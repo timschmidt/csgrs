@@ -102,7 +102,9 @@ pub use intersection::{
 pub use local_bsp::{BspLeaf, LocalBsp};
 pub use mesh::{InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, prepare_input};
 pub use operations::{
-    EmberConfig, boolean_difference, boolean_intersection, boolean_operation, boolean_union,
+    BooleanArrangement, EmberConfig, boolean_difference, boolean_intersection, boolean_operation,
+    boolean_union, build_boolean_arrangement, prepare_boolean_operations,
+    prepare_boolean_operations_with_certified_convex_inputs,
 };
 pub use output::{
     BooleanResult, OutputPolygon, TriangleSoup, TriangleSoupClosureReport, TriangleSource,

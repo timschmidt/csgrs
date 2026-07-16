@@ -13,7 +13,7 @@ use super::{
     DefinitionNoPlaneReplacementCycleGuardCacheEntry,
     DefinitionNoPlaneReplacementReachabilityCache,
     DefinitionNoPlaneReplacementReachabilityCacheEntry, DefinitionReachabilityBucket,
-    DetourArrangementCellState, DetourTarget, DetourTargetFamilyCache,
+    DetourArrangementCellState, DetourPathPointBuckets, DetourTarget, DetourTargetFamilyCache,
     DetourTargetFamilyCacheEntry, InteriorBoxAxisIntervalsCache, InteriorBoxDetourTargetBatchCache,
     InteriorLeafPoint, PlaneReplacementAffineCache, PlaneReplacementNoNestedOrderingWarmupBucket,
     PlaneReplacementNoNestedOrderingWarmupCache, PlaneReplacementNoNestedOrderingWarmupCacheEntry,
@@ -31,8 +31,8 @@ use super::{
     detour_target_family_result_from_targets, endpoint_definition_family,
     evaluate_strict_aabb_target_families_with_direct_ranking, first_changed_axis,
     initial_visited_definition_points, interior_box_axis_intervals_with_surface_queries,
-    interior_box_detour_targets, normalized_cycle_guard_visited_points, planes_are_coplanar,
-    point_is_inside_optional_trace_bounds, point_lies_on_traced_surface,
+    interior_box_detour_targets, matching_detour_path_index, normalized_cycle_guard_visited_points,
+    planes_are_coplanar, point_is_inside_optional_trace_bounds, point_lies_on_traced_surface,
     point_strictly_between_axis, push_detour_target_family_bucket_entry,
     push_strict_aabb_target_family_bucket_entry, push_unique_detour_target,
     record_detour_arrangement_cell_state,
@@ -3148,6 +3148,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
         usize,
     ) -> HypermeshResult<Option<Vec<DetourTarget>>>,
 ) -> HypermeshResult<bool> {
+    crate::trace_dispatch!("breadth-first-detour-reachability", "entry");
     let start_target = DetourTarget {
         point: start.clone(),
         definitions: start_definitions.to_vec(),
@@ -3161,6 +3162,8 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
     let initial_path = vec![start_target, end_target];
     let mut queue = std::collections::VecDeque::from([(initial_path.clone(), 0usize)]);
     let mut seen_paths = vec![initial_path];
+    let mut seen_path_points = DetourPathPointBuckets::default();
+    seen_path_points.record(&seen_paths[0], 0);
     let mut seen_cells = Vec::<DetourArrangementCellState>::new();
     let mut saw_unknown = false;
 
@@ -3275,7 +3278,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
             let mut next_path = path.clone();
             let detour_uncertified_definition_fallback = detour.uncertified_definition_fallback;
             next_path.insert(edge_index + 1, detour);
-            if seen_paths.contains(&next_path) {
+            if matching_detour_path_index(&seen_paths, &seen_path_points, &next_path).is_some() {
                 continue;
             }
             let mut complete = true;
@@ -3302,6 +3305,8 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
             if complete {
                 return Ok(true);
             }
+            let next_path_index = seen_paths.len();
+            seen_path_points.record(&next_path, next_path_index);
             seen_paths.push(next_path.clone());
             if !definition_transition && let Some(cell) = detour_cell {
                 record_detour_arrangement_cell_state(

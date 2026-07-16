@@ -34,7 +34,7 @@ use super::{
     seed_family_search_failed_without_any_seed, segment_plane_crossing,
     shifted_halfspace_cell_witnesses_from_seed, shifted_halfspace_seed_families_with_report_seed,
     strict_axis_probe_targets, strict_normal_probe_targets_with_query_caches,
-    take_new_halfspace_seed_family, trace_bounds_including_point,
+    take_new_halfspace_seed_family, trace_axis_segment_ignoring_mesh, trace_bounds_including_point,
     trace_segment_from_definitions_with_step_detoured_plane_replacement_with_caches,
     unique_definition_family, unique_normal_probe_search_definitions,
 };
@@ -94,6 +94,7 @@ pub(crate) fn classify_leaf_polygon_with_probe_query_caches(
         polygon_index: -1,
         delta_w: WindingNumberTransitionVector::new(),
         approx_bounds: None,
+        known_vertices: None,
     };
     let clipped_leaf = clip_polygon_to_aabb(&leaf, bounds)?;
     let interior_points = interior_leaf_points(&clipped_leaf)?;
@@ -161,6 +162,8 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
             host_delta_w,
             probe_query_caches,
             &mut saw_unknown,
+            None,
+            &[],
         )? {
             return Ok(winding);
         }
@@ -209,8 +212,23 @@ pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
     host_delta_w: &[i32],
     probe_query_caches: &mut LeafProbeQueryCaches,
     saw_unknown: &mut bool,
+    certified_convex_host_mesh: Option<usize>,
+    certified_convex_inputs: &[bool],
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     probe_query_caches.prepare_for_trace_bounds(bounds);
+    if let Some(host_mesh) = certified_convex_host_mesh
+        && ref_wnv.iter().all(|winding| *winding == 0)
+        && let Some(winding) = classify_point_against_certified_convex_inputs_with_cache(
+            &point.point,
+            ref_wnv.len(),
+            polygons,
+            host_mesh,
+            certified_convex_inputs,
+            probe_query_caches,
+        )?
+    {
+        return Ok(Some(winding));
+    }
     for positive_side in [true, false] {
         if let Some(winding) = search_adjacent_normal_probe_winding_with_queries(
             point,
@@ -224,6 +242,7 @@ pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
             host_delta_w,
             probe_query_caches,
             saw_unknown,
+            certified_convex_host_mesh,
         )? {
             return Ok(Some(winding));
         }
@@ -305,6 +324,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
     host_delta_w: &[i32],
     probe_query_caches: &mut LeafProbeQueryCaches,
     saw_unknown: &mut bool,
+    certified_convex_host_mesh: Option<usize>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let retained_definitions = unique_normal_probe_search_definitions(&point.planes, support)?;
     let direction = if positive_side {
@@ -355,6 +375,35 @@ fn search_adjacent_normal_probe_winding_with_queries(
                 side: direct_side,
                 uncertified_definition_fallback: false,
             };
+            if !local_unknown {
+                if let Some(host_mesh) = certified_convex_host_mesh
+                    && ref_wnv.iter().all(|winding| *winding == 0)
+                    && let Some(winding) = trace_certified_simple_outward_host_probe_winding(
+                        &direct_probe,
+                        bounds,
+                        ref_wnv.len(),
+                        polygons,
+                        host_mesh,
+                    )?
+                {
+                    return Ok(Some(winding));
+                }
+                match trace_certified_adjacent_probe_winding(
+                    &direct_probe,
+                    ref_point,
+                    ref_definitions,
+                    ref_wnv,
+                    polygons,
+                    host_delta_w,
+                    probe_query_caches,
+                ) {
+                    Ok(winding) => return Ok(Some(winding)),
+                    Err(HypermeshError::UnknownClassification) => {
+                        *saw_unknown = true;
+                    }
+                    Err(err) => return Err(err),
+                }
+            }
             if let Some(winding) = try_leaf_probe_family_with_queries(
                 point,
                 positive_side,
@@ -497,6 +546,202 @@ fn search_adjacent_normal_probe_winding_with_queries(
     }
 
     Ok(None)
+}
+
+/// Classifies an adjacent probe against every input except a certified host.
+///
+/// A certified simple outward shell has winding zero on the front of each of
+/// its faces. Starting outside the root bounds therefore lets an exact
+/// axis-aligned trace recover every non-host component directly; the host
+/// component remains zero without tracing the host's own triangulation.
+fn trace_certified_simple_outward_host_probe_winding(
+    probe: &ProbePoint,
+    bounds: &Aabb,
+    winding_len: usize,
+    polygons: &[ConvexPolygon],
+    host_mesh: usize,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    if host_mesh >= winding_len {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    let host_mesh =
+        isize::try_from(host_mesh).map_err(|_| HypermeshError::UnknownClassification)?;
+    let one = Real::one();
+    let zero_winding = vec![0; winding_len];
+
+    for axis in 0..3 {
+        for start_from_min in [true, false] {
+            let mut start = probe.point.clone();
+            *crate::geometry::axis_mut(&mut start, axis) = if start_from_min {
+                axis_ref(&bounds.min, axis) - one.clone()
+            } else {
+                axis_ref(&bounds.max, axis) + one.clone()
+            };
+            match trace_axis_segment_ignoring_mesh(
+                &start,
+                &probe.point,
+                axis,
+                &zero_winding,
+                polygons,
+                Some(host_mesh),
+            ) {
+                Ok(trace) if trace.valid => return Ok(Some(trace.winding)),
+                Ok(_) | Err(HypermeshError::UnknownClassification) => {}
+                Err(err) => return Err(err),
+            }
+        }
+    }
+
+    Ok(None)
+}
+
+fn classify_point_against_certified_convex_inputs_with_cache(
+    point: &Point3,
+    winding_len: usize,
+    polygons: &[ConvexPolygon],
+    host_mesh: usize,
+    certified_convex_inputs: &[bool],
+    probe_query_caches: &mut LeafProbeQueryCaches,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    if probe_query_caches.certified_convex_mesh_supports.is_none() {
+        let mut supports = vec![Vec::new(); winding_len];
+        for polygon in polygons {
+            if let Ok(mesh) = usize::try_from(polygon.mesh_index)
+                && let Some(mesh_supports) = supports.get_mut(mesh)
+            {
+                mesh_supports.push(polygon.support.clone());
+            }
+        }
+        probe_query_caches.certified_convex_mesh_supports = Some(supports);
+        probe_query_caches.certified_convex_last_outside_support = vec![None; winding_len];
+    }
+    let supports = probe_query_caches
+        .certified_convex_mesh_supports
+        .as_ref()
+        .ok_or(HypermeshError::UnknownClassification)?;
+    classify_point_against_certified_convex_inputs(
+        point,
+        winding_len,
+        isize::try_from(host_mesh).map_err(|_| HypermeshError::UnknownClassification)?,
+        certified_convex_inputs,
+        supports,
+        &mut probe_query_caches.certified_convex_last_outside_support,
+    )
+}
+
+fn classify_point_against_certified_convex_inputs(
+    point: &Point3,
+    winding_len: usize,
+    host_mesh: isize,
+    certified_convex_inputs: &[bool],
+    supports: &[Vec<Plane>],
+    last_outside_support: &mut [Option<usize>],
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    if certified_convex_inputs.len() != winding_len
+        || supports.len() != winding_len
+        || last_outside_support.len() != winding_len
+    {
+        return Ok(None);
+    }
+    let mut winding = vec![0; winding_len];
+
+    for mesh in 0..winding_len {
+        let mesh_index =
+            isize::try_from(mesh).map_err(|_| HypermeshError::UnknownClassification)?;
+        if mesh_index == host_mesh {
+            continue;
+        }
+        if !certified_convex_inputs[mesh] {
+            return Ok(None);
+        }
+
+        let mesh_supports = &supports[mesh];
+        if mesh_supports.is_empty() {
+            return Err(HypermeshError::UnknownClassification);
+        }
+        let mut on_boundary = false;
+        let mut outside = false;
+        if let Some(index) = last_outside_support[mesh]
+            && let Some(support) = mesh_supports.get(index)
+        {
+            match classify_point(point, support)? {
+                Classification::Positive => outside = true,
+                Classification::On => on_boundary = true,
+                Classification::Negative => {}
+            }
+        }
+        if outside {
+            continue;
+        }
+        for (index, support) in mesh_supports.iter().enumerate() {
+            if last_outside_support[mesh] == Some(index) {
+                continue;
+            }
+            match classify_point(point, support)? {
+                Classification::Positive => {
+                    outside = true;
+                    last_outside_support[mesh] = Some(index);
+                    break;
+                }
+                Classification::On => on_boundary = true,
+                Classification::Negative => {}
+            }
+        }
+        if !outside {
+            if on_boundary {
+                return Ok(None);
+            }
+            winding[mesh] = 1;
+        }
+    }
+
+    Ok(Some(winding))
+}
+
+fn trace_certified_adjacent_probe_winding(
+    probe: &ProbePoint,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    host_delta_w: &[i32],
+    probe_query_caches: &mut LeafProbeQueryCaches,
+) -> HypermeshResult<WindingNumberVector> {
+    let LeafProbeQueryCaches {
+        trace_bounds,
+        probe_winding,
+        probe_surface,
+        axis_ordered_segment_traces,
+        plane_replacement_affine,
+        plane_replacement_trace_steps,
+        definition_no_detour_trace,
+        detour_target_families,
+        ..
+    } = probe_query_caches;
+    let trace_bounds = trace_bounds
+        .as_ref()
+        .ok_or(HypermeshError::UnknownClassification)?;
+    let winding_trace_bounds = trace_bounds_including_point(trace_bounds, ref_point)?;
+    let mut winding = cached_probe_winding_with(probe_winding, probe, || {
+        trace_probe_winding_with_caches(
+            ref_point,
+            ref_definitions,
+            probe,
+            ref_wnv,
+            polygons,
+            probe_surface,
+            axis_ordered_segment_traces,
+            plane_replacement_affine,
+            plane_replacement_trace_steps,
+            definition_no_detour_trace,
+            detour_target_families,
+            Some(&winding_trace_bounds),
+        )
+    })?;
+    if probe.side == Classification::Negative {
+        apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
+    }
+    Ok(winding)
 }
 
 fn try_strict_normal_probe_targets_progressively_with_query_caches(

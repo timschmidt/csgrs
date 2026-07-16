@@ -1,6 +1,6 @@
 //! Face-local BSP tree for splitting one polygon into convex leaves.
 
-use hyperlattice::{Point3, intersect_three_planes};
+use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, classify_point, classify_projective_point};
@@ -15,13 +15,16 @@ pub struct BspLeaf {
     pub edges: Vec<Plane>,
     /// Whether this leaf is still active for output.
     pub enabled: bool,
+    /// Certified strict interior witness retained through BSP splits.
+    pub(crate) interior_point: Option<Point3>,
 }
 
 impl BspLeaf {
-    fn new(edges: Vec<Plane>) -> Self {
+    fn new(edges: Vec<Plane>, interior_point: Option<Point3>) -> Self {
         Self {
             edges,
             enabled: true,
+            interior_point,
         }
     }
 }
@@ -49,11 +52,18 @@ pub struct LocalBsp {
 impl LocalBsp {
     /// Builds a local BSP with one initial leaf matching `polygon`.
     pub fn new(polygon: &ConvexPolygon) -> Self {
+        let interior_point = polygon
+            .vertices()
+            .ok()
+            .and_then(|vertices| convex_point_centroid(&vertices).ok().flatten());
         Self {
             support: polygon.support.clone(),
             host_mesh_index: polygon.mesh_index,
             host_polygon_index: polygon.polygon_index,
-            nodes: vec![BspNode::Leaf(BspLeaf::new(polygon.edges.as_ref().clone()))],
+            nodes: vec![BspNode::Leaf(BspLeaf::new(
+                polygon.edges.as_ref().clone(),
+                interior_point,
+            ))],
             root: Some(0),
         }
     }
@@ -167,8 +177,12 @@ impl LocalBsp {
     }
 
     fn split_leaf(&mut self, node_index: usize, split: &Plane) -> HypermeshResult<()> {
-        let (old_edges, was_enabled) = match &self.nodes[node_index] {
-            BspNode::Leaf(leaf) => (leaf.edges.clone(), leaf.enabled),
+        let (old_edges, old_interior_point, was_enabled) = match &self.nodes[node_index] {
+            BspNode::Leaf(leaf) => (
+                leaf.edges.clone(),
+                leaf.interior_point.clone(),
+                leaf.enabled,
+            ),
             BspNode::Branch { .. } => return Ok(()),
         };
 
@@ -177,6 +191,7 @@ impl LocalBsp {
             return Ok(());
         }
 
+        let mut vertices = Vec::with_capacity(n);
         let mut classifications = Vec::with_capacity(n);
         let mut has_pos = false;
         let mut has_neg = false;
@@ -187,6 +202,7 @@ impl LocalBsp {
                 &old_edges[(index + 1) % n],
             );
             let classification = classify_projective_point(&vertex, split)?;
+            vertices.push(vertex);
             has_pos |= classification == Classification::Positive;
             has_neg |= classification == Classification::Negative;
             classifications.push(classification);
@@ -222,8 +238,22 @@ impl LocalBsp {
             }
         }
 
-        let negative = self.alloc_leaf(negative_edges, was_enabled);
-        let positive = self.alloc_leaf(positive_edges, was_enabled);
+        let negative_interior = split_child_interior_point(
+            old_interior_point.as_ref(),
+            split,
+            &vertices,
+            &classifications,
+            Classification::Negative,
+        )?;
+        let positive_interior = split_child_interior_point(
+            old_interior_point.as_ref(),
+            split,
+            &vertices,
+            &classifications,
+            Classification::Positive,
+        )?;
+        let negative = self.alloc_leaf(negative_edges, negative_interior, was_enabled);
+        let positive = self.alloc_leaf(positive_edges, positive_interior, was_enabled);
         self.nodes[node_index] = BspNode::Branch {
             split_plane: Box::new(split.clone()),
             negative,
@@ -232,9 +262,14 @@ impl LocalBsp {
         Ok(())
     }
 
-    fn alloc_leaf(&mut self, edges: Vec<Plane>, enabled: bool) -> usize {
+    fn alloc_leaf(
+        &mut self,
+        edges: Vec<Plane>,
+        interior_point: Option<Point3>,
+        enabled: bool,
+    ) -> usize {
         let index = self.nodes.len();
-        let mut leaf = BspLeaf::new(edges);
+        let mut leaf = BspLeaf::new(edges, interior_point);
         leaf.enabled = enabled;
         self.nodes.push(BspNode::Leaf(leaf));
         index
@@ -321,6 +356,72 @@ fn classify_leaf_overlap_relation(
         return Ok(None);
     }
     classify_overlap_test_relation(&test_points, other)
+}
+
+fn convex_point_centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
+    if points.is_empty() {
+        return Ok(None);
+    }
+    let mut point = Point3::origin();
+    for candidate in points {
+        point.x += candidate.x.clone();
+        point.y += candidate.y.clone();
+        point.z += candidate.z.clone();
+    }
+    let denominator = Real::from(points.len() as u64);
+    Ok(Some(Point3::new(
+        (point.x / denominator.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (point.y / denominator.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
+        (point.z / denominator).map_err(|_| HypermeshError::UnknownClassification)?,
+    )))
+}
+
+fn split_child_interior_point(
+    parent: Option<&Point3>,
+    split: &Plane,
+    vertices: &[HomogeneousPoint3],
+    classifications: &[Classification],
+    target: Classification,
+) -> HypermeshResult<Option<Point3>> {
+    let Some(parent) = parent else {
+        return Ok(None);
+    };
+    if classify_point(parent, split)? == target {
+        return Ok(Some(parent.clone()));
+    }
+    let Some(vertex_index) = classifications
+        .iter()
+        .position(|classification| *classification == target)
+    else {
+        return Ok(None);
+    };
+    let vertex = vertices[vertex_index]
+        .to_affine_point()
+        .map_err(|_| HypermeshError::PointAtInfinity)?;
+    let parent_value = split.expression_at_point(parent);
+    let parent_class = crate::geometry::classify_real(&parent_value)?;
+    let crossing = if parent_class == Classification::On {
+        parent.clone()
+    } else {
+        let vertex_value = split.expression_at_point(&vertex);
+        let denominator = &parent_value - &vertex_value;
+        let t = (parent_value / denominator).map_err(|_| HypermeshError::UnknownClassification)?;
+        Point3::new(
+            &parent.x + &(t.clone() * (&vertex.x - &parent.x)),
+            &parent.y + &(t.clone() * (&vertex.y - &parent.y)),
+            &parent.z + &(t * (&vertex.z - &parent.z)),
+        )
+    };
+    let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
+    let witness = Point3::new(
+        &crossing.x + &(half.clone() * (&vertex.x - &crossing.x)),
+        &crossing.y + &(half.clone() * (&vertex.y - &crossing.y)),
+        &crossing.z + &(half * (&vertex.z - &crossing.z)),
+    );
+    if classify_point(&witness, split)? != target {
+        return Ok(None);
+    }
+    Ok(Some(witness))
 }
 
 fn classify_overlap_test_relation(

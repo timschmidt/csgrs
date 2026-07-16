@@ -37,6 +37,7 @@ use hyperlimit::{
     HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, Sign,
     classify_plane_aabb3_report,
 };
+use hyperreal::Rational;
 
 pub(super) fn detour_arrangement_planes(polygons: &[ConvexPolygon]) -> Vec<Plane> {
     let mut planes = Vec::new();
@@ -260,6 +261,17 @@ pub fn trace_axis_segment(
     start_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<TraceAxisSegmentResult> {
+    trace_axis_segment_ignoring_mesh(start, end, axis, start_wnv, polygons, None)
+}
+
+pub(super) fn trace_axis_segment_ignoring_mesh(
+    start: &Point3,
+    end: &Point3,
+    axis: usize,
+    start_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    ignored_mesh: Option<isize>,
+) -> HypermeshResult<TraceAxisSegmentResult> {
     let mut winding = start_wnv.to_vec();
     let direction = compare_real(axis_ref(end, axis), axis_ref(start, axis))?;
     if direction.is_eq() {
@@ -281,7 +293,7 @@ pub fn trace_axis_segment(
     let end_prepared = PreparedPoint3::new(end);
     let mut events = Vec::new();
     for polygon in polygons {
-        if polygon.mesh_index < 0 {
+        if polygon.mesh_index < 0 || ignored_mesh == Some(polygon.mesh_index) {
             continue;
         }
 
@@ -293,6 +305,11 @@ pub fn trace_axis_segment(
 
         let normal_axis = axis_ref(&polygon.support.normal, axis);
         if normal_axis.definitely_zero() {
+            if start_prepared.classify(&polygon.support)? == Classification::On
+                && segment_has_coplanar_polygon_contact_before_end(start, end, polygon)?
+            {
+                return Err(HypermeshError::UnknownClassification);
+            }
             continue;
         }
 
@@ -375,6 +392,52 @@ pub fn trace_axis_segment(
     })
 }
 
+fn segment_has_coplanar_polygon_contact_before_end(
+    start: &Point3,
+    end: &Point3,
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    let mut lower = Real::zero();
+    let mut upper = Real::one();
+
+    for edge in polygon.edges.iter() {
+        let start_value = edge.expression_at_point(start);
+        let end_value = edge.expression_at_point(end);
+        let start_class = classify_real(&start_value)?;
+        let end_class = classify_real(&end_value)?;
+
+        match (start_class, end_class) {
+            (Classification::Negative, Classification::Negative)
+            | (Classification::Negative, Classification::On)
+            | (Classification::On, Classification::Negative)
+            | (Classification::On, Classification::On) => {}
+            (Classification::Positive, Classification::Positive) => return Ok(false),
+            (Classification::Positive, Classification::Negative)
+            | (Classification::Positive, Classification::On) => {
+                let cut = (start_value.clone() / (&start_value - &end_value))
+                    .map_err(|_| HypermeshError::UnknownClassification)?;
+                if compare_real(&cut, &lower)?.is_gt() {
+                    lower = cut;
+                }
+            }
+            (Classification::Negative, Classification::Positive)
+            | (Classification::On, Classification::Positive) => {
+                let cut = (start_value.clone() / (&start_value - &end_value))
+                    .map_err(|_| HypermeshError::UnknownClassification)?;
+                if compare_real(&cut, &upper)?.is_lt() {
+                    upper = cut;
+                }
+            }
+        }
+
+        if compare_real(&lower, &upper)?.is_gt() {
+            return Ok(false);
+        }
+    }
+
+    Ok(compare_real(&lower, &Real::one())?.is_lt())
+}
+
 fn axis_segment_overlaps_bounds(
     start: &Point3,
     end: &Point3,
@@ -415,7 +478,6 @@ pub(super) const AXIS_ORDERINGS: [[usize; 3]; 6] = [
 const MIN_DETOUR_RECURSION_LIMIT: usize = 2;
 #[cfg(test)]
 const MIN_PLANE_REPLACEMENT_STEP_DETOUR_LIMIT: usize = 1;
-
 /// Traces an axis-aligned polyline using several axis orderings and returns
 /// the first valid winding result. If direct L-shaped paths are blocked by
 /// exact surface hits, retries through arrangement-coordinate endpoint-box
@@ -987,6 +1049,7 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
         usize,
     ) -> HypermeshResult<Option<Vec<DetourTarget>>>,
 ) -> HypermeshResult<WindingNumberVector> {
+    crate::trace_dispatch!("breadth-first-detour-trace", "entry");
     let start_target = DetourTarget {
         point: start.clone(),
         definitions: start_definitions.to_vec(),
@@ -1000,6 +1063,8 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
     let initial_path = vec![start_target, end_target];
     let mut queue = std::collections::VecDeque::from([(initial_path.clone(), 0usize)]);
     let mut seen_paths = vec![initial_path];
+    let mut seen_path_points = DetourPathPointBuckets::default();
+    seen_path_points.record(&seen_paths[0], 0);
     let mut seen_cells = Vec::<DetourArrangementCellState>::new();
 
     while let Some((path, batch_index)) = queue.pop_front() {
@@ -1096,7 +1161,7 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
             let mut next_path = path.clone();
             let detour_uncertified_definition_fallback = detour.uncertified_definition_fallback;
             next_path.insert(edge_index + 1, detour);
-            if seen_paths.contains(&next_path) {
+            if matching_detour_path_index(&seen_paths, &seen_path_points, &next_path).is_some() {
                 continue;
             }
 
@@ -1121,6 +1186,8 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
             if complete {
                 return Ok(next_attempt);
             }
+            let next_path_index = seen_paths.len();
+            seen_path_points.record(&next_path, next_path_index);
             seen_paths.push(next_path.clone());
             if !definition_transition && let Some(cell) = detour_cell {
                 record_detour_arrangement_cell_state(
@@ -1917,10 +1984,27 @@ pub(super) fn trace_direct_segment(
     } else {
         -1
     };
+    let mut segment_min = Point3::origin();
+    let mut segment_max = Point3::origin();
+    for axis in 0..3 {
+        let (lower, upper) = if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_le() {
+            (axis_ref(start, axis), axis_ref(end, axis))
+        } else {
+            (axis_ref(end, axis), axis_ref(start, axis))
+        };
+        *axis_mut(&mut segment_min, axis) = lower.clone();
+        *axis_mut(&mut segment_max, axis) = upper.clone();
+    }
+    let segment_bounds = ApproxBounds::new(segment_min, segment_max);
 
     let mut events = Vec::new();
     for polygon in polygons {
         if polygon.mesh_index < 0 {
+            continue;
+        }
+        if let Some(polygon_bounds) = &polygon.approx_bounds
+            && !bounds_overlap(&segment_bounds, polygon_bounds)?
+        {
             continue;
         }
 
@@ -2458,12 +2542,14 @@ pub(super) struct StrictAabbTargetCursor {
     next_shifted_seed: usize,
     certified_direct_target_points: Vec<Point3>,
     emitted_targets: Vec<DetourTarget>,
+    emitted_target_points: DetourTargetPointBuckets,
     pub(super) saw_unknown: bool,
     pub(super) stage: StrictAabbTargetCursorStage,
 }
 
 impl StrictAabbTargetCursor {
     pub(super) fn new(bounds: &Aabb) -> HypermeshResult<Self> {
+        crate::trace_dispatch!("strict-aabb-target-cursor", "new");
         let halfspaces = aabb_core_halfspaces(bounds)?;
         let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
         let feasible = report
@@ -2492,6 +2578,7 @@ impl StrictAabbTargetCursor {
             next_shifted_seed: 0,
             certified_direct_target_points: Vec::new(),
             emitted_targets: Vec::new(),
+            emitted_target_points: DetourTargetPointBuckets::default(),
             saw_unknown,
             stage: if feasible {
                 StrictAabbTargetCursorStage::FrontDirect
@@ -2541,6 +2628,7 @@ impl StrictAabbTargetCursor {
         let mut batch = Vec::new();
         let seeds = self.seeds[start_index..end_index].to_vec();
         for seed in &seeds {
+            crate::trace_dispatch!("strict-aabb-target-cursor", "direct-seed");
             let target = match build_detour_target(
                 seed,
                 &self.halfspaces,
@@ -2595,6 +2683,7 @@ impl StrictAabbTargetCursor {
                 return Ok((Vec::new(), true));
             };
             self.next_shifted_seed += 1;
+            crate::trace_dispatch!("strict-aabb-target-cursor", "shifted-seed");
             let shifted_witnesses = match shifted_halfspace_cell_witnesses_from_seed(
                 &self.bounds,
                 &self.halfspaces,
@@ -2609,6 +2698,7 @@ impl StrictAabbTargetCursor {
             };
             let mut batch = Vec::new();
             for witness in &shifted_witnesses {
+                crate::trace_dispatch!("strict-aabb-target-cursor", "shifted-witness");
                 let target = match build_detour_target_from_shifted_witness(witness) {
                     Ok(target) => target,
                     Err(HypermeshError::UnknownClassification) => {
@@ -2626,15 +2716,120 @@ impl StrictAabbTargetCursor {
     }
 
     fn push_target(&mut self, batch: &mut Vec<DetourTarget>, target: DetourTarget) {
-        if self.emitted_targets.iter().any(|existing| {
-            existing.point == target.point
-                && definition_families_match_as_sets(&existing.definitions, &target.definitions)
-        }) {
+        if matching_detour_target_index(&self.emitted_targets, &self.emitted_target_points, &target)
+            .is_some()
+        {
+            crate::trace_dispatch!("strict-aabb-target-cursor", "duplicate-target");
             return;
         }
+        crate::trace_dispatch!("strict-aabb-target-cursor", "unique-target");
+        let index = self.emitted_targets.len();
+        self.emitted_target_points.record(&target.point, index);
         self.emitted_targets.push(target.clone());
         batch.push(target);
     }
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct ExactRationalPointKey([Rational; 3]);
+
+impl ExactRationalPointKey {
+    fn from_point(point: &Point3) -> Option<Self> {
+        Some(Self([
+            point.x.exact_rational()?,
+            point.y.exact_rational()?,
+            point.z.exact_rational()?,
+        ]))
+    }
+}
+
+#[derive(Default)]
+struct DetourTargetPointBuckets {
+    exact: HashMap<ExactRationalPointKey, Vec<usize>>,
+    unkeyed: Vec<usize>,
+}
+
+impl DetourTargetPointBuckets {
+    fn record(&mut self, point: &Point3, index: usize) {
+        if let Some(key) = ExactRationalPointKey::from_point(point) {
+            self.exact.entry(key).or_default().push(index);
+        } else {
+            self.unkeyed.push(index);
+        }
+    }
+}
+
+#[derive(Default)]
+pub(super) struct DetourPathPointBuckets {
+    exact: HashMap<Vec<ExactRationalPointKey>, Vec<usize>>,
+    unkeyed: Vec<usize>,
+}
+
+impl DetourPathPointBuckets {
+    pub(super) fn record(&mut self, path: &[DetourTarget], index: usize) {
+        if let Some(key) = exact_rational_path_point_key(path) {
+            self.exact.entry(key).or_default().push(index);
+        } else {
+            self.unkeyed.push(index);
+        }
+    }
+}
+
+fn exact_rational_path_point_key(path: &[DetourTarget]) -> Option<Vec<ExactRationalPointKey>> {
+    path.iter()
+        .map(|target| ExactRationalPointKey::from_point(&target.point))
+        .collect()
+}
+
+pub(super) fn matching_detour_path_index(
+    paths: &[Vec<DetourTarget>],
+    buckets: &DetourPathPointBuckets,
+    candidate: &[DetourTarget],
+) -> Option<usize> {
+    let matches = |index: usize| {
+        paths
+            .get(index)
+            .is_some_and(|existing| existing == candidate)
+    };
+
+    if let Some(key) = exact_rational_path_point_key(candidate) {
+        return buckets
+            .exact
+            .get(&key)
+            .into_iter()
+            .flatten()
+            .copied()
+            .chain(buckets.unkeyed.iter().copied())
+            .find(|index| matches(*index));
+    }
+
+    (0..paths.len()).find(|index| matches(*index))
+}
+
+fn matching_detour_target_index(
+    targets: &[DetourTarget],
+    buckets: &DetourTargetPointBuckets,
+    candidate: &DetourTarget,
+) -> Option<usize> {
+    let matches = |index: usize| {
+        targets.get(index).is_some_and(|existing| {
+            existing.point == candidate.point
+                && definition_families_match_as_sets(&existing.definitions, &candidate.definitions)
+        })
+    };
+
+    if let Some(key) = ExactRationalPointKey::from_point(&candidate.point) {
+        return buckets
+            .exact
+            .get(&key)
+            .into_iter()
+            .flatten()
+            .copied()
+            .chain(buckets.unkeyed.iter().copied())
+            .find(|index| matches(*index));
+    }
+
+    (0..targets.len()).find(|index| matches(*index))
 }
 
 pub(super) struct InteriorBoxDetourTargetCursor {
@@ -2642,6 +2837,7 @@ pub(super) struct InteriorBoxDetourTargetCursor {
     next_bounds: usize,
     current: Option<StrictAabbTargetCursor>,
     emitted_targets: Vec<DetourTarget>,
+    emitted_target_points: DetourTargetPointBuckets,
     pub(super) saw_unknown: bool,
 }
 
@@ -2653,6 +2849,7 @@ impl InteriorBoxDetourTargetCursor {
         arrangement_planes: &[Plane],
         trace_bounds: Option<&Aabb>,
     ) -> HypermeshResult<Self> {
+        crate::trace_dispatch!("interior-box-detour-cursor", "new");
         let (start_cell, end_cell) = if arrangement_planes.is_empty() {
             (None, None)
         } else {
@@ -2696,6 +2893,7 @@ impl InteriorBoxDetourTargetCursor {
             next_bounds: 0,
             current: None,
             emitted_targets: Vec::new(),
+            emitted_target_points: DetourTargetPointBuckets::default(),
             saw_unknown,
         })
     }
@@ -2705,25 +2903,30 @@ impl InteriorBoxDetourTargetCursor {
             if let Some(current) = self.current.as_mut() {
                 match current.next_batch() {
                     Ok(Some(batch)) => {
+                        crate::trace_dispatch!("interior-box-detour-cursor", "source-batch");
                         let mut unique = Vec::new();
                         for target in batch {
-                            if let Some(existing) =
-                                self.emitted_targets.iter_mut().find(|existing| {
-                                    existing.point == target.point
-                                        && definition_families_match_as_sets(
-                                            &existing.definitions,
-                                            &target.definitions,
-                                        )
-                                })
-                            {
+                            if let Some(index) = matching_detour_target_index(
+                                &self.emitted_targets,
+                                &self.emitted_target_points,
+                                &target,
+                            ) {
+                                let existing = &mut self.emitted_targets[index];
                                 if existing.uncertified_definition_fallback
                                     && !target.uncertified_definition_fallback
                                 {
                                     existing.uncertified_definition_fallback = false;
                                     unique.push(target);
                                 }
+                                crate::trace_dispatch!(
+                                    "interior-box-detour-cursor",
+                                    "duplicate-target"
+                                );
                                 continue;
                             }
+                            crate::trace_dispatch!("interior-box-detour-cursor", "unique-target");
+                            let index = self.emitted_targets.len();
+                            self.emitted_target_points.record(&target.point, index);
                             self.emitted_targets.push(target.clone());
                             unique.push(target);
                         }
@@ -2747,6 +2950,7 @@ impl InteriorBoxDetourTargetCursor {
                 return Ok(None);
             };
             self.next_bounds += 1;
+            crate::trace_dispatch!("interior-box-detour-cursor", "candidate-bounds");
             match StrictAabbTargetCursor::new(bounds) {
                 Ok(cursor) => self.current = Some(cursor),
                 Err(HypermeshError::UnknownClassification) => self.saw_unknown = true,

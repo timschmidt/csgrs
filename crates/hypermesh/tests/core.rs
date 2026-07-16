@@ -3,10 +3,11 @@ use hypermesh::bvh::bounds_overlap;
 use hypermesh::clip::{ClipSide, clip_polygon};
 use hypermesh::{
     BooleanOp, Classification, EmberConfig, HypermeshError, MeshRef, Plane, SubdivisionConfig,
-    SubdivisionTask, Triangle, boolean_operation, certify_output_polygon_closure,
-    classify_leaf_polygon, classify_point, classify_polygon_output, intersect_polygons,
-    make_indicator, make_quad, make_triangle, prepare_input, process_leaf_into, subdivide,
-    trace_axis_segment, trace_segment, triangulate_and_resolve_certified,
+    SubdivisionTask, Triangle, boolean_operation, build_boolean_arrangement,
+    certify_output_polygon_closure, classify_leaf_polygon, classify_point, classify_polygon_output,
+    intersect_polygons, make_indicator, make_quad, make_triangle, prepare_boolean_operations,
+    prepare_input, process_leaf_into, subdivide, trace_axis_segment, trace_segment,
+    triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -1010,6 +1011,140 @@ fn boolean_operation_accepts_input_mesh_refs() {
 }
 
 #[test]
+fn reusable_arrangement_matches_each_direct_boolean_operation() {
+    let left = cube_mesh(0, 2);
+    let right = cube_mesh(1, 3);
+    let meshes = [left.as_ref(), right.as_ref()];
+    let arrangement = build_boolean_arrangement(&meshes, EmberConfig::default()).unwrap();
+
+    assert!(arrangement.fragment_count() >= 12);
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::SymmetricDifference,
+    ] {
+        let direct = boolean_operation(&meshes, op, EmberConfig::default()).unwrap();
+        let extracted = arrangement.extract(op).unwrap();
+        assert_eq!(extracted, direct, "{op:?}");
+        assert_eq!(
+            arrangement.extract_triangle_soup(op).unwrap().as_ref(),
+            &triangulate_and_resolve_certified(&extracted).unwrap(),
+            "{op:?} triangle soup"
+        );
+    }
+}
+
+#[test]
+fn reusable_arrangement_shares_certified_extraction_cache_across_clones() {
+    let left = cube_mesh(0, 2);
+    let right = cube_mesh(1, 3);
+    let meshes = [left.as_ref(), right.as_ref()];
+    let arrangement = build_boolean_arrangement(&meshes, EmberConfig::default()).unwrap();
+
+    let first = arrangement.extract_triangle_soup(BooleanOp::Union).unwrap();
+    let second = arrangement
+        .clone()
+        .extract_triangle_soup(BooleanOp::Union)
+        .unwrap();
+
+    assert!(std::sync::Arc::ptr_eq(&first, &second));
+}
+
+#[test]
+fn reusable_arrangement_preserves_coincident_mesh_winding_evidence() {
+    let left = cube_mesh(0, 2);
+    let right = cube_mesh(0, 2);
+    let meshes = [left.as_ref(), right.as_ref()];
+    let arrangement = build_boolean_arrangement(&meshes, EmberConfig::default()).unwrap();
+
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::SymmetricDifference,
+    ] {
+        let direct = boolean_operation(&meshes, op, EmberConfig::default()).unwrap();
+        let extracted = arrangement.extract(op).unwrap();
+        assert_eq!(extracted, direct, "{op:?}");
+    }
+}
+
+#[test]
+fn scoped_boolean_preparation_rejects_unretained_extractions() {
+    let left = cube_mesh(0, 2);
+    let right = cube_mesh(1, 3);
+    let meshes = [left.as_ref(), right.as_ref()];
+    let prepared =
+        prepare_boolean_operations(&meshes, &[BooleanOp::Union], EmberConfig::default()).unwrap();
+
+    assert!(prepared.extract(BooleanOp::Union).is_ok());
+    assert_eq!(
+        prepared.extract(BooleanOp::Difference).unwrap_err(),
+        HypermeshError::UnsupportedBooleanExtraction
+    );
+}
+
+#[test]
+fn multi_operation_preparation_extracts_exact_requested_subset() {
+    let left = cube_mesh(0, 2);
+    let right = cube_mesh(1, 3);
+    let meshes = [left.as_ref(), right.as_ref()];
+    let operations = [BooleanOp::Union, BooleanOp::Difference];
+    let prepared =
+        prepare_boolean_operations(&meshes, &operations, EmberConfig::default()).unwrap();
+
+    for operation in operations {
+        let expected = boolean_operation(&meshes, operation, EmberConfig::default()).unwrap();
+        assert_eq!(
+            prepared.extract(operation).unwrap(),
+            expected,
+            "{operation:?}"
+        );
+    }
+    assert_eq!(
+        prepared
+            .extract(BooleanOp::SymmetricDifference)
+            .unwrap_err(),
+        HypermeshError::UnsupportedBooleanExtraction
+    );
+}
+
+#[test]
+fn scoped_boolean_preparation_canonicalizes_operation_sets() {
+    let left = cube_mesh(0, 2);
+    let right = cube_mesh(1, 3);
+    let meshes = [left.as_ref(), right.as_ref()];
+    let canonical = prepare_boolean_operations(
+        &meshes,
+        &[BooleanOp::Union, BooleanOp::Difference],
+        EmberConfig::default(),
+    )
+    .unwrap();
+    let permuted_with_duplicates = prepare_boolean_operations(
+        &meshes,
+        &[
+            BooleanOp::Difference,
+            BooleanOp::Union,
+            BooleanOp::Difference,
+        ],
+        EmberConfig::default(),
+    )
+    .unwrap();
+
+    assert_eq!(permuted_with_duplicates, canonical);
+}
+
+#[test]
+fn boolean_preparation_rejects_an_empty_operation_set() {
+    let mesh = cube_mesh(0, 2);
+    assert_eq!(
+        prepare_boolean_operations(&[mesh.as_ref()], &[], EmberConfig::default()).unwrap_err(),
+        HypermeshError::EmptyBooleanOperationSet
+    );
+}
+
+#[test]
 fn subdivision_processes_certified_leaf_at_max_depth() {
     let mesh = cube_mesh(0, 2);
     let soup = prepare_input(&[mesh.as_ref()]).unwrap();
@@ -1076,7 +1211,7 @@ fn subdivision_escapes_projected_reference_on_surface() {
         &indicator,
         config,
     );
-    assert!(result.is_ok());
+    assert!(result.is_ok(), "{result:?}");
 }
 
 #[test]

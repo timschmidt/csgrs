@@ -31,7 +31,7 @@ impl ApproxBounds {
 }
 
 /// Plane-bounded convex polygon.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct ConvexPolygon {
     /// Supporting plane.
     pub support: Plane,
@@ -45,6 +45,22 @@ pub struct ConvexPolygon {
     pub delta_w: WindingNumberTransitionVector,
     /// Optional approximate bounds.
     pub approx_bounds: Option<ApproxBounds>,
+    /// Exact vertices retained when supplied directly by the input owner.
+    ///
+    /// Derived clipping and BSP polygons clear this cache when their edge
+    /// cycle changes.
+    pub(crate) known_vertices: Option<Arc<Vec<Point3>>>,
+}
+
+impl PartialEq for ConvexPolygon {
+    fn eq(&self, other: &Self) -> bool {
+        self.support == other.support
+            && self.edges == other.edges
+            && self.mesh_index == other.mesh_index
+            && self.polygon_index == other.polygon_index
+            && self.delta_w == other.delta_w
+            && self.approx_bounds == other.approx_bounds
+    }
 }
 
 impl ConvexPolygon {
@@ -62,6 +78,7 @@ impl ConvexPolygon {
             polygon_index: -1,
             delta_w: Vec::new(),
             approx_bounds: None,
+            known_vertices: None,
         }
     }
 
@@ -96,6 +113,9 @@ impl ConvexPolygon {
 
     /// Computes all affine vertices.
     pub fn vertices(&self) -> HypermeshResult<Vec<Point3>> {
+        if let Some(vertices) = &self.known_vertices {
+            return Ok(vertices.as_ref().clone());
+        }
         (0..self.vertex_count())
             .map(|index| self.vertex_point(index))
             .collect()
@@ -112,6 +132,7 @@ impl ConvexPolygon {
                 .map(Plane::inverted)
                 .collect::<Vec<_>>(),
         );
+        result.known_vertices = None;
         result
     }
 
@@ -170,6 +191,7 @@ pub fn make_triangle(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
+        known_vertices: Some(Arc::new(vec![p0.clone(), p1.clone(), p2.clone()])),
     }
 }
 
@@ -202,6 +224,12 @@ pub fn make_quad(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2, p3])),
+        known_vertices: Some(Arc::new(vec![
+            p0.clone(),
+            p1.clone(),
+            p2.clone(),
+            p3.clone(),
+        ])),
     }
 }
 

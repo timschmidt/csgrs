@@ -91,8 +91,10 @@ pub fn clip_polygon(poly: &ConvexPolygon, split_plane: &Plane) -> HypermeshResul
 
     let mut left = poly.clone();
     left.edges = Arc::new(left_edges);
+    left.known_vertices = None;
     let mut right = poly.clone();
     right.edges = Arc::new(right_edges);
+    right.known_vertices = None;
 
     Ok(ClipResult {
         left,

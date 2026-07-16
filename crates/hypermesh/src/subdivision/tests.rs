@@ -203,6 +203,46 @@ fn cached_leaf_classification_reuses_rotated_edge_cycles() {
 }
 
 #[test]
+fn leaf_classification_lookup_limit_skips_same_pass_entries() {
+    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut cache = Vec::new();
+    let mut calls = 0;
+
+    for expected in [3, 5] {
+        let result = cached_leaf_classification_with_lookup_limit(
+            &mut cache,
+            0,
+            None,
+            &polygon.support,
+            &polygon.edges,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(vec![expected])
+            },
+        )
+        .unwrap();
+        assert_eq!(result, vec![expected]);
+    }
+    let result = cached_leaf_classification_with_lookup_limit(
+        &mut cache,
+        2,
+        None,
+        &polygon.support,
+        &polygon.edges,
+        &polygon.delta_w,
+        || {
+            calls += 1;
+            Ok(vec![7])
+        },
+    )
+    .unwrap();
+
+    assert_eq!(calls, 2);
+    assert_eq!(result, vec![3]);
+}
+
+#[test]
 fn cached_leaf_classification_distinguishes_leaf_context() {
     let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let left_context = Arc::new(LeafClassificationCacheContextKey {
@@ -312,6 +352,57 @@ fn cached_leaf_point_classification_reuses_identical_state() {
 }
 
 #[test]
+fn leaf_point_classification_lookup_limit_skips_same_pass_entries() {
+    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
+    let mut cache = Vec::new();
+    let mut calls = 0;
+
+    for expected in [3, 5] {
+        let state = cached_leaf_point_classification_with_lookup_limit(
+            &mut cache,
+            0,
+            None,
+            &polygon.support,
+            &point,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(LeafPointClassificationState {
+                    winding: Some(vec![expected]),
+                    saw_unknown: false,
+                })
+            },
+        )
+        .unwrap();
+        assert_eq!(state.winding, Some(vec![expected]));
+    }
+    let state = cached_leaf_point_classification_with_lookup_limit(
+        &mut cache,
+        2,
+        None,
+        &polygon.support,
+        &point,
+        &polygon.delta_w,
+        || {
+            calls += 1;
+            Ok(LeafPointClassificationState {
+                winding: Some(vec![7]),
+                saw_unknown: false,
+            })
+        },
+    )
+    .unwrap();
+
+    assert_eq!(calls, 2);
+    assert_eq!(state.winding, Some(vec![3]));
+}
+
+#[test]
 fn cached_leaf_point_classification_distinguishes_context() {
     let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
@@ -390,6 +481,8 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
         &host.edges,
         &first_polygons,
         &first_intersections[0],
+        false,
+        None,
     )
     .unwrap();
 
@@ -401,6 +494,8 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
         &host.edges,
         &second_polygons,
         &second_intersections[1],
+        false,
+        None,
     )
     .unwrap();
 
@@ -758,7 +853,7 @@ fn subdivision_exhausts_arrangement_splits_before_depth_budget() {
         SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
         &indicator,
         SubdivisionConfig { max_depth: 0 },
-        None,
+        &[],
         &mut output,
         &mut |_task, _indicator, _output| {
             leaf_calls += 1;
@@ -791,7 +886,7 @@ fn certified_root_leaf_preempts_available_arrangement_splits() {
         SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
         &indicator,
         SubdivisionConfig::default(),
-        None,
+        &[],
         &mut output,
         &mut |task, _indicator, local_output| {
             leaf_calls += 1;
@@ -1746,6 +1841,8 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
                             &leaf.edges,
                             &child_task.polygons,
                             Some(&intersections[index]),
+                            false,
+                            None,
                         )
                     else {
                         continue;
@@ -1906,6 +2003,8 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
                         &leaf.edges,
                         &child_task.polygons,
                         Some(&intersections[index]),
+                        false,
+                        None,
                     )
                 else {
                     continue;
@@ -3762,7 +3861,7 @@ fn unsplittable_subdivision_runs_leaf_processor_once() {
         task,
         &indicator,
         SubdivisionConfig { max_depth: 0 },
-        None,
+        &[],
         &mut output,
         &mut |_task, _indicator, _output| {
             attempts += 1;
@@ -3983,7 +4082,7 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
         task,
         &indicator,
         SubdivisionConfig { max_depth: 0 },
-        None,
+        &[],
         &mut output,
         &mut |_task, _indicator, _output| {
             process_leaf_calls += 1;
@@ -4078,6 +4177,7 @@ fn ordered_bsp_leaf_indices_prefers_larger_edge_cycles_first() {
                 Plane::axis_aligned(2, r(0)),
             ],
             enabled: true,
+            interior_point: None,
         },
         BspLeaf {
             edges: vec![
@@ -4087,6 +4187,7 @@ fn ordered_bsp_leaf_indices_prefers_larger_edge_cycles_first() {
                 Plane::axis_aligned(0, r(1)),
             ],
             enabled: true,
+            interior_point: None,
         },
         BspLeaf {
             edges: vec![
@@ -4095,6 +4196,7 @@ fn ordered_bsp_leaf_indices_prefers_larger_edge_cycles_first() {
                 Plane::axis_aligned(2, r(0)),
             ],
             enabled: true,
+            interior_point: None,
         },
     ];
 
@@ -5315,7 +5417,7 @@ fn process_split_attempt_child_backtracks_on_identical_recursive_state() {
         task.bounds.clone(),
         &indicator,
         SubdivisionConfig { max_depth: 4 },
-        Some(BooleanOp::Union),
+        &[BooleanOp::Union],
         &mut candidate_output,
         &mut candidate_buckets,
         &mut |_task, _indicator, _output| {
@@ -6262,6 +6364,25 @@ fn valid_reference_rejects_local_surface_points() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
     assert!(!is_valid_reference_for_bounds(&p(2, 2, 1), &bounds, &[wall]).unwrap());
+}
+
+#[test]
+fn surface_reference_normalization_departs_open_parallel_surface_family() {
+    let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    left.delta_w = vec![1];
+    let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    right.delta_w = vec![1];
+    let polygons = vec![left, right];
+    let bounds = Aabb::new(p(1, 1, 1), p(4, 5, 5));
+
+    let (point, definitions, winding) =
+        normalize_surface_reference(&p(1, 3, 3), &[0], &bounds, &polygons)
+            .unwrap()
+            .expect("parallel surface interior should have a certified normal departure");
+
+    assert_eq!(winding, vec![0]);
+    assert_eq!(affine_from_planes(&definitions[0]).unwrap(), point);
+    assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &polygons).unwrap());
 }
 
 #[test]
@@ -13701,7 +13822,7 @@ fn unsplittable_task_requires_certified_leaf_completion() {
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
         &indicator,
         SubdivisionConfig { max_depth: 4 },
-        None,
+        &[],
         &mut output,
         &mut |_task, _indicator, out| {
             out.push(emitted.clone());
@@ -13734,7 +13855,7 @@ fn unsplittable_task_accepts_certified_leaf_completion() {
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
         &indicator,
         SubdivisionConfig { max_depth: 4 },
-        None,
+        &[],
         &mut output,
         &mut |_task, _indicator, out| {
             out.push(emitted.clone());
@@ -13768,7 +13889,7 @@ fn subdivision_normalizes_reference_definitions_before_leaf_processing() {
         task,
         &indicator,
         SubdivisionConfig { max_depth: 4 },
-        None,
+        &[],
         &mut output,
         &mut |task, _indicator, _output| {
             assert_eq!(task.ref_definitions, axis_defs(&ref_point));
@@ -13819,13 +13940,10 @@ fn operation_subdivision_discards_fixed_difference_outside_region() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 1, 0);
     wall.delta_w = vec![0, 1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Difference, 2);
-
-    let output = subdivide_for_operation(
+    let output = subdivide_prepared(
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
-        &indicator,
+        &[BooleanOp::Difference],
         SubdivisionConfig { max_depth: 0 },
-        BooleanOp::Difference,
     )
     .unwrap();
 
@@ -13837,13 +13955,10 @@ fn operation_subdivision_keeps_potential_difference_region() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1, 0];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Difference, 2);
-
-    let err = subdivide_for_operation(
+    let err = subdivide_prepared(
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
-        &indicator,
+        &[BooleanOp::Difference],
         SubdivisionConfig { max_depth: 0 },
-        BooleanOp::Difference,
     )
     .unwrap_err();
 
@@ -13933,5 +14048,6 @@ fn support_only_polygon(support: Plane) -> ConvexPolygon {
         polygon_index: 0,
         delta_w: Vec::new(),
         approx_bounds: None,
+        known_vertices: None,
     }
 }

@@ -18,6 +18,10 @@ pub enum HypermeshError {
     },
     /// A mesh operation needs at least one point.
     EmptyInput,
+    /// Boolean preparation needs at least one supported extraction operation.
+    EmptyBooleanOperationSet,
+    /// An extraction requested an operation outside the prepared operation set.
+    UnsupportedBooleanExtraction,
     /// A query supplied a point slice different from the one used to build an
     /// acceleration structure.
     PointCountMismatch {
@@ -112,6 +116,12 @@ impl fmt::Display for HypermeshError {
                 "vertex index {index} is out of bounds for {vertex_count} vertices"
             ),
             Self::EmptyInput => f.write_str("input mesh set is empty"),
+            Self::EmptyBooleanOperationSet => {
+                f.write_str("boolean preparation operation set is empty")
+            }
+            Self::UnsupportedBooleanExtraction => {
+                f.write_str("boolean operation was not retained by this preparation")
+            }
             Self::PointCountMismatch { expected, actual } => write!(
                 f,
                 "point acceleration structure contains {expected} points but query supplied {actual}"

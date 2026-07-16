@@ -167,6 +167,16 @@ fn trace_axis_segment_reports_unknown_for_zero_length_surface_contact() {
 }
 
 #[test]
+fn trace_axis_segment_reports_unknown_when_ray_lies_in_parallel_support_plane() {
+    let wall = make_triangle(&p(0, -1, 0), &p(2, -1, 0), &p(1, 1, 0), 0, 0);
+
+    assert_eq!(
+        trace_axis_segment(&p(-1, 0, 0), &p(3, 0, 0), 0, &[0], &[wall]),
+        Err(HypermeshError::UnknownClassification)
+    );
+}
+
+#[test]
 fn trace_direct_segment_reports_unknown_for_unmatched_edge_crossing() {
     let wall = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
 
@@ -9172,6 +9182,7 @@ fn detour_trace_reports_unknown_when_fallback_surface_detour_is_skipped() {
         polygon_index: 0,
         delta_w: Vec::new(),
         approx_bounds: None,
+        known_vertices: None,
     }];
 
     let err = trace_segment_via_detours_with_definitions_budget(
@@ -10876,6 +10887,7 @@ fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_surface_detour_is
         polygon_index: 0,
         delta_w: Vec::new(),
         approx_bounds: None,
+        known_vertices: None,
     }];
     let mut trace_without_detours =
         |_from: &Point3,
@@ -12460,6 +12472,7 @@ fn probe_reachability_reports_unknown_when_fallback_surface_detour_is_skipped() 
         polygon_index: 0,
         delta_w: Vec::new(),
         approx_bounds: None,
+        known_vertices: None,
     }];
     let mut trace_without_detours =
         |_from: &Point3,

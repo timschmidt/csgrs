@@ -43,6 +43,10 @@ closure fact cannot be certified, the operation returns `HypermeshError`.
 - `BooleanResult` contains the certified classified polygon arrangement. Its
   `output`, `classifications`, and `winding_pairs` accessors expose geometry and
   classification evidence.
+- `BooleanArrangement` retains certified winding evidence for its requested
+  operation set. `prepare_boolean_operations` can preserve a one-operation
+  pruning schedule or retain several results for extraction from one build;
+  `build_boolean_arrangement` requests all four operations.
 - `OutputPolygon` is an extracted polygon with explicit exact vertices.
   `TriangleSoup` is the indexed triangle output produced by
   `triangulate_and_resolve_certified`.
@@ -97,6 +101,11 @@ repeated exact comparisons during output assembly.
 The implementation prioritizes pruning work before invoking expensive exact
 predicates: AABB and BVH rejection, adaptive subdivision, leaf-level pairwise tests,
 local winding traces, and retained arrangement evidence all constrain the exact work.
+All public Boolean operations use one prepared pipeline. `boolean_operation` requests a
+single operation and retains operation-specific winding-reachability pruning;
+`prepare_boolean_operations` requests an explicit reusable subset; and
+`build_boolean_arrangement` retains all four operations. Multi-operation preparation
+avoids repeating intersection, BSP, and winding-classification work.
 The current implementation is single-process Rust and does not claim the parallel
 throughput numbers of the EMBER reference implementation.
 
@@ -106,6 +115,9 @@ Implemented today:
 
 - exact union, intersection, difference, and symmetric difference over multiple
   finite closed-PWN triangle meshes;
+- reusable certified arrangement construction for extracting several operations
+  over the same inputs;
+- one unified scoped-preparation path for single and multi-operation Booleans;
 - input validation for indices, degeneracy, closure, and directed edge balance;
 - exact polygon intersection, adaptive subdivision, local BSP splitting, and winding
   classification;
@@ -185,6 +197,9 @@ difference. Use `extract_output` when polygon loops are preferable to indexed
 triangles.
 
 ## Development
+
+Paper-derived optimization experiments and their benchmark, trace, and test
+evidence are recorded in [PERFORMANCE.md](PERFORMANCE.md).
 
 Run the crate checks from this directory:
 

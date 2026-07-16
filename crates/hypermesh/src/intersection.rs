@@ -228,28 +228,59 @@ fn collect_edge_plane_crossings(
     plane_polygon: &ConvexPolygon,
     points: &mut Vec<Point3>,
 ) -> HypermeshResult<()> {
+    if let [v0, v1, v2] = vertices {
+        let c0 = classify_point(v0, &plane_polygon.support)?;
+        let c1 = classify_point(v1, &plane_polygon.support)?;
+        let c2 = classify_point(v2, &plane_polygon.support)?;
+        collect_edge_plane_crossing(edge_polygon, v0, v1, c0, c1, plane_polygon, points)?;
+        collect_edge_plane_crossing(edge_polygon, v1, v2, c1, c2, plane_polygon, points)?;
+        collect_edge_plane_crossing(edge_polygon, v2, v0, c2, c0, plane_polygon, points)?;
+        return Ok(());
+    }
+
     for index in 0..vertices.len() {
         let start = &vertices[index];
         let end = &vertices[(index + 1) % vertices.len()];
         let start_class = classify_point(start, &plane_polygon.support)?;
         let end_class = classify_point(end, &plane_polygon.support)?;
+        collect_edge_plane_crossing(
+            edge_polygon,
+            start,
+            end,
+            start_class,
+            end_class,
+            plane_polygon,
+            points,
+        )?;
+    }
+    Ok(())
+}
 
-        let candidate = match (start_class, end_class) {
-            (Classification::On, _) => Some(start.clone()),
-            (_, Classification::On) => Some(end.clone()),
-            (Classification::Negative, Classification::Positive)
-            | (Classification::Positive, Classification::Negative) => {
-                Some(intersect_segment_plane(start, end, &plane_polygon.support)?)
-            }
-            _ => None,
-        };
-
-        if let Some(point) = candidate
-            && affine_point_in_polygon(&point, edge_polygon)?
-            && affine_point_in_polygon(&point, plane_polygon)?
-        {
-            points.push(point);
+#[inline]
+fn collect_edge_plane_crossing(
+    edge_polygon: &ConvexPolygon,
+    start: &Point3,
+    end: &Point3,
+    start_class: Classification,
+    end_class: Classification,
+    plane_polygon: &ConvexPolygon,
+    points: &mut Vec<Point3>,
+) -> HypermeshResult<()> {
+    let candidate = match (start_class, end_class) {
+        (Classification::On, _) => Some(start.clone()),
+        (_, Classification::On) => Some(end.clone()),
+        (Classification::Negative, Classification::Positive)
+        | (Classification::Positive, Classification::Negative) => {
+            Some(intersect_segment_plane(start, end, &plane_polygon.support)?)
         }
+        _ => None,
+    };
+
+    if let Some(point) = candidate
+        && affine_point_in_polygon(&point, edge_polygon)?
+        && affine_point_in_polygon(&point, plane_polygon)?
+    {
+        points.push(point);
     }
     Ok(())
 }

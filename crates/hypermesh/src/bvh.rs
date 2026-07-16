@@ -39,15 +39,36 @@ impl BoundsBvh {
         if bounds.is_empty() {
             return Ok(Self::default());
         }
+        let approximate_centers = bounds
+            .iter()
+            .map(|bounds| std::array::from_fn(|axis| approximate_center(bounds, axis)))
+            .collect::<Vec<_>>();
         let mut tree = Self {
             order: (0..bounds.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(bounds.len())),
         };
-        tree.build_node(bounds, 0, bounds.len())?;
+        tree.build_node(bounds, &approximate_centers, 0, bounds.len())?;
         Ok(tree)
     }
 
     fn build_points(points: &[Point3]) -> HypermeshResult<Self> {
+        let approximate_points = points
+            .iter()
+            .map(|point| std::array::from_fn(|axis| approximate_coordinate(point, axis)))
+            .collect::<Vec<_>>();
+        Self::build_points_with_approximate(points, &approximate_points)
+    }
+
+    fn build_points_with_approximate(
+        points: &[Point3],
+        approximate_points: &[[f64; 3]],
+    ) -> HypermeshResult<Self> {
+        if points.len() != approximate_points.len() {
+            return Err(HypermeshError::PointCountMismatch {
+                expected: points.len(),
+                actual: approximate_points.len(),
+            });
+        }
         if points.is_empty() {
             return Ok(Self::default());
         }
@@ -55,13 +76,14 @@ impl BoundsBvh {
             order: (0..points.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(points.len())),
         };
-        tree.build_point_node(points, 0, points.len())?;
+        tree.build_point_node(points, approximate_points, 0, points.len())?;
         Ok(tree)
     }
 
     fn build_node(
         &mut self,
         item_bounds: &[ApproxBounds],
+        approximate_centers: &[[f64; 3]],
         start: usize,
         end: usize,
     ) -> HypermeshResult<usize> {
@@ -85,12 +107,12 @@ impl BoundsBvh {
 
         let middle = start + (end - start) / 2;
         self.order[start..end].select_nth_unstable_by(middle - start, |&left, &right| {
-            approximate_center(&item_bounds[left], axis)
-                .total_cmp(&approximate_center(&item_bounds[right], axis))
+            approximate_centers[left][axis]
+                .total_cmp(&approximate_centers[right][axis])
                 .then_with(|| left.cmp(&right))
         });
-        let left = self.build_node(item_bounds, start, middle)?;
-        let right = self.build_node(item_bounds, middle, end)?;
+        let left = self.build_node(item_bounds, approximate_centers, start, middle)?;
+        let right = self.build_node(item_bounds, approximate_centers, middle, end)?;
         self.nodes[node_index].children = Some([left, right]);
         Ok(node_index)
     }
@@ -98,6 +120,7 @@ impl BoundsBvh {
     fn build_point_node(
         &mut self,
         points: &[Point3],
+        approximate_points: &[[f64; 3]],
         start: usize,
         end: usize,
     ) -> HypermeshResult<usize> {
@@ -117,12 +140,12 @@ impl BoundsBvh {
 
         let middle = start + (end - start) / 2;
         self.order[start..end].select_nth_unstable_by(middle - start, |&left, &right| {
-            approximate_coordinate(&points[left], axis)
-                .total_cmp(&approximate_coordinate(&points[right], axis))
+            approximate_points[left][axis]
+                .total_cmp(&approximate_points[right][axis])
                 .then_with(|| left.cmp(&right))
         });
-        let left = self.build_point_node(points, start, middle)?;
-        let right = self.build_point_node(points, middle, end)?;
+        let left = self.build_point_node(points, approximate_points, start, middle)?;
+        let right = self.build_point_node(points, approximate_points, middle, end)?;
         self.nodes[node_index].children = Some([left, right]);
         Ok(node_index)
     }
@@ -258,6 +281,17 @@ impl ExactPointBvh {
     /// Builds a hierarchy over borrowed exact points.
     pub fn build(points: &[Point3]) -> HypermeshResult<Self> {
         let tree = BoundsBvh::build_points(points)?;
+        Ok(Self {
+            point_count: points.len(),
+            tree,
+        })
+    }
+
+    pub(crate) fn build_with_approximate(
+        points: &[Point3],
+        approximate_points: &[[f64; 3]],
+    ) -> HypermeshResult<Self> {
+        let tree = BoundsBvh::build_points_with_approximate(points, approximate_points)?;
         Ok(Self {
             point_count: points.len(),
             tree,

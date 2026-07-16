@@ -89,11 +89,6 @@ fn convex_hull_impl(
         "seed selection",
     )?;
     let interior = hull_stage(tetrahedron_centroid(&points, seed), "seed centroid")?;
-    let point_bvh = match ExactPointBvh::build(&points) {
-        Ok(point_bvh) => Some(point_bvh),
-        Err(HypermeshError::UnknownClassification) => None,
-        Err(error) => return Err(error),
-    };
     let approximate_points = points
         .iter()
         .map(|point| {
@@ -104,6 +99,11 @@ fn convex_hull_impl(
             ]
         })
         .collect::<Vec<_>>();
+    let point_bvh = match ExactPointBvh::build_with_approximate(&points, &approximate_points) {
+        Ok(point_bvh) => Some(point_bvh),
+        Err(HypermeshError::UnknownClassification) => None,
+        Err(error) => return Err(error),
+    };
     let mut processed = vec![false; points.len()];
     for index in seed {
         processed[index] = true;

@@ -8,7 +8,7 @@ use crate::bvh::ExactBvh;
 use crate::clip::{ClipSide, clip_polygon};
 use crate::error::HypermeshResult;
 use crate::geometry::{
-    Aabb, Classification, Plane, axis_mut, axis_ref, classify_real, compare_real,
+    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
 };
 use crate::halfspace::{
     aabb_core_halfspaces, axis_halfspace, halfspace_has_opposite_pair,
@@ -24,8 +24,8 @@ use crate::intersection::{
 use crate::local_bsp::{BspLeaf, LocalBsp};
 use crate::mesh::classify_edge_balance;
 use crate::output::{
-    ClassifiedPolygon, ClassifiedPolygonBucketState, merge_unique_classified_polygons,
-    merge_unique_classified_polygons_with_bucket_state,
+    ARRANGEMENT_CLASSIFICATION, ClassifiedPolygon, ClassifiedPolygonBucketState,
+    merge_unique_classified_polygons, merge_unique_classified_polygons_with_bucket_state,
     push_unique_classified_polygon_with_bucket_state,
 };
 use crate::polygon::ConvexPolygon;
@@ -218,6 +218,7 @@ struct SplitAttemptChild {
 struct PairwiseIntersectionsCacheEntry {
     polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
+    certified_embedded_inputs: Vec<bool>,
     result: HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>>,
 }
 
@@ -233,6 +234,7 @@ struct HostBspLeavesCacheEntry {
 struct BspLeafCertificationCacheEntry {
     host: ConvexPolygon,
     leaf_edges: Vec<Plane>,
+    single_convex_interior_point: bool,
     polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     result: HypermeshResult<Arc<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>>,
@@ -340,6 +342,9 @@ fn process_leaf_into_inner(
         ref_definitions,
         ref_wnv,
         indicator,
+        false,
+        &[],
+        false,
         output,
         &leaf_classification_cache,
         &leaf_point_classification_cache,
@@ -347,12 +352,19 @@ fn process_leaf_into_inner(
         |polygon, polygons, intersections| {
             build_host_bsp_leaves(polygon, polygons, intersections).map(Arc::new)
         },
-        |polygon, leaf_edges, polygons, intersections| {
+        |polygon,
+         leaf_edges,
+         polygons,
+         intersections,
+         _single_convex_interior_point,
+         interior_point| {
             certify_bsp_leaf_and_delta_w_with_host_intersections(
                 polygon,
                 leaf_edges,
                 polygons,
                 Some(intersections),
+                false,
+                interior_point,
             )
             .map(Arc::new)
         },
@@ -366,6 +378,9 @@ fn process_leaf_into_inner_with_pairwise_cache(
     ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     indicator: &Indicator,
+    emit_all_transitions: bool,
+    certified_convex_inputs: &[bool],
+    allow_certified_root_host_classification: bool,
     output: &mut Vec<ClassifiedPolygon>,
     leaf_classification_cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
     leaf_point_classification_cache: &RefCell<Vec<LeafPointClassificationCacheEntry>>,
@@ -382,6 +397,8 @@ fn process_leaf_into_inner_with_pairwise_cache(
         &[crate::geometry::Plane],
         &[ConvexPolygon],
         &[PairwiseIntersection],
+        bool,
+        Option<&Point3>,
     ) -> HypermeshResult<
         Arc<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>,
     >,
@@ -403,28 +420,49 @@ fn process_leaf_into_inner_with_pairwise_cache(
         ref_definitions: ref_definitions.to_vec(),
         ref_wnv: ref_wnv.to_vec(),
     });
+    let leaf_classification_lookup_len = leaf_classification_cache.borrow().len();
+    let leaf_point_classification_lookup_len = leaf_point_classification_cache.borrow().len();
+    let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
 
     let intersections = pairwise_query(polygons)?;
+    let direct_polygon_components = direct_leaf_polygon_components(polygons, &intersections)?;
+    let mut direct_component_winding: Vec<Option<WindingNumberVector>> = vec![None; polygons.len()];
     stats.intersection_count = intersections.iter().map(Vec::len).sum();
 
     for index in ordered_leaf_polygon_indices_by_intersections(&intersections) {
         let polygon = &polygons[index];
         if intersections[index].is_empty() {
-            let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
-            let emitted = emit_one_direct(
-                polygon,
-                bounds,
-                ref_point,
-                ref_definitions,
-                ref_wnv,
-                polygons,
-                indicator,
-                leaf_classification_cache,
-                Some(&leaf_cache_context),
-                &mut leaf_probe_query_caches,
-                output,
-                &mut output_buckets,
-            )?;
+            let component = direct_polygon_components[index].unwrap_or(index);
+            let emitted = if let Some(w_front) = direct_component_winding[component].as_ref() {
+                emit_one_direct_from_w_front(
+                    polygon,
+                    w_front.clone(),
+                    indicator,
+                    emit_all_transitions,
+                    output,
+                    &mut output_buckets,
+                )?
+            } else {
+                let (emitted, w_front) = emit_one_direct(
+                    polygon,
+                    bounds,
+                    ref_point,
+                    ref_definitions,
+                    ref_wnv,
+                    polygons,
+                    &polygon.delta_w,
+                    indicator,
+                    emit_all_transitions,
+                    leaf_classification_cache,
+                    Some(&leaf_cache_context),
+                    leaf_classification_lookup_len,
+                    &mut leaf_probe_query_caches,
+                    output,
+                    &mut output_buckets,
+                )?;
+                direct_component_winding[component] = Some(w_front);
+                emitted
+            };
             stats.direct_polygon_count += usize::from(emitted);
             continue;
         }
@@ -439,12 +477,28 @@ fn process_leaf_into_inner_with_pairwise_cache(
             if !take_new_bsp_leaf_edge_cycle(&mut seen_bsp_leaf_edges, &leaf.edges) {
                 continue;
             }
-            let certification =
-                certify_bsp_leaf(polygon, &leaf.edges, polygons, &intersections[index])?;
+            let certified_convex_host_mesh = allow_certified_root_host_classification
+                .then(|| usize::try_from(polygon.mesh_index).ok())
+                .flatten()
+                .filter(|mesh_index| {
+                    certified_convex_inputs
+                        .get(*mesh_index)
+                        .copied()
+                        .unwrap_or(false)
+                });
+            let certification = certify_bsp_leaf(
+                polygon,
+                &leaf.edges,
+                polygons,
+                &intersections[index],
+                certified_convex_host_mesh.is_some(),
+                leaf.interior_point.as_ref(),
+            )?;
             let (interior_points, effective_delta_w) = certification.as_ref();
             stats.bsp_leaf_count += 1;
-            let w_front = cached_leaf_classification_with(
+            let w_front = cached_leaf_classification_with_lookup_limit(
                 &mut leaf_classification_cache.borrow_mut(),
+                leaf_classification_lookup_len,
                 Some(&leaf_cache_context),
                 &polygon.support,
                 &leaf.edges,
@@ -460,15 +514,24 @@ fn process_leaf_into_inner_with_pairwise_cache(
                         bounds,
                         effective_delta_w,
                         &mut leaf_point_classification_cache.borrow_mut(),
+                        leaf_point_classification_lookup_len,
                         Some(&leaf_cache_context),
+                        &mut leaf_probe_query_caches,
+                        certified_convex_host_mesh,
+                        certified_convex_inputs,
                     )
                 },
             )?;
             let w_back = propagate_wnv(&w_front, 1, effective_delta_w)?;
-            let classification = classify_polygon_output(&w_front, &w_back, indicator);
+            let classification = if emit_all_transitions && w_front != w_back {
+                ARRANGEMENT_CLASSIFICATION
+            } else {
+                classify_polygon_output(&w_front, &w_back, indicator)
+            };
             if classification != 0 {
                 let mut fragment = polygon.clone();
                 fragment.edges = Arc::new(leaf.edges.clone());
+                fragment.known_vertices = None;
                 fragment.delta_w = effective_delta_w.clone();
                 let mut classified = ClassifiedPolygon::new(fragment, classification);
                 classified.winding = Some(WindingPair { w_front, w_back });
@@ -526,19 +589,21 @@ pub fn subdivide(
         process_leaf_task_into_with_caches(
             task,
             indicator,
+            false,
             output,
             pairwise_cache,
             host_bsp_cache,
             bsp_leaf_cache,
             leaf_classification_cache,
             leaf_point_classification_cache,
+            &[],
         )
     };
     subdivide_into_inner_with(
         task,
         indicator,
         config,
-        None,
+        &[],
         &mut output,
         &mut process_leaf,
         &caches,
@@ -547,14 +612,32 @@ pub fn subdivide(
     Ok(output)
 }
 
-pub(crate) fn subdivide_for_operation(
+#[cfg(test)]
+pub(crate) fn subdivide_prepared(
     task: SubdivisionTask,
-    indicator: &Indicator,
+    operations: &[BooleanOp],
     config: SubdivisionConfig,
-    op: BooleanOp,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
+    subdivide_prepared_with_certified_convex_inputs(task, operations, &[], config)
+}
+
+pub(crate) fn subdivide_prepared_with_certified_convex_inputs(
+    task: SubdivisionTask,
+    operations: &[BooleanOp],
+    certified_convex_inputs: &[bool],
+    config: SubdivisionConfig,
+) -> HypermeshResult<Vec<ClassifiedPolygon>> {
+    if operations.is_empty() {
+        return Err(crate::error::HypermeshError::EmptyBooleanOperationSet);
+    }
     let mut output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
+    let emit_all_transitions = operations.len() > 1;
+    let indicator = if let [operation] = operations {
+        crate::winding::make_indicator(*operation, task.ref_wnv.len())
+    } else {
+        Box::new(|_winding: &[i32]| false) as Box<Indicator>
+    };
     let pairwise_cache = &caches.pairwise_intersections;
     let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
@@ -566,19 +649,21 @@ pub(crate) fn subdivide_for_operation(
         process_leaf_task_into_with_caches(
             task,
             indicator,
+            emit_all_transitions,
             output,
             pairwise_cache,
             host_bsp_cache,
             bsp_leaf_cache,
             leaf_classification_cache,
             leaf_point_classification_cache,
+            certified_convex_inputs,
         )
     };
     subdivide_into_inner_with(
         task,
-        indicator,
+        &indicator,
         config,
-        Some(op),
+        operations,
         &mut output,
         &mut process_leaf,
         &caches,
@@ -611,19 +696,21 @@ pub fn subdivide_into(
         process_leaf_task_into_with_caches(
             task,
             indicator,
+            false,
             output,
             pairwise_cache,
             host_bsp_cache,
             bsp_leaf_cache,
             leaf_classification_cache,
             leaf_point_classification_cache,
+            &[],
         )
     };
     subdivide_into_inner_with(
         task,
         indicator,
         config,
-        None,
+        &[],
         &mut certified_output,
         &mut process_leaf,
         &caches,
@@ -637,7 +724,7 @@ fn subdivide_into_inner_with(
     mut task: SubdivisionTask,
     indicator: &Indicator,
     config: SubdivisionConfig,
-    reachability_op: Option<BooleanOp>,
+    reachability_operations: &[BooleanOp],
     output: &mut Vec<ClassifiedPolygon>,
     process_leaf: &mut impl FnMut(
         &SubdivisionTask,
@@ -650,18 +737,55 @@ fn subdivide_into_inner_with(
     if task.polygons.is_empty() {
         return Ok(());
     }
+    crate::trace_dispatch!("subdivision", "task");
     task.ref_definitions = certified_reference_definitions(&task.ref_point, &task.ref_definitions);
+    let mut root_leaf_attempted = false;
+    let root_reference_is_on_surface = if task.depth == 0 {
+        match point_lies_on_local_surface(&task.ref_point, &task.polygons) {
+            Ok(on_surface) => on_surface,
+            Err(crate::error::HypermeshError::UnknownClassification) => true,
+            Err(err) => return Err(err),
+        }
+    } else {
+        false
+    };
+    if root_reference_is_on_surface {
+        crate::trace_dispatch!("subdivision", "root-leaf-skipped-surface-reference");
+    }
+    let has_cached_polygon_family_result = if task.depth == 0 {
+        let polygon_profile = polygon_family_profile(&task.polygons);
+        caches.child_subdivision.borrow().iter().any(|existing| {
+            existing.polygon_profile == polygon_profile
+                && existing.result.is_ok()
+                && polygon_families_match_as_multisets(&existing.task.polygons, &task.polygons)
+        })
+    } else {
+        false
+    };
 
-    cached_root_split_basis_with(
-        &caches.split_candidates,
-        &caches.polygon_axis_values,
-        &caches.pairwise_intersections,
-        &task.bounds,
-        &task.polygons,
-    )?;
+    if task.depth == 0 && !has_cached_polygon_family_result && !root_reference_is_on_surface {
+        root_leaf_attempted = true;
+        if let Some(certified_output) =
+            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
+                process_leaf(task, indicator, output)
+            })?
+        {
+            crate::trace_dispatch!("subdivision", "root-leaf-complete");
+            merge_unique_classified_polygons(output, certified_output);
+            return Ok(());
+        }
+    }
 
-    if let Some(contracted_task) = contract_task_to_polygon_family_bounds_if_tighter(&task, caches)?
-    {
+    let contracted_task = match contract_task_to_polygon_family_bounds_if_tighter(&task, caches) {
+        Ok(contracted_task) => contracted_task,
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            crate::trace_dispatch!("subdivision", "contract-skipped-unknown-reference");
+            None
+        }
+        Err(err) => return Err(err),
+    };
+    if let Some(contracted_task) = contracted_task {
+        crate::trace_dispatch!("subdivision", "contract-bounds");
         let contracted_output = if let Some(reused) = {
             let mut query_caches = caches.support_reference_query.borrow_mut();
             if let Some(reused) = reusable_child_subdivision_if_certified(
@@ -686,7 +810,7 @@ fn subdivide_into_inner_with(
                     contracted_task.clone(),
                     indicator,
                     config,
-                    reachability_op,
+                    reachability_operations,
                     &mut contracted_output,
                     process_leaf,
                     caches,
@@ -698,29 +822,50 @@ fn subdivide_into_inner_with(
         merge_unique_classified_polygons(output, contracted_output);
         return Ok(());
     }
+    if task.depth == 0 && !root_leaf_attempted {
+        root_leaf_attempted = true;
+        if let Some(certified_output) =
+            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
+                process_leaf(task, indicator, output)
+            })?
+        {
+            crate::trace_dispatch!("subdivision", "root-leaf-complete");
+            merge_unique_classified_polygons(output, certified_output);
+            return Ok(());
+        }
+    }
 
     let mut output_buckets = ClassifiedPolygonBucketState::from_classified(output);
 
-    if let Some(op) = reachability_op
-        && cached_winding_reachability_with(
+    let mut discard_for_every_operation = !reachability_operations.is_empty();
+    for &operation in reachability_operations {
+        if !cached_winding_reachability_with(
             winding_reachability_cache,
-            op,
+            operation,
             &task.ref_wnv,
             &task.polygons,
-            || can_discard_by_winding_reachability(op, &task.ref_wnv, &task.polygons),
-        )?
-    {
+            || can_discard_by_winding_reachability(operation, &task.ref_wnv, &task.polygons),
+        )? {
+            discard_for_every_operation = false;
+            break;
+        }
+    }
+    if discard_for_every_operation {
+        crate::trace_dispatch!("subdivision", "winding-reachability-discard");
         return Ok(());
     }
 
     let can_split = can_split_bounds(&task.bounds)?;
 
     if !can_split {
-        if let Some(certified_output) =
-            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
-                process_leaf(task, indicator, output)
-            })?
+        if !root_leaf_attempted
+            && let Some(certified_output) = certified_leaf_output_if_complete_with(
+                &task,
+                indicator,
+                |task, indicator, output| process_leaf(task, indicator, output),
+            )?
         {
+            crate::trace_dispatch!("subdivision", "leaf-complete");
             merge_unique_classified_polygons_with_bucket_state(
                 output,
                 &mut output_buckets,
@@ -731,11 +876,13 @@ fn subdivide_into_inner_with(
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
-    if let Some(certified_output) =
-        certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
-            process_leaf(task, indicator, output)
-        })?
+    if !root_leaf_attempted
+        && let Some(certified_output) =
+            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
+                process_leaf(task, indicator, output)
+            })?
     {
+        crate::trace_dispatch!("subdivision", "leaf-complete");
         merge_unique_classified_polygons_with_bucket_state(
             output,
             &mut output_buckets,
@@ -744,6 +891,13 @@ fn subdivide_into_inner_with(
         return Ok(());
     }
 
+    cached_root_split_basis_with(
+        &caches.split_candidates,
+        &caches.polygon_axis_values,
+        &caches.pairwise_intersections,
+        &task.bounds,
+        &task.polygons,
+    )?;
     let split_candidates = cached_ordered_subdivision_splits_with(
         &caches.polygon_axis_values,
         &caches.split_candidates,
@@ -754,6 +908,7 @@ fn subdivide_into_inner_with(
         &task.bounds,
         &task.polygons,
     )?;
+    crate::trace_dispatch!("subdivision", "split-search");
 
     if subdivision_depth_budget_reached(task.depth, config.max_depth) {
         if split_candidates.is_empty() {
@@ -774,7 +929,7 @@ fn subdivide_into_inner_with(
         preferred_split,
         indicator,
         config,
-        reachability_op,
+        reachability_operations,
         process_leaf,
         caches,
         winding_reachability_cache,
@@ -793,7 +948,7 @@ fn subdivide_into_inner_with(
         deferred_splits,
         indicator,
         config,
-        reachability_op,
+        reachability_operations,
         process_leaf,
         caches,
         winding_reachability_cache,
@@ -836,7 +991,7 @@ fn try_ranked_subdivision_attempts(
     split_attempts: impl IntoIterator<Item = RankedSplitAttempt>,
     indicator: &Indicator,
     config: SubdivisionConfig,
-    reachability_op: Option<BooleanOp>,
+    reachability_operations: &[BooleanOp],
     process_leaf: &mut impl FnMut(
         &SubdivisionTask,
         &Indicator,
@@ -864,7 +1019,7 @@ fn try_ranked_subdivision_attempts(
                     split_child.bounds,
                     indicator,
                     config,
-                    reachability_op,
+                    reachability_operations,
                     &mut candidate_output,
                     &mut candidate_buckets,
                     process_leaf,
@@ -989,7 +1144,7 @@ fn process_split_attempt_child(
     child_bounds: Aabb,
     indicator: &Indicator,
     config: SubdivisionConfig,
-    reachability_op: Option<BooleanOp>,
+    reachability_operations: &[BooleanOp],
     candidate_output: &mut Vec<ClassifiedPolygon>,
     candidate_buckets: &mut ClassifiedPolygonBucketState,
     process_leaf: &mut impl FnMut(
@@ -1040,7 +1195,7 @@ fn process_split_attempt_child(
                 child_task.clone(),
                 indicator,
                 config,
-                reachability_op,
+                reachability_operations,
                 &mut child_output,
                 process_leaf,
                 caches,
@@ -1834,15 +1989,21 @@ fn leaf_classification_cache_context_matches(
 fn process_leaf_task_into_with_caches(
     task: &SubdivisionTask,
     indicator: &Indicator,
+    emit_all_transitions: bool,
     output: &mut Vec<ClassifiedPolygon>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     host_bsp_cache: &RefCell<Vec<HostBspLeavesCacheEntry>>,
     bsp_leaf_cache: &RefCell<Vec<BspLeafCertificationCacheEntry>>,
     leaf_classification_cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
     leaf_point_classification_cache: &RefCell<Vec<LeafPointClassificationCacheEntry>>,
+    certified_embedded_inputs: &[bool],
 ) -> HypermeshResult<LeafProcessingStats> {
     let pairwise_query = |polygons: &[ConvexPolygon]| {
-        cached_pairwise_intersections_by_polygon_with(pairwise_cache, polygons)
+        cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+            pairwise_cache,
+            polygons,
+            certified_embedded_inputs,
+        )
     };
     let bsp_leaves_query = |polygon: &ConvexPolygon,
                             polygons: &[ConvexPolygon],
@@ -1852,13 +2013,17 @@ fn process_leaf_task_into_with_caches(
     let bsp_leaf_query = |polygon: &ConvexPolygon,
                           leaf_edges: &[crate::geometry::Plane],
                           polygons: &[ConvexPolygon],
-                          intersections: &[PairwiseIntersection]| {
+                          intersections: &[PairwiseIntersection],
+                          single_convex_interior_point: bool,
+                          interior_point: Option<&Point3>| {
         cached_bsp_leaf_certification_with(
             bsp_leaf_cache,
             polygon,
             leaf_edges,
             polygons,
             intersections,
+            single_convex_interior_point,
+            interior_point,
         )
     };
     process_leaf_into_inner_with_pairwise_cache(
@@ -1868,6 +2033,9 @@ fn process_leaf_task_into_with_caches(
         &task.ref_definitions,
         &task.ref_wnv,
         indicator,
+        emit_all_transitions,
+        certified_embedded_inputs,
+        task.depth == 0 && task.ref_wnv.iter().all(|winding| *winding == 0),
         output,
         leaf_classification_cache,
         leaf_point_classification_cache,
@@ -1945,15 +2113,19 @@ fn emit_one_direct(
     ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
     class_polygons: &[ConvexPolygon],
+    classification_host_delta_w: &[i32],
     indicator: &Indicator,
+    emit_all_transitions: bool,
     cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
     context: Option<&Arc<LeafClassificationCacheContextKey>>,
+    lookup_len: usize,
     probe_query_caches: &mut LeafProbeQueryCaches,
     output: &mut Vec<ClassifiedPolygon>,
     output_buckets: &mut ClassifiedPolygonBucketState,
-) -> HypermeshResult<bool> {
-    let w_front = cached_leaf_classification_with(
+) -> HypermeshResult<(bool, WindingNumberVector)> {
+    let w_front = cached_leaf_classification_with_lookup_limit(
         &mut cache.borrow_mut(),
+        lookup_len,
         context,
         &polygon.support,
         &polygon.edges,
@@ -1967,13 +2139,36 @@ fn emit_one_direct(
                 ref_wnv,
                 class_polygons,
                 bounds,
-                &polygon.delta_w,
+                classification_host_delta_w,
                 probe_query_caches,
             )
         },
     )?;
+    let emitted = emit_one_direct_from_w_front(
+        polygon,
+        w_front.clone(),
+        indicator,
+        emit_all_transitions,
+        output,
+        output_buckets,
+    )?;
+    Ok((emitted, w_front))
+}
+
+fn emit_one_direct_from_w_front(
+    polygon: &ConvexPolygon,
+    w_front: WindingNumberVector,
+    indicator: &Indicator,
+    emit_all_transitions: bool,
+    output: &mut Vec<ClassifiedPolygon>,
+    output_buckets: &mut ClassifiedPolygonBucketState,
+) -> HypermeshResult<bool> {
     let w_back = propagate_wnv(&w_front, 1, &polygon.delta_w)?;
-    let classification = classify_polygon_output(&w_front, &w_back, indicator);
+    let classification = if emit_all_transitions && w_front != w_back {
+        ARRANGEMENT_CLASSIFICATION
+    } else {
+        classify_polygon_output(&w_front, &w_back, indicator)
+    };
     if classification != 0 {
         let mut classified = ClassifiedPolygon::new(polygon.clone(), classification);
         classified.winding = Some(WindingPair { w_front, w_back });
@@ -1983,6 +2178,7 @@ fn emit_one_direct(
     Ok(false)
 }
 
+#[cfg(test)]
 fn cached_leaf_classification_with(
     cache: &mut Vec<LeafClassificationCacheEntry>,
     context: Option<&Arc<LeafClassificationCacheContextKey>>,
@@ -1991,15 +2187,38 @@ fn cached_leaf_classification_with(
     delta_w: &[i32],
     classify: impl FnOnce() -> HypermeshResult<WindingNumberVector>,
 ) -> HypermeshResult<WindingNumberVector> {
-    if let Some(existing) = cache.iter().find(|existing| {
-        leaf_classification_cache_context_matches(existing.context.as_ref(), context)
-            && existing.support == *support
-            && existing.delta_w == delta_w
-            && edge_cycles_match_up_to_rotation(&existing.edges, edges)
-    }) {
+    let lookup_len = cache.len();
+    cached_leaf_classification_with_lookup_limit(
+        cache, lookup_len, context, support, edges, delta_w, classify,
+    )
+}
+
+fn cached_leaf_classification_with_lookup_limit(
+    cache: &mut Vec<LeafClassificationCacheEntry>,
+    lookup_len: usize,
+    context: Option<&Arc<LeafClassificationCacheContextKey>>,
+    support: &Plane,
+    edges: &[Plane],
+    delta_w: &[i32],
+    classify: impl FnOnce() -> HypermeshResult<WindingNumberVector>,
+) -> HypermeshResult<WindingNumberVector> {
+    if lookup_len < cache.len() {
+        crate::trace_dispatch!("leaf-classification-cache", "same-pass-scan-skipped");
+    }
+    if let Some(existing) = cache[..lookup_len.min(cache.len())]
+        .iter()
+        .find(|existing| {
+            leaf_classification_cache_context_matches(existing.context.as_ref(), context)
+                && existing.support == *support
+                && existing.delta_w == delta_w
+                && edge_cycles_match_up_to_rotation(&existing.edges, edges)
+        })
+    {
+        crate::trace_dispatch!("leaf-classification-cache", "hit");
         return existing.winding.clone();
     }
 
+    crate::trace_dispatch!("leaf-classification-cache", "miss");
     let winding = classify();
     cache.push(LeafClassificationCacheEntry {
         context: context.cloned(),
@@ -2011,6 +2230,7 @@ fn cached_leaf_classification_with(
     winding
 }
 
+#[cfg(test)]
 fn cached_leaf_point_classification_with(
     cache: &mut Vec<LeafPointClassificationCacheEntry>,
     context: Option<&Arc<LeafClassificationCacheContextKey>>,
@@ -2019,15 +2239,38 @@ fn cached_leaf_point_classification_with(
     delta_w: &[i32],
     classify: impl FnOnce() -> HypermeshResult<LeafPointClassificationState>,
 ) -> HypermeshResult<LeafPointClassificationState> {
-    if let Some(existing) = cache.iter().find(|existing| {
-        leaf_classification_cache_context_matches(existing.context.as_ref(), context)
-            && existing.support == *support
-            && existing.point == *point
-            && existing.delta_w == delta_w
-    }) {
+    let lookup_len = cache.len();
+    cached_leaf_point_classification_with_lookup_limit(
+        cache, lookup_len, context, support, point, delta_w, classify,
+    )
+}
+
+fn cached_leaf_point_classification_with_lookup_limit(
+    cache: &mut Vec<LeafPointClassificationCacheEntry>,
+    lookup_len: usize,
+    context: Option<&Arc<LeafClassificationCacheContextKey>>,
+    support: &Plane,
+    point: &crate::segment_trace::InteriorLeafPoint,
+    delta_w: &[i32],
+    classify: impl FnOnce() -> HypermeshResult<LeafPointClassificationState>,
+) -> HypermeshResult<LeafPointClassificationState> {
+    if lookup_len < cache.len() {
+        crate::trace_dispatch!("leaf-point-classification-cache", "same-pass-scan-skipped");
+    }
+    if let Some(existing) = cache[..lookup_len.min(cache.len())]
+        .iter()
+        .find(|existing| {
+            leaf_classification_cache_context_matches(existing.context.as_ref(), context)
+                && existing.support == *support
+                && existing.point == *point
+                && existing.delta_w == delta_w
+        })
+    {
+        crate::trace_dispatch!("leaf-point-classification-cache", "hit");
         return existing.state.clone();
     }
 
+    crate::trace_dispatch!("leaf-point-classification-cache", "miss");
     let state = classify();
     cache.push(LeafPointClassificationCacheEntry {
         context: context.cloned(),
@@ -2049,14 +2292,18 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
     bounds: &Aabb,
     host_delta_w: &[i32],
     point_cache: &mut Vec<LeafPointClassificationCacheEntry>,
+    point_cache_lookup_len: usize,
     context: Option<&Arc<LeafClassificationCacheContextKey>>,
+    probe_query_caches: &mut LeafProbeQueryCaches,
+    certified_convex_host_mesh: Option<usize>,
+    certified_convex_inputs: &[bool],
 ) -> HypermeshResult<WindingNumberVector> {
     let mut saw_unknown = false;
-    let mut probe_query_caches = LeafProbeQueryCaches::default();
 
     for point in ordered_interior_points_for_probe_search_with_support(interior_points, support)? {
-        let state = cached_leaf_point_classification_with(
+        let state = cached_leaf_point_classification_with_lookup_limit(
             point_cache,
+            point_cache_lookup_len,
             context,
             support,
             point,
@@ -2072,8 +2319,10 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
                     polygons,
                     bounds,
                     host_delta_w,
-                    &mut probe_query_caches,
+                    probe_query_caches,
                     &mut local_unknown,
+                    certified_convex_host_mesh,
+                    certified_convex_inputs,
                 )?;
                 Ok(LeafPointClassificationState {
                     winding,
@@ -2147,11 +2396,14 @@ fn cached_bsp_leaf_certification_with(
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
     intersections: &[PairwiseIntersection],
+    single_convex_interior_point: bool,
+    interior_point: Option<&Point3>,
 ) -> HypermeshResult<Arc<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>> {
     let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.host == *host
             && edge_cycles_match_up_to_rotation(&existing.leaf_edges, leaf_edges)
+            && existing.single_convex_interior_point == single_convex_interior_point
             && existing.polygon_profile == polygon_profile
             && polygon_families_match_as_multisets(&existing.polygons, polygons)
     }) {
@@ -2163,11 +2415,14 @@ fn cached_bsp_leaf_certification_with(
         leaf_edges,
         polygons,
         Some(intersections),
+        single_convex_interior_point,
+        interior_point,
     )
     .map(Arc::new);
     cache.borrow_mut().push(BspLeafCertificationCacheEntry {
         host: host.clone(),
         leaf_edges: leaf_edges.to_vec(),
+        single_convex_interior_point,
         polygon_profile,
         polygons: polygons.to_vec(),
         result: result.clone(),
@@ -2216,7 +2471,9 @@ pub(crate) fn certify_bsp_leaf_and_delta_w(
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
-    certify_bsp_leaf_and_delta_w_with_host_intersections(polygon, leaf_edges, polygons, None)
+    certify_bsp_leaf_and_delta_w_with_host_intersections(
+        polygon, leaf_edges, polygons, None, false, None,
+    )
 }
 
 fn certify_bsp_leaf_and_delta_w_with_host_intersections(
@@ -2224,6 +2481,8 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
     host_intersections: Option<&[PairwiseIntersection]>,
+    single_convex_interior_point: bool,
+    interior_point: Option<&Point3>,
 ) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
     let leaf_polygon = ConvexPolygon {
         support: polygon.support.clone(),
@@ -2232,9 +2491,25 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
         polygon_index: polygon.polygon_index,
         delta_w: polygon.delta_w.clone(),
         approx_bounds: None,
+        known_vertices: None,
     };
-    let interior_points =
-        certified_leaf_interior_points(&leaf_polygon.support, &leaf_polygon.edges)?;
+    let may_use_single_point = single_convex_interior_point
+        && host_intersections.is_some_and(|intersections| {
+            intersections
+                .iter()
+                .all(|intersection| intersection.kind != PairwiseIntersectionType::Overlap)
+        });
+    let interior_points = if may_use_single_point {
+        vec![if let Some(point) = interior_point
+            && point_is_strictly_inside_convex_leaf(point, &leaf_polygon)?
+        {
+            crate::segment_trace::InteriorLeafPoint::certified(point.clone(), Vec::new())
+        } else {
+            certified_convex_leaf_centroid(&leaf_polygon)?
+        }]
+    } else {
+        certified_leaf_interior_points(&leaf_polygon.support, &leaf_polygon.edges)?
+    };
     if interior_points.is_empty() {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
@@ -2249,68 +2524,157 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
             )
         })
         .collect::<Vec<_>>();
-    let leaf_vertices = leaf_polygon.vertices()?;
     let mut delta_w = polygon.delta_w.clone();
 
-    for other_index in
-        bsp_leaf_certification_candidate_indices(polygon, polygons, host_intersections)?
-    {
-        let other = &polygons[other_index];
-        if delta_w.len() != other.delta_w.len() {
-            return Err(crate::error::HypermeshError::UnknownClassification);
+    if may_use_single_point {
+        // `build_host_bsp_leaves` split this exact edge cycle by every retained
+        // host intersection segment. With no overlap candidates, each
+        // resulting open leaf interior is therefore segment-free by
+        // construction; re-clipping every source segment against every leaf
+        // would repeat the proof already encoded by the BSP.
+    } else if let Some(host_intersections) = host_intersections {
+        for intersection in host_intersections {
+            let other_index = pairwise_intersection_other_polygon_idx(intersection)?;
+            let other = polygons
+                .get(other_index)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            if other.mesh_index == polygon.mesh_index
+                && other.polygon_index == polygon.polygon_index
+            {
+                continue;
+            }
+            certify_bsp_leaf_against_candidate(
+                polygon,
+                &leaf_polygon,
+                &leaf_test_points,
+                other,
+                intersection,
+                &mut delta_w,
+            )?;
         }
-        let relation = classify_leaf_test_relation(&leaf_test_points, other)?;
-        let other_vertices = other.vertices()?;
-        let intersection = intersect_polygons_with_vertices(
-            &leaf_polygon,
-            &leaf_vertices,
-            other,
-            &other_vertices,
-            0,
-        )?;
-        match intersection.kind {
-            PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
-            PairwiseIntersectionType::Segment => {
-                let Some(segment) = intersection.segment else {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                };
-                if segment_has_strict_interior_point_in_both(
-                    &segment.v0,
-                    &segment.v1,
-                    &leaf_polygon,
-                    other,
-                )? {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                }
+    } else {
+        let leaf_vertices = leaf_polygon.vertices()?;
+        for (other_index, other) in polygons.iter().enumerate() {
+            if other.mesh_index == polygon.mesh_index
+                && other.polygon_index == polygon.polygon_index
+            {
+                continue;
             }
-            PairwiseIntersectionType::Overlap => {
-                let Some(strictly_inside) = relation else {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                };
-                if leaf_polygon_key(polygon) > leaf_polygon_key(other) && strictly_inside {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                }
-            }
-        }
-
-        let Some(strictly_inside) = relation else {
-            return Err(crate::error::HypermeshError::UnknownClassification);
-        };
-        if strictly_inside {
-            let sign = if supports_have_same_direction(&polygon.support, &other.support)? {
-                1
-            } else {
-                -1
-            };
-            for (value, delta) in delta_w.iter_mut().zip(&other.delta_w) {
-                *value += sign * *delta;
-            }
+            let other_vertices = other.vertices()?;
+            let intersection = intersect_polygons_with_vertices(
+                &leaf_polygon,
+                &leaf_vertices,
+                other,
+                &other_vertices,
+                other_index,
+            )?;
+            certify_bsp_leaf_against_candidate(
+                polygon,
+                &leaf_polygon,
+                &leaf_test_points,
+                other,
+                &intersection,
+                &mut delta_w,
+            )?;
         }
     }
 
     Ok((interior_points, delta_w))
 }
 
+fn certified_convex_leaf_centroid(
+    leaf: &ConvexPolygon,
+) -> HypermeshResult<crate::segment_trace::InteriorLeafPoint> {
+    let vertices = leaf.vertices()?;
+    if vertices.len() < 3 {
+        return Err(crate::error::HypermeshError::UnknownClassification);
+    }
+
+    let mut point = Point3::origin();
+    for vertex in &vertices {
+        point.x += vertex.x.clone();
+        point.y += vertex.y.clone();
+        point.z += vertex.z.clone();
+    }
+    let denominator = Real::from(vertices.len() as u64);
+    point.x = (point.x / denominator.clone())
+        .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+    point.y = (point.y / denominator.clone())
+        .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+    point.z =
+        (point.z / denominator).map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
+
+    if !point_is_strictly_inside_convex_leaf(&point, leaf)? {
+        return Err(crate::error::HypermeshError::UnknownClassification);
+    }
+
+    Ok(crate::segment_trace::InteriorLeafPoint::certified(
+        point,
+        Vec::new(),
+    ))
+}
+
+fn point_is_strictly_inside_convex_leaf(
+    point: &Point3,
+    leaf: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    if classify_point(point, &leaf.support)? != Classification::On {
+        return Ok(false);
+    }
+    for edge in leaf.edges.iter() {
+        if classify_point(point, edge)? != Classification::Negative {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn certify_bsp_leaf_against_candidate(
+    host: &ConvexPolygon,
+    leaf: &ConvexPolygon,
+    leaf_test_points: &[HomogeneousPoint3],
+    other: &ConvexPolygon,
+    intersection: &PairwiseIntersection,
+    delta_w: &mut [i32],
+) -> HypermeshResult<()> {
+    if delta_w.len() != other.delta_w.len() {
+        return Err(crate::error::HypermeshError::UnknownClassification);
+    }
+    match intersection.kind {
+        PairwiseIntersectionType::None | PairwiseIntersectionType::Point => return Ok(()),
+        PairwiseIntersectionType::Segment => {
+            let Some(segment) = intersection.segment.as_ref() else {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            };
+            if segment_has_strict_interior_point_in_both(&segment.v0, &segment.v1, leaf, other)? {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            }
+            return Ok(());
+        }
+        PairwiseIntersectionType::Overlap => {
+            let relation = classify_leaf_test_relation(leaf_test_points, other)?;
+            let Some(strictly_inside) = relation else {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            };
+            if leaf_polygon_key(host) > leaf_polygon_key(other) && strictly_inside {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            }
+            if strictly_inside {
+                let sign = if supports_have_same_direction(&host.support, &other.support)? {
+                    1
+                } else {
+                    -1
+                };
+                for (value, delta) in delta_w.iter_mut().zip(&other.delta_w) {
+                    *value += sign * *delta;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
 fn bsp_leaf_certification_candidate_indices(
     polygon: &ConvexPolygon,
     polygons: &[ConvexPolygon],
@@ -2518,8 +2882,85 @@ fn unique_overlap_edge_planes(intersections: &[PairwiseIntersection]) -> Vec<Pla
     edges
 }
 
+fn direct_leaf_polygon_components(
+    polygons: &[ConvexPolygon],
+    intersections: &[Vec<PairwiseIntersection>],
+) -> HypermeshResult<Vec<Option<usize>>> {
+    let vertices = polygons
+        .iter()
+        .zip(intersections)
+        .map(|(polygon, intersections)| {
+            intersections
+                .is_empty()
+                .then(|| polygon.vertices())
+                .transpose()
+        })
+        .collect::<HypermeshResult<Vec<_>>>()?;
+    let mut parents = (0..polygons.len()).collect::<Vec<_>>();
+
+    for left in 0..polygons.len() {
+        let Some(left_vertices) = vertices[left].as_ref() else {
+            continue;
+        };
+        for right in (left + 1)..polygons.len() {
+            if polygons[left].mesh_index != polygons[right].mesh_index {
+                continue;
+            }
+            let Some(right_vertices) = vertices[right].as_ref() else {
+                continue;
+            };
+            if polygon_cycles_share_reversed_edge(left_vertices, right_vertices) {
+                union_component_roots(&mut parents, left, right);
+            }
+        }
+    }
+
+    Ok(vertices
+        .iter()
+        .enumerate()
+        .map(|(index, vertices)| vertices.as_ref().map(|_| component_root(&parents, index)))
+        .collect())
+}
+
+fn polygon_cycles_share_reversed_edge(left: &[Point3], right: &[Point3]) -> bool {
+    for left_index in 0..left.len() {
+        let left_start = &left[left_index];
+        let left_end = &left[(left_index + 1) % left.len()];
+        for right_index in 0..right.len() {
+            if left_start == &right[(right_index + 1) % right.len()]
+                && left_end == &right[right_index]
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn component_root(parents: &[usize], mut index: usize) -> usize {
+    while parents[index] != index {
+        index = parents[index];
+    }
+    index
+}
+
+fn union_component_roots(parents: &mut [usize], left: usize, right: usize) {
+    let left_root = component_root(parents, left);
+    let right_root = component_root(parents, right);
+    if left_root != right_root {
+        parents[right_root] = left_root;
+    }
+}
+
 fn pairwise_intersections_by_polygon(
     polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
+    pairwise_intersections_by_polygon_with_certified_embedded_inputs(polygons, &[])
+}
+
+fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+    polygons: &[ConvexPolygon],
+    certified_embedded_inputs: &[bool],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
     let mut by_polygon = vec![Vec::new(); polygons.len()];
     let bvh = ExactBvh::build(polygons)?;
@@ -2535,6 +2976,28 @@ fn pairwise_intersections_by_polygon(
     })?;
 
     for (global_i, global_j) in candidate_pairs {
+        crate::trace_dispatch!("pairwise-intersection", "bvh-candidate");
+        if polygons[global_i].mesh_index == polygons[global_j].mesh_index
+            && usize::try_from(polygons[global_i].mesh_index)
+                .ok()
+                .and_then(|mesh_index| certified_embedded_inputs.get(mesh_index))
+                .copied()
+                .unwrap_or(false)
+        {
+            crate::trace_dispatch!("pairwise-intersection", "certified-embedded-input");
+            continue;
+        }
+        if polygons[global_i].mesh_index == polygons[global_j].mesh_index
+            && polygon_cycles_share_reversed_noncoplanar_triangle_edge(
+                &vertices[global_i],
+                &polygons[global_i].support,
+                &vertices[global_j],
+                &polygons[global_j].support,
+            )?
+        {
+            crate::trace_dispatch!("pairwise-intersection", "known-manifold-edge");
+            continue;
+        }
         let intersection = intersect_polygons_with_vertices(
             &polygons[global_i],
             &vertices[global_i],
@@ -2546,6 +3009,20 @@ fn pairwise_intersections_by_polygon(
             intersection.kind,
             PairwiseIntersectionType::Segment | PairwiseIntersectionType::Overlap
         ) {
+            if polygons[global_i].mesh_index == polygons[global_j].mesh_index
+                && intersection.kind == PairwiseIntersectionType::Segment
+                && let Some(segment) = intersection.segment.as_ref()
+                && !segment_has_strict_interior_point_in_both(
+                    &segment.v0,
+                    &segment.v1,
+                    &polygons[global_i],
+                    &polygons[global_j],
+                )?
+            {
+                crate::trace_dispatch!("pairwise-intersection", "same-mesh-boundary-only");
+                continue;
+            }
+            crate::trace_dispatch!("pairwise-intersection", "nonempty-cut");
             let reverse =
                 reverse_pairwise_intersection(&intersection, &polygons[global_i], global_i);
             by_polygon[global_i].push(intersection);
@@ -2554,6 +3031,35 @@ fn pairwise_intersections_by_polygon(
     }
 
     Ok(by_polygon)
+}
+
+fn polygon_cycles_share_reversed_noncoplanar_triangle_edge(
+    left: &[Point3],
+    left_support: &Plane,
+    right: &[Point3],
+    right_support: &Plane,
+) -> HypermeshResult<bool> {
+    if left.len() != 3 || right.len() != 3 {
+        return Ok(false);
+    }
+    for left_index in 0..3 {
+        let left_start = &left[left_index];
+        let left_end = &left[(left_index + 1) % 3];
+        for right_index in 0..3 {
+            if left_start != &right[(right_index + 1) % 3] || left_end != &right[right_index] {
+                continue;
+            }
+            let left_opposite = &left[(left_index + 2) % 3];
+            let right_opposite = &right[(right_index + 2) % 3];
+            return Ok(
+                crate::geometry::classify_point(right_opposite, left_support)?
+                    != Classification::On
+                    || crate::geometry::classify_point(left_opposite, right_support)?
+                        != Classification::On,
+            );
+        }
+    }
+    Ok(false)
 }
 
 fn reverse_pairwise_intersection(
@@ -2584,39 +3090,65 @@ fn cached_pairwise_intersections_by_polygon_with(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>> {
+    cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(cache, polygons, &[])
+}
+
+fn cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+    cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    certified_embedded_inputs: &[bool],
+) -> HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>> {
     if let Some(result) = cache
         .borrow()
         .iter()
         .rev()
-        .find(|existing| existing.polygons == polygons)
+        .find(|existing| {
+            existing.polygons == polygons
+                && existing.certified_embedded_inputs == certified_embedded_inputs
+        })
         .map(|existing| existing.result.clone())
     {
+        crate::trace_dispatch!("pairwise-intersection-cache", "exact-order-hit");
         return result;
     }
 
     let polygon_profile = polygon_family_profile(polygons);
     let existing = cache.borrow().iter().rev().find_map(|existing| {
-        if existing.polygon_profile != polygon_profile {
+        if existing.polygon_profile != polygon_profile
+            || existing.certified_embedded_inputs != certified_embedded_inputs
+        {
             return None;
         }
         let query_to_cached = polygon_family_order_mapping(polygons, &existing.polygons)?;
         Some((query_to_cached, existing.result.clone()))
     });
     if let Some((query_to_cached, result)) = existing {
+        crate::trace_dispatch!("pairwise-intersection-cache", "permuted-order-hit");
         let remapped = result.and_then(|intersections| {
             remap_pairwise_intersections_for_polygon_order(&intersections, &query_to_cached)
                 .map(Arc::new)
         });
         if remapped.is_ok() {
-            cache_pairwise_intersections_result(cache, polygons, &remapped);
+            cache_pairwise_intersections_result(
+                cache,
+                polygons,
+                certified_embedded_inputs,
+                &remapped,
+            );
         }
         return remapped;
     }
 
-    let result = pairwise_intersections_by_polygon(polygons).map(Arc::new);
+    crate::trace_dispatch!("pairwise-intersection-cache", "miss");
+    let result = pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+        polygons,
+        certified_embedded_inputs,
+    )
+    .map(Arc::new);
     cache.borrow_mut().push(PairwiseIntersectionsCacheEntry {
         polygon_profile,
         polygons: polygons.to_vec(),
+        certified_embedded_inputs: certified_embedded_inputs.to_vec(),
         result: result.clone(),
     });
     result
@@ -2625,19 +3157,20 @@ fn cached_pairwise_intersections_by_polygon_with(
 fn cache_pairwise_intersections_result(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
+    certified_embedded_inputs: &[bool],
     result: &HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>>,
 ) {
-    if cache
-        .borrow()
-        .iter()
-        .any(|existing| existing.polygons == polygons)
-    {
+    if cache.borrow().iter().any(|existing| {
+        existing.polygons == polygons
+            && existing.certified_embedded_inputs == certified_embedded_inputs
+    }) {
         return;
     }
 
     cache.borrow_mut().push(PairwiseIntersectionsCacheEntry {
         polygon_profile: polygon_family_profile(polygons),
         polygons: polygons.to_vec(),
+        certified_embedded_inputs: certified_embedded_inputs.to_vec(),
         result: result.clone(),
     });
 }
@@ -2737,9 +3270,6 @@ fn normalize_surface_reference(
     if incident.is_empty() && !has_boundary_contact {
         return Ok(None);
     }
-    if !polygon_family_is_closed_within_bounds(polygons, bounds, old_wnv.len())? {
-        return Err(crate::error::HypermeshError::UnknownClassification);
-    }
 
     if !has_boundary_contact {
         let base = incident[0];
@@ -2802,6 +3332,10 @@ fn normalize_surface_reference(
                 }
             }
         }
+    }
+
+    if !polygon_family_is_closed_within_bounds(polygons, bounds, old_wnv.len())? {
+        return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
     match closed_family_adjacent_reference_with_winding(
@@ -6199,6 +6733,7 @@ fn cached_support_plane_cell_search_with<T: Clone>(
             .iter()
             .rev()
             .find(|existing| {
+                crate::trace_dispatch!("support-plane-cell-search-cache", "exact-scan");
                 support_reference_cache_context_matches_exact_state(
                     existing.context.as_ref(),
                     context,
@@ -6209,6 +6744,7 @@ fn cached_support_plane_cell_search_with<T: Clone>(
             .cloned()
     };
     if let Some(existing) = exact_existing {
+        crate::trace_dispatch!("support-plane-cell-search-cache", "exact-hit");
         return existing.result;
     }
 
@@ -6218,6 +6754,7 @@ fn cached_support_plane_cell_search_with<T: Clone>(
             .iter()
             .rev()
             .find(|existing| {
+                crate::trace_dispatch!("support-plane-cell-search-cache", "family-scan");
                 support_reference_cache_context_matches(existing.context.as_ref(), context)
                     && existing.bounds == *bounds
                     && existing.polygon_index == polygon_index
@@ -6226,6 +6763,7 @@ fn cached_support_plane_cell_search_with<T: Clone>(
             .cloned()
     };
     if let Some(existing) = existing {
+        crate::trace_dispatch!("support-plane-cell-search-cache", "family-hit");
         if !cache.borrow().iter().any(|current| {
             support_reference_cache_context_matches_exact_state(current.context.as_ref(), context)
                 && current.bounds == *bounds
@@ -6243,6 +6781,7 @@ fn cached_support_plane_cell_search_with<T: Clone>(
         return existing.result.clone();
     }
 
+    crate::trace_dispatch!("support-plane-cell-search-cache", "miss");
     let result = search();
     cache.borrow_mut().push(SupportPlaneCellSearchCacheEntry {
         context: context.cloned(),
@@ -10442,7 +10981,6 @@ fn point_strictly_inside_bounds(point: &Point3, bounds: &Aabb) -> HypermeshResul
     Ok(true)
 }
 
-#[cfg(test)]
 fn point_lies_on_local_surface(
     point: &Point3,
     polygons: &[ConvexPolygon],
@@ -10455,7 +10993,6 @@ fn point_lies_on_local_surface(
     Ok(false)
 }
 
-#[cfg(test)]
 fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> HypermeshResult<bool> {
     if crate::geometry::classify_point(point, &polygon.support)?
         != crate::geometry::Classification::On

@@ -11,6 +11,8 @@ use hyperlattice::Real;
 
 const RESOLVE_TJUNCTION_MAX_PASSES: usize = 256;
 
+pub(crate) const ARRANGEMENT_CLASSIFICATION: i8 = 2;
+
 /// Polygon plus its boolean output classification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ClassifiedPolygon {
@@ -322,6 +324,8 @@ fn find_matching_classified_polygon_index(
     })?;
     bucket.indices.iter().copied().find(|index| {
         polygons_match_output_geometry(&classified[*index].polygon, &candidate.polygon)
+            && (candidate.classification != ARRANGEMENT_CLASSIFICATION
+                || classified[*index].winding == candidate.winding)
     })
 }
 
@@ -414,6 +418,11 @@ pub struct TriangleSource {
     pub mesh: isize,
     /// Global source triangle index across the ordered input mesh streams.
     pub triangle: isize,
+    /// `+1` when output orientation matches the source and `-1` when inverted.
+    ///
+    /// Zero is reserved for callers constructing source records without
+    /// orientation provenance.
+    pub orientation: i8,
 }
 
 /// Indexed triangle soup using hyperreal output vertices.
@@ -497,7 +506,7 @@ pub fn extract_output_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<Ve
 }
 
 fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
-    triangulate_polygons(&result.output.polygons)
+    triangulate_polygons(&result.output.polygons, Some(&result.classifications))
 }
 
 /// Fan-triangulates and resolves exact duplicate/T-junction artifacts.
@@ -508,11 +517,30 @@ fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
 /// reported as uncertified.
 pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
     certify_output_polygon_closure(result)?;
-    let soup = resolve_tjunctions(&triangulate_output(result)?)?;
+    triangulate_and_resolve_polygon_certified(result)
+}
+
+pub(crate) fn triangulate_and_resolve_polygon_certified(
+    result: &BooleanResult,
+) -> HypermeshResult<TriangleSoup> {
+    let mut soup = match triangulate_closed_polygon_arrangement(
+        &result.output.polygons,
+        &result.classifications,
+    ) {
+        Ok(soup) => soup,
+        Err(HypermeshError::UnknownClassification) => {
+            resolve_tjunctions(&triangulate_output(result)?)?
+        }
+        Err(err) => return Err(err),
+    };
     if soup.triangles.is_empty() {
         return Ok(soup);
     }
-    let closure = triangle_soup_closure_report(&soup);
+    let mut closure = triangle_soup_closure_report(&soup);
+    if !closure.has_no_boundary() {
+        soup = resolve_tjunctions(&triangulate_output(result)?)?;
+        closure = triangle_soup_closure_report(&soup);
+    }
     if !closure.has_no_boundary() {
         return Err(HypermeshError::OpenOutput {
             boundary_edges: closure.boundary_edges,
@@ -520,8 +548,183 @@ pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshRes
             non_manifold_edges: closure.non_manifold_edges,
         });
     }
-    certify_positive_signed_volume(&soup)?;
+    if !boolean_result_has_complete_orientation_evidence(result) {
+        certify_positive_signed_volume(&soup)?;
+    }
     Ok(soup)
+}
+
+fn boolean_result_has_complete_orientation_evidence(result: &BooleanResult) -> bool {
+    result.output.polygons.len() == result.classifications.len()
+        && result.output.polygons.len() == result.winding_pairs.len()
+        && result
+            .classifications
+            .iter()
+            .all(|classification| matches!(classification, -1 | 1))
+        && result.winding_pairs.iter().all(Option::is_some)
+}
+
+fn triangulate_closed_polygon_arrangement(
+    polygons: &[ConvexPolygon],
+    orientations: &[i8],
+) -> HypermeshResult<TriangleSoup> {
+    if polygons.len() != orientations.len() {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    let (mut vertices, indexed_polygons) = merge_duplicate_convex_polygon_vertices(polygons)?;
+    let axis_order = sorted_vertex_indices_by_axis(&vertices)?;
+    let mut split_edge_cache: HashMap<[usize; 2], Vec<[usize; 2]>> = HashMap::new();
+    let mut triangles = Vec::new();
+    let mut sources = Vec::new();
+
+    for ((polygon, indexed), orientation) in polygons
+        .iter()
+        .zip(indexed_polygons)
+        .zip(orientations.iter().copied())
+    {
+        if indexed.len() < 3 {
+            continue;
+        }
+        let mut boundary = Vec::new();
+        for edge_index in 0..indexed.len() {
+            let start = indexed[edge_index];
+            let end = indexed[(edge_index + 1) % indexed.len()];
+            if start == end {
+                continue;
+            }
+            let canonical = sorted_edge([start, end]);
+            let subedges = split_segment_subedges_exact(
+                &mut split_edge_cache,
+                &vertices,
+                &axis_order,
+                canonical,
+            )?;
+            if start == canonical[0] {
+                boundary.extend(subedges.iter().map(|edge| edge[0]));
+            } else {
+                boundary.extend(subedges.iter().rev().map(|edge| edge[1]));
+            }
+        }
+        boundary.dedup();
+        if boundary.len() > 1 && boundary.first() == boundary.last() {
+            boundary.pop();
+        }
+        if boundary.len() < 3 {
+            continue;
+        }
+        let polygon_triangles = if boundary.len() > indexed.len() {
+            let center = append_output_polygon_centroid(&mut vertices, &boundary)?;
+            (0..boundary.len())
+                .map(|index| {
+                    [
+                        center,
+                        boundary[index],
+                        boundary[(index + 1) % boundary.len()],
+                    ]
+                })
+                .collect()
+        } else {
+            match triangulate_weakly_convex_boundary(&boundary, &vertices, &polygon.support) {
+                Ok(triangles) => triangles,
+                Err(HypermeshError::UnknownClassification) => (1..(indexed.len() - 1))
+                    .map(|index| [indexed[0], indexed[index], indexed[index + 1]])
+                    .collect(),
+                Err(err) => return Err(err),
+            }
+        };
+        for triangle in polygon_triangles {
+            triangles.push(triangle);
+            sources.push(TriangleSource {
+                mesh: polygon.mesh_index,
+                triangle: polygon.polygon_index,
+                orientation,
+            });
+        }
+    }
+
+    Ok(TriangleSoup {
+        vertices,
+        triangles,
+        sources,
+    })
+}
+
+fn append_output_polygon_centroid(
+    vertices: &mut Vec<OutputVertex>,
+    boundary: &[usize],
+) -> HypermeshResult<usize> {
+    let mut x = Real::zero();
+    let mut y = Real::zero();
+    let mut z = Real::zero();
+    for &index in boundary {
+        x += vertices[index].x.clone();
+        y += vertices[index].y.clone();
+        z += vertices[index].z.clone();
+    }
+    let count = Real::from(
+        u64::try_from(boundary.len()).map_err(|_| HypermeshError::UnknownClassification)?,
+    );
+    let center = OutputVertex {
+        x: (x / &count).map_err(|_| HypermeshError::UnknownClassification)?,
+        y: (y / &count).map_err(|_| HypermeshError::UnknownClassification)?,
+        z: (z / count).map_err(|_| HypermeshError::UnknownClassification)?,
+    };
+    let index = vertices.len();
+    vertices.push(center);
+    Ok(index)
+}
+
+fn triangulate_weakly_convex_boundary(
+    boundary: &[usize],
+    vertices: &[OutputVertex],
+    support: &Plane,
+) -> HypermeshResult<Vec<[usize; 3]>> {
+    let mut remaining = boundary.to_vec();
+    let mut triangles = Vec::with_capacity(remaining.len().saturating_sub(2));
+    while remaining.len() > 3 {
+        let mut ear = None;
+        for index in 0..remaining.len() {
+            let triangle = [
+                remaining[(index + remaining.len() - 1) % remaining.len()],
+                remaining[index],
+                remaining[(index + 1) % remaining.len()],
+            ];
+            if output_triangle_is_nondegenerate(triangle, vertices, support)? {
+                ear = Some((index, triangle));
+                break;
+            }
+        }
+        let Some((index, triangle)) = ear else {
+            return Err(HypermeshError::UnknownClassification);
+        };
+        triangles.push(triangle);
+        remaining.remove(index);
+    }
+    let triangle = [remaining[0], remaining[1], remaining[2]];
+    if !output_triangle_is_nondegenerate(triangle, vertices, support)? {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    triangles.push(triangle);
+    Ok(triangles)
+}
+
+fn output_triangle_is_nondegenerate(
+    triangle: [usize; 3],
+    vertices: &[OutputVertex],
+    support: &Plane,
+) -> HypermeshResult<bool> {
+    let left = sub_vertex(&vertices[triangle[1]], &vertices[triangle[0]]);
+    let right = sub_vertex(&vertices[triangle[2]], &vertices[triangle[0]]);
+    let cross = cross_arrays(&left, &right);
+    let oriented_area = Real::signed_product_sum(
+        [true, true, true],
+        [
+            [&cross[0], &support.normal.x],
+            [&cross[1], &support.normal.y],
+            [&cross[2], &support.normal.z],
+        ],
+    );
+    Ok(crate::geometry::classify_real(&oriented_area)? != Classification::On)
 }
 
 /// Certifies that the classified polygon arrangement is already closed before
@@ -864,10 +1067,16 @@ fn upper_bound_vertex_axis(
     Ok(low)
 }
 
-fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleSoup> {
+fn triangulate_polygons(
+    polygons: &[ConvexPolygon],
+    orientations: Option<&[i8]>,
+) -> HypermeshResult<TriangleSoup> {
+    if orientations.is_some_and(|orientations| orientations.len() != polygons.len()) {
+        return Err(HypermeshError::UnknownClassification);
+    }
     let mut soup = TriangleSoup::default();
 
-    for polygon in polygons {
+    for (polygon_index, polygon) in polygons.iter().enumerate() {
         let vertex_count = polygon.vertex_count();
         if vertex_count < 3 {
             continue;
@@ -887,6 +1096,10 @@ fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleS
             soup.sources.push(TriangleSource {
                 mesh: polygon.mesh_index,
                 triangle: polygon.polygon_index,
+                orientation: orientations
+                    .and_then(|orientations| orientations.get(polygon_index))
+                    .copied()
+                    .unwrap_or(0),
             });
         }
     }
@@ -925,16 +1138,31 @@ fn resolve_tjunctions_with_pass_limit(
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct OutputVertexBucket([Option<u64>; 3]);
+
 fn merge_duplicate_vertices(input: &TriangleSoup) -> TriangleSoup {
-    let mut vertices: Vec<OutputVertex> = Vec::new();
+    let mut vertices: Vec<OutputVertex> = Vec::with_capacity(input.vertices.len());
+    let mut buckets: HashMap<OutputVertexBucket, Vec<usize>> = HashMap::new();
     let mut remap = vec![0; input.vertices.len()];
 
     for (index, vertex) in input.vertices.iter().enumerate() {
-        if let Some(existing) = vertices.iter().position(|candidate| candidate == vertex) {
+        let key = OutputVertexBucket([
+            vertex.x.to_f64_lossy().map(f64::to_bits),
+            vertex.y.to_f64_lossy().map(f64::to_bits),
+            vertex.z.to_f64_lossy().map(f64::to_bits),
+        ]);
+        let candidates = buckets.entry(key).or_default();
+        if let Some(existing) = candidates
+            .iter()
+            .copied()
+            .find(|&candidate| vertices[candidate] == *vertex)
+        {
             remap[index] = existing;
         } else {
             remap[index] = vertices.len();
             vertices.push(vertex.clone());
+            candidates.push(vertices.len() - 1);
         }
     }
 
@@ -1102,15 +1330,40 @@ fn split_one_edge_crossing_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool
     edges.sort();
     edges.dedup();
 
-    for left_index in 0..edges.len() {
-        for right_index in (left_index + 1)..edges.len() {
-            let left = edges[left_index];
-            let right = edges[right_index];
+    let mut bounded_edges = edges
+        .into_iter()
+        .map(|edge| exact_edge_bounds(edge, &soup.vertices))
+        .collect::<HypermeshResult<Vec<_>>>()?;
+    bounded_edges.sort_by(|left, right| {
+        compare_real(
+            vertex_axis(&soup.vertices[left.min[0]], 0),
+            vertex_axis(&soup.vertices[right.min[0]], 0),
+        )
+        .expect("exact edge-bound ordering should compare")
+        .then_with(|| left.edge.cmp(&right.edge))
+    });
+
+    for left_index in 0..bounded_edges.len() {
+        let left = &bounded_edges[left_index];
+        for right in &bounded_edges[(left_index + 1)..] {
+            if compare_real(
+                vertex_axis(&soup.vertices[right.min[0]], 0),
+                vertex_axis(&soup.vertices[left.max[0]], 0),
+            )?
+            .is_gt()
+            {
+                break;
+            }
+            if !edge_bounds_overlap_exact(left, right, &soup.vertices)? {
+                continue;
+            }
+            let left = left.edge;
+            let right = right.edge;
             if left.iter().any(|vertex| right.contains(vertex)) {
                 continue;
             }
 
-            let Some(point) = proper_segment_intersection(
+            let Some(point) = proper_segment_intersection_after_bounds_overlap(
                 &soup.vertices[left[0]],
                 &soup.vertices[left[1]],
                 &soup.vertices[right[0]],
@@ -1129,15 +1382,61 @@ fn split_one_edge_crossing_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool
     Ok(false)
 }
 
-fn proper_segment_intersection(
+struct ExactEdgeBounds {
+    edge: [usize; 2],
+    min: [usize; 3],
+    max: [usize; 3],
+}
+
+fn exact_edge_bounds(
+    edge: [usize; 2],
+    vertices: &[OutputVertex],
+) -> HypermeshResult<ExactEdgeBounds> {
+    let mut min = [edge[0]; 3];
+    let mut max = [edge[1]; 3];
+    for axis in 0..3 {
+        if compare_real(
+            vertex_axis(&vertices[edge[0]], axis),
+            vertex_axis(&vertices[edge[1]], axis),
+        )?
+        .is_gt()
+        {
+            min[axis] = edge[1];
+            max[axis] = edge[0];
+        }
+    }
+    Ok(ExactEdgeBounds { edge, min, max })
+}
+
+fn edge_bounds_overlap_exact(
+    left: &ExactEdgeBounds,
+    right: &ExactEdgeBounds,
+    vertices: &[OutputVertex],
+) -> HypermeshResult<bool> {
+    for axis in 1..3 {
+        if compare_real(
+            vertex_axis(&vertices[left.max[axis]], axis),
+            vertex_axis(&vertices[right.min[axis]], axis),
+        )?
+        .is_lt()
+            || compare_real(
+                vertex_axis(&vertices[right.max[axis]], axis),
+                vertex_axis(&vertices[left.min[axis]], axis),
+            )?
+            .is_lt()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn proper_segment_intersection_after_bounds_overlap(
     a: &OutputVertex,
     b: &OutputVertex,
     c: &OutputVertex,
     d: &OutputVertex,
 ) -> HypermeshResult<Option<OutputVertex>> {
-    if !segment_bounds_overlap_exact(a, b, c, d)? {
-        return Ok(None);
-    }
     let ab = sub_vertex(b, a);
     let cd = sub_vertex(d, c);
     let normal = cross_arrays(&ab, &cd);
@@ -1285,27 +1584,6 @@ fn point_within_segment_bounds_exact(
         let b = vertex_axis(end, axis);
         let (min, max) = ordered_reals(a, b)?;
         if compare_real(p, min)?.is_lt() || compare_real(p, max)?.is_gt() {
-            return Ok(false);
-        }
-    }
-    Ok(true)
-}
-
-fn segment_bounds_overlap_exact(
-    a: &OutputVertex,
-    b: &OutputVertex,
-    c: &OutputVertex,
-    d: &OutputVertex,
-) -> HypermeshResult<bool> {
-    for axis in 0..3 {
-        let a = vertex_axis(a, axis);
-        let b = vertex_axis(b, axis);
-        let c = vertex_axis(c, axis);
-        let d = vertex_axis(d, axis);
-        let (left_min, left_max) = ordered_reals(a, b)?;
-        let (right_min, right_max) = ordered_reals(c, d)?;
-        if compare_real(left_max, right_min)?.is_lt() || compare_real(right_max, left_min)?.is_lt()
-        {
             return Ok(false);
         }
     }
@@ -1503,10 +1781,12 @@ mod tests {
                 TriangleSource {
                     mesh: 0,
                     triangle: 3,
+                    orientation: 0,
                 },
                 TriangleSource {
                     mesh: 1,
                     triangle: 9,
+                    orientation: 0,
                 },
             ],
         };
@@ -1519,7 +1799,8 @@ mod tests {
             resolved.sources,
             vec![TriangleSource {
                 mesh: 0,
-                triangle: 3
+                triangle: 3,
+                orientation: 0,
             }]
         );
     }
@@ -1532,6 +1813,7 @@ mod tests {
             sources: vec![TriangleSource {
                 mesh: 1,
                 triangle: 7,
+                orientation: 0,
             }],
         };
 
@@ -1544,7 +1826,8 @@ mod tests {
             vec![
                 TriangleSource {
                     mesh: 1,
-                    triangle: 7
+                    triangle: 7,
+                    orientation: 0,
                 };
                 2
             ]

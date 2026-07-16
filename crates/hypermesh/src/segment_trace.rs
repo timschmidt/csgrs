@@ -43,22 +43,23 @@ pub(crate) use leaf_probe::{
 #[cfg(test)]
 use path::*;
 use path::{
-    AXIS_ORDERINGS, DetourArrangementCellState, InteriorBoxDetourTargetBatchCache,
-    aabb_from_axis_intervals, adapt_plane_replacement_vertex_to_trace_bounds,
-    apply_winding_transition_in_place, axis_plane_defined_point, cached_affine_from_planes_with,
-    cached_detour_target_family, cached_detour_target_family_with,
-    cached_interior_box_axis_intervals_with_surface_queries, cached_strict_aabb_target_families,
-    definition_families_match_as_sets, definition_planes_match_as_sets, detour_arrangement_cell,
+    AXIS_ORDERINGS, DetourArrangementCellState, DetourPathPointBuckets,
+    InteriorBoxDetourTargetBatchCache, aabb_from_axis_intervals,
+    adapt_plane_replacement_vertex_to_trace_bounds, apply_winding_transition_in_place,
+    axis_plane_defined_point, cached_affine_from_planes_with, cached_detour_target_family,
+    cached_detour_target_family_with, cached_interior_box_axis_intervals_with_surface_queries,
+    cached_strict_aabb_target_families, definition_families_match_as_sets,
+    definition_planes_match_as_sets, detour_arrangement_cell,
     detour_arrangement_cell_state_is_dominated, detour_arrangement_planes,
     detour_target_family_result_from_targets, endpoint_definition_family,
     evaluate_strict_aabb_target_families_with_direct_ranking, first_changed_axis,
     initial_visited_definition_points, interior_box_axis_intervals_with_surface_queries,
-    interior_box_detour_targets, normalized_cycle_guard_visited_points,
+    interior_box_detour_targets, matching_detour_path_index, normalized_cycle_guard_visited_points,
     point_is_inside_optional_trace_bounds, point_lies_on_traced_surface,
     push_detour_target_family_bucket_entry, push_strict_aabb_target_family_bucket_entry,
     push_unique_detour_target, record_detour_arrangement_cell_state,
     search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome,
-    trace_bounds_including_point,
+    trace_axis_segment_ignoring_mesh, trace_bounds_including_point,
     trace_segment_from_definitions_with_step_detoured_plane_replacement_with_caches,
     unique_definition_family, visited_definition_family_contains,
     visited_definition_points_match_as_sets, visited_definition_points_subset_of,
@@ -152,6 +153,16 @@ pub(crate) struct InteriorLeafPoint {
     pub(crate) point: Point3,
     planes: Vec<[Plane; 3]>,
     uncertified_definition_fallback: bool,
+}
+
+impl InteriorLeafPoint {
+    pub(crate) fn certified(point: Point3, planes: Vec<[Plane; 3]>) -> Self {
+        Self {
+            point,
+            planes,
+            uncertified_definition_fallback: false,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -265,6 +276,8 @@ struct AxisProbeFamilyCacheEntry {
 #[derive(Default)]
 pub(crate) struct LeafProbeQueryCaches {
     trace_bounds: Option<Aabb>,
+    certified_convex_mesh_supports: Option<Vec<Vec<Plane>>>,
+    certified_convex_last_outside_support: Vec<Option<usize>>,
     #[cfg(test)]
     #[cfg_attr(test, allow(dead_code))]
     normal_probe_families: Vec<NormalProbeFamilyCacheEntry>,
