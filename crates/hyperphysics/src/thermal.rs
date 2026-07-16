@@ -313,6 +313,14 @@ impl TransientThermalStepReport {
         net_heat_rate: Real,
     ) -> PhysicsResult<Self> {
         require_positive(&time_step, PhysicsError::NonPositiveTimeStep)?;
+        Self::energy_balance_step_after_time_validation(node, time_step, net_heat_rate)
+    }
+
+    fn energy_balance_step_after_time_validation(
+        node: LumpedThermalNode,
+        time_step: Real,
+        net_heat_rate: Real,
+    ) -> PhysicsResult<Self> {
         let temperature_delta = div_real(&(&time_step * &net_heat_rate), &node.heat_capacity)?;
         let next_temperature = node.temperature.clone() + temperature_delta.clone();
         Ok(Self {
@@ -342,7 +350,7 @@ impl LumpedRcThermalStepReport {
         let temperature_difference = node.temperature.clone() - ambient_temperature.clone();
         let conductive_heat_rate = -div_real(&temperature_difference, &thermal_resistance)?;
         let net_heat_rate = heat_source.clone() + conductive_heat_rate.clone();
-        let balance = TransientThermalStepReport::energy_balance_step(
+        let balance = TransientThermalStepReport::energy_balance_step_after_time_validation(
             node.clone(),
             time_step.clone(),
             net_heat_rate.clone(),

@@ -251,16 +251,35 @@ impl MaterialPropertyGraph {
 
     /// Resolves a property without guessing missing values.
     pub fn resolve(&self, kind: &MaterialPropertyKind) -> ResolvedPropertyReport {
-        let matching = self
+        let mut sources = Vec::new();
+        let mut first_exact = None::<&Real>;
+        let mut exact_conflict = false;
+        let mut first_interval = None::<&PropertyValue>;
+        let mut first_proposal = None::<&PropertyValue>;
+
+        for assertion in self
             .assertions
             .iter()
             .filter(|assertion| &assertion.kind == kind)
-            .collect::<Vec<_>>();
-        let sources = matching
-            .iter()
-            .map(|assertion| assertion.source.clone())
-            .collect::<Vec<_>>();
-        if matching.is_empty() {
+        {
+            sources.push(assertion.source.clone());
+            match &assertion.value {
+                PropertyValue::ExactScalar(value) => match first_exact {
+                    Some(first) if first != value.as_ref() => exact_conflict = true,
+                    Some(_) => {}
+                    None => first_exact = Some(value.as_ref()),
+                },
+                PropertyValue::Interval { .. } => {
+                    first_interval.get_or_insert(&assertion.value);
+                }
+                PropertyValue::ExternalProposal { .. } => {
+                    first_proposal.get_or_insert(&assertion.value);
+                }
+                PropertyValue::Unknown => {}
+            }
+        }
+
+        if sources.is_empty() {
             return ResolvedPropertyReport {
                 kind: kind.clone(),
                 status: PropertyResolutionStatus::Unknown,
@@ -270,19 +289,12 @@ impl MaterialPropertyGraph {
             };
         }
 
-        let exact_values = matching
-            .iter()
-            .filter_map(|assertion| match &assertion.value {
-                PropertyValue::ExactScalar(value) => Some(value),
-                _ => None,
-            })
-            .collect::<Vec<_>>();
-        if let Some(first) = exact_values.first() {
-            if exact_values.iter().all(|value| *value == *first) {
+        if let Some(first) = first_exact {
+            if !exact_conflict {
                 return ResolvedPropertyReport {
                     kind: kind.clone(),
                     status: PropertyResolutionStatus::ExactKnown,
-                    value: Some(PropertyValue::ExactScalar((*first).clone())),
+                    value: Some(PropertyValue::exact_scalar(first.clone())),
                     sources,
                     evidence: vec!["all exact assertions agree".into()],
                 };
@@ -296,41 +308,27 @@ impl MaterialPropertyGraph {
             };
         }
 
-        if let Some(interval) = matching
-            .iter()
-            .find_map(|assertion| match &assertion.value {
-                PropertyValue::Interval { lower, upper } => Some(PropertyValue::Interval {
-                    lower: lower.clone(),
-                    upper: upper.clone(),
-                }),
-                _ => None,
-            })
-        {
+        if let Some(PropertyValue::Interval { lower, upper }) = first_interval {
             return ResolvedPropertyReport {
                 kind: kind.clone(),
                 status: PropertyResolutionStatus::Interval,
-                value: Some(interval),
+                value: Some(PropertyValue::Interval {
+                    lower: lower.clone(),
+                    upper: upper.clone(),
+                }),
                 sources,
                 evidence: vec!["interval assertion selected".into()],
             };
         }
 
-        if let Some(proposal) = matching
-            .iter()
-            .find_map(|assertion| match &assertion.value {
-                PropertyValue::ExternalProposal { value, status } => {
-                    Some(PropertyValue::ExternalProposal {
-                        value: value.clone(),
-                        status: *status,
-                    })
-                }
-                _ => None,
-            })
-        {
+        if let Some(PropertyValue::ExternalProposal { value, status }) = first_proposal {
             return ResolvedPropertyReport {
                 kind: kind.clone(),
                 status: PropertyResolutionStatus::ExternalProposal,
-                value: Some(proposal),
+                value: Some(PropertyValue::ExternalProposal {
+                    value: value.clone(),
+                    status: *status,
+                }),
                 sources,
                 evidence: vec!["external proposal only".into()],
             };
@@ -349,10 +347,10 @@ impl MaterialPropertyGraph {
     pub fn derive_isotropic_shear_modulus(&self) -> PhysicsResult<Option<ElasticDerivationReport>> {
         let young = self.resolve(&MaterialPropertyKind::YoungModulus);
         let poisson = self.resolve(&MaterialPropertyKind::PoissonRatio);
-        let Some(PropertyValue::ExactScalar(young_value)) = young.value.clone() else {
+        let Some(PropertyValue::ExactScalar(young_value)) = young.value else {
             return Ok(None);
         };
-        let Some(PropertyValue::ExactScalar(poisson_value)) = poisson.value.clone() else {
+        let Some(PropertyValue::ExactScalar(poisson_value)) = poisson.value else {
             return Ok(None);
         };
         require_positive(young_value.as_ref(), PhysicsError::InvalidElasticConstant)?;

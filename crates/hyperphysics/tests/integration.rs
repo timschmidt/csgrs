@@ -47,6 +47,23 @@ fn exact_force_accumulation_and_explicit_step_replay_are_certified() {
 }
 
 #[test]
+fn symplectic_euler_entry_point_names_the_velocity_first_update() {
+    let mut forces = ForceAccumulator3::default();
+    forces.push(ForceContribution3 {
+        source: "force".into(),
+        force: v(6, 0, 0),
+    });
+
+    let report =
+        StepReplayReport3::symplectic_euler_replay(r(3), q(1, 2), v(0, 0, 0), v(1, 0, 0), &forces)
+            .unwrap();
+
+    assert_eq!(report.policy, IntegrationPolicy::SymplecticEulerReplay);
+    assert_eq!(report.proposed_velocity, v(2, 0, 0));
+    assert_eq!(report.proposed_position, v(1, 0, 0));
+}
+
+#[test]
 fn invalid_mass_and_step_are_rejected_before_proposal() {
     let forces = ForceAccumulator3::default();
     assert_eq!(

@@ -17,8 +17,10 @@ use crate::{PhysicsError, PhysicsResult};
 /// Solver or co-simulation policy used to generate a step proposal.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum IntegrationPolicy {
-    /// Exact force accumulation plus explicit Euler proposal.
+    /// Legacy label for the velocity-first Euler replay exposed by the original API.
     ExplicitEulerReplay,
+    /// Exact force accumulation plus velocity-first symplectic Euler replay.
+    SymplecticEulerReplay,
     /// Symplectic or variational integrator proposal.
     SymplecticVariational,
     /// Implicit Euler proposal.
@@ -136,14 +138,54 @@ impl ForceAccumulator3 {
 }
 
 impl StepReplayReport3 {
-    /// Builds an exact explicit-Euler replay report for one body point mass.
+    /// Builds the legacy exact velocity-first Euler replay for one point mass.
     ///
-    /// This is intentionally a small certified kernel: `v_{n+1} = v_n +
-    /// (F/m)dt`, `x_{n+1} = x_n + v_{n+1}dt`, and diagnostics are evaluated
-    /// exactly from the proposed state. It provides the report shape that
-    /// richer symplectic, implicit, complementarity, heat, EM, and field/circuit
-    /// adapters must match before their proposals are accepted.
+    /// Despite the historical method name and policy label, the retained update
+    /// has always used `v_{n+1}` for the position step and is therefore the
+    /// velocity-first symplectic Euler scheme. New callers should prefer
+    /// [`Self::symplectic_euler_replay`]; this entry point preserves existing
+    /// report identity and numerical behavior.
     pub fn explicit_euler_replay(
+        mass: Real,
+        dt: Real,
+        initial_position: Vector3,
+        initial_velocity: Vector3,
+        forces: &ForceAccumulator3,
+    ) -> PhysicsResult<Self> {
+        Self::velocity_first_euler_replay(
+            IntegrationPolicy::ExplicitEulerReplay,
+            mass,
+            dt,
+            initial_position,
+            initial_velocity,
+            forces,
+        )
+    }
+
+    /// Builds an exact velocity-first symplectic Euler replay for one point mass.
+    ///
+    /// The certified kernel is `v_{n+1} = v_n + (F/m)dt` followed by
+    /// `x_{n+1} = x_n + v_{n+1}dt`. Diagnostics are evaluated exactly from the
+    /// proposed state.
+    pub fn symplectic_euler_replay(
+        mass: Real,
+        dt: Real,
+        initial_position: Vector3,
+        initial_velocity: Vector3,
+        forces: &ForceAccumulator3,
+    ) -> PhysicsResult<Self> {
+        Self::velocity_first_euler_replay(
+            IntegrationPolicy::SymplecticEulerReplay,
+            mass,
+            dt,
+            initial_position,
+            initial_velocity,
+            forces,
+        )
+    }
+
+    fn velocity_first_euler_replay(
+        policy: IntegrationPolicy,
         mass: Real,
         dt: Real,
         initial_position: Vector3,
@@ -153,12 +195,17 @@ impl StepReplayReport3 {
         require_positive(&mass, PhysicsError::NonPositiveMass)?;
         require_positive(&dt, PhysicsError::NonPositiveTimeStep)?;
         let accumulated_force = forces.total_force();
-        let acceleration = div_vector_by_real(accumulated_force.clone(), &mass)?;
-        let proposed_velocity = initial_velocity.clone() + (acceleration * &dt);
+        // Share the exact `dt / mass` quotient across all force components.
+        // This is algebraically identical to `(F / mass) * dt` but performs
+        // one rational division per step instead of one per axis.
+        let velocity_delta_scale = div_real(&dt, &mass)?;
+        let proposed_velocity =
+            initial_velocity.clone() + (accumulated_force.clone() * &velocity_delta_scale);
         let proposed_position = initial_position.clone() + (proposed_velocity.clone() * &dt);
-        let diagnostics = SystemDiagnostics3::from_mass_velocity(&mass, &proposed_velocity)?;
+        let diagnostics =
+            SystemDiagnostics3::from_positive_mass_velocity(&mass, &proposed_velocity)?;
         Ok(Self {
-            policy: IntegrationPolicy::ExplicitEulerReplay,
+            policy,
             couplings: Vec::new(),
             dt,
             initial_position,
@@ -176,6 +223,10 @@ impl SystemDiagnostics3 {
     /// Computes exact translational momentum and kinetic energy.
     pub fn from_mass_velocity(mass: &Real, velocity: &Vector3) -> PhysicsResult<Self> {
         require_positive(mass, PhysicsError::NonPositiveMass)?;
+        Self::from_positive_mass_velocity(mass, velocity)
+    }
+
+    fn from_positive_mass_velocity(mass: &Real, velocity: &Vector3) -> PhysicsResult<Self> {
         let momentum = velocity.clone() * mass;
         let speed_squared = velocity.dot(velocity);
         let kinetic_energy = (mass * &speed_squared) / Real::from(2);
@@ -192,14 +243,6 @@ fn require_positive(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Negative | RealSign::Zero) | None => Err(error),
     }
-}
-
-fn div_vector_by_real(vector: Vector3, rhs: &Real) -> PhysicsResult<Vector3> {
-    Ok(Vector3::new([
-        div_real(&vector[0], rhs)?,
-        div_real(&vector[1], rhs)?,
-        div_real(&vector[2], rhs)?,
-    ]))
 }
 
 fn div_real(lhs: &Real, rhs: &Real) -> PhysicsResult<Real> {

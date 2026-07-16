@@ -90,6 +90,7 @@ fn beer_lambert_slab_keeps_exact_optical_depth() {
 
     assert_eq!(report.optical_depth, r(1));
     assert_eq!(report.transmittance_expression, "exp(-optical_depth)");
+    assert_eq!(report.transmittance().unwrap().ln().unwrap(), r(-1));
     assert_eq!(report.status, OpticalReportStatus::Exact);
 }
 

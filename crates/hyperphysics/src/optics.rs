@@ -121,6 +121,18 @@ pub struct BeerLambertSlabReport {
     pub status: OpticalReportStatus,
 }
 
+impl BeerLambertSlabReport {
+    /// Evaluates the exact-real Beer-Lambert transmittance `exp(-optical_depth)`.
+    ///
+    /// Optical depth remains the compact retained fact; the transcendental
+    /// expression is built only for callers that need transmitted intensity.
+    pub fn transmittance(&self) -> PhysicsResult<Real> {
+        (-self.optical_depth.clone())
+            .exp()
+            .map_err(|_| PhysicsError::UnknownOpticalClassification)
+    }
+}
+
 impl OpticalMedium {
     /// Creates an optical medium after validating positive `n` and non-negative absorption.
     pub fn new(

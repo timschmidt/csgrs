@@ -33,6 +33,24 @@ fn tetra_mesh() -> ClosedTriangleMesh3 {
     .unwrap()
 }
 
+fn repeated_tetra_mesh(count: usize) -> ClosedTriangleMesh3 {
+    let mut triangles = Vec::with_capacity(count * 4);
+    for index in 0..count {
+        let offset = i32::try_from(index * 2).unwrap();
+        let o = v(offset, 0, 0);
+        let x = v(offset + 1, 0, 0);
+        let y = v(offset, 1, 0);
+        let z = v(offset, 0, 1);
+        triangles.extend([
+            Triangle3::new([o.clone(), z.clone(), y.clone()]),
+            Triangle3::new([o.clone(), x.clone(), z.clone()]),
+            Triangle3::new([o, y.clone(), x.clone()]),
+            Triangle3::new([x, y, z]),
+        ]);
+    }
+    ClosedTriangleMesh3::new(triangles).unwrap()
+}
+
 fn main() {
     let mesh = tetra_mesh();
     let density = r(7850);
@@ -54,6 +72,23 @@ fn main() {
         elapsed / iterations
     );
 
+    let repeated_mesh = repeated_tetra_mesh(64);
+    let large_iterations = 200_u32;
+    let started = Instant::now();
+    let mut repeated_checksum = 0_usize;
+    for _ in 0..large_iterations {
+        let report = black_box(&repeated_mesh)
+            .uniform_density_mass_properties(black_box(density.clone()))
+            .unwrap();
+        repeated_checksum ^= format!("{:?}", report.mass).len();
+        repeated_checksum ^= report.certificate.triangle_count;
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "mass_properties_256_triangles: {large_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={repeated_checksum}",
+        elapsed / large_iterations
+    );
+
     let mut forces = hyperphysics::ForceAccumulator3::default();
     forces.push(hyperphysics::ForceContribution3 {
         source: "bench-force".into(),
@@ -62,7 +97,7 @@ fn main() {
     let started = Instant::now();
     let mut step_checksum = 0_usize;
     for _ in 0..iterations {
-        let report = hyperphysics::StepReplayReport3::explicit_euler_replay(
+        let report = hyperphysics::StepReplayReport3::symplectic_euler_replay(
             r(3),
             r(1),
             v(0, 0, 0),

@@ -119,16 +119,30 @@ impl ClosedTriangleMesh3 {
         for triangle in self.triangles() {
             let [a, b, c] = triangle.vertices();
             let det = determinant3(a, b, c);
-            signed_volume_numerator += det.clone();
+            signed_volume_numerator =
+                Real::signed_product_sum([true, true], [[&signed_volume_numerator], [&det]]);
 
-            let vertex_sum = a + b + c;
-            first_moment_numerator = first_moment_numerator + vertex_sum.clone() * det.clone();
+            let vertex_sum = Vector3::new(from_fn(|axis| {
+                Real::signed_product_sum([true, true, true], [[&a[axis]], [&b[axis]], [&c[axis]]])
+            }));
+            first_moment_numerator = Vector3::new(from_fn(|axis| {
+                Real::signed_product_sum(
+                    [true, true],
+                    [
+                        [&first_moment_numerator[axis], &Real::one()],
+                        [&vertex_sum[axis], &det],
+                    ],
+                )
+            }));
 
             for (row_index, row) in second_moment_numerators.iter_mut().enumerate() {
                 for (col_index, value) in row.iter_mut().enumerate().skip(row_index) {
                     let numerator =
                         tetra_second_moment_numerator(a, b, c, &vertex_sum, row_index, col_index);
-                    *value = value.clone() + &det * &numerator;
+                    *value = Real::signed_product_sum(
+                        [true, true],
+                        [[value, &Real::one()], [&det, &numerator]],
+                    );
                 }
             }
         }
@@ -211,13 +225,17 @@ fn require_positive_density(density: &Real) -> PhysicsResult<()> {
 }
 
 fn determinant3(a: &Vector3, b: &Vector3, c: &Vector3) -> Real {
-    let bxcy = &b[1] * &c[2];
-    let bzcy = &b[2] * &c[1];
-    let bzcx = &b[2] * &c[0];
-    let bxcz = &b[0] * &c[2];
-    let bxcy_z = &b[0] * &c[1];
-    let bycx = &b[1] * &c[0];
-    &a[0] * &(bxcy - bzcy) + (&a[1] * &(bzcx - bxcz)) + (&a[2] * &(bxcy_z - bycx))
+    Real::signed_product_sum(
+        [true, false, true, false, true, false],
+        [
+            [&a[0], &b[1], &c[2]],
+            [&a[0], &b[2], &c[1]],
+            [&a[1], &b[2], &c[0]],
+            [&a[1], &b[0], &c[2]],
+            [&a[2], &b[0], &c[1]],
+            [&a[2], &b[1], &c[0]],
+        ],
+    )
 }
 
 fn tetra_second_moment_numerator(
@@ -233,10 +251,15 @@ fn tetra_second_moment_numerator(
     // weighted twice. Factoring the first sum as vertex_sum[row] *
     // vertex_sum[col] cuts nine products to four while preserving the exact
     // polynomial.
-    &vertex_sum[row] * &vertex_sum[col]
-        + (&a[row] * &a[col])
-        + (&b[row] * &b[col])
-        + (&c[row] * &c[col])
+    Real::signed_product_sum(
+        [true; 4],
+        [
+            [&vertex_sum[row], &vertex_sum[col]],
+            [&a[row], &a[col]],
+            [&b[row], &b[col]],
+            [&c[row], &c[col]],
+        ],
+    )
 }
 
 fn inertia_from_second_moments(second: &[[Real; 3]; 3]) -> SymmetricInertia3 {

@@ -72,6 +72,9 @@ Performance improvements should come from prepared shape facts, broad-phase boun
 specialized exact queries, and explicit lossy adapters rather than hidden primitive
 predicates.
 
+The measured reference audit, retained/rejected experiments, and exact dispatch-trace
+protocol are recorded in [PERFORMANCE.md](PERFORMANCE.md).
+
 ## Current Status
 
 Implemented today:
@@ -162,7 +165,7 @@ fn main() -> hyperphysics::PhysicsResult<()> {
         source: "test force".into(),
         force: Vector3::new([Real::from(1), Real::from(0), Real::from(0)]),
     });
-    let step = StepReplayReport3::explicit_euler_replay(
+    let step = StepReplayReport3::symplectic_euler_replay(
         Real::from(2),
         Real::from(1),
         Vector3::zero(),

@@ -23,7 +23,6 @@
 use hyperlattice::{Point3, Vector3};
 use hyperlimit::{
     Aabb3Intersection, Aabb3PointLocation, PlaneSegmentRelation, PlaneSide, PredicateOutcome,
-    Triangle3Location,
 };
 use hyperreal::{Real, RealSign};
 
@@ -241,32 +240,29 @@ impl Triangle3 {
         let ac = c - a;
         let normal = ab.cross(&ac);
         let plane_signed_distance = (point - a).dot(&normal);
-
-        let location = decide(hyperlimit::classify_point_triangle3(
-            &point3_from_vector(a),
-            &point3_from_vector(b),
-            &point3_from_vector(c),
-            &point3_from_vector(point),
-        ))?;
-        let classification = match location {
-            Triangle3Location::Degenerate => TrianglePointClassification::DegenerateTriangle,
-            Triangle3Location::OffPlane => TrianglePointClassification::OffPlane,
-            Triangle3Location::Outside => TrianglePointClassification::Outside,
-            Triangle3Location::Inside => TrianglePointClassification::Inside,
-            Triangle3Location::OnEdge | Triangle3Location::OnVertex => {
-                TrianglePointClassification::Boundary
-            }
-        };
-        let edge_signs = match classification {
-            TrianglePointClassification::Inside
-            | TrianglePointClassification::Boundary
-            | TrianglePointClassification::Outside => Some([
+        let normal_signs = [sign(&normal[0])?, sign(&normal[1])?, sign(&normal[2])?];
+        let (edge_signs, classification) = if normal_signs == [RealSign::Zero; 3] {
+            (None, TrianglePointClassification::DegenerateTriangle)
+        } else if sign(&plane_signed_distance)? != RealSign::Zero {
+            (None, TrianglePointClassification::OffPlane)
+        } else {
+            // These are the same oriented edge-halfspace predicates used by
+            // HyperLimit's 3D triangle classifier. Retaining their signs here
+            // lets the report derive its coarse classification without
+            // immediately rebuilding the normal and all three expressions.
+            let edge_signs = [
                 sign(&(b - a).cross(&(point - a)).dot(&normal))?,
                 sign(&(c - b).cross(&(point - b)).dot(&normal))?,
                 sign(&(a - c).cross(&(point - c)).dot(&normal))?,
-            ]),
-            TrianglePointClassification::OffPlane
-            | TrianglePointClassification::DegenerateTriangle => None,
+            ];
+            let classification = if edge_signs.contains(&RealSign::Negative) {
+                TrianglePointClassification::Outside
+            } else if edge_signs.contains(&RealSign::Zero) {
+                TrianglePointClassification::Boundary
+            } else {
+                TrianglePointClassification::Inside
+            };
+            (Some(edge_signs), classification)
         };
         Ok(TrianglePointReport3 {
             plane_signed_distance,

@@ -13,6 +13,10 @@ fn v(x: i32, y: i32, z: i32) -> Vector3 {
     Vector3::new([r(x), r(y), r(z)])
 }
 
+fn p(vector: &Vector3) -> hyperlimit::Point3 {
+    hyperlimit::Point3::new(vector[0].clone(), vector[1].clone(), vector[2].clone())
+}
+
 #[test]
 fn exact_box_classifies_inside_boundary_and_outside_points() {
     let aabb = AxisAlignedBox3::new(v(0, 0, 0), v(10, 10, 10)).unwrap();
@@ -165,5 +169,39 @@ proptest! {
             prop_assert_ne!(report.classification, TrianglePointClassification::Outside);
             prop_assert_ne!(report.classification, TrianglePointClassification::OffPlane);
         }
+    }
+
+    #[test]
+    fn generated_triangle_reports_match_hyperlimit_classification(
+        coordinates in prop::collection::vec(-3_i32..=3, 12),
+    ) {
+        let a = v(coordinates[0], coordinates[1], coordinates[2]);
+        let b = v(coordinates[3], coordinates[4], coordinates[5]);
+        let c = v(coordinates[6], coordinates[7], coordinates[8]);
+        let point = v(coordinates[9], coordinates[10], coordinates[11]);
+        let report = Triangle3::new([a.clone(), b.clone(), c.clone()])
+            .classify_point(&point)
+            .unwrap();
+        let reference = hyperlimit::classify_point_triangle3(
+            &p(&a),
+            &p(&b),
+            &p(&c),
+            &p(&point),
+        )
+        .value()
+        .unwrap();
+        let reference = match reference {
+            hyperlimit::Triangle3Location::Degenerate => {
+                TrianglePointClassification::DegenerateTriangle
+            }
+            hyperlimit::Triangle3Location::OffPlane => TrianglePointClassification::OffPlane,
+            hyperlimit::Triangle3Location::Outside => TrianglePointClassification::Outside,
+            hyperlimit::Triangle3Location::Inside => TrianglePointClassification::Inside,
+            hyperlimit::Triangle3Location::OnEdge | hyperlimit::Triangle3Location::OnVertex => {
+                TrianglePointClassification::Boundary
+            }
+        };
+
+        prop_assert_eq!(report.classification, reference);
     }
 }
