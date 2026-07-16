@@ -688,6 +688,54 @@ pub(crate) fn classify_segment_triangle3_intersection_with_policy(
         Err(unknown) => return unknown,
     };
 
+    classify_segment_triangle3_intersection_from_sides(
+        p, q, a, b, c, p_side, q_side, None, policy, certainty, stage,
+    )
+}
+
+/// Classify an edge against a triangle when a caller has already certified
+/// both endpoint sides against the supplied supporting plane.
+pub(crate) fn classify_segment_triangle3_intersection_with_preclassified_sides(
+    edge: [&Point3; 2],
+    triangle: [&Point3; 3],
+    endpoint_sides: [PlaneSide; 2],
+    plane: &Plane3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<SegmentTriangleIntersection> {
+    let sign = |side| match side {
+        PlaneSide::Below => Sign::Negative,
+        PlaneSide::On => Sign::Zero,
+        PlaneSide::Above => Sign::Positive,
+    };
+    classify_segment_triangle3_intersection_from_sides(
+        edge[0],
+        edge[1],
+        triangle[0],
+        triangle[1],
+        triangle[2],
+        sign(endpoint_sides[0]),
+        sign(endpoint_sides[1]),
+        Some(plane),
+        policy,
+        Certainty::Exact,
+        Escalation::Exact,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn classify_segment_triangle3_intersection_from_sides(
+    p: &Point3,
+    q: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    p_side: Sign,
+    q_side: Sign,
+    prepared_plane: Option<&Plane3>,
+    policy: PredicatePolicy,
+    certainty: Certainty,
+    stage: Escalation,
+) -> PredicateOutcome<SegmentTriangleIntersection> {
     if p_side == Sign::Zero && q_side == Sign::Zero {
         return PredicateOutcome::decided(SegmentTriangleIntersection::Coplanar, certainty, stage);
     }
@@ -702,9 +750,15 @@ pub(crate) fn classify_segment_triangle3_intersection_with_policy(
         return segment_endpoint_triangle_relation(q, a, b, c, policy, certainty, stage);
     }
 
-    let plane = triangle_support_plane(a, b, c);
+    let owned_plane;
+    let plane = if let Some(plane) = prepared_plane {
+        plane
+    } else {
+        owned_plane = triangle_support_plane(a, b, c);
+        &owned_plane
+    };
     let line = line_from_points(p, q);
-    let point = line.intersect_plane(&plane);
+    let point = line.intersect_plane(plane);
     match point.to_affine_point() {
         Ok(intersection) => {
             match classify_point_triangle3_with_policy(a, b, c, &intersection, policy) {

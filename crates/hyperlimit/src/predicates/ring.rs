@@ -8,7 +8,7 @@ use crate::geometry::Point2;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::orient2d_with_policy;
-use crate::predicates::segment::classify_point_segment_with_policy;
+use crate::predicates::segment::classify_collinear_point_segment_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{resolve_real_sign, signed_term_filter};
 use hyperreal::{Real, ZeroKnowledge};
@@ -493,35 +493,45 @@ fn classify_point_ring_even_odd_report_refs(
         let a = &ring[index];
         let b = &ring[(index + 1) % ring.len()];
 
-        let segment_location = match decided(
-            classify_point_segment_with_policy(a, b, point, policy),
-            &mut trace,
-        ) {
-            Ok(location) if location.is_on_segment() => {
-                edges.push(RingEvenOddEdgeReport {
-                    edge_index: index,
-                    segment_location: location,
-                    a_above: None,
-                    b_above: None,
-                    upward: None,
-                    orientation: None,
-                    crosses_right: false,
-                });
-                return PredicateOutcome::decided(
-                    RingEvenOddReport {
-                        location: RingPointLocation::Boundary,
-                        edge_count: ring.len(),
-                        crossing_count,
-                        boundary_edge: Some(index),
-                        edges,
-                    },
-                    trace.certainty,
-                    trace.stage,
-                );
-            }
-            Ok(location) => location,
+        // The orientation is needed both for the complete point/segment report
+        // and, on y-straddling edges, for crossing parity. Certify it once and
+        // retain the result for both decisions.
+        let orientation = match decided(orient2d_with_policy(a, b, point, policy), &mut trace) {
+            Ok(sign) => sign,
             Err(unknown) => return unknown.into_outcome(),
         };
+        let segment_location = match orientation {
+            Sign::Zero => match decided(
+                classify_collinear_point_segment_with_policy(a, b, point, policy),
+                &mut trace,
+            ) {
+                Ok(location) => location,
+                Err(unknown) => return unknown.into_outcome(),
+            },
+            Sign::Positive | Sign::Negative => PointSegmentLocation::OffLine,
+        };
+        if segment_location.is_on_segment() {
+            edges.push(RingEvenOddEdgeReport {
+                edge_index: index,
+                segment_location,
+                a_above: None,
+                b_above: None,
+                upward: None,
+                orientation: None,
+                crosses_right: false,
+            });
+            return PredicateOutcome::decided(
+                RingEvenOddReport {
+                    location: RingPointLocation::Boundary,
+                    edge_count: ring.len(),
+                    crossing_count,
+                    boundary_edge: Some(index),
+                    edges,
+                },
+                trace.certainty,
+                trace.stage,
+            );
+        }
 
         let a_above = match compare_greater(&a.y, &point.y, policy, &mut trace) {
             Ok(value) => value,
@@ -544,10 +554,6 @@ fn classify_point_ring_even_odd_report_refs(
             continue;
         }
 
-        let orientation = match decided(orient2d_with_policy(a, b, point, policy), &mut trace) {
-            Ok(sign) => sign,
-            Err(unknown) => return unknown.into_outcome(),
-        };
         let upward = match compare_greater(&b.y, &a.y, policy, &mut trace) {
             Ok(value) => value,
             Err(unknown) => return unknown.into_outcome(),
@@ -917,6 +923,21 @@ mod tests {
         assert_eq!(outside.location, RingPointLocation::Outside);
         assert_eq!(outside.crossing_count, 0);
         assert_eq!(outside.validate(), Ok(()));
+    }
+
+    #[test]
+    fn point_ring_even_odd_report_retains_collinear_outside_edge_evidence() {
+        let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let report = classify_point_ring_even_odd_report(&ring, &p2(6, 0))
+            .value()
+            .expect("collinear exterior point should decide exactly");
+
+        assert_eq!(report.location, RingPointLocation::Outside);
+        assert_eq!(
+            report.edges[0].segment_location,
+            PointSegmentLocation::CollinearOutside
+        );
+        assert_eq!(report.validate(), Ok(()));
     }
 
     #[test]

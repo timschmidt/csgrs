@@ -227,6 +227,7 @@ cargo bench --bench predicates
 ```
 
 The generated benchmark summary is in [`benchmarks.md`](benchmarks.md).
+The reference-driven optimization record is in [`PERFORMANCE.md`](PERFORMANCE.md).
 
 Run dispatch tracing separately:
 

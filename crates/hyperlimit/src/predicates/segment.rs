@@ -269,6 +269,24 @@ pub(crate) fn classify_point_segment_with_policy(
     classify_point_segment_impl(a, b, point, policy, None)
 }
 
+/// Classify a point already certified collinear with the segment endpoints.
+///
+/// This is an internal composition helper for predicates that already retain
+/// an `orient2d(a, b, point) == 0` certificate. It avoids rebuilding the same
+/// determinant while preserving the full endpoint/interior/outside report.
+pub(crate) fn classify_collinear_point_segment_with_policy(
+    a: &Point2,
+    b: &Point2,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PointSegmentLocation> {
+    let mut trace = DecisionTrace::default();
+    match classify_collinear_point_segment(a, b, point, policy, &mut trace) {
+        Ok(location) => PredicateOutcome::decided(location, trace.certainty, trace.stage),
+        Err(unknown) => unknown.into_outcome(),
+    }
+}
+
 /// Classify `point` relative to the closed segment `ab` using cached segment
 /// structural facts.
 pub fn classify_point_segment_with_facts(

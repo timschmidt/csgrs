@@ -9,11 +9,11 @@
 //! facts rather than primitive tolerances.
 
 use crate::classify::{
-    PlaneTriangleRelation, SegmentTriangleIntersection, TriangleLocation,
+    PlaneSide, PlaneTriangleRelation, SegmentTriangleIntersection, TriangleLocation,
     TriangleTriangleIntersection,
 };
 use crate::geometry::Point3;
-use crate::geometry::plane::{PreparedOrientedPlane3, classify_plane_triangle_with_policy};
+use crate::geometry::plane::PreparedOrientedPlane3;
 use crate::predicate::PredicatePolicy;
 use crate::predicate::{Escalation, PredicateOutcome, RefinementNeed};
 use crate::predicates::coplanar::{
@@ -23,7 +23,8 @@ use crate::predicates::coplanar::{
 };
 use crate::predicates::segment::classify_segment_intersection_with_policy;
 use crate::predicates::triangle::{
-    classify_point_triangle_with_policy, classify_segment_triangle3_intersection_with_policy,
+    classify_point_triangle_with_policy,
+    classify_segment_triangle3_intersection_with_preclassified_sides,
 };
 
 /// Structural inconsistency in a retained triangle/triangle report.
@@ -208,30 +209,16 @@ pub fn classify_triangle_triangle3_points_with_policy(
 
     let left_plane = PreparedOrientedPlane3::new(left[0], left[1], left[2]);
     let right_plane = PreparedOrientedPlane3::new(right[0], right[1], right[2]);
-    let right_against_left_plane = match classify_plane_triangle_with_policy(
-        left_plane.plane(),
-        right[0],
-        right[1],
-        right[2],
-        policy,
-    ) {
-        PredicateOutcome::Decided { value, .. } => value,
-        PredicateOutcome::Unknown { needed, stage } => {
-            return PredicateOutcome::unknown(needed, stage);
-        }
-    };
-    let left_against_right_plane = match classify_plane_triangle_with_policy(
-        right_plane.plane(),
-        left[0],
-        left[1],
-        left[2],
-        policy,
-    ) {
-        PredicateOutcome::Decided { value, .. } => value,
-        PredicateOutcome::Unknown { needed, stage } => {
-            return PredicateOutcome::unknown(needed, stage);
-        }
-    };
+    let (right_against_left_plane, right_against_left_sides) =
+        match classify_triangle_against_prepared_plane(&left_plane, right, policy) {
+            Ok(classification) => classification,
+            Err(unknown) => return unknown,
+        };
+    let (left_against_right_plane, left_against_right_sides) =
+        match classify_triangle_against_prepared_plane(&right_plane, left, policy) {
+            Ok(classification) => classification,
+            Err(unknown) => return unknown,
+        };
 
     if right_against_left_plane == PlaneTriangleRelation::Coplanar
         && left_against_right_plane == PlaneTriangleRelation::Coplanar
@@ -270,12 +257,22 @@ pub fn classify_triangle_triangle3_points_with_policy(
     let mut right_edges_against_left = [None; 3];
     let mut saw_boundary = false;
     let mut saw_crossing = false;
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "triangle_triangle3",
+        "reuse-plane-sides-for-edges"
+    );
 
-    for (slot, edge) in triangle_edges(left).into_iter().enumerate() {
-        let relation = match edge_against_triangle(edge, right, policy) {
-            Ok(relation) => relation,
-            Err(unknown) => return unknown,
-        };
+    for (slot, (edge, endpoint_sides)) in triangle_edges(left)
+        .into_iter()
+        .zip(triangle_edge_sides(left_against_right_sides))
+        .enumerate()
+    {
+        let relation =
+            match edge_against_triangle(edge, endpoint_sides, right, right_plane.plane(), policy) {
+                Ok(relation) => relation,
+                Err(unknown) => return unknown,
+            };
         if let Err(unknown) = absorb_edge_relation(
             relation,
             edge,
@@ -288,11 +285,16 @@ pub fn classify_triangle_triangle3_points_with_policy(
         }
         left_edges_against_right[slot] = Some(relation);
     }
-    for (slot, edge) in triangle_edges(right).into_iter().enumerate() {
-        let relation = match edge_against_triangle(edge, left, policy) {
-            Ok(relation) => relation,
-            Err(unknown) => return unknown,
-        };
+    for (slot, (edge, endpoint_sides)) in triangle_edges(right)
+        .into_iter()
+        .zip(triangle_edge_sides(right_against_left_sides))
+        .enumerate()
+    {
+        let relation =
+            match edge_against_triangle(edge, endpoint_sides, left, left_plane.plane(), policy) {
+                Ok(relation) => relation,
+                Err(unknown) => return unknown,
+            };
         if let Err(unknown) = absorb_edge_relation(
             relation,
             edge,
@@ -328,15 +330,16 @@ pub fn classify_triangle_triangle3_points_with_policy(
 
 fn edge_against_triangle(
     edge: [&Point3; 2],
+    endpoint_sides: [PlaneSide; 2],
     triangle: [&Point3; 3],
+    plane: &crate::geometry::Plane3,
     policy: PredicatePolicy,
 ) -> Result<SegmentTriangleIntersection, PredicateOutcome<TriangleTriangleClassification>> {
-    match classify_segment_triangle3_intersection_with_policy(
-        edge[0],
-        edge[1],
-        triangle[0],
-        triangle[1],
-        triangle[2],
+    match classify_segment_triangle3_intersection_with_preclassified_sides(
+        edge,
+        triangle,
+        endpoint_sides,
+        plane,
         policy,
     ) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
@@ -344,6 +347,45 @@ fn edge_against_triangle(
             Err(PredicateOutcome::unknown(needed, stage))
         }
     }
+}
+
+fn classify_triangle_against_prepared_plane(
+    plane: &PreparedOrientedPlane3,
+    triangle: [&Point3; 3],
+    policy: PredicatePolicy,
+) -> Result<(PlaneTriangleRelation, [PlaneSide; 3]), PredicateOutcome<TriangleTriangleClassification>>
+{
+    let mut sides = [PlaneSide::On; 3];
+    for (index, point) in triangle.into_iter().enumerate() {
+        sides[index] = match plane.classify_point_with_policy(point, policy) {
+            PredicateOutcome::Decided { value, .. } => value,
+            PredicateOutcome::Unknown { needed, stage } => {
+                return Err(PredicateOutcome::unknown(needed, stage));
+            }
+        };
+    }
+
+    let below = sides
+        .iter()
+        .filter(|&&side| side == PlaneSide::Below)
+        .count();
+    let above = sides
+        .iter()
+        .filter(|&&side| side == PlaneSide::Above)
+        .count();
+    let on = sides.iter().filter(|&&side| side == PlaneSide::On).count();
+    let relation = if below == 3 {
+        PlaneTriangleRelation::Below
+    } else if above == 3 {
+        PlaneTriangleRelation::Above
+    } else if on == 3 {
+        PlaneTriangleRelation::Coplanar
+    } else if below > 0 && above > 0 {
+        PlaneTriangleRelation::Split
+    } else {
+        PlaneTriangleRelation::BoundaryTouch
+    };
+    Ok((relation, sides))
 }
 
 fn absorb_edge_relation(
@@ -485,6 +527,14 @@ fn triangle_edges(points: [&Point3; 3]) -> [[&Point3; 2]; 3] {
         [points[0], points[1]],
         [points[1], points[2]],
         [points[2], points[0]],
+    ]
+}
+
+fn triangle_edge_sides(sides: [PlaneSide; 3]) -> [[PlaneSide; 2]; 3] {
+    [
+        [sides[0], sides[1]],
+        [sides[1], sides[2]],
+        [sides[2], sides[0]],
     ]
 }
 

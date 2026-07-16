@@ -186,6 +186,30 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
     ];
     let segment_start = rational_point3(0, 1, 0, 1, -1, 1);
     let segment_end = rational_point3(0, 1, 0, 1, 1, 1);
+    let noncoplanar_left = [
+        rational_point3(0, 1, 0, 1, 0, 1),
+        rational_point3(4, 1, 0, 1, 0, 1),
+        rational_point3(0, 1, 4, 1, 0, 1),
+    ];
+    let noncoplanar_right = [
+        rational_point3(1, 1, 1, 1, -1, 1),
+        rational_point3(1, 1, 3, 1, 1, 1),
+        rational_point3(3, 1, 1, 1, 1, 1),
+    ];
+    trace_dispatch_cases(
+        "hypermesh_port_helpers/triangle_triangle3/noncoplanar_report_replay",
+        &[()],
+        |_| {
+            black_box(classify_triangle_triangle3(
+                &noncoplanar_left[0],
+                &noncoplanar_left[1],
+                &noncoplanar_left[2],
+                &noncoplanar_right[0],
+                &noncoplanar_right[1],
+                &noncoplanar_right[2],
+            ));
+        },
+    );
 
     // These rows track construction and coplanar helpers lifted from hypermesh.
     // Topology is classified by retained exact predicates, and split parameters
@@ -253,6 +277,23 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 Some(TriangleTriangleIntersection::CoplanarDisjoint) => 3,
                 Some(TriangleTriangleIntersection::CoplanarTouching) => 4,
                 Some(TriangleTriangleIntersection::CoplanarOverlapping) => 5,
+                None => -1,
+            })
+        });
+    });
+    group.bench_function("triangle_triangle3/noncoplanar_report_replay", |bench| {
+        bench.iter(|| {
+            let classification = classify_triangle_triangle3(
+                black_box(&noncoplanar_left[0]),
+                black_box(&noncoplanar_left[1]),
+                black_box(&noncoplanar_left[2]),
+                black_box(&noncoplanar_right[0]),
+                black_box(&noncoplanar_right[1]),
+                black_box(&noncoplanar_right[2]),
+            );
+            black_box(match classification.value().map(|report| report.relation) {
+                Some(TriangleTriangleIntersection::NonCoplanarIntersection) => 1_i64,
+                Some(_) => 0,
                 None => -1,
             })
         });
