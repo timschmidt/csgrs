@@ -67,3 +67,7 @@ harness = false
 [[bench]]
 name = "fixture_smoke"
 harness = false
+
+[[bench]]
+name = "spatial_index_audit"
+harness = false

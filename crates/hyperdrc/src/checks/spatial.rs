@@ -5,7 +5,7 @@
 //! intentionally simple and deterministic because readiness reports are easier
 //! to review when candidate ordering is stable across platforms and runs.
 
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 use geo::{BoundingRect, Polygon};
 
@@ -25,8 +25,8 @@ const SPATIAL_GRID_EPSILON: f64 = 1.0e-9;
 /// borrow the layer key once instead of allocating one key per bucket probe.
 pub(super) struct CopperSpatialIndex<'a> {
     features: &'a [&'a CopperFeature],
-    buckets_by_layer: BTreeMap<String, BTreeMap<(i64, i64), Vec<usize>>>,
-    all_layer_buckets: BTreeMap<(i64, i64), Vec<usize>>,
+    buckets_by_layer: HashMap<String, HashMap<(i64, i64), Vec<usize>>>,
+    all_layer_buckets: HashMap<(i64, i64), Vec<usize>>,
     cell_size: f64,
     maximum_span: f64,
 }
@@ -39,9 +39,8 @@ impl<'a> CopperSpatialIndex<'a> {
             .map(|feature| feature_span(feature))
             .fold(0.0_f64, f64::max);
         let cell_size = nominal_radius.max(maximum_span).max(SPATIAL_GRID_EPSILON);
-        let mut buckets_by_layer: BTreeMap<String, BTreeMap<(i64, i64), Vec<usize>>> =
-            BTreeMap::new();
-        let mut all_layer_buckets: BTreeMap<(i64, i64), Vec<usize>> = BTreeMap::new();
+        let mut buckets_by_layer: HashMap<String, HashMap<(i64, i64), Vec<usize>>> = HashMap::new();
+        let mut all_layer_buckets: HashMap<(i64, i64), Vec<usize>> = HashMap::new();
 
         for (index, feature) in features.iter().enumerate() {
             let (bucket_x, bucket_y) =
@@ -69,7 +68,7 @@ impl<'a> CopperSpatialIndex<'a> {
 
     /// Number of populated grid buckets, useful for trace diagnostics.
     pub(super) fn bucket_count(&self) -> usize {
-        self.buckets_by_layer.values().map(BTreeMap::len).sum()
+        self.buckets_by_layer.values().map(HashMap::len).sum()
     }
 
     /// Return same-layer candidate features near the queried feature.
@@ -215,7 +214,7 @@ impl<'a> CopperSpatialIndex<'a> {
 /// `pub(super)` avoids exposing bbox-center approximations as public geometry
 /// semantics while letting layer checks share tested spatial infrastructure.
 pub(super) struct LayerPolygonSpatialIndex {
-    buckets: BTreeMap<(i64, i64), Vec<usize>>,
+    buckets: HashMap<(i64, i64), Vec<usize>>,
     bounds: Vec<Option<geo::Rect<f64>>>,
     cell_size: f64,
     maximum_span: f64,
@@ -234,7 +233,7 @@ impl LayerPolygonSpatialIndex {
             .map(rect_span)
             .fold(0.0_f64, f64::max);
         let cell_size = nominal_radius.max(maximum_span).max(SPATIAL_GRID_EPSILON);
-        let mut buckets = BTreeMap::new();
+        let mut buckets = HashMap::new();
 
         for (index, bounds) in bounds.iter().enumerate() {
             let Some(bounds) = bounds else {
@@ -311,7 +310,7 @@ impl LayerPolygonSpatialIndex {
 /// remains responsible for exact edge-gap comparison.
 pub(super) struct DrillSpatialIndex<'a> {
     drills: &'a [DrillFeature],
-    buckets: BTreeMap<(i64, i64), Vec<usize>>,
+    buckets: HashMap<(i64, i64), Vec<usize>>,
     cell_size: f64,
     maximum_radius: f64,
 }
@@ -325,7 +324,7 @@ impl<'a> DrillSpatialIndex<'a> {
             .map(|diameter| diameter / 2.0)
             .fold(0.0_f64, f64::max);
         let cell_size = (maximum_radius * 2.0 + nominal_spacing).max(SPATIAL_GRID_EPSILON);
-        let mut buckets: BTreeMap<(i64, i64), Vec<usize>> = BTreeMap::new();
+        let mut buckets: HashMap<(i64, i64), Vec<usize>> = HashMap::new();
 
         for (index, drill) in drills.iter().enumerate() {
             let key = center_bucket_key(drill.location_f64_compatibility_required(), cell_size);
@@ -429,7 +428,7 @@ impl<'a> DrillSpatialIndex<'a> {
 /// decisions to the exact caller-side predicate.
 pub(super) struct PointSpatialIndex {
     points: Vec<[f64; 2]>,
-    buckets: BTreeMap<(i64, i64), Vec<usize>>,
+    buckets: HashMap<(i64, i64), Vec<usize>>,
     cell_size: f64,
 }
 
@@ -438,7 +437,7 @@ impl PointSpatialIndex {
     pub(super) fn new(points: impl IntoIterator<Item = [f64; 2]>, nominal_radius: f64) -> Self {
         let cell_size = nominal_radius.max(SPATIAL_GRID_EPSILON);
         let points = points.into_iter().collect::<Vec<_>>();
-        let mut buckets: BTreeMap<(i64, i64), Vec<usize>> = BTreeMap::new();
+        let mut buckets: HashMap<(i64, i64), Vec<usize>> = HashMap::new();
 
         for (index, point) in points.iter().enumerate() {
             buckets
@@ -497,7 +496,7 @@ fn center_bucket_key(location: [f64; 2], cell_size: f64) -> (i64, i64) {
 }
 
 fn candidate_centers_within(
-    buckets: &BTreeMap<(i64, i64), Vec<usize>>,
+    buckets: &HashMap<(i64, i64), Vec<usize>>,
     cell_size: f64,
     center: [f64; 2],
     radius: f64,
@@ -676,6 +675,23 @@ mod tests {
         assert_eq!(index.candidates_near(0, 0.10), vec![1]);
         assert_eq!(index.later_candidates_near(0, 0.10), vec![1]);
         assert!(index.candidates_near(2, 0.10).is_empty());
+    }
+
+    #[test]
+    fn hash_bucket_queries_keep_sorted_deterministic_candidate_order() {
+        let polygons = vec![
+            rect_polygon([2.0, 0.0], [0.2, 0.2], 0.0),
+            rect_polygon([0.0, 0.0], [0.2, 0.2], 0.0),
+            rect_polygon([1.0, 0.0], [0.2, 0.2], 0.0),
+        ];
+
+        for _ in 0..32 {
+            let index = LayerPolygonSpatialIndex::new(&polygons, 0.2);
+            assert_eq!(
+                index.candidates_near_polygon(&polygons[1], 2.0),
+                vec![0, 1, 2]
+            );
+        }
     }
 
     #[test]

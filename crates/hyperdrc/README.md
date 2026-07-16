@@ -76,6 +76,9 @@ Performance work should keep expensive geometry checks observable, avoid hiding 
 or adapter costs, and prefer reusable source/provenance records over reparsing release
 packages for each output format.
 
+The measured reference audit, including retained and rejected broad-phase experiments,
+is recorded in [PERFORMANCE.md](PERFORMANCE.md).
+
 Report sinks share the same `Report` model, so text, JSON, SARIF, SQLite, Arrow, Parquet,
 and overlays do not force independent analysis passes. Geometry hashes, baselines,
 waivers, parser summaries, and sidecar indexes let repeated CI runs compare evidence
@@ -330,6 +333,7 @@ stay focused on local behavior and evidence boundaries.
 - STMicroelectronics. *AN576: Influence of the PCB Layout on the ESD Protection*. STMicroelectronics, DocID3588 Rev. 3, https://www.st.com/resource/en/application_note/an576-pcb-layout-optimisation-stmicroelectronics.pdf. Accessed 14 May 2026.
 - Sun, Yanhui, et al. "Multi-Physics Coupling Aid Uniformity Improvement in Pattern Plating." *Applied Thermal Engineering*, vol. 108, 2016, pp. 1197-1206, https://doi.org/10.1016/j.applthermaleng.2016.07.182.
 - Tang, Yinggang, et al. "Study on Wet Chemical Etching of Flexible Printed Circuit Board with 16-um Line Pitch." *Journal of Electronic Materials*, vol. 52, 2023, pp. 4030-4036, https://doi.org/10.1007/s11664-023-10368-z.
+- Teschner, Matthias, et al. "Optimized Spatial Hashing for Collision Detection of Deformable Objects." *Vision, Modeling, and Visualization 2003*, 2003, pp. 47-54, http://hdl.handle.net/20.500.11850/52292.
 - Toussaint, Godfried T. "Solving Geometric Problems with the Rotating Calipers." *Proceedings of IEEE MELECON '83*, 1983.
 - Wilcoxon, Ross, Tim Pearson, and David Hillman. "Modeling the Effects of Thermal Pad Voiding on Quad Flatpack No-Lead (QFN) Components." *Journal of Surface Mount Technology*, vol. 36, no. 2, 2023, https://doi.org/10.37665/smt.v36i2.37.
 - Wheeler, H. A. "Transmission-Line Properties of a Stripline Between Parallel Planes." *IEEE Transactions on Microwave Theory and Techniques*, vol. 26, no. 11, 1978, pp. 866-876, https://doi.org/10.1109/TMTT.1978.1129505.

@@ -82,13 +82,13 @@ fn main() {
     "#;
 
     let parse_elapsed = time("sexp_parse_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = sexp::parse(sexp_input).expect("benchmark S-expression should parse");
         }
     });
 
     let geometry_elapsed = time("geometry_build_10k", || {
-        for index in 0..10_000 {
+        for index in iterations(10_000) {
             let x = index as f64 * 0.001;
             let mut polygons = vec![
                 rect_polygon([x, x], [1.0, 2.0], 35.0),
@@ -124,13 +124,13 @@ fn main() {
     });
     let gerber_metadata_input = "%MOMM*%\n%FSLAX46Y46*%\n%AMTHERM*1,1,0.5,0,0,0*%\n%ADD10C,0.5*%\n%ADD11R,1.0X0.5*%\n%LPD*%\n%LMN*%\n%LR0*%\n%LS1*%\n%SRX2Y1I1.0J0.0*%\nD10*\nG75*\nG36*\nG01X0Y0D02*\nG02X10Y0I5J0D01*\nG37*\n%LPC*%\nX10Y10D03*\n%SR*%\n%TF.FileFunction,Copper,L1,Top*%\n%TF.FilePolarity,Positive*%\n%TF.SameCoordinates,PXbench*%\n%TA.AperFunction,Conductor*%\n%TA.AperFunction,SMDPad,CuDef*%\n%TO.N,GND*%\n%TO.C,U1*%\n%TO.P,U1,1*%\n%TD.N*%\n%TD*%\n";
     let gerber_metadata_elapsed = time("gerber_metadata_parse_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = parse_gerber_metadata_report(gerber_metadata_input.as_bytes());
         }
     });
     let ipc356_input = "317 /GND U1 1 X010000Y020000D000600 ACCESS=TOP FEATURE=SMD MASK=OPEN\n327 /VCC U2 2 X030000Y040000D000700 ACCESS=BOTTOM FEATURE=VIA MASK=COVERED\n367 malformed\n";
     let ipc356_parse_elapsed = time("ipc356_parse_mixed_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = parse_ipc356_report(ipc356_input, std::path::Path::new("bench.ipc"));
         }
     });
@@ -143,7 +143,7 @@ fn main() {
 327 /MISC U3 3 X110000Y120000D000500 FEATURE=OTHER
 ";
     let ipc356_metadata_elapsed = time("ipc356_metadata_summary_parse_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = parse_ipc356_report(ipc356_metadata_input, std::path::Path::new("bench.ipc"));
         }
     });
@@ -154,7 +154,7 @@ fn main() {
 327 / U4 4 X070000Y080000D000600
 ";
     let ipc356_net_summary_elapsed = time("ipc356_net_summary_parse_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ =
                 parse_ipc356_report(ipc356_net_summary_input, std::path::Path::new("bench.ipc"));
         }
@@ -166,7 +166,7 @@ fn main() {
 327 /NO_DIAM U3 4 X070000Y080000
 ";
     let ipc356_field_summary_elapsed = time("ipc356_field_summary_parse_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = parse_ipc356_report(
                 ipc356_field_summary_input,
                 std::path::Path::new("bench.ipc"),
@@ -180,7 +180,7 @@ fn main() {
 327 /NO_DIAM U4 4 X070000Y080000
 ";
     let ipc356_geometry_summary_elapsed = time("ipc356_geometry_summary_parse_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = parse_ipc356_report(
                 ipc356_geometry_summary_input,
                 std::path::Path::new("bench.ipc"),
@@ -194,7 +194,7 @@ fn main() {
 999 ignored-unknown-record
 ";
     let ipc356_issue_summary_elapsed = time("ipc356_issue_summary_parse_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = parse_ipc356_report(
                 ipc356_issue_summary_input,
                 std::path::Path::new("bench.ipc"),
@@ -246,7 +246,7 @@ fn main() {
     )
     .expect("benchmark KiCad file should be writable");
     let kicad_footprint_graphics_elapsed = time("kicad_footprint_graphics_load_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = load_kicad_pcb(&kicad_graphics_path).expect("benchmark KiCad file should load");
         }
     });
@@ -267,7 +267,7 @@ fn main() {
         })
         .collect::<Vec<_>>();
     let duplicate_layer_elapsed = time("duplicate_layer_geometry_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = duplicate_layer_geometry_readiness(&duplicate_layers, &scalar("1.0e-9"));
         }
     });
@@ -285,7 +285,7 @@ fn main() {
         }),
     );
     let duplicate_island_elapsed = time("duplicate_layer_island_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = duplicate_layer_island_readiness(
                 "bench duplicate islands",
                 &duplicate_island_layer,
@@ -306,7 +306,7 @@ fn main() {
         }),
     );
     let tiny_feature_elapsed = time("tiny_layer_feature_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = tiny_layer_feature_readiness(
                 "bench tiny features",
                 &tiny_feature_layer,
@@ -327,7 +327,7 @@ fn main() {
         }),
     );
     let skinny_feature_elapsed = time("skinny_layer_feature_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = skinny_layer_feature_readiness(
                 "bench skinny features",
                 &skinny_feature_layer,
@@ -358,7 +358,7 @@ fn main() {
         ),
     ];
     let density_elapsed = time("local_copper_density_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = local_copper_density_readiness(
                 &density_layers,
                 &scalar("10.0"),
@@ -384,12 +384,12 @@ fn main() {
         panel_features: None,
     };
     let copper_width_elapsed = time("copper_width_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = copper_width_readiness(&sparse_copper_intent_board, &[], &scalar("0.12"));
         }
     });
     let copper_net_intent_elapsed = time("copper_net_intent_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = copper_net_intent(&sparse_copper_intent_board, &[]);
         }
     });
@@ -406,7 +406,7 @@ fn main() {
         }),
     );
     let paste_spacing_sparse_elapsed = time("paste_aperture_spacing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = paste_aperture_spacing(
                 "bench sparse apertures",
                 &sparse_apertures,
@@ -431,7 +431,7 @@ fn main() {
         }),
     );
     let paste_ratio_sparse_elapsed = time("paste_aperture_ratio_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = paste_aperture_ratio(
                 "bench sparse apertures",
                 &sparse_apertures,
@@ -444,7 +444,7 @@ fn main() {
         }
     });
     let paste_coverage_sparse_elapsed = time("paste_aperture_coverage_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = paste_aperture_coverage(
                 "bench sparse apertures",
                 &sparse_apertures,
@@ -455,7 +455,7 @@ fn main() {
         }
     });
     let paste_overhang_sparse_elapsed = time("paste_overhang_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = paste_overhang(
                 "bench sparse apertures",
                 &sparse_ratio_copper,
@@ -467,7 +467,7 @@ fn main() {
         }
     });
     let mask_coverage_sparse_elapsed = time("solder_mask_opening_coverage_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = solder_mask_opening_coverage(
                 "bench sparse ratio copper",
                 &sparse_ratio_copper,
@@ -478,7 +478,7 @@ fn main() {
         }
     });
     let mask_opening_ratio_sparse_elapsed = time("solder_mask_opening_ratio_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = solder_mask_opening_ratio_readiness(
                 "bench sparse ratio copper",
                 &sparse_ratio_copper,
@@ -491,7 +491,7 @@ fn main() {
         }
     });
     let mask_annular_ring_sparse_elapsed = time("solder_mask_annular_ring_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = solder_mask_annular_ring_readiness(
                 "bench sparse ratio copper",
                 &sparse_ratio_copper,
@@ -503,7 +503,7 @@ fn main() {
         }
     });
     let exposed_copper_sparse_elapsed = time("exposed_copper_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = exposed_copper(
                 "bench sparse ratio copper",
                 &sparse_ratio_copper,
@@ -514,7 +514,7 @@ fn main() {
         }
     });
     let mask_expansion_sparse_elapsed = time("solder_mask_expansion_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = solder_mask_expansion(
                 "bench sparse cover copper",
                 &sparse_cover_copper,
@@ -526,7 +526,7 @@ fn main() {
         }
     });
     let paste_mask_alignment_sparse_elapsed = time("paste_mask_alignment_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = paste_mask_alignment(
                 "bench sparse apertures",
                 &sparse_ratio_copper,
@@ -538,7 +538,7 @@ fn main() {
     });
     let mask_overlap_clearance_sparse_elapsed =
         time("solder_mask_overlap_clearance_sparse_1k", || {
-            for _ in 0..1_000 {
+            for _ in iterations(1_000) {
                 let _ = solder_mask_overlap_clearance(
                     "bench sparse ratio copper",
                     &sparse_ratio_copper,
@@ -550,7 +550,7 @@ fn main() {
             }
         });
     let mask_spacing_sparse_elapsed = time("solder_mask_opening_spacing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = solder_mask_opening_spacing(
                 "bench sparse apertures",
                 &sparse_apertures,
@@ -560,7 +560,7 @@ fn main() {
         }
     });
     let mask_island_sparse_elapsed = time("mask_island_keepout_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = mask_island_keepout(
                 "bench sparse apertures",
                 &sparse_apertures,
@@ -579,7 +579,7 @@ fn main() {
         }),
     );
     let silkscreen_overlap_sparse_elapsed = time("silkscreen_overlap_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = silkscreen_overlap(
                 "bench sparse silk",
                 &sparse_silk,
@@ -590,7 +590,7 @@ fn main() {
         }
     });
     let silkscreen_clearance_sparse_elapsed = time("silkscreen_clearance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = silkscreen_clearance(
                 "bench sparse silk",
                 &sparse_silk,
@@ -602,7 +602,7 @@ fn main() {
         }
     });
     let silkscreen_text_height_elapsed = time("silkscreen_text_height_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = silkscreen_text_height_readiness(
                 "bench sparse silk",
                 &sparse_silk,
@@ -636,7 +636,7 @@ fn main() {
         }),
     );
     let tombstone_elapsed = time("tombstone_paste_imbalance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = tombstone_paste_imbalance_readiness(
                 "bench tombstone paste",
                 &tombstone_paste,
@@ -682,7 +682,7 @@ fn main() {
         }),
     );
     let paste_via_elapsed = time("paste_via_exposure_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = paste_via_exposure_readiness(
                 "bench paste via sparse paste",
                 &paste_via_sparse_paste,
@@ -694,7 +694,7 @@ fn main() {
     });
     let thermal_pad_windowpane_sparse_elapsed =
         time("thermal_pad_paste_windowpane_sparse_1k", || {
-            for _ in 0..1_000 {
+            for _ in iterations(1_000) {
                 let _ = thermal_pad_paste_windowpane_readiness(
                     "bench paste via sparse paste",
                     &paste_via_sparse_paste,
@@ -738,7 +738,7 @@ fn main() {
         panel_features: None,
     };
     let net_constraint_elapsed = time("net_constraint_inherited_clearance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = net_constraint_readiness(
                 &net_constraint_classes,
                 None,
@@ -782,7 +782,7 @@ fn main() {
     };
     let net_constraint_region_elapsed =
         time("net_constraint_region_scoped_clearance_sparse_1k", || {
-            for _ in 0..1_000 {
+            for _ in iterations(1_000) {
                 let _ = net_constraint_readiness(
                     &net_constraint_region_classes,
                     None,
@@ -829,7 +829,7 @@ fn main() {
         panel_features: None,
     };
     let net_constraint_pair_elapsed = time("net_constraint_pair_spacing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = net_constraint_readiness(
                 &net_constraint_pair_classes,
                 None,
@@ -914,7 +914,7 @@ fn main() {
         panel_features: None,
     };
     let net_constraint_impedance_elapsed = time("net_constraint_impedance_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let violations = net_constraint_readiness(
                 &net_constraint_impedance_classes,
                 Some(&net_constraint_impedance_stackup),
@@ -944,7 +944,7 @@ fn main() {
         panel_features: None,
     };
     let different_net_spacing_elapsed = time("different_net_spacing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = net_spacing(
                 &different_net_spacing_board,
                 &scalar("0.10"),
@@ -978,7 +978,7 @@ fn main() {
         panel_features: None,
     };
     let registration_elapsed = time("registration_tolerance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = registration_tolerance(&registration_board, &scalar("0.10"), &scalar("1.0e-9"));
         }
     });
@@ -995,7 +995,7 @@ fn main() {
         panel_features: None,
     };
     let acid_trap_elapsed = time("trace_junction_acid_trap_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = trace_junction_acid_trap_readiness(
                 &acid_trap_board,
                 &[],
@@ -1017,7 +1017,7 @@ fn main() {
         panel_features: None,
     };
     let acid_trap_sparse_elapsed = time("trace_junction_acid_trap_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = trace_junction_acid_trap_readiness(
                 &acid_trap_sparse_board,
                 &[],
@@ -1047,7 +1047,7 @@ fn main() {
         panel_features: None,
     };
     let via_in_pad_elapsed = time("via_in_pad_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = via_in_pad_readiness(&via_in_pad_board, &[], &scalar("1.0e-9"));
         }
     });
@@ -1072,7 +1072,7 @@ fn main() {
         panel_features: None,
     };
     let teardrop_elapsed = time("teardrop_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = teardrop_readiness(&teardrop_board, &[], &scalar("0.12"), &scalar("1.0e-9"));
         }
     });
@@ -1099,7 +1099,7 @@ fn main() {
         panel_features: None,
     };
     let local_fiducial_elapsed = time("local_fiducial_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = local_fiducial_readiness(
                 &dense_pad_fiducial_board,
                 &[],
@@ -1119,7 +1119,7 @@ fn main() {
         panel_features: None,
     };
     let dense_pad_escape_elapsed = time("dense_pad_escape_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = dense_pad_escape_readiness(
                 &dense_pad_escape_board,
                 &[],
@@ -1129,7 +1129,7 @@ fn main() {
         }
     });
     let dense_pad_via_elapsed = time("dense_pad_via_spacing_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = dense_pad_via_spacing_readiness(
                 &dense_pad_board,
                 &[],
@@ -1157,7 +1157,7 @@ fn main() {
         panel_features: None,
     };
     let dense_pad_via_sparse_pads_elapsed = time("dense_pad_via_spacing_sparse_pads_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = dense_pad_via_spacing_readiness(
                 &dense_pad_via_sparse_pads_board,
                 &[],
@@ -1170,7 +1170,7 @@ fn main() {
     });
 
     let dense_pad_mask_elapsed = time("dense_pad_mask_bridge_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = dense_pad_mask_bridge_readiness(
                 &dense_pad_board,
                 &[],
@@ -1199,7 +1199,7 @@ fn main() {
         panel_features: None,
     };
     let dense_pad_mask_sparse_elapsed = time("dense_pad_mask_bridge_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = dense_pad_mask_bridge_readiness(
                 &dense_pad_mask_sparse_board,
                 &[],
@@ -1225,7 +1225,7 @@ fn main() {
         panel_features: None,
     };
     let component_spacing_elapsed = time("component_spacing_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = component_spacing_readiness(
                 &assembly_sparse_board,
                 &[],
@@ -1259,7 +1259,7 @@ fn main() {
         panel_features: None,
     };
     let component_edge_elapsed = time("component_edge_clearance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = component_edge_clearance_readiness(&component_edge_board, &[], &scalar("0.5"));
         }
     });
@@ -1287,7 +1287,7 @@ fn main() {
         panel_features: None,
     };
     let component_hole_elapsed = time("component_hole_clearance_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = component_hole_clearance_readiness(
                 &component_hole_board,
                 &[],
@@ -1318,7 +1318,7 @@ fn main() {
         panel_features: None,
     };
     let connector_rework_elapsed = time("connector_rework_clearance_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = connector_rework_clearance_readiness(
                 &connector_rework_board,
                 &[],
@@ -1343,7 +1343,7 @@ fn main() {
         panel_features: None,
     };
     let connector_return_sparse_elapsed = time("connector_return_path_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = connector_return_path_readiness(
                 &connector_return_sparse_board,
                 &[],
@@ -1368,7 +1368,7 @@ fn main() {
         panel_features: None,
     };
     let edge_stitching_sparse_elapsed = time("edge_stitching_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = edge_stitching_readiness(
                 &edge_stitching_sparse_board,
                 &[],
@@ -1403,7 +1403,7 @@ fn main() {
         panel_features: None,
     };
     let board_edge_exposure_elapsed = time("board_edge_exposure_rect_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = board_edge_exposure(&rectangular_edge_board, &[], &scalar("1.0e-9"));
         }
     });
@@ -1427,7 +1427,7 @@ fn main() {
         panel_features: None,
     };
     let high_speed_edge_elapsed = time("high_speed_edge_rect_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = high_speed_edge_readiness(
                 &rectangular_high_speed_edge_board,
                 &[],
@@ -1456,7 +1456,7 @@ fn main() {
         panel_features: None,
     };
     let high_voltage_edge_elapsed = time("high_voltage_edge_rect_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = high_voltage_edge_readiness(
                 &rectangular_high_voltage_edge_board,
                 &[],
@@ -1476,7 +1476,7 @@ fn main() {
         panel_features: None,
     };
     let chassis_stitching_sparse_elapsed = time("chassis_stitching_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ =
                 chassis_stitching_readiness(&chassis_stitching_sparse_board, &[], &scalar("0.50"));
         }
@@ -1502,7 +1502,7 @@ fn main() {
         panel_features: None,
     };
     let pad_pair_asymmetry_elapsed = time("pad_pair_asymmetry_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = pad_pair_asymmetry_readiness(
                 &asymmetry_board,
                 &[],
@@ -1530,7 +1530,7 @@ fn main() {
         panel_features: None,
     };
     let fiducial_keepout_elapsed = time("fiducial_keepout_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = fiducial_keepout_readiness(
                 &fiducial_keepout_board,
                 &[],
@@ -1562,7 +1562,7 @@ fn main() {
         panel_features: None,
     };
     let fiducial_edge_elapsed = time("fiducial_edge_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = fiducial_readiness(&fiducial_edge_board, &[], &scalar("1.0"));
         }
     });
@@ -1595,7 +1595,7 @@ fn main() {
         panel_features: None,
     };
     let selective_wave_elapsed = time("selective_wave_keepout_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = selective_wave_solder_keepout_readiness(
                 &process_keepout_board,
                 &[],
@@ -1605,7 +1605,7 @@ fn main() {
         }
     });
     let press_fit_elapsed = time("press_fit_keepout_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = press_fit_keepout_readiness(
                 &process_keepout_board,
                 &[],
@@ -1656,7 +1656,7 @@ fn main() {
         panel_features: None,
     };
     let mouse_bite_elapsed = time("mouse_bite_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = mouse_bite_readiness(
                 &mouse_bite_board,
                 &mouse_bite_drills,
@@ -1711,7 +1711,7 @@ fn main() {
         panel_features: None,
     };
     let tooling_hole_elapsed = time("tooling_hole_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = tooling_hole_readiness(
                 &tooling_hole_board,
                 &[],
@@ -1741,7 +1741,7 @@ fn main() {
         panel_features: None,
     };
     let conformal_coating_elapsed = time("conformal_coating_keepout_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = conformal_coating_keepout_readiness(
                 &conformal_coating_board,
                 &[],
@@ -1768,7 +1768,7 @@ fn main() {
         panel_features: None,
     };
     let testpoint_access_elapsed = time("testpoint_accessibility_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = testpoint_accessibility_readiness(
                 &testpoint_board,
                 &testpoints,
@@ -1798,7 +1798,7 @@ fn main() {
         .map(|index| bench_testpoint(&format!("VBUS_{index}"), [index as f64 * 2.0, 0.0], 0.4))
         .collect::<Vec<_>>();
     let testpoint_coverage_elapsed = time("testpoint_coverage_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = testpoint_coverage_readiness(&coverage_board, &coverage_points, &[]);
         }
     });
@@ -1825,7 +1825,7 @@ fn main() {
     };
     let testpoint_side_points = vec![bench_testpoint("TP_SIDE", [-10.0, -10.0], 0.40)];
     let testpoint_side_elapsed = time("testpoint_side_parity_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = testpoint_accessibility_readiness(
                 &testpoint_side_board,
                 &testpoint_side_points,
@@ -1856,7 +1856,7 @@ fn main() {
     };
     let testpoint_copper_points = vec![bench_testpoint("TP_NET", [-10.0, -10.0], 0.40)];
     let testpoint_copper_elapsed = time("testpoint_copper_clearance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = testpoint_copper_clearance_readiness(
                 &testpoint_copper_board,
                 &testpoint_copper_points,
@@ -1880,7 +1880,7 @@ fn main() {
         panel_features: None,
     };
     let antenna_keepout_elapsed = time("antenna_copper_keepout_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = antenna_copper_keepout_readiness(
                 &antenna_board,
                 &[],
@@ -1910,7 +1910,7 @@ fn main() {
         panel_features: None,
     };
     let rf_keepout_elapsed = time("rf_keepout_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ =
                 rf_keepout_readiness(&rf_keepout_board, &scalar("0.60"), &[], &scalar("1.0e-9"));
         }
@@ -1935,7 +1935,7 @@ fn main() {
         panel_features: None,
     };
     let rf_via_fence_elapsed = time("rf_via_fence_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = rf_via_fence_readiness(&rf_fence_board, &[], &scalar("0.60"));
         }
     });
@@ -1952,7 +1952,7 @@ fn main() {
         panel_features: None,
     };
     let inductor_keepout_elapsed = time("inductor_copper_keepout_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = inductor_copper_keepout_readiness(
                 &power_board,
                 &[],
@@ -1982,7 +1982,7 @@ fn main() {
         panel_features: None,
     };
     let switch_node_elapsed = time("switch_node_keepout_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = switch_node_keepout_readiness(
                 &switch_node_board,
                 &[],
@@ -2005,12 +2005,12 @@ fn main() {
         panel_features: None,
     };
     let power_plane_elapsed = time("power_plane_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = power_plane_readiness(&sparse_power_summary_board, &[]);
         }
     });
     let high_current_neck_elapsed = time("high_current_neck_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = high_current_neck_readiness(&sparse_power_summary_board, &[], &scalar("0.30"));
         }
     });
@@ -2025,7 +2025,7 @@ fn main() {
         panel_features: None,
     };
     let power_pad_entry_elapsed = time("power_pad_entry_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = power_pad_entry_readiness(
                 &pad_entry_board,
                 &[],
@@ -2058,7 +2058,7 @@ fn main() {
         panel_features: None,
     };
     let power_pad_entry_sparse_elapsed = time("power_pad_entry_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = power_pad_entry_readiness(
                 &sparse_pad_entry_board,
                 &[],
@@ -2079,7 +2079,7 @@ fn main() {
         panel_features: None,
     };
     let power_via_return_elapsed = time("power_via_return_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = power_via_return_readiness(&power_via_return_board, &[], &scalar("0.50"));
         }
     });
@@ -2106,7 +2106,7 @@ fn main() {
         panel_features: None,
     };
     let power_via_return_sparse_elapsed = time("power_via_return_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ =
                 power_via_return_readiness(&sparse_power_via_return_board, &[], &scalar("0.50"));
         }
@@ -2121,7 +2121,7 @@ fn main() {
         panel_features: None,
     };
     let power_via_array_sparse_elapsed = time("power_via_array_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = power_via_array_readiness(&power_via_array_board, &[], &scalar("0.50"));
         }
     });
@@ -2136,7 +2136,7 @@ fn main() {
         panel_features: None,
     };
     let decoupling_sparse_elapsed = time("decoupling_proximity_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = decoupling_proximity_readiness(&decoupling_sparse_board, &[], &scalar("1.0"));
         }
     });
@@ -2153,7 +2153,7 @@ fn main() {
         panel_features: None,
     };
     let thermal_via_distribution_elapsed = time("thermal_via_distribution_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = thermal_via_distribution_readiness(
                 &thermal_board,
                 &[],
@@ -2179,7 +2179,7 @@ fn main() {
         panel_features: None,
     };
     let thermal_via_cluster_elapsed = time("thermal_via_distribution_clustered_100x1k", || {
-        for _ in 0..100 {
+        for _ in iterations(100) {
             let _ = thermal_via_distribution_readiness(
                 &thermal_via_cluster_board,
                 &[],
@@ -2212,13 +2212,13 @@ fn main() {
         panel_features: None,
     };
     let thermal_via_elapsed = time("thermal_via_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = thermal_via_readiness(&thermal_via_sparse_board, &[], 3, &scalar("0.10"));
         }
     });
     let thermal_via_distribution_sparse_elapsed =
         time("thermal_via_distribution_sparse_1k", || {
-            for _ in 0..1_000 {
+            for _ in iterations(1_000) {
                 let _ = thermal_via_distribution_readiness(
                     &thermal_via_sparse_board,
                     &[],
@@ -2250,22 +2250,22 @@ fn main() {
         panel_features: None,
     };
     let thermal_copper_area_elapsed = time("thermal_copper_area_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = thermal_copper_area_readiness(&thermal_sparse_board, &[], &scalar("2.0"));
         }
     });
     let thermal_relief_elapsed = time("thermal_relief_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = thermal_relief_readiness(&thermal_sparse_board, &[], &scalar("1.0e-9"));
         }
     });
     let thermal_pad_via_elapsed = time("thermal_pad_via_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = thermal_pad_via_readiness(&thermal_sparse_board, &[], &scalar("0.75"));
         }
     });
     let hot_component_spacing_elapsed = time("hot_component_spacing_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = hot_component_spacing_readiness(
                 &thermal_sparse_board,
                 &[],
@@ -2275,7 +2275,7 @@ fn main() {
         }
     });
     let thermal_mechanical_elapsed = time("thermal_mechanical_keepout_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = thermal_mechanical_keepout_readiness(
                 &thermal_sparse_board,
                 &[],
@@ -2298,7 +2298,7 @@ fn main() {
         panel_features: None,
     };
     let esd_return_path_elapsed = time("esd_return_path_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = esd_return_path_readiness(&safety_board, &[], &scalar("0.50"));
         }
     });
@@ -2318,7 +2318,7 @@ fn main() {
         panel_features: None,
     };
     let esd_protection_elapsed = time("esd_protection_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = esd_protection_readiness(
                 &esd_protection_board,
                 &[],
@@ -2338,7 +2338,7 @@ fn main() {
         panel_features: None,
     };
     let protective_earth_spacing_elapsed = time("protective_earth_spacing_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = protective_earth_spacing_readiness(
                 &protective_spacing_board,
                 &[],
@@ -2348,7 +2348,7 @@ fn main() {
         }
     });
     let voltage_clearance_elapsed = time("voltage_clearance_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = voltage_clearance_readiness(
                 &protective_spacing_board,
                 &scalar("0.30"),
@@ -2368,7 +2368,7 @@ fn main() {
         panel_features: None,
     };
     let surge_keepout_elapsed = time("surge_protection_keepout_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = surge_protection_keepout_readiness(
                 &surge_keepout_board,
                 &[],
@@ -2390,7 +2390,7 @@ fn main() {
         panel_features: None,
     };
     let mixed_signal_partition_elapsed = time("mixed_signal_partition_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = mixed_signal_partition_readiness(
                 &signal_board,
                 &[],
@@ -2422,7 +2422,7 @@ fn main() {
         panel_features: None,
     };
     let sensitive_spacing_elapsed = time("sensitive_net_spacing_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = sensitive_net_spacing_readiness(
                 &sparse_signal_board,
                 &scalar("0.45"),
@@ -2432,7 +2432,7 @@ fn main() {
         }
     });
     let sensitive_return_elapsed = time("sensitive_return_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = sensitive_return_readiness(&sparse_signal_board, &[], &scalar("0.30"));
         }
     });
@@ -2450,7 +2450,7 @@ fn main() {
         }),
     );
     let min_copper_neck_elapsed = time("min_copper_neck_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = min_copper_neck_width(
                 "bench neck islands",
                 &neck_layer,
@@ -2476,7 +2476,7 @@ fn main() {
         panel_features: None,
     };
     let continuity_elapsed = time("same_net_drill_break_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = same_net_drill_break_readiness(&continuity_board, &[], &[], &scalar("1.0e-9"));
         }
     });
@@ -2508,7 +2508,7 @@ fn main() {
         panel_features: None,
     };
     let continuity_sparse_drills_elapsed = time("same_net_drill_break_sparse_drills_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = same_net_drill_break_readiness(
                 &continuity_sparse_drill_board,
                 &[],
@@ -2530,7 +2530,7 @@ fn main() {
         panel_features: None,
     };
     let same_net_island_sparse_elapsed = time("same_net_island_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = same_net_island_readiness(&same_net_island_sparse_board, &[], &scalar("0.10"));
         }
     });
@@ -2558,7 +2558,7 @@ fn main() {
         panel_features: None,
     };
     let plane_clearance_sparse_elapsed = time("plane_clearance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ =
                 plane_clearance_readiness(&plane_clearance_sparse_board, &[], &scalar("1.0e-9"));
         }
@@ -2591,7 +2591,7 @@ fn main() {
         )),
     };
     let panelization_clearance_elapsed = time("panelization_clearance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = panelization_clearance(
                 &panelization_sparse_board,
                 &[],
@@ -2631,7 +2631,7 @@ fn main() {
         panel_features: None,
     };
     let drill_clearance_elapsed = time("drill_to_copper_clearance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = drill_to_copper_clearance(
                 &drill_clearance_sparse_board,
                 &[],
@@ -2680,7 +2680,7 @@ fn main() {
         panel_features: None,
     };
     let plating_intent_elapsed = time("plating_intent_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = plating_intent(&plating_intent_board, &[], &scalar("0.05"));
         }
     });
@@ -2704,7 +2704,7 @@ fn main() {
         .collect::<Vec<_>>();
     outline_clearance_drills.push(bench_drill([0.35, 50.0], 0.30, false));
     let board_outline_drill_elapsed = time("board_outline_drill_clearance_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = board_outline_drill_clearance(
                 "KiCad drills",
                 "KiCad Edge.Cuts",
@@ -2725,7 +2725,7 @@ fn main() {
         ])
         .collect::<Vec<_>>();
     let drill_spacing_elapsed = time("drill_spacing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = drill_spacing(&sparse_drills, &[], &scalar("0.20"));
         }
     });
@@ -2740,7 +2740,7 @@ fn main() {
         .collect::<Vec<_>>();
     ipc_table_points.push(bench_testpoint("SIG", [0.06, 0.0], 0.80));
     let drill_table_elapsed = time("drill_table_consistency_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = drill_table_consistency(
                 &board_table_drills,
                 &sidecar_table_drills,
@@ -2773,7 +2773,7 @@ fn main() {
         bench_testpoint("IPC_DRILL", [0.02, 1.0], 0.50),
     ];
     let ipc356_apply_elapsed = time("ipc356_apply_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let mut board = ipc356_board.clone();
             apply_ipc356_nets(
                 &mut board,
@@ -2783,7 +2783,7 @@ fn main() {
         }
     });
     let ipc356_coverage_elapsed = time("ipc356_coverage_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = ipc356_coverage(
                 &ipc356_board,
                 &ipc356_points,
@@ -2792,7 +2792,7 @@ fn main() {
         }
     });
     let ipc356_drill_elapsed = time("ipc356_drill_diameter_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = ipc356_drill_diameter(
                 &ipc356_board,
                 &ipc356_points,
@@ -2815,7 +2815,7 @@ fn main() {
         panel_features: None,
     };
     let mounting_hole_spacing_elapsed = time("mounting_hole_spacing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = mounting_hole_spacing_readiness(&mechanical_spacing_board, &scalar("0.5"));
         }
     });
@@ -2838,7 +2838,7 @@ fn main() {
         panel_features: None,
     };
     let mounting_hole_distribution_elapsed = time("mounting_hole_distribution_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = mounting_hole_distribution_readiness(
                 &mounting_hole_distribution_board,
                 &scalar("8.0"),
@@ -2861,7 +2861,7 @@ fn main() {
         panel_features: None,
     };
     let mounting_hole_grounding_elapsed = time("mounting_hole_grounding_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = mounting_hole_grounding_readiness(
                 &mounting_hole_grounding_board,
                 &[],
@@ -2886,7 +2886,7 @@ fn main() {
         panel_features: None,
     };
     let mounting_hole_keepout_elapsed = time("mounting_hole_keepout_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = mounting_hole_copper_keepout_readiness(
                 &mounting_hole_keepout_board,
                 &[],
@@ -2920,7 +2920,7 @@ fn main() {
         panel_features: None,
     };
     let mounting_hole_edge_elapsed = time("mounting_hole_edge_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = mounting_hole_edge_clearance_readiness(
                 &mounting_hole_edge_board,
                 &scalar("0.5"),
@@ -2944,7 +2944,7 @@ fn main() {
         panel_features: None,
     };
     let mounting_hole_plating_elapsed = time("mounting_hole_plating_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = mounting_hole_plating_intent_readiness(
                 &mounting_hole_plating_board,
                 &[],
@@ -2972,7 +2972,7 @@ fn main() {
         panel_features: None,
     };
     let gold_finger_spacing_elapsed = time("gold_finger_spacing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = gold_finger_spacing_readiness(
                 &gold_finger_spacing_board,
                 &[],
@@ -2992,7 +2992,7 @@ fn main() {
         panel_features: None,
     };
     let gold_finger_intent_elapsed = time("gold_finger_intent_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = gold_finger_readiness(&gold_finger_intent_board, &[]);
         }
     });
@@ -3016,7 +3016,7 @@ fn main() {
         panel_features: None,
     };
     let gold_finger_edge_elapsed = time("gold_finger_edge_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = gold_finger_edge_readiness(&gold_finger_edge_board, &[], &scalar("1.0"));
         }
     });
@@ -3038,7 +3038,7 @@ fn main() {
     };
     let gold_finger_keepout_drills = vec![bench_drill([1.25, 0.0], 0.6, false)];
     let gold_finger_keepout_elapsed = time("gold_finger_drill_keepout_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = gold_finger_drill_keepout_readiness(
                 &gold_finger_keepout_board,
                 &gold_finger_keepout_drills,
@@ -3073,7 +3073,7 @@ fn main() {
         panel_features: None,
     };
     let edge_plating_elapsed = time("edge_plating_rect_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = edge_plating_intent_readiness(
                 &edge_plating_board,
                 &[],
@@ -3113,7 +3113,7 @@ fn main() {
         )),
     };
     let panel_feature_outline_elapsed = time("panel_feature_outline_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = panel_feature_outline_readiness(
                 &panel_feature_outline_board,
                 &scalar("0.5"),
@@ -3141,7 +3141,7 @@ fn main() {
         panel_features: None,
     };
     let castellation_pitch_elapsed = time("castellation_pitch_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = castellation_pitch_readiness(&castellation_pitch_board, &scalar("0.5"));
         }
     });
@@ -3157,7 +3157,7 @@ fn main() {
         panel_features: None,
     };
     let short_elapsed = time("different_net_short_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = different_net_short_readiness(&short_board, &[], &scalar("1.0e-9"));
         }
     });
@@ -3177,22 +3177,22 @@ fn main() {
         panel_features: None,
     };
     let controlled_impedance_elapsed = time("controlled_impedance_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = controlled_impedance_readiness(&net_usage_board, &[]);
         }
     });
     let differential_pair_presence_elapsed = time("differential_pair_presence_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = differential_pair_readiness(&net_usage_board, &[]);
         }
     });
     let reference_plane_elapsed = time("reference_plane_presence_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = reference_plane_readiness(&net_usage_board, &[]);
         }
     });
     let high_current_elapsed = time("high_current_layer_change_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = high_current_readiness(&net_usage_board, &[]);
         }
     });
@@ -3216,7 +3216,7 @@ fn main() {
         panel_features: None,
     };
     let intra_pair_sparse_elapsed = time("differential_pair_spacing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ =
                 differential_pair_spacing_readiness(&intra_pair_sparse_board, &[], &scalar("0.30"));
         }
@@ -3238,7 +3238,7 @@ fn main() {
         panel_features: None,
     };
     let pair_to_pair_elapsed = time("differential_pair_to_pair_spacing_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = differential_pair_to_pair_spacing_readiness(
                 &differential_pair_board,
                 &[],
@@ -3267,7 +3267,7 @@ fn main() {
         panel_features: None,
     };
     let pair_to_pair_sparse_elapsed = time("differential_pair_to_pair_spacing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = differential_pair_to_pair_spacing_readiness(
                 &pair_to_pair_sparse_board,
                 &[],
@@ -3276,13 +3276,13 @@ fn main() {
         }
     });
     let pair_skew_elapsed = time("differential_pair_skew_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ =
                 differential_pair_skew_readiness(&differential_pair_board, &[], &scalar("0.20"));
         }
     });
     let pair_width_elapsed = time("differential_pair_width_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = differential_pair_width_readiness(
                 &differential_pair_board,
                 &[],
@@ -3292,7 +3292,7 @@ fn main() {
         }
     });
     let pair_neckdown_elapsed = time("differential_pair_neckdown_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = differential_pair_neckdown_readiness(
                 &differential_pair_board,
                 &[],
@@ -3302,7 +3302,7 @@ fn main() {
         }
     });
     let pair_via_proximity_elapsed = time("differential_pair_via_proximity_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = differential_pair_via_proximity_readiness(
                 &differential_pair_board,
                 &[],
@@ -3311,7 +3311,7 @@ fn main() {
         }
     });
     let pair_via_return_elapsed = time("differential_pair_via_return_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = differential_pair_via_return_readiness(
                 &differential_pair_board,
                 &[],
@@ -3320,7 +3320,7 @@ fn main() {
         }
     });
     let mut dense_pair_vias = Vec::new();
-    for index in 0..1_000 {
+    for index in iterations(1_000) {
         let x = index as f64 * 0.25;
         dense_pair_vias.push(bench_via("DDR_DQS_DP", [x, 0.0], 0.20));
         dense_pair_vias.push(bench_via("DDR_DQS_DM", [x + 0.05, 0.0], 0.20));
@@ -3333,7 +3333,7 @@ fn main() {
         panel_features: None,
     };
     let pair_via_proximity_dense_elapsed = time("differential_pair_via_proximity_dense_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = differential_pair_via_proximity_readiness(
                 &dense_pair_via_board,
                 &[],
@@ -3345,7 +3345,7 @@ fn main() {
         bench_via("USB_DP", [0.0, 0.0], 0.20),
         bench_via("USB_DM", [0.05, 0.0], 0.20),
     ];
-    for index in 0..2_000 {
+    for index in iterations(2_000) {
         sparse_ground_vias.push(bench_via("GND", [100.0 + index as f64 * 0.25, 10.0], 0.20));
     }
     let sparse_ground_board = BoardModel {
@@ -3356,7 +3356,7 @@ fn main() {
         panel_features: None,
     };
     let pair_via_return_sparse_elapsed = time("differential_pair_via_return_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ =
                 differential_pair_via_return_readiness(&sparse_ground_board, &[], &scalar("0.20"));
         }
@@ -3365,7 +3365,7 @@ fn main() {
         bench_segment("USB_D+", [0.0, 0.0], [1.0, 0.0], 0.10),
         bench_segment("USB_D-", [0.0, 0.20], [1.0, 0.20], 0.10),
     ];
-    for index in 0..2_000 {
+    for index in iterations(2_000) {
         sparse_pair_return_copper.push(bench_via("GND", [100.0 + index as f64 * 0.50, 10.0], 0.20));
     }
     let sparse_pair_return_board = BoardModel {
@@ -3376,7 +3376,7 @@ fn main() {
         panel_features: None,
     };
     let pair_return_sparse_elapsed = time("differential_pair_return_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ =
                 differential_pair_return_readiness(&sparse_pair_return_board, &[], &scalar("0.30"));
         }
@@ -3394,7 +3394,7 @@ fn main() {
         panel_features: None,
     };
     let split_plane_elapsed = time("split_plane_crossing_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = split_plane_crossing_readiness(
                 &split_plane_board,
                 &[],
@@ -3422,7 +3422,7 @@ fn main() {
         panel_features: None,
     };
     let split_plane_sparse_elapsed = time("split_plane_crossing_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = split_plane_crossing_readiness(
                 &split_plane_sparse_board,
                 &[],
@@ -3432,12 +3432,12 @@ fn main() {
         }
     });
     let return_path_proximity_elapsed = time("return_path_proximity_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = return_path_proximity_readiness(&split_plane_board, &[], &scalar("0.50"));
         }
     });
     let mut sparse_return_path_copper = vec![bench_segment("USB_DP", [0.0, 0.0], [1.0, 0.0], 0.10)];
-    for index in 0..2_000 {
+    for index in iterations(2_000) {
         sparse_return_path_copper.push(bench_segment(
             "GND",
             [100.0 + index as f64 * 3.0, 100.0],
@@ -3453,14 +3453,14 @@ fn main() {
         panel_features: None,
     };
     let return_path_proximity_sparse_elapsed = time("return_path_proximity_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ =
                 return_path_proximity_readiness(&sparse_return_path_board, &[], &scalar("0.50"));
         }
     });
     let mut sparse_reference_plane_copper =
         vec![bench_segment("USB_DP", [0.0, 0.0], [1.0, 0.0], 0.10)];
-    for index in 0..2_000 {
+    for index in iterations(2_000) {
         sparse_reference_plane_copper.push(bench_zone(
             "GND",
             [
@@ -3479,7 +3479,7 @@ fn main() {
         panel_features: None,
     };
     let reference_plane_void_sparse_elapsed = time("reference_plane_void_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = reference_plane_void_readiness(
                 &sparse_reference_plane_board,
                 &[],
@@ -3510,7 +3510,7 @@ fn main() {
         panel_features: None,
     };
     let orphaned_zone_sparse_elapsed = time("orphaned_zone_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ = orphaned_zone_readiness(&orphaned_zone_sparse_board, &[], &scalar("0.10"));
         }
     });
@@ -3525,7 +3525,7 @@ fn main() {
         panel_features: None,
     };
     let return_path_stitching_sparse_elapsed = time("return_path_stitching_sparse_1k", || {
-        for _ in 0..1_000 {
+        for _ in iterations(1_000) {
             let _ =
                 return_path_readiness(&return_path_stitching_sparse_board, &scalar("0.50"), &[]);
         }
@@ -3558,7 +3558,7 @@ fn main() {
         ..Default::default()
     };
     let manifest_elapsed = time("file_manifest_filename_layer_count_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = file_manifest_readiness(&manifest_input);
         }
     });
@@ -3566,26 +3566,26 @@ fn main() {
     polarity_manifest.gerber_layers[1].file_polarity = Some("Negative".to_string());
     polarity_manifest.gerber_layers[11].file_polarity = None;
     let manifest_polarity_elapsed = time("file_manifest_x2_file_polarity_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = file_manifest_readiness(&polarity_manifest);
         }
     });
     let excellon_smoke = "M48\nMETRIC,TZ\nT01C0.300\nT02C0.600\n%\nT01\nG85X010000Y020000X010500Y020500\nX010000Y020000\nT02X011000Y021000\nM30\n";
     let excellon_elapsed = time("excellon_zero_suppression_parse_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = parse_excellon_report(excellon_smoke, std::path::Path::new("bench.drl"));
         }
     });
     let excellon_unit_dialect = "M48\nM71\nT01C0.300\n%\nT01\nX010000Y020000\nM30\n";
     let excellon_unit_dialect_elapsed = time("excellon_m71_unit_parse_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ =
                 parse_excellon_report(excellon_unit_dialect, std::path::Path::new("bench-m71.drl"));
         }
     });
     let excellon_unsupported_units = "M48\nMILS\nT01C0.300\n%\nT01\nX010000Y020000\nM30\n";
     let excellon_unsupported_units_elapsed = time("excellon_unsupported_unit_parse_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = parse_excellon_report(
                 excellon_unsupported_units,
                 std::path::Path::new("bench-mils.drl"),
@@ -3595,7 +3595,7 @@ fn main() {
     let excellon_unit_summary =
         "M48\nMETRIC,TZ\nINCH,LZ\nMILS\nT01C0.300\n%\nT01\nX010000Y020000\nM30\n";
     let excellon_unit_summary_elapsed = time("excellon_unit_summary_parse_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = parse_excellon_report(
                 excellon_unit_summary,
                 std::path::Path::new("bench-units.drl"),
@@ -3604,7 +3604,7 @@ fn main() {
     });
     let excellon_program_structure = "M48\nMETRIC\nT01C0.300\n%\nT01\nX010000Y020000\nM30\n";
     let excellon_program_elapsed = time("excellon_program_structure_parse_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = parse_excellon_report(
                 excellon_program_structure,
                 std::path::Path::new("bench-program.drl"),
@@ -3614,14 +3614,14 @@ fn main() {
     let excellon_tool_table =
         "M48\nMETRIC\nT01C0.300\nT01C0.300\nT01C0.450\nT02C0.000\n%\nT01\nX010000Y020000\nM30\n";
     let excellon_tool_table_elapsed = time("excellon_tool_table_summary_parse_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ =
                 parse_excellon_report(excellon_tool_table, std::path::Path::new("bench-tools.drl"));
         }
     });
     let excellon_routing_summary = "M48\nMETRIC\nT01C0.800\n%\nT01\nG00X010000Y010000\nG01X012000Y010000\nG85X014000Y010000X018000Y010000\nX020000Y020000\nM30\n";
     let excellon_routing_elapsed = time("excellon_routing_summary_parse_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = parse_excellon_report(
                 excellon_routing_summary,
                 std::path::Path::new("bench-routing.drl"),
@@ -3630,14 +3630,14 @@ fn main() {
     });
     let excellon_hit_summary = "M48\nMETRIC\nT03C0.000\nT01C0.600\n%\nX001000Y001000\nT02X002000Y002000\nT03X003000Y003000\nT01X004000Y004000\nX005000Y005000\nX00600AY006000\nM30\n";
     let excellon_hit_summary_elapsed = time("excellon_hit_summary_parse_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ =
                 parse_excellon_report(excellon_hit_summary, std::path::Path::new("bench-hits.drl"));
         }
     });
     let excellon_drill_summary = "M48\nMETRIC\nT01C0.300\nT02C0.600\n%\nT01\nX010000Y020000\nX011000Y020000\nT02\nX012000Y020000\nM30\n";
     let excellon_drill_summary_elapsed = time("excellon_drill_summary_parse_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = parse_excellon_report(
                 excellon_drill_summary,
                 std::path::Path::new("bench-PTH.drl"),
@@ -3647,7 +3647,7 @@ fn main() {
     let duplicate_drill_a = parse_excellon_report(excellon_smoke, std::path::Path::new("a.drl"));
     let duplicate_drill_b = parse_excellon_report(excellon_smoke, std::path::Path::new("b.drl"));
     let excellon_duplicate_elapsed = time("excellon_duplicate_geometry_batch_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ =
                 excellon_batch_readiness(&[duplicate_drill_a.clone(), duplicate_drill_b.clone()]);
         }
@@ -3657,7 +3657,7 @@ fn main() {
         std::path::Path::new("diameter-outlier.drl"),
     );
     let excellon_outlier_elapsed = time("excellon_diameter_outlier_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = excellon_readiness(&outlier_drill_report);
         }
     });
@@ -3670,7 +3670,7 @@ fn main() {
         std::path::Path::new("bench-NPTH.drl"),
     );
     let excellon_plating_split_elapsed = time("excellon_plating_split_batch_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ =
                 excellon_batch_readiness(&[plated_split_pth.clone(), plated_split_npth.clone()]);
         }
@@ -3697,7 +3697,7 @@ fn main() {
         byte_len: 256,
     };
     let artifact_elapsed = time("production_artifact_readiness_5k", || {
-        for _ in 0..5_000 {
+        for _ in iterations(5_000) {
             let _ = production_artifact_readiness(
                 std::slice::from_ref(&artifact_bom),
                 std::slice::from_ref(&artifact_centroid),
@@ -3723,7 +3723,7 @@ fn main() {
         })
         .collect::<Vec<_>>();
     let waiver_governance_elapsed = time("waiver_governance_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = governance_violations(&waiver_inputs);
         }
     });
@@ -3751,7 +3751,7 @@ fn main() {
         violations: stub_violations,
     };
     let waiver_stub_elapsed = time("waiver_stub_fingerprint_10k", || {
-        for _ in 0..10_000 {
+        for _ in iterations(10_000) {
             let _ = report_to_waiver_stubs(&stub_report);
         }
     });
@@ -4149,6 +4149,14 @@ fn bench_zone(net: &str, location: [f64; 2], size: [f64; 2]) -> CopperFeature {
                 name: "bench zone".to_string(),
             }),
         ),
+    }
+}
+
+fn iterations(release_count: usize) -> std::ops::Range<usize> {
+    0..if cfg!(debug_assertions) {
+        1
+    } else {
+        release_count
     }
 }
 

@@ -5795,14 +5795,19 @@ fn ply_mesh_summary(text: &str) -> PlyMeshSummary {
     summary
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 struct MeshBounds {
-    min_x: Option<f64>,
-    min_y: Option<f64>,
-    min_z: Option<f64>,
-    max_x: Option<f64>,
-    max_y: Option<f64>,
-    max_z: Option<f64>,
+    min: [f64; 3],
+    max: [f64; 3],
+}
+
+impl Default for MeshBounds {
+    fn default() -> Self {
+        Self {
+            min: [f64::INFINITY; 3],
+            max: [f64::NEG_INFINITY; 3],
+        }
+    }
 }
 
 impl MeshBounds {
@@ -5810,16 +5815,15 @@ impl MeshBounds {
         if !(x.is_finite() && y.is_finite() && z.is_finite()) {
             return;
         }
-        self.min_x = Some(self.min_x.map_or(x, |value| value.min(x)));
-        self.min_y = Some(self.min_y.map_or(y, |value| value.min(y)));
-        self.min_z = Some(self.min_z.map_or(z, |value| value.min(z)));
-        self.max_x = Some(self.max_x.map_or(x, |value| value.max(x)));
-        self.max_y = Some(self.max_y.map_or(y, |value| value.max(y)));
-        self.max_z = Some(self.max_z.map_or(z, |value| value.max(z)));
+        let point = [x, y, z];
+        for (axis, coordinate) in point.into_iter().enumerate() {
+            self.min[axis] = self.min[axis].min(coordinate);
+            self.max[axis] = self.max[axis].max(coordinate);
+        }
     }
 
     fn finish(self) -> Option<Self> {
-        if self.min_x.is_some() {
+        if self.min[0].is_finite() {
             Some(self)
         } else {
             None
@@ -5829,12 +5833,7 @@ impl MeshBounds {
     fn to_evidence_string(&self) -> String {
         format!(
             "{:.6},{:.6},{:.6}..{:.6},{:.6},{:.6}",
-            self.min_x.unwrap_or(0.0),
-            self.min_y.unwrap_or(0.0),
-            self.min_z.unwrap_or(0.0),
-            self.max_x.unwrap_or(0.0),
-            self.max_y.unwrap_or(0.0),
-            self.max_z.unwrap_or(0.0)
+            self.min[0], self.min[1], self.min[2], self.max[0], self.max[1], self.max[2]
         )
     }
 }
@@ -7210,10 +7209,28 @@ struct DxfDrawingSummary {
     layer_names: std::collections::BTreeSet<String>,
     color_count: usize,
     coordinate_pair_count: usize,
-    min_x: Option<f64>,
-    min_y: Option<f64>,
-    max_x: Option<f64>,
-    max_y: Option<f64>,
+    bounds: Option<DrawingBounds>,
+}
+
+struct DrawingBounds {
+    min: [f64; 2],
+    max: [f64; 2],
+}
+
+impl DrawingBounds {
+    fn new(point: [f64; 2]) -> Self {
+        Self {
+            min: point,
+            max: point,
+        }
+    }
+
+    fn include(&mut self, point: [f64; 2]) {
+        for (axis, coordinate) in point.into_iter().enumerate() {
+            self.min[axis] = self.min[axis].min(coordinate);
+            self.max[axis] = self.max[axis].max(coordinate);
+        }
+    }
 }
 
 impl DxfDrawingSummary {
@@ -7230,9 +7247,10 @@ impl DxfDrawingSummary {
     }
 
     fn bounds_string(&self) -> Option<String> {
+        let bounds = self.bounds.as_ref()?;
         Some(format!(
             "{:.6},{:.6}..{:.6},{:.6}",
-            self.min_x?, self.min_y?, self.max_x?, self.max_y?
+            bounds.min[0], bounds.min[1], bounds.max[0], bounds.max[1]
         ))
     }
 }
@@ -7284,10 +7302,12 @@ fn dxf_drawing_summary(text: &str) -> DxfDrawingSummary {
             "20" | "21" | "22" | "23" | "24" | "25" | "26" | "27" | "28" if in_entity_section => {
                 if let (Some(x), Ok(y)) = (pending_x.take(), value.parse::<f64>()) {
                     summary.coordinate_pair_count += 1;
-                    summary.min_x = Some(summary.min_x.map_or(x, |min| min.min(x)));
-                    summary.max_x = Some(summary.max_x.map_or(x, |max| max.max(x)));
-                    summary.min_y = Some(summary.min_y.map_or(y, |min| min.min(y)));
-                    summary.max_y = Some(summary.max_y.map_or(y, |max| max.max(y)));
+                    let point = [x, y];
+                    if let Some(bounds) = summary.bounds.as_mut() {
+                        bounds.include(point);
+                    } else {
+                        summary.bounds = Some(DrawingBounds::new(point));
+                    }
                 }
             }
             _ => {}

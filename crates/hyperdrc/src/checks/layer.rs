@@ -3510,16 +3510,35 @@ fn indexed_intersection_with_mode(
         let cover_sketch = match mode {
             IndexedCoverMode::AsIs => cover_sketch,
             IndexedCoverMode::Offset(ref distance) => cover_sketch.offset(distance.clone()),
-            IndexedCoverMode::OffsetRing(ref distance) => cover_sketch
-                .offset(distance.clone())
-                .difference(&cover_sketch),
+            IndexedCoverMode::OffsetRing(ref distance) => {
+                let expanded = cover_sketch.offset(distance.clone());
+                match expanded.try_difference(&cover_sketch) {
+                    Ok(ring) => ring,
+                    Err(error) => {
+                        // An uncertified ring subtraction must not abort a
+                        // readiness run. Retaining the expanded opening is
+                        // conservative: it can add a review finding, but
+                        // cannot hide copper near a mask boundary.
+                        log::warn!(
+                            "indexed offset ring retained expanded cover after uncertified profile difference: {error}"
+                        );
+                        expanded
+                    }
+                }
+            }
         };
-        overlap_polygons.extend(
-            subject_island
-                .intersection(&cover_sketch)
-                .to_multipolygon()
-                .0,
-        );
+        match subject_island.try_intersection(&cover_sketch) {
+            Ok(overlap) => overlap_polygons.extend(overlap.to_multipolygon().0),
+            Err(error) => {
+                // Preserve a possible finding if exact topology cannot certify
+                // the candidate intersection. Returning the subject island is
+                // conservative for every caller of this readiness-only helper.
+                log::warn!(
+                    "indexed intersection retained subject island after uncertified profile intersection: {error}"
+                );
+                overlap_polygons.extend(subject_island.to_multipolygon().0);
+            }
+        }
     }
 
     log::trace!(
