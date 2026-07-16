@@ -141,6 +141,8 @@ pub struct ComplianceClaim {
     pub value: AssertionValue,
     /// Source evidence.
     pub source: SourceRef,
+    /// Optional revision or consolidation date of the compliance source.
+    pub revision: Option<SourceRevision>,
 }
 
 /// Source-attributed procurement offer.

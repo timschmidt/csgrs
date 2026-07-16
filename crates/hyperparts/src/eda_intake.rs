@@ -14,8 +14,7 @@ use crate::{
     ElectronicPackage, GeneralPartAssertion, GeometryHandle, GeometryHandoffReport, GeometryStatus,
     ImportIssue, ImportIssueKind, ImportReport, ImportTargetKind, Interface, InterfaceKind,
     PartAspect, PartAssertion, PartFamily, PartGraph, PartId, PartQueryEvidence, PartVariant,
-    PinFunction, Pinout, ProcessKind, SourceRef, Terminal, TerminalId, VariantId, VoltageEnvelope,
-    VoltageRange,
+    PinFunction, ProcessKind, SourceRef, Terminal, TerminalId, VariantId, VoltageEnvelope,
 };
 
 /// Overall status for an EDA authoring intake.
@@ -359,12 +358,25 @@ impl EdaAuthoringImportResult {
 /// missing voltage range is retained in [`ImportReport`] so callers can show the
 /// exact blocker instead of losing provenance at the API boundary.
 pub fn import_eda_authoring_bundle(bundle: EdaAuthoringBundle) -> EdaAuthoringImportResult {
-    let mut issues = ImportIssueBuilder::new(bundle.source.clone());
+    let expected_issue_count = bundle
+        .circuit_records
+        .iter()
+        .map(|record| 1 + record.exact_fields.len())
+        .sum::<usize>()
+        + bundle.model_references.len()
+        + bundle
+            .package
+            .as_ref()
+            .map_or(0, |package| 2 + package.pins.len())
+        + 2 * bundle.routes.len()
+        + bundle.fabrication.len()
+        + usize::from(bundle.footprint.is_some());
+    let mut issues = ImportIssueBuilder::new(bundle.source.clone(), expected_issue_count);
     let mut variant = PartVariant::new(bundle.variant.clone(), None);
-    let mut geometry_handoffs = Vec::new();
-    let mut circuit_handoffs = Vec::new();
-    let mut route_handoffs = Vec::new();
-    let mut drc_handoffs = Vec::new();
+    let mut geometry_handoffs = Vec::with_capacity(bundle.model_references.len());
+    let mut circuit_handoffs = Vec::with_capacity(bundle.circuit_records.len());
+    let mut route_handoffs = Vec::with_capacity(bundle.routes.len());
+    let mut drc_handoffs = Vec::with_capacity(bundle.fabrication.len());
 
     import_circuit_records(&bundle, &mut variant, &mut circuit_handoffs, &mut issues);
     import_footprint(&bundle, &mut variant, &mut issues);
@@ -439,8 +451,8 @@ fn import_circuit_records(
             bundle.source.clone(),
         )));
 
-        let mut exact_parameters = Vec::new();
-        let mut unknowns = Vec::new();
+        let mut exact_parameters = Vec::with_capacity(record.exact_fields.len());
+        let mut unknowns = Vec::with_capacity(record.exact_fields.len() + 1);
         for field in &record.exact_fields {
             let field_path = format!("{record_path}/{}", field.field);
             match parse_exact_field(&field_path, field, issues) {
@@ -673,8 +685,8 @@ fn import_package(
         issues.unknown("package/terminal_count", "package omitted terminal count");
     }
 
-    let mut terminals = Vec::new();
-    let mut pinout = Vec::new();
+    let mut terminals = Vec::with_capacity(package.pins.len());
+    let mut imported_pin_count = 0;
     for pin in &package.pins {
         let pin_path = format!("{path}/pins/{}", pin.terminal);
         if pin.terminal.trim().is_empty() {
@@ -697,17 +709,7 @@ fn import_package(
             voltage.clone(),
         ));
         terminals.push(terminal.clone());
-        pinout.push(Pinout {
-            terminal,
-            name: pin.name.clone(),
-            function: pin.function.clone(),
-            voltage: voltage.map(|voltage| VoltageRange {
-                min: voltage.min,
-                max: voltage.max,
-            }),
-            current: None,
-            status: ElectricalFactStatus::Certified,
-        });
+        imported_pin_count += 1;
         issues.parsed(&pin_path, "package pin retained as terminal metadata");
     }
 
@@ -723,7 +725,7 @@ fn import_package(
         name: package.name.clone(),
         handle: package.handle.clone(),
         terminal_count: package.terminal_count,
-        status: if package.terminal_count == Some(pinout.len()) {
+        status: if package.terminal_count == Some(imported_pin_count) {
             ElectricalFactStatus::Certified
         } else {
             ElectricalFactStatus::Unknown
@@ -1112,11 +1114,11 @@ struct ImportIssueBuilder {
 }
 
 impl ImportIssueBuilder {
-    fn new(source: SourceRef) -> Self {
+    fn new(source: SourceRef, expected_issue_count: usize) -> Self {
         Self {
             source,
             unknown_field_count: 0,
-            parsed_assertions: Vec::new(),
+            parsed_assertions: Vec::with_capacity(expected_issue_count),
             rejected_fields: Vec::new(),
             lossy_conversions: Vec::new(),
             unresolved_references: Vec::new(),

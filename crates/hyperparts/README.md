@@ -62,6 +62,8 @@ assert_eq!(result.candidates.len(), 1);
 - `SourceRef`, `SourceRevision`, `Assertion<T>`, `AssertionValue`, and
   `PartAssertion` retain source identity, exact values, intervals, review state,
   explicit unknowns, and conflicts.
+- `ComplianceClaim` carries its source and an optional revision or consolidation
+  date so mutable RoHS/REACH evidence is not treated as timeless.
 - `Terminal`, `Interface`, `Port`, `Pin`, `Pad`, `Lead`, and `Hole` describe
   electrical, mechanical, fluidic, optical, and assembly surfaces.
 - `GeometryHandoffReport`, `PhysicsHandoffReport`,
@@ -115,6 +117,7 @@ cargo bench --bench queries
 ```
 
 The `fuzz/` package contains an `eda_authoring_intake` target for `cargo fuzz`.
+See [PERFORMANCE.md](PERFORMANCE.md) for the benchmark and per-reference audit.
 
 ## References
 

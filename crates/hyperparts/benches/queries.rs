@@ -279,6 +279,30 @@ fn main() {
         elapsed / iterations
     );
 
+    for index in 0..256 {
+        capability_graph.insert_family(PartFamily::new(
+            id(&format!("bench-family-{index:03}")),
+            format!("Bench Family {index:03}"),
+        ));
+    }
+    let capability_part_query = PartQuery {
+        constraints: vec![PartConstraint::HasCapabilityTarget("part:panel".into())],
+    };
+    let query_iterations = 1_000_u32;
+    let started = Instant::now();
+    let mut capability_part_checksum = 0_usize;
+    for _ in 0..query_iterations {
+        capability_part_checksum ^= black_box(&capability_graph)
+            .query_parts(black_box(&capability_part_query))
+            .candidates
+            .len();
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "capability_constrained_part_query: {query_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={capability_part_checksum}",
+        elapsed / query_iterations
+    );
+
     let part_query = PartQuery {
         constraints: vec![PartConstraint::FamilyNameContains("Bench".into())],
     };

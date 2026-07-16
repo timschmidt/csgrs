@@ -295,6 +295,7 @@ fn procurement_compliance_and_knowledge_reports_keep_unknowns_visible() {
         scheme: "RoHS".into(),
         value: AssertionValue::Unknown,
         source: source(),
+        revision: Some(SourceRevision::new("2011/65/EU", Some("2022-10-01".into())).unwrap()),
     };
     let report = PartKnowledgeReport {
         status: "needs-review".into(),
@@ -308,6 +309,10 @@ fn procurement_compliance_and_knowledge_reports_keep_unknowns_visible() {
         AssertionValue::exact_scalar(Real::from(100))
     );
     assert_eq!(compliance.value, AssertionValue::Unknown);
+    assert_eq!(
+        compliance.revision.unwrap().date.as_deref(),
+        Some("2022-10-01")
+    );
     assert_eq!(report.unknowns.len(), 1);
 }
 
@@ -674,9 +679,35 @@ fn typed_capabilities_are_queryable_from_tool_and_target() {
         evidence: PartQueryEvidence::from_fact(source(), "manual drill route"),
         status: CapabilityStatus::NeedsReview,
     });
+    graph.insert_family(PartFamily::new(part("gridbeam:beam"), "Gridbeam"));
 
     assert_eq!(graph.capabilities_for_tool("tool:drill-press").len(), 1);
     assert_eq!(graph.capabilities_for_target("gridbeam:hole").len(), 1);
+    assert!(graph.has_capability_target("gridbeam:hole"));
+    assert!(!graph.has_capability_target("gridbeam:missing"));
+    assert_eq!(
+        graph
+            .query_parts(&PartQuery {
+                constraints: vec![
+                    PartConstraint::HasCapabilityTarget("gridbeam:hole".into()),
+                    PartConstraint::FamilyNameContains("Grid".into()),
+                    PartConstraint::HasCapabilityTarget("gridbeam:blank".into()),
+                ],
+            })
+            .candidates
+            .len(),
+        1
+    );
+    assert!(
+        graph
+            .query_parts(&PartQuery {
+                constraints: vec![PartConstraint::HasCapabilityTarget(
+                    "gridbeam:missing".into(),
+                )],
+            })
+            .candidates
+            .is_empty()
+    );
     assert_eq!(graph.manufacturing_routes()[0].unknowns.len(), 1);
     assert_eq!(
         graph.capabilities()[0].fixtures[0].status,

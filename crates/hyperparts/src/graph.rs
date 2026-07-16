@@ -370,14 +370,43 @@ impl PartGraph {
             .collect()
     }
 
+    /// Returns whether any typed capability declares the target as an input or output.
+    ///
+    /// Use this when only existence matters; unlike [`Self::capabilities_for_target`],
+    /// it stops at the first match and does not allocate a result vector.
+    pub fn has_capability_target(&self, target: &str) -> bool {
+        self.capabilities.iter().any(|capability| {
+            capability.inputs.iter().any(|input| input.handle == target)
+                || capability
+                    .outputs
+                    .iter()
+                    .any(|output| output.handle == target)
+        })
+    }
+
     /// Queries part families with ranked evidence and explicit unknowns.
     pub fn query_parts(&self, query: &PartQuery) -> QueryResult<PartId> {
         let mut unknowns = Vec::new();
         let mut candidates = Vec::new();
+        // Capability targets describe graph-global manufacturing facts. Compile
+        // those constraints once before visiting candidate families instead of
+        // rescanning (and allocating a match vector from) the capability graph
+        // for every family.
+        let capability_matches: Vec<bool> = query
+            .constraints
+            .iter()
+            .filter_map(|constraint| match constraint {
+                PartConstraint::HasCapabilityTarget(target) => {
+                    Some(self.has_capability_target(target))
+                }
+                _ => None,
+            })
+            .collect();
         for family in self.families.values() {
             let mut rank = 0;
             let mut notes = Vec::new();
             let mut matched = true;
+            let mut capability_matches = capability_matches.iter();
             for constraint in &query.constraints {
                 match constraint {
                     PartConstraint::FamilyNameContains(needle) => {
@@ -421,7 +450,10 @@ impl PartGraph {
                         }
                     }
                     PartConstraint::HasCapabilityTarget(target) => {
-                        if !self.capabilities_for_target(target).is_empty() {
+                        if *capability_matches
+                            .next()
+                            .expect("each capability constraint is precompiled")
+                        {
                             rank += 3;
                             notes.push(format!("capability target {target} exists"));
                         } else {

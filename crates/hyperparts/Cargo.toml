@@ -9,6 +9,10 @@ repository = "https://github.com/timschmidt/hyperparts"
 keywords = ["parts", "bom", "knowledge-graph", "hyperreal", "cad"]
 categories = ["data-structures", "science", "development-tools"]
 
+[features]
+default = []
+dispatch-trace = ["hyperreal/dispatch-trace"]
+
 [dependencies]
 # Hyper ecosystem dependencies: keep the crate-official release references and
 # the commented workspace references below. Switch to the workspace form for
