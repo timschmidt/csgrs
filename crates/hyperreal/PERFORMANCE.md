@@ -160,6 +160,22 @@ Goals:
 - Any new symbolic class must show wins in `scalar_micro`, `hyperlattice`, and
   `hyperlimit`; otherwise keep the representation simpler.
 
+### Prepared rational predicate queries
+
+Repeated geometric predicates can now prepare the floating interval for an
+exact-rational homogeneous point once and reuse its values and conservative
+conversion-error radii across several fixed linear forms. The affine 3D helper
+sets the homogeneous weight to exact `1.0` with zero error instead of
+reconverting the same rational one for every plane test. A filter that cannot
+certify separation still returns `None` and reaches the unchanged arbitrary-
+precision product-sum fallback.
+
+The motivating `hypermesh` paths improved by 2.46--3.03% end to end in matched
+on/off release runs. Direct tests cover positive, negative, and boundary-
+inconclusive prepared queries, as well as the affine exact-one specialization.
+A 15-second `real_exact` sanitizer campaign completed 63,207 executions without
+a target failure.
+
 ## Computable Path
 
 Current timing anchors:

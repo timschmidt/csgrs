@@ -479,6 +479,66 @@ mod tests {
             ]),
             None,
         );
+
+        let positive_query =
+            Real::prepare_rational_linear_form4_query([
+                &positive,
+                &zero,
+                &zero,
+                &three,
+            ])
+            .expect("finite rational query should prepare");
+        assert_eq!(
+            prepared.sign_prepared(&positive_query),
+            Some(RealSign::Positive),
+        );
+        let negative_query =
+            Real::prepare_rational_linear_form4_query([
+                &negative,
+                &zero,
+                &zero,
+                &three,
+            ])
+            .expect("finite rational query should prepare");
+        assert_eq!(
+            prepared.sign_prepared(&negative_query),
+            Some(RealSign::Negative),
+        );
+        let boundary_query =
+            Real::prepare_rational_linear_form4_query([
+                &boundary,
+                &zero,
+                &zero,
+                &three,
+            ])
+            .expect("finite rational query should prepare");
+        assert_eq!(prepared.sign_prepared(&boundary_query), None);
+
+        let affine_query =
+            Real::prepare_rational_affine_point3_query([
+                &positive,
+                &zero,
+                &zero,
+            ])
+            .expect("finite affine rational query should prepare");
+        let affine_coefficients = [
+            Real::new(Rational::fraction(1, 3).unwrap()),
+            Real::zero(),
+            Real::zero(),
+            Real::from(-21_i32),
+        ];
+        let affine_filter =
+            Real::prepare_rational_linear_form4_filter([
+                &affine_coefficients[0],
+                &affine_coefficients[1],
+                &affine_coefficients[2],
+                &affine_coefficients[3],
+            ])
+            .expect("finite affine coefficients should prepare");
+        assert_eq!(
+            affine_filter.sign_prepared(&affine_query),
+            Some(RealSign::Positive),
+        );
     }
 
     #[test]
