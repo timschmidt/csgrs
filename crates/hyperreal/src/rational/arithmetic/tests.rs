@@ -174,6 +174,51 @@ mod tests {
     }
 
     #[test]
+    fn perfect_square_residue_filter_never_rejects_a_square() {
+        assert_eq!(
+            Rational::SMALL_SQUARE_FACTORS
+                .iter()
+                .map(|(_, square)| square)
+                .product::<u64>(),
+            Rational::SMALL_SQUARE_PRODUCT
+        );
+        for root in 0_u64..=4096 {
+            let root = BigUint::from(root);
+            let square = &root * &root;
+            assert!(Rational::could_be_perfect_square(&square));
+            assert_eq!(Rational::try_perfect(&square), Some(root));
+        }
+
+        for nonsquare in [2_u64, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 19, 23] {
+            assert_eq!(Rational::try_perfect(&BigUint::from(nonsquare)), None);
+        }
+    }
+
+    #[test]
+    fn large_square_factor_schedule_preserves_canonical_residuals() {
+        let base = (BigUint::one() << 80_usize) + BigUint::from(123_u8);
+        for small_factor in [1_u64, 2, 3, 5, 7, 11, 13, 17] {
+            let expected_root = &base * small_factor;
+            for residual in [1_u64, 2, 3, 5, 6, 7, 10, 11, 13, 15, 17, 19] {
+                let value = &expected_root * &expected_root * residual;
+                let (root, rest) = Rational::extract_square(value);
+                assert_eq!(root, expected_root);
+                assert_eq!(rest, BigUint::from(residual));
+            }
+        }
+    }
+
+    #[test]
+    fn large_power_of_two_square_extraction_splits_the_exponent() {
+        for exponent in [64_usize, 65, 256, 257] {
+            let value = BigUint::one() << exponent;
+            let (root, rest) = Rational::extract_square(value.clone());
+            assert_eq!(&root * &root * &rest, value);
+            assert_eq!(rest, BigUint::from(if exponent.is_multiple_of(2) { 1_u8 } else { 2 }));
+        }
+    }
+
+    #[test]
     fn signs() {
         let half: Rational = "4/8".parse().unwrap();
         let one = Rational::one();

@@ -20,7 +20,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/exp_cached_probe` | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 1 |
 | `computable/exp_large_rational` | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/acosh_large` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 7 | 0 | 0 |
-| `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 8 | 0 | 0 |
+| `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 8 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/acosh_sqrt_two` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 14 | 2 | 2 |
 | `computable/inverse_hyperbolic_adversarial/acosh_two` | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 11 | 2 | 2 |
 | `computable/inverse_hyperbolic_adversarial/asinh_large` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 9 | 0 | 0 |
@@ -129,7 +129,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/dot_product/dot3_mixed_structural` | 17 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 6 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 6 | 1 | 1 |
 | `real/dot_product/dot4_dense_symbolic` | 59 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 25 | 0 | 11 | 0 | 0 |
 | `real/dot_product/dot4_mixed_structural` | 25 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 10 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 14 | 3 | 3 |
-| `real/geometry_polynomial_substrate` | 260 | 0 | 0 | 2 | 28 | 0 | 0 | 19 | 24 | 176 | 0 | 0 | 0 | 0 | 0 | 35 | 1 | 78 | 19 | 15 |
+| `real/geometry_polynomial_substrate` | 265 | 0 | 0 | 2 | 28 | 0 | 0 | 19 | 24 | 181 | 0 | 0 | 0 | 0 | 0 | 35 | 1 | 78 | 19 | 15 |
 | `real/hyperbolic_log_exp` | 17 | 0 | 0 | 1 | 4 | 0 | 0 | 1 | 5 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 0 |
 | `real/inverse/inverse_generic` | 9 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 1 | 1 |
 | `real/inverse_hyperbolic/exact_rational` | 32 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 11 | 21 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 3 | 1 |
@@ -218,6 +218,8 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | `rational` | `add` | `word-sized` | 2 |
 | `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | `rational` | `comparison` | `word-sized` | 2 |
 | `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | `rational` | `mul` | `word-sized` | 1 |
+| `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | `rational` | `square_extraction` | `shared-divisor-remainder` | 1 |
+| `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 1 |
 | `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | `rational` | `word-result` | `wide-general-fraction` | 2 |
 | `computable/inverse_hyperbolic_adversarial/acosh_sqrt_two` | `computable` | `acosh` | `sqrt-two-asinh-one` | 1 |
@@ -1058,6 +1060,9 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/geometry_polynomial_substrate` | `rational` | `dot_product` | `word-sized` | 3 |
 | `real/geometry_polynomial_substrate` | `rational` | `mul` | `word-sized` | 18 |
 | `real/geometry_polynomial_substrate` | `rational` | `product_sum` | `word-sized` | 1 |
+| `real/geometry_polynomial_substrate` | `rational` | `square_extraction` | `mod63-reject` | 1 |
+| `real/geometry_polynomial_substrate` | `rational` | `square_extraction` | `shared-divisor-remainder` | 2 |
+| `real/geometry_polynomial_substrate` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 2 |
 | `real/geometry_polynomial_substrate` | `rational` | `word-result` | `cached-small-integer` | 2 |
 | `real/geometry_polynomial_substrate` | `rational` | `word-result` | `dyadic-fraction` | 10 |
 | `real/geometry_polynomial_substrate` | `rational` | `word-result` | `small-general-fraction` | 24 |

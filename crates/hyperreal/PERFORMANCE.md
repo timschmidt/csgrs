@@ -438,6 +438,38 @@ extra cloning, and loss of the cheap left-fold shape outweighed the shallower
 tree.  The implementation was removed; the two `real_sum_refs_64_symbolic`
 benchmark rows remain as regression guards.
 
+### Retained experiment: exact square-factor screens
+
+Exact f64 vector coordinates become dyadic rationals, so their squared norm
+often has a denominator that is a large power of two. The former rational
+square extractor repeatedly divided that denominator by four and issued
+separate arbitrary-precision remainder probes for every small square factor
+and fixed residual divisor. Those probes dominated exact square-root
+construction even though the input shape was simple.
+
+The retained extractor splits a large power-of-two exponent in constant time.
+For other large integers it first applies exact quadratic-residue screens
+modulo 64 and 63, then shares one remainder across the small square factors
+and one across the fixed divisor schedule. The screens only reject residue
+classes that no integer square can occupy; factor extraction and canonical
+residual reconstruction remain exact. Exhaustive roots through 4096, large
+power-of-two exponents, and every scheduled factor have dedicated regression
+coverage.
+
+| Workload | Before | After | Result |
+| --- | ---: | ---: | ---: |
+| exact dyadic vector-norm radicand | 2.097 us | 432.04 ns | 79.4% faster |
+| Hyperlattice `vec3 magnitude` | 3.067 us | 798.41 ns | 74.0% faster |
+| Hyperlattice `vec3 normalize` ledger | 5.30 us | 3.30 us | 37.7% faster |
+| Hyperlattice `vec4 magnitude` ledger | 2.64 us | 832.44 ns | 68.5% faster |
+
+An eager full perfect-square test and a specialized three/four-term
+sum-of-squares API did not improve the end-to-end rows, so both experiments
+were removed. Sanitizer-backed nightly fuzzing completed 774,516 rational
+arithmetic cases, 93,237 exact-real cases, and 35,767 elementary-real cases
+without a failure. Dispatch tracing distinguishes residue rejection, the
+large-power-of-two path, and both shared-remainder schedules.
+
 ### Retained experiment: two-thirds arctangent table reduction
 
 Johansson's medium-precision elementary-function work suggests reducing an

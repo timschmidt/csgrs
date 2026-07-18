@@ -267,6 +267,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Reduces an exact square-root expression.",
             },
             BenchDoc {
+                name: "real_exact_dyadic_sqrt_reduce",
+                description: "Reduces the square root of a large exact dyadic rational.",
+            },
+            BenchDoc {
+                name: "real_exact_general_sqrt_reduce",
+                description: "Reduces a large non-dyadic rational sum of squares.",
+            },
+            BenchDoc {
                 name: "real_exact_ln_reduce",
                 description: "Reduces an exact logarithm of a power of two.",
             },
@@ -763,6 +771,26 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     let exact_real_lhs = Real::new(lhs.clone());
     let exact_real_rhs = Real::new(rhs.clone());
     let sqrt_input = Real::new(Rational::new(18));
+    let dyadic_components = [
+        Rational::try_from(1.234_567_890_123_45_f64).expect("finite f64 imports exactly"),
+        Rational::try_from(-2.345_678_901_234_56_f64).expect("finite f64 imports exactly"),
+        Rational::try_from(3.456_789_012_345_67_f64).expect("finite f64 imports exactly"),
+    ];
+    let dyadic_sqrt_input = Real::new(
+        &(&dyadic_components[0] * &dyadic_components[0])
+            + &(&dyadic_components[1] * &dyadic_components[1])
+            + &(&dyadic_components[2] * &dyadic_components[2]),
+    );
+    let norm_components = [
+        rational(123_456_789_012_345, 100_000_000_000_000),
+        rational(-234_567_890_123_456, 100_000_000_000_000),
+        rational(345_678_901_234_567, 100_000_000_000_000),
+    ];
+    let general_sqrt_input = Real::new(
+        &(&norm_components[0] * &norm_components[0])
+            + &(&norm_components[1] * &norm_components[1])
+            + &(&norm_components[2] * &norm_components[2]),
+    );
     let ln_input = Real::new(Rational::new(1024));
     let pow_base = Real::new(rational(7, 5));
     let pow_exponent = Real::new(Rational::new(17));
@@ -788,6 +816,20 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     group.bench_function("real_exact_sqrt_reduce", |b| {
         b.iter_batched(
             || sqrt_input.clone(),
+            |value| black_box(value.sqrt().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("real_exact_dyadic_sqrt_reduce", |b| {
+        b.iter_batched(
+            || dyadic_sqrt_input.clone(),
+            |value| black_box(value.sqrt().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("real_exact_general_sqrt_reduce", |b| {
+        b.iter_batched(
+            || general_sqrt_input.clone(),
             |value| black_box(value.sqrt().unwrap()),
             BatchSize::SmallInput,
         )

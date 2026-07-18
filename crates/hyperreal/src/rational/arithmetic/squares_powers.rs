@@ -1,28 +1,58 @@
 impl Rational {
     const EXTRACT_SQUARE_MAX_LEN: u64 = 5000;
+    const SMALL_SQUARE_FACTORS: [(u64, u64); 7] = [
+        (2, 4),
+        (3, 9),
+        (5, 25),
+        (7, 49),
+        (11, 121),
+        (13, 169),
+        (17, 289),
+    ];
+    const SMALL_SQUARE_PRODUCT: u64 = 260_620_460_100;
 
-    fn make_squares() -> Vec<(BigUint, BigUint)> {
-        // Tiny prime-square table covers the residuals that appear most often
-        // in exact trig and matrix examples without running full factorization.
-        vec![
-            (BigUint::from(2_u8), BigUint::from(4_u8)),
-            (BigUint::from(3_u8), BigUint::from(9_u8)),
-            (BigUint::from(5_u8), BigUint::from(25_u8)),
-            (BigUint::from(7_u8), BigUint::from(49_u8)),
-            (BigUint::from(11_u8), BigUint::from(121_u8)),
-            // 13 and 17 fit in u8; their squares need u16.
-            (BigUint::from(13_u8), BigUint::from(169_u16)),
-            (BigUint::from(17_u8), BigUint::from(289_u16)),
-        ]
+    #[inline]
+    fn could_be_perfect_square(n: &BigUint) -> bool {
+        // Every integer square is one of twelve residues modulo 64. This cheap
+        // screen rejects 81.25% of arbitrary candidates before the
+        // substantially more expensive arbitrary-precision square root.
+        let residue_64 = (n % 64_u8)
+            .to_u8()
+            .expect("a residue modulo 64 fits in u8");
+        if !matches!(
+            residue_64,
+            0 | 1 | 4 | 9 | 16 | 17 | 25 | 33 | 36 | 41 | 49 | 57
+        ) {
+            crate::trace_dispatch!("rational", "square_extraction", "mod64-reject");
+            return false;
+        }
+
+        // Modulo 63 supplies an independent odd-factor screen. This remains a
+        // proof-only rejection: candidates reaching `sqrt` may be nonsquares,
+        // but no actual integer square can be discarded here.
+        let residue_63 = (n % 63_u8)
+            .to_u8()
+            .expect("a residue modulo 63 fits in u8");
+        let possible = matches!(
+            residue_63,
+            0 | 1 | 4 | 7 | 9 | 16 | 18 | 22 | 25 | 28 | 36 | 37 | 43 | 46 | 49 | 58
+        );
+        if !possible {
+            crate::trace_dispatch!("rational", "square_extraction", "mod63-reject");
+        }
+        possible
     }
 
     // Some(root) squared is n, otherwise None
-    fn try_perfect(n: BigUint) -> Option<BigUint> {
+    fn try_perfect(n: &BigUint) -> Option<BigUint> {
+        if !Self::could_be_perfect_square(n) {
+            return None;
+        }
         // BigUint::sqrt is cheap enough as a final check once small square
         // factors have been stripped.
         let root = n.sqrt();
         let square = &root * &root;
-        if square == n { Some(root) } else { None }
+        if square == *n { Some(root) } else { None }
     }
 
     fn extract_square_u64(mut rest: u64) -> (u64, u64) {
@@ -59,14 +89,28 @@ impl Rational {
 
     // (root squared times rest) = n
     fn extract_square(n: BigUint) -> (BigUint, BigUint) {
-        static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(Rational::make_squares);
-
         if let Some(small) = n.to_u64() {
             let (root, rest) = Self::extract_square_u64(small);
             if root == 1 && rest == small {
                 return (BigUint::one(), n);
             }
             return (BigUint::from(root), BigUint::from(rest));
+        }
+
+        // Exact f64 imports and fixed-grid geometry produce large dyadic
+        // denominators. A power of two needs no trial division: split its
+        // exponent into a square root and at most one residual factor of two.
+        let exponent = n.bits() - 1;
+        if n.trailing_zeros() == Some(exponent) {
+            crate::trace_dispatch!("rational", "square_extraction", "large-power-of-two");
+            let root = BigUint::one()
+                << usize::try_from(exponent / 2).expect("BigUint exponent fits usize");
+            let rest = if exponent.is_multiple_of(2) {
+                BigUint::one()
+            } else {
+                BigUint::from(2_u8)
+            };
+            return (root, rest);
         }
 
         // Partial square extraction is a performance shortcut, not full prime
@@ -78,31 +122,57 @@ impl Rational {
         if rest.bits() > Self::EXTRACT_SQUARE_MAX_LEN {
             return (root, rest);
         }
-        for (p, s) in &*SQUARES {
+        // All small prime squares are pairwise coprime, so one word-sized
+        // remainder identifies every factor worth probing. Most arbitrary
+        // numerators now avoid seven separate BigUint remainder operations.
+        let small_square_residue = (&rest % Self::SMALL_SQUARE_PRODUCT)
+            .to_u64()
+            .expect("a residue modulo the small-square product fits in u64");
+        crate::trace_dispatch!("rational", "square_extraction", "shared-small-factor-remainder");
+        for (prime, square) in Self::SMALL_SQUARE_FACTORS {
             if rest == one {
                 break;
             }
-            while (&rest % s).is_zero() {
-                rest /= s;
-                root *= p;
+            if !small_square_residue.is_multiple_of(square) {
+                continue;
+            }
+            let square = BigUint::from(square);
+            while (&rest % &square).is_zero() {
+                rest /= &square;
+                root *= prime;
             }
         }
 
-        let divisors = if rest.bit(0) {
+        let (divisors, divisor_lcm) = if rest.bit(0) {
             // Odd number so dividing by an even number won't get a whole result
             // `u8` covers this fixed probe table and converts straight to BigUint.
-            [1_u8, 3, 5, 7, 11, 13, 15, 17, 19]
+            ([1_u64, 3, 5, 7, 11, 13, 15, 17, 19], 4_849_845_u64)
         } else {
-            [1_u8, 2, 3, 5, 6, 7, 8, 10, 11]
+            ([1_u64, 2, 3, 5, 6, 7, 8, 10, 11], 9_240_u64)
         };
+        // As above, one remainder answers all fixed small-divisor probes.
+        let divisor_residue = (&rest % divisor_lcm)
+            .to_u64()
+            .expect("a residue modulo the divisor LCM fits in u64");
+        crate::trace_dispatch!("rational", "square_extraction", "shared-divisor-remainder");
 
-        for n in divisors {
-            let divisor = BigUint::from(n);
+        for divisor_word in divisors {
+            let divisor = BigUint::from(divisor_word);
             if rest == divisor {
                 return (root, rest);
             }
-            if (&rest % &divisor).is_zero() {
-                let square = &rest / &divisor;
+            if divisor_residue.is_multiple_of(divisor_word) {
+                let square = if divisor_word == 1 {
+                    &rest
+                } else {
+                    // The owned quotient is needed only for the comparatively
+                    // rare divisor that survives the shared remainder screen.
+                    let quotient = &rest / &divisor;
+                    if let Some(factor) = Self::try_perfect(&quotient) {
+                        return (root * factor, divisor);
+                    }
+                    continue;
+                };
                 if let Some(factor) = Self::try_perfect(square) {
                     return (root * factor, divisor);
                 }
