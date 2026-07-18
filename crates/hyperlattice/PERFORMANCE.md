@@ -54,6 +54,19 @@ lands within 1.65% of the 86.164 ns exact-dyadic hyperreal control while
 beating the 1.6814 us Numerica 128 and 9.8471 us Symbolica rows on the same
 construction workload.
 
+## One-pass exact rational-turn cosine
+
+Hyperreal's canonical cosine reducer now returns the signed `SinPi` complement
+for a non-tabulated rational turn instead of adding one half and visiting the
+rational curve reducer a second time. This preserves the exact facade result
+while reducing the `hyperreal-rational/pi_7/cos` row from 486.27 ns to
+201.99 ns (58.46%). Fresh controls measured 50.240 ns for the dyadic hyperreal
+input, 552.42 ns for Numerica 128, and 1.7514 us for Symbolica.
+
+The cross-stack trace records 12 events instead of 14, one rational comparison
+instead of three, no rational addition, and the retained
+`pi-rational-direct-sinpi-certificate` dispatch.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`

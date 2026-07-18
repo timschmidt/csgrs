@@ -765,7 +765,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal-rational/neg_1e-12/atan` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/neg_1e6/asinh` | 7 | 0 | 1 | 0 | 2 | 0 | 0 | 0 | 2 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/neg_1e6/atan` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 4 | 0 | 0 |
-| `scalar_trig/hyperreal-rational/pi_7/cos` | 14 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
+| `scalar_trig/hyperreal-rational/pi_7/cos` | 12 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 6 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/pi_7/sin` | 10 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal/0.1/cos` | 5 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal/0.1/sin` | 5 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
@@ -10116,10 +10116,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal-rational/pi_7/cos` | `computable` | `constructor` | `rational-node` | 1 |
 | `scalar_trig/hyperreal-rational/pi_7/cos` | `computable` | `constructor` | `shared-constant-wrapper` | 2 |
 | `scalar_trig/hyperreal-rational/pi_7/cos` | `hyperlattice` | `free_function` | `cos` | 1 |
-| `scalar_trig/hyperreal-rational/pi_7/cos` | `rational` | `add` | `word-sized` | 1 |
-| `scalar_trig/hyperreal-rational/pi_7/cos` | `rational` | `comparison` | `word-sized` | 3 |
+| `scalar_trig/hyperreal-rational/pi_7/cos` | `rational` | `comparison` | `word-sized` | 1 |
+| `scalar_trig/hyperreal-rational/pi_7/cos` | `rational` | `sub` | `word-sized` | 1 |
 | `scalar_trig/hyperreal-rational/pi_7/cos` | `rational` | `word-result` | `small-general-fraction` | 1 |
-| `scalar_trig/hyperreal-rational/pi_7/cos` | `real` | `cos` | `pi-rational-sinpi-rewrite` | 1 |
+| `scalar_trig/hyperreal-rational/pi_7/cos` | `real` | `cos` | `pi-rational-direct-sinpi-certificate` | 1 |
 | `scalar_trig/hyperreal-rational/pi_7/cos` | `real` | `definitely_zero` | `rational-sign` | 1 |
 | `scalar_trig/hyperreal-rational/pi_7/sin` | `computable` | `constructor` | `cached-pi` | 2 |
 | `scalar_trig/hyperreal-rational/pi_7/sin` | `computable` | `constructor` | `prescaled-sin` | 1 |
