@@ -642,88 +642,142 @@ fn sampled_involute_gear(
     {
         return Profile::empty();
     }
-    let Some((module, pressure_angle, clearance, backlash)) = module
-        .to_f64_lossy()
-        .zip(pressure_angle_deg.to_f64_lossy())
-        .zip(clearance.to_f64_lossy().zip(backlash.to_f64_lossy()))
-        .map(|((module, pressure_angle), (clearance, backlash))| {
-            (module, pressure_angle.to_radians(), clearance, backlash)
-        })
-    else {
-        return Profile::empty();
-    };
+    let Some(points) = (|| -> Option<Vec<[Real; 2]>> {
+        let two = Real::from(2_u8);
+        let four = Real::from(4_u8);
+        let tooth_count = Real::from(teeth as u64);
+        let pressure_angle =
+            (pressure_angle_deg.clone() * Real::pi() / Real::from(180_u16)).ok()?;
+        let pitch_radius = (module.clone() * tooth_count.clone() / two.clone()).ok()?;
+        let base_radius = pitch_radius.clone() * pressure_angle.cos();
+        let outer_radius = pitch_radius.clone() + module.clone();
+        let root_radius = pitch_radius.clone()
+            - (module.clone() * Real::from(5_u8) / four.clone()).ok()?
+            - clearance.clone();
+        let angular_pitch = (Real::tau() / tooth_count).ok()?;
+        let backlash_angle = (backlash.clone() / pitch_radius.clone()).ok()?;
+        let half_tooth_angle =
+            ((angular_pitch.clone() / two.clone()).ok()? - backlash_angle) / two.clone();
+        let half_tooth_angle = half_tooth_angle.ok()?;
+        if !hprofile_scalar_positive(&base_radius)
+            || !hprofile_scalar_positive(&root_radius)
+            || !hprofile_scalar_positive(&half_tooth_angle)
+        {
+            return None;
+        }
 
-    let pitch_radius = 0.5 * module * teeth as f64;
-    let base_radius = pitch_radius * pressure_angle.cos();
-    let outer_radius = pitch_radius + module;
-    let root_radius = pitch_radius - 1.25 * module - clearance;
-    let Some(tau) = Real::tau().to_f64_lossy() else {
-        return Profile::empty();
-    };
-    let angular_pitch = tau / teeth as f64;
-    let half_tooth_angle = 0.5 * (0.5 * angular_pitch - backlash / pitch_radius);
-    if !(base_radius > 0.0 && root_radius > 0.0 && half_tooth_angle > 0.0) {
-        return Profile::empty();
-    }
+        let involute_angle = |radius: &Real| -> Option<Real> {
+            let ratio = (radius.clone() / base_radius.clone()).ok()?;
+            let radicand = ratio.clone() * ratio - Real::one();
+            let parameter = radicand.sqrt().ok()?;
+            Some(parameter.clone() - parameter.atan().ok()?)
+        };
+        let (flank_start_radius, has_root_transition) =
+            match hreal_try_cmp(&root_radius, &base_radius)? {
+                Ordering::Less => (base_radius.clone(), true),
+                Ordering::Equal | Ordering::Greater => (root_radius.clone(), false),
+            };
+        let pitch_involute = involute_angle(&pitch_radius)?;
+        let start_involute = involute_angle(&flank_start_radius)?;
+        let outer_involute = involute_angle(&outer_radius)?;
+        let offset = half_tooth_angle + pitch_involute;
+        let right_start = start_involute.clone() - offset.clone();
+        let left_start = offset.clone() - start_involute.clone();
+        let right_tip = outer_involute.clone() - offset.clone();
+        let left_tip = offset.clone() - outer_involute.clone();
+        if hreal_try_cmp(&right_start, &left_start)? != Ordering::Less
+            || hreal_try_cmp(&right_tip, &left_tip)? != Ordering::Less
+        {
+            return None;
+        }
 
-    let involute_angle = |radius: f64| {
-        let parameter = ((radius / base_radius).powi(2) - 1.0).max(0.0).sqrt();
-        parameter - parameter.atan()
-    };
-    let flank_start_radius = root_radius.max(base_radius);
-    let pitch_involute = involute_angle(pitch_radius);
-    let start_involute = involute_angle(flank_start_radius);
-    let outer_involute = involute_angle(outer_radius);
-    let offset = half_tooth_angle + pitch_involute;
-    let right_start = start_involute - offset;
-    let left_start = offset - start_involute;
-    let right_tip = outer_involute - offset;
-    let left_tip = offset - outer_involute;
-    if !(right_start < left_start && right_tip < left_tip) {
-        return Profile::empty();
-    }
-
-    let polar = |radius: f64, angle: f64| [radius * angle.cos(), radius * angle.sin()];
-    let mut points = Vec::with_capacity(teeth * (4 * segments_per_flank + 3));
-    for tooth in 0..teeth {
-        let center = tooth as f64 * angular_pitch;
-        points.push(polar(root_radius, center + right_start));
-        if flank_start_radius > root_radius {
-            points.push(polar(flank_start_radius, center + right_start));
-        }
-        for sample in 1..=segments_per_flank {
-            let t = sample as f64 / segments_per_flank as f64;
-            let radius = flank_start_radius + t * (outer_radius - flank_start_radius);
-            points.push(polar(radius, center + involute_angle(radius) - offset));
-        }
-        for sample in 1..=segments_per_flank {
-            let t = sample as f64 / segments_per_flank as f64;
-            points.push(polar(
-                outer_radius,
-                center + right_tip + t * (left_tip - right_tip),
-            ));
-        }
-        for sample in 1..=segments_per_flank {
-            let t = sample as f64 / segments_per_flank as f64;
-            let radius = outer_radius - t * (outer_radius - flank_start_radius);
-            points.push(polar(radius, center + offset - involute_angle(radius)));
-        }
-        if flank_start_radius > root_radius {
-            points.push(polar(root_radius, center + left_start));
-        }
-        let next_right = angular_pitch + right_start;
+        let mut flank_samples = Vec::with_capacity(segments_per_flank);
         for sample in 1..segments_per_flank {
-            let t = sample as f64 / segments_per_flank as f64;
-            points.push(polar(
-                root_radius,
-                center + left_start + t * (next_right - left_start),
+            let t = exact_ratio(sample, segments_per_flank)?;
+            let radius = flank_start_radius.clone()
+                + t * (outer_radius.clone() - flank_start_radius.clone());
+            let angle = involute_angle(&radius)?;
+            flank_samples.push((radius, angle));
+        }
+        flank_samples.push((outer_radius.clone(), outer_involute));
+
+        let points_per_tooth = segments_per_flank.checked_mul(4)?.checked_add(3)?;
+        let mut local_tooth = Vec::with_capacity(points_per_tooth);
+        local_tooth.push(exact_polar(&root_radius, right_start.clone()));
+        if has_root_transition {
+            local_tooth.push(exact_polar(&flank_start_radius, right_start.clone()));
+        }
+        for (radius, angle) in &flank_samples {
+            local_tooth.push(exact_polar(radius, angle.clone() - offset.clone()));
+        }
+        for sample in 1..=segments_per_flank {
+            let t = exact_ratio(sample, segments_per_flank)?;
+            local_tooth.push(exact_polar(
+                &outer_radius,
+                right_tip.clone() + t * (left_tip.clone() - right_tip.clone()),
             ));
         }
-    }
+        for (radius, angle) in flank_samples[..flank_samples.len() - 1].iter().rev() {
+            local_tooth.push(exact_polar(radius, offset.clone() - angle.clone()));
+        }
+        local_tooth.push(exact_polar(
+            &flank_start_radius,
+            offset.clone() - start_involute,
+        ));
+        if has_root_transition {
+            local_tooth.push(exact_polar(&root_radius, left_start.clone()));
+        }
+        let next_right = angular_pitch.clone() + right_start.clone();
+        for sample in 1..segments_per_flank {
+            let t = exact_ratio(sample, segments_per_flank)?;
+            local_tooth.push(exact_polar(
+                &root_radius,
+                left_start.clone() + t * (next_right.clone() - left_start.clone()),
+            ));
+        }
 
-    Contour2::from_finite_ring(&points)
-        .map(Profile::from_contour)
-        .unwrap_or_else(|_| Profile::empty())
+        let symmetry = if teeth.is_multiple_of(4) {
+            4
+        } else if teeth.is_multiple_of(2) {
+            2
+        } else {
+            1
+        };
+        let unique_teeth = teeth / symmetry;
+        let base_capacity = unique_teeth.checked_mul(local_tooth.len())?;
+        let mut base_points = Vec::with_capacity(base_capacity);
+        base_points.extend(local_tooth.iter().cloned());
+        for tooth in 1..unique_teeth {
+            let (sin, cos) = sampled_sin_cos(tooth, teeth, &Real::zero(), &Real::tau())?;
+            let negative_sin = -sin.clone();
+            base_points.extend(local_tooth.iter().map(|[x, y]| {
+                [
+                    Real::active_dot2_refs([x, y], [&cos, &negative_sin]),
+                    Real::active_dot2_refs([x, y], [&sin, &cos]),
+                ]
+            }));
+        }
+        let mut points = Vec::with_capacity(teeth.checked_mul(local_tooth.len())?);
+        points.extend(base_points.iter().cloned());
+        if symmetry >= 2 {
+            if symmetry == 4 {
+                points.extend(base_points.iter().map(|[x, y]| [-y.clone(), x.clone()]));
+            }
+            points.extend(base_points.iter().map(|[x, y]| [-x.clone(), -y.clone()]));
+            if symmetry == 4 {
+                points.extend(base_points.iter().map(|[x, y]| [y.clone(), -x.clone()]));
+            }
+        }
+        Some(points)
+    })() else {
+        return Profile::empty();
+    };
+
+    // The admitted analytic ranges prove distinct neighboring samples, a
+    // nonzero addendum/dedendum span, and one simple counter-clockwise tooth
+    // sequence. Preserve those exact samples without asking generic contour
+    // validation to rediscover the same construction facts.
+    certified_tessellation_profile(&points)
 }
 
 fn sampled_cycloidal_gear(
@@ -2313,6 +2367,11 @@ impl Profile {
     /// - `clearance`: additional clearance for dedendum
     /// - `backlash`: backlash allowance
     /// - `segments_per_flank`: tessellation resolution per tooth flank
+    ///
+    /// Parameter admission, involute evaluation, and tessellation all remain
+    /// exact `Real` operations. One analytic tooth retains each radial flank
+    /// sample once; exact pitch rotations and half/quarter-turn symmetry then
+    /// assemble the ring without crossing a primitive-float boundary.
     pub fn involute_gear(
         module: Real,
         teeth: usize,
@@ -2941,6 +3000,75 @@ mod tests {
                 [radius * theta.cos(), radius * theta.sin()]
             })
             .collect()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn legacy_finite_involute_gear_points(
+        module: f64,
+        teeth: usize,
+        pressure_angle_deg: f64,
+        clearance: f64,
+        backlash: f64,
+        segments_per_flank: usize,
+    ) -> Vec<[f64; 2]> {
+        let pressure_angle = pressure_angle_deg.to_radians();
+        let pitch_radius = 0.5 * module * teeth as f64;
+        let base_radius = pitch_radius * pressure_angle.cos();
+        let outer_radius = pitch_radius + module;
+        let root_radius = pitch_radius - 1.25 * module - clearance;
+        let angular_pitch = std::f64::consts::TAU / teeth as f64;
+        let half_tooth_angle = 0.5 * (0.5 * angular_pitch - backlash / pitch_radius);
+        let involute_angle = |radius: f64| {
+            let parameter = ((radius / base_radius).powi(2) - 1.0).max(0.0).sqrt();
+            parameter - parameter.atan()
+        };
+        let flank_start_radius = root_radius.max(base_radius);
+        let pitch_involute = involute_angle(pitch_radius);
+        let start_involute = involute_angle(flank_start_radius);
+        let outer_involute = involute_angle(outer_radius);
+        let offset = half_tooth_angle + pitch_involute;
+        let right_start = start_involute - offset;
+        let left_start = offset - start_involute;
+        let right_tip = outer_involute - offset;
+        let left_tip = offset - outer_involute;
+        let polar = |radius: f64, angle: f64| [radius * angle.cos(), radius * angle.sin()];
+        let mut points = Vec::with_capacity(teeth * (4 * segments_per_flank + 3));
+        for tooth in 0..teeth {
+            let center = tooth as f64 * angular_pitch;
+            points.push(polar(root_radius, center + right_start));
+            if flank_start_radius > root_radius {
+                points.push(polar(flank_start_radius, center + right_start));
+            }
+            for sample in 1..=segments_per_flank {
+                let t = sample as f64 / segments_per_flank as f64;
+                let radius = flank_start_radius + t * (outer_radius - flank_start_radius);
+                points.push(polar(radius, center + involute_angle(radius) - offset));
+            }
+            for sample in 1..=segments_per_flank {
+                let t = sample as f64 / segments_per_flank as f64;
+                points.push(polar(
+                    outer_radius,
+                    center + right_tip + t * (left_tip - right_tip),
+                ));
+            }
+            for sample in 1..=segments_per_flank {
+                let t = sample as f64 / segments_per_flank as f64;
+                let radius = outer_radius - t * (outer_radius - flank_start_radius);
+                points.push(polar(radius, center + offset - involute_angle(radius)));
+            }
+            if flank_start_radius > root_radius {
+                points.push(polar(root_radius, center + left_start));
+            }
+            let next_right = angular_pitch + right_start;
+            for sample in 1..segments_per_flank {
+                let t = sample as f64 / segments_per_flank as f64;
+                points.push(polar(
+                    root_radius,
+                    center + left_start + t * (next_right - left_start),
+                ));
+            }
+        }
+        points
     }
 
     fn legacy_cycloidal_gear_points(
@@ -4102,6 +4230,95 @@ mod tests {
         assert!(!cleared.is_empty());
         assert!((minimum_radius(nominal) - 9.5).abs() < 1.0e-8);
         assert!((minimum_radius(cleared) - 9.0).abs() < 1.0e-8);
+    }
+
+    #[test]
+    fn involute_gear_keeps_exact_samples_while_matching_legacy_finite_coordinates() {
+        for (module, teeth, pressure_angle, clearance, backlash, segments) in [
+            (2.0, 12, 20.0, 0.0, 0.0, 4),
+            (3.0, 9, 25.0, 0.5, 0.1, 3),
+            (1.0, 20, 14.5, 0.25, 0.05, 6),
+        ] {
+            let profile = Profile::involute_gear(
+                Real::try_from(module).unwrap(),
+                teeth,
+                Real::try_from(pressure_angle).unwrap(),
+                Real::try_from(clearance).unwrap(),
+                Real::try_from(backlash).unwrap(),
+                segments,
+            );
+            let actual = profile.region.material_contours()[0]
+                .segments()
+                .iter()
+                .map(|segment| {
+                    let point = segment.start();
+                    assert!(
+                        point.x().exact_rational_ref().is_none()
+                            || point.y().exact_rational_ref().is_none(),
+                        "analytic gear sample was demoted to a finite dyadic"
+                    );
+                    [
+                        point.x().to_f64_lossy().unwrap(),
+                        point.y().to_f64_lossy().unwrap(),
+                    ]
+                })
+                .collect::<Vec<_>>();
+            let expected = legacy_finite_involute_gear_points(
+                module,
+                teeth,
+                pressure_angle,
+                clearance,
+                backlash,
+                segments,
+            );
+
+            assert_eq!(actual.len(), expected.len());
+            for (actual, expected) in actual.iter().zip(expected) {
+                for axis in 0..2 {
+                    let scale = expected[axis].abs().max(1.0);
+                    assert!(
+                        (actual[axis] - expected[axis]).abs() <= 2.0e-12 * scale,
+                        "axis {axis}: exact {} vs legacy {}",
+                        actual[axis],
+                        expected[axis]
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn involute_gear_retains_module_beyond_binary64_integer_resolution() {
+        let module = Real::from(9_007_199_254_740_993_u64);
+        let rounded_module = Real::try_from(module.to_f64_lossy().unwrap()).unwrap();
+        assert_eq!(
+            hreal_try_cmp(&module, &rounded_module),
+            Some(Ordering::Greater)
+        );
+
+        let exact = Profile::involute_gear(
+            module,
+            12,
+            Real::from(20_u8),
+            Real::zero(),
+            Real::zero(),
+            2,
+        );
+        let rounded = Profile::involute_gear(
+            rounded_module,
+            12,
+            Real::from(20_u8),
+            Real::zero(),
+            Real::zero(),
+            2,
+        );
+        assert!(!exact.is_empty());
+        assert!(!rounded.is_empty());
+        let exact_x = exact.region.material_contours()[0].segments()[0].start().x();
+        let rounded_x = rounded.region.material_contours()[0].segments()[0]
+            .start()
+            .x();
+        assert_ne!(hreal_try_cmp(exact_x, rounded_x), Some(Ordering::Equal));
     }
 
     #[test]
