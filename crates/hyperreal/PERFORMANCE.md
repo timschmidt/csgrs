@@ -504,6 +504,31 @@ API and its Hyperlattice caller were removed. The retained optimization stays
 inside exact rational multiplication and does not introduce a floating-point
 decision boundary.
 
+### Retained experiment: native machine-sized integer powers
+
+Profiling Hyperlattice's exact scalar `powi(..., 5)` facade placed the hot path
+in three generic `Real` multiplications, repeated rational reductions, and
+temporary arbitrary-precision storage. Hyperreal now raises reduced word-sized
+rationals in checked `u128` storage when the powered numerator and denominator
+fit, constructs a dyadic denominator from its exact shift when they do not, and
+uses the former arbitrary-precision schedule as the exact fallback. The public
+`Real::powi_i64` entry point also avoids allocating a `BigInt` exponent and
+retains the existing rational and symbolic `Real::powi` semantics.
+
+Fresh cross-library medians for the four-case Hyperlattice facade moved from
+376.76 ns to 161.11 ns for exact f64 inputs and from 2.813 us to 210.93 ns for
+explicit rational inputs. The Numerica 128 control was 84.53 ns and Symbolica
+was 1.545 us, reducing the exact-f64/Numerica gap from 4.41x to 1.91x while
+remaining 9.6x faster than Symbolica. Hyperreal's direct exact-17 benchmark
+moved from 290.51 ns to 115.72 ns, and the Rational row from 185.66 ns to
+80.40 ns.
+
+The cross-stack trace records `native-real-i64-kernel`,
+`real/powi-i64/rational-exact`, and either `rational/powi/word-sized` or
+`dyadic-denominator-shift`. Exact equivalence tests cover rational, radical,
+symbolic, unknown-sign, negative-exponent, zero-domain, and `i64::MIN` cases;
+none of the new dispatch decisions use a primitive approximation.
+
 ### Retained experiment: two-thirds arctangent table reduction
 
 Johansson's medium-precision elementary-function work suggests reducing an

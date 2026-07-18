@@ -987,6 +987,28 @@ mod tests {
     }
 
     #[test]
+    fn powi_i64_matches_arbitrary_precision_exponents() {
+        let values = [
+            Real::new(Rational::fraction(7, 5).unwrap()),
+            Real::new(Rational::new(3)).sqrt().unwrap(),
+            Real::pi(),
+            Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap()),
+        ];
+        for value in values {
+            for exponent in [-3_i64, -1, 0, 1, 2, 5, 17] {
+                assert_eq!(
+                    value.clone().powi_i64(exponent),
+                    value.clone().powi(num::BigInt::from(exponent))
+                );
+            }
+        }
+
+        assert_eq!(Real::zero().powi_i64(0), Err(Problem::NotANumber));
+        assert_eq!(Real::zero().powi_i64(-2), Err(Problem::NotANumber));
+        assert_eq!(Real::from(-1).powi_i64(i64::MIN), Ok(Real::one()));
+    }
+
+    #[test]
     fn powi_negative_unknown_sign_matches_inverse() {
         let near_pi = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
         assert_eq!(near_pi.structural_facts().sign, None);

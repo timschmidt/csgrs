@@ -163,6 +163,10 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
             black_box(base.pow(exponent).unwrap());
         },
     );
+    trace_row(&mut rows, filters, "real/powi_i64/exact_17", || {
+        let base = Real::new(rational(7, 5));
+        black_box(base.powi_i64(17).unwrap());
+    });
     trace_row(&mut rows, filters, "real/pow/symbolic_negative_one", || {
         black_box(Real::pi().powi(BigInt::from(-1_i8)).unwrap());
         black_box(Real::e().powi(BigInt::from(-1_i8)).unwrap());

@@ -69,11 +69,13 @@ fuzz_target!(|input: Input| {
         17 => force(value.clone().qnorm()),
         18 => force(value.clone().gamma()),
         19 => force(value.clone().lgamma()),
-        20 => force(
-            value
-                .clone()
-                .powi(BigInt::from(i32::from(input.exponent.clamp(-8, 8)))),
-        ),
+        20 => {
+            let exponent = i64::from(input.exponent.clamp(-8, 8));
+            let machine = value.clone().powi_i64(exponent);
+            let arbitrary = value.clone().powi(BigInt::from(exponent));
+            assert_eq!(machine, arbitrary);
+            force(machine);
+        }
         21 => force(
             value
                 .clone()

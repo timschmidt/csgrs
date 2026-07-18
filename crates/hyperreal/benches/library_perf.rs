@@ -75,6 +75,10 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
                 description: "Raises an exact rational-backed `Real` to the 17th power.",
             },
             BenchDoc {
+                name: "exact_17_i64",
+                description: "Raises an exact rational-backed `Real` through the machine-sized exponent API.",
+            },
+            BenchDoc {
                 name: "irrational_17",
                 description: "Raises sqrt(3) to the 17th power with symbolic simplification.",
             },
@@ -839,6 +843,13 @@ fn bench_real_powi(c: &mut Criterion) {
         b.iter_batched(
             || exact.clone(),
             |value| black_box(value.powi(exp.clone()).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("exact_17_i64", |b| {
+        b.iter_batched(
+            || exact.clone(),
+            |value| black_box(value.powi_i64(17).unwrap()),
             BatchSize::SmallInput,
         )
     });

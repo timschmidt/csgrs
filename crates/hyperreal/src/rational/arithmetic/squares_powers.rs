@@ -232,13 +232,39 @@ impl Rational {
         Some(Self::from_parts_raw(self.sign, numerator, denominator))
     }
 
-    // This could grow unreasonably in terms of object size
-    // so only call this for modest exp values
-    fn pow_up(&self, exp: &BigUint) -> Self {
-        if exp == &BigUint::ZERO {
+    fn pow_up_u64(&self, exp: u64) -> Self {
+        if exp == 0 {
             return Self::one();
         }
-        if let Some(exp) = exp.to_u32().filter(|exp| *exp <= 64) {
+        if let Ok(exp) = u32::try_from(exp)
+            && exp <= 64
+        {
+            if let (Some(numerator), Some(denominator)) =
+                (self.numerator.to_u128(), self.denominator.to_u128())
+                && let (Some(numerator), Some(denominator)) =
+                    (numerator.checked_pow(exp), denominator.checked_pow(exp))
+            {
+                crate::trace_dispatch!("rational", "powi", "word-sized");
+                return Self::from_reduced_word_parts(
+                    if self.sign == Minus && exp % 2 == 1 {
+                        Minus
+                    } else {
+                        Plus
+                    },
+                    numerator,
+                    denominator,
+                );
+            }
+
+            let denominator = self
+                .dyadic_denominator_shift()
+                .and_then(|shift| shift.checked_mul(u64::from(exp)))
+                .and_then(|shift| usize::try_from(shift).ok())
+                .map(|shift| {
+                    crate::trace_dispatch!("rational", "powi", "dyadic-denominator-shift");
+                    BigUint::one() << shift
+                })
+                .unwrap_or_else(|| self.denominator.pow(exp));
             return Self::from_parts_raw(
                 if self.sign == Minus && exp % 2 == 1 {
                     Minus
@@ -246,9 +272,32 @@ impl Rational {
                     Plus
                 },
                 self.numerator.pow(exp),
-                self.denominator.pow(exp),
+                denominator,
             );
         }
+
+        let mut result = Self::one();
+        let mut factor = self.clone();
+        let mut exp = exp;
+        while exp > 0 {
+            if exp & 1 == 1 {
+                result *= &factor;
+            }
+            exp >>= 1;
+            if exp > 0 {
+                factor = &factor * &factor;
+            }
+        }
+        result
+    }
+
+    // This could grow unreasonably in terms of object size
+    // so only call this for modest exp values.
+    fn pow_up(&self, exp: &BigUint) -> Self {
+        if let Some(exp) = exp.to_u64() {
+            return self.pow_up_u64(exp);
+        }
+
         let mut result = Self::one();
         let mut factor = self.clone();
         let bits = exp.bits();
@@ -261,6 +310,32 @@ impl Rational {
             }
         }
         result
+    }
+
+    pub(crate) fn powi_i64(self, exp: i64) -> Result<Self, Problem> {
+        if exp == 0 {
+            return Ok(Self::one());
+        }
+        if self.sign == NoSign {
+            return if exp < 0 {
+                Err(Problem::DivideByZero)
+            } else {
+                Ok(Self::zero())
+            };
+        }
+        if self.is_integer() && self.numerator == *ONE.deref() {
+            return if self.sign == Minus && exp & 1 != 0 {
+                Ok(Self::new(-1))
+            } else {
+                Ok(Self::one())
+            };
+        }
+
+        if exp < 0 {
+            Ok(self.inverse()?.pow_up_u64(exp.unsigned_abs()))
+        } else {
+            Ok(self.pow_up_u64(exp as u64))
+        }
     }
 
     /// Integer exponentiation. Raise this Rational to an integer exponent.

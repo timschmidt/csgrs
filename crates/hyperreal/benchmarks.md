@@ -423,8 +423,9 @@ Integer exponentiation for exact and irrational `Real` values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_powi/exact_17` | 290.51 ns | 289.50 ns - 291.74 ns | Raises an exact rational-backed `Real` to the 17th power. |
-| `real_powi/irrational_17` | 393.20 ns | 391.66 ns - 395.14 ns | Raises sqrt(3) to the 17th power with symbolic simplification. |
+| `real_powi/exact_17` | 115.72 ns | 115.04 ns - 116.47 ns | Raises an exact rational-backed `Real` to the 17th power. |
+| `real_powi/exact_17_i64` | 81.29 ns | 81.13 ns - 81.47 ns | Raises an exact rational-backed `Real` through the machine-sized exponent API. |
+| `real_powi/irrational_17` | 174.23 ns | 155.24 ns - 211.37 ns | Raises sqrt(3) to the 17th power with symbolic simplification. |
 
 ### `rational_powi`
 
@@ -432,7 +433,7 @@ Integer exponentiation for `Rational`.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `rational_powi/exact_17` | 185.66 ns | 185.00 ns - 186.31 ns | Raises a rational value to the 17th power. |
+| `rational_powi/exact_17` | 80.40 ns | 80.23 ns - 80.58 ns | Raises a rational value to the 17th power. |
 
 ### `real_exact_trig`
 

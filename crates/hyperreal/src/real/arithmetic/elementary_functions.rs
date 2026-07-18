@@ -3062,6 +3062,53 @@ impl Real {
         }
     }
 
+    /// Raise this Real to a machine-sized integer exponent.
+    ///
+    /// Exact rational values use the Rational kernel without first allocating
+    /// an arbitrary-precision exponent. Other retained symbolic classes reuse
+    /// [`Real::powi`].
+    pub fn powi_i64(self, exp: i64) -> Result<Self, Problem> {
+        if exp == 1 {
+            crate::trace_dispatch!("real", "powi-i64", "exponent-one");
+            return Ok(self);
+        }
+        if exp == 0 {
+            if self.definitely_zero() {
+                crate::trace_dispatch!("real", "powi-i64", "zero-to-zero-domain-error");
+                return Err(Problem::NotANumber);
+            }
+            crate::trace_dispatch!("real", "powi-i64", "exponent-zero-one");
+            return Ok(Self::one());
+        }
+        if exp < 0 && self.definitely_zero() {
+            crate::trace_dispatch!(
+                "real",
+                "powi-i64",
+                "zero-negative-exponent-domain-error"
+            );
+            return Err(Problem::NotANumber);
+        }
+        if exp == -1 {
+            crate::trace_dispatch!("real", "powi-i64", "negative-one-inverse");
+            return self.inverse();
+        }
+        if self.class == One {
+            let rational = self.rational.powi_i64(exp)?;
+            crate::trace_dispatch!("real", "powi-i64", "rational-exact");
+            return Ok(Self {
+                rational,
+                class: One,
+                computable: None,
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
+            });
+        }
+
+        crate::trace_dispatch!("real", "powi-i64", "bigint-kernel-fallback");
+        self.powi(BigInt::from(exp))
+    }
+
     /// Raise this Real to some integer exponent.
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         if exp == *signed::ONE {

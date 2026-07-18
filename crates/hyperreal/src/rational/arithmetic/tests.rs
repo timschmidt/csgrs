@@ -423,6 +423,26 @@ mod tests {
         assert_eq!(one_two_five, Rational::fraction(1, 125));
         let more = Rational::new(7).powi(11i32.into()).unwrap();
         assert_eq!(more, Rational::new(1_977_326_743));
+
+        let dyadic = Rational::try_from(1.0e-12_f64).unwrap();
+        let powered = dyadic.clone().powi(5_i32.into()).unwrap();
+        let square = &dyadic * &dyadic;
+        let fourth = &square * &square;
+        assert_eq!(powered, fourth * dyadic);
+
+        let negative = Rational::fraction(-7, 5).unwrap();
+        assert_eq!(
+            negative.clone().powi(3_i32.into()),
+            Rational::fraction(-343, 125)
+        );
+        assert_eq!(
+            negative.clone().powi(4_i32.into()),
+            Rational::fraction(2_401, 625)
+        );
+        assert_eq!(
+            negative.powi((-3_i32).into()),
+            Rational::fraction(-125, 343)
+        );
     }
 
     #[test]

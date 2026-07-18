@@ -309,6 +309,10 @@ distribution helpers (`erf`, `erfc`, `erfcx`, `dnorm`,
 `regularized_gamma_p`, `regularized_gamma_q`, `chi_square_cdf`,
 `chi_square_sf`), integers, decimals, fractions, `pi`, and `e`.
 
+For direct Rust callers, `Real::powi_i64` accepts a machine-sized integer
+exponent without allocating an arbitrary-precision exponent. It preserves the
+same exact rational and retained symbolic results as `Real::powi`.
+
 Stability-oriented scalar forms keep common statistical expressions from being
 assembled out of cancellation-prone generic arithmetic:
 
