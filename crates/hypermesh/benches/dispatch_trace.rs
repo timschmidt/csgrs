@@ -1,6 +1,33 @@
 mod common;
 
-use hypermesh::{BooleanOp, EmberConfig, Point3, Real, boolean_operation, convex_hull};
+use hypermesh::clip::clip_polygon;
+use hypermesh::{
+    BooleanOp, EmberConfig, ExactBvh, HypermeshResult, LocalBsp, Plane, Point3, Real,
+    boolean_operation, classify_polygon_output, convex_hull, convex_hull_with_coplanar_groups,
+    convex_hull_with_retained_facts, extract_output, intersect_polygons, make_indicator,
+    make_triangle, prepare_boolean_operations_with_certified_convex_inputs, prepare_input,
+    propagate_wnv, trace_axis_segment, trace_segment,
+};
+
+fn trace_workload<T>(name: &str, workload: impl FnOnce() -> HypermeshResult<T>) -> T {
+    hyperreal::dispatch_trace::reset();
+    let result = hyperreal::dispatch_trace::with_recording(workload)
+        .unwrap_or_else(|error| panic!("{name} trace workload must remain certified: {error}"));
+    let trace = hyperreal::dispatch_trace::take_trace();
+    let correlation = trace.correlation_summary();
+    assert!(
+        correlation.dispatch_events > 0 || correlation.rational_temporaries > 0,
+        "{name} did not emit an exact-computation path trace"
+    );
+    println!("{name}: correlation={correlation:?}");
+    for summary in &trace.dispatch {
+        println!(
+            "  {}/{}/{}/{}",
+            summary.layer, summary.operation, summary.path, summary.count
+        );
+    }
+    result
+}
 
 fn main() {
     for (name, meshes) in [
@@ -24,10 +51,15 @@ fn main() {
             });
             let output = result.expect("trace workload must remain certified");
             let trace = hyperreal::dispatch_trace::take_trace();
+            let correlation = trace.correlation_summary();
+            assert!(
+                correlation.dispatch_events > 0 || correlation.rational_temporaries > 0,
+                "{name}/{op:?} did not emit an exact-computation path trace"
+            );
             println!(
                 "{name}/{op:?}: polygons={}, correlation={:?}",
                 output.classifications().len(),
-                trace.correlation_summary()
+                correlation
             );
             for summary in &trace.dispatch {
                 println!(
@@ -53,10 +85,15 @@ fn main() {
     })
     .expect("trace variadic difference must remain certified");
     let trace = hyperreal::dispatch_trace::take_trace();
+    let correlation = trace.correlation_summary();
+    assert!(
+        correlation.dispatch_events > 0 || correlation.rational_temporaries > 0,
+        "nested_tools_5/Difference did not emit an exact-computation path trace"
+    );
     println!(
         "nested_tools_5/Difference: polygons={}, correlation={:?}",
         nested_tool_result.classifications().len(),
-        trace.correlation_summary()
+        correlation
     );
     for summary in &trace.dispatch {
         println!(
@@ -76,10 +113,15 @@ fn main() {
     })
     .expect("subdivided cube union must remain certified");
     let trace = hyperreal::dispatch_trace::take_trace();
+    let correlation = trace.correlation_summary();
+    assert!(
+        correlation.dispatch_events > 0 || correlation.rational_temporaries > 0,
+        "subdivided_cubes_192/Union did not emit an exact-computation path trace"
+    );
     println!(
         "subdivided_cubes_192/Union: polygons={}, correlation={:?}",
         subdivided_result.classifications().len(),
-        trace.correlation_summary()
+        correlation
     );
     for summary in &trace.dispatch {
         println!(
@@ -99,11 +141,16 @@ fn main() {
     let hull = hyperreal::dispatch_trace::with_recording(|| convex_hull(&hull_points))
         .expect("trace point set must span 3D");
     let trace = hyperreal::dispatch_trace::take_trace();
+    let correlation = trace.correlation_summary();
+    assert!(
+        correlation.dispatch_events > 0 || correlation.rational_temporaries > 0,
+        "convex_hull/grid_4913 did not emit an exact-computation path trace"
+    );
     println!(
         "convex_hull/grid_4913: vertices={}, triangles={}, correlation={:?}",
         hull.positions.len(),
         hull.triangles.len(),
-        trace.correlation_summary()
+        correlation
     );
     for summary in &trace.dispatch {
         println!(
@@ -111,4 +158,79 @@ fn main() {
             summary.layer, summary.operation, summary.path, summary.count
         );
     }
+
+    let prepared_pair = common::cube_pair();
+    let prepared_refs = [prepared_pair[0].as_ref(), prepared_pair[1].as_ref()];
+    let prepared = trace_workload("mesh_prepare_input", || prepare_input(&prepared_refs));
+    assert_eq!(prepared.num_meshes, 2);
+    assert!(!prepared.polygons.is_empty());
+
+    trace_workload("prepared_certified_convex_and_output_views", || {
+        let operations = [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::SymmetricDifference,
+        ];
+        let arrangement = prepare_boolean_operations_with_certified_convex_inputs(
+            &prepared_refs,
+            &operations,
+            &[true, true],
+            EmberConfig::default(),
+        )?;
+        let result = arrangement.extract(BooleanOp::Union)?;
+        let triangle_soup = arrangement.extract_triangle_soup(BooleanOp::Union)?;
+        let owned = extract_output(&result)?;
+        let borrowed = hypermesh::output::extract_output_polygons(&result.output().polygons)?;
+        assert_eq!(owned.len(), borrowed.len());
+        Ok((owned.len(), triangle_soup.triangles.len()))
+    });
+
+    let p = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
+    let host = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let cutter = make_triangle(&p(2, -1, -1), &p(2, 5, -1), &p(2, 2, 1), 1, 0);
+    trace_workload("polygon_clip_intersection_bvh_bsp", || {
+        let clipped = clip_polygon(&host, &Plane::axis_aligned(0, Real::from(1)))?;
+        assert!(clipped.left.is_valid() || clipped.right.is_valid());
+
+        let intersection = intersect_polygons(&host, &cutter, 1)?;
+        let mut bsp = LocalBsp::new(&host);
+        if let Some(segment) = &intersection.segment {
+            bsp.add_segment(segment)?;
+        }
+
+        let left = ExactBvh::build(std::slice::from_ref(&host))?;
+        let right = ExactBvh::build(std::slice::from_ref(&cutter))?;
+        let mut pair_count = 0;
+        left.intersect_pairs(&right, |_, _| pair_count += 1)?;
+        assert_eq!(pair_count, 1);
+        Ok((bsp.node_count(), pair_count))
+    });
+
+    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    wall.delta_w = vec![1];
+    trace_workload("segment_and_winding", || {
+        let axis = trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone()])?;
+        let winding = trace_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall.clone()])?;
+        assert!(axis.valid);
+        assert_eq!(axis.winding, winding);
+
+        let propagated = propagate_wnv(&[0, 1], -1, &[1, -1])?;
+        let indicator = make_indicator(BooleanOp::Difference, 2);
+        let classification = classify_polygon_output(&[0, 1], &propagated, &indicator);
+        Ok((winding, classification))
+    });
+
+    let retained_points = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(0, 0, 2)];
+    let coordinate_ids = vec![
+        [0, 1, 2, 10, 20],
+        [3, 4, 5, 10, 21],
+        [6, 7, 8, 10, 22],
+        [9, 10, 11, 10, 23],
+    ];
+    trace_workload("convex_hull_public_variants", || {
+        let grouped = convex_hull_with_coplanar_groups(&retained_points, &[])?;
+        let retained = convex_hull_with_retained_facts(&retained_points, &[], &coordinate_ids)?;
+        Ok((grouped.triangles.len(), retained.triangles.len()))
+    });
 }

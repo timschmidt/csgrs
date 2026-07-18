@@ -1,0 +1,38 @@
+[package]
+name = "hypermesh-fuzz"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hypermesh = { path = ".." }
+
+[[bin]]
+name = "polygon_predicates"
+path = "fuzz_targets/polygon_predicates.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "bvh_queries"
+path = "fuzz_targets/bvh_queries.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "mesh_and_hull"
+path = "fuzz_targets/mesh_and_hull.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "boolean_pipeline"
+path = "fuzz_targets/boolean_pipeline.rs"
+test = false
+doc = false

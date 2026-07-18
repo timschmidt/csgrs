@@ -84,6 +84,22 @@ fn tetra_mesh() -> hypermesh::InputMesh {
     )
 }
 
+#[cfg(feature = "dispatch-trace")]
+#[test]
+fn public_mesh_preparation_emits_correlated_dispatch_trace() {
+    let mesh = tetra_mesh();
+    hyperreal::dispatch_trace::reset();
+    let prepared = hyperreal::dispatch_trace::with_recording(|| prepare_input(&[mesh.as_ref()]))
+        .expect("tetrahedron preparation remains certified");
+    assert!(!prepared.polygons.is_empty());
+
+    let correlation = hyperreal::dispatch_trace::take_trace().correlation_summary();
+    assert!(
+        correlation.dispatch_events > 0 || correlation.rational_temporaries > 0,
+        "public mesh preparation did not emit an exact-computation path trace"
+    );
+}
+
 fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> hypermesh::InputMesh {
     hypermesh::InputMesh::new(
         vec![a, b, c, apex],

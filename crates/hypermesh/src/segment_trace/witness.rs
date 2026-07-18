@@ -573,6 +573,7 @@ pub(crate) fn certified_leaf_interior_points(
         delta_w: WindingNumberTransitionVector::new(),
         approx_bounds: None,
         known_vertices: None,
+        known_edge_identities: None,
     };
     interior_leaf_points(&leaf)
 }

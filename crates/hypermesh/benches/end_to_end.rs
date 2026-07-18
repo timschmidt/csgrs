@@ -6,7 +6,9 @@ use std::time::Duration;
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use hypermesh::{
     BooleanOp, EmberConfig, Point3, Real, boolean_operation, build_boolean_arrangement,
-    convex_hull, prepare_boolean_operations, prepare_input, triangulate_and_resolve_certified,
+    convex_hull, convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, extract_output,
+    prepare_boolean_operations, prepare_boolean_operations_with_certified_convex_inputs,
+    prepare_input, triangulate_and_resolve_certified,
 };
 
 fn curved_shell(segments: usize, stacks: usize) -> Vec<Point3> {
@@ -105,6 +107,22 @@ fn bench_end_to_end(c: &mut Criterion) {
                 arrangement
                     .extract(op)
                     .expect("cube arrangement extraction is certified")
+            })
+        })
+    });
+    arrangement_group.bench_function("prepare_certified_convex_and_extract_four", |b| {
+        b.iter(|| {
+            let arrangement = prepare_boolean_operations_with_certified_convex_inputs(
+                black_box(&cube_refs),
+                &all_ops,
+                &[true, true],
+                EmberConfig::default(),
+            )
+            .expect("certified convex cube arrangement is certified");
+            all_ops.map(|op| {
+                arrangement
+                    .extract(op)
+                    .expect("certified convex cube extraction is certified")
             })
         })
     });
@@ -226,6 +244,15 @@ fn bench_end_to_end(c: &mut Criterion) {
                 .expect("benchmark output is certified")
         })
     });
+    c.bench_function("output/cube_union_extract_public_views", |b| {
+        b.iter(|| {
+            let result = black_box(&cube_union);
+            let owned = extract_output(result).expect("benchmark output extraction is certified");
+            let borrowed = hypermesh::output::extract_output_polygons(&result.output().polygons)
+                .expect("benchmark borrowed output extraction is certified");
+            (owned, borrowed)
+        })
+    });
 
     let hull_points = (-8..=8)
         .flat_map(|x| {
@@ -248,6 +275,35 @@ fn bench_end_to_end(c: &mut Criterion) {
     let curved_shell = curved_shell(16, 8);
     c.bench_function("convex_hull/curved_shell_684", |b| {
         b.iter(|| convex_hull(black_box(&curved_shell)).expect("point set spans 3D"))
+    });
+
+    let retained_points = vec![
+        Point3::new(Real::from(0), Real::from(0), Real::from(0)),
+        Point3::new(Real::from(2), Real::from(0), Real::from(0)),
+        Point3::new(Real::from(0), Real::from(2), Real::from(0)),
+        Point3::new(Real::from(0), Real::from(0), Real::from(2)),
+    ];
+    let retained_coordinate_ids = vec![
+        [0, 1, 2, 10, 20],
+        [3, 4, 5, 10, 21],
+        [6, 7, 8, 10, 22],
+        [9, 10, 11, 10, 23],
+    ];
+    c.bench_function("convex_hull/tetra_coplanar_group_api", |b| {
+        b.iter(|| {
+            convex_hull_with_coplanar_groups(black_box(&retained_points), black_box(&[]))
+                .expect("tetrahedron spans 3D")
+        })
+    });
+    c.bench_function("convex_hull/tetra_retained_facts_api", |b| {
+        b.iter(|| {
+            convex_hull_with_retained_facts(
+                black_box(&retained_points),
+                black_box(&[]),
+                black_box(&retained_coordinate_ids),
+            )
+            .expect("retained tetrahedron spans 3D")
+        })
     });
 }
 

@@ -17,21 +17,23 @@ pub struct BspLeaf {
     pub enabled: bool,
     /// Certified strict interior witness retained through BSP splits.
     pub(crate) interior_point: Option<Point3>,
+    pub(crate) projective_interior_point: Option<HomogeneousPoint3>,
 }
 
 impl BspLeaf {
-    fn new(edges: Vec<Plane>, interior_point: Option<Point3>) -> Self {
+    fn new(edges: Vec<Plane>, projective_interior_point: Option<HomogeneousPoint3>) -> Self {
         Self {
             edges,
             enabled: true,
-            interior_point,
+            interior_point: None,
+            projective_interior_point,
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
 enum BspNode {
-    Leaf(BspLeaf),
+    Leaf(Box<BspLeaf>),
     Branch {
         split_plane: Box<Plane>,
         negative: usize,
@@ -52,18 +54,18 @@ pub struct LocalBsp {
 impl LocalBsp {
     /// Builds a local BSP with one initial leaf matching `polygon`.
     pub fn new(polygon: &ConvexPolygon) -> Self {
-        let interior_point = polygon
+        let projective_interior_point = polygon
             .vertices()
             .ok()
-            .and_then(|vertices| convex_point_centroid(&vertices).ok().flatten());
+            .and_then(|vertices| convex_point_projective_centroid(&vertices));
         Self {
             support: polygon.support.clone(),
             host_mesh_index: polygon.mesh_index,
             host_polygon_index: polygon.polygon_index,
-            nodes: vec![BspNode::Leaf(BspLeaf::new(
+            nodes: vec![BspNode::Leaf(Box::new(BspLeaf::new(
                 polygon.edges.as_ref().clone(),
-                interior_point,
-            ))],
+                projective_interior_point,
+            )))],
             root: Some(0),
         }
     }
@@ -177,10 +179,11 @@ impl LocalBsp {
     }
 
     fn split_leaf(&mut self, node_index: usize, split: &Plane) -> HypermeshResult<()> {
-        let (old_edges, old_interior_point, was_enabled) = match &self.nodes[node_index] {
+        let (old_edges, old_projective_interior_point, was_enabled) = match &self.nodes[node_index]
+        {
             BspNode::Leaf(leaf) => (
                 leaf.edges.clone(),
-                leaf.interior_point.clone(),
+                leaf.projective_interior_point.clone(),
                 leaf.enabled,
             ),
             BspNode::Branch { .. } => return Ok(()),
@@ -238,15 +241,15 @@ impl LocalBsp {
             }
         }
 
-        let negative_interior = split_child_interior_point(
-            old_interior_point.as_ref(),
+        let negative_interior = split_child_projective_interior_point(
+            old_projective_interior_point.as_ref(),
             split,
             &vertices,
             &classifications,
             Classification::Negative,
         )?;
-        let positive_interior = split_child_interior_point(
-            old_interior_point.as_ref(),
+        let positive_interior = split_child_projective_interior_point(
+            old_projective_interior_point.as_ref(),
             split,
             &vertices,
             &classifications,
@@ -265,13 +268,13 @@ impl LocalBsp {
     fn alloc_leaf(
         &mut self,
         edges: Vec<Plane>,
-        interior_point: Option<Point3>,
+        projective_interior_point: Option<HomogeneousPoint3>,
         enabled: bool,
     ) -> usize {
         let index = self.nodes.len();
-        let mut leaf = BspLeaf::new(edges, interior_point);
+        let mut leaf = BspLeaf::new(edges, projective_interior_point);
         leaf.enabled = enabled;
-        self.nodes.push(BspNode::Leaf(leaf));
+        self.nodes.push(BspNode::Leaf(Box::new(leaf)));
         index
     }
 
@@ -358,9 +361,9 @@ fn classify_leaf_overlap_relation(
     classify_overlap_test_relation(&test_points, other)
 }
 
-fn convex_point_centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
+fn convex_point_projective_centroid(points: &[Point3]) -> Option<HomogeneousPoint3> {
     if points.is_empty() {
-        return Ok(None);
+        return None;
     }
     let mut point = Point3::origin();
     for candidate in points {
@@ -368,25 +371,26 @@ fn convex_point_centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
         point.y += candidate.y.clone();
         point.z += candidate.z.clone();
     }
-    let denominator = Real::from(points.len() as u64);
-    Ok(Some(Point3::new(
-        (point.x / denominator.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (point.y / denominator.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (point.z / denominator).map_err(|_| HypermeshError::UnknownClassification)?,
-    )))
+    Some(HomogeneousPoint3::new(
+        point.x,
+        point.y,
+        point.z,
+        Real::from(points.len() as u64),
+    ))
 }
 
-fn split_child_interior_point(
-    parent: Option<&Point3>,
+fn split_child_projective_interior_point(
+    parent: Option<&HomogeneousPoint3>,
     split: &Plane,
     vertices: &[HomogeneousPoint3],
     classifications: &[Classification],
     target: Classification,
-) -> HypermeshResult<Option<Point3>> {
+) -> HypermeshResult<Option<HomogeneousPoint3>> {
     let Some(parent) = parent else {
         return Ok(None);
     };
-    if classify_point(parent, split)? == target {
+    let parent_classification = classify_projective_point(parent, split)?;
+    if parent_classification == target {
         return Ok(Some(parent.clone()));
     }
     let Some(vertex_index) = classifications
@@ -395,33 +399,72 @@ fn split_child_interior_point(
     else {
         return Ok(None);
     };
-    let vertex = vertices[vertex_index]
-        .to_affine_point()
-        .map_err(|_| HypermeshError::PointAtInfinity)?;
-    let parent_value = split.expression_at_point(parent);
-    let parent_class = crate::geometry::classify_real(&parent_value)?;
-    let crossing = if parent_class == Classification::On {
+    let vertex = positive_weight_projective_point(&vertices[vertex_index])?;
+    let parent = positive_weight_projective_point(parent)?;
+    let mut scaled_vertex = vertex.clone();
+    for _ in 0..32 {
+        let witness = add_projective_points(&parent, &scaled_vertex);
+        match classify_projective_point(&witness, split)? {
+            classification if classification == target => {
+                return Ok(Some(witness));
+            }
+            Classification::On => {
+                return Ok(Some(add_projective_points(&witness, &vertex)));
+            }
+            _ => {
+                scaled_vertex = add_projective_points(&scaled_vertex, &scaled_vertex);
+            }
+        }
+    }
+
+    let parent_value = hyperlattice::homogeneous_point_plane_expression(&parent, split);
+    let vertex_value = hyperlattice::homogeneous_point_plane_expression(&vertex, split);
+    let crossing = if parent_classification == Classification::On {
         parent.clone()
     } else {
-        let vertex_value = split.expression_at_point(&vertex);
-        let denominator = &parent_value - &vertex_value;
-        let t = (parent_value / denominator).map_err(|_| HypermeshError::UnknownClassification)?;
-        Point3::new(
-            &parent.x + &(t.clone() * (&vertex.x - &parent.x)),
-            &parent.y + &(t.clone() * (&vertex.y - &parent.y)),
-            &parent.z + &(t * (&vertex.z - &parent.z)),
+        let parent_scale = vertex_value.abs();
+        let vertex_scale = parent_value.abs();
+        HomogeneousPoint3::new(
+            &parent_scale * &parent.x + &vertex_scale * &vertex.x,
+            &parent_scale * &parent.y + &vertex_scale * &vertex.y,
+            &parent_scale * &parent.z + &vertex_scale * &vertex.z,
+            &parent_scale * &parent.w + &vertex_scale * &vertex.w,
         )
     };
-    let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
-    let witness = Point3::new(
-        &crossing.x + &(half.clone() * (&vertex.x - &crossing.x)),
-        &crossing.y + &(half.clone() * (&vertex.y - &crossing.y)),
-        &crossing.z + &(half * (&vertex.z - &crossing.z)),
+    let witness = HomogeneousPoint3::new(
+        &crossing.x + &vertex.x,
+        &crossing.y + &vertex.y,
+        &crossing.z + &vertex.z,
+        &crossing.w + &vertex.w,
     );
-    if classify_point(&witness, split)? != target {
+    if classify_projective_point(&witness, split)? != target {
         return Ok(None);
     }
     Ok(Some(witness))
+}
+
+fn add_projective_points(left: &HomogeneousPoint3, right: &HomogeneousPoint3) -> HomogeneousPoint3 {
+    HomogeneousPoint3::new(
+        &left.x + &right.x,
+        &left.y + &right.y,
+        &left.z + &right.z,
+        &left.w + &right.w,
+    )
+}
+
+fn positive_weight_projective_point(
+    point: &HomogeneousPoint3,
+) -> HypermeshResult<HomogeneousPoint3> {
+    match crate::geometry::classify_real(&point.w)? {
+        Classification::Positive => Ok(point.clone()),
+        Classification::Negative => Ok(HomogeneousPoint3::new(
+            -point.x.clone(),
+            -point.y.clone(),
+            -point.z.clone(),
+            -point.w.clone(),
+        )),
+        Classification::On => Err(HypermeshError::PointAtInfinity),
+    }
 }
 
 fn classify_overlap_test_relation(

@@ -10,6 +10,37 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## Public-path trace coverage
+
+Coverage is audited by executable public family. Constructors, enums, report
+accessors, and borrowed views are validated through the public operation that
+produces or consumes them; they do not receive misleading standalone timing
+rows. Every exact-computation family below has semantic assertions, a release
+timing, and a recording window that fails on an empty dispatch trace.
+
+| Public executable family | Semantic tests | Release benchmark | Exact path trace |
+| --- | --- | --- | --- |
+| Input meshes, polygon soups, and preparation | `core`, `regression` | `end_to_end/prepare_input` | `mesh_prepare_input` plus the dispatch-trace integration test |
+| Primitives, clipping, intersections, BVHs, and local BSP | `core`, `regression` | exercised inside `end_to_end` Boolean and hull workloads | `polygon_clip_intersection_bvh_bsp` |
+| Boolean arrangement construction, scoped/certified-convex preparation, extraction, and all operations | `core`, `regression` | `end_to_end/boolean_operation` and arrangement/crossover groups | every operation over overlapping, nested, variadic, and subdivided inputs plus `prepared_certified_convex_and_output_views` |
+| Subdivision, leaf processing, segment tracing, and winding propagation | `core`, `regression` | exercised inside `end_to_end` Boolean workloads | Boolean recordings plus `segment_and_winding` |
+| Certified output extraction, triangulation, and closure reports | `core`, `regression` | `end_to_end/output` | Boolean recordings include output-closure certification |
+| Convex hull, coplanar groups, and retained construction facts | `core`, `regression` | all `end_to_end/convex_hull` cases, including both retained variants | `convex_hull/grid_4913` and `convex_hull_public_variants` |
+
+`cargo bench --features dispatch-trace --bench dispatch_trace` records the
+exact-computation paths for every Boolean operation across overlapping,
+contained, variadic, and subdivided inputs, plus convex hull construction. It
+also contains direct public-module workloads for mesh preparation; polygon
+construction, clipping, and intersection; exact BVH queries; local BSP
+splitting; axis/general segment tracing; and winding propagation and output
+classification. Every recording window fails if it emits neither dispatch nor
+rational-reducer evidence.
+
+These trace workloads complement the Criterion timings in `end_to_end` and the
+unit/integration tests: the Criterion suite measures retained end-to-end costs,
+the dispatch benchmark identifies the selected exact paths, and the tests lock
+their semantic results and failure behavior.
+
 ## 2026-07-15: cache approximate BVH partition keys
 
 Status: **kept**

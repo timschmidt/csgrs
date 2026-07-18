@@ -4178,6 +4178,7 @@ fn ordered_bsp_leaf_indices_prefers_larger_edge_cycles_first() {
             ],
             enabled: true,
             interior_point: None,
+            projective_interior_point: None,
         },
         BspLeaf {
             edges: vec![
@@ -4188,6 +4189,7 @@ fn ordered_bsp_leaf_indices_prefers_larger_edge_cycles_first() {
             ],
             enabled: true,
             interior_point: None,
+            projective_interior_point: None,
         },
         BspLeaf {
             edges: vec![
@@ -4197,6 +4199,7 @@ fn ordered_bsp_leaf_indices_prefers_larger_edge_cycles_first() {
             ],
             enabled: true,
             interior_point: None,
+            projective_interior_point: None,
         },
     ];
 
@@ -14049,5 +14052,6 @@ fn support_only_polygon(support: Plane) -> ConvexPolygon {
         delta_w: Vec::new(),
         approx_bounds: None,
         known_vertices: None,
+        known_edge_identities: None,
     }
 }

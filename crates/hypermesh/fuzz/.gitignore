@@ -1,0 +1,5 @@
+artifacts/
+target/
+corpus/**
+!corpus/**/
+!corpus/**/seed

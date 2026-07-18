@@ -9,6 +9,23 @@ use crate::geometry::{
 };
 use crate::winding::WindingNumberTransitionVector;
 
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub(crate) struct ConstructionPlaneIdentity {
+    pub(crate) mesh: usize,
+    pub(crate) plane: usize,
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub(crate) enum ConstructionEdgeIdentity {
+    Source {
+        mesh: usize,
+        endpoints: [usize; 2],
+    },
+    Split {
+        planes: [ConstructionPlaneIdentity; 2],
+    },
+}
+
 /// Approximate exact-coordinate bounds for fast spatial rejection.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApproxBounds {
@@ -50,6 +67,7 @@ pub struct ConvexPolygon {
     /// Derived clipping and BSP polygons clear this cache when their edge
     /// cycle changes.
     pub(crate) known_vertices: Option<Arc<Vec<Point3>>>,
+    pub(crate) known_edge_identities: Option<Arc<Vec<ConstructionEdgeIdentity>>>,
 }
 
 impl PartialEq for ConvexPolygon {
@@ -79,6 +97,7 @@ impl ConvexPolygon {
             delta_w: Vec::new(),
             approx_bounds: None,
             known_vertices: None,
+            known_edge_identities: None,
         }
     }
 
@@ -132,8 +151,76 @@ impl ConvexPolygon {
                 .map(Plane::inverted)
                 .collect::<Vec<_>>(),
         );
-        result.known_vertices = None;
+        result.known_vertices = self
+            .known_vertices
+            .as_ref()
+            .map(|vertices| Arc::new(vertices.iter().rev().cloned().collect()));
+        result.known_edge_identities = self.known_edge_identities.as_ref().map(|identities| {
+            let count = identities.len();
+            Arc::new(
+                (0..count)
+                    .map(|index| identities[(count + count - 2 - index) % count].clone())
+                    .collect(),
+            )
+        });
         result
+    }
+
+    pub(crate) fn with_known_vertex_cycle_and_edges(
+        &self,
+        vertices: Vec<Point3>,
+        edges: Vec<Plane>,
+        edge_identities: Vec<ConstructionEdgeIdentity>,
+    ) -> Self {
+        debug_assert_eq!(vertices.len(), edges.len());
+        debug_assert_eq!(vertices.len(), edge_identities.len());
+        let approx_bounds = (!vertices.is_empty()).then(|| {
+            let points = vertices.iter().collect::<Vec<_>>();
+            bounds_for_points(&points)
+        });
+        let mut result = self.clone();
+        result.edges = Arc::new(edges);
+        result.approx_bounds = approx_bounds;
+        result.known_vertices = Some(Arc::new(vertices));
+        result.known_edge_identities = Some(Arc::new(edge_identities));
+        result
+    }
+
+    pub(crate) fn with_source_triangle_edge_identities(
+        mut self,
+        mesh: usize,
+        vertices: [usize; 3],
+    ) -> Self {
+        self.known_edge_identities = Some(Arc::new(
+            (0..3)
+                .map(|index| {
+                    let mut endpoints = [vertices[index], vertices[(index + 1) % 3]];
+                    endpoints.sort_unstable();
+                    ConstructionEdgeIdentity::Source { mesh, endpoints }
+                })
+                .collect(),
+        ));
+        self
+    }
+
+    pub(crate) fn with_rebuilt_edge_planes(&self) -> HypermeshResult<Self> {
+        let vertices = self.vertices()?;
+        if vertices.len() < 3 {
+            return Ok(self.clone());
+        }
+        let edges = (0..vertices.len())
+            .map(|index| {
+                edge_plane(
+                    &vertices[index],
+                    &vertices[(index + 1) % vertices.len()],
+                    &vertices[(index + 2) % vertices.len()],
+                    &self.support,
+                )
+            })
+            .collect();
+        let mut result = self.clone();
+        result.edges = Arc::new(edges);
+        Ok(result)
     }
 
     /// Returns true if a homogeneous point lies on or inside the polygon.
@@ -192,6 +279,27 @@ pub fn make_triangle(
         delta_w: Vec::new(),
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
         known_vertices: Some(Arc::new(vec![p0.clone(), p1.clone(), p2.clone()])),
+        known_edge_identities: None,
+    }
+}
+
+pub(crate) fn make_triangle_with_deferred_edges(
+    p0: &Point3,
+    p1: &Point3,
+    p2: &Point3,
+    mesh_index: isize,
+    polygon_index: isize,
+) -> ConvexPolygon {
+    let support = Plane::from_points(p0, p1, p2);
+    ConvexPolygon {
+        edges: Arc::new(vec![support.clone(); 3]),
+        support,
+        mesh_index,
+        polygon_index,
+        delta_w: Vec::new(),
+        approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
+        known_vertices: Some(Arc::new(vec![p0.clone(), p1.clone(), p2.clone()])),
+        known_edge_identities: None,
     }
 }
 
@@ -230,10 +338,22 @@ pub fn make_quad(
             p2.clone(),
             p3.clone(),
         ])),
+        known_edge_identities: None,
     }
 }
 
 fn edge_plane(a: &Point3, b: &Point3, opposite: &Point3, support: &Plane) -> Plane {
+    let mut plane = oriented_edge_plane(a, b, support);
+    if matches!(
+        crate::geometry::classify_point(opposite, &plane),
+        Ok(Classification::Positive)
+    ) {
+        plane = plane.inverted();
+    }
+    plane
+}
+
+fn oriented_edge_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
     let edge = sub_points(b, a);
     let support_normal = [
         support.normal.x.clone(),
@@ -242,14 +362,7 @@ fn edge_plane(a: &Point3, b: &Point3, opposite: &Point3, support: &Plane) -> Pla
     ];
     let normal = cross_arrays(&edge, &support_normal);
     let offset = -dot_point(&normal, a);
-    let mut plane = Plane::new(normal, offset);
-    if matches!(
-        crate::geometry::classify_point(opposite, &plane),
-        Ok(Classification::Positive)
-    ) {
-        plane = plane.inverted();
-    }
-    plane
+    Plane::new(normal, offset)
 }
 
 fn bounds_for_points(points: &[&Point3]) -> ApproxBounds {

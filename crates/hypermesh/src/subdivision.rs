@@ -6,9 +6,10 @@ use split::*;
 
 use crate::bvh::ExactBvh;
 use crate::clip::{ClipSide, clip_polygon};
-use crate::error::HypermeshResult;
+use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
+    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_projective_point,
+    classify_real, compare_real,
 };
 use crate::halfspace::{
     aabb_core_halfspaces, axis_halfspace, halfspace_has_opposite_pair,
@@ -486,6 +487,45 @@ fn process_leaf_into_inner_with_pairwise_cache(
                         .copied()
                         .unwrap_or(false)
                 });
+            if let Some(w_front) = certified_convex_host_mesh
+                .zip(leaf.projective_interior_point.as_ref())
+                .map(|(host_mesh, point)| {
+                    classify_projective_point_against_certified_convex_inputs(
+                        point,
+                        host_mesh,
+                        polygons,
+                        certified_convex_inputs,
+                    )
+                })
+                .transpose()?
+                .flatten()
+                && intersections[index]
+                    .iter()
+                    .all(|intersection| intersection.kind != PairwiseIntersectionType::Overlap)
+            {
+                let w_back = propagate_wnv(&w_front, 1, &polygon.delta_w)?;
+                let classification = if emit_all_transitions && w_front != w_back {
+                    ARRANGEMENT_CLASSIFICATION
+                } else {
+                    classify_polygon_output(&w_front, &w_back, indicator)
+                };
+                if classification != 0 {
+                    let mut fragment = polygon.clone();
+                    fragment.edges = Arc::new(leaf.edges.clone());
+                    fragment.known_vertices = None;
+                    let mut classified = ClassifiedPolygon::new(fragment, classification);
+                    classified.winding = Some(WindingPair { w_front, w_back });
+                    classified.is_bsp_fragment = true;
+                    push_unique_classified_polygon_with_bucket_state(
+                        output,
+                        &mut output_buckets,
+                        classified,
+                    );
+                    stats.bsp_fragment_count += 1;
+                }
+                stats.bsp_leaf_count += 1;
+                continue;
+            }
             let certification = certify_bsp_leaf(
                 polygon,
                 &leaf.edges,
@@ -548,6 +588,54 @@ fn process_leaf_into_inner_with_pairwise_cache(
 
     stats.certified_complete = true;
     Ok(stats)
+}
+
+fn classify_projective_point_against_certified_convex_inputs(
+    point: &HomogeneousPoint3,
+    host_mesh: usize,
+    polygons: &[ConvexPolygon],
+    certified_convex_inputs: &[bool],
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    if certified_convex_inputs.is_empty()
+        || host_mesh >= certified_convex_inputs.len()
+        || !certified_convex_inputs[host_mesh]
+    {
+        return Ok(None);
+    }
+    let mut winding = vec![0; certified_convex_inputs.len()];
+    for mesh in 0..certified_convex_inputs.len() {
+        if mesh == host_mesh {
+            continue;
+        }
+        if !certified_convex_inputs[mesh] {
+            return Ok(None);
+        }
+        let mesh_index =
+            isize::try_from(mesh).map_err(|_| HypermeshError::UnknownClassification)?;
+        let mut saw_support = false;
+        let mut outside = false;
+        for polygon in polygons
+            .iter()
+            .filter(|polygon| polygon.mesh_index == mesh_index)
+        {
+            saw_support = true;
+            match classify_projective_point(point, &polygon.support)? {
+                Classification::Positive => {
+                    outside = true;
+                    break;
+                }
+                Classification::On => return Ok(None),
+                Classification::Negative => {}
+            }
+        }
+        if !saw_support {
+            return Ok(None);
+        }
+        if !outside {
+            winding[mesh] = 1;
+        }
+    }
+    Ok(Some(winding))
 }
 
 fn ordered_leaf_polygon_indices_by_intersections(
@@ -2492,6 +2580,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
         delta_w: polygon.delta_w.clone(),
         approx_bounds: None,
         known_vertices: None,
+        known_edge_identities: None,
     };
     let may_use_single_point = single_convex_interior_point
         && host_intersections.is_some_and(|intersections| {

@@ -1,12 +1,57 @@
 //! Certified scalar and point-plane predicate dispatch.
 
+use std::cell::RefCell;
 use std::cmp::Ordering;
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
 use hyperlimit::{PredicateOutcome, Sign, classify_real_sign};
+use hyperreal::{PreparedRationalLinearForm4Filter, RealSign};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Plane;
+use crate::storage_hash::StorageHashMap;
+
+const LINEAR_FORM_FILTER_CACHE_CAPACITY: usize = 8_192;
+
+struct CachedLinearForm3Filter {
+    _owners: [Rational; 4],
+    filter: Option<PreparedRationalLinearForm4Filter>,
+}
+
+thread_local! {
+    static LINEAR_FORM_FILTERS: RefCell<
+        StorageHashMap<[usize; 4], CachedLinearForm3Filter>
+    > = RefCell::new(StorageHashMap::default());
+}
+
+fn prepared_linear_form3_filter(
+    plane: &Plane,
+    coefficients: [&Rational; 4],
+) -> Option<PreparedRationalLinearForm4Filter> {
+    let key = coefficients.map(Rational::storage_identity);
+    LINEAR_FORM_FILTERS.with_borrow_mut(|cache| {
+        if let Some(cached) = cache.get(&key) {
+            return cached.filter;
+        }
+        if cache.len() >= LINEAR_FORM_FILTER_CACHE_CAPACITY {
+            cache.clear();
+        }
+        let filter = Real::prepare_rational_linear_form4_filter([
+            &plane.normal.x,
+            &plane.normal.y,
+            &plane.normal.z,
+            &plane.offset,
+        ]);
+        cache.insert(
+            key,
+            CachedLinearForm3Filter {
+                _owners: coefficients.map(Clone::clone),
+                filter,
+            },
+        );
+        filter
+    })
+}
 
 /// Certified point-vs-plane classification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -134,6 +179,23 @@ fn classify_exact_rational_coordinates(
     .map(Real::exact_rational_ref) else {
         return None;
     };
+    if let Some(filter) = prepared_linear_form3_filter(plane, [a, b, c, d])
+        && let Some(sign) = filter.sign_rational([x, y, z, homogeneous_weight])
+    {
+        crate::trace_dispatch!(
+            "classify-point",
+            if homogeneous_weight.is_one() {
+                "affine-rational-floating-filter"
+            } else {
+                "projective-rational-floating-filter"
+            }
+        );
+        return Some(match sign {
+            RealSign::Negative => Classification::Negative,
+            RealSign::Zero => Classification::On,
+            RealSign::Positive => Classification::Positive,
+        });
+    }
 
     Some(
         match Rational::signed_product_sum_ordering(

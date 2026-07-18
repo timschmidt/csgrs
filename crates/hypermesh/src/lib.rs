@@ -70,6 +70,7 @@
 
 mod trace;
 pub(crate) use trace::trace_dispatch;
+mod storage_hash;
 
 pub mod bvh;
 pub mod clip;

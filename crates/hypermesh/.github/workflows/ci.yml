@@ -24,6 +24,8 @@ jobs:
             command: cargo doc --all-features --no-deps
           - name: benches
             command: cargo bench --no-run
+          - name: fuzz-targets
+            command: cargo check --manifest-path fuzz/Cargo.toml --bins
 
     steps:
       - uses: actions/checkout@v4

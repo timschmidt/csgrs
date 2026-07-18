@@ -95,6 +95,7 @@ pub(crate) fn classify_leaf_polygon_with_probe_query_caches(
         delta_w: WindingNumberTransitionVector::new(),
         approx_bounds: None,
         known_vertices: None,
+        known_edge_identities: None,
     };
     let clipped_leaf = clip_polygon_to_aabb(&leaf, bounds)?;
     let interior_points = interior_leaf_points(&clipped_leaf)?;

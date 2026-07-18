@@ -6,7 +6,7 @@ use hyperlattice::{Point3, Real};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Aabb, axis_ref, compare_real};
-use crate::polygon::{ConvexPolygon, make_triangle};
+use crate::polygon::{ConvexPolygon, make_triangle, make_triangle_with_deferred_edges};
 
 /// Input triangle: three vertex indices.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -103,7 +103,32 @@ impl PolygonSoup {
 
 /// Prepares borrowed mesh views into a combined polygon soup.
 pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
+    prepare_input_with_certified_convex_inputs(meshes, &vec![false; meshes.len()])
+}
+
+pub(crate) fn prepare_input_with_certified_convex_inputs(
+    meshes: &[MeshRef<'_>],
+    certified_convex_inputs: &[bool],
+) -> HypermeshResult<PolygonSoup> {
+    prepare_input_with_edge_mode(meshes, certified_convex_inputs, false)
+}
+
+pub(crate) fn prepare_input_with_deferred_edges(
+    meshes: &[MeshRef<'_>],
+    certified_convex_inputs: &[bool],
+) -> HypermeshResult<PolygonSoup> {
+    prepare_input_with_edge_mode(meshes, certified_convex_inputs, true)
+}
+
+fn prepare_input_with_edge_mode(
+    meshes: &[MeshRef<'_>],
+    certified_convex_inputs: &[bool],
+    defer_edges: bool,
+) -> HypermeshResult<PolygonSoup> {
     crate::trace_dispatch!("prepare-input", "start");
+    if certified_convex_inputs.len() != meshes.len() {
+        return Err(HypermeshError::UnknownClassification);
+    }
     validate_non_empty_mesh_views(meshes)?;
 
     let bounds = bounds_for_positions(meshes.iter().flat_map(|mesh| mesh.positions.iter()))?;
@@ -135,7 +160,12 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
                     index: i2,
                     vertex_count: mesh.positions.len(),
                 })?;
-            let mut polygon = make_triangle(p0, p1, p2, mesh_index as isize, polygon_index);
+            let mut polygon = if defer_edges && certified_convex_inputs[mesh_index] {
+                make_triangle_with_deferred_edges(p0, p1, p2, mesh_index as isize, polygon_index)
+            } else {
+                make_triangle(p0, p1, p2, mesh_index as isize, polygon_index)
+            }
+            .with_source_triangle_edge_identities(mesh_index, [i0, i1, i2]);
             if !polygon.support.is_valid() {
                 return Err(HypermeshError::DegenerateTriangle {
                     mesh_index,
@@ -147,18 +177,20 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
             polygons.push(polygon);
             polygon_index += 1;
         }
-        let edge_balance = classify_indexed_edge_balance(mesh);
-        if edge_balance.boundary_edges != 0 {
-            return Err(HypermeshError::OpenInput {
-                mesh_index,
-                boundary_edges: edge_balance.boundary_edges,
-            });
-        }
-        if edge_balance.unbalanced_edges != 0 {
-            return Err(HypermeshError::NonPwnInput {
-                mesh_index,
-                unbalanced_edges: edge_balance.unbalanced_edges,
-            });
+        if !certified_convex_inputs[mesh_index] {
+            let edge_balance = classify_indexed_edge_balance(mesh);
+            if edge_balance.boundary_edges != 0 {
+                return Err(HypermeshError::OpenInput {
+                    mesh_index,
+                    boundary_edges: edge_balance.boundary_edges,
+                });
+            }
+            if edge_balance.unbalanced_edges != 0 {
+                return Err(HypermeshError::NonPwnInput {
+                    mesh_index,
+                    unbalanced_edges: edge_balance.unbalanced_edges,
+                });
+            }
         }
     }
 

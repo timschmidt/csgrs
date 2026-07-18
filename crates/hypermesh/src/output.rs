@@ -5,13 +5,17 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, compare_real};
 use crate::mesh::{OutputVertex, PolygonSoup};
-use crate::polygon::ConvexPolygon;
+use crate::polygon::{ConstructionEdgeIdentity, ConvexPolygon};
+use crate::storage_hash::StorageHashMap;
 use crate::winding::WindingPair;
-use hyperlattice::Real;
+use hyperlattice::{Rational, Real};
+use hyperreal::PreparedRationalLine2Filter;
 
 const RESOLVE_TJUNCTION_MAX_PASSES: usize = 256;
 
 pub(crate) const ARRANGEMENT_CLASSIFICATION: i8 = 2;
+
+type SplitEdgeCache = StorageHashMap<[usize; 2], Vec<[usize; 2]>>;
 
 /// Polygon plus its boolean output classification.
 #[derive(Clone, Debug, PartialEq)]
@@ -119,6 +123,12 @@ pub struct BooleanResult {
     /// Per-output-polygon front/back winding evidence, when produced by the
     /// general subdivision classifier.
     winding_pairs: Vec<Option<WindingPair>>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct ClassifiedTriangleArrangement {
+    pub(crate) soup: TriangleSoup,
+    pub(crate) windings: Vec<WindingPair>,
 }
 
 impl BooleanResult {
@@ -526,8 +536,12 @@ pub(crate) fn triangulate_and_resolve_polygon_certified(
     let mut soup = match triangulate_closed_polygon_arrangement(
         &result.output.polygons,
         &result.classifications,
+        None,
+        false,
+        false,
+        false,
     ) {
-        Ok(soup) => soup,
+        Ok((soup, _)) => soup,
         Err(HypermeshError::UnknownClassification) => {
             resolve_tjunctions(&triangulate_output(result)?)?
         }
@@ -567,20 +581,37 @@ fn boolean_result_has_complete_orientation_evidence(result: &BooleanResult) -> b
 fn triangulate_closed_polygon_arrangement(
     polygons: &[ConvexPolygon],
     orientations: &[i8],
-) -> HypermeshResult<TriangleSoup> {
+    polygon_windings: Option<&[WindingPair]>,
+    prefer_precomputed_f64_scan: bool,
+    prefer_construction_candidates: bool,
+    filter_recovery_candidates: bool,
+) -> HypermeshResult<(TriangleSoup, Vec<WindingPair>)> {
     if polygons.len() != orientations.len() {
         return Err(HypermeshError::UnknownClassification);
     }
+    if polygon_windings.is_some_and(|windings| windings.len() != polygons.len()) {
+        return Err(HypermeshError::UnknownClassification);
+    }
     let (mut vertices, indexed_polygons) = merge_duplicate_convex_polygon_vertices(polygons)?;
-    let axis_order = sorted_vertex_indices_by_axis(&vertices)?;
-    let mut split_edge_cache: HashMap<[usize; 2], Vec<[usize; 2]>> = HashMap::new();
+    let construction_candidates = prefer_construction_candidates
+        .then(|| build_construction_edge_candidates(polygons, &indexed_polygons))
+        .transpose()?;
+    let approximate_vertices = prefer_precomputed_f64_scan
+        .then(|| exact_output_vertices_f64(&vertices))
+        .flatten();
+    let axis_order = (approximate_vertices.is_none() && construction_candidates.is_none())
+        .then(|| sorted_vertex_indices_by_axis(&vertices))
+        .transpose()?;
+    let mut split_edge_cache = SplitEdgeCache::default();
     let mut triangles = Vec::new();
     let mut sources = Vec::new();
+    let mut triangle_windings = Vec::new();
 
-    for ((polygon, indexed), orientation) in polygons
+    for (polygon_index, ((polygon, indexed), orientation)) in polygons
         .iter()
         .zip(indexed_polygons)
         .zip(orientations.iter().copied())
+        .enumerate()
     {
         if indexed.len() < 3 {
             continue;
@@ -593,12 +624,31 @@ fn triangulate_closed_polygon_arrangement(
                 continue;
             }
             let canonical = sorted_edge([start, end]);
-            let subedges = split_segment_subedges_exact(
-                &mut split_edge_cache,
-                &vertices,
-                &axis_order,
-                canonical,
-            )?;
+            let subedges = if let Some(candidates) = &construction_candidates {
+                split_segment_subedges_exact_candidates(
+                    &mut split_edge_cache,
+                    &vertices,
+                    canonical,
+                    &candidates.groups[candidates.polygon_edges[polygon_index][edge_index]],
+                    filter_recovery_candidates,
+                )?
+            } else if let Some(approximate_vertices) = &approximate_vertices {
+                split_segment_subedges_exact_precomputed_f64_scan(
+                    &mut split_edge_cache,
+                    &vertices,
+                    approximate_vertices,
+                    canonical,
+                )?
+            } else {
+                split_segment_subedges_exact(
+                    &mut split_edge_cache,
+                    &vertices,
+                    axis_order
+                        .as_ref()
+                        .expect("axis order exists without an approximate scan"),
+                    canonical,
+                )?
+            };
             if start == canonical[0] {
                 boundary.extend(subedges.iter().map(|edge| edge[0]));
             } else {
@@ -623,6 +673,11 @@ fn triangulate_closed_polygon_arrangement(
                     ]
                 })
                 .collect()
+        } else if let Some(polygon_triangles) = construction_candidates
+            .as_ref()
+            .and_then(|_| triangulate_construction_boundary(polygon, &indexed, &boundary))
+        {
+            polygon_triangles
         } else {
             match triangulate_weakly_convex_boundary(&boundary, &vertices, &polygon.support) {
                 Ok(triangles) => triangles,
@@ -639,13 +694,71 @@ fn triangulate_closed_polygon_arrangement(
                 triangle: polygon.polygon_index,
                 orientation,
             });
+            if let Some(windings) = polygon_windings {
+                triangle_windings.push(windings[polygon_index].clone());
+            }
         }
     }
 
-    Ok(TriangleSoup {
-        vertices,
-        triangles,
-        sources,
+    Ok((
+        TriangleSoup {
+            vertices,
+            triangles,
+            sources,
+        },
+        triangle_windings,
+    ))
+}
+
+pub(crate) fn triangulate_classified_arrangement_precomputed_f64_scan(
+    classified: &[ClassifiedPolygon],
+) -> HypermeshResult<ClassifiedTriangleArrangement> {
+    triangulate_classified_arrangement_with_strategy(classified, true, false, false)
+}
+
+pub(crate) fn triangulate_classified_arrangement_construction_candidates(
+    classified: &[ClassifiedPolygon],
+    filter_recovery_candidates: bool,
+) -> HypermeshResult<ClassifiedTriangleArrangement> {
+    triangulate_classified_arrangement_with_strategy(
+        classified,
+        false,
+        true,
+        filter_recovery_candidates,
+    )
+}
+
+fn triangulate_classified_arrangement_with_strategy(
+    classified: &[ClassifiedPolygon],
+    prefer_precomputed_f64_scan: bool,
+    prefer_construction_candidates: bool,
+    filter_recovery_candidates: bool,
+) -> HypermeshResult<ClassifiedTriangleArrangement> {
+    let polygons = classified
+        .iter()
+        .map(|classified| classified.polygon.clone())
+        .collect::<Vec<_>>();
+    let windings = classified
+        .iter()
+        .map(|classified| {
+            classified
+                .winding
+                .clone()
+                .ok_or(HypermeshError::UnknownClassification)
+        })
+        .collect::<HypermeshResult<Vec<_>>>()?;
+    let orientations = vec![1; polygons.len()];
+    let (soup, triangle_windings) = triangulate_closed_polygon_arrangement(
+        &polygons,
+        &orientations,
+        Some(&windings),
+        prefer_precomputed_f64_scan,
+        prefer_construction_candidates,
+        filter_recovery_candidates,
+    )?;
+    Ok(ClassifiedTriangleArrangement {
+        soup,
+        windings: triangle_windings,
     })
 }
 
@@ -672,6 +785,42 @@ fn append_output_polygon_centroid(
     let index = vertices.len();
     vertices.push(center);
     Ok(index)
+}
+
+fn triangulate_construction_boundary(
+    polygon: &ConvexPolygon,
+    indexed: &[usize],
+    boundary: &[usize],
+) -> Option<Vec<[usize; 3]>> {
+    if indexed != boundary {
+        return None;
+    }
+    let identities = polygon.known_edge_identities.as_ref()?;
+    if identities.len() != boundary.len() {
+        return None;
+    }
+    let strictly_convex = boundary
+        .iter()
+        .enumerate()
+        .filter_map(|(index, &vertex)| {
+            let incoming = (index + identities.len() - 1) % identities.len();
+            (identities[incoming] != identities[index]).then_some(vertex)
+        })
+        .collect::<Vec<_>>();
+    if strictly_convex.len() < 3 {
+        return None;
+    }
+    Some(
+        (1..(strictly_convex.len() - 1))
+            .map(|index| {
+                [
+                    strictly_convex[0],
+                    strictly_convex[index],
+                    strictly_convex[index + 1],
+                ]
+            })
+            .collect(),
+    )
 }
 
 fn triangulate_weakly_convex_boundary(
@@ -863,6 +1012,41 @@ fn merge_duplicate_convex_polygon_vertices(
         }
     }
 
+    if positions.iter().all(|(_, _, _, vertex)| {
+        vertex.x.exact_rational_ref().is_some()
+            && vertex.y.exact_rational_ref().is_some()
+            && vertex.z.exact_rational_ref().is_some()
+    }) {
+        let mut vertices: Vec<OutputVertex> = Vec::with_capacity(positions.len());
+        let mut storage_vertices: StorageHashMap<[usize; 3], usize> = StorageHashMap::default();
+        storage_vertices.reserve(positions.len());
+        let mut exact_vertices: HashMap<ExactOutputVertexKey, usize> =
+            HashMap::with_capacity(positions.len());
+        for (polygon_index, vertex_index, _, vertex) in positions {
+            let storage_key = exact_output_vertex_storage_key(&vertex)
+                .expect("all output vertices were certified exact rational");
+            let merged_index = if let Some(&index) = storage_vertices.get(&storage_key) {
+                index
+            } else {
+                let key = exact_output_vertex_key(&vertex)
+                    .expect("all output vertices were certified exact rational");
+                let index = match exact_vertices.entry(key) {
+                    std::collections::hash_map::Entry::Occupied(entry) => *entry.get(),
+                    std::collections::hash_map::Entry::Vacant(entry) => {
+                        let index = vertices.len();
+                        vertices.push(vertex);
+                        entry.insert(index);
+                        index
+                    }
+                };
+                storage_vertices.insert(storage_key, index);
+                index
+            };
+            indexed_polygons[polygon_index][vertex_index] = merged_index;
+        }
+        return Ok((vertices, indexed_polygons));
+    }
+
     positions.sort_by(|(_, _, _, left), (_, _, _, right)| {
         compare_output_vertices_lexicographic(left, right)
             .expect("exact output vertex ordering should compare")
@@ -892,6 +1076,25 @@ fn merge_duplicate_convex_polygon_vertices(
     Ok((vertices, indexed_polygons))
 }
 
+#[derive(Eq, Hash, PartialEq)]
+struct ExactOutputVertexKey([Rational; 3]);
+
+fn exact_output_vertex_storage_key(vertex: &OutputVertex) -> Option<[usize; 3]> {
+    Some([
+        vertex.x.exact_rational_ref()?.storage_identity(),
+        vertex.y.exact_rational_ref()?.storage_identity(),
+        vertex.z.exact_rational_ref()?.storage_identity(),
+    ])
+}
+
+fn exact_output_vertex_key(vertex: &OutputVertex) -> Option<ExactOutputVertexKey> {
+    Some(ExactOutputVertexKey([
+        vertex.x.exact_rational_ref()?.clone(),
+        vertex.y.exact_rational_ref()?.clone(),
+        vertex.z.exact_rational_ref()?.clone(),
+    ]))
+}
+
 fn compare_output_vertices_lexicographic(
     left: &OutputVertex,
     right: &OutputVertex,
@@ -907,13 +1110,95 @@ fn compare_output_vertices_lexicographic(
     compare_real(&left.z, &right.z)
 }
 
+struct ConstructionEdgeCandidates {
+    groups: Vec<ConstructionEdgeCandidateGroup>,
+    polygon_edges: Vec<Vec<usize>>,
+}
+
+struct ConstructionEdgeCandidateGroup {
+    collinear: Vec<usize>,
+    same_plane: Vec<usize>,
+}
+
+fn build_construction_edge_candidates(
+    polygons: &[ConvexPolygon],
+    indexed_polygons: &[Vec<usize>],
+) -> HypermeshResult<ConstructionEdgeCandidates> {
+    if polygons.len() != indexed_polygons.len() {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    let mut group_indices: StorageHashMap<ConstructionEdgeIdentity, usize> =
+        StorageHashMap::default();
+    let mut plane_vertices: StorageHashMap<crate::polygon::ConstructionPlaneIdentity, Vec<usize>> =
+        StorageHashMap::default();
+    let mut groups: Vec<ConstructionEdgeCandidateGroup> = Vec::new();
+    let mut polygon_edges = Vec::with_capacity(polygons.len());
+    for (polygon, indexed) in polygons.iter().zip(indexed_polygons) {
+        let identities = polygon
+            .known_edge_identities
+            .as_ref()
+            .ok_or(HypermeshError::UnknownClassification)?;
+        if indexed.len() != identities.len() {
+            return Err(HypermeshError::UnknownClassification);
+        }
+        let mut edge_groups = Vec::with_capacity(indexed.len());
+        for (edge_index, identity) in identities.iter().enumerate() {
+            let group_index = match group_indices.entry(identity.clone()) {
+                std::collections::hash_map::Entry::Occupied(entry) => *entry.get(),
+                std::collections::hash_map::Entry::Vacant(entry) => {
+                    let index = groups.len();
+                    groups.push(ConstructionEdgeCandidateGroup {
+                        collinear: Vec::new(),
+                        same_plane: Vec::new(),
+                    });
+                    entry.insert(index);
+                    index
+                }
+            };
+            groups[group_index].collinear.push(indexed[edge_index]);
+            groups[group_index]
+                .collinear
+                .push(indexed[(edge_index + 1) % indexed.len()]);
+            if let ConstructionEdgeIdentity::Split { planes } = identity {
+                for plane in planes {
+                    plane_vertices.entry(*plane).or_default().extend([
+                        indexed[edge_index],
+                        indexed[(edge_index + 1) % indexed.len()],
+                    ]);
+                }
+            }
+            edge_groups.push(group_index);
+        }
+        polygon_edges.push(edge_groups);
+    }
+    for (identity, &group_index) in &group_indices {
+        if let ConstructionEdgeIdentity::Split { planes } = identity {
+            for plane in planes {
+                if let Some(vertices) = plane_vertices.get(plane) {
+                    groups[group_index].same_plane.extend(vertices);
+                }
+            }
+        }
+    }
+    for group in &mut groups {
+        group.collinear.sort_unstable();
+        group.collinear.dedup();
+        group.same_plane.sort_unstable();
+        group.same_plane.dedup();
+    }
+    Ok(ConstructionEdgeCandidates {
+        groups,
+        polygon_edges,
+    })
+}
+
 fn polygon_edge_counts(
     vertices: &[OutputVertex],
     polygons: &[Vec<usize>],
     axis_order: &[Vec<usize>; 3],
-) -> HypermeshResult<HashMap<[usize; 2], DirectedEdgeUses>> {
-    let mut counts: HashMap<[usize; 2], DirectedEdgeUses> = HashMap::new();
-    let mut split_edge_cache: HashMap<[usize; 2], Vec<[usize; 2]>> = HashMap::new();
+) -> HypermeshResult<StorageHashMap<[usize; 2], DirectedEdgeUses>> {
+    let mut counts: StorageHashMap<[usize; 2], DirectedEdgeUses> = StorageHashMap::default();
+    let mut split_edge_cache = SplitEdgeCache::default();
 
     for polygon in polygons {
         if polygon.len() < 2 {
@@ -954,7 +1239,7 @@ fn polygon_edge_counts(
 }
 
 fn split_segment_subedges_exact<'a>(
-    cache: &'a mut HashMap<[usize; 2], Vec<[usize; 2]>>,
+    cache: &'a mut SplitEdgeCache,
     vertices: &[OutputVertex],
     axis_order: &[Vec<usize>; 3],
     edge: [usize; 2],
@@ -962,13 +1247,19 @@ fn split_segment_subedges_exact<'a>(
     let edge = sorted_edge(edge);
     if let std::collections::hash_map::Entry::Vacant(e) = cache.entry(edge) {
         let axis = dominant_segment_axis(&vertices[edge[0]], &vertices[edge[1]])?;
+        let bounds = exact_edge_bounds(edge, vertices)?;
         let mut on_edge = Vec::new();
         let (start, end) = candidate_vertex_index_range_for_edge(axis_order, vertices, edge, axis)?;
         for &vertex_index in &axis_order[axis][start..end] {
             if vertex_index == edge[0] || vertex_index == edge[1] {
                 continue;
             }
-            if point_on_segment_exact(
+            if point_within_edge_bounds_except_axis_exact(
+                &vertices[vertex_index],
+                &bounds,
+                vertices,
+                axis,
+            )? && point_collinear_with_segment_exact(
                 &vertices[vertex_index],
                 &vertices[edge[0]],
                 &vertices[edge[1]],
@@ -989,6 +1280,155 @@ fn split_segment_subedges_exact<'a>(
         e.insert(subedges);
     }
     Ok(cache.get(&edge).expect("cached edge was just inserted"))
+}
+
+fn split_segment_subedges_exact_candidates<'a>(
+    cache: &'a mut SplitEdgeCache,
+    vertices: &[OutputVertex],
+    edge: [usize; 2],
+    candidates: &ConstructionEdgeCandidateGroup,
+    filter_recovery_candidates: bool,
+) -> HypermeshResult<&'a [[usize; 2]]> {
+    let edge = sorted_edge(edge);
+    if let std::collections::hash_map::Entry::Vacant(entry) = cache.entry(edge) {
+        let axis = inexpensive_nonzero_segment_axis(&vertices[edge[0]], &vertices[edge[1]])?;
+        let (min, max) = ordered_reals(
+            vertex_axis(&vertices[edge[0]], axis),
+            vertex_axis(&vertices[edge[1]], axis),
+        )?;
+        let projection_filters = filter_recovery_candidates
+            .then(|| {
+                (0..3)
+                    .filter(|&other_axis| other_axis != axis)
+                    .map(|other_axis| {
+                        let start = [
+                            vertex_axis(&vertices[edge[0]], axis).exact_rational_ref()?,
+                            vertex_axis(&vertices[edge[0]], other_axis).exact_rational_ref()?,
+                        ];
+                        let end = [
+                            vertex_axis(&vertices[edge[1]], axis).exact_rational_ref()?,
+                            vertex_axis(&vertices[edge[1]], other_axis).exact_rational_ref()?,
+                        ];
+                        Some((other_axis, Real::prepare_rational_line2_filter(start, end)?))
+                    })
+                    .collect::<Option<Vec<(usize, PreparedRationalLine2Filter)>>>()
+            })
+            .flatten();
+        let mut on_edge = Vec::new();
+        for &vertex_index in &candidates.collinear {
+            if vertex_index == edge[0] || vertex_index == edge[1] {
+                continue;
+            }
+            let coordinate = vertex_axis(&vertices[vertex_index], axis);
+            if !compare_real(coordinate, min)?.is_lt() && !compare_real(coordinate, max)?.is_gt() {
+                on_edge.push(vertex_index);
+            }
+        }
+        for &vertex_index in &candidates.same_plane {
+            if vertex_index == edge[0] || vertex_index == edge[1] || on_edge.contains(&vertex_index)
+            {
+                continue;
+            }
+            if projection_filters.as_ref().is_some_and(|filters| {
+                filters.iter().any(|(other_axis, filter)| {
+                    let point = [
+                        vertex_axis(&vertices[vertex_index], axis).exact_rational_ref(),
+                        vertex_axis(&vertices[vertex_index], *other_axis).exact_rational_ref(),
+                    ];
+                    let [Some(first), Some(second)] = point else {
+                        return false;
+                    };
+                    filter.sign_rational([first, second]).is_some()
+                })
+            }) {
+                continue;
+            }
+            if point_on_segment_exact(
+                &vertices[vertex_index],
+                &vertices[edge[0]],
+                &vertices[edge[1]],
+            )? {
+                on_edge.push(vertex_index);
+            }
+        }
+        on_edge.sort_unstable();
+        on_edge.dedup();
+        let mut chain = Vec::with_capacity(on_edge.len() + 2);
+        chain.push(edge[0]);
+        chain.extend(sort_along_segment_on_axis(
+            &on_edge, edge[0], edge[1], vertices, axis,
+        )?);
+        chain.push(edge[1]);
+        entry.insert(
+            chain
+                .windows(2)
+                .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
+                .collect(),
+        );
+    }
+    Ok(cache.get(&edge).expect("candidate edge was just cached"))
+}
+
+fn exact_output_vertices_f64(vertices: &[OutputVertex]) -> Option<Vec<[f64; 3]>> {
+    vertices
+        .iter()
+        .map(|vertex| {
+            let coordinates = [&vertex.x, &vertex.y, &vertex.z];
+            if coordinates
+                .iter()
+                .any(|coordinate| coordinate.exact_rational_ref().is_none())
+            {
+                return None;
+            }
+            let point = coordinates
+                .map(|coordinate| coordinate.to_f64_lossy())
+                .map(|coordinate| coordinate.filter(|coordinate| coordinate.is_finite()));
+            let [Some(x), Some(y), Some(z)] = point else {
+                return None;
+            };
+            Some([x, y, z])
+        })
+        .collect()
+}
+
+fn split_segment_subedges_exact_precomputed_f64_scan<'a>(
+    cache: &'a mut SplitEdgeCache,
+    vertices: &[OutputVertex],
+    approximate_vertices: &[[f64; 3]],
+    edge: [usize; 2],
+) -> HypermeshResult<&'a [[usize; 2]]> {
+    let edge = sorted_edge(edge);
+    if let std::collections::hash_map::Entry::Vacant(entry) = cache.entry(edge) {
+        let start = approximate_vertices[edge[0]];
+        let end = approximate_vertices[edge[1]];
+        let mut on_edge = Vec::new();
+        for (vertex_index, point) in approximate_vertices.iter().enumerate() {
+            if vertex_index == edge[0] || vertex_index == edge[1] {
+                continue;
+            }
+            if (0..3).all(|axis| {
+                point[axis] >= start[axis].min(end[axis])
+                    && point[axis] <= start[axis].max(end[axis])
+            }) && point_on_segment_exact(
+                &vertices[vertex_index],
+                &vertices[edge[0]],
+                &vertices[edge[1]],
+            )? {
+                on_edge.push(vertex_index);
+            }
+        }
+        let mut chain = Vec::with_capacity(on_edge.len() + 2);
+        chain.push(edge[0]);
+        chain.extend(sort_along_segment(&on_edge, edge[0], edge[1], vertices)?);
+        chain.push(edge[1]);
+        entry.insert(
+            chain
+                .windows(2)
+                .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
+                .collect(),
+        );
+    }
+    Ok(cache.get(&edge).expect("scanned edge was just cached"))
 }
 
 fn sorted_vertex_indices_by_axis(vertices: &[OutputVertex]) -> HypermeshResult<[Vec<usize>; 3]> {
@@ -1198,8 +1638,9 @@ fn remove_degenerate_and_duplicate_triangles(soup: &mut TriangleSoup) {
     soup.sources = sources;
 }
 
-fn triangle_edge_counts(triangles: &[[usize; 3]]) -> BTreeMap<[usize; 2], DirectedEdgeUses> {
-    let mut counts: BTreeMap<[usize; 2], DirectedEdgeUses> = BTreeMap::new();
+fn triangle_edge_counts(triangles: &[[usize; 3]]) -> StorageHashMap<[usize; 2], DirectedEdgeUses> {
+    let mut counts: StorageHashMap<[usize; 2], DirectedEdgeUses> = StorageHashMap::default();
+    counts.reserve(triangles.len().saturating_mul(3) / 2);
     for triangle in triangles {
         for edge in triangle_edges(*triangle) {
             let key = sorted_edge(edge);
@@ -1225,16 +1666,20 @@ pub fn triangle_soup_is_closed(soup: &TriangleSoup) -> bool {
 pub fn triangle_soup_closure_report(soup: &TriangleSoup) -> TriangleSoupClosureReport {
     let mut report = TriangleSoupClosureReport::default();
     for uses in triangle_edge_counts(&soup.triangles).values().copied() {
-        if uses.total() == 1 {
-            report.boundary_edges += 1;
-        } else if uses.total() > 2 {
-            report.non_manifold_edges += 1;
-        }
-        if !uses.is_balanced() {
-            report.unbalanced_edges += 1;
-        }
+        update_closure_report(&mut report, uses);
     }
     report
+}
+
+fn update_closure_report(report: &mut TriangleSoupClosureReport, uses: DirectedEdgeUses) {
+    if uses.total() == 1 {
+        report.boundary_edges += 1;
+    } else if uses.total() > 2 {
+        report.non_manifold_edges += 1;
+    }
+    if !uses.is_balanced() {
+        report.unbalanced_edges += 1;
+    }
 }
 
 fn split_one_tjunction_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
@@ -1560,6 +2005,14 @@ fn point_on_segment_exact(
     if !point_within_segment_bounds_exact(point, start, end)? {
         return Ok(false);
     }
+    point_collinear_with_segment_exact(point, start, end)
+}
+
+fn point_collinear_with_segment_exact(
+    point: &OutputVertex,
+    start: &OutputVertex,
+    end: &OutputVertex,
+) -> HypermeshResult<bool> {
     let ab = sub_vertex(end, start);
     let av = sub_vertex(point, start);
     let cross = cross_arrays(&ab, &av);
@@ -1571,6 +2024,26 @@ fn point_on_segment_exact(
     }
 
     Ok(point != start && point != end)
+}
+
+fn point_within_edge_bounds_except_axis_exact(
+    point: &OutputVertex,
+    bounds: &ExactEdgeBounds,
+    vertices: &[OutputVertex],
+    excluded_axis: usize,
+) -> HypermeshResult<bool> {
+    for axis in 0..3 {
+        if axis == excluded_axis {
+            continue;
+        }
+        let coordinate = vertex_axis(point, axis);
+        if compare_real(coordinate, vertex_axis(&vertices[bounds.min[axis]], axis))?.is_lt()
+            || compare_real(coordinate, vertex_axis(&vertices[bounds.max[axis]], axis))?.is_gt()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn point_within_segment_bounds_exact(
@@ -1605,6 +2078,16 @@ fn sort_along_segment(
     vertices: &[OutputVertex],
 ) -> HypermeshResult<Vec<usize>> {
     let axis = dominant_segment_axis(&vertices[start], &vertices[end])?;
+    sort_along_segment_on_axis(indices, start, end, vertices, axis)
+}
+
+fn sort_along_segment_on_axis(
+    indices: &[usize],
+    start: usize,
+    end: usize,
+    vertices: &[OutputVertex],
+    axis: usize,
+) -> HypermeshResult<Vec<usize>> {
     let ascending = compare_real(
         vertex_axis(&vertices[start], axis),
         vertex_axis(&vertices[end], axis),
@@ -1628,6 +2111,33 @@ fn sort_along_segment(
     }
 
     Ok(sorted)
+}
+
+fn inexpensive_nonzero_segment_axis(
+    start: &OutputVertex,
+    end: &OutputVertex,
+) -> HypermeshResult<usize> {
+    let approximate = (0..3)
+        .map(|axis| {
+            Some(
+                (vertex_axis(end, axis).to_f64_lossy()?
+                    - vertex_axis(start, axis).to_f64_lossy()?)
+                .abs(),
+            )
+        })
+        .collect::<Option<Vec<_>>>();
+    if let Some(approximate) = approximate
+        && let Some((axis, _)) = approximate
+            .iter()
+            .enumerate()
+            .filter(|(_, delta)| delta.is_finite() && **delta != 0.0)
+            .max_by(|(_, left), (_, right)| {
+                left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal)
+            })
+    {
+        return Ok(axis);
+    }
+    dominant_segment_axis(start, end)
 }
 
 fn dominant_segment_axis(start: &OutputVertex, end: &OutputVertex) -> HypermeshResult<usize> {
@@ -2013,7 +2523,7 @@ mod tests {
         ];
         let (vertices, _indexed) = merge_duplicate_polygon_vertices(&polygons);
         let axis_order = sorted_vertex_indices_by_axis(&vertices).unwrap();
-        let mut cache = HashMap::new();
+        let mut cache = SplitEdgeCache::default();
 
         let forward = split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [0, 1])
             .unwrap()
