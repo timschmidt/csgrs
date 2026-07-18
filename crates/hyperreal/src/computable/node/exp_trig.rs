@@ -274,6 +274,84 @@ impl Computable {
         self.known_msd_for_trig_reduction().flatten()
     }
 
+    fn rational_magnitude(value: Rational) -> Rational {
+        if value.sign() == Sign::Minus {
+            value.neg()
+        } else {
+            value
+        }
+    }
+
+    /// Return a conservative exact upper bound for `|self| / pi` when the
+    /// expression has a cheap, recognizable form.
+    ///
+    /// This deliberately proves only the small subset needed by trig
+    /// construction. In particular, inverse-trig ranges, rational scaling,
+    /// binary scaling, and sums can certify that an argument is already inside
+    /// the prescaled kernel without approximating that argument first. Unknown
+    /// forms return `None` instead of making a heuristic magnitude claim.
+    fn trig_pi_magnitude_upper_bound(&self, budget: usize) -> Option<Rational> {
+        if budget == 0 {
+            return None;
+        }
+        let next_budget = budget - 1;
+
+        match &self.internal.approximation {
+            // pi > 1, so every exact rational r satisfies |r| < |r| * pi.
+            Approximation::One => Some(Rational::one()),
+            Approximation::Int(value) => {
+                Some(Self::rational_magnitude(Rational::from_bigint(value.clone())))
+            }
+            Approximation::Ratio(value) => Some(Self::rational_magnitude(value.clone())),
+            Approximation::Constant(SharedConstant::Pi) => Some(Rational::one()),
+            Approximation::Constant(SharedConstant::Tau) => Some(Rational::new(2)),
+            Approximation::Constant(SharedConstant::InvPi) => Some(Rational::one()),
+            // These constructors are admitted only for inputs in [0, 1], so
+            // their results lie in [0, pi/2].
+            Approximation::AcosPositive(_) | Approximation::AcosPositiveRational(_) => {
+                Some(HALF_RATIONAL.clone())
+            }
+            // acos(-x), x in (0, 1], lies in [pi/2, pi].
+            Approximation::AcosNegativeRational(_) => Some(Rational::one()),
+            // Every admitted asin representation lies in [-pi/2, pi/2]. This
+            // also covers acos of tiny rationals, which is retained internally
+            // as pi/2 - asin(x).
+            Approximation::AsinRational(_)
+            | Approximation::PrescaledAsin(_)
+            | Approximation::AsinDeferred(_) => Some(HALF_RATIONAL.clone()),
+            Approximation::Negate(child) => {
+                child.trig_pi_magnitude_upper_bound(next_budget)
+            }
+            Approximation::Offset(child, shift) => {
+                // Keep this proof helper cheap even for deliberately enormous
+                // symbolic shifts; the ordinary magnitude/reduction path can
+                // handle those without materializing a giant Rational bound.
+                if !(-128..=128).contains(shift) {
+                    return None;
+                }
+                let bound = child.trig_pi_magnitude_upper_bound(next_budget)?;
+                Some(bound * Self::power_of_two_rational(*shift))
+            }
+            Approximation::Add(left, right) => {
+                let left = left.trig_pi_magnitude_upper_bound(next_budget)?;
+                let right = right.trig_pi_magnitude_upper_bound(next_budget)?;
+                Some(left + right)
+            }
+            Approximation::Multiply(left, right) => {
+                if let Some(scale) = left.exact_rational() {
+                    let bound = right.trig_pi_magnitude_upper_bound(next_budget)?;
+                    Some(bound * Self::rational_magnitude(scale))
+                } else if let Some(scale) = right.exact_rational() {
+                    let bound = left.trig_pi_magnitude_upper_bound(next_budget)?;
+                    Some(bound * Self::rational_magnitude(scale))
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
     fn exact_rational_half_pi_shortcut_magnitude(rational: &Rational) -> Option<Rational> {
         // Exact rationals with 1 <= |x| < 3/2 are the awkward medium trig rows:
         // not small enough for direct sin/cos, but close enough to pi/2 that a
@@ -305,13 +383,32 @@ impl Computable {
             ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
 
         if quadrant.is_zero() {
-            reduced.cos()
+            Self::prescaled_cos(reduced)
         } else if quadrant == *signed::ONE {
-            reduced.sin().negate()
+            Self::prescaled_sin(reduced).negate()
         } else if quadrant == *signed::TWO {
-            reduced.cos().negate()
+            Self::prescaled_cos(reduced).negate()
         } else {
-            reduced.sin()
+            Self::prescaled_sin(reduced)
+        }
+    }
+
+    fn sin_reduced_by_half_pi(self, multiplier: BigInt) -> Computable {
+        let adjustment = Self::pi()
+            .shift_right(1)
+            .multiply(Self::rational(Rational::from_bigint(multiplier.clone())).negate());
+        let reduced = self.add(adjustment);
+        let quadrant =
+            ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
+
+        if quadrant.is_zero() {
+            Self::prescaled_sin(reduced)
+        } else if quadrant == *signed::ONE {
+            Self::prescaled_cos(reduced)
+        } else if quadrant == *signed::TWO {
+            Self::prescaled_sin(reduced).negate()
+        } else {
+            Self::prescaled_cos(reduced).negate()
         }
     }
 
@@ -358,6 +455,13 @@ impl Computable {
                 crate::trace_dispatch!("computable", "cos", "structural-large-half-pi-reduction");
                 return self.cos_reduced_by_half_pi(multiplier);
             }
+        }
+        if self
+            .trig_pi_magnitude_upper_bound(32)
+            .is_some_and(|bound| bound <= *HALF_RATIONAL)
+        {
+            crate::trace_dispatch!("computable", "cos", "structural-pi-bounded-prescaled");
+            return Self::prescaled_cos(self);
         }
         let rough_appr = self.approx(-1);
         let abs_rough_appr = rough_appr.magnitude();
@@ -421,24 +525,16 @@ impl Computable {
                 // Known large input: avoid the extra rough approximation and
                 // reduce by half-pi immediately.
                 let multiplier = Self::half_pi_multiple(&self);
-                let adjustment = Self::pi()
-                    .shift_right(1)
-                    .multiply(Self::rational(Rational::from_bigint(multiplier.clone())).negate());
-                let reduced = self.add(adjustment);
-                let quadrant = ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref())
-                    % signed::FOUR.deref();
-
                 crate::trace_dispatch!("computable", "sin", "structural-large-half-pi-reduction");
-                if quadrant.is_zero() {
-                    return reduced.sin();
-                } else if quadrant == *signed::ONE {
-                    return reduced.cos();
-                } else if quadrant == *signed::TWO {
-                    return reduced.sin().negate();
-                } else {
-                    return reduced.cos().negate();
-                }
+                return self.sin_reduced_by_half_pi(multiplier);
             }
+        }
+        if self
+            .trig_pi_magnitude_upper_bound(32)
+            .is_some_and(|bound| bound <= *HALF_RATIONAL)
+        {
+            crate::trace_dispatch!("computable", "sin", "structural-pi-bounded-prescaled");
+            return Self::prescaled_sin(self);
         }
         let rough_appr = self.approx(-1);
         let abs_rough_appr = rough_appr.magnitude();
@@ -449,39 +545,18 @@ impl Computable {
         }
 
         if abs_rough_appr < unsigned::SIX.deref() {
-            // Medium sine inputs are rewritten through exact symmetries instead of going
-            // through the generic half-pi division path.
+            // The rough quadrant table identifies the exact half-pi symmetry.
+            // Enter the already-reduced kernel directly; recursively invoking
+            // public sin/cos here can bounce at a low-precision rounding
+            // boundary for cancellation-heavy symbolic expressions.
             let multiplier = Self::medium_half_pi_multiple(&rough_appr);
             crate::trace_dispatch!("computable", "sin", "rough-medium-special-rewrite");
-            if multiplier == *signed::ONE {
-                return Self::pi().shift_right(1).add(self.negate()).cos();
-            } else if multiplier == *signed::MINUS_ONE {
-                return Self::pi().shift_right(1).add(self).cos().negate();
-            } else if multiplier == *signed::TWO {
-                return Self::pi().add(self.negate()).sin();
-            } else {
-                return Self::pi().add(self).sin().negate();
-            }
+            return self.sin_reduced_by_half_pi(multiplier);
         }
 
         let multiplier = Self::half_pi_multiple(&self);
-        let adjustment = Self::pi()
-            .shift_right(1)
-            .multiply(Self::rational(Rational::from_bigint(multiplier.clone())).negate());
-        let reduced = self.add(adjustment);
-        let quadrant =
-            ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
-
         crate::trace_dispatch!("computable", "sin", "generic-half-pi-reduction");
-        if quadrant.is_zero() {
-            reduced.sin()
-        } else if quadrant == *signed::ONE {
-            reduced.cos()
-        } else if quadrant == *signed::TWO {
-            reduced.sin().negate()
-        } else {
-            reduced.cos().negate()
-        }
+        self.sin_reduced_by_half_pi(multiplier)
     }
 
     /// Tangent of this number.

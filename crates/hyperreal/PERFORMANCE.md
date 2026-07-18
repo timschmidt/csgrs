@@ -193,6 +193,10 @@ Relevant path notes:
 - Small exact rationals now use rational-backed prescaled trig nodes so
   construction avoids a child Ratio node. The approximation dispatcher
   materializes the same rational input only when digits are requested.
+- Scaled inverse-trig compositions use a conservative exact upper bound in pi
+  units through rational products, sums, binary shifts, and admitted asin/acos
+  ranges. Arguments certified within `[-pi/2, pi/2]` enter the prescaled kernel
+  without calling `approx(-1)` merely to choose a reduction path.
 - Cached approximation rows are intentionally very sensitive to code layout.
   During optimization, keep helper functions away from the middle of hot
   `sin`/`cos`/`tan` kernels unless the low-level numerical benches prove there
@@ -248,6 +252,14 @@ raised the paired asin/acos rows from 5.954/5.689 us to 7.787/7.466 us
 `atan(1/2)` anchor still measured 7.632/7.537 us. The direct
 `atan_sqrt_rational_small` kernel therefore remains the correct schedule for
 this exact-rational range.
+
+Negative rational acos values now use the retained `pi - acos(|x|)` node over
+their complete domain instead of expanding mid-range values through nested
+half-pi/asin identities. A stack regression composes both positive and negative
+rational acos phases with exact gear-like carrier and rolling-angle scales,
+then constructs and evaluates all corresponding sine/cosine coordinates. This
+keeps the representation exact and bounded without a binary floating-point
+probe or recursive constructor expansion.
 
 ## Reference Audit (2026-07-15)
 

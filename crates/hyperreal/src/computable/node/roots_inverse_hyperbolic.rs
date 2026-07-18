@@ -379,10 +379,11 @@ impl Computable {
                 crate::trace_dispatch!("computable", "acos", "tiny-via-asin");
                 return Self::pi().shift_right(1).add(self.asin().negate());
             }
-            if rational_sign == Sign::Minus && magnitude >= *INVERSE_ENDPOINT_RATIONAL_THRESHOLD {
-                // Negative endpoint values mirror the positive endpoint transform.
-                // Store the magnitude directly so construction stays as a single
-                // deferred fact instead of rebuilding pi - acos(|x|).
+            if rational_sign == Sign::Minus {
+                // Every negative rational uses acos(-x) = pi - acos(x). Store
+                // the magnitude directly so mid-range values do not expand
+                // through nested half-pi-minus-asin identities before trig
+                // composition can inspect their exact [pi/2, pi] range.
                 crate::trace_dispatch!("computable", "acos", "negative-rational-deferred");
                 return Self::acos_negative_rational_deferred(magnitude);
             }

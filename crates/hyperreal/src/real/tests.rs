@@ -1159,6 +1159,72 @@ mod tests {
     }
 
     #[test]
+    fn scaled_acos_trig_composition_remains_bounded() {
+        let phase = Real::new(Rational::fraction(-14, 31).unwrap())
+            .acos()
+            .unwrap();
+        let carrier =
+            (phase.clone() * Real::new(Rational::fraction(4, 81).unwrap())) + pi_fraction(1, 18);
+        let rolling = (phase * Real::new(Rational::fraction(31, 81).unwrap())) + pi_fraction(1, 18);
+
+        assert!(carrier.clone().sin().to_f64_lossy().is_some());
+        assert!(carrier.clone().cos().to_f64_lossy().is_some());
+        assert!(rolling.clone().sin().to_f64_lossy().is_some());
+        assert!(rolling.clone().cos().to_f64_lossy().is_some());
+
+        let carrier_radius = Real::new(Rational::fraction(31, 2).unwrap());
+        let generator = Real::from(2_i8);
+        let x = carrier_radius.clone() * carrier.clone().cos()
+            - generator.clone() * rolling.clone().cos();
+        let y = carrier_radius * carrier.sin() - generator * rolling.sin();
+        assert!(x.to_f64_lossy().is_some());
+        assert!(y.to_f64_lossy().is_some());
+
+        let phase = Real::new(Rational::fraction(1, 18).unwrap())
+            .acos()
+            .unwrap();
+        let carrier =
+            (phase.clone() * Real::new(Rational::fraction(1, 24).unwrap())) + pi_fraction(1, 32);
+        let rolling = (phase * Real::new(Rational::fraction(3, 8).unwrap())) + pi_fraction(1, 32);
+        let x = Real::from(9_i8) * carrier.clone().cos() - rolling.clone().cos();
+        let y = Real::from(9_i8) * carrier.sin() - rolling.sin();
+        assert!(x.to_f64_lossy().is_some());
+        assert!(y.to_f64_lossy().is_some());
+
+        let phase = Real::new(Rational::fraction(-71, 224).unwrap())
+            .acos()
+            .unwrap();
+        let carrier =
+            (phase.clone() * Real::new(Rational::fraction(1, 16).unwrap())) + pi_fraction(1, 32);
+        let rolling = (phase * Real::new(Rational::fraction(7, 16).unwrap())) - pi_fraction(1, 32);
+        let carrier_cos = carrier.clone().cos();
+        let rolling_cos = rolling.clone().cos();
+        let x = Real::from(7_i8) * carrier_cos + rolling_cos;
+        let carrier_sin = carrier.sin();
+        let rolling_sin = rolling.sin();
+        let y = Real::from(7_i8) * carrier_sin - rolling_sin;
+        assert!(x.to_f64_lossy().is_some());
+        assert!(y.to_f64_lossy().is_some());
+
+        // A dense exact cycloidal tip arc combines an acos phase with an
+        // atan2-derived endpoint. Low-precision quadrant selection used to
+        // bounce between public sin/cos constructors for one of these samples.
+        let phase = Real::new(Rational::fraction(1, 18).unwrap())
+            .acos()
+            .unwrap();
+        let tip_parameter = phase.clone() * Real::new(Rational::fraction(1, 8).unwrap());
+        let tip_argument = (-phase.clone().sin()).atan2(Real::from(9_i8) - phase.cos());
+        let right = -(tip_parameter + tip_argument + pi_fraction(1, 32));
+        let left = -right.clone();
+        for sample in 1..=32 {
+            let u = Real::new(Rational::fraction(sample, 32).unwrap());
+            let angle = right.clone() + u * (left.clone() - right.clone());
+            assert!(angle.clone().sin().to_f64_lossy().is_some());
+            assert!(angle.cos().to_f64_lossy().is_some());
+        }
+    }
+
+    #[test]
     fn inverse_trig_domain_boundaries() {
         assert_eq!(
             Real::new(Rational::new(1)).asin().unwrap(),
