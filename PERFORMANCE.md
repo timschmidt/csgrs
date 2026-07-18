@@ -14,7 +14,7 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `profile_primitives/constructor/circle_with_keyway` | 4.72 ms/op | 0.209 ms/op | 95.6% faster | Same contour roles, area, exact containment oracle, and checksum |
 | `profile_primitives/constructor/keyhole` | 5.58 ms/op | 0.161 ms/op | 97.1% faster | Same contour roles, area, exact containment oracle, and checksum |
 | `profile_primitives/constructor/crescent` | 10.9 ms/op | 1.42 ms/op | 87.0% faster | Same contour roles, area, 605 exact containment oracle decisions, and checksum |
-| `profile_primitives/constructor/circle` | 0.129 ms/op | 0.0527 ms/op | 59.3% faster | Exact former `Region2` and convex-cache equality at five tessellations |
+| `profile_primitives/constructor/circle` | 0.129 ms/op | 0.0791 ms/op | 38.7% faster | Exact former `Region2`, point cache, and symbolic unit-normal cache at five tessellations |
 | `profile_primitives/constructor/ellipse` | 0.171 ms/op | 0.0452 ms/op | 73.6% faster | Exact former `Region2` equality across five aspect-ratio/tessellation cases |
 | `profile_primitives/constructor/star` | 0.128 ms/op | 0.0539 ms/op | 57.8% faster | Exact former `Region2` equality across five point-count/radius-ratio cases |
 | `profile_primitives/constructor/regular_ngon` | 0.0368 ms/op | 0.0201 ms/op | 45.3% faster | Exact former `Region2` equality at six side counts |
@@ -113,12 +113,15 @@ cyclic samples prove distinct neighboring vertices, nonzero chords, simple
 closure, and consistent winding, so the generic exact distance predicates do
 not need to rediscover those properties. The convex tessellation cache remains
 the exact authored point sequence. A differential regression compares both the
-complete former `Region2` and that cache at 3, 4, 5, 16, and 31 segments.
-Matched 30-sample medians fell from 0.129 to 0.0527 ms/op (59.3%), with
-non-overlapping 0.125--0.155 and 0.0519--0.0609 ms interquartile ranges. A
-one-call trace fell from 1,752 to 1,284 dispatch events; unknown and
-fallback/abort events each fell from 88 to zero, with no approximation or
-refinement events before or after.
+complete former `Region2` and point cache at 3, 4, 5, 16, and 31 segments.
+The retained side-normal cache now also samples exact half-step angles instead
+of promoting binary64 sine/cosine values; the same differential proves every
+normal against its symbolic construction. Matched 30-sample medians fell from
+0.129 to 0.0791 ms/op (38.7%), with non-overlapping 0.125--0.155 and
+0.0788--0.0799 ms interquartile ranges. A one-call trace moved from 1,752 to
+2,068 dispatch events because the formerly invisible normal sampling is now
+exact and recorded. Unknown and fallback/abort events each fell from 88 to
+zero, with no approximation or refinement events before or after.
 
 `Profile::ellipse` applies the same certified materialization after its positive
 width and height admission. Independent positive axis scaling is an
@@ -313,8 +316,12 @@ finite coordinate within 1e-12 while now proving exact requested width and
 height and retaining symbolic sample dependencies.
 
 The shared sketch-constructor target then completed 1,000
-AddressSanitizer-instrumented executions (321 coverage points and 533 feature
-edges). Its generated corpus exposed exact-Boolean uncertainty in the legacy
+AddressSanitizer-instrumented executions (350 coverage points and 569 feature
+edges). Supershape inputs retain negative, zero, and positive exact powers in
+the bounded integer range -4 through 4 so fuzz throughput cannot be dominated
+by arbitrarily large symbolic exponent expansion; this is a harness-only bound,
+and the public constructor remains unrestricted. Its generated corpus exposed
+exact-Boolean uncertainty in the legacy
 fallbacks for a 3-segment keyhole and a 15-sided Reuleaux polygon. Those public
 constructors now use the fallible Boolean surfaces and fail closed instead of
 reaching the panic-based convenience methods; both minimized four-byte inputs

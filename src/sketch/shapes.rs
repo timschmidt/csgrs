@@ -1000,16 +1000,27 @@ impl Profile {
         // samples, nonzero chords, and a simple consistent winding.
         let mut profile = certified_tessellation_profile(&points);
         if !profile.is_empty() {
-            let edge_normals = (0..segments)
+            let Some(normal_sample_count) = segments.checked_mul(2) else {
+                return Profile::empty();
+            };
+            let Some(edge_normals) = (0..segments)
                 .map(|index| {
-                    let angle = std::f64::consts::TAU * (index as f64 + 0.5) / segments as f64;
-                    Vector3::from_xyz(
-                        Real::try_from(angle.cos()).expect("finite sampled circle normal"),
-                        Real::try_from(angle.sin()).expect("finite sampled circle normal"),
+                    let angle = exact_sample_angle(
+                        index.checked_mul(2)?.checked_add(1)?,
+                        normal_sample_count,
+                        &Real::zero(),
+                        &Real::tau(),
+                    )?;
+                    Some(Vector3::from_xyz(
+                        angle.clone().cos(),
+                        angle.sin(),
                         Real::zero(),
-                    )
+                    ))
                 })
-                .collect();
+                .collect::<Option<Vec<_>>>()
+            else {
+                return Profile::empty();
+            };
             profile.retain_convex_tessellation(points, edge_normals);
         }
         profile
@@ -3574,6 +3585,25 @@ mod tests {
                 actual.convex_edge_normals.as_deref().map(Vec::len),
                 Some(segments)
             );
+            let normals = actual.convex_edge_normals.as_deref().unwrap();
+            for (index, normal) in normals.iter().enumerate() {
+                let angle = exact_sample_angle(
+                    2 * index + 1,
+                    2 * segments,
+                    &Real::zero(),
+                    &Real::tau(),
+                )
+                .unwrap();
+                assert_eq!(
+                    hreal_try_cmp(&normal.0[0], angle.clone().cos()),
+                    Some(Ordering::Equal)
+                );
+                assert_eq!(
+                    hreal_try_cmp(&normal.0[1], angle.sin()),
+                    Some(Ordering::Equal)
+                );
+                assert!(normal.0[2].exact_rational_ref().is_some_and(|z| z.is_zero()));
+            }
         }
     }
 

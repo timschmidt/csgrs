@@ -65,6 +65,8 @@ fuzz_target!(|bytes: &[u8]| {
     };
     let positive_a = at_least_tolerance(a.abs());
     let positive_b = at_least_tolerance(b.abs());
+    let exponent_a = Real::from((bytes[idx % bytes.len()] % 9) as i8 - 4);
+    let exponent_b = Real::from((bytes[(idx + 1) % bytes.len()] % 9) as i8 - 4);
     let curve_control = [
         [Real::zero(), Real::zero()],
         [a.clone(), b.clone()],
@@ -124,8 +126,8 @@ fuzz_target!(|bytes: &[u8]| {
             positive_b,
             c,
             real(2.0),
-            b,
-            a,
+            exponent_a,
+            exponent_b,
             segments,
         ),
         _ => Profile::polygon_points(&native_points),
