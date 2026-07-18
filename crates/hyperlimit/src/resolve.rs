@@ -4,8 +4,8 @@ use crate::predicate::PredicatePolicy;
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign, SignKnowledge,
 };
-use crate::real::{RealPredicateExt, sign_knowledge_from_real_facts};
-use hyperreal::{Real, ZeroKnowledge};
+use crate::real::{RealPredicateExt, map_real_sign};
+use hyperreal::{CertifiedRealSign, Real, RealSignCertificate, ZeroKnowledge};
 
 /// Resolve a Real sign through the common predicate pipeline.
 ///
@@ -39,11 +39,6 @@ pub(crate) fn resolve_real_sign(
         return outcome;
     }
 
-    if let Some(outcome) = exact_real_sign(value) {
-        crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "exact-real-facts");
-        return outcome;
-    }
-
     if let Some(outcome) = exact_evaluation(exact) {
         crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "exact-predicate");
         return outcome;
@@ -56,6 +51,44 @@ pub(crate) fn resolve_real_sign(
 
     crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "unknown");
     PredicateOutcome::unknown(unknown_need, Escalation::Undecided)
+}
+
+/// Resolve a Real sign when no predicate-specific filter or exact callback
+/// exists between structural inspection and bounded refinement.
+///
+/// Calling `certified_sign_until` once preserves the same proof stages while
+/// avoiding the duplicate structural-facts pass in the general resolver.
+pub(crate) fn resolve_real_sign_direct(
+    value: &Real,
+    unknown_need: RefinementNeed,
+) -> PredicateOutcome<Sign> {
+    match value.certified_sign_until(PredicatePolicy::MAX_REFINEMENT_PRECISION) {
+        CertifiedRealSign::Known { sign, certificate } => {
+            let stage = match certificate {
+                RealSignCertificate::StructuralFacts | RealSignCertificate::ExactZeroScale => {
+                    crate::trace_dispatch!(
+                        "hyperlimit",
+                        "resolve_real_sign_direct",
+                        "structural-real-facts"
+                    );
+                    Escalation::Structural
+                }
+                RealSignCertificate::BoundedRefinement { .. } => {
+                    crate::trace_dispatch!(
+                        "hyperlimit",
+                        "resolve_real_sign_direct",
+                        "real-refinement"
+                    );
+                    Escalation::Refined
+                }
+            };
+            PredicateOutcome::decided(map_real_sign(sign), Certainty::Exact, stage)
+        }
+        CertifiedRealSign::Unknown { .. } => {
+            crate::trace_dispatch!("hyperlimit", "resolve_real_sign_direct", "unknown");
+            PredicateOutcome::unknown(unknown_need, Escalation::Undecided)
+        }
+    }
 }
 
 pub(crate) fn decide_real_sign(value: &Real, stage: Escalation) -> Option<PredicateOutcome<Sign>> {
@@ -86,33 +119,6 @@ pub(crate) fn map_outcome<T, U>(
             stage,
         } => PredicateOutcome::decided(map(value), certainty, stage),
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
-    }
-}
-
-fn exact_real_sign(value: &Real) -> Option<PredicateOutcome<Sign>> {
-    let facts = value.real_facts();
-    if !facts.exact_rational {
-        crate::trace_dispatch!("hyperlimit", "exact_real_sign", "not-exact-real");
-        return None;
-    }
-
-    match sign_knowledge_from_real_facts(facts) {
-        SignKnowledge::Known { sign, .. } => {
-            crate::trace_dispatch!("hyperlimit", "exact_real_sign", "decided");
-            Some(PredicateOutcome::decided(
-                sign,
-                Certainty::Exact,
-                Escalation::Exact,
-            ))
-        }
-        SignKnowledge::NonZero => {
-            crate::trace_dispatch!("hyperlimit", "exact_real_sign", "nonzero-no-sign");
-            None
-        }
-        SignKnowledge::Unknown => {
-            crate::trace_dispatch!("hyperlimit", "exact_real_sign", "unknown");
-            None
-        }
     }
 }
 

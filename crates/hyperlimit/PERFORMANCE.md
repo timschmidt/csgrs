@@ -6,6 +6,40 @@ focused Criterion comparison shows a meaningful improvement.
 
 ## Retained optimization
 
+### Collapse redundant Real sign-resolution passes
+
+`resolve_real_sign` already asks `decide_real_sign` for the value's structural
+facts before predicate-specific filters. Exact-rational structural facts always
+carry `sign: Some(_)`, so they decide on that first pass. The former
+`exact_real_sign` stage then re-read the same facts: it was unreachable for
+exact rationals and returned `None` for every unresolved symbolic value. The
+stage and its duplicate structural traversal are now removed; predicate
+filters, exact callbacks, bounded refinement, certainty, and escalation remain
+in the same order.
+
+Scalar sign classification and Real ordering have no predicate-specific filter
+or exact callback. They now use `resolve_real_sign_direct`, which calls
+hyperreal's certificate-bearing `certified_sign_until` once and maps
+`StructuralFacts`/`ExactZeroScale` to the structural stage and
+`BoundedRefinement` to the refined stage. The exact-rational ordering branch is
+unchanged. A close `pi < 355/113` regression proves that symbolic ordering still
+reports `PredicateCertificate::BoundedRefinement`.
+
+On the csgrs Reuleaux region-Boolean workload, a 30-sample, four-iteration A/B
+measured 14.610 ms/op before and 14.402 ms/op after, a 1.43% reduction. The
+patched interquartile range was 14.350--14.455 ms/op versus
+14.502--14.722 ms/op before. Dispatch tracing removed 21,759 events
+(206,175 to 184,416): 7,253 redundant `exact_real_sign` calls and the two
+associated fact-query events for each call. All 7,251 successful refinements,
+two unknown outcomes, and predicate decisions were unchanged.
+
+The direct certificate route was measured separately against that already
+simplified resolver: 14.792 ms/op before and 14.125 ms/op after, a 4.51%
+reduction in the paired run. Its 14.027--14.250 ms/op interquartile range did not
+overlap the 14.733--14.927 ms/op control range. The final trace contains 141,208
+events, 64,967 fewer than the original 206,175, while retaining the same 7,251
+refined decisions and two explicit unknown outcomes.
+
 ### Reuse point/ring edge orientations
 
 `classify_point_ring_even_odd_report` formerly evaluated `orient2d(a, b,

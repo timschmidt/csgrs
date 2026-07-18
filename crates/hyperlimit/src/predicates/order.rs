@@ -12,7 +12,7 @@ use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicateReport, RefinementNeed, Sign,
 };
 use crate::real::sub_ref;
-use crate::resolve::{map_outcome, resolve_real_sign};
+use crate::resolve::{map_outcome, resolve_real_sign_direct};
 use hyperreal::Real;
 
 /// Decide the sign of one Real value through the predicate pipeline.
@@ -37,13 +37,10 @@ pub(crate) fn classify_real_sign_with_policy(
 /// provenance certificate.
 pub(crate) fn classify_real_sign_report_with_policy(
     value: &Real,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> PredicateReport<Sign> {
-    PredicateReport::from_outcome(resolve_real_sign(
+    PredicateReport::from_outcome(resolve_real_sign_direct(
         value,
-        policy,
-        || None,
-        || None,
         RefinementNeed::RealRefinement,
     ))
 }
@@ -84,7 +81,7 @@ pub fn compare_reals_with_policy(
 pub(crate) fn compare_reals_report_with_policy(
     left: &Real,
     right: &Real,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> PredicateReport<Ordering> {
     if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
         crate::trace_dispatch!("hyperlimit", "compare_reals", "exact-rational");
@@ -99,13 +96,7 @@ pub(crate) fn compare_reals_report_with_policy(
     crate::trace_dispatch!("hyperlimit", "compare_reals", "difference-sign");
     let difference = sub_ref(left, right);
     PredicateReport::from_outcome(map_outcome(
-        resolve_real_sign(
-            &difference,
-            policy,
-            || None,
-            || None,
-            RefinementNeed::RealRefinement,
-        ),
+        resolve_real_sign_direct(&difference, RefinementNeed::RealRefinement),
         ordering_from_sign,
     ))
 }
@@ -541,6 +532,18 @@ mod tests {
         assert_eq!(
             report.certificate,
             crate::PredicateCertificate::ExactRealFact
+        );
+    }
+
+    #[test]
+    fn symbolic_ordering_report_preserves_bounded_refinement_certificate() {
+        let upper = hyperreal::Real::new(hyperreal::Rational::fraction(355, 113).unwrap());
+        let report = compare_reals_report(&hyperreal::Real::pi(), &upper);
+
+        assert_eq!(report.value(), Some(Ordering::Less));
+        assert_eq!(
+            report.certificate,
+            crate::PredicateCertificate::BoundedRefinement
         );
     }
 
