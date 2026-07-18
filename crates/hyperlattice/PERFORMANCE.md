@@ -67,6 +67,29 @@ The cross-stack trace records 12 events instead of 14, one rational comparison
 instead of three, no rational addition, and the retained
 `pi-rational-direct-sinpi-certificate` dispatch.
 
+## Signed deferred exact-rational inverse sine
+
+Hyperreal now retains every non-special exact-rational inverse sine in one
+signed `AsinRational` node. Tiny values preserve the direct series, while
+mid-domain and endpoint values defer the same guarded `pi/2 - acos(|x|)`
+schedule until approximation. This removes the recursive sign normalization
+and eager complement graph without moving approximation to a floating-point
+boundary.
+
+Fresh cross-library construction runs reduced `asin(0.999999)` from 239.49 ns
+to 156.22 ns and `asin(-0.999999)` from 358.40 ns to 152.54 ns. The exact
+rational facade is 93.9--94.1% faster than Numerica 128 and 98.8% faster
+than Symbolica on those rows. Cross-stack trace events fell from 14 to 11 for
+the positive endpoint and from 15 to 9 for the negative endpoint. Across the
+four-value scalar-API batch, inverse-sine events fell from 48 to 39, and the
+abort facade fell from 56 to 47.
+
+The scalar API fuzz harness now derives a dyadic half-integer exponent in
+`[-4, 4]` for general `pow`. This continues to cover integer, inverse, and
+fractional exponent schedules without letting an arbitrary exact integer
+allocate gigabytes before the remaining scalar API executes. A final
+sanitizer-backed campaign completed 620 cases without a failure.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`

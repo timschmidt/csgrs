@@ -90,7 +90,12 @@ fn scalar_fuzz(input: Input) {
     let _ = a.clone().asinh();
     let _ = a.clone().acosh();
     let _ = a.clone().atanh();
-    let _ = a.clone().pow(b.clone());
+    // Keep general powers representative without allowing an arbitrary exact
+    // integer exponent to allocate gigabytes before the remaining API is
+    // exercised. Half-integers cover both integer and rational exponent paths.
+    let pow_exponent = f64::from(i16::from(exp).rem_euclid(17) - 8) / 2.0;
+    let pow_exponent = Real::try_from(pow_exponent).expect("finite dyadic exponent");
+    let _ = a.clone().pow(pow_exponent);
 
     // ── No-panic: free function variants ────────────────────────────────────
     let _ = reciprocal(a.clone());

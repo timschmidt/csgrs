@@ -683,8 +683,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/acos_abort` | 54 | 0 | 12 | 4 | 15 | 4 | 0 | 8 | 11 | 29 | 0 | 0 | 0 | 0 | 0 | 3 | 11 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/acosh` | 20 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/acosh_abort` | 28 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/asin` | 48 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 31 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/asin_abort` | 56 | 0 | 12 | 4 | 12 | 4 | 0 | 8 | 8 | 31 | 0 | 0 | 0 | 0 | 0 | 4 | 8 | 4 | 0 | 0 |
+| `scalar_ops/hyperreal-rational/asin` | 39 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 9 | 28 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
+| `scalar_ops/hyperreal-rational/asin_abort` | 47 | 0 | 12 | 4 | 12 | 4 | 0 | 8 | 9 | 28 | 0 | 0 | 0 | 0 | 0 | 2 | 8 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/asinh` | 20 | 0 | 4 | 0 | 6 | 0 | 0 | 0 | 8 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/asinh_abort` | 28 | 0 | 8 | 0 | 6 | 0 | 0 | 0 | 8 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/atan` | 24 | 0 | 4 | 0 | 4 | 0 | 0 | 4 | 4 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 4 | 0 | 0 |
@@ -709,8 +709,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/acos_abort` | 50 | 0 | 12 | 4 | 15 | 4 | 0 | 8 | 11 | 25 | 0 | 0 | 0 | 0 | 0 | 3 | 11 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/acosh` | 17 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/acosh_abort` | 25 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal/asin` | 44 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 27 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal/asin_abort` | 52 | 0 | 12 | 4 | 12 | 4 | 0 | 8 | 8 | 27 | 0 | 0 | 0 | 0 | 0 | 4 | 8 | 4 | 0 | 0 |
+| `scalar_ops/hyperreal/asin` | 36 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 9 | 25 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
+| `scalar_ops/hyperreal/asin_abort` | 44 | 0 | 12 | 4 | 12 | 4 | 0 | 8 | 9 | 25 | 0 | 0 | 0 | 0 | 0 | 2 | 8 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal/asinh` | 20 | 0 | 4 | 0 | 6 | 0 | 0 | 0 | 8 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/asinh_abort` | 28 | 0 | 8 | 0 | 6 | 0 | 0 | 0 | 8 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/atan` | 24 | 0 | 4 | 0 | 4 | 0 | 0 | 4 | 4 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 5 | 0 | 0 |
@@ -739,7 +739,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal-rational/0.5/atan` | 6 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/0.5/atanh` | 5 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/0.999999/acos` | 12 | 0 | 2 | 1 | 4 | 1 | 0 | 2 | 3 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 |
-| `scalar_trig/hyperreal-rational/0.999999/asin` | 14 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 2 | 9 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 |
+| `scalar_trig/hyperreal-rational/0.999999/asin` | 11 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 2 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/0.999999/atanh` | 6 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/1.23456789/cos` | 6 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/1.23456789/sin` | 6 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
@@ -759,7 +759,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal-rational/9/acosh` | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/e/acosh` | 8 | 0 | 1 | 1 | 2 | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/acos` | 10 | 0 | 2 | 1 | 4 | 1 | 0 | 2 | 3 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 0 |
-| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | 15 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 2 | 10 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
+| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | 9 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 3 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/atanh` | 5 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/neg_1e-12/asinh` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/neg_1e-12/atan` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 0 |
@@ -775,7 +775,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal/0.5/atan` | 6 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal/0.5/atanh` | 7 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 0 |
 | `scalar_trig/hyperreal/0.999999/acos` | 10 | 0 | 2 | 1 | 4 | 1 | 0 | 2 | 3 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 |
-| `scalar_trig/hyperreal/0.999999/asin` | 12 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 2 | 7 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 |
+| `scalar_trig/hyperreal/0.999999/asin` | 9 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 2 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 0 |
 | `scalar_trig/hyperreal/0.999999/atanh` | 5 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal/1.23456789/cos` | 5 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal/1.23456789/sin` | 5 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 0 |
@@ -795,7 +795,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal/9/acosh` | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
 | `scalar_trig/hyperreal/e/acosh` | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal/neg_0.999999/acos` | 10 | 0 | 2 | 1 | 4 | 1 | 0 | 2 | 3 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 0 |
-| `scalar_trig/hyperreal/neg_0.999999/asin` | 14 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 2 | 9 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 | 1 | 0 |
+| `scalar_trig/hyperreal/neg_0.999999/asin` | 9 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 3 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal/neg_0.999999/atanh` | 5 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 0 |
 | `scalar_trig/hyperreal/neg_1e-12/asinh` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
 | `scalar_trig/hyperreal/neg_1e-12/atan` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 0 |
@@ -9317,38 +9317,34 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/acosh_abort` | `rational` | `comparison` | `word-sized` | 3 |
 | `scalar_ops/hyperreal-rational/acosh_abort` | `real` | `acosh` | `near-one-deferred-node` | 1 |
 | `scalar_ops/hyperreal-rational/acosh_abort` | `real` | `acosh` | `rational-at-least-two-direct-deferred-node` | 3 |
-| `scalar_ops/hyperreal-rational/asin` | `computable` | `acos` | `positive-rational-deferred` | 2 |
-| `scalar_ops/hyperreal-rational/asin` | `computable` | `asin` | `endpoint-via-acos` | 2 |
-| `scalar_ops/hyperreal-rational/asin` | `computable` | `asin` | `exact-negative-symmetry` | 1 |
+| `scalar_ops/hyperreal-rational/asin` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
 | `scalar_ops/hyperreal-rational/asin` | `computable` | `asin` | `exact-tiny-rational-series` | 1 |
-| `scalar_ops/hyperreal-rational/asin` | `computable` | `constructor` | `acos-positive-rational-deferred` | 2 |
-| `scalar_ops/hyperreal-rational/asin` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
-| `scalar_ops/hyperreal-rational/asin` | `computable` | `constructor` | `cached-pi` | 3 |
-| `scalar_ops/hyperreal-rational/asin` | `computable` | `constructor` | `rational-node` | 4 |
-| `scalar_ops/hyperreal-rational/asin` | `computable` | `constructor` | `shared-constant-wrapper` | 3 |
+| `scalar_ops/hyperreal-rational/asin` | `computable` | `asin` | `signed-rational-deferred` | 1 |
+| `scalar_ops/hyperreal-rational/asin` | `computable` | `constructor` | `asin-rational-deferred` | 3 |
+| `scalar_ops/hyperreal-rational/asin` | `computable` | `constructor` | `cached-pi` | 1 |
+| `scalar_ops/hyperreal-rational/asin` | `computable` | `constructor` | `rational-node` | 3 |
+| `scalar_ops/hyperreal-rational/asin` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `scalar_ops/hyperreal-rational/asin` | `hyperlattice` | `domain` | `structural-valid` | 4 |
 | `scalar_ops/hyperreal-rational/asin` | `hyperlattice` | `free_function` | `asin` | 4 |
-| `scalar_ops/hyperreal-rational/asin` | `rational` | `comparison` | `word-sized` | 4 |
+| `scalar_ops/hyperreal-rational/asin` | `rational` | `comparison` | `word-sized` | 3 |
 | `scalar_ops/hyperreal-rational/asin` | `real` | `asin` | `exact-special-form` | 1 |
 | `scalar_ops/hyperreal-rational/asin` | `real` | `asin` | `rational-computable` | 3 |
 | `scalar_ops/hyperreal-rational/asin` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `scalar_ops/hyperreal-rational/asin` | `real` | `detailed_facts` | `exact-rational` | 4 |
 | `scalar_ops/hyperreal-rational/asin` | `real` | `pi_fraction` | `cached-special-form` | 1 |
 | `scalar_ops/hyperreal-rational/asin` | `real` | `structural_facts` | `exact-rational` | 4 |
-| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `acos` | `positive-rational-deferred` | 2 |
-| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `asin` | `endpoint-via-acos` | 2 |
-| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `asin` | `exact-negative-symmetry` | 1 |
+| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
 | `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `asin` | `exact-tiny-rational-series` | 1 |
-| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `acos-positive-rational-deferred` | 2 |
-| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
-| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `cached-pi` | 3 |
+| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `asin` | `signed-rational-deferred` | 1 |
+| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `asin-rational-deferred` | 3 |
+| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `cached-pi` | 1 |
 | `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `one` | 4 |
-| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `rational-node` | 4 |
-| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `shared-constant-wrapper` | 3 |
+| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `rational-node` | 3 |
+| `scalar_ops/hyperreal-rational/asin_abort` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `scalar_ops/hyperreal-rational/asin_abort` | `hyperlattice` | `abort` | `attach-owned-real` | 4 |
 | `scalar_ops/hyperreal-rational/asin_abort` | `hyperlattice` | `domain` | `structural-valid` | 4 |
 | `scalar_ops/hyperreal-rational/asin_abort` | `hyperlattice` | `free_function` | `asin-with-abort` | 4 |
-| `scalar_ops/hyperreal-rational/asin_abort` | `rational` | `comparison` | `word-sized` | 4 |
+| `scalar_ops/hyperreal-rational/asin_abort` | `rational` | `comparison` | `word-sized` | 3 |
 | `scalar_ops/hyperreal-rational/asin_abort` | `real` | `asin` | `exact-special-form` | 1 |
 | `scalar_ops/hyperreal-rational/asin_abort` | `real` | `asin` | `rational-computable` | 3 |
 | `scalar_ops/hyperreal-rational/asin_abort` | `real` | `definitely_zero` | `rational-sign` | 4 |
@@ -9624,15 +9620,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/acosh_abort` | `hyperlattice` | `free_function` | `acosh-with-abort` | 4 |
 | `scalar_ops/hyperreal/acosh_abort` | `real` | `acosh` | `near-one-deferred-node` | 1 |
 | `scalar_ops/hyperreal/acosh_abort` | `real` | `acosh` | `rational-at-least-two-direct-deferred-node` | 3 |
-| `scalar_ops/hyperreal/asin` | `computable` | `acos` | `positive-rational-deferred` | 2 |
-| `scalar_ops/hyperreal/asin` | `computable` | `asin` | `endpoint-via-acos` | 2 |
-| `scalar_ops/hyperreal/asin` | `computable` | `asin` | `exact-negative-symmetry` | 1 |
+| `scalar_ops/hyperreal/asin` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
 | `scalar_ops/hyperreal/asin` | `computable` | `asin` | `exact-tiny-rational-series` | 1 |
-| `scalar_ops/hyperreal/asin` | `computable` | `constructor` | `acos-positive-rational-deferred` | 2 |
-| `scalar_ops/hyperreal/asin` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
-| `scalar_ops/hyperreal/asin` | `computable` | `constructor` | `cached-pi` | 3 |
-| `scalar_ops/hyperreal/asin` | `computable` | `constructor` | `rational-node` | 4 |
-| `scalar_ops/hyperreal/asin` | `computable` | `constructor` | `shared-constant-wrapper` | 3 |
+| `scalar_ops/hyperreal/asin` | `computable` | `asin` | `signed-rational-deferred` | 1 |
+| `scalar_ops/hyperreal/asin` | `computable` | `constructor` | `asin-rational-deferred` | 3 |
+| `scalar_ops/hyperreal/asin` | `computable` | `constructor` | `cached-pi` | 1 |
+| `scalar_ops/hyperreal/asin` | `computable` | `constructor` | `rational-node` | 3 |
+| `scalar_ops/hyperreal/asin` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `scalar_ops/hyperreal/asin` | `hyperlattice` | `domain` | `structural-valid` | 4 |
 | `scalar_ops/hyperreal/asin` | `hyperlattice` | `free_function` | `asin` | 4 |
 | `scalar_ops/hyperreal/asin` | `real` | `asin` | `exact-special-form` | 1 |
@@ -9641,16 +9635,14 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/asin` | `real` | `detailed_facts` | `exact-rational` | 4 |
 | `scalar_ops/hyperreal/asin` | `real` | `pi_fraction` | `cached-special-form` | 1 |
 | `scalar_ops/hyperreal/asin` | `real` | `structural_facts` | `exact-rational` | 4 |
-| `scalar_ops/hyperreal/asin_abort` | `computable` | `acos` | `positive-rational-deferred` | 2 |
-| `scalar_ops/hyperreal/asin_abort` | `computable` | `asin` | `endpoint-via-acos` | 2 |
-| `scalar_ops/hyperreal/asin_abort` | `computable` | `asin` | `exact-negative-symmetry` | 1 |
+| `scalar_ops/hyperreal/asin_abort` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
 | `scalar_ops/hyperreal/asin_abort` | `computable` | `asin` | `exact-tiny-rational-series` | 1 |
-| `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `acos-positive-rational-deferred` | 2 |
-| `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
-| `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `cached-pi` | 3 |
+| `scalar_ops/hyperreal/asin_abort` | `computable` | `asin` | `signed-rational-deferred` | 1 |
+| `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `asin-rational-deferred` | 3 |
+| `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `cached-pi` | 1 |
 | `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `one` | 4 |
-| `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `rational-node` | 4 |
-| `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `shared-constant-wrapper` | 3 |
+| `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `rational-node` | 3 |
+| `scalar_ops/hyperreal/asin_abort` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `scalar_ops/hyperreal/asin_abort` | `hyperlattice` | `abort` | `attach-owned-real` | 4 |
 | `scalar_ops/hyperreal/asin_abort` | `hyperlattice` | `domain` | `structural-valid` | 4 |
 | `scalar_ops/hyperreal/asin_abort` | `hyperlattice` | `free_function` | `asin-with-abort` | 4 |
@@ -9933,12 +9925,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal-rational/0.999999/acos` | `real` | `definitely_zero` | `rational-sign` | 2 |
 | `scalar_trig/hyperreal-rational/0.999999/acos` | `real` | `detailed_facts` | `exact-rational` | 1 |
 | `scalar_trig/hyperreal-rational/0.999999/acos` | `real` | `structural_facts` | `exact-rational` | 1 |
-| `scalar_trig/hyperreal-rational/0.999999/asin` | `computable` | `acos` | `positive-rational-deferred` | 1 |
-| `scalar_trig/hyperreal-rational/0.999999/asin` | `computable` | `asin` | `endpoint-via-acos` | 1 |
-| `scalar_trig/hyperreal-rational/0.999999/asin` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
-| `scalar_trig/hyperreal-rational/0.999999/asin` | `computable` | `constructor` | `cached-pi` | 1 |
+| `scalar_trig/hyperreal-rational/0.999999/asin` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
+| `scalar_trig/hyperreal-rational/0.999999/asin` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
 | `scalar_trig/hyperreal-rational/0.999999/asin` | `computable` | `constructor` | `rational-node` | 1 |
-| `scalar_trig/hyperreal-rational/0.999999/asin` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `scalar_trig/hyperreal-rational/0.999999/asin` | `hyperlattice` | `domain` | `structural-valid` | 1 |
 | `scalar_trig/hyperreal-rational/0.999999/asin` | `hyperlattice` | `free_function` | `asin` | 1 |
 | `scalar_trig/hyperreal-rational/0.999999/asin` | `rational` | `comparison` | `word-sized` | 2 |
@@ -10065,16 +10054,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal-rational/neg_0.999999/acos` | `real` | `definitely_zero` | `rational-sign` | 2 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/acos` | `real` | `detailed_facts` | `exact-rational` | 1 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/acos` | `real` | `structural_facts` | `exact-rational` | 1 |
-| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `acos` | `positive-rational-deferred` | 1 |
-| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `asin` | `endpoint-via-acos` | 1 |
-| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `asin` | `exact-negative-symmetry` | 1 |
-| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
-| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `constructor` | `cached-pi` | 1 |
-| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `constructor` | `rational-node` | 2 |
-| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
+| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `asin` | `signed-rational-deferred` | 1 |
+| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
+| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `computable` | `constructor` | `rational-node` | 1 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `hyperlattice` | `domain` | `structural-valid` | 1 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `hyperlattice` | `free_function` | `asin` | 1 |
-| `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `rational` | `comparison` | `word-sized` | 1 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `real` | `asin` | `rational-computable` | 1 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `real` | `definitely_zero` | `rational-sign` | 1 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/asin` | `real` | `detailed_facts` | `exact-rational` | 1 |
@@ -10182,12 +10166,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal/0.999999/acos` | `real` | `definitely_zero` | `rational-sign` | 2 |
 | `scalar_trig/hyperreal/0.999999/acos` | `real` | `detailed_facts` | `exact-rational` | 1 |
 | `scalar_trig/hyperreal/0.999999/acos` | `real` | `structural_facts` | `exact-rational` | 1 |
-| `scalar_trig/hyperreal/0.999999/asin` | `computable` | `acos` | `positive-rational-deferred` | 1 |
-| `scalar_trig/hyperreal/0.999999/asin` | `computable` | `asin` | `endpoint-via-acos` | 1 |
-| `scalar_trig/hyperreal/0.999999/asin` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
-| `scalar_trig/hyperreal/0.999999/asin` | `computable` | `constructor` | `cached-pi` | 1 |
+| `scalar_trig/hyperreal/0.999999/asin` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
+| `scalar_trig/hyperreal/0.999999/asin` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
 | `scalar_trig/hyperreal/0.999999/asin` | `computable` | `constructor` | `rational-node` | 1 |
-| `scalar_trig/hyperreal/0.999999/asin` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `scalar_trig/hyperreal/0.999999/asin` | `hyperlattice` | `domain` | `structural-valid` | 1 |
 | `scalar_trig/hyperreal/0.999999/asin` | `hyperlattice` | `free_function` | `asin` | 1 |
 | `scalar_trig/hyperreal/0.999999/asin` | `real` | `asin` | `rational-computable` | 1 |
@@ -10296,13 +10277,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_trig/hyperreal/neg_0.999999/acos` | `real` | `definitely_zero` | `rational-sign` | 2 |
 | `scalar_trig/hyperreal/neg_0.999999/acos` | `real` | `detailed_facts` | `exact-rational` | 1 |
 | `scalar_trig/hyperreal/neg_0.999999/acos` | `real` | `structural_facts` | `exact-rational` | 1 |
-| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `acos` | `positive-rational-deferred` | 1 |
-| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `asin` | `endpoint-via-acos` | 1 |
-| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `asin` | `exact-negative-symmetry` | 1 |
-| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
-| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `constructor` | `cached-pi` | 1 |
-| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `constructor` | `rational-node` | 2 |
-| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
+| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `asin` | `signed-rational-deferred` | 1 |
+| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
+| `scalar_trig/hyperreal/neg_0.999999/asin` | `computable` | `constructor` | `rational-node` | 1 |
 | `scalar_trig/hyperreal/neg_0.999999/asin` | `hyperlattice` | `domain` | `structural-valid` | 1 |
 | `scalar_trig/hyperreal/neg_0.999999/asin` | `hyperlattice` | `free_function` | `asin` | 1 |
 | `scalar_trig/hyperreal/neg_0.999999/asin` | `real` | `asin` | `rational-computable` | 1 |

@@ -55,10 +55,10 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `asin 0.5` | 99.93 ns | 100.97 ns | 2.99 us | 13.56 us | 0.03x | 0.01x |
 | `acos 0.5` | 101.36 ns | 100.88 ns | 3.00 us | 13.19 us | 0.03x | 0.01x |
 | `atanh 0.5` | 60.32 ns | 60.20 ns | 1.66 us | 13.28 us | 0.04x | 0.00x |
-| `asin neg_0.999999` | 333.14 ns | 353.17 ns | 2.55 us | 13.01 us | 0.13x | 0.03x |
+| `asin neg_0.999999` | 156.91 ns | 152.54 ns | 2.58 us | 13.12 us | 0.06x | 0.01x |
 | `acos neg_0.999999` | 289.15 ns | 279.60 ns | 2.68 us | 13.12 us | 0.11x | 0.02x |
 | `atanh neg_0.999999` | 185.43 ns | 167.40 ns | 1.59 us | 12.93 us | 0.12x | 0.01x |
-| `asin 0.999999` | 216.64 ns | 243.11 ns | 2.55 us | 12.99 us | 0.08x | 0.02x |
+| `asin 0.999999` | 176.38 ns | 156.22 ns | 2.57 us | 12.88 us | 0.07x | 0.01x |
 | `acos 0.999999` | 151.12 ns | 170.20 ns | 2.74 us | 13.15 us | 0.06x | 0.01x |
 | `atanh 0.999999` | 143.39 ns | 138.00 ns | 1.58 us | 12.96 us | 0.09x | 0.01x |
 | `asin 1e-12` | 127.14 ns | 136.14 ns | 1.43 us | 15.12 us | 0.09x | 0.01x |
