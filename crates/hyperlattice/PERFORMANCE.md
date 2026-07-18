@@ -30,6 +30,30 @@ after, a 6.4% median improvement. Its reported 95% change interval was 5.38% to
 7.46% faster (`p < 0.01`). An exact-value regression independently checks the
 fractional result `75933 / 5000`.
 
+## Retained canonical acosh domain ownership
+
+The compatibility `acosh` and `acosh_with_abort` facades formerly queried
+`Real::acosh_domain` and then called `Real::acosh`, which independently enforces
+the same exact domain contract. Removing the duplicate preflight leaves domain
+ownership in the canonical scalar implementation and eliminates one complete
+structural-fact traversal from every successful call. Existing invalid-domain,
+endpoint, near-one, and abort regressions retain the public facade semantics.
+
+Matched 100-sample Criterion runs around only the facade change measured:
+
+| exact input | duplicate preflight | canonical owner | result |
+| --- | ---: | ---: | ---: |
+| `9` | 121.73 ns | 80.929 ns | 33.52% faster |
+| `1 + 10^-12` | 274.48 ns | 176.00 ns | 35.88% faster |
+| `10^6` | 121.06 ns | 80.531 ns | 33.48% faster |
+| `e` | 116.50 ns | 87.589 ns | 24.82% faster |
+
+Combined with hyperreal's exact-MSD domain certificate, exact-symbolic
+`acosh(e)` improved from 997.60 ns to 87.589 ns end to end (91.22%) and now
+lands within 1.65% of the 86.164 ns exact-dyadic hyperreal control while
+beating the 1.6814 us Numerica 128 and 9.8471 us Symbolica rows on the same
+construction workload.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`

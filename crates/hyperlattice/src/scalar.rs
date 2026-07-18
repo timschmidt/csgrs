@@ -376,14 +376,12 @@ pub fn asinh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
 /// Returns the inverse hyperbolic cosine of `value`.
 pub fn acosh(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "acosh");
-    reject_invalid_domain(value.acosh_domain(), Problem::NotANumber)?;
     value.acosh()
 }
 
 /// Returns the inverse hyperbolic cosine after attaching an abort signal.
 pub fn acosh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "acosh-with-abort");
-    reject_invalid_domain(value.acosh_domain(), Problem::NotANumber)?;
     with_abort(value, signal).acosh()
 }
 

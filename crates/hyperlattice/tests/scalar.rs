@@ -2,10 +2,10 @@ mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
 use hyperlattice::{
-    Problem, RealFacts, RealSign, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln, log10,
-    log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked, reciprocal_checked_with_abort,
-    reciprocal_ref, reciprocal_ref_checked, sin, sqrt, tan, tau, zero, zero_status,
-    zero_status_with_abort,
+    Problem, RealFacts, RealSign, ZeroStatus, acos, acosh, acosh_with_abort, asin, asin_with_abort,
+    atanh, ln, log10, log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked,
+    reciprocal_checked_with_abort, reciprocal_ref, reciprocal_ref_checked, sin, sqrt, tan, tau,
+    zero, zero_status, zero_status_with_abort,
 };
 
 #[test]
@@ -156,4 +156,5 @@ fn inverse_scalar_helpers_accept_abort_signal() {
     let signal = abort_signal();
 
     assert_eq!(asin_with_abort(zero(), &signal).unwrap(), zero());
+    assert_eq!(acosh_with_abort(zero(), &signal), Err(Problem::NotANumber));
 }
