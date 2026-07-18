@@ -208,6 +208,24 @@ cross-stack trace replaces the multiplication chain with
 word-sized or dyadic-denominator Rational power path. Regression tests cover
 fractional fifth powers and symbolic reciprocal preservation.
 
+## Canonical square-root domain ownership
+
+The compatibility `sqrt` facade formerly built complete structural and domain
+facts before calling `Real::sqrt`, which immediately performs the authoritative
+exact sign/domain check itself. Removing that duplicate preflight preserves the
+same `Problem::SqrtNegative` contract and leaves domain ownership in Hyperreal.
+
+The stored 573.91 ns row had already fallen to 196.04 ns after dependency-side
+square extraction work. Around only the facade change, the four-case exact-f64
+median fell another 21.4% to 153.56 ns and the explicit-rational row fell 22.4%
+to 154.89 ns. Fresh controls measured 95.12 ns for Numerica 128 and 1.450 us
+for Symbolica, reducing the exact-f64/Numerica gap from the stored 5.95x to
+1.61x while making Hyperreal 9.4x faster than Symbolica.
+
+The regenerated trace removes four domain-fact, four detailed-fact, and four
+structural-fact events from each four-case workload. Canonical `Real::sqrt`
+still records every exact sign and perfect-square or retained-radical route.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`

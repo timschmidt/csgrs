@@ -213,7 +213,6 @@ pub fn log10_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
 /// Returns the principal square root of `value`.
 pub fn sqrt(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "sqrt");
-    reject_invalid_domain(value.sqrt_domain(), Problem::SqrtNegative)?;
     value.sqrt()
 }
 

@@ -704,7 +704,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/powi_negative_one` | 16 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/sinh` | 92 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 44 | 4 | 4 |
-| `scalar_ops/hyperreal-rational/sqrt` | 26 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `scalar_ops/hyperreal-rational/sqrt` | 14 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/tan` | 20 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/tanh` | 132 | 0 | 4 | 12 | 12 | 0 | 0 | 8 | 12 | 88 | 0 | 0 | 0 | 0 | 0 | 4 | 4 | 68 | 8 | 8 |
 | `scalar_ops/hyperreal/acos` | 42 | 0 | 8 | 4 | 15 | 4 | 0 | 8 | 11 | 25 | 0 | 0 | 0 | 0 | 0 | 3 | 3 | 4 | 0 | 0 |
@@ -730,7 +730,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/powi_negative_one` | 16 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/sinh` | 92 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 44 | 4 | 4 |
-| `scalar_ops/hyperreal/sqrt` | 27 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `scalar_ops/hyperreal/sqrt` | 15 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal/tan` | 20 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/tanh` | 132 | 0 | 4 | 12 | 12 | 0 | 0 | 8 | 12 | 88 | 0 | 0 | 0 | 0 | 0 | 4 | 4 | 68 | 8 | 8 |
 | `scalar_trig/hyperreal-rational/0.1/cos` | 5 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
@@ -9880,13 +9880,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `div` | `rhs-one` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `exp` | `rational-exp-special-form` | 8 |
 | `scalar_ops/hyperreal-rational/sqrt` | `computable` | `constructor` | `rational-node` | 2 |
-| `scalar_ops/hyperreal-rational/sqrt` | `hyperlattice` | `domain` | `structural-valid` | 4 |
 | `scalar_ops/hyperreal-rational/sqrt` | `hyperlattice` | `free_function` | `sqrt` | 4 |
 | `scalar_ops/hyperreal-rational/sqrt` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
-| `scalar_ops/hyperreal-rational/sqrt` | `real` | `detailed_facts` | `exact-rational` | 4 |
 | `scalar_ops/hyperreal-rational/sqrt` | `real` | `sqrt` | `rational-perfect-square` | 2 |
 | `scalar_ops/hyperreal-rational/sqrt` | `real` | `sqrt` | `rational-sqrt-special-form` | 2 |
-| `scalar_ops/hyperreal-rational/sqrt` | `real` | `structural_facts` | `exact-rational` | 4 |
 | `scalar_ops/hyperreal-rational/tan` | `computable` | `constructor` | `prescaled-tan-rational` | 2 |
 | `scalar_ops/hyperreal-rational/tan` | `computable` | `constructor` | `tan-large-rational-deferred` | 2 |
 | `scalar_ops/hyperreal-rational/tan` | `computable` | `tan` | `large-rational-deferred` | 2 |
@@ -10204,14 +10201,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/sinh` | `real` | `exp` | `rational-exp-special-form` | 8 |
 | `scalar_ops/hyperreal/sqrt` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
 | `scalar_ops/hyperreal/sqrt` | `computable` | `constructor` | `rational-node` | 1 |
-| `scalar_ops/hyperreal/sqrt` | `hyperlattice` | `domain` | `structural-valid` | 4 |
 | `scalar_ops/hyperreal/sqrt` | `hyperlattice` | `free_function` | `sqrt` | 4 |
 | `scalar_ops/hyperreal/sqrt` | `rational` | `square_extraction` | `large-power-of-two` | 1 |
 | `scalar_ops/hyperreal/sqrt` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
-| `scalar_ops/hyperreal/sqrt` | `real` | `detailed_facts` | `exact-rational` | 4 |
 | `scalar_ops/hyperreal/sqrt` | `real` | `sqrt` | `rational-perfect-square` | 2 |
 | `scalar_ops/hyperreal/sqrt` | `real` | `sqrt` | `rational-sqrt-special-form` | 2 |
-| `scalar_ops/hyperreal/sqrt` | `real` | `structural_facts` | `exact-rational` | 4 |
 | `scalar_ops/hyperreal/tan` | `computable` | `constructor` | `prescaled-tan-rational` | 2 |
 | `scalar_ops/hyperreal/tan` | `computable` | `constructor` | `tan-large-rational-deferred` | 2 |
 | `scalar_ops/hyperreal/tan` | `computable` | `tan` | `large-rational-deferred` | 2 |
