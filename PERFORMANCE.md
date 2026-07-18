@@ -22,6 +22,7 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `profile_primitives/constructor/egg` | 0.118 ms/op | 0.0628 ms/op | 46.9% faster | Legacy finite coordinates within 1e-12 plus exact requested bounds |
 | `profile_primitives/constructor/squircle` | 0.138 ms/op | 0.0634 ms/op | 54.0% faster | Exact former `Region2` equality across six aspect-ratio/tessellation cases |
 | `profile_primitives/constructor/ring` | 0.263 ms/op | 0.0868 ms/op | 66.9% faster | Exact former annular `Region2` equality across six dimension/tessellation cases |
+| `profile_primitives/constructor/supershape` | 0.0280 ms/op | 0.0692 ms/op | 147.5% exactness cost | Legacy finite coordinates within 1e-11; no internal binary64 demotion |
 | `profile_primitives/constructor/airfoil_naca4` | 1.686 ms/op | 1.184 ms/op | 29.8% faster | Exact former-region equality at three tessellations and same checksum |
 | `profile_primitives/constructor/involute_gear` | 0.637 ms/op | 0.173 ms/op | 72.8% faster | Same contour/checksum and exact finite-import accounting |
 | `profile_primitives/constructor/cycloidal_gear` | 0.391 ms/op | 0.118 ms/op | 69.8% faster | Former finite point sequence bit-exact across three parameter sets |
@@ -205,6 +206,20 @@ interquartile ranges. A one-call trace fell from 3,646 to 2,174 dispatch events
 (40.4%); unknown and fallback/abort events both fell from 176 to zero, while
 approximation and refinement events remained zero.
 
+`Profile::supershape` no longer demotes its six parameters, symbolic sample
+angles, powered superformula terms, radius, and final coordinates to binary64.
+General exponents now use Hyperreal powers throughout. The common
+`a = b = 1`, `n2 = n3 = 2` identity is reduced exactly through
+`cos(theta)^2 + sin(theta)^2 = 1`, avoiding the general power graph while
+retaining exact circle samples. Positive radii and uniform angular wedges
+certify the resulting polygon directly. Symmetric and asymmetric differential
+cases retain every legacy finite coordinate within `1e-11` and preserve
+non-rational exact coordinates. Removing the internal approximation raises the
+matched 30-sample median from 0.0280 to 0.0692 ms/op (2.48x), with
+0.0266--0.0327 and 0.0688--0.0702 ms interquartile ranges. The one-call trace
+rises from 788 to 1,999 events because the exact sine/cosine path is now
+observable; fallback, approximation, and refinement events remain zero.
+
 `Profile::airfoil_naca4` previously evaluated every interior chord station
 twice: once while constructing the upper surface and again while traversing the
 lower surface in reverse. It now evaluates each exact station once, appends the
@@ -298,7 +313,7 @@ finite coordinate within 1e-12 while now proving exact requested width and
 height and retaining symbolic sample dependencies.
 
 The shared sketch-constructor target then completed 1,000
-AddressSanitizer-instrumented executions (310 coverage points and 521 feature
+AddressSanitizer-instrumented executions (321 coverage points and 533 feature
 edges). Its generated corpus exposed exact-Boolean uncertainty in the legacy
 fallbacks for a 3-segment keyhole and a 15-sided Reuleaux polygon. Those public
 constructors now use the fallible Boolean surfaces and fail closed instead of
