@@ -24,7 +24,7 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `profile_primitives/constructor/ring` | 0.263 ms/op | 0.0868 ms/op | 66.9% faster | Exact former annular `Region2` equality across six dimension/tessellation cases |
 | `profile_primitives/constructor/supershape` | 0.0280 ms/op | 0.0692 ms/op | 147.5% exactness cost | Legacy finite coordinates within 1e-11; no internal binary64 demotion |
 | `profile_primitives/constructor/airfoil_naca4` | 1.686 ms/op | 1.184 ms/op | 29.8% faster | Exact former-region equality at three tessellations and same checksum |
-| `profile_primitives/constructor/involute_gear` | 0.637 ms/op | 0.173 ms/op | 72.8% faster | Same contour/checksum and exact finite-import accounting |
+| `profile_primitives/constructor/involute_gear` | 0.637 ms/op | 0.389 ms/op | 38.9% faster | Legacy coordinates within 2e-12, symbolic samples, and exact beyond-binary64 module retention |
 | `profile_primitives/constructor/cycloidal_gear` | 0.391 ms/op | 0.118 ms/op | 69.8% faster | Former finite point sequence bit-exact across three parameter sets |
 | `profile_primitives/constructor/cycloidal_rack` | 0.170 ms/op | 0.0419 ms/op | 75.4% faster | Exact former `Region2` equality across three parameter sets |
 | `profile_primitives/constructor/involute_rack` | 0.0809 ms/op | 0.0309 ms/op | 61.8% faster | Exact former `Region2` equality plus zero-root-space boundary oracle |
@@ -236,16 +236,25 @@ cambered airfoils at 10, 24, and 80 samples. The shared sketch-constructor fuzz
 target completed 1,000 AddressSanitizer-instrumented executions after the
 change with no failure.
 
-`Profile::involute_gear` benefits from Hypercurve's retained finite-ring import
-fast path. Duplicate source-edge accounting now occurs once at the explicit
-binary64 boundary before retained points are promoted to exact dyadics. Since
-promotion preserves the already-proven finite equality and the cyclic segments
-share cloned endpoints, Hypercurve constructs that exact nonzero, connected,
-closed ring without repeating squared-distance validation. Matched 30-sample
-medians fell from 0.637 to 0.173 ms/op (72.8%), with a retained 0.148--0.192 ms
-interquartile range and the same contour checksum. A one-call trace fell from
-24,619 to 943 events (96.2%); approximations, refinements, fallbacks, and
-unknown facts remained zero.
+`Profile::involute_gear` no longer demotes module, pressure angle, clearance,
+backlash, analytic radii, or sampled angles to binary64. Hyperreal square root,
+inverse tangent, and trigonometry retain the analytic samples directly. The
+constructor evaluates each radial flank sample once for one local tooth, reuses
+that retained sequence in reverse for the opposite flank, and assembles the
+gear with exact pitch rotations. Even tooth counts reuse half-turn symmetry;
+multiples of four reuse exact coordinate swaps and sign changes for three
+quadrants. The admitted analytic ranges also certify the line ring without a
+second generic validation pass. A differential oracle compares every boundary
+coordinate with the former finite implementation within 2e-12 across three
+pressure-angle, clearance, backlash, tooth-count, and tessellation cases; an
+adversarial module one unit beyond binary64 integer resolution remains exactly
+distinguishable after construction. Matched 30-sample medians are 0.389 ms/op
+with a 0.384--0.396 ms interquartile range: 38.9% faster than the original
+0.637 ms generic path, while paying a documented 125% exactness cost against
+the intermediate 0.173 ms finite sampler. The optimized exact one-call trace
+emits 1,213 events versus 24,619 originally and 943 for the invisible finite
+sampler, with six arctangent and five generic square-root evaluations and no
+unknown or approximation events.
 
 `Profile::cycloidal_gear` additionally retains its four sampled source flanks
 once and hoists the two shared tooth-angle sine/cosine pairs, rather than
@@ -316,7 +325,7 @@ finite coordinate within 1e-12 while now proving exact requested width and
 height and retaining symbolic sample dependencies.
 
 The shared sketch-constructor target then completed 1,000
-AddressSanitizer-instrumented executions (350 coverage points and 569 feature
+AddressSanitizer-instrumented executions (350 coverage points and 573 feature
 edges). Supershape inputs retain negative, zero, and positive exact powers in
 the bounded integer range -4 through 4 so fuzz throughput cannot be dominated
 by arbitrarily large symbolic exponent expansion; this is a harness-only bound,
