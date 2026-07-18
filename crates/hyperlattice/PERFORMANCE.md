@@ -61,6 +61,11 @@ affine, diagonal, prepared-cache, and transform paths remain separately observab
 The trace is diagnostic rather than timing evidence because tracing hooks are compiled
 into that build.
 
+`api_dispatch_trace.md` complements the Criterion-integrated matrix report with
+single-run workloads for the public algebra2, point, projective, and AABB families.
+Each row fails if it records only its benchmark marker, preventing a syntactically
+present workload from being mistaken for executed lattice/dependency work.
+
 ## Reproduction and validation
 
 ```sh
@@ -68,6 +73,7 @@ cargo bench --bench regression_sentinels -- 'sentinel/matrix3/sparse_mask_produc
 cargo bench --bench regression_sentinels -- 'sentinel/matrix4/sparse_mask_product'
 cargo bench --bench regression_sentinels -- 'sentinel/matrix4/determinant_fractional'
 cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
+cargo bench --bench api_dispatch_trace --features hyperreal-dispatch-trace
 cargo fmt --all -- --check
 cargo test --locked
 cargo check --benches --locked

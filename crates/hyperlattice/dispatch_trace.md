@@ -10,17 +10,17 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | `mat3` | `affine_div_matrix_translation` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `affine_div_matrix_translation` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `div_matrix` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 8.250 | 3.750 | 44.75 | 323 | none=3.750, pow2=3.250, <=8b=0, <=64b=0, >64b=1.250 |
+| `mat3` | `div_matrix` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 3.750 | 3.750 | 44 | 323 | none=3.750, pow2=3.250, <=8b=0, <=64b=0, >64b=1.250 |
 | `mat3` | `div_matrix` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1.500 | 3.750 | 34.50 | 240 | none=1.250, pow2=0.250, <=8b=0, <=64b=0.750, >64b=1.500 |
 | `mat3` | `div_matrix_affine` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `div_matrix_affine` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 8.250 | 3.750 | 44.75 | 323 | none=3.750, pow2=3.250, <=8b=0, <=64b=0, >64b=1.250 |
+| `mat3` | `div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 3.750 | 3.750 | 44 | 323 | none=3.750, pow2=3.250, <=8b=0, <=64b=0, >64b=1.250 |
 | `mat3` | `div_matrix_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1.500 | 3.750 | 34.50 | 240 | none=1.250, pow2=0.250, <=8b=0, <=64b=0.750, >64b=1.500 |
-| `mat3` | `div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 8.250 | 3.750 | 45.75 | 323 | none=3.750, pow2=3.250, <=8b=0, <=64b=0, >64b=1.250 |
+| `mat3` | `div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 3.750 | 3.750 | 45 | 323 | none=3.750, pow2=3.250, <=8b=0, <=64b=0, >64b=1.250 |
 | `mat3` | `div_matrix_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1.500 | 3.750 | 35.50 | 240 | none=1.250, pow2=0.250, <=8b=0, <=64b=0.750, >64b=1.500 |
-| `mat3` | `inverse_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 5.250 | 4.500 | 29.75 | 274 | none=1, pow2=3.500, <=8b=0, <=64b=0, >64b=0.750 |
+| `mat3` | `inverse_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4.500 | 4.500 | 29.75 | 274 | none=1, pow2=3.500, <=8b=0, <=64b=0, >64b=0.750 |
 | `mat3` | `inverse_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 20.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `inverse_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 5.250 | 4.500 | 30.75 | 274 | none=1, pow2=3.500, <=8b=0, <=64b=0, >64b=0.750 |
+| `mat3` | `inverse_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4.500 | 4.500 | 30.75 | 274 | none=1, pow2=3.500, <=8b=0, <=64b=0, >64b=0.750 |
 | `mat3` | `inverse_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 21.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `inverse_checked_affine` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 32 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `inverse_checked_affine` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 32 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
@@ -46,47 +46,47 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `mat3` | `known_upper_triangular_inverse_checked` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `known_upper_triangular_inverse_checked_abort` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `known_upper_triangular_inverse_checked_abort` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `powi` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 6.750 | 0 | 26.50 | 240 | none=5.250, pow2=1.500, <=8b=0, <=64b=0, >64b=0 |
+| `mat3` | `powi` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 25 | 0 | none=5.250, pow2=1.500, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `powi` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.250 | 8.750 | 20.75 | 190 | none=4.250, pow2=0.250, <=8b=0, <=64b=1.250, >64b=3 |
-| `mat3` | `powi_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 6.750 | 0 | 26.50 | 240 | none=5.250, pow2=1.500, <=8b=0, <=64b=0, >64b=0 |
+| `mat3` | `powi_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 25 | 0 | none=5.250, pow2=1.500, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `powi_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.250 | 8.750 | 20.75 | 190 | none=4.250, pow2=0.250, <=8b=0, <=64b=1.250, >64b=3 |
-| `mat3` | `powi_checked_negative` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 13.25 | 25.75 | 48 | 328 | none=12.50, pow2=3.500, <=8b=1.250, <=64b=0, >64b=9.250 |
+| `mat3` | `powi_checked_negative` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 12.50 | 25.75 | 48 | 328 | none=12.50, pow2=3.500, <=8b=1.250, <=64b=0, >64b=9.250 |
 | `mat3` | `powi_checked_negative` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4.500 | 15 | 36.25 | 200 | none=5.500, pow2=1, <=8b=0.500, <=64b=1, >64b=7 |
-| `mat3` | `powi_negative` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 13.25 | 25.75 | 48 | 328 | none=12.50, pow2=3.500, <=8b=1.250, <=64b=0, >64b=9.250 |
+| `mat3` | `powi_negative` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 12.50 | 25.75 | 48 | 328 | none=12.50, pow2=3.500, <=8b=1.250, <=64b=0, >64b=9.250 |
 | `mat3` | `powi_negative` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4.500 | 15 | 36.25 | 200 | none=5.500, pow2=1, <=8b=0.500, <=64b=1, >64b=7 |
-| `mat3` | `prepared_div_matrix` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 9 | 45.25 | 348 | none=5.250, pow2=5.750, <=8b=0, <=64b=0, >64b=4 |
+| `mat3` | `prepared_div_matrix` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 9 | 44.50 | 348 | none=5.250, pow2=5.750, <=8b=0, <=64b=0, >64b=4 |
 | `mat3` | `prepared_div_matrix` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 20.50 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `prepared_div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 9 | 45.25 | 348 | none=5.250, pow2=5.750, <=8b=0, <=64b=0, >64b=4 |
+| `mat3` | `prepared_div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 9 | 44.50 | 348 | none=5.250, pow2=5.750, <=8b=0, <=64b=0, >64b=4 |
 | `mat3` | `prepared_div_matrix_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 20.50 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `prepared_div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 9 | 45.50 | 348 | none=5.250, pow2=5.750, <=8b=0, <=64b=0, >64b=4 |
+| `mat3` | `prepared_div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 9 | 44.75 | 348 | none=5.250, pow2=5.750, <=8b=0, <=64b=0, >64b=4 |
 | `mat3` | `prepared_div_matrix_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 20.75 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `prepared_inverse` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.500 | 2.250 | 9.500 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
+| `mat3` | `prepared_inverse` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.250 | 2.250 | 9.500 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
 | `mat3` | `prepared_inverse` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4.750 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `prepared_inverse_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.500 | 2.250 | 9.500 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
+| `mat3` | `prepared_inverse_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.250 | 2.250 | 9.500 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
 | `mat3` | `prepared_inverse_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4.750 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `prepared_inverse_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.500 | 2.250 | 9.750 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
+| `mat3` | `prepared_inverse_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.250 | 2.250 | 9.750 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
 | `mat3` | `prepared_inverse_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `prepared_reciprocal` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.500 | 2.250 | 9.500 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
+| `mat3` | `prepared_reciprocal` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.250 | 2.250 | 9.500 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
 | `mat3` | `prepared_reciprocal` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4.750 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `prepared_reciprocal_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.500 | 2.250 | 9.500 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
+| `mat3` | `prepared_reciprocal_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.250 | 2.250 | 9.500 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
 | `mat3` | `prepared_reciprocal_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4.750 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `prepared_reciprocal_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.500 | 2.250 | 9.750 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
+| `mat3` | `prepared_reciprocal_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2.250 | 2.250 | 9.750 | 266 | none=0.250, pow2=1, <=8b=0, <=64b=0.250, >64b=1 |
 | `mat3` | `prepared_reciprocal_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `reciprocal` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 5.250 | 4.500 | 29.75 | 274 | none=1, pow2=3.500, <=8b=0, <=64b=0, >64b=0.750 |
+| `mat3` | `reciprocal` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4.500 | 4.500 | 29.75 | 274 | none=1, pow2=3.500, <=8b=0, <=64b=0, >64b=0.750 |
 | `mat3` | `reciprocal` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 20.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `reciprocal_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 5.250 | 4.500 | 29.75 | 274 | none=1, pow2=3.500, <=8b=0, <=64b=0, >64b=0.750 |
+| `mat3` | `reciprocal_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4.500 | 4.500 | 29.75 | 274 | none=1, pow2=3.500, <=8b=0, <=64b=0, >64b=0.750 |
 | `mat3` | `reciprocal_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 20.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `transform_vec3` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0.750 | 0 | 3.750 | 179 | none=0.750, pow2=0, <=8b=0, <=64b=0, >64b=0 |
+| `mat3` | `transform_vec3` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3.750 | 0 | none=0.750, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `transform_vec3` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `transform_vec3_batch` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1.500 | 0 | 4.500 | 149 | none=1.500, pow2=0, <=8b=0, <=64b=0, >64b=0 |
+| `mat3` | `transform_vec3_batch` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4.500 | 0 | none=1.500, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `transform_vec3_batch` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `transform_vec3_handle` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0.750 | 0 | 3.750 | 179 | none=0.750, pow2=0, <=8b=0, <=64b=0, >64b=0 |
+| `mat3` | `transform_vec3_handle` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3.750 | 0 | none=0.750, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `transform_vec3_handle` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `uniform_scale_reciprocal` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat3` | `uniform_scale_reciprocal` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `affine_div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 11.25 | 30.50 | 66 | 277 | none=8.250, pow2=7, <=8b=1, <=64b=1, >64b=14.25 |
+| `mat4` | `affine_div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 10.75 | 30.50 | 66 | 277 | none=8.250, pow2=7, <=8b=1, <=64b=1, >64b=14.25 |
 | `mat4` | `affine_div_matrix_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 43.50 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `affine_div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 11.25 | 30.50 | 66.50 | 277 | none=8.250, pow2=7, <=8b=1, <=64b=1, >64b=14.25 |
+| `mat4` | `affine_div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 10.75 | 30.50 | 66.50 | 277 | none=8.250, pow2=7, <=8b=1, <=64b=1, >64b=14.25 |
 | `mat4` | `affine_div_matrix_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `affine_div_matrix_translation` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 16.50 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `affine_div_matrix_translation` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 16.50 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
@@ -100,13 +100,13 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `mat4` | `diagonal_point_batch` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6.500 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `diagonal_reciprocal` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `diagonal_reciprocal` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `div_matrix` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 17.50 | 7.750 | 104.75 | 332 | none=7.250, pow2=4.500, <=8b=0, <=64b=0.500, >64b=5.250 |
+| `mat4` | `div_matrix` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 7.750 | 7.750 | 102.25 | 332 | none=7.250, pow2=4.500, <=8b=0, <=64b=0.500, >64b=5.250 |
 | `mat4` | `div_matrix` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 7.500 | 19.75 | 90.25 | 277 | none=4.750, pow2=1.250, <=8b=0, <=64b=4.500, >64b=9.250 |
-| `mat4` | `div_matrix_affine` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 11.25 | 30.50 | 66 | 277 | none=8.250, pow2=7, <=8b=1, <=64b=1, >64b=14.25 |
+| `mat4` | `div_matrix_affine` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 10.75 | 30.50 | 66 | 277 | none=8.250, pow2=7, <=8b=1, <=64b=1, >64b=14.25 |
 | `mat4` | `div_matrix_affine` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 43.50 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 17.50 | 7.750 | 104.75 | 332 | none=7.250, pow2=4.500, <=8b=0, <=64b=0.500, >64b=5.250 |
+| `mat4` | `div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 7.750 | 7.750 | 102.25 | 332 | none=7.250, pow2=4.500, <=8b=0, <=64b=0.500, >64b=5.250 |
 | `mat4` | `div_matrix_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 7.500 | 19.75 | 90.25 | 277 | none=4.750, pow2=1.250, <=8b=0, <=64b=4.500, >64b=9.250 |
-| `mat4` | `div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 17.50 | 7.750 | 105.75 | 332 | none=7.250, pow2=4.500, <=8b=0, <=64b=0.500, >64b=5.250 |
+| `mat4` | `div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 7.750 | 7.750 | 103.25 | 332 | none=7.250, pow2=4.500, <=8b=0, <=64b=0.500, >64b=5.250 |
 | `mat4` | `div_matrix_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 7.500 | 19.75 | 91.25 | 277 | none=4.750, pow2=1.250, <=8b=0, <=64b=4.500, >64b=9.250 |
 | `mat4` | `identity_direction_batch_assumed` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `identity_direction_batch_assumed` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
@@ -124,11 +124,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `mat4` | `identity_point_transform` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `identity_point_transform_handle` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `identity_point_transform_handle` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `inverse_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 13.75 | 10.50 | 79.50 | 305 | none=3.250, pow2=4.250, <=8b=0.250, <=64b=1, >64b=5 |
+| `mat4` | `inverse_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 10.50 | 10.50 | 79 | 305 | none=3.250, pow2=4.250, <=8b=0.250, <=64b=1, >64b=5 |
 | `mat4` | `inverse_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 8.250 | 64.25 | 283 | none=2, pow2=0, <=8b=0, <=64b=3.250, >64b=3 |
-| `mat4` | `inverse_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 13.75 | 10.50 | 80.50 | 305 | none=3.250, pow2=4.250, <=8b=0.250, <=64b=1, >64b=5 |
+| `mat4` | `inverse_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 10.50 | 10.50 | 80 | 305 | none=3.250, pow2=4.250, <=8b=0.250, <=64b=1, >64b=5 |
 | `mat4` | `inverse_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 8.250 | 65.25 | 283 | none=2, pow2=0, <=8b=0, <=64b=3.250, >64b=3 |
-| `mat4` | `inverse_checked_affine` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 6.500 | 8.250 | 81.25 | 282 | none=2, pow2=3.750, <=8b=0, <=64b=0.750, >64b=2.250 |
+| `mat4` | `inverse_checked_affine` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 8.250 | 81.25 | 282 | none=2, pow2=3.750, <=8b=0, <=64b=0.750, >64b=2.250 |
 | `mat4` | `inverse_checked_affine` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 69.50 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `known_diagonal_div_matrix` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `known_diagonal_div_matrix` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
@@ -180,13 +180,13 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `mat4` | `known_upper_triangular_inverse_checked` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 88 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `known_upper_triangular_inverse_checked_abort` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 88 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `known_upper_triangular_inverse_checked_abort` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 88 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `powi` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 7.500 | 0 | 44.25 | 240 | none=7, pow2=0.500, <=8b=0, <=64b=0, >64b=0 |
+| `mat4` | `powi` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 43.75 | 0 | none=7, pow2=0.500, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `powi` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 15 | 39.50 | 189 | none=5.750, pow2=0.250, <=8b=0, <=64b=5.500, >64b=3.500 |
-| `mat4` | `powi_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 7.500 | 0 | 44.25 | 240 | none=7, pow2=0.500, <=8b=0, <=64b=0, >64b=0 |
+| `mat4` | `powi_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 43.75 | 0 | none=7, pow2=0.500, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `powi_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 15 | 39.50 | 189 | none=5.750, pow2=0.250, <=8b=0, <=64b=5.500, >64b=3.500 |
-| `mat4` | `powi_checked_negative` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 23.50 | 40.25 | 107.75 | 345 | none=16.25, pow2=4.250, <=8b=2.750, <=64b=1, >64b=19.25 |
+| `mat4` | `powi_checked_negative` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 20.25 | 40.25 | 107.25 | 345 | none=16.25, pow2=4.250, <=8b=2.750, <=64b=1, >64b=19.25 |
 | `mat4` | `powi_checked_negative` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 46.25 | 89.25 | 326 | none=16.50, pow2=0, <=8b=1, <=64b=3.250, >64b=25.50 |
-| `mat4` | `powi_negative` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 23.50 | 40.25 | 107.75 | 345 | none=16.25, pow2=4.250, <=8b=2.750, <=64b=1, >64b=19.25 |
+| `mat4` | `powi_negative` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 20.25 | 40.25 | 107.25 | 345 | none=16.25, pow2=4.250, <=8b=2.750, <=64b=1, >64b=19.25 |
 | `mat4` | `powi_negative` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 46.25 | 89.25 | 326 | none=16.50, pow2=0, <=8b=1, <=64b=3.250, >64b=25.50 |
 | `mat4` | `prepared_div_matrix` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `prepared_div_matrix` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
@@ -210,11 +210,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `mat4` | `prepared_reciprocal_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `prepared_reciprocal_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `prepared_reciprocal_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15.25 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `reciprocal` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 13.75 | 10.50 | 79.50 | 305 | none=3.250, pow2=4.250, <=8b=0.250, <=64b=1, >64b=5 |
+| `mat4` | `reciprocal` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 10.50 | 10.50 | 79 | 305 | none=3.250, pow2=4.250, <=8b=0.250, <=64b=1, >64b=5 |
 | `mat4` | `reciprocal` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 8.250 | 64.25 | 283 | none=2, pow2=0, <=8b=0, <=64b=3.250, >64b=3 |
-| `mat4` | `reciprocal_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 13.75 | 10.50 | 79.50 | 305 | none=3.250, pow2=4.250, <=8b=0.250, <=64b=1, >64b=5 |
+| `mat4` | `reciprocal_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 10.50 | 10.50 | 79 | 305 | none=3.250, pow2=4.250, <=8b=0.250, <=64b=1, >64b=5 |
 | `mat4` | `reciprocal_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 8.250 | 64.25 | 283 | none=2, pow2=0, <=8b=0, <=64b=3.250, >64b=3 |
-| `mat4` | `transform_vec4` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 8 | 139 | none=1, pow2=0, <=8b=0, <=64b=0, >64b=0 |
+| `mat4` | `transform_vec4` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | none=1, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `transform_vec4` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `translated_diagonal_direction_batch` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6.500 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `translated_diagonal_direction_batch` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6.500 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
@@ -247,16 +247,16 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `borrowed_ops/hyperreal-rational/complex add refs` | 32 | 0 | 8 | 0 | 1 | 0 | 0 | 1 | 2 | 23 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | 116 | 0 | 20 | 0 | 0 | 0 | 0 | 15 | 0 | 104 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 3 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/complex mul refs` | 76 | 0 | 8 | 0 | 1 | 0 | 0 | 2 | 2 | 67 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 7 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/complex mul refs` | 75 | 0 | 8 | 0 | 1 | 0 | 0 | 2 | 1 | 66 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 7 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/complex sub refs` | 32 | 0 | 8 | 0 | 0 | 0 | 0 | 1 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 2 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/mat3 add refs` | 96 | 0 | 4 | 0 | 7 | 0 | 0 | 1 | 13 | 85 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 28 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/mat3 add refs` | 92 | 0 | 4 | 0 | 7 | 0 | 0 | 1 | 9 | 81 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 28 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | 973 | 0 | 96 | 0 | 484 | 88 | 0 | 324 | 272 | 885 | 0 | 0 | 0 | 0 | 0 | 37 | 0 | 26 | 6 | 15 |
 | `borrowed_ops/hyperreal-rational/mat3 div_scalar_ref` | 106 | 0 | 8 | 0 | 4 | 0 | 0 | 10 | 8 | 94 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 mul refs` | 860 | 0 | 12 | 0 | 704 | 176 | 0 | 452 | 192 | 752 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 mul_scalar_ref` | 132 | 0 | 40 | 0 | 0 | 0 | 0 | 0 | 0 | 128 | 0 | 0 | 0 | 0 | 0 | 37 | 0 | 1 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 sub refs` | 96 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 92 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 19 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | 368 | 0 | 4 | 0 | 316 | 88 | 0 | 220 | 60 | 316 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/mat4 add refs` | 152 | 0 | 4 | 0 | 15 | 0 | 0 | 0 | 29 | 133 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | 68 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/mat4 add refs` | 141 | 0 | 4 | 0 | 15 | 0 | 0 | 0 | 18 | 122 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | 68 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | 1682 | 0 | 222 | 0 | 633 | 115 | 0 | 509 | 365 | 1572 | 0 | 0 | 0 | 0 | 0 | 117 | 0 | 117 | 30 | 79 |
 | `borrowed_ops/hyperreal-rational/mat4 div_scalar_ref` | 224 | 0 | 72 | 0 | 4 | 0 | 0 | 20 | 8 | 212 | 0 | 0 | 0 | 0 | 0 | 70 | 0 | 9 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat4 mul refs` | 1631 | 0 | 76 | 0 | 1299 | 306 | 0 | 860 | 471 | 1404 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 3 | 0 | 0 |
@@ -275,33 +275,33 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/vec4 div_scalar_ref` | 68 | 0 | 24 | 0 | 4 | 0 | 0 | 3 | 8 | 56 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | 8 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/vec4 mul_scalar_ref` | 62 | 0 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 58 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 4 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/vec4 sub refs` | 48 | 0 | 4 | 0 | 1 | 0 | 0 | 0 | 2 | 43 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 8 | 0 | 0 |
-| `borrowed_ops/hyperreal/complex add refs` | 32 | 0 | 8 | 0 | 2 | 0 | 0 | 4 | 4 | 22 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 6 | 0 | 0 |
-| `borrowed_ops/hyperreal/complex div refs` | 104 | 0 | 20 | 0 | 0 | 0 | 0 | 22 | 0 | 92 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 12 | 7 | 3 |
-| `borrowed_ops/hyperreal/complex mul refs` | 64 | 0 | 8 | 0 | 1 | 0 | 0 | 8 | 2 | 55 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 13 | 6 | 2 |
+| `borrowed_ops/hyperreal/complex add refs` | 31 | 0 | 8 | 0 | 2 | 0 | 0 | 4 | 3 | 21 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 6 | 0 | 0 |
+| `borrowed_ops/hyperreal/complex div refs` | 104 | 0 | 20 | 0 | 0 | 0 | 0 | 22 | 0 | 92 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 12 | 5 | 3 |
+| `borrowed_ops/hyperreal/complex mul refs` | 63 | 0 | 8 | 0 | 1 | 0 | 0 | 8 | 1 | 54 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 13 | 6 | 2 |
 | `borrowed_ops/hyperreal/complex sub refs` | 32 | 0 | 8 | 0 | 0 | 0 | 0 | 5 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 2 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat3 add refs` | 96 | 0 | 4 | 0 | 7 | 0 | 0 | 14 | 13 | 85 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 27 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat3 div refs` | 930 | 0 | 92 | 0 | 484 | 88 | 0 | 381 | 272 | 842 | 0 | 0 | 0 | 0 | 0 | 44 | 0 | 67 | 33 | 15 |
+| `borrowed_ops/hyperreal/mat3 add refs` | 92 | 0 | 4 | 0 | 7 | 0 | 0 | 14 | 9 | 81 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 27 | 0 | 0 |
+| `borrowed_ops/hyperreal/mat3 div refs` | 930 | 0 | 92 | 0 | 484 | 88 | 0 | 381 | 272 | 842 | 0 | 0 | 0 | 0 | 0 | 44 | 0 | 64 | 15 | 15 |
 | `borrowed_ops/hyperreal/mat3 div_scalar_ref` | 106 | 0 | 8 | 0 | 4 | 0 | 0 | 9 | 8 | 94 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat3 mul refs` | 857 | 0 | 12 | 0 | 704 | 176 | 0 | 483 | 192 | 749 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 4 | 3 | 0 |
+| `borrowed_ops/hyperreal/mat3 mul refs` | 857 | 0 | 12 | 0 | 704 | 176 | 0 | 483 | 192 | 749 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 4 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat3 mul_scalar_ref` | 126 | 0 | 40 | 0 | 0 | 0 | 0 | 16 | 0 | 122 | 0 | 0 | 0 | 0 | 0 | 45 | 0 | 4 | 3 | 0 |
 | `borrowed_ops/hyperreal/mat3 sub refs` | 96 | 0 | 4 | 0 | 0 | 0 | 0 | 15 | 0 | 92 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 19 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat3 transform_vec refs` | 365 | 0 | 4 | 0 | 316 | 88 | 0 | 230 | 60 | 313 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 3 | 0 |
-| `borrowed_ops/hyperreal/mat4 add refs` | 152 | 0 | 4 | 0 | 15 | 0 | 0 | 6 | 29 | 133 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 68 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat4 div refs` | 1627 | 0 | 222 | 0 | 633 | 115 | 0 | 593 | 363 | 1517 | 0 | 0 | 0 | 0 | 0 | 123 | 0 | 175 | 70 | 31 |
+| `borrowed_ops/hyperreal/mat3 transform_vec refs` | 365 | 0 | 4 | 0 | 316 | 88 | 0 | 230 | 60 | 313 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
+| `borrowed_ops/hyperreal/mat4 add refs` | 141 | 0 | 4 | 0 | 15 | 0 | 0 | 6 | 18 | 122 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 68 | 0 | 0 |
+| `borrowed_ops/hyperreal/mat4 div refs` | 1627 | 0 | 222 | 0 | 633 | 115 | 0 | 593 | 363 | 1517 | 0 | 0 | 0 | 0 | 0 | 123 | 0 | 165 | 31 | 31 |
 | `borrowed_ops/hyperreal/mat4 div_scalar_ref` | 224 | 0 | 72 | 0 | 4 | 0 | 0 | 4 | 8 | 212 | 0 | 0 | 0 | 0 | 0 | 67 | 0 | 9 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat4 mul refs` | 1627 | 0 | 76 | 0 | 1299 | 306 | 0 | 901 | 471 | 1400 | 0 | 0 | 0 | 0 | 0 | 23 | 0 | 7 | 4 | 0 |
+| `borrowed_ops/hyperreal/mat4 mul refs` | 1627 | 0 | 76 | 0 | 1299 | 306 | 0 | 901 | 471 | 1400 | 0 | 0 | 0 | 0 | 0 | 23 | 0 | 7 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat4 mul_scalar_ref` | 212 | 0 | 68 | 0 | 0 | 0 | 0 | 16 | 0 | 208 | 0 | 0 | 0 | 0 | 0 | 88 | 0 | 16 | 4 | 0 |
-| `borrowed_ops/hyperreal/mat4 sub refs` | 152 | 0 | 4 | 0 | 1 | 0 | 0 | 9 | 2 | 147 | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 50 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat4 transform_vec refs` | 682 | 0 | 8 | 0 | 604 | 158 | 0 | 402 | 148 | 562 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 12 | 4 | 0 |
+| `borrowed_ops/hyperreal/mat4 sub refs` | 151 | 0 | 4 | 0 | 1 | 0 | 0 | 9 | 1 | 146 | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 50 | 0 | 0 |
+| `borrowed_ops/hyperreal/mat4 transform_vec refs` | 682 | 0 | 8 | 0 | 604 | 158 | 0 | 402 | 148 | 562 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 12 | 0 | 0 |
 | `borrowed_ops/hyperreal/scalar add refs` | 12 | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 2 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
 | `borrowed_ops/hyperreal/scalar div refs` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
 | `borrowed_ops/hyperreal/scalar mul refs` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 |
 | `borrowed_ops/hyperreal/scalar sub refs` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `borrowed_ops/hyperreal/vec3 add refs` | 38 | 0 | 4 | 0 | 3 | 0 | 0 | 8 | 6 | 31 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 |
+| `borrowed_ops/hyperreal/vec3 add refs` | 36 | 0 | 4 | 0 | 3 | 0 | 0 | 8 | 4 | 29 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 |
 | `borrowed_ops/hyperreal/vec3 div_scalar_ref` | 42 | 0 | 8 | 0 | 4 | 0 | 0 | 3 | 8 | 30 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 5 | 0 | 0 |
 | `borrowed_ops/hyperreal/vec3 mul_scalar_ref` | 42 | 0 | 16 | 0 | 0 | 0 | 0 | 5 | 0 | 38 | 0 | 0 | 0 | 0 | 0 | 14 | 0 | 4 | 4 | 0 |
 | `borrowed_ops/hyperreal/vec3 sub refs` | 38 | 0 | 4 | 0 | 0 | 0 | 0 | 9 | 0 | 34 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
-| `borrowed_ops/hyperreal/vec4 add refs` | 48 | 0 | 4 | 0 | 2 | 0 | 0 | 8 | 4 | 42 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 10 | 0 | 0 |
+| `borrowed_ops/hyperreal/vec4 add refs` | 46 | 0 | 4 | 0 | 2 | 0 | 0 | 8 | 2 | 40 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 10 | 0 | 0 |
 | `borrowed_ops/hyperreal/vec4 div_scalar_ref` | 66 | 0 | 24 | 0 | 4 | 0 | 0 | 2 | 8 | 54 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 8 | 0 | 0 |
 | `borrowed_ops/hyperreal/vec4 mul_scalar_ref` | 52 | 0 | 20 | 0 | 0 | 0 | 0 | 3 | 0 | 48 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 9 | 5 | 0 |
 | `borrowed_ops/hyperreal/vec4 sub refs` | 48 | 0 | 4 | 0 | 1 | 0 | 0 | 7 | 2 | 43 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 8 | 0 | 0 |
@@ -309,8 +309,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `complex_ops/hyperreal-rational/powi_checked` | 153 | 0 | 68 | 0 | 0 | 0 | 0 | 54 | 26 | 133 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 18 | 10 | 22 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | 94 | 0 | 32 | 0 | 4 | 0 | 0 | 0 | 12 | 62 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 9 | 0 | 0 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | 82 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 62 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 9 | 0 | 0 |
-| `complex_ops/hyperreal/powi` | 153 | 0 | 68 | 0 | 0 | 0 | 0 | 57 | 25 | 133 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 15 | 9 | 0 |
-| `complex_ops/hyperreal/powi_checked` | 153 | 0 | 68 | 0 | 0 | 0 | 0 | 57 | 25 | 133 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 15 | 9 | 0 |
+| `complex_ops/hyperreal/powi` | 153 | 0 | 68 | 0 | 0 | 0 | 0 | 57 | 25 | 133 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 13 | 0 | 0 |
+| `complex_ops/hyperreal/powi_checked` | 153 | 0 | 68 | 0 | 0 | 0 | 0 | 57 | 25 | 133 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 13 | 0 | 0 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | 84 | 0 | 32 | 0 | 4 | 0 | 0 | 3 | 12 | 52 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 17 | 5 | 3 |
 | `complex_ops/hyperreal/powi_negative_one` | 72 | 0 | 24 | 0 | 0 | 0 | 0 | 3 | 0 | 52 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 17 | 5 | 3 |
 | `matrix3/hyperreal-rational/mat3 determinant` | 33 | 0 | 5 | 0 | 12 | 0 | 0 | 7 | 15 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -332,10 +332,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | 255 | 0 | 5 | 16 | 97 | 22 | 6 | 34 | 62 | 132 | 0 | 0 | 0 | 0 | 0 | 43 | 6 | 44 | 8 | 8 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | 138 | 0 | 1 | 13 | 81 | 22 | 0 | 31 | 43 | 75 | 0 | 0 | 0 | 2 | 0 | 24 | 0 | 15 | 2 | 2 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | 144 | 0 | 1 | 14 | 85 | 23 | 0 | 31 | 47 | 76 | 0 | 0 | 0 | 4 | 0 | 25 | 0 | 11 | 2 | 2 |
-| `matrix3/hyperreal/mat3 determinant` | 130 | 0 | 20 | 0 | 48 | 0 | 0 | 42 | 60 | 130 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 2 | 0 |
-| `matrix3/hyperreal/mat3 inverse` | 365 | 0 | 124 | 0 | 12 | 0 | 0 | 108 | 50 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 21 | 18 |
-| `matrix3/hyperreal/mat3 mul mat3` | 857 | 0 | 12 | 0 | 704 | 176 | 0 | 483 | 192 | 749 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 4 | 3 | 0 |
-| `matrix3/hyperreal/mat3 transform vec3` | 365 | 0 | 4 | 0 | 316 | 88 | 0 | 230 | 60 | 313 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 3 | 0 |
+| `matrix3/hyperreal/mat3 determinant` | 130 | 0 | 20 | 0 | 48 | 0 | 0 | 42 | 60 | 130 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
+| `matrix3/hyperreal/mat3 inverse` | 365 | 0 | 124 | 0 | 12 | 0 | 0 | 108 | 50 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 18 | 18 |
+| `matrix3/hyperreal/mat3 mul mat3` | 857 | 0 | 12 | 0 | 704 | 176 | 0 | 483 | 192 | 749 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 4 | 0 | 0 |
+| `matrix3/hyperreal/mat3 transform vec3` | 365 | 0 | 4 | 0 | 316 | 88 | 0 | 230 | 60 | 313 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 determinant` | 111 | 0 | 17 | 0 | 60 | 0 | 0 | 14 | 68 | 104 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 7 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 inverse` | 495 | 0 | 57 | 0 | 293 | 39 | 0 | 139 | 204 | 450 | 0 | 0 | 0 | 0 | 0 | 37 | 0 | 20 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 mul mat4` | 407 | 0 | 19 | 0 | 324 | 77 | 0 | 216 | 116 | 352 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 2 | 0 | 0 |
@@ -378,13 +378,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | 238 | 0 | 2 | 16 | 158 | 39 | 2 | 70 | 75 | 146 | 0 | 0 | 0 | 0 | 0 | 30 | 2 | 18 | 4 | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | 275 | 0 | 2 | 14 | 152 | 39 | 0 | 72 | 67 | 182 | 0 | 0 | 0 | 2 | 0 | 30 | 0 | 42 | 10 | 10 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | 284 | 0 | 2 | 16 | 158 | 41 | 0 | 72 | 73 | 184 | 0 | 0 | 0 | 4 | 0 | 32 | 0 | 42 | 10 | 10 |
-| `matrix4/hyperreal/mat4 determinant` | 359 | 0 | 65 | 0 | 108 | 0 | 0 | 76 | 120 | 352 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 20 | 4 | 0 |
+| `matrix4/hyperreal/mat4 determinant` | 359 | 0 | 65 | 0 | 108 | 0 | 0 | 76 | 120 | 352 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 20 | 0 | 0 |
 | `matrix4/hyperreal/mat4 determinant sparse` | 301 | 0 | 64 | 0 | 204 | 0 | 0 | 0 | 204 | 212 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 42 | 0 | 0 |
-| `matrix4/hyperreal/mat4 inverse` | 1155 | 0 | 291 | 0 | 335 | 39 | 0 | 375 | 343 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 138 | 55 | 42 |
+| `matrix4/hyperreal/mat4 inverse` | 1155 | 0 | 291 | 0 | 335 | 39 | 0 | 375 | 343 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 136 | 42 | 42 |
 | `matrix4/hyperreal/mat4 inverse sparse` | 855 | 0 | 38 | 0 | 705 | 161 | 0 | 383 | 243 | 608 | 0 | 0 | 0 | 0 | 0 | 33 | 0 | 149 | 0 | 0 |
-| `matrix4/hyperreal/mat4 mul mat4` | 1627 | 0 | 76 | 0 | 1299 | 306 | 0 | 901 | 471 | 1400 | 0 | 0 | 0 | 0 | 0 | 23 | 0 | 7 | 4 | 0 |
+| `matrix4/hyperreal/mat4 mul mat4` | 1627 | 0 | 76 | 0 | 1299 | 306 | 0 | 901 | 471 | 1400 | 0 | 0 | 0 | 0 | 0 | 23 | 0 | 7 | 0 | 0 |
 | `matrix4/hyperreal/mat4 mul mat4 sparse` | 1441 | 0 | 32 | 0 | 1333 | 322 | 0 | 774 | 414 | 1181 | 0 | 0 | 0 | 0 | 0 | 34 | 0 | 56 | 0 | 0 |
-| `matrix4/hyperreal/mat4 transform vec4` | 682 | 0 | 8 | 0 | 604 | 158 | 0 | 402 | 148 | 562 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 12 | 4 | 0 |
+| `matrix4/hyperreal/mat4 transform vec4` | 682 | 0 | 8 | 0 | 604 | 158 | 0 | 402 | 148 | 562 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 12 | 0 | 0 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | 248 | 0 | 23 | 0 | 121 | 22 | 0 | 99 | 66 | 226 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | 146 | 0 | 36 | 0 | 6 | 0 | 0 | 38 | 15 | 131 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | 103 | 0 | 32 | 0 | 3 | 0 | 0 | 29 | 12 | 95 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 |
@@ -415,18 +415,18 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | 282 | 0 | 50 | 0 | 3 | 0 | 0 | 90 | 3 | 277 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 0 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | 346 | 0 | 99 | 0 | 18 | 0 | 0 | 119 | 63 | 332 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 0 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | 259 | 0 | 79 | 0 | 15 | 0 | 0 | 87 | 44 | 252 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 0 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | 220 | 0 | 23 | 0 | 121 | 22 | 0 | 99 | 66 | 198 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 30 | 19 | 9 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | 118 | 0 | 36 | 0 | 6 | 0 | 0 | 47 | 15 | 103 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 28 | 19 | 45 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | 84 | 0 | 32 | 0 | 3 | 0 | 0 | 29 | 12 | 76 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 19 | 10 | 9 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | 217 | 0 | 50 | 0 | 3 | 0 | 0 | 90 | 3 | 212 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 77 | 49 | 16 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | 281 | 0 | 99 | 0 | 18 | 0 | 0 | 134 | 63 | 267 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 66 | 49 | 92 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | 210 | 0 | 79 | 0 | 15 | 0 | 0 | 87 | 44 | 203 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 50 | 33 | 16 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | 220 | 0 | 23 | 0 | 121 | 22 | 0 | 99 | 66 | 198 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 33 | 19 | 9 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | 118 | 0 | 36 | 0 | 6 | 0 | 0 | 45 | 15 | 103 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 30 | 19 | 39 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | 84 | 0 | 32 | 0 | 3 | 0 | 0 | 29 | 12 | 76 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 19 | 10 | 9 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | 217 | 0 | 50 | 0 | 3 | 0 | 0 | 90 | 3 | 212 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 70 | 49 | 16 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | 281 | 0 | 99 | 0 | 18 | 0 | 0 | 119 | 63 | 267 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 68 | 49 | 32 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | 210 | 0 | 79 | 0 | 15 | 0 | 0 | 87 | 44 | 203 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 52 | 33 | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | 220 | 0 | 23 | 0 | 121 | 22 | 0 | 99 | 66 | 198 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 28 | 9 | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | 118 | 0 | 36 | 0 | 6 | 0 | 0 | 47 | 15 | 103 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 28 | 18 | 45 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | 84 | 0 | 32 | 0 | 3 | 0 | 0 | 29 | 12 | 76 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 19 | 9 | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | 217 | 0 | 50 | 0 | 3 | 0 | 0 | 90 | 3 | 212 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 65 | 16 | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | 281 | 0 | 99 | 0 | 18 | 0 | 0 | 134 | 63 | 267 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 65 | 32 | 92 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | 210 | 0 | 79 | 0 | 15 | 0 | 0 | 87 | 44 | 203 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 49 | 16 | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | 220 | 0 | 23 | 0 | 121 | 22 | 0 | 99 | 66 | 198 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 28 | 9 | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | 118 | 0 | 36 | 0 | 6 | 0 | 0 | 45 | 15 | 103 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 30 | 18 | 39 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | 84 | 0 | 32 | 0 | 3 | 0 | 0 | 29 | 12 | 76 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 19 | 9 | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | 217 | 0 | 50 | 0 | 3 | 0 | 0 | 90 | 3 | 212 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 65 | 16 | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | 281 | 0 | 99 | 0 | 18 | 0 | 0 | 119 | 63 | 267 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 65 | 32 | 32 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | 210 | 0 | 79 | 0 | 15 | 0 | 0 | 87 | 44 | 203 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 49 | 16 | 16 |
 | `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | 405 | 0 | 32 | 0 | 288 | 66 | 0 | 179 | 107 | 356 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 17 | 0 | 0 |
 | `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | 389 | 0 | 30 | 0 | 292 | 66 | 0 | 169 | 105 | 329 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 13 | 0 | 0 |
 | `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | 174 | 0 | 22 | 0 | 112 | 22 | 0 | 55 | 49 | 146 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 11 | 0 | 0 |
@@ -559,12 +559,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | 879 | 0 | 40 | 0 | 705 | 176 | 0 | 446 | 205 | 748 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 23 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | 724 | 0 | 24 | 0 | 664 | 176 | 0 | 419 | 152 | 592 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 17 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | 524 | 0 | 46 | 0 | 358 | 88 | 0 | 214 | 118 | 396 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 46 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 bitxor` | 329 | 0 | 32 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 34 | 27 | 0 |
-| `matrix_ops/hyperreal/mat3 div_matrix` | 930 | 0 | 92 | 0 | 484 | 88 | 0 | 381 | 272 | 842 | 0 | 0 | 0 | 0 | 0 | 44 | 0 | 67 | 33 | 15 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked` | 942 | 0 | 100 | 0 | 488 | 88 | 0 | 381 | 284 | 842 | 0 | 0 | 0 | 0 | 0 | 44 | 0 | 67 | 33 | 15 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | 950 | 0 | 104 | 0 | 488 | 88 | 0 | 381 | 284 | 842 | 0 | 0 | 0 | 0 | 0 | 44 | 12 | 67 | 33 | 15 |
-| `matrix_ops/hyperreal/mat3 inverse_checked` | 377 | 0 | 132 | 0 | 16 | 0 | 0 | 108 | 62 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 21 | 18 |
-| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | 385 | 0 | 136 | 0 | 16 | 0 | 0 | 108 | 62 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 16 | 43 | 21 | 18 |
+| `matrix_ops/hyperreal/mat3 bitxor` | 329 | 0 | 32 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 div_matrix` | 930 | 0 | 92 | 0 | 484 | 88 | 0 | 381 | 272 | 842 | 0 | 0 | 0 | 0 | 0 | 44 | 0 | 64 | 15 | 15 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked` | 942 | 0 | 100 | 0 | 488 | 88 | 0 | 381 | 284 | 842 | 0 | 0 | 0 | 0 | 0 | 44 | 0 | 64 | 15 | 15 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | 950 | 0 | 104 | 0 | 488 | 88 | 0 | 381 | 284 | 842 | 0 | 0 | 0 | 0 | 0 | 44 | 12 | 64 | 15 | 15 |
+| `matrix_ops/hyperreal/mat3 inverse_checked` | 377 | 0 | 132 | 0 | 16 | 0 | 0 | 108 | 62 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 18 | 18 |
+| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | 385 | 0 | 136 | 0 | 16 | 0 | 0 | 108 | 62 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 16 | 43 | 18 | 18 |
 | `matrix_ops/hyperreal/mat3 known_diagonal_div_matrix` | 40 | 0 | 10 | 0 | 0 | 0 | 0 | 4 | 0 | 36 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 known_diagonal_div_vector` | 29 | 0 | 5 | 0 | 0 | 0 | 0 | 4 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 known_diagonal_inverse` | 11 | 0 | 2 | 0 | 6 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
@@ -578,40 +578,40 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | 42 | 0 | 6 | 0 | 6 | 0 | 0 | 0 | 6 | 32 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | 51 | 0 | 12 | 0 | 9 | 0 | 0 | 0 | 15 | 32 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | 51 | 0 | 12 | 0 | 9 | 0 | 0 | 0 | 15 | 32 | 0 | 0 | 0 | 0 | 0 | 5 | 4 | 9 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 powi` | 325 | 0 | 28 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 34 | 27 | 0 |
-| `matrix_ops/hyperreal/mat3 powi_checked` | 325 | 0 | 28 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 34 | 27 | 0 |
-| `matrix_ops/hyperreal/mat3 powi_checked_abort` | 325 | 0 | 28 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 4 | 34 | 27 | 0 |
-| `matrix_ops/hyperreal/mat3 powi_checked_negative` | 521 | 0 | 152 | 0 | 28 | 0 | 0 | 163 | 74 | 449 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 80 | 53 | 103 |
-| `matrix_ops/hyperreal/mat3 powi_negative` | 509 | 0 | 144 | 0 | 24 | 0 | 0 | 163 | 62 | 449 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 80 | 53 | 103 |
-| `matrix_ops/hyperreal/mat3 powi_negative_one` | 373 | 0 | 132 | 0 | 12 | 0 | 0 | 108 | 50 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 21 | 18 |
-| `matrix_ops/hyperreal/mat3 prepared_div_matrix` | 380 | 0 | 77 | 14 | 106 | 22 | 0 | 153 | 51 | 322 | 0 | 0 | 0 | 0 | 0 | 50 | 0 | 99 | 60 | 36 |
-| `matrix_ops/hyperreal/mat3 prepared_div_matrix_checked` | 383 | 0 | 79 | 14 | 107 | 22 | 0 | 153 | 54 | 322 | 0 | 0 | 0 | 0 | 0 | 50 | 0 | 99 | 60 | 36 |
-| `matrix_ops/hyperreal/mat3 prepared_div_matrix_checked_abort` | 385 | 0 | 80 | 14 | 107 | 22 | 0 | 153 | 54 | 322 | 0 | 0 | 0 | 0 | 0 | 50 | 14 | 99 | 60 | 36 |
-| `matrix_ops/hyperreal/mat3 prepared_inverse` | 168 | 0 | 37 | 9 | 82 | 22 | 0 | 81 | 27 | 143 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 19 | 10 | 9 |
-| `matrix_ops/hyperreal/mat3 prepared_inverse_checked` | 171 | 0 | 39 | 9 | 83 | 22 | 0 | 81 | 30 | 143 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 19 | 10 | 9 |
-| `matrix_ops/hyperreal/mat3 prepared_inverse_checked_abort` | 173 | 0 | 40 | 9 | 83 | 22 | 0 | 81 | 30 | 143 | 0 | 0 | 0 | 0 | 0 | 18 | 9 | 19 | 10 | 9 |
-| `matrix_ops/hyperreal/mat3 prepared_reciprocal` | 172 | 0 | 41 | 13 | 82 | 22 | 0 | 81 | 27 | 143 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 19 | 10 | 9 |
-| `matrix_ops/hyperreal/mat3 prepared_reciprocal_checked` | 175 | 0 | 43 | 13 | 83 | 22 | 0 | 81 | 30 | 143 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 19 | 10 | 9 |
-| `matrix_ops/hyperreal/mat3 prepared_reciprocal_checked_abort` | 177 | 0 | 44 | 13 | 83 | 22 | 0 | 81 | 30 | 143 | 0 | 0 | 0 | 0 | 0 | 22 | 13 | 19 | 10 | 9 |
-| `matrix_ops/hyperreal/mat3 reciprocal` | 369 | 0 | 128 | 0 | 12 | 0 | 0 | 108 | 50 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 21 | 18 |
-| `matrix_ops/hyperreal/mat3 reciprocal_checked` | 381 | 0 | 136 | 0 | 16 | 0 | 0 | 108 | 62 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 21 | 18 |
-| `matrix_ops/hyperreal/mat3 transform_vec3_batch` | 125 | 0 | 4 | 0 | 79 | 22 | 0 | 76 | 15 | 109 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 6 | 0 |
-| `matrix_ops/hyperreal/mat3 transform_vec3_handle` | 365 | 0 | 4 | 0 | 316 | 88 | 0 | 230 | 60 | 313 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 3 | 0 |
+| `matrix_ops/hyperreal/mat3 powi` | 325 | 0 | 28 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 powi_checked` | 325 | 0 | 28 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 powi_checked_abort` | 325 | 0 | 28 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 4 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 powi_checked_negative` | 521 | 0 | 152 | 0 | 28 | 0 | 0 | 163 | 74 | 449 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 80 | 50 | 103 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | 509 | 0 | 144 | 0 | 24 | 0 | 0 | 163 | 62 | 449 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 80 | 50 | 103 |
+| `matrix_ops/hyperreal/mat3 powi_negative_one` | 373 | 0 | 132 | 0 | 12 | 0 | 0 | 108 | 50 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 18 | 18 |
+| `matrix_ops/hyperreal/mat3 prepared_div_matrix` | 380 | 0 | 77 | 14 | 106 | 22 | 0 | 153 | 51 | 322 | 0 | 0 | 0 | 0 | 0 | 50 | 0 | 96 | 36 | 36 |
+| `matrix_ops/hyperreal/mat3 prepared_div_matrix_checked` | 383 | 0 | 79 | 14 | 107 | 22 | 0 | 153 | 54 | 322 | 0 | 0 | 0 | 0 | 0 | 50 | 0 | 96 | 36 | 36 |
+| `matrix_ops/hyperreal/mat3 prepared_div_matrix_checked_abort` | 385 | 0 | 80 | 14 | 107 | 22 | 0 | 153 | 54 | 322 | 0 | 0 | 0 | 0 | 0 | 50 | 14 | 96 | 36 | 36 |
+| `matrix_ops/hyperreal/mat3 prepared_inverse` | 168 | 0 | 37 | 9 | 82 | 22 | 0 | 81 | 27 | 143 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 19 | 9 | 9 |
+| `matrix_ops/hyperreal/mat3 prepared_inverse_checked` | 171 | 0 | 39 | 9 | 83 | 22 | 0 | 81 | 30 | 143 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 19 | 9 | 9 |
+| `matrix_ops/hyperreal/mat3 prepared_inverse_checked_abort` | 173 | 0 | 40 | 9 | 83 | 22 | 0 | 81 | 30 | 143 | 0 | 0 | 0 | 0 | 0 | 18 | 9 | 19 | 9 | 9 |
+| `matrix_ops/hyperreal/mat3 prepared_reciprocal` | 172 | 0 | 41 | 13 | 82 | 22 | 0 | 81 | 27 | 143 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 19 | 9 | 9 |
+| `matrix_ops/hyperreal/mat3 prepared_reciprocal_checked` | 175 | 0 | 43 | 13 | 83 | 22 | 0 | 81 | 30 | 143 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 19 | 9 | 9 |
+| `matrix_ops/hyperreal/mat3 prepared_reciprocal_checked_abort` | 177 | 0 | 44 | 13 | 83 | 22 | 0 | 81 | 30 | 143 | 0 | 0 | 0 | 0 | 0 | 22 | 13 | 19 | 9 | 9 |
+| `matrix_ops/hyperreal/mat3 reciprocal` | 369 | 0 | 128 | 0 | 12 | 0 | 0 | 108 | 50 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 18 | 18 |
+| `matrix_ops/hyperreal/mat3 reciprocal_checked` | 381 | 0 | 136 | 0 | 16 | 0 | 0 | 108 | 62 | 337 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 43 | 18 | 18 |
+| `matrix_ops/hyperreal/mat3 transform_vec3_batch` | 125 | 0 | 4 | 0 | 79 | 22 | 0 | 76 | 15 | 109 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 transform_vec3_handle` | 365 | 0 | 4 | 0 | 316 | 88 | 0 | 230 | 60 | 313 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 uniform_scale_reciprocal` | 92 | 0 | 5 | 0 | 86 | 22 | 0 | 52 | 22 | 67 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix` | 1861 | 0 | 98 | 0 | 1509 | 378 | 0 | 1014 | 430 | 1532 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 135 | 45 | 122 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | 1877 | 0 | 109 | 0 | 1514 | 378 | 0 | 1014 | 445 | 1533 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 135 | 45 | 122 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | 1881 | 0 | 111 | 0 | 1514 | 378 | 0 | 1014 | 445 | 1533 | 0 | 0 | 0 | 0 | 0 | 28 | 19 | 135 | 45 | 122 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | 1861 | 0 | 98 | 0 | 1509 | 378 | 0 | 1014 | 430 | 1532 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 135 | 43 | 122 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | 1877 | 0 | 109 | 0 | 1514 | 378 | 0 | 1014 | 445 | 1533 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 135 | 43 | 122 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | 1881 | 0 | 111 | 0 | 1514 | 378 | 0 | 1014 | 445 | 1533 | 0 | 0 | 0 | 0 | 0 | 28 | 19 | 135 | 43 | 122 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | 1360 | 0 | 32 | 0 | 1240 | 328 | 0 | 802 | 304 | 1096 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 26 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | 1364 | 0 | 36 | 0 | 1240 | 328 | 0 | 802 | 304 | 1096 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 26 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | 1364 | 0 | 36 | 0 | 1240 | 328 | 0 | 802 | 304 | 1096 | 0 | 0 | 0 | 0 | 0 | 9 | 12 | 26 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 affine_inverse` | 997 | 0 | 114 | 0 | 675 | 155 | 0 | 437 | 263 | 752 | 0 | 0 | 0 | 0 | 0 | 38 | 0 | 149 | 26 | 33 |
-| `matrix_ops/hyperreal/mat4 bitxor` | 1321 | 0 | 160 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 49 | 30 | 0 |
+| `matrix_ops/hyperreal/mat4 affine_inverse` | 997 | 0 | 114 | 0 | 675 | 155 | 0 | 437 | 263 | 752 | 0 | 0 | 0 | 0 | 0 | 38 | 0 | 149 | 24 | 33 |
+| `matrix_ops/hyperreal/mat4 bitxor` | 1321 | 0 | 160 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 47 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 diagonal_direction_batch` | 204 | 0 | 13 | 0 | 155 | 39 | 0 | 93 | 42 | 173 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 10 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 diagonal_point_batch` | 210 | 0 | 13 | 0 | 157 | 42 | 0 | 99 | 35 | 176 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 10 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 diagonal_reciprocal` | 164 | 0 | 3 | 0 | 157 | 38 | 0 | 91 | 46 | 119 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | 1627 | 0 | 222 | 0 | 633 | 115 | 0 | 593 | 363 | 1517 | 0 | 0 | 0 | 0 | 0 | 123 | 0 | 175 | 70 | 31 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | 1639 | 0 | 230 | 0 | 637 | 115 | 0 | 593 | 375 | 1517 | 0 | 0 | 0 | 0 | 0 | 123 | 0 | 175 | 70 | 31 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | 1647 | 0 | 234 | 0 | 637 | 115 | 0 | 593 | 375 | 1517 | 0 | 0 | 0 | 0 | 0 | 123 | 12 | 175 | 70 | 31 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | 1627 | 0 | 222 | 0 | 633 | 115 | 0 | 593 | 363 | 1517 | 0 | 0 | 0 | 0 | 0 | 123 | 0 | 165 | 31 | 31 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | 1639 | 0 | 230 | 0 | 637 | 115 | 0 | 593 | 375 | 1517 | 0 | 0 | 0 | 0 | 0 | 123 | 0 | 165 | 31 | 31 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | 1647 | 0 | 234 | 0 | 637 | 115 | 0 | 593 | 375 | 1517 | 0 | 0 | 0 | 0 | 0 | 123 | 12 | 165 | 31 | 31 |
 | `matrix_ops/hyperreal/mat4 identity_direction_batch_assumed` | 192 | 0 | 2 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 identity_direction_materialize` | 191 | 0 | 1 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 identity_direction_transform` | 19 | 0 | 1 | 0 | 18 | 3 | 0 | 6 | 9 | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -620,8 +620,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 identity_point_materialize` | 191 | 0 | 1 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 identity_point_transform` | 22 | 0 | 4 | 0 | 12 | 1 | 0 | 2 | 9 | 20 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 identity_point_transform_handle` | 191 | 0 | 1 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | 1167 | 0 | 299 | 0 | 339 | 39 | 0 | 375 | 355 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 138 | 55 | 42 |
-| `matrix_ops/hyperreal/mat4 inverse_checked_abort` | 1175 | 0 | 303 | 0 | 339 | 39 | 0 | 375 | 355 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 11 | 138 | 55 | 42 |
+| `matrix_ops/hyperreal/mat4 inverse_checked` | 1167 | 0 | 299 | 0 | 339 | 39 | 0 | 375 | 355 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 136 | 42 | 42 |
+| `matrix_ops/hyperreal/mat4 inverse_checked_abort` | 1175 | 0 | 303 | 0 | 339 | 39 | 0 | 375 | 355 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 11 | 136 | 42 | 42 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_matrix` | 55 | 0 | 17 | 0 | 0 | 0 | 0 | 1 | 0 | 50 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 4 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | 72 | 0 | 10 | 0 | 13 | 3 | 0 | 12 | 7 | 62 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 1 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_direction` | 38 | 0 | 5 | 0 | 5 | 1 | 0 | 8 | 3 | 31 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 1 | 0 | 0 |
@@ -648,12 +648,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | 111 | 0 | 11 | 0 | 22 | 0 | 0 | 3 | 22 | 80 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | 123 | 0 | 19 | 0 | 26 | 0 | 0 | 3 | 34 | 80 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | 123 | 0 | 19 | 0 | 26 | 0 | 0 | 3 | 34 | 80 | 0 | 0 | 0 | 0 | 0 | 10 | 5 | 32 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 powi` | 1317 | 0 | 156 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 49 | 30 | 0 |
-| `matrix_ops/hyperreal/mat4 powi_checked` | 1317 | 0 | 156 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 49 | 30 | 0 |
-| `matrix_ops/hyperreal/mat4 powi_checked_abort` | 1317 | 0 | 156 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 4 | 49 | 30 | 0 |
-| `matrix_ops/hyperreal/mat4 powi_checked_negative` | 1480 | 0 | 383 | 0 | 351 | 39 | 0 | 526 | 431 | 1373 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 187 | 94 | 161 |
-| `matrix_ops/hyperreal/mat4 powi_negative` | 1468 | 0 | 375 | 0 | 347 | 39 | 0 | 526 | 419 | 1373 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 187 | 94 | 161 |
-| `matrix_ops/hyperreal/mat4 powi_negative_one` | 1163 | 0 | 299 | 0 | 335 | 39 | 0 | 375 | 343 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 138 | 55 | 42 |
+| `matrix_ops/hyperreal/mat4 powi` | 1317 | 0 | 156 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 47 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 powi_checked` | 1317 | 0 | 156 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 47 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 powi_checked_abort` | 1317 | 0 | 156 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 4 | 47 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 powi_checked_negative` | 1480 | 0 | 383 | 0 | 351 | 39 | 0 | 526 | 431 | 1373 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 185 | 81 | 161 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | 1468 | 0 | 375 | 0 | 347 | 39 | 0 | 526 | 419 | 1373 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 185 | 81 | 161 |
+| `matrix_ops/hyperreal/mat4 powi_negative_one` | 1163 | 0 | 299 | 0 | 335 | 39 | 0 | 375 | 343 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 136 | 42 | 42 |
 | `matrix_ops/hyperreal/mat4 prepared_div_matrix` | 977 | 0 | 121 | 18 | 296 | 38 | 0 | 241 | 211 | 928 | 0 | 0 | 0 | 0 | 0 | 146 | 0 | 20 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 prepared_div_matrix_checked` | 980 | 0 | 123 | 18 | 297 | 38 | 0 | 241 | 214 | 928 | 0 | 0 | 0 | 0 | 0 | 146 | 0 | 20 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 prepared_div_matrix_checked_abort` | 982 | 0 | 124 | 18 | 297 | 38 | 0 | 241 | 214 | 928 | 0 | 0 | 0 | 0 | 0 | 146 | 14 | 20 | 0 | 0 |
@@ -666,8 +666,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 prepared_reciprocal` | 520 | 0 | 64 | 13 | 296 | 38 | 0 | 145 | 211 | 472 | 0 | 0 | 0 | 0 | 0 | 57 | 0 | 15 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 prepared_reciprocal_checked` | 523 | 0 | 66 | 13 | 297 | 38 | 0 | 145 | 214 | 472 | 0 | 0 | 0 | 0 | 0 | 57 | 0 | 15 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 prepared_reciprocal_checked_abort` | 525 | 0 | 67 | 13 | 297 | 38 | 0 | 145 | 214 | 472 | 0 | 0 | 0 | 0 | 0 | 57 | 13 | 15 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | 1159 | 0 | 295 | 0 | 335 | 39 | 0 | 375 | 343 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 138 | 55 | 42 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | 1171 | 0 | 303 | 0 | 339 | 39 | 0 | 375 | 355 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 138 | 55 | 42 |
+| `matrix_ops/hyperreal/mat4 reciprocal` | 1159 | 0 | 295 | 0 | 335 | 39 | 0 | 375 | 343 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 136 | 42 | 42 |
+| `matrix_ops/hyperreal/mat4 reciprocal_checked` | 1171 | 0 | 303 | 0 | 339 | 39 | 0 | 375 | 355 | 1092 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 136 | 42 | 42 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_direction_batch` | 210 | 0 | 13 | 0 | 161 | 42 | 0 | 99 | 42 | 176 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 10 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_direction_batch_assumed` | 199 | 0 | 14 | 0 | 149 | 38 | 0 | 91 | 38 | 168 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 10 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_direction_batch_public_assumed` | 63 | 0 | 14 | 0 | 13 | 0 | 0 | 0 | 13 | 57 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 10 | 0 | 0 |
@@ -809,20 +809,20 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vector_ops/hyperreal-rational/vec4 dot_abort_dense` | 156 | 0 | 76 | 0 | 32 | 0 | 0 | 8 | 36 | 52 | 0 | 0 | 0 | 0 | 0 | 1 | 72 | 1 | 0 | 0 |
 | `vector_ops/hyperreal-rational/vec4 dot_abort_sparse` | 81 | 0 | 34 | 0 | 24 | 0 | 0 | 4 | 27 | 36 | 0 | 0 | 0 | 0 | 0 | 3 | 32 | 4 | 0 | 0 |
 | `vector_ops/hyperreal-rational/vec4 dot_sparse` | 19 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 4 | 0 | 0 |
-| `vector_ops/hyperreal/vec3 dot_abort_dense` | 122 | 0 | 60 | 0 | 24 | 0 | 0 | 11 | 32 | 42 | 0 | 0 | 0 | 0 | 0 | 1 | 56 | 2 | 2 | 0 |
+| `vector_ops/hyperreal/vec3 dot_abort_dense` | 122 | 0 | 60 | 0 | 24 | 0 | 0 | 11 | 32 | 42 | 0 | 0 | 0 | 0 | 0 | 1 | 56 | 2 | 0 | 0 |
 | `vector_ops/hyperreal/vec3 dot_abort_sparse` | 61 | 0 | 25 | 0 | 18 | 0 | 0 | 2 | 20 | 28 | 0 | 0 | 0 | 0 | 0 | 3 | 24 | 3 | 0 | 0 |
 | `vector_ops/hyperreal/vec3 dot_sparse` | 19 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 3 | 0 | 0 |
-| `vector_ops/hyperreal/vec4 dot_abort_dense` | 154 | 0 | 76 | 0 | 32 | 0 | 0 | 10 | 36 | 50 | 0 | 0 | 0 | 0 | 0 | 2 | 72 | 4 | 2 | 0 |
+| `vector_ops/hyperreal/vec4 dot_abort_dense` | 154 | 0 | 76 | 0 | 32 | 0 | 0 | 10 | 36 | 50 | 0 | 0 | 0 | 0 | 0 | 2 | 72 | 3 | 0 | 0 |
 | `vector_ops/hyperreal/vec4 dot_abort_sparse` | 81 | 0 | 34 | 0 | 24 | 0 | 0 | 4 | 27 | 36 | 0 | 0 | 0 | 0 | 0 | 3 | 32 | 4 | 0 | 0 |
 | `vector_ops/hyperreal/vec4 dot_sparse` | 19 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 4 | 0 | 0 |
 | `vectors/hyperreal-rational/vec3 dot` | 5 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `vectors/hyperreal-rational/vec3 magnitude` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `vectors/hyperreal-rational/vec3 normalize` | 21 | 0 | 2 | 0 | 2 | 0 | 0 | 1 | 2 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 4 | 0 | 0 |
 | `vectors/hyperreal-rational/vec4 normalize` | 17 | 0 | 2 | 0 | 1 | 0 | 0 | 1 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
-| `vectors/hyperreal/vec3 dot` | 18 | 0 | 4 | 0 | 0 | 0 | 0 | 7 | 0 | 14 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 2 | 0 |
-| `vectors/hyperreal/vec3 magnitude` | 30 | 0 | 4 | 0 | 4 | 0 | 0 | 7 | 4 | 26 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 2 | 0 |
-| `vectors/hyperreal/vec3 normalize` | 59 | 0 | 8 | 0 | 4 | 0 | 0 | 9 | 4 | 51 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 13 | 6 | 3 |
-| `vectors/hyperreal/vec4 normalize` | 61 | 0 | 8 | 0 | 4 | 0 | 0 | 7 | 4 | 53 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 17 | 7 | 4 |
+| `vectors/hyperreal/vec3 dot` | 18 | 0 | 4 | 0 | 0 | 0 | 0 | 7 | 0 | 14 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
+| `vectors/hyperreal/vec3 magnitude` | 30 | 0 | 4 | 0 | 4 | 0 | 0 | 7 | 4 | 26 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
+| `vectors/hyperreal/vec3 normalize` | 59 | 0 | 8 | 0 | 4 | 0 | 0 | 9 | 4 | 51 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 13 | 4 | 3 |
+| `vectors/hyperreal/vec4 normalize` | 61 | 0 | 8 | 0 | 4 | 0 | 0 | 7 | 4 | 53 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 17 | 5 | 4 |
 
 ## Dispatch Counts
 
@@ -861,7 +861,6 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `dyadic-fraction` | 2 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `small-general-fraction` | 8 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `wide-general-fraction` | 8 |
-| `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `zero` | 1 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `real` | `constructor` | `rational` | 23 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `real` | `constructor` | `zero` | 1 |
 | `borrowed_ops/hyperreal-rational/complex sub refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
@@ -876,7 +875,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `word-result` | `cached-small-integer` | 7 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `word-result` | `small-general-fraction` | 14 |
-| `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `word-result` | `zero` | 6 |
+| `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `word-result` | `zero` | 2 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `real` | `constructor` | `rational` | 29 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `real` | `constructor` | `zero` | 7 |
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 36 |
@@ -957,7 +956,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `rational` | `add` | `word-sized` | 42 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `rational` | `word-result` | `cached-small-integer` | 20 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `rational` | `word-result` | `small-general-fraction` | 8 |
-| `borrowed_ops/hyperreal-rational/mat4 add refs` | `rational` | `word-result` | `zero` | 14 |
+| `borrowed_ops/hyperreal-rational/mat4 add refs` | `rational` | `word-result` | `zero` | 3 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `real` | `constructor` | `rational` | 49 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `real` | `constructor` | `zero` | 15 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 64 |
@@ -1157,7 +1156,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/complex add refs` | `rational` | `word-result` | `cached-small-integer` | 1 |
 | `borrowed_ops/hyperreal/complex add refs` | `rational` | `word-result` | `dyadic-fraction` | 4 |
 | `borrowed_ops/hyperreal/complex add refs` | `rational` | `word-result` | `unit` | 1 |
-| `borrowed_ops/hyperreal/complex add refs` | `rational` | `word-result` | `zero` | 2 |
+| `borrowed_ops/hyperreal/complex add refs` | `rational` | `word-result` | `zero` | 1 |
 | `borrowed_ops/hyperreal/complex add refs` | `real` | `constructor` | `rational` | 6 |
 | `borrowed_ops/hyperreal/complex add refs` | `real` | `constructor` | `zero` | 2 |
 | `borrowed_ops/hyperreal/complex div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 8 |
@@ -1184,7 +1183,6 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/complex mul refs` | `rational` | `word-result` | `cached-small-integer` | 3 |
 | `borrowed_ops/hyperreal/complex mul refs` | `rational` | `word-result` | `dyadic-fraction` | 8 |
 | `borrowed_ops/hyperreal/complex mul refs` | `rational` | `word-result` | `uncached-integer-wide` | 4 |
-| `borrowed_ops/hyperreal/complex mul refs` | `rational` | `word-result` | `zero` | 1 |
 | `borrowed_ops/hyperreal/complex mul refs` | `real` | `constructor` | `rational` | 23 |
 | `borrowed_ops/hyperreal/complex mul refs` | `real` | `constructor` | `zero` | 1 |
 | `borrowed_ops/hyperreal/complex sub refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
@@ -1199,7 +1197,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `word-result` | `cached-small-integer` | 6 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `word-result` | `dyadic-fraction` | 14 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
-| `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `word-result` | `zero` | 6 |
+| `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `word-result` | `zero` | 2 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `real` | `constructor` | `rational` | 29 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `real` | `constructor` | `zero` | 7 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 36 |
@@ -1286,7 +1284,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/mat4 add refs` | `rational` | `word-result` | `cached-small-integer` | 20 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `rational` | `word-result` | `dyadic-fraction` | 6 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
-| `borrowed_ops/hyperreal/mat4 add refs` | `rational` | `word-result` | `zero` | 14 |
+| `borrowed_ops/hyperreal/mat4 add refs` | `rational` | `word-result` | `zero` | 3 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `real` | `constructor` | `rational` | 49 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `real` | `constructor` | `zero` | 15 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 64 |
@@ -1385,7 +1383,6 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/mat4 sub refs` | `rational` | `word-result` | `uncached-integer-65-127` | 2 |
 | `borrowed_ops/hyperreal/mat4 sub refs` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
 | `borrowed_ops/hyperreal/mat4 sub refs` | `rational` | `word-result` | `unit` | 2 |
-| `borrowed_ops/hyperreal/mat4 sub refs` | `rational` | `word-result` | `zero` | 1 |
 | `borrowed_ops/hyperreal/mat4 sub refs` | `real` | `constructor` | `rational` | 63 |
 | `borrowed_ops/hyperreal/mat4 sub refs` | `real` | `constructor` | `zero` | 1 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 3 |
@@ -1427,7 +1424,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/vec3 add refs` | `hyperlattice_vector` | `op` | `add-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `rational` | `add` | `word-sized` | 11 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `rational` | `word-result` | `dyadic-fraction` | 8 |
-| `borrowed_ops/hyperreal/vec3 add refs` | `rational` | `word-result` | `zero` | 3 |
+| `borrowed_ops/hyperreal/vec3 add refs` | `rational` | `word-result` | `zero` | 1 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `real` | `constructor` | `rational` | 9 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `real` | `constructor` | `zero` | 3 |
 | `borrowed_ops/hyperreal/vec3 div_scalar_ref` | `hyperlattice` | `zero_guard` | `not-definitely-zero` | 4 |
@@ -1456,7 +1453,6 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/vec4 add refs` | `rational` | `word-result` | `cached-small-integer` | 3 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `rational` | `word-result` | `dyadic-fraction` | 8 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `rational` | `word-result` | `unit` | 1 |
-| `borrowed_ops/hyperreal/vec4 add refs` | `rational` | `word-result` | `zero` | 2 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `real` | `constructor` | `rational` | 14 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `real` | `constructor` | `zero` | 2 |
 | `borrowed_ops/hyperreal/vec4 div_scalar_ref` | `hyperlattice` | `real_kernel` | `mul-cached` | 16 |
