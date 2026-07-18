@@ -155,7 +155,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `vec3 dot` | 453.02 ns | 422.30 ns | 257.12 ns | 7.40 us | 1.76x | 0.06x |
 | `vec3 magnitude` | 796.04 ns | 1.99 us | 354.38 ns | 8.84 us | 2.25x | 0.09x |
-| `vec3 normalize` | 3.30 us | 4.77 us | 601.15 ns | 16.87 us | 5.48x | 0.20x |
+| `vec3 normalize` | 2.57 us | 4.67 us | 591.76 ns | 16.62 us | 4.34x | 0.15x |
 
 #### Vector API Operations
 
@@ -178,7 +178,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `vec3 div scalar` | 454.07 ns | 428.86 ns | 172.79 ns | 7.69 us | 2.63x | 0.06x |
 | `vec4 dot` | 408.77 ns | 251.40 ns | 326.88 ns | 9.68 us | 1.25x | 0.04x |
 | `vec4 magnitude` | 832.44 ns | 1.30 us | 409.78 ns | 11.65 us | 2.03x | 0.07x |
-| `vec4 normalize` | 3.62 us | 2.70 us | 727.14 ns | 21.87 us | 4.98x | 0.17x |
+| `vec4 normalize` | 3.16 us | 2.67 us | 736.42 ns | 22.07 us | 4.29x | 0.14x |
 | `vec4 add` | 546.07 ns | 453.60 ns | 176.78 ns | 5.24 us | 3.09x | 0.10x |
 | `vec4 add scalar` | 526.86 ns | 437.35 ns | 177.42 ns | 5.26 us | 2.97x | 0.10x |
 | `vec4 sub` | 550.15 ns | 492.30 ns | 175.96 ns | 9.80 us | 3.13x | 0.06x |

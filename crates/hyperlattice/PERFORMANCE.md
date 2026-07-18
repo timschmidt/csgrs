@@ -133,6 +133,30 @@ Hyperreal is 5.1--11.1 times faster than Symbolica. The regenerated trace
 records the dependency's large-power-of-two square-extraction path beneath the
 public vector magnitude and normalization rows.
 
+## Exact reciprocal-radical scaling
+
+The remaining normalization profile was dominated by multiplying each exact
+f64 coordinate by the shared reciprocal norm radical. Hyperreal now
+cross-cancels dyadic/general rational scales before forming their word or
+arbitrary-precision products, while retaining defensive reduction for raw
+noncanonical internal fractions. Hyperlattice's borrowed component multiply
+and public normalization semantics are unchanged.
+
+Fresh matched 100-sample runs measured:
+
+| Workload | Hyperreal f64 | Exact rational | Numerica 128 | Symbolica |
+| --- | ---: | ---: | ---: | ---: |
+| `vec3 normalize` | 2.57 us | 4.67 us | 591.76 ns | 16.62 us |
+| `vec4 normalize` | 3.16 us | 2.67 us | 736.42 ns | 22.07 us |
+
+Relative to the preceding ledger, the f64 facade is 22.2% faster for vec3 and
+12.6% faster for vec4. The exact-rational controls improve by about 2.2% and
+1.1%, respectively. Numerica remains 4.34 and 4.29 times faster on these
+construction rows; Hyperreal is 6.48 and 6.98 times faster than Symbolica.
+The dependency microbenchmark for one coordinate scale fell from 558.37 ns to
+239.73 ns (57.1%). A shared batch-scaling prototype did not improve vec3 and
+was removed, leaving the direct borrowed component schedule in place.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`
