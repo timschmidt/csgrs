@@ -1,5 +1,6 @@
 //! 3D Shapes as `Mesh`s
 
+#[cfg(any(feature = "sketch", feature = "stl-io"))]
 use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::mesh::Mesh;
