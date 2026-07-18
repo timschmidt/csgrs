@@ -477,6 +477,10 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
                 description: "Uses exact rational-turn cosine.",
             },
             BenchDoc {
+                name: "cos_pi_one_seventh",
+                description: "Builds a non-tabulated rational-turn cosine certificate.",
+            },
+            BenchDoc {
                 name: "tan_pi_one_third",
                 description: "Uses exact rational-turn tangent.",
             },
@@ -1459,6 +1463,7 @@ fn bench_real_geometry_polynomial_substrate(c: &mut Criterion) {
     let half = real(1, 2);
     let one_sixth = real(1, 6);
     let one_fourth = real(1, 4);
+    let one_seventh = real(1, 7);
     let one_third = real(1, 3);
     let zero = Real::zero();
     let one = Real::one();
@@ -1487,6 +1492,13 @@ fn bench_real_geometry_polynomial_substrate(c: &mut Criterion) {
     group.bench_function("cos_pi_one_fourth", |b| {
         b.iter_batched(
             || one_fourth.clone(),
+            |value| black_box(value.cos_pi()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cos_pi_one_seventh", |b| {
+        b.iter_batched(
+            || one_seventh.clone(),
             |value| black_box(value.cos_pi()),
             BatchSize::SmallInput,
         )

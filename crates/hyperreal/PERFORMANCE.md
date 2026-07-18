@@ -154,9 +154,8 @@ Goals:
 - Bring medium scalar rows such as `1.23456789` below 200 ns without regressing
   large rows.
 - Keep rational `1000pi_eps` sin/cos under 1 us.
-- Investigate remaining rational exact-special hot spots, especially
-  `hyperreal-rational/pi_7_cos`, rational endpoint inverse trig, and
-  `hyperreal-rational/e_acosh`.
+- Investigate remaining rational exact-special hot spots, especially rational
+  endpoint inverse trig.
 - Any new symbolic class must show wins in `scalar_micro`, `hyperlattice`, and
   `hyperlimit`; otherwise keep the representation simpler.
 
@@ -191,6 +190,29 @@ cross-crate exact-symbolic `acosh(e)` row, this reduced construction from
 997.60 ns to 116.50 ns (88.32%) while the hyperlattice facade still performed
 its own preflight. The exact subtraction/refinement path remains active for
 uncertified values.
+
+### One-pass rational-turn cosine reduction
+
+Non-tabulated `cos(q*pi)` formerly asked the cosine table to reduce `q`, then
+constructed `q + 1/2` and sent that new rational through the complete sine
+curve reduction. The cosine reducer now returns either an exact table value or
+the canonical signed `SinPi` complement in one visit. The resulting `Real` has
+the same outer sign, reduced rational, class, and computable certificate as the
+former half-turn identity, so inverse identities and exact equality are
+unchanged.
+
+Fresh 100-sample cross-crate Criterion runs measured the exact-symbolic
+`pi/7` cosine construction at 486.27 ns before and 201.99 ns after, a 58.46%
+improvement. The retained path is 63.44% faster than Numerica 128 at 552.42 ns
+and 88.47% faster than Symbolica at 1.7514 us. The direct `Real::cos_pi(1/7)`
+sentinel measured 213.00 ns. The exact tabulated control `cos(pi/3)` remained
+on its table path at 46.271 ns.
+
+Cross-stack dispatch evidence fell from 14 events to 12. Rational comparisons
+fell from three to one, the half-turn addition disappeared, and the trace now
+records `pi-rational-direct-sinpi-certificate`. Signed multi-period regressions
+compare the complete exact result with `sin_pi(q + 1/2)` and also retain a
+finite approximation oracle.
 
 ## Computable Path
 

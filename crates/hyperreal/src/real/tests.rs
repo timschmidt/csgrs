@@ -368,6 +368,33 @@ mod tests {
     }
 
     #[test]
+    fn non_tabulated_cos_pi_reuses_direct_sin_pi_certificates() {
+        for (numerator, denominator) in [
+            (-17, 11),
+            (-9, 7),
+            (-2, 7),
+            (1, 7),
+            (5, 7),
+            (9, 7),
+            (17, 11),
+        ] {
+            let turn = Rational::fraction(numerator, denominator).unwrap();
+            let direct = pi_fraction(numerator, denominator).cos();
+            let scaled = Real::new(turn.clone()).cos_pi();
+            let complementary = Real::new(turn + Rational::fraction(1, 2).unwrap()).sin_pi();
+
+            assert_eq!(direct, scaled);
+            assert_eq!(direct, complementary);
+            assert!(
+                (direct.to_f64_lossy().unwrap()
+                    - (std::f64::consts::PI * numerator as f64 / denominator as f64).cos())
+                .abs()
+                    < 1.0e-12
+            );
+        }
+    }
+
+    #[test]
     fn public_pi_scaled_trig_uses_exact_rational_turns() {
         let half = Real::new(Rational::fraction(1, 2).unwrap());
         let sqrt_two_over_two = Real::new(Rational::fraction(1, 2).unwrap())

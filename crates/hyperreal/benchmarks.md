@@ -584,6 +584,7 @@ Geometry-facing scalar helpers for rational-turn trig, removable small-angle lim
 | --- | ---: | ---: | --- |
 | `real_geometry_polynomial_substrate/sin_pi_one_sixth` | 167.30 ns | 166.60 ns - 168.10 ns | Uses exact rational-turn sine. |
 | `real_geometry_polynomial_substrate/cos_pi_one_fourth` | 537.24 ns | 535.14 ns - 539.45 ns | Uses exact rational-turn cosine. |
+| `real_geometry_polynomial_substrate/cos_pi_one_seventh` | 213.00 ns | 210.21 ns - 216.27 ns | Builds a non-tabulated rational-turn cosine certificate. |
 | `real_geometry_polynomial_substrate/tan_pi_one_third` | 513.62 ns | 509.41 ns - 518.96 ns | Uses exact rational-turn tangent. |
 | `real_geometry_polynomial_substrate/sinc_zero` | 75.03 ns | 74.60 ns - 75.56 ns | Returns the removable sinc limit at zero. |
 | `real_geometry_polynomial_substrate/sinc_tiny` | 330.79 ns | 328.68 ns - 333.14 ns | Builds sinc for a tiny exact input. |

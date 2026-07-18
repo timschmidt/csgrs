@@ -2082,14 +2082,20 @@ impl Real {
                 return Self::irrational_from_computable(computable);
             }
             Pi => {
-                if let Some(exact) = Self::cos_pi_rational(self.rational.clone()) {
-                    crate::trace_dispatch!("real", "cos", "pi-rational-exact-table");
-                    return exact;
+                match Self::reduce_cos_pi_rational(self.rational) {
+                    CosPiRationalReduction::Exact(exact) => {
+                        crate::trace_dispatch!("real", "cos", "pi-rational-exact-table");
+                        return exact;
+                    }
+                    CosPiRationalReduction::SinPi { negate, reduced } => {
+                        crate::trace_dispatch!(
+                            "real",
+                            "cos",
+                            "pi-rational-direct-sinpi-certificate"
+                        );
+                        return Self::sin_pi_from_canonical_reduction(negate, reduced);
+                    }
                 }
-                // cos(q*pi) is represented through the same SinPi machinery with a
-                // half-turn shift, keeping exact identities in one place.
-                crate::trace_dispatch!("real", "cos", "pi-rational-sinpi-rewrite");
-                return Self::sin_pi_rational(self.rational + rationals::HALF.clone());
             }
             _ => (),
         }
@@ -2106,12 +2112,20 @@ impl Real {
     /// Cosine of `pi * x`, with exact rational-turn special cases.
     pub fn cos_pi(self) -> Real {
         if self.class == One {
-            if let Some(exact) = Self::cos_pi_rational(self.rational.clone()) {
-                crate::trace_dispatch!("real", "cos_pi", "rational-exact-table");
-                return exact;
+            match Self::reduce_cos_pi_rational(self.rational) {
+                CosPiRationalReduction::Exact(exact) => {
+                    crate::trace_dispatch!("real", "cos_pi", "rational-exact-table");
+                    return exact;
+                }
+                CosPiRationalReduction::SinPi { negate, reduced } => {
+                    crate::trace_dispatch!(
+                        "real",
+                        "cos_pi",
+                        "rational-direct-sinpi-certificate"
+                    );
+                    return Self::sin_pi_from_canonical_reduction(negate, reduced);
+                }
             }
-            crate::trace_dispatch!("real", "cos_pi", "rational-sinpi-rewrite");
-            return Self::sin_pi_rational(self.rational + rationals::HALF.clone());
         }
         (self * Self::pi()).cos()
     }

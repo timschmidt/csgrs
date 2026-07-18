@@ -1,3 +1,8 @@
+enum CosPiRationalReduction {
+    Exact(Real),
+    SinPi { negate: bool, reduced: Rational },
+}
+
 impl Real {
     /// Are two Reals definitely unequal?
     pub fn definitely_not_equal(&self, other: &Self) -> bool {
@@ -135,26 +140,37 @@ impl Real {
         }
     }
 
-    fn cos_pi_rational(rational: Rational) -> Option<Real> {
+    fn reduce_cos_pi_rational(rational: Rational) -> CosPiRationalReduction {
         if rational.is_integer() {
             let odd = rational
                 .integer_magnitude()
                 .expect("integer rational has integer magnitude")
                 .bit(0);
-            return Some(if odd { -Self::one() } else { Self::one() });
+            return CosPiRationalReduction::Exact(if odd {
+                -Self::one()
+            } else {
+                Self::one()
+            });
         }
 
         if rational.sign() == Sign::Plus && rational < *rationals::HALF {
             let denominator = rational.denominator();
             if denominator == unsigned::THREE.deref() {
-                return Some(constants::half());
+                return CosPiRationalReduction::Exact(constants::half());
             }
             if denominator == unsigned::FOUR.deref() {
-                return Some(constants::sqrt_two_over_two());
+                return CosPiRationalReduction::Exact(constants::sqrt_two_over_two());
             }
             if denominator == unsigned::SIX.deref() {
-                return Some(constants::sqrt_three_over_two());
+                return CosPiRationalReduction::Exact(constants::sqrt_three_over_two());
             }
+            // This already is the principal positive cosine curve. Construct
+            // its complementary SinPi certificate directly instead of first
+            // adding one half and then reducing that sum back below one half.
+            return CosPiRationalReduction::SinPi {
+                negate: false,
+                reduced: rationals::HALF.clone() - rational,
+            };
         }
 
         // Cosine is even, then each whole pi turn flips its sign. Folding a
@@ -174,20 +190,48 @@ impl Real {
 
         let denominator = reduced.denominator();
         let exact = if reduced.is_zero() {
-            Self::one()
+            Some(Self::one())
         } else if denominator == unsigned::TWO.deref() {
-            Self::zero()
+            Some(Self::zero())
         } else if denominator == unsigned::THREE.deref() {
-            constants::half()
+            Some(constants::half())
         } else if denominator == unsigned::FOUR.deref() {
-            constants::sqrt_two_over_two()
+            Some(constants::sqrt_two_over_two())
         } else if denominator == unsigned::SIX.deref() {
-            constants::sqrt_three_over_two()
+            Some(constants::sqrt_three_over_two())
         } else {
-            return None;
+            None
         };
 
-        Some(if negate { exact.neg() } else { exact })
+        if let Some(exact) = exact {
+            return CosPiRationalReduction::Exact(if negate {
+                exact.neg()
+            } else {
+                exact
+            });
+        }
+
+        CosPiRationalReduction::SinPi {
+            negate,
+            reduced: rationals::HALF.clone() - reduced,
+        }
+    }
+
+    #[inline(always)]
+    fn sin_pi_from_canonical_reduction(negate: bool, reduced: Rational) -> Real {
+        debug_assert!(reduced.sign() == Sign::Plus && reduced < *rationals::HALF);
+        let argument =
+            Computable::multiply(Computable::pi(), Computable::rational(reduced.clone()));
+        Self {
+            rational: if negate {
+                Rational::new(-1)
+            } else {
+                Rational::one()
+            },
+            class: SinPi(reduced),
+            computable: Some(Computable::prescaled_sin(argument)),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+        }
     }
 
     /// The inverse of this Real, or a [`Problem`] if that's impossible,
