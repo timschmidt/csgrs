@@ -37,7 +37,8 @@ use hypersolve::{
     schedule_univariate_resultant_pairs, search_failed_constraint_minimal_removals,
     search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
     search_failed_constraint_single_removals, sketch_compatibility_fixtures,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
+    solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    solve_dense_linear_system_bareiss_multi_rhs, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
     solve_sparse_linear_system_bareiss_minimum_degree,
     solve_sparse_linear_system_bareiss_pattern_preserving, squared_distance_equation,
@@ -4024,6 +4025,33 @@ fn certification(c: &mut Criterion) {
             solve_dense_linear_system_bareiss(
                 &[vec![r(2), r(1)], vec![r(1), r(-1)]],
                 &[r(5), r(1)],
+                -64,
+            )
+        })
+    });
+    let dense_multi_rhs_matrix = [vec![r(2), r(1)], vec![r(1), r(-1)]];
+    let dense_multi_rhs = [vec![r(5), r(1)], vec![r(0), r(3)]];
+    c.bench_function("solve_dense_bareiss_two_rhs_sequential", |b| {
+        b.iter(|| {
+            (
+                solve_dense_linear_system_bareiss(
+                    &dense_multi_rhs_matrix,
+                    &dense_multi_rhs[0],
+                    -64,
+                ),
+                solve_dense_linear_system_bareiss(
+                    &dense_multi_rhs_matrix,
+                    &dense_multi_rhs[1],
+                    -64,
+                ),
+            )
+        })
+    });
+    c.bench_function("solve_dense_bareiss_two_rhs_shared", |b| {
+        b.iter(|| {
+            solve_dense_linear_system_bareiss_multi_rhs(
+                &dense_multi_rhs_matrix,
+                &dense_multi_rhs,
                 -64,
             )
         })

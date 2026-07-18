@@ -38,6 +38,7 @@ are regression evidence for these workloads, not portable absolute claims.
 | Workload | Before | After | Change |
 | --- | ---: | ---: | ---: |
 | Dense exact Bareiss solve, 2 x 2 | 2.051 us | 1.546 us | 24.6% faster |
+| Two dense exact right-hand sides, 2 x 2 | 2.562 us sequential | 2.228 us shared | 13.0% faster |
 | Dense exact Bareiss solve, tridiagonal 8 x 8 | 245.34 us | 35.29 us | 85.6% faster |
 | Pattern-preserving sparse Bareiss solve, 3 x 3 | 4.325 us | 3.768 us | 12.9% faster |
 | Symbolic cyclic sparse row swaps, 64 x 64 | 139.99 us | 73.31 us | 47.6% faster |
@@ -52,6 +53,32 @@ certified symbolic rows for numeric elimination improved 4.325 us to 4.115 us
 terms proves that the reused replay report equals a fresh replay of the source
 terms.
 
+The multi-right-hand-side solve performs one certified fraction-free matrix
+elimination while carrying every augmented column through the same row
+operations. Each result still retains its own Cramer numerators and exact
+residual replay. The paired Criterion comparison includes all returned evidence
+on both paths; the shared API reduces the 2-by-2 two-coordinate solve from
+2.562 us to 2.228 us (13.0%). Hypercurve's complete three-point NURBS
+interpolation benefits more because it replaces a determinant-per-coordinate
+Cramer construction: its five-run median falls from 19.276 us to 13.098 us
+(32.1%).
+
+## Dispatch-path coverage
+
+Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
+`dispatch_trace.md`. The diagnostic harness pairs major families from the timed
+`certification` benchmark with the shared `hyperreal` trace recorder. It covers
+sketch lowering and preflight, prepared candidate/batch/active-set work,
+direct and fraction-free linear algebra, resultants and curve substitution,
+root isolation and interval proof, affine Krawczyk proof, domain proof, and the
+named lossy-proposal/exact-replay boundary. Every row contains a Hypersolve
+workload marker, and the run fails unless that row also records dependency
+dispatch or rational reducer work.
+
+Trace builds are diagnostic and must not be used for timing comparisons. The
+feature forwards trace instrumentation into `hyperreal`, `hyperlattice`, and
+`hyperlimit`; the ordinary default build retains no trace hooks.
+
 ## Why the retained changes preserve proof
 
 The augmented dense solve applies the same Bareiss recurrence to `A` and `b`
@@ -59,6 +86,14 @@ in one pass, then reconstructs the Cramer numerators as `det(A) * x`. Exact
 residual replay is unchanged, pivot swaps are tested, generated nonsingular
 systems recover their authored solutions, and the former Cramer path remains a
 fallback.
+
+The multi-right-hand-side sibling applies those identical certified row
+operations to every `b` column. Pivot-row swaps are replayed across all columns,
+each solution is independently checked against its original `A*x-b`, and the
+single-right-hand-side reports are used as exact test oracles for solutions,
+numerators, and replay rows. The same oracle is exercised by a dedicated
+generated triangular-system fuzz target (1,000 retained executions in this
+batch), and the shared solve is part of the exact-linear dispatch trace family.
 
 The sparse solver's symbolic report already contains every duplicate-
 accumulated exact entry and its certified zero/nonzero status. Feeding those

@@ -23,6 +23,19 @@ hyperlimit = { path = "../hyperlimit", default-features = false }
 criterion = "0.5"
 proptest = "1.7.0"
 
+[features]
+default = []
+dispatch-trace = [
+    "hyperreal/dispatch-trace",
+    "hyperlattice/hyperreal-dispatch-trace",
+    "hyperlimit/dispatch-trace",
+]
+
 [[bench]]
 name = "certification"
 harness = false
+
+[[bench]]
+name = "dispatch_trace"
+harness = false
+required-features = ["dispatch-trace"]

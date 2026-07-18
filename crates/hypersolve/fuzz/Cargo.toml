@@ -434,6 +434,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "dense_bareiss_multi_rhs"
+path = "fuzz_targets/dense_bareiss_multi_rhs.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "active_set_quadratic_regeneration"
 path = "fuzz_targets/active_set_quadratic_regeneration.rs"
 test = false

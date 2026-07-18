@@ -108,10 +108,11 @@ pub use alpha::{
     certify_univariate_quadratic_alpha,
 };
 pub use bareiss::{
-    BareissDeterminantReport, BareissError, BareissPivot, BareissSolveReport, SparseBareissError,
-    SparseBareissSolveReport, SparseMinimumDegreeBareissSolveReport,
-    SparsePatternPreservingBareissSolveReport, determinant_bareiss,
-    solve_dense_linear_system_bareiss, solve_sparse_linear_system_bareiss,
+    BareissDeterminantReport, BareissError, BareissMultiRhsSolveReport, BareissPivot,
+    BareissSolveReport, SparseBareissError, SparseBareissSolveReport,
+    SparseMinimumDegreeBareissSolveReport, SparsePatternPreservingBareissSolveReport,
+    determinant_bareiss, solve_dense_linear_system_bareiss,
+    solve_dense_linear_system_bareiss_multi_rhs, solve_sparse_linear_system_bareiss,
     solve_sparse_linear_system_bareiss_minimum_degree,
     solve_sparse_linear_system_bareiss_pattern_preserving,
 };
