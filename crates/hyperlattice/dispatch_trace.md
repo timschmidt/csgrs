@@ -700,8 +700,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/log10` | 49 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/log10_abort` | 57 | 0 | 12 | 4 | 12 | 4 | 0 | 10 | 8 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 12 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/pow` | 69 | 0 | 4 | 0 | 4 | 0 | 0 | 2 | 5 | 43 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/powi` | 30 | 0 | 4 | 0 | 0 | 0 | 0 | 3 | 0 | 26 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 6 | 6 |
-| `scalar_ops/hyperreal-rational/powi_negative_one` | 12 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `scalar_ops/hyperreal-rational/powi` | 10 | 0 | 4 | 0 | 0 | 0 | 0 | 1 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `scalar_ops/hyperreal-rational/powi_negative_one` | 16 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/sinh` | 92 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 44 | 4 | 4 |
 | `scalar_ops/hyperreal-rational/sqrt` | 26 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -725,9 +725,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/ln` | 41 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 25 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 |
 | `scalar_ops/hyperreal/log10` | 44 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 0 | 0 |
 | `scalar_ops/hyperreal/log10_abort` | 52 | 0 | 12 | 4 | 12 | 4 | 0 | 10 | 8 | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 13 | 0 | 0 |
-| `scalar_ops/hyperreal/pow` | 77 | 0 | 4 | 0 | 4 | 0 | 0 | 1 | 5 | 47 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 45 | 11 | 9 |
-| `scalar_ops/hyperreal/powi` | 33 | 0 | 4 | 0 | 0 | 0 | 0 | 11 | 0 | 29 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 7 | 0 | 0 |
-| `scalar_ops/hyperreal/powi_negative_one` | 12 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `scalar_ops/hyperreal/pow` | 78 | 0 | 4 | 0 | 4 | 0 | 0 | 2 | 5 | 48 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 45 | 11 | 9 |
+| `scalar_ops/hyperreal/powi` | 13 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 0 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `scalar_ops/hyperreal/powi_negative_one` | 16 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/sinh` | 92 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 44 | 4 | 4 |
 | `scalar_ops/hyperreal/sqrt` | 27 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -9842,15 +9842,14 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/pow` | `real` | `pow` | `rational-exponent` | 4 |
 | `scalar_ops/hyperreal-rational/pow` | `real` | `powi` | `rational-exact` | 1 |
 | `scalar_ops/hyperreal-rational/pow` | `real` | `sqrt` | `rational-perfect-square` | 1 |
-| `scalar_ops/hyperreal-rational/powi` | `hyperlattice` | `powi` | `specialized-fifth` | 4 |
-| `scalar_ops/hyperreal-rational/powi` | `rational` | `mul` | `word-sized` | 6 |
-| `scalar_ops/hyperreal-rational/powi` | `rational` | `mul-div` | `proven-reduced-word-product` | 2 |
-| `scalar_ops/hyperreal-rational/powi` | `rational` | `word-result` | `dyadic-fraction` | 3 |
-| `scalar_ops/hyperreal-rational/powi` | `rational` | `word-result` | `wide-general-fraction` | 3 |
-| `scalar_ops/hyperreal-rational/powi` | `real` | `constructor` | `rational` | 12 |
-| `scalar_ops/hyperreal-rational/powi_negative_one` | `hyperlattice` | `powi` | `exponent-one` | 4 |
-| `scalar_ops/hyperreal-rational/powi_negative_one` | `hyperlattice` | `powi` | `negative-inverse` | 4 |
+| `scalar_ops/hyperreal-rational/powi` | `hyperlattice` | `powi` | `native-real-i64-kernel` | 4 |
+| `scalar_ops/hyperreal-rational/powi` | `rational` | `powi` | `word-sized` | 1 |
+| `scalar_ops/hyperreal-rational/powi` | `rational` | `word-result` | `dyadic-fraction` | 1 |
+| `scalar_ops/hyperreal-rational/powi` | `real` | `powi-i64` | `rational-exact` | 4 |
+| `scalar_ops/hyperreal-rational/powi_negative_one` | `hyperlattice` | `powi` | `native-real-i64-kernel` | 4 |
+| `scalar_ops/hyperreal-rational/powi_negative_one` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `scalar_ops/hyperreal-rational/powi_negative_one` | `real` | `inverse` | `prechecked-one` | 4 |
+| `scalar_ops/hyperreal-rational/powi_negative_one` | `real` | `powi-i64` | `negative-one-inverse` | 4 |
 | `scalar_ops/hyperreal-rational/sin` | `computable` | `constructor` | `prescaled-sin-rational` | 2 |
 | `scalar_ops/hyperreal-rational/sin` | `computable` | `constructor` | `sin-large-rational-deferred` | 2 |
 | `scalar_ops/hyperreal-rational/sin` | `computable` | `sin` | `structural-small-prescaled` | 2 |
@@ -10152,6 +10151,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/pow` | `computable` | `ln` | `smooth-rational-shared-log-sum` | 1 |
 | `scalar_ops/hyperreal/pow` | `computable_approx` | `ln` | `binary-scaled-rational` | 2 |
 | `scalar_ops/hyperreal/pow` | `hyperlattice` | `free_function` | `pow` | 4 |
+| `scalar_ops/hyperreal/pow` | `rational` | `powi` | `dyadic-denominator-shift` | 1 |
 | `scalar_ops/hyperreal/pow` | `rational` | `square_extraction` | `large-power-of-two` | 1 |
 | `scalar_ops/hyperreal/pow` | `rational` | `square_extraction` | `mod63-reject` | 1 |
 | `scalar_ops/hyperreal/pow` | `rational` | `square_extraction` | `shared-divisor-remainder` | 1 |
@@ -10164,15 +10164,15 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/pow` | `real` | `pow` | `rational-exponent` | 4 |
 | `scalar_ops/hyperreal/pow` | `real` | `powi` | `rational-exact` | 1 |
 | `scalar_ops/hyperreal/pow` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
-| `scalar_ops/hyperreal/powi` | `hyperlattice` | `powi` | `specialized-fifth` | 4 |
-| `scalar_ops/hyperreal/powi` | `rational` | `mul` | `wide-dyadic-cross-cancel` | 7 |
-| `scalar_ops/hyperreal/powi` | `rational` | `mul` | `word-sized` | 5 |
-| `scalar_ops/hyperreal/powi` | `rational` | `word-result` | `dyadic-fraction` | 4 |
-| `scalar_ops/hyperreal/powi` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
-| `scalar_ops/hyperreal/powi` | `real` | `constructor` | `rational` | 12 |
-| `scalar_ops/hyperreal/powi_negative_one` | `hyperlattice` | `powi` | `exponent-one` | 4 |
-| `scalar_ops/hyperreal/powi_negative_one` | `hyperlattice` | `powi` | `negative-inverse` | 4 |
+| `scalar_ops/hyperreal/powi` | `hyperlattice` | `powi` | `native-real-i64-kernel` | 4 |
+| `scalar_ops/hyperreal/powi` | `rational` | `powi` | `dyadic-denominator-shift` | 3 |
+| `scalar_ops/hyperreal/powi` | `rational` | `powi` | `word-sized` | 1 |
+| `scalar_ops/hyperreal/powi` | `rational` | `word-result` | `dyadic-fraction` | 1 |
+| `scalar_ops/hyperreal/powi` | `real` | `powi-i64` | `rational-exact` | 4 |
+| `scalar_ops/hyperreal/powi_negative_one` | `hyperlattice` | `powi` | `native-real-i64-kernel` | 4 |
+| `scalar_ops/hyperreal/powi_negative_one` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `scalar_ops/hyperreal/powi_negative_one` | `real` | `inverse` | `prechecked-one` | 4 |
+| `scalar_ops/hyperreal/powi_negative_one` | `real` | `powi-i64` | `negative-one-inverse` | 4 |
 | `scalar_ops/hyperreal/sin` | `computable` | `constructor` | `prescaled-sin-rational` | 2 |
 | `scalar_ops/hyperreal/sin` | `computable` | `constructor` | `sin-large-rational-deferred` | 2 |
 | `scalar_ops/hyperreal/sin` | `computable` | `sin` | `structural-small-prescaled` | 2 |

@@ -183,6 +183,31 @@ Hyperreal is 6.8 times faster than Symbolica. The full all-target/all-feature
 gate, 256-case property suites, strict Clippy, warning-denied documentation,
 and 5,928 clean-exit vector fuzz executions passed with the final source.
 
+## Native exact integer-power delegation
+
+The scalar `powi` facade formerly specialized powers through five with generic
+`Real` multiplication. Profiling exponent five showed that the three
+multiplications spent most of their time constructing intermediate `Real`
+values and reducing exact rational products. The retained implementation now
+delegates to Hyperreal's machine-sized integer-power kernel, which raises the
+retained rational scale directly and preserves radical and symbolic classes.
+
+Fresh four-case Criterion medians measured:
+
+| Engine | Before | After | Result |
+| --- | ---: | ---: | ---: |
+| Hyperreal exact f64 | 376.76 ns | 161.11 ns | 57.2% faster |
+| Hyperreal explicit rational | 2.813 us | 210.93 ns | 92.5% faster |
+| Numerica 128 control | 85.45 ns | 84.53 ns | unchanged |
+| Symbolica control | 1.559 us | 1.545 us | unchanged |
+
+The exact-f64 gap to Numerica fell from 4.41x to 1.91x, and Hyperreal is 9.6x
+faster than Symbolica on the same construction workload. The regenerated
+cross-stack trace replaces the multiplication chain with
+`native-real-i64-kernel`, `real/powi-i64/rational-exact`, and the exact
+word-sized or dyadic-denominator Rational power path. Regression tests cover
+fractional fifth powers and symbolic reciprocal preservation.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`

@@ -171,78 +171,16 @@ pub fn pow(base: Real, exponent: Real) -> BlasResult<Real> {
     base.pow(exponent)
 }
 
-/// Raises `base` to an integer exponent using exponentiation by squaring.
+/// Raises `base` to an integer exponent.
 ///
 /// Negative exponents require the result to be invertible. `0^0` returns
 /// [`Problem::NotANumber`].
 pub fn powi(base: Real, exponent: i64) -> BlasResult<Real> {
-    if exponent == 0 {
-        if base.definitely_zero() {
-            crate::trace_dispatch!("hyperlattice", "powi", "zero-to-zero-domain-error");
-            return Err(Problem::NotANumber);
-        }
-        crate::trace_dispatch!("hyperlattice", "powi", "exponent-zero-one");
-        return Ok(Real::one());
-    }
-
-    let exp = exponent.unsigned_abs();
-    let positive = match exp {
-        1 => {
-            crate::trace_dispatch!("hyperlattice", "powi", "exponent-one");
-            base
-        }
-        2 => {
-            crate::trace_dispatch!("hyperlattice", "powi", "specialized-square");
-            base.clone() * base
-        }
-        3 => {
-            crate::trace_dispatch!("hyperlattice", "powi", "specialized-cube");
-            let square = base.clone() * base.clone();
-            square * base
-        }
-        4 => {
-            crate::trace_dispatch!("hyperlattice", "powi", "specialized-fourth");
-            let square = base.clone() * base;
-            square.clone() * square
-        }
-        5 => {
-            crate::trace_dispatch!("hyperlattice", "powi", "specialized-fifth");
-            let square = base.clone() * base.clone();
-            let fourth = square.clone() * square;
-            fourth * base
-        }
-        _ => {
-            crate::trace_dispatch!("hyperlattice", "powi", "generic-squaring");
-            powi_by_squaring(base, exp)
-        }
-    };
-
-    if exponent < 0 {
-        crate::trace_dispatch!("hyperlattice", "powi", "negative-inverse");
-        positive.inverse()
-    } else {
-        Ok(positive)
-    }
-}
-
-fn powi_by_squaring(base: Real, exponent: u64) -> Real {
-    let mut exp = exponent;
-    let mut result = None;
-    let mut factor = base;
-    while exp > 0 {
-        if exp & 1 == 1 {
-            result = Some(match result {
-                Some(result) => result * factor.clone(),
-                None => factor.clone(),
-            });
-        }
-        exp >>= 1;
-        if exp > 0 {
-            factor = factor.clone() * factor;
-        }
-    }
-
-    result.expect("non-zero exponent sets at least one result bit")
+    // Hyperreal's native integer-power kernel raises retained rational scales
+    // directly and preserves radical or symbolic classes. Delegating avoids
+    // constructing and reducing a chain of intermediate `Real` products.
+    crate::trace_dispatch!("hyperlattice", "powi", "native-real-i64-kernel");
+    base.powi_i64(exponent)
 }
 
 /// Returns `e` raised to `value`.

@@ -15,6 +15,8 @@ fn scalar_functions() {
     assert_eq!(sin(pi()), zero());
     assert_eq!(ln(hyperlattice::e()).unwrap(), one());
     assert_eq!(log10(r(100)).unwrap(), r(2));
+    assert_eq!(powi(frac(7, 5), 5).unwrap(), frac(16_807, 3_125));
+    assert_eq!(powi(pi(), -1), reciprocal(pi()));
 
     let signal = abort_signal();
     assert_eq!(log10_with_abort(r(1_000), &signal).unwrap(), r(3));
