@@ -83,6 +83,47 @@ fn public_certified_regular_ngon_emits_correlated_dispatch_trace() {
 }
 
 #[test]
+fn public_certified_teardrop_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::teardrop(Real::from(6), Real::from(10), 24)
+    });
+    assert_eq!(profile.material_contour_count(), 1);
+    assert_recorded("csgrs certified teardrop");
+}
+
+#[test]
+fn public_exact_egg_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::egg(Real::from(6), Real::from(10), 24)
+    });
+    assert_eq!(profile.material_contour_count(), 1);
+    assert_recorded("csgrs exact egg");
+}
+
+#[test]
+fn public_certified_squircle_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::squircle(Real::from(8), Real::from(6), 24)
+    });
+    assert_eq!(profile.material_contour_count(), 1);
+    assert_recorded("csgrs certified squircle");
+}
+
+#[test]
+fn public_certified_ring_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::ring(Real::from(6), Real::from(2), 24)
+    });
+    assert_eq!(profile.material_contour_count(), 1);
+    assert_eq!(profile.hole_contour_count(), 1);
+    assert_recorded("csgrs certified ring");
+}
+
+#[test]
 fn public_naca_airfoil_emits_correlated_dispatch_trace() {
     hyperreal::dispatch_trace::reset();
     let profile = hyperreal::dispatch_trace::with_recording(|| {

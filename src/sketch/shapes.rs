@@ -65,7 +65,7 @@ fn tessellation_profile(points: &[[Real; 2]]) -> Profile {
 
 /// Materialize a line ring whose nonzero edges, connectivity, closure, and
 /// simple winding have already been proved by its analytic constructor.
-fn certified_tessellation_profile(points: &[[Real; 2]]) -> Profile {
+fn certified_tessellation_contour(points: &[[Real; 2]]) -> Contour2 {
     let points = points
         .iter()
         .map(|point| Point2::new(point[0].clone(), point[1].clone()))
@@ -77,10 +77,11 @@ fn certified_tessellation_profile(points: &[[Real; 2]]) -> Profile {
             points[(index + 1) % points.len()].clone(),
         )));
     }
-    Profile::from_contour(Contour2::new_unchecked(
-        CurveString2::new_unchecked(segments),
-        FillRule::NonZero,
-    ))
+    Contour2::new_unchecked(CurveString2::new_unchecked(segments), FillRule::NonZero)
+}
+
+fn certified_tessellation_profile(points: &[[Real; 2]]) -> Profile {
+    Profile::from_contour(certified_tessellation_contour(points))
 }
 
 fn hcircle_samples(samples: usize, radius: Real) -> Option<Vec<[Real; 2]>> {
@@ -1363,14 +1364,19 @@ impl Profile {
             points.push([x, y]);
         }
 
-        tessellation_profile(&points)
+        // The admitted center_y is strictly positive. The sampled upper
+        // semicircle stays on or above its endpoint chord while both tip
+        // edges stay strictly below that chord except at their endpoints, so
+        // the authored cycle is nonzero, simple, closed, and consistently
+        // wound.
+        certified_tessellation_profile(&points)
     }
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
     ///
-    /// Angles are constructed symbolically before the explicitly polygonal
-    /// outline is projected to finite samples for normalization.
+    /// Angles and discrete normalization bounds remain exact throughout the
+    /// explicitly polygonal construction.
     pub fn egg(width: Real, length: Real, segments: usize) -> Profile {
         if segments < 3
             || !hprofile_scalar_positive(&width)
@@ -1378,44 +1384,84 @@ impl Profile {
         {
             return Profile::empty();
         }
+        let Some(one_fifth) = hreal_div(1_u8, 5_u8) else {
+            return Profile::empty();
+        };
         let mut raw = Vec::with_capacity(segments);
         for i in 0..segments {
             let Some(theta) = exact_sample_angle(i, segments, &Real::zero(), &Real::tau())
             else {
                 return Profile::empty();
             };
-            let Some((sin, cos)) = theta
-                .clone()
-                .sin()
-                .to_f64_lossy()
-                .zip(theta.cos().to_f64_lossy())
-            else {
+            let sin = theta.clone().sin();
+            let cos = theta.cos();
+            let Some(cos_squared) = hreal_mul(&cos, &cos) else {
                 return Profile::empty();
             };
-            raw.push((-sin, cos * (1.0 + 0.2 * cos)));
+            let Some(correction) = hreal_mul(&one_fifth, cos_squared) else {
+                return Profile::empty();
+            };
+            raw.push([-sin, cos + correction]);
         }
-        let min_x = raw.iter().map(|point| point.0).fold(f64::INFINITY, f64::min);
-        let max_x = raw
-            .iter()
-            .map(|point| point.0)
-            .fold(f64::NEG_INFINITY, f64::max);
-        let min_y = raw.iter().map(|point| point.1).fold(f64::INFINITY, f64::min);
-        let max_y = raw
-            .iter()
-            .map(|point| point.1)
-            .fold(f64::NEG_INFINITY, f64::max);
-        let points = raw
+
+        let quarter_turns = segments / 4;
+        let remainder = segments % 4;
+        let min_x_index = quarter_turns + usize::from(remainder >= 2);
+        let max_x_index = 3 * quarter_turns + ((3 * remainder + 2) / 4);
+        let min_x = raw[min_x_index][0].clone();
+        let max_x = raw[max_x_index][0].clone();
+        let min_y = raw[segments / 2][1].clone();
+        let max_y = raw[0][1].clone();
+        let (Some(x_span), Some(y_span)) =
+            (hreal_sub(&max_x, &min_x), hreal_sub(&max_y, &min_y))
+        else {
+            return Profile::empty();
+        };
+        let (Some(x_scale), Some(y_scale)) =
+            (hreal_div(&width, x_span), hreal_div(&length, y_span))
+        else {
+            return Profile::empty();
+        };
+        let (Some(x_midpoint), Some(y_midpoint)) =
+            (hreal_mul(0.5, min_x + max_x), hreal_mul(0.5, min_y + max_y))
+        else {
+            return Profile::empty();
+        };
+        let Some(mut points) = raw
             .into_iter()
-            .map(|(x, y)| -> Option<[Real; 2]> {
+            .map(|[x, y]| -> Option<[Real; 2]> {
                 Some([
-                    width.clone()
-                        * hreal_from_f64((x - min_x) / (max_x - min_x) - 0.5).ok()?,
-                    length.clone()
-                        * hreal_from_f64((y - min_y) / (max_y - min_y) - 0.5).ok()?,
+                    hreal_mul(hreal_sub(x, &x_midpoint)?, &x_scale)?,
+                    hreal_mul(hreal_sub(y, &y_midpoint)?, &y_scale)?,
                 ])
             })
-            .collect::<Option<Vec<_>>>();
-        points.map_or_else(Profile::empty, Self::polygonal_region)
+            .collect::<Option<Vec<_>>>()
+        else {
+            return Profile::empty();
+        };
+        let (Some(half_width), Some(half_length)) =
+            (hreal_mul(0.5, &width), hreal_mul(0.5, &length))
+        else {
+            return Profile::empty();
+        };
+        points[min_x_index][0] = -half_width.clone();
+        points[max_x_index][0] = half_width;
+        if remainder == 2 {
+            points[min_x_index - 1][0] = points[min_x_index][0].clone();
+            points[max_x_index - 1][0] = points[max_x_index][0].clone();
+        }
+        let min_y_index = segments / 2;
+        points[min_y_index][1] = -half_length.clone();
+        if segments % 2 == 1 {
+            points[min_y_index + 1][1] = -half_length.clone();
+        }
+        points[0][1] = half_length;
+
+        // The raw curve has strictly positive signed curvature:
+        // 1 + (2/5) cos(theta)^3 >= 3/5. Uniform cyclic samples therefore
+        // author a distinct, simple, consistently wound convex polygon, and
+        // positive axis normalization preserves that topology.
+        certified_tessellation_profile(&points)
     }
 
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
@@ -1526,7 +1572,10 @@ impl Profile {
             points.push([x, y]);
         }
 
-        tessellation_profile(&points)
+        // Positive axis scales map these cyclic samples onto the strictly
+        // convex Lamé boundary x^4/rx^4 + y^4/ry^4 = 1. Consecutive samples
+        // are distinct and author a simple, consistently wound convex ring.
+        certified_tessellation_profile(&points)
     }
 
     /// Keyhole shape (simple version): a large circle + a rectangle "handle".
@@ -1666,14 +1715,15 @@ impl Profile {
         let Some(inner_points) = hcircle_samples(segments, inner_radius) else {
             return Profile::empty();
         };
-        let (Ok(outer_contour), Ok(inner_contour)) = (
-            Contour2::from_real_ring(&outer_points),
-            Contour2::from_real_ring(&inner_points),
-        ) else {
-            return Profile::empty();
-        };
-
-        Profile::from_region(Region2::new(vec![outer_contour], vec![inner_contour]))
+        // Both point sets are corresponding cyclic samples of concentric
+        // circles. Positive radii and `segments >= 3` make each a distinct,
+        // simple, consistently wound regular polygon. Since
+        // `outer_radius > inner_radius`, the inner polygon is a strict positive
+        // homothety inside the outer polygon, certifying its hole role.
+        Profile::from_region(Region2::new(
+            vec![certified_tessellation_contour(&outer_points)],
+            vec![certified_tessellation_contour(&inner_points)],
+        ))
     }
 
     /// Create a 2D "pie slice" (wedge) in the XY plane.
@@ -2802,6 +2852,35 @@ mod tests {
             .collect()
     }
 
+    fn legacy_finite_egg_points(width: f64, length: f64, segments: usize) -> Vec<[f64; 2]> {
+        let mut raw = Vec::with_capacity(segments);
+        for index in 0..segments {
+            let theta = exact_sample_angle(index, segments, &Real::zero(), &Real::tau())
+                .expect("valid egg sample angle");
+            let sin = theta.clone().sin().to_f64_lossy().expect("finite egg sine");
+            let cos = theta.cos().to_f64_lossy().expect("finite egg cosine");
+            raw.push((-sin, cos * (1.0 + 0.2 * cos)));
+        }
+        let min_x = raw.iter().map(|point| point.0).fold(f64::INFINITY, f64::min);
+        let max_x = raw
+            .iter()
+            .map(|point| point.0)
+            .fold(f64::NEG_INFINITY, f64::max);
+        let min_y = raw.iter().map(|point| point.1).fold(f64::INFINITY, f64::min);
+        let max_y = raw
+            .iter()
+            .map(|point| point.1)
+            .fold(f64::NEG_INFINITY, f64::max);
+        raw.into_iter()
+            .map(|(x, y)| {
+                [
+                    width * ((x - min_x) / (max_x - min_x) - 0.5),
+                    length * ((y - min_y) / (max_y - min_y) - 0.5),
+                ]
+            })
+            .collect()
+    }
+
     fn legacy_cycloidal_gear_points(
         module: f64,
         teeth: usize,
@@ -3532,6 +3611,85 @@ mod tests {
     }
 
     #[test]
+    fn certified_teardrop_ring_matches_former_exact_region() {
+        for (width, length, segments) in [
+            (Real::from(4), Real::from(5), 2_usize),
+            (Real::from(6), Real::from(10), 3),
+            (Real::from(9), Real::from(7), 7),
+            (Real::from(3), Real::from(5), 24),
+            (Real::from(11), Real::from(8), 31),
+        ] {
+            let r = hreal_mul(0.5, &width).unwrap();
+            let center_y = hreal_sub(&length, &r).unwrap();
+            let mut points = vec![[Real::zero(), Real::zero()]];
+            for index in 0..=segments {
+                let [dx, dy] =
+                    sampled_ellipse_point(&r, &r, index, segments, &Real::zero(), &Real::pi())
+                        .unwrap();
+                points.push([
+                    hreal_sub(0.0, dx).unwrap(),
+                    hreal_affine(&center_y, 1.0, dy).unwrap(),
+                ]);
+            }
+            let oracle = tessellation_profile(&points);
+            let actual = Profile::teardrop(width, length, segments);
+
+            assert_eq!(actual.region, oracle.region);
+        }
+    }
+
+    #[test]
+    fn certified_squircle_ring_matches_former_exact_region() {
+        for (width, height, segments) in [
+            (Real::from(8), Real::from(6), 3_usize),
+            (Real::from(6), Real::from(8), 4),
+            (Real::from(9), Real::from(2), 5),
+            (Real::from(3), Real::from(7), 7),
+            (Real::from(8), Real::from(6), 24),
+            (Real::from(11), Real::from(5), 31),
+        ] {
+            let rx = hreal_mul(0.5, &width).unwrap();
+            let ry = hreal_mul(0.5, &height).unwrap();
+            let mut points = Vec::with_capacity(segments);
+            for index in 0..segments {
+                let angle =
+                    exact_sample_angle(index, segments, &Real::zero(), &Real::tau()).unwrap();
+                let ct = signed_sqrt(angle.clone().cos()).unwrap();
+                let st = signed_sqrt(angle.sin()).unwrap();
+                points.push([hreal_mul(&rx, ct).unwrap(), hreal_mul(&ry, st).unwrap()]);
+            }
+            let oracle = tessellation_profile(&points);
+            let actual = Profile::squircle(width, height, segments);
+
+            assert_eq!(actual.region, oracle.region);
+        }
+    }
+
+    #[test]
+    fn certified_annular_ring_matches_former_exact_region() {
+        for (id, thickness, segments) in [
+            (Real::from(2), Real::from(1), 3_usize),
+            (Real::from(7), Real::from(2), 4),
+            (Real::from(3), Real::from(9), 5),
+            (Real::from(11), Real::from(1), 7),
+            (Real::from(6), Real::from(2), 24),
+            (Real::from(13), Real::from(5), 31),
+        ] {
+            let inner_radius = hreal_mul(0.5, &id).unwrap();
+            let outer_radius = hreal_affine(&inner_radius, 1.0, thickness.clone()).unwrap();
+            let outer_points = hcircle_samples(segments, outer_radius).unwrap();
+            let inner_points = hcircle_samples(segments, inner_radius).unwrap();
+            let oracle = Profile::from_region(Region2::new(
+                vec![Contour2::from_real_ring(&outer_points).unwrap()],
+                vec![Contour2::from_real_ring(&inner_points).unwrap()],
+            ));
+            let actual = Profile::ring(id, thickness, segments);
+
+            assert_eq!(actual.region, oracle.region);
+        }
+    }
+
+    #[test]
     fn symbolic_circle_flat_retains_exact_clipped_topology() {
         let profile = Profile::circle_with_flat(r(3.0), 24, r(1.0));
         assert_eq!(profile.material_contour_count(), 1);
@@ -3755,15 +3913,44 @@ mod tests {
     }
 
     #[test]
-    fn egg_honors_requested_centered_dimensions() {
-        let egg = Profile::egg(r(3.0), r(5.0), 24);
-        let (min_x, min_y, max_x, max_y) = egg.native_xy_bounds().expect("egg bounds");
-        let values = [min_x, min_y, max_x, max_y]
-            .map(|value| value.to_f64_lossy().expect("finite egg bound"));
-        assert!((values[0] + 1.5).abs() < 1.0e-12);
-        assert!((values[1] + 2.5).abs() < 1.0e-12);
-        assert!((values[2] - 1.5).abs() < 1.0e-12);
-        assert!((values[3] - 2.5).abs() < 1.0e-12);
+    fn egg_keeps_normalization_exact_while_matching_legacy_finite_coordinates() {
+        let mut saw_non_rational_coordinate = false;
+        for segments in [3_usize, 4, 5, 7, 24, 31, 64] {
+            let egg = Profile::egg(Real::from(6), Real::from(10), segments);
+            let contour = &egg.region.material_contours()[0];
+            let actual = contour
+                .segments()
+                .iter()
+                .map(|segment| {
+                    [
+                        segment.start().x().to_f64_lossy().expect("finite egg x"),
+                        segment.start().y().to_f64_lossy().expect("finite egg y"),
+                    ]
+                })
+                .collect::<Vec<_>>();
+            let legacy = legacy_finite_egg_points(6.0, 10.0, segments);
+
+            assert_eq!(actual.len(), legacy.len());
+            for (point, expected) in actual.iter().zip(legacy) {
+                assert!((point[0] - expected[0]).abs() <= 1.0e-12);
+                assert!((point[1] - expected[1]).abs() <= 1.0e-12);
+            }
+
+            let (min_x, min_y, max_x, max_y) = egg.native_xy_bounds().expect("egg bounds");
+            assert_eq!(
+                hreal_try_cmp(max_x - min_x, Real::from(6)),
+                Some(Ordering::Equal)
+            );
+            assert_eq!(
+                hreal_try_cmp(max_y - min_y, Real::from(10)),
+                Some(Ordering::Equal)
+            );
+            saw_non_rational_coordinate |= contour.segments().iter().any(|segment| {
+                segment.start().x().exact_rational_ref().is_none()
+                    || segment.start().y().exact_rational_ref().is_none()
+            });
+        }
+        assert!(saw_non_rational_coordinate);
     }
 
     #[test]

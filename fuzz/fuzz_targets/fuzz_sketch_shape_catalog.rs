@@ -48,7 +48,7 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     let mut idx = 0usize;
-    let tag = bytes[idx] % 22;
+    let tag = bytes[idx] % 24;
     idx += 1;
     let a = decode_real(bytes, &mut idx);
     let b = decode_real(bytes, &mut idx);
@@ -66,28 +66,42 @@ fuzz_target!(|bytes: &[u8]| {
     let positive_b = at_least_tolerance(b.abs());
 
     let sketch: Profile = match tag {
-        0 => Profile::rectangle(a, b ),
-        1 => Profile::square(a ),
-        2 => Profile::circle(a, segments ),
-        3 => Profile::right_triangle(a, b ),
-        4 => Profile::ellipse(a, b, segments ),
-        5 => Profile::regular_ngon(segments, a ),
-        6 => Profile::arrow(a, b, c, positive_b ),
-        7 => Profile::trapezoid(a, b, c, real(0.25) ),
-        8 => Profile::star(segments, a, b ),
-        9 => Profile::rounded_rectangle(a, b, c, segments ),
-        10 => Profile::squircle(a, b, segments ),
-        11 => Profile::keyhole(a, b, c, segments ),
+        0 => Profile::rectangle(a, b),
+        1 => Profile::square(a),
+        2 => Profile::circle(a, segments),
+        3 => Profile::right_triangle(a, b),
+        4 => Profile::ellipse(a, b, segments),
+        5 => Profile::regular_ngon(segments, a),
+        6 => Profile::arrow(a, b, c, positive_b),
+        7 => Profile::trapezoid(a, b, c, real(0.25)),
+        8 => Profile::star(segments, a, b),
+        9 => Profile::rounded_rectangle(a, b, c, segments),
+        10 => Profile::squircle(a, b, segments),
+        11 => Profile::keyhole(a, b, c, segments),
         12 => Profile::reuleaux(reuleaux_sides, a, reuleaux_segments),
-        13 => Profile::ring(a, b, segments ),
-        14 => Profile::pie_slice(a, b, c, segments ),
-        15 => Profile::heart(a, b, segments ),
-        16 => Profile::crescent(positive_a, positive_b, c, segments ),
-        17 => Profile::airfoil_naca4(a, b, real(12.0), positive_a, segments.max(2) ),
-        18 => Profile::involute_gear(a, teeth, b.clone(), c, real(0.01) * b, segments ),
-        19 => Profile::cycloidal_gear(a, teeth, positive_b, b, segments ),
-        20 => Profile::involute_rack(a, teeth, b, c.clone(), real(0.01) * c ),
-        _ => Profile::cycloidal_rack(a, teeth, c, segments ),
+        13 => Profile::ring(a, b, segments),
+        14 => Profile::pie_slice(a, b, c, segments),
+        15 => Profile::heart(a, b, segments),
+        16 => Profile::crescent(positive_a, positive_b, c, segments),
+        17 => Profile::airfoil_naca4(a, b, real(12.0), positive_a, segments.max(2)),
+        18 => Profile::involute_gear(a, teeth, b.clone(), c, real(0.01) * b, segments),
+        19 => Profile::cycloidal_gear(a, teeth, positive_b, b, segments),
+        20 => Profile::involute_rack(a, teeth, b, c.clone(), real(0.01) * c),
+        21 => Profile::cycloidal_rack(a, teeth, c, segments),
+        22 => {
+            if bytes[idx % bytes.len()] & 1 == 0 {
+                Profile::teardrop(a, b, segments)
+            } else {
+                Profile::teardrop(positive_a.clone(), positive_a + positive_b, segments.max(2))
+            }
+        },
+        _ => {
+            if bytes[idx % bytes.len()] & 1 == 0 {
+                Profile::egg(a, b, segments)
+            } else {
+                Profile::egg(positive_a, positive_b, segments.max(3))
+            }
+        },
     };
 
     assert_sketch_finite(&sketch);

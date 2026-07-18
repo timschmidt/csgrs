@@ -18,6 +18,10 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `profile_primitives/constructor/ellipse` | 0.171 ms/op | 0.0452 ms/op | 73.6% faster | Exact former `Region2` equality across five aspect-ratio/tessellation cases |
 | `profile_primitives/constructor/star` | 0.128 ms/op | 0.0539 ms/op | 57.8% faster | Exact former `Region2` equality across five point-count/radius-ratio cases |
 | `profile_primitives/constructor/regular_ngon` | 0.0368 ms/op | 0.0201 ms/op | 45.3% faster | Exact former `Region2` equality at six side counts |
+| `profile_primitives/constructor/teardrop` | 0.170 ms/op | 0.0606 ms/op | 64.4% faster | Exact former `Region2` equality across five dimension/tessellation cases |
+| `profile_primitives/constructor/egg` | 0.118 ms/op | 0.0628 ms/op | 46.9% faster | Legacy finite coordinates within 1e-12 plus exact requested bounds |
+| `profile_primitives/constructor/squircle` | 0.138 ms/op | 0.0634 ms/op | 54.0% faster | Exact former `Region2` equality across six aspect-ratio/tessellation cases |
+| `profile_primitives/constructor/ring` | 0.263 ms/op | 0.0868 ms/op | 66.9% faster | Exact former annular `Region2` equality across six dimension/tessellation cases |
 | `profile_primitives/constructor/airfoil_naca4` | 1.686 ms/op | 1.184 ms/op | 29.8% faster | Exact former-region equality at three tessellations and same checksum |
 | `profile_primitives/constructor/involute_gear` | 0.637 ms/op | 0.173 ms/op | 72.8% faster | Same contour/checksum and exact finite-import accounting |
 | `profile_primitives/constructor/cycloidal_gear` | 0.391 ms/op | 0.118 ms/op | 69.8% faster | Former finite point sequence bit-exact across three parameter sets |
@@ -148,6 +152,59 @@ A one-call trace fell from 723 to 589 dispatch events (18.5%); unknown and
 fallback/abort events each fell from 26 to zero, with no approximation or
 refinement events before or after.
 
+`Profile::teardrop` now materializes its sampled semicircle-and-tip boundary
+from the constructor's existing strict `length > width / 2` certificate. The
+positive cap-center height places the entire semicircle on or above its
+endpoint chord while both tip edges stay below it except at shared endpoints,
+proving nonzero edges, simple closure, and consistent winding. A differential
+regression compares the complete former exact `Region2` across five dimension
+and tessellation regimes, including the minimum two-segment cap. Matched
+30-sample medians fell from 0.170 to 0.0606 ms/op (64.4%), with 0.166--0.177
+and 0.0566--0.0672 ms interquartile ranges. A one-call trace fell from 2,112
+to 1,436 dispatch events (32.0%); unknown and fallback/abort events each fell
+from 92 to zero, with no approximation or refinement events before or after.
+
+`Profile::egg` no longer demotes every symbolic sine/cosine sample to binary64
+for internal normalization. The discrete extrema are known from uniform sample
+indices: x extrema are nearest the quarter turns, while
+`d(c + c^2/5)/dc = 1 + 2c/5` is strictly positive on `[-1, 1]`, so y extrema
+are nearest 0 and pi. Two exact span divisions are hoisted outside the point
+loop, and analytically tied extrema are canonicalized to the exact requested
+half-dimensions. The raw curve's signed curvature
+`1 + (2/5) cos(theta)^3 >= 3/5` certifies the normalized sampled ring as
+distinct, convex, simple, and consistently wound. Across seven tessellations,
+the new path stays within `1e-12` of every legacy finite coordinate, preserves
+non-rational exact coordinates, and proves the requested width and length
+exactly. Matched 30-sample medians fell from 0.118 to 0.0628 ms/op (46.9%),
+with 0.100--0.121 and 0.0618--0.0644 ms interquartile ranges. A one-call trace
+fell from 2,083 to 1,377 dispatch events (33.9%); approximation, refinement,
+fallback, and unknown events remained zero.
+
+`Profile::squircle` now materializes its exact signed-square-root samples from
+the constructor's Lamé topology certificate. Positive width and height scale
+the strictly convex boundary `x^4/rx^4 + y^4/ry^4 = 1`, so cyclic samples are
+distinct and form a simple, consistently wound convex polygon without generic
+edge validation. A differential regression compares the complete former exact
+`Region2` across six aspect-ratio and tessellation cases. Matched 30-sample
+medians fell from 0.138 to 0.0634 ms/op (54.0%), with 0.126--0.156 and
+0.0587--0.0683 ms interquartile ranges. A one-call trace fell from 2,135 to
+1,711 dispatch events (19.9%); unknown events fell from 96 to zero and
+fallback/abort events from 160 to 64, with approximation and refinement events
+remaining zero. The retained 64 fallback events belong to the intrinsic
+signed-square-root classification, not ring topology validation.
+
+`Profile::ring` now applies the same analytic topology certificate separately
+to its two concentric regular polygons. Positive input dimensions and at least
+three samples make both boundaries simple and consistently wound; the larger
+outer radius makes the inner polygon a strict positive homothety inside it, so
+the material and hole roles need no generic ring validation. A differential
+regression compares the complete former exact annular `Region2` across six
+diameter, thickness, and tessellation cases. Matched 30-sample medians fell
+from 0.263 to 0.0868 ms/op (66.9%), with 0.260--0.265 and 0.0858--0.0885 ms
+interquartile ranges. A one-call trace fell from 3,646 to 2,174 dispatch events
+(40.4%); unknown and fallback/abort events both fell from 176 to zero, while
+approximation and refinement events remained zero.
+
 `Profile::airfoil_naca4` previously evaluated every interior chord station
 twice: once while constructing the upper surface and again while traversing the
 lower surface in reverse. It now evaluates each exact station once, appends the
@@ -241,7 +298,7 @@ finite coordinate within 1e-12 while now proving exact requested width and
 height and retaining symbolic sample dependencies.
 
 The shared sketch-constructor target then completed 1,000
-AddressSanitizer-instrumented executions (265 coverage points and 493 feature
+AddressSanitizer-instrumented executions (298 coverage points and 516 feature
 edges). Its generated corpus exposed exact-Boolean uncertainty in the legacy
 fallbacks for a 3-segment keyhole and a 15-sided Reuleaux polygon. Those public
 constructors now use the fallible Boolean surfaces and fail closed instead of
