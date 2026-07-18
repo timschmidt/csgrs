@@ -399,6 +399,113 @@ mod tests {
     }
 
     #[test]
+    fn prepared_linear_form3_filter_certifies_non_dyadic_rational_queries() {
+        let coefficients = [
+            Real::from(2_i32),
+            Real::from(-3_i32),
+            Real::from(5_i32),
+            Real::from(-7_i32),
+        ];
+        let prepared = Real::prepare_linear_form3_filter([
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ])
+        .expect("dyadic coefficients should prepare");
+        let positive = Rational::fraction(11, 3).unwrap();
+        let negative = Rational::fraction(10, 3).unwrap();
+        let boundary = Rational::fraction(7, 2).unwrap();
+        let zero = Rational::zero();
+        assert_eq!(
+            prepared.sign_rational([&positive, &zero, &zero]),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            prepared.sign_rational([&negative, &zero, &zero]),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(
+            prepared.sign_rational([&boundary, &zero, &zero]),
+            None,
+        );
+    }
+
+    #[test]
+    fn prepared_rational_linear_form4_filter_preserves_exact_signs() {
+        let third = Rational::fraction(1, 3).unwrap();
+        let coefficients = [
+            Real::new(third),
+            Real::from(-3_i32),
+            Real::from(5_i32),
+            Real::from(-7_i32),
+        ];
+        let prepared = Real::prepare_rational_linear_form4_filter([
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ])
+        .expect("finite rational coefficients should prepare");
+        let zero = Rational::zero();
+        let three = Rational::new(3);
+        let positive = Rational::new(66);
+        let negative = Rational::new(60);
+        let boundary = Rational::new(63);
+        assert_eq!(
+            prepared.sign_rational([
+                &positive,
+                &zero,
+                &zero,
+                &three,
+            ]),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            prepared.sign_rational([
+                &negative,
+                &zero,
+                &zero,
+                &three,
+            ]),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(
+            prepared.sign_rational([
+                &boundary,
+                &zero,
+                &zero,
+                &three,
+            ]),
+            None,
+        );
+    }
+
+    #[test]
+    fn prepared_rational_line2_filter_preserves_exact_signs() {
+        let zero = Rational::zero();
+        let third = Rational::fraction(1, 3).unwrap();
+        let two_thirds = Rational::fraction(2, 3).unwrap();
+        let line = Real::prepare_rational_line2_filter(
+            [&zero, &zero],
+            [&third, &two_thirds],
+        )
+        .expect("finite rational line should prepare");
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        assert_eq!(
+            line.sign_rational([&one, &three]),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            line.sign_rational([&two, &three]),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(line.sign_rational([&one, &two]), None);
+    }
+
+    #[test]
     fn certified_linear_form3_filter_only_returns_exact_signs() {
         let coefficients = [
             Real::from(2_i32),

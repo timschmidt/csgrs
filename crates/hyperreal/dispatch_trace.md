@@ -25,7 +25,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_hyperbolic_adversarial/acosh_two` | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 11 | 2 | 2 |
 | `computable/inverse_hyperbolic_adversarial/asinh_large` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 9 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/asinh_large_negative` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 11 | 0 | 0 |
-| `computable/inverse_hyperbolic_adversarial/asinh_mid` | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `computable/inverse_hyperbolic_adversarial/asinh_mid` | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 3 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/asinh_tiny` | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/atanh_mid` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/atanh_near_minus_one` | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 8 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 8 | 0 | 0 |
@@ -265,8 +265,12 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_hyperbolic_adversarial/asinh_large_negative` | `computable` | `sqrt` | `generic-sqrt-node` | 1 |
 | `computable/inverse_hyperbolic_adversarial/asinh_large_negative` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/inverse_hyperbolic_adversarial/asinh_large_negative` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
-| `computable/inverse_hyperbolic_adversarial/asinh_mid` | `computable` | `asinh` | `exact-small-rational-series` | 1 |
-| `computable/inverse_hyperbolic_adversarial/asinh_mid` | `computable` | `constructor` | `asinh-rational-deferred` | 1 |
+| `computable/inverse_hyperbolic_adversarial/asinh_mid` | `computable` | `asinh` | `near-zero-ln1p-transform` | 1 |
+| `computable/inverse_hyperbolic_adversarial/asinh_mid` | `computable` | `constructor` | `one` | 1 |
+| `computable/inverse_hyperbolic_adversarial/asinh_mid` | `computable` | `constructor` | `rational-node` | 2 |
+| `computable/inverse_hyperbolic_adversarial/asinh_mid` | `computable` | `sqrt` | `generic-sqrt-node` | 1 |
+| `computable/inverse_hyperbolic_adversarial/asinh_mid` | `rational` | `mul` | `word-sized` | 1 |
+| `computable/inverse_hyperbolic_adversarial/asinh_mid` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `computable/inverse_hyperbolic_adversarial/asinh_tiny` | `computable` | `asinh` | `exact-small-rational-series` | 1 |
 | `computable/inverse_hyperbolic_adversarial/asinh_tiny` | `computable` | `constructor` | `asinh-rational-deferred` | 1 |
 | `computable/inverse_hyperbolic_adversarial/atanh_mid` | `computable` | `atanh` | `exact-half-ln3` | 1 |

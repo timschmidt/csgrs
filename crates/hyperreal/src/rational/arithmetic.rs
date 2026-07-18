@@ -7,7 +7,7 @@ use num::{One, Zero};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::ops::Deref;
-use std::sync::{Arc, LazyLock};
+use std::sync::{Arc, LazyLock, OnceLock};
 
 include!("arithmetic/representation.rs");
 include!("arithmetic/construction.rs");

@@ -3,6 +3,60 @@ mod tests {
     use super::*;
 
     #[test]
+    fn binary_word_gcd_matches_euclidean_reference() {
+        fn reference(mut left: u128, mut right: u128) -> u128 {
+            while right != 0 {
+                (left, right) = (right, left % right);
+            }
+            left
+        }
+
+        let edge_cases = [
+            (0, 0),
+            (0, 1),
+            (1, 0),
+            (1, 1),
+            (2, 4),
+            (u128::MAX, u128::MAX - 1),
+            (1_u128 << 127, 1_u128 << 126),
+            ((1_u128 << 127) + (1_u128 << 63), 1_u128 << 64),
+        ];
+        for (left, right) in edge_cases {
+            assert_eq!(Rational::gcd_word(left, right), reference(left, right));
+        }
+
+        let mut left = 0x243f_6a88_85a3_08d3_1319_8a2e_0370_7344_u128;
+        let mut right = 0xa409_3822_299f_31d0_082e_fa98_ec4e_6c89_u128;
+        for _ in 0..20_000 {
+            left ^= left << 13;
+            left ^= left >> 17;
+            left ^= left << 43;
+            right ^= right << 29;
+            right ^= right >> 31;
+            right ^= right << 37;
+            assert_eq!(Rational::gcd_word(left, right), reference(left, right));
+        }
+    }
+
+    #[test]
+    fn word_multiplication_cross_cancellation_stays_reduced() {
+        let dyadic = Rational::try_from(0.123_456_789_f64).unwrap();
+        let scaled = &dyadic * Rational::new(10);
+        assert_eq!(
+            scaled,
+            Rational::from_bigint_fraction(
+                BigInt::from(44_479_995_914_940_635_u64),
+                BigUint::from(36_028_797_018_963_968_u64),
+            )
+            .unwrap()
+        );
+
+        let left = Rational::fraction(35, 22).unwrap();
+        let right = Rational::fraction(121, 14).unwrap();
+        assert_eq!(&left * right, Rational::fraction(55, 4).unwrap());
+    }
+
+    #[test]
     fn exact_dyadic_f64_view_round_trips_finite_binary64_values() {
         let mut state = 0xbb67_ae85_84ca_a73b_u64;
         let mut recovered_count = 0_u32;
@@ -27,12 +81,14 @@ mod tests {
     fn exact_dyadic_f64_view_rejects_unrepresentable_values() {
         let too_precise = Rational::new((1_i64 << 54) + 1);
         let exactly_representable = Rational::new((1_i64 << 54) + 4);
+        let non_dyadic = Rational::fraction(1, 3).unwrap();
         let too_small = Rational::from_bigint_fraction(
             BigInt::from(1_u8),
             BigUint::from(1_u8) << 1075,
         )
         .unwrap();
 
+        assert_eq!(non_dyadic.dyadic_to_f64_exact(), None);
         assert_eq!(too_precise.dyadic_to_f64_exact(), None);
         assert_eq!(
             exactly_representable.dyadic_to_f64_exact(),
@@ -138,6 +194,48 @@ mod tests {
         let three = Rational::new(3);
         let sum = half + one;
         assert_eq!(sum * two, three);
+    }
+
+    #[test]
+    fn average_pair_matches_expanded_exact_arithmetic() {
+        let cases = [
+            (
+                Rational::fraction(5, 8).unwrap(),
+                Rational::fraction(5, 8).unwrap(),
+            ),
+            (
+                Rational::fraction(-7, 12).unwrap(),
+                Rational::fraction(11, 18).unwrap(),
+            ),
+            (
+                Rational::zero(),
+                Rational::fraction(-13, 32).unwrap(),
+            ),
+            (
+                Rational::from_parts_raw(
+                    Plus,
+                    BigUint::from(3_u8),
+                    BigUint::one() << 200_usize,
+                ),
+                Rational::from_parts_raw(
+                    Minus,
+                    BigUint::from(5_u8),
+                    BigUint::one() << 201_usize,
+                ),
+            ),
+            (
+                Rational::from_unsigned_integer(BigUint::one() << 127_usize),
+                Rational::from_unsigned_integer(
+                    (BigUint::one() << 127_usize) + BigUint::from(2_u8),
+                ),
+            ),
+        ];
+        let half = Rational::fraction(1, 2).unwrap();
+        for (left, right) in cases {
+            let expanded = (&left + &right) * &half;
+            assert_eq!(Rational::average_pair(&left, &right), expanded);
+            assert_eq!(Rational::average_pair(&right, &left), expanded);
+        }
     }
 
     #[test]
@@ -444,6 +542,31 @@ mod tests {
             Rational::fraction(-1, 16).unwrap()
         );
         assert_eq!(&three_eighths - &three_eighths, Rational::zero());
+    }
+
+    #[test]
+    fn integer_add_sub_preserves_reduced_fraction_denominator() {
+        let three_eighths = Rational::fraction(3, 8).unwrap();
+        let five = Rational::from(5_u8);
+        let negative_five = Rational::from(-5_i8);
+
+        for (actual, expected) in [
+            (&three_eighths + &five, Rational::fraction(43, 8).unwrap()),
+            (&five + &three_eighths, Rational::fraction(43, 8).unwrap()),
+            (&three_eighths - &five, Rational::fraction(-37, 8).unwrap()),
+            (&five - &three_eighths, Rational::fraction(37, 8).unwrap()),
+            (
+                &three_eighths + &negative_five,
+                Rational::fraction(-37, 8).unwrap(),
+            ),
+            (
+                &negative_five - &three_eighths,
+                Rational::fraction(-43, 8).unwrap(),
+            ),
+        ] {
+            assert_eq!(actual, expected);
+            assert_eq!(actual.denominator(), &BigUint::from(8_u8));
+        }
     }
 
     #[test]

@@ -33,6 +33,35 @@ cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates
 cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
 ```
 
+## Fuzz coverage
+
+The standalone `fuzz` workspace covers four runtime-bearing public families:
+
+| Target | Exactness and API boundary |
+| --- | --- |
+| `rational_arithmetic` | Rational construction, every core arithmetic ownership path, inverse/powers, truncation/fraction decomposition, and exact dyadic conversion |
+| `real_exact` | Exact Real arithmetic, fused dot/product-sum kernels, prepared determinant filters, certified facts/comparisons, exact conversion, and serde round trips |
+| `real_elementary` | Domain-bearing roots, logarithms, powers, trigonometric, inverse/hyperbolic, normal, error, and gamma-family construction with forced lazy evaluation |
+| `computable_approximation` | Direct Computable graph construction, transcendental dispatch, repeatable multi-precision approximation, structural facts, and bounded sign refinement |
+
+Inputs remain bounded exact rationals. Primitive-float values are requested only
+through the explicitly lossy output API and are checked for finiteness, never
+used as proof. The live campaign found and fixed a public-contract defect where
+`Rational::dyadic_to_f64_exact` debug-asserted on non-dyadic input despite its
+`Option` return type; arbitrary non-dyadics now return `None`.
+
+```sh
+cargo check --manifest-path fuzz/Cargo.toml --bins
+CCACHE_DISABLE=1 cargo +nightly fuzz run -s none rational_arithmetic --fuzz-dir fuzz -- -runs=1000 -timeout=10 -max_len=64
+CCACHE_DISABLE=1 cargo +nightly fuzz run -s none real_exact --fuzz-dir fuzz -- -runs=1000 -timeout=10 -max_len=64
+CCACHE_DISABLE=1 cargo +nightly fuzz run -s none real_elementary --fuzz-dir fuzz -- -runs=1000 -timeout=10 -max_len=64
+CCACHE_DISABLE=1 cargo +nightly fuzz run -s none computable_approximation --fuzz-dir fuzz -- -runs=1000 -timeout=10 -max_len=64
+```
+
+The `-s none` smoke setting is needed only in ptrace-managed environments where
+LeakSanitizer cannot attach. Normal local campaigns should retain the default
+AddressSanitizer configuration.
+
 ## Rational Path
 
 Current timing anchors:
@@ -186,6 +215,39 @@ Goals:
 - Reduce tan cold paths toward 3 us without changing pole behavior.
 - The biggest remaining low-level targets are inverse trig and hyperbolic
   cold paths: `acos`, `asin`, `atan`, `acosh`, `asinh`, and large `exp`.
+
+### Retained asinh series crossover
+
+The exact-rational asinh dispatcher formerly sent every value with binary MSD
+`<= -1` through the direct Taylor recurrence. That includes the whole
+`[1/2, 1)` binade, where convergence becomes progressively slower. The retained
+threshold limits the series to MSD `<= -2`; larger subunit rationals use the
+existing cancellation-safe
+`ln1p(x + x^2 / (sqrt(1 + x^2) + 1))` transform. Both paths remain exact
+Computable graphs and round only at the requested approximation precision.
+
+Paired 100-sample Criterion runs at 128 bits measured:
+
+| Input | Series control | Retained `ln1p` path | Change |
+| --- | ---: | ---: | ---: |
+| `asinh(1/2)` | 6.866 us | 6.355 us | 8.36% faster |
+| `asinh(3/4)` | 16.344 us | 4.695 us | 71.18% faster |
+
+The new three-quarters sentinel guards the crossover and its exact
+`asinh(3/4) = ln(2)` value. Construction tracing now records
+`near-zero-ln1p-transform` for the mid case while the tiny case retains
+`exact-small-rational-series`. The complete all-target/all-feature gate, strict
+Clippy, and warning-denied documentation passed. The Computable approximation
+and public Real elementary fuzz targets each completed 1,000 sanitizer-backed
+runs without a failure, reaching 4,254 and 6,355 coverage edges respectively.
+
+Two inverse-trig follow-ups were measured and fully removed. Routing the
+`acos(7/10)` square-root residual through the generic Computable atan graph
+raised the paired asin/acos rows from 5.954/5.689 us to 7.787/7.466 us
+(30--31% slower). Explicitly reducing that graph around the cached
+`atan(1/2)` anchor still measured 7.632/7.537 us. The direct
+`atan_sqrt_rational_small` kernel therefore remains the correct schedule for
+this exact-rational range.
 
 ## Reference Audit (2026-07-15)
 

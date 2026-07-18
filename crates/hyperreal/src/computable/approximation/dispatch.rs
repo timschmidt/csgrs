@@ -40,6 +40,7 @@ impl Approximation {
             Negate(c) => -c.approx_signal(signal, p),
             Add(c1, c2) => add(signal, c1, c2, p),
             Multiply(c1, c2) => multiply(signal, c1, c2, p),
+            LinearCombination3(form) => linear_combination3(signal, form, p),
             Square(c) => square(signal, c, p),
             Ratio(r) => ratio(r, p),
             Offset(c, n) => offset(signal, c, *n, p),

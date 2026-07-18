@@ -356,6 +356,10 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Approximates a computable asinh expression.",
             },
             BenchDoc {
+                name: "asinh_three_quarters_cold_p128",
+                description: "Approximates asinh(3/4) across the series/ln1p crossover.",
+            },
+            BenchDoc {
                 name: "asinh_cached_p128",
                 description: "Repeats a cached computable asinh approximation.",
             },
@@ -1266,6 +1270,14 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     group.bench_function("asinh_cold_p128", |b| {
         b.iter_batched(
             || computable_asinh(hyperbolic_input.clone()),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let asinh_three_quarters_input = Computable::rational(Rational::fraction(3, 4).unwrap());
+    group.bench_function("asinh_three_quarters_cold_p128", |b| {
+        b.iter_batched(
+            || computable_asinh(asinh_three_quarters_input.clone()),
             |value| black_box(value.approx(p)),
             BatchSize::SmallInput,
         )

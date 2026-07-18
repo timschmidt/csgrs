@@ -39,6 +39,13 @@ static NEG_SEVENTEEN_HALVES_RATIONAL: LazyLock<Rational> =
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub(super) struct LinearCombination3 {
+    pub(super) coefficients: [Computable; 3],
+    pub(super) values: [Rational; 3],
+}
+
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(super) enum Approximation {
     // Exact integer leaf. This is the cheapest approximation source and also
     // exposes exact sign/MSD facts without any refinement.
@@ -62,6 +69,10 @@ pub(super) enum Approximation {
     // Generic product. Exact and dyadic scales are peeled off before this node
     // is created because multiplication dominates dense algebra kernels.
     Multiply(Computable, Computable),
+    // Dense three-term dot products are common in exact affine transforms.
+    // Retaining the whole form in one node avoids allocating three products and
+    // two additions while preserving demand-driven exact approximation.
+    LinearCombination3(Box<LinearCombination3>),
     // Dedicated square node exposes sign/MSD facts and lets sqrt(square(x))
     // collapse structurally when x has a known sign.
     Square(Computable),

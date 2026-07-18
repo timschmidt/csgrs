@@ -339,6 +339,12 @@ impl From<Real> for f64 {
 }
 
 impl Real {
+    /// Return an `f64` only when this value is an exact dyadic rational whose
+    /// conversion is lossless.
+    pub fn to_f64_exact_dyadic(&self) -> Option<f64> {
+        self.exact_rational_ref()?.dyadic_to_f64_exact()
+    }
+
     /// Return a finite borrowed lossy `f64` approximation, or `None` on overflow.
     ///
     /// This is an explicit primitive-float edge for rendering, IO, display,

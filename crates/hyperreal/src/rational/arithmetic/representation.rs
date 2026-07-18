@@ -127,24 +127,10 @@ static RATIONAL_ONE: LazyLock<Rational> =
     LazyLock::new(|| Rational::from_parts_raw(Plus, BigUint::one(), BigUint::one()));
 static RATIONAL_MINUS_ONE: LazyLock<Rational> =
     LazyLock::new(|| Rational::from_parts_raw(Minus, BigUint::one(), BigUint::one()));
-static SMALL_POSITIVE_RATIONALS: LazyLock<[Rational; 63]> = LazyLock::new(|| {
-    std::array::from_fn(|index| {
-        Rational::from_parts_raw(
-            Plus,
-            BigUint::from((index + 2) as u8),
-            BigUint::one(),
-        )
-    })
-});
-static SMALL_NEGATIVE_RATIONALS: LazyLock<[Rational; 63]> = LazyLock::new(|| {
-    std::array::from_fn(|index| {
-        Rational::from_parts_raw(
-            Minus,
-            BigUint::from((index + 2) as u8),
-            BigUint::one(),
-        )
-    })
-});
+static SMALL_POSITIVE_RATIONALS: [OnceLock<Rational>; 63] =
+    [const { OnceLock::new() }; 63];
+static SMALL_NEGATIVE_RATIONALS: [OnceLock<Rational>; 63] =
+    [const { OnceLock::new() }; 63];
 
 macro_rules! trace_rational_temporary {
     () => {{

@@ -57,6 +57,21 @@ pub struct Real {
 
 impl Clone for Real {
     fn clone(&self) -> Self {
+        if matches!(self.class, One) && self.computable.is_none() {
+            // Exact rationals dominate dense geometry carriers. They have no
+            // computable payload or abort signal, and their class certificate
+            // is the unit variant, so avoid the generic symbolic-clone
+            // decision tree and enum clone entirely.
+            return Self {
+                rational: self.rational.clone(),
+                class: One,
+                computable: None,
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    self.primitive_approx_cache.get(),
+                ),
+            };
+        }
+
         // `Computable` caches are accelerators, not semantic state. Most Real
         // clones in hyperlattice matrix kernels are cold exact symbols, so
         // cloning the full payload just to preserve an empty cache is wasted

@@ -2660,6 +2660,33 @@ mod tests {
     }
 
     #[test]
+    fn active_dot3_retains_symbolic_by_rational_linear_combination() {
+        let symbolic = [Real::pi(), Real::e(), Real::from(2_i32).sqrt().unwrap()];
+        let rational = [
+            Real::new(Rational::fraction(5, 7).unwrap()),
+            Real::new(Rational::fraction(-11, 13).unwrap()),
+            Real::new(Rational::fraction(17, 19).unwrap()),
+        ];
+        let expected = &(&symbolic[0] * &rational[0])
+            + &(&symbolic[1] * &rational[1])
+            + &(&symbolic[2] * &rational[2]);
+        let expected_approximation = expected.to_f64_lossy().unwrap();
+
+        for actual in [
+            Real::active_dot3_refs(
+                [&symbolic[0], &symbolic[1], &symbolic[2]],
+                [&rational[0], &rational[1], &rational[2]],
+            ),
+            Real::active_dot3_refs(
+                [&rational[0], &rational[1], &rational[2]],
+                [&symbolic[0], &symbolic[1], &symbolic[2]],
+            ),
+        ] {
+            assert!((actual.to_f64_lossy().unwrap() - expected_approximation).abs() < 1e-12);
+        }
+    }
+
+    #[test]
     fn dot2_refs_matches_pairwise_rational_arithmetic() {
         let left = [
             &Real::new(Rational::fraction(6, 5).unwrap()),

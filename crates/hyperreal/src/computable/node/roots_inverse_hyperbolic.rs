@@ -425,7 +425,7 @@ impl Computable {
         let exact_small = exact_rational
             .as_ref()
             .and_then(Rational::msd_exact)
-            .is_some_and(|msd| msd <= -1);
+            .is_some_and(|msd| msd <= -2);
         let exact_large = exact_rational
             .as_ref()
             .and_then(Rational::msd_exact)

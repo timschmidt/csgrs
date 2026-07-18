@@ -1,17 +1,202 @@
 use core::ops::*;
 
 impl Rational {
+    /// Return the exact arithmetic mean of two rationals.
+    ///
+    /// This delays canonical reduction until after both the addition and the
+    /// division by two. It is equivalent to `(left + right) / 2`, but avoids
+    /// materializing and reducing the intermediate sum.
+    pub fn average_pair(left: &Self, right: &Self) -> Self {
+        if left.sign == right.sign
+            && left.numerator == right.numerator
+            && left.denominator == right.denominator
+        {
+            crate::trace_dispatch!("rational", "average_pair", "equal");
+            return left.clone();
+        }
+
+        if let (
+            Some(left_numerator),
+            Some(left_denominator),
+            Some(right_numerator),
+            Some(right_denominator),
+        ) = (
+            left.numerator.to_u128(),
+            left.denominator.to_u128(),
+            right.numerator.to_u128(),
+            right.denominator.to_u128(),
+        ) {
+            let (left_scale, right_scale) =
+                if left_denominator.is_power_of_two()
+                    && right_denominator.is_power_of_two()
+                {
+                    let left_shift = left_denominator.trailing_zeros();
+                    let right_shift = right_denominator.trailing_zeros();
+                    let common_shift = left_shift.max(right_shift);
+                    (
+                        1_u128 << (common_shift - left_shift),
+                        1_u128 << (common_shift - right_shift),
+                    )
+                } else {
+                    let divisor =
+                        Self::gcd_word(left_denominator, right_denominator);
+                    (
+                        right_denominator / divisor,
+                        left_denominator / divisor,
+                    )
+                };
+            if let (Some(left_magnitude), Some(right_magnitude), Some(denominator)) = (
+                left_numerator.checked_mul(left_scale),
+                right_numerator.checked_mul(right_scale),
+                left_denominator
+                    .checked_mul(left_scale)
+                    .and_then(|denominator| denominator.checked_mul(2)),
+            ) {
+                let totals = (|| {
+                    let mut positive = 0_u128;
+                    let mut negative = 0_u128;
+                    for (sign, magnitude) in [
+                        (left.sign, left_magnitude),
+                        (right.sign, right_magnitude),
+                    ] {
+                        match sign {
+                            Plus => {
+                                positive = positive.checked_add(magnitude)?;
+                            }
+                            Minus => {
+                                negative = negative.checked_add(magnitude)?;
+                            }
+                            NoSign => {}
+                        }
+                    }
+                    Some((positive, negative))
+                })();
+                if let Some((positive, negative)) = totals {
+                    crate::trace_dispatch!("rational", "average_pair", "word-sized");
+                    return Self::from_word_magnitude_difference(
+                        positive,
+                        negative,
+                        denominator,
+                    );
+                }
+            }
+        }
+
+        let common_denominator =
+            num::Integer::gcd(&left.denominator, &right.denominator);
+        trace_rational_gcd!(
+            &left.denominator,
+            &right.denominator,
+            &common_denominator
+        );
+        let left_scale = &right.denominator / &common_denominator;
+        let right_scale = &left.denominator / &common_denominator;
+        let denominator = (&left.denominator * &left_scale) << 1_usize;
+        let left_magnitude = &left.numerator * &left_scale;
+        let right_magnitude = &right.numerator * &right_scale;
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for (sign, magnitude) in [
+            (left.sign, left_magnitude),
+            (right.sign, right_magnitude),
+        ] {
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+        crate::trace_dispatch!("rational", "average_pair", "arbitrary-precision");
+        Self::from_signed_magnitude_difference(positive, negative, denominator)
+    }
+
+    fn from_reduced_word_sum(
+        left_sign: Sign,
+        left: u128,
+        right_sign: Sign,
+        right: u128,
+        denominator: u128,
+    ) -> Option<Self> {
+        let mut positive = 0_u128;
+        let mut negative = 0_u128;
+        for (sign, magnitude) in [(left_sign, left), (right_sign, right)] {
+            match sign {
+                Plus => positive = positive.checked_add(magnitude)?,
+                Minus => negative = negative.checked_add(magnitude)?,
+                NoSign => {}
+            }
+        }
+        match positive.cmp(&negative) {
+            core::cmp::Ordering::Greater => Some(Self::from_reduced_word_parts(
+                Plus,
+                positive - negative,
+                denominator,
+            )),
+            core::cmp::Ordering::Less => Some(Self::from_reduced_word_parts(
+                Minus,
+                negative - positive,
+                denominator,
+            )),
+            core::cmp::Ordering::Equal => Some(Self::zero()),
+        }
+    }
+
     fn add_sub_words(&self, other: &Self, subtract: bool) -> Option<Self> {
         let left_denominator = self.denominator.to_u128()?;
         let right_denominator = other.denominator.to_u128()?;
-        let divisor = Self::gcd_word(left_denominator, right_denominator);
-        let left_scale = right_denominator / divisor;
-        let right_scale = left_denominator / divisor;
-        let denominator = left_denominator.checked_mul(left_scale)?;
-        let left = self.numerator.to_u128()?.checked_mul(left_scale)?;
-        let right = other.numerator.to_u128()?.checked_mul(right_scale)?;
         let right_sign = if subtract { -other.sign } else { other.sign };
 
+        if right_denominator == 1 {
+            let right = other
+                .numerator
+                .to_u128()?
+                .checked_mul(left_denominator)?;
+            return Self::from_reduced_word_sum(
+                self.sign,
+                self.numerator.to_u128()?,
+                right_sign,
+                right,
+                left_denominator,
+            );
+        }
+        if left_denominator == 1 {
+            let left = self
+                .numerator
+                .to_u128()?
+                .checked_mul(right_denominator)?;
+            return Self::from_reduced_word_sum(
+                self.sign,
+                left,
+                right_sign,
+                other.numerator.to_u128()?,
+                right_denominator,
+            );
+        }
+
+        let (left_scale, right_scale, denominator) =
+            if left_denominator.is_power_of_two()
+                && right_denominator.is_power_of_two()
+            {
+                let left_shift = left_denominator.trailing_zeros();
+                let right_shift = right_denominator.trailing_zeros();
+                let common_shift = left_shift.max(right_shift);
+                (
+                    1_u128 << (common_shift - left_shift),
+                    1_u128 << (common_shift - right_shift),
+                    1_u128 << common_shift,
+                )
+            } else {
+                let divisor =
+                    Self::gcd_word(left_denominator, right_denominator);
+                (
+                    right_denominator / divisor,
+                    left_denominator / divisor,
+                    left_denominator
+                        .checked_mul(right_denominator / divisor)?,
+                )
+            };
+        let left = self.numerator.to_u128()?.checked_mul(left_scale)?;
+        let right = other.numerator.to_u128()?.checked_mul(right_scale)?;
         let mut positive = 0_u128;
         let mut negative = 0_u128;
         for (sign, magnitude) in [(self.sign, left), (right_sign, right)] {
@@ -36,6 +221,33 @@ impl Rational {
         } else {
             (other.numerator.to_u128()?, other.denominator.to_u128()?)
         };
+
+        if !divide
+            && left_denominator.is_power_of_two()
+            && right_denominator.is_power_of_two()
+        {
+            // Reduced dyadic operands need only power-of-two cancellation.
+            // Avoid even binary-GCD loops for the imported-f64 products that
+            // dominate exact mesh construction.
+            let mut denominator_shift =
+                left_denominator.trailing_zeros() + right_denominator.trailing_zeros();
+            let left_cancel = left_numerator.trailing_zeros().min(denominator_shift);
+            left_numerator >>= left_cancel;
+            denominator_shift -= left_cancel;
+            let right_cancel = right_numerator.trailing_zeros().min(denominator_shift);
+            right_numerator >>= right_cancel;
+            denominator_shift -= right_cancel;
+            if denominator_shift >= u128::BITS {
+                return None;
+            }
+            let numerator = left_numerator.checked_mul(right_numerator)?;
+            let denominator = 1_u128 << denominator_shift;
+            return Some(Self::from_reduced_word_parts(
+                self.sign * other.sign,
+                numerator,
+                denominator,
+            ));
+        }
 
         let cross = Self::gcd_word(left_numerator, right_denominator);
         left_numerator /= cross;
@@ -84,7 +296,6 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
             crate::trace_dispatch!("rational", "add", "word-sized");
             return result;
         }
-
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
         trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
         let left_scale = &other.denominator / &common_denominator;
@@ -171,7 +382,6 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
             crate::trace_dispatch!("rational", "sub", "word-sized");
             return result;
         }
-
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
         trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
         let left_scale = &other.denominator / &common_denominator;

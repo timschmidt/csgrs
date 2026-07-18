@@ -4,7 +4,9 @@
 //! slices. The included files remain in one module so private graph/cache
 //! invariants and hot constructor rewrites keep their original visibility.
 
-use crate::computable::approximation::{Approximation, NormalQuantileData, SharedConstant};
+use crate::computable::approximation::{
+    Approximation, LinearCombination3, NormalQuantileData, SharedConstant,
+};
 use crate::{MagnitudeBits, Rational, RealSign, RealStructuralFacts, ZeroKnowledge};
 use core::cmp::Ordering;
 use num::Signed;

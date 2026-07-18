@@ -1,0 +1,40 @@
+[package]
+name = "hyperreal-fuzz"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+arbitrary = { version = "1", features = ["derive"] }
+libfuzzer-sys = "0.4"
+num = { version = "0.4.3", features = ["num-bigint"] }
+hyperreal = { path = "..", features = ["serde"] }
+
+[[bin]]
+name = "rational_arithmetic"
+path = "fuzz_targets/rational_arithmetic.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "real_exact"
+path = "fuzz_targets/real_exact.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "real_elementary"
+path = "fuzz_targets/real_elementary.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "computable_approximation"
+path = "fuzz_targets/computable_approximation.rs"
+test = false
+doc = false

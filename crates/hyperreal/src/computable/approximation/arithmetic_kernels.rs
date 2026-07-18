@@ -150,6 +150,62 @@ fn multiply(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precis
     }
 }
 
+fn linear_combination3(
+    signal: &Option<Signal>,
+    form: &LinearCombination3,
+    p: Precision,
+) -> BigInt {
+    fn weighted(
+        signal: &Option<Signal>,
+        coefficient: &Computable,
+        value: &Rational,
+        p: Precision,
+    ) -> BigInt {
+        let Some(msd) = value.msd_exact() else {
+            return Zero::zero();
+        };
+        // Eight coefficient guard bits leave ample room for the rational
+        // scale and the truncating integer division below.
+        let coefficient_precision = p - msd - 8;
+        let approximation =
+            coefficient.approx_signal(signal, coefficient_precision);
+        let signed_numerator =
+            BigInt::from_biguint(value.sign(), value.numerator().clone());
+        let mut numerator = approximation * signed_numerator;
+        let mut denominator = value.denominator().clone();
+        let shift = coefficient_precision - p;
+        if shift >= 0 {
+            numerator <<= shift as usize;
+        } else {
+            denominator <<= shift.unsigned_abs() as usize;
+        }
+        numerator / BigInt::from(denominator)
+    }
+
+    // Compute each term four bits below the target. Even after the three
+    // truncating rational scales, the final division by sixteen keeps the
+    // aggregate absolute error below one target unit.
+    let guard = 4;
+    let precision = p - guard;
+    let sum = weighted(
+        signal,
+        &form.coefficients[0],
+        &form.values[0],
+        precision,
+    ) + weighted(
+        signal,
+        &form.coefficients[1],
+        &form.values[1],
+        precision,
+    ) + weighted(
+        signal,
+        &form.coefficients[2],
+        &form.values[2],
+        precision,
+    );
+    scale(sum, -guard)
+}
+
 fn square(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Square can reuse one approximation of the child. Constructors create this
     // node for repeated powers so multiplication does not duplicate child work.

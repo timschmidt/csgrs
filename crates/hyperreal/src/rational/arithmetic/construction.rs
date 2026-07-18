@@ -41,15 +41,19 @@ impl Rational {
     fn small_integer(sign: Sign, magnitude: u128) -> Option<Self> {
         let index = usize::try_from(magnitude.checked_sub(2)?).ok()?;
         let values = match sign {
-            Plus => &*SMALL_POSITIVE_RATIONALS,
-            Minus => &*SMALL_NEGATIVE_RATIONALS,
+            Plus => &SMALL_POSITIVE_RATIONALS,
+            Minus => &SMALL_NEGATIVE_RATIONALS,
             NoSign => return Some(Self::zero()),
         };
-        let value = values.get(index).cloned();
-        if value.is_some() {
-            trace_rational_temporary!();
-        }
-        value
+        let value = values.get(index)?.get_or_init(|| {
+            Self::from_parts_raw(
+                sign,
+                BigUint::from((index + 2) as u8),
+                BigUint::one(),
+            )
+        });
+        trace_rational_temporary!();
+        Some(value.clone())
     }
 
     /// The non-negative Rational corresponding to the provided [`i64`].
@@ -364,13 +368,30 @@ impl Rational {
     fn from_signed_magnitude_difference(
         positive: BigUint,
         negative: BigUint,
-        denominator: BigUint,
+        mut denominator: BigUint,
     ) -> Self {
-        let (sign, numerator) = match positive.cmp(&negative) {
+        let (sign, mut numerator) = match positive.cmp(&negative) {
             Ordering::Greater => (Plus, positive - negative),
             Ordering::Less => (Minus, negative - positive),
             Ordering::Equal => return Self::zero(),
         };
+        if let Some(denominator_shift) =
+            Self::biguint_power_of_two_shift(&denominator)
+        {
+            let numerator_shift = numerator
+                .trailing_zeros()
+                .expect("non-zero numerator has trailing zeros");
+            let common_shift = numerator_shift.min(denominator_shift);
+            if common_shift != 0 {
+                let shift = usize::try_from(common_shift)
+                    .expect("dyadic reduction shift fits usize");
+                numerator >>= shift;
+                denominator >>= shift;
+            }
+            trace_rational_power_of_two_common_factor!(common_shift);
+            trace_rational_temporary!();
+            return Self::from_parts_raw(sign, numerator, denominator);
+        }
         trace_rational_temporary!();
         Self::from_parts_raw(sign, numerator, denominator)
         .maybe_reduce()

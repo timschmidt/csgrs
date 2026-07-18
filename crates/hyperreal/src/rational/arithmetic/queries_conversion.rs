@@ -5,6 +5,17 @@ impl Rational {
         &RATIONAL_ONE
     }
 
+    /// Returns the identity of this rational's immutable shared storage.
+    ///
+    /// This is an internal cache key, not a numeric hash. Callers that retain
+    /// the key must also retain a clone of the rational so allocator address
+    /// reuse cannot alias a different value.
+    #[inline]
+    #[doc(hidden)]
+    pub fn storage_identity(&self) -> usize {
+        Arc::as_ptr(&self.0) as usize
+    }
+
     ///
     /// This is a stored-sign structural predicate. It deliberately avoids
     /// constructing a comparison value so downstream numeric kernels can ask
@@ -307,11 +318,15 @@ impl Rational {
 
     /// Return an `f64` only when conversion preserves this dyadic rational exactly.
     ///
-    /// The caller has already selected a dyadic schedule for the whole fixed
-    /// kernel, avoiding a repeated denominator scan in every lane.
+    /// Non-dyadic rationals and dyadics outside the finite binary64 range return
+    /// `None`. Callers that have already selected a dyadic schedule avoid the
+    /// repeated denominator scan by construction, but this public query remains
+    /// total for arbitrary rationals.
     #[inline]
-    pub(crate) fn dyadic_to_f64_exact(&self) -> Option<f64> {
-        debug_assert!(self.is_dyadic());
+    pub fn dyadic_to_f64_exact(&self) -> Option<f64> {
+        if !self.is_dyadic() {
+            return None;
+        }
         if self.is_zero() {
             return Some(0.0);
         }

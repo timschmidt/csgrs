@@ -762,6 +762,27 @@ mod tests {
     }
 
     #[test]
+    fn asinh_uses_series_only_below_the_half_boundary() {
+        let quarter = Computable::rational(Rational::fraction(1, 4).unwrap()).asinh();
+        let half = Computable::rational(Rational::fraction(1, 2).unwrap()).asinh();
+        let three_quarters = Computable::rational(Rational::fraction(3, 4).unwrap()).asinh();
+
+        assert!(matches!(
+            &quarter.internal.approximation,
+            Approximation::AsinhRational(_)
+        ));
+        assert!(!matches!(
+            &half.internal.approximation,
+            Approximation::AsinhRational(_)
+        ));
+        assert!(!matches!(
+            &three_quarters.internal.approximation,
+            Approximation::AsinhRational(_)
+        ));
+        assert_approx(three_quarters, -40, "762123384786", 2);
+    }
+
+    #[test]
     fn deep_add_chain_approximates_without_recursive_walk() {
         let mut value = Computable::one();
         for _ in 0..5000 {

@@ -118,6 +118,104 @@ impl PreparedLinearForm3Filter {
         let point = Real::exact_dyadic_f64(point)?;
         Real::certified_linear_form3_sign_f64(self.coefficients, point)
     }
+
+    /// Try to certify the linear-form sign for arbitrary exact-rational query
+    /// coordinates.
+    ///
+    /// Each rational conversion carries an explicit conservative error radius.
+    /// Queries whose conversion or accumulated interval can touch zero return
+    /// `None` for the caller's exact fallback.
+    #[inline]
+    pub fn sign_rational(&self, point: [&Rational; 3]) -> Option<RealSign> {
+        let [
+            Some((x, x_error)),
+            Some((y, y_error)),
+            Some((z, z_error)),
+        ] = point.map(Real::rational_f64_with_error)
+        else {
+            return None;
+        };
+        Real::certified_linear_form3_sign_f64_with_input_error(
+            self.coefficients,
+            [x, y, z],
+            [x_error, y_error, z_error],
+        )
+    }
+
+}
+
+/// Certified floating filter for repeated signs of a homogeneous
+/// four-variable linear form with exact-rational coefficients and queries.
+///
+/// Both coefficient and query conversion errors are retained explicitly.
+/// Uncertain results return `None` for the caller's exact fallback.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedRationalLinearForm4Filter {
+    coefficients: [f64; 4],
+    coefficient_errors: [f64; 4],
+}
+
+/// Certified floating filter for repeated exact-rational point queries
+/// against one fixed 2D line.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedRationalLine2Filter {
+    from: [f64; 2],
+    from_errors: [f64; 2],
+    to: [f64; 2],
+    to_errors: [f64; 2],
+}
+
+impl PreparedRationalLine2Filter {
+    /// Try to certify the orientation sign of a rational query point.
+    #[inline]
+    pub fn sign_rational(
+        &self,
+        point: [&Rational; 2],
+    ) -> Option<RealSign> {
+        let mut values = [0.0; 2];
+        let mut errors = [0.0; 2];
+        for (index, coordinate) in point.into_iter().enumerate() {
+            let (value, error) =
+                Real::rational_f64_with_error(coordinate)?;
+            values[index] = value;
+            errors[index] = error;
+        }
+        Real::certified_rational_line2_sign_f64(
+            self.from,
+            self.from_errors,
+            self.to,
+            self.to_errors,
+            values,
+            errors,
+        )
+    }
+}
+
+impl PreparedRationalLinearForm4Filter {
+    /// Try to certify the homogeneous linear-form sign for an exact-rational
+    /// query.
+    #[inline]
+    pub fn sign_rational(
+        &self,
+        point: [&Rational; 4],
+    ) -> Option<RealSign> {
+        let mut values = [0.0; 4];
+        let mut errors = [0.0; 4];
+        for (index, coordinate) in point.into_iter().enumerate() {
+            let (value, error) =
+                Real::rational_f64_with_error(coordinate)?;
+            values[index] = value;
+            errors[index] = error;
+        }
+        Real::certified_linear_form4_sign_f64_with_errors(
+            self.coefficients,
+            self.coefficient_errors,
+            values,
+            errors,
+        )
+    }
 }
 
 /// Certified floating filter for repeated 2D in-circle predicates.
@@ -259,6 +357,55 @@ impl Real {
     ) -> Option<PreparedLinearForm3Filter> {
         Some(PreparedLinearForm3Filter {
             coefficients: Self::exact_dyadic_f64(coefficients)?,
+        })
+    }
+
+    /// Prepare a certified homogeneous linear-form filter from exact-rational
+    /// coefficients, retaining conservative conversion errors.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_rational_linear_form4_filter(
+        coefficients: [&Real; 4],
+    ) -> Option<PreparedRationalLinearForm4Filter> {
+        let mut values = [0.0; 4];
+        let mut errors = [0.0; 4];
+        for (index, coefficient) in
+            coefficients.into_iter().enumerate()
+        {
+            let (value, error) = Self::rational_f64_with_error(
+                coefficient.exact_rational_ref()?,
+            )?;
+            values[index] = value;
+            errors[index] = error;
+        }
+        Some(PreparedRationalLinearForm4Filter {
+            coefficients: values,
+            coefficient_errors: errors,
+        })
+    }
+
+    /// Prepare a certified 2D line filter from exact-rational endpoints.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_rational_line2_filter(
+        from: [&Rational; 2],
+        to: [&Rational; 2],
+    ) -> Option<PreparedRationalLine2Filter> {
+        let mut from_values = [0.0; 2];
+        let mut from_errors = [0.0; 2];
+        let mut to_values = [0.0; 2];
+        let mut to_errors = [0.0; 2];
+        for index in 0..2 {
+            (from_values[index], from_errors[index]) =
+                Self::rational_f64_with_error(from[index])?;
+            (to_values[index], to_errors[index]) =
+                Self::rational_f64_with_error(to[index])?;
+        }
+        Some(PreparedRationalLine2Filter {
+            from: from_values,
+            from_errors,
+            to: to_values,
+            to_errors,
         })
     }
 
@@ -416,8 +563,48 @@ impl Real {
         coefficients: [f64; 4],
         point: [f64; 3],
     ) -> Option<RealSign> {
+        Self::certified_linear_form3_sign_f64_with_input_error(
+            coefficients,
+            point,
+            [0.0; 3],
+        )
+    }
+
+    #[inline]
+    fn rational_f64_with_error(
+        value: &Rational,
+    ) -> Option<(f64, f64)> {
+        let approximation = value.to_f64_lossy()?;
+        if !approximation.is_finite() {
+            return None;
+        }
+        if approximation == 0.0 {
+            return value.is_zero().then_some((0.0, 0.0));
+        }
+        if !approximation.is_normal() {
+            return None;
+        }
+
+        // `BigUint::to_f64` retains the high significand bits and introduces
+        // less than one ulp of relative error. Numerator conversion,
+        // denominator conversion, and the final division therefore fit well
+        // inside this 32-epsilon radius, including compounding and normal
+        // rounding. Rejecting non-normal values keeps the bound purely
+        // relative and avoids underflow edge cases.
+        let error =
+            approximation.abs() * (32.0 * f64::EPSILON);
+        error.is_normal().then_some((approximation, error))
+    }
+
+    #[inline]
+    fn certified_linear_form3_sign_f64_with_input_error(
+        coefficients: [f64; 4],
+        point: [f64; 3],
+        point_error: [f64; 3],
+    ) -> Option<RealSign> {
         let [a, b, c, d] = coefficients;
         let [x, y, z] = point;
+        let [x_error, y_error, z_error] = point_error;
         let ax = Self::normal_product_f64(a, x)?;
         let by = Self::normal_product_f64(b, y)?;
         let cz = Self::normal_product_f64(c, z)?;
@@ -435,7 +622,17 @@ impl Real {
         // term sum. Eight machine epsilons deliberately cover conversion from
         // the computed product magnitudes to the exact magnitudes as well.
         const ERROR_FACTOR: f64 = 8.0 * f64::EPSILON;
-        let error_bound = Self::normal_product_f64(ERROR_FACTOR, magnitude_sum)?;
+        let arithmetic_error =
+            Self::normal_product_f64(ERROR_FACTOR, magnitude_sum)?;
+        let input_error = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(a.abs(), x_error)?,
+                Self::normal_product_f64(b.abs(), y_error)?,
+            )?,
+            Self::normal_product_f64(c.abs(), z_error)?,
+        )?;
+        let error_bound =
+            Self::normal_add_f64(arithmetic_error, input_error)?;
         if value > error_bound {
             Some(RealSign::Positive)
         } else if -value > error_bound {
@@ -443,6 +640,173 @@ impl Real {
         } else {
             None
         }
+    }
+
+    #[inline]
+    fn certified_linear_form4_sign_f64_with_errors(
+        coefficients: [f64; 4],
+        coefficient_errors: [f64; 4],
+        point: [f64; 4],
+        point_errors: [f64; 4],
+    ) -> Option<RealSign> {
+        let mut products = [0.0; 4];
+        let mut magnitude_sum = 0.0;
+        let mut conversion_error = 0.0;
+        for index in 0..4 {
+            products[index] = Self::normal_product_f64(
+                coefficients[index],
+                point[index],
+            )?;
+            magnitude_sum = Self::normal_add_f64(
+                magnitude_sum,
+                products[index].abs(),
+            )?;
+            let coefficient_and_error = Self::normal_add_f64(
+                coefficients[index].abs(),
+                coefficient_errors[index],
+            )?;
+            let point_contribution = Self::normal_product_f64(
+                coefficient_and_error,
+                point_errors[index],
+            )?;
+            let coefficient_contribution =
+                Self::normal_product_f64(
+                    point[index].abs(),
+                    coefficient_errors[index],
+                )?;
+            conversion_error = Self::normal_add_f64(
+                conversion_error,
+                Self::normal_add_f64(
+                    point_contribution,
+                    coefficient_contribution,
+                )?,
+            )?;
+        }
+        let mut value = 0.0;
+        for product in products {
+            value = Self::normal_add_f64(value, product)?;
+        }
+
+        // Four rounded products and four accumulated additions fit within
+        // this deliberately conservative gamma-style bound.
+        const ERROR_FACTOR: f64 = 16.0 * f64::EPSILON;
+        let arithmetic_error = Self::normal_product_f64(
+            ERROR_FACTOR,
+            magnitude_sum,
+        )?;
+        let error_bound = Self::normal_add_f64(
+            arithmetic_error,
+            conversion_error,
+        )?;
+        if value > error_bound {
+            Some(RealSign::Positive)
+        } else if -value > error_bound {
+            Some(RealSign::Negative)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn certified_rational_line2_sign_f64(
+        from: [f64; 2],
+        from_errors: [f64; 2],
+        to: [f64; 2],
+        to_errors: [f64; 2],
+        point: [f64; 2],
+        point_errors: [f64; 2],
+    ) -> Option<RealSign> {
+        let (abx, abx_error) = Self::difference_f64_with_error(
+            to[0],
+            to_errors[0],
+            from[0],
+            from_errors[0],
+        )?;
+        let (aby, aby_error) = Self::difference_f64_with_error(
+            to[1],
+            to_errors[1],
+            from[1],
+            from_errors[1],
+        )?;
+        let (apx, apx_error) = Self::difference_f64_with_error(
+            point[0],
+            point_errors[0],
+            from[0],
+            from_errors[0],
+        )?;
+        let (apy, apy_error) = Self::difference_f64_with_error(
+            point[1],
+            point_errors[1],
+            from[1],
+            from_errors[1],
+        )?;
+        let (left, left_error) = Self::product_f64_with_error(
+            abx,
+            abx_error,
+            apy,
+            apy_error,
+        )?;
+        let (right, right_error) = Self::product_f64_with_error(
+            aby,
+            aby_error,
+            apx,
+            apx_error,
+        )?;
+        let (value, error) = Self::difference_f64_with_error(
+            left,
+            left_error,
+            right,
+            right_error,
+        )?;
+        if value > error {
+            Some(RealSign::Positive)
+        } else if -value > error {
+            Some(RealSign::Negative)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn difference_f64_with_error(
+        left: f64,
+        left_error: f64,
+        right: f64,
+        right_error: f64,
+    ) -> Option<(f64, f64)> {
+        let value = Self::normal_add_f64(left, -right)?;
+        let magnitude =
+            Self::normal_add_f64(left.abs(), right.abs())?;
+        let rounding = Self::normal_product_f64(
+            4.0 * f64::EPSILON,
+            magnitude,
+        )?;
+        let input = Self::normal_add_f64(left_error, right_error)?;
+        Some((value, Self::normal_add_f64(rounding, input)?))
+    }
+
+    #[inline]
+    fn product_f64_with_error(
+        left: f64,
+        left_error: f64,
+        right: f64,
+        right_error: f64,
+    ) -> Option<(f64, f64)> {
+        let value = Self::normal_product_f64(left, right)?;
+        let left_and_error =
+            Self::normal_add_f64(left.abs(), left_error)?;
+        let propagated = Self::normal_add_f64(
+            Self::normal_product_f64(left_and_error, right_error)?,
+            Self::normal_product_f64(right.abs(), left_error)?,
+        )?;
+        let rounding = Self::normal_product_f64(
+            4.0 * f64::EPSILON,
+            value.abs(),
+        )?;
+        Some((
+            value,
+            Self::normal_add_f64(propagated, rounding)?,
+        ))
     }
 
     /// Try to certify the sign of the affine 2x2 determinant
@@ -1381,6 +1745,56 @@ impl Real {
         ) {
             crate::trace_dispatch!("real", "dot_product", "active-dot3-exact-rational");
             return Real::new(Rational::dot_products([l0, l1, l2], [r0, r1, r2]));
+        }
+
+        let retained_form = if left
+            .iter()
+            .all(|value| value.exact_rational_ref().is_none())
+            && right
+                .iter()
+                .all(|value| value.exact_rational_ref().is_some())
+        {
+            Some((
+                std::array::from_fn(|index| left[index].fold_ref()),
+                std::array::from_fn(|index| {
+                    right[index]
+                        .exact_rational_ref()
+                        .expect("mixed dot lane was classified exact")
+                        .clone()
+                }),
+            ))
+        } else if left
+            .iter()
+            .all(|value| value.exact_rational_ref().is_some())
+            && right
+                .iter()
+                .all(|value| value.exact_rational_ref().is_none())
+        {
+            Some((
+                std::array::from_fn(|index| right[index].fold_ref()),
+                std::array::from_fn(|index| {
+                    left[index]
+                        .exact_rational_ref()
+                        .expect("mixed dot lane was classified exact")
+                        .clone()
+                }),
+            ))
+        } else {
+            None
+        };
+        if let Some((coefficients, values)) = retained_form {
+            crate::trace_dispatch!("real", "dot_product", "active-dot3-retained-form");
+            return Real {
+                rational: Rational::one(),
+                class: Irrational,
+                computable: Some(Computable::linear_combination3(
+                    coefficients,
+                    values,
+                )),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
+            };
         }
 
         crate::trace_dispatch!("real", "dot_product", "active-dot3-real-tree");

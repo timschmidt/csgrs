@@ -1,9 +1,29 @@
 impl Rational {
-    fn gcd_word(mut left: u128, mut right: u128) -> u128 {
-        while right != 0 {
-            (left, right) = (right, left % right);
+    fn gcd_word(left: u128, right: u128) -> u128 {
+        if left == 0 {
+            return right;
         }
-        left
+        if right == 0 {
+            return left;
+        }
+
+        // u128 remainder is a compiler-rt software call on common 64-bit
+        // targets. Word-sized exact arithmetic reaches this helper heavily for
+        // imported binary floats, so use Stein's binary GCD: it needs only
+        // trailing-zero counts, shifts, comparisons, and subtraction.
+        let common_shift = left.trailing_zeros().min(right.trailing_zeros());
+        let mut left = left >> left.trailing_zeros();
+        let mut right = right;
+        loop {
+            right >>= right.trailing_zeros();
+            if left > right {
+                std::mem::swap(&mut left, &mut right);
+            }
+            right -= left;
+            if right == 0 {
+                return left << common_shift;
+            }
+        }
     }
 
     fn from_word_magnitude_difference(
@@ -19,9 +39,21 @@ impl Rational {
                 return Self::zero();
             }
         };
-        let divisor = Self::gcd_word(magnitude, denominator);
-        let magnitude = magnitude / divisor;
-        let denominator = denominator / divisor;
+        let (magnitude, denominator) = if denominator.is_power_of_two() {
+            let common_shift =
+                magnitude.trailing_zeros().min(denominator.trailing_zeros());
+            (magnitude >> common_shift, denominator >> common_shift)
+        } else {
+            let divisor = Self::gcd_word(magnitude, denominator);
+            (magnitude / divisor, denominator / divisor)
+        };
+        Self::from_reduced_word_parts(sign, magnitude, denominator)
+    }
+
+    fn from_reduced_word_parts(sign: Sign, magnitude: u128, denominator: u128) -> Self {
+        debug_assert_ne!(sign, NoSign);
+        debug_assert_ne!(magnitude, 0);
+        debug_assert_ne!(denominator, 0);
         if magnitude == denominator {
             crate::trace_dispatch!("rational", "word-result", "unit");
             return if sign == Minus {
@@ -386,6 +418,41 @@ impl Rational {
         Some(positive.cmp(&negative))
     }
 
+    fn product_sum_prefers_wide_dyadic<const TERMS: usize, const FACTORS: usize>(
+        terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
+    ) -> bool {
+        let mut denominator_shifts = [0_u64; TERMS];
+        let mut numerator_bits = [0_u64; TERMS];
+        let mut max_shift = 0_u64;
+        let mut live_terms = 0_u64;
+        for i in 0..TERMS {
+            if signs[i] == NoSign {
+                continue;
+            }
+            live_terms += 1;
+            for factor in terms[i] {
+                let Some(shift) = factor.dyadic_denominator_shift() else {
+                    return false;
+                };
+                denominator_shifts[i] =
+                    denominator_shifts[i].saturating_add(shift);
+                numerator_bits[i] = numerator_bits[i]
+                    .saturating_add(factor.numerator.bits());
+            }
+            max_shift = max_shift.max(denominator_shifts[i]);
+        }
+
+        let total_growth = live_terms.next_power_of_two().trailing_zeros();
+        (0..TERMS).any(|i| {
+            signs[i] != NoSign
+                && numerator_bits[i]
+                    .saturating_add(max_shift - denominator_shifts[i])
+                    .saturating_add(u64::from(total_growth))
+                    > u64::from(u128::BITS)
+        })
+    }
+
     /// Evaluate a signed product sum when every live factor shares one
     /// reduced denominator.
     ///
@@ -505,7 +572,12 @@ impl Rational {
             crate::trace_dispatch!("rational", "product_sum", "all-zero");
             return Self::zero();
         }
-        if let Some(word) = Self::signed_product_sum_words(terms, signs) {
+        let prefer_wide_dyadic =
+            Self::product_sum_prefers_wide_dyadic(terms, signs);
+        if !prefer_wide_dyadic
+            && let Some(word) =
+                Self::signed_product_sum_words(terms, signs)
+        {
             crate::trace_dispatch!("rational", "product_sum", "word-sized");
             return word;
         }
@@ -625,7 +697,12 @@ impl Rational {
     ) -> Ordering {
         debug_assert!(FACTORS > 0);
         let signs = std::array::from_fn(|i| Self::product_term_sign(positive_terms[i], terms[i]));
-        if let Some((positive, negative, _)) = Self::signed_product_sum_word_totals(terms, signs) {
+        let prefer_wide_dyadic =
+            Self::product_sum_prefers_wide_dyadic(terms, signs);
+        if !prefer_wide_dyadic
+            && let Some((positive, negative, _)) =
+                Self::signed_product_sum_word_totals(terms, signs)
+        {
             crate::trace_dispatch!("rational", "product_sum_ordering", "word-sized");
             return positive.cmp(&negative);
         }

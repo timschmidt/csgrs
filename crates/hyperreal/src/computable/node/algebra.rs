@@ -294,6 +294,25 @@ impl Computable {
         }
     }
 
+    pub(crate) fn linear_combination3(
+        coefficients: [Computable; 3],
+        values: [Rational; 3],
+    ) -> Computable {
+        Self {
+            internal: Arc::new(Node::new(
+                Approximation::LinearCombination3(Box::new(
+                    LinearCombination3 {
+                        coefficients,
+                        values,
+                    },
+                )),
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
+            signal: None,
+        }
+    }
+
     pub(crate) fn multiply_rational(self, scale: Rational) -> Computable {
         if scale.sign() == Sign::NoSign {
             // Multiplying by zero drops the expression tree, including any

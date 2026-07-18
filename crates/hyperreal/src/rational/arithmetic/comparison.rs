@@ -128,13 +128,17 @@ fn compare_shifted_biguints(
         ordering => return ordering,
     }
 
-    for bit in (0..left_bits).rev() {
-        let left_bit = bit >= left_shift && left.bit(bit - left_shift);
-        let right_bit = bit >= right_shift && right.bit(bit - right_shift);
-        match left_bit.cmp(&right_bit) {
-            std::cmp::Ordering::Equal => {}
-            ordering => return ordering,
-        }
+    match left_shift.cmp(&right_shift) {
+        std::cmp::Ordering::Greater => {
+            let shift = usize::try_from(left_shift - right_shift)
+                .expect("dyadic comparison shift fits usize");
+            (left << shift).cmp(right)
+        },
+        std::cmp::Ordering::Less => {
+            let shift = usize::try_from(right_shift - left_shift)
+                .expect("dyadic comparison shift fits usize");
+            left.cmp(&(right << shift))
+        },
+        std::cmp::Ordering::Equal => left.cmp(right),
     }
-    std::cmp::Ordering::Equal
 }
