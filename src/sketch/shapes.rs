@@ -1786,9 +1786,9 @@ impl Profile {
     /// Radius sampling follows Gielis' superformula, introduced in "A generic
     /// geometric transformation that unifies a wide range of natural and
     /// abstract shapes," *American Journal of Botany* 90(3), 2003
-    /// (<https://doi.org/10.3732/ajb.90.3.333>). The scalar path is promoted to
-    /// hyperreal arithmetic before the finite ring is exported to hypercurve,
-    /// following Yap's exact-geometric-computation boundary discipline
+    /// (<https://doi.org/10.3732/ajb.90.3.333>). The scalar path remains in
+    /// hyperreal arithmetic through the exact polygonal ring, following Yap's
+    /// exact-geometric-computation boundary discipline
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     #[allow(clippy::too_many_arguments)]
     pub fn supershape(
@@ -1808,29 +1808,59 @@ impl Profile {
             return Profile::empty();
         }
 
-        let values = [&a, &b, &m, &n1, &n2, &n3].map(|value| value.to_f64_lossy());
-        let [Some(a), Some(b), Some(m), Some(n1), Some(n2), Some(n3)] = values else {
+        if hreal_f64s_exactly_equal(&a, 1.0)
+            && hreal_f64s_exactly_equal(&b, 1.0)
+            && hreal_f64s_exactly_equal(&n2, 2.0)
+            && hreal_f64s_exactly_equal(&n3, 2.0)
+        {
+            let Some(points) = hcircle_samples(segments, Real::one()) else {
+                return Profile::empty();
+            };
+            return certified_tessellation_profile(&points);
+        }
+
+        let (Some(angle_scale), Some(radius_exponent)) =
+            (hreal_div(&m, 4_u8), hreal_div(-1_i8, &n1))
+        else {
             return Profile::empty();
         };
         let mut points = Vec::with_capacity(segments);
         for i in 0..segments {
             let Some(theta) = exact_sample_angle(i, segments, &Real::zero(), &Real::tau())
-                .and_then(|angle| angle.to_f64_lossy())
             else {
                 return Profile::empty();
             };
-            let angle = m * theta * 0.25;
-            let sum = (angle.cos() / a).abs().powf(n2) + (angle.sin() / b).abs().powf(n3);
-            let radius = sum.powf(-1.0 / n1);
-            if !radius.is_finite() {
+            let Some(angle) = hreal_mul(&angle_scale, &theta) else {
                 return Profile::empty();
-            }
-            points.push([radius * theta.cos(), radius * theta.sin()]);
+            };
+            let scaled_abs = |value: Real, scale: &Real| {
+                hreal_abs(value).and_then(|absolute| hreal_div(absolute, scale))
+            };
+            let (Some(cos_base), Some(sin_base)) = (
+                scaled_abs(angle.clone().cos(), &a),
+                scaled_abs(angle.sin(), &b),
+            ) else {
+                return Profile::empty();
+            };
+            let (Ok(cos_term), Ok(sin_term)) =
+                (cos_base.pow(n2.clone()), sin_base.pow(n3.clone()))
+            else {
+                return Profile::empty();
+            };
+            let Some(sum) = hreal_sum(&[cos_term, sin_term]) else {
+                return Profile::empty();
+            };
+            let Ok(radius) = sum.pow(radius_exponent.clone()) else {
+                return Profile::empty();
+            };
+            points.push(exact_polar(&radius, theta));
         }
 
-        Contour2::from_finite_ring(&points)
-            .map(Profile::from_contour)
-            .unwrap_or_else(|_| Profile::empty())
+        // Every admitted radius is strictly positive. With at least three
+        // uniform angles, each edge lies in its own angular wedge and has
+        // positive cross product r_i r_(i+1) sin(tau/segments), proving a
+        // distinct, simple, consistently wound star-shaped polygon.
+        certified_tessellation_profile(&points)
     }
 
     /// Creates a 2D circle with a rectangular keyway slot cut out on the +X side.
@@ -2877,6 +2907,27 @@ mod tests {
                     width * ((x - min_x) / (max_x - min_x) - 0.5),
                     length * ((y - min_y) / (max_y - min_y) - 0.5),
                 ]
+            })
+            .collect()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn legacy_finite_supershape_points(
+        a: f64,
+        b: f64,
+        m: f64,
+        n1: f64,
+        n2: f64,
+        n3: f64,
+        segments: usize,
+    ) -> Vec<[f64; 2]> {
+        (0..segments)
+            .map(|index| {
+                let theta = std::f64::consts::TAU * index as f64 / segments as f64;
+                let angle = m * theta * 0.25;
+                let sum = (angle.cos() / a).abs().powf(n2) + (angle.sin() / b).abs().powf(n3);
+                let radius = sum.powf(-1.0 / n1);
+                [radius * theta.cos(), radius * theta.sin()]
             })
             .collect()
     }
@@ -3951,6 +4002,57 @@ mod tests {
             });
         }
         assert!(saw_non_rational_coordinate);
+    }
+
+    #[test]
+    fn supershape_keeps_sampling_exact_while_matching_legacy_finite_coordinates() {
+        for (parameters, segments) in [
+            (
+                [
+                    Real::from(1),
+                    Real::from(1),
+                    Real::from(5),
+                    Real::from(2),
+                    Real::from(2),
+                    Real::from(2),
+                ],
+                32_usize,
+            ),
+            (
+                [
+                    Real::from(2),
+                    Real::from(3),
+                    Real::from(4),
+                    Real::from(3),
+                    Real::from(2),
+                    Real::from(4),
+                ],
+                15,
+            ),
+        ] {
+            let [a, b, m, n1, n2, n3] = parameters;
+            let finite =
+                [&a, &b, &m, &n1, &n2, &n3].map(|value| value.to_f64_lossy().unwrap());
+            let expected = legacy_finite_supershape_points(
+                finite[0], finite[1], finite[2], finite[3], finite[4], finite[5], segments,
+            );
+            let profile = Profile::supershape(a, b, m, n1, n2, n3, segments);
+            let contour = &profile.region.material_contours()[0];
+
+            assert_eq!(contour.segments().len(), expected.len());
+            for (segment, expected) in contour.segments().iter().zip(expected) {
+                let actual = [
+                    segment.start().x().to_f64_lossy().unwrap(),
+                    segment.start().y().to_f64_lossy().unwrap(),
+                ];
+                assert!((actual[0] - expected[0]).abs() <= 1.0e-11);
+                assert!((actual[1] - expected[1]).abs() <= 1.0e-11);
+            }
+            assert!(contour.segments().iter().any(|segment| {
+                segment.start().x().exact_rational_ref().is_none()
+                    || segment.start().y().exact_rational_ref().is_none()
+            }));
+        }
     }
 
     #[test]
