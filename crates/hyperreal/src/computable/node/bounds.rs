@@ -109,9 +109,15 @@ impl BoundInfo {
     fn square(self) -> Self {
         match self {
             Self::Zero => Self::Zero,
-            Self::NonZero { msd, .. } => Self::NonZero {
+            Self::NonZero {
+                msd, exact_msd, ..
+            } => Self::NonZero {
                 sign: Some(Sign::Plus),
-                msd: msd.map(|value| value * 2),
+                // One square can estimate the result within one binade from an
+                // exact child MSD. Do not recursively double an already
+                // inexact estimate: the error would grow exponentially through
+                // a power tree.
+                msd: exact_msd.then(|| msd.map(|value| value * 2)).flatten(),
                 exact_msd: false,
             },
             Self::Unknown => Self::Unknown,
@@ -141,12 +147,12 @@ impl BoundInfo {
                 Self::NonZero {
                     sign: left_sign,
                     msd: left_msd,
-                    ..
+                    exact_msd: left_exact_msd,
                 },
                 Self::NonZero {
                     sign: right_sign,
                     msd: right_msd,
-                    ..
+                    exact_msd: right_exact_msd,
                 },
             ) => {
                 let sign = match (left_sign, right_sign) {
@@ -156,7 +162,10 @@ impl BoundInfo {
                     | (Some(Sign::Minus), Some(Sign::Plus)) => Some(Sign::Minus),
                     _ => None,
                 };
-                let msd = match (left_msd, right_msd) {
+                let msd = match (
+                    left_exact_msd.then_some(left_msd).flatten(),
+                    right_exact_msd.then_some(right_msd).flatten(),
+                ) {
                     (Some(left), Some(right)) => Some(left + right),
                     _ => None,
                 };

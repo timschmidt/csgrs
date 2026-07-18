@@ -210,11 +210,15 @@ fn square(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Square can reuse one approximation of the child. Constructors create this
     // node for repeated powers so multiplication does not duplicate child work.
     let half_prec = (p >> 1) - 1;
-    let (sign, msd) = c.planning_sign_and_msd();
+    let (sign, _) = c.planning_sign_and_msd();
     if sign == Some(Sign::NoSign) {
         return Zero::zero();
     }
-    let msd = match msd.unwrap_or_else(|| c.msd(half_prec)) {
+    // A square's structural MSD estimate can be one binade low, and repeatedly
+    // doubling that estimate compounds the error in power chains. Ask for the
+    // child's certified/cached MSD here; exact bounds remain allocation-free,
+    // while inexact square chains refine before choosing a working precision.
+    let msd = match c.msd(half_prec) {
         None => {
             return Zero::zero();
         }

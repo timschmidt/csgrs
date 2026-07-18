@@ -134,7 +134,12 @@ fn atan_anchor_residual(r: &Rational, anchor_numerator: u8, anchor_denominator: 
         .expect("atan anchor residual denominator is positive")
 }
 
-fn atan_sqrt_rational_small(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+fn atan_sqrt_rational_small(
+    signal: &Option<Signal>,
+    r: &Rational,
+    p: Precision,
+    sample_exact_square: bool,
+) -> BigInt {
     // Same Taylor kernel as atan_rational_small for inputs known to satisfy
     // sqrt(r) <= 1/2. The sqrt is formed as an integer approximation directly
     // from the Rational, avoiding a transient Sqrt node followed by PrescaledAtan.
@@ -147,7 +152,16 @@ fn atan_sqrt_rational_small(signal: &Option<Signal>, r: &Rational, p: Precision)
     let op_prec = calc_precision - 3;
     let sqrt_extra = 8;
     let op_appr = shift(ratio(r, 2 * op_prec - sqrt_extra).sqrt(), -(sqrt_extra / 2));
-    let op_squared = scale(&op_appr * &op_appr, op_prec);
+    let op_squared = if sample_exact_square {
+        // The series argument is sqrt(r), so its square is the retained exact
+        // rational r. The asin complement already samples another rational and
+        // benefits from reusing that division path instead of a wide square.
+        ratio(r, op_prec)
+    } else {
+        // The standalone acos kernel is faster at this precision when it
+        // squares the root sample it already owns.
+        scale(&op_appr * &op_appr, op_prec)
+    };
 
     let max_trunc_error = BigUint::one()
         << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
@@ -294,15 +308,18 @@ fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
             return if sign == Sign::Minus { -result } else { result };
         }
 
-        // Sample both terms four guard bits finer. At that scale
+        // Sample both terms two guard bits finer. The pi approximation has
+        // error below one working unit and the doubled atan approximation has
+        // error below two; after the final division by eight their combined
+        // error is below 3/8 of one result unit, leaving room for the final
+        // half-unit rounding. At that scale
         // pi/2 - acos(x) = (pi - 2*acos(x))/2, so a single final shift
-        // performs the combination with ample room for both approximation
-        // errors and the final integer rounding.
-        let extra = 4;
+        // performs the combination without building an arithmetic graph.
+        let extra = 2;
         let work_precision = p - extra;
         let pi = Computable::pi().approx_signal(signal, work_precision);
         crate::trace_dispatch!("computable_approx", "acos", "small-rational-residual");
-        let acos = atan_sqrt_rational_small(signal, &residual, work_precision - 1);
+        let acos = atan_sqrt_rational_small(signal, &residual, work_precision - 1, true);
         let result = scale(pi - (acos << 1), -(extra + 1));
         return if sign == Sign::Minus { -result } else { result };
     }
@@ -409,7 +426,7 @@ fn acos_positive_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -
     let residual = (Rational::one() - r.clone()) / (Rational::one() + r.clone());
     if residual <= Rational::fraction(1, 4).expect("nonzero denominator") {
         crate::trace_dispatch!("computable_approx", "acos", "small-rational-residual");
-        return atan_sqrt_rational_small(signal, &residual, p - 1);
+        return atan_sqrt_rational_small(signal, &residual, p - 1, false);
     }
     Computable::sqrt_rational(residual)
         .atan()

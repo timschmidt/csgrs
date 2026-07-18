@@ -528,6 +528,52 @@ mod tests {
     }
 
     #[test]
+    fn bounded_integer_exp_matches_ln2_reduction() {
+        fn compare(exponent: i32, precision: Precision) {
+            let input = Computable::rational(Rational::new(i64::from(exponent)));
+            let optimized = input.clone().exp();
+            let (reduced, multiple) = input
+                .reduce_by_divisor(&Computable::ln2(), -4, 64)
+                .expect("bounded integer has an ln2 reduction");
+            let reference = reduced.prescaled_exp().shift_left(
+                multiple
+                    .try_into()
+                    .expect("bounded integer reduction fits i32"),
+            );
+            let optimized = optimized.approx(precision);
+            let reference = reference.approx(precision);
+            let error = (&optimized - &reference).abs();
+            assert!(
+                error <= BigInt::from(2),
+                "exp({exponent}) at {precision}: optimized {optimized}, reference {reference}, error {error}"
+            );
+        }
+
+        for exponent in 2..=256 {
+            compare(exponent, -40);
+        }
+        for exponent in [2, 13, 128, 256] {
+            compare(exponent, -128);
+        }
+    }
+
+    #[test]
+    fn integer_exp_uses_binary_power_only_through_the_retained_limit() {
+        let at_limit = Computable::rational(Rational::new(256)).exp();
+        assert!(matches!(
+            &at_limit.internal.approximation,
+            Approximation::Square(_)
+        ));
+
+        let above_limit = Computable::rational(Rational::new(257)).exp();
+        assert!(matches!(
+            &above_limit.internal.approximation,
+            Approximation::Offset(child, _)
+                if matches!(&child.internal.approximation, Approximation::PrescaledExp(_))
+        ));
+    }
+
+    #[test]
     fn cos_zero() {
         let zero = Computable::rational(Rational::zero());
         let cos = zero.cos();

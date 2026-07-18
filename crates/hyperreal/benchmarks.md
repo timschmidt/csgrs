@@ -89,7 +89,10 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/e_constant_cached_p128` | not run | not run | Repeats a cached approximation of e. |
 | `computable_transcendentals/exp_cold_p128` | not run | not run | Approximates exp(7/5) from a fresh clone. |
 | `computable_transcendentals/exp_cached_p128` | not run | not run | Repeats a cached exp(7/5) approximation. |
-| `computable_transcendentals/exp_large_cold_p128` | not run | not run | Approximates exp(128), exercising large-argument reduction. |
+| `computable_transcendentals/exp_large_cold_p128` | 4.718 us | 4.707 us - 4.730 us | Approximates exp(128), exercising the bounded exact-integer power path. |
+| `computable_transcendentals/exp_negative_integer_cold_p128` | 2.155 us | 2.152 us - 2.159 us | Approximates exp(-32), retaining signed ln(2) range reduction. |
+| `computable_transcendentals/exp_integer_limit_cold_p128` | 6.884 us | 6.851 us - 6.935 us | Approximates exp(256), guarding the binary e-power limit. |
+| `computable_transcendentals/exp_integer_above_limit_cold_p128` | 12.435 us | 12.396 us - 12.481 us | Approximates exp(257), retaining the ln(2) range-reduction fallback. |
 | `computable_transcendentals/exp_half_cold_p128` | not run | not run | Approximates exp(1/2). |
 | `computable_transcendentals/exp_near_limit_cold_p128` | not run | not run | Approximates exp near a prescaling threshold. |
 | `computable_transcendentals/exp_near_limit_cached_p128` | not run | not run | Repeats a cached near-threshold exp approximation. |
@@ -128,9 +131,9 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/sin_huge_cold_p96` | not run | not run | Approximates sine of a huge pi multiple plus offset. |
 | `computable_transcendentals/cos_huge_cold_p96` | not run | not run | Approximates cosine of a huge pi multiple plus offset. |
 | `computable_transcendentals/tan_huge_cold_p96` | not run | not run | Approximates tangent of a huge pi multiple plus offset. |
-| `computable_transcendentals/asin_cold_p96` | 7.700 us | 7.647 us - 7.765 us | Approximates a computable asin expression. |
+| `computable_transcendentals/asin_cold_p96` | 6.086 us | 6.075 us - 6.099 us | Approximates a computable asin expression. |
 | `computable_transcendentals/asin_cached_p96` | not run | not run | Repeats a cached computable asin approximation. |
-| `computable_transcendentals/acos_cold_p96` | 7.546 us | 7.537 us - 7.555 us | Approximates a computable acos expression. |
+| `computable_transcendentals/acos_cold_p96` | 5.670 us | 5.660 us - 5.681 us | Approximates a computable acos expression. |
 | `computable_transcendentals/acos_cached_p96` | not run | not run | Repeats a cached computable acos approximation. |
 | `computable_transcendentals/asin_tiny_cold_p96` | not run | not run | Approximates asin(1e-12), exercising the tiny-input series. |
 | `computable_transcendentals/acos_tiny_cold_p96` | not run | not run | Approximates acos(1e-12), exercising the tiny-input complement. |

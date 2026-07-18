@@ -223,7 +223,7 @@ complement graph, and then added an outer negation. A single signed
 `AsinRational` node now retains the input instead. Tiny values still enter the
 direct odd series. Mid-high and endpoint magnitudes form the cancellation-safe
 acos complement inside the cold approximation kernel and combine its terms
-once with four guard bits; smaller non-tiny rationals retain the former
+once with two guard bits; smaller non-tiny rationals retain the former
 adaptive complement graph on the first cold approximation.
 
 Fresh 100-sample cross-stack construction runs measured exact rational
@@ -246,6 +246,43 @@ constructs pi, an acos node, a second rational node, or either negation wrapper.
 Sanitizer-backed live campaigns completed 24,241 public Real elementary cases
 and 544 direct Computable approximation cases without a failure.
 
+The retained rational residual can also serve directly as the squared argument
+of the specialized atan series. Avoiding a wide re-square of the sampled root
+reduced the fresh `asin(7/10)` p=-96 cold row from 6.4495 us to
+6.0863 us (5.6%). The paired standalone `acos(7/10)` row remained effectively
+unchanged at 5.6700 us because it retains the sampled-root schedule that is
+faster for that independent entry point.
+
+### Bounded exact-integer exponential powers
+
+Positive exact-integer exponentials from 2 through 256 now reuse the shared
+exact `e` constant and build `e^n` by binary exponentiation. The former path
+constructed an `ln(2)` quotient, rounded the reduction index, and retained a
+large prescaled exponential graph even though the input already identified the
+integer power. Zero and one keep their canonical shortcuts; negative integers
+and values above 256 retain the cancellation-safe range-reduction fallback.
+
+At p=-128, the 100-sample `exp(128)` cold row fell from 7.0691 us to 4.7178 us
+(33.3%). The limit sentinel `exp(256)` measured 6.8843 us, while the adjacent
+fallback `exp(257)` measured 12.4353 us. Cross-library construction of the same
+exact `exp(128)` expression fell from 3.0952 us on the old graph to 251.06 ns
+(91.9%); the retained path is 4.16 times faster than Numerica 128 at 1.0444 us
+and 7.60 times faster than Symbolica at 1.9075 us. The exact-rational facade
+measured 252.53 ns.
+
+The first binary-power prototype exposed an over-optimistic magnitude estimate
+in chained squares and products. Structural MSD estimates are now propagated
+through those nodes only when their child estimates are exact, and the square
+kernel obtains a certified cached MSD before setting its working precision.
+An exhaustive oracle compares every exponent from 2 through 256 with the former
+`ln(2)` reduction at p=-40, with deeper p=-128 sentinels at 2, 13, 128, and 256.
+Sanitizer-backed campaigns then completed 26,468 public elementary cases and
+364 direct approximation cases without a failure.
+
+The regenerated trace reduces `computable/exp_large_rational` from 29 events to
+5, records `bounded-integer-e-power`, and removes the old `ln2-range-reduction`
+and its rational add, multiply, comparison, and word-result traffic.
+
 ## Computable Path
 
 Current timing anchors:
@@ -265,8 +302,9 @@ Current timing anchors:
 | `computable_transcendentals/sin_1e6_cold_p96` | 2.29 us |
 | `computable_transcendentals/cos_1e6_cold_p96` | 2.30 us |
 | `computable_transcendentals/tan_cold_p96` | 3.38 us |
-| `computable_transcendentals/asin_cold_p96` | 6.55 us |
-| `computable_transcendentals/acos_cold_p96` | 8.92 us |
+| `computable_transcendentals/exp_large_cold_p128` | 4.72 us |
+| `computable_transcendentals/asin_cold_p96` | 6.09 us |
+| `computable_transcendentals/acos_cold_p96` | 5.67 us |
 | `computable_transcendentals/acosh_cold_p128` | 9.47 us |
 
 Relevant path notes:
@@ -304,7 +342,7 @@ Goals:
 - Bring large exact-rational cold sin/cos closer to 2 us or below.
 - Reduce tan cold paths toward 3 us without changing pole behavior.
 - The biggest remaining low-level targets are inverse trig and hyperbolic
-  cold paths: `acos`, `asin`, `atan`, `acosh`, `asinh`, and large `exp`.
+  cold paths: `acos`, `asin`, `atan`, `acosh`, and `asinh`.
 
 ### Retained asinh series crossover
 

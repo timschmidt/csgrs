@@ -1,4 +1,21 @@
 impl Computable {
+    fn exp_bounded_positive_integer_power(mut remaining: u32) -> Self {
+        let mut base = Self::e_constant();
+        let mut result = Self::one();
+
+        while remaining != 0 {
+            if remaining & 1 == 1 {
+                result = result.multiply(base.clone());
+            }
+            remaining >>= 1;
+            if remaining != 0 {
+                base = base.square();
+            }
+        }
+
+        result
+    }
+
     fn integer_ratio_nearest(&self, divisor: Computable) -> BigInt {
         // Low-precision nearest-integer quotient used only for range reduction.
         // Use fixed-precision values directly and explicit remainder correction
@@ -73,18 +90,28 @@ impl Computable {
 
     /// Natural Exponential function, raise Euler's Number to this number.
     pub fn exp(self) -> Computable {
-        if self.exact_rational().as_ref().is_some_and(Rational::is_one) {
+        let exact_rational = self.exact_rational();
+        if exact_rational.as_ref().is_some_and(Rational::is_one) {
             // e^1 is the shared cached constant, not a fresh PrescaledExp node.
             crate::trace_dispatch!("computable", "exp", "exact-one-shared-e");
             return Self::e_constant();
         }
-        if self
-            .exact_rational()
+        if exact_rational
+            .as_ref()
             .is_some_and(|r| r.sign() == Sign::NoSign)
         {
             // e^0 is exact and must stay outside the approximation pipeline.
             crate::trace_dispatch!("computable", "exp", "exact-zero-one");
             return Self::one();
+        }
+        if let Some(exponent) = exact_rational
+            .as_ref()
+            .and_then(Rational::to_big_integer)
+            .and_then(|integer| u32::try_from(integer).ok())
+            .filter(|exponent| (2..=256).contains(exponent))
+        {
+            crate::trace_dispatch!("computable", "exp", "bounded-integer-e-power");
+            return Self::exp_bounded_positive_integer_power(exponent);
         }
         if let Some(msd) = self.planning_sign_and_msd().1.flatten() {
             if msd <= 2 {

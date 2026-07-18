@@ -145,7 +145,19 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
             },
             BenchDoc {
                 name: "exp_large_cold_p128",
-                description: "Approximates exp(128), exercising large-argument reduction.",
+                description: "Approximates exp(128), exercising the bounded exact-integer power path.",
+            },
+            BenchDoc {
+                name: "exp_negative_integer_cold_p128",
+                description: "Approximates exp(-32), retaining signed ln(2) range reduction.",
+            },
+            BenchDoc {
+                name: "exp_integer_limit_cold_p128",
+                description: "Approximates exp(256), guarding the binary e-power limit.",
+            },
+            BenchDoc {
+                name: "exp_integer_above_limit_cold_p128",
+                description: "Approximates exp(257), retaining the ln(2) range-reduction fallback.",
             },
             BenchDoc {
                 name: "exp_half_cold_p128",
@@ -866,6 +878,30 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     group.bench_function("exp_large_cold_p128", |b| {
         b.iter_batched(
             || exp_large_input.clone().exp(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let exp_negative_integer_input = Computable::rational(Rational::new(-32));
+    group.bench_function("exp_negative_integer_cold_p128", |b| {
+        b.iter_batched(
+            || exp_negative_integer_input.clone().exp(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let exp_integer_limit_input = Computable::rational(Rational::new(256));
+    group.bench_function("exp_integer_limit_cold_p128", |b| {
+        b.iter_batched(
+            || exp_integer_limit_input.clone().exp(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let exp_integer_above_limit_input = Computable::rational(Rational::new(257));
+    group.bench_function("exp_integer_above_limit_cold_p128", |b| {
+        b.iter_batched(
+            || exp_integer_above_limit_input.clone().exp(),
             |value| black_box(value.approx(p)),
             BatchSize::SmallInput,
         )
