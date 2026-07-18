@@ -54,6 +54,81 @@ mod tests {
         let left = Rational::fraction(35, 22).unwrap();
         let right = Rational::fraction(121, 14).unwrap();
         assert_eq!(&left * right, Rational::fraction(55, 4).unwrap());
+
+        // Decimal parsing may retain an unreduced internal fraction until a
+        // later arithmetic operation. The dyadic/general path must reduce
+        // those parts as well as cross-cancelling the operands.
+        let decimal: Rational = "1.6".parse().unwrap();
+        assert_eq!(Rational::fraction(5, 4).unwrap() * decimal, Rational::new(2));
+        let odd_common_factor: Rational = "1.5".parse().unwrap();
+        assert_eq!(
+            Rational::fraction(5, 4).unwrap() * odd_common_factor,
+            Rational::fraction(15, 8).unwrap()
+        );
+    }
+
+    #[test]
+    fn wide_dyadic_multiplication_cross_cancels_before_products() {
+        let dyadic = Rational::from_bigint_fraction(
+            BigInt::from(35_u8),
+            BigUint::one() << 180_usize,
+        )
+        .unwrap();
+        let general = Rational::from_bigint_fraction(
+            BigInt::from(11_u8) << 150_usize,
+            BigUint::from(21_u8),
+        )
+        .unwrap();
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(55_u8),
+            BigUint::from(3_u8) << 30_usize,
+        )
+        .unwrap();
+        assert_eq!(&dyadic * &general, expected);
+        assert_eq!(&general * &dyadic, expected);
+        assert_eq!((-&dyadic) * &general, -&expected);
+
+        let unreduced_general = Rational::from_parts_raw(
+            Plus,
+            (BigUint::from(11_u8) << 150_usize) * BigUint::from(3_u8),
+            BigUint::from(63_u8),
+        );
+        assert_eq!(&dyadic * unreduced_general, expected);
+
+        let left = Rational::from_bigint_fraction(
+            BigInt::from(3_u8),
+            BigUint::one() << 200_usize,
+        )
+        .unwrap();
+        let right = Rational::from_bigint_fraction(
+            BigInt::from(5_u8) << 140_usize,
+            BigUint::one() << 220_usize,
+        )
+        .unwrap();
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(15_u8),
+            BigUint::one() << 280_usize,
+        )
+        .unwrap();
+        assert_eq!(left * right, expected);
+
+        let dyadic = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            BigUint::one() << 120_usize,
+        )
+        .unwrap();
+        let odd_denominator = (BigUint::one() << 20_usize) + BigUint::one();
+        let general = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            odd_denominator.clone(),
+        )
+        .unwrap();
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            odd_denominator << 120_usize,
+        )
+        .unwrap();
+        assert_eq!(dyadic * general, expected);
     }
 
     #[test]

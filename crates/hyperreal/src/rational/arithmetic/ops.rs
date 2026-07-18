@@ -213,6 +213,14 @@ impl Rational {
         ))
     }
 
+    #[inline]
+    fn word_parts_provably_reduced(numerator: u128, denominator: u128) -> bool {
+        denominator == 1
+            || numerator == 1
+            || (denominator.is_power_of_two() && numerator & 1 == 1)
+            || (numerator.is_power_of_two() && denominator & 1 == 1)
+    }
+
     fn mul_div_words(&self, other: &Self, divide: bool) -> Option<Self> {
         let mut left_numerator = self.numerator.to_u128()?;
         let mut left_denominator = self.denominator.to_u128()?;
@@ -221,6 +229,10 @@ impl Rational {
         } else {
             (other.numerator.to_u128()?, other.denominator.to_u128()?)
         };
+        let inputs_provably_reduced = Self::word_parts_provably_reduced(
+            left_numerator,
+            left_denominator,
+        ) && Self::word_parts_provably_reduced(right_numerator, right_denominator);
 
         if !divide
             && left_denominator.is_power_of_two()
@@ -249,6 +261,71 @@ impl Rational {
             ));
         }
 
+        if !divide
+            && left_denominator.is_power_of_two() != right_denominator.is_power_of_two()
+        {
+            let (mut dyadic_numerator, dyadic_denominator, mut general_numerator, mut general_denominator) =
+                if left_denominator.is_power_of_two() {
+                    (
+                        left_numerator,
+                        left_denominator,
+                        right_numerator,
+                        right_denominator,
+                    )
+                } else {
+                    (
+                        right_numerator,
+                        right_denominator,
+                        left_numerator,
+                        left_denominator,
+                    )
+                };
+            let mut denominator_shift = dyadic_denominator.trailing_zeros();
+
+            // Raw internal rationals are not required to be canonical. Strip
+            // the only possible factor from the dyadic operand and fully
+            // reduce the general operand before cross-cancelling them.
+            let internal_power_cancel = dyadic_numerator.trailing_zeros().min(denominator_shift);
+            dyadic_numerator >>= internal_power_cancel;
+            denominator_shift -= internal_power_cancel;
+            let internal_general = if general_numerator.is_power_of_two()
+                && general_denominator & 1 == 1
+            {
+                1
+            } else {
+                Self::gcd_word(general_numerator, general_denominator)
+            };
+            general_numerator /= internal_general;
+            general_denominator /= internal_general;
+
+            let power_cancel = general_numerator.trailing_zeros().min(denominator_shift);
+            general_numerator >>= power_cancel;
+            denominator_shift -= power_cancel;
+
+            let cross = if dyadic_numerator <= u128::from(u64::MAX) {
+                // Exact f64 numerators fit one word. Reduce the opposing wide
+                // denominator once before the binary GCD so coprime vector
+                // scales do not take a long u128 subtraction schedule.
+                Self::gcd_word(
+                    dyadic_numerator,
+                    general_denominator % dyadic_numerator,
+                )
+            } else {
+                Self::gcd_word(dyadic_numerator, general_denominator)
+            };
+            dyadic_numerator /= cross;
+            general_denominator /= cross;
+            let numerator = dyadic_numerator.checked_mul(general_numerator)?;
+            let denominator_scale = 1_u128.checked_shl(denominator_shift)?;
+            let denominator = general_denominator.checked_mul(denominator_scale)?;
+            crate::trace_dispatch!("rational", "mul", "word-dyadic-general-cross-cancel");
+            return Some(Self::from_reduced_word_parts(
+                self.sign * other.sign,
+                numerator,
+                denominator,
+            ));
+        }
+
         let cross = Self::gcd_word(left_numerator, right_denominator);
         left_numerator /= cross;
         right_denominator /= cross;
@@ -259,6 +336,14 @@ impl Rational {
         let numerator = left_numerator.checked_mul(right_numerator)?;
         let denominator = left_denominator.checked_mul(right_denominator)?;
         let sign = self.sign * other.sign;
+        if inputs_provably_reduced {
+            crate::trace_dispatch!("rational", "mul-div", "proven-reduced-word-product");
+            return Some(Self::from_reduced_word_parts(
+                sign,
+                numerator,
+                denominator,
+            ));
+        }
         let (positive, negative) = if sign == Minus {
             (0, numerator)
         } else {
@@ -267,6 +352,83 @@ impl Rational {
         Some(Self::from_word_magnitude_difference(
             positive,
             negative,
+            denominator,
+        ))
+    }
+
+    fn mul_wide_with_dyadic_denominator(&self, other: &Self) -> Option<Self> {
+        let left_dyadic = Self::is_power_of_two(&self.denominator);
+        let right_dyadic = Self::is_power_of_two(&other.denominator);
+        if !left_dyadic && !right_dyadic {
+            return None;
+        }
+
+        if left_dyadic && right_dyadic {
+            let mut denominator_shift = self
+                .denominator
+                .trailing_zeros()?
+                .checked_add(other.denominator.trailing_zeros()?)?;
+            let left_cancel = self.numerator.trailing_zeros()?.min(denominator_shift);
+            denominator_shift -= left_cancel;
+            let right_cancel = other.numerator.trailing_zeros()?.min(denominator_shift);
+            denominator_shift -= right_cancel;
+            let left_cancel = usize::try_from(left_cancel).ok()?;
+            let right_cancel = usize::try_from(right_cancel).ok()?;
+            let denominator_shift = usize::try_from(denominator_shift).ok()?;
+            let numerator = (&self.numerator >> left_cancel) * (&other.numerator >> right_cancel);
+            let denominator = BigUint::one() << denominator_shift;
+            crate::trace_dispatch!("rational", "mul", "wide-dyadic-cross-cancel");
+            trace_rational_temporary!();
+            return Some(Self::from_parts_raw(
+                self.sign * other.sign,
+                numerator,
+                denominator,
+            ));
+        }
+
+        // Reduce raw internal parts, cancel the opposing power of two with
+        // shifts, then cancel the remaining cross pair before either wide
+        // product is formed.
+        let (dyadic, general) = if left_dyadic {
+            (self, other)
+        } else {
+            (other, self)
+        };
+        let mut denominator_shift = dyadic.denominator.trailing_zeros()?;
+        let dyadic_internal_cancel = dyadic.numerator.trailing_zeros()?.min(denominator_shift);
+        denominator_shift -= dyadic_internal_cancel;
+        let dyadic_internal_cancel = usize::try_from(dyadic_internal_cancel).ok()?;
+        let dyadic_numerator = &dyadic.numerator >> dyadic_internal_cancel;
+
+        let internal_general = if Self::is_power_of_two(&general.numerator)
+            && general.denominator.bit(0)
+        {
+            BigUint::one()
+        } else {
+            let divisor = num::Integer::gcd(&general.numerator, &general.denominator);
+            trace_rational_gcd!(&general.numerator, &general.denominator, &divisor);
+            divisor
+        };
+        let general_numerator = &general.numerator / &internal_general;
+        let general_denominator = &general.denominator / &internal_general;
+        let numerator_shift = general_numerator.trailing_zeros()?;
+        let power_cancel = denominator_shift.min(numerator_shift);
+        let remaining_denominator_shift = denominator_shift - power_cancel;
+        let power_cancel = usize::try_from(power_cancel).ok()?;
+        let remaining_denominator_shift = usize::try_from(remaining_denominator_shift).ok()?;
+
+        let cross = num::Integer::gcd(&dyadic_numerator, &general_denominator);
+        trace_rational_gcd!(&dyadic_numerator, &general_denominator, &cross);
+        let dyadic_numerator = dyadic_numerator / &cross;
+        let general_denominator = general_denominator / &cross;
+        let general_numerator = general_numerator >> power_cancel;
+        let numerator = dyadic_numerator * general_numerator;
+        let denominator = general_denominator << remaining_denominator_shift;
+        crate::trace_dispatch!("rational", "mul", "dyadic-general-cross-cancel");
+        trace_rational_temporary!();
+        Some(Self::from_parts_raw(
+            self.sign * other.sign,
+            numerator,
             denominator,
         ))
     }
@@ -444,6 +606,9 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
         }
         if let Some(result) = self.mul_div_words(other, false) {
             crate::trace_dispatch!("rational", "mul", "word-sized");
+            return result;
+        }
+        if let Some(result) = self.mul_wide_with_dyadic_denominator(other) {
             return result;
         }
         let numerator = &self.numerator * &other.numerator;

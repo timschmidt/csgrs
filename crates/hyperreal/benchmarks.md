@@ -261,6 +261,7 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | --- | ---: | ---: | --- |
 | `pure_scalar_algorithm_speed/rational_add` | not run | not run | Adds two nontrivial rational values. |
 | `pure_scalar_algorithm_speed/rational_mul` | not run | not run | Multiplies two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_mul_dyadic_general_cross_cancel` | 1.194 us | 1.188 us - 1.201 us | Multiplies a wide dyadic rational by a general rational with a power-of-two numerator. |
 | `pure_scalar_algorithm_speed/rational_div` | not run | not run | Divides two nontrivial rational values. |
 | `pure_scalar_algorithm_speed/real_exact_add` | not run | not run | Adds exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |
@@ -268,6 +269,7 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | not run | not run | Reduces an exact square-root expression. |
 | `pure_scalar_algorithm_speed/real_exact_dyadic_sqrt_reduce` | 433.54 ns | 432.70 ns .. 434.50 ns | Reduces the exact dyadic square-root radicand produced by an f64 vector norm. |
 | `pure_scalar_algorithm_speed/real_exact_general_sqrt_reduce` | 2.03 us | 1.94 us .. 2.20 us | Reduces a large non-dyadic exact-rational square-root radicand. |
+| `pure_scalar_algorithm_speed/real_exact_dyadic_radical_scale` | 239.73 ns | 238.42 ns - 241.10 ns | Scales an exact reciprocal radical by one exact f64 coordinate. |
 | `pure_scalar_algorithm_speed/real_exact_ln_reduce` | not run | not run | Reduces an exact logarithm of a power of two. |
 | `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | not run | not run | Dispatches `Real::pow` with an exact small-integer exponent. |
 

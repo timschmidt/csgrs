@@ -247,6 +247,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Multiplies two nontrivial rational values.",
             },
             BenchDoc {
+                name: "rational_mul_dyadic_general_cross_cancel",
+                description: "Multiplies a wide dyadic rational by a general rational with a power-of-two numerator.",
+            },
+            BenchDoc {
                 name: "rational_div",
                 description: "Divides two nontrivial rational values.",
             },
@@ -273,6 +277,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "real_exact_general_sqrt_reduce",
                 description: "Reduces a large non-dyadic rational sum of squares.",
+            },
+            BenchDoc {
+                name: "real_exact_dyadic_radical_scale",
+                description: "Scales an exact reciprocal radical by one exact f64 coordinate.",
             },
             BenchDoc {
                 name: "real_exact_ln_reduce",
@@ -781,6 +789,19 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
             + &(&dyadic_components[1] * &dyadic_components[1])
             + &(&dyadic_components[2] * &dyadic_components[2]),
     );
+    let dyadic_general_lhs = dyadic_components[0].clone();
+    let dyadic_general_rhs = Rational::from_bigint_fraction(
+        BigInt::from(1_u8) << 160_usize,
+        (BigUint::from(1_u8) << 127_usize) + BigUint::from(123_u8),
+    )
+    .expect("the synthetic reciprocal scale has a nonzero denominator");
+    let dyadic_radical_scale = dyadic_sqrt_input
+        .clone()
+        .sqrt()
+        .expect("a sum of exact squares is nonnegative")
+        .inverse()
+        .expect("the benchmark norm is nonzero");
+    let dyadic_component_real = Real::new(dyadic_components[0].clone());
     let norm_components = [
         rational(123_456_789_012_345, 100_000_000_000_000),
         rational(-234_567_890_123_456, 100_000_000_000_000),
@@ -800,6 +821,9 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     });
     group.bench_function("rational_mul", |b| {
         b.iter(|| black_box(black_box(&lhs) * black_box(&rhs)))
+    });
+    group.bench_function("rational_mul_dyadic_general_cross_cancel", |b| {
+        b.iter(|| black_box(black_box(&dyadic_general_lhs) * black_box(&dyadic_general_rhs)))
     });
     group.bench_function("rational_div", |b| {
         b.iter(|| black_box(black_box(&lhs) / black_box(&rhs)))
@@ -833,6 +857,9 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
             |value| black_box(value.sqrt().unwrap()),
             BatchSize::SmallInput,
         )
+    });
+    group.bench_function("real_exact_dyadic_radical_scale", |b| {
+        b.iter(|| black_box(black_box(&dyadic_component_real) * black_box(&dyadic_radical_scale)))
     });
     group.bench_function("real_exact_ln_reduce", |b| {
         b.iter_batched(

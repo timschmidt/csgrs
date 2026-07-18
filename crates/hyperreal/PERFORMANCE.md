@@ -470,6 +470,40 @@ arithmetic cases, 93,237 exact-real cases, and 35,767 elementary-real cases
 without a failure. Dispatch tracing distinguishes residue rejection, the
 large-power-of-two path, and both shared-remainder schedules.
 
+### Retained experiment: exact dyadic/general product cancellation
+
+Profiling one exact f64 coordinate multiplied by a reciprocal vector-norm
+radical placed most samples in the word-sized rational multiplication and
+result-reduction paths. The retained multiplier recognizes products with one
+power-of-two denominator, removes internal dyadic factors by shifts, reduces
+raw general parts when necessary, and cross-cancels both operands before
+forming either product. Power-of-two numerators over odd denominators provide
+a cheap proof that the general operand is already reduced; small opposing
+numerators use one remainder before the binary GCD. The arbitrary-precision
+counterpart applies the same cancellation schedule before wide products.
+
+The generic word path remains defensive because internal decimal construction
+may temporarily carry values such as `16/10`. It bypasses its final reduction
+only when denominator-one, unit-numerator, or dyadic structural facts prove
+both inputs reduced. Checked multiplication, rather than a shift-count check,
+guards the reconstructed denominator against word overflow. The all-feature
+adversarial benchmark caught both boundaries during development; final
+regressions cover unreduced even and odd decimal factors, wide raw general
+parts, and overflowing shifted denominators.
+
+| Workload | Before | After | Result |
+| --- | ---: | ---: | ---: |
+| exact dyadic reciprocal-radical scale | 558.37 ns | 239.73 ns | 57.1% faster |
+| wide dyadic/general cross-cancel sentinel | 1.263 us | 1.194 us | 5.5% faster |
+| Hyperlattice `vec3 normalize` | 3.30 us | 2.57 us | 22.2% faster |
+| Hyperlattice `vec4 normalize` | 3.62 us | 3.16 us | 12.6% faster |
+
+A shared batch-scaling API was also measured across vector normalization. It
+did not improve vec3 and changed the other rows by only a few percent, so the
+API and its Hyperlattice caller were removed. The retained optimization stays
+inside exact rational multiplication and does not introduce a floating-point
+decision boundary.
+
 ### Retained experiment: two-thirds arctangent table reduction
 
 Johansson's medium-precision elementary-function work suggests reducing an
