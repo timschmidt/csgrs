@@ -165,8 +165,8 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `vec3 zero` | 47.89 ns | 47.57 ns | 30.95 ns | 2.82 ns | 1.55x | 16.97x |
 | `vec3 dot abort` | 426.71 ns | 347.07 ns | 204.28 ns | 7.19 us | 2.09x | 0.06x |
 | `vec3 magnitude abort` | 822.02 ns | 1.92 us | 324.35 ns | 8.97 us | 2.53x | 0.09x |
-| `vec3 normalize checked` | 3.76 us | 3.95 us | 535.22 ns | 17.03 us | 7.02x | 0.22x |
-| `vec3 normalize checked abort` | 3.80 us | 3.94 us | 532.19 ns | 17.32 us | 7.14x | 0.22x |
+| `vec3 normalize checked` | 2.56 us | 3.60 us | 528.75 ns | 17.43 us | 4.85x | 0.15x |
+| `vec3 normalize checked abort` | 2.60 us | 3.63 us | - | - | - | - |
 | `vec3 div scalar checked` | 462.83 ns | 429.43 ns | 171.88 ns | 7.69 us | 2.69x | 0.06x |
 | `vec3 div scalar checked abort` | 478.61 ns | 452.38 ns | 172.41 ns | 7.68 us | 2.78x | 0.06x |
 | `vec3 add` | 465.93 ns | 436.68 ns | 124.44 ns | 3.98 us | 3.74x | 0.12x |

@@ -157,6 +157,32 @@ The dependency microbenchmark for one coordinate scale fell from 558.37 ns to
 239.73 ns (57.1%). A shared batch-scaling prototype did not improve vec3 and
 was removed, leaving the direct borrowed component schedule in place.
 
+## Minimal checked-normalization certificate
+
+Checked vector normalization previously built the complete public structural
+fact summary merely to decide whether the squared norm was zero. That summary
+also scans for exact-set properties, symbolic dependencies, zero masks, and
+geometric metadata that normalization does not use. The checked path now scans
+only component zero status and stops at the first proven nonzero component.
+This is exact in an ordered real field because a sum of squares is nonzero if
+and only if at least one component is nonzero. All-zero inputs still report
+`DivideByZero`, and undecidable inputs still report `UnknownZero`.
+
+Fresh matched 100-sample runs measured:
+
+| Workload | Hyperreal f64 | Exact rational | Numerica 128 | Symbolica |
+| --- | ---: | ---: | ---: | ---: |
+| `vec3 normalize checked` | 2.56 us | 3.60 us | 528.75 ns | 17.43 us |
+| `vec3 normalize checked abort` | 2.60 us | 3.63 us | - | - |
+
+Criterion measured a 15.5% improvement for the Hyperreal checked path and
+11.6% for exact rational inputs. The abort-aware forms improved by 15.8% and
+12.0%, respectively. The remaining Hyperreal-to-Numerica gap on the comparable
+checked row is 4.85 times, down from 5.73 times in the fresh pre-change run;
+Hyperreal is 6.8 times faster than Symbolica. The full all-target/all-feature
+gate, 256-case property suites, strict Clippy, warning-denied documentation,
+and 5,928 clean-exit vector fuzz executions passed with the final source.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`

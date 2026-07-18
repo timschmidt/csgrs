@@ -904,6 +904,47 @@ fn squared_norm_zero_status_from_counts(known_nonzero: u32, unknown_zero: u32) -
     }
 }
 
+#[inline]
+fn squared_norm_zero_status<const N: usize>(values: &[Real; N]) -> ZeroStatus {
+    // In an ordered real field, a sum of squares is nonzero exactly when at
+    // least one component is nonzero. Checked normalization only needs that
+    // certificate, so avoid constructing the vector's broader structural
+    // facts (exact-set summaries, dependency masks, and geometric metadata).
+    // A known nonzero component also decides the result immediately, even if
+    // an earlier component's zero status was unknown.
+    let mut unknown_zero = false;
+    for value in values {
+        match value.zero_status() {
+            ZeroStatus::NonZero => {
+                crate::trace_dispatch!(
+                    "hyperlattice_vector",
+                    "norm-certificate",
+                    "component-nonzero"
+                );
+                return ZeroStatus::NonZero;
+            }
+            ZeroStatus::Unknown => unknown_zero = true,
+            ZeroStatus::Zero => {}
+        }
+    }
+
+    if unknown_zero {
+        crate::trace_dispatch!(
+            "hyperlattice_vector",
+            "norm-certificate",
+            "component-unknown"
+        );
+        ZeroStatus::Unknown
+    } else {
+        crate::trace_dispatch!(
+            "hyperlattice_vector",
+            "norm-certificate",
+            "all-components-zero"
+        );
+        ZeroStatus::Zero
+    }
+}
+
 #[inline(always)]
 fn require_known_nonzero_status(status: ZeroStatus) -> CheckedBlasResult<()> {
     match status {
@@ -1104,7 +1145,7 @@ macro_rules! impl_vector {
             /// Returns a unit vector after rejecting zero and unknown-zero magnitudes.
             pub fn normalize_checked(&self) -> CheckedBlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "normalize-checked");
-                let norm_status = self.structural_facts().squared_norm_zero_status();
+                let norm_status = squared_norm_zero_status(&self.0);
                 require_known_nonzero_status(norm_status)?;
                 let mag_squared = self.magnitude_squared_fast();
                 let mag = mag_squared.sqrt()?;
@@ -1124,7 +1165,7 @@ macro_rules! impl_vector {
                     "method",
                     "normalize-checked-with-abort"
                 );
-                let norm_status = self.structural_facts().squared_norm_zero_status();
+                let norm_status = squared_norm_zero_status(&self.0);
                 require_known_nonzero_status(norm_status)?;
                 let mag_squared = with_abort(self.dot_with_abort(self, signal), signal);
                 let mag = mag_squared.sqrt()?;

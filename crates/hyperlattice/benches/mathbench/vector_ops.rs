@@ -69,6 +69,30 @@ fn bench_vector_operations_for<F>(
             );
         }
     });
+    trace_dispatch_row(
+        format!("vector_ops/{label}/vec3 normalize_checked"),
+        || {
+            for value in &lhs3_cases {
+                black_box(
+                    black_box(value)
+                        .normalize_checked()
+                        .expect("benchmark vectors have known nonzero norms"),
+                );
+            }
+        },
+    );
+    trace_dispatch_row(
+        format!("vector_ops/{label}/vec3 normalize_checked_abort"),
+        || {
+            for value in &lhs3_cases {
+                black_box(
+                    black_box(value)
+                        .normalize_checked_with_abort(&signal)
+                        .expect("benchmark vectors have known nonzero norms"),
+                );
+            }
+        },
+    );
 
     group.bench_function(format!("{label}/vec3 new"), |b| {
         let raw_cases = sample_vec3_cases();
