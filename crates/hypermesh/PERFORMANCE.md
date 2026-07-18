@@ -371,6 +371,47 @@ all doctests. Formatting, all-target/all-feature checking, Clippy with warnings
 denied, rustdoc with warnings denied, and the no-default-feature test matrix
 also passed.
 
+## 2026-07-18: retain rational point filter intervals
+
+Status: **kept**
+
+Sampled call stacks for the 192-triangle-per-mesh subdivided-cube union showed
+that exact point/plane classification was the largest named function and that
+rational magnitude detection plus conversion to conservative `f64` intervals
+accounted for another substantial share. Dispatch tracing recorded 211,430
+prepared affine points feeding 265,416 exact-rational classifications: the
+same point was commonly tested against a support plane and several edge
+planes, but its three coordinates and homogeneous weight were converted again
+for every filter attempt.
+
+`hyperreal` now exposes a hidden prepared rational linear-form query carrying
+four approximate values and their certified error radii. `PreparedPoint3`
+constructs the affine form once, uses an exact `1.0` homogeneous weight with
+zero error, and reuses it across every plane classification. Inconclusive
+filters still execute the same exact rational signed-product-sum ordering.
+
+Matched release A/B runs used identical code and settings except for retaining
+the prepared query:
+
+| workload | repeated conversion | retained query | result |
+| --- | ---: | ---: | ---: |
+| `boolean_operation/subdivided_cubes_192/Union` | 168.49 ms | 163.39 ms | 3.03% faster |
+| `boolean_operation/cubes/Union` | 3.8631 ms | 3.7679 ms | 2.46% faster |
+| `convex_hull/grid_4913` | 7.6063 ms | 7.4052 ms | 2.64% faster |
+
+The subdivided case used 30 samples and a ten-second measurement window for
+each side of the A/B. Criterion reported a significant 3.12% regression when
+the retained query was disabled (`p < 0.01`), corroborating the direct
+point-estimate comparison. Cube union and the grid hull likewise regressed
+significantly when disabled (`p < 0.01`). The complete dispatch workload
+retained the same output polygon/triangle counts with zero unknown-fact and
+fallback/abort events.
+
+The full default and all-feature test matrices passed, as did the
+no-default-feature build, warning-denied Clippy, rustdoc, benchmark and fuzz
+target builds, the release WASM UI build, and a 15-second sanitizer campaign
+over `polygon_predicates` (35,735 executions with no failure).
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
 use hyperlimit::{PredicateOutcome, Sign, classify_real_sign};
-use hyperreal::{PreparedRationalLinearForm4Filter, RealSign};
+use hyperreal::{PreparedRationalLinearForm4Filter, PreparedRationalLinearForm4Query, RealSign};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Plane;
@@ -96,6 +96,7 @@ pub fn classify_point(point: &Point3, plane: &Plane) -> HypermeshResult<Classifi
 pub(crate) struct PreparedPoint3<'a> {
     point: &'a Point3,
     exact_coordinates: Option<[&'a Rational; 3]>,
+    rational_filter_query: Option<PreparedRationalLinearForm4Query>,
 }
 
 impl<'a> PreparedPoint3<'a> {
@@ -117,17 +118,27 @@ impl<'a> PreparedPoint3<'a> {
                 "general-real"
             }
         );
+        let rational_filter_query =
+            exact_coordinates.and_then(Real::prepare_rational_affine_point3_query);
+        if rational_filter_query.is_some() {
+            crate::trace_dispatch!("prepared-point3", "rational-filter-query");
+        }
         Self {
             point,
             exact_coordinates,
+            rational_filter_query,
         }
     }
 
     /// Classifies the retained point against one plane.
     pub(crate) fn classify(&self, plane: &Plane) -> HypermeshResult<Classification> {
         if let Some(coordinates) = self.exact_coordinates
-            && let Some(classification) =
-                classify_exact_rational_coordinates(plane, coordinates, Rational::one_ref())
+            && let Some(classification) = classify_exact_rational_coordinates(
+                plane,
+                coordinates,
+                Rational::one_ref(),
+                self.rational_filter_query.as_ref(),
+            )
         {
             crate::trace_dispatch!("classify-point", "affine-exact-rational");
             return Ok(classification);
@@ -162,13 +173,14 @@ fn classify_exact_rational_terms(
     let [Some(x), Some(y), Some(z)] = coordinates.map(Real::exact_rational_ref) else {
         return None;
     };
-    classify_exact_rational_coordinates(plane, [x, y, z], homogeneous_weight)
+    classify_exact_rational_coordinates(plane, [x, y, z], homogeneous_weight, None)
 }
 
 fn classify_exact_rational_coordinates(
     plane: &Plane,
     [x, y, z]: [&Rational; 3],
     homogeneous_weight: &Rational,
+    prepared_query: Option<&PreparedRationalLinearForm4Query>,
 ) -> Option<Classification> {
     let [Some(a), Some(b), Some(c), Some(d)] = [
         &plane.normal.x,
@@ -179,9 +191,12 @@ fn classify_exact_rational_coordinates(
     .map(Real::exact_rational_ref) else {
         return None;
     };
-    if let Some(filter) = prepared_linear_form3_filter(plane, [a, b, c, d])
-        && let Some(sign) = filter.sign_rational([x, y, z, homogeneous_weight])
-    {
+    let filtered_sign =
+        prepared_linear_form3_filter(plane, [a, b, c, d]).and_then(|filter| match prepared_query {
+            Some(query) => filter.sign_prepared(query),
+            None => filter.sign_rational([x, y, z, homogeneous_weight]),
+        });
+    if let Some(sign) = filtered_sign {
         crate::trace_dispatch!(
             "classify-point",
             if homogeneous_weight.is_one() {
