@@ -509,6 +509,34 @@ mod tests {
         let e = Real::e().structural_facts();
         assert_eq!(e.sign, Some(RealSign::Positive));
         assert_eq!(e.zero, ZeroKnowledge::NonZero);
+
+        let e = Real::e().detailed_facts();
+        assert_eq!(e.ordering.cmp_one, StructuralComparison::Greater);
+        assert_eq!(e.ordering.abs_cmp_one, StructuralComparison::Greater);
+        assert_eq!(e.domains.acosh, DomainStatus::Valid);
+
+        let inverse_pi = Real::pi().inverse().unwrap().detailed_facts();
+        assert_eq!(inverse_pi.ordering.cmp_one, StructuralComparison::Less);
+        assert_eq!(inverse_pi.ordering.abs_cmp_one, StructuralComparison::Less);
+        assert_eq!(inverse_pi.domains.acosh, DomainStatus::Invalid);
+        assert_eq!(inverse_pi.domains.atanh, DomainStatus::Valid);
+
+        let negative_e = (-Real::e()).detailed_facts();
+        assert_eq!(negative_e.ordering.cmp_one, StructuralComparison::Less);
+        assert_eq!(
+            negative_e.ordering.abs_cmp_one,
+            StructuralComparison::Greater
+        );
+
+        // Exact MSDs of two non-unit factors cannot simply be added: their
+        // product may carry into the next binade. Keep that comparison unknown
+        // until an exact predicate resolves it.
+        let scaled_e = Real::e() * Real::new(Rational::fraction(3, 8).unwrap());
+        assert_eq!(
+            scaled_e.detailed_facts().ordering.cmp_one,
+            StructuralComparison::Unknown
+        );
+        assert!(scaled_e.acosh().is_ok());
     }
 
     #[test]
@@ -634,7 +662,8 @@ mod tests {
 
         assert_eq!(pi.domain_facts().sqrt, DomainStatus::Valid);
         assert_eq!(pi.domain_facts().reciprocal, DomainStatus::Valid);
-        assert_eq!(pi.asin_acos_domain(), DomainStatus::Unknown);
+        assert_eq!(pi.asin_acos_domain(), DomainStatus::Invalid);
+        assert_eq!(pi.acosh_domain(), DomainStatus::Valid);
     }
 
     #[test]

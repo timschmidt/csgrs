@@ -68,6 +68,44 @@ fn structural_cmp_from_ordering(ordering: Ordering) -> StructuralComparison {
     }
 }
 
+#[inline]
+fn structural_cmp_one_from_base(facts: &RealStructuralFacts) -> StructuralComparison {
+    match facts.sign {
+        Some(RealSign::Negative | RealSign::Zero) => StructuralComparison::Less,
+        Some(RealSign::Positive) => match facts.magnitude {
+            Some(MagnitudeBits {
+                msd,
+                exact_msd: true,
+            }) if msd > 0 => StructuralComparison::Greater,
+            Some(MagnitudeBits {
+                msd,
+                exact_msd: true,
+            }) if msd < 0 => StructuralComparison::Less,
+            _ => StructuralComparison::Unknown,
+        },
+        None => StructuralComparison::Unknown,
+    }
+}
+
+#[inline]
+fn structural_abs_cmp_one_from_base(facts: &RealStructuralFacts) -> StructuralComparison {
+    match facts.sign {
+        Some(RealSign::Zero) => StructuralComparison::Less,
+        Some(RealSign::Negative | RealSign::Positive) => match facts.magnitude {
+            Some(MagnitudeBits {
+                msd,
+                exact_msd: true,
+            }) if msd > 0 => StructuralComparison::Greater,
+            Some(MagnitudeBits {
+                msd,
+                exact_msd: true,
+            }) if msd < 0 => StructuralComparison::Less,
+            _ => StructuralComparison::Unknown,
+        },
+        None => StructuralComparison::Unknown,
+    }
+}
+
 fn domain_from_sign_nonnegative(sign: Option<RealSign>) -> DomainStatus {
     match sign {
         Some(RealSign::Positive | RealSign::Zero) => DomainStatus::Valid,

@@ -341,11 +341,18 @@ impl Real {
         let exact_rational = matches!(self.class, One);
         let cmp_one = if exact_rational {
             structural_cmp_from_ordering(self.rational.cmp_one_structural())
+        } else if self.rational.is_one() || self.rational.is_minus_one() {
+            // Multiplying two exact MSDs can carry into the next binade. Only
+            // unit-magnitude outer scales preserve the computable's exact MSD
+            // strongly enough to certify a comparison with one.
+            structural_cmp_one_from_base(&base)
         } else {
             StructuralComparison::Unknown
         };
         let abs_cmp_one = if exact_rational {
             structural_cmp_from_ordering(self.rational.abs_cmp_one_structural())
+        } else if self.rational.is_one() || self.rational.is_minus_one() {
+            structural_abs_cmp_one_from_base(&base)
         } else {
             StructuralComparison::Unknown
         };

@@ -2788,10 +2788,29 @@ impl Real {
             crate::trace_dispatch!("real", "acosh", "sqrt-direct-deferred-node");
             return Ok(self.make_computable(Computable::acosh_direct_deferred));
         } else {
-            let one = Self::one();
-            if (self.clone() - one).best_sign() == Sign::Minus {
-                crate::trace_dispatch!("real", "acosh", "generic-domain-error");
-                return Err(Problem::NotANumber);
+            let structural_cmp_one = if self.rational.is_one() || self.rational.is_minus_one() {
+                structural_cmp_one_from_base(&self.structural_facts())
+            } else {
+                StructuralComparison::Unknown
+            };
+            match structural_cmp_one {
+                StructuralComparison::Less => {
+                    crate::trace_dispatch!("real", "acosh", "structural-domain-error");
+                    return Err(Problem::NotANumber);
+                }
+                StructuralComparison::Greater => {
+                    crate::trace_dispatch!("real", "acosh", "structural-domain-valid");
+                }
+                StructuralComparison::Equal => unreachable!(
+                    "non-rational structural comparison cannot certify equality to one"
+                ),
+                StructuralComparison::Unknown => {
+                    let one = Self::one();
+                    if (self.clone() - one).best_sign() == Sign::Minus {
+                        crate::trace_dispatch!("real", "acosh", "generic-domain-error");
+                        return Err(Problem::NotANumber);
+                    }
+                }
             }
         }
         let folded = self.fold_ref();

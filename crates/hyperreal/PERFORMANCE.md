@@ -176,6 +176,22 @@ inconclusive prepared queries, as well as the affine exact-one specialization.
 A 15-second `real_exact` sanitizer campaign completed 63,207 executions without
 a target failure.
 
+### Exact-MSD domain certificates
+
+Exact symbolic values with a unit-magnitude outer rational scale now promote
+their certified sign and exact binary MSD into comparisons with one. A positive
+value with MSD above zero is provably greater than one; one with MSD below zero
+is provably less. The same certificate supplies absolute comparisons for
+inverse-trigonometric and inverse-hyperbolic domain facts. Non-unit outer scales
+remain unknown because multiplying two exact MSDs can carry into the next
+binade; a `3e/8 > 1` regression protects that boundary.
+
+`Real::acosh` consumes the certificate before constructing `x - 1`. In the
+cross-crate exact-symbolic `acosh(e)` row, this reduced construction from
+997.60 ns to 116.50 ns (88.32%) while the hyperlattice facade still performed
+its own preflight. The exact subtraction/refinement path remains active for
+uncertified values.
+
 ## Computable Path
 
 Current timing anchors:
