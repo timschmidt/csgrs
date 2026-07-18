@@ -460,6 +460,7 @@ struct MeshPolygonStorage<M: Clone> {
     axis_aligned_box: OnceLock<Aabb>,
     centering_offset: OnceLock<Vector3>,
     graphics_mesh: OnceLock<GraphicsMesh>,
+    #[cfg(feature = "stl-io")]
     stl_binary: OnceLock<Arc<Vec<u8>>>,
     renormalized: OnceLock<MeshPolygons<M>>,
     materialized_finite: OnceLock<MeshPolygons<M>>,
@@ -485,11 +486,20 @@ impl<M: Clone> MeshPolygonStorage<M> {
             axis_aligned_box: OnceLock::new(),
             centering_offset: OnceLock::new(),
             graphics_mesh: OnceLock::new(),
+            #[cfg(feature = "stl-io")]
             stl_binary: OnceLock::new(),
             renormalized: OnceLock::new(),
             materialized_finite: OnceLock::new(),
         }
     }
+
+    #[cfg(feature = "stl-io")]
+    fn reset_stl_binary(&mut self) {
+        self.stl_binary = OnceLock::new();
+    }
+
+    #[cfg(not(feature = "stl-io"))]
+    fn reset_stl_binary(&mut self) {}
 }
 
 #[derive(Clone, Debug)]
@@ -609,10 +619,12 @@ impl<M: Clone> MeshPolygons<M> {
         let _ = self.0.graphics_mesh.set(graphics);
     }
 
+    #[cfg(feature = "stl-io")]
     pub(crate) fn stl_binary(&self) -> Option<&Arc<Vec<u8>>> {
         self.0.stl_binary.get()
     }
 
+    #[cfg(feature = "stl-io")]
     pub(crate) fn retain_stl_binary(&self, bytes: Arc<Vec<u8>>) {
         let _ = self.0.stl_binary.set(bytes);
     }
@@ -656,7 +668,7 @@ impl<M: Clone> DerefMut for MeshPolygons<M> {
         storage.axis_aligned_box = OnceLock::new();
         storage.centering_offset = OnceLock::new();
         storage.graphics_mesh = OnceLock::new();
-        storage.stl_binary = OnceLock::new();
+        storage.reset_stl_binary();
         storage.renormalized = OnceLock::new();
         storage.materialized_finite = OnceLock::new();
         &mut storage.polygons

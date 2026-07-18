@@ -44,6 +44,51 @@ fn exact_polar(radius: &Real, angle: Real) -> [Real; 2] {
     ]
 }
 
+/// Repeat one exact local pattern around the origin while retaining rotational
+/// symmetry instead of evaluating equivalent trigonometry for every copy.
+fn repeat_exact_rotational_pattern(
+    local_points: &[[Real; 2]],
+    copies: usize,
+) -> Option<Vec<[Real; 2]>> {
+    if local_points.is_empty() || copies == 0 {
+        return Some(Vec::new());
+    }
+    let symmetry = if copies.is_multiple_of(4) {
+        4
+    } else if copies.is_multiple_of(2) {
+        2
+    } else {
+        1
+    };
+    let unique_copies = copies / symmetry;
+    let base_capacity = unique_copies.checked_mul(local_points.len())?;
+    let mut base_points = Vec::with_capacity(base_capacity);
+    base_points.extend(local_points.iter().cloned());
+    for copy in 1..unique_copies {
+        let (sin, cos) = sampled_sin_cos(copy, copies, &Real::zero(), &Real::tau())?;
+        let negative_sin = -sin.clone();
+        base_points.extend(local_points.iter().map(|[x, y]| {
+            [
+                Real::active_dot2_refs([x, y], [&cos, &negative_sin]),
+                Real::active_dot2_refs([x, y], [&sin, &cos]),
+            ]
+        }));
+    }
+
+    let mut points = Vec::with_capacity(copies.checked_mul(local_points.len())?);
+    points.extend(base_points.iter().cloned());
+    if symmetry >= 2 {
+        if symmetry == 4 {
+            points.extend(base_points.iter().map(|[x, y]| [-y.clone(), x.clone()]));
+        }
+        points.extend(base_points.iter().map(|[x, y]| [-x.clone(), -y.clone()]));
+        if symmetry == 4 {
+            points.extend(base_points.iter().map(|[x, y]| [y.clone(), -x.clone()]));
+        }
+    }
+    Some(points)
+}
+
 fn exact_ratio(numerator: usize, denominator: usize) -> Option<Real> {
     (Real::from(numerator as u64) / Real::from(denominator as u64)).ok()
 }
@@ -736,39 +781,7 @@ fn sampled_involute_gear(
             ));
         }
 
-        let symmetry = if teeth.is_multiple_of(4) {
-            4
-        } else if teeth.is_multiple_of(2) {
-            2
-        } else {
-            1
-        };
-        let unique_teeth = teeth / symmetry;
-        let base_capacity = unique_teeth.checked_mul(local_tooth.len())?;
-        let mut base_points = Vec::with_capacity(base_capacity);
-        base_points.extend(local_tooth.iter().cloned());
-        for tooth in 1..unique_teeth {
-            let (sin, cos) = sampled_sin_cos(tooth, teeth, &Real::zero(), &Real::tau())?;
-            let negative_sin = -sin.clone();
-            base_points.extend(local_tooth.iter().map(|[x, y]| {
-                [
-                    Real::active_dot2_refs([x, y], [&cos, &negative_sin]),
-                    Real::active_dot2_refs([x, y], [&sin, &cos]),
-                ]
-            }));
-        }
-        let mut points = Vec::with_capacity(teeth.checked_mul(local_tooth.len())?);
-        points.extend(base_points.iter().cloned());
-        if symmetry >= 2 {
-            if symmetry == 4 {
-                points.extend(base_points.iter().map(|[x, y]| [-y.clone(), x.clone()]));
-            }
-            points.extend(base_points.iter().map(|[x, y]| [-x.clone(), -y.clone()]));
-            if symmetry == 4 {
-                points.extend(base_points.iter().map(|[x, y]| [y.clone(), -x.clone()]));
-            }
-        }
-        Some(points)
+        repeat_exact_rotational_pattern(&local_tooth, teeth)
     })() else {
         return Profile::empty();
     };
@@ -795,159 +808,144 @@ fn sampled_cycloidal_gear(
     {
         return Profile::empty();
     }
-    let (Some(module), Some(generator), Some(clearance)) = (
-        module.to_f64_lossy(),
-        generating_radius.to_f64_lossy(),
-        clearance.to_f64_lossy(),
-    ) else {
-        return Profile::empty();
-    };
-    let pitch_radius = 0.5 * module * teeth as f64;
-    let outer_radius = pitch_radius + module;
-    let root_radius = pitch_radius - 1.25 * module - clearance;
-    if !(root_radius > 0.0 && 2.0 * generator < pitch_radius) {
-        return Profile::empty();
-    }
-    let epicycloid = |parameter: f64| {
-        let ratio = (pitch_radius + generator) / generator;
-        [
-            (pitch_radius + generator) * parameter.cos()
-                - generator * (ratio * parameter).cos(),
-            (pitch_radius + generator) * parameter.sin()
-                - generator * (ratio * parameter).sin(),
-        ]
-    };
-    let hypocycloid = |parameter: f64| {
-        let ratio = (pitch_radius - generator) / generator;
-        [
-            (pitch_radius - generator) * parameter.cos()
-                + generator * (ratio * parameter).cos(),
-            (pitch_radius - generator) * parameter.sin()
-                - generator * (ratio * parameter).sin(),
-        ]
-    };
-    let radius = |point: [f64; 2]| point[0].hypot(point[1]);
-    let Some((pi, tau)) = Real::pi().to_f64_lossy().zip(Real::tau().to_f64_lossy()) else {
-        return Profile::empty();
-    };
-    let lobe_extremum = pi * generator / pitch_radius;
-    let solve_first_lobe = |target: f64, increasing: bool, curve: &dyn Fn(f64) -> [f64; 2]| {
-        let end_radius = radius(curve(lobe_extremum));
-        let scale = target.abs().max(end_radius.abs()).max(1.0);
-        if (target - end_radius).abs() <= 32.0 * f64::EPSILON * scale {
-            return Some(lobe_extremum);
-        }
-        if (increasing && target > end_radius) || (!increasing && target < end_radius) {
+    let Some(points) = (|| -> Option<Vec<[Real; 2]>> {
+        let two = Real::from(2_u8);
+        let four = Real::from(4_u8);
+        let pitch_radius = (module.clone() * Real::from(teeth as u64) / two.clone()).ok()?;
+        let outer_radius = pitch_radius.clone() + module.clone();
+        let root_radius = pitch_radius.clone()
+            - (module.clone() * Real::from(5_u8) / four.clone()).ok()?
+            - clearance.clone();
+        let twice_generator = two.clone() * generating_radius.clone();
+        if !hprofile_scalar_positive(&root_radius)
+            || hreal_try_cmp(&twice_generator, &pitch_radius)? != Ordering::Less
+        {
             return None;
         }
-        let mut low = 0.0;
-        let mut high = lobe_extremum;
-        for _ in 0..64 {
-            let mid = 0.5 * (low + high);
-            let mid_radius = radius(curve(mid));
-            if (increasing && mid_radius < target) || (!increasing && mid_radius > target) {
-                low = mid;
-            } else {
-                high = mid;
-            }
-        }
-        Some(0.5 * (low + high))
-    };
-    let Some(tip_parameter) = solve_first_lobe(outer_radius, true, &epicycloid) else {
-        return Profile::empty();
-    };
-    let generated_root_radius = pitch_radius - 2.0 * generator;
-    let flank_root_radius = root_radius.max(generated_root_radius);
-    let Some(root_parameter) = solve_first_lobe(flank_root_radius, false, &hypocycloid) else {
-        return Profile::empty();
-    };
-    let angular_pitch = tau / teeth as f64;
-    let pitch_half_thickness = 0.25 * angular_pitch;
-    let rotate_with_sin_cos = |point: [f64; 2], sin: f64, cos: f64| {
-        [
-            point[0] * cos - point[1] * sin,
-            point[0] * sin + point[1] * cos,
-        ]
-    };
-    let rotate = |point: [f64; 2], angle: f64| {
-        let (sin, cos) = angle.sin_cos();
-        rotate_with_sin_cos(point, sin, cos)
-    };
-    let angle = |point: [f64; 2]| point[1].atan2(point[0]);
-    let tip_point = epicycloid(tip_parameter);
-    let root_point = hypocycloid(root_parameter);
-    let right_tip_angle = angle(rotate([tip_point[0], -tip_point[1]], -pitch_half_thickness));
-    let right_root_angle =
-        angle(rotate([root_point[0], -root_point[1]], -pitch_half_thickness));
-    let left_tip_angle = -right_tip_angle;
-    let left_root_angle = -right_root_angle;
-    if !(right_tip_angle < left_tip_angle && right_root_angle < left_root_angle) {
-        return Profile::empty();
-    }
 
-    let polar = |radius: f64, angle: f64| [radius * angle.cos(), radius * angle.sin()];
-    let right_root_flank = (0..=segments_per_flank)
-        .map(|sample| {
-            let u = sample as f64 / segments_per_flank as f64;
-            let point = hypocycloid(root_parameter * (1.0 - u));
-            [point[0], -point[1]]
-        })
-        .collect::<Vec<_>>();
-    let right_tip_flank = (1..=segments_per_flank)
-        .map(|sample| {
-            let u = sample as f64 / segments_per_flank as f64;
-            let point = epicycloid(tip_parameter * u);
-            [point[0], -point[1]]
-        })
-        .collect::<Vec<_>>();
-    let left_tip_flank = (1..=segments_per_flank)
-        .map(|sample| {
-            let u = sample as f64 / segments_per_flank as f64;
-            epicycloid(tip_parameter * (1.0 - u))
-        })
-        .collect::<Vec<_>>();
-    let left_root_flank = (1..=segments_per_flank)
-        .map(|sample| {
-            let u = sample as f64 / segments_per_flank as f64;
-            hypocycloid(root_parameter * u)
-        })
-        .collect::<Vec<_>>();
-    let mut points = Vec::with_capacity(teeth * (6 * segments_per_flank + 2));
-    for tooth in 0..teeth {
-        let center = tooth as f64 * angular_pitch;
-        let (right_sin, right_cos) = (center - pitch_half_thickness).sin_cos();
-        let (left_sin, left_cos) = (center + pitch_half_thickness).sin_cos();
-        for &point in &right_root_flank {
-            points.push(rotate_with_sin_cos(point, right_sin, right_cos));
+        let epicycle_radius = pitch_radius.clone() + generating_radius.clone();
+        let hypocycle_radius = pitch_radius.clone() - generating_radius.clone();
+        let maximum_epicycloid_radius = pitch_radius.clone() + twice_generator.clone();
+        if hreal_try_cmp(&outer_radius, &maximum_epicycloid_radius)? == Ordering::Greater {
+            return None;
         }
-        for &point in &right_tip_flank {
-            points.push(rotate_with_sin_cos(point, right_sin, right_cos));
+        let generated_root_radius = pitch_radius.clone() - twice_generator;
+        let flank_root_radius = match hreal_try_cmp(&root_radius, &generated_root_radius)? {
+            Ordering::Less => generated_root_radius,
+            Ordering::Equal | Ordering::Greater => root_radius.clone(),
+        };
+
+        let square = |value: &Real| value.clone() * value.clone();
+        let tip_cosine_numerator =
+            square(&epicycle_radius) + square(generating_radius) - square(&outer_radius);
+        let tip_cosine_denominator =
+            two.clone() * generating_radius.clone() * epicycle_radius.clone();
+        let tip_cosine = (tip_cosine_numerator / tip_cosine_denominator).ok()?;
+        let tip_phase = tip_cosine.acos().ok()?;
+        let tip_parameter =
+            (tip_phase.clone() * generating_radius.clone() / pitch_radius.clone()).ok()?;
+
+        let root_cosine_numerator =
+            square(&flank_root_radius) - square(&hypocycle_radius) - square(generating_radius);
+        let root_cosine_denominator =
+            two.clone() * generating_radius.clone() * hypocycle_radius.clone();
+        let root_cosine = (root_cosine_numerator / root_cosine_denominator).ok()?;
+        let root_phase = root_cosine.acos().ok()?;
+        let root_parameter =
+            (root_phase.clone() * generating_radius.clone() / pitch_radius.clone()).ok()?;
+        let epicycle_ratio = (epicycle_radius.clone() / generating_radius.clone()).ok()?;
+        let hypocycle_ratio = (hypocycle_radius.clone() / generating_radius.clone()).ok()?;
+        let angular_pitch = (Real::tau() / Real::from(teeth as u64)).ok()?;
+        let pitch_half_thickness = (angular_pitch.clone() / four).ok()?;
+        let oriented_epicycloid = |parameter: Real| {
+            let carrier_angle = parameter.clone() + pitch_half_thickness.clone();
+            let rolling_angle =
+                epicycle_ratio.clone() * parameter + pitch_half_thickness.clone();
+            [
+                epicycle_radius.clone() * carrier_angle.clone().cos()
+                    - generating_radius.clone() * rolling_angle.clone().cos(),
+                epicycle_radius.clone() * carrier_angle.sin()
+                    - generating_radius.clone() * rolling_angle.sin(),
+            ]
+        };
+        let oriented_hypocycloid = |parameter: Real| {
+            let carrier_angle = parameter.clone() + pitch_half_thickness.clone();
+            let rolling_angle =
+                hypocycle_ratio.clone() * parameter - pitch_half_thickness.clone();
+            [
+                hypocycle_radius.clone() * carrier_angle.clone().cos()
+                    + generating_radius.clone() * rolling_angle.clone().cos(),
+                hypocycle_radius.clone() * carrier_angle.sin()
+                    - generating_radius.clone() * rolling_angle.sin(),
+            ]
+        };
+
+        let mut epicycloid_samples = Vec::with_capacity(segments_per_flank + 1);
+        let mut hypocycloid_samples = Vec::with_capacity(segments_per_flank + 1);
+        for sample in 0..=segments_per_flank {
+            let u = exact_ratio(sample, segments_per_flank)?;
+            epicycloid_samples.push(oriented_epicycloid(tip_parameter.clone() * u.clone()));
+            hypocycloid_samples.push(oriented_hypocycloid(root_parameter.clone() * u));
         }
+
+        let tip_argument = (-generating_radius.clone() * tip_phase.clone().sin())
+            .atan2(epicycle_radius.clone() - generating_radius.clone() * tip_phase.cos());
+        let root_argument = (-generating_radius.clone() * root_phase.clone().sin())
+            .atan2(hypocycle_radius.clone() + generating_radius.clone() * root_phase.cos());
+        let right_tip_angle =
+            -(tip_parameter.clone() + tip_argument + pitch_half_thickness.clone());
+        let right_root_angle =
+            -(root_parameter.clone() + root_argument + pitch_half_thickness.clone());
+        let left_tip_angle = -right_tip_angle.clone();
+        let left_root_angle = -right_root_angle.clone();
+        if hreal_try_cmp(&right_tip_angle, &left_tip_angle)? != Ordering::Less
+            || hreal_try_cmp(&right_root_angle, &left_root_angle)? != Ordering::Less
+        {
+            return None;
+        }
+
+        let points_per_tooth = segments_per_flank.checked_mul(6)?;
+        let mut local_tooth = Vec::with_capacity(points_per_tooth);
+        local_tooth.extend(
+            hypocycloid_samples
+                .iter()
+                .rev()
+                .map(|[x, y]| [x.clone(), -y.clone()]),
+        );
+        local_tooth.extend(
+            epicycloid_samples
+                .iter()
+                .skip(1)
+                .map(|[x, y]| [x.clone(), -y.clone()]),
+        );
         for sample in 1..=segments_per_flank {
-            let u = sample as f64 / segments_per_flank as f64;
-            points.push(polar(
-                outer_radius,
-                center + right_tip_angle + u * (left_tip_angle - right_tip_angle),
+            let u = exact_ratio(sample, segments_per_flank)?;
+            local_tooth.push(exact_polar(
+                &outer_radius,
+                right_tip_angle.clone()
+                    + u * (left_tip_angle.clone() - right_tip_angle.clone()),
             ));
         }
-        for &point in &left_tip_flank {
-            points.push(rotate_with_sin_cos(point, left_sin, left_cos));
-        }
-        for &point in &left_root_flank {
-            points.push(rotate_with_sin_cos(point, left_sin, left_cos));
-        }
-        let next_right_root = angular_pitch + right_root_angle;
+        local_tooth.extend(epicycloid_samples[..segments_per_flank].iter().rev().cloned());
+        local_tooth.extend(hypocycloid_samples.iter().skip(1).cloned());
+        let next_right_root = angular_pitch + right_root_angle.clone();
         for sample in 1..segments_per_flank {
-            let u = sample as f64 / segments_per_flank as f64;
-            points.push(polar(
-                root_radius,
-                center + left_root_angle + u * (next_right_root - left_root_angle),
+            let u = exact_ratio(sample, segments_per_flank)?;
+            local_tooth.push(exact_polar(
+                &root_radius,
+                left_root_angle.clone()
+                    + u * (next_right_root.clone() - left_root_angle.clone()),
             ));
         }
-    }
-    Contour2::from_finite_ring(&points)
-        .map(Profile::from_contour)
-        .unwrap_or_else(|_| Profile::empty())
+
+        repeat_exact_rotational_pattern(&local_tooth, teeth)
+    })() else {
+        return Profile::empty();
+    };
+
+    // The exact first-lobe inverse and admitted radius ranges certify one
+    // simple tooth sequence; rotational assembly preserves that topology.
+    certified_tessellation_profile(&points)
 }
 
 impl Profile {
@@ -2408,9 +2406,10 @@ impl Profile {
     /// Addendum flanks are epicycloids and dedendum flanks are hypocycloids,
     /// clipped at the standard addendum and dedendum circles.
     ///
-    /// Parameter admission uses exact hyperreal predicates. The analytic
-    /// cycloids are sampled at a finite boundary and represented by exact
-    /// binary-rational line topology afterward.
+    /// Parameter admission, first-lobe endpoint inversion, cycloid sampling,
+    /// circular arcs, and rotational assembly all use exact [`Real`] arithmetic.
+    /// Approximation is deferred until a caller explicitly converts the result
+    /// at an output boundary.
     pub fn cycloidal_gear(
         module: Real,
         teeth: usize,
@@ -4247,16 +4246,16 @@ mod tests {
                 Real::try_from(backlash).unwrap(),
                 segments,
             );
-            let actual = profile.region.material_contours()[0]
-                .segments()
+            let boundary_segments = profile.region.material_contours()[0].segments();
+            assert!(boundary_segments.iter().any(|segment| {
+                let point = segment.start();
+                point.x().exact_rational_ref().is_none()
+                    || point.y().exact_rational_ref().is_none()
+            }));
+            let actual = boundary_segments
                 .iter()
                 .map(|segment| {
                     let point = segment.start();
-                    assert!(
-                        point.x().exact_rational_ref().is_none()
-                            || point.y().exact_rational_ref().is_none(),
-                        "analytic gear sample was demoted to a finite dyadic"
-                    );
                     [
                         point.x().to_f64_lossy().unwrap(),
                         point.y().to_f64_lossy().unwrap(),
@@ -4322,6 +4321,32 @@ mod tests {
     }
 
     #[test]
+    fn cycloidal_gear_retains_module_beyond_binary64_integer_resolution() {
+        let module = Real::from(9_007_199_254_740_993_u64);
+        let rounded_module = Real::try_from(module.to_f64_lossy().unwrap()).unwrap();
+        assert_eq!(
+            hreal_try_cmp(&module, &rounded_module),
+            Some(Ordering::Greater)
+        );
+
+        let exact = Profile::cycloidal_gear(module.clone(), 12, module, Real::zero(), 2);
+        let rounded = Profile::cycloidal_gear(
+            rounded_module.clone(),
+            12,
+            rounded_module,
+            Real::zero(),
+            2,
+        );
+        assert!(!exact.is_empty());
+        assert!(!rounded.is_empty());
+        let exact_x = exact.region.material_contours()[0].segments()[0].start().x();
+        let rounded_x = rounded.region.material_contours()[0].segments()[0]
+            .start()
+            .x();
+        assert_ne!(hreal_try_cmp(exact_x, rounded_x), Some(Ordering::Equal));
+    }
+
+    #[test]
     fn cycloidal_gear_uses_first_lobe_and_clearance_root() {
         let radii = |profile: Profile| {
             profile
@@ -4341,45 +4366,82 @@ mod tests {
         );
     }
 
-    #[test]
-    fn cycloidal_gear_retained_flanks_match_former_points_bit_exactly() {
-        for (module, teeth, generator, clearance, segments) in
-            [(2, 12, 1, 0, 4), (3, 9, 2, 1, 3), (1, 16, 1, 0, 6)]
-        {
-            let profile = Profile::cycloidal_gear(
-                Real::from(module),
-                teeth,
-                Real::from(generator),
-                Real::from(clearance),
-                segments,
-            );
-            let actual = profile.region.material_contours()[0]
-                .segments()
-                .iter()
-                .map(|segment| {
-                    [
-                        segment.start().x().to_f64_lossy().unwrap(),
-                        segment.start().y().to_f64_lossy().unwrap(),
-                    ]
-                })
-                .collect::<Vec<_>>();
-            let expected = legacy_cycloidal_gear_points(
-                module as f64,
-                teeth,
-                generator as f64,
-                clearance as f64,
-                segments,
-            );
-            let canonical_bits = |value: f64| {
-                if value == 0.0 { 0 } else { value.to_bits() }
-            };
-
-            assert_eq!(actual.len(), expected.len());
-            for (actual, expected) in actual.iter().zip(expected) {
-                assert_eq!(canonical_bits(actual[0]), canonical_bits(expected[0]));
-                assert_eq!(canonical_bits(actual[1]), canonical_bits(expected[1]));
+    fn assert_cycloidal_gear_matches_legacy(
+        module: i32,
+        teeth: usize,
+        generator: i32,
+        clearance: i32,
+        segments: usize,
+    ) {
+        let profile = Profile::cycloidal_gear(
+            Real::from(module),
+            teeth,
+            Real::from(generator),
+            Real::from(clearance),
+            segments,
+        );
+        let boundary_segments = profile.region.material_contours()[0].segments();
+        assert!(boundary_segments.iter().any(|segment| {
+            let point = segment.start();
+            point.x().exact_rational_ref().is_none()
+                || point.y().exact_rational_ref().is_none()
+        }));
+        let actual = boundary_segments
+            .iter()
+            .map(|segment| {
+                let point = segment.start();
+                [
+                    point.x().to_f64_lossy().unwrap(),
+                    point.y().to_f64_lossy().unwrap(),
+                ]
+            })
+            .collect::<Vec<_>>();
+        let expected = legacy_cycloidal_gear_points(
+            module as f64,
+            teeth,
+            generator as f64,
+            clearance as f64,
+            segments,
+        );
+        assert_eq!(actual.len(), expected.len());
+        for (actual, expected) in actual.iter().zip(expected) {
+            for axis in 0..2 {
+                let scale = expected[axis].abs().max(1.0);
+                assert!(
+                    (actual[axis] - expected[axis]).abs() <= 2.0e-12 * scale,
+                    "axis {axis}: exact {} vs legacy {}",
+                    actual[axis],
+                    expected[axis]
+                );
             }
         }
+    }
+
+    #[test]
+    fn cycloidal_gear_generic_lobe_matches_legacy_finite_coordinates() {
+        assert_cycloidal_gear_matches_legacy(3, 9, 2, 1, 3);
+    }
+
+    #[test]
+    fn cycloidal_gear_maximum_lobe_matches_legacy_finite_coordinates() {
+        assert_cycloidal_gear_matches_legacy(2, 12, 1, 0, 4);
+    }
+
+    #[test]
+    fn cycloidal_gear_symmetric_lobes_match_legacy_finite_coordinates() {
+        assert_cycloidal_gear_matches_legacy(1, 16, 1, 0, 6);
+    }
+
+    #[test]
+    fn cycloidal_gear_dense_exact_arc_sampling_does_not_recurse() {
+        let profile = Profile::cycloidal_gear(
+            Real::from(1_000),
+            16,
+            Real::from(1_000),
+            Real::from(1_000),
+            32,
+        );
+        assert!(!profile.is_empty());
     }
 
     #[test]

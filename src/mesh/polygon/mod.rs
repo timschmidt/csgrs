@@ -65,6 +65,7 @@ enum LazySourceVertices {
         vertices: Vec<OnceLock<Box<Vertex>>>,
         first_vertex_identity: u64,
     },
+    #[cfg(feature = "sketch")]
     Torus {
         major_radius: Real,
         minor_radius: Real,
@@ -83,6 +84,7 @@ enum LazySourceVertices {
         first_vertex_identity: u64,
         first_ruled_id: u64,
     },
+    #[cfg(feature = "sketch")]
     ConvexExtrusion {
         points: Arc<Vec<[Real; 2]>>,
         edge_normals: Arc<Vec<Vector3>>,
@@ -128,8 +130,10 @@ impl LazySourceVertices {
         match self {
             Self::Materialized(vertices) => vertices.len(),
             Self::Sphere { vertices, .. } => vertices.len(),
+            #[cfg(feature = "sketch")]
             Self::Torus { vertices, .. } => vertices.len(),
             Self::VerticalFrustum { vertices, .. } => vertices.len(),
+            #[cfg(feature = "sketch")]
             Self::ConvexExtrusion { vertices, .. } => vertices.len(),
             Self::RigidCopies { vertices, .. } => vertices.len(),
             Self::ArcCopies { vertices, .. } => vertices.len(),
@@ -187,6 +191,7 @@ impl LazySourceVertices {
                     index,
                 ))
             }),
+            #[cfg(feature = "sketch")]
             Self::Torus {
                 major_radius,
                 minor_radius,
@@ -287,6 +292,7 @@ impl LazySourceVertices {
                 }
                 Box::new(vertex)
             }),
+            #[cfg(feature = "sketch")]
             Self::ConvexExtrusion {
                 points,
                 edge_normals,
@@ -752,6 +758,7 @@ impl LazySubdivisionVertexPool {
         }
     }
 
+    #[cfg(feature = "sketch")]
     pub(crate) fn new_torus(
         major_radius: Real,
         minor_radius: Real,
@@ -815,6 +822,7 @@ impl LazySubdivisionVertexPool {
         }
     }
 
+    #[cfg(feature = "sketch")]
     pub(crate) fn new_convex_extrusion(
         points: Arc<Vec<[Real; 2]>>,
         edge_normals: Arc<Vec<Vector3>>,

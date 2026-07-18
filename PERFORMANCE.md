@@ -25,7 +25,7 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `profile_primitives/constructor/supershape` | 0.0280 ms/op | 0.0692 ms/op | 147.5% exactness cost | Legacy finite coordinates within 1e-11; no internal binary64 demotion |
 | `profile_primitives/constructor/airfoil_naca4` | 1.686 ms/op | 1.184 ms/op | 29.8% faster | Exact former-region equality at three tessellations and same checksum |
 | `profile_primitives/constructor/involute_gear` | 0.637 ms/op | 0.389 ms/op | 38.9% faster | Legacy coordinates within 2e-12, symbolic samples, and exact beyond-binary64 module retention |
-| `profile_primitives/constructor/cycloidal_gear` | 0.391 ms/op | 0.118 ms/op | 69.8% faster | Former finite point sequence bit-exact across three parameter sets |
+| `profile_primitives/constructor/cycloidal_gear` | 0.391 ms/op | 0.202 ms/op | 48.3% faster | Legacy coordinates within 2e-12, symbolic samples, and exact beyond-binary64 module retention |
 | `profile_primitives/constructor/cycloidal_rack` | 0.170 ms/op | 0.0419 ms/op | 75.4% faster | Exact former `Region2` equality across three parameter sets |
 | `profile_primitives/constructor/involute_rack` | 0.0809 ms/op | 0.0309 ms/op | 61.8% faster | Exact former `Region2` equality plus zero-root-space boundary oracle |
 | `profile_primitives/constructor/reuleaux` | 12.409 ms/op | 0.0650 ms/op | 99.5% faster | Exact former Boolean boundary and same contour checksum |
@@ -256,17 +256,21 @@ emits 1,213 events versus 24,619 originally and 943 for the invisible finite
 sampler, with six arctangent and five generic square-root evaluations and no
 unknown or approximation events.
 
-`Profile::cycloidal_gear` additionally retains its four sampled source flanks
-once and hoists the two shared tooth-angle sine/cosine pairs, rather than
-rebuilding identical local samples and trigonometric rotations for every tooth.
-The tip and root arcs keep their former evaluation order. A differential oracle
-copies the former implementation and compares every promoted boundary
-coordinate bit-for-bit (canonicalizing signed zero) across three parameter
-sets. Together with the shared finite-ring path, matched 30-sample medians fell
-from 0.391 to 0.118 ms/op (69.8%), with non-overlapping 0.367--0.399 and
-0.113--0.122 ms interquartile ranges. Its one-call trace fell from 12,839 to
-799 events (93.8%), with zero approximation, refinement, fallback, or unknown
-events.
+`Profile::cycloidal_gear` now obtains its first-lobe tip and root parameters
+from exact closed-form radial-square identities and retained inverse cosine
+nodes, replacing the former binary64 conversion and 64-step floating bisection.
+It samples one oriented epicycloid and hypocycloid per tooth shape, reuses those
+samples for both flanks, and assembles repeated teeth through shared exact
+rotational symmetry. Tip and root arcs remain exact `Real` polar samples. A
+differential oracle compares every boundary coordinate with the former finite
+implementation within 2e-12 across three lobe and symmetry cases; a module one
+unit beyond binary64 integer resolution remains distinguishable after complete
+construction. Matched 30-sample release medians are 0.202 ms/op with a
+0.201--0.205 ms interquartile range: 48.3% faster than the original 0.391 ms
+path, while paying a documented 71% exactness cost against the intermediate
+0.118 ms finite sampler. Its one-call trace fell from 12,839 to 3,292 dispatch
+events (74.4%), with zero approximation, refinement, fallback, unknown-fact,
+or rational-GCD events.
 
 `Profile::cycloidal_rack` now evaluates its exact cycloid lobe once and reuses
 that symbolic `Real` boundary under pitch translations for every tooth. Its
