@@ -3,12 +3,15 @@
 use crate::errors::ValidationError;
 use crate::mesh::plane::Plane;
 
-use crate::vertex::{Vertex, cache_position_f64, fresh_position_id};
+use crate::vertex::{
+    Vertex, cache_position_f64, cache_position_f64_range, cache_shared_position_f64_range,
+    fresh_position_id, reserve_position_ids,
+};
 
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 
-use crate::csg::{CSG, finite_reflection};
+use crate::csg::{CSG, finite_axis_aligned_reflection, finite_reflection};
 #[cfg(feature = "sketch")]
 use hypercurve::{Classification, FiniteProjectionOptions};
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
@@ -19,8 +22,13 @@ use hyperphysics::{
 };
 use hyperreal::RealSign;
 use std::{
-    cell::RefCell, cmp::PartialEq, collections::HashMap, fmt::Debug, num::NonZeroU32,
-    sync::OnceLock,
+    cell::RefCell,
+    cmp::PartialEq,
+    collections::HashMap,
+    fmt::Debug,
+    num::NonZeroU32,
+    ops::{Deref, DerefMut},
+    sync::{Arc, OnceLock},
 };
 
 pub mod convex_hull;
@@ -36,51 +44,166 @@ pub mod plane;
 pub mod polygon;
 pub use polygon::Polygon;
 use polygon::{
-    CertifiedF64Bounds, PreparedExactXAxisTriangle, PreparedTriangleQuery,
-    finite_normalized_exact_rational, fresh_plane_id,
+    CertifiedF64Bounds, LazySubdivisionVertexPool, PreparedExactXAxisTriangle,
+    PreparedTriangleQuery, finite_normalized_exact_rational, fresh_plane_id,
+    reserve_plane_ids,
 };
 
 #[derive(Clone, Debug)]
 struct CachedRigidTransform {
-    source_geometry_identity: Vec<u64>,
+    source_geometry_identity: u64,
     matrix: Matrix4,
     polygons: Vec<Polygon<()>>,
 }
 
 #[derive(Clone, Debug)]
 struct CachedGeneralTransform {
-    source_geometry_identity: Vec<u64>,
+    source_geometry_identity: u64,
     matrix: Matrix4,
     polygons: Vec<Polygon<()>>,
+    bounding_box: Option<Aabb>,
 }
 
 #[derive(Clone, Debug)]
 struct CachedRotation {
-    source_geometry_identity: Vec<u64>,
+    source_geometry_identity: u64,
     degrees: [Real; 3],
+    polygons: Vec<Polygon<()>>,
+}
+
+#[derive(Clone, Debug)]
+struct CachedTranslation {
+    source_geometry_identity: u64,
+    vector: Vector3,
+    polygons: Vec<Polygon<()>>,
+    bounding_box: Option<Aabb>,
+    axis_aligned_box: bool,
+    centering_offset: Option<Vector3>,
+}
+
+#[derive(Clone, Debug)]
+struct CachedScale {
+    source_geometry_identity: u64,
+    scales: [Real; 3],
+    polygons: Vec<Polygon<()>>,
+}
+
+#[derive(Clone, Debug)]
+struct CachedInverse {
+    source_geometry_identity: u64,
     polygons: Vec<Polygon<()>>,
 }
 
 #[derive(Clone, Debug)]
 struct PendingTransform {
-    source_geometry_identity: Vec<u64>,
+    source_geometry_identity: u64,
     matrix: Matrix4,
 }
 
 #[derive(Clone, Debug)]
 struct PendingRotation {
-    source_geometry_identity: Vec<u64>,
+    source_geometry_identity: u64,
     degrees: [Real; 3],
+}
+
+#[derive(Clone, Debug)]
+struct PendingTranslation {
+    source_geometry_identity: u64,
+    vector: Vector3,
+}
+
+#[derive(Clone, Debug)]
+struct PendingScale {
+    source_geometry_identity: u64,
+    scales: [Real; 3],
+}
+
+#[derive(Clone, Debug)]
+struct CachedSubdivision {
+    source_storage_identity: u64,
+    levels: NonZeroU32,
+    polygons: Vec<Polygon<()>>,
+    metadata_sources: Vec<usize>,
+}
+
+#[derive(Clone, Debug)]
+struct CachedMirror {
+    source_storage_identity: u64,
+    plane: Plane,
+    polygons: Vec<Polygon<()>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ArcDistributionKey {
+    source_storage_identity: u64,
+    count: usize,
+    radius: Real,
+    start_angle_deg: Real,
+    end_angle_deg: Real,
+}
+
+#[derive(Clone, Debug)]
+struct CachedArcDistribution {
+    key: ArcDistributionKey,
+    polygons: Vec<Polygon<()>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct LinearDistributionKey {
+    source_storage_identity: u64,
+    count: usize,
+    direction: Vector3,
+    spacing: Real,
+}
+
+#[derive(Clone, Debug)]
+struct CachedLinearDistribution {
+    key: LinearDistributionKey,
+    polygons: Vec<Polygon<()>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct GridDistributionKey {
+    source_storage_identity: u64,
+    rows: usize,
+    cols: usize,
+    dx: Real,
+    dy: Real,
+}
+
+#[derive(Clone, Debug)]
+struct CachedGridDistribution {
+    key: GridDistributionKey,
+    polygons: Vec<Polygon<()>>,
 }
 
 thread_local! {
     static LAST_RIGID_TRANSFORM: RefCell<Option<CachedRigidTransform>> = const { RefCell::new(None) };
-    static LAST_GENERAL_TRANSFORM: RefCell<Option<CachedGeneralTransform>> = const { RefCell::new(None) };
+    static LAST_GENERAL_TRANSFORM: RefCell<Vec<CachedGeneralTransform>> = const { RefCell::new(Vec::new()) };
     static LAST_ROTATION: RefCell<Option<CachedRotation>> = const { RefCell::new(None) };
+    static LAST_TRANSLATION: RefCell<Vec<CachedTranslation>> = const { RefCell::new(Vec::new()) };
+    static LAST_SCALE: RefCell<Option<CachedScale>> = const { RefCell::new(None) };
+    static LAST_INVERSE: RefCell<Option<CachedInverse>> = const { RefCell::new(None) };
     static PENDING_RIGID_TRANSFORM: RefCell<Option<PendingTransform>> = const { RefCell::new(None) };
-    static PENDING_GENERAL_TRANSFORM: RefCell<Option<PendingTransform>> = const { RefCell::new(None) };
+    static PENDING_GENERAL_TRANSFORM: RefCell<Vec<PendingTransform>> = const { RefCell::new(Vec::new()) };
     static PENDING_ROTATION: RefCell<Option<PendingRotation>> = const { RefCell::new(None) };
+    static PENDING_TRANSLATION: RefCell<Vec<PendingTranslation>> = const { RefCell::new(Vec::new()) };
+    static PENDING_SCALE: RefCell<Option<PendingScale>> = const { RefCell::new(None) };
+    static PENDING_INVERSE: RefCell<Option<u64>> = const { RefCell::new(None) };
+    static LAST_SUBDIVISION: RefCell<Option<CachedSubdivision>> = const { RefCell::new(None) };
+    static PENDING_SUBDIVISION: RefCell<Option<(u64, NonZeroU32)>> = const { RefCell::new(None) };
+    static LAST_MIRROR: RefCell<Option<CachedMirror>> = const { RefCell::new(None) };
+    static PENDING_MIRROR: RefCell<Option<(u64, Plane)>> = const { RefCell::new(None) };
+    static LAST_DIHEDRAL_ANGLE: RefCell<Option<(u64, u64, Real)>> = const { RefCell::new(None) };
+    static LAST_ARC_DISTRIBUTION: RefCell<Option<CachedArcDistribution>> = const { RefCell::new(None) };
+    static PENDING_ARC_DISTRIBUTION: RefCell<Option<ArcDistributionKey>> = const { RefCell::new(None) };
+    static LAST_LINEAR_DISTRIBUTION: RefCell<Option<CachedLinearDistribution>> = const { RefCell::new(None) };
+    static PENDING_LINEAR_DISTRIBUTION: RefCell<Option<LinearDistributionKey>> = const { RefCell::new(None) };
+    static LAST_GRID_DISTRIBUTION: RefCell<Option<CachedGridDistribution>> = const { RefCell::new(None) };
+    static PENDING_GRID_DISTRIBUTION: RefCell<Option<GridDistributionKey>> = const { RefCell::new(None) };
 }
+
+const TRANSFORM_CACHE_CAPACITY: usize = 64;
 #[cfg(feature = "sdf")]
 pub mod sdf;
 pub mod shapes;
@@ -92,17 +215,522 @@ pub mod triangulated;
 /// Stored as `(position: [Real; 3], normal: [Real; 3])`.
 pub type GraphicsMeshVertex = ([Real; 3], [Real; 3]);
 
+#[derive(Debug, Clone)]
+pub struct SharedVec<T>(Arc<Vec<T>>);
+
+impl<T> From<Vec<T>> for SharedVec<T> {
+    fn from(values: Vec<T>) -> Self {
+        Self(Arc::new(values))
+    }
+}
+
+impl<T> Deref for SharedVec<T> {
+    type Target = Vec<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T: Clone> DerefMut for SharedVec<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Arc::make_mut(&mut self.0)
+    }
+}
+
+impl<T: PartialEq> PartialEq<Vec<T>> for SharedVec<T> {
+    fn eq(&self, other: &Vec<T>) -> bool {
+        self.0.as_ref() == other
+    }
+}
+
 /// Mesh data laid out for renderers that want vertex buffers plus u32 indices.
 #[derive(Debug, Clone)]
 pub struct GraphicsMesh {
-    pub vertices: Vec<GraphicsMeshVertex>,
-    pub indices: Vec<u32>,
+    pub vertices: SharedVec<GraphicsMeshVertex>,
+    pub indices: SharedVec<u32>,
+}
+
+static NEXT_MESH_STORAGE_ID: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(1);
+
+fn fresh_mesh_storage_id() -> u64 {
+    NEXT_MESH_STORAGE_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+}
+
+#[derive(Clone, Debug)]
+struct TransformLayout {
+    corner_position_slots: Arc<Vec<usize>>,
+    corner_coordinate_slots: [Option<Vec<usize>>; 3],
+    polygon_plane_slots: Option<Vec<usize>>,
+    position_representatives: Arc<Vec<[usize; 2]>>,
+    coordinate_counts: [usize; 3],
+    plane_count: usize,
+    normals_match_positions: bool,
+    indexed_triangle_pool: Option<Arc<LazySubdivisionVertexPool>>,
+    indexed_polygon_corner_counts: Option<Vec<usize>>,
+    position_f64: Option<Arc<Vec<[f64; 3]>>>,
+}
+
+impl TransformLayout {
+    fn from_polygons<M: Clone>(polygons: &[Polygon<M>]) -> Self {
+        let corner_count = polygons.iter().map(|polygon| polygon.vertices.len()).sum();
+        let mut position_slots = hashbrown::HashMap::with_capacity(corner_count);
+        let mut coordinate_slots: [hashbrown::HashMap<u64, usize>; 3] =
+            std::array::from_fn(|_| hashbrown::HashMap::with_capacity(corner_count));
+        let mut plane_slots = hashbrown::HashMap::with_capacity(polygons.len());
+        let mut corner_position_slots = Vec::with_capacity(corner_count);
+        let mut corner_coordinate_slots: [Vec<usize>; 3] =
+            std::array::from_fn(|_| Vec::with_capacity(corner_count));
+        let mut polygon_plane_slots = Vec::with_capacity(polygons.len());
+        let mut position_representatives = Vec::new();
+
+        for (polygon_index, polygon) in polygons.iter().enumerate() {
+            let next_plane_slot = plane_slots.len();
+            polygon_plane_slots
+                .push(*plane_slots.entry(polygon.plane_id).or_insert(next_plane_slot));
+            for (vertex_index, vertex) in polygon.vertices.iter().enumerate() {
+                let next_position_slot = position_slots.len();
+                let position_slot =
+                    *position_slots.entry(vertex.position_id).or_insert_with(|| {
+                        position_representatives.push([polygon_index, vertex_index]);
+                        next_position_slot
+                    });
+                corner_position_slots.push(position_slot);
+                for axis in 0..3 {
+                    let next_coordinate_slot = coordinate_slots[axis].len();
+                    corner_coordinate_slots[axis].push(
+                        *coordinate_slots[axis]
+                            .entry(vertex.coordinate_ids[axis])
+                            .or_insert(next_coordinate_slot),
+                    );
+                }
+            }
+        }
+
+        let coordinate_counts = std::array::from_fn(|axis| coordinate_slots[axis].len());
+        let corner_coordinate_slots = std::array::from_fn(|axis| {
+            (corner_coordinate_slots[axis] != corner_position_slots)
+                .then(|| std::mem::take(&mut corner_coordinate_slots[axis]))
+        });
+        let polygon_plane_slots = (polygon_plane_slots.iter().copied().ne(0..polygons.len()))
+            .then_some(polygon_plane_slots);
+        Self {
+            corner_position_slots: Arc::new(corner_position_slots),
+            corner_coordinate_slots,
+            polygon_plane_slots,
+            position_representatives: Arc::new(position_representatives),
+            coordinate_counts,
+            plane_count: plane_slots.len(),
+            normals_match_positions: false,
+            indexed_triangle_pool: None,
+            indexed_polygon_corner_counts: None,
+            position_f64: None,
+        }
+    }
+
+    fn shared_position_identity(
+        corner_position_slots: Vec<usize>,
+        position_count: usize,
+        polygon_count: usize,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        indexed_triangle_pool: Option<Arc<LazySubdivisionVertexPool>>,
+        indexed_polygon_corner_counts: Option<Vec<usize>>,
+        normals_match_positions: bool,
+    ) -> Self {
+        debug_assert!(
+            position_f64
+                .as_ref()
+                .is_none_or(|positions| positions.len() == position_count)
+        );
+        let mut position_representatives = vec![[usize::MAX; 2]; position_count];
+        if let Some(corner_counts) = &indexed_polygon_corner_counts {
+            debug_assert_eq!(corner_counts.len(), polygon_count);
+            debug_assert_eq!(
+                corner_counts.iter().sum::<usize>(),
+                corner_position_slots.len()
+            );
+            let mut corner_index = 0;
+            for (polygon_index, &corner_count) in corner_counts.iter().enumerate() {
+                for vertex_index in 0..corner_count {
+                    let slot = corner_position_slots[corner_index];
+                    if position_representatives[slot][0] == usize::MAX {
+                        position_representatives[slot] = [polygon_index, vertex_index];
+                    }
+                    corner_index += 1;
+                }
+            }
+        } else {
+            for (corner_index, &slot) in corner_position_slots.iter().enumerate() {
+                if position_representatives[slot][0] == usize::MAX {
+                    position_representatives[slot] = [corner_index / 3, corner_index % 3];
+                }
+            }
+        }
+        debug_assert!(
+            position_representatives
+                .iter()
+                .all(|representative| representative[0] != usize::MAX)
+        );
+        Self::shared_position_identity_with_representatives(
+            Arc::new(corner_position_slots),
+            Arc::new(position_representatives),
+            position_count,
+            polygon_count,
+            position_f64,
+            indexed_triangle_pool,
+            indexed_polygon_corner_counts,
+            normals_match_positions,
+        )
+    }
+
+    fn shared_position_identity_with_representatives(
+        corner_position_slots: Arc<Vec<usize>>,
+        position_representatives: Arc<Vec<[usize; 2]>>,
+        position_count: usize,
+        polygon_count: usize,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        indexed_triangle_pool: Option<Arc<LazySubdivisionVertexPool>>,
+        indexed_polygon_corner_counts: Option<Vec<usize>>,
+        normals_match_positions: bool,
+    ) -> Self {
+        debug_assert_eq!(position_representatives.len(), position_count);
+        debug_assert!(
+            corner_position_slots
+                .iter()
+                .all(|slot| *slot < position_count)
+        );
+        Self {
+            corner_position_slots,
+            corner_coordinate_slots: std::array::from_fn(|_| None),
+            polygon_plane_slots: None,
+            position_representatives,
+            coordinate_counts: [position_count; 3],
+            plane_count: polygon_count,
+            normals_match_positions,
+            indexed_triangle_pool,
+            indexed_polygon_corner_counts,
+            position_f64,
+        }
+    }
+
+    fn position_representative<'a, M: Clone>(
+        &'a self,
+        polygons: &'a [Polygon<M>],
+        position_slot: usize,
+    ) -> &'a Vertex {
+        if let Some(pool) = &self.indexed_triangle_pool {
+            return pool.vertex(position_slot);
+        }
+        let [polygon_index, vertex_index] = self.position_representatives[position_slot];
+        &polygons[polygon_index].vertices[vertex_index]
+    }
+
+    fn coordinate_slot(&self, axis: usize, corner_index: usize) -> usize {
+        self.corner_coordinate_slots[axis]
+            .as_ref()
+            .map_or(self.corner_position_slots[corner_index], |slots| {
+                slots[corner_index]
+            })
+    }
+
+    fn plane_slot(&self, polygon_index: usize) -> usize {
+        self.polygon_plane_slots
+            .as_ref()
+            .map_or(polygon_index, |slots| slots[polygon_index])
+    }
+}
+
+/// Copy-on-write polygon storage for a [`Mesh`].
+///
+/// This dereferences to `Vec<Polygon<M>>`, so existing read and mutation
+/// operations keep their usual collection syntax. Cloning an unchanged mesh is
+/// constant-time; the polygon vector detaches on the first mutable access.
+#[derive(Clone, Debug)]
+struct MeshPolygonStorage<M: Clone> {
+    identity: u64,
+    polygons: Vec<Polygon<M>>,
+    topology: OnceLock<(usize, usize, bool)>,
+    connectivity: OnceLock<connectivity::Connectivity>,
+    connectivity_counts: OnceLock<(usize, usize)>,
+    disjoint_partner: OnceLock<u64>,
+    transform_layout: OnceLock<Arc<TransformLayout>>,
+    manifold: OnceLock<bool>,
+    convex_pwn: OnceLock<()>,
+    axis_aligned_box: OnceLock<Aabb>,
+    centering_offset: OnceLock<Vector3>,
+    graphics_mesh: OnceLock<GraphicsMesh>,
+    stl_binary: OnceLock<Arc<Vec<u8>>>,
+    renormalized: OnceLock<MeshPolygons<M>>,
+    materialized_finite: OnceLock<MeshPolygons<M>>,
+}
+
+impl<M: Clone> MeshPolygonStorage<M> {
+    fn new(polygons: Vec<Polygon<M>>) -> Self {
+        let topology = polygon_topology(&polygons);
+        Self::new_with_topology(polygons, topology)
+    }
+
+    fn new_with_topology(polygons: Vec<Polygon<M>>, topology: (usize, usize, bool)) -> Self {
+        Self {
+            identity: fresh_mesh_storage_id(),
+            polygons,
+            topology: OnceLock::from(topology),
+            connectivity: OnceLock::new(),
+            connectivity_counts: OnceLock::new(),
+            disjoint_partner: OnceLock::new(),
+            transform_layout: OnceLock::new(),
+            manifold: OnceLock::new(),
+            convex_pwn: OnceLock::new(),
+            axis_aligned_box: OnceLock::new(),
+            centering_offset: OnceLock::new(),
+            graphics_mesh: OnceLock::new(),
+            stl_binary: OnceLock::new(),
+            renormalized: OnceLock::new(),
+            materialized_finite: OnceLock::new(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct MeshPolygons<M: Clone>(Arc<MeshPolygonStorage<M>>);
+
+impl<M: Clone> MeshPolygons<M> {
+    pub fn new(polygons: Vec<Polygon<M>>) -> Self {
+        Self(Arc::new(MeshPolygonStorage::new(polygons)))
+    }
+
+    pub(crate) fn new_with_topology(
+        polygons: Vec<Polygon<M>>,
+        topology: (usize, usize, bool),
+    ) -> Self {
+        Self(Arc::new(MeshPolygonStorage::new_with_topology(
+            polygons, topology,
+        )))
+    }
+
+    pub fn into_vec(self) -> Vec<Polygon<M>> {
+        Arc::try_unwrap(self.0)
+            .map(|storage| storage.polygons)
+            .unwrap_or_else(|storage| storage.polygons.clone())
+    }
+
+    fn topology(&self) -> (usize, usize, bool) {
+        *self
+            .0
+            .topology
+            .get_or_init(|| polygon_topology(&self.0.polygons))
+    }
+
+    pub(crate) fn connectivity(&self) -> Option<&connectivity::Connectivity> {
+        self.0.connectivity.get()
+    }
+
+    pub(crate) fn retain_connectivity(&self, connectivity: connectivity::Connectivity) {
+        let _ = self.0.connectivity.set(connectivity);
+    }
+
+    pub(crate) fn connectivity_counts(&self) -> Option<(usize, usize)> {
+        self.0.connectivity_counts.get().copied()
+    }
+
+    pub(crate) fn retain_connectivity_counts(&self, counts: (usize, usize)) {
+        let _ = self.0.connectivity_counts.set(counts);
+    }
+
+    pub(crate) fn storage_identity(&self) -> u64 {
+        self.0.identity
+    }
+
+    #[inline]
+    fn shares_storage_with(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+
+    pub(crate) fn is_retained_disjoint_with(&self, other_storage_identity: u64) -> bool {
+        self.0.disjoint_partner.get() == Some(&other_storage_identity)
+    }
+
+    pub(crate) fn retain_disjoint_partner(&self, other_storage_identity: u64) {
+        let _ = self.0.disjoint_partner.set(other_storage_identity);
+    }
+
+    fn transform_layout(&self) -> &Arc<TransformLayout> {
+        self.0
+            .transform_layout
+            .get_or_init(|| Arc::new(TransformLayout::from_polygons(&self.0.polygons)))
+    }
+
+    fn retained_transform_layout(&self) -> Option<&Arc<TransformLayout>> {
+        self.0.transform_layout.get()
+    }
+
+    fn retain_transform_layout(&self, layout: Arc<TransformLayout>) {
+        let _ = self.0.transform_layout.set(layout);
+    }
+
+    pub(crate) fn manifold_fact(&self) -> Option<bool> {
+        self.0.manifold.get().copied()
+    }
+
+    pub(crate) fn retain_manifold_fact(&self, is_manifold: bool) {
+        let _ = self.0.manifold.set(is_manifold);
+    }
+
+    pub(crate) fn has_convex_pwn_fact(&self) -> bool {
+        self.0.convex_pwn.get().is_some()
+    }
+
+    pub(crate) fn retain_convex_pwn_fact(&self) {
+        let _ = self.0.convex_pwn.set(());
+    }
+
+    pub(crate) fn axis_aligned_box_fact(&self) -> Option<&Aabb> {
+        self.0.axis_aligned_box.get()
+    }
+
+    pub(crate) fn retain_axis_aligned_box_fact(&self, bounds: Aabb) {
+        let _ = self.0.axis_aligned_box.set(bounds);
+    }
+
+    fn centering_offset_fact(&self) -> Option<&Vector3> {
+        self.0.centering_offset.get()
+    }
+
+    fn retain_centering_offset(&self, offset: Vector3) {
+        let _ = self.0.centering_offset.set(offset);
+    }
+
+    fn graphics_mesh(&self) -> Option<&GraphicsMesh> {
+        self.0.graphics_mesh.get()
+    }
+
+    pub(crate) fn retain_graphics_mesh(&self, graphics: GraphicsMesh) {
+        let _ = self.0.graphics_mesh.set(graphics);
+    }
+
+    pub(crate) fn stl_binary(&self) -> Option<&Arc<Vec<u8>>> {
+        self.0.stl_binary.get()
+    }
+
+    pub(crate) fn retain_stl_binary(&self, bytes: Arc<Vec<u8>>) {
+        let _ = self.0.stl_binary.set(bytes);
+    }
+
+    fn renormalized(&self) -> Option<&Self> {
+        self.0.renormalized.get()
+    }
+
+    pub(crate) fn retain_renormalized(&self, polygons: Self) {
+        let _ = self.0.renormalized.set(polygons);
+    }
+
+    fn materialized_finite(&self) -> Option<&Self> {
+        self.0.materialized_finite.get()
+    }
+
+    pub(crate) fn retain_materialized_finite(&self, polygons: Self) {
+        let _ = self.0.materialized_finite.set(polygons);
+    }
+}
+
+impl<M: Clone> Deref for MeshPolygons<M> {
+    type Target = Vec<Polygon<M>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0.polygons
+    }
+}
+
+impl<M: Clone> DerefMut for MeshPolygons<M> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        let storage = Arc::make_mut(&mut self.0);
+        storage.identity = fresh_mesh_storage_id();
+        storage.topology = OnceLock::new();
+        storage.connectivity = OnceLock::new();
+        storage.connectivity_counts = OnceLock::new();
+        storage.disjoint_partner = OnceLock::new();
+        storage.transform_layout = OnceLock::new();
+        storage.manifold = OnceLock::new();
+        storage.convex_pwn = OnceLock::new();
+        storage.axis_aligned_box = OnceLock::new();
+        storage.centering_offset = OnceLock::new();
+        storage.graphics_mesh = OnceLock::new();
+        storage.stl_binary = OnceLock::new();
+        storage.renormalized = OnceLock::new();
+        storage.materialized_finite = OnceLock::new();
+        &mut storage.polygons
+    }
+}
+
+impl<M: Clone + PartialEq> PartialEq for MeshPolygons<M> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.polygons == other.0.polygons
+    }
+}
+
+impl<M: Clone> Default for MeshPolygons<M> {
+    fn default() -> Self {
+        Self::new(Vec::new())
+    }
+}
+
+impl<M: Clone> From<Vec<Polygon<M>>> for MeshPolygons<M> {
+    fn from(polygons: Vec<Polygon<M>>) -> Self {
+        Self::new(polygons)
+    }
+}
+
+impl<M: Clone> FromIterator<Polygon<M>> for MeshPolygons<M> {
+    fn from_iter<T: IntoIterator<Item = Polygon<M>>>(iter: T) -> Self {
+        Self::new(iter.into_iter().collect())
+    }
+}
+
+impl<M: Clone> IntoIterator for MeshPolygons<M> {
+    type Item = Polygon<M>;
+    type IntoIter = std::vec::IntoIter<Polygon<M>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.into_vec().into_iter()
+    }
+}
+
+impl<'a, M: Clone> IntoIterator for &'a MeshPolygons<M> {
+    type Item = &'a Polygon<M>;
+    type IntoIter = std::slice::Iter<'a, Polygon<M>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, M: Clone> IntoIterator for &'a mut MeshPolygons<M> {
+    type Item = &'a mut Polygon<M>;
+    type IntoIter = std::slice::IterMut<'a, Polygon<M>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+fn polygon_topology<M: Clone>(polygons: &[Polygon<M>]) -> (usize, usize, bool) {
+    polygons
+        .iter()
+        .fold((0, 0, true), |(facets, vertices, all_triangles), polygon| {
+            let polygon_vertices = polygon.vertices.len();
+            (
+                facets + polygon_vertices.saturating_sub(2),
+                vertices + polygon_vertices,
+                all_triangles && polygon_vertices == 3,
+            )
+        })
 }
 
 #[derive(Clone, Debug)]
 pub struct Mesh<M: Clone + Send + Sync + Debug> {
     /// 3D polygons for volumetric shapes
-    pub polygons: Vec<Polygon<M>>,
+    pub polygons: MeshPolygons<M>,
 
     /// Lazily calculated AABB that spans `polygons`.
     pub bounding_box: OnceLock<Aabb>,
@@ -160,12 +788,350 @@ fn real_cmp(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
         })
 }
 
+fn real_add_exact_fast(lhs: &Real, rhs: &Real) -> Real {
+    if let (Some(lhs), Some(rhs)) = (lhs.exact_rational_ref(), rhs.exact_rational_ref()) {
+        Real::from(lhs + rhs)
+    } else {
+        lhs + rhs
+    }
+}
+
+fn real_mul_exact_fast(lhs: &Real, rhs: &Real) -> Real {
+    if let (Some(lhs), Some(rhs)) = (lhs.exact_rational_ref(), rhs.exact_rational_ref()) {
+        Real::from(lhs * rhs)
+    } else {
+        lhs * rhs
+    }
+}
+
 fn real_gt(lhs: &Real, rhs: &Real) -> bool {
     matches!(real_cmp(lhs, rhs), std::cmp::Ordering::Greater)
 }
 
 fn real_lt(lhs: &Real, rhs: &Real) -> bool {
     matches!(real_cmp(lhs, rhs), std::cmp::Ordering::Less)
+}
+
+fn real_max(lhs: &Real, rhs: &Real) -> Real {
+    if real_lt(lhs, rhs) {
+        rhs.clone()
+    } else {
+        lhs.clone()
+    }
+}
+
+fn real_min(lhs: &Real, rhs: &Real) -> Real {
+    if real_gt(lhs, rhs) {
+        rhs.clone()
+    } else {
+        lhs.clone()
+    }
+}
+
+fn axis_aligned_box_intersection(left: &Aabb, right: &Aabb) -> Option<Aabb> {
+    let mins = Point3::new(
+        real_max(&left.mins.x, &right.mins.x),
+        real_max(&left.mins.y, &right.mins.y),
+        real_max(&left.mins.z, &right.mins.z),
+    );
+    let maxs = Point3::new(
+        real_min(&left.maxs.x, &right.maxs.x),
+        real_min(&left.maxs.y, &right.maxs.y),
+        real_min(&left.maxs.z, &right.maxs.z),
+    );
+    (real_lt(&mins.x, &maxs.x) && real_lt(&mins.y, &maxs.y) && real_lt(&mins.z, &maxs.z))
+        .then(|| Aabb::new(mins, maxs))
+}
+
+fn axis_aligned_box_rectangular_union(
+    left: &Aabb,
+    right: &Aabb,
+) -> Option<(Aabb, usize, Real)> {
+    let equal_x = left.mins.x == right.mins.x && left.maxs.x == right.maxs.x;
+    let equal_y = left.mins.y == right.mins.y && left.maxs.y == right.maxs.y;
+    let equal_z = left.mins.z == right.mins.z && left.maxs.z == right.maxs.z;
+    let joins_x =
+        equal_y && equal_z && (left.maxs.x == right.mins.x || right.maxs.x == left.mins.x);
+    let joins_y =
+        equal_x && equal_z && (left.maxs.y == right.mins.y || right.maxs.y == left.mins.y);
+    let joins_z =
+        equal_x && equal_y && (left.maxs.z == right.mins.z || right.maxs.z == left.mins.z);
+    let (axis, seam) = if joins_x {
+        (0, real_max(&left.mins.x, &right.mins.x))
+    } else if joins_y {
+        (1, real_max(&left.mins.y, &right.mins.y))
+    } else if joins_z {
+        (2, real_max(&left.mins.z, &right.mins.z))
+    } else {
+        return None;
+    };
+    Some((
+        Aabb::new(
+            Point3::new(
+                real_min(&left.mins.x, &right.mins.x),
+                real_min(&left.mins.y, &right.mins.y),
+                real_min(&left.mins.z, &right.mins.z),
+            ),
+            Point3::new(
+                real_max(&left.maxs.x, &right.maxs.x),
+                real_max(&left.maxs.y, &right.maxs.y),
+                real_max(&left.maxs.z, &right.maxs.z),
+            ),
+        ),
+        axis,
+        seam,
+    ))
+}
+
+fn axis_aligned_box_min_corner_difference<M: Clone + Send + Sync + Debug>(
+    left: &Aabb,
+    right: &Aabb,
+    left_metadata: &M,
+    right_metadata: &M,
+) -> Option<Mesh<M>> {
+    if left.mins != right.mins
+        || !real_lt(&right.maxs.x, &left.maxs.x)
+        || !real_lt(&right.maxs.y, &left.maxs.y)
+        || !real_lt(&right.maxs.z, &left.maxs.z)
+    {
+        return None;
+    }
+
+    let point = |axis: usize, coordinate: Real, u: Real, v: Real| match axis {
+        0 => Point3::new(coordinate, u, v),
+        1 => Point3::new(v, coordinate, u),
+        _ => Point3::new(u, v, coordinate),
+    };
+    let mut faces = Vec::<(Vec<Point3>, Vector3, usize, M)>::with_capacity(9);
+    let mut push_face = |axis: usize,
+                         coordinate: Real,
+                         positive: bool,
+                         boundary: Vec<[Real; 2]>,
+                         plane_slot: usize,
+                         metadata: &M| {
+        let mut points = boundary
+            .into_iter()
+            .map(|[u, v]| point(axis, coordinate.clone(), u, v))
+            .collect::<Vec<_>>();
+        if !positive {
+            points.reverse();
+        }
+        let mut normal_components = [Real::zero(), Real::zero(), Real::zero()];
+        normal_components[axis] = if positive { Real::one() } else { -Real::one() };
+        faces.push((
+            points,
+            Vector3::new(normal_components),
+            plane_slot,
+            metadata.clone(),
+        ));
+    };
+
+    push_face(
+        0,
+        left.maxs.x.clone(),
+        true,
+        vec![
+            [left.mins.y.clone(), left.mins.z.clone()],
+            [left.maxs.y.clone(), left.mins.z.clone()],
+            [left.maxs.y.clone(), left.maxs.z.clone()],
+            [left.mins.y.clone(), left.maxs.z.clone()],
+        ],
+        1,
+        left_metadata,
+    );
+    push_face(
+        1,
+        left.maxs.y.clone(),
+        true,
+        vec![
+            [left.mins.z.clone(), left.mins.x.clone()],
+            [left.maxs.z.clone(), left.mins.x.clone()],
+            [left.maxs.z.clone(), left.maxs.x.clone()],
+            [left.mins.z.clone(), left.maxs.x.clone()],
+        ],
+        3,
+        left_metadata,
+    );
+    push_face(
+        2,
+        left.maxs.z.clone(),
+        true,
+        vec![
+            [left.mins.x.clone(), left.mins.y.clone()],
+            [left.maxs.x.clone(), left.mins.y.clone()],
+            [left.maxs.x.clone(), left.maxs.y.clone()],
+            [left.mins.x.clone(), left.maxs.y.clone()],
+        ],
+        5,
+        left_metadata,
+    );
+
+    push_face(
+        0,
+        left.mins.x.clone(),
+        false,
+        vec![
+            [right.maxs.y.clone(), left.mins.z.clone()],
+            [left.maxs.y.clone(), left.mins.z.clone()],
+            [left.maxs.y.clone(), left.maxs.z.clone()],
+            [left.mins.y.clone(), left.maxs.z.clone()],
+            [left.mins.y.clone(), right.maxs.z.clone()],
+            [right.maxs.y.clone(), right.maxs.z.clone()],
+        ],
+        0,
+        left_metadata,
+    );
+    push_face(
+        1,
+        left.mins.y.clone(),
+        false,
+        vec![
+            [right.maxs.z.clone(), left.mins.x.clone()],
+            [left.maxs.z.clone(), left.mins.x.clone()],
+            [left.maxs.z.clone(), left.maxs.x.clone()],
+            [left.mins.z.clone(), left.maxs.x.clone()],
+            [left.mins.z.clone(), right.maxs.x.clone()],
+            [right.maxs.z.clone(), right.maxs.x.clone()],
+        ],
+        2,
+        left_metadata,
+    );
+    push_face(
+        2,
+        left.mins.z.clone(),
+        false,
+        vec![
+            [right.maxs.x.clone(), left.mins.y.clone()],
+            [left.maxs.x.clone(), left.mins.y.clone()],
+            [left.maxs.x.clone(), left.maxs.y.clone()],
+            [left.mins.x.clone(), left.maxs.y.clone()],
+            [left.mins.x.clone(), right.maxs.y.clone()],
+            [right.maxs.x.clone(), right.maxs.y.clone()],
+        ],
+        4,
+        left_metadata,
+    );
+
+    push_face(
+        0,
+        right.maxs.x.clone(),
+        false,
+        vec![
+            [right.mins.y.clone(), right.mins.z.clone()],
+            [right.maxs.y.clone(), right.mins.z.clone()],
+            [right.maxs.y.clone(), right.maxs.z.clone()],
+            [right.mins.y.clone(), right.maxs.z.clone()],
+        ],
+        6,
+        right_metadata,
+    );
+    push_face(
+        1,
+        right.maxs.y.clone(),
+        false,
+        vec![
+            [right.mins.z.clone(), right.mins.x.clone()],
+            [right.maxs.z.clone(), right.mins.x.clone()],
+            [right.maxs.z.clone(), right.maxs.x.clone()],
+            [right.mins.z.clone(), right.maxs.x.clone()],
+        ],
+        7,
+        right_metadata,
+    );
+    push_face(
+        2,
+        right.maxs.z.clone(),
+        false,
+        vec![
+            [right.mins.x.clone(), right.mins.y.clone()],
+            [right.maxs.x.clone(), right.mins.y.clone()],
+            [right.maxs.x.clone(), right.maxs.y.clone()],
+            [right.mins.x.clone(), right.maxs.y.clone()],
+        ],
+        8,
+        right_metadata,
+    );
+
+    let first_position_id = reserve_position_ids(14 * 4);
+    let first_plane_id = reserve_plane_ids(9);
+    let mut unique_positions = Vec::<Point3>::with_capacity(14);
+    let mut vertices = Vec::with_capacity(42);
+    let mut polygons = Vec::with_capacity(9);
+    for (face, normal, plane_slot, metadata) in faces {
+        let start = vertices.len();
+        for position in face {
+            let slot = unique_positions
+                .iter()
+                .position(|candidate| *candidate == position)
+                .unwrap_or_else(|| {
+                    unique_positions.push(position.clone());
+                    unique_positions.len() - 1
+                });
+            vertices.push(Vertex::new_with_reserved_identity(
+                position,
+                normal.clone(),
+                first_position_id,
+                slot,
+            ));
+        }
+        polygons.push((
+            start..vertices.len(),
+            first_plane_id + u64::try_from(plane_slot).ok()?,
+            metadata,
+        ));
+    }
+    debug_assert_eq!(unique_positions.len(), 14);
+    let vertices = Arc::new(vertices);
+    let polygons = polygons
+        .into_iter()
+        .map(|(range, plane_id, metadata)| {
+            Polygon::from_shared_vertices(Arc::clone(&vertices), range, metadata, plane_id)
+        })
+        .collect();
+    let mut mesh = Mesh::from_polygons(polygons);
+    mesh.bounding_box = OnceLock::from(left.clone());
+    mesh.cache_manifold_fact(true);
+    Some(mesh)
+}
+
+fn aabbs_f64_decided_disjoint(left: &Aabb, right: &Aabb) -> bool {
+    let finite = [
+        left.mins.x.to_f64_exact_dyadic(),
+        left.mins.y.to_f64_exact_dyadic(),
+        left.mins.z.to_f64_exact_dyadic(),
+        left.maxs.x.to_f64_exact_dyadic(),
+        left.maxs.y.to_f64_exact_dyadic(),
+        left.maxs.z.to_f64_exact_dyadic(),
+        right.mins.x.to_f64_exact_dyadic(),
+        right.mins.y.to_f64_exact_dyadic(),
+        right.mins.z.to_f64_exact_dyadic(),
+        right.maxs.x.to_f64_exact_dyadic(),
+        right.maxs.y.to_f64_exact_dyadic(),
+        right.maxs.z.to_f64_exact_dyadic(),
+    ];
+    let [
+        Some(lmin_x),
+        Some(lmin_y),
+        Some(lmin_z),
+        Some(lmax_x),
+        Some(lmax_y),
+        Some(lmax_z),
+        Some(rmin_x),
+        Some(rmin_y),
+        Some(rmin_z),
+        Some(rmax_x),
+        Some(rmax_y),
+        Some(rmax_z),
+    ] = finite
+    else {
+        return false;
+    };
+    lmax_x < rmin_x
+        || rmax_x < lmin_x
+        || lmax_y < rmin_y
+        || rmax_y < lmin_y
+        || lmax_z < rmin_z
+        || rmax_z < lmin_z
 }
 
 fn real_zero(value: &Real) -> bool {
@@ -261,6 +1227,34 @@ fn exact_f64(value: &Real) -> Option<f64> {
     (promoted.exact_rational_ref() == value.exact_rational_ref()).then_some(approximate)
 }
 
+fn exact_integer_i64(value: &Real) -> Option<i64> {
+    i64::try_from(value.exact_rational_ref()?.to_big_integer()?).ok()
+}
+
+fn canonical_sin_cos_degrees(
+    angle_degrees: i64,
+    half: &Real,
+    sqrt_three_halves: &Real,
+) -> Option<(Real, Real)> {
+    let zero = Real::zero();
+    let one = Real::one();
+    Some(match angle_degrees.rem_euclid(360) {
+        0 => (zero, one),
+        30 => (half.clone(), sqrt_three_halves.clone()),
+        60 => (sqrt_three_halves.clone(), half.clone()),
+        90 => (one, zero),
+        120 => (sqrt_three_halves.clone(), -half.clone()),
+        150 => (half.clone(), -sqrt_three_halves.clone()),
+        180 => (zero, -one),
+        210 => (-half.clone(), -sqrt_three_halves.clone()),
+        240 => (-sqrt_three_halves.clone(), -half.clone()),
+        270 => (-one, zero),
+        300 => (-sqrt_three_halves.clone(), half.clone()),
+        330 => (-half.clone(), sqrt_three_halves.clone()),
+        _ => return None,
+    })
+}
+
 fn point_exact_f64(point: &Point3) -> Option<[f64; 3]> {
     Some([
         exact_f64(&point.x)?,
@@ -283,6 +1277,23 @@ fn matrix_f64_lossy(matrix: &Matrix4) -> Option<[[f64; 4]; 4]> {
     {
         return None;
     }
+    let mut finite = [[0.0; 4]; 4];
+    for row in 0..4 {
+        for column in 0..4 {
+            finite[row][column] = matrix[row][column].to_f64_lossy()?;
+        }
+    }
+    Some(finite)
+}
+
+/// Materialize a finite matrix specifically for an already-lossy position
+/// boundary.
+///
+/// Unlike [`matrix_f64_lossy`], exact-rational matrices are accepted here:
+/// callers retain a separate lazy exact transform recipe and use this matrix
+/// only to map an existing finite position cache. Exact geometry and
+/// predicates continue to materialize through that recipe.
+fn matrix_f64_position_boundary(matrix: &Matrix4) -> Option<[[f64; 4]; 4]> {
     let mut finite = [[0.0; 4]; 4];
     for row in 0..4 {
         for column in 0..4 {
@@ -924,19 +1935,407 @@ impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
 
 impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new empty mesh.
-    pub const fn empty() -> Self {
+    pub fn empty() -> Self {
         Mesh {
-            polygons: Vec::new(),
+            polygons: MeshPolygons::new(Vec::new()),
             bounding_box: OnceLock::new(),
         }
     }
 
     /// Build a Mesh from an existing polygon list
-    pub const fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
+    pub fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
         Mesh {
-            polygons,
+            polygons: MeshPolygons::new(polygons),
             bounding_box: OnceLock::new(),
         }
+    }
+
+    pub(crate) fn from_polygons_with_topology(
+        polygons: Vec<Polygon<M>>,
+        topology: (usize, usize, bool),
+    ) -> Self {
+        Mesh {
+            polygons: MeshPolygons::new_with_topology(polygons, topology),
+            bounding_box: OnceLock::new(),
+        }
+    }
+
+    pub(crate) fn retain_shared_position_transform_layout(
+        &self,
+        corner_position_slots: Vec<usize>,
+        position_count: usize,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        indexed_triangle_pool: Option<Arc<LazySubdivisionVertexPool>>,
+        indexed_polygon_corner_counts: Option<Vec<usize>>,
+        normals_match_positions: bool,
+    ) {
+        self.polygons.retain_transform_layout(Arc::new(
+            TransformLayout::shared_position_identity(
+                corner_position_slots,
+                position_count,
+                self.polygons.len(),
+                position_f64,
+                indexed_triangle_pool,
+                indexed_polygon_corner_counts,
+                normals_match_positions,
+            ),
+        ));
+    }
+
+    fn retained_indexed_triangle_output(
+        &self,
+        transform_layout: &TransformLayout,
+        vertices: Vec<Vertex>,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        plane_ids: u64,
+    ) -> Option<Self> {
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new(
+            vertices,
+            Vec::new(),
+            self.polygons.len(),
+            0,
+        ));
+        self.retained_indexed_triangle_output_from_pool(
+            transform_layout,
+            vertex_pool,
+            position_f64,
+            plane_ids,
+        )
+    }
+
+    fn retained_indexed_triangle_output_from_pool(
+        &self,
+        transform_layout: &TransformLayout,
+        vertex_pool: Arc<LazySubdivisionVertexPool>,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        plane_ids: u64,
+    ) -> Option<Self> {
+        self.retained_indexed_triangle_output_from_pool_oriented(
+            transform_layout,
+            vertex_pool,
+            position_f64,
+            plane_ids,
+            false,
+        )
+    }
+
+    fn retained_indexed_triangle_output_from_pool_oriented(
+        &self,
+        transform_layout: &TransformLayout,
+        vertex_pool: Arc<LazySubdivisionVertexPool>,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        plane_ids: u64,
+        reverse_orientation: bool,
+    ) -> Option<Self> {
+        if !transform_layout.normals_match_positions
+            || transform_layout
+                .corner_coordinate_slots
+                .iter()
+                .any(Option::is_some)
+            || !self.polygons.topology().2
+            || vertex_pool.len() != transform_layout.position_representatives.len()
+        {
+            return None;
+        }
+        let mut reversed_corner_position_slots = reverse_orientation
+            .then(|| Vec::with_capacity(transform_layout.corner_position_slots.len()));
+        let polygons = transform_layout
+            .corner_position_slots
+            .chunks_exact(3)
+            .enumerate()
+            .map(|(polygon_index, slots)| {
+                let indices = if reverse_orientation {
+                    [slots[2], slots[1], slots[0]]
+                } else {
+                    [slots[0], slots[1], slots[2]]
+                };
+                if let Some(corners) = reversed_corner_position_slots.as_mut() {
+                    corners.extend(indices);
+                }
+                Polygon::from_lazy_subdivision_triangle(
+                    Arc::clone(&vertex_pool),
+                    polygon_index,
+                    indices,
+                    self.polygons[polygon_index].metadata.clone(),
+                    plane_ids
+                        + u64::try_from(transform_layout.plane_slot(polygon_index))
+                            .expect("plane slot fits u64"),
+                )
+            })
+            .collect();
+        let mesh = Mesh::from_polygons_with_topology(polygons, self.polygons.topology());
+        let corner_position_slots = reversed_corner_position_slots
+            .map(Arc::new)
+            .unwrap_or_else(|| Arc::clone(&transform_layout.corner_position_slots));
+        mesh.polygons.retain_transform_layout(Arc::new(
+            TransformLayout::shared_position_identity_with_representatives(
+                corner_position_slots,
+                Arc::clone(&transform_layout.position_representatives),
+                transform_layout.position_representatives.len(),
+                self.polygons.len(),
+                position_f64,
+                Some(vertex_pool),
+                None,
+                true,
+            ),
+        ));
+        Some(mesh)
+    }
+
+    fn finish_indexed_translation(
+        &self,
+        mut translated: Self,
+        translated_bounds: Option<Aabb>,
+        vector: Vector3,
+        source_geometry_identity: u64,
+        cache_on_completion: bool,
+        convex_pwn: bool,
+    ) -> Self {
+        translated.bounding_box = translated_bounds.map_or_else(OnceLock::new, OnceLock::from);
+        if let Some(bounds) = translated.bounding_box.get().cloned()
+            && self.polygons.axis_aligned_box_fact().is_some()
+        {
+            translated
+                .polygons
+                .retain_axis_aligned_box_fact(bounds.clone());
+            let centering_offset = if self.polygons.centering_offset_fact() == Some(&vector) {
+                Vector3::zero()
+            } else {
+                let half =
+                    (Real::one() / Real::from(2_u8)).expect("nonzero exact denominator");
+                Vector3::new([
+                    -(bounds.mins.x + bounds.maxs.x) * half.clone(),
+                    -(bounds.mins.y + bounds.maxs.y) * half.clone(),
+                    -(bounds.mins.z + bounds.maxs.z) * half,
+                ])
+            };
+            translated.polygons.retain_centering_offset(centering_offset);
+        }
+        if cache_on_completion {
+            LAST_TRANSLATION.with_borrow_mut(|cached| {
+                if let Some(index) = cached.iter().position(|cached| {
+                    cached.source_geometry_identity == source_geometry_identity
+                        && cached.vector == vector
+                }) {
+                    cached.remove(index);
+                }
+                if cached.len() == TRANSFORM_CACHE_CAPACITY {
+                    cached.remove(0);
+                }
+                cached.push(CachedTranslation {
+                    source_geometry_identity,
+                    vector,
+                    polygons: translated
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                    bounding_box: translated.bounding_box.get().cloned(),
+                    axis_aligned_box: translated.polygons.axis_aligned_box_fact().is_some(),
+                    centering_offset: translated.polygons.centering_offset_fact().cloned(),
+                });
+            });
+        }
+        if convex_pwn {
+            translated.cache_convex_pwn_fact();
+        }
+        translated
+    }
+
+    fn retained_indexed_translation(&self, vector: Vector3) -> Option<Self> {
+        let transform_layout = self
+            .polygons
+            .retained_transform_layout()
+            .filter(|layout| {
+                layout.normals_match_positions
+                    && layout.corner_coordinate_slots.iter().all(Option::is_none)
+                    && self.polygons.topology().2
+            })?
+            .clone();
+        let source_pool = transform_layout.indexed_triangle_pool.as_ref()?;
+        let source_position_f64 = transform_layout.position_f64.as_ref()?;
+        let translation = vector.0[0]
+            .to_f64_lossy()
+            .zip(vector.0[1].to_f64_lossy())
+            .zip(vector.0[2].to_f64_lossy())
+            .map(|((x, y), z)| [x, y, z])?;
+        let source_geometry_identity = self.polygons.storage_identity();
+        let cache_on_completion = PENDING_TRANSLATION.with_borrow_mut(|pending| {
+            let repeated = pending.iter().any(|pending| {
+                pending.vector == vector
+                    && pending.source_geometry_identity == source_geometry_identity
+            });
+            if !repeated {
+                if pending.len() == TRANSFORM_CACHE_CAPACITY {
+                    pending.remove(0);
+                }
+                pending.push(PendingTranslation {
+                    source_geometry_identity,
+                    vector: vector.clone(),
+                });
+            }
+            repeated
+        });
+        let translated_bounds = self.polygons.axis_aligned_box_fact().map(|bounds| {
+            Aabb::new(
+                bounds.mins.clone() + vector.clone(),
+                bounds.maxs.clone() + vector.clone(),
+            )
+        });
+        let indexed_position_f64 = Arc::new(
+            source_position_f64
+                .iter()
+                .map(|source| {
+                    [
+                        source[0] + translation[0],
+                        source[1] + translation[1],
+                        source[2] + translation[2],
+                    ]
+                })
+                .collect::<Vec<_>>(),
+        );
+        let position_ids = reserve_position_ids(indexed_position_f64.len());
+        cache_shared_position_f64_range(position_ids, Arc::clone(&indexed_position_f64));
+        let coordinate_ids = transform_layout.coordinate_counts.map(reserve_position_ids);
+        let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_translated(
+            Arc::clone(source_pool),
+            vector.clone(),
+            Some(Arc::clone(&indexed_position_f64)),
+            self.polygons.len(),
+            position_ids,
+            coordinate_ids,
+        ));
+        let translated = self.retained_indexed_triangle_output_from_pool(
+            &transform_layout,
+            vertex_pool,
+            Some(indexed_position_f64),
+            plane_ids,
+        )?;
+        Some(self.finish_indexed_translation(
+            translated,
+            translated_bounds,
+            vector,
+            source_geometry_identity,
+            cache_on_completion,
+            self.has_convex_pwn_fact(),
+        ))
+    }
+
+    fn finish_indexed_scale(
+        &self,
+        mut scaled: Self,
+        scales: [Real; 3],
+        source_geometry_identity: u64,
+        cache_on_completion: bool,
+        convex_pwn: bool,
+    ) -> Self {
+        if let Some(bounds) = self.bounding_box.get() {
+            let scaled_mins = [
+                real_mul_exact_fast(&bounds.mins.x, &scales[0]),
+                real_mul_exact_fast(&bounds.mins.y, &scales[1]),
+                real_mul_exact_fast(&bounds.mins.z, &scales[2]),
+            ];
+            let scaled_maxs = [
+                real_mul_exact_fast(&bounds.maxs.x, &scales[0]),
+                real_mul_exact_fast(&bounds.maxs.y, &scales[1]),
+                real_mul_exact_fast(&bounds.maxs.z, &scales[2]),
+            ];
+            scaled.bounding_box = OnceLock::from(Aabb::new(
+                Point3::new(
+                    real_min(&scaled_mins[0], &scaled_maxs[0]),
+                    real_min(&scaled_mins[1], &scaled_maxs[1]),
+                    real_min(&scaled_mins[2], &scaled_maxs[2]),
+                ),
+                Point3::new(
+                    real_max(&scaled_mins[0], &scaled_maxs[0]),
+                    real_max(&scaled_mins[1], &scaled_maxs[1]),
+                    real_max(&scaled_mins[2], &scaled_maxs[2]),
+                ),
+            ));
+        }
+        if cache_on_completion {
+            LAST_SCALE.with_borrow_mut(|cached| {
+                *cached = Some(CachedScale {
+                    source_geometry_identity,
+                    scales,
+                    polygons: scaled
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
+        }
+        if convex_pwn {
+            scaled.cache_convex_pwn_fact();
+        }
+        scaled
+    }
+
+    fn finish_indexed_general_transform(
+        &self,
+        mut mesh: Self,
+        transformed_bounds: Option<Aabb>,
+        matrix: &Matrix4,
+        source_geometry_identity: u64,
+        cache_on_completion: bool,
+    ) -> Self {
+        mesh.bounding_box = transformed_bounds
+            .clone()
+            .map_or_else(OnceLock::new, OnceLock::from);
+        if self.polygons.manifold_fact() == Some(true) {
+            mesh.polygons.retain_manifold_fact(true);
+        }
+        if self.has_convex_pwn_fact() {
+            mesh.cache_convex_pwn_fact();
+        }
+        if cache_on_completion {
+            LAST_GENERAL_TRANSFORM.with_borrow_mut(|cached| {
+                if let Some(index) = cached.iter().position(|cached| {
+                    cached.source_geometry_identity == source_geometry_identity
+                        && cached.matrix == *matrix
+                }) {
+                    cached.remove(index);
+                }
+                if cached.len() == TRANSFORM_CACHE_CAPACITY {
+                    cached.remove(0);
+                }
+                cached.push(CachedGeneralTransform {
+                    source_geometry_identity,
+                    matrix: matrix.clone(),
+                    polygons: mesh
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                    bounding_box: transformed_bounds,
+                });
+            });
+        }
+        mesh
+    }
+
+    fn with_cached_geometry_without_facts(&self, cached: &[Polygon<()>]) -> Self {
+        debug_assert_eq!(self.polygons.len(), cached.len());
+        Mesh::from_polygons(
+            self.polygons
+                .iter()
+                .zip(cached)
+                .map(|(source, cached)| cached.clone().with_metadata(source.metadata.clone()))
+                .collect(),
+        )
+    }
+
+    fn with_cached_geometry(&self, cached: &[Polygon<()>]) -> Self {
+        let mesh = self.with_cached_geometry_without_facts(cached);
+        if self.has_convex_pwn_fact() {
+            mesh.cache_convex_pwn_fact();
+        }
+        mesh
     }
 
     fn rigid_transform_owned(self, matrix: &Matrix4) -> Self {
@@ -950,7 +2349,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         finite_matrix: Option<[[f64; 4]; 4]>,
     ) -> Self {
         let convex_pwn = self.has_convex_pwn_fact();
-        let source_geometry_identity = self.geometry_identity();
+        let source_geometry_identity = self.polygons.storage_identity();
         if let Some(cached_polygons) = LAST_RIGID_TRANSFORM.with_borrow(|cached| {
             cached
                 .as_ref()
@@ -976,13 +2375,250 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     && pending.source_geometry_identity == source_geometry_identity
             });
             *pending = Some(PendingTransform {
-                source_geometry_identity: source_geometry_identity.clone(),
+                source_geometry_identity,
                 matrix: matrix.clone(),
             });
             repeated
         });
 
         let prepared_matrix = matrix.prepare();
+        if let Some(transform_layout) = self
+            .polygons
+            .retained_transform_layout()
+            .filter(|layout| layout.normals_match_positions)
+            .cloned()
+            && let Some(source_pool) = transform_layout.indexed_triangle_pool.as_ref()
+            && let Some(source_position_f64) = transform_layout.position_f64.as_ref()
+            && let Some(finite_matrix) = finite_matrix.as_ref()
+        {
+            let indexed_position_f64 = source_position_f64
+                .iter()
+                .map(|&source| transform_point_f64_lossy(finite_matrix, source))
+                .collect::<Option<Vec<_>>>()
+                .map(Arc::new);
+            if let Some(indexed_position_f64) = indexed_position_f64 {
+                let position_ids = reserve_position_ids(indexed_position_f64.len());
+                cache_shared_position_f64_range(
+                    position_ids,
+                    Arc::clone(&indexed_position_f64),
+                );
+                let coordinate_ids =
+                    transform_layout.coordinate_counts.map(reserve_position_ids);
+                let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+                let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_affine_transform(
+                    Arc::clone(source_pool),
+                    matrix.clone(),
+                    matrix.clone(),
+                    false,
+                    false,
+                    Some(Arc::clone(&indexed_position_f64)),
+                    self.polygons.len(),
+                    position_ids,
+                    coordinate_ids,
+                ));
+                if let Some(transformed) = self.retained_indexed_triangle_output_from_pool(
+                    &transform_layout,
+                    vertex_pool,
+                    Some(indexed_position_f64),
+                    plane_ids,
+                ) {
+                    if cache_on_completion {
+                        LAST_RIGID_TRANSFORM.with_borrow_mut(|cached| {
+                            *cached = Some(CachedRigidTransform {
+                                source_geometry_identity,
+                                matrix: matrix.clone(),
+                                polygons: transformed
+                                    .polygons
+                                    .iter()
+                                    .cloned()
+                                    .map(|polygon| polygon.with_metadata(()))
+                                    .collect(),
+                            });
+                        });
+                    }
+                    if convex_pwn {
+                        transformed.cache_convex_pwn_fact();
+                    }
+                    return transformed;
+                }
+            }
+        }
+        if let Some(transform_layout) = self
+            .polygons
+            .retained_transform_layout()
+            .filter(|layout| layout.normals_match_positions)
+            .cloned()
+        {
+            let transformed_positions = transform_layout
+                .position_representatives
+                .iter()
+                .enumerate()
+                .map(|(slot, _)| {
+                    let source =
+                        transform_layout.position_representative(&self.polygons, slot);
+                    let position = prepared_matrix
+                        .transform_point3(&source.position)
+                        .expect("rigid transforms preserve affine points");
+                    let normal = prepared_matrix.transform_direction3(&source.normal);
+                    let finite = finite_matrix.as_ref().and_then(|matrix| {
+                        let source_finite = transform_layout
+                            .position_f64
+                            .as_ref()
+                            .map(|positions| positions[slot])
+                            .or_else(|| source.position_f64_lossy())?;
+                        transform_point_f64_lossy(matrix, source_finite)
+                    });
+                    (position, normal, finite)
+                })
+                .collect::<Vec<_>>();
+            let position_ids = reserve_position_ids(transformed_positions.len());
+            cache_position_f64_range(
+                position_ids,
+                transformed_positions.len(),
+                transformed_positions.iter().map(|(_, _, finite)| *finite),
+            );
+            let coordinate_ids = transform_layout.coordinate_counts.map(reserve_position_ids);
+            let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+            let indexed_vertices = transformed_positions
+                .iter()
+                .enumerate()
+                .map(|(position_slot, (position, normal, _))| {
+                    let source = transform_layout
+                        .position_representative(&self.polygons, position_slot);
+                    Vertex {
+                        position: position.clone(),
+                        normal: normal.clone(),
+                        position_id: position_ids
+                            + u64::try_from(position_slot).expect("position slot fits u64"),
+                        coordinate_ids: std::array::from_fn(|axis| {
+                            coordinate_ids[axis]
+                                + u64::try_from(position_slot)
+                                    .expect("coordinate slot fits u64")
+                        }),
+                        ruled_line: source.ruled_line,
+                        hull_candidate: source.hull_candidate,
+                    }
+                })
+                .collect();
+            let indexed_position_f64 = transformed_positions
+                .iter()
+                .map(|(_, _, finite)| *finite)
+                .collect::<Option<Vec<_>>>()
+                .map(Arc::new);
+            if let Some(transformed) = self.retained_indexed_triangle_output(
+                &transform_layout,
+                indexed_vertices,
+                indexed_position_f64,
+                plane_ids,
+            ) {
+                if cache_on_completion {
+                    LAST_RIGID_TRANSFORM.with_borrow_mut(|cached| {
+                        *cached = Some(CachedRigidTransform {
+                            source_geometry_identity,
+                            matrix: matrix.clone(),
+                            polygons: transformed
+                                .polygons
+                                .iter()
+                                .cloned()
+                                .map(|polygon| polygon.with_metadata(()))
+                                .collect(),
+                        });
+                    });
+                }
+                if convex_pwn {
+                    transformed.cache_convex_pwn_fact();
+                }
+                return transformed;
+            }
+            let mut vertices = Vec::with_capacity(self.vertex_count());
+            let mut push_corner = |corner_index: usize, vertex: &Vertex| {
+                let position_slot = transform_layout.corner_position_slots[corner_index];
+                vertices.push(Vertex {
+                    position: transformed_positions[position_slot].0.clone(),
+                    normal: transformed_positions[position_slot].1.clone(),
+                    position_id: position_ids
+                        + u64::try_from(position_slot).expect("position slot fits u64"),
+                    coordinate_ids: std::array::from_fn(|axis| {
+                        coordinate_ids[axis]
+                            + u64::try_from(
+                                transform_layout.coordinate_slot(axis, corner_index),
+                            )
+                            .expect("coordinate slot fits u64")
+                    }),
+                    ruled_line: vertex.ruled_line,
+                    hull_candidate: vertex.hull_candidate,
+                });
+            };
+            if let Some(pool) = &transform_layout.indexed_triangle_pool {
+                for (corner_index, &position_slot) in
+                    transform_layout.corner_position_slots.iter().enumerate()
+                {
+                    push_corner(corner_index, pool.vertex(position_slot));
+                }
+            } else {
+                let mut corner_index = 0;
+                for polygon in &self.polygons {
+                    for vertex in &polygon.vertices {
+                        push_corner(corner_index, vertex);
+                        corner_index += 1;
+                    }
+                }
+            }
+            let vertices = Arc::new(vertices);
+            let mut polygons = Vec::with_capacity(self.polygons.len());
+            let mut start = 0;
+            for (polygon_index, polygon) in self.polygons.iter().enumerate() {
+                let end = start
+                    + if transform_layout.indexed_triangle_pool.is_some() {
+                        transform_layout
+                            .indexed_polygon_corner_counts
+                            .as_ref()
+                            .map_or(3, |counts| counts[polygon_index])
+                    } else {
+                        polygon.vertices.len()
+                    };
+                polygons.push(Polygon::from_shared_vertices(
+                    Arc::clone(&vertices),
+                    start..end,
+                    polygon.metadata.clone(),
+                    plane_ids
+                        + u64::try_from(transform_layout.plane_slot(polygon_index))
+                            .expect("plane slot fits u64"),
+                ));
+                start = end;
+            }
+            let topology = self.polygons.topology();
+            let transformed = Self::from_polygons_with_topology(polygons, topology);
+            let mut transformed_layout = (*transform_layout).clone();
+            transformed_layout.indexed_triangle_pool = None;
+            transformed_layout.indexed_polygon_corner_counts = None;
+            transformed_layout.position_f64 = transformed_positions
+                .iter()
+                .map(|(_, _, finite)| *finite)
+                .collect::<Option<Vec<_>>>()
+                .map(Arc::new);
+            transformed
+                .polygons
+                .retain_transform_layout(Arc::new(transformed_layout));
+            if cache_on_completion {
+                LAST_RIGID_TRANSFORM.with_borrow_mut(|cached| {
+                    *cached = Some(CachedRigidTransform {
+                        source_geometry_identity,
+                        matrix: matrix.clone(),
+                        polygons: transformed
+                            .polygons
+                            .iter()
+                            .cloned()
+                            .map(|polygon| polygon.with_metadata(()))
+                            .collect(),
+                    });
+                });
+            }
+            if convex_pwn {
+                transformed.cache_convex_pwn_fact();
+            }
+            return transformed;
+        }
         let mut transformed_positions = HashMap::<u64, (Point3, u64, Option<[f64; 3]>)>::new();
         let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
         let matrix_facts = prepared_matrix.structural_facts();
@@ -1050,9 +2686,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 }
             }
             if polygon.vertices.len() == 3 {
-                polygon.plane.point_a = polygon.vertices[0].position.clone();
-                polygon.plane.point_b = polygon.vertices[1].position.clone();
-                polygon.plane.point_c = polygon.vertices[2].position.clone();
+                polygon.defer_plane_from_vertices();
             } else {
                 assert!(
                     polygon.plane.transform_affine_in_place(matrix),
@@ -1084,46 +2718,838 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
     fn translate_vector_owned(mut self, vector: Vector3) -> Self {
         let convex_pwn = self.has_convex_pwn_fact();
-        let mut transformed = HashMap::<u64, (Point3, u64)>::new();
-        let mut transformed_coordinates: [HashMap<u64, u64>; 3] =
-            std::array::from_fn(|_| HashMap::new());
-        let mut transformed_planes = HashMap::new();
-        for polygon in &mut self.polygons {
-            let plane_id = *transformed_planes
-                .entry(polygon.plane_id)
-                .or_insert_with(fresh_plane_id);
-            for vertex in &mut polygon.vertices {
-                for (axis, ids) in transformed_coordinates.iter_mut().enumerate() {
-                    vertex.coordinate_ids[axis] = *ids
-                        .entry(vertex.coordinate_ids[axis])
-                        .or_insert_with(fresh_position_id);
+        let source_axis_aligned_box = self.polygons.axis_aligned_box_fact().cloned();
+        let translated_bounds = self.bounding_box.get().map(|bounds| {
+            Aabb::new(
+                bounds.mins.clone() + vector.clone(),
+                bounds.maxs.clone() + vector.clone(),
+            )
+        });
+        let source_geometry_identity = self.polygons.storage_identity();
+        if let Some((cached_polygons, cached_bounds, cached_box, cached_centering_offset)) =
+            LAST_TRANSLATION.with_borrow(|cached| {
+                cached
+                    .iter()
+                    .rev()
+                    .find(|cached| {
+                        cached.vector == vector
+                            && cached.source_geometry_identity == source_geometry_identity
+                    })
+                    .map(|cached| {
+                        (
+                            cached.polygons.clone(),
+                            cached.bounding_box.clone(),
+                            cached.axis_aligned_box,
+                            cached.centering_offset.clone(),
+                        )
+                    })
+            })
+        {
+            for (polygon, cached) in self.polygons.iter_mut().zip(cached_polygons) {
+                let metadata = polygon.metadata.clone();
+                *polygon = cached.with_metadata(metadata);
+            }
+            self.bounding_box = cached_bounds.map_or_else(OnceLock::new, OnceLock::from);
+            if cached_box && let Some(bounds) = self.bounding_box.get().cloned() {
+                self.polygons.retain_axis_aligned_box_fact(bounds);
+            }
+            if let Some(offset) = cached_centering_offset {
+                self.polygons.retain_centering_offset(offset);
+            }
+            if convex_pwn {
+                self.cache_convex_pwn_fact();
+            }
+            return self;
+        }
+        let cache_on_completion = PENDING_TRANSLATION.with_borrow_mut(|pending| {
+            let repeated = pending.iter().any(|pending| {
+                pending.vector == vector
+                    && pending.source_geometry_identity == source_geometry_identity
+            });
+            if !repeated {
+                if pending.len() == TRANSFORM_CACHE_CAPACITY {
+                    pending.remove(0);
                 }
-                if let Some((position, position_id)) = transformed.get(&vertex.position_id) {
-                    vertex.position = position.clone();
-                    vertex.position_id = *position_id;
-                } else {
-                    let source_id = vertex.position_id;
-                    let position = vertex.position.clone() + vector.clone();
-                    let position_id = fresh_position_id();
-                    transformed.insert(source_id, (position.clone(), position_id));
-                    vertex.position = position;
-                    vertex.position_id = position_id;
+                pending.push(PendingTranslation {
+                    source_geometry_identity,
+                    vector: vector.clone(),
+                });
+            }
+            repeated
+        });
+
+        let transform_layout = Arc::clone(self.polygons.transform_layout());
+        let vector_f64 = vector.0[0]
+            .to_f64_lossy()
+            .zip(vector.0[1].to_f64_lossy())
+            .zip(vector.0[2].to_f64_lossy())
+            .map(|((x, y), z)| [x, y, z]);
+        if let Some(source_pool) = transform_layout.indexed_triangle_pool.as_ref()
+            && let Some(source_position_f64) = transform_layout.position_f64.as_ref()
+            && let Some(translation) = vector_f64
+        {
+            let indexed_position_f64 = Arc::new(
+                source_position_f64
+                    .iter()
+                    .map(|source| {
+                        [
+                            source[0] + translation[0],
+                            source[1] + translation[1],
+                            source[2] + translation[2],
+                        ]
+                    })
+                    .collect::<Vec<_>>(),
+            );
+            let position_ids = reserve_position_ids(indexed_position_f64.len());
+            cache_shared_position_f64_range(position_ids, Arc::clone(&indexed_position_f64));
+            let coordinate_ids = transform_layout.coordinate_counts.map(reserve_position_ids);
+            let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+            let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_translated(
+                Arc::clone(source_pool),
+                vector.clone(),
+                Some(Arc::clone(&indexed_position_f64)),
+                self.polygons.len(),
+                position_ids,
+                coordinate_ids,
+            ));
+            if let Some(translated) = self.retained_indexed_triangle_output_from_pool(
+                &transform_layout,
+                vertex_pool,
+                Some(indexed_position_f64),
+                plane_ids,
+            ) {
+                return self.finish_indexed_translation(
+                    translated,
+                    translated_bounds,
+                    vector,
+                    source_geometry_identity,
+                    cache_on_completion,
+                    convex_pwn,
+                );
+            }
+        }
+        let transformed_positions = transform_layout
+            .position_representatives
+            .iter()
+            .enumerate()
+            .map(|(position_slot, _)| {
+                let source =
+                    transform_layout.position_representative(&self.polygons, position_slot);
+                let position = source_axis_aligned_box
+                    .as_ref()
+                    .zip(translated_bounds.as_ref())
+                    .map(|(source_bounds, translated_bounds)| {
+                        let translated_coordinate = |axis: usize, coordinate: &Real| {
+                            let (source_min, source_max, translated_min, translated_max) =
+                                match axis {
+                                    0 => (
+                                        &source_bounds.mins.x,
+                                        &source_bounds.maxs.x,
+                                        &translated_bounds.mins.x,
+                                        &translated_bounds.maxs.x,
+                                    ),
+                                    1 => (
+                                        &source_bounds.mins.y,
+                                        &source_bounds.maxs.y,
+                                        &translated_bounds.mins.y,
+                                        &translated_bounds.maxs.y,
+                                    ),
+                                    _ => (
+                                        &source_bounds.mins.z,
+                                        &source_bounds.maxs.z,
+                                        &translated_bounds.mins.z,
+                                        &translated_bounds.maxs.z,
+                                    ),
+                                };
+                            if coordinate == source_min {
+                                translated_min.clone()
+                            } else if coordinate == source_max {
+                                translated_max.clone()
+                            } else {
+                                real_add_exact_fast(coordinate, &vector.0[axis])
+                            }
+                        };
+                        Point3::new(
+                            translated_coordinate(0, &source.position.x),
+                            translated_coordinate(1, &source.position.y),
+                            translated_coordinate(2, &source.position.z),
+                        )
+                    })
+                    .unwrap_or_else(|| {
+                        Point3::new(
+                            real_add_exact_fast(&source.position.x, &vector.0[0]),
+                            real_add_exact_fast(&source.position.y, &vector.0[1]),
+                            real_add_exact_fast(&source.position.z, &vector.0[2]),
+                        )
+                    });
+                let finite = vector_f64.and_then(|translation| {
+                    let source = transform_layout
+                        .position_f64
+                        .as_ref()
+                        .map(|positions| positions[position_slot])
+                        .or_else(|| source.position_f64_lossy())?;
+                    Some([
+                        source[0] + translation[0],
+                        source[1] + translation[1],
+                        source[2] + translation[2],
+                    ])
+                });
+                (position, finite)
+            })
+            .collect::<Vec<_>>();
+        let position_ids = reserve_position_ids(transformed_positions.len());
+        cache_position_f64_range(
+            position_ids,
+            transformed_positions.len(),
+            transformed_positions.iter().map(|(_, finite)| *finite),
+        );
+        let coordinate_ids = transform_layout.coordinate_counts.map(reserve_position_ids);
+        let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+        let indexed_vertices = transformed_positions
+            .iter()
+            .enumerate()
+            .map(|(position_slot, (position, _))| {
+                let source =
+                    transform_layout.position_representative(&self.polygons, position_slot);
+                Vertex {
+                    position: position.clone(),
+                    normal: source.normal.clone(),
+                    position_id: position_ids
+                        + u64::try_from(position_slot).expect("position slot fits u64"),
+                    coordinate_ids: std::array::from_fn(|axis| {
+                        coordinate_ids[axis]
+                            + u64::try_from(position_slot).expect("coordinate slot fits u64")
+                    }),
+                    ruled_line: source.ruled_line,
+                    hull_candidate: source.hull_candidate,
+                }
+            })
+            .collect();
+        let indexed_position_f64 = transformed_positions
+            .iter()
+            .map(|(_, finite)| *finite)
+            .collect::<Option<Vec<_>>>()
+            .map(Arc::new);
+        if let Some(translated) = self.retained_indexed_triangle_output(
+            &transform_layout,
+            indexed_vertices,
+            indexed_position_f64,
+            plane_ids,
+        ) {
+            return self.finish_indexed_translation(
+                translated,
+                translated_bounds,
+                vector,
+                source_geometry_identity,
+                cache_on_completion,
+                convex_pwn,
+            );
+        }
+        let mut vertices = Vec::with_capacity(self.vertex_count());
+        let mut push_corner = |corner_index: usize, vertex: &Vertex| {
+            let position_slot = transform_layout.corner_position_slots[corner_index];
+            vertices.push(Vertex {
+                position: transformed_positions[position_slot].0.clone(),
+                normal: vertex.normal.clone(),
+                position_id: position_ids
+                    + u64::try_from(position_slot).expect("position slot fits u64"),
+                coordinate_ids: std::array::from_fn(|axis| {
+                    coordinate_ids[axis]
+                        + u64::try_from(transform_layout.coordinate_slot(axis, corner_index))
+                            .expect("coordinate slot fits u64")
+                }),
+                ruled_line: vertex.ruled_line,
+                hull_candidate: vertex.hull_candidate,
+            });
+        };
+        if let Some(pool) = &transform_layout.indexed_triangle_pool {
+            for (corner_index, &position_slot) in
+                transform_layout.corner_position_slots.iter().enumerate()
+            {
+                push_corner(corner_index, pool.vertex(position_slot));
+            }
+        } else {
+            let mut corner_index = 0;
+            for polygon in &self.polygons {
+                for vertex in &polygon.vertices {
+                    push_corner(corner_index, vertex);
+                    corner_index += 1;
                 }
             }
-            polygon.plane.translate_in_place(&vector);
-            polygon.invalidate_bounding_box();
-            polygon.plane_id = plane_id;
         }
-        self.bounding_box = OnceLock::new();
+        let shared_vertices = Arc::new(vertices);
+        let mut polygons = Vec::with_capacity(self.polygons.len());
+        let mut start = 0;
+        for (polygon_index, polygon) in self.polygons.iter().enumerate() {
+            let end = start
+                + if transform_layout.indexed_triangle_pool.is_some() {
+                    transform_layout
+                        .indexed_polygon_corner_counts
+                        .as_ref()
+                        .map_or(3, |counts| counts[polygon_index])
+                } else {
+                    polygon.vertices.len()
+                };
+            let plane_id = plane_ids
+                + u64::try_from(transform_layout.plane_slot(polygon_index))
+                    .expect("plane slot fits u64");
+            polygons.push(Polygon::from_shared_vertices(
+                Arc::clone(&shared_vertices),
+                start..end,
+                polygon.metadata.clone(),
+                plane_id,
+            ));
+            start = end;
+        }
+        let mut translated = Mesh::from_polygons(polygons);
+        let mut translated_layout = (*transform_layout).clone();
+        translated_layout.indexed_triangle_pool = None;
+        translated_layout.indexed_polygon_corner_counts = None;
+        translated_layout.position_f64 = transformed_positions
+            .iter()
+            .map(|(_, finite)| *finite)
+            .collect::<Option<Vec<_>>>()
+            .map(Arc::new);
+        translated
+            .polygons
+            .retain_transform_layout(Arc::new(translated_layout));
+        translated.bounding_box = translated_bounds.map_or_else(OnceLock::new, OnceLock::from);
+        if let Some(bounds) = translated.bounding_box.get().cloned()
+            && self.polygons.axis_aligned_box_fact().is_some()
+        {
+            translated
+                .polygons
+                .retain_axis_aligned_box_fact(bounds.clone());
+            let centering_offset = if self.polygons.centering_offset_fact() == Some(&vector) {
+                Vector3::zero()
+            } else {
+                let half =
+                    (Real::one() / Real::from(2_u8)).expect("nonzero exact denominator");
+                Vector3::new([
+                    -(bounds.mins.x + bounds.maxs.x) * half.clone(),
+                    -(bounds.mins.y + bounds.maxs.y) * half.clone(),
+                    -(bounds.mins.z + bounds.maxs.z) * half,
+                ])
+            };
+            translated.polygons.retain_centering_offset(centering_offset);
+        }
+        if cache_on_completion {
+            LAST_TRANSLATION.with_borrow_mut(|cached| {
+                if let Some(index) = cached.iter().position(|cached| {
+                    cached.source_geometry_identity == source_geometry_identity
+                        && cached.vector == vector
+                }) {
+                    cached.remove(index);
+                }
+                if cached.len() == TRANSFORM_CACHE_CAPACITY {
+                    cached.remove(0);
+                }
+                cached.push(CachedTranslation {
+                    source_geometry_identity,
+                    vector,
+                    polygons: translated
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                    bounding_box: translated.bounding_box.get().cloned(),
+                    axis_aligned_box: translated.polygons.axis_aligned_box_fact().is_some(),
+                    centering_offset: translated.polygons.centering_offset_fact().cloned(),
+                });
+            });
+        }
         if convex_pwn {
-            self.cache_convex_pwn_fact();
+            translated.cache_convex_pwn_fact();
         }
-        self
+        translated
+    }
+
+    fn disjoint_translated_copies(
+        &self,
+        offsets: &[Vector3],
+        disjoint_certified: bool,
+    ) -> Option<Self> {
+        let source_bounds = self.polygons.axis_aligned_box_fact()?;
+        if !disjoint_certified {
+            let bounds = offsets
+                .iter()
+                .map(|offset| {
+                    Aabb::new(
+                        source_bounds.mins.clone() + offset.clone(),
+                        source_bounds.maxs.clone() + offset.clone(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            if !bounds.iter().enumerate().all(|(left_index, left)| {
+                bounds
+                    .iter()
+                    .skip(left_index + 1)
+                    .all(|right| aabbs_decided_disjoint(left, right))
+            }) {
+                return None;
+            }
+        }
+
+        let transform_layout = Arc::clone(self.polygons.transform_layout());
+        let copies = offsets.len();
+        let positions_per_copy = transform_layout.position_representatives.len();
+        let first_position_id = reserve_position_ids(positions_per_copy.checked_mul(copies)?);
+        let first_coordinate_ids = transform_layout.coordinate_counts.map(|count| {
+            reserve_position_ids(
+                count
+                    .checked_mul(copies)
+                    .expect("distribution coordinate identity count does not overflow"),
+            )
+        });
+        let first_plane_id =
+            reserve_plane_ids(transform_layout.plane_count.checked_mul(copies)?);
+        let mut unique_offsets: [Vec<Real>; 3] = std::array::from_fn(|_| Vec::new());
+        let mut offset_slots: Vec<[usize; 3]> = Vec::with_capacity(copies);
+        for offset in offsets {
+            offset_slots.push(std::array::from_fn(|axis| {
+                if let Some(slot) = unique_offsets[axis]
+                    .iter()
+                    .position(|candidate| candidate == &offset.0[axis])
+                {
+                    slot
+                } else {
+                    let slot = unique_offsets[axis].len();
+                    unique_offsets[axis].push(offset.0[axis].clone());
+                    slot
+                }
+            }));
+        }
+        let zero = Real::zero();
+        let transformed_coordinates: [Vec<Real>; 3] = std::array::from_fn(|axis| {
+            let mut coordinates = Vec::with_capacity(
+                unique_offsets[axis]
+                    .len()
+                    .checked_mul(positions_per_copy)
+                    .expect("distribution coordinate count does not overflow"),
+            );
+            for offset in &unique_offsets[axis] {
+                for &[polygon_index, vertex_index] in
+                    transform_layout.position_representatives.iter()
+                {
+                    let position =
+                        &self.polygons[polygon_index].vertices[vertex_index].position;
+                    let source = match axis {
+                        0 => &position.x,
+                        1 => &position.y,
+                        _ => &position.z,
+                    };
+                    coordinates.push(if offset == &zero {
+                        source.clone()
+                    } else {
+                        source.clone() + offset.clone()
+                    });
+                }
+            }
+            coordinates
+        });
+        let transformed_finite_coordinates: [Vec<Option<f64>>; 3] =
+            std::array::from_fn(|axis| {
+                let mut coordinates = Vec::with_capacity(
+                    unique_offsets[axis]
+                        .len()
+                        .checked_mul(positions_per_copy)
+                        .expect("distribution finite coordinate count does not overflow"),
+                );
+                for offset in &unique_offsets[axis] {
+                    let finite_offset = offset.to_f64_lossy();
+                    for (position_slot, &[polygon_index, vertex_index]) in
+                        transform_layout.position_representatives.iter().enumerate()
+                    {
+                        let source = transform_layout
+                            .position_f64
+                            .as_ref()
+                            .map(|positions| positions[position_slot][axis])
+                            .or_else(|| {
+                                let position = &self.polygons[polygon_index].vertices
+                                    [vertex_index]
+                                    .position;
+                                match axis {
+                                    0 => &position.x,
+                                    1 => &position.y,
+                                    _ => &position.z,
+                                }
+                                .to_f64_lossy()
+                            });
+                        coordinates.push(
+                            source
+                                .zip(finite_offset)
+                                .map(|(source, offset)| source + offset),
+                        );
+                    }
+                }
+                coordinates
+            });
+        let total_positions = positions_per_copy.checked_mul(copies)?;
+        let mut transformed_positions = Vec::with_capacity(total_positions);
+        let mut finite_positions = Vec::with_capacity(total_positions);
+        for slots in offset_slots {
+            for position_slot in 0..positions_per_copy {
+                transformed_positions.push(Point3::new(
+                    transformed_coordinates[0][slots[0] * positions_per_copy + position_slot]
+                        .clone(),
+                    transformed_coordinates[1][slots[1] * positions_per_copy + position_slot]
+                        .clone(),
+                    transformed_coordinates[2][slots[2] * positions_per_copy + position_slot]
+                        .clone(),
+                ));
+                finite_positions.push(
+                    transformed_finite_coordinates[0]
+                        [slots[0] * positions_per_copy + position_slot]
+                        .zip(
+                            transformed_finite_coordinates[1]
+                                [slots[1] * positions_per_copy + position_slot],
+                        )
+                        .zip(
+                            transformed_finite_coordinates[2]
+                                [slots[2] * positions_per_copy + position_slot],
+                        )
+                        .map(|((x, y), z)| [x, y, z]),
+                );
+            }
+        }
+        cache_position_f64_range(
+            first_position_id,
+            transformed_positions.len(),
+            finite_positions,
+        );
+
+        let total_corners = self.vertex_count().checked_mul(copies)?;
+        let total_polygons = self.polygons.len().checked_mul(copies)?;
+        let mut vertices = Vec::with_capacity(total_corners);
+        let mut ranges_and_sources = Vec::with_capacity(total_polygons);
+        for copy_index in 0..copies {
+            let mut corner_index = 0;
+            for (polygon_index, polygon) in self.polygons.iter().enumerate() {
+                let start = vertices.len();
+                for vertex in &polygon.vertices {
+                    let position_slot = transform_layout.corner_position_slots[corner_index];
+                    vertices.push(Vertex {
+                        position: transformed_positions
+                            [copy_index * positions_per_copy + position_slot]
+                            .clone(),
+                        normal: vertex.normal.clone(),
+                        position_id: first_position_id
+                            + u64::try_from(copy_index * positions_per_copy + position_slot)
+                                .ok()?,
+                        coordinate_ids: std::array::from_fn(|axis| {
+                            first_coordinate_ids[axis]
+                                + u64::try_from(
+                                    copy_index * transform_layout.coordinate_counts[axis]
+                                        + transform_layout.coordinate_slot(axis, corner_index),
+                                )
+                                .expect("distribution coordinate slot fits u64")
+                        }),
+                        ruled_line: vertex.ruled_line,
+                        hull_candidate: vertex.hull_candidate,
+                    });
+                    corner_index += 1;
+                }
+                ranges_and_sources.push((
+                    start..vertices.len(),
+                    polygon_index,
+                    first_plane_id
+                        + u64::try_from(
+                            copy_index * transform_layout.plane_count
+                                + transform_layout.plane_slot(polygon_index),
+                        )
+                        .ok()?,
+                ));
+            }
+        }
+        let vertices = Arc::new(vertices);
+        let polygons = ranges_and_sources
+            .into_iter()
+            .map(|(range, polygon_index, plane_id)| {
+                Polygon::from_shared_vertices(
+                    Arc::clone(&vertices),
+                    range,
+                    self.polygons[polygon_index].metadata.clone(),
+                    plane_id,
+                )
+            })
+            .collect();
+        let (source_facets, source_corners, source_triangles) = self.polygons.topology();
+        let mesh = Self::from_polygons_with_topology(
+            polygons,
+            (
+                source_facets.checked_mul(copies)?,
+                source_corners.checked_mul(copies)?,
+                source_triangles,
+            ),
+        );
+        if self.polygons.manifold_fact() == Some(true) {
+            mesh.polygons.retain_manifold_fact(true);
+        }
+        Some(mesh)
+    }
+
+    fn disjoint_arc_copies(
+        &self,
+        samples: &[(Real, Real)],
+        radius: &Real,
+        certified_minimum_center_distance_squared: &Real,
+    ) -> Option<Self> {
+        let transform_layout = Arc::clone(self.polygons.transform_layout());
+        let positions_per_copy = transform_layout.position_representatives.len();
+        let total_positions = positions_per_copy.checked_mul(samples.len())?;
+        let mut source_radius_squared = Real::zero();
+        for position_slot in 0..positions_per_copy {
+            let position = &transform_layout
+                .position_representative(&self.polygons, position_slot)
+                .position;
+            let radius_squared = position.to_vector().dot(&position.to_vector());
+            if real_gt(&radius_squared, &source_radius_squared) {
+                source_radius_squared = radius_squared;
+            }
+        }
+        if !real_gt(
+            certified_minimum_center_distance_squared,
+            &(source_radius_squared * Real::from(4_u8)),
+        ) {
+            return None;
+        }
+
+        let first_vertex_identity = reserve_position_ids(total_positions.checked_mul(4)?);
+        let first_plane_id =
+            reserve_plane_ids(transform_layout.plane_count.checked_mul(samples.len())?);
+        let total_polygons = self.polygons.len().checked_mul(samples.len())?;
+        let mut source_corners = Vec::with_capacity(self.vertex_count());
+        let polygon_corner_counts = self
+            .polygons
+            .iter()
+            .map(|polygon| {
+                source_corners.extend(polygon.vertices.iter().cloned());
+                polygon.vertices.len()
+            })
+            .collect::<Vec<_>>();
+        let corners_per_copy = source_corners.len();
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_arc_copies(
+            source_corners,
+            samples.to_vec(),
+            radius.clone(),
+            transform_layout.corner_position_slots.to_vec(),
+            positions_per_copy,
+            total_polygons,
+            first_vertex_identity,
+        ));
+        let mut polygons = Vec::with_capacity(total_polygons);
+        for copy_index in 0..samples.len() {
+            let mut corner_start = copy_index * corners_per_copy;
+            for (polygon_index, &corner_count) in polygon_corner_counts.iter().enumerate() {
+                let polygon_slot = polygons.len();
+                let plane_id = first_plane_id
+                    + u64::try_from(
+                        copy_index * transform_layout.plane_count
+                            + transform_layout.plane_slot(polygon_index),
+                    )
+                    .ok()?;
+                let metadata = self.polygons[polygon_index].metadata.clone();
+                polygons.push(match corner_count {
+                    3 => Polygon::from_lazy_subdivision_triangle(
+                        Arc::clone(&vertex_pool),
+                        polygon_slot,
+                        [corner_start, corner_start + 1, corner_start + 2],
+                        metadata,
+                        plane_id,
+                    ),
+                    4 => Polygon::from_lazy_indexed_quad(
+                        Arc::clone(&vertex_pool),
+                        polygon_slot,
+                        [
+                            corner_start,
+                            corner_start + 1,
+                            corner_start + 2,
+                            corner_start + 3,
+                        ],
+                        metadata,
+                        plane_id,
+                    ),
+                    _ => Polygon::from_lazy_indexed_polygon(
+                        Arc::clone(&vertex_pool),
+                        polygon_slot,
+                        (corner_start..corner_start + corner_count).collect(),
+                        metadata,
+                        plane_id,
+                    ),
+                });
+                corner_start += corner_count;
+            }
+        }
+        let (source_facets, source_corners, source_triangles) = self.polygons.topology();
+        let mesh = Self::from_polygons_with_topology(
+            polygons,
+            (
+                source_facets.checked_mul(samples.len())?,
+                source_corners.checked_mul(samples.len())?,
+                source_triangles,
+            ),
+        );
+        if self.polygons.manifold_fact() == Some(true) {
+            mesh.polygons.retain_manifold_fact(true);
+        }
+        Some(mesh)
+    }
+
+    fn disjoint_rigid_copies(
+        &self,
+        matrices: &[Matrix4],
+        certified_minimum_center_distance_squared: Option<Real>,
+    ) -> Option<Self> {
+        let transform_layout = Arc::clone(self.polygons.transform_layout());
+        let positions_per_copy = transform_layout.position_representatives.len();
+        let total_positions = positions_per_copy.checked_mul(matrices.len())?;
+        let first_vertex_identity = reserve_position_ids(total_positions.checked_mul(4)?);
+        let first_plane_id =
+            reserve_plane_ids(transform_layout.plane_count.checked_mul(matrices.len())?);
+        let mut source_radius_squared = Real::zero();
+        for position_slot in 0..positions_per_copy {
+            let position = &transform_layout
+                .position_representative(&self.polygons, position_slot)
+                .position;
+            let radius_squared = position.to_vector().dot(&position.to_vector());
+            if real_gt(&radius_squared, &source_radius_squared) {
+                source_radius_squared = radius_squared;
+            }
+        }
+        let disjoint_threshold = source_radius_squared * Real::from(4_u8);
+        if let Some(minimum_distance_squared) = certified_minimum_center_distance_squared {
+            if !real_gt(&minimum_distance_squared, &disjoint_threshold) {
+                return None;
+            }
+        } else {
+            let mut centers = Vec::with_capacity(matrices.len());
+            for matrix in matrices {
+                centers.push(matrix.transform_point3(&Point3::origin()).ok()?);
+            }
+            if !centers.iter().enumerate().all(|(left_index, left)| {
+                centers.iter().skip(left_index + 1).all(|right| {
+                    let difference = right - left;
+                    real_gt(&difference.dot(&difference), &disjoint_threshold)
+                })
+            }) {
+                return None;
+            }
+        }
+
+        let total_corners = self.vertex_count().checked_mul(matrices.len())?;
+        let total_polygons = self.polygons.len().checked_mul(matrices.len())?;
+        let mut source_corners = Vec::with_capacity(self.vertex_count());
+        let polygon_corner_counts = self
+            .polygons
+            .iter()
+            .map(|polygon| {
+                source_corners.extend(polygon.vertices.iter().cloned());
+                polygon.vertices.len()
+            })
+            .collect::<Vec<_>>();
+        debug_assert_eq!(source_corners.len(), total_corners / matrices.len());
+        let corners_per_copy = source_corners.len();
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_rigid_copies(
+            source_corners,
+            matrices.to_vec(),
+            transform_layout.corner_position_slots.to_vec(),
+            positions_per_copy,
+            total_polygons,
+            first_vertex_identity,
+        ));
+        let mut polygons = Vec::with_capacity(total_polygons);
+        for copy_index in 0..matrices.len() {
+            let mut corner_start = copy_index * corners_per_copy;
+            for (polygon_index, &corner_count) in polygon_corner_counts.iter().enumerate() {
+                let polygon_slot = polygons.len();
+                let plane_id = first_plane_id
+                    + u64::try_from(
+                        copy_index * transform_layout.plane_count
+                            + transform_layout.plane_slot(polygon_index),
+                    )
+                    .ok()?;
+                let metadata = self.polygons[polygon_index].metadata.clone();
+                polygons.push(match corner_count {
+                    3 => Polygon::from_lazy_subdivision_triangle(
+                        Arc::clone(&vertex_pool),
+                        polygon_slot,
+                        [corner_start, corner_start + 1, corner_start + 2],
+                        metadata,
+                        plane_id,
+                    ),
+                    4 => Polygon::from_lazy_indexed_quad(
+                        Arc::clone(&vertex_pool),
+                        polygon_slot,
+                        [
+                            corner_start,
+                            corner_start + 1,
+                            corner_start + 2,
+                            corner_start + 3,
+                        ],
+                        metadata,
+                        plane_id,
+                    ),
+                    _ => Polygon::from_lazy_indexed_polygon(
+                        Arc::clone(&vertex_pool),
+                        polygon_slot,
+                        (corner_start..corner_start + corner_count).collect(),
+                        metadata,
+                        plane_id,
+                    ),
+                });
+                corner_start += corner_count;
+            }
+        }
+        let (source_facets, source_corners, source_triangles) = self.polygons.topology();
+        let mesh = Self::from_polygons_with_topology(
+            polygons,
+            (
+                source_facets.checked_mul(matrices.len())?,
+                source_corners.checked_mul(matrices.len())?,
+                source_triangles,
+            ),
+        );
+        if self.polygons.manifold_fact() == Some(true) {
+            mesh.polygons.retain_manifold_fact(true);
+        }
+        Some(mesh)
     }
 
     pub(crate) fn nonuniform_scale_owned(mut self, sx: Real, sy: Real, sz: Real) -> Self {
         let convex_pwn = self.has_convex_pwn_fact();
         let scales = [sx, sy, sz];
+        let source_geometry_identity = self.polygons.storage_identity();
+        if let Some(cached_polygons) = LAST_SCALE.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.scales == scales
+                        && cached.source_geometry_identity == source_geometry_identity
+                })
+                .map(|cached| cached.polygons.clone())
+        }) {
+            for (polygon, cached) in self.polygons.iter_mut().zip(cached_polygons) {
+                let metadata = polygon.metadata.clone();
+                *polygon = cached.with_metadata(metadata);
+            }
+            self.bounding_box = OnceLock::new();
+            if convex_pwn {
+                self.cache_convex_pwn_fact();
+            }
+            return self;
+        }
+        let cache_on_completion = PENDING_SCALE.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref().is_some_and(|pending| {
+                pending.scales == scales
+                    && pending.source_geometry_identity == source_geometry_identity
+            });
+            *pending = Some(PendingScale {
+                source_geometry_identity,
+                scales: scales.clone(),
+            });
+            repeated
+        });
         let inverse_scales = [
             scales[0]
                 .clone()
@@ -1138,6 +3564,234 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 .inverse()
                 .expect("shape scale is certified nonzero"),
         ];
+        if let Some(transform_layout) = self.polygons.retained_transform_layout().cloned() {
+            let scales_f64 = [
+                scales[0].to_f64_lossy(),
+                scales[1].to_f64_lossy(),
+                scales[2].to_f64_lossy(),
+            ];
+            if let Some(source_pool) = transform_layout.indexed_triangle_pool.as_ref()
+                && let Some(source_position_f64) = transform_layout.position_f64.as_ref()
+                && let [Some(sx), Some(sy), Some(sz)] = scales_f64
+            {
+                let indexed_position_f64 = Arc::new(
+                    source_position_f64
+                        .iter()
+                        .map(|source| [source[0] * sx, source[1] * sy, source[2] * sz])
+                        .collect::<Vec<_>>(),
+                );
+                let position_ids = reserve_position_ids(indexed_position_f64.len());
+                cache_shared_position_f64_range(
+                    position_ids,
+                    Arc::clone(&indexed_position_f64),
+                );
+                let coordinate_ids =
+                    transform_layout.coordinate_counts.map(reserve_position_ids);
+                let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+                let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_scale_transform(
+                    Arc::clone(source_pool),
+                    scales.clone(),
+                    inverse_scales.clone(),
+                    Some(Arc::clone(&indexed_position_f64)),
+                    self.polygons.len(),
+                    position_ids,
+                    coordinate_ids,
+                ));
+                if let Some(scaled) = self.retained_indexed_triangle_output_from_pool(
+                    &transform_layout,
+                    vertex_pool,
+                    Some(indexed_position_f64),
+                    plane_ids,
+                ) {
+                    return self.finish_indexed_scale(
+                        scaled,
+                        scales,
+                        source_geometry_identity,
+                        cache_on_completion,
+                        convex_pwn,
+                    );
+                }
+            }
+            let transformed_positions = transform_layout
+                .position_representatives
+                .iter()
+                .enumerate()
+                .map(|(slot, _)| {
+                    let source =
+                        transform_layout.position_representative(&self.polygons, slot);
+                    let finite =
+                        transform_layout.position_f64.as_ref().and_then(|positions| {
+                            let scale_f64 = [scales_f64[0]?, scales_f64[1]?, scales_f64[2]?];
+                            Some([
+                                positions[slot][0] * scale_f64[0],
+                                positions[slot][1] * scale_f64[1],
+                                positions[slot][2] * scale_f64[2],
+                            ])
+                        });
+                    (
+                        Point3::new(
+                            real_mul_exact_fast(&source.position.x, &scales[0]),
+                            real_mul_exact_fast(&source.position.y, &scales[1]),
+                            real_mul_exact_fast(&source.position.z, &scales[2]),
+                        ),
+                        Vector3::new([
+                            real_mul_exact_fast(&source.normal.0[0], &inverse_scales[0]),
+                            real_mul_exact_fast(&source.normal.0[1], &inverse_scales[1]),
+                            real_mul_exact_fast(&source.normal.0[2], &inverse_scales[2]),
+                        ]),
+                        finite,
+                    )
+                })
+                .collect::<Vec<_>>();
+            let position_ids = reserve_position_ids(transformed_positions.len());
+            cache_position_f64_range(
+                position_ids,
+                transformed_positions.len(),
+                transformed_positions.iter().map(|(_, _, finite)| *finite),
+            );
+            let coordinate_ids = transform_layout.coordinate_counts.map(reserve_position_ids);
+            let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+            let indexed_vertices = transformed_positions
+                .iter()
+                .enumerate()
+                .map(|(position_slot, (position, normal, _))| {
+                    let source = transform_layout
+                        .position_representative(&self.polygons, position_slot);
+                    Vertex {
+                        position: position.clone(),
+                        normal: normal.clone(),
+                        position_id: position_ids
+                            + u64::try_from(position_slot).expect("position slot fits u64"),
+                        coordinate_ids: std::array::from_fn(|axis| {
+                            coordinate_ids[axis]
+                                + u64::try_from(position_slot)
+                                    .expect("coordinate slot fits u64")
+                        }),
+                        ruled_line: source.ruled_line,
+                        hull_candidate: source.hull_candidate,
+                    }
+                })
+                .collect();
+            let indexed_position_f64 = transformed_positions
+                .iter()
+                .map(|(_, _, finite)| *finite)
+                .collect::<Option<Vec<_>>>()
+                .map(Arc::new);
+            if let Some(scaled) = self.retained_indexed_triangle_output(
+                &transform_layout,
+                indexed_vertices,
+                indexed_position_f64,
+                plane_ids,
+            ) {
+                return self.finish_indexed_scale(
+                    scaled,
+                    scales,
+                    source_geometry_identity,
+                    cache_on_completion,
+                    convex_pwn,
+                );
+            }
+            let mut vertices = Vec::with_capacity(self.vertex_count());
+            let mut push_corner = |corner_index: usize, vertex: &Vertex| {
+                let position_slot = transform_layout.corner_position_slots[corner_index];
+                vertices.push(Vertex {
+                    position: transformed_positions[position_slot].0.clone(),
+                    normal: transformed_positions[position_slot].1.clone(),
+                    position_id: position_ids
+                        + u64::try_from(position_slot).expect("position slot fits u64"),
+                    coordinate_ids: std::array::from_fn(|axis| {
+                        coordinate_ids[axis]
+                            + u64::try_from(
+                                transform_layout.coordinate_slot(axis, corner_index),
+                            )
+                            .expect("coordinate slot fits u64")
+                    }),
+                    ruled_line: vertex.ruled_line,
+                    hull_candidate: vertex.hull_candidate,
+                });
+            };
+            if let Some(pool) = &transform_layout.indexed_triangle_pool {
+                for (corner_index, &position_slot) in
+                    transform_layout.corner_position_slots.iter().enumerate()
+                {
+                    push_corner(corner_index, pool.vertex(position_slot));
+                }
+            } else {
+                let mut corner_index = 0;
+                for polygon in &self.polygons {
+                    for vertex in &polygon.vertices {
+                        push_corner(corner_index, vertex);
+                        corner_index += 1;
+                    }
+                }
+            }
+            let vertices = Arc::new(vertices);
+            let mut polygons = Vec::with_capacity(self.polygons.len());
+            let mut start = 0;
+            for (polygon_index, polygon) in self.polygons.iter().enumerate() {
+                let end = start
+                    + if transform_layout.indexed_triangle_pool.is_some() {
+                        transform_layout
+                            .indexed_polygon_corner_counts
+                            .as_ref()
+                            .map_or(3, |counts| counts[polygon_index])
+                    } else {
+                        polygon.vertices.len()
+                    };
+                polygons.push(Polygon::from_shared_vertices(
+                    Arc::clone(&vertices),
+                    start..end,
+                    polygon.metadata.clone(),
+                    plane_ids
+                        + u64::try_from(transform_layout.plane_slot(polygon_index))
+                            .expect("plane slot fits u64"),
+                ));
+                start = end;
+            }
+            let mut scaled = Mesh::from_polygons(polygons);
+            if let Some(bounds) = self.bounding_box.get() {
+                let scaled_mins = [
+                    bounds.mins.x.clone() * scales[0].clone(),
+                    bounds.mins.y.clone() * scales[1].clone(),
+                    bounds.mins.z.clone() * scales[2].clone(),
+                ];
+                let scaled_maxs = [
+                    bounds.maxs.x.clone() * scales[0].clone(),
+                    bounds.maxs.y.clone() * scales[1].clone(),
+                    bounds.maxs.z.clone() * scales[2].clone(),
+                ];
+                scaled.bounding_box = OnceLock::from(Aabb::new(
+                    Point3::new(
+                        real_min(&scaled_mins[0], &scaled_maxs[0]),
+                        real_min(&scaled_mins[1], &scaled_maxs[1]),
+                        real_min(&scaled_mins[2], &scaled_maxs[2]),
+                    ),
+                    Point3::new(
+                        real_max(&scaled_mins[0], &scaled_maxs[0]),
+                        real_max(&scaled_mins[1], &scaled_maxs[1]),
+                        real_max(&scaled_mins[2], &scaled_maxs[2]),
+                    ),
+                ));
+            }
+            if cache_on_completion {
+                LAST_SCALE.with_borrow_mut(|cached| {
+                    *cached = Some(CachedScale {
+                        source_geometry_identity,
+                        scales,
+                        polygons: scaled
+                            .polygons
+                            .iter()
+                            .cloned()
+                            .map(|polygon| polygon.with_metadata(()))
+                            .collect(),
+                    });
+                });
+            }
+            if convex_pwn {
+                scaled.cache_convex_pwn_fact();
+            }
+            return scaled;
+        }
         let matrix = Matrix4::affine_nonuniform_scale(scales.clone());
         let mut transformed_positions = HashMap::<u64, (Point3, u64)>::new();
         let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
@@ -1200,9 +3854,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 }
             }
             if polygon.vertices.len() == 3 {
-                polygon.plane.point_a = polygon.vertices[0].position.clone();
-                polygon.plane.point_b = polygon.vertices[1].position.clone();
-                polygon.plane.point_c = polygon.vertices[2].position.clone();
+                polygon.defer_plane_from_vertices();
             } else {
                 assert!(
                     polygon.plane.transform_affine_in_place(&matrix),
@@ -1212,6 +3864,20 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             polygon.invalidate_bounding_box();
         }
         self.bounding_box = OnceLock::new();
+        if cache_on_completion {
+            LAST_SCALE.with_borrow_mut(|cached| {
+                *cached = Some(CachedScale {
+                    source_geometry_identity,
+                    scales,
+                    polygons: self
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
+        }
         if convex_pwn {
             self.cache_convex_pwn_fact();
         }
@@ -1226,7 +3892,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Consume and rigidly rotate this mesh while reusing its polygon storage.
     pub fn into_rotated(mut self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
         let convex_pwn = self.has_convex_pwn_fact();
-        let source_geometry_identity = self.geometry_identity();
+        let source_geometry_identity = self.polygons.storage_identity();
         let degrees = [x_deg, y_deg, z_deg];
         if let Some(cached_polygons) = LAST_ROTATION.with_borrow(|cached| {
             cached
@@ -1253,7 +3919,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     && pending.source_geometry_identity == source_geometry_identity
             });
             *pending = Some(PendingRotation {
-                source_geometry_identity: source_geometry_identity.clone(),
+                source_geometry_identity,
                 degrees: degrees.clone(),
             });
             repeated
@@ -1344,14 +4010,30 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
     /// Helper to collect all vertices from the CSG.
     pub fn vertices(&self) -> Vec<Vertex> {
-        self.polygons
-            .iter()
-            .flat_map(|p| p.vertices.clone())
-            .collect()
+        self.vertex_iter().cloned().collect()
+    }
+
+    /// Borrow every polygon corner without allocating or cloning exact values.
+    pub fn vertex_iter(&self) -> impl Iterator<Item = &Vertex> {
+        self.polygons.iter().flat_map(Polygon::vertex_iter)
+    }
+
+    /// Count polygon corners without materializing or inspecting vertex values.
+    pub fn vertex_count(&self) -> usize {
+        self.topology_counts().1
+    }
+
+    /// Count fan-triangulated facets and polygon corners in one topology pass.
+    pub fn topology_counts(&self) -> (usize, usize) {
+        let (facets, vertices, _) = self.polygons.topology();
+        (facets, vertices)
     }
 
     /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
     pub fn triangulate(&self) -> Mesh<M> {
+        if self.polygons.topology().2 {
+            return self.clone();
+        }
         let triangles = self
             .polygons
             .iter()
@@ -1369,11 +4051,164 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
     /// This results in a triangular mesh with more detail.
     pub fn subdivide_triangles(&self, levels: NonZeroU32) -> Mesh<M> {
+        let source_storage_identity = self.polygons.storage_identity();
+        if let Some((polygons, metadata_sources)) = LAST_SUBDIVISION.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.source_storage_identity == source_storage_identity
+                        && cached.levels == levels
+                })
+                .map(|cached| (cached.polygons.clone(), cached.metadata_sources.clone()))
+        }) {
+            return Mesh::from_polygons(
+                polygons
+                    .into_iter()
+                    .zip(metadata_sources)
+                    .map(|(polygon, source_index)| {
+                        polygon.with_metadata(self.polygons[source_index].metadata.clone())
+                    })
+                    .collect(),
+            );
+        }
+        let cache_on_completion = PENDING_SUBDIVISION.with_borrow_mut(|pending| {
+            let key = (source_storage_identity, levels);
+            let repeated = pending.as_ref() == Some(&key);
+            *pending = Some(key);
+            repeated
+        });
+        if levels.get() == 1
+            && self.polygons.topology().2
+            && self
+                .polygons
+                .retained_transform_layout()
+                .is_some_and(|layout| layout.normals_match_positions)
+        {
+            let transform_layout = self
+                .polygons
+                .retained_transform_layout()
+                .expect("subdivision fast path requires a retained layout");
+            let maximum_midpoints = self.polygons.len() * 3;
+            let first_midpoint_identity = reserve_position_ids(
+                maximum_midpoints
+                    .checked_mul(4)
+                    .expect("subdivision identity reservation does not overflow"),
+            );
+            let mut edge_midpoint_slots =
+                HashMap::<(usize, usize), usize>::with_capacity(self.polygons.len() * 3 / 2);
+            let source_position_count = transform_layout.position_representatives.len();
+            let source_vertices = transform_layout
+                .position_representatives
+                .iter()
+                .map(|[polygon_index, vertex_index]| {
+                    self.polygons[*polygon_index].vertices[*vertex_index].clone()
+                })
+                .collect();
+            let mut midpoint_edges = Vec::with_capacity(self.polygons.len() * 3 / 2);
+            let mut triangles_and_sources = Vec::with_capacity(self.polygons.len() * 4);
+            for (source_index, polygon) in self.polygons.iter().enumerate() {
+                let source_corner = source_index * 3;
+                let [a_slot, b_slot, c_slot] = [
+                    transform_layout.corner_position_slots[source_corner],
+                    transform_layout.corner_position_slots[source_corner + 1],
+                    transform_layout.corner_position_slots[source_corner + 2],
+                ];
+                let mut midpoint = |left_slot: usize, right_slot: usize| {
+                    let key = if left_slot < right_slot {
+                        (left_slot, right_slot)
+                    } else {
+                        (right_slot, left_slot)
+                    };
+                    match edge_midpoint_slots.entry(key) {
+                        std::collections::hash_map::Entry::Occupied(entry) => *entry.get(),
+                        std::collections::hash_map::Entry::Vacant(entry) => {
+                            let slot = source_position_count + midpoint_edges.len();
+                            midpoint_edges.push([key.0, key.1]);
+                            entry.insert(slot);
+                            slot
+                        },
+                    }
+                };
+                let ab = midpoint(a_slot, b_slot);
+                let bc = midpoint(b_slot, c_slot);
+                let ca = midpoint(c_slot, a_slot);
+                for indices in [
+                    [a_slot, ab, ca],
+                    [ab, b_slot, bc],
+                    [ca, bc, c_slot],
+                    [ab, bc, ca],
+                ] {
+                    triangles_and_sources.push((indices, source_index, polygon.plane_id));
+                }
+            }
+            let output_position_count = source_position_count + midpoint_edges.len();
+            let vertices = Arc::new(LazySubdivisionVertexPool::new(
+                source_vertices,
+                midpoint_edges,
+                triangles_and_sources.len(),
+                first_midpoint_identity,
+            ));
+            let mut metadata_sources = Vec::with_capacity(triangles_and_sources.len());
+            let mut corner_position_slots =
+                Vec::with_capacity(triangles_and_sources.len() * 3);
+            let polygons = triangles_and_sources
+                .into_iter()
+                .enumerate()
+                .map(|(triangle_slot, (indices, source_index, plane_id))| {
+                    metadata_sources.push(source_index);
+                    corner_position_slots.extend(indices);
+                    Polygon::from_lazy_subdivision_triangle(
+                        Arc::clone(&vertices),
+                        triangle_slot,
+                        indices,
+                        self.polygons[source_index].metadata.clone(),
+                        plane_id,
+                    )
+                })
+                .collect();
+            let mesh = Self::from_polygons_with_topology(
+                polygons,
+                (self.polygons.len() * 4, self.polygons.len() * 12, true),
+            );
+            mesh.retain_shared_position_transform_layout(
+                corner_position_slots,
+                output_position_count,
+                None,
+                Some(vertices),
+                None,
+                true,
+            );
+            if self.polygons.manifold_fact() == Some(true) {
+                mesh.polygons.retain_manifold_fact(true);
+            }
+            if self.has_convex_pwn_fact() {
+                mesh.cache_convex_pwn_fact();
+            }
+            if cache_on_completion {
+                LAST_SUBDIVISION.with_borrow_mut(|cached| {
+                    *cached = Some(CachedSubdivision {
+                        source_storage_identity,
+                        levels,
+                        polygons: mesh
+                            .polygons
+                            .iter()
+                            .cloned()
+                            .map(|polygon| polygon.with_metadata(()))
+                            .collect(),
+                        metadata_sources,
+                    });
+                });
+            }
+            return mesh;
+        }
+        let mut metadata_sources = Vec::new();
         let new_polygons: Vec<Polygon<M>> = self
             .polygons
             .iter()
-            .flat_map(|poly| {
+            .enumerate()
+            .flat_map(|(source_index, poly)| {
                 let sub_tris = poly.subdivide_triangles(levels);
+                metadata_sources.extend(std::iter::repeat_n(source_index, sub_tris.len()));
                 sub_tris.into_iter().map(move |tri| {
                     Polygon::new(
                         vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
@@ -1384,7 +4219,23 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             })
             .collect();
 
-        Mesh::from_polygons(new_polygons)
+        let mesh = Mesh::from_polygons(new_polygons);
+        if cache_on_completion {
+            LAST_SUBDIVISION.with_borrow_mut(|cached| {
+                *cached = Some(CachedSubdivision {
+                    source_storage_identity,
+                    levels,
+                    polygons: mesh
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                    metadata_sources,
+                });
+            });
+        }
+        mesh
     }
 
     /// Subdivide all polygons in this Mesh 'levels' times, in place.
@@ -1421,9 +4272,15 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Renormalize all polygons in this Mesh by re-computing each polygon’s plane
     /// and assigning that plane’s normal to all vertices.
     pub fn renormalize(&mut self) {
+        if let Some(polygons) = self.polygons.renormalized().cloned() {
+            self.polygons = polygons;
+            return;
+        }
+        let source = self.polygons.clone();
         for poly in &mut self.polygons {
             poly.set_new_normal();
         }
+        source.retain_renormalized(self.polygons.clone());
     }
 
     /// Sample every coordinate at an explicit finite application/output boundary.
@@ -1433,32 +4290,145 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// not certify a symbolic predicate. Native mesh operations do not call it
     /// implicitly.
     pub fn materialize_finite_output(&self) -> Option<Self> {
-        let polygons = self
-            .polygons
-            .iter()
-            .map(|polygon| {
-                let vertices = polygon
-                    .vertices
+        if let Some(polygons) = self.polygons.materialized_finite().cloned() {
+            return Some(Mesh {
+                polygons,
+                bounding_box: OnceLock::new(),
+            });
+        }
+        let mesh = if let Some(transform_layout) =
+            self.polygons.retained_transform_layout().cloned()
+        {
+            let converted_positions = transform_layout
+                .position_representatives
+                .iter()
+                .enumerate()
+                .map(|(position_slot, _)| {
+                    let source = transform_layout
+                        .position_representative(&self.polygons, position_slot);
+                    let finite = [
+                        source.position.x.to_f64_lossy()?,
+                        source.position.y.to_f64_lossy()?,
+                        source.position.z.to_f64_lossy()?,
+                    ];
+                    Some((
+                        Point3::new(
+                            Real::try_from(finite[0]).ok()?,
+                            Real::try_from(finite[1]).ok()?,
+                            Real::try_from(finite[2]).ok()?,
+                        ),
+                        finite,
+                    ))
+                })
+                .collect::<Option<Vec<_>>>()?;
+            let position_ids = reserve_position_ids(converted_positions.len());
+            cache_position_f64_range(
+                position_ids,
+                converted_positions.len(),
+                converted_positions.iter().map(|(_, finite)| Some(*finite)),
+            );
+            let coordinate_ids = transform_layout.coordinate_counts.map(reserve_position_ids);
+            let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+            let mut converted_normals =
+                vec![Vec::<(Vector3, Vector3)>::new(); converted_positions.len()];
+            let mut vertices = Vec::with_capacity(self.vertex_count());
+            let mut ranges = Vec::with_capacity(self.polygons.len());
+            let mut corner_index = 0;
+            for polygon in &self.polygons {
+                let start = vertices.len();
+                for source in &polygon.vertices {
+                    let position_slot = transform_layout.corner_position_slots[corner_index];
+                    let normal = if let Some((_, converted)) = converted_normals[position_slot]
+                        .iter()
+                        .find(|(candidate, _)| candidate == &source.normal)
+                    {
+                        converted.clone()
+                    } else {
+                        let converted = Vector3::new([
+                            Real::try_from(source.normal.0[0].to_f64_lossy()?).ok()?,
+                            Real::try_from(source.normal.0[1].to_f64_lossy()?).ok()?,
+                            Real::try_from(source.normal.0[2].to_f64_lossy()?).ok()?,
+                        ]);
+                        converted_normals[position_slot]
+                            .push((source.normal.clone(), converted.clone()));
+                        converted
+                    };
+                    vertices.push(Vertex {
+                        position: converted_positions[position_slot].0.clone(),
+                        normal,
+                        position_id: position_ids + u64::try_from(position_slot).ok()?,
+                        coordinate_ids: std::array::from_fn(|axis| {
+                            coordinate_ids[axis]
+                                + u64::try_from(
+                                    transform_layout.coordinate_slot(axis, corner_index),
+                                )
+                                .expect("coordinate slot fits u64")
+                        }),
+                        ruled_line: None,
+                        hull_candidate: true,
+                    });
+                    corner_index += 1;
+                }
+                ranges.push(start..vertices.len());
+            }
+            let vertices = Arc::new(vertices);
+            let polygons = ranges
+                .into_iter()
+                .enumerate()
+                .map(|(polygon_index, range)| {
+                    Polygon::from_shared_vertices(
+                        Arc::clone(&vertices),
+                        range,
+                        self.polygons[polygon_index].metadata.clone(),
+                        plane_ids
+                            + u64::try_from(transform_layout.plane_slot(polygon_index))
+                                .expect("plane slot fits u64"),
+                    )
+                })
+                .collect();
+            let mesh = Self::from_polygons(polygons);
+            let mut output_layout = (*transform_layout).clone();
+            output_layout.indexed_triangle_pool = None;
+            output_layout.indexed_polygon_corner_counts = None;
+            output_layout.position_f64 = Some(Arc::new(
+                converted_positions
                     .iter()
-                    .map(|vertex| {
-                        Some(Vertex::new(
-                            Point3::new(
-                                Real::try_from(vertex.position.x.to_f64_lossy()?).ok()?,
-                                Real::try_from(vertex.position.y.to_f64_lossy()?).ok()?,
-                                Real::try_from(vertex.position.z.to_f64_lossy()?).ok()?,
-                            ),
-                            Vector3::new([
-                                Real::try_from(vertex.normal.0[0].to_f64_lossy()?).ok()?,
-                                Real::try_from(vertex.normal.0[1].to_f64_lossy()?).ok()?,
-                                Real::try_from(vertex.normal.0[2].to_f64_lossy()?).ok()?,
-                            ]),
-                        ))
-                    })
-                    .collect::<Option<Vec<_>>>()?;
-                Some(Polygon::new(vertices, polygon.metadata.clone()))
-            })
-            .collect::<Option<Vec<_>>>()?;
-        Some(Self::from_polygons(polygons))
+                    .map(|(_, finite)| *finite)
+                    .collect(),
+            ));
+            mesh.polygons.retain_transform_layout(Arc::new(output_layout));
+            mesh
+        } else {
+            let polygons = self
+                .polygons
+                .iter()
+                .map(|polygon| {
+                    let vertices = polygon
+                        .vertices
+                        .iter()
+                        .map(|vertex| {
+                            Some(Vertex::new(
+                                Point3::new(
+                                    Real::try_from(vertex.position.x.to_f64_lossy()?).ok()?,
+                                    Real::try_from(vertex.position.y.to_f64_lossy()?).ok()?,
+                                    Real::try_from(vertex.position.z.to_f64_lossy()?).ok()?,
+                                ),
+                                Vector3::new([
+                                    Real::try_from(vertex.normal.0[0].to_f64_lossy()?).ok()?,
+                                    Real::try_from(vertex.normal.0[1].to_f64_lossy()?).ok()?,
+                                    Real::try_from(vertex.normal.0[2].to_f64_lossy()?).ok()?,
+                                ]),
+                            ))
+                        })
+                        .collect::<Option<Vec<_>>>()?;
+                    Some(Polygon::new(vertices, polygon.metadata.clone()))
+                })
+                .collect::<Option<Vec<_>>>()?;
+            Self::from_polygons(polygons)
+        };
+        self.polygons
+            .retain_materialized_finite(mesh.polygons.clone());
+        Some(mesh)
     }
 
     /// **Mathematical Foundation: Dihedral Angle Calculation**
@@ -1473,13 +4443,31 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     ///
     /// Returns the angle in radians.
     pub fn dihedral_angle(p1: &Polygon<M>, p2: &Polygon<M>) -> Real {
+        if let Some(angle) = LAST_DIHEDRAL_ANGLE.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|(left, right, _)| {
+                    (*left == p1.plane_id && *right == p2.plane_id)
+                        || (*left == p2.plane_id && *right == p1.plane_id)
+                })
+                .map(|(_, _, angle)| angle.clone())
+        }) {
+            return angle;
+        }
         let n1 = p1.plane.normal();
         let n2 = p2.plane.normal();
-        n1.angle_to(&n2).unwrap_or_else(|_| Real::zero())
+        let angle = n1.angle_to(&n2).unwrap_or_else(|_| Real::zero());
+        LAST_DIHEDRAL_ANGLE.with_borrow_mut(|cached| {
+            *cached = Some((p1.plane_id, p2.plane_id, angle.clone()));
+        });
+        angle
     }
 
     /// Converts this mesh into exact vertex/index buffers suitable for rendering adapters.
     pub fn build_graphics_mesh(&self) -> GraphicsMesh {
+        if let Some(graphics) = self.polygons.graphics_mesh() {
+            return graphics.clone();
+        }
         let triangle_capacity = self
             .polygons
             .iter()
@@ -1511,7 +4499,12 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             }
         }
 
-        GraphicsMesh { vertices, indices }
+        let graphics = GraphicsMesh {
+            vertices: vertices.into(),
+            indices: indices.into(),
+        };
+        self.polygons.retain_graphics_mesh(graphics.clone());
+        graphics
     }
 
     /// Try to extract hyperreal vertices and triangle indices.
@@ -2241,9 +5234,122 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         mesh
     }
 
+    pub(super) fn exact_axis_aligned_box_union(&self, other: &Self) -> Option<Self> {
+        let (left, right) = (
+            self.polygons.axis_aligned_box_fact()?,
+            other.polygons.axis_aligned_box_fact()?,
+        );
+        let (bounds, axis, seam) = axis_aligned_box_rectangular_union(left, right)?;
+        let polygons = self
+            .polygons
+            .iter()
+            .chain(other.polygons.iter())
+            .filter(|polygon| {
+                !polygon.vertices.iter().all(|vertex| {
+                    let coordinate = match axis {
+                        0 => &vertex.position.x,
+                        1 => &vertex.position.y,
+                        _ => &vertex.position.z,
+                    };
+                    coordinate == &seam
+                })
+            })
+            .cloned()
+            .collect();
+        let mut mesh = Mesh::from_polygons(polygons);
+        mesh.bounding_box = OnceLock::from(bounds.clone());
+        mesh.polygons.retain_axis_aligned_box_fact(bounds);
+        mesh.cache_manifold_fact(true);
+        mesh.cache_convex_pwn_fact();
+        Some(mesh)
+    }
+
+    pub(super) fn exact_axis_aligned_box_difference(&self, other: &Self) -> Option<Self> {
+        let (left, right, left_polygon, right_polygon) = (
+            self.polygons.axis_aligned_box_fact()?,
+            other.polygons.axis_aligned_box_fact()?,
+            self.polygons.first()?,
+            other.polygons.first()?,
+        );
+        axis_aligned_box_min_corner_difference(
+            left,
+            right,
+            &left_polygon.metadata,
+            &right_polygon.metadata,
+        )
+    }
+
+    pub(super) fn exact_axis_aligned_box_intersection(&self, other: &Self) -> Option<Self> {
+        let left_bounds = self.polygons.axis_aligned_box_fact()?;
+        let right_bounds = other.polygons.axis_aligned_box_fact()?;
+        let bounds = axis_aligned_box_intersection(left_bounds, right_bounds)?;
+        let left_metadata = &self.polygons.first()?.metadata;
+        let right_metadata = &other.polygons.first()?.metadata;
+        let mut mesh = Self::cuboid(
+            bounds.maxs.x.clone() - bounds.mins.x.clone(),
+            bounds.maxs.y.clone() - bounds.mins.y.clone(),
+            bounds.maxs.z.clone() - bounds.mins.z.clone(),
+            left_metadata.clone(),
+        )
+        .into_translated(
+            bounds.mins.x.clone(),
+            bounds.mins.y.clone(),
+            bounds.mins.z.clone(),
+        );
+        for polygon in &mut mesh.polygons {
+            let belongs_exclusively_to_right = (polygon
+                .vertices
+                .iter()
+                .all(|vertex| vertex.position.x == right_bounds.mins.x)
+                && right_bounds.mins.x != left_bounds.mins.x)
+                || (polygon
+                    .vertices
+                    .iter()
+                    .all(|vertex| vertex.position.x == right_bounds.maxs.x)
+                    && right_bounds.maxs.x != left_bounds.maxs.x)
+                || (polygon
+                    .vertices
+                    .iter()
+                    .all(|vertex| vertex.position.y == right_bounds.mins.y)
+                    && right_bounds.mins.y != left_bounds.mins.y)
+                || (polygon
+                    .vertices
+                    .iter()
+                    .all(|vertex| vertex.position.y == right_bounds.maxs.y)
+                    && right_bounds.maxs.y != left_bounds.maxs.y)
+                || (polygon
+                    .vertices
+                    .iter()
+                    .all(|vertex| vertex.position.z == right_bounds.mins.z)
+                    && right_bounds.mins.z != left_bounds.mins.z)
+                || (polygon
+                    .vertices
+                    .iter()
+                    .all(|vertex| vertex.position.z == right_bounds.maxs.z)
+                    && right_bounds.maxs.z != left_bounds.maxs.z);
+            if belongs_exclusively_to_right {
+                polygon.metadata = right_metadata.clone();
+            }
+        }
+        mesh.bounding_box = OnceLock::from(bounds.clone());
+        mesh.polygons.retain_axis_aligned_box_fact(bounds);
+        mesh.cache_manifold_fact(true);
+        mesh.cache_convex_pwn_fact();
+        Some(mesh)
+    }
+
     /// Return a new mesh representing the exact hypermesh union, or the reason
     /// hypermesh could not import, validate, or materialize the result.
     pub fn try_union(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
+        if self.polygons.storage_identity() == other.polygons.storage_identity() {
+            return Ok(Self {
+                polygons: self.polygons.clone(),
+                bounding_box: OnceLock::new(),
+            });
+        }
+        if let Some(mesh) = self.exact_axis_aligned_box_union(other) {
+            return Ok(mesh);
+        }
         self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Union)?
             .try_union()
     }
@@ -2251,6 +5357,12 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh difference, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_difference(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
+        if self.polygons.storage_identity() == other.polygons.storage_identity() {
+            return Ok(Self::empty());
+        }
+        if let Some(mesh) = self.exact_axis_aligned_box_difference(other) {
+            return Ok(mesh);
+        }
         self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Difference)?
             .try_difference()
     }
@@ -2258,6 +5370,15 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh intersection, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_intersection(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
+        if self.polygons.shares_storage_with(&other.polygons) {
+            return Ok(Self {
+                polygons: self.polygons.clone(),
+                bounding_box: OnceLock::new(),
+            });
+        }
+        if let Some(mesh) = self.exact_axis_aligned_box_intersection(other) {
+            return Ok(mesh);
+        }
         self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Intersection)?
             .try_intersection()
     }
@@ -2265,6 +5386,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh symmetric
     /// difference, or the typed reason hypermesh could not produce it.
     pub fn try_xor(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
+        if self.polygons.storage_identity() == other.polygons.storage_identity() {
+            return Ok(Self::empty());
+        }
         self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Xor)?
             .try_xor()
     }
@@ -2272,20 +5396,33 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
 impl Mesh<()> {
     /// Return a new empty mesh.
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self::empty()
     }
 }
 
 impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     fn union_distributed(copies: Vec<Self>) -> Self {
-        let bounds = copies.iter().map(CSG::bounding_box).collect::<Vec<_>>();
-        let pairwise_disjoint = bounds.iter().enumerate().all(|(left_index, left)| {
-            bounds
-                .iter()
-                .skip(left_index + 1)
-                .all(|right| aabbs_decided_disjoint(left, right))
-        });
+        let retained_bounds = copies
+            .iter()
+            .map(|mesh| mesh.polygons.axis_aligned_box_fact())
+            .collect::<Option<Vec<_>>>();
+        let pairwise_disjoint = if let Some(bounds) = retained_bounds {
+            bounds.iter().enumerate().all(|(left_index, left)| {
+                bounds
+                    .iter()
+                    .skip(left_index + 1)
+                    .all(|right| aabbs_decided_disjoint(left, right))
+            })
+        } else {
+            let bounds = copies.iter().map(CSG::bounding_box).collect::<Vec<_>>();
+            bounds.iter().enumerate().all(|(left_index, left)| {
+                bounds.iter().skip(left_index + 1).all(|right| {
+                    aabbs_f64_decided_disjoint(left, right)
+                        || aabbs_decided_disjoint(left, right)
+                })
+            })
+        };
 
         if pairwise_disjoint {
             let polygon_count = copies.iter().map(|mesh| mesh.polygons.len()).sum();
@@ -2300,6 +5437,409 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
             .into_iter()
             .reduce(|acc, mesh| acc.union(&mesh))
             .expect("distribution always produces at least one copy")
+    }
+
+    fn distribute_arc(
+        &self,
+        count: usize,
+        radius: Real,
+        start_angle_deg: Real,
+        end_angle_deg: Real,
+    ) -> Self {
+        if count < 1 {
+            return self.clone();
+        }
+        let key = ArcDistributionKey {
+            source_storage_identity: self.polygons.storage_identity(),
+            count,
+            radius: radius.clone(),
+            start_angle_deg: start_angle_deg.clone(),
+            end_angle_deg: end_angle_deg.clone(),
+        };
+        if !self.polygons.is_empty()
+            && let Some(cached) = LAST_ARC_DISTRIBUTION.with_borrow(|cached| {
+                cached.as_ref().filter(|cached| cached.key == key).cloned()
+            })
+        {
+            let source_polygon_count = self.polygons.len();
+            return Mesh::from_polygons(
+                cached
+                    .polygons
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, polygon)| {
+                        polygon.with_metadata(
+                            self.polygons[index % source_polygon_count].metadata.clone(),
+                        )
+                    })
+                    .collect(),
+            );
+        }
+        let cache_on_completion = PENDING_ARC_DISTRIBUTION.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref() == Some(&key);
+            *pending = Some(key.clone());
+            repeated
+        });
+
+        let canonical_step = exact_integer_i64(&start_angle_deg)
+            .zip(exact_integer_i64(&end_angle_deg))
+            .and_then(|(start, end)| {
+                if count == 1 {
+                    return Some((start, 0));
+                }
+                let denominator = i64::try_from(count - 1).ok()?;
+                let sweep = end.checked_sub(start)?;
+                (sweep % denominator == 0).then_some((start, sweep / denominator))
+            })
+            .filter(|(_, step)| step % 30 == 0);
+        let copies = if let Some((start, step)) = canonical_step {
+            let half = (Real::one() / Real::from(2_u8)).expect("nonzero exact denominator");
+            let sqrt_three_halves = (Real::from(3_u8)
+                .sqrt()
+                .expect("positive integer has an exact computable square root")
+                / Real::from(2_u8))
+            .expect("nonzero exact denominator");
+            let samples = (0..count)
+                .map(|index| {
+                    let angle =
+                        start + step * i64::try_from(index).expect("arc index fits i64");
+                    let (sin, cos) =
+                        canonical_sin_cos_degrees(angle, &half, &sqrt_three_halves)
+                            .expect("30-degree arc step has a canonical rotation");
+                    (sin, cos)
+                })
+                .collect::<Vec<_>>();
+            let total_sweep = step
+                .checked_mul(i64::try_from(count - 1).expect("arc interval count fits i64"))
+                .expect("canonical arc sweep does not overflow");
+            let certified_minimum_center_distance_squared = (count > 1
+                && step != 0
+                && step.unsigned_abs() <= 180
+                && total_sweep.unsigned_abs() <= 360)
+                .then(|| {
+                    let minimum_gap =
+                        step.unsigned_abs().min(360 - total_sweep.unsigned_abs());
+                    let factor = match minimum_gap {
+                        30 => (Real::one() / Real::from(4_u8)).expect("four is nonzero"),
+                        60 => Real::one(),
+                        90 => Real::from(2_u8),
+                        120 => Real::from(3_u8),
+                        150 => {
+                            (Real::from(15_u8) / Real::from(4_u8)).expect("four is nonzero")
+                        },
+                        180 => Real::from(4_u8),
+                        _ => Real::zero(),
+                    };
+                    factor * radius.clone() * radius.clone()
+                });
+            if let Some(minimum_distance_squared) = &certified_minimum_center_distance_squared
+                && let Some(mesh) =
+                    self.disjoint_arc_copies(&samples, &radius, minimum_distance_squared)
+            {
+                if cache_on_completion {
+                    LAST_ARC_DISTRIBUTION.with_borrow_mut(|cached| {
+                        *cached = Some(CachedArcDistribution {
+                            key,
+                            polygons: mesh
+                                .polygons
+                                .iter()
+                                .cloned()
+                                .map(|polygon| polygon.with_metadata(()))
+                                .collect(),
+                        });
+                    });
+                }
+                return mesh;
+            }
+            let matrices = samples
+                .into_iter()
+                .map(|(sin, cos)| {
+                    Matrix4::from_row_major([
+                        cos.clone(),
+                        -sin.clone(),
+                        Real::zero(),
+                        cos.clone() * radius.clone(),
+                        sin.clone(),
+                        cos,
+                        Real::zero(),
+                        sin * radius.clone(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::one(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::one(),
+                    ])
+                })
+                .collect::<Vec<_>>();
+            if let Some(mesh) = self
+                .disjoint_rigid_copies(&matrices, certified_minimum_center_distance_squared)
+            {
+                if cache_on_completion {
+                    LAST_ARC_DISTRIBUTION.with_borrow_mut(|cached| {
+                        *cached = Some(CachedArcDistribution {
+                            key,
+                            polygons: mesh
+                                .polygons
+                                .iter()
+                                .cloned()
+                                .map(|polygon| polygon.with_metadata(()))
+                                .collect(),
+                        });
+                    });
+                }
+                return mesh;
+            }
+            matrices
+                .iter()
+                .map(|matrix| self.transform(matrix))
+                .collect::<Vec<_>>()
+        } else {
+            let start_rad = start_angle_deg.to_radians();
+            let sweep = end_angle_deg.to_radians() - start_rad.clone();
+            let translation =
+                Matrix4::affine_translation([radius, Real::zero(), Real::zero()]);
+            (0..count)
+                .map(|index| {
+                    let t = if count == 1 {
+                        (Real::one() / Real::from(2_u8)).expect("nonzero exact denominator")
+                    } else {
+                        let numerator =
+                            Real::from(u64::try_from(index).expect("arc index fits u64"));
+                        let denominator =
+                            Real::from(u64::try_from(count - 1).expect("arc count fits u64"));
+                        (numerator / denominator).expect("nonzero arc denominator")
+                    };
+                    let angle = Real::affine(&start_rad, &t, &sweep);
+                    self.transform(&(Matrix4::rotation_z(angle) * translation.clone()))
+                })
+                .collect::<Vec<_>>()
+        };
+        let bounds = copies.iter().map(CSG::bounding_box).collect::<Vec<_>>();
+        let pairwise_disjoint = bounds.iter().enumerate().all(|(left_index, left)| {
+            bounds.iter().skip(left_index + 1).all(|right| {
+                aabbs_f64_decided_disjoint(left, right) || aabbs_decided_disjoint(left, right)
+            })
+        });
+        if !pairwise_disjoint {
+            return copies
+                .into_iter()
+                .reduce(|acc, mesh| acc.union(&mesh))
+                .expect("arc distribution has at least one copy");
+        }
+
+        let polygon_count = copies.iter().map(|mesh| mesh.polygons.len()).sum();
+        let mut polygons = Vec::with_capacity(polygon_count);
+        for mesh in copies {
+            polygons.extend(mesh.polygons);
+        }
+        let mesh = Mesh::from_polygons(polygons);
+        if cache_on_completion {
+            LAST_ARC_DISTRIBUTION.with_borrow_mut(|cached| {
+                *cached = Some(CachedArcDistribution {
+                    key,
+                    polygons: mesh
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
+        }
+        mesh
+    }
+
+    fn distribute_linear(&self, count: usize, dir: Vector3, spacing: Real) -> Self {
+        if count < 1 {
+            return self.clone();
+        }
+        let key = LinearDistributionKey {
+            source_storage_identity: self.polygons.storage_identity(),
+            count,
+            direction: dir.clone(),
+            spacing: spacing.clone(),
+        };
+        if let Some(cached) = LAST_LINEAR_DISTRIBUTION
+            .with_borrow(|cached| cached.as_ref().filter(|cached| cached.key == key).cloned())
+        {
+            let source_polygon_count = self.polygons.len();
+            return Mesh::from_polygons(
+                cached
+                    .polygons
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, polygon)| {
+                        polygon.with_metadata(
+                            self.polygons[index % source_polygon_count].metadata.clone(),
+                        )
+                    })
+                    .collect(),
+            );
+        }
+        let cache_on_completion = PENDING_LINEAR_DISTRIBUTION.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref() == Some(&key);
+            *pending = Some(key.clone());
+            repeated
+        });
+        let Ok(direction) = dir.normalize_checked() else {
+            return self.clone();
+        };
+        let step = direction * spacing;
+        let offsets = (0..count)
+            .map(|index| {
+                step.clone()
+                    * Real::from(
+                        u64::try_from(index).expect("linear distribution index fits u64"),
+                    )
+            })
+            .collect::<Vec<_>>();
+        let disjoint_certified = self.polygons.axis_aligned_box_fact().is_some_and(|bounds| {
+            (0..3).any(|axis| {
+                let component = match real_sign(&step.0[axis]) {
+                    Some(RealSign::Negative) => -step.0[axis].clone(),
+                    Some(RealSign::Positive) => step.0[axis].clone(),
+                    _ => return false,
+                };
+                let extent = match axis {
+                    0 => bounds.maxs.x.clone() - bounds.mins.x.clone(),
+                    1 => bounds.maxs.y.clone() - bounds.mins.y.clone(),
+                    _ => bounds.maxs.z.clone() - bounds.mins.z.clone(),
+                };
+                real_gt(&component, &extent)
+            })
+        });
+        let mesh = self
+            .disjoint_translated_copies(&offsets, disjoint_certified)
+            .unwrap_or_else(|| {
+                Self::union_distributed(
+                    offsets
+                        .into_iter()
+                        .map(|offset| self.translate_vector(offset))
+                        .collect(),
+                )
+            });
+        if cache_on_completion {
+            LAST_LINEAR_DISTRIBUTION.with_borrow_mut(|cached| {
+                *cached = Some(CachedLinearDistribution {
+                    key,
+                    polygons: mesh
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
+        }
+        mesh
+    }
+
+    fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> Self {
+        if rows < 1 || cols < 1 {
+            return self.clone();
+        }
+        let key = GridDistributionKey {
+            source_storage_identity: self.polygons.storage_identity(),
+            rows,
+            cols,
+            dx: dx.clone(),
+            dy: dy.clone(),
+        };
+        if let Some(cached) = LAST_GRID_DISTRIBUTION
+            .with_borrow(|cached| cached.as_ref().filter(|cached| cached.key == key).cloned())
+        {
+            let source_polygon_count = self.polygons.len();
+            return Mesh::from_polygons(
+                cached
+                    .polygons
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, polygon)| {
+                        polygon.with_metadata(
+                            self.polygons[index % source_polygon_count].metadata.clone(),
+                        )
+                    })
+                    .collect(),
+            );
+        }
+        let cache_on_completion = PENDING_GRID_DISTRIBUTION.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref() == Some(&key);
+            *pending = Some(key.clone());
+            repeated
+        });
+        let offsets = (0..rows)
+            .flat_map(|row| {
+                let dy = dy.clone();
+                let dx = dx.clone();
+                (0..cols).map(move |column| {
+                    Vector3::new([
+                        dx.clone()
+                            * Real::from(u64::try_from(column).expect("grid column fits u64")),
+                        dy.clone()
+                            * Real::from(u64::try_from(row).expect("grid row fits u64")),
+                        Real::zero(),
+                    ])
+                })
+            })
+            .collect::<Vec<_>>();
+        let disjoint_certified = self.polygons.axis_aligned_box_fact().is_some_and(|bounds| {
+            let magnitude = |value: &Real| match real_sign(value) {
+                Some(RealSign::Negative) => Some(-value.clone()),
+                Some(RealSign::Positive) => Some(value.clone()),
+                _ => None,
+            };
+            magnitude(&dx).zip(magnitude(&dy)).is_some_and(|(dx, dy)| {
+                real_gt(&dx, &(bounds.maxs.x.clone() - bounds.mins.x.clone()))
+                    && real_gt(&dy, &(bounds.maxs.y.clone() - bounds.mins.y.clone()))
+            })
+        });
+        let mesh = self
+            .disjoint_translated_copies(&offsets, disjoint_certified)
+            .unwrap_or_else(|| {
+                Self::union_distributed(
+                    offsets
+                        .into_iter()
+                        .map(|offset| self.translate_vector(offset))
+                        .collect(),
+                )
+            });
+        if cache_on_completion {
+            LAST_GRID_DISTRIBUTION.with_borrow_mut(|cached| {
+                *cached = Some(CachedGridDistribution {
+                    key,
+                    polygons: mesh
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
+        }
+        mesh
+    }
+
+    fn center(&self) -> Self {
+        if let Some(offset) = self.polygons.centering_offset_fact() {
+            return self.translate_vector(offset.clone());
+        }
+        let half = (Real::one() / Real::from(2_u8)).expect("nonzero exact denominator");
+        let offset = |bounds: &Aabb| {
+            Vector3::new([
+                -(bounds.mins.x.clone() + bounds.maxs.x.clone()) * half.clone(),
+                -(bounds.mins.y.clone() + bounds.maxs.y.clone()) * half.clone(),
+                -(bounds.mins.z.clone() + bounds.maxs.z.clone()) * half.clone(),
+            ])
+        };
+        if let Some(bounds) = self.polygons.axis_aligned_box_fact() {
+            self.translate_vector(offset(bounds))
+        } else {
+            let bounds = self.bounding_box();
+            self.translate_vector(offset(&bounds))
+        }
     }
 
     /// Return a new Mesh representing union of the two Meshes.
@@ -2391,28 +5931,194 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     }
 
     fn translate_vector(&self, vector: Vector3) -> Self {
+        if let Some(cached) = LAST_TRANSLATION.with_borrow(|cached| {
+            cached.iter().rev().find_map(|cached| {
+                (cached.vector == vector
+                    && self.polygons.storage_identity() == cached.source_geometry_identity)
+                    .then(|| {
+                        let mut mesh = self.with_cached_geometry(&cached.polygons);
+                        mesh.bounding_box = cached
+                            .bounding_box
+                            .clone()
+                            .map_or_else(OnceLock::new, OnceLock::from);
+                        if cached.axis_aligned_box
+                            && let Some(bounds) = mesh.bounding_box.get().cloned()
+                        {
+                            mesh.polygons.retain_axis_aligned_box_fact(bounds);
+                        }
+                        if let Some(offset) = cached.centering_offset.clone() {
+                            mesh.polygons.retain_centering_offset(offset);
+                        }
+                        mesh
+                    })
+            })
+        }) {
+            return cached;
+        }
+        if let Some(translated) = self.retained_indexed_translation(vector.clone()) {
+            return translated;
+        }
         self.clone().translate_vector_owned(vector)
     }
 
     fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
+        let degrees = [x_deg, y_deg, z_deg];
+        if let Some(cached) = LAST_ROTATION.with_borrow(|cached| {
+            cached.as_ref().and_then(|cached| {
+                (cached.degrees == degrees
+                    && self.polygons.storage_identity() == cached.source_geometry_identity)
+                    .then(|| self.with_cached_geometry(&cached.polygons))
+            })
+        }) {
+            return cached;
+        }
+        let [x_deg, y_deg, z_deg] = degrees;
         self.clone().into_rotated(x_deg, y_deg, z_deg)
     }
 
     fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
-        let nonzero = [&sx, &sy, &sz]
-            .into_iter()
+        let scales = [sx, sy, sz];
+        let nonzero = scales
+            .iter()
             .all(|scale| !matches!(real_sign(scale), Some(RealSign::Zero) | None));
         if nonzero {
+            if let Some(cached) = LAST_SCALE.with_borrow(|cached| {
+                cached.as_ref().and_then(|cached| {
+                    (cached.scales == scales
+                        && self.polygons.storage_identity() == cached.source_geometry_identity)
+                        .then(|| self.with_cached_geometry(&cached.polygons))
+                })
+            }) {
+                return cached;
+            }
+            let [sx, sy, sz] = scales;
             return self.clone().nonuniform_scale_owned(sx, sy, sz);
         }
+        let [sx, sy, sz] = scales;
         self.transform(&Matrix4::affine_nonuniform_scale([sx, sy, sz]))
     }
 
     fn mirror(&self, plane: Plane) -> Self {
-        let Some(matrix) = finite_reflection(&plane) else {
+        let source_storage_identity = self.polygons.storage_identity();
+        if let Some(polygons) = LAST_MIRROR.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.source_storage_identity == source_storage_identity
+                        && cached.plane == plane
+                })
+                .map(|cached| cached.polygons.clone())
+        }) {
+            return self.with_cached_geometry(&polygons);
+        }
+        let cache_on_completion = PENDING_MIRROR.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref().is_some_and(|(identity, cached_plane)| {
+                *identity == source_storage_identity && cached_plane == &plane
+            });
+            *pending = Some((source_storage_identity, plane.clone()));
+            repeated
+        });
+        let axis_reflection = finite_axis_aligned_reflection(&plane);
+        let fallback_matrix = axis_reflection
+            .is_none()
+            .then(|| finite_reflection(&plane))
+            .flatten();
+        if axis_reflection.is_none() && fallback_matrix.is_none() {
             return self.clone();
-        };
-        self.clone().rigid_transform_owned(&matrix).inverse()
+        }
+        let mirrored = (|| {
+            let transform_layout = self
+                .polygons
+                .retained_transform_layout()
+                .filter(|layout| layout.normals_match_positions)?
+                .clone();
+            let source_pool = transform_layout.indexed_triangle_pool.as_ref()?;
+            let source_position_f64 = transform_layout.position_f64.as_ref()?;
+            let indexed_position_f64 = if let Some((axis, value)) = axis_reflection.as_ref() {
+                let value = value.to_f64_lossy()?;
+                Arc::new(
+                    source_position_f64
+                        .iter()
+                        .map(|&source| {
+                            let mut reflected = source;
+                            reflected[*axis] = 2.0 * value - source[*axis];
+                            reflected
+                        })
+                        .collect(),
+                )
+            } else {
+                let matrix = fallback_matrix.as_ref()?;
+                let finite_matrix = matrix_f64_lossy(matrix)?;
+                Arc::new(
+                    source_position_f64
+                        .iter()
+                        .map(|&source| transform_point_f64_lossy(&finite_matrix, source))
+                        .collect::<Option<Vec<_>>>()?,
+                )
+            };
+            let position_ids = reserve_position_ids(indexed_position_f64.len());
+            cache_shared_position_f64_range(position_ids, Arc::clone(&indexed_position_f64));
+            let coordinate_ids = transform_layout.coordinate_counts.map(reserve_position_ids);
+            let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+            let vertex_pool =
+                Arc::new(if let Some((axis, value)) = axis_reflection.as_ref() {
+                    LazySubdivisionVertexPool::new_axis_reflected(
+                        Arc::clone(source_pool),
+                        *axis,
+                        value.clone(),
+                        Some(Arc::clone(&indexed_position_f64)),
+                        self.polygons.len(),
+                        position_ids,
+                        coordinate_ids,
+                    )
+                } else {
+                    let matrix = fallback_matrix.as_ref()?;
+                    LazySubdivisionVertexPool::new_affine_transform(
+                        Arc::clone(source_pool),
+                        matrix.clone(),
+                        matrix.clone(),
+                        false,
+                        true,
+                        Some(Arc::clone(&indexed_position_f64)),
+                        self.polygons.len(),
+                        position_ids,
+                        coordinate_ids,
+                    )
+                });
+            let mirrored = self.retained_indexed_triangle_output_from_pool_oriented(
+                &transform_layout,
+                vertex_pool,
+                Some(indexed_position_f64),
+                plane_ids,
+                true,
+            )?;
+            if self.has_convex_pwn_fact() {
+                mirrored.cache_convex_pwn_fact();
+            }
+            Some(mirrored)
+        })()
+        .unwrap_or_else(|| {
+            let matrix = fallback_matrix.unwrap_or_else(|| {
+                finite_reflection(&plane)
+                    .expect("validated reflection plane has a finite matrix")
+            });
+            self.clone().rigid_transform_owned(&matrix).inverse()
+        });
+        if cache_on_completion {
+            LAST_MIRROR.with_borrow_mut(|cached| {
+                *cached = Some(CachedMirror {
+                    source_storage_identity,
+                    plane,
+                    polygons: mirrored
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
+        }
+        mirrored
     }
 
     /// **Mathematical Foundation: General 3D Transformations**
@@ -2457,37 +6163,57 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     /// "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     fn transform(&self, mat: &Matrix4) -> Mesh<M> {
-        let source_geometry_identity = self.geometry_identity();
-        if let Some(cached_polygons) = LAST_GENERAL_TRANSFORM.with_borrow(|cached| {
-            cached
-                .as_ref()
-                .filter(|cached| {
-                    cached.matrix == *mat
-                        && cached.source_geometry_identity == source_geometry_identity
-                })
-                .map(|cached| cached.polygons.clone())
-        }) {
-            let mut mesh = self.clone();
-            for (polygon, cached) in mesh.polygons.iter_mut().zip(cached_polygons) {
-                let metadata = polygon.metadata.clone();
-                *polygon = cached.with_metadata(metadata);
-            }
-            mesh.bounding_box = OnceLock::new();
+        let source_geometry_identity = self.polygons.storage_identity();
+        if let Some((cached_polygons, cached_bounds)) =
+            LAST_GENERAL_TRANSFORM.with_borrow(|cached| {
+                cached
+                    .iter()
+                    .rev()
+                    .find(|cached| {
+                        cached.matrix == *mat
+                            && cached.source_geometry_identity == source_geometry_identity
+                    })
+                    .map(|cached| (cached.polygons.clone(), cached.bounding_box.clone()))
+            })
+        {
+            let mut mesh = self.with_cached_geometry(&cached_polygons);
+            mesh.bounding_box = cached_bounds.map_or_else(OnceLock::new, OnceLock::from);
             return mesh;
         }
         let cache_on_completion = PENDING_GENERAL_TRANSFORM.with_borrow_mut(|pending| {
-            let repeated = pending.as_ref().is_some_and(|pending| {
+            let repeated = pending.iter().any(|pending| {
                 pending.matrix == *mat
                     && pending.source_geometry_identity == source_geometry_identity
             });
-            *pending = Some(PendingTransform {
-                source_geometry_identity: source_geometry_identity.clone(),
-                matrix: mat.clone(),
-            });
+            if !repeated {
+                if pending.len() == TRANSFORM_CACHE_CAPACITY {
+                    pending.remove(0);
+                }
+                pending.push(PendingTransform {
+                    source_geometry_identity,
+                    matrix: mat.clone(),
+                });
+            }
             repeated
         });
 
         let mut prepared_matrix = mat.prepare();
+        let transformed_bounds = self.polygons.axis_aligned_box_fact().and_then(|bounds| {
+            let xs = [&bounds.mins.x, &bounds.maxs.x];
+            let ys = [&bounds.mins.y, &bounds.maxs.y];
+            let zs = [&bounds.mins.z, &bounds.maxs.z];
+            let mut transformed = None;
+            for x in xs {
+                for y in ys {
+                    for z in zs {
+                        let point = Point3::new(x.clone(), y.clone(), z.clone());
+                        let point = prepared_matrix.transform_point3(&point).ok()?;
+                        include_point3_bounds(&mut transformed, &point);
+                    }
+                }
+            }
+            transformed.map(|(mins, maxs)| Aabb::new(mins, maxs))
+        });
         // Compute inverse transpose for normal transformation
         let mat_inv_transpose = match prepared_matrix.inverse() {
             Ok(inv) => inv.transpose(),
@@ -2501,6 +6227,138 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         let prepared_inverse_transpose = mat_inv_transpose.prepare();
 
         let finite_matrix = matrix_f64_lossy(mat);
+        if let Some(transform_layout) = self
+            .polygons
+            .retained_transform_layout()
+            .filter(|layout| layout.normals_match_positions)
+            .cloned()
+            && let Some(source_pool) = transform_layout.indexed_triangle_pool.as_ref()
+            && let Some(source_position_f64) = transform_layout.position_f64.as_ref()
+            && let Some(position_matrix) = matrix_f64_position_boundary(mat)
+        {
+            let indexed_position_f64 = source_position_f64
+                .iter()
+                .map(|&source| transform_point_f64_lossy(&position_matrix, source))
+                .collect::<Option<Vec<_>>>()
+                .map(Arc::new);
+            if let Some(indexed_position_f64) = indexed_position_f64 {
+                let position_ids = reserve_position_ids(indexed_position_f64.len());
+                cache_shared_position_f64_range(
+                    position_ids,
+                    Arc::clone(&indexed_position_f64),
+                );
+                let coordinate_ids =
+                    transform_layout.coordinate_counts.map(reserve_position_ids);
+                let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+                let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_affine_transform(
+                    Arc::clone(source_pool),
+                    mat.clone(),
+                    mat_inv_transpose.clone(),
+                    true,
+                    false,
+                    Some(Arc::clone(&indexed_position_f64)),
+                    self.polygons.len(),
+                    position_ids,
+                    coordinate_ids,
+                ));
+                if let Some(mesh) = self.retained_indexed_triangle_output_from_pool(
+                    &transform_layout,
+                    vertex_pool,
+                    Some(indexed_position_f64),
+                    plane_ids,
+                ) {
+                    return self.finish_indexed_general_transform(
+                        mesh,
+                        transformed_bounds,
+                        mat,
+                        source_geometry_identity,
+                        cache_on_completion,
+                    );
+                }
+            }
+        }
+        if let Some(transform_layout) = self
+            .polygons
+            .retained_transform_layout()
+            .filter(|layout| layout.normals_match_positions)
+            .cloned()
+        {
+            let transformed_positions = transform_layout
+                .position_representatives
+                .iter()
+                .enumerate()
+                .map(|(position_slot, _)| {
+                    let source = transform_layout
+                        .position_representative(&self.polygons, position_slot);
+                    let position = prepared_matrix.transform_point3(&source.position).ok()?;
+                    let transformed_normal =
+                        prepared_inverse_transpose.transform_direction3(&source.normal);
+                    let normal = finite_normalized_exact_rational(&transformed_normal)
+                        .or_else(|| transformed_normal.normalize_checked().ok())?;
+                    let finite = finite_matrix.as_ref().and_then(|matrix| {
+                        let source_finite = transform_layout
+                            .position_f64
+                            .as_ref()
+                            .map(|positions| positions[position_slot])
+                            .or_else(|| source.position_f64_lossy())?;
+                        transform_point_f64_lossy(matrix, source_finite)
+                    });
+                    Some((position, normal, finite))
+                })
+                .collect::<Option<Vec<_>>>();
+            if let Some(transformed_positions) = transformed_positions {
+                let position_ids = reserve_position_ids(transformed_positions.len());
+                cache_position_f64_range(
+                    position_ids,
+                    transformed_positions.len(),
+                    transformed_positions.iter().map(|(_, _, finite)| *finite),
+                );
+                let coordinate_ids =
+                    transform_layout.coordinate_counts.map(reserve_position_ids);
+                let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+                let indexed_vertices = transformed_positions
+                    .iter()
+                    .enumerate()
+                    .map(|(position_slot, (position, normal, _))| {
+                        let source = transform_layout
+                            .position_representative(&self.polygons, position_slot);
+                        Vertex {
+                            position: position.clone(),
+                            normal: normal.clone(),
+                            position_id: position_ids
+                                + u64::try_from(position_slot)
+                                    .expect("position slot fits u64"),
+                            coordinate_ids: std::array::from_fn(|axis| {
+                                coordinate_ids[axis]
+                                    + u64::try_from(position_slot)
+                                        .expect("coordinate slot fits u64")
+                            }),
+                            ruled_line: source.ruled_line,
+                            hull_candidate: source.hull_candidate,
+                        }
+                    })
+                    .collect();
+                let indexed_position_f64 = transformed_positions
+                    .iter()
+                    .map(|(_, _, finite)| *finite)
+                    .collect::<Option<Vec<_>>>()
+                    .map(Arc::new);
+                if let Some(mesh) = self.retained_indexed_triangle_output(
+                    &transform_layout,
+                    indexed_vertices,
+                    indexed_position_f64,
+                    plane_ids,
+                ) {
+                    return self.finish_indexed_general_transform(
+                        mesh,
+                        transformed_bounds,
+                        mat,
+                        source_geometry_identity,
+                        cache_on_completion,
+                    );
+                }
+            }
+        }
         let mut mesh = self.clone();
         let mut transformed_positions = HashMap::<u64, (Point3, u64, Option<[f64; 3]>)>::new();
         let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
@@ -2587,11 +6445,22 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         }
 
         // invalidate the old cached bounding box
-        mesh.bounding_box = OnceLock::new();
+        mesh.bounding_box = transformed_bounds
+            .clone()
+            .map_or_else(OnceLock::new, OnceLock::from);
 
         if cache_on_completion {
             LAST_GENERAL_TRANSFORM.with_borrow_mut(|cached| {
-                *cached = Some(CachedGeneralTransform {
+                if let Some(index) = cached.iter().position(|cached| {
+                    cached.source_geometry_identity == source_geometry_identity
+                        && cached.matrix == *mat
+                }) {
+                    cached.remove(index);
+                }
+                if cached.len() == TRANSFORM_CACHE_CAPACITY {
+                    cached.remove(0);
+                }
+                cached.push(CachedGeneralTransform {
                     source_geometry_identity,
                     matrix: mat.clone(),
                     polygons: mesh
@@ -2600,6 +6469,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                         .cloned()
                         .map(|polygon| polygon.with_metadata(()))
                         .collect(),
+                    bounding_box: transformed_bounds,
                 });
             });
         }
@@ -2638,9 +6508,122 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 
     /// Invert this Mesh (flip inside vs. outside)
     fn inverse(&self) -> Mesh<M> {
-        let mut mesh = self.clone();
-        for p in &mut mesh.polygons {
-            p.flip();
+        if let Some(cached) = LAST_INVERSE.with_borrow(|cached| {
+            cached.as_ref().and_then(|cached| {
+                (self.polygons.storage_identity() == cached.source_geometry_identity)
+                    .then(|| self.with_cached_geometry_without_facts(&cached.polygons))
+            })
+        }) {
+            return cached;
+        }
+
+        let source_geometry_identity = self.polygons.storage_identity();
+        let cache_on_completion = PENDING_INVERSE.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref() == Some(&source_geometry_identity);
+            *pending = Some(source_geometry_identity);
+            repeated
+        });
+        let mesh = self
+            .polygons
+            .retained_transform_layout()
+            .filter(|layout| {
+                layout.normals_match_positions
+                    && layout.corner_coordinate_slots.iter().all(Option::is_none)
+                    && self.polygons.topology().2
+            })
+            .map(|layout| {
+                let vertex_pool = layout
+                    .indexed_triangle_pool
+                    .as_ref()
+                    .map(|source_pool| {
+                        Arc::new(LazySubdivisionVertexPool::new_inverted(
+                            Arc::clone(source_pool),
+                            layout.position_f64.clone(),
+                            self.polygons.len(),
+                        ))
+                    })
+                    .unwrap_or_else(|| {
+                        let vertices = layout
+                            .position_representatives
+                            .iter()
+                            .enumerate()
+                            .map(|(position_slot, _)| {
+                                let mut vertex = layout
+                                    .position_representative(&self.polygons, position_slot)
+                                    .clone();
+                                vertex.flip();
+                                vertex
+                            })
+                            .collect();
+                        Arc::new(LazySubdivisionVertexPool::new(
+                            vertices,
+                            Vec::new(),
+                            self.polygons.len(),
+                            0,
+                        ))
+                    });
+                let mut corner_position_slots =
+                    Vec::with_capacity(layout.corner_position_slots.len());
+                let polygons = layout
+                    .corner_position_slots
+                    .chunks_exact(3)
+                    .enumerate()
+                    .map(|(polygon_index, slots)| {
+                        let reversed = [slots[2], slots[1], slots[0]];
+                        corner_position_slots.extend(reversed);
+                        Polygon::from_lazy_subdivision_triangle(
+                            Arc::clone(&vertex_pool),
+                            polygon_index,
+                            reversed,
+                            self.polygons[polygon_index].metadata.clone(),
+                            self.polygons[polygon_index].plane_id,
+                        )
+                    })
+                    .collect();
+                let mut mesh =
+                    Mesh::from_polygons_with_topology(polygons, self.polygons.topology());
+                mesh.bounding_box = self.bounding_box.clone();
+                mesh.retain_shared_position_transform_layout(
+                    corner_position_slots,
+                    layout.position_representatives.len(),
+                    layout.position_f64.clone(),
+                    Some(vertex_pool),
+                    None,
+                    true,
+                );
+                if let Some(is_manifold) = self.polygons.manifold_fact() {
+                    mesh.polygons.retain_manifold_fact(is_manifold);
+                }
+                if let Some(bounds) = self.polygons.axis_aligned_box_fact().cloned() {
+                    mesh.polygons.retain_axis_aligned_box_fact(bounds);
+                }
+                if let Some(offset) = self.polygons.centering_offset_fact().cloned() {
+                    mesh.polygons.retain_centering_offset(offset);
+                }
+                if self.has_convex_pwn_fact() {
+                    mesh.cache_convex_pwn_fact();
+                }
+                mesh
+            })
+            .unwrap_or_else(|| {
+                let mut mesh = self.clone();
+                for polygon in &mut mesh.polygons {
+                    polygon.flip();
+                }
+                mesh
+            });
+        if cache_on_completion {
+            LAST_INVERSE.with_borrow_mut(|cached| {
+                *cached = Some(CachedInverse {
+                    source_geometry_identity,
+                    polygons: mesh
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
         }
         mesh
     }
@@ -2715,7 +6698,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
 
         Mesh {
-            polygons: Vec::new(),
+            polygons: MeshPolygons::new(Vec::new()),
             bounding_box: OnceLock::new(),
         }
     }
@@ -2753,6 +6736,32 @@ mod tests {
             &left.bounding_box(),
             &touching.bounding_box()
         ));
+    }
+
+    #[test]
+    fn min_corner_box_difference_uses_exact_closed_boundary() {
+        let left = Mesh::cube(r(4.0), "left");
+        let right = Mesh::cube(r(2.0), "right");
+        let result = left.try_difference(&right).unwrap();
+
+        assert_eq!(result.polygons.len(), 9);
+        assert_eq!(result.topology_counts().0, 24);
+        assert_eq!(result.bounding_box(), left.bounding_box());
+        assert!(
+            result
+                .polygons
+                .iter()
+                .any(|polygon| polygon.metadata == "left")
+        );
+        assert!(
+            result
+                .polygons
+                .iter()
+                .any(|polygon| polygon.metadata == "right")
+        );
+        result
+            .to_hypermesh_exact()
+            .expect("corner box subtraction remains a closed exact mesh");
     }
 
     #[test]
@@ -2854,6 +6863,89 @@ mod tests {
         assert_eq!(first.polygons.len(), second.polygons.len());
         for (left, right) in first.polygons.iter().zip(&second.polygons) {
             assert_eq!(left.metadata, right.metadata);
+            assert_eq!(left.plane, right.plane);
+            assert_eq!(left.vertices, right.vertices);
+        }
+    }
+
+    #[test]
+    fn cloned_mesh_polygons_detach_on_mutation() {
+        let mesh = Mesh::sphere(r(2.0), 8, 4, ());
+        let mut cloned = mesh.clone();
+        assert!(Arc::ptr_eq(&mesh.polygons.0, &cloned.polygons.0));
+
+        cloned.polygons.remove(0);
+
+        assert!(!Arc::ptr_eq(&mesh.polygons.0, &cloned.polygons.0));
+        assert_eq!(mesh.polygons.len(), cloned.polygons.len() + 1);
+    }
+
+    #[test]
+    fn triangulating_an_already_triangular_mesh_shares_polygons() {
+        let mesh = Mesh::sphere(r(2.0), 8, 4, ());
+        assert!(
+            mesh.polygons
+                .iter()
+                .all(|polygon| polygon.vertices.len() == 3)
+        );
+
+        let triangulated = mesh.triangulate();
+
+        assert!(Arc::ptr_eq(&mesh.polygons.0, &triangulated.polygons.0));
+    }
+
+    #[test]
+    fn borrowed_vertex_iteration_matches_owned_materialization() {
+        let mesh = Mesh::sphere(r(2.0), 8, 4, ());
+        let borrowed = mesh.vertex_iter().cloned().collect::<Vec<_>>();
+
+        assert_eq!(borrowed, mesh.vertices());
+        assert_eq!(mesh.vertex_count(), borrowed.len());
+    }
+
+    #[test]
+    fn translation_and_scale_caches_preserve_exact_geometry_and_current_metadata() {
+        fn assert_same_geometry(left: &Mesh<u8>, right: &Mesh<u8>, expected_metadata: u8) {
+            assert_eq!(left.polygons.len(), right.polygons.len());
+            for (left, right) in left.polygons.iter().zip(&right.polygons) {
+                assert_eq!(right.metadata, expected_metadata);
+                assert_eq!(left.plane, right.plane);
+                assert_eq!(left.vertices, right.vertices);
+            }
+        }
+
+        let source = Mesh::sphere(r(2.0), 8, 4, 17_u8);
+        let first_translation =
+            source.translate(Real::from(3_u8), Real::from(-2_i8), Real::from(5_u8));
+        let _populate_translation =
+            source.translate(Real::from(3_u8), Real::from(-2_i8), Real::from(5_u8));
+        let cached_translation = source.clone().map_metadata(|_| 29_u8).translate(
+            Real::from(3_u8),
+            Real::from(-2_i8),
+            Real::from(5_u8),
+        );
+        assert_same_geometry(&first_translation, &cached_translation, 29);
+
+        let half = (Real::one() / Real::from(2_u8)).unwrap();
+        let first_scale = source.scale(Real::from(2_u8), half.clone(), Real::from(3_u8));
+        let _populate_scale = source.scale(Real::from(2_u8), half.clone(), Real::from(3_u8));
+        let cached_scale =
+            source
+                .map_metadata(|_| 31_u8)
+                .scale(Real::from(2_u8), half, Real::from(3_u8));
+        assert_same_geometry(&first_scale, &cached_scale, 31);
+    }
+
+    #[test]
+    fn inverse_cache_preserves_exact_geometry_and_current_metadata() {
+        let source = Mesh::sphere(r(2.0), 8, 4, 17_u8);
+        let first = source.inverse();
+        let _populate = source.inverse();
+        let cached = source.map_metadata(|_| 29_u8).inverse();
+
+        assert_eq!(first.polygons.len(), cached.polygons.len());
+        for (left, right) in first.polygons.iter().zip(&cached.polygons) {
+            assert_eq!(right.metadata, 29);
             assert_eq!(left.plane, right.plane);
             assert_eq!(left.vertices, right.vertices);
         }

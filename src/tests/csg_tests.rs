@@ -401,9 +401,41 @@ fn tapered_frustum_side_normals_include_axial_slope() {
 fn representative_mesh_shape_constructors_produce_topology() {
     let meshes = [
         ("cuboid", Mesh::<()>::cuboid(r(2.0), r(3.0), r(4.0), ())),
+        ("cube", Mesh::<()>::cube(r(2.0), ())),
         ("sphere", Mesh::<()>::sphere(r(2.0), 12, 6, ())),
         ("cylinder", Mesh::<()>::cylinder(r(2.0), r(4.0), 12, ())),
         ("frustum", Mesh::<()>::frustum(r(2.0), r(1.0), r(4.0), 12, ())),
+        (
+            "frustum_ptp",
+            Mesh::<()>::frustum_ptp(
+                p3(0.0, 0.0, 0.0),
+                p3(1.0, 2.0, 4.0),
+                r(2.0),
+                r(1.0),
+                12,
+                (),
+            ),
+        ),
+        (
+            "polyhedron",
+            Mesh::<()>::polyhedron(
+                &[
+                    [r(0.0), r(0.0), r(0.0)],
+                    [r(2.0), r(0.0), r(0.0)],
+                    [r(0.0), r(2.0), r(0.0)],
+                    [r(0.0), r(0.0), r(2.0)],
+                ],
+                &[&[0, 2, 1], &[0, 1, 3], &[0, 3, 2], &[1, 2, 3]],
+                (),
+            )
+            .expect("tetrahedron polyhedron remains valid"),
+        ),
+        ("egg", Mesh::<()>::egg(r(3.0), r(5.0), 12, 16, ())),
+        ("teardrop", Mesh::<()>::teardrop(r(3.0), r(5.0), 12, 16, ())),
+        (
+            "teardrop_cylinder",
+            Mesh::<()>::teardrop_cylinder(r(3.0), r(5.0), r(2.0), 16, ()),
+        ),
         (
             "ellipsoid",
             Mesh::<()>::ellipsoid(r(2.0), r(3.0), r(4.0), 12, 6, ()),
@@ -647,6 +679,40 @@ fn test_csg_subdivide_triangles() {
     // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
     let subdiv = cube.subdivide_triangles(1.try_into().expect("not 0"));
     assert_eq!(subdiv.polygons.len(), 6 * 8);
+}
+
+#[test]
+fn test_sphere_subdivision_lazy_vertices_match_expanded_geometry() {
+    let sphere: Mesh<()> = Mesh::sphere(Real::from(3_u8), 8, 4, ());
+    let level = 1.try_into().expect("not 0");
+    let expected = sphere
+        .polygons
+        .iter()
+        .flat_map(|polygon| polygon.subdivide_triangles(level))
+        .collect::<Vec<_>>();
+    let subdivided = sphere.subdivide_triangles(level);
+
+    assert_eq!(subdivided.polygons.len(), expected.len());
+    for (actual, expected) in subdivided.polygons.iter().zip(expected) {
+        assert_eq!(actual.vertices(), expected.as_slice());
+    }
+}
+
+#[test]
+fn test_lazy_ellipsoid_vertices_match_scaled_unit_sphere() {
+    let radii = [Real::from(5_u8), Real::from(3_u8), Real::from(2_u8)];
+    let expected = Mesh::sphere(Real::one(), 8, 4, ()).scale(
+        radii[0].clone(),
+        radii[1].clone(),
+        radii[2].clone(),
+    );
+    let ellipsoid =
+        Mesh::ellipsoid(radii[0].clone(), radii[1].clone(), radii[2].clone(), 8, 4, ());
+
+    assert_eq!(ellipsoid.polygons.len(), expected.polygons.len());
+    for (actual, expected) in ellipsoid.polygons.iter().zip(&expected.polygons) {
+        assert_eq!(actual.vertices(), expected.vertices());
+    }
 }
 
 #[test]

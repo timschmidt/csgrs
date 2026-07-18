@@ -4,17 +4,28 @@ use hashbrown::HashMap;
 use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::RealSign;
 use std::cell::RefCell;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT_POSITION_ID: AtomicU64 = AtomicU64::new(1);
 const FINITE_POSITION_CACHE_CAPACITY: usize = 262_144;
+type FinitePositionRangeCache = (usize, Vec<(u64, Arc<Vec<[f64; 3]>>)>);
 
 thread_local! {
     static FINITE_POSITIONS: RefCell<HashMap<u64, [f64; 3]>> = RefCell::new(HashMap::new());
+    static FINITE_POSITION_RANGES: RefCell<FinitePositionRangeCache> =
+        const { RefCell::new((0, Vec::new())) };
 }
 
 pub(crate) fn fresh_position_id() -> u64 {
-    NEXT_POSITION_ID.fetch_add(1, Ordering::Relaxed)
+    reserve_position_ids(1)
+}
+
+pub(crate) fn reserve_position_ids(count: usize) -> u64 {
+    NEXT_POSITION_ID.fetch_add(
+        u64::try_from(count).expect("position identity reservation fits u64"),
+        Ordering::Relaxed,
+    )
 }
 
 pub(crate) fn cache_position_f64(position_id: u64, position: Option<[f64; 3]>) {
@@ -26,6 +37,58 @@ pub(crate) fn cache_position_f64(position_id: u64, position: Option<[f64; 3]>) {
             positions.clear();
         }
         positions.insert(position_id, position);
+    });
+}
+
+pub(crate) fn cache_position_f64_range<I>(
+    first_position_id: u64,
+    position_count: usize,
+    finite_positions: I,
+) where
+    I: IntoIterator<Item = Option<[f64; 3]>>,
+{
+    FINITE_POSITIONS.with_borrow_mut(|positions| {
+        if positions.len().saturating_add(position_count) >= FINITE_POSITION_CACHE_CAPACITY {
+            positions.clear();
+        }
+        positions.reserve(position_count);
+        for (offset, position) in finite_positions.into_iter().enumerate() {
+            if let Some(position) = position {
+                positions.insert(
+                    first_position_id
+                        + u64::try_from(offset).expect("position cache offset fits u64"),
+                    position,
+                );
+            }
+        }
+    });
+}
+
+pub(crate) fn cache_shared_position_f64_range(
+    first_position_id: u64,
+    finite_positions: Arc<Vec<[f64; 3]>>,
+) {
+    if finite_positions.is_empty() {
+        return;
+    }
+    FINITE_POSITION_RANGES.with_borrow_mut(|(position_count, ranges)| {
+        if position_count.saturating_add(finite_positions.len())
+            >= FINITE_POSITION_CACHE_CAPACITY
+        {
+            *position_count = 0;
+            ranges.clear();
+        }
+        *position_count += finite_positions.len();
+        ranges.push((first_position_id, finite_positions));
+    });
+}
+
+pub(crate) fn reserve_position_f64_cache(additional: usize) {
+    FINITE_POSITIONS.with_borrow_mut(|positions| {
+        if positions.len().saturating_add(additional) >= FINITE_POSITION_CACHE_CAPACITY {
+            positions.clear();
+        }
+        positions.reserve(additional);
     });
 }
 
@@ -70,6 +133,31 @@ impl Vertex {
         }
     }
 
+    pub(crate) fn new_with_reserved_identity(
+        position: Point3,
+        normal: Vector3,
+        first_identity: u64,
+        slot: usize,
+    ) -> Self {
+        let offset = u64::try_from(
+            slot.checked_mul(4)
+                .expect("vertex identity slot multiplication does not overflow"),
+        )
+        .expect("vertex identity offset fits u64");
+        Self {
+            position,
+            normal,
+            position_id: first_identity + offset,
+            coordinate_ids: [
+                first_identity + offset + 1,
+                first_identity + offset + 2,
+                first_identity + offset + 3,
+            ],
+            ruled_line: None,
+            hull_candidate: true,
+        }
+    }
+
     pub(crate) fn refresh_position_identity(&mut self) {
         self.position_id = fresh_position_id();
         self.coordinate_ids = [
@@ -93,6 +181,17 @@ impl Vertex {
     pub fn position_f64_lossy(&self) -> Option<[f64; 3]> {
         FINITE_POSITIONS
             .with_borrow(|positions| positions.get(&self.position_id).copied())
+            .or_else(|| {
+                FINITE_POSITION_RANGES.with_borrow(|(_, ranges)| {
+                    ranges
+                        .iter()
+                        .rev()
+                        .find_map(|(first_position_id, positions)| {
+                            let offset = self.position_id.checked_sub(*first_position_id)?;
+                            positions.get(usize::try_from(offset).ok()?).copied()
+                        })
+                })
+            })
             .or_else(|| {
                 Some([
                     self.position.x.to_f64_lossy()?,

@@ -137,12 +137,6 @@ impl PartialEq for Plane {
 }
 
 impl Plane {
-    pub(crate) fn translate_in_place(&mut self, vector: &Vector3) {
-        self.point_a = self.point_a.clone() + vector.clone();
-        self.point_b = self.point_b.clone() + vector.clone();
-        self.point_c = self.point_c.clone() + vector.clone();
-    }
-
     pub(crate) fn transform_affine_in_place(&mut self, matrix: &Matrix4) -> bool {
         let Ok(point_a) = matrix.transform_point3(&self.point_a) else {
             return false;

@@ -56,6 +56,12 @@ fuzz_target!(|bytes: &[u8]| {
     let segments = (bytes[idx % bytes.len()] as usize % 32) + 1;
     idx += 1;
     let teeth = (bytes[idx % bytes.len()] as usize % 24) + 1;
+    let reuleaux_sides = ((bytes[(idx + 1) % bytes.len()] as usize % 7) * 2) + 3;
+    let reuleaux_segments = if bytes[idx % bytes.len()] & 1 == 0 {
+        reuleaux_sides * 4
+    } else {
+        segments.max(6)
+    };
     let positive_a = at_least_tolerance(a.abs());
     let positive_b = at_least_tolerance(b.abs());
 
@@ -72,7 +78,7 @@ fuzz_target!(|bytes: &[u8]| {
         9 => Profile::rounded_rectangle(a, b, c, segments ),
         10 => Profile::squircle(a, b, segments ),
         11 => Profile::keyhole(a, b, c, segments ),
-        12 => Profile::reuleaux(segments, a, segments ),
+        12 => Profile::reuleaux(reuleaux_sides, a, reuleaux_segments),
         13 => Profile::ring(a, b, segments ),
         14 => Profile::pie_slice(a, b, c, segments ),
         15 => Profile::heart(a, b, segments ),

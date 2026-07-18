@@ -421,6 +421,15 @@ mod tests {
     use std::io::Cursor;
 
     #[test]
+    fn public_writer_matches_string_serializer() {
+        let mesh = Mesh::<()>::cube(Real::one(), ());
+        let expected = to_obj(&mesh, "cube").unwrap();
+        let mut written = Vec::new();
+        crate::io::obj::write_obj(&mesh, &mut written, "cube").unwrap();
+        assert_eq!(written, expected.as_bytes());
+    }
+
+    #[test]
     fn from_obj_accepts_relative_negative_face_indices() {
         let obj = "\
 v 0 0 0

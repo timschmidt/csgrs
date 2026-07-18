@@ -221,4 +221,23 @@ mod tests {
             Err(IoError::Geometry { format: "AMF", .. })
         ));
     }
+
+    #[test]
+    fn public_colored_serializer_and_writer_match_checked_output() {
+        let mesh = Mesh::<()>::cube(Real::one(), ());
+        let plain = to_amf(&mesh, "cube", "millimeter").unwrap();
+        let colored = crate::io::amf::to_amf_with_color(
+            &mesh,
+            "cube",
+            "millimeter",
+            (Real::one(), Real::zero(), Real::zero()),
+        )
+        .unwrap();
+        assert!(colored.contains("<material id=\"1\">"));
+        assert!(colored.contains("<volume materialid=\"1\">"));
+
+        let mut written = Vec::new();
+        crate::io::amf::write_amf(&mesh, &mut written, "cube", "millimeter").unwrap();
+        assert_eq!(written, plain.as_bytes());
+    }
 }

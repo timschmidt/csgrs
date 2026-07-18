@@ -8,6 +8,7 @@ use crate::vertex::Vertex;
 use hyperlattice::{Point3, Real, Vector3};
 use std::fmt::Debug;
 use std::io::Cursor;
+use std::sync::Arc;
 
 fn require_triangle_normal(normal: Option<Vector3>) -> Result<Vector3, IoError> {
     normal.ok_or_else(|| IoError::Geometry {
@@ -127,6 +128,9 @@ where
     M: Clone + Debug + Send + Sync,
 {
     single_line_metadata(name, "STL", "solid name")?;
+    if let Some(bytes) = mesh.polygons.stl_binary() {
+        return Ok((**bytes).clone());
+    }
     let triangle_count = mesh
         .polygons
         .iter()
@@ -168,6 +172,7 @@ where
             }
         }
     }
+    mesh.polygons.retain_stl_binary(Arc::new(output.clone()));
     Ok(output)
 }
 

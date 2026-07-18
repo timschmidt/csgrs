@@ -6,6 +6,7 @@ use hashbrown::HashMap;
 use hyperlattice::Point3;
 use std::cell::RefCell;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
 ///
@@ -32,8 +33,7 @@ pub struct VertexIndexMap {
 #[derive(Clone, Debug)]
 struct CachedConnectivity {
     geometry_identity: Vec<u64>,
-    vertex_map: VertexIndexMap,
-    adjacency: HashMap<usize, Vec<usize>>,
+    connectivity: Connectivity,
 }
 
 thread_local! {
@@ -41,6 +41,32 @@ thread_local! {
 }
 
 const CONNECTIVITY_FACT_CAPACITY: usize = 8;
+
+/// Shared exact mesh connectivity.
+#[derive(Clone, Debug)]
+pub struct Connectivity {
+    vertex_map: Arc<VertexIndexMap>,
+    adjacency: Arc<HashMap<usize, Vec<usize>>>,
+}
+
+impl Connectivity {
+    fn new(vertex_map: VertexIndexMap, adjacency: HashMap<usize, Vec<usize>>) -> Self {
+        Self {
+            vertex_map: Arc::new(vertex_map),
+            adjacency: Arc::new(adjacency),
+        }
+    }
+
+    /// Exact canonical vertex map.
+    pub fn vertices(&self) -> &VertexIndexMap {
+        &self.vertex_map
+    }
+
+    /// Exact undirected vertex adjacency.
+    pub fn adjacency(&self) -> &HashMap<usize, Vec<usize>> {
+        &self.adjacency
+    }
+}
 
 impl VertexIndexMap {
     /// Create a new exact vertex index map.
@@ -142,19 +168,47 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///
     /// Returns (vertex_map, adjacency_graph) for robust mesh processing.
     pub fn build_connectivity(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
+        let connectivity = self.connectivity();
+        (
+            connectivity.vertices().clone(),
+            connectivity.adjacency().clone(),
+        )
+    }
+
+    /// Return shared exact connectivity, retaining it with this mesh geometry.
+    pub fn connectivity(&self) -> Connectivity {
+        if let Some(connectivity) = self.polygons.connectivity() {
+            return connectivity.clone();
+        }
         if let Some(cached) = CONNECTIVITY_FACTS.with_borrow(|facts| {
             facts
                 .iter()
                 .rev()
                 .find(|fact| self.geometry_identity_matches(&fact.geometry_identity))
-                .cloned()
+                .map(|fact| fact.connectivity.clone())
         }) {
-            return (cached.vertex_map, cached.adjacency);
+            self.polygons.retain_connectivity(cached.clone());
+            return cached;
         }
 
         let (vertex_map, adjacency) = self.build_connectivity_uncached();
-        self.retain_connectivity(vertex_map.clone(), adjacency.clone());
-        (vertex_map, adjacency)
+        let connectivity = Connectivity::new(vertex_map, adjacency);
+        self.retain_connectivity(connectivity.clone());
+        connectivity
+    }
+
+    /// Return retained exact connectivity cardinalities.
+    pub fn connectivity_counts(&self) -> (usize, usize) {
+        if let Some(counts) = self.polygons.connectivity_counts() {
+            return counts;
+        }
+        let connectivity = self.connectivity();
+        let counts = (
+            connectivity.vertices().vertex_count(),
+            connectivity.adjacency().len(),
+        );
+        self.polygons.retain_connectivity_counts(counts);
+        counts
     }
 
     fn build_connectivity_uncached(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
@@ -187,16 +241,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         (vertex_map, adjacency)
     }
 
-    pub(super) fn cache_connectivity(&self) {
-        let (vertex_map, adjacency) = self.build_connectivity_uncached();
-        self.retain_connectivity(vertex_map, adjacency);
-    }
-
-    fn retain_connectivity(
-        &self,
-        vertex_map: VertexIndexMap,
-        adjacency: HashMap<usize, Vec<usize>>,
-    ) {
+    fn retain_connectivity(&self, connectivity: Connectivity) {
+        self.polygons.retain_connectivity(connectivity.clone());
         let geometry_identity = self.geometry_identity();
         CONNECTIVITY_FACTS.with_borrow_mut(|facts| {
             if let Some(index) = facts
@@ -210,10 +256,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
             facts.push(CachedConnectivity {
                 geometry_identity,
-                vertex_map,
-                adjacency,
+                connectivity,
             });
         });
+    }
+
+    pub(super) fn retain_connectivity_counts(&self, counts: (usize, usize)) {
+        self.polygons.retain_connectivity_counts(counts);
     }
 }
 

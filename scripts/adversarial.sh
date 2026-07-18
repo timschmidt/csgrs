@@ -34,8 +34,6 @@ for features in "${feature_sets[@]}"; do
   run cargo check --no-default-features --features "$features"
 done
 
-expect_fail cargo check --no-default-features --features "geo"
-
 if [[ "${RUN_FUZZ_SECONDS:-0}" != "0" ]]; then
   run cargo check --manifest-path fuzz/Cargo.toml --locked
   cargo_fuzz=(cargo fuzz)

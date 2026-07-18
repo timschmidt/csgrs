@@ -139,9 +139,32 @@ fn run() {
     });
 
     config.run("feature", "mesh_primitives", "catalog", 4, || {
+        let polyhedron_points = [
+            [Real::from(0), Real::from(0), Real::from(0)],
+            [Real::from(2), Real::from(0), Real::from(0)],
+            [Real::from(0), Real::from(2), Real::from(0)],
+            [Real::from(0), Real::from(0), Real::from(2)],
+        ];
+        let polyhedron_faces: [&[usize]; 4] = [&[0, 2, 1], &[0, 1, 3], &[0, 3, 2], &[1, 2, 3]];
         let meshes = [
             Mesh::cuboid(Real::from(2_u8), Real::from(3_u8), Real::from(5_u8), ()),
+            Mesh::cube(Real::from(4_u8), ()),
+            Mesh::sphere(Real::from(4_u8), 16, 8, ()),
             Mesh::cylinder(Real::from(3_u8), Real::from(8_u8), 32, ()),
+            Mesh::frustum(Real::from(3_u8), Real::from(2_u8), Real::from(8_u8), 16, ()),
+            Mesh::frustum_ptp(
+                Point3::origin(),
+                Point3::new(Real::from(2), Real::from(3), Real::from(8)),
+                Real::from(3_u8),
+                Real::from(2_u8),
+                16,
+                (),
+            ),
+            Mesh::polyhedron(&polyhedron_points, &polyhedron_faces, ())
+                .expect("benchmark tetrahedron remains valid"),
+            Mesh::egg(Real::from(4), Real::from(6), 12, 16, ()),
+            Mesh::teardrop(Real::from(4), Real::from(6), 12, 16, ()),
+            Mesh::teardrop_cylinder(Real::from(4), Real::from(6), Real::from(3), 16, ()),
             Mesh::torus(Real::from(8_u8), Real::from(2_u8), 32, 12, ()),
             Mesh::ellipsoid(
                 Real::from(3_u8),
@@ -151,14 +174,79 @@ fn run() {
                 12,
                 (),
             ),
+            Mesh::arrow(
+                Point3::origin(),
+                Vector3::from_xyz(Real::from(2), Real::from(3), Real::from(4)),
+                12,
+                false,
+                (),
+            ),
+            Mesh::octahedron(Real::from(4_u8), ()),
             Mesh::icosahedron(Real::from(4_u8), ()),
+            Mesh::spur_gear_involute(
+                Real::from(2),
+                12,
+                Real::from(20),
+                Real::zero(),
+                Real::zero(),
+                4,
+                Real::from(2),
+                (),
+            ),
+            Mesh::spur_gear_cycloid(
+                Real::from(2),
+                12,
+                Real::from(1),
+                Real::zero(),
+                4,
+                Real::from(2),
+                (),
+            ),
+            Mesh::helical_involute_gear(
+                Real::from(2),
+                12,
+                Real::from(20),
+                Real::zero(),
+                Real::zero(),
+                4,
+                Real::from(6),
+                Real::from(20),
+                4,
+                (),
+            ),
         ];
         let polygons = meshes.iter().map(|mesh| mesh.polygons.len()).sum::<usize>();
-        Measurement::new(5, polygons as u64, polygons as u64)
+        Measurement::new(meshes.len() as u64, polygons as u64, polygons as u64)
     });
 
     config.run("feature", "profile_primitives", "catalog", 8, || {
+        let polygon = [
+            [Real::from(0), Real::from(0)],
+            [Real::from(4), Real::from(0)],
+            [Real::from(2), Real::from(3)],
+        ];
+        let polygon_points = [
+            Point2::new(Real::from(0), Real::from(0)),
+            Point2::new(Real::from(4), Real::from(0)),
+            Point2::new(Real::from(2), Real::from(3)),
+        ];
+        let bezier_control = [
+            [Real::from(0), Real::from(0)],
+            [Real::from(1), Real::from(2)],
+            [Real::from(2), Real::from(2)],
+            [Real::from(3), Real::from(0)],
+        ];
         let profiles = [
+            Profile::rectangle(Real::from(12), Real::from(8)),
+            Profile::square(Real::from(8)),
+            Profile::circle(Real::from(4), 24),
+            Profile::right_triangle(Real::from(6), Real::from(4)),
+            Profile::polygon(&polygon),
+            Profile::polygon_points(&polygon_points),
+            Profile::ellipse(Real::from(8), Real::from(4), 24),
+            Profile::regular_ngon(7, Real::from(4)),
+            Profile::arrow(Real::from(6), Real::from(2), Real::from(3), Real::from(4)),
+            Profile::trapezoid(Real::from(4), Real::from(8), Real::from(4), Real::from(2)),
             Profile::rounded_rectangle(
                 Real::from(12_u8),
                 Real::from(8_u8),
@@ -166,6 +254,29 @@ fn run() {
                 8,
             ),
             Profile::star(12, Real::from(8_u8), Real::from(4_u8)),
+            Profile::teardrop(Real::from(6), Real::from(10), 24),
+            Profile::egg(Real::from(6), Real::from(10), 24),
+            Profile::squircle(Real::from(8), Real::from(6), 24),
+            Profile::keyhole(Real::from(4), Real::from(2), Real::from(6), 24),
+            Profile::reuleaux(3, Real::from(6), 24),
+            Profile::ring(Real::from(6), Real::from(2), 24),
+            Profile::pie_slice(Real::from(4), Real::from(10), Real::from(100), 12),
+            Profile::supershape(
+                Real::from(1),
+                Real::from(1),
+                Real::from(5),
+                Real::from(2),
+                Real::from(2),
+                Real::from(2),
+                32,
+            ),
+            Profile::circle_with_keyway(Real::from(6), 24, Real::from(2), Real::from(2)),
+            Profile::circle_with_flat(Real::from(6), 24, Real::from(2)),
+            Profile::circle_with_two_flats(Real::from(6), 24, Real::from(2)),
+            Profile::bezier(&bezier_control, 16),
+            Profile::bspline(&bezier_control, 3, 8),
+            Profile::heart(Real::from(8), Real::from(8), 32),
+            Profile::crescent(Real::from(6), Real::from(4), Real::from(3), 24),
             Profile::involute_gear(
                 Real::from(2_u8),
                 20,
@@ -174,6 +285,15 @@ fn run() {
                 Real::zero(),
                 4,
             ),
+            Profile::cycloidal_gear(Real::from(2), 12, Real::from(1), Real::zero(), 4),
+            Profile::involute_rack(
+                Real::from(2),
+                4,
+                Real::from(20),
+                Real::zero(),
+                Real::zero(),
+            ),
+            Profile::cycloidal_rack(Real::from(2), 4, Real::zero(), 8),
             Profile::airfoil_naca4(
                 Real::from(2_u8),
                 Real::from(4_u8),
@@ -181,12 +301,21 @@ fn run() {
                 Real::from(20_u8),
                 80,
             ),
+            Profile::square(Real::from(8)).hilbert_curve(3, Real::from(1)),
         ];
         let contours = profiles
             .iter()
             .map(|profile| profile.material_contour_count())
             .sum::<usize>();
-        Measurement::new(4, contours as u64, contours as u64)
+        let wires = profiles
+            .iter()
+            .map(|profile| profile.wires().len())
+            .sum::<usize>();
+        Measurement::new(
+            profiles.len() as u64,
+            (contours + wires) as u64,
+            ((contours as u64) << 32) ^ wires as u64,
+        )
     });
 
     let profile_left = Profile::circle(Real::from(10_u8), 64);
@@ -723,6 +852,63 @@ fn run() {
         let gltf = io_mesh.to_gltf("benchmark").expect("glTF export");
         let size = stl.len() + dxf.len() + obj.len() + ply.len() + amf.len() + gltf.len();
         Measurement::new(io_mesh.polygons.len() as u64, size as u64, size as u64)
+    });
+    config.run("feature", "mesh_io", "public_writer_exporters", 1, || {
+        let mut obj = Vec::new();
+        csgrs::io::obj::write_obj(&io_mesh, &mut obj, "benchmark").expect("OBJ writer");
+        let mut ply = Vec::new();
+        csgrs::io::ply::write_ply(&io_mesh, &mut ply, "benchmark").expect("PLY writer");
+        let mut amf = Vec::new();
+        csgrs::io::amf::write_amf(&io_mesh, &mut amf, "benchmark", "millimeter")
+            .expect("AMF writer");
+        let colored_amf = csgrs::io::amf::to_amf_with_color(
+            &io_mesh,
+            "benchmark",
+            "millimeter",
+            (Real::one(), Real::zero(), Real::zero()),
+        )
+        .expect("colored AMF serializer");
+        let mut gltf = Vec::new();
+        csgrs::io::gltf::write_gltf(&io_mesh, &mut gltf, "benchmark").expect("glTF writer");
+        let size = obj.len() + ply.len() + amf.len() + colored_amf.len() + gltf.len();
+        Measurement::new(io_mesh.polygons.len() as u64, size as u64, size as u64)
+    });
+    config.run("feature", "mesh_io", "writer_obj", 1, || {
+        let mut output = Vec::new();
+        csgrs::io::obj::write_obj(&io_mesh, &mut output, "benchmark").expect("OBJ writer");
+        Measurement::new(
+            io_mesh.polygons.len() as u64,
+            output.len() as u64,
+            output.len() as u64,
+        )
+    });
+    config.run("feature", "mesh_io", "writer_ply", 1, || {
+        let mut output = Vec::new();
+        csgrs::io::ply::write_ply(&io_mesh, &mut output, "benchmark").expect("PLY writer");
+        Measurement::new(
+            io_mesh.polygons.len() as u64,
+            output.len() as u64,
+            output.len() as u64,
+        )
+    });
+    config.run("feature", "mesh_io", "writer_amf", 1, || {
+        let mut output = Vec::new();
+        csgrs::io::amf::write_amf(&io_mesh, &mut output, "benchmark", "millimeter")
+            .expect("AMF writer");
+        Measurement::new(
+            io_mesh.polygons.len() as u64,
+            output.len() as u64,
+            output.len() as u64,
+        )
+    });
+    config.run("feature", "mesh_io", "writer_gltf", 1, || {
+        let mut output = Vec::new();
+        csgrs::io::gltf::write_gltf(&io_mesh, &mut output, "benchmark").expect("glTF writer");
+        Measurement::new(
+            io_mesh.polygons.len() as u64,
+            output.len() as u64,
+            output.len() as u64,
+        )
     });
     let stl = io_mesh.to_stl_binary("benchmark").expect("STL fixture");
     let obj = io_mesh.to_obj("benchmark").expect("OBJ fixture");

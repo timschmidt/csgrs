@@ -73,6 +73,11 @@ required-features = [
   "bevymesh",
 ]
 
+[[bench]]
+name = "profile_primitives"
+harness = false
+required-features = ["sketch"]
+
 [profile.release]
 opt-level = 3
 lto = true
@@ -102,7 +107,6 @@ wgpu-types = { version = "27", optional = true, default-features = false }
 
 # utils
 rayon = { version = "1.10", optional = true }
-geo = { version = "0.32", optional = true }
 thiserror = "2.0"
 hashbrown = { version = "0.15" }
 fast-surface-nets = { version = "0.2.1", optional = true }
@@ -152,6 +156,7 @@ hypersolve = { path = "../hypersolve" }
 [features]
 default = ["mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
 dispatch-trace = [
+  "hypercurve/dispatch-trace",
   "hypermesh/dispatch-trace",
   "hyperreal/dispatch-trace",
 ]
@@ -215,10 +220,9 @@ sdf = [
   "fast-surface-nets",
   "hypersdf",
 ]
-offset = [
-  "sketch",
-  "dep:geo",
-]
+# Compatibility feature retained for existing consumers. Offset operations are
+# native Hypercurve APIs and no longer activate an external geometry backend.
+offset = ["sketch"]
 bevymesh = [
   "dep:bevy_mesh",
   "dep:bevy_asset",

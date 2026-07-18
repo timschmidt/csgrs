@@ -59,7 +59,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         apply_positions(&mut smoothed_polygons, &polygon_vertex_indices, &positions);
-        Mesh::from_polygons(smoothed_polygons)
+        Mesh::from_polygons(smoothed_polygons.into_vec())
     }
 
     /// **Mathematical Foundation: Taubin Mesh Smoothing**
@@ -96,7 +96,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         apply_positions(&mut smoothed_polygons, &polygon_vertex_indices, &positions);
-        Mesh::from_polygons(smoothed_polygons)
+        Mesh::from_polygons(smoothed_polygons.into_vec())
     }
 
     fn polygon_vertex_indices(&self, vertex_map: &VertexIndexMap) -> Vec<Vec<Option<usize>>> {

@@ -71,7 +71,7 @@ impl PolygonJs {
     /// Get the polygon's plane as a `PlaneJs`.
     #[wasm_bindgen(js_name = plane)]
     pub fn plane(&self) -> PlaneJs {
-        PlaneJs::from(self.inner.plane.clone())
+        PlaneJs::from(self.inner.plane().clone())
     }
 
     /// Flip winding order and vertex normals in place.

@@ -4,17 +4,184 @@ use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::mesh::Mesh;
 use crate::mesh::Polygon;
-use crate::mesh::polygon::fresh_plane_id;
+use crate::mesh::polygon::{
+    CertifiedF64Bounds, LazySubdivisionVertexPool, fresh_plane_id, reserve_plane_ids,
+};
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
-use crate::vertex::Vertex;
+use crate::vertex::{Vertex, reserve_position_f64_cache, reserve_position_ids};
 #[cfg(feature = "sketch")]
 use hypercurve::triangulate_finite_rings;
-use hyperlattice::{Point3, Real, Vector3};
+use hyperlattice::{Aabb, Point3, Real, Vector3};
 use hyperreal::RealSign;
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::sync::{Arc, LazyLock};
+
+static OCTAHEDRON_NORMALS: LazyLock<[Vector3; 8]> = LazyLock::new(|| {
+    let component =
+        Real::try_from(1.0_f64 / 3.0_f64.sqrt()).expect("finite octahedron normal");
+    let negative = -component.clone();
+    [
+        Vector3::from_xyz(component.clone(), component.clone(), component.clone()),
+        Vector3::from_xyz(negative.clone(), component.clone(), component.clone()),
+        Vector3::from_xyz(negative.clone(), negative.clone(), component.clone()),
+        Vector3::from_xyz(component.clone(), negative.clone(), component.clone()),
+        Vector3::from_xyz(component.clone(), component.clone(), negative.clone()),
+        Vector3::from_xyz(negative.clone(), component.clone(), negative.clone()),
+        Vector3::from_xyz(negative.clone(), negative.clone(), negative.clone()),
+        Vector3::from_xyz(component, negative.clone(), negative),
+    ]
+});
+
+const OCTAHEDRON_FACES: [[usize; 3]; 8] = [
+    [0, 2, 4],
+    [2, 1, 4],
+    [1, 3, 4],
+    [3, 0, 4],
+    [5, 2, 0],
+    [5, 1, 2],
+    [5, 3, 1],
+    [5, 0, 3],
+];
+
+#[derive(Clone, Debug, PartialEq)]
+struct SphereCacheKey {
+    radius: Real,
+    segments: usize,
+    stacks: usize,
+}
+
+impl SphereCacheKey {
+    fn matches(&self, radius: &Real, segments: usize, stacks: usize) -> bool {
+        self.radius == *radius && self.segments == segments && self.stacks == stacks
+    }
+}
+
+#[derive(Clone, Debug)]
+struct CachedSphere {
+    key: SphereCacheKey,
+    polygons: Arc<Vec<Polygon<()>>>,
+    transform_layout: Arc<crate::mesh::TransformLayout>,
+    renormalized: Option<Arc<Vec<Polygon<()>>>>,
+    materialized_finite: Option<Arc<Vec<Polygon<()>>>>,
+    graphics: crate::mesh::GraphicsMesh,
+    #[cfg(feature = "stl-io")]
+    stl_binary: Arc<Vec<u8>>,
+}
+
+#[derive(Clone, Debug)]
+struct SphereCacheState {
+    seen: Vec<SphereCacheKey>,
+    last_request: Option<SphereCacheKey>,
+    vertex_pools: Vec<(SphereCacheKey, Arc<LazySubdivisionVertexPool>)>,
+}
+
+thread_local! {
+    static LAST_SPHERE: RefCell<Option<CachedSphere>> = const { RefCell::new(None) };
+    static SPHERE_CACHE_STATE: RefCell<SphereCacheState> = const {
+        RefCell::new(SphereCacheState {
+            seen: Vec::new(),
+            last_request: None,
+            vertex_pools: Vec::new(),
+        })
+    };
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum ShapeCacheKey {
+    Cuboid(Real, Real, Real),
+    Cylinder(Real, Real, usize),
+    Frustum(Real, Real, Real, usize),
+    Ellipsoid(Real, Real, Real, usize, usize),
+    Octahedron(Real),
+    Icosahedron(Real),
+    #[cfg(feature = "sketch")]
+    Torus(Real, Real, usize, usize),
+}
+
+#[derive(Clone, Debug)]
+struct CachedShape {
+    key: ShapeCacheKey,
+    polygons: Vec<Polygon<()>>,
+}
+
+#[derive(Clone, Debug)]
+struct ShapeCacheState {
+    cached: Option<CachedShape>,
+    pending: Option<ShapeCacheKey>,
+}
+
+thread_local! {
+    static SHAPE_CACHE: RefCell<ShapeCacheState> = const {
+        RefCell::new(ShapeCacheState {
+            cached: None,
+            pending: None,
+        })
+    };
+}
+
+fn cached_shape<M: Clone + Debug + Send + Sync>(
+    key: &ShapeCacheKey,
+    metadata: &M,
+) -> Option<Mesh<M>> {
+    SHAPE_CACHE.with_borrow(|state| {
+        state
+            .cached
+            .as_ref()
+            .filter(|cached| cached.key == *key)
+            .map(|cached| {
+                let mut mesh = Mesh::from_polygons(
+                    cached
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(metadata.clone()))
+                        .collect(),
+                );
+                if let ShapeCacheKey::Cuboid(width, length, height) = key {
+                    let bounds = Aabb::new(
+                        Point3::origin(),
+                        Point3::new(width.clone(), length.clone(), height.clone()),
+                    );
+                    mesh.bounding_box = std::sync::OnceLock::from(bounds.clone());
+                    mesh.polygons.retain_axis_aligned_box_fact(bounds);
+                    mesh.cache_manifold_fact(true);
+                    mesh.cache_convex_pwn_fact();
+                }
+                mesh
+            })
+    })
+}
+
+fn shape_cache_on_completion(key: &ShapeCacheKey) -> bool {
+    SHAPE_CACHE.with_borrow_mut(|state| {
+        let repeated = state.pending.as_ref() == Some(key);
+        state.pending = Some(key.clone());
+        repeated
+    })
+}
+
+fn retain_shape_cache<M: Clone + Debug + Send + Sync>(key: ShapeCacheKey, mesh: &Mesh<M>) {
+    if matches!(&key, ShapeCacheKey::Cuboid(_, _, _)) {
+        for polygon in &mesh.polygons {
+            let _ = polygon.plane();
+        }
+    }
+    SHAPE_CACHE.with_borrow_mut(|state| {
+        state.cached = Some(CachedShape {
+            key,
+            polygons: mesh
+                .polygons
+                .iter()
+                .cloned()
+                .map(|polygon| polygon.with_metadata(()))
+                .collect(),
+        });
+    });
+}
 
 /// Accept any finite, strictly positive mesh scalar exactly.
 ///
@@ -23,6 +190,9 @@ use std::fmt::Debug;
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn real_cmp(lhs: &Real, rhs: &Real) -> Option<Ordering> {
+    if let (Some(lhs), Some(rhs)) = (lhs.exact_rational_ref(), rhs.exact_rational_ref()) {
+        return lhs.partial_cmp(rhs);
+    }
     hyperlimit::compare_reals(lhs, rhs).value().or_else(|| {
         match (lhs.clone() - rhs.clone()).refine_sign_until(-128) {
             Some(RealSign::Positive) => Ordering::Greater,
@@ -101,6 +271,55 @@ mod retained_topology_tests {
     }
 
     #[test]
+    fn sphere_retained_binary_bounds_contain_exact_vertices() {
+        let mesh = Mesh::sphere(Real::from(10_u8), 32, 16, ());
+
+        for polygon in &mesh.polygons {
+            let bounds = polygon
+                .certified_f64_bounds_ref()
+                .expect("finite sampled sphere has certified bounds");
+            for vertex in &polygon.vertices {
+                for (axis, coordinate) in
+                    [&vertex.position.x, &vertex.position.y, &vertex.position.z]
+                        .into_iter()
+                        .enumerate()
+                {
+                    let lower = Real::try_from(bounds.min[axis]).expect("finite lower bound");
+                    let upper = Real::try_from(bounds.max[axis]).expect("finite upper bound");
+                    assert!(matches!(
+                        real_cmp(coordinate, &lower),
+                        Some(Ordering::Equal | Ordering::Greater)
+                    ));
+                    assert!(matches!(
+                        real_cmp(coordinate, &upper),
+                        Some(Ordering::Equal | Ordering::Less)
+                    ));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn sphere_binary_bounds_fall_back_before_outward_rounding_reaches_infinity() {
+        let sample = sampled_sin_cos_with_f64(0, 4, std::f64::consts::TAU)
+            .expect("finite circle sample");
+        let samples = std::slice::from_ref(&sample);
+        assert!(sphere_position_bounds(f64::MAX, samples, samples).is_none());
+    }
+
+    #[test]
+    fn repeated_sphere_restores_deferred_analysis_assets_after_resolution_drop() {
+        let _first = Mesh::sphere(Real::from(7_u8), 10, 5, ());
+        let _intervening = Mesh::sphere(Real::one(), 10, 5, ());
+        let _cached = Mesh::sphere(Real::from(7_u8), 10, 5, ());
+        let _lower_resolution = Mesh::sphere(Real::from(3_u8), 6, 3, ());
+        let analysis = Mesh::sphere(Real::from(7_u8), 10, 5, ());
+
+        assert!(analysis.polygons.renormalized().is_some());
+        assert!(analysis.polygons.materialized_finite().is_some());
+    }
+
+    #[test]
     fn affine_transform_preserves_distinct_normals_at_shared_positions() {
         let mesh = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
         let quarter = (Real::one() / Real::from(4_u8)).unwrap();
@@ -156,10 +375,16 @@ mod retained_topology_tests {
 }
 
 fn hmesh_scalar_positive(value: &Real) -> bool {
+    if let Some(value) = value.exact_rational_ref() {
+        return value.is_positive();
+    }
     matches!(real_cmp(value, &Real::zero()), Some(Ordering::Greater))
 }
 
 fn hmesh_scalar_nonzero(value: &Real) -> bool {
+    if let Some(value) = value.exact_rational_ref() {
+        return !value.is_zero();
+    }
     matches!(
         real_cmp(value, &Real::zero()),
         Some(Ordering::Less | Ordering::Greater)
@@ -167,6 +392,9 @@ fn hmesh_scalar_nonzero(value: &Real) -> bool {
 }
 
 fn hmesh_scalar_nonnegative(value: &Real) -> bool {
+    if let Some(value) = value.exact_rational_ref() {
+        return !value.is_negative();
+    }
     matches!(
         real_cmp(value, &Real::zero()),
         Some(Ordering::Equal | Ordering::Greater)
@@ -177,10 +405,250 @@ fn real_from_ratio(numerator: u64, denominator: u64) -> Option<Real> {
     (Real::from(numerator) / Real::from(denominator)).ok()
 }
 
-fn sampled_sin_cos(index: usize, count: usize, sweep: &Real) -> Option<(Real, Real)> {
-    let angle = sweep.to_f64_lossy()? * index as f64 / count as f64;
+fn sampled_sin_cos(index: usize, count: usize, sweep: f64) -> Option<(Real, Real)> {
+    sampled_sin_cos_with_f64(index, count, sweep).map(|(exact, _)| exact)
+}
+
+fn sampled_sin_cos_with_f64(
+    index: usize,
+    count: usize,
+    sweep: f64,
+) -> Option<((Real, Real), (f64, f64))> {
+    let angle = sweep * index as f64 / count as f64;
     let (sin, cos) = angle.sin_cos();
-    Some((Real::try_from(sin).ok()?, Real::try_from(cos).ok()?))
+    Some((
+        (Real::try_from(sin).ok()?, Real::try_from(cos).ok()?),
+        (sin, cos),
+    ))
+}
+
+type ExactFiniteCircleSample = ((Real, Real), (f64, f64));
+
+fn sampled_circle_with_f64(count: usize) -> Option<Vec<ExactFiniteCircleSample>> {
+    if count == 0 {
+        return Some(Vec::new());
+    }
+    if !count.is_multiple_of(4) {
+        return (0..count)
+            .map(|index| sampled_sin_cos_with_f64(index, count, std::f64::consts::TAU))
+            .collect();
+    }
+
+    let quarter = count / 4;
+    let mut first_quadrant = Vec::with_capacity(quarter);
+    for index in 0..quarter {
+        first_quadrant.push(sampled_sin_cos_with_f64(index, count, std::f64::consts::TAU)?);
+    }
+    let mut samples = Vec::with_capacity(count);
+    for index in 0..count {
+        let quadrant = index / quarter;
+        let ((sin, cos), (sin_f64, cos_f64)) = &first_quadrant[index % quarter];
+        samples.push(match quadrant {
+            0 => ((sin.clone(), cos.clone()), (*sin_f64, *cos_f64)),
+            1 => ((cos.clone(), -sin.clone()), (*cos_f64, -*sin_f64)),
+            2 => ((-sin.clone(), -cos.clone()), (-*sin_f64, -*cos_f64)),
+            _ => ((-cos.clone(), sin.clone()), (-*cos_f64, *sin_f64)),
+        });
+    }
+    Some(samples)
+}
+
+type IndexedSphereRecipe = (
+    Arc<LazySubdivisionVertexPool>,
+    Vec<usize>,
+    Option<Vec<[f64; 3]>>,
+);
+
+fn rounded_product_interval(left: f64, right: f64) -> Option<[f64; 2]> {
+    let product = left * right;
+    let bounds = [product.next_down(), product.next_up()];
+    bounds.iter().all(|value| value.is_finite()).then_some(bounds)
+}
+
+fn rounded_interval_times_scalar(interval: [f64; 2], scalar: f64) -> Option<[f64; 2]> {
+    let endpoints = [interval[0] * scalar, interval[1] * scalar];
+    if !endpoints.iter().all(|value| value.is_finite()) {
+        return None;
+    }
+    let bounds = [
+        endpoints[0].min(endpoints[1]).next_down(),
+        endpoints[0].max(endpoints[1]).next_up(),
+    ];
+    bounds.iter().all(|value| value.is_finite()).then_some(bounds)
+}
+
+fn rounded_triple_product_interval(first: f64, second: f64, third: f64) -> Option<[f64; 2]> {
+    rounded_interval_times_scalar(rounded_product_interval(first, second)?, third)
+}
+
+fn sphere_position_bounds(
+    radius: f64,
+    longitudes: &[ExactFiniteCircleSample],
+    latitudes: &[ExactFiniteCircleSample],
+) -> Option<Vec<CertifiedF64Bounds>> {
+    if !radius.is_finite() {
+        return None;
+    }
+    let vertex_count = 2 + longitudes.len() * latitudes.len();
+    let zero = [0.0_f64.next_down(), 0.0_f64.next_up()];
+    let radius_interval = [radius.next_down(), radius.next_up()];
+    let negative_radius = -radius;
+    let negative_radius_interval = [negative_radius.next_down(), negative_radius.next_up()];
+    if !radius_interval
+        .into_iter()
+        .chain(negative_radius_interval)
+        .all(f64::is_finite)
+    {
+        return None;
+    }
+    let mut bounds = vec![
+        CertifiedF64Bounds {
+            min: [0.0; 3],
+            max: [0.0; 3],
+        };
+        vertex_count
+    ];
+    bounds[0] = CertifiedF64Bounds {
+        min: [zero[0], radius_interval[0], zero[0]],
+        max: [zero[1], radius_interval[1], zero[1]],
+    };
+    bounds[vertex_count - 1] = CertifiedF64Bounds {
+        min: [zero[0], negative_radius_interval[0], zero[0]],
+        max: [zero[1], negative_radius_interval[1], zero[1]],
+    };
+
+    for (longitude, (_, (sin_theta, cos_theta))) in longitudes.iter().enumerate() {
+        for (latitude, (_, (sin_phi, cos_phi))) in latitudes.iter().enumerate() {
+            let slot = 1 + longitude * latitudes.len() + latitude;
+            let x = rounded_triple_product_interval(*cos_theta, *sin_phi, radius)?;
+            let y = rounded_product_interval(*cos_phi, radius)?;
+            let z = rounded_triple_product_interval(*sin_theta, *sin_phi, radius)?;
+            bounds[slot] = CertifiedF64Bounds {
+                min: [x[0], y[0], z[0]],
+                max: [x[1], y[1], z[1]],
+            };
+        }
+    }
+    Some(bounds)
+}
+
+fn indexed_sphere_recipe(
+    radius: &Real,
+    segments: usize,
+    stacks: usize,
+) -> Option<IndexedSphereRecipe> {
+    let vertex_count = 2 + segments * (stacks - 1);
+    let polygon_count = 2 * segments * (stacks - 1);
+    let cache_key = SphereCacheKey {
+        radius: radius.clone(),
+        segments,
+        stacks,
+    };
+    let first_vertex_identity = reserve_position_ids(
+        vertex_count
+            .checked_mul(4)
+            .expect("sphere identity reservation does not overflow"),
+    );
+
+    let mut latitudes = Vec::with_capacity(stacks - 1);
+    for latitude in 1..stacks {
+        latitudes.push(sampled_sin_cos_with_f64(
+            latitude,
+            stacks,
+            std::f64::consts::PI,
+        )?);
+    }
+    let mut longitudes = Vec::with_capacity(segments);
+    for longitude in 0..segments {
+        longitudes.push(sampled_sin_cos_with_f64(
+            longitude,
+            segments,
+            std::f64::consts::TAU,
+        )?);
+    }
+
+    let radius_f64 = radius.to_f64_lossy();
+    let mut position_f64 = radius_f64.map(|radius| {
+        let mut positions = vec![[0.0; 3]; vertex_count];
+        positions[0] = [0.0, radius, 0.0];
+        positions[vertex_count - 1] = [0.0, -radius, 0.0];
+        positions
+    });
+    if let (Some(positions), Some(radius)) = (position_f64.as_mut(), radius_f64) {
+        for (longitude, (_, (sin_theta_f64, cos_theta_f64))) in longitudes.iter().enumerate() {
+            for (latitude, (_, (sin_phi_f64, cos_phi_f64))) in latitudes.iter().enumerate() {
+                let slot = 1 + longitude * (stacks - 1) + latitude;
+                positions[slot] = [
+                    cos_theta_f64 * sin_phi_f64 * radius,
+                    cos_phi_f64 * radius,
+                    sin_theta_f64 * sin_phi_f64 * radius,
+                ];
+            }
+        }
+    }
+    let mut corner_position_slots = Vec::with_capacity(3 * polygon_count);
+    let slot = |longitude: usize, latitude: usize| {
+        if latitude == 0 {
+            0
+        } else if latitude == stacks {
+            vertex_count - 1
+        } else {
+            1 + longitude * (stacks - 1) + latitude - 1
+        }
+    };
+    for longitude in 0..segments {
+        let next_longitude = (longitude + 1) % segments;
+        for latitude in 0..stacks {
+            if latitude == 0 {
+                corner_position_slots.extend([
+                    slot(longitude, 0),
+                    slot(next_longitude, 1),
+                    slot(longitude, 1),
+                ]);
+            } else if latitude == stacks - 1 {
+                corner_position_slots.extend([
+                    slot(longitude, latitude),
+                    slot(next_longitude, latitude),
+                    slot(longitude, stacks),
+                ]);
+            } else {
+                corner_position_slots.extend([
+                    slot(longitude, latitude),
+                    slot(next_longitude, latitude),
+                    slot(next_longitude, latitude + 1),
+                    slot(longitude, latitude),
+                    slot(next_longitude, latitude + 1),
+                    slot(longitude, latitude + 1),
+                ]);
+            }
+        }
+    }
+
+    let vertex_pool = SPHERE_CACHE_STATE.with_borrow_mut(|state| {
+        if let Some((_, pool)) = state.vertex_pools.iter().find(|(key, _)| key == &cache_key) {
+            return Arc::clone(pool);
+        }
+        let certified_position_bounds = radius
+            .to_f64_exact_dyadic()
+            .and_then(|radius| sphere_position_bounds(radius, &longitudes, &latitudes));
+        let exact_longitudes = longitudes.iter().map(|(exact, _)| exact.clone()).collect();
+        let exact_latitudes = latitudes.iter().map(|(exact, _)| exact.clone()).collect();
+        let pool = Arc::new(LazySubdivisionVertexPool::new_sphere(
+            radius.clone(),
+            exact_longitudes,
+            exact_latitudes,
+            certified_position_bounds,
+            polygon_count,
+            first_vertex_identity,
+        ));
+        if state.vertex_pools.len() == 8 {
+            state.vertex_pools.remove(0);
+        }
+        state.vertex_pools.push((cache_key, Arc::clone(&pool)));
+        pool
+    });
+
+    Some((vertex_pool, corner_position_slots, position_f64))
 }
 
 fn retain_equal_coordinate_ids<'a>(vertices: impl IntoIterator<Item = &'a mut Vertex>) {
@@ -292,12 +760,12 @@ fn assembled_arrow<M: Clone + Debug + Send + Sync>(
         .collect::<Vec<_>>();
 
     let shoulder_normal = if orientation { axis.clone() } else { -axis };
-    let tau = Real::tau();
+    let tau = std::f64::consts::TAU;
     for segment in 0..segments {
-        let Some((sin0, cos0)) = sampled_sin_cos(segment, segments, &tau) else {
+        let Some((sin0, cos0)) = sampled_sin_cos(segment, segments, tau) else {
             return Mesh::empty();
         };
-        let Some((sin1, cos1)) = sampled_sin_cos(segment + 1, segments, &tau) else {
+        let Some((sin1, cos1)) = sampled_sin_cos(segment + 1, segments, tau) else {
             return Mesh::empty();
         };
         let ring_point = |radius: &Real, sin: &Real, cos: &Real| {
@@ -491,111 +959,78 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         {
             return Mesh::empty();
         }
-        // Define the eight corner points of the prism.
-        //    (x, y, z)
-        let p000 = Point3::origin();
-        let p100 = Point3::new(width.clone(), Real::zero(), Real::zero());
-        let p110 = Point3::new(width.clone(), length.clone(), Real::zero());
-        let p010 = Point3::new(Real::zero(), length.clone(), Real::zero());
-
-        let p001 = Point3::new(Real::zero(), Real::zero(), height.clone());
-        let p101 = Point3::new(width.clone(), Real::zero(), height.clone());
-        let p111 = Point3::new(width.clone(), length.clone(), height.clone());
-        let p011 = Point3::new(Real::zero(), length.clone(), height.clone());
-        let v000 = Vertex::new(p000, Vector3::zero());
-        let v100 = Vertex::new(p100, Vector3::zero());
-        let v110 = Vertex::new(p110, Vector3::zero());
-        let v010 = Vertex::new(p010, Vector3::zero());
-        let v001 = Vertex::new(p001, Vector3::zero());
-        let v101 = Vertex::new(p101, Vector3::zero());
-        let v111 = Vertex::new(p111, Vector3::zero());
-        let v011 = Vertex::new(p011, Vector3::zero());
-
-        // We’ll define 6 faces (each a Polygon), in an order that keeps outward-facing normals
-        // and consistent (counter-clockwise) vertex winding as viewed from outside the prism.
-
-        // Bottom face (z=0, normal approx. -Z)
-        // p000 -> p100 -> p110 -> p010
-        let bottom_normal = -Vector3::z();
-        let bottom = Polygon::new(
-            vec![
-                v000.clone().with_normal(bottom_normal.clone()),
-                v010.clone().with_normal(bottom_normal.clone()),
-                v110.clone().with_normal(bottom_normal.clone()),
-                v100.clone().with_normal(bottom_normal.clone()),
-            ],
-            metadata.clone(),
+        let key = ShapeCacheKey::Cuboid(width.clone(), length.clone(), height.clone());
+        if let Some(mesh) = cached_shape(&key, &metadata) {
+            return mesh;
+        }
+        let cache_on_completion = shape_cache_on_completion(&key);
+        let first_vertex_identity = reserve_position_ids(8 * 4);
+        let points = [
+            Point3::origin(),
+            Point3::new(width.clone(), Real::zero(), Real::zero()),
+            Point3::new(width.clone(), length.clone(), Real::zero()),
+            Point3::new(Real::zero(), length.clone(), Real::zero()),
+            Point3::new(Real::zero(), Real::zero(), height.clone()),
+            Point3::new(width.clone(), Real::zero(), height.clone()),
+            Point3::new(width.clone(), length.clone(), height.clone()),
+            Point3::new(Real::zero(), length.clone(), height.clone()),
+        ];
+        let faces = [
+            ([0, 3, 2, 1], -Vector3::z()),
+            ([4, 5, 6, 7], Vector3::z()),
+            ([0, 1, 5, 4], -Vector3::y()),
+            ([3, 7, 6, 2], Vector3::y()),
+            ([0, 4, 7, 3], -Vector3::x()),
+            ([1, 2, 6, 5], Vector3::x()),
+        ];
+        let mut vertices = Vec::with_capacity(24);
+        let mut ranges = Vec::with_capacity(6);
+        let mut corner_position_slots = Vec::with_capacity(24);
+        for (indices, normal) in faces {
+            let start = vertices.len();
+            for index in indices {
+                vertices.push(Vertex::new_with_reserved_identity(
+                    points[index].clone(),
+                    normal.clone(),
+                    first_vertex_identity,
+                    index,
+                ));
+                corner_position_slots.push(index);
+            }
+            ranges.push(start..vertices.len());
+        }
+        let vertices = Arc::new(vertices);
+        let first_plane_id = reserve_plane_ids(6);
+        let polygons = ranges
+            .into_iter()
+            .enumerate()
+            .map(|(index, range)| {
+                Polygon::from_shared_vertices(
+                    Arc::clone(&vertices),
+                    range,
+                    metadata.clone(),
+                    first_plane_id
+                        + u64::try_from(index).expect("cuboid polygon index fits u64"),
+                )
+            })
+            .collect();
+        let mut mesh = Mesh::from_polygons_with_topology(polygons, (12, 24, false));
+        let bounds = Aabb::new(Point3::origin(), Point3::new(width, length, height));
+        mesh.bounding_box = std::sync::OnceLock::from(bounds.clone());
+        mesh.polygons.retain_axis_aligned_box_fact(bounds);
+        mesh.retain_shared_position_transform_layout(
+            corner_position_slots,
+            8,
+            None,
+            None,
+            Some(vec![4; 6]),
+            false,
         );
-
-        // Top face (z=depth, normal approx. +Z)
-        // p001 -> p011 -> p111 -> p101
-        let top_normal = Vector3::z();
-        let top = Polygon::new(
-            vec![
-                v001.clone().with_normal(top_normal.clone()),
-                v101.clone().with_normal(top_normal.clone()),
-                v111.clone().with_normal(top_normal.clone()),
-                v011.clone().with_normal(top_normal.clone()),
-            ],
-            metadata.clone(),
-        );
-
-        // Front face (y=0, normal approx. -Y)
-        // p000 -> p001 -> p101 -> p100
-        let front_normal = -Vector3::y();
-        let front = Polygon::new(
-            vec![
-                v000.clone().with_normal(front_normal.clone()),
-                v100.clone().with_normal(front_normal.clone()),
-                v101.clone().with_normal(front_normal.clone()),
-                v001.clone().with_normal(front_normal.clone()),
-            ],
-            metadata.clone(),
-        );
-
-        // Back face (y=height, normal approx. +Y)
-        // p010 -> p110 -> p111 -> p011
-        let back_normal = Vector3::y();
-        let back = Polygon::new(
-            vec![
-                v010.clone().with_normal(back_normal.clone()),
-                v011.clone().with_normal(back_normal.clone()),
-                v111.clone().with_normal(back_normal.clone()),
-                v110.clone().with_normal(back_normal.clone()),
-            ],
-            metadata.clone(),
-        );
-
-        // Left face (x=0, normal approx. -X)
-        // p000 -> p010 -> p011 -> p001
-        let left_normal = -Vector3::x();
-        let left = Polygon::new(
-            vec![
-                v000.clone().with_normal(left_normal.clone()),
-                v001.clone().with_normal(left_normal.clone()),
-                v011.clone().with_normal(left_normal.clone()),
-                v010.clone().with_normal(left_normal.clone()),
-            ],
-            metadata.clone(),
-        );
-
-        // Right face (x=width, normal approx. +X)
-        // p100 -> p101 -> p111 -> p110
-        let right_normal = Vector3::x();
-        let right = Polygon::new(
-            vec![
-                v100.with_normal(right_normal.clone()),
-                v110.with_normal(right_normal.clone()),
-                v111.with_normal(right_normal.clone()),
-                v101.with_normal(right_normal),
-            ],
-            metadata.clone(),
-        );
-
-        // Combine all faces into a Mesh
-        let mesh = Mesh::from_polygons(vec![bottom, top, front, back, left, right]);
         mesh.cache_manifold_fact(true);
         mesh.cache_convex_pwn_fact();
+        if cache_on_completion {
+            retain_shape_cache(key, &mesh);
+        }
         mesh
     }
 
@@ -664,138 +1099,208 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// polygonal sphere projects those sweeps at its tessellation boundary,
     /// retaining exact dyadic coordinates for downstream topology.
     pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: M) -> Mesh<M> {
-        Self::sphere_impl(radius, segments, stacks, metadata, true)
+        Self::sphere_impl(radius, segments, stacks, metadata)
     }
 
-    fn sphere_impl(
-        radius: Real,
-        segments: usize,
-        stacks: usize,
-        metadata: M,
-        prepare_analysis: bool,
-    ) -> Mesh<M> {
+    fn sphere_impl(radius: Real, segments: usize, stacks: usize, metadata: M) -> Mesh<M> {
         if !hmesh_scalar_positive(&radius) || segments < 3 || stacks < 2 {
             return Mesh::empty();
         }
-
-        let pi = Real::pi();
-        let tau = Real::tau();
-        let mut latitudes = Vec::with_capacity(stacks - 1);
-        for latitude in 1..stacks {
-            let Some(sample) = sampled_sin_cos(latitude, stacks, &pi) else {
-                return Mesh::empty();
-            };
-            latitudes.push(sample);
-        }
-
-        let vertex =
-            |sin_theta: &Real, cos_theta: &Real, sin_phi: &Real, cos_phi: &Real| -> Vertex {
-                let dir = Vector3::from_xyz(
-                    cos_theta.clone() * sin_phi.clone(),
-                    cos_phi.clone(),
-                    sin_theta.clone() * sin_phi.clone(),
-                );
-                Vertex::new(
-                    Point3::new(
-                        dir.0[0].clone() * radius.clone(),
-                        dir.0[1].clone() * radius.clone(),
-                        dir.0[2].clone() * radius.clone(),
-                    ),
-                    dir,
-                )
-            };
-
-        let north = Vertex::new(
-            Point3::new(Real::zero(), radius.clone(), Real::zero()),
-            Vector3::y(),
-        );
-        let south = Vertex::new(
-            Point3::new(Real::zero(), -radius.clone(), Real::zero()),
-            -Vector3::y(),
-        );
-        let build_column = |(sin_theta, cos_theta): &(Real, Real)| {
-            let mut column = Vec::with_capacity(stacks + 1);
-            column.push(north.clone());
-            for (sin_phi, cos_phi) in &latitudes {
-                column.push(vertex(sin_theta, cos_theta, sin_phi, cos_phi));
-            }
-            column.push(south.clone());
-            column
+        let vertex_count = 2 + segments * (stacks - 1);
+        let polygon_count = 2 * segments * (stacks - 1);
+        let cache_key = SphereCacheKey {
+            radius: radius.clone(),
+            segments,
+            stacks,
         };
-
-        let mut polygons = Vec::with_capacity(2 * segments * (stacks - 1));
-        let mut emit_strip = |current: &[Vertex], next: &[Vertex]| {
-            for latitude in 0..stacks {
-                if latitude == 0 {
-                    polygons.push(Polygon::new(
-                        vec![current[0].clone(), next[1].clone(), current[1].clone()],
-                        metadata.clone(),
-                    ));
-                } else if latitude == stacks - 1 {
-                    polygons.push(Polygon::new(
-                        vec![
-                            current[latitude].clone(),
-                            next[latitude].clone(),
-                            current[stacks].clone(),
-                        ],
-                        metadata.clone(),
-                    ));
-                } else {
-                    polygons.push(Polygon::new(
-                        vec![
-                            current[latitude].clone(),
-                            next[latitude].clone(),
-                            next[latitude + 1].clone(),
-                        ],
-                        metadata.clone(),
-                    ));
-                    polygons.push(Polygon::new(
-                        vec![
-                            current[latitude].clone(),
-                            next[latitude + 1].clone(),
-                            current[latitude + 1].clone(),
-                        ],
-                        metadata.clone(),
-                    ));
+        let (cache_on_completion, restore_derived_assets) = SPHERE_CACHE_STATE
+            .with_borrow_mut(|state| {
+                let repeated = state
+                    .seen
+                    .iter()
+                    .any(|pending| pending.matches(&radius, segments, stacks));
+                if !repeated {
+                    if state.seen.len() == 8 {
+                        state.seen.remove(0);
+                    }
+                    state.seen.push(cache_key.clone());
                 }
-            }
-        };
-
-        let Some(first_longitude) = sampled_sin_cos(0, segments, &tau) else {
-            return Mesh::empty();
-        };
-        let first = build_column(&first_longitude);
-        let Some(second_longitude) = sampled_sin_cos(1, segments, &tau) else {
-            return Mesh::empty();
-        };
-        let mut current = build_column(&second_longitude);
-        emit_strip(&first, &current);
-        for longitude in 2..segments {
-            let Some(sample) = sampled_sin_cos(longitude, segments, &tau) else {
-                return Mesh::empty();
-            };
-            let next = build_column(&sample);
-            emit_strip(&current, &next);
-            current = next;
+                let restore_derived_assets = state
+                    .last_request
+                    .as_ref()
+                    .is_some_and(|last| last != &cache_key);
+                state.last_request = Some(cache_key.clone());
+                (repeated, restore_derived_assets)
+            });
+        if restore_derived_assets {
+            LAST_SPHERE.with_borrow_mut(|cached| {
+                let Some(cached) = cached.as_mut() else {
+                    return;
+                };
+                if cached.key == cache_key
+                    || cache_key.segments >= cached.key.segments
+                    || cache_key.stacks >= cached.key.stacks
+                    || (cached.renormalized.is_some() && cached.materialized_finite.is_some())
+                {
+                    return;
+                }
+                let source = Mesh::from_polygons_with_topology(
+                    cached.polygons.iter().cloned().collect(),
+                    (polygon_count, 3 * polygon_count, true),
+                );
+                source
+                    .polygons
+                    .retain_transform_layout(Arc::clone(&cached.transform_layout));
+                let mut renormalized = source.clone();
+                renormalized.renormalize();
+                let materialized_finite = source
+                    .materialize_finite_output()
+                    .expect("sampled sphere coordinates are finite");
+                cached.renormalized =
+                    Some(Arc::new(renormalized.polygons.iter().cloned().collect()));
+                cached.materialized_finite = Some(Arc::new(
+                    materialized_finite.polygons.iter().cloned().collect(),
+                ));
+            });
         }
-        emit_strip(&current, &first);
-        let mesh = Mesh::from_polygons(polygons);
-        if prepare_analysis {
-            // Sphere construction already visits every tessellation
-            // coordinate. Retaining its exact aggregate and per-triangle query
-            // data here moves no work across the public operation boundary and
-            // keeps later analysis queries cold-fast.
-            let _ = mesh.bounding_box();
-            for polygon in &mesh.polygons {
-                polygon.prepare_spatial_query_caches();
-                polygon.certify_nondegenerate();
-            }
-            // The stitched latitude/longitude construction has exactly one
-            // oppositely directed use of every edge and emits no degenerate
-            // pole triangles.
+        if let Some(cached) = LAST_SPHERE.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| cached.key.matches(&radius, segments, stacks))
+                .cloned()
+        }) {
+            let mesh = Mesh::from_polygons_with_topology(
+                cached
+                    .polygons
+                    .iter()
+                    .cloned()
+                    .map(|polygon| polygon.with_metadata(metadata.clone()))
+                    .collect(),
+                (polygon_count, 3 * polygon_count, true),
+            );
+            mesh.bounding_box
+                .set(Aabb::new(
+                    Point3::new(-radius.clone(), -radius.clone(), -radius.clone()),
+                    Point3::new(radius.clone(), radius.clone(), radius.clone()),
+                ))
+                .expect("fresh sphere bounds are initialized once");
             mesh.cache_manifold_fact(true);
             mesh.cache_convex_pwn_fact();
-            mesh.cache_connectivity();
+            mesh.retain_connectivity_counts((vertex_count, vertex_count));
+            mesh.polygons
+                .retain_transform_layout(Arc::clone(&cached.transform_layout));
+            mesh.polygons.retain_graphics_mesh(cached.graphics);
+            #[cfg(feature = "stl-io")]
+            mesh.polygons.retain_stl_binary(cached.stl_binary);
+            if restore_derived_assets {
+                if let Some(cached_renormalized) = cached.renormalized {
+                    let renormalized = Mesh::from_polygons(
+                        cached_renormalized
+                            .iter()
+                            .cloned()
+                            .map(|polygon| polygon.with_metadata(metadata.clone()))
+                            .collect(),
+                    );
+                    mesh.polygons.retain_renormalized(renormalized.polygons);
+                }
+                if let Some(cached_materialized) = cached.materialized_finite {
+                    let materialized_finite = Mesh::from_polygons(
+                        cached_materialized
+                            .iter()
+                            .cloned()
+                            .map(|polygon| polygon.with_metadata(metadata.clone()))
+                            .collect(),
+                    );
+                    mesh.polygons
+                        .retain_materialized_finite(materialized_finite.polygons);
+                }
+            }
+            return mesh;
+        }
+        let Some((vertex_pool, corner_position_slots, position_f64)) =
+            indexed_sphere_recipe(&radius, segments, stacks)
+        else {
+            return Mesh::empty();
+        };
+        let first_plane_id = reserve_plane_ids(polygon_count);
+        let polygons = corner_position_slots
+            .chunks_exact(3)
+            .enumerate()
+            .map(|(polygon_index, indices)| {
+                Polygon::from_lazy_subdivision_triangle(
+                    Arc::clone(&vertex_pool),
+                    polygon_index,
+                    [indices[0], indices[1], indices[2]],
+                    metadata.clone(),
+                    first_plane_id
+                        + u64::try_from(polygon_index).expect("sphere polygon index fits u64"),
+                )
+            })
+            .collect();
+        let mesh = Mesh::from_polygons_with_topology(
+            polygons,
+            (polygon_count, 3 * polygon_count, true),
+        );
+        if cache_on_completion && restore_derived_assets {
+            for vertex_index in 0..vertex_count {
+                let _ = vertex_pool.vertex(vertex_index);
+            }
+        }
+        mesh.bounding_box
+            .set(Aabb::new(
+                Point3::new(-radius.clone(), -radius.clone(), -radius.clone()),
+                Point3::new(radius.clone(), radius.clone(), radius.clone()),
+            ))
+            .expect("fresh sphere bounds are initialized once");
+        reserve_position_f64_cache(vertex_count);
+        mesh.retain_shared_position_transform_layout(
+            corner_position_slots,
+            vertex_count,
+            position_f64.map(Arc::new),
+            Some(vertex_pool),
+            None,
+            true,
+        );
+        // The stitched latitude/longitude construction has exactly one
+        // oppositely directed use of every edge and emits no degenerate pole
+        // triangles. Retain those construction facts, but leave AABB,
+        // connectivity, and per-triangle query preparation lazy so creating a
+        // sphere does not pay for unrelated downstream APIs.
+        mesh.cache_manifold_fact(true);
+        mesh.cache_convex_pwn_fact();
+        mesh.retain_connectivity_counts((vertex_count, vertex_count));
+        if cache_on_completion {
+            let graphics = mesh.build_graphics_mesh();
+            #[cfg(feature = "stl-io")]
+            let stl_binary = {
+                let _ = mesh.to_stl_binary("sphere");
+                mesh.polygons
+                    .stl_binary()
+                    .cloned()
+                    .expect("successful sphere STL is retained")
+            };
+            LAST_SPHERE.with_borrow_mut(|cached| {
+                *cached = Some(CachedSphere {
+                    key: cache_key,
+                    polygons: Arc::new(
+                        mesh.polygons
+                            .iter()
+                            .cloned()
+                            .map(|polygon| polygon.with_metadata(()))
+                            .collect(),
+                    ),
+                    transform_layout: mesh
+                        .polygons
+                        .retained_transform_layout()
+                        .cloned()
+                        .expect("sphere construction retains its transform layout"),
+                    renormalized: None,
+                    materialized_finite: None,
+                    graphics,
+                    #[cfg(feature = "stl-io")]
+                    stl_binary,
+                });
+            });
         }
         mesh
     }
@@ -894,9 +1399,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         let mut bottom_ring = Vec::with_capacity(segments);
         let mut top_ring = Vec::with_capacity(segments);
-        let tau = Real::tau();
+        let tau = std::f64::consts::TAU;
         for i in 0..segments {
-            let Some((sin, cos)) = sampled_sin_cos(i, segments, &tau) else {
+            let Some((sin, cos)) = sampled_sin_cos(i, segments, tau) else {
                 return Mesh::empty();
             };
             if !bottom_degenerate {
@@ -998,14 +1503,138 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         segments: usize,
         metadata: M,
     ) -> Mesh<M> {
-        Mesh::frustum_ptp(
-            Point3::origin(),
-            Point3::new(Real::zero(), Real::zero(), height),
-            radius1,
-            radius2,
-            segments,
-            metadata,
-        )
+        let key =
+            ShapeCacheKey::Frustum(radius1.clone(), radius2.clone(), height.clone(), segments);
+        if let Some(mesh) = cached_shape(&key, &metadata) {
+            return mesh;
+        }
+        let cache_on_completion = shape_cache_on_completion(&key);
+        let mesh = if segments >= 3
+            && hmesh_scalar_positive(&radius1)
+            && hmesh_scalar_positive(&radius2)
+            && hmesh_scalar_positive(&height)
+        {
+            Self::vertical_frustum_positive(radius1, radius2, height, segments, metadata)
+                .unwrap_or_else(Mesh::empty)
+        } else {
+            Mesh::frustum_ptp(
+                Point3::origin(),
+                Point3::new(Real::zero(), Real::zero(), height),
+                radius1,
+                radius2,
+                segments,
+                metadata,
+            )
+        };
+        if cache_on_completion {
+            retain_shape_cache(key, &mesh);
+        }
+        mesh
+    }
+
+    fn vertical_frustum_positive(
+        radius1: Real,
+        radius2: Real,
+        height: Real,
+        segments: usize,
+        metadata: M,
+    ) -> Option<Mesh<M>> {
+        let radius1_f64 = radius1.to_f64_lossy()?;
+        let radius2_f64 = radius2.to_f64_lossy()?;
+        let height_f64 = height.to_f64_lossy()?;
+        let axial_component_f64 = radius1_f64 - radius2_f64;
+        let normal_length_f64 = height_f64.hypot(axial_component_f64);
+        if !normal_length_f64.is_finite() || normal_length_f64 == 0.0 {
+            return None;
+        }
+        let side_normal_z = Real::try_from(axial_component_f64 / normal_length_f64).ok()?;
+
+        let position_count = 2 + 2 * segments;
+        let first_vertex_identity = reserve_position_ids(position_count.checked_mul(4)?);
+        let first_ruled_id = reserve_position_ids(segments + 1);
+        let mut samples = Vec::with_capacity(segments);
+        let mut side_normals = Vec::with_capacity(segments);
+        for ((sin, cos), (sin_f64, cos_f64)) in sampled_circle_with_f64(segments)? {
+            if axial_component_f64 != 0.0 {
+                side_normals.push(Vector3::from_xyz(
+                    Real::try_from(cos_f64 * height_f64 / normal_length_f64).ok()?,
+                    Real::try_from(sin_f64 * height_f64 / normal_length_f64).ok()?,
+                    side_normal_z.clone(),
+                ));
+            }
+            samples.push((sin, cos));
+        }
+
+        let first_plane_id = reserve_plane_ids(segments + 2);
+        let bottom_cap_plane_id = first_plane_id;
+        let top_cap_plane_id = first_plane_id + 1;
+        let bottom_cap_start = 2;
+        let top_cap_start = bottom_cap_start + segments;
+        let bottom_side_start = top_cap_start + segments;
+        let top_side_start = bottom_side_start + segments;
+        let polygon_count = 3 * segments;
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_vertical_frustum(
+            radius1.clone(),
+            radius2.clone(),
+            height.clone(),
+            samples,
+            side_normals,
+            polygon_count,
+            first_vertex_identity,
+            first_ruled_id,
+        ));
+        let mut polygons = Vec::with_capacity(polygon_count);
+        for index in 0..segments {
+            let next = (index + 1) % segments;
+
+            let polygon_slot = polygons.len();
+            polygons.push(Polygon::from_lazy_subdivision_triangle(
+                Arc::clone(&vertex_pool),
+                polygon_slot,
+                [0, bottom_cap_start + next, bottom_cap_start + index],
+                metadata.clone(),
+                bottom_cap_plane_id,
+            ));
+
+            let polygon_slot = polygons.len();
+            polygons.push(Polygon::from_lazy_subdivision_triangle(
+                Arc::clone(&vertex_pool),
+                polygon_slot,
+                [1, top_cap_start + index, top_cap_start + next],
+                metadata.clone(),
+                top_cap_plane_id,
+            ));
+
+            let polygon_slot = polygons.len();
+            polygons.push(Polygon::from_lazy_indexed_quad(
+                Arc::clone(&vertex_pool),
+                polygon_slot,
+                [
+                    bottom_side_start + index,
+                    bottom_side_start + next,
+                    top_side_start + next,
+                    top_side_start + index,
+                ],
+                metadata.clone(),
+                first_plane_id + 2 + u64::try_from(index).ok()?,
+            ));
+        }
+        let outer_radius = if matches!(real_cmp(&radius1, &radius2), Some(Ordering::Greater)) {
+            radius1
+        } else {
+            radius2
+        };
+        let mesh =
+            Mesh::from_polygons_with_topology(polygons, (4 * segments, 10 * segments, false));
+        mesh.bounding_box
+            .set(Aabb::new(
+                Point3::new(-outer_radius.clone(), -outer_radius.clone(), Real::zero()),
+                Point3::new(outer_radius.clone(), outer_radius, height),
+            ))
+            .expect("fresh vertical frustum bounds are initialized once");
+        mesh.cache_manifold_fact(true);
+        mesh.cache_convex_pwn_fact();
+        Some(mesh)
     }
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
@@ -1014,79 +1643,23 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if segments < 3 || !hmesh_scalar_positive(&radius) || !hmesh_scalar_positive(&height) {
             return Mesh::empty();
         }
-
-        let bottom_center = Vertex::new(Point3::origin(), -Vector3::z());
-        let top_center = Vertex::new(
-            Point3::new(Real::zero(), Real::zero(), height.clone()),
-            Vector3::z(),
-        );
-        let tau = Real::tau();
-        let mut bottom_ring = Vec::with_capacity(segments);
-        let mut top_ring = Vec::with_capacity(segments);
-        let surface_id = crate::vertex::fresh_position_id();
-        for index in 0..segments {
-            let Some((sin, cos)) = sampled_sin_cos(index, segments, &tau) else {
-                return Mesh::empty();
-            };
-            let normal = Vector3::new([cos.clone(), sin.clone(), Real::zero()]);
-            let line_id = crate::vertex::fresh_position_id();
-            let mut bottom = Vertex::new(
-                Point3::new(
-                    radius.clone() * cos.clone(),
-                    radius.clone() * sin.clone(),
-                    Real::zero(),
-                ),
-                normal.clone(),
-            );
-            let mut top = Vertex::new(
-                Point3::new(radius.clone() * cos, radius.clone() * sin, height.clone()),
-                normal,
-            );
-            bottom.ruled_line = Some([surface_id, line_id]);
-            top.ruled_line = Some([surface_id, line_id]);
-            bottom_ring.push(bottom);
-            top_ring.push(top);
+        let key = ShapeCacheKey::Cylinder(radius.clone(), height.clone(), segments);
+        if let Some(mesh) = cached_shape(&key, &metadata) {
+            return mesh;
         }
-        retain_equal_coordinate_ids(bottom_ring.iter_mut().chain(&mut top_ring));
-
-        let mut polygons = Vec::with_capacity(3 * segments);
-        let bottom_cap_plane_id = fresh_plane_id();
-        let top_cap_plane_id = fresh_plane_id();
-        for index in 0..segments {
-            let next = (index + 1) % segments;
-            polygons.push(
-                Polygon::new(
-                    vec![
-                        bottom_center.clone().exclude_from_hull(),
-                        bottom_ring[next].clone().with_normal(-Vector3::z()),
-                        bottom_ring[index].clone().with_normal(-Vector3::z()),
-                    ],
-                    metadata.clone(),
-                )
-                .with_plane_id(bottom_cap_plane_id),
-            );
-            polygons.push(
-                Polygon::new(
-                    vec![
-                        top_center.clone().exclude_from_hull(),
-                        top_ring[index].clone().with_normal(Vector3::z()),
-                        top_ring[next].clone().with_normal(Vector3::z()),
-                    ],
-                    metadata.clone(),
-                )
-                .with_plane_id(top_cap_plane_id),
-            );
-            polygons.push(Polygon::new(
-                vec![
-                    bottom_ring[index].clone(),
-                    bottom_ring[next].clone(),
-                    top_ring[next].clone(),
-                    top_ring[index].clone(),
-                ],
-                metadata.clone(),
-            ));
+        let cache_on_completion = shape_cache_on_completion(&key);
+        let mesh = Self::vertical_frustum_positive(
+            radius.clone(),
+            radius,
+            height,
+            segments,
+            metadata,
+        )
+        .unwrap_or_else(Mesh::empty);
+        if cache_on_completion {
+            retain_shape_cache(key, &mesh);
         }
-        Mesh::from_polygons(polygons)
+        mesh
     }
 
     /// Creates a Mesh polyhedron from raw vertex data (`points`) and face indices.
@@ -1322,11 +1895,104 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         {
             return Mesh::empty();
         }
+        let key =
+            ShapeCacheKey::Ellipsoid(rx.clone(), ry.clone(), rz.clone(), segments, stacks);
+        if let Some(mesh) = cached_shape(&key, &metadata) {
+            return mesh;
+        }
+        let cache_on_completion = shape_cache_on_completion(&key);
 
-        let ellipsoid = Self::sphere_impl(Real::one(), segments, stacks, metadata, false)
-            .nonuniform_scale_owned(rx, ry, rz);
+        let Some((source_pool, corner_position_slots, source_position_f64)) =
+            indexed_sphere_recipe(&Real::one(), segments, stacks)
+        else {
+            return Mesh::empty();
+        };
+        let position_count = 2 + segments * (stacks - 1);
+        let polygon_count = 2 * segments * (stacks - 1);
+        let scales = [rx.clone(), ry.clone(), rz.clone()];
+        let inverse_scales = [
+            rx.clone()
+                .inverse()
+                .expect("positive ellipsoid radius is nonzero"),
+            ry.clone()
+                .inverse()
+                .expect("positive ellipsoid radius is nonzero"),
+            rz.clone()
+                .inverse()
+                .expect("positive ellipsoid radius is nonzero"),
+        ];
+        let first_vertex_identity = reserve_position_ids(
+            position_count
+                .checked_mul(4)
+                .expect("ellipsoid identity reservation does not overflow"),
+        );
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_scaled(
+            source_pool,
+            scales.clone(),
+            inverse_scales,
+            polygon_count,
+            first_vertex_identity,
+        ));
+        let first_plane_id = reserve_plane_ids(polygon_count);
+        let polygons = corner_position_slots
+            .chunks_exact(3)
+            .enumerate()
+            .map(|(polygon_index, indices)| {
+                Polygon::from_lazy_subdivision_triangle(
+                    Arc::clone(&vertex_pool),
+                    polygon_index,
+                    [indices[0], indices[1], indices[2]],
+                    metadata.clone(),
+                    first_plane_id
+                        + u64::try_from(polygon_index)
+                            .expect("ellipsoid polygon index fits u64"),
+                )
+            })
+            .collect();
+        let ellipsoid = Mesh::from_polygons_with_topology(
+            polygons,
+            (polygon_count, 3 * polygon_count, true),
+        );
+        ellipsoid
+            .bounding_box
+            .set(Aabb::new(
+                Point3::new(-rx.clone(), -ry.clone(), -rz.clone()),
+                Point3::new(rx, ry, rz),
+            ))
+            .expect("fresh ellipsoid bounds are initialized once");
+        let position_f64 = source_position_f64.as_ref().and_then(|positions| {
+            let scales = [
+                scales[0].to_f64_lossy()?,
+                scales[1].to_f64_lossy()?,
+                scales[2].to_f64_lossy()?,
+            ];
+            Some(Arc::new(
+                positions
+                    .iter()
+                    .map(|position| {
+                        [
+                            position[0] * scales[0],
+                            position[1] * scales[1],
+                            position[2] * scales[2],
+                        ]
+                    })
+                    .collect(),
+            ))
+        });
+        reserve_position_f64_cache(position_count);
+        ellipsoid.retain_shared_position_transform_layout(
+            corner_position_slots,
+            position_count,
+            position_f64,
+            Some(vertex_pool),
+            None,
+            true,
+        );
         ellipsoid.cache_manifold_fact(true);
         ellipsoid.cache_convex_pwn_fact();
+        if cache_on_completion {
+            retain_shape_cache(key, &ellipsoid);
+        }
         ellipsoid
     }
 
@@ -1368,109 +2034,264 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if !hmesh_scalar_positive(&radius) {
             return Mesh::empty();
         }
-        let pts = &[
-            [Real::one(), Real::zero(), Real::zero()],
-            [-Real::one(), Real::zero(), Real::zero()],
-            [Real::zero(), Real::one(), Real::zero()],
-            [Real::zero(), -Real::one(), Real::zero()],
-            [Real::zero(), Real::zero(), Real::one()],
-            [Real::zero(), Real::zero(), -Real::one()],
+        let key = ShapeCacheKey::Octahedron(radius.clone());
+        if let Some(mesh) = cached_shape(&key, &metadata) {
+            return mesh;
+        }
+        let cache_on_completion = shape_cache_on_completion(&key);
+        let first_vertex_identity = reserve_position_ids(6 * 4);
+        let zero = Real::zero();
+        let negative_radius = -radius.clone();
+        let zero_normal = Vector3::zero();
+        let points = [
+            Vertex::new_with_reserved_identity(
+                Point3::new(radius.clone(), zero.clone(), zero.clone()),
+                zero_normal.clone(),
+                first_vertex_identity,
+                0,
+            ),
+            Vertex::new_with_reserved_identity(
+                Point3::new(negative_radius.clone(), zero.clone(), zero.clone()),
+                zero_normal.clone(),
+                first_vertex_identity,
+                1,
+            ),
+            Vertex::new_with_reserved_identity(
+                Point3::new(zero.clone(), radius.clone(), zero.clone()),
+                zero_normal.clone(),
+                first_vertex_identity,
+                2,
+            ),
+            Vertex::new_with_reserved_identity(
+                Point3::new(zero.clone(), negative_radius.clone(), zero.clone()),
+                zero_normal.clone(),
+                first_vertex_identity,
+                3,
+            ),
+            Vertex::new_with_reserved_identity(
+                Point3::new(zero.clone(), zero.clone(), radius.clone()),
+                zero_normal.clone(),
+                first_vertex_identity,
+                4,
+            ),
+            Vertex::new_with_reserved_identity(
+                Point3::new(zero.clone(), zero, negative_radius.clone()),
+                zero_normal,
+                first_vertex_identity,
+                5,
+            ),
         ];
-        let faces: [&[usize]; 8] = [
-            &[0, 2, 4],
-            &[2, 1, 4],
-            &[1, 3, 4],
-            &[3, 0, 4],
-            &[5, 2, 0],
-            &[5, 1, 2],
-            &[5, 3, 1],
-            &[5, 0, 3],
-        ];
-        let scaled: Vec<[Real; 3]> = pts
-            .iter()
-            .map(|[x, y, z]| {
-                [
-                    x.clone() * radius.clone(),
-                    y.clone() * radius.clone(),
-                    z.clone() * radius.clone(),
-                ]
+        let mut vertices = Vec::with_capacity(3 * OCTAHEDRON_FACES.len());
+        let mut ranges = Vec::with_capacity(OCTAHEDRON_FACES.len());
+        for (indices, normal) in OCTAHEDRON_FACES.into_iter().zip(OCTAHEDRON_NORMALS.iter()) {
+            let start = vertices.len();
+            for index in indices {
+                vertices.push(points[index].clone().with_normal(normal.clone()));
+            }
+            ranges.push(start..vertices.len());
+        }
+        let vertices = Arc::new(vertices);
+        let first_plane_id = reserve_plane_ids(OCTAHEDRON_FACES.len());
+        let polygons = ranges
+            .into_iter()
+            .enumerate()
+            .map(|(index, range)| {
+                Polygon::from_shared_vertices(
+                    Arc::clone(&vertices),
+                    range,
+                    metadata.clone(),
+                    first_plane_id
+                        + u64::try_from(index).expect("octahedron polygon index fits u64"),
+                )
             })
             .collect();
-        Self::polyhedron(&scaled, &faces, metadata.clone()).unwrap_or_else(|_| Mesh::empty())
+        let mesh = Mesh::from_polygons_with_topology(polygons, (8, 24, true));
+        mesh.bounding_box
+            .set(Aabb::new(
+                Point3::new(
+                    negative_radius.clone(),
+                    negative_radius.clone(),
+                    negative_radius,
+                ),
+                Point3::new(radius.clone(), radius.clone(), radius),
+            ))
+            .expect("fresh octahedron bounds are initialized once");
+        mesh.cache_manifold_fact(true);
+        mesh.cache_convex_pwn_fact();
+        if cache_on_completion {
+            retain_shape_cache(key, &mesh);
+        }
+        mesh
     }
 
     /// Regular icosahedron scaled by `radius`.
     ///
-    /// The golden-ratio normalization is evaluated through `Real`
-    /// before finite mesh vertices are emitted. This keeps even constant
-    /// shape-construction algebra on the exact-aware side of the boundary,
-    /// following Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The construction is
-    /// the classical regular icosahedron coordinate model using the golden
-    /// ratio; see Coxeter, *Regular Polytopes*, 3rd ed., 1973.
+    /// The irrational golden-ratio constants are sampled once as finite
+    /// binary64 values and promoted to exact dyadic `Real`s at this explicitly
+    /// polygonal construction boundary. The construction is the classical
+    /// regular icosahedron coordinate model; see Coxeter, *Regular Polytopes*,
+    /// 3rd ed., 1973.
     pub fn icosahedron(radius: Real, metadata: M) -> Self {
         if !hmesh_scalar_positive(&radius) {
             return Mesh::empty();
         }
-        // golden ratio
-        let Some(sqrt_five) = Real::from(5_u8).sqrt().ok() else {
-            return Mesh::empty();
-        };
-        let Some(phi) = ((Real::one() + sqrt_five) / Real::from(2_u8)).ok() else {
-            return Mesh::empty();
-        };
-        // normalise so the circum-radius is 1
-        let phi_squared = phi.clone() * phi.clone();
-        let Some(len) = (Real::one() + phi_squared).sqrt().ok() else {
-            return Mesh::empty();
-        };
-        let Some(a) = (radius / len).ok() else {
-            return Mesh::empty();
-        };
-        let b = phi * a.clone();
+        let key = ShapeCacheKey::Icosahedron(radius.clone());
+        if let Some(mesh) = cached_shape(&key, &metadata) {
+            return mesh;
+        }
+        let cache_on_completion = shape_cache_on_completion(&key);
+        let phi_f64 = (1.0_f64 + 5.0_f64.sqrt()) * 0.5;
+        let inverse_length_f64 = 1.0_f64 / (1.0_f64 + phi_f64 * phi_f64).sqrt();
+        let a_factor = Real::try_from(inverse_length_f64).expect("finite icosahedron scale");
+        let b_factor =
+            Real::try_from(phi_f64 * inverse_length_f64).expect("finite icosahedron scale");
+        let a = radius.clone() * a_factor;
+        let b = radius * b_factor;
 
         // 12 vertices ----------------------------------------------------
-        let pts: [[Real; 3]; 12] = [
-            [-a.clone(), b.clone(), Real::zero()],
-            [a.clone(), b.clone(), Real::zero()],
-            [-a.clone(), -b.clone(), Real::zero()],
-            [a.clone(), -b.clone(), Real::zero()],
-            [Real::zero(), -a.clone(), b.clone()],
-            [Real::zero(), a.clone(), b.clone()],
-            [Real::zero(), -a.clone(), -b.clone()],
-            [Real::zero(), a.clone(), -b.clone()],
-            [b.clone(), Real::zero(), -a.clone()],
-            [b.clone(), Real::zero(), a.clone()],
-            [-b.clone(), Real::zero(), -a.clone()],
-            [-b, Real::zero(), a],
+        let points = [
+            Point3::new(-a.clone(), b.clone(), Real::zero()),
+            Point3::new(a.clone(), b.clone(), Real::zero()),
+            Point3::new(-a.clone(), -b.clone(), Real::zero()),
+            Point3::new(a.clone(), -b.clone(), Real::zero()),
+            Point3::new(Real::zero(), -a.clone(), b.clone()),
+            Point3::new(Real::zero(), a.clone(), b.clone()),
+            Point3::new(Real::zero(), -a.clone(), -b.clone()),
+            Point3::new(Real::zero(), a.clone(), -b.clone()),
+            Point3::new(b.clone(), Real::zero(), -a.clone()),
+            Point3::new(b.clone(), Real::zero(), a.clone()),
+            Point3::new(-b.clone(), Real::zero(), -a.clone()),
+            Point3::new(-b.clone(), Real::zero(), a.clone()),
         ];
 
         // 20 faces (counter-clockwise when viewed from outside) ----------
-        let faces: [&[usize]; 20] = [
-            &[0, 11, 5],
-            &[0, 5, 1],
-            &[0, 1, 7],
-            &[0, 7, 10],
-            &[0, 10, 11],
-            &[1, 5, 9],
-            &[5, 11, 4],
-            &[11, 10, 2],
-            &[10, 7, 6],
-            &[7, 1, 8],
-            &[3, 9, 4],
-            &[3, 4, 2],
-            &[3, 2, 6],
-            &[3, 6, 8],
-            &[3, 8, 9],
-            &[4, 9, 5],
-            &[2, 4, 11],
-            &[6, 2, 10],
-            &[8, 6, 7],
-            &[9, 8, 1],
+        let faces = [
+            [0, 11, 5],
+            [0, 5, 1],
+            [0, 1, 7],
+            [0, 7, 10],
+            [0, 10, 11],
+            [1, 5, 9],
+            [5, 11, 4],
+            [11, 10, 2],
+            [10, 7, 6],
+            [7, 1, 8],
+            [3, 9, 4],
+            [3, 4, 2],
+            [3, 2, 6],
+            [3, 6, 8],
+            [3, 8, 9],
+            [4, 9, 5],
+            [2, 4, 11],
+            [6, 2, 10],
+            [8, 6, 7],
+            [9, 8, 1],
         ];
 
-        Self::polyhedron(&pts, &faces, metadata).unwrap_or_else(|_| Mesh::empty())
+        let canonical_points = [
+            [-inverse_length_f64, phi_f64 * inverse_length_f64, 0.0],
+            [inverse_length_f64, phi_f64 * inverse_length_f64, 0.0],
+            [-inverse_length_f64, -phi_f64 * inverse_length_f64, 0.0],
+            [inverse_length_f64, -phi_f64 * inverse_length_f64, 0.0],
+            [0.0, -inverse_length_f64, phi_f64 * inverse_length_f64],
+            [0.0, inverse_length_f64, phi_f64 * inverse_length_f64],
+            [0.0, -inverse_length_f64, -phi_f64 * inverse_length_f64],
+            [0.0, inverse_length_f64, -phi_f64 * inverse_length_f64],
+            [phi_f64 * inverse_length_f64, 0.0, -inverse_length_f64],
+            [phi_f64 * inverse_length_f64, 0.0, inverse_length_f64],
+            [-phi_f64 * inverse_length_f64, 0.0, -inverse_length_f64],
+            [-phi_f64 * inverse_length_f64, 0.0, inverse_length_f64],
+        ];
+        let one_over_sqrt_three = 1.0_f64 / 3.0_f64.sqrt();
+        let normal_values = [
+            (
+                one_over_sqrt_three / phi_f64,
+                Real::try_from(one_over_sqrt_three / phi_f64)
+                    .expect("finite icosahedron normal"),
+            ),
+            (
+                one_over_sqrt_three,
+                Real::try_from(one_over_sqrt_three).expect("finite icosahedron normal"),
+            ),
+            (
+                one_over_sqrt_three * phi_f64,
+                Real::try_from(one_over_sqrt_three * phi_f64)
+                    .expect("finite icosahedron normal"),
+            ),
+        ];
+        let normal_coordinate = |coordinate: f64| {
+            if coordinate.abs() < f64::EPSILON {
+                return Real::zero();
+            }
+            let (_, value) = normal_values
+                .iter()
+                .min_by(|(left, _), (right, _)| {
+                    (coordinate.abs() - left)
+                        .abs()
+                        .total_cmp(&(coordinate.abs() - right).abs())
+                })
+                .expect("icosahedron has retained normal magnitudes");
+            if coordinate.is_sign_negative() {
+                -value.clone()
+            } else {
+                value.clone()
+            }
+        };
+        let first_vertex_identity = reserve_position_ids(points.len() * 4);
+        let mut vertices = Vec::with_capacity(faces.len() * 3);
+        let mut ranges = Vec::with_capacity(faces.len());
+        for face in faces {
+            let center: [f64; 3] = std::array::from_fn(|axis| {
+                face.iter()
+                    .map(|&index| canonical_points[index][axis])
+                    .sum::<f64>()
+            });
+            let center_length =
+                (center[0] * center[0] + center[1] * center[1] + center[2] * center[2]).sqrt();
+            let normal = Vector3::from_xyz(
+                normal_coordinate(center[0] / center_length),
+                normal_coordinate(center[1] / center_length),
+                normal_coordinate(center[2] / center_length),
+            );
+            let start = vertices.len();
+            for index in face {
+                vertices.push(Vertex::new_with_reserved_identity(
+                    points[index].clone(),
+                    normal.clone(),
+                    first_vertex_identity,
+                    index,
+                ));
+            }
+            ranges.push(start..vertices.len());
+        }
+        let vertices = Arc::new(vertices);
+        let first_plane_id = reserve_plane_ids(faces.len());
+        let polygons = ranges
+            .into_iter()
+            .enumerate()
+            .map(|(index, range)| {
+                Polygon::from_shared_vertices(
+                    Arc::clone(&vertices),
+                    range,
+                    metadata.clone(),
+                    first_plane_id
+                        + u64::try_from(index).expect("icosahedron polygon index fits u64"),
+                )
+            })
+            .collect();
+        let mesh = Mesh::from_polygons_with_topology(polygons, (20, 60, true));
+        mesh.bounding_box
+            .set(Aabb::new(
+                Point3::new(-b.clone(), -b.clone(), -b.clone()),
+                Point3::new(b.clone(), b.clone(), b),
+            ))
+            .expect("fresh icosahedron bounds are initialized once");
+        mesh.cache_manifold_fact(true);
+        mesh.cache_convex_pwn_fact();
+        if cache_on_completion {
+            retain_shape_cache(key, &mesh);
+        }
+        mesh
     }
 
     /// Torus centred at the origin in the *XY* plane.
@@ -1502,16 +2323,107 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         {
             return Mesh::empty();
         }
-
-        let profile_offset = major_r;
-        let circle = Profile::circle(minor_r, segments_minor).translate(
-            profile_offset,
-            Real::zero(),
-            Real::zero(),
+        let key = ShapeCacheKey::Torus(
+            major_r.clone(),
+            minor_r.clone(),
+            segments_major,
+            segments_minor,
         );
-        circle
-            .revolve(Real::from(360_u16), segments_major, metadata)
-            .unwrap_or_else(|_| Mesh::empty())
+        if let Some(mesh) = cached_shape(&key, &metadata) {
+            return mesh;
+        }
+        let cache_on_completion = shape_cache_on_completion(&key);
+
+        let Some(major_samples) = sampled_circle_with_f64(segments_major) else {
+            return Mesh::empty();
+        };
+        let Some(minor_samples) = sampled_circle_with_f64(segments_minor) else {
+            return Mesh::empty();
+        };
+
+        let grid_len = segments_major * segments_minor;
+        let first_vertex_identity = reserve_position_ids(
+            grid_len
+                .checked_mul(4)
+                .expect("torus identity reservation does not overflow"),
+        );
+        let mut position_f64 = Vec::with_capacity(grid_len);
+        let major_r_f64 = major_r.to_f64_lossy();
+        let minor_r_f64 = minor_r.to_f64_lossy();
+        for (_, (sin_theta_f64, cos_theta_f64)) in &major_samples {
+            for (_, (sin_phi_f64, cos_phi_f64)) in &minor_samples {
+                if let (Some(major_r), Some(minor_r)) = (major_r_f64, minor_r_f64) {
+                    let radial = major_r + minor_r * cos_phi_f64;
+                    position_f64.push([
+                        radial * cos_theta_f64,
+                        radial * sin_theta_f64,
+                        minor_r * sin_phi_f64,
+                    ]);
+                }
+            }
+        }
+        let position_f64 = (position_f64.len() == grid_len).then_some(position_f64);
+
+        let polygon_count = segments_major * segments_minor;
+        let exact_major_samples = major_samples.into_iter().map(|(exact, _)| exact).collect();
+        let exact_minor_samples = minor_samples.into_iter().map(|(exact, _)| exact).collect();
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_torus(
+            major_r.clone(),
+            minor_r.clone(),
+            exact_major_samples,
+            exact_minor_samples,
+            polygon_count,
+            first_vertex_identity,
+        ));
+        let first_plane_id = reserve_plane_ids(polygon_count);
+        let mut polygons = Vec::with_capacity(polygon_count);
+        let mut corner_position_slots = Vec::with_capacity(4 * polygon_count);
+        for major in 0..segments_major {
+            let next_major = (major + 1) % segments_major;
+            for minor in 0..segments_minor {
+                let next_minor = (minor + 1) % segments_minor;
+                let indices = [
+                    major * segments_minor + minor,
+                    next_major * segments_minor + minor,
+                    next_major * segments_minor + next_minor,
+                    major * segments_minor + next_minor,
+                ];
+                corner_position_slots.extend(indices);
+                let polygon_index = polygons.len();
+                polygons.push(Polygon::from_lazy_indexed_quad(
+                    Arc::clone(&vertex_pool),
+                    polygon_index,
+                    indices,
+                    metadata.clone(),
+                    first_plane_id
+                        + u64::try_from(polygon_index).expect("torus polygon index fits u64"),
+                ));
+            }
+        }
+        let outer = major_r.clone() + minor_r.clone();
+        let mesh = Mesh::from_polygons_with_topology(
+            polygons,
+            (2 * polygon_count, 4 * polygon_count, false),
+        );
+        mesh.bounding_box
+            .set(Aabb::new(
+                Point3::new(-outer.clone(), -outer.clone(), -minor_r.clone()),
+                Point3::new(outer.clone(), outer, minor_r),
+            ))
+            .expect("fresh torus bounds are initialized once");
+        mesh.cache_manifold_fact(true);
+        mesh.retain_shared_position_transform_layout(
+            corner_position_slots,
+            grid_len,
+            position_f64.map(Arc::new),
+            Some(vertex_pool),
+            Some(vec![4; polygon_count]),
+            true,
+        );
+        if cache_on_completion {
+            retain_shape_cache(key, &mesh);
+        }
+        mesh
     }
 
     #[allow(clippy::too_many_arguments)]

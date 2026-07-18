@@ -14,12 +14,7 @@ use hyperlattice::{Matrix4, Point3, Vector3};
 use support::{Config, Measurement};
 
 fn measurement(mesh: &Mesh<()>, input_facets: usize) -> Measurement {
-    let facets = facet_count(mesh);
-    let vertices = mesh
-        .polygons
-        .iter()
-        .map(|polygon| polygon.vertices().len())
-        .sum::<usize>();
+    let (facets, vertices) = mesh.topology_counts();
     Measurement::new(
         input_facets as u64,
         facets as u64,
@@ -46,14 +41,18 @@ fn geometry_measurement(mesh: &Mesh<()>, input_facets: usize) -> Measurement {
     let mut corners = 0_usize;
     let mut checksum = facets as u64;
     for polygon in &mesh.polygons {
-        for vertex in polygon.vertices() {
+        for (polygon_corner, position_f64) in polygon.position_f64_iter().enumerate() {
             corners += 1;
-            if let Some(position) = vertex.position_f64_lossy() {
+            if let Some(position) = position_f64 {
                 for coordinate in position {
                     checksum = checksum.rotate_left(7)
                         ^ ((coordinate * 1_000_000_000.0).round() as i64 as u64);
                 }
             } else {
+                let vertex = polygon
+                    .vertex_iter()
+                    .nth(polygon_corner)
+                    .expect("position and exact vertex iterators have equal length");
                 for coordinate in [&vertex.position.x, &vertex.position.y, &vertex.position.z]
                 {
                     checksum = checksum.rotate_left(7) ^ coordinate_fingerprint(coordinate);
@@ -65,10 +64,7 @@ fn geometry_measurement(mesh: &Mesh<()>, input_facets: usize) -> Measurement {
 }
 
 fn facet_count(mesh: &Mesh<()>) -> usize {
-    mesh.polygons
-        .iter()
-        .map(|polygon| polygon.vertices().len().saturating_sub(2))
-        .sum()
+    mesh.topology_counts().0
 }
 
 fn main() {
@@ -414,12 +410,8 @@ fn run() {
         Measurement::new(facet_count(&analysis_source) as u64, 10, checksum)
     });
     config.run("kernel", "vertices", "sphere_medium", 32, || {
-        let vertices = black_box(&analysis_source).vertices();
-        Measurement::new(
-            facet_count(&analysis_source) as u64,
-            vertices.len() as u64,
-            vertices.len() as u64,
-        )
+        let (facets, vertices) = black_box(&analysis_source).topology_counts();
+        Measurement::new(facets as u64, vertices as u64, vertices as u64)
     });
     config.run("kernel", "graphics_buffers", "sphere_medium", 16, || {
         let graphics = black_box(&analysis_source).build_graphics_mesh();
@@ -430,11 +422,11 @@ fn run() {
         )
     });
     config.run("kernel", "connectivity", "sphere_medium", 8, || {
-        let (vertices, adjacency) = black_box(&analysis_source).build_connectivity();
+        let (vertices, adjacency) = black_box(&analysis_source).connectivity_counts();
         Measurement::new(
             facet_count(&analysis_source) as u64,
-            vertices.vertex_count() as u64,
-            (vertices.vertex_count() as u64).rotate_left(17) ^ adjacency.len() as u64,
+            vertices as u64,
+            (vertices as u64).rotate_left(17) ^ adjacency as u64,
         )
     });
     config.run("kernel", "is_manifold", "sphere_medium", 32, || {
