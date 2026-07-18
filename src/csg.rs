@@ -2,7 +2,7 @@
 //! representations.
 
 use crate::mesh::plane::Plane;
-use hyperlattice::{Aabb, Matrix4, Real, Vector3};
+use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 
 /// Build a finite homogeneous translation matrix from a public boundary vector.
 ///
@@ -31,15 +31,103 @@ fn finite_rotation_z(angle: Real) -> Option<Matrix4> {
     Some(Matrix4::rotation_z(angle))
 }
 
+fn axis_aligned_reflection(axis: usize, value: Real) -> Matrix4 {
+    let zero = Real::zero();
+    let one = Real::one();
+    let mut diagonal = [one.clone(), one.clone(), one.clone()];
+    diagonal[axis] = -one.clone();
+    let mut translation = [zero.clone(), zero.clone(), zero.clone()];
+    translation[axis] = Real::from(2_u8) * value;
+    Matrix4::from_row_major([
+        diagonal[0].clone(),
+        zero.clone(),
+        zero.clone(),
+        translation[0].clone(),
+        zero.clone(),
+        diagonal[1].clone(),
+        zero.clone(),
+        translation[1].clone(),
+        zero.clone(),
+        zero.clone(),
+        diagonal[2].clone(),
+        translation[2].clone(),
+        zero.clone(),
+        zero.clone(),
+        zero,
+        one,
+    ])
+}
+
+const fn point_coordinate(point: &Point3, axis: usize) -> &Real {
+    match axis {
+        0 => &point.x,
+        1 => &point.y,
+        _ => &point.z,
+    }
+}
+
+pub(crate) fn finite_axis_aligned_reflection(plane: &Plane) -> Option<(usize, Real)> {
+    for axis in 0..3 {
+        let value = point_coordinate(&plane.point_a, axis);
+        if point_coordinate(&plane.point_b, axis) != value
+            || point_coordinate(&plane.point_c, axis) != value
+        {
+            continue;
+        }
+        let other = match axis {
+            0 => [1, 2],
+            1 => [0, 2],
+            _ => [0, 1],
+        };
+        let b_changes = [
+            point_coordinate(&plane.point_b, other[0])
+                != point_coordinate(&plane.point_a, other[0]),
+            point_coordinate(&plane.point_b, other[1])
+                != point_coordinate(&plane.point_a, other[1]),
+        ];
+        let c_changes = [
+            point_coordinate(&plane.point_c, other[0])
+                != point_coordinate(&plane.point_a, other[0]),
+            point_coordinate(&plane.point_c, other[1])
+                != point_coordinate(&plane.point_a, other[1]),
+        ];
+        if matches!(
+            (b_changes, c_changes),
+            ([true, false], [false, true]) | ([false, true], [true, false])
+        ) {
+            return Some((axis, value.clone()));
+        }
+    }
+    None
+}
+
 pub(crate) fn finite_reflection(plane: &Plane) -> Option<Matrix4> {
-    let normal = plane.normal();
-    let len = normal.magnitude().ok()?;
-    let n = normal.normalize_checked().ok()?;
-    let w = (plane.offset() / len).ok()?;
+    if let Some((axis, value)) = finite_axis_aligned_reflection(plane) {
+        return Some(axis_aligned_reflection(axis, value));
+    }
+
+    let n = plane.unit_hreal_normal()?;
+    let w = n.dot(&plane.point_a.to_vector());
+    let one = Real::one();
+    let minus_one = -one.clone();
+    if let Some((axis, direction)) = n.0.iter().enumerate().find_map(|(axis, component)| {
+        let direction = if component == &one {
+            one.clone()
+        } else if component == &minus_one {
+            minus_one.clone()
+        } else {
+            return None;
+        };
+        n.0.iter()
+            .enumerate()
+            .all(|(other_axis, other)| other_axis == axis || other.definitely_zero())
+            .then_some((axis, direction))
+    }) {
+        return Some(axis_aligned_reflection(axis, w * direction));
+    }
     let [nx, ny, nz] = n.0;
     let two = Real::from(2_u8);
     let zero = Real::zero();
-    let one = Real::one();
     Some(Matrix4::from_row_major([
         one.clone() - two.clone() * nx.clone() * nx.clone(),
         -two.clone() * nx.clone() * ny.clone(),
@@ -119,12 +207,12 @@ pub trait CSG: Sized + Clone {
     /// Returns a new Self translated so that its bounding-box center is at the origin (0,0,0).
     fn center(&self) -> Self {
         let aabb = self.bounding_box();
-
-        let Some(center) =
-            hyperlattice::Point3::centroid(&[aabb.mins.clone(), aabb.maxs.clone()])
-        else {
-            return self.clone();
-        };
+        let half = real_half();
+        let center = hyperlattice::Point3::new(
+            (aabb.mins.x + aabb.maxs.x) * half.clone(),
+            (aabb.mins.y + aabb.maxs.y) * half.clone(),
+            (aabb.mins.z + aabb.maxs.z) * half,
+        );
 
         // Translate so that the bounding-box center goes to the origin
         self.translate(-center.x.clone(), -center.y.clone(), -center.z.clone())
@@ -328,10 +416,7 @@ pub trait CSG: Sized + Clone {
                     return self.clone();
                 };
                 let offset = step.clone() * step_index;
-                let Some(trans) = finite_translation(offset) else {
-                    return self.clone();
-                };
-                self.transform(&trans)
+                self.translate_vector(offset)
             })
             .collect();
         Self::union_distributed(copies)
@@ -360,10 +445,7 @@ pub trait CSG: Sized + Clone {
                         return self.clone();
                     };
                     let offset = step_x.clone() * col + step_y.clone() * row;
-                    let Some(trans) = finite_translation(offset) else {
-                        return self.clone();
-                    };
-                    self.transform(&trans)
+                    self.translate_vector(offset)
                 })
             })
             .collect();

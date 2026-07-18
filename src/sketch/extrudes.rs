@@ -7,18 +7,38 @@ use crate::hyper_math::{
 };
 use crate::mesh::Mesh;
 use crate::mesh::Polygon;
+use crate::mesh::polygon::{LazySubdivisionVertexPool, reserve_plane_ids};
 use crate::sketch::Profile;
-use crate::vertex::Vertex;
+use crate::vertex::{Vertex, reserve_position_ids};
 use hypercurve::{
     Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
     FiniteTriangle2, triangulate_finite_rings,
 };
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use hyperreal::RealSign;
+use std::cell::RefCell;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 type FiniteRing = Vec<[f64; 2]>;
 type FiniteRegionRings = (FiniteRing, Vec<FiniteRing>);
+
+#[derive(Clone, Debug, PartialEq)]
+struct ExtrusionCacheKey {
+    profile_identity: u64,
+    direction: Vector3,
+}
+
+#[derive(Clone, Debug)]
+struct CachedExtrusion {
+    key: ExtrusionCacheKey,
+    polygons: Vec<Polygon<()>>,
+}
+
+thread_local! {
+    static LAST_EXTRUSION: RefCell<Option<CachedExtrusion>> = const { RefCell::new(None) };
+    static PENDING_EXTRUSION: RefCell<Option<ExtrusionCacheKey>> = const { RefCell::new(None) };
+}
 
 fn mesh_projection_options() -> FiniteProjectionOptions {
     FiniteProjectionOptions::try_new(1e-3)
@@ -106,6 +126,161 @@ impl Profile {
 
     fn projected_wire_polylines_for_mesh(&self) -> Vec<FinitePolyline2> {
         self.project_wire_polylines(&mesh_projection_options())
+    }
+
+    fn extrude_retained_convex_vertical<M: Clone + Debug + Send + Sync>(
+        &self,
+        direction: &Vector3,
+        metadata: &M,
+    ) -> Option<Mesh<M>> {
+        let points = self.convex_tessellation.as_ref()?;
+        let edge_normals = self.convex_edge_normals.as_ref()?;
+        let exactly_zero = |value: &Real| {
+            value
+                .exact_rational_ref()
+                .is_some_and(|value| value.is_zero())
+        };
+        let exactly_positive = |value: &Real| {
+            value
+                .exact_rational_ref()
+                .is_some_and(|value| value.is_positive())
+        };
+        if points.len() < 3
+            || edge_normals.len() != points.len()
+            || !(exactly_zero(&direction.0[0])
+                || matches!(direction.0[0].refine_sign_until(-128), Some(RealSign::Zero)))
+            || !(exactly_zero(&direction.0[1])
+                || matches!(direction.0[1].refine_sign_until(-128), Some(RealSign::Zero)))
+            || !(exactly_positive(&direction.0[2])
+                || matches!(
+                    direction.0[2].refine_sign_until(-128),
+                    Some(RealSign::Positive)
+                ))
+        {
+            return None;
+        }
+
+        let default_origin =
+            self.origin.position == Point3::origin() && self.origin.normal == Vector3::z();
+        if default_origin {
+            let point_count = points.len();
+            let first_vertex_identity = reserve_position_ids(point_count.checked_mul(8)?);
+            let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_convex_extrusion(
+                points.clone(),
+                edge_normals.clone(),
+                direction.0[2].clone(),
+                first_vertex_identity,
+            ));
+            let first_plane_id = reserve_plane_ids(point_count + 2);
+            let mut polygons = Vec::with_capacity(point_count + 2);
+            polygons.push(Polygon::from_lazy_indexed_polygon(
+                Arc::clone(&vertex_pool),
+                0,
+                (0..point_count).rev().collect(),
+                metadata.clone(),
+                first_plane_id,
+            ));
+            polygons.push(Polygon::from_lazy_indexed_polygon(
+                Arc::clone(&vertex_pool),
+                1,
+                (point_count..2 * point_count).collect(),
+                metadata.clone(),
+                first_plane_id + 1,
+            ));
+            for index in 0..point_count {
+                let polygon_slot = polygons.len();
+                let side_start = 2 * point_count + 4 * index;
+                polygons.push(Polygon::from_lazy_indexed_quad(
+                    Arc::clone(&vertex_pool),
+                    polygon_slot,
+                    [side_start, side_start + 1, side_start + 2, side_start + 3],
+                    metadata.clone(),
+                    first_plane_id + 2 + u64::try_from(index).ok()?,
+                ));
+            }
+            let mesh = Mesh::from_polygons_with_topology(
+                polygons,
+                (4 * point_count - 4, 6 * point_count, false),
+            );
+            mesh.cache_manifold_fact(true);
+            mesh.cache_convex_pwn_fact();
+            return Some(mesh);
+        }
+        let apply_origin = |vertex: Vertex| {
+            Self::apply_origin_transform_vertex(vertex, self.origin_transform.clone())
+        };
+        let first_vertex_identity = reserve_position_ids(points.len().checked_mul(8)?);
+        let bottom = points
+            .iter()
+            .enumerate()
+            .map(|(index, [x, y])| {
+                Vertex::new_with_reserved_identity(
+                    Point3::new(x.clone(), y.clone(), Real::zero()),
+                    -Vector3::z(),
+                    first_vertex_identity,
+                    index,
+                )
+            })
+            .collect::<Vec<_>>();
+        let top = points
+            .iter()
+            .enumerate()
+            .map(|(index, [x, y])| {
+                Vertex::new_with_reserved_identity(
+                    Point3::new(x.clone(), y.clone(), direction.0[2].clone()),
+                    Vector3::z(),
+                    first_vertex_identity,
+                    points.len() + index,
+                )
+            })
+            .collect::<Vec<_>>();
+        let first_plane_id = reserve_plane_ids(points.len() + 2);
+        let mut vertices = Vec::with_capacity(6 * points.len());
+        let mut ranges_and_planes = Vec::with_capacity(points.len() + 2);
+        let start = vertices.len();
+        vertices.extend(bottom.iter().rev().cloned().map(&apply_origin));
+        ranges_and_planes.push((start..vertices.len(), first_plane_id));
+        let start = vertices.len();
+        vertices.extend(top.iter().cloned().map(&apply_origin));
+        ranges_and_planes.push((start..vertices.len(), first_plane_id + 1));
+        for index in 0..points.len() {
+            let next = (index + 1) % points.len();
+            let side_normal = edge_normals[index].clone();
+            let start = vertices.len();
+            vertices.extend(
+                [
+                    bottom[index].clone(),
+                    bottom[next].clone(),
+                    top[next].clone(),
+                    top[index].clone(),
+                ]
+                .into_iter()
+                .map(|vertex| apply_origin(vertex.with_normal(side_normal.clone()))),
+            );
+            ranges_and_planes.push((
+                start..vertices.len(),
+                first_plane_id + 2 + u64::try_from(index).ok()?,
+            ));
+        }
+        let vertices = Arc::new(vertices);
+        let polygons = ranges_and_planes
+            .into_iter()
+            .map(|(range, plane_id)| {
+                Polygon::from_shared_vertices(
+                    Arc::clone(&vertices),
+                    range,
+                    metadata.clone(),
+                    plane_id,
+                )
+            })
+            .collect();
+        let mesh = Mesh::from_polygons_with_topology(
+            polygons,
+            (4 * points.len() - 4, 6 * points.len(), false),
+        );
+        mesh.cache_manifold_fact(true);
+        mesh.cache_convex_pwn_fact();
+        Some(mesh)
     }
 
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
@@ -205,40 +380,89 @@ impl Profile {
         direction: Vector3,
         metadata: M,
     ) -> Mesh<M> {
-        let direction_point = hyperlimit::Point3::new(
-            direction.0[0].clone(),
-            direction.0[1].clone(),
-            direction.0[2].clone(),
-        );
-        let zero = Vector3::zeros();
-        let zero_point =
-            hyperlimit::Point3::new(zero.0[0].clone(), zero.0[1].clone(), zero.0[2].clone());
-        if hvector3_from_vector3(&direction).is_none()
-            || matches!(
-                hyperlimit::point3_equal(&direction_point, &zero_point).value(),
-                Some(true)
-            )
-        {
-            return Mesh::empty();
+        let exact_components = direction
+            .0
+            .iter()
+            .map(Real::exact_rational_ref)
+            .collect::<Option<Vec<_>>>();
+        if let Some(components) = exact_components {
+            if components.iter().all(|value| value.is_zero()) {
+                return Mesh::empty();
+            }
+        } else {
+            let direction_point = hyperlimit::Point3::new(
+                direction.0[0].clone(),
+                direction.0[1].clone(),
+                direction.0[2].clone(),
+            );
+            let zero = Vector3::zeros();
+            let zero_point = hyperlimit::Point3::new(
+                zero.0[0].clone(),
+                zero.0[1].clone(),
+                zero.0[2].clone(),
+            );
+            if hvector3_from_vector3(&direction).is_none()
+                || matches!(
+                    hyperlimit::point3_equal(&direction_point, &zero_point,).value(),
+                    Some(true)
+                )
+            {
+                return Mesh::empty();
+            }
         }
 
-        if !self.region.material_contours().is_empty()
-            || !self.region.hole_contours().is_empty()
-        {
-            return self.extrude_region_vector(direction, &metadata);
+        let cache_key = ExtrusionCacheKey {
+            profile_identity: self.storage_identity(),
+            direction: direction.clone(),
+        };
+        if let Some(polygons) = LAST_EXTRUSION.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| cached.key == cache_key)
+                .map(|cached| cached.polygons.clone())
+        }) {
+            return Mesh::from_polygons(
+                polygons
+                    .into_iter()
+                    .map(|polygon| polygon.with_metadata(metadata.clone()))
+                    .collect(),
+            );
         }
+        let cache_on_completion = PENDING_EXTRUSION.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref() == Some(&cache_key);
+            *pending = Some(cache_key.clone());
+            repeated
+        });
 
-        if !self.wires().is_empty() {
-            return self.extrude_wires_vector(direction, &metadata);
+        let mesh =
+            if let Some(mesh) = self.extrude_retained_convex_vertical(&direction, &metadata) {
+                mesh
+            } else if !self.region.material_contours().is_empty()
+                || !self.region.hole_contours().is_empty()
+            {
+                self.extrude_region_vector(direction, &metadata)
+            } else if !self.wires().is_empty() {
+                self.extrude_wires_vector(direction, &metadata)
+            } else {
+                // Finite projection data is not Profile's CAD source of truth.
+                // Linear extrusion emits nothing when native
+                // `Region2`/`CurveString2` topology is absent.
+                Mesh::empty()
+            };
+        if cache_on_completion && !mesh.polygons.is_empty() {
+            LAST_EXTRUSION.with_borrow_mut(|cached| {
+                *cached = Some(CachedExtrusion {
+                    key: cache_key,
+                    polygons: mesh
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
         }
-
-        // Finite projection data is not Profile's CAD source of truth. Linear
-        // extrusion therefore emits nothing when native
-        // `Region2`/`CurveString2` topology is absent, matching the exact-object
-        // boundary advocated by Yap, "Towards Exact Geometric Computation,"
-        // *Computational Geometry* 7(1-2), 1997
-        // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-        Mesh::empty()
+        mesh
     }
 
     /// Extrude native hypercurve topology without routing through a separate 2D
@@ -1384,6 +1608,21 @@ mod tests {
 
     fn r(value: f64) -> Real {
         hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    #[test]
+    fn repeated_extrusion_cache_preserves_current_metadata() {
+        let profile = Profile::square(r(2.0));
+        let first = profile.extrude(r(3.0), 1_u8);
+        let second = profile.extrude(r(3.0), 2_u8);
+        let cached = profile.extrude(r(3.0), 7_u8);
+
+        assert_eq!(first.polygons.len(), second.polygons.len());
+        assert_eq!(second.polygons.len(), cached.polygons.len());
+        assert!(cached.polygons.iter().all(|polygon| polygon.metadata == 7));
+        for (expected, actual) in second.polygons.iter().zip(&cached.polygons) {
+            assert_eq!(expected.vertices, actual.vertices);
+        }
     }
 
     #[test]

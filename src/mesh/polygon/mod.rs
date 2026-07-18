@@ -3,12 +3,13 @@
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
 use hashbrown::HashMap;
-use hyperlattice::{Aabb, Point3, Real, Vector3};
+use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hyperreal::Rational;
 use std::cell::RefCell;
+use std::ops::Range;
 use std::ops::{Deref, DerefMut};
-use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, LazyLock, OnceLock};
 
 static NEXT_PLANE_ID: AtomicU64 = AtomicU64::new(1);
 
@@ -24,9 +25,1324 @@ thread_local! {
 }
 
 const POLYGON_NORMAL_CACHE_CAPACITY: usize = 8_192;
+static EMPTY_VERTEX_BUFFER: LazyLock<Arc<Vec<Vertex>>> =
+    LazyLock::new(|| Arc::new(Vec::new()));
+
+#[derive(Debug)]
+enum LazyMappedTransform {
+    Translate(Vector3),
+    AxisReflection {
+        axis: usize,
+        value: Real,
+    },
+    Scale {
+        scales: [Real; 3],
+        inverse_scales: [Real; 3],
+    },
+    Affine {
+        matrix: Box<Matrix4>,
+        normal_matrix: Box<Matrix4>,
+        normalize_normals: bool,
+        flip_normals: bool,
+    },
+    Invert,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct LazyMappedIdentities {
+    first_position_id: u64,
+    first_coordinate_ids: [u64; 3],
+}
+
+#[derive(Debug)]
+enum LazySourceVertices {
+    Materialized(Arc<Vec<Vertex>>),
+    Sphere {
+        radius: Real,
+        longitudes: Vec<(Real, Real)>,
+        latitudes: Vec<(Real, Real)>,
+        certified_position_bounds: Option<Arc<Vec<CertifiedF64Bounds>>>,
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_vertex_identity: u64,
+    },
+    Torus {
+        major_radius: Real,
+        minor_radius: Real,
+        major_samples: Vec<(Real, Real)>,
+        minor_samples: Vec<(Real, Real)>,
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_vertex_identity: u64,
+    },
+    VerticalFrustum {
+        radius1: Real,
+        radius2: Real,
+        height: Real,
+        samples: Vec<(Real, Real)>,
+        side_normals: Vec<Vector3>,
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_vertex_identity: u64,
+        first_ruled_id: u64,
+    },
+    ConvexExtrusion {
+        points: Arc<Vec<[Real; 2]>>,
+        edge_normals: Arc<Vec<Vector3>>,
+        height: Real,
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_vertex_identity: u64,
+    },
+    RigidCopies {
+        source_corners: Arc<Vec<Vertex>>,
+        matrices: Vec<Matrix4>,
+        corner_position_slots: Vec<usize>,
+        positions_per_copy: usize,
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_vertex_identity: u64,
+    },
+    ArcCopies {
+        source_corners: Arc<Vec<Vertex>>,
+        samples: Vec<(Real, Real)>,
+        radius: Real,
+        corner_position_slots: Vec<usize>,
+        positions_per_copy: usize,
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_vertex_identity: u64,
+    },
+    Scaled {
+        source: Arc<LazySubdivisionVertexPool>,
+        scales: [Real; 3],
+        inverse_scales: [Real; 3],
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_vertex_identity: u64,
+    },
+    Mapped {
+        source: Arc<LazySubdivisionVertexPool>,
+        transform: Box<LazyMappedTransform>,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        identities: Option<LazyMappedIdentities>,
+    },
+}
+
+impl LazySourceVertices {
+    fn len(&self) -> usize {
+        match self {
+            Self::Materialized(vertices) => vertices.len(),
+            Self::Sphere { vertices, .. } => vertices.len(),
+            Self::Torus { vertices, .. } => vertices.len(),
+            Self::VerticalFrustum { vertices, .. } => vertices.len(),
+            Self::ConvexExtrusion { vertices, .. } => vertices.len(),
+            Self::RigidCopies { vertices, .. } => vertices.len(),
+            Self::ArcCopies { vertices, .. } => vertices.len(),
+            Self::Scaled { vertices, .. } => vertices.len(),
+            Self::Mapped { vertices, .. } => vertices.len(),
+        }
+    }
+
+    pub(crate) fn vertex(&self, index: usize) -> &Vertex {
+        match self {
+            Self::Materialized(vertices) => &vertices[index],
+            Self::Sphere {
+                radius,
+                longitudes,
+                latitudes,
+                vertices,
+                first_vertex_identity,
+                ..
+            } => vertices[index].get_or_init(|| {
+                if index == 0 {
+                    return Box::new(Vertex::new_with_reserved_identity(
+                        Point3::new(Real::zero(), radius.clone(), Real::zero()),
+                        Vector3::y(),
+                        *first_vertex_identity,
+                        index,
+                    ));
+                }
+                if index + 1 == vertices.len() {
+                    return Box::new(Vertex::new_with_reserved_identity(
+                        Point3::new(Real::zero(), -radius.clone(), Real::zero()),
+                        -Vector3::y(),
+                        *first_vertex_identity,
+                        index,
+                    ));
+                }
+
+                let interior = index - 1;
+                let longitude = interior / latitudes.len();
+                let latitude = interior % latitudes.len();
+                let (sin_theta, cos_theta) = &longitudes[longitude];
+                let (sin_phi, cos_phi) = &latitudes[latitude];
+                let direction = Vector3::from_xyz(
+                    cos_theta.clone() * sin_phi.clone(),
+                    cos_phi.clone(),
+                    sin_theta.clone() * sin_phi.clone(),
+                );
+                Box::new(Vertex::new_with_reserved_identity(
+                    Point3::new(
+                        direction.0[0].clone() * radius.clone(),
+                        direction.0[1].clone() * radius.clone(),
+                        direction.0[2].clone() * radius.clone(),
+                    ),
+                    direction,
+                    *first_vertex_identity,
+                    index,
+                ))
+            }),
+            Self::Torus {
+                major_radius,
+                minor_radius,
+                major_samples,
+                minor_samples,
+                vertices,
+                first_vertex_identity,
+            } => vertices[index].get_or_init(|| {
+                let major = index / minor_samples.len();
+                let minor = index % minor_samples.len();
+                let (sin_theta, cos_theta) = &major_samples[major];
+                let (sin_phi, cos_phi) = &minor_samples[minor];
+                let radial = major_radius.clone() + minor_radius.clone() * cos_phi.clone();
+                Box::new(Vertex::new_with_reserved_identity(
+                    Point3::new(
+                        radial.clone() * cos_theta.clone(),
+                        radial * sin_theta.clone(),
+                        minor_radius.clone() * sin_phi.clone(),
+                    ),
+                    Vector3::from_xyz(
+                        cos_phi.clone() * cos_theta.clone(),
+                        cos_phi.clone() * sin_theta.clone(),
+                        sin_phi.clone(),
+                    ),
+                    *first_vertex_identity,
+                    index,
+                ))
+            }),
+            Self::VerticalFrustum {
+                radius1,
+                radius2,
+                height,
+                samples,
+                side_normals,
+                vertices,
+                first_vertex_identity,
+                first_ruled_id,
+            } => vertices[index].get_or_init(|| {
+                if index == 0 {
+                    return Box::new(
+                        Vertex::new_with_reserved_identity(
+                            Point3::origin(),
+                            -Vector3::z(),
+                            *first_vertex_identity,
+                            0,
+                        )
+                        .exclude_from_hull(),
+                    );
+                }
+                if index == 1 {
+                    return Box::new(
+                        Vertex::new_with_reserved_identity(
+                            Point3::new(Real::zero(), Real::zero(), height.clone()),
+                            Vector3::z(),
+                            *first_vertex_identity,
+                            1,
+                        )
+                        .exclude_from_hull(),
+                    );
+                }
+
+                let segment_count = samples.len();
+                let ring_offset = index - 2;
+                let ring = ring_offset / segment_count;
+                let segment = ring_offset % segment_count;
+                let (sin, cos) = &samples[segment];
+                let is_bottom = matches!(ring, 0 | 2);
+                let is_side = ring >= 2;
+                let (radius, z, position_slot) = if is_bottom {
+                    (radius1, Real::zero(), 2 + segment)
+                } else {
+                    (radius2, height.clone(), 2 + segment_count + segment)
+                };
+                let normal = if is_side {
+                    if side_normals.is_empty() {
+                        Vector3::from_xyz(cos.clone(), sin.clone(), Real::zero())
+                    } else {
+                        side_normals[segment].clone()
+                    }
+                } else if is_bottom {
+                    -Vector3::z()
+                } else {
+                    Vector3::z()
+                };
+                let mut vertex = Vertex::new_with_reserved_identity(
+                    Point3::new(radius.clone() * cos.clone(), radius.clone() * sin.clone(), z),
+                    normal,
+                    *first_vertex_identity,
+                    position_slot,
+                );
+                if is_side {
+                    vertex.ruled_line = Some([
+                        *first_ruled_id,
+                        *first_ruled_id
+                            + 1
+                            + u64::try_from(segment).expect("frustum segment index fits u64"),
+                    ]);
+                }
+                Box::new(vertex)
+            }),
+            Self::ConvexExtrusion {
+                points,
+                edge_normals,
+                height,
+                vertices,
+                first_vertex_identity,
+            } => vertices[index].get_or_init(|| {
+                let point_count = points.len();
+                let (point_index, top, normal) = if index < point_count {
+                    (index, false, -Vector3::z())
+                } else if index < 2 * point_count {
+                    (index - point_count, true, Vector3::z())
+                } else {
+                    let side_corner = index - 2 * point_count;
+                    let edge = side_corner / 4;
+                    let corner = side_corner % 4;
+                    (
+                        if matches!(corner, 0 | 3) {
+                            edge
+                        } else {
+                            (edge + 1) % point_count
+                        },
+                        corner >= 2,
+                        edge_normals[edge].clone(),
+                    )
+                };
+                let [x, y] = &points[point_index];
+                Box::new(Vertex::new_with_reserved_identity(
+                    Point3::new(
+                        x.clone(),
+                        y.clone(),
+                        if top { height.clone() } else { Real::zero() },
+                    ),
+                    normal,
+                    *first_vertex_identity,
+                    if top {
+                        point_count + point_index
+                    } else {
+                        point_index
+                    },
+                ))
+            }),
+            Self::RigidCopies {
+                source_corners,
+                matrices,
+                corner_position_slots,
+                positions_per_copy,
+                vertices,
+                first_vertex_identity,
+            } => vertices[index].get_or_init(|| {
+                let corners_per_copy = source_corners.len();
+                let copy = index / corners_per_copy;
+                let corner = index % corners_per_copy;
+                let source = &source_corners[corner];
+                let position_slot = corner_position_slots[corner];
+                let identity_slot = copy * positions_per_copy + position_slot;
+                let mut vertex = Vertex::new_with_reserved_identity(
+                    matrices[copy]
+                        .transform_point3(&source.position)
+                        .expect("rigid copy matrix transforms finite points"),
+                    matrices[copy].transform_direction3(&source.normal),
+                    *first_vertex_identity,
+                    identity_slot,
+                );
+                vertex.ruled_line = source.ruled_line;
+                vertex.hull_candidate = source.hull_candidate;
+                Box::new(vertex)
+            }),
+            Self::ArcCopies {
+                source_corners,
+                samples,
+                radius,
+                corner_position_slots,
+                positions_per_copy,
+                vertices,
+                first_vertex_identity,
+            } => vertices[index].get_or_init(|| {
+                let corners_per_copy = source_corners.len();
+                let copy = index / corners_per_copy;
+                let corner = index % corners_per_copy;
+                let source = &source_corners[corner];
+                let (sin, cos) = &samples[copy];
+                let translated_x = source.position.x.clone() + radius.clone();
+                let position = Point3::new(
+                    cos.clone() * translated_x.clone()
+                        - sin.clone() * source.position.y.clone(),
+                    sin.clone() * translated_x + cos.clone() * source.position.y.clone(),
+                    source.position.z.clone(),
+                );
+                let normal = Vector3::from_xyz(
+                    cos.clone() * source.normal.0[0].clone()
+                        - sin.clone() * source.normal.0[1].clone(),
+                    sin.clone() * source.normal.0[0].clone()
+                        + cos.clone() * source.normal.0[1].clone(),
+                    source.normal.0[2].clone(),
+                );
+                let position_slot = corner_position_slots[corner];
+                let identity_slot = copy * positions_per_copy + position_slot;
+                let mut vertex = Vertex::new_with_reserved_identity(
+                    position,
+                    normal,
+                    *first_vertex_identity,
+                    identity_slot,
+                );
+                vertex.ruled_line = source.ruled_line;
+                vertex.hull_candidate = source.hull_candidate;
+                Box::new(vertex)
+            }),
+            Self::Scaled {
+                source,
+                scales,
+                inverse_scales,
+                vertices,
+                first_vertex_identity,
+            } => vertices[index].get_or_init(|| {
+                let source = source.vertex(index);
+                let mut vertex = Vertex::new_with_reserved_identity(
+                    Point3::new(
+                        source.position.x.clone() * scales[0].clone(),
+                        source.position.y.clone() * scales[1].clone(),
+                        source.position.z.clone() * scales[2].clone(),
+                    ),
+                    Vector3::new([
+                        source.normal.0[0].clone() * inverse_scales[0].clone(),
+                        source.normal.0[1].clone() * inverse_scales[1].clone(),
+                        source.normal.0[2].clone() * inverse_scales[2].clone(),
+                    ]),
+                    *first_vertex_identity,
+                    index,
+                );
+                vertex.ruled_line = source.ruled_line;
+                vertex.hull_candidate = source.hull_candidate;
+                Box::new(vertex)
+            }),
+            Self::Mapped {
+                source,
+                transform,
+                vertices,
+                identities,
+                ..
+            } => vertices[index].get_or_init(|| {
+                let source = source.vertex(index);
+                if matches!(transform.as_ref(), LazyMappedTransform::Invert) {
+                    let mut vertex = source.clone();
+                    vertex.flip();
+                    return Box::new(vertex);
+                }
+                let (position, normal) = match transform.as_ref() {
+                    LazyMappedTransform::Translate(translation) => (
+                        Point3::new(
+                            source.position.x.clone() + translation.0[0].clone(),
+                            source.position.y.clone() + translation.0[1].clone(),
+                            source.position.z.clone() + translation.0[2].clone(),
+                        ),
+                        source.normal.clone(),
+                    ),
+                    LazyMappedTransform::AxisReflection { axis, value } => {
+                        let mut position = source.position.clone();
+                        let coordinate = match *axis {
+                            0 => &mut position.x,
+                            1 => &mut position.y,
+                            2 => &mut position.z,
+                            _ => unreachable!("reflection axis is in 0..3"),
+                        };
+                        *coordinate = Real::from(2_u8) * value.clone() - coordinate.clone();
+                        let mut normal = -source.normal.clone();
+                        normal.0[*axis] = source.normal.0[*axis].clone();
+                        (position, normal)
+                    },
+                    LazyMappedTransform::Scale {
+                        scales,
+                        inverse_scales,
+                    } => (
+                        Point3::new(
+                            source.position.x.clone() * scales[0].clone(),
+                            source.position.y.clone() * scales[1].clone(),
+                            source.position.z.clone() * scales[2].clone(),
+                        ),
+                        Vector3::new([
+                            source.normal.0[0].clone() * inverse_scales[0].clone(),
+                            source.normal.0[1].clone() * inverse_scales[1].clone(),
+                            source.normal.0[2].clone() * inverse_scales[2].clone(),
+                        ]),
+                    ),
+                    LazyMappedTransform::Affine {
+                        matrix,
+                        normal_matrix,
+                        normalize_normals,
+                        flip_normals,
+                    } => {
+                        let position = matrix
+                            .prepare()
+                            .transform_point3(&source.position)
+                            .expect("retained affine transform preserves finite points");
+                        let transformed_normal =
+                            normal_matrix.prepare().transform_direction3(&source.normal);
+                        let mut normal = if *normalize_normals {
+                            finite_normalized_exact_rational(&transformed_normal)
+                                .or_else(|| transformed_normal.normalize_checked().ok())
+                                .expect("retained affine transform has a valid normal")
+                        } else {
+                            transformed_normal
+                        };
+                        if *flip_normals {
+                            normal = -normal;
+                        }
+                        (position, normal)
+                    },
+                    LazyMappedTransform::Invert => unreachable!(),
+                };
+                let identities =
+                    identities.expect("mapped geometric transforms reserve identities");
+                let slot = u64::try_from(index).expect("vertex slot fits u64");
+                let mut vertex = Vertex {
+                    position,
+                    normal,
+                    position_id: identities.first_position_id + slot,
+                    coordinate_ids: std::array::from_fn(|axis| {
+                        identities.first_coordinate_ids[axis] + slot
+                    }),
+                    ruled_line: source.ruled_line,
+                    hull_candidate: source.hull_candidate,
+                };
+                vertex.ruled_line = source.ruled_line;
+                vertex.hull_candidate = source.hull_candidate;
+                Box::new(vertex)
+            }),
+        }
+    }
+
+    fn position_f64_lossy(&self, index: usize) -> Option<[f64; 3]> {
+        match self {
+            Self::Mapped {
+                position_f64: Some(positions),
+                ..
+            } => positions.get(index).copied(),
+            _ => self.vertex(index).position_f64_lossy(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct LazySubdivisionVertexPool {
+    source_vertices: LazySourceVertices,
+    midpoint_edges: Vec<[usize; 2]>,
+    midpoints: Vec<OnceLock<Box<Vertex>>>,
+    materialized_polygons: Vec<OnceLock<Arc<Vec<Vertex>>>>,
+    first_midpoint_identity: u64,
+}
+
+impl LazySubdivisionVertexPool {
+    pub(crate) fn new(
+        source_vertices: Vec<Vertex>,
+        midpoint_edges: Vec<[usize; 2]>,
+        polygon_count: usize,
+        first_midpoint_identity: u64,
+    ) -> Self {
+        debug_assert!(midpoint_edges.iter().all(|[left, right]| {
+            *left < source_vertices.len() && *right < source_vertices.len()
+        }));
+        let midpoints = std::iter::repeat_with(OnceLock::new)
+            .take(midpoint_edges.len())
+            .collect();
+        let materialized_polygons = std::iter::repeat_with(OnceLock::new)
+            .take(polygon_count)
+            .collect();
+        Self {
+            source_vertices: LazySourceVertices::Materialized(Arc::new(source_vertices)),
+            midpoint_edges,
+            midpoints,
+            materialized_polygons,
+            first_midpoint_identity,
+        }
+    }
+
+    pub(crate) fn new_sphere(
+        radius: Real,
+        longitudes: Vec<(Real, Real)>,
+        latitudes: Vec<(Real, Real)>,
+        certified_position_bounds: Option<Vec<CertifiedF64Bounds>>,
+        polygon_count: usize,
+        first_vertex_identity: u64,
+    ) -> Self {
+        let vertex_count = 2 + longitudes.len() * latitudes.len();
+        Self {
+            source_vertices: LazySourceVertices::Sphere {
+                radius,
+                longitudes,
+                latitudes,
+                certified_position_bounds: certified_position_bounds.map(Arc::new),
+                vertices: std::iter::repeat_with(OnceLock::new)
+                    .take(vertex_count)
+                    .collect(),
+                first_vertex_identity,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new)
+                .take(polygon_count)
+                .collect(),
+            first_midpoint_identity: first_vertex_identity,
+        }
+    }
+
+    pub(crate) fn new_scaled(
+        source: Arc<Self>,
+        scales: [Real; 3],
+        inverse_scales: [Real; 3],
+        polygon_count: usize,
+        first_vertex_identity: u64,
+    ) -> Self {
+        let vertex_count = source.len();
+        Self {
+            source_vertices: LazySourceVertices::Scaled {
+                source,
+                scales,
+                inverse_scales,
+                vertices: std::iter::repeat_with(OnceLock::new)
+                    .take(vertex_count)
+                    .collect(),
+                first_vertex_identity,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new)
+                .take(polygon_count)
+                .collect(),
+            first_midpoint_identity: first_vertex_identity,
+        }
+    }
+
+    pub(crate) fn new_translated(
+        source: Arc<Self>,
+        translation: Vector3,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        polygon_count: usize,
+        first_position_id: u64,
+        first_coordinate_ids: [u64; 3],
+    ) -> Self {
+        Self::new_mapped(
+            source,
+            LazyMappedTransform::Translate(translation),
+            position_f64,
+            polygon_count,
+            Some(LazyMappedIdentities {
+                first_position_id,
+                first_coordinate_ids,
+            }),
+        )
+    }
+
+    pub(crate) fn new_scale_transform(
+        source: Arc<Self>,
+        scales: [Real; 3],
+        inverse_scales: [Real; 3],
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        polygon_count: usize,
+        first_position_id: u64,
+        first_coordinate_ids: [u64; 3],
+    ) -> Self {
+        Self::new_mapped(
+            source,
+            LazyMappedTransform::Scale {
+                scales,
+                inverse_scales,
+            },
+            position_f64,
+            polygon_count,
+            Some(LazyMappedIdentities {
+                first_position_id,
+                first_coordinate_ids,
+            }),
+        )
+    }
+
+    pub(crate) fn new_axis_reflected(
+        source: Arc<Self>,
+        axis: usize,
+        value: Real,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        polygon_count: usize,
+        first_position_id: u64,
+        first_coordinate_ids: [u64; 3],
+    ) -> Self {
+        Self::new_mapped(
+            source,
+            LazyMappedTransform::AxisReflection { axis, value },
+            position_f64,
+            polygon_count,
+            Some(LazyMappedIdentities {
+                first_position_id,
+                first_coordinate_ids,
+            }),
+        )
+    }
+
+    pub(crate) fn new_affine_transform(
+        source: Arc<Self>,
+        matrix: Matrix4,
+        normal_matrix: Matrix4,
+        normalize_normals: bool,
+        flip_normals: bool,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        polygon_count: usize,
+        first_position_id: u64,
+        first_coordinate_ids: [u64; 3],
+    ) -> Self {
+        Self::new_mapped(
+            source,
+            LazyMappedTransform::Affine {
+                matrix: Box::new(matrix),
+                normal_matrix: Box::new(normal_matrix),
+                normalize_normals,
+                flip_normals,
+            },
+            position_f64,
+            polygon_count,
+            Some(LazyMappedIdentities {
+                first_position_id,
+                first_coordinate_ids,
+            }),
+        )
+    }
+
+    pub(crate) fn new_inverted(
+        source: Arc<Self>,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        polygon_count: usize,
+    ) -> Self {
+        Self::new_mapped(
+            source,
+            LazyMappedTransform::Invert,
+            position_f64,
+            polygon_count,
+            None,
+        )
+    }
+
+    fn new_mapped(
+        source: Arc<Self>,
+        transform: LazyMappedTransform,
+        position_f64: Option<Arc<Vec<[f64; 3]>>>,
+        polygon_count: usize,
+        identities: Option<LazyMappedIdentities>,
+    ) -> Self {
+        let vertex_count = source.len();
+        Self {
+            source_vertices: LazySourceVertices::Mapped {
+                source,
+                transform: Box::new(transform),
+                position_f64,
+                vertices: std::iter::repeat_with(OnceLock::new)
+                    .take(vertex_count)
+                    .collect(),
+                identities,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new)
+                .take(polygon_count)
+                .collect(),
+            first_midpoint_identity: 0,
+        }
+    }
+
+    pub(crate) fn new_torus(
+        major_radius: Real,
+        minor_radius: Real,
+        major_samples: Vec<(Real, Real)>,
+        minor_samples: Vec<(Real, Real)>,
+        polygon_count: usize,
+        first_vertex_identity: u64,
+    ) -> Self {
+        let vertex_count = major_samples.len() * minor_samples.len();
+        Self {
+            source_vertices: LazySourceVertices::Torus {
+                major_radius,
+                minor_radius,
+                major_samples,
+                minor_samples,
+                vertices: std::iter::repeat_with(OnceLock::new)
+                    .take(vertex_count)
+                    .collect(),
+                first_vertex_identity,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new)
+                .take(polygon_count)
+                .collect(),
+            first_midpoint_identity: first_vertex_identity,
+        }
+    }
+
+    pub(crate) fn new_vertical_frustum(
+        radius1: Real,
+        radius2: Real,
+        height: Real,
+        samples: Vec<(Real, Real)>,
+        side_normals: Vec<Vector3>,
+        polygon_count: usize,
+        first_vertex_identity: u64,
+        first_ruled_id: u64,
+    ) -> Self {
+        debug_assert!(side_normals.is_empty() || samples.len() == side_normals.len());
+        let vertex_count = 2 + 4 * samples.len();
+        Self {
+            source_vertices: LazySourceVertices::VerticalFrustum {
+                radius1,
+                radius2,
+                height,
+                samples,
+                side_normals,
+                vertices: std::iter::repeat_with(OnceLock::new)
+                    .take(vertex_count)
+                    .collect(),
+                first_vertex_identity,
+                first_ruled_id,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new)
+                .take(polygon_count)
+                .collect(),
+            first_midpoint_identity: first_vertex_identity,
+        }
+    }
+
+    pub(crate) fn new_convex_extrusion(
+        points: Arc<Vec<[Real; 2]>>,
+        edge_normals: Arc<Vec<Vector3>>,
+        height: Real,
+        first_vertex_identity: u64,
+    ) -> Self {
+        debug_assert_eq!(points.len(), edge_normals.len());
+        let polygon_count = points.len() + 2;
+        let vertex_count = 6 * points.len();
+        Self {
+            source_vertices: LazySourceVertices::ConvexExtrusion {
+                points,
+                edge_normals,
+                height,
+                vertices: std::iter::repeat_with(OnceLock::new)
+                    .take(vertex_count)
+                    .collect(),
+                first_vertex_identity,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new)
+                .take(polygon_count)
+                .collect(),
+            first_midpoint_identity: first_vertex_identity,
+        }
+    }
+
+    pub(crate) fn new_rigid_copies(
+        source_corners: Vec<Vertex>,
+        matrices: Vec<Matrix4>,
+        corner_position_slots: Vec<usize>,
+        positions_per_copy: usize,
+        polygon_count: usize,
+        first_vertex_identity: u64,
+    ) -> Self {
+        debug_assert_eq!(source_corners.len(), corner_position_slots.len());
+        let vertex_count = source_corners.len() * matrices.len();
+        Self {
+            source_vertices: LazySourceVertices::RigidCopies {
+                source_corners: Arc::new(source_corners),
+                matrices,
+                corner_position_slots,
+                positions_per_copy,
+                vertices: std::iter::repeat_with(OnceLock::new)
+                    .take(vertex_count)
+                    .collect(),
+                first_vertex_identity,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new)
+                .take(polygon_count)
+                .collect(),
+            first_midpoint_identity: first_vertex_identity,
+        }
+    }
+
+    pub(crate) fn new_arc_copies(
+        source_corners: Vec<Vertex>,
+        samples: Vec<(Real, Real)>,
+        radius: Real,
+        corner_position_slots: Vec<usize>,
+        positions_per_copy: usize,
+        polygon_count: usize,
+        first_vertex_identity: u64,
+    ) -> Self {
+        debug_assert_eq!(source_corners.len(), corner_position_slots.len());
+        let vertex_count = source_corners.len() * samples.len();
+        Self {
+            source_vertices: LazySourceVertices::ArcCopies {
+                source_corners: Arc::new(source_corners),
+                samples,
+                radius,
+                corner_position_slots,
+                positions_per_copy,
+                vertices: std::iter::repeat_with(OnceLock::new)
+                    .take(vertex_count)
+                    .collect(),
+                first_vertex_identity,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new)
+                .take(polygon_count)
+                .collect(),
+            first_midpoint_identity: first_vertex_identity,
+        }
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.source_vertices.len() + self.midpoint_edges.len()
+    }
+
+    pub(crate) fn vertex(&self, index: usize) -> &Vertex {
+        if index < self.source_vertices.len() {
+            return self.source_vertices.vertex(index);
+        }
+        let midpoint_index = index - self.source_vertices.len();
+        self.midpoints[midpoint_index].get_or_init(|| {
+            let [left, right] = self.midpoint_edges[midpoint_index];
+            let left = self.source_vertices.vertex(left);
+            let right = self.source_vertices.vertex(right);
+            let midpoint_real = |left: &Real, right: &Real| {
+                if let (Some(left), Some(right)) =
+                    (left.exact_rational_ref(), right.exact_rational_ref())
+                {
+                    Real::from(Rational::average_pair(left, right))
+                } else {
+                    (left + right)
+                        * Real::from(Rational::fraction(1, 2).expect("two is nonzero"))
+                }
+            };
+            Box::new(Vertex::new_with_reserved_identity(
+                Point3::new(
+                    midpoint_real(&left.position.x, &right.position.x),
+                    midpoint_real(&left.position.y, &right.position.y),
+                    midpoint_real(&left.position.z, &right.position.z),
+                ),
+                Vector3::new([
+                    midpoint_real(&left.normal.0[0], &right.normal.0[0]),
+                    midpoint_real(&left.normal.0[1], &right.normal.0[1]),
+                    midpoint_real(&left.normal.0[2], &right.normal.0[2]),
+                ]),
+                self.first_midpoint_identity,
+                midpoint_index,
+            ))
+        })
+    }
+
+    fn position_f64_lossy(&self, index: usize) -> Option<[f64; 3]> {
+        if index < self.source_vertices.len() {
+            return self.source_vertices.position_f64_lossy(index);
+        }
+        self.vertex(index).position_f64_lossy()
+    }
+
+    fn certified_f64_bounds(&self, indices: &[usize]) -> Option<CertifiedF64Bounds> {
+        let LazySourceVertices::Sphere {
+            certified_position_bounds: Some(position_bounds),
+            ..
+        } = &self.source_vertices
+        else {
+            return None;
+        };
+        let mut minimum = [f64::INFINITY; 3];
+        let mut maximum = [f64::NEG_INFINITY; 3];
+        for &index in indices {
+            for axis in 0..3 {
+                minimum[axis] = minimum[axis].min(position_bounds[index].min[axis]);
+                maximum[axis] = maximum[axis].max(position_bounds[index].max[axis]);
+            }
+        }
+        Some(CertifiedF64Bounds {
+            min: minimum,
+            max: maximum,
+        })
+    }
+
+    fn materialized_polygon(
+        &self,
+        polygon_slot: usize,
+        indices: &[usize],
+    ) -> &Arc<Vec<Vertex>> {
+        self.materialized_polygons[polygon_slot].get_or_init(|| {
+            Arc::new(
+                indices
+                    .iter()
+                    .map(|&index| self.vertex(index).clone())
+                    .collect(),
+            )
+        })
+    }
+}
+
+#[derive(Clone, Debug)]
+enum IndexedPolygonVertices {
+    Triangle([usize; 3]),
+    Quad([usize; 4]),
+    Ngon(Arc<[usize]>),
+}
+
+impl IndexedPolygonVertices {
+    fn as_slice(&self) -> &[usize] {
+        match self {
+            Self::Triangle(indices) => indices,
+            Self::Quad(indices) => indices,
+            Self::Ngon(indices) => indices,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct PolygonVertices {
+    buffer: Arc<Vec<Vertex>>,
+    range: Range<usize>,
+    indexed_polygon: Option<IndexedPolygonVertices>,
+    lazy_subdivision_pool: Option<Arc<LazySubdivisionVertexPool>>,
+    lazy_polygon_slot: Option<usize>,
+}
+
+impl PolygonVertices {
+    fn new(vertices: Vec<Vertex>) -> Self {
+        let len = vertices.len();
+        Self {
+            buffer: Arc::new(vertices),
+            range: 0..len,
+            indexed_polygon: None,
+            lazy_subdivision_pool: None,
+            lazy_polygon_slot: None,
+        }
+    }
+
+    pub(crate) fn from_shared(buffer: Arc<Vec<Vertex>>, range: Range<usize>) -> Self {
+        debug_assert!(range.end <= buffer.len());
+        Self {
+            buffer,
+            range,
+            indexed_polygon: None,
+            lazy_subdivision_pool: None,
+            lazy_polygon_slot: None,
+        }
+    }
+
+    pub(crate) fn from_lazy_subdivision_triangle(
+        pool: Arc<LazySubdivisionVertexPool>,
+        triangle_slot: usize,
+        indices: [usize; 3],
+    ) -> Self {
+        debug_assert!(indices.iter().all(|index| *index < pool.len()));
+        debug_assert!(triangle_slot < pool.materialized_polygons.len());
+        Self {
+            buffer: Arc::clone(&EMPTY_VERTEX_BUFFER),
+            range: 0..3,
+            indexed_polygon: Some(IndexedPolygonVertices::Triangle(indices)),
+            lazy_subdivision_pool: Some(pool),
+            lazy_polygon_slot: Some(triangle_slot),
+        }
+    }
+
+    pub(crate) fn from_lazy_indexed_quad(
+        pool: Arc<LazySubdivisionVertexPool>,
+        polygon_slot: usize,
+        indices: [usize; 4],
+    ) -> Self {
+        debug_assert!(indices.iter().all(|index| *index < pool.len()));
+        debug_assert!(polygon_slot < pool.materialized_polygons.len());
+        Self {
+            buffer: Arc::clone(&EMPTY_VERTEX_BUFFER),
+            range: 0..4,
+            indexed_polygon: Some(IndexedPolygonVertices::Quad(indices)),
+            lazy_subdivision_pool: Some(pool),
+            lazy_polygon_slot: Some(polygon_slot),
+        }
+    }
+
+    pub(crate) fn from_lazy_indexed_polygon(
+        pool: Arc<LazySubdivisionVertexPool>,
+        polygon_slot: usize,
+        indices: Vec<usize>,
+    ) -> Self {
+        debug_assert!(indices.len() >= 3);
+        debug_assert!(indices.iter().all(|index| *index < pool.len()));
+        debug_assert!(polygon_slot < pool.materialized_polygons.len());
+        let len = indices.len();
+        Self {
+            buffer: Arc::clone(&EMPTY_VERTEX_BUFFER),
+            range: 0..len,
+            indexed_polygon: Some(IndexedPolygonVertices::Ngon(indices.into())),
+            lazy_subdivision_pool: Some(pool),
+            lazy_polygon_slot: Some(polygon_slot),
+        }
+    }
+
+    pub(crate) fn into_vec(self) -> Vec<Vertex> {
+        if let Some(indices) = &self.indexed_polygon {
+            return self
+                .lazy_subdivision_pool
+                .as_ref()
+                .expect("indexed polygon retains its lazy vertex pool")
+                .materialized_polygon(
+                    self.lazy_polygon_slot
+                        .expect("indexed polygon retains its pool slot"),
+                    indices.as_slice(),
+                )
+                .as_ref()
+                .clone();
+        }
+        if self.range.start == 0 && self.range.end == self.buffer.len() {
+            return Arc::try_unwrap(self.buffer)
+                .unwrap_or_else(|vertices| (*vertices).clone());
+        }
+        self.buffer[self.range].to_vec()
+    }
+
+    fn borrowed_iter(&self) -> PolygonVertexIter<'_> {
+        if let Some(indices) = &self.indexed_polygon {
+            return PolygonVertexIter::Indexed {
+                indices: indices.as_slice().iter(),
+                pool: self
+                    .lazy_subdivision_pool
+                    .as_ref()
+                    .expect("indexed polygon retains its lazy vertex pool"),
+            };
+        }
+        PolygonVertexIter::Slice(self.buffer[self.range.clone()].iter())
+    }
+
+    fn position_f64_iter(&self) -> PolygonPositionF64Iter<'_> {
+        if let Some(indices) = &self.indexed_polygon {
+            return PolygonPositionF64Iter::Indexed {
+                indices: indices.as_slice().iter(),
+                pool: self
+                    .lazy_subdivision_pool
+                    .as_ref()
+                    .expect("indexed polygon retains its lazy vertex pool"),
+            };
+        }
+        PolygonPositionF64Iter::Slice(self.buffer[self.range.clone()].iter())
+    }
+
+    fn retained_certified_f64_bounds(&self) -> Option<CertifiedF64Bounds> {
+        let indices = self.indexed_polygon.as_ref()?.as_slice();
+        self.lazy_subdivision_pool
+            .as_ref()?
+            .certified_f64_bounds(indices)
+    }
+}
+
+enum PolygonVertexIter<'a> {
+    Slice(std::slice::Iter<'a, Vertex>),
+    Indexed {
+        indices: std::slice::Iter<'a, usize>,
+        pool: &'a LazySubdivisionVertexPool,
+    },
+}
+
+impl<'a> Iterator for PolygonVertexIter<'a> {
+    type Item = &'a Vertex;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Slice(vertices) => vertices.next(),
+            Self::Indexed { indices, pool } => indices.next().map(|&index| pool.vertex(index)),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Slice(vertices) => vertices.size_hint(),
+            Self::Indexed { indices, .. } => indices.size_hint(),
+        }
+    }
+}
+
+impl ExactSizeIterator for PolygonVertexIter<'_> {}
+
+enum PolygonPositionF64Iter<'a> {
+    Slice(std::slice::Iter<'a, Vertex>),
+    Indexed {
+        indices: std::slice::Iter<'a, usize>,
+        pool: &'a LazySubdivisionVertexPool,
+    },
+}
+
+impl Iterator for PolygonPositionF64Iter<'_> {
+    type Item = Option<[f64; 3]>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Slice(vertices) => vertices.next().map(Vertex::position_f64_lossy),
+            Self::Indexed { indices, pool } => {
+                indices.next().map(|&index| pool.position_f64_lossy(index))
+            },
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Slice(vertices) => vertices.size_hint(),
+            Self::Indexed { indices, .. } => indices.size_hint(),
+        }
+    }
+}
+
+impl ExactSizeIterator for PolygonPositionF64Iter<'_> {}
+
+impl Deref for PolygonVertices {
+    type Target = [Vertex];
+
+    fn deref(&self) -> &Self::Target {
+        if let Some(indices) = &self.indexed_polygon {
+            return self
+                .lazy_subdivision_pool
+                .as_ref()
+                .expect("indexed polygon retains its lazy vertex pool")
+                .materialized_polygon(
+                    self.lazy_polygon_slot
+                        .expect("indexed polygon retains its pool slot"),
+                    indices.as_slice(),
+                );
+        }
+        &self.buffer[self.range.clone()]
+    }
+}
+
+impl DerefMut for PolygonVertices {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        if self.indexed_polygon.is_some() {
+            let vertices = self.deref().to_vec();
+            let len = vertices.len();
+            self.buffer = Arc::new(vertices);
+            self.range = 0..len;
+            self.indexed_polygon = None;
+            self.lazy_subdivision_pool = None;
+            self.lazy_polygon_slot = None;
+        }
+        if self.range.start != 0 || self.range.end != self.buffer.len() {
+            let vertices = self.to_vec();
+            let len = vertices.len();
+            self.buffer = Arc::new(vertices);
+            self.range = 0..len;
+        }
+        &mut Arc::make_mut(&mut self.buffer)[self.range.clone()]
+    }
+}
+
+impl PartialEq for PolygonVertices {
+    fn eq(&self, other: &Self) -> bool {
+        **self == **other
+    }
+}
+
+impl IntoIterator for PolygonVertices {
+    type Item = Vertex;
+    type IntoIter = std::vec::IntoIter<Vertex>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.into_vec().into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a PolygonVertices {
+    type Item = &'a Vertex;
+    type IntoIter = std::slice::Iter<'a, Vertex>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut PolygonVertices {
+    type Item = &'a mut Vertex;
+    type IntoIter = std::slice::IterMut<'a, Vertex>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct PolygonPlane {
+    plane: OnceLock<Arc<Plane>>,
+    source_vertices: Option<PolygonVertices>,
+}
+
+impl PolygonPlane {
+    fn from_vertices(vertices: &PolygonVertices) -> Self {
+        Self {
+            plane: OnceLock::new(),
+            source_vertices: Some(vertices.clone()),
+        }
+    }
+
+    fn get(&self) -> &Arc<Plane> {
+        self.plane.get_or_init(|| {
+            Arc::new(Plane::from_vertices(
+                self.source_vertices
+                    .as_ref()
+                    .expect("deferred polygon plane retains source vertices"),
+            ))
+        })
+    }
+}
+
+impl Deref for PolygonPlane {
+    type Target = Plane;
+
+    fn deref(&self) -> &Self::Target {
+        self.get()
+    }
+}
+
+impl DerefMut for PolygonPlane {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        if self.plane.get().is_none() {
+            let plane = Arc::new(Plane::from_vertices(
+                self.source_vertices
+                    .as_ref()
+                    .expect("deferred polygon plane retains source vertices"),
+            ));
+            self.plane
+                .set(plane)
+                .expect("deferred polygon plane is initialized once");
+        }
+        Arc::make_mut(
+            self.plane
+                .get_mut()
+                .expect("polygon plane was initialized before mutation"),
+        )
+    }
+}
+
+impl PartialEq for PolygonPlane {
+    fn eq(&self, other: &Self) -> bool {
+        **self == **other
+    }
+}
 
 pub(crate) fn fresh_plane_id() -> u64 {
-    NEXT_PLANE_ID.fetch_add(1, Ordering::Relaxed)
+    reserve_plane_ids(1)
+}
+
+pub(crate) fn reserve_plane_ids(count: usize) -> u64 {
+    NEXT_PLANE_ID.fetch_add(
+        u64::try_from(count).expect("plane identity reservation fits u64"),
+        Ordering::Relaxed,
+    )
 }
 
 mod triangulation;
@@ -36,12 +1352,12 @@ mod triangulation;
 ///   `M = ()` for no metadata, or `M = Option<YourMetadata>` for optional metadata.
 #[derive(Debug, Clone)]
 pub struct Polygon<M: Clone> {
-    pub(crate) vertices: Vec<Vertex>,
-    pub(crate) plane: Plane,
+    pub(crate) vertices: PolygonVertices,
+    pub(crate) plane: PolygonPlane,
     pub(crate) plane_id: u64,
-    bounding_box: OnceLock<Aabb>,
+    bounding_box: OnceLock<Arc<Aabb>>,
     certified_f64_bounds: OnceLock<Option<CertifiedF64Bounds>>,
-    prepared_triangle_query: OnceLock<Option<PreparedTriangleQuery>>,
+    prepared_triangle_query: OnceLock<Option<Arc<PreparedTriangleQuery>>>,
     certified_nondegenerate: OnceLock<Option<bool>>,
     pub(crate) metadata: M,
 }
@@ -129,11 +1445,91 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     pub fn new(vertices: Vec<Vertex>, metadata: M) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
 
-        let plane = Plane::from_vertices(&vertices);
+        let vertices = PolygonVertices::new(vertices);
         Polygon {
+            plane: PolygonPlane::from_vertices(&vertices),
             vertices,
-            plane,
             plane_id: fresh_plane_id(),
+            bounding_box: OnceLock::new(),
+            certified_f64_bounds: OnceLock::new(),
+            prepared_triangle_query: OnceLock::new(),
+            certified_nondegenerate: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    pub(crate) fn from_lazy_indexed_quad(
+        pool: Arc<LazySubdivisionVertexPool>,
+        polygon_slot: usize,
+        indices: [usize; 4],
+        metadata: M,
+        plane_id: u64,
+    ) -> Self {
+        let vertices = PolygonVertices::from_lazy_indexed_quad(pool, polygon_slot, indices);
+        Self {
+            plane: PolygonPlane::from_vertices(&vertices),
+            vertices,
+            plane_id,
+            bounding_box: OnceLock::new(),
+            certified_f64_bounds: OnceLock::new(),
+            prepared_triangle_query: OnceLock::new(),
+            certified_nondegenerate: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    pub(crate) fn from_lazy_indexed_polygon(
+        pool: Arc<LazySubdivisionVertexPool>,
+        polygon_slot: usize,
+        indices: Vec<usize>,
+        metadata: M,
+        plane_id: u64,
+    ) -> Self {
+        let vertices = PolygonVertices::from_lazy_indexed_polygon(pool, polygon_slot, indices);
+        Self {
+            plane: PolygonPlane::from_vertices(&vertices),
+            vertices,
+            plane_id,
+            bounding_box: OnceLock::new(),
+            certified_f64_bounds: OnceLock::new(),
+            prepared_triangle_query: OnceLock::new(),
+            certified_nondegenerate: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    pub(crate) fn from_shared_vertices(
+        buffer: Arc<Vec<Vertex>>,
+        range: Range<usize>,
+        metadata: M,
+        plane_id: u64,
+    ) -> Self {
+        let vertices = PolygonVertices::from_shared(buffer, range);
+        Self {
+            plane: PolygonPlane::from_vertices(&vertices),
+            vertices,
+            plane_id,
+            bounding_box: OnceLock::new(),
+            certified_f64_bounds: OnceLock::new(),
+            prepared_triangle_query: OnceLock::new(),
+            certified_nondegenerate: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    pub(crate) fn from_lazy_subdivision_triangle(
+        pool: Arc<LazySubdivisionVertexPool>,
+        triangle_slot: usize,
+        indices: [usize; 3],
+        metadata: M,
+        plane_id: u64,
+    ) -> Self {
+        let vertices =
+            PolygonVertices::from_lazy_subdivision_triangle(pool, triangle_slot, indices);
+        Self {
+            plane: PolygonPlane::from_vertices(&vertices),
+            vertices,
+            plane_id,
             bounding_box: OnceLock::new(),
             certified_f64_bounds: OnceLock::new(),
             prepared_triangle_query: OnceLock::new(),
@@ -184,35 +1580,36 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     }
 
     pub(crate) fn bounding_box_ref(&self) -> &Aabb {
-        self.bounding_box.get_or_init(|| {
-            let Some((mins, maxs)) =
-                point3_bounds(self.vertices.iter().map(|vertex| &vertex.position))
-            else {
-                return Aabb::origin();
-            };
-            Aabb::new(mins, maxs)
-        })
+        self.bounding_box
+            .get_or_init(|| {
+                let Some((mins, maxs)) =
+                    point3_bounds(self.vertices.iter().map(|vertex| &vertex.position))
+                else {
+                    return Arc::new(Aabb::origin());
+                };
+                Arc::new(Aabb::new(mins, maxs))
+            })
+            .as_ref()
     }
 
     pub(crate) fn cached_bounding_box_ref(&self) -> Option<&Aabb> {
-        self.bounding_box.get()
+        self.bounding_box.get().map(Arc::as_ref)
     }
 
     pub(crate) fn certified_f64_bounds_ref(&self) -> Option<&CertifiedF64Bounds> {
         self.certified_f64_bounds
-            .get_or_init(|| certified_f64_bounds(&self.vertices))
+            .get_or_init(|| {
+                self.vertices
+                    .retained_certified_f64_bounds()
+                    .or_else(|| certified_f64_bounds(&self.vertices))
+            })
             .as_ref()
     }
 
     pub(crate) fn prepared_triangle_query_ref(&self) -> Option<&PreparedTriangleQuery> {
         self.prepared_triangle_query
-            .get_or_init(|| prepared_triangle_query(&self.vertices))
-            .as_ref()
-    }
-
-    pub(crate) fn prepare_spatial_query_caches(&self) {
-        let _ = self.certified_f64_bounds_ref();
-        let _ = self.prepared_triangle_query_ref();
+            .get_or_init(|| prepared_triangle_query(&self.vertices).map(Arc::new))
+            .as_deref()
     }
 
     #[cfg(feature = "stl-io")]
@@ -220,10 +1617,6 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         *self
             .certified_nondegenerate
             .get_or_init(|| self.compute_certified_nondegenerate())
-    }
-
-    pub(crate) fn certify_nondegenerate(&self) {
-        let _ = self.certified_nondegenerate.set(Some(true));
     }
 
     #[cfg(feature = "stl-io")]
@@ -256,6 +1649,21 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         &self.vertices
     }
 
+    /// Borrow vertices in winding order without forcing indexed storage into
+    /// an expanded contiguous buffer.
+    pub fn vertex_iter(&self) -> impl ExactSizeIterator<Item = &Vertex> {
+        self.vertices.borrowed_iter()
+    }
+
+    /// Returns retained finite approximations of vertex positions without
+    /// forcing exact lazy transform recipes to materialize.
+    ///
+    /// This view is intended for rendering, export, and checksums. Geometry
+    /// predicates continue to consume the exact [`Self::vertex_iter`] values.
+    pub fn position_f64_iter(&self) -> impl ExactSizeIterator<Item = Option<[f64; 3]>> {
+        self.vertices.position_f64_iter()
+    }
+
     /// Mutably access vertex values while preserving derived geometry.
     ///
     /// The slice has a fixed length, so the polygon cannot become degenerate
@@ -282,16 +1690,20 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     }
 
     /// Plane derived from the current vertices.
-    pub const fn plane(&self) -> &Plane {
+    pub fn plane(&self) -> &Plane {
         &self.plane
     }
 
     fn refresh_geometry(&mut self) {
-        self.plane = Plane::from_vertices(&self.vertices);
+        self.defer_plane_from_vertices();
         self.bounding_box = OnceLock::new();
         self.certified_f64_bounds = OnceLock::new();
         self.prepared_triangle_query = OnceLock::new();
         self.certified_nondegenerate = OnceLock::new();
+    }
+
+    pub(crate) fn defer_plane_from_vertices(&mut self) {
+        self.plane = PolygonPlane::from_vertices(&self.vertices);
     }
 
     pub(crate) fn invalidate_bounding_box(&mut self) {
@@ -308,8 +1720,8 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         for v in &mut self.vertices {
             v.flip();
         }
-        // 3) flip the cached plane too
-        self.plane.flip();
+        // 3) defer the matching support plane until it is queried
+        self.defer_plane_from_vertices();
         self.prepared_triangle_query = OnceLock::new();
     }
 
@@ -517,4 +1929,122 @@ pub(crate) fn finite_normalized_exact_rational(vector: &Vector3) -> Option<Vecto
         Real::try_from(components[1] / magnitude).ok()?,
         Real::try_from(components[2] / magnitude).ok()?,
     ]))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cloned_polygon_vertices_detach_on_mutation() {
+        let polygon = Polygon::new(
+            vec![
+                Vertex::new(Point3::origin(), Vector3::z()),
+                Vertex::new(
+                    Point3::new(Real::one(), Real::zero(), Real::zero()),
+                    Vector3::z(),
+                ),
+                Vertex::new(
+                    Point3::new(Real::zero(), Real::one(), Real::zero()),
+                    Vector3::z(),
+                ),
+            ],
+            (),
+        );
+        let mut cloned = polygon.clone();
+        assert!(Arc::ptr_eq(&polygon.vertices.buffer, &cloned.vertices.buffer));
+
+        cloned.vertices_mut()[0].position.x = Real::from(2_u8);
+
+        assert!(!Arc::ptr_eq(
+            &polygon.vertices.buffer,
+            &cloned.vertices.buffer
+        ));
+        assert_eq!(polygon.vertices[0].position.x, Real::zero());
+        assert_eq!(cloned.vertices[0].position.x, Real::from(2_u8));
+    }
+
+    #[test]
+    fn indexed_triangle_materializes_in_order_and_detaches_on_mutation() {
+        let source_vertices = [0_u8, 2, 4]
+            .into_iter()
+            .map(|x| {
+                Vertex::new(
+                    Point3::new(Real::from(x), Real::zero(), Real::zero()),
+                    Vector3::z(),
+                )
+            })
+            .collect();
+        let pool = Arc::new(LazySubdivisionVertexPool::new(
+            source_vertices,
+            vec![[0, 2]],
+            1,
+            crate::vertex::reserve_position_ids(4),
+        ));
+        let polygon = Polygon::from_lazy_subdivision_triangle(
+            Arc::clone(&pool),
+            0,
+            [2, 0, 3],
+            (),
+            fresh_plane_id(),
+        );
+        let materialized = &pool.materialized_polygons[0];
+        assert!(materialized.get().is_none());
+        assert_eq!(
+            polygon
+                .vertices
+                .iter()
+                .map(|vertex| vertex.position.x.clone())
+                .collect::<Vec<_>>(),
+            [4_u8, 0, 2].map(Real::from)
+        );
+        assert!(materialized.get().is_some());
+
+        let mut cloned = polygon.clone();
+        cloned.vertices_mut()[0].position.x = Real::from(9_u8);
+        assert_eq!(polygon.vertices[0].position.x, Real::from(4_u8));
+        assert_eq!(cloned.vertices[0].position.x, Real::from(9_u8));
+    }
+
+    #[test]
+    fn indexed_quad_materializes_in_order_and_detaches_on_mutation() {
+        let source_vertices = [0_u8, 2, 4, 6]
+            .into_iter()
+            .map(|x| {
+                Vertex::new(
+                    Point3::new(Real::from(x), Real::zero(), Real::zero()),
+                    Vector3::z(),
+                )
+            })
+            .collect();
+        let pool = Arc::new(LazySubdivisionVertexPool::new(
+            source_vertices,
+            Vec::new(),
+            1,
+            crate::vertex::reserve_position_ids(4),
+        ));
+        let polygon = Polygon::from_lazy_indexed_quad(
+            Arc::clone(&pool),
+            0,
+            [3, 1, 0, 2],
+            (),
+            fresh_plane_id(),
+        );
+        let materialized = &pool.materialized_polygons[0];
+        assert!(materialized.get().is_none());
+        assert_eq!(
+            polygon
+                .vertices
+                .iter()
+                .map(|vertex| vertex.position.x.clone())
+                .collect::<Vec<_>>(),
+            [6_u8, 2, 0, 4].map(Real::from)
+        );
+        assert!(materialized.get().is_some());
+
+        let mut cloned = polygon.clone();
+        cloned.vertices_mut()[3].position.x = Real::from(9_u8);
+        assert_eq!(polygon.vertices[3].position.x, Real::from(4_u8));
+        assert_eq!(cloned.vertices[3].position.x, Real::from(9_u8));
+    }
 }

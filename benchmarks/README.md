@@ -69,6 +69,24 @@ For example, this runs only Boolean cases with five samples:
 CSGRS_BENCH_FILTER=boolean CSGRS_BENCH_SAMPLES=5 benchmarks/run.sh
 ```
 
+## Runtime path tracing
+
+Enable `dispatch-trace` to record the exact-computation path selected by every
+timed `feature_pipeline` workload, including public mesh paths through
+`hypermesh` and public profile paths through `hypercurve`:
+
+```sh
+cargo test --lib --all-features dispatch_trace_tests
+cargo bench --all-features --bench feature_pipeline
+```
+
+The focused tests fail if representative public mesh or profile Booleans emit
+neither a dispatch event nor rational-reducer evidence. Every benchmark window
+also records a `csgrs-benchmark/entry/recorded-workload` marker and fails on an empty trace, so
+finite adapters and serialization paths remain correlated even when they do
+not enter exact arithmetic. The benchmark prints a correlation summary and
+per-operation trace for each independently recorded workload.
+
 ## Comparison protocol
 
 The comparison corpus fixes dimensions, tessellation counts, transforms, and
@@ -139,14 +157,23 @@ but serialization-only conclusions should account for that boundary difference.
 
 ## Coverage
 
+Coverage is audited by executable public family. Data-only types, constants,
+report accessors, and binding wrappers are validated through their producing
+operation or their compile/test workflow rather than assigned meaningless
+standalone timings. Each runtime-bearing family in the table has semantic
+tests and a `feature_pipeline` or focused release benchmark. With
+`dispatch-trace`, every `feature_pipeline` row is independently recorded;
+mesh and profile trace integration is additionally enforced by
+`dispatch_trace_tests`.
+
 | Area | Representative cases | Principal implementation/dependencies |
 |---|---|---|
 | Exact scalar/lattice | expression evaluation; isolated translation, rotation, non-uniform scale, affine shear, mirror, and inverse | `hyperreal`, `hyperlattice` |
-| 3D construction | box, sphere, cylinder, torus, ellipsoid, icosahedron | csgrs mesh shapes |
+| 3D construction | every public mesh constructor: boxes, round/frustum solids, polyhedron, revolved/extruded specialty solids, Platonic solids, torus, arrow, and gear variants | csgrs mesh shapes |
 | Mesh topology | union, difference, intersection, XOR, inverse orientation, connectivity, manifold test, triangulation | `hypermesh`, `hypertri`, `hyperlimit` |
 | Geometry algorithms | hull, Minkowski sum, subdivision, smoothing | `hypermesh`, csgrs mesh pipeline |
 | Analysis/query | bounds, rays, exact mass properties, graphics buffers | `hyperlimit`, `hyperphysics` |
-| 2D profiles | shape catalog, all Booleans, all CSG transform helpers, triangulation, offsets | `hypercurve`, `hypertri`, `geo` |
+| 2D profiles | every public profile constructor (including polygon, Bezier/B-spline, gear/rack, airfoil, and Hilbert paths), all Booleans, all CSG transform helpers, triangulation, offsets | `hypercurve`, `hypertri` |
 | 2D→3D | extrusion, revolution, twist, sweep, loft | `hypercurve`, csgrs mesh lowering |
 | Implicit geometry | retained SDF, 2D/3D metaballs, TPMS catalog | `hypersdf`, `fast-surface-nets` |
 | Projection | slice and flatten | `hypercurve`, `hyperlimit` |

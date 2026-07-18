@@ -103,7 +103,6 @@ struct PreparedMeshBooleanArrangement {
 struct CachedPreparedMeshBooleanArrangement {
     left_geometry_identity: Vec<u64>,
     right_geometry_identity: Vec<u64>,
-    operations: Vec<HypermeshBooleanOp>,
     arrangement: Arc<BooleanArrangement>,
     left_source_polygons: Arc<[usize]>,
     right_source_polygons: Arc<[usize]>,
@@ -160,6 +159,21 @@ impl<'a, M: Clone + Send + Sync + Debug> PreparedMeshBoolean<'a, M> {
                 Ok(self.extract_shortcut(*shortcut, operation))
             },
             PreparedMeshBooleanState::Arrangement(prepared) => {
+                let exact_box_result = match operation {
+                    HypermeshBooleanOp::Union => {
+                        self.left.exact_axis_aligned_box_union(self.right)
+                    },
+                    HypermeshBooleanOp::Difference => {
+                        self.left.exact_axis_aligned_box_difference(self.right)
+                    },
+                    HypermeshBooleanOp::Intersection => {
+                        self.left.exact_axis_aligned_box_intersection(self.right)
+                    },
+                    HypermeshBooleanOp::Xor => None,
+                };
+                if let Some(mesh) = exact_box_result {
+                    return Ok(mesh);
+                }
                 let soup = prepared
                     .arrangement
                     .extract_triangle_soup(operation.as_hypermesh())
@@ -271,17 +285,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     pub(super) fn try_prepare_boolean_operation<'a>(
         &'a self,
         other: &'a Self,
-        _operation: HypermeshBooleanOp,
+        operation: HypermeshBooleanOp,
     ) -> Result<PreparedMeshBoolean<'a, M>, HypermeshError> {
-        self.try_prepare_boolean_operations(
-            other,
-            &[
-                HypermeshBooleanOp::Union,
-                HypermeshBooleanOp::Difference,
-                HypermeshBooleanOp::Intersection,
-                HypermeshBooleanOp::Xor,
-            ],
-        )
+        self.try_prepare_boolean_operations(other, &[operation])
     }
 
     fn try_prepare_boolean_operations<'a>(
@@ -289,6 +295,30 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         other: &'a Self,
         operations: &[HypermeshBooleanOp],
     ) -> Result<PreparedMeshBoolean<'a, M>, HypermeshError> {
+        let left_storage_identity = self.polygons.storage_identity();
+        let right_storage_identity = other.polygons.storage_identity();
+        if left_storage_identity == right_storage_identity {
+            return Ok(PreparedMeshBoolean {
+                left: self,
+                right: other,
+                state: PreparedMeshBooleanState::Shortcut(
+                    PreparedMeshBooleanShortcut::Identical,
+                ),
+            });
+        }
+        if self
+            .polygons
+            .is_retained_disjoint_with(right_storage_identity)
+        {
+            return Ok(PreparedMeshBoolean {
+                left: self,
+                right: other,
+                state: PreparedMeshBooleanState::Shortcut(
+                    PreparedMeshBooleanShortcut::Disjoint,
+                ),
+            });
+        }
+
         let shortcut = if self.polygons.is_empty() {
             Some(PreparedMeshBooleanShortcut::LeftEmpty)
         } else if other.polygons.is_empty() {
@@ -299,6 +329,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             None
         };
         if let Some(shortcut) = shortcut {
+            if shortcut == PreparedMeshBooleanShortcut::Disjoint {
+                self.polygons.retain_disjoint_partner(right_storage_identity);
+                other.polygons.retain_disjoint_partner(left_storage_identity);
+            }
             return Ok(PreparedMeshBoolean {
                 left: self,
                 right: other,
@@ -314,7 +348,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 .filter(|cached| {
                     cached.left_geometry_identity == left_geometry_identity
                         && cached.right_geometry_identity == right_geometry_identity
-                        && cached.operations == operations
+                        && operations.iter().all(|operation| {
+                            cached.arrangement.supports(operation.as_hypermesh())
+                        })
                 })
                 .cloned()
         }) {
@@ -375,7 +411,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             *cached = Some(CachedPreparedMeshBooleanArrangement {
                 left_geometry_identity,
                 right_geometry_identity,
-                operations: operations.to_vec(),
                 arrangement: Arc::clone(&arrangement),
                 left_source_polygons: Arc::clone(&left_source_polygons),
                 right_source_polygons: Arc::clone(&right_source_polygons),
@@ -406,6 +441,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     }
 
     pub(super) fn build_hypermesh_input(&self, retain_sources: bool) -> HypermeshAdapterInput {
+        if let Some(input) = self.build_hypermesh_input_from_retained_layout(retain_sources) {
+            return input;
+        }
         let triangle_capacity = self
             .polygons
             .iter()
@@ -476,6 +514,76 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             source_polygons,
             position_ids,
         }
+    }
+
+    fn build_hypermesh_input_from_retained_layout(
+        &self,
+        retain_sources: bool,
+    ) -> Option<HypermeshAdapterInput> {
+        let layout = self.polygons.retained_transform_layout()?;
+        layout.indexed_triangle_pool.as_ref()?;
+        let all_triangles = self.polygons.topology().2;
+        if layout.indexed_polygon_corner_counts.is_none() && !all_triangles {
+            return None;
+        }
+
+        let mut positions = Vec::with_capacity(layout.position_representatives.len() * 3);
+        for position_slot in 0..layout.position_representatives.len() {
+            let position = canonical_position(
+                &layout
+                    .position_representative(&self.polygons, position_slot)
+                    .position,
+            );
+            positions.extend([position.x, position.y, position.z]);
+        }
+
+        let triangle_capacity = self
+            .polygons
+            .iter()
+            .map(|polygon| polygon.vertices.len().saturating_sub(2))
+            .sum::<usize>();
+        let mut indices = Vec::with_capacity(triangle_capacity * 3);
+        let mut source_polygons =
+            Vec::with_capacity(if retain_sources { triangle_capacity } else { 0 });
+        let mut corner_offset = 0usize;
+        for polygon_index in 0..self.polygons.len() {
+            let corner_count = layout
+                .indexed_polygon_corner_counts
+                .as_ref()
+                .map_or(3, |counts| counts[polygon_index]);
+            let polygon_slots = layout
+                .corner_position_slots
+                .get(corner_offset..corner_offset + corner_count)?;
+            for index in 1..corner_count.saturating_sub(1) {
+                indices.extend([
+                    polygon_slots[0],
+                    polygon_slots[index],
+                    polygon_slots[index + 1],
+                ]);
+                if retain_sources {
+                    source_polygons.push(polygon_index);
+                }
+            }
+            corner_offset += corner_count;
+        }
+        if corner_offset != layout.corner_position_slots.len() {
+            return None;
+        }
+
+        let mut position_ids = HashMap::with_capacity(layout.corner_position_slots.len());
+        let mut corner_index = 0usize;
+        for polygon in self.polygons.iter() {
+            for vertex in polygon.vertices.iter() {
+                position_ids
+                    .insert(vertex.position_id, layout.corner_position_slots[corner_index]);
+                corner_index += 1;
+            }
+        }
+        Some(HypermeshAdapterInput {
+            buffers: HypermeshBuffers { positions, indices },
+            source_polygons,
+            position_ids,
+        })
     }
 
     /// Convert this `csgrs` mesh into an exact `hypermesh` input mesh.

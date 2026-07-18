@@ -219,4 +219,13 @@ mod tests {
             Err(IoError::SizeOverflow { format: "glTF", .. })
         ));
     }
+
+    #[test]
+    fn public_writer_matches_string_serializer() {
+        let mesh = Mesh::<()>::cube(Real::one(), ());
+        let expected = to_gltf(&mesh, "cube").unwrap();
+        let mut written = Vec::new();
+        crate::io::gltf::write_gltf(&mesh, &mut written, "cube").unwrap();
+        assert_eq!(written, expected.as_bytes());
+    }
 }

@@ -36,7 +36,7 @@ fn mesh_bounds_union_cached_polygon_endpoints() {
     for polygon in polygons.iter().step_by(2) {
         polygon.bounding_box();
     }
-    let mesh = Mesh::from_polygons(polygons);
+    let mesh = Mesh::from_polygons(polygons.into_vec());
 
     let bounds = mesh.bounding_box();
 

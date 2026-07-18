@@ -4,6 +4,8 @@ mod support;
 
 mod bug_tests;
 mod csg_tests;
+#[cfg(feature = "dispatch-trace")]
+mod dispatch_trace_tests;
 mod extrude_slice_tests;
 mod flatten_slice_tests;
 mod metadata_tests;

@@ -19,7 +19,8 @@ use hypercurve::{
 use hyperlattice::{Matrix4, Point3, Vector3};
 use hyperreal::RealSign;
 use std::fmt::Debug;
-use std::sync::OnceLock;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, OnceLock};
 
 pub mod extrudes;
 pub mod shapes;
@@ -40,6 +41,12 @@ pub mod offset;
 pub mod truetype;
 
 pub mod triangulated;
+
+static NEXT_PROFILE_ID: AtomicU64 = AtomicU64::new(1);
+
+fn fresh_profile_id() -> u64 {
+    NEXT_PROFILE_ID.fetch_add(1, Ordering::Relaxed)
+}
 
 /// Position transform plus rotation from the sketch's local XY plane into 3D.
 ///
@@ -76,6 +83,10 @@ impl GraphicLineStrings {
 
 #[derive(Clone, Debug)]
 pub struct Profile {
+    identity: u64,
+    pub(crate) convex_tessellation: Option<Arc<Vec<[Real; 2]>>>,
+    pub(crate) convex_edge_normals: Option<Arc<Vec<Vector3>>>,
+
     /// Primary hypercurve region for 2D CAD topology.
     ///
     /// Filled Profile topology is owned by this region. Topology-sensitive
@@ -105,6 +116,9 @@ impl Profile {
     /// Return a new empty sketch.
     pub fn empty() -> Self {
         Profile {
+            identity: fresh_profile_id(),
+            convex_tessellation: None,
+            convex_edge_normals: None,
             region: Region2::empty(),
             wires: Vec::new(),
             bounding_box: OnceLock::new(),
@@ -337,13 +351,16 @@ impl Profile {
         )
     }
 
-    pub(crate) const fn from_region_and_wires_with_origin(
+    pub(crate) fn from_region_and_wires_with_origin(
         region: Region2,
         wires: Vec<CurveString2>,
         origin: Vertex,
         origin_transform: OriginTransform,
     ) -> Profile {
         Profile {
+            identity: fresh_profile_id(),
+            convex_tessellation: None,
+            convex_edge_normals: None,
             region,
             wires,
             bounding_box: OnceLock::new(),
@@ -398,6 +415,20 @@ impl Profile {
     /// Borrow native open hypercurve wires carried by this sketch.
     pub fn wires(&self) -> &[CurveString2] {
         &self.wires
+    }
+
+    pub(crate) const fn storage_identity(&self) -> u64 {
+        self.identity
+    }
+
+    pub(crate) fn retain_convex_tessellation(
+        &mut self,
+        points: Vec<[Real; 2]>,
+        edge_normals: Vec<Vector3>,
+    ) {
+        debug_assert_eq!(points.len(), edge_normals.len());
+        self.convex_tessellation = Some(Arc::new(points));
+        self.convex_edge_normals = Some(Arc::new(edge_normals));
     }
 
     /// Consume this sketch into its native hypercurve CAD topology.
@@ -639,6 +670,7 @@ impl Profile {
     pub fn set_origin(&mut self, origin: Vertex) {
         self.origin_transform = Self::prepare_origin_transform(origin.clone());
         self.origin = origin;
+        self.identity = fresh_profile_id();
     }
 
     /// Return this sketch with a new 3D origin.
@@ -1098,6 +1130,9 @@ impl CSG for Profile {
     /// Invalidates object's cached bounding box.
     fn invalidate_bounding_box(&mut self) {
         self.bounding_box = OnceLock::new();
+        self.convex_tessellation = None;
+        self.convex_edge_normals = None;
+        self.identity = fresh_profile_id();
     }
 
     /// Return the topology-preserving Profile inverse for native hypercurve data.

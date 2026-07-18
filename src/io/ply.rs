@@ -164,6 +164,15 @@ mod tests {
     }
 
     #[test]
+    fn public_writer_matches_string_serializer() {
+        let mesh = Mesh::<()>::cube(Real::one(), ());
+        let expected = to_ply(&mesh, "cube").unwrap();
+        let mut written = Vec::new();
+        crate::io::ply::write_ply(&mesh, &mut written, "cube").unwrap();
+        assert_eq!(written, expected.as_bytes());
+    }
+
+    #[test]
     fn comment_cannot_inject_header_records() {
         let mesh = Mesh::<()>::cube(Real::one(), ());
         assert!(mesh.to_ply("safe\nelement vertex 0").is_err());

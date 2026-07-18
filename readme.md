@@ -556,7 +556,6 @@ for Polygon
 - disengage chulls on 2D->3D shapes
 - fix up error handling with result types, eliminate panics
 - ray intersection (singular)
-- expose geo traits on 2D shapes
 - https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
 - document coordinate system / coordinate transformations / compounded transformations
 - bending
@@ -581,7 +580,6 @@ for Polygon
 - history tree
   - STEP/IGES import / export
 - constraintt solving tree
-- test geo_booleanop as alternative to geo's built-in boolean ops.
 - rethink metadata
   - support storing UV[W] coordinates with vertices at compile time (try to keep runtime cost low too)
   - accomplish equivalence checks and memory usage reduction by using a hashmap or references instead of storing metadata with each node
@@ -600,11 +598,7 @@ for Polygon
   - make corners, edge midpoints, and centroids of polygons accessible by default (calculate on demand using an iterator)
   - align_to_attachment(name, csg2, name2)
 - implement C FFI using https://rust-lang.github.io/rust-bindgen/
-- pull in https://crates.io/crates/geo-uom for units and dimensional analysis
 - https://proptest-rs.github.io/proptest/intro.html
-- https://crates.io/crates/geo-validity-check as compile time option
-- https://crates.io/crates/geo-index - 2D only :(
-- https://github.com/lelongg/geo-rand
 - renderer integration
   - blueprint renders
   - exploded renders - installation vector
@@ -614,7 +608,6 @@ for Polygon
 - evaluate using approx crate
 - evaluate using https://docs.rs/nalgebra/latest/nalgebra/trait.RealField.html instead of float_types::Real
 - mutable API for transmute, etc.
-- implement trait geo::MetricSpace on nalgebra::Point, Point2, Point3
 - gltf output
 - gerber output
 - rework bezier and bspline using https://github.com/mattatz/curvo
@@ -648,11 +641,9 @@ for Polygon
 - https://github.com/PsichiX/density-mesh
 - https://github.com/asny/tri-mesh port
 - https://crates.io/crates/flo_curves
-- port https://github.com/21re/rust-geo-booleanop to cavalier_contours
 - hyperbolic geometry: https://github.com/agerasev/ccgeom/tree/master/src/hyperbolic
 - https://crates.io/crates/spherical_geometry
 - https://crates.io/crates/miniproj
-- examine https://crates.io/crates/geo-aid constraint solver
 - examine https://cadquery.readthedocs.io/en/latest/apireference.html for function ideas
 - https://github.com/tscircuit/tscircuit
 

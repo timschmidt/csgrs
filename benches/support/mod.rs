@@ -69,7 +69,14 @@ impl Config {
         #[cfg(feature = "dispatch-trace")]
         {
             hyperreal::dispatch_trace::reset();
-            hyperreal::dispatch_trace::with_recording(&mut measure);
+            hyperreal::dispatch_trace::with_recording(|| {
+                hyperreal::dispatch_trace::record(
+                    "csgrs-benchmark",
+                    "entry",
+                    "recorded-workload",
+                );
+                measure();
+            });
             print_dispatch_trace(suite, benchmark, case);
         }
 
@@ -110,8 +117,13 @@ pub fn print_header() {
 #[cfg(feature = "dispatch-trace")]
 fn print_dispatch_trace(suite: &str, benchmark: &str, case: &str) {
     let trace = hyperreal::dispatch_trace::take_trace();
+    let correlation = trace.correlation_summary();
+    assert!(
+        correlation.dispatch_events > 0,
+        "{suite}/{benchmark}/{case} did not emit a benchmark path trace"
+    );
     eprintln!("dispatch benchmark: {suite}/{benchmark}/{case}");
-    eprintln!("dispatch correlation: {:?}", trace.correlation_summary());
+    eprintln!("dispatch correlation: {correlation:?}");
     for summary in trace.operation_summaries() {
         eprintln!(
             "dispatch operation: {}/{}/{}",

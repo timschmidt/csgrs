@@ -1078,7 +1078,7 @@ Build and test these combinations:
 - default plus `bevymesh`
 - minimal mesh-only combinations where compile rules permit
 - minimal sketch-only combinations where compile rules permit
-- expected compile failures for retired `bmesh` and `geo` feature names
+- expected compile failure for the retired `bmesh` feature name
 
 Performance and complexity attacks
 ----------------------------------
