@@ -715,6 +715,47 @@ mod tests {
     }
 
     #[test]
+    fn signed_rational_asin_deferred_node_matches_acos_complement() {
+        for input in [
+            Rational::fraction(-999_999, 1_000_000).unwrap(),
+            Rational::fraction(-7, 8).unwrap(),
+            Rational::fraction(-7, 10).unwrap(),
+            Rational::fraction(-3, 10).unwrap(),
+            Rational::fraction(-1, 8).unwrap(),
+            Rational::fraction(1, 8).unwrap(),
+            Rational::fraction(3, 10).unwrap(),
+            Rational::fraction(7, 10).unwrap(),
+            Rational::fraction(7, 8).unwrap(),
+            Rational::fraction(999_999, 1_000_000).unwrap(),
+        ] {
+            let direct = Computable::rational(input.clone()).asin();
+            assert!(matches!(
+                &direct.internal.approximation,
+                Approximation::AsinRational(stored) if stored == &input
+            ));
+
+            let sign = input.sign();
+            let magnitude = if sign == Sign::Minus {
+                -input
+            } else {
+                input
+            };
+            let complement = Computable::pi()
+                .shift_right(1)
+                .add(Computable::rational(magnitude).acos().negate());
+            let reference = if sign == Sign::Minus {
+                complement.negate()
+            } else {
+                complement
+            };
+
+            for precision in [-16, -40, -96, -256] {
+                assert_close(direct.clone(), reference.clone(), precision, 2);
+            }
+        }
+    }
+
+    #[test]
     fn tiny_non_rational_asin_uses_prescaled_series() {
         let tiny = Computable::rational(Rational::new(2))
             .sqrt()

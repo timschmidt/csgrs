@@ -32,15 +32,15 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_hyperbolic_adversarial/atanh_near_one` | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 6 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 7 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/atanh_tiny` | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `computable/inverse_trig` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 0 |
-| `computable/inverse_trig/mid-domain` | 41 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 33 | 5 | 5 | 0 | 0 | 0 | 3 | 0 | 28 | 11 | 6 |
+| `computable/inverse_trig/mid-domain` | 41 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 33 | 6 | 6 | 0 | 0 | 0 | 3 | 0 | 28 | 11 | 6 |
 | `computable/inverse_trig_adversarial/acos_mid` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 5 | 1 | 0 |
-| `computable/inverse_trig_adversarial/acos_near_minus_one` | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 6 | 1 | 0 |
+| `computable/inverse_trig_adversarial/acos_near_minus_one` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 6 | 1 | 0 |
 | `computable/inverse_trig_adversarial/acos_near_one` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 5 | 1 | 0 |
 | `computable/inverse_trig_adversarial/acos_tiny` | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | `computable/inverse_trig_adversarial/acos_zero` | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 |
-| `computable/inverse_trig_adversarial/asin_mid` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 5 | 1 | 0 |
-| `computable/inverse_trig_adversarial/asin_near_minus_one` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 6 | 1 | 0 |
-| `computable/inverse_trig_adversarial/asin_near_one` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 5 | 1 | 0 |
+| `computable/inverse_trig_adversarial/asin_mid` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 5 | 1 | 0 |
+| `computable/inverse_trig_adversarial/asin_near_minus_one` | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 7 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 6 | 1 | 0 |
+| `computable/inverse_trig_adversarial/asin_near_one` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 5 | 1 | 0 |
 | `computable/inverse_trig_adversarial/asin_tiny` | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `computable/inverse_trig_adversarial/asin_zero` | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `computable/inverse_trig_adversarial/atan_generated_783_412` | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 6 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 1 |
@@ -134,9 +134,9 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/inverse/inverse_generic` | 9 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 1 | 1 |
 | `real/inverse_hyperbolic/exact_rational` | 32 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 11 | 21 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 3 | 1 |
 | `real/inverse_hyperbolic/sqrt` | 16 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 3 | 10 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 5 | 1 | 0 |
-| `real/inverse_trig` | 35 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 7 | 27 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 9 | 4 | 0 |
+| `real/inverse_trig` | 32 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 7 | 27 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 9 | 4 | 0 |
 | `real/inverse_trig/exact` | 33 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 5 | 17 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 6 | 5 | 2 |
-| `real/inverse_trig/mid-domain` | 35 | 0 | 0 | 0 | 5 | 0 | 0 | 2 | 5 | 31 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 14 | 6 | 1 |
+| `real/inverse_trig/mid-domain` | 32 | 0 | 0 | 0 | 5 | 0 | 0 | 2 | 5 | 30 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 14 | 6 | 1 |
 | `real/log/scaled_e` | 15 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 18 | 4 | 4 |
 | `real/normal_scientific_substrate` | 618 | 0 | 0 | 17 | 58 | 1 | 0 | 21 | 97 | 434 | 0 | 0 | 0 | 0 | 0 | 84 | 38 | 277 | 21 | 9 |
 | `real/pow/small_integer_exponent` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 1 |
@@ -302,11 +302,12 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_trig` | `computable` | `constructor` | `cached-pi` | 1 |
 | `computable/inverse_trig` | `computable` | `constructor` | `rational-node` | 1 |
 | `computable/inverse_trig` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
-| `computable/inverse_trig/mid-domain` | `computable` | `acos` | `positive-rational-deferred` | 2 |
-| `computable/inverse_trig/mid-domain` | `computable` | `asin` | `positive-rational-via-acos` | 1 |
+| `computable/inverse_trig/mid-domain` | `computable` | `acos` | `positive-rational-deferred` | 1 |
+| `computable/inverse_trig/mid-domain` | `computable` | `asin` | `positive-rational-deferred` | 1 |
 | `computable/inverse_trig/mid-domain` | `computable` | `atan` | `exact-rational-deferred` | 1 |
 | `computable/inverse_trig/mid-domain` | `computable` | `atanh` | `exact-log-ratio` | 1 |
-| `computable/inverse_trig/mid-domain` | `computable` | `constructor` | `acos-positive-rational-deferred` | 2 |
+| `computable/inverse_trig/mid-domain` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
+| `computable/inverse_trig/mid-domain` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
 | `computable/inverse_trig/mid-domain` | `computable` | `constructor` | `atan-rational-deferred` | 1 |
 | `computable/inverse_trig/mid-domain` | `computable` | `constructor` | `cached-atan-inv5` | 1 |
 | `computable/inverse_trig/mid-domain` | `computable` | `constructor` | `cached-pi` | 2 |
@@ -314,6 +315,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_trig/mid-domain` | `computable` | `constructor` | `shared-constant-wrapper` | 4 |
 | `computable/inverse_trig/mid-domain` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
 | `computable/inverse_trig/mid-domain` | `computable_approx` | `acos` | `small-rational-residual` | 2 |
+| `computable/inverse_trig/mid-domain` | `computable_approx` | `asin` | `rational-acos-complement` | 1 |
 | `computable/inverse_trig/mid-domain` | `computable_approx` | `atan` | `exact-rational-reduction` | 1 |
 | `computable/inverse_trig/mid-domain` | `computable_approx` | `atan` | `two-thirds-anchor-shared` | 1 |
 | `computable/inverse_trig/mid-domain` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
@@ -331,7 +333,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_trig_adversarial/acos_near_minus_one` | `computable` | `constructor` | `cached-pi` | 1 |
 | `computable/inverse_trig_adversarial/acos_near_minus_one` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `computable/inverse_trig_adversarial/acos_near_minus_one` | `computable_approx` | `acos` | `small-rational-residual` | 1 |
-| `computable/inverse_trig_adversarial/acos_near_minus_one` | `rational` | `comparison` | `word-sized` | 2 |
+| `computable/inverse_trig_adversarial/acos_near_minus_one` | `rational` | `comparison` | `word-sized` | 1 |
 | `computable/inverse_trig_adversarial/acos_near_minus_one` | `rational` | `div` | `word-sized` | 1 |
 | `computable/inverse_trig_adversarial/acos_near_minus_one` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/inverse_trig_adversarial/acos_near_one` | `computable` | `acos` | `positive-rational-deferred` | 1 |
@@ -348,32 +350,30 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_trig_adversarial/acos_zero` | `computable` | `acos` | `exact-zero-half-pi` | 1 |
 | `computable/inverse_trig_adversarial/acos_zero` | `computable` | `constructor` | `cached-pi` | 1 |
 | `computable/inverse_trig_adversarial/acos_zero` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
-| `computable/inverse_trig_adversarial/asin_mid` | `computable` | `acos` | `positive-rational-deferred` | 1 |
-| `computable/inverse_trig_adversarial/asin_mid` | `computable` | `asin` | `positive-rational-via-acos` | 1 |
-| `computable/inverse_trig_adversarial/asin_mid` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
+| `computable/inverse_trig_adversarial/asin_mid` | `computable` | `asin` | `positive-rational-deferred` | 1 |
+| `computable/inverse_trig_adversarial/asin_mid` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
 | `computable/inverse_trig_adversarial/asin_mid` | `computable` | `constructor` | `cached-pi` | 1 |
 | `computable/inverse_trig_adversarial/asin_mid` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `computable/inverse_trig_adversarial/asin_mid` | `computable_approx` | `acos` | `small-rational-residual` | 1 |
+| `computable/inverse_trig_adversarial/asin_mid` | `computable_approx` | `asin` | `rational-acos-complement` | 1 |
 | `computable/inverse_trig_adversarial/asin_mid` | `rational` | `comparison` | `word-sized` | 2 |
 | `computable/inverse_trig_adversarial/asin_mid` | `rational` | `div` | `word-sized` | 1 |
 | `computable/inverse_trig_adversarial/asin_mid` | `rational` | `word-result` | `small-general-fraction` | 1 |
-| `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable` | `acos` | `positive-rational-deferred` | 1 |
-| `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable` | `asin` | `endpoint-via-acos` | 1 |
-| `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable` | `asin` | `exact-negative-symmetry` | 1 |
-| `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
+| `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable` | `asin` | `signed-rational-deferred` | 1 |
+| `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable` | `constructor` | `cached-pi` | 1 |
-| `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable` | `constructor` | `rational-node` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable_approx` | `acos` | `small-rational-residual` | 1 |
-| `computable/inverse_trig_adversarial/asin_near_minus_one` | `rational` | `comparison` | `word-sized` | 2 |
+| `computable/inverse_trig_adversarial/asin_near_minus_one` | `computable_approx` | `asin` | `rational-acos-complement` | 1 |
+| `computable/inverse_trig_adversarial/asin_near_minus_one` | `rational` | `comparison` | `word-sized` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_minus_one` | `rational` | `div` | `word-sized` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_minus_one` | `rational` | `word-result` | `small-general-fraction` | 1 |
-| `computable/inverse_trig_adversarial/asin_near_one` | `computable` | `acos` | `positive-rational-deferred` | 1 |
-| `computable/inverse_trig_adversarial/asin_near_one` | `computable` | `asin` | `endpoint-via-acos` | 1 |
-| `computable/inverse_trig_adversarial/asin_near_one` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
+| `computable/inverse_trig_adversarial/asin_near_one` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
+| `computable/inverse_trig_adversarial/asin_near_one` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_one` | `computable` | `constructor` | `cached-pi` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_one` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_one` | `computable_approx` | `acos` | `small-rational-residual` | 1 |
+| `computable/inverse_trig_adversarial/asin_near_one` | `computable_approx` | `asin` | `rational-acos-complement` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_one` | `rational` | `comparison` | `word-sized` | 2 |
 | `computable/inverse_trig_adversarial/asin_near_one` | `rational` | `div` | `word-sized` | 1 |
 | `computable/inverse_trig_adversarial/asin_near_one` | `rational` | `word-result` | `small-general-fraction` | 1 |
@@ -1153,17 +1153,17 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/inverse_hyperbolic/sqrt` | `real` | `constructor` | `rational` | 3 |
 | `real/inverse_hyperbolic/sqrt` | `real` | `definitely_zero` | `rational-sign` | 1 |
 | `real/inverse_hyperbolic/sqrt` | `real` | `sqrt` | `rational-sqrt-special-form` | 2 |
-| `real/inverse_trig` | `computable` | `acos` | `positive-rational-deferred` | 2 |
+| `real/inverse_trig` | `computable` | `acos` | `positive-rational-deferred` | 1 |
 | `real/inverse_trig` | `computable` | `acos` | `tiny-via-asin` | 1 |
-| `real/inverse_trig` | `computable` | `asin` | `endpoint-via-acos` | 1 |
+| `real/inverse_trig` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
 | `real/inverse_trig` | `computable` | `asin` | `exact-tiny-rational-series` | 2 |
 | `real/inverse_trig` | `computable` | `atanh` | `exact-tiny-prescaled` | 1 |
-| `real/inverse_trig` | `computable` | `constructor` | `acos-positive-rational-deferred` | 2 |
-| `real/inverse_trig` | `computable` | `constructor` | `asin-rational-deferred` | 2 |
+| `real/inverse_trig` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
+| `real/inverse_trig` | `computable` | `constructor` | `asin-rational-deferred` | 3 |
 | `real/inverse_trig` | `computable` | `constructor` | `atanh-rational-deferred` | 1 |
-| `real/inverse_trig` | `computable` | `constructor` | `cached-pi` | 2 |
+| `real/inverse_trig` | `computable` | `constructor` | `cached-pi` | 1 |
 | `real/inverse_trig` | `computable` | `constructor` | `rational-node` | 5 |
-| `real/inverse_trig` | `computable` | `constructor` | `shared-constant-wrapper` | 2 |
+| `real/inverse_trig` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `real/inverse_trig` | `real` | `acos` | `generic-computable` | 2 |
 | `real/inverse_trig` | `real` | `asin` | `rational-computable` | 2 |
 | `real/inverse_trig` | `real` | `atanh` | `tiny-rational-computable` | 1 |
@@ -1180,14 +1180,13 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/inverse_trig/exact` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `real/inverse_trig/exact` | `real` | `pi_fraction` | `cached-special-form` | 2 |
 | `real/inverse_trig/exact` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
-| `real/inverse_trig/mid-domain` | `computable` | `acos` | `positive-rational-deferred` | 2 |
-| `real/inverse_trig/mid-domain` | `computable` | `asin` | `positive-rational-via-acos` | 1 |
+| `real/inverse_trig/mid-domain` | `computable` | `acos` | `positive-rational-deferred` | 1 |
+| `real/inverse_trig/mid-domain` | `computable` | `asin` | `positive-rational-deferred` | 1 |
 | `real/inverse_trig/mid-domain` | `computable` | `atan` | `exact-rational-deferred` | 1 |
-| `real/inverse_trig/mid-domain` | `computable` | `constructor` | `acos-positive-rational-deferred` | 2 |
+| `real/inverse_trig/mid-domain` | `computable` | `constructor` | `acos-positive-rational-deferred` | 1 |
+| `real/inverse_trig/mid-domain` | `computable` | `constructor` | `asin-rational-deferred` | 1 |
 | `real/inverse_trig/mid-domain` | `computable` | `constructor` | `atan-rational-deferred` | 1 |
-| `real/inverse_trig/mid-domain` | `computable` | `constructor` | `cached-pi` | 1 |
 | `real/inverse_trig/mid-domain` | `computable` | `constructor` | `rational-node` | 4 |
-| `real/inverse_trig/mid-domain` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
 | `real/inverse_trig/mid-domain` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
 | `real/inverse_trig/mid-domain` | `rational` | `comparison` | `word-sized` | 7 |
 | `real/inverse_trig/mid-domain` | `rational` | `div` | `word-sized` | 1 |

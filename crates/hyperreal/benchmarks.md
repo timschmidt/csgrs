@@ -469,7 +469,9 @@ General inverse trig construction, domain errors, and atan range reduction.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_general_inverse_trig/asin_7_10` | 636.43 ns | 633.41 ns - 640.01 ns | Builds asin(7/10) through the rational-specialized path. |
+| `real_general_inverse_trig/asin_7_10` | 96.02 ns | 95.71 ns - 96.39 ns | Builds asin(7/10) through the rational-specialized path. |
+| `real_general_inverse_trig/asin_near_one` | 111.58 ns | 110.30 ns - 112.95 ns | Builds asin(0.999999) through the deferred exact-rational endpoint path. |
+| `real_general_inverse_trig/asin_near_minus_one` | 106.43 ns | 105.93 ns - 106.95 ns | Builds asin(-0.999999) through the deferred signed exact-rational endpoint path. |
 | `real_general_inverse_trig/asin_sqrt_2_over_3` | 432.35 ns | 431.54 ns - 433.22 ns | Builds asin(sqrt(2)/3) through the general path. |
 | `real_general_inverse_trig/acos_7_10` | 640.63 ns | 559.70 ns - 800.14 ns | Builds acos(7/10) through the rational-specialized asin path. |
 | `real_general_inverse_trig/acos_sqrt_2_over_3` | 347.20 ns | 345.70 ns - 349.10 ns | Builds acos(sqrt(2)/3) through the general path. |

@@ -259,12 +259,52 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
 }
 
 fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
-    // Exact rational asin uses the same direct series as `asin_computable`, but
-    // bypasses the child Computable approximation. This is only selected after
-    // construction certifies a tiny/moderate positive input, so the series
-    // remains convergent enough to beat the generic sqrt/atan transform.
+    // Tiny exact rational inputs use the direct odd series. Larger magnitudes
+    // retain the cancellation-safe pi/2 - acos(|x|) schedule, but build that
+    // approximation graph only on a cold cache miss instead of during every
+    // public construction. The outer node carries the original sign directly.
     if p >= 1 {
         return Zero::zero();
+    }
+
+    if r.msd_exact().is_none_or(|msd| msd > -4) {
+        crate::trace_dispatch!("computable_approx", "asin", "rational-acos-complement");
+        let sign = r.sign();
+        let magnitude = if sign == Sign::Minus {
+            -r.clone()
+        } else {
+            r.clone()
+        };
+        let residual = (Rational::one() - magnitude.clone())
+            / (Rational::one() + magnitude.clone());
+        if residual > Rational::fraction(1, 4).expect("nonzero denominator") {
+            // The generic acos residual branch has its own adaptive error
+            // schedule. Preserve the former expression-level approximation
+            // there; the endpoint range below is the branch that can safely
+            // combine two directly sampled integer approximations.
+            crate::trace_dispatch!(
+                "computable_approx",
+                "asin",
+                "generic-rational-acos-complement"
+            );
+            let half_pi = Computable::pi()
+                .multiply(Computable::rational(HALF_RATIONAL.clone()));
+            let reduced = half_pi.add(Computable::rational(magnitude).acos().negate());
+            let result = reduced.approx_signal(signal, p);
+            return if sign == Sign::Minus { -result } else { result };
+        }
+
+        // Sample both terms four guard bits finer. At that scale
+        // pi/2 - acos(x) = (pi - 2*acos(x))/2, so a single final shift
+        // performs the combination with ample room for both approximation
+        // errors and the final integer rounding.
+        let extra = 4;
+        let work_precision = p - extra;
+        let pi = Computable::pi().approx_signal(signal, work_precision);
+        crate::trace_dispatch!("computable_approx", "acos", "small-rational-residual");
+        let acos = atan_sqrt_rational_small(signal, &residual, work_precision - 1);
+        let result = scale(pi - (acos << 1), -(extra + 1));
+        return if sign == Sign::Minus { -result } else { result };
     }
 
     let iterations_needed: i32 = -p / 2 + 4;

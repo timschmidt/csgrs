@@ -175,6 +175,14 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
                 description: "Builds asin(7/10) through the rational-specialized path.",
             },
             BenchDoc {
+                name: "asin_near_one",
+                description: "Builds a deferred exact-rational asin near the positive endpoint.",
+            },
+            BenchDoc {
+                name: "asin_near_minus_one",
+                description: "Builds a deferred exact-rational asin near the negative endpoint.",
+            },
+            BenchDoc {
                 name: "asin_sqrt_2_over_3",
                 description: "Builds asin(sqrt(2)/3) through the general path.",
             },
@@ -1016,6 +1024,8 @@ fn bench_real_exact_inverse_trig(c: &mut Criterion) {
 fn bench_real_general_inverse_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_general_inverse_trig");
     let rational_in_domain = Real::new(Rational::fraction(7, 10).unwrap());
+    let rational_near_one = Real::new(Rational::fraction(999_999, 1_000_000).unwrap());
+    let rational_near_minus_one = Real::new(Rational::fraction(-999_999, 1_000_000).unwrap());
     let rational_out_of_domain = Real::new(Rational::fraction(11, 10).unwrap());
     let irrational_in_domain =
         Real::new(Rational::new(2)).sqrt().unwrap() / Real::new(Rational::new(3));
@@ -1026,6 +1036,20 @@ fn bench_real_general_inverse_trig(c: &mut Criterion) {
     group.bench_function("asin_7_10", |b| {
         b.iter_batched(
             || rational_in_domain.clone(),
+            |value| black_box(value.asin().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asin_near_one", |b| {
+        b.iter_batched(
+            || rational_near_one.clone(),
+            |value| black_box(value.asin().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asin_near_minus_one", |b| {
+        b.iter_batched(
+            || rational_near_minus_one.clone(),
             |value| black_box(value.asin().unwrap()),
             BatchSize::SmallInput,
         )

@@ -98,9 +98,8 @@ pub(super) enum Approximation {
     // deferred node performs the same small/medium/large reductions as
     // Computable::atan without allocating the intermediate add/divide graph.
     AtanRational(Rational),
-    // Tiny exact rational asin inputs use the direct power series. Keeping the
-    // rational in the node avoids a child Computable::approx call before
-    // entering that series.
+    // Exact rational asin stores the signed input directly. Tiny values use the
+    // power series and larger values use the endpoint-stable acos complement.
     AsinRational(Rational),
     PrescaledAsin(Computable),
     // Generic non-rational asin uses the stable half-angle atan transform. A

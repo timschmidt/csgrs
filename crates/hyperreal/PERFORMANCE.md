@@ -154,8 +154,8 @@ Goals:
 - Bring medium scalar rows such as `1.23456789` below 200 ns without regressing
   large rows.
 - Keep rational `1000pi_eps` sin/cos under 1 us.
-- Investigate remaining rational exact-special hot spots, especially rational
-  endpoint inverse trig.
+- Keep exact-rational inverse-sine construction below 200 ns across signs and
+  endpoint/mid-domain schedules.
 - Any new symbolic class must show wins in `scalar_micro`, `hyperlattice`, and
   `hyperlimit`; otherwise keep the representation simpler.
 
@@ -213,6 +213,38 @@ fell from three to one, the half-turn addition disappeared, and the trace now
 records `pi-rational-direct-sinpi-certificate`. Signed multi-period regressions
 compare the complete exact result with `sin_pi(q + 1/2)` and also retain a
 finite approximation oracle.
+
+### Signed deferred exact-rational inverse sine
+
+Exact-rational `asin` formerly expanded positive mid-domain and endpoint
+inputs into `pi/2 - acos(x)` during public construction. Negative values first
+negated the rational, recursively repeated that dispatch, built the same
+complement graph, and then added an outer negation. A single signed
+`AsinRational` node now retains the input instead. Tiny values still enter the
+direct odd series. Mid-high and endpoint magnitudes form the cancellation-safe
+acos complement inside the cold approximation kernel and combine its terms
+once with four guard bits; smaller non-tiny rationals retain the former
+adaptive complement graph on the first cold approximation.
+
+Fresh 100-sample cross-stack construction runs measured exact rational
+`asin(0.999999)` at 239.49 ns before and 156.22 ns after (34.8% faster), and
+`asin(-0.999999)` at 358.40 ns before and 152.54 ns after (57.4% faster). The
+retained rows are 93.9--94.1% faster than Numerica 128 and 98.8% faster
+than Symbolica on the same inputs. The direct public `asin(7/10)` sentinel
+measured 96.02 ns, with the positive and negative endpoint sentinels at
+111.58 ns and 106.43 ns.
+
+Cold p=-96 approximation also improved: the final 100-sample positive endpoint
+row fell from 2.0483 us to 1.8843 us (8.0%), while the signed adversarial row
+fell from 2.4611 us to 1.9225 us (21.9%). Differential tests compare the new node
+with the former explicit acos complement at p=-16, -40, -96, and -256 across
+both signs, the 7/8 schedule boundary, direct mid-domain values, the adaptive
+3/10 schedule, and endpoint values.
+Cross-stack construction traces fell from 14 to 11 events for the positive
+endpoint and from 15 to 9 for the negative endpoint; the latter no longer
+constructs pi, an acos node, a second rational node, or either negation wrapper.
+Sanitizer-backed live campaigns completed 24,241 public Real elementary cases
+and 544 direct Computable approximation cases without a failure.
 
 ## Computable Path
 

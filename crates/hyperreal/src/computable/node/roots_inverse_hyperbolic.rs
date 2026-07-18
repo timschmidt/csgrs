@@ -138,9 +138,10 @@ impl Computable {
     }
 
     fn asin_rational_deferred(rational: Rational) -> Self {
-        // Exact rational asin uses a direct series for tiny/moderate inputs.
-        // Storing the Rational in the approximation node keeps the hot path out
-        // of the generic sqrt/atan transform and avoids a child approx lookup.
+        // Exact rational asin stores the signed input directly. Tiny values use
+        // the odd series, while larger values select the endpoint-stable acos
+        // complement inside the approximation kernel. Keeping both schedules
+        // behind one node avoids constructing and then negating a pi/2 graph.
         crate::trace_dispatch!("computable", "constructor", "asin-rational-deferred");
         let sign = rational.sign();
         Self {
@@ -320,8 +321,8 @@ impl Computable {
                     return Self::zero();
                 }
                 Sign::Minus => {
-                    crate::trace_dispatch!("computable", "asin", "exact-negative-symmetry");
-                    return self.negate().asin().negate();
+                    crate::trace_dispatch!("computable", "asin", "signed-rational-deferred");
+                    return Self::asin_rational_deferred(rational);
                 }
                 Sign::Plus => {
                     if rational.msd_exact().is_some_and(|msd| msd <= -4) {
@@ -331,12 +332,11 @@ impl Computable {
                         return Self::asin_rational_deferred(rational);
                     }
                     if rational >= *INVERSE_ENDPOINT_RATIONAL_THRESHOLD {
-                        // Near 1, use pi/2 - acos(x); acos has the endpoint transform.
-                        crate::trace_dispatch!("computable", "asin", "endpoint-via-acos");
-                        return Self::pi().shift_right(1).add(self.acos().negate());
+                        crate::trace_dispatch!("computable", "asin", "endpoint-rational-deferred");
+                        return Self::asin_rational_deferred(rational);
                     }
-                    crate::trace_dispatch!("computable", "asin", "positive-rational-via-acos");
-                    return Self::pi().shift_right(1).add(self.acos().negate());
+                    crate::trace_dispatch!("computable", "asin", "positive-rational-deferred");
+                    return Self::asin_rational_deferred(rational);
                 }
             }
         }
