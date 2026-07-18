@@ -11,10 +11,12 @@ cargo-fuzz = true
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 csgrs = { path = "..", features = ["offset"] }
+hypercurve = { path = "../../hypercurve" }
 hyperlimit = { path = "../../hyperlimit" }
 hyperlattice = { path = "../../hyperlattice" }
 hypersdf = { path = "../../hypersdf" }
 # csgrs = { version = "0.23.0", features = ["offset"] }
+# hypercurve = "0.3.0"
 # hyperlimit = "0.4.0"
 # hyperlattice = "0.6.0"
 # hypersdf = "0.2.0"

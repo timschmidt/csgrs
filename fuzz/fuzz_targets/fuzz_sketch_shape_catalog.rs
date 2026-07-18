@@ -3,6 +3,7 @@
 #![no_main]
 
 use csgrs::sketch::Profile;
+use hypercurve::Point2;
 use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
 
@@ -48,7 +49,7 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     let mut idx = 0usize;
-    let tag = bytes[idx] % 24;
+    let tag = bytes[idx] % 31;
     idx += 1;
     let a = decode_real(bytes, &mut idx);
     let b = decode_real(bytes, &mut idx);
@@ -64,6 +65,17 @@ fuzz_target!(|bytes: &[u8]| {
     };
     let positive_a = at_least_tolerance(a.abs());
     let positive_b = at_least_tolerance(b.abs());
+    let curve_control = [
+        [Real::zero(), Real::zero()],
+        [a.clone(), b.clone()],
+        [c.clone(), a.clone()],
+        [Real::one(), Real::zero()],
+    ];
+    let native_points = [
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(a.clone(), b.clone()),
+        Point2::new(c.clone(), positive_a.clone()),
+    ];
 
     let sketch: Profile = match tag {
         0 => Profile::rectangle(a, b),
@@ -95,13 +107,28 @@ fuzz_target!(|bytes: &[u8]| {
                 Profile::teardrop(positive_a.clone(), positive_a + positive_b, segments.max(2))
             }
         },
-        _ => {
+        23 => {
             if bytes[idx % bytes.len()] & 1 == 0 {
                 Profile::egg(a, b, segments)
             } else {
                 Profile::egg(positive_a, positive_b, segments.max(3))
             }
         },
+        24 => Profile::circle_with_keyway(a, segments, b, c),
+        25 => Profile::circle_with_flat(a, segments, b),
+        26 => Profile::circle_with_two_flats(a, segments, b),
+        27 => Profile::bezier(&curve_control, segments),
+        28 => Profile::bspline(&curve_control, bytes[idx % bytes.len()] as usize % 5, segments),
+        29 => Profile::supershape(
+            positive_a,
+            positive_b,
+            c,
+            real(2.0),
+            b,
+            a,
+            segments,
+        ),
+        _ => Profile::polygon_points(&native_points),
     };
 
     assert_sketch_finite(&sketch);

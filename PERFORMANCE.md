@@ -298,7 +298,7 @@ finite coordinate within 1e-12 while now proving exact requested width and
 height and retaining symbolic sample dependencies.
 
 The shared sketch-constructor target then completed 1,000
-AddressSanitizer-instrumented executions (298 coverage points and 516 feature
+AddressSanitizer-instrumented executions (310 coverage points and 521 feature
 edges). Its generated corpus exposed exact-Boolean uncertainty in the legacy
 fallbacks for a 3-segment keyhole and a 15-sided Reuleaux polygon. Those public
 constructors now use the fallible Boolean surfaces and fail closed instead of

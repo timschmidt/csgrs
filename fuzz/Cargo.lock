@@ -335,6 +335,7 @@ version = "0.1.0"
 dependencies = [
  "csgrs",
  "hashbrown 0.15.5",
+ "hypercurve",
  "hyperlattice",
  "hyperlimit",
  "hypersdf",
