@@ -90,6 +90,26 @@ fractional exponent schedules without letting an arbitrary exact integer
 allocate gigabytes before the remaining scalar API executes. A final
 sanitizer-backed campaign completed 620 cases without a failure.
 
+## Bounded exact-integer exponential powers
+
+Hyperreal now recognizes positive exact integers from 2 through 256 and builds
+the exact expression as a binary power of its shared `e` constant. This removes
+the former `ln(2)` range-reduction graph while preserving that fallback for
+negative integers and values above the measured crossover limit.
+
+The dedicated cross-library `exp 128` row measured medians of 251.06 ns for the
+Hyperreal f64 facade and 252.53 ns for the exact-rational facade, versus
+1.0444 us for Numerica 128 and 1.9075 us for Symbolica. Hyperreal is therefore
+4.16 times and 7.60 times faster on this exact construction workload. A
+controlled build of the former graph measured 3.0952 us, so the retained path
+is 91.9% faster than its direct predecessor.
+
+The regenerated dependency trace records `bounded-integer-e-power` for both
+Hyperreal rows, making the exact route independently visible in the public API
+benchmark. Hyperreal's exhaustive value oracle covers every retained exponent,
+and the full Hyperlattice all-target/all-feature gate, strict Clippy, and
+warning-denied documentation checks passed with the final dependency source.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`
@@ -132,6 +152,7 @@ present workload from being mistaken for executed lattice/dependency work.
 cargo bench --bench regression_sentinels -- 'sentinel/matrix3/sparse_mask_product'
 cargo bench --bench regression_sentinels -- 'sentinel/matrix4/sparse_mask_product'
 cargo bench --bench regression_sentinels -- 'sentinel/matrix4/determinant_fractional'
+cargo bench --bench mathbench -- scalar_large_integer_exp
 cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
 cargo bench --bench api_dispatch_trace --features hyperreal-dispatch-trace
 cargo fmt --all -- --check

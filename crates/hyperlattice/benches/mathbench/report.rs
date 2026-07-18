@@ -204,6 +204,11 @@ const SCALAR_OP_ROWS: &[BenchRow] = &[
         id: "exp",
     },
     BenchRow {
+        title: "exp 128",
+        group: "scalar_large_integer_exp",
+        id: "exp_128",
+    },
+    BenchRow {
         title: "ln",
         group: "scalar_ops",
         id: "ln",

@@ -97,6 +97,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `pow` | 6.41 us | 2.96 us | 2.93 us | 2.38 us | 2.19x | 2.69x |
 | `powi` | 592.82 ns | 2.88 us | 83.69 ns | 1.55 us | 7.08x | 0.38x |
 | `exp` | 86.71 ns | 91.45 ns | 990.72 ns | 1.92 us | 0.09x | 0.05x |
+| `exp 128` | 251.06 ns | 252.53 ns | 1.04 us | 1.91 us | 0.24x | 0.13x |
 | `ln` | 1.23 us | 734.31 ns | 1.34 us | 1.84 us | 0.92x | 0.67x |
 | `log10` | 1.41 us | 916.18 ns | 2.89 us | 6.76 us | 0.49x | 0.21x |
 | `log10 abort` | 1.44 us | 941.40 ns | 3.00 us | 7.06 us | 0.48x | 0.20x |

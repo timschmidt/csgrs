@@ -571,6 +571,42 @@ fn bench_scalar_operations(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_large_integer_exp(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalar_large_integer_exp");
+    let hyperreal = s(128.0);
+    let hyperreal_rational = q(128, 1);
+    let numerica_ctx = numerica_engine::Ctx::new(128);
+    let numerica = numerica_ctx.f(128.0);
+    let symbolica_ctx = symbolica_engine::Ctx::new(128);
+    let symbolica = symbolica_ctx.f(128.0);
+
+    trace_dispatch_row("scalar_large_integer_exp/hyperreal/exp_128", || {
+        black_box(hyperlattice::exp(hyperreal.clone()).unwrap());
+    });
+    trace_dispatch_row(
+        "scalar_large_integer_exp/hyperreal-rational/exp_128",
+        || {
+            black_box(hyperlattice::exp(hyperreal_rational.clone()).unwrap());
+        },
+    );
+
+    group.bench_function("hyperreal/exp_128", |b| {
+        b.iter(|| black_box(hyperlattice::exp(black_box(hyperreal.clone())).unwrap()))
+    });
+    group.bench_function("hyperreal-rational/exp_128", |b| {
+        b.iter(|| {
+            black_box(hyperlattice::exp(black_box(hyperreal_rational.clone())).unwrap())
+        })
+    });
+    group.bench_function("numerica128/exp_128", |b| {
+        b.iter(|| black_box(numerica_ctx.exp(black_box(&numerica))))
+    });
+    group.bench_function("symbolica/exp_128", |b| {
+        b.iter(|| black_box(symbolica_ctx.exp(black_box(&symbolica))))
+    });
+    group.finish();
+}
+
 fn bench_numerica_scalar_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,

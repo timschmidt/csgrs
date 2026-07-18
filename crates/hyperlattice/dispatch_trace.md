@@ -679,6 +679,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | 170 | 0 | 4 | 0 | 148 | 39 | 0 | 93 | 35 | 143 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | 34 | 0 | 4 | 0 | 12 | 1 | 0 | 2 | 9 | 32 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 uniform_scale_reciprocal` | 162 | 0 | 4 | 0 | 157 | 38 | 0 | 91 | 46 | 119 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
+| `scalar_large_integer_exp/hyperreal-rational/exp_128` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 | 0 | 0 |
+| `scalar_large_integer_exp/hyperreal/exp_128` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/acos` | 46 | 0 | 8 | 4 | 15 | 4 | 0 | 8 | 11 | 29 | 0 | 0 | 0 | 0 | 0 | 3 | 3 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/acos_abort` | 54 | 0 | 12 | 4 | 15 | 4 | 0 | 8 | 11 | 29 | 0 | 0 | 0 | 0 | 0 | 3 | 11 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/acosh` | 20 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
@@ -692,19 +694,19 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/atanh` | 23 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/atanh_abort` | 31 | 0 | 8 | 0 | 4 | 0 | 0 | 0 | 4 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/cos` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/cosh` | 104 | 0 | 4 | 8 | 8 | 0 | 0 | 4 | 8 | 80 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 64 | 8 | 8 |
+| `scalar_ops/hyperreal-rational/cosh` | 84 | 0 | 4 | 6 | 8 | 0 | 0 | 4 | 8 | 58 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 44 | 4 | 4 |
 | `scalar_ops/hyperreal-rational/exp` | 20 | 0 | 4 | 4 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/ln` | 42 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 30 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/log10` | 49 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/log10_abort` | 57 | 0 | 12 | 4 | 12 | 4 | 0 | 10 | 8 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 12 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/pow` | 64 | 0 | 4 | 1 | 4 | 0 | 0 | 2 | 5 | 39 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 |
+| `scalar_ops/hyperreal-rational/pow` | 67 | 0 | 4 | 0 | 4 | 0 | 0 | 2 | 5 | 41 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/powi` | 28 | 0 | 4 | 0 | 0 | 0 | 0 | 3 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 6 | 6 |
 | `scalar_ops/hyperreal-rational/powi_negative_one` | 12 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/sinh` | 104 | 0 | 4 | 8 | 8 | 0 | 0 | 4 | 8 | 80 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 64 | 8 | 8 |
+| `scalar_ops/hyperreal-rational/sinh` | 84 | 0 | 4 | 6 | 8 | 0 | 0 | 4 | 8 | 58 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 44 | 4 | 4 |
 | `scalar_ops/hyperreal-rational/sqrt` | 26 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/tan` | 20 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/tanh` | 164 | 0 | 4 | 16 | 12 | 0 | 0 | 0 | 12 | 124 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 108 | 16 | 16 |
+| `scalar_ops/hyperreal-rational/tanh` | 124 | 0 | 4 | 12 | 12 | 0 | 0 | 0 | 12 | 80 | 0 | 0 | 0 | 0 | 0 | 4 | 4 | 68 | 8 | 8 |
 | `scalar_ops/hyperreal/acos` | 42 | 0 | 8 | 4 | 15 | 4 | 0 | 8 | 11 | 25 | 0 | 0 | 0 | 0 | 0 | 3 | 3 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/acos_abort` | 50 | 0 | 12 | 4 | 15 | 4 | 0 | 8 | 11 | 25 | 0 | 0 | 0 | 0 | 0 | 3 | 11 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/acosh` | 17 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
@@ -718,19 +720,19 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/atanh` | 21 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal/atanh_abort` | 29 | 0 | 8 | 0 | 4 | 0 | 0 | 0 | 4 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal/cos` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal/cosh` | 104 | 0 | 4 | 8 | 8 | 0 | 0 | 4 | 8 | 80 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 64 | 8 | 8 |
+| `scalar_ops/hyperreal/cosh` | 84 | 0 | 4 | 6 | 8 | 0 | 0 | 4 | 8 | 58 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 44 | 4 | 4 |
 | `scalar_ops/hyperreal/exp` | 20 | 0 | 4 | 4 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/ln` | 41 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 25 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 |
 | `scalar_ops/hyperreal/log10` | 44 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 0 | 0 |
 | `scalar_ops/hyperreal/log10_abort` | 52 | 0 | 12 | 4 | 12 | 4 | 0 | 10 | 8 | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 13 | 0 | 0 |
-| `scalar_ops/hyperreal/pow` | 59 | 0 | 4 | 1 | 4 | 0 | 0 | 1 | 5 | 34 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 28 | 8 | 6 |
+| `scalar_ops/hyperreal/pow` | 73 | 0 | 4 | 0 | 4 | 0 | 0 | 1 | 5 | 43 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 45 | 11 | 9 |
 | `scalar_ops/hyperreal/powi` | 26 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 0 | 22 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 7 | 7 | 0 |
 | `scalar_ops/hyperreal/powi_negative_one` | 12 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal/sinh` | 104 | 0 | 4 | 8 | 8 | 0 | 0 | 4 | 8 | 80 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 64 | 8 | 8 |
+| `scalar_ops/hyperreal/sinh` | 84 | 0 | 4 | 6 | 8 | 0 | 0 | 4 | 8 | 58 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 44 | 4 | 4 |
 | `scalar_ops/hyperreal/sqrt` | 26 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal/tan` | 20 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal/tanh` | 164 | 0 | 4 | 16 | 12 | 0 | 0 | 0 | 12 | 124 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 108 | 16 | 16 |
+| `scalar_ops/hyperreal/tanh` | 124 | 0 | 4 | 12 | 12 | 0 | 0 | 0 | 12 | 80 | 0 | 0 | 0 | 0 | 0 | 4 | 4 | 68 | 8 | 8 |
 | `scalar_trig/hyperreal-rational/0.1/cos` | 5 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/0.1/sin` | 5 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/0.5/acos` | 9 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 2 | 4 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
@@ -9259,6 +9261,22 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 uniform_scale_reciprocal` | `real` | `zero_one_or_minus_one` | `identity-facts` | 1 |
 | `matrix_ops/hyperreal/mat4 uniform_scale_reciprocal` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_ops/hyperreal/mat4 uniform_scale_reciprocal` | `real` | `zero_status` | `zero-scale` | 2 |
+| `scalar_large_integer_exp/hyperreal-rational/exp_128` | `computable` | `constructor` | `cached-e-internal` | 1 |
+| `scalar_large_integer_exp/hyperreal-rational/exp_128` | `computable` | `constructor` | `one` | 1 |
+| `scalar_large_integer_exp/hyperreal-rational/exp_128` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
+| `scalar_large_integer_exp/hyperreal-rational/exp_128` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
+| `scalar_large_integer_exp/hyperreal-rational/exp_128` | `computable` | `exp` | `bounded-integer-e-power` | 1 |
+| `scalar_large_integer_exp/hyperreal-rational/exp_128` | `hyperlattice` | `free_function` | `exp` | 1 |
+| `scalar_large_integer_exp/hyperreal-rational/exp_128` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `scalar_large_integer_exp/hyperreal-rational/exp_128` | `real` | `exp` | `rational-exp-special-form` | 1 |
+| `scalar_large_integer_exp/hyperreal/exp_128` | `computable` | `constructor` | `cached-e-internal` | 1 |
+| `scalar_large_integer_exp/hyperreal/exp_128` | `computable` | `constructor` | `one` | 1 |
+| `scalar_large_integer_exp/hyperreal/exp_128` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
+| `scalar_large_integer_exp/hyperreal/exp_128` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
+| `scalar_large_integer_exp/hyperreal/exp_128` | `computable` | `exp` | `bounded-integer-e-power` | 1 |
+| `scalar_large_integer_exp/hyperreal/exp_128` | `hyperlattice` | `free_function` | `exp` | 1 |
+| `scalar_large_integer_exp/hyperreal/exp_128` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `scalar_large_integer_exp/hyperreal/exp_128` | `real` | `exp` | `rational-exp-special-form` | 1 |
 | `scalar_ops/hyperreal-rational/acos` | `computable` | `acos` | `negative-rational-deferred` | 1 |
 | `scalar_ops/hyperreal-rational/acos` | `computable` | `acos` | `positive-rational-deferred` | 1 |
 | `scalar_ops/hyperreal-rational/acos` | `computable` | `acos` | `tiny-via-asin` | 1 |
@@ -9414,19 +9432,22 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/cos` | `real` | `cos` | `large-rational-deferred-node` | 2 |
 | `scalar_ops/hyperreal-rational/cos` | `real` | `cos` | `rational-specialized-computable` | 2 |
 | `scalar_ops/hyperreal-rational/cos` | `real` | `definitely_zero` | `rational-sign` | 4 |
-| `scalar_ops/hyperreal-rational/cosh` | `computable` | `constructor` | `rational-integer-canonicalized` | 12 |
+| `scalar_ops/hyperreal-rational/cosh` | `computable` | `constructor` | `cached-e-internal` | 2 |
+| `scalar_ops/hyperreal-rational/cosh` | `computable` | `constructor` | `one` | 2 |
+| `scalar_ops/hyperreal-rational/cosh` | `computable` | `constructor` | `rational-integer-canonicalized` | 8 |
 | `scalar_ops/hyperreal-rational/cosh` | `computable` | `constructor` | `rational-node` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `computable` | `constructor` | `shared-constant-wrapper` | 4 |
-| `scalar_ops/hyperreal-rational/cosh` | `computable` | `exp` | `ln2-range-reduction` | 4 |
-| `scalar_ops/hyperreal-rational/cosh` | `computable` | `exp` | `structural-large-range-reduction` | 4 |
+| `scalar_ops/hyperreal-rational/cosh` | `computable` | `exp` | `bounded-integer-e-power` | 2 |
+| `scalar_ops/hyperreal-rational/cosh` | `computable` | `exp` | `ln2-range-reduction` | 2 |
+| `scalar_ops/hyperreal-rational/cosh` | `computable` | `exp` | `structural-large-range-reduction` | 2 |
 | `scalar_ops/hyperreal-rational/cosh` | `computable` | `exp` | `structural-small-prescaled` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `hyperlattice` | `free_function` | `cosh-exp-formula` | 4 |
-| `scalar_ops/hyperreal-rational/cosh` | `rational` | `add` | `word-sized` | 8 |
-| `scalar_ops/hyperreal-rational/cosh` | `rational` | `comparison` | `word-sized` | 4 |
+| `scalar_ops/hyperreal-rational/cosh` | `rational` | `add` | `word-sized` | 4 |
+| `scalar_ops/hyperreal-rational/cosh` | `rational` | `comparison` | `word-sized` | 2 |
 | `scalar_ops/hyperreal-rational/cosh` | `rational` | `div` | `word-sized` | 4 |
-| `scalar_ops/hyperreal-rational/cosh` | `rational` | `mul` | `word-sized` | 8 |
+| `scalar_ops/hyperreal-rational/cosh` | `rational` | `mul` | `word-sized` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `rational` | `word-result` | `dyadic-fraction` | 4 |
-| `scalar_ops/hyperreal-rational/cosh` | `rational` | `word-result` | `small-general-fraction` | 16 |
+| `scalar_ops/hyperreal-rational/cosh` | `rational` | `word-result` | `small-general-fraction` | 8 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `constructor` | `rational` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `div` | `rhs-one` | 4 |
@@ -9484,14 +9505,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/log10_abort` | `real` | `log10` | `rational-power-of-ten` | 1 |
 | `scalar_ops/hyperreal-rational/log10_abort` | `real` | `structural_facts` | `exact-rational` | 4 |
 | `scalar_ops/hyperreal-rational/pow` | `computable` | `constructor` | `one` | 2 |
-| `scalar_ops/hyperreal-rational/pow` | `computable` | `constructor` | `rational-integer-canonicalized` | 2 |
+| `scalar_ops/hyperreal-rational/pow` | `computable` | `constructor` | `rational-integer-canonicalized` | 4 |
 | `scalar_ops/hyperreal-rational/pow` | `computable` | `constructor` | `rational-node` | 6 |
-| `scalar_ops/hyperreal-rational/pow` | `computable` | `constructor` | `shared-constant-wrapper` | 7 |
+| `scalar_ops/hyperreal-rational/pow` | `computable` | `constructor` | `shared-constant-wrapper` | 8 |
 | `scalar_ops/hyperreal-rational/pow` | `computable` | `constructor` | `shared-log-constant-probe` | 2 |
 | `scalar_ops/hyperreal-rational/pow` | `computable` | `constructor` | `zero` | 1 |
-| `scalar_ops/hyperreal-rational/pow` | `computable` | `exp` | `ln2-range-reduction` | 1 |
+| `scalar_ops/hyperreal-rational/pow` | `computable` | `exp` | `ln2-range-reduction` | 2 |
 | `scalar_ops/hyperreal-rational/pow` | `computable` | `exp` | `prescaled-kernel` | 1 |
-| `scalar_ops/hyperreal-rational/pow` | `computable` | `exp` | `structural-small-prescaled` | 1 |
 | `scalar_ops/hyperreal-rational/pow` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 2 |
 | `scalar_ops/hyperreal-rational/pow` | `computable` | `ln` | `smooth-rational-shared-log-sum` | 1 |
 | `scalar_ops/hyperreal-rational/pow` | `computable_approx` | `ln` | `binary-scaled-rational` | 4 |
@@ -9520,19 +9540,22 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/sin` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `scalar_ops/hyperreal-rational/sin` | `real` | `sin` | `large-rational-deferred-node` | 2 |
 | `scalar_ops/hyperreal-rational/sin` | `real` | `sin` | `rational-specialized-computable` | 2 |
-| `scalar_ops/hyperreal-rational/sinh` | `computable` | `constructor` | `rational-integer-canonicalized` | 12 |
+| `scalar_ops/hyperreal-rational/sinh` | `computable` | `constructor` | `cached-e-internal` | 2 |
+| `scalar_ops/hyperreal-rational/sinh` | `computable` | `constructor` | `one` | 2 |
+| `scalar_ops/hyperreal-rational/sinh` | `computable` | `constructor` | `rational-integer-canonicalized` | 8 |
 | `scalar_ops/hyperreal-rational/sinh` | `computable` | `constructor` | `rational-node` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `computable` | `constructor` | `shared-constant-wrapper` | 4 |
-| `scalar_ops/hyperreal-rational/sinh` | `computable` | `exp` | `ln2-range-reduction` | 4 |
-| `scalar_ops/hyperreal-rational/sinh` | `computable` | `exp` | `structural-large-range-reduction` | 4 |
+| `scalar_ops/hyperreal-rational/sinh` | `computable` | `exp` | `bounded-integer-e-power` | 2 |
+| `scalar_ops/hyperreal-rational/sinh` | `computable` | `exp` | `ln2-range-reduction` | 2 |
+| `scalar_ops/hyperreal-rational/sinh` | `computable` | `exp` | `structural-large-range-reduction` | 2 |
 | `scalar_ops/hyperreal-rational/sinh` | `computable` | `exp` | `structural-small-prescaled` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `hyperlattice` | `free_function` | `sinh-exp-formula` | 4 |
-| `scalar_ops/hyperreal-rational/sinh` | `rational` | `add` | `word-sized` | 8 |
-| `scalar_ops/hyperreal-rational/sinh` | `rational` | `comparison` | `word-sized` | 4 |
+| `scalar_ops/hyperreal-rational/sinh` | `rational` | `add` | `word-sized` | 4 |
+| `scalar_ops/hyperreal-rational/sinh` | `rational` | `comparison` | `word-sized` | 2 |
 | `scalar_ops/hyperreal-rational/sinh` | `rational` | `div` | `word-sized` | 4 |
-| `scalar_ops/hyperreal-rational/sinh` | `rational` | `mul` | `word-sized` | 8 |
+| `scalar_ops/hyperreal-rational/sinh` | `rational` | `mul` | `word-sized` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `rational` | `word-result` | `dyadic-fraction` | 4 |
-| `scalar_ops/hyperreal-rational/sinh` | `rational` | `word-result` | `small-general-fraction` | 16 |
+| `scalar_ops/hyperreal-rational/sinh` | `rational` | `word-result` | `small-general-fraction` | 8 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `constructor` | `rational` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `div` | `rhs-one` | 4 |
@@ -9552,17 +9575,20 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/tan` | `hyperlattice` | `free_function` | `tan` | 4 |
 | `scalar_ops/hyperreal-rational/tan` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `scalar_ops/hyperreal-rational/tan` | `real` | `tan` | `rational-specialized-computable` | 4 |
-| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `rational-integer-canonicalized` | 24 |
+| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `cached-e-internal` | 4 |
+| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `one` | 4 |
+| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `rational-integer-canonicalized` | 16 |
 | `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `rational-node` | 8 |
 | `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `shared-constant-wrapper` | 8 |
-| `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `ln2-range-reduction` | 8 |
-| `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `structural-large-range-reduction` | 8 |
+| `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `bounded-integer-e-power` | 4 |
+| `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `ln2-range-reduction` | 4 |
+| `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `structural-large-range-reduction` | 4 |
 | `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `structural-small-prescaled` | 8 |
 | `scalar_ops/hyperreal-rational/tanh` | `hyperlattice` | `free_function` | `tanh-exp-formula` | 4 |
-| `scalar_ops/hyperreal-rational/tanh` | `rational` | `add` | `word-sized` | 16 |
-| `scalar_ops/hyperreal-rational/tanh` | `rational` | `comparison` | `word-sized` | 8 |
-| `scalar_ops/hyperreal-rational/tanh` | `rational` | `mul` | `word-sized` | 16 |
-| `scalar_ops/hyperreal-rational/tanh` | `rational` | `word-result` | `small-general-fraction` | 32 |
+| `scalar_ops/hyperreal-rational/tanh` | `rational` | `add` | `word-sized` | 8 |
+| `scalar_ops/hyperreal-rational/tanh` | `rational` | `comparison` | `word-sized` | 4 |
+| `scalar_ops/hyperreal-rational/tanh` | `rational` | `mul` | `word-sized` | 8 |
+| `scalar_ops/hyperreal-rational/tanh` | `rational` | `word-result` | `small-general-fraction` | 16 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `definitely_zero` | `rational-sign` | 12 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `exp` | `rational-exp-special-form` | 8 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `inverse_ref` | `generic` | 4 |
@@ -9717,19 +9743,22 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/cos` | `real` | `cos` | `large-rational-deferred-node` | 2 |
 | `scalar_ops/hyperreal/cos` | `real` | `cos` | `rational-specialized-computable` | 2 |
 | `scalar_ops/hyperreal/cos` | `real` | `definitely_zero` | `rational-sign` | 4 |
-| `scalar_ops/hyperreal/cosh` | `computable` | `constructor` | `rational-integer-canonicalized` | 12 |
+| `scalar_ops/hyperreal/cosh` | `computable` | `constructor` | `cached-e-internal` | 2 |
+| `scalar_ops/hyperreal/cosh` | `computable` | `constructor` | `one` | 2 |
+| `scalar_ops/hyperreal/cosh` | `computable` | `constructor` | `rational-integer-canonicalized` | 8 |
 | `scalar_ops/hyperreal/cosh` | `computable` | `constructor` | `rational-node` | 4 |
 | `scalar_ops/hyperreal/cosh` | `computable` | `constructor` | `shared-constant-wrapper` | 4 |
-| `scalar_ops/hyperreal/cosh` | `computable` | `exp` | `ln2-range-reduction` | 4 |
-| `scalar_ops/hyperreal/cosh` | `computable` | `exp` | `structural-large-range-reduction` | 4 |
+| `scalar_ops/hyperreal/cosh` | `computable` | `exp` | `bounded-integer-e-power` | 2 |
+| `scalar_ops/hyperreal/cosh` | `computable` | `exp` | `ln2-range-reduction` | 2 |
+| `scalar_ops/hyperreal/cosh` | `computable` | `exp` | `structural-large-range-reduction` | 2 |
 | `scalar_ops/hyperreal/cosh` | `computable` | `exp` | `structural-small-prescaled` | 4 |
 | `scalar_ops/hyperreal/cosh` | `hyperlattice` | `free_function` | `cosh-exp-formula` | 4 |
-| `scalar_ops/hyperreal/cosh` | `rational` | `add` | `word-sized` | 8 |
-| `scalar_ops/hyperreal/cosh` | `rational` | `comparison` | `word-sized` | 4 |
+| `scalar_ops/hyperreal/cosh` | `rational` | `add` | `word-sized` | 4 |
+| `scalar_ops/hyperreal/cosh` | `rational` | `comparison` | `word-sized` | 2 |
 | `scalar_ops/hyperreal/cosh` | `rational` | `div` | `word-sized` | 4 |
-| `scalar_ops/hyperreal/cosh` | `rational` | `mul` | `word-sized` | 8 |
+| `scalar_ops/hyperreal/cosh` | `rational` | `mul` | `word-sized` | 4 |
 | `scalar_ops/hyperreal/cosh` | `rational` | `word-result` | `dyadic-fraction` | 4 |
-| `scalar_ops/hyperreal/cosh` | `rational` | `word-result` | `small-general-fraction` | 16 |
+| `scalar_ops/hyperreal/cosh` | `rational` | `word-result` | `small-general-fraction` | 8 |
 | `scalar_ops/hyperreal/cosh` | `real` | `constructor` | `rational` | 4 |
 | `scalar_ops/hyperreal/cosh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal/cosh` | `real` | `div` | `rhs-one` | 4 |
@@ -9787,17 +9816,16 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/log10_abort` | `real` | `log10` | `rational-power-of-ten` | 1 |
 | `scalar_ops/hyperreal/log10_abort` | `real` | `structural_facts` | `exact-rational` | 4 |
 | `scalar_ops/hyperreal/pow` | `computable` | `constructor` | `one` | 2 |
-| `scalar_ops/hyperreal/pow` | `computable` | `constructor` | `rational-integer-canonicalized` | 4 |
-| `scalar_ops/hyperreal/pow` | `computable` | `constructor` | `rational-node` | 11 |
-| `scalar_ops/hyperreal/pow` | `computable` | `constructor` | `shared-constant-wrapper` | 6 |
+| `scalar_ops/hyperreal/pow` | `computable` | `constructor` | `rational-integer-canonicalized` | 8 |
+| `scalar_ops/hyperreal/pow` | `computable` | `constructor` | `rational-node` | 14 |
+| `scalar_ops/hyperreal/pow` | `computable` | `constructor` | `shared-constant-wrapper` | 9 |
 | `scalar_ops/hyperreal/pow` | `computable` | `constructor` | `shared-log-constant-probe` | 2 |
 | `scalar_ops/hyperreal/pow` | `computable` | `constructor` | `zero` | 1 |
-| `scalar_ops/hyperreal/pow` | `computable` | `exp` | `ln2-range-reduction` | 1 |
+| `scalar_ops/hyperreal/pow` | `computable` | `exp` | `ln2-range-reduction` | 2 |
 | `scalar_ops/hyperreal/pow` | `computable` | `exp` | `prescaled-kernel` | 1 |
-| `scalar_ops/hyperreal/pow` | `computable` | `exp` | `structural-small-prescaled` | 1 |
-| `scalar_ops/hyperreal/pow` | `computable` | `ln` | `binary-scale-reduction` | 1 |
+| `scalar_ops/hyperreal/pow` | `computable` | `ln` | `binary-scale-reduction` | 3 |
 | `scalar_ops/hyperreal/pow` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
-| `scalar_ops/hyperreal/pow` | `computable` | `ln` | `prescaled-ln1p-kernel` | 1 |
+| `scalar_ops/hyperreal/pow` | `computable` | `ln` | `prescaled-ln1p-kernel` | 3 |
 | `scalar_ops/hyperreal/pow` | `computable` | `ln` | `smooth-rational-shared-log-sum` | 1 |
 | `scalar_ops/hyperreal/pow` | `computable_approx` | `ln` | `binary-scaled-rational` | 2 |
 | `scalar_ops/hyperreal/pow` | `hyperlattice` | `free_function` | `pow` | 4 |
@@ -9824,19 +9852,22 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/sin` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `scalar_ops/hyperreal/sin` | `real` | `sin` | `large-rational-deferred-node` | 2 |
 | `scalar_ops/hyperreal/sin` | `real` | `sin` | `rational-specialized-computable` | 2 |
-| `scalar_ops/hyperreal/sinh` | `computable` | `constructor` | `rational-integer-canonicalized` | 12 |
+| `scalar_ops/hyperreal/sinh` | `computable` | `constructor` | `cached-e-internal` | 2 |
+| `scalar_ops/hyperreal/sinh` | `computable` | `constructor` | `one` | 2 |
+| `scalar_ops/hyperreal/sinh` | `computable` | `constructor` | `rational-integer-canonicalized` | 8 |
 | `scalar_ops/hyperreal/sinh` | `computable` | `constructor` | `rational-node` | 4 |
 | `scalar_ops/hyperreal/sinh` | `computable` | `constructor` | `shared-constant-wrapper` | 4 |
-| `scalar_ops/hyperreal/sinh` | `computable` | `exp` | `ln2-range-reduction` | 4 |
-| `scalar_ops/hyperreal/sinh` | `computable` | `exp` | `structural-large-range-reduction` | 4 |
+| `scalar_ops/hyperreal/sinh` | `computable` | `exp` | `bounded-integer-e-power` | 2 |
+| `scalar_ops/hyperreal/sinh` | `computable` | `exp` | `ln2-range-reduction` | 2 |
+| `scalar_ops/hyperreal/sinh` | `computable` | `exp` | `structural-large-range-reduction` | 2 |
 | `scalar_ops/hyperreal/sinh` | `computable` | `exp` | `structural-small-prescaled` | 4 |
 | `scalar_ops/hyperreal/sinh` | `hyperlattice` | `free_function` | `sinh-exp-formula` | 4 |
-| `scalar_ops/hyperreal/sinh` | `rational` | `add` | `word-sized` | 8 |
-| `scalar_ops/hyperreal/sinh` | `rational` | `comparison` | `word-sized` | 4 |
+| `scalar_ops/hyperreal/sinh` | `rational` | `add` | `word-sized` | 4 |
+| `scalar_ops/hyperreal/sinh` | `rational` | `comparison` | `word-sized` | 2 |
 | `scalar_ops/hyperreal/sinh` | `rational` | `div` | `word-sized` | 4 |
-| `scalar_ops/hyperreal/sinh` | `rational` | `mul` | `word-sized` | 8 |
+| `scalar_ops/hyperreal/sinh` | `rational` | `mul` | `word-sized` | 4 |
 | `scalar_ops/hyperreal/sinh` | `rational` | `word-result` | `dyadic-fraction` | 4 |
-| `scalar_ops/hyperreal/sinh` | `rational` | `word-result` | `small-general-fraction` | 16 |
+| `scalar_ops/hyperreal/sinh` | `rational` | `word-result` | `small-general-fraction` | 8 |
 | `scalar_ops/hyperreal/sinh` | `real` | `constructor` | `rational` | 4 |
 | `scalar_ops/hyperreal/sinh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal/sinh` | `real` | `div` | `rhs-one` | 4 |
@@ -9857,17 +9888,20 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/tan` | `hyperlattice` | `free_function` | `tan` | 4 |
 | `scalar_ops/hyperreal/tan` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `scalar_ops/hyperreal/tan` | `real` | `tan` | `rational-specialized-computable` | 4 |
-| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `rational-integer-canonicalized` | 24 |
+| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `cached-e-internal` | 4 |
+| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `one` | 4 |
+| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `rational-integer-canonicalized` | 16 |
 | `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `rational-node` | 8 |
 | `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `shared-constant-wrapper` | 8 |
-| `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `ln2-range-reduction` | 8 |
-| `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `structural-large-range-reduction` | 8 |
+| `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `bounded-integer-e-power` | 4 |
+| `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `ln2-range-reduction` | 4 |
+| `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `structural-large-range-reduction` | 4 |
 | `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `structural-small-prescaled` | 8 |
 | `scalar_ops/hyperreal/tanh` | `hyperlattice` | `free_function` | `tanh-exp-formula` | 4 |
-| `scalar_ops/hyperreal/tanh` | `rational` | `add` | `word-sized` | 16 |
-| `scalar_ops/hyperreal/tanh` | `rational` | `comparison` | `word-sized` | 8 |
-| `scalar_ops/hyperreal/tanh` | `rational` | `mul` | `word-sized` | 16 |
-| `scalar_ops/hyperreal/tanh` | `rational` | `word-result` | `small-general-fraction` | 32 |
+| `scalar_ops/hyperreal/tanh` | `rational` | `add` | `word-sized` | 8 |
+| `scalar_ops/hyperreal/tanh` | `rational` | `comparison` | `word-sized` | 4 |
+| `scalar_ops/hyperreal/tanh` | `rational` | `mul` | `word-sized` | 8 |
+| `scalar_ops/hyperreal/tanh` | `rational` | `word-result` | `small-general-fraction` | 16 |
 | `scalar_ops/hyperreal/tanh` | `real` | `definitely_zero` | `rational-sign` | 12 |
 | `scalar_ops/hyperreal/tanh` | `real` | `exp` | `rational-exp-special-form` | 8 |
 | `scalar_ops/hyperreal/tanh` | `real` | `inverse_ref` | `generic` | 4 |
