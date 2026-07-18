@@ -3,10 +3,7 @@
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-use hyperreal::RealSign;
-use hypersolve::{
-    BareissError, DenseResidualReplayError, determinant_bareiss, replay_dense_linear_residuals,
-};
+use hypersolve::{BareissError, determinant_bareiss, solve_dense_linear_system_bareiss_multi_rhs};
 
 use crate::{
     CurveError, CurveFamily2, CurveOperation2, CurvePolicy, CurveSource2, ExactCurveError,
@@ -377,21 +374,24 @@ fn interpolate_with_inputs(
         .chain(&rhs_x)
         .chain(&rhs_y)
         .all(|value| value.exact_rational_ref().is_some());
-    let determinant = interpolation_determinant(&coefficient_matrix, source)?;
-    let x_solve = solve_interpolation_coordinate(
-        &coefficient_matrix,
-        &rhs_x,
-        &determinant,
-        replay_residuals,
-        source,
-    )?;
-    let y_solve = solve_interpolation_coordinate(
-        &coefficient_matrix,
-        &rhs_y,
-        &determinant,
-        replay_residuals,
-        source,
-    )?;
+    let (determinant, x_solve, y_solve) = if replay_residuals {
+        solve_interpolation_coordinates_bareiss(&coefficient_matrix, &[rhs_x, rhs_y], source)?
+    } else {
+        let determinant = interpolation_determinant(&coefficient_matrix, source)?;
+        let x_solve = solve_interpolation_coordinate_cramer_identity(
+            &coefficient_matrix,
+            &rhs_x,
+            &determinant,
+            source,
+        )?;
+        let y_solve = solve_interpolation_coordinate_cramer_identity(
+            &coefficient_matrix,
+            &rhs_y,
+            &determinant,
+            source,
+        )?;
+        (determinant, x_solve, y_solve)
+    };
     let control_points = x_solve
         .solution
         .iter()
@@ -478,11 +478,64 @@ fn interpolation_determinant(
     }
 }
 
-fn solve_interpolation_coordinate(
+fn solve_interpolation_coordinates_bareiss(
+    coefficient_matrix: &[Vec<Real>],
+    right_hand_sides: &[Vec<Real>; 2],
+    source: Option<CurveSource2>,
+) -> ExactCurveResult<(
+    Real,
+    InterpolationCoordinateSolve,
+    InterpolationCoordinateSolve,
+)> {
+    let report = solve_dense_linear_system_bareiss_multi_rhs(
+        coefficient_matrix,
+        right_hand_sides,
+        INTERPOLATION_SOLVE_PRECISION,
+    )
+    .map_err(|error| interpolation_solve_error(error, source))?;
+    for replay in &report.residual_replays {
+        if !replay.accepted {
+            let row = replay
+                .rows
+                .iter()
+                .find(|row| !matches!(row.sign, hyperreal::RealSign::Zero))
+                .map_or(0, |row| row.row_index);
+            return Err(ExactCurveError::invalid(
+                CurveOperation2::Interpolation,
+                CurveFamily2::Nurbs,
+                source,
+                CurveError::InconsistentNurbsInterpolationSolution { row },
+            ));
+        }
+    }
+    let determinant = report.determinant.determinant;
+    let mut solutions = report.solutions.into_iter();
+    let mut numerators = report.numerators.into_iter();
+    let x_solve = InterpolationCoordinateSolve {
+        solution: solutions
+            .next()
+            .expect("two right-hand sides were supplied"),
+        numerators: numerators
+            .next()
+            .expect("two right-hand sides were supplied"),
+        residual_replayed: true,
+    };
+    let y_solve = InterpolationCoordinateSolve {
+        solution: solutions
+            .next()
+            .expect("two right-hand sides were supplied"),
+        numerators: numerators
+            .next()
+            .expect("two right-hand sides were supplied"),
+        residual_replayed: true,
+    };
+    Ok((determinant, x_solve, y_solve))
+}
+
+fn solve_interpolation_coordinate_cramer_identity(
     coefficient_matrix: &[Vec<Real>],
     rhs: &[Real],
     determinant: &Real,
-    replay_residuals: bool,
     source: Option<CurveSource2>,
 ) -> ExactCurveResult<InterpolationCoordinateSolve> {
     let mut replaced = coefficient_matrix.to_vec();
@@ -510,40 +563,10 @@ fn solve_interpolation_coordinate(
         }
     }
 
-    let residual_replayed = if replay_residuals {
-        match replay_dense_linear_residuals(
-            coefficient_matrix,
-            rhs,
-            &solution,
-            INTERPOLATION_SOLVE_PRECISION,
-        ) {
-            Ok(report) if report.accepted => true,
-            Ok(report) => {
-                let row = report
-                    .rows
-                    .iter()
-                    .find(|row| row.sign != RealSign::Zero)
-                    .map_or(0, |row| row.row_index);
-                return Err(ExactCurveError::invalid(
-                    CurveOperation2::Interpolation,
-                    CurveFamily2::Nurbs,
-                    source,
-                    CurveError::InconsistentNurbsInterpolationSolution { row },
-                ));
-            }
-            Err(DenseResidualReplayError::UnknownResidual) => false,
-            Err(DenseResidualReplayError::DimensionMismatch) => {
-                return Err(invalid_interpolation(source));
-            }
-        }
-    } else {
-        false
-    };
-
     Ok(InterpolationCoordinateSolve {
         solution,
         numerators,
-        residual_replayed,
+        residual_replayed: false,
     })
 }
 

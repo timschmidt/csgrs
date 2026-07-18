@@ -251,6 +251,12 @@ preparation/candidate filtering, and ordinary, prepared, and mixed-prepared path
 
 The complete reference-to-implementation audit, retained benchmark results, and
 rejected optimization experiments are recorded in [PERFORMANCE.md](PERFORMANCE.md).
+Runtime exact-computation paths can be audited with
+`cargo bench --features dispatch-trace --bench dispatch_trace`; the matching
+feature-gated integration test verifies that public curve queries continue to
+emit correlated trace evidence.
+Adapter and authoring surfaces have a separate
+`cargo bench --features triangulation --bench api_surface` lane.
 
 ## Current Status
 

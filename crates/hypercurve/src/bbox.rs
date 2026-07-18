@@ -346,22 +346,43 @@ impl Aabb2 {
     /// Edge and corner contacts count as overlap. This inclusive convention is
     /// necessary for tangent, endpoint, and shared-boundary curve topology.
     pub fn overlaps(&self, other: &Self, policy: &CurvePolicy) -> Classification<bool> {
-        let Some(self_left_of_other) = real_less(self.max_x(), other.min_x(), policy) else {
-            return Classification::Uncertain(UncertaintyReason::Ordering);
-        };
-        let Some(other_left_of_self) = real_less(other.max_x(), self.min_x(), policy) else {
-            return Classification::Uncertain(UncertaintyReason::Ordering);
-        };
-        let Some(self_below_other) = real_less(self.max_y(), other.min_y(), policy) else {
-            return Classification::Uncertain(UncertaintyReason::Ordering);
-        };
-        let Some(other_below_self) = real_less(other.max_y(), self.min_y(), policy) else {
-            return Classification::Uncertain(UncertaintyReason::Ordering);
-        };
+        for (_direction, (left, right)) in [
+            (self.max_x(), other.min_x()),
+            (other.max_x(), self.min_x()),
+            (self.max_y(), other.min_y()),
+            (other.max_y(), self.min_y()),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            match real_less(left, right, policy) {
+                Some(true) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "aabb-overlap",
+                        match _direction {
+                            0 => "separated-first-x",
+                            1 => "separated-second-x",
+                            2 => "separated-first-y",
+                            3 => "separated-second-y",
+                            _ => unreachable!("AABB has four directed separation tests"),
+                        },
+                    );
+                    return Classification::Decided(false);
+                }
+                Some(false) => {}
+                None => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record("hypercurve", "aabb-overlap", "uncertain");
+                    return Classification::Uncertain(UncertaintyReason::Ordering);
+                }
+            }
+        }
 
-        Classification::Decided(
-            !(self_left_of_other || other_left_of_self || self_below_other || other_below_self),
-        )
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record("hypercurve", "aabb-overlap", "overlap");
+        Classification::Decided(true)
     }
 
     /// Returns the sole point in the intersection of two closed boxes.

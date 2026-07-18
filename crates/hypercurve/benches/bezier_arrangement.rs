@@ -21,6 +21,14 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
+fn benchmark_iterations() -> u32 {
+    std::env::var("HYPERCURVE_BENCH_ARRANGEMENT_ITERATIONS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(100_u32)
+        .max(1)
+}
+
 fn decided<T>(classification: Classification<T>) -> T {
     match classification {
         Classification::Decided(value) => value,
@@ -30,13 +38,14 @@ fn decided<T>(classification: Classification<T>) -> T {
 
 fn line_fragment(
     source: usize,
+    segment: usize,
     start: Point2,
     control: Point2,
     end: Point2,
 ) -> BezierArrangementFragment2 {
     BezierArrangementFragment2::new(
         source,
-        0,
+        segment,
         BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(r(0)),
             end: BezierParameter2::Exact(r(1)),
@@ -59,7 +68,7 @@ fn main() -> CurveResult<()> {
     }
     let graph = BezierArrangementGraph2::from_split_materializations(&materializations)?;
 
-    let iterations = 5_000_u32;
+    let iterations = benchmark_iterations();
     let started = Instant::now();
     let mut total = 0_usize;
     for _ in 0..iterations {
@@ -116,14 +125,14 @@ fn main() -> CurveResult<()> {
     );
 
     let reversed_internal_overlap_graph = BezierArrangementGraph2::new(vec![
-        line_fragment(0, p(0, 0), p(1, 0), p(2, 0)),
-        line_fragment(0, p(2, 0), p(2, 1), p(2, 2)),
-        line_fragment(0, p(2, 2), p(1, 2), p(0, 2)),
-        line_fragment(0, p(0, 2), p(0, 1), p(0, 0)),
-        line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),
-        line_fragment(1, p(4, 0), p(4, 1), p(4, 2)),
-        line_fragment(1, p(4, 2), p(3, 2), p(2, 2)),
-        line_fragment(1, p(2, 2), p(2, 1), p(2, 0)),
+        line_fragment(0, 0, p(0, 0), p(1, 0), p(2, 0)),
+        line_fragment(0, 1, p(2, 0), p(2, 1), p(2, 2)),
+        line_fragment(0, 2, p(2, 2), p(1, 2), p(0, 2)),
+        line_fragment(0, 3, p(0, 2), p(0, 1), p(0, 0)),
+        line_fragment(1, 0, p(2, 0), p(3, 0), p(4, 0)),
+        line_fragment(1, 1, p(4, 0), p(4, 1), p(4, 2)),
+        line_fragment(1, 2, p(4, 2), p(3, 2), p(2, 2)),
+        line_fragment(1, 3, p(2, 2), p(2, 1), p(2, 0)),
     ])?;
     let started = Instant::now();
     let mut reversed_overlap_total = 0_usize;

@@ -6,6 +6,60 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Runtime path tracing
+
+Coverage is audited by executable public family, not by assigning artificial
+timings to every enum variant, report accessor, or zero-cost data carrier. A
+family is covered only when a public workload has semantic test assertions, a
+release benchmark, and—when it enters exact computation—a nonempty dispatch
+recording. Finite-only adapters are benchmarked and tested but correctly have
+no exact-dispatch requirement.
+
+| Public executable family | Semantic tests | Release benchmark | Exact path trace |
+| --- | --- | --- | --- |
+| Line, arc, bounds, transforms, and primitive evaluation | `hypercurve_arc_bezier`, `hypercurve_bbox`, `hypercurve_curve`, `hypercurve_bezier_evaluation` | `arc`, `bezier_evaluation`, `api_surface` | line/line, arc/arc, quadratic evaluation, similarity transform |
+| Curve intersections and curve paths | `hypercurve_curve_intersection`, `hypercurve_curve_string`, `hypercurve_self_contacts` | `intersection`, `intersection_sweep`, `curve_path` | line/line and arc/arc intersections |
+| Polynomial/rational Bezier algebra, splitting, arrangement, and retained evidence | the `hypercurve_bezier_*` tests and `hypercurve_rational_bezier` | the `bezier_*` benches and `rational_bezier` | quadratic evaluation and region Boolean |
+| B-spline, polynomial spline, and NURBS construction/evaluation | `hypercurve_bspline`, `hypercurve_polynomial_spline`, `hypercurve_nurbs`, `hypercurve_nurbs_interpolation` | `bspline`, `rational_bezier`, `api_surface` | global NURBS interpolation |
+| Editing, offsets, fitting, and reconstruction | `hypercurve_contour`, `hypercurve_offset`, `hypercurve_bezier_fit_offset`, `hypercurve_reconstruct` | `editing`, `offset`, `reconstruction` | checked curve-string offset |
+| Contours, regions, Boolean topology, and prepared queries | `hypercurve_boolean`, `hypercurve_region*`, `hypercurve_curve_region_boolean` | `containment`, `bezier_region` | region Boolean and prepared containment |
+| Finite projection, retained import, triangulation, and SVG boundary | `hypercurve_region`, `hypercurve_triangulation`, `hypercurve_svg_io` | `api_surface`, `svg_io` | not applicable to the finite-only adapter work; exact reconstruction/topology is traced by the rows above |
+
+The `dispatch-trace` feature enables the shared `hyperreal`/`hyperlimit`
+exact-computation trace recorder. The `dispatch_trace` benchmark exercises
+public line and arc intersections, polynomial Bezier evaluation, curve-string
+offsetting, exact similarity transforms, global NURBS interpolation, region
+Boolean construction, and prepared region containment. Each workload is
+isolated in its own recording window and fails if it produces no dispatch or
+rational-reducer evidence.
+
+```bash
+cargo test --features dispatch-trace --test hypercurve_dispatch_trace
+cargo bench --features dispatch-trace --bench dispatch_trace
+```
+
+The integration test protects the trace contract itself; the benchmark prints
+the per-operation summaries and cross-stack correlation counters used to relate
+performance observations to exact predicate, structural-fact, reducer, cache,
+refinement, and approximation paths.
+
+The complementary `api_surface` benchmark covers public adapter and authoring
+families that are not hot paths inside the topology workloads: checked and
+unchecked finite measurements, exact similarity transforms, global NURBS
+interpolation, retained import records, and feature-gated finite-ring
+triangulation. With `dispatch-trace` enabled, every row records an explicit
+`hypercurve-benchmark/api-surface/recorded-workload` entry marker and fails on an empty recording,
+including finite-only rows that correctly emit no exact-arithmetic events.
+
+```bash
+cargo bench --features triangulation,dispatch-trace --bench api_surface
+```
+
+The retained-overlap arrangement sentinel defaults to 100 repetitions because
+each repetition traverses a 64-curve graph through every retained overlap
+view. Set `HYPERCURVE_BENCH_ARRANGEMENT_ITERATIONS` for longer statistical
+runs without changing the benchmark workload.
+
 ## Reference-by-reference findings
 
 | Reference | Applied finding and disposition |
@@ -135,6 +189,113 @@ The adversarial x-dense/global-overlap sentinel selected the flat scan. Its
 movement was a 1.1% slowdown and is below the retention threshold. A 64-by-65
 equal-x endpoint-contact regression exercises the active sweep and proves that
 direct and prepared queries retain the same event and source indices.
+
+## Retained exact AABB separation short-circuit
+
+`Aabb2::overlaps` formerly certified all four directed axis separations before
+combining them. A single strict separation is already a complete exact proof
+that two closed boxes are disjoint, so later comparisons were redundant. They
+could also turn a proved disjoint result into `Uncertain` if an unrelated later
+axis exhausted its ordering budget. The classifier now visits the four
+directions in the same order and returns `Decided(false)` on the first certified
+separation; only a still-required undecidable comparison returns uncertainty.
+Edge and corner contact remain inclusive because equality is not separation.
+
+On the csgrs Reuleaux region-Boolean workload, the paired 30-sample median fell
+from 14.266 to 12.523 ms/op (12.22%). The optimized 12.405--12.598 ms/op
+interquartile range did not overlap the 14.199--14.441 ms/op control range.
+Dispatch tracing showed the mechanism directly: Real comparisons fell from
+16,081 to 12,307 (23.5%), comparison refinements from 7,163 to 5,830 (18.6%),
+and total dispatch events from 141,208 to 116,040. The all-target/all-feature
+gate exercised every integration, benchmark, and example target without a
+failure.
+
+## Retained shared-coordinate NURBS solve
+
+Global NURBS interpolation solves the same exact basis matrix for the x and y
+control coordinates. The former path constructed one coefficient determinant,
+then one replaced-column determinant per control and coordinate. The rational
+branch now uses Hypersolve's shared multi-right-hand-side Bareiss elimination:
+the matrix is eliminated once, both coordinate columns follow the same
+certified row operations, and each coordinate retains its Cramer numerators and
+independent exact residual replay. Symbolic chord/centripetal inputs keep the
+existing determinant-identity path because their mathematically zero residuals
+are not always normalizable by the current scalar package.
+
+Five same-machine 10,000-iteration release runs reduced the uniform quadratic
+interpolation median from 19.276 us/iter to 13.098 us/iter (32.1%), with the
+same checksum. Dispatch events fell from 11,520,001 to 6,400,001 per 10,000
+constructions (44.4%) with no refinement events on either path. The exact test
+suite retains determinant and numerator evidence, exercises rational weighted,
+nonuniform, and symbolic parameterizations, and property-checks generated cubic
+control recovery. An intermediate integration of two independent augmented
+solves was rejected at 20.356 us/iter because it repeated the matrix
+elimination.
+
+## Retained certified triangulation-conformity fast path
+
+Finite regions with holes delegate exact triangulation to HyperTri. HyperTri formerly
+followed every successful earcut with a global exact vertex-on-triangle-edge scan to
+repair source boundary vertices that normalization may have skipped. The retained
+implementation first certifies the emitted mesh structurally: every authored exterior
+or hole edge must occur exactly once and every other triangle edge exactly twice. Only
+a certified mesh skips the scan; any missing authored edge runs the unchanged exact
+geometric repair. A collinear-boundary regression proves both certificate rejection
+and repaired conformance.
+
+For `finite_ring_triangulation`, five same-source release control runs had a
+62.656 us/iter median; five retained runs had a 32.671 us/iter median (47.9% faster),
+with the same eight-triangle checksum. Per 10,000 calls, trace events fell from
+8,460,001 to 7,260,001 (14.2%) and exact predicates from 5,460,000 to 4,260,000
+(22.0%); neither path refined. Hypercurve's six triangulation integration tests,
+strict all-target/all-feature Clippy, and warning-denied rustdoc passed after the
+dependency change.
+
+The retained dependency then adds an exact rectangular-annulus dispatch for the common
+four-corner material plus one four-corner hole case. It structurally identifies both
+axis-aligned rectangles, proves strict containment through exact scalar ordering,
+constructs eight consistently wound triangles, and requires the authored boundary
+certificate before returning. Rotated starts and reversed winding are supported;
+nonrectangular, touching, multi-hole, or collinear-authored inputs use general earcut
+and its exact conformity repair.
+
+Five additional release runs reduced the median from 32.671 to 6.254 us/iter (80.9%),
+or 90.0% from the original 62.656 us/iter control, at the same checksum. The retained
+one-call trace has 136 events and 52 predicates, down from 726 and 426 respectively;
+scalar comparisons fell from 141 to 8 and orientations from 87 to 8, with no
+refinements. Hypertri's full unit/adversarial/differential/property and all-target gate
+plus Hypercurve's public triangulation integration tests remain green.
+
+## Retained finite-ring boundary deduplication
+
+`Contour2::import_finite_ring` previously promoted every source point before
+using exact `Point2`/`LineSeg2` construction to count cyclic duplicate edges,
+then exact-compared adjacent points again while filtering those duplicates.
+Finite input equality is already authoritative at this explicit adapter
+boundary: equality of finite binary64 coordinates is identical to equality of
+their promoted exact dyadics, including signed zero. The importer now validates
+all coordinates for finiteness, counts and filters source duplicates in one
+finite pass, and promotes each retained point once. Because finite dyadic
+promotion preserves that equality proof, and the cyclic native segments share
+cloned endpoints, the adapter now constructs the already-proven nonzero,
+connected, closed exact ring directly instead of repeating two exact squared-
+distance validation passes.
+
+The direct 384-point retained-import sentinel fell from the original 751.199
+to 127.175 us/iter over 10,000 iterations (83.1%), or 76.2% from the preceding
+533.464 us/iter retained version, with the same 384 emitted segments and
+retained-record accounting. CSGRS's involute-gear constructor, which crosses
+this boundary with its finite analytic tessellation, fell from 0.637 to 0.173
+ms/op across matched 30-sample runs (72.8%); cycloidal gear fell from 0.391 to
+0.118 ms/op (69.8%). Their one-call traces fell from 24,619 to 943 and from
+12,839 to 799 dispatch events respectively, with zero approximations,
+refinements, fallbacks, or unknown facts. Signed-zero, adjacent/closing duplicate,
+all-duplicate, and nonfinite regressions protect the adapter semantics; an
+exact `Region2` comparison proves retained point order and coordinates.
+The dedicated retained-import target completed 1,000
+AddressSanitizer-instrumented executions (651 coverage points and 1,686 feature
+edges). Its isolated 64-point dispatch sentinel records 128 events and zero
+approximations, refinements, or unknown facts.
 
 ## Optimization boundary
 

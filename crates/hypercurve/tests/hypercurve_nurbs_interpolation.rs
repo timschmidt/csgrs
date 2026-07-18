@@ -39,6 +39,8 @@ fn uniform_quadratic_nurbs_interpolation_retains_exact_bareiss_evidence() {
         vec![q(1, 4), q(1, 2), q(1, 4)]
     );
     assert_eq!(report.determinant(), &q(1, 2));
+    assert_eq!(report.x_numerators(), &[r(0), r(1), r(2)]);
+    assert_eq!(report.y_numerators(), &[r(0), r(2), r(0)]);
     assert_eq!(
         report.solve_path(),
         NurbsInterpolationSolvePath2::DenseBareissCramerResidualReplay

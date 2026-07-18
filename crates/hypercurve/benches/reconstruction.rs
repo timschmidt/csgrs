@@ -53,6 +53,15 @@ fn finite_line_samples(count: usize) -> Vec<[f64; 2]> {
     (0..count).map(|index| [index as f64, 0.0]).collect()
 }
 
+fn finite_ring_samples(count: usize) -> Vec<[f64; 2]> {
+    (0..count)
+        .map(|index| {
+            let angle = std::f64::consts::TAU * index as f64 / count as f64;
+            [angle.cos(), angle.sin()]
+        })
+        .collect()
+}
+
 fn bench_open_reconstruction(name: &str, points: &[Point2], iterations: u32) -> CurveResult<()> {
     let options = PolylineReconstructionOptions {
         min_arc_points: 3,
@@ -118,6 +127,22 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "retained_import_line_string_256: 10000 iterations in {elapsed:?} ({:?}/iter), total segments={total_import_segments}",
+        elapsed / 10_000
+    );
+    let ring_points = finite_ring_samples(384);
+    let started = Instant::now();
+    let mut total_ring_segments = 0_usize;
+    for _ in 0..10_000 {
+        let import = Contour2::import_finite_ring(&ring_points)?;
+        total_ring_segments += black_box(
+            import.contour().len()
+                + import.record().emitted_segment_count()
+                + import.record().discarded_duplicate_count(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "retained_import_ring_384: 10000 iterations in {elapsed:?} ({:?}/iter), total segments={total_ring_segments}",
         elapsed / 10_000
     );
     bench_open_reconstruction("reconstruct_collinear_256", &line_samples(256), 10_000)?;

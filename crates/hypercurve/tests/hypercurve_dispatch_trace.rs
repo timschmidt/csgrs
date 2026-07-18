@@ -1,0 +1,43 @@
+#![cfg(feature = "dispatch-trace")]
+
+use hypercurve::{Contour2, CurvePolicy, LineSeg2, Point2, Real};
+
+fn p(x: i32, y: i32) -> Point2 {
+    Point2::new(Real::from(x), Real::from(y))
+}
+
+#[test]
+fn public_curve_query_emits_correlated_exact_path_trace() {
+    let horizontal = LineSeg2::try_new(p(-4, 0), p(4, 0)).unwrap();
+    let vertical = LineSeg2::try_new(p(0, -4), p(0, 4)).unwrap();
+
+    hyperreal::dispatch_trace::reset();
+    let relation = hyperreal::dispatch_trace::with_recording(|| {
+        horizontal.intersect_line(&vertical, &CurvePolicy::certified())
+    })
+    .unwrap();
+    assert!(!matches!(relation, hypercurve::LineLineIntersection::None));
+
+    let snapshot = hyperreal::dispatch_trace::take_trace();
+    let summary = snapshot.correlation_summary();
+    assert!(summary.dispatch_events > 0);
+    assert!(
+        summary.predicate_events > 0
+            || summary.sign_or_zero_query_events > 0
+            || summary.exact_reducer_events > 0
+    );
+}
+
+#[test]
+fn public_finite_ring_import_emits_correlated_exact_path_trace() {
+    hyperreal::dispatch_trace::reset();
+    let import = hyperreal::dispatch_trace::with_recording(|| {
+        Contour2::import_finite_ring(&[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0]])
+    })
+    .unwrap();
+    assert_eq!(import.contour().len(), 4);
+
+    let snapshot = hyperreal::dispatch_trace::take_trace();
+    let summary = snapshot.correlation_summary();
+    assert!(summary.dispatch_events > 0 || summary.rational_temporaries > 0);
+}

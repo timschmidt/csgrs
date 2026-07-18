@@ -16,7 +16,7 @@ use hyperreal::Real;
 
 use crate::{
     BulgeVertex2, Classification, Contour2, CurveError, CurveResult, CurveString2, FillRule,
-    Point2, RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2,
+    LineSeg2, Point2, RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2,
     RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
 };
 
@@ -783,8 +783,20 @@ impl Contour2 {
             return Err(CurveError::InsufficientVertices);
         }
 
-        let (vertices, discarded_duplicate_count) = finite_ring_vertices(points)?;
-        let contour = Self::from_bulge_vertices_with_fill_rule(&vertices, fill_rule)?;
+        let (retained_points, discarded_duplicate_count) = finite_ring_points(points)?;
+        let mut segments = Vec::with_capacity(retained_points.len());
+        for index in 0..retained_points.len() {
+            let start = retained_points[index].clone();
+            let end = retained_points[(index + 1) % retained_points.len()].clone();
+            // `finite_ring_points` rejects non-finite input and removes every
+            // adjacent (including closing) duplicate before exact dyadic
+            // promotion. Promotion preserves finite `f64` equality, while
+            // shared cloned endpoints make this chain connected and closed by
+            // construction. Repeating those exact distance predicates here is
+            // therefore unnecessary work at this finite adapter boundary.
+            segments.push(Segment2::Line(LineSeg2::new_unchecked(start, end)));
+        }
+        let contour = Self::new_unchecked(CurveString2::new_unchecked(segments), fill_rule);
         let record = RetainedImportRecord2::try_new_closed_ring_with_source_version(
             format,
             source_index,
@@ -895,35 +907,47 @@ impl Contour2 {
     }
 }
 
-fn finite_ring_vertices(points: &[[f64; 2]]) -> CurveResult<(Vec<BulgeVertex2>, usize)> {
-    let source_points = points
+fn finite_ring_points(points: &[[f64; 2]]) -> CurveResult<(Vec<Point2>, usize)> {
+    if points
         .iter()
-        .map(|point| point_from_finite_xy(*point))
-        .collect::<CurveResult<Vec<_>>>()?;
-    let discarded_duplicate_count = cyclic_duplicate_edge_count(&source_points);
+        .flatten()
+        .any(|coordinate| !coordinate.is_finite())
+    {
+        return Err(CurveError::NonFiniteReconstructionPoint);
+    }
 
-    let mut unique_points: Vec<Point2> = Vec::with_capacity(source_points.len());
-    for point in source_points {
+    let same_point = |left: &[f64; 2], right: &[f64; 2]| left[0] == right[0] && left[1] == right[1];
+    let discarded_duplicate_count = points
+        .iter()
+        .zip(points.iter().cycle().skip(1))
+        .take(points.len())
+        .filter(|(start, end)| same_point(start, end))
+        .count();
+
+    let mut unique_points = Vec::with_capacity(points.len());
+    for point in points {
         if unique_points
             .last()
-            .is_some_and(|previous| previous == &point)
+            .is_some_and(|previous| same_point(previous, point))
         {
             continue;
         }
-        unique_points.push(point);
+        unique_points.push(*point);
     }
-    if unique_points.len() > 1 && unique_points.first() == unique_points.last() {
+    if unique_points.len() > 1
+        && same_point(&unique_points[0], &unique_points[unique_points.len() - 1])
+    {
         unique_points.pop();
     }
     if unique_points.len() < 3 {
         return Err(CurveError::InsufficientVertices);
     }
 
-    let vertices = unique_points
+    let points = unique_points
         .into_iter()
-        .map(|point| BulgeVertex2::new(point, Real::zero()))
-        .collect();
-    Ok((vertices, discarded_duplicate_count))
+        .map(point_from_finite_xy)
+        .collect::<CurveResult<Vec<_>>>()?;
+    Ok((points, discarded_duplicate_count))
 }
 
 fn bulge_vertices_from_reconstruction_spans(
@@ -1021,19 +1045,6 @@ fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
         }
     }
     counts
-}
-
-fn cyclic_duplicate_edge_count(points: &[Point2]) -> usize {
-    if points.is_empty() {
-        return 0;
-    }
-
-    points
-        .iter()
-        .zip(points.iter().cycle().skip(1))
-        .take(points.len())
-        .filter(|(start, end)| crate::LineSeg2::try_new((*start).clone(), (*end).clone()).is_err())
-        .count()
 }
 
 #[derive(Clone, Debug)]

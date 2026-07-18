@@ -73,3 +73,9 @@ path = "fuzz_targets/curve_string_editing.rs"
 test = false
 doc = false
 bench = false
+
+[patch.crates-io]
+hyperreal = { path = "../../hyperreal" }
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit" }
+hypersolve = { path = "../../hypersolve" }

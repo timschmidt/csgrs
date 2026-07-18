@@ -470,6 +470,38 @@ fn finite_ring_import_discards_adjacent_duplicate_source_edges() {
 }
 
 #[test]
+fn finite_ring_import_counts_signed_zero_duplicates_at_the_input_boundary() {
+    let import = Contour2::import_finite_ring(&[
+        [-0.0, 0.0],
+        [0.0, -0.0],
+        [4.0, 0.0],
+        [4.0, 3.0],
+        [-0.0, 0.0],
+    ])
+    .unwrap();
+
+    assert_eq!(import.contour().len(), 3);
+    assert_eq!(import.record().discarded_duplicate_count(), 2);
+    let expected =
+        Contour2::from_real_ring(&[[r(0.0), r(0.0)], [r(4.0), r(0.0)], [r(4.0), r(3.0)]]).unwrap();
+    assert_eq!(import.contour(), &expected);
+}
+
+#[test]
+fn finite_ring_import_rejects_nonfinite_points_even_when_adjacent() {
+    assert_eq!(
+        Contour2::import_finite_ring(&[
+            [0.0, 0.0],
+            [f64::INFINITY, 0.0],
+            [f64::INFINITY, 0.0],
+            [0.0, 1.0],
+        ])
+        .unwrap_err(),
+        CurveError::NonFiniteReconstructionPoint
+    );
+}
+
+#[test]
 fn finite_ring_import_rejects_all_duplicate_source_edges() {
     assert_eq!(
         Contour2::import_finite_ring(&[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]).unwrap_err(),

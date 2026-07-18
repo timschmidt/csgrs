@@ -58,6 +58,7 @@ fuzz_target!(|data: &[u8]| {
 
     if points.len() >= 3 {
         points.push(points[0]);
+        let _ = Contour2::import_finite_ring(&points);
         let _ = Contour2::import_finite_ring_with_source(
             &points,
             FillRule::NonZero,

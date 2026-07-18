@@ -32,6 +32,7 @@ proptest = "1"
 [features]
 default = ["predicates"]
 predicates = ["dep:hyperlimit"]
+dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit?/dispatch-trace"]
 serde = []
 svg = []
 triangulation = ["dep:hypertri"]
@@ -109,5 +110,19 @@ name = "svg_io"
 harness = false
 required-features = ["svg"]
 
+[[bench]]
+name = "dispatch_trace"
+harness = false
+required-features = ["dispatch-trace", "predicates"]
+
+[[bench]]
+name = "api_surface"
+harness = false
+required-features = ["triangulation"]
+
 [patch.crates-io]
 hyperreal = { path = "../hyperreal" }
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hypersolve = { path = "../hypersolve" }
+hypertri = { path = "../hypertri" }
