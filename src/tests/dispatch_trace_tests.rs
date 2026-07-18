@@ -124,6 +124,188 @@ fn public_certified_ring_emits_correlated_dispatch_trace() {
 }
 
 #[test]
+fn public_arrow_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::arrow(Real::from(6), Real::from(2), Real::from(3), Real::from(4))
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs arrow");
+}
+
+#[test]
+fn public_bezier_emits_correlated_dispatch_trace() {
+    let control = [
+        [Real::from(0), Real::from(0)],
+        [Real::from(1), Real::from(2)],
+        [Real::from(2), Real::from(2)],
+        [Real::from(3), Real::from(0)],
+    ];
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| Profile::bezier(&control, 16));
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs Bezier");
+}
+
+#[test]
+fn public_bspline_emits_correlated_dispatch_trace() {
+    let control = [
+        [Real::from(0), Real::from(0)],
+        [Real::from(1), Real::from(2)],
+        [Real::from(2), Real::from(2)],
+        [Real::from(3), Real::from(0)],
+    ];
+    hyperreal::dispatch_trace::reset();
+    let profile =
+        hyperreal::dispatch_trace::with_recording(|| Profile::bspline(&control, 3, 8));
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs B-spline");
+}
+
+#[test]
+fn public_circle_with_keyway_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::circle_with_keyway(Real::from(6), 24, Real::from(2), Real::from(2))
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs circle with keyway");
+}
+
+#[test]
+fn public_circle_with_flat_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::circle_with_flat(Real::from(6), 24, Real::from(2))
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs circle with flat");
+}
+
+#[test]
+fn public_circle_with_two_flats_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::circle_with_two_flats(Real::from(6), 24, Real::from(2))
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs circle with two flats");
+}
+
+#[test]
+fn public_crescent_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::crescent(Real::from(6), Real::from(4), Real::from(3), 24)
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs crescent");
+}
+
+#[test]
+fn public_keyhole_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::keyhole(Real::from(4), Real::from(2), Real::from(6), 24)
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs keyhole");
+}
+
+#[test]
+fn public_pie_slice_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::pie_slice(Real::from(4), Real::from(10), Real::from(100), 12)
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs pie slice");
+}
+
+#[test]
+fn public_polygon_emits_correlated_dispatch_trace() {
+    let points = [
+        [Real::from(0), Real::from(0)],
+        [Real::from(4), Real::from(0)],
+        [Real::from(2), Real::from(3)],
+    ];
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| Profile::polygon(&points));
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs polygon");
+}
+
+#[test]
+fn public_polygon_points_emits_correlated_dispatch_trace() {
+    let points = [
+        hypercurve::Point2::new(Real::from(0), Real::from(0)),
+        hypercurve::Point2::new(Real::from(4), Real::from(0)),
+        hypercurve::Point2::new(Real::from(2), Real::from(3)),
+    ];
+    hyperreal::dispatch_trace::reset();
+    let profile =
+        hyperreal::dispatch_trace::with_recording(|| Profile::polygon_points(&points));
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs native polygon points");
+}
+
+#[test]
+fn public_right_triangle_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::right_triangle(Real::from(6), Real::from(4))
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs right triangle");
+}
+
+#[test]
+fn public_rounded_rectangle_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::rounded_rectangle(Real::from(12), Real::from(8), Real::from(2), 8)
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs rounded rectangle");
+}
+
+#[test]
+fn public_square_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| Profile::square(Real::from(8)));
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs square");
+}
+
+#[test]
+fn public_supershape_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::supershape(
+            Real::from(1),
+            Real::from(1),
+            Real::from(5),
+            Real::from(2),
+            Real::from(2),
+            Real::from(2),
+            32,
+        )
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs supershape");
+}
+
+#[test]
+fn public_trapezoid_emits_correlated_dispatch_trace() {
+    hyperreal::dispatch_trace::reset();
+    let profile = hyperreal::dispatch_trace::with_recording(|| {
+        Profile::trapezoid(Real::from(4), Real::from(8), Real::from(4), Real::from(2))
+    });
+    assert!(!profile.is_empty());
+    assert_recorded("csgrs trapezoid");
+}
+
+#[test]
 fn public_naca_airfoil_emits_correlated_dispatch_trace() {
     hyperreal::dispatch_trace::reset();
     let profile = hyperreal::dispatch_trace::with_recording(|| {
