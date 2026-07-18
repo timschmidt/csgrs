@@ -154,8 +154,8 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `vec3 dot` | 453.02 ns | 422.30 ns | 257.12 ns | 7.40 us | 1.76x | 0.06x |
-| `vec3 magnitude` | 3.25 us | 2.32 us | 363.40 ns | 8.95 us | 8.95x | 0.36x |
-| `vec3 normalize` | 5.30 us | 4.47 us | 602.21 ns | 17.17 us | 8.79x | 0.31x |
+| `vec3 magnitude` | 796.04 ns | 1.99 us | 354.38 ns | 8.84 us | 2.25x | 0.09x |
+| `vec3 normalize` | 3.30 us | 4.77 us | 601.15 ns | 16.87 us | 5.48x | 0.20x |
 
 #### Vector API Operations
 
@@ -164,9 +164,9 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `vec3 new` | 235.93 ns | 1.37 us | 56.41 ns | 825.22 ns | 4.18x | 0.29x |
 | `vec3 zero` | 47.89 ns | 47.57 ns | 30.95 ns | 2.82 ns | 1.55x | 16.97x |
 | `vec3 dot abort` | 426.71 ns | 347.07 ns | 204.28 ns | 7.19 us | 2.09x | 0.06x |
-| `vec3 magnitude abort` | 3.20 us | 1.92 us | 324.35 ns | 8.97 us | 9.86x | 0.36x |
-| `vec3 normalize checked` | 5.79 us | 3.95 us | 535.22 ns | 17.03 us | 10.81x | 0.34x |
-| `vec3 normalize checked abort` | 5.77 us | 3.94 us | 532.19 ns | 17.32 us | 10.84x | 0.33x |
+| `vec3 magnitude abort` | 822.02 ns | 1.92 us | 324.35 ns | 8.97 us | 2.53x | 0.09x |
+| `vec3 normalize checked` | 3.76 us | 3.95 us | 535.22 ns | 17.03 us | 7.02x | 0.22x |
+| `vec3 normalize checked abort` | 3.80 us | 3.94 us | 532.19 ns | 17.32 us | 7.14x | 0.22x |
 | `vec3 div scalar checked` | 462.83 ns | 429.43 ns | 171.88 ns | 7.69 us | 2.69x | 0.06x |
 | `vec3 div scalar checked abort` | 478.61 ns | 452.38 ns | 172.41 ns | 7.68 us | 2.78x | 0.06x |
 | `vec3 add` | 465.93 ns | 436.68 ns | 124.44 ns | 3.98 us | 3.74x | 0.12x |
@@ -177,8 +177,8 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `vec3 mul scalar` | 758.59 ns | 738.93 ns | 123.45 ns | 4.41 us | 6.14x | 0.17x |
 | `vec3 div scalar` | 454.07 ns | 428.86 ns | 172.79 ns | 7.69 us | 2.63x | 0.06x |
 | `vec4 dot` | 408.77 ns | 251.40 ns | 326.88 ns | 9.68 us | 1.25x | 0.04x |
-| `vec4 magnitude` | 2.64 us | 1.30 us | 409.78 ns | 11.65 us | 6.45x | 0.23x |
-| `vec4 normalize` | 4.99 us | 2.25 us | 683.22 ns | 22.38 us | 7.30x | 0.22x |
+| `vec4 magnitude` | 832.44 ns | 1.30 us | 409.78 ns | 11.65 us | 2.03x | 0.07x |
+| `vec4 normalize` | 3.62 us | 2.70 us | 727.14 ns | 21.87 us | 4.98x | 0.17x |
 | `vec4 add` | 546.07 ns | 453.60 ns | 176.78 ns | 5.24 us | 3.09x | 0.10x |
 | `vec4 add scalar` | 526.86 ns | 437.35 ns | 177.42 ns | 5.26 us | 2.97x | 0.10x |
 | `vec4 sub` | 550.15 ns | 492.30 ns | 175.96 ns | 9.80 us | 3.13x | 0.06x |

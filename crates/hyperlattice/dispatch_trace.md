@@ -699,7 +699,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/ln` | 42 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 30 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/log10` | 49 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/log10_abort` | 57 | 0 | 12 | 4 | 12 | 4 | 0 | 10 | 8 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 12 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/pow` | 67 | 0 | 4 | 0 | 4 | 0 | 0 | 2 | 5 | 41 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 |
+| `scalar_ops/hyperreal-rational/pow` | 69 | 0 | 4 | 0 | 4 | 0 | 0 | 2 | 5 | 43 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/powi` | 28 | 0 | 4 | 0 | 0 | 0 | 0 | 3 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 6 | 6 |
 | `scalar_ops/hyperreal-rational/powi_negative_one` | 12 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
@@ -725,12 +725,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/ln` | 41 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 25 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 |
 | `scalar_ops/hyperreal/log10` | 44 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 0 | 0 |
 | `scalar_ops/hyperreal/log10_abort` | 52 | 0 | 12 | 4 | 12 | 4 | 0 | 10 | 8 | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 13 | 0 | 0 |
-| `scalar_ops/hyperreal/pow` | 73 | 0 | 4 | 0 | 4 | 0 | 0 | 1 | 5 | 43 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 45 | 11 | 9 |
+| `scalar_ops/hyperreal/pow` | 77 | 0 | 4 | 0 | 4 | 0 | 0 | 1 | 5 | 47 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 45 | 11 | 9 |
 | `scalar_ops/hyperreal/powi` | 26 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 0 | 22 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 7 | 7 | 0 |
 | `scalar_ops/hyperreal/powi_negative_one` | 12 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/sinh` | 84 | 0 | 4 | 6 | 8 | 0 | 0 | 4 | 8 | 58 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 44 | 4 | 4 |
-| `scalar_ops/hyperreal/sqrt` | 26 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `scalar_ops/hyperreal/sqrt` | 27 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 8 | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal/tan` | 20 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/tanh` | 124 | 0 | 4 | 12 | 12 | 0 | 0 | 0 | 12 | 80 | 0 | 0 | 0 | 0 | 0 | 4 | 4 | 68 | 8 | 8 |
 | `scalar_trig/hyperreal-rational/0.1/cos` | 5 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
@@ -818,13 +818,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vector_ops/hyperreal/vec4 dot_abort_sparse` | 81 | 0 | 34 | 0 | 24 | 0 | 0 | 4 | 27 | 36 | 0 | 0 | 0 | 0 | 0 | 3 | 32 | 4 | 0 | 0 |
 | `vector_ops/hyperreal/vec4 dot_sparse` | 19 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 4 | 0 | 0 |
 | `vectors/hyperreal-rational/vec3 dot` | 5 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `vectors/hyperreal-rational/vec3 magnitude` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `vectors/hyperreal-rational/vec3 normalize` | 21 | 0 | 2 | 0 | 2 | 0 | 0 | 1 | 2 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 4 | 0 | 0 |
+| `vectors/hyperreal-rational/vec3 magnitude` | 15 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `vectors/hyperreal-rational/vec3 normalize` | 32 | 0 | 2 | 0 | 2 | 0 | 0 | 1 | 2 | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 4 | 0 | 0 |
 | `vectors/hyperreal-rational/vec4 normalize` | 17 | 0 | 2 | 0 | 1 | 0 | 0 | 1 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
 | `vectors/hyperreal/vec3 dot` | 18 | 0 | 4 | 0 | 0 | 0 | 0 | 7 | 0 | 14 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
-| `vectors/hyperreal/vec3 magnitude` | 30 | 0 | 4 | 0 | 4 | 0 | 0 | 7 | 4 | 26 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
-| `vectors/hyperreal/vec3 normalize` | 59 | 0 | 8 | 0 | 4 | 0 | 0 | 9 | 4 | 51 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 13 | 4 | 3 |
-| `vectors/hyperreal/vec4 normalize` | 61 | 0 | 8 | 0 | 4 | 0 | 0 | 7 | 4 | 53 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 17 | 5 | 4 |
+| `vectors/hyperreal/vec3 magnitude` | 45 | 0 | 4 | 0 | 4 | 0 | 0 | 7 | 4 | 41 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
+| `vectors/hyperreal/vec3 normalize` | 74 | 0 | 8 | 0 | 4 | 0 | 0 | 9 | 4 | 66 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 13 | 4 | 3 |
+| `vectors/hyperreal/vec4 normalize` | 71 | 0 | 8 | 0 | 4 | 0 | 0 | 7 | 4 | 63 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 17 | 5 | 4 |
 
 ## Dispatch Counts
 
@@ -9517,6 +9517,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/pow` | `computable_approx` | `ln` | `binary-scaled-rational` | 4 |
 | `scalar_ops/hyperreal-rational/pow` | `hyperlattice` | `free_function` | `pow` | 4 |
 | `scalar_ops/hyperreal-rational/pow` | `rational` | `comparison` | `word-sized` | 10 |
+| `scalar_ops/hyperreal-rational/pow` | `rational` | `square_extraction` | `shared-divisor-remainder` | 1 |
+| `scalar_ops/hyperreal-rational/pow` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 1 |
 | `scalar_ops/hyperreal-rational/pow` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
 | `scalar_ops/hyperreal-rational/pow` | `real` | `constructor` | `rational` | 3 |
 | `scalar_ops/hyperreal-rational/pow` | `real` | `pow` | `fractional-arbitrary` | 3 |
@@ -9829,6 +9831,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/pow` | `computable` | `ln` | `smooth-rational-shared-log-sum` | 1 |
 | `scalar_ops/hyperreal/pow` | `computable_approx` | `ln` | `binary-scaled-rational` | 2 |
 | `scalar_ops/hyperreal/pow` | `hyperlattice` | `free_function` | `pow` | 4 |
+| `scalar_ops/hyperreal/pow` | `rational` | `square_extraction` | `large-power-of-two` | 1 |
+| `scalar_ops/hyperreal/pow` | `rational` | `square_extraction` | `mod63-reject` | 1 |
+| `scalar_ops/hyperreal/pow` | `rational` | `square_extraction` | `shared-divisor-remainder` | 1 |
+| `scalar_ops/hyperreal/pow` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 1 |
 | `scalar_ops/hyperreal/pow` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
 | `scalar_ops/hyperreal/pow` | `real` | `constructor` | `rational` | 3 |
 | `scalar_ops/hyperreal/pow` | `real` | `pow` | `fractional-arbitrary` | 3 |
@@ -9876,6 +9882,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/sqrt` | `computable` | `constructor` | `rational-node` | 1 |
 | `scalar_ops/hyperreal/sqrt` | `hyperlattice` | `domain` | `structural-valid` | 4 |
 | `scalar_ops/hyperreal/sqrt` | `hyperlattice` | `free_function` | `sqrt` | 4 |
+| `scalar_ops/hyperreal/sqrt` | `rational` | `square_extraction` | `large-power-of-two` | 1 |
 | `scalar_ops/hyperreal/sqrt` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
 | `scalar_ops/hyperreal/sqrt` | `real` | `detailed_facts` | `exact-rational` | 4 |
 | `scalar_ops/hyperreal/sqrt` | `real` | `sqrt` | `rational-perfect-square` | 2 |
@@ -10511,6 +10518,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vectors/hyperreal-rational/vec3 magnitude` | `computable` | `constructor` | `rational-node` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `hyperlattice_vector` | `method` | `magnitude` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `rational` | `dot_product` | `word-sized` | 1 |
+| `vectors/hyperreal-rational/vec3 magnitude` | `rational` | `square_extraction` | `mod63-reject` | 1 |
+| `vectors/hyperreal-rational/vec3 magnitude` | `rational` | `square_extraction` | `mod64-reject` | 2 |
+| `vectors/hyperreal-rational/vec3 magnitude` | `rational` | `square_extraction` | `shared-divisor-remainder` | 2 |
+| `vectors/hyperreal-rational/vec3 magnitude` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 2 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `rational` | `word-result` | `wide-general-fraction` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `real` | `best_sign` | `symbolic-or-rational` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `real` | `constructor` | `rational` | 1 |
@@ -10522,6 +10533,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vectors/hyperreal-rational/vec3 normalize` | `hyperlattice_vector` | `method` | `normalize` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `rational` | `dot_product` | `word-sized` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `rational` | `mul` | `word-sized` | 4 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `mod63-reject` | 2 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `mod64-reject` | 3 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `shared-divisor-remainder` | 3 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 3 |
 | `vectors/hyperreal-rational/vec3 normalize` | `rational` | `word-result` | `wide-general-fraction` | 5 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `best_sign` | `symbolic-or-rational` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `constructor` | `rational` | 1 |
@@ -10552,6 +10567,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vectors/hyperreal/vec3 magnitude` | `hyperlattice_vector` | `method` | `magnitude` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `rational` | `dot_product` | `dyadic-shared-denominator` | 2 |
 | `vectors/hyperreal/vec3 magnitude` | `rational` | `dot_product` | `word-sized` | 2 |
+| `vectors/hyperreal/vec3 magnitude` | `rational` | `square_extraction` | `large-power-of-two` | 3 |
+| `vectors/hyperreal/vec3 magnitude` | `rational` | `square_extraction` | `mod63-reject` | 2 |
+| `vectors/hyperreal/vec3 magnitude` | `rational` | `square_extraction` | `mod64-reject` | 4 |
+| `vectors/hyperreal/vec3 magnitude` | `rational` | `square_extraction` | `shared-divisor-remainder` | 3 |
+| `vectors/hyperreal/vec3 magnitude` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 3 |
 | `vectors/hyperreal/vec3 magnitude` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `vectors/hyperreal/vec3 magnitude` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
 | `vectors/hyperreal/vec3 magnitude` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
@@ -10564,6 +10584,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vectors/hyperreal/vec3 normalize` | `rational` | `dot_product` | `dyadic-shared-denominator` | 2 |
 | `vectors/hyperreal/vec3 normalize` | `rational` | `dot_product` | `word-sized` | 2 |
 | `vectors/hyperreal/vec3 normalize` | `rational` | `mul` | `word-sized` | 10 |
+| `vectors/hyperreal/vec3 normalize` | `rational` | `square_extraction` | `large-power-of-two` | 3 |
+| `vectors/hyperreal/vec3 normalize` | `rational` | `square_extraction` | `mod63-reject` | 2 |
+| `vectors/hyperreal/vec3 normalize` | `rational` | `square_extraction` | `mod64-reject` | 4 |
+| `vectors/hyperreal/vec3 normalize` | `rational` | `square_extraction` | `shared-divisor-remainder` | 3 |
+| `vectors/hyperreal/vec3 normalize` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 3 |
 | `vectors/hyperreal/vec3 normalize` | `rational` | `word-result` | `dyadic-fraction` | 3 |
 | `vectors/hyperreal/vec3 normalize` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `vectors/hyperreal/vec3 normalize` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
@@ -10579,6 +10604,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vectors/hyperreal/vec4 normalize` | `rational` | `dot_product` | `dyadic-shared-denominator` | 2 |
 | `vectors/hyperreal/vec4 normalize` | `rational` | `dot_product` | `word-sized` | 2 |
 | `vectors/hyperreal/vec4 normalize` | `rational` | `mul` | `word-sized` | 10 |
+| `vectors/hyperreal/vec4 normalize` | `rational` | `square_extraction` | `large-power-of-two` | 2 |
+| `vectors/hyperreal/vec4 normalize` | `rational` | `square_extraction` | `mod63-reject` | 1 |
+| `vectors/hyperreal/vec4 normalize` | `rational` | `square_extraction` | `mod64-reject` | 3 |
+| `vectors/hyperreal/vec4 normalize` | `rational` | `square_extraction` | `shared-divisor-remainder` | 2 |
+| `vectors/hyperreal/vec4 normalize` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 2 |
 | `vectors/hyperreal/vec4 normalize` | `rational` | `word-result` | `cached-small-integer` | 1 |
 | `vectors/hyperreal/vec4 normalize` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `vectors/hyperreal/vec4 normalize` | `rational` | `word-result` | `small-general-fraction` | 5 |

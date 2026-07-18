@@ -110,6 +110,29 @@ benchmark. Hyperreal's exhaustive value oracle covers every retained exponent,
 and the full Hyperlattice all-target/all-feature gate, strict Clippy, and
 warning-denied documentation checks passed with the final dependency source.
 
+## Exact dyadic vector norm reduction
+
+Vector magnitude and normalization were spending most of their time below the
+lattice layer while Hyperreal extracted square factors from the exact dyadic
+norm radicand. Hyperreal now splits large power-of-two denominators directly
+and shares exact residue probes across its remaining factor schedule. No
+Hyperlattice arithmetic route or public API changed.
+
+Fresh cross-library medians show the downstream effect:
+
+| Workload | Hyperreal f64 | Exact rational | Numerica 128 | Symbolica |
+| --- | ---: | ---: | ---: | ---: |
+| `vec3 magnitude` | 796.04 ns | 1.99 us | 354.38 ns | 8.84 us |
+| `vec3 normalize` | 3.30 us | 4.77 us | 601.15 ns | 16.87 us |
+| `vec4 normalize` | 3.62 us | 2.70 us | 727.14 ns | 21.87 us |
+
+Relative to the preceding ledger, the f64 facade improves by 75.5% for vec3
+magnitude, 37.7% for vec3 normalization, and 27.5% for vec4 normalization.
+Numerica remains 2.25--5.48 times faster on these construction workloads;
+Hyperreal is 5.1--11.1 times faster than Symbolica. The regenerated trace
+records the dependency's large-power-of-two square-extraction path beneath the
+public vector magnitude and normalization rows.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`
