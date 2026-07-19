@@ -2067,12 +2067,70 @@ fn boolean_boundary_loop_set_from_borrowed_contours_keeps_inputs_available() {
 }
 
 #[test]
-fn boundary_chain_assembly_rejects_branch_points() {
+fn boundary_chain_assembly_orders_branch_points_by_tangent() {
     let fragments = BooleanBoundaryFragmentSet::new(
         vec![
             directed_fragment(0, 0, 0, 1, 0),
             directed_fragment(1, 1, 0, 2, 0),
             directed_fragment(2, 1, 0, 1, 1),
+        ],
+        Vec::new(),
+    )
+    .unwrap();
+
+    let assembled = fragments.assemble_chains_with_report(&policy());
+    let chains = assembled.chains().unwrap();
+    assert_eq!(chains.len(), 2);
+    assert_eq!(chains.closed_count(), 0);
+    assert_eq!(chains.chains()[0].len(), 2);
+    assert_eq!(chains.chains()[0].fragments()[0].fragment_index, 0);
+    assert_eq!(chains.chains()[0].fragments()[1].fragment_index, 1);
+    assert_eq!(chains.chains()[1].len(), 1);
+    assert_eq!(chains.chains()[1].fragments()[0].fragment_index, 2);
+
+    assert!(assembled.report().status().is_native_exact());
+    assert_eq!(
+        assembled.report().stage(),
+        BooleanBoundaryChainAssemblyStage2::ChainMaterialization
+    );
+    assert_eq!(assembled.report().directed_fragment_count(), 3);
+    assert_eq!(
+        assembled.report().directed_fragment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 0 }
+    );
+    assert_eq!(
+        assembled.report().output_fragment_kind_counts(),
+        Some(SegmentKindCounts { lines: 3, arcs: 0 })
+    );
+    assert_eq!(assembled.report().output_fragments().len(), 3);
+    assert_eq!(assembled.report().unresolved_boundary_count(), 0);
+    assert_eq!(assembled.report().blocker(), None);
+    assert!(matches!(
+        assembled.chains_classification(),
+        Classification::Decided(_)
+    ));
+    let assembled_report = assembled.clone().into_report();
+    assert_eq!(&assembled_report, assembled.report());
+    let (owned_chains, owned_assembled_report) = assembled.clone().into_parts();
+    assert_eq!(owned_chains.as_ref(), assembled.chains());
+    assert_eq!(&owned_assembled_report, assembled.report());
+    assert!(matches!(
+        assembled.into_chains_classification(),
+        Classification::Decided(_)
+    ));
+    assert!(matches!(
+        fragments.assemble_chains(&policy()),
+        Classification::Decided(_)
+    ));
+}
+
+#[test]
+fn boundary_chain_assembly_rejects_equal_tangent_branch_points() {
+    let fragments = BooleanBoundaryFragmentSet::new(
+        vec![
+            directed_fragment(0, 0, 0, 1, 0),
+            directed_fragment(1, 1, 0, 2, 0),
+            directed_fragment(2, 1, 0, 3, 0),
         ],
         Vec::new(),
     )
@@ -2085,34 +2143,13 @@ fn boundary_chain_assembly_rejects_branch_points() {
         assembled.report().stage(),
         BooleanBoundaryChainAssemblyStage2::EndpointAdjacency
     );
-    assert_eq!(assembled.report().directed_fragment_count(), 3);
-    assert_eq!(
-        assembled.report().directed_fragment_kind_counts(),
-        SegmentKindCounts { lines: 3, arcs: 0 }
-    );
-    assert_eq!(assembled.report().output_fragment_kind_counts(), None);
-    assert_eq!(assembled.report().output_fragments().len(), 0);
-    assert_eq!(assembled.report().unresolved_boundary_count(), 0);
     assert_eq!(
         assembled.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
+        Some(UncertaintyReason::Boundary)
     );
-    assert_eq!(
-        assembled.chains_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-    let assembled_report = assembled.clone().into_report();
-    assert_eq!(&assembled_report, assembled.report());
-    let (owned_chains, owned_assembled_report) = assembled.clone().into_parts();
-    assert_eq!(owned_chains.as_ref(), assembled.chains());
-    assert_eq!(&owned_assembled_report, assembled.report());
     assert_eq!(
         assembled.into_chains_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-    assert_eq!(
-        fragments.assemble_chains(&policy()),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
 

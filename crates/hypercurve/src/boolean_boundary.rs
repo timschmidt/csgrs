@@ -7,14 +7,15 @@
 use crate::boolean::{
     BooleanFragmentClassification, validate_boolean_fragment_classification_boundary_action,
 };
+use hyperreal::RealSign;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
-use crate::classify::{compare_reals, is_zero};
+use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, ParamRange, Point2,
-    RegionContourKey, RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    Real, RegionContourKey, RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2,
+    SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// A selected fragment with geometry already oriented for result traversal.
@@ -241,12 +242,10 @@ impl BooleanBoundaryFragmentSet {
     /// Assembles directed boundary fragments into endpoint-connected chains.
     ///
     /// This is the first graph-traversal scaffold, not final loop extraction.
-    /// It requires every directed fragment endpoint to have at most one outgoing
-    /// and one incoming neighbor. That mirrors the regularized traversal graph
-    /// assumed after polygon clipping has inserted and classified intersections.
-    /// Branch points and unresolved overlaps intentionally remain uncertainty;
-    /// they require fill state and event ordering rather than an arbitrary
-    /// local successor.
+    /// Regular vertices use direct endpoint adjacency. At branch vertices, the
+    /// traversal selects the smallest certified counter-clockwise turn from the
+    /// incoming tangent. Unresolved overlaps and indistinguishable tangent
+    /// continuations remain uncertainty rather than using an arbitrary successor.
     pub fn assemble_chains(&self, policy: &CurvePolicy) -> Classification<BooleanBoundaryChainSet> {
         self.assemble_chains_with_report(policy)
             .into_chains_classification()
@@ -265,16 +264,33 @@ impl BooleanBoundaryFragmentSet {
             );
         }
 
-        let (successors, predecessors) = match endpoint_adjacency(&self.directed_fragments, policy)
-        {
-            Classification::Decided(adjacency) => adjacency,
-            Classification::Uncertain(reason) => {
-                return blocked_boolean_boundary_chain_assembly_result(
-                    self,
-                    BooleanBoundaryChainAssemblyStage2::EndpointAdjacency,
-                    reason,
-                );
-            }
+        let adjacency = endpoint_adjacency(&self.directed_fragments, policy);
+        if matches!(
+            adjacency,
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        ) {
+            return match tangent_ordered_chains(&self.directed_fragments, policy) {
+                Classification::Decided(chains) => {
+                    decided_boolean_boundary_chain_assembly_result(self, chains)
+                }
+                Classification::Uncertain(reason) => {
+                    blocked_boolean_boundary_chain_assembly_result(
+                        self,
+                        BooleanBoundaryChainAssemblyStage2::EndpointAdjacency,
+                        reason,
+                    )
+                }
+            };
+        }
+        let Classification::Decided((successors, predecessors)) = adjacency else {
+            let Classification::Uncertain(reason) = adjacency else {
+                unreachable!()
+            };
+            return blocked_boolean_boundary_chain_assembly_result(
+                self,
+                BooleanBoundaryChainAssemblyStage2::EndpointAdjacency,
+                reason,
+            );
         };
 
         let mut used = vec![false; self.directed_fragments.len()];
@@ -1988,6 +2004,273 @@ fn endpoint_adjacency(
     }
 
     Classification::Decided((successors, predecessors))
+}
+
+#[derive(Clone, Debug)]
+struct BoundaryTangent {
+    dx: Real,
+    dy: Real,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum BoundaryTurnOrdering {
+    FirstBeforeSecond,
+    SecondBeforeFirst,
+    SameDirection,
+}
+
+fn tangent_ordered_chains(
+    fragments: &[DirectedBooleanFragment],
+    policy: &CurvePolicy,
+) -> Classification<BooleanBoundaryChainSet> {
+    let outgoing = match boundary_outgoing_adjacency(fragments, policy) {
+        Classification::Decided(outgoing) => outgoing,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let mut predecessors = vec![0_usize; fragments.len()];
+    for successors in &outgoing {
+        for successor in successors {
+            predecessors[*successor] += 1;
+        }
+    }
+
+    let mut used = vec![false; fragments.len()];
+    let mut chains = Vec::new();
+
+    for index in 0..fragments.len() {
+        if predecessors[index] == 0 && !used[index] {
+            let chain = match follow_tangent_ordered_chain(
+                index, fragments, &outgoing, &mut used, policy,
+            ) {
+                Classification::Decided(chain) => chain,
+                Classification::Uncertain(reason) => {
+                    return Classification::Uncertain(reason);
+                }
+            };
+            chains.push(chain);
+        }
+    }
+
+    for index in 0..fragments.len() {
+        if !used[index] {
+            let chain = match follow_tangent_ordered_chain(
+                index, fragments, &outgoing, &mut used, policy,
+            ) {
+                Classification::Decided(chain) => chain,
+                Classification::Uncertain(reason) => {
+                    return Classification::Uncertain(reason);
+                }
+            };
+            chains.push(chain);
+        }
+    }
+
+    match BooleanBoundaryChainSet::new(chains) {
+        Ok(chains) => Classification::Decided(chains),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
+fn boundary_outgoing_adjacency(
+    fragments: &[DirectedBooleanFragment],
+    policy: &CurvePolicy,
+) -> Classification<Vec<Vec<usize>>> {
+    let mut outgoing = vec![Vec::new(); fragments.len()];
+    for (left_index, left) in fragments.iter().enumerate() {
+        for (right_index, right) in fragments.iter().enumerate() {
+            if left_index == right_index {
+                continue;
+            }
+            match points_match(left.segment.end(), right.segment.start(), policy) {
+                Classification::Decided(true) => outgoing[left_index].push(right_index),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+        }
+    }
+    Classification::Decided(outgoing)
+}
+
+fn follow_tangent_ordered_chain(
+    start: usize,
+    fragments: &[DirectedBooleanFragment],
+    outgoing: &[Vec<usize>],
+    used: &mut [bool],
+    policy: &CurvePolicy,
+) -> Classification<BooleanBoundaryChain> {
+    let first_start = fragments[start].segment.start().clone();
+    let mut current = start;
+    let mut chain = Vec::new();
+
+    loop {
+        if used[current] {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        used[current] = true;
+        chain.push(fragments[current].clone());
+
+        let next =
+            match choose_boundary_tangent_successor(current, &outgoing[current], fragments, policy)
+            {
+                Classification::Decided(next) => next,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
+        let Some(next) = next else {
+            let closed = match points_match(fragments[current].segment.end(), &first_start, policy)
+            {
+                Classification::Decided(closed) => closed,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
+            return decided_boolean_boundary_chain(chain, closed);
+        };
+        if next == start {
+            return decided_boolean_boundary_chain(chain, true);
+        }
+        if used[next] {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        current = next;
+    }
+}
+
+fn choose_boundary_tangent_successor(
+    current: usize,
+    candidates: &[usize],
+    fragments: &[DirectedBooleanFragment],
+    policy: &CurvePolicy,
+) -> Classification<Option<usize>> {
+    if candidates.is_empty() {
+        return Classification::Decided(None);
+    }
+    if candidates.len() == 1 {
+        return Classification::Decided(Some(candidates[0]));
+    }
+
+    let base = segment_end_tangent(&fragments[current].segment);
+    if !boundary_tangent_is_nonzero(&base, policy) {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    }
+
+    let mut best = candidates[0];
+    let mut best_tangent = segment_start_tangent(&fragments[best].segment);
+    if !boundary_tangent_is_nonzero(&best_tangent, policy) {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    }
+    for candidate in candidates.iter().copied().skip(1) {
+        let candidate_tangent = segment_start_tangent(&fragments[candidate].segment);
+        if !boundary_tangent_is_nonzero(&candidate_tangent, policy) {
+            return Classification::Uncertain(UncertaintyReason::RealSign);
+        }
+        match compare_boundary_turn_from_base(&base, &candidate_tangent, &best_tangent, policy) {
+            Classification::Decided(BoundaryTurnOrdering::FirstBeforeSecond) => {
+                best = candidate;
+                best_tangent = candidate_tangent;
+            }
+            Classification::Decided(BoundaryTurnOrdering::SecondBeforeFirst) => {}
+            Classification::Decided(BoundaryTurnOrdering::SameDirection) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    }
+    Classification::Decided(Some(best))
+}
+
+fn segment_start_tangent(segment: &Segment2) -> BoundaryTangent {
+    segment_tangent_at(segment, segment.start())
+}
+
+fn segment_end_tangent(segment: &Segment2) -> BoundaryTangent {
+    segment_tangent_at(segment, segment.end())
+}
+
+fn segment_tangent_at(segment: &Segment2, point: &Point2) -> BoundaryTangent {
+    match segment {
+        Segment2::Line(line) => BoundaryTangent {
+            dx: line.end().x() - line.start().x(),
+            dy: line.end().y() - line.start().y(),
+        },
+        Segment2::Arc(arc) => {
+            let radial_x = point.x() - arc.center().x();
+            let radial_y = point.y() - arc.center().y();
+            if arc.is_clockwise() {
+                BoundaryTangent {
+                    dx: radial_y,
+                    dy: -radial_x,
+                }
+            } else {
+                BoundaryTangent {
+                    dx: -radial_y,
+                    dy: radial_x,
+                }
+            }
+        }
+    }
+}
+
+fn boundary_tangent_is_nonzero(tangent: &BoundaryTangent, policy: &CurvePolicy) -> bool {
+    !matches!(
+        is_zero(&boundary_dot(tangent, tangent), policy),
+        Some(true) | None
+    )
+}
+
+fn compare_boundary_turn_from_base(
+    base: &BoundaryTangent,
+    first: &BoundaryTangent,
+    second: &BoundaryTangent,
+    policy: &CurvePolicy,
+) -> Classification<BoundaryTurnOrdering> {
+    let first_half = match boundary_turn_half(base, first, policy) {
+        Some(half) => half,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    let second_half = match boundary_turn_half(base, second, policy) {
+        Some(half) => half,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    if first_half != second_half {
+        return Classification::Decided(if first_half < second_half {
+            BoundaryTurnOrdering::FirstBeforeSecond
+        } else {
+            BoundaryTurnOrdering::SecondBeforeFirst
+        });
+    }
+
+    match real_sign(&boundary_cross(first, second), policy) {
+        Some(RealSign::Positive) => {
+            Classification::Decided(BoundaryTurnOrdering::FirstBeforeSecond)
+        }
+        Some(RealSign::Negative) => {
+            Classification::Decided(BoundaryTurnOrdering::SecondBeforeFirst)
+        }
+        Some(RealSign::Zero) => Classification::Decided(BoundaryTurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+fn boundary_turn_half(
+    base: &BoundaryTangent,
+    candidate: &BoundaryTangent,
+    policy: &CurvePolicy,
+) -> Option<u8> {
+    match real_sign(&boundary_cross(base, candidate), policy)? {
+        RealSign::Positive => Some(0),
+        RealSign::Negative => Some(1),
+        RealSign::Zero => match real_sign(&boundary_dot(base, candidate), policy)? {
+            RealSign::Positive => Some(0),
+            RealSign::Negative => Some(1),
+            RealSign::Zero => None,
+        },
+    }
+}
+
+fn boundary_cross(left: &BoundaryTangent, right: &BoundaryTangent) -> Real {
+    (&left.dx * &right.dy) - (&left.dy * &right.dx)
+}
+
+fn boundary_dot(left: &BoundaryTangent, right: &BoundaryTangent) -> Real {
+    (&left.dx * &right.dx) + (&left.dy * &right.dy)
 }
 
 fn follow_chain(

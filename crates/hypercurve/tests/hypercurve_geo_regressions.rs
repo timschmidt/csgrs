@@ -65,16 +65,15 @@ fn line(start: (f64, f64), end: (f64, f64)) -> LineSeg2 {
     LineSeg2::try_new(p(start.0, start.1), p(end.0, end.1)).unwrap()
 }
 
-fn assert_close(actual: f64, expected: f64, tolerance: f64) {
-    assert!(
-        (actual - expected).abs() <= tolerance,
-        "expected {expected}, got {actual}"
-    );
-}
-
 fn assert_point_close(actual: &HPoint, expected: (f64, f64), tolerance: f64) {
-    assert_close(actual.x().to_f64_lossy().unwrap(), expected.0, tolerance);
-    assert_close(actual.y().to_f64_lossy().unwrap(), expected.1, tolerance);
+    let actual = (
+        actual.x().to_f64_lossy().unwrap(),
+        actual.y().to_f64_lossy().unwrap(),
+    );
+    assert!(
+        (actual.0 - expected.0).abs() <= tolerance && (actual.1 - expected.1).abs() <= tolerance,
+        "expected {expected:?}, got {actual:?}",
+    );
 }
 
 fn assert_single_line_hit(
@@ -139,7 +138,13 @@ fn assert_boolean_samples_match_geo(
         .boolean_region(&second_region, op, FillRule::NonZero, &policy())
         .unwrap();
     let Classification::Decided(result) = result else {
-        panic!("expected Geo-derived boolean case to be decided, got {result:?}");
+        let report = first_region
+            .boolean_region_with_report(&second_region, op, FillRule::NonZero, &policy())
+            .unwrap();
+        panic!(
+            "expected Geo-derived boolean case to be decided, got {result:?}; report={:#?}",
+            report.report(),
+        );
     };
 
     for &(x, y) in samples {
