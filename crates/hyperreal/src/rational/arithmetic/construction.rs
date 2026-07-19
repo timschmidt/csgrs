@@ -42,7 +42,18 @@ impl Rational {
             }
             _ => {}
         }
-        let inverse = cached.tertiary.get()?;
+        if let Some(inverse) = cached.tertiary.get() {
+            match inverse.kind {
+                CachedRationalLinearKind::StrongInversePlaceholder => {
+                    return Some(inverse.result.clone());
+                }
+                CachedRationalLinearKind::WeakInversePlaceholder => {
+                    return inverse.other.upgrade().map(Self);
+                }
+                _ => {}
+            }
+        }
+        let inverse = cached.quaternary.get()?;
         match inverse.kind {
             CachedRationalLinearKind::StrongInversePlaceholder => {
                 Some(inverse.result.clone())
@@ -52,37 +63,45 @@ impl Rational {
         }
     }
 
-    fn retain_inverse_entry(&self, inverse: CachedRationalInverse) -> bool {
+    fn retain_inverse_entry(&self, inverse: CachedRationalUnary) -> bool {
         if let Some(cached) = self.linear_cache.get() {
             if cached.primary.kind.is_inverse_placeholder() {
                 return false;
             }
             let entry = match inverse {
-                CachedRationalInverse::Strong(inverse) => CachedRationalLinearEntry {
+                CachedRationalUnary::Strong(inverse) => CachedRationalLinearEntry {
                     other: std::sync::Weak::new(),
                     kind: CachedRationalLinearKind::StrongInversePlaceholder,
                     result: inverse,
                 },
-                CachedRationalInverse::Weak(inverse) => CachedRationalLinearEntry {
+                CachedRationalUnary::Weak(inverse) => CachedRationalLinearEntry {
                     other: inverse,
                     kind: CachedRationalLinearKind::WeakInversePlaceholder,
                     result: RATIONAL_ZERO.clone(),
                 },
             };
-            return cached.tertiary.set(entry).is_ok();
+            if cached.primary.kind.is_unary_placeholder() {
+                return cached.quaternary.set(entry).is_ok();
+            }
+            return cached
+                .tertiary
+                .set(entry)
+                .or_else(|entry| cached.quaternary.set(entry))
+                .is_ok();
         }
 
         // Preserve a direct primary linear-cache load on the established
         // add/sub hot path. When inverse retention initializes this lazy box
         // first, the inert primary slot marks secondary and tertiary as the
-        // two available linear entries.
+        // two available linear entries; quaternary remains available for the
+        // other cycle-free unary pair.
         let (kind, other, placeholder) = match inverse {
-            CachedRationalInverse::Strong(inverse) => (
+            CachedRationalUnary::Strong(inverse) => (
                 CachedRationalLinearKind::StrongInversePlaceholder,
                 std::sync::Weak::new(),
                 inverse,
             ),
-            CachedRationalInverse::Weak(inverse) => (
+            CachedRationalUnary::Weak(inverse) => (
                 CachedRationalLinearKind::WeakInversePlaceholder,
                 inverse,
                 RATIONAL_ZERO.clone(),
@@ -97,14 +116,15 @@ impl Rational {
                 },
                 secondary: OnceLock::new(),
                 tertiary: OnceLock::new(),
+                quaternary: OnceLock::new(),
             }))
             .is_ok()
     }
 
     #[cold]
     fn retain_inverse_pair(&self, inverse: &Self) {
-        let _ = inverse.retain_inverse_entry(CachedRationalInverse::Weak(Arc::downgrade(&self.0)));
-        let _ = self.retain_inverse_entry(CachedRationalInverse::Strong(inverse.clone()));
+        let _ = inverse.retain_inverse_entry(CachedRationalUnary::Weak(Arc::downgrade(&self.0)));
+        let _ = self.retain_inverse_entry(CachedRationalUnary::Strong(inverse.clone()));
     }
 
     /// Zero, the additive identity.

@@ -80,6 +80,8 @@ Current timing anchors:
 | `pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold` | 87.78 ns |
 | `pure_scalar_algorithm_speed/rational_inverse_owned_cold` | 21.13 ns |
 | `pure_scalar_algorithm_speed/rational_inverse_retained` | 7.45 ns |
+| `pure_scalar_algorithm_speed/rational_neg_owned_cold` | 7.12 ns |
+| `pure_scalar_algorithm_speed/rational_neg_retained` | 6.14 ns |
 | `pure_scalar_algorithm_speed/real_exact_add` (retained) | 22.78 ns |
 | `pure_scalar_algorithm_speed/real_exact_sub` (retained) | 22.58 ns |
 | `pure_scalar_algorithm_speed/rational_div` | 595.3 ns |
@@ -102,15 +104,17 @@ Relevant path notes:
   one-shot operands allocation-light while making retained outer carriers visible
   without cloning their scalar fields. The hint fits existing `RationalData` padding,
   keeping that allocation at 96 bytes. The lazily allocated arithmetic cache holds
-  two weak-keyed linear results and, for shared values, one reciprocal. Reciprocal
-  owners retain the result strongly while the reverse edge is weak, so repeated
-  division reuses stable product-cache identities without an ownership cycle. If
-  reciprocal use initializes the box first, the same three entry locations still
-  leave room for two linear results. Sum and directed-difference entries can also
+  two weak-keyed linear results and, for shared values, one reciprocal and one
+  opposite-sign result. Unary owners retain their result strongly while reverse
+  edges are weak, so repeated division and negation reuse stable identities without
+  ownership cycles. The four-entry layout leaves room for both unary pairs and two
+  linear results regardless of which operation initializes it. Sum and
+  directed-difference entries can also
   occupy opposite operand caches and remain ignored by serialization. Occupied
   entries are checked before constructing a candidate. Cold wide-dyadic add/sub
   sentinels measured 87.78 ns; cold owned inversion measured 21.13 ns and retained
-  inversion 7.45 ns.
+  inversion 7.45 ns; unique owned negation measured 7.12 ns and retained negation
+  6.14 ns.
 - Exact-rational `Real += &Real`, `Real -= &Real`, and `Real *= &Real` replace
   only the rational scale and invalidate the lossy approximation accelerator,
   preserving the existing exact class payload in place. Default-feature exact

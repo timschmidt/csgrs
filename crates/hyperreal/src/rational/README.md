@@ -69,6 +69,9 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
 - shared rationals retain one exact reciprocal in that same bounded lazy box; the
   reciprocal points back weakly, avoiding ownership cycles while stabilizing the
   multiplier identity used by repeated scalar division
+- repeated sign flips use a second cycle-free unary slot in the lazy box; the source
+  owns its opposite sign and the reverse edge is weak, while reciprocal and both
+  linear-result entries remain independently available
 - shared-denominator dot products and signed product sums accumulate related
   terms before the final reduction
 - all-zero and single-term exits avoid building denominators that will be

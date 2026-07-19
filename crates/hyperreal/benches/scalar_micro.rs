@@ -283,6 +283,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Reuses the retained reciprocal of a shared nontrivial rational.",
             },
             BenchDoc {
+                name: "rational_neg_owned_cold",
+                description: "Negates a fresh uniquely owned nontrivial rational in place.",
+            },
+            BenchDoc {
+                name: "rational_neg_retained",
+                description: "Reuses the retained opposite sign of a shared nontrivial rational.",
+            },
+            BenchDoc {
                 name: "real_exact_add",
                 description: "Adds exact rational-backed `Real` values.",
             },
@@ -819,6 +827,8 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     let _ = black_box(&retained_lhs * &retained_rhs);
     let retained_inverse_input = rational(123_456_789, 987_654_321);
     let _retained_inverse = retained_inverse_input.clone().inverse().unwrap();
+    let retained_negation_input = rational(123_456_789, 987_654_321);
+    let _retained_negation = -&retained_negation_input;
     let retained_real_lhs = Real::new(Rational::new(1_000_000_000));
     let retained_real_rhs =
         Real::new(Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly"));
@@ -923,6 +933,16 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     });
     group.bench_function("rational_inverse_retained", |b| {
         b.iter(|| black_box(black_box(retained_inverse_input.clone()).inverse().unwrap()))
+    });
+    group.bench_function("rational_neg_owned_cold", |b| {
+        b.iter_batched(
+            || rational(123_456_789, 987_654_321),
+            |value| black_box(-value),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("rational_neg_retained", |b| {
+        b.iter(|| black_box(-black_box(&retained_negation_input)))
     });
     group.bench_function("real_exact_add", |b| {
         b.iter(|| black_box(black_box(&exact_real_lhs) + black_box(&exact_real_rhs)))

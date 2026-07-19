@@ -559,7 +559,7 @@ impl Rational {
                 kind,
                 result: result.clone(),
             };
-            if cached.primary.kind.is_inverse_placeholder() {
+            if cached.primary.kind.is_unary_placeholder() {
                 return cached
                     .secondary
                     .set(entry)
@@ -578,6 +578,7 @@ impl Rational {
                 },
                 secondary: OnceLock::new(),
                 tertiary: OnceLock::new(),
+                quaternary: OnceLock::new(),
             }))
             .is_ok()
     }
@@ -709,31 +710,152 @@ impl<T: AsRef<Rational>> Add<T> for Rational {
     }
 }
 
+impl Rational {
+    #[inline]
+    fn negation_from_entry(entry: &CachedRationalLinearEntry) -> Option<Self> {
+        match entry.kind {
+            CachedRationalLinearKind::StrongNegationPlaceholder => Some(entry.result.clone()),
+            CachedRationalLinearKind::WeakNegationPlaceholder => entry.other.upgrade().map(Self),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    fn retained_negation(&self) -> Option<Self> {
+        let cached = self.linear_cache.get()?;
+        if let Some(result) = Self::negation_from_entry(&cached.primary) {
+            return Some(result);
+        }
+        if let Some(result) = cached
+            .tertiary
+            .get()
+            .and_then(Self::negation_from_entry)
+        {
+            return Some(result);
+        }
+        cached
+            .quaternary
+            .get()
+            .and_then(Self::negation_from_entry)
+    }
+
+    fn retain_negation_entry(&self, negation: CachedRationalUnary) -> bool {
+        if let Some(cached) = self.linear_cache.get() {
+            if cached.primary.kind.is_negation_placeholder() {
+                return false;
+            }
+            let entry = match negation {
+                CachedRationalUnary::Strong(negation) => CachedRationalLinearEntry {
+                    other: std::sync::Weak::new(),
+                    kind: CachedRationalLinearKind::StrongNegationPlaceholder,
+                    result: negation,
+                },
+                CachedRationalUnary::Weak(negation) => CachedRationalLinearEntry {
+                    other: negation,
+                    kind: CachedRationalLinearKind::WeakNegationPlaceholder,
+                    result: RATIONAL_ZERO.clone(),
+                },
+            };
+            if cached.primary.kind.is_unary_placeholder() {
+                return cached.quaternary.set(entry).is_ok();
+            }
+            return cached
+                .tertiary
+                .set(entry)
+                .or_else(|entry| cached.quaternary.set(entry))
+                .is_ok();
+        }
+
+        let (kind, other, placeholder) = match negation {
+            CachedRationalUnary::Strong(negation) => (
+                CachedRationalLinearKind::StrongNegationPlaceholder,
+                std::sync::Weak::new(),
+                negation,
+            ),
+            CachedRationalUnary::Weak(negation) => (
+                CachedRationalLinearKind::WeakNegationPlaceholder,
+                negation,
+                RATIONAL_ZERO.clone(),
+            ),
+        };
+        self.linear_cache
+            .set(Box::new(CachedRationalArithmetic {
+                primary: CachedRationalLinearEntry {
+                    other,
+                    kind,
+                    result: placeholder,
+                },
+                secondary: OnceLock::new(),
+                tertiary: OnceLock::new(),
+                quaternary: OnceLock::new(),
+            }))
+            .is_ok()
+    }
+
+    #[cold]
+    fn retain_negation_pair(&self, negation: &Self) {
+        let _ = negation
+            .retain_negation_entry(CachedRationalUnary::Weak(Arc::downgrade(&self.0)));
+        let _ = self.retain_negation_entry(CachedRationalUnary::Strong(negation.clone()));
+    }
+}
+
 impl Neg for &Rational {
     type Output = Rational;
 
+    #[inline]
     fn neg(self) -> Self::Output {
+        if self.sign == NoSign {
+            return self.clone();
+        }
         if self.is_one() {
             return Self::Output::minus_one();
         }
         if self.is_minus_one() {
             return Self::Output::one();
         }
+        if let Some(result) = self.retained_negation() {
+            crate::trace_dispatch!("rational", "neg", "retained");
+            return result;
+        }
         trace_rational_temporary!();
-        Self::Output::from_parts_raw(
+        let result = Self::Output::from_parts_raw(
             -self.sign,
             self.numerator.clone(),
             self.denominator.clone(),
-        )
+        );
+        self.retain_negation_pair(&result);
+        result
     }
 }
 
 impl Neg for Rational {
     type Output = Self;
 
+    #[inline]
     fn neg(mut self) -> Self {
+        if self.sign == NoSign {
+            return self;
+        }
+        if self.is_one() {
+            return Self::minus_one();
+        }
+        if self.is_minus_one() {
+            return Self::one();
+        }
+        if let Some(result) = self.retained_negation() {
+            crate::trace_dispatch!("rational", "neg", "retained");
+            return result;
+        }
         if let Some(data) = Arc::get_mut(&mut self.0) {
             data.sign = -data.sign;
+            // Unary negation changes the cache key represented by this node.
+            // A unique owner can reuse the BigUint allocation, but any locally
+            // retained arithmetic results describe the old sign and must go.
+            data.product_cache.take();
+            data.linear_cache.take();
+            data.linear_reuse_seen
+                .store(false, std::sync::atomic::Ordering::Relaxed);
             return self;
         }
         -&self

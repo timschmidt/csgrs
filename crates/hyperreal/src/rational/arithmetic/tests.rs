@@ -531,6 +531,67 @@ mod tests {
     }
 
     #[test]
+    fn repeated_negation_reuses_exact_storage_without_a_cycle() {
+        let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
+        let owner = Arc::downgrade(&value.0);
+
+        let first = -&value;
+        let second = -&value;
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+
+        drop(value);
+        drop(first);
+        drop(second);
+        assert!(owner.upgrade().is_none());
+    }
+
+    #[test]
+    fn shared_owned_negation_reuses_retained_storage() {
+        let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
+        let shared = value.clone();
+
+        let first = -value;
+        let second = -shared;
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+    }
+
+    #[test]
+    fn negation_first_cache_still_retains_inverse_and_two_linear_results() {
+        let left = Rational::new(5_000_000_000);
+        let _shared_left = left.clone();
+        let negation = -&left;
+        let inverse = left.clone().inverse().unwrap();
+        let first_right = Rational::try_from(11.0e-9_f64).unwrap();
+        let second_right = Rational::try_from(13.0e-9_f64).unwrap();
+
+        let first = &left + &first_right;
+        let second = &left + &second_right;
+        let negation_reused = -&left;
+        let inverse_reused = left.clone().inverse().unwrap();
+        let first_reused = &left + &first_right;
+        let second_reused = &left + &second_right;
+
+        assert!(Arc::ptr_eq(&negation.0, &negation_reused.0));
+        assert!(Arc::ptr_eq(&inverse.0, &inverse_reused.0));
+        assert!(Arc::ptr_eq(&first.0, &first_reused.0));
+        assert!(Arc::ptr_eq(&second.0, &second_reused.0));
+    }
+
+    #[test]
+    fn unique_owned_negation_discards_results_for_the_old_sign() {
+        let left = Rational::new(5_000_000_000);
+        let right = Rational::fraction(1, 7).unwrap();
+
+        let _cold = &left + &right;
+        let retained = &left + &right;
+        let reused = &left + &right;
+        assert!(Arc::ptr_eq(&retained.0, &reused.0));
+
+        let negated = -left;
+        assert_eq!(&negated + &right, Rational::fraction(-34_999_999_999_i64, 7).unwrap());
+    }
+
+    #[test]
     fn small_dyadic_products_share_canonical_storage() {
         let left = Rational::fraction(5, 4).unwrap();
         let right = Rational::fraction(5, 2).unwrap();

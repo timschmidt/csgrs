@@ -53,6 +53,8 @@ enum CachedRationalLinearKind {
     OtherMinusOwner,
     StrongInversePlaceholder,
     WeakInversePlaceholder,
+    StrongNegationPlaceholder,
+    WeakNegationPlaceholder,
 }
 
 impl CachedRationalLinearKind {
@@ -63,6 +65,19 @@ impl CachedRationalLinearKind {
             Self::StrongInversePlaceholder | Self::WeakInversePlaceholder
         )
     }
+
+    #[inline]
+    fn is_negation_placeholder(self) -> bool {
+        matches!(
+            self,
+            Self::StrongNegationPlaceholder | Self::WeakNegationPlaceholder
+        )
+    }
+
+    #[inline]
+    fn is_unary_placeholder(self) -> bool {
+        self.is_inverse_placeholder() || self.is_negation_placeholder()
+    }
 }
 
 struct CachedRationalLinearEntry {
@@ -71,7 +86,7 @@ struct CachedRationalLinearEntry {
     result: Rational,
 }
 
-enum CachedRationalInverse {
+enum CachedRationalUnary {
     Strong(Rational),
     Weak(std::sync::Weak<RationalData>),
 }
@@ -80,6 +95,7 @@ struct CachedRationalArithmetic {
     primary: CachedRationalLinearEntry,
     secondary: OnceLock<CachedRationalLinearEntry>,
     tertiary: OnceLock<CachedRationalLinearEntry>,
+    quaternary: OnceLock<CachedRationalLinearEntry>,
 }
 
 #[doc(hidden)]

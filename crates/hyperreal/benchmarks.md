@@ -270,6 +270,8 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | `pure_scalar_algorithm_speed/rational_div` | not run | not run | Divides two nontrivial rational values. |
 | `pure_scalar_algorithm_speed/rational_inverse_owned_cold` | 21.13 ns | 21.08 ns - 21.17 ns | Inverts a fresh uniquely owned nontrivial rational. |
 | `pure_scalar_algorithm_speed/rational_inverse_retained` | 7.45 ns | 7.44 ns - 7.46 ns | Reuses the retained reciprocal of a shared nontrivial rational. |
+| `pure_scalar_algorithm_speed/rational_neg_owned_cold` | 7.12 ns | 7.09 ns - 7.16 ns | Negates a fresh uniquely owned nontrivial rational in place. |
+| `pure_scalar_algorithm_speed/rational_neg_retained` | 6.14 ns | 6.12 ns - 6.15 ns | Reuses the retained opposite sign of a shared nontrivial rational. |
 | `pure_scalar_algorithm_speed/real_exact_add` | 22.776 ns | 22.714 ns - 22.847 ns | Adds exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_sub` | 22.578 ns | 22.529 ns - 22.638 ns | Subtracts exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |

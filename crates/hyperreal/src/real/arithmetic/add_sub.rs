@@ -200,19 +200,29 @@ impl<'a> std::iter::Sum<&'a Real> for Real {
 impl Neg for Real {
     type Output = Self;
 
-    fn neg(self) -> Self {
-        Self {
-            rational: -self.rational,
-            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
-            ..self
-        }
+    #[inline]
+    fn neg(mut self) -> Self {
+        self.rational = -self.rational;
+        self.primitive_approx_cache.set(PrimitiveApproxCache::Empty);
+        self
     }
 }
 
 impl Neg for &Real {
     type Output = Real;
 
+    #[inline]
     fn neg(self) -> Self::Output {
+        if matches!(self.class, One) && self.computable.is_none() {
+            return Real {
+                rational: -&self.rational,
+                class: One,
+                computable: None,
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
+            };
+        }
         let mut ret = self.clone();
         ret.rational = -ret.rational;
         ret.primitive_approx_cache.set(PrimitiveApproxCache::Empty);

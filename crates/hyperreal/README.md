@@ -125,7 +125,7 @@ control. `hyperreal` uses several small performance strategies together:
   prescaled kernels, cancellation-aware transforms, shared constants, and precision-aware
   caches so refinement grows with caller demand.
 - Keep hot kernels predictable. Borrowed arithmetic, shared-denominator/product-sum
-  reducers, cached constants, bounded exact product retention, adaptive linear-result
+  reducers, cached constants, bounded exact product/sign retention, adaptive linear-result
   admission, in-place exact additive and multiplicative scale assignment, and
   capability-gated symbolic shortcuts are preferred over speculative approximation
   in dense loops.
@@ -150,8 +150,8 @@ Version `0.13.1` is active and benchmark-driven. Current implementation work inc
 - bounded sign refinement and certified equality/ordering/sign reports;
 - cached approximation and structural-fact propagation through computable nodes;
 - borrowed arithmetic paths for `Rational` and `Real`;
-- canonical small-dyadic storage, bounded retained exact products, and cycle-free
-  reciprocal reuse for shared immutable rationals;
+- canonical small-dyadic storage, bounded retained exact products and sign flips, and
+  cycle-free reciprocal/sign-pair reuse for shared immutable rationals;
 - shared-denominator and signed-product-sum hooks used by matrix/vector callers;
 - `serde` support for expression structure, excluding transient caches and abort
   signals;
