@@ -180,6 +180,7 @@ impl<'a, M: Clone + Send + Sync + Debug> PreparedMeshBoolean<'a, M> {
                     .map_err(HypermeshError::Boolean)?;
                 self.left.materialize_hypermesh_soup(
                     self.right,
+                    &prepared.arrangement,
                     &soup,
                     prepared.left_source_polygons.as_ref(),
                     prepared.right_source_polygons.as_ref(),
@@ -626,6 +627,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     fn materialize_hypermesh_soup(
         &self,
         other: &Self,
+        arrangement: &BooleanArrangement,
         soup: &TriangleSoup,
         left_source_polygons: &[usize],
         right_source_polygons: &[usize],
@@ -662,9 +664,21 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             let Some(c) = soup_vertex_position(soup, triangle[2]) else {
                 continue;
             };
-            let normal = match source.orientation {
-                1 => polygon.calculate_new_normal(),
-                -1 => -polygon.calculate_new_normal(),
+            let normal = match (source.orientation, polygon.cached_new_normal()) {
+                (1, Some(normal)) => normal,
+                (-1, Some(normal)) => -normal,
+                (orientation @ (1 | -1), None) => {
+                    let source_normal =
+                        arrangement.oriented_source_normal(::hypermesh::TriangleSource {
+                            orientation: 1,
+                            ..*source
+                        });
+                    let normal = source_normal.map_or_else(
+                        || polygon.calculate_new_normal(),
+                        |normal| polygon.calculate_normal_from_retained_area(&normal),
+                    );
+                    if orientation == 1 { normal } else { -normal }
+                },
                 _ => hyper_triangle_unit_normal(&a, &b, &c).unwrap_or_else(Vector3::z),
             };
             polygons.push(Polygon::new(
@@ -1103,6 +1117,31 @@ mod tests {
                     .map(|polygon| polygon.metadata)
                     .collect::<Vec<_>>()
             );
+        }
+    }
+
+    #[test]
+    fn retained_source_normals_match_materialized_triangle_orientation() {
+        let left = Mesh::cube(Real::from(2_u8), ());
+        let right = Mesh::cube(Real::from(2_u8), ()).translate(
+            Real::one(),
+            (Real::one() / Real::from(2_u8)).unwrap(),
+            Real::zero(),
+        );
+
+        for output in [
+            left.try_union(&right).unwrap(),
+            left.try_difference(&right).unwrap(),
+        ] {
+            for polygon in &output.polygons {
+                let expected = polygon.calculate_new_normal();
+                assert!(
+                    polygon
+                        .vertices()
+                        .iter()
+                        .all(|vertex| vertex.normal == expected)
+                );
+            }
         }
     }
 

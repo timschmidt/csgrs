@@ -73,6 +73,38 @@ Nine-sample release medians characterize the unified path:
 Every row retains the same polygon/corner checksum. Focused differential tests
 also compare exact vertex rows, source metadata, and shortcut polygonization.
 
+Cold HyperMesh extraction now reuses each certified source triangle's retained
+exact support normal when materializing CSGRS shading normals. Previously every
+used source polygon rebuilt an exact cross product even though HyperMesh had
+already constructed the same oriented support plane during preparation. The
+retained area vector passes through the existing finite shading-normal boundary
+and CSGRS normal cache; symbolic or unavailable source normals retain the full
+exact recomputation fallback. Cache lookup precedes source-vector cloning, so
+repeated extraction keeps the prior warmed path.
+
+Seven counter runs over 500 fresh sphere/box operations measured the extraction
+change after the source-centroid optimization:
+
+| operation | recomputed source normal | retained support normal | result |
+| --- | ---: | ---: | ---: |
+| union | 9,925,432,002 | 9,481,373,714 | 4.47% fewer instructions |
+| difference | 8,295,496,270 | 7,883,059,273 | 4.97% fewer instructions |
+
+Cycles fell 7.16% for union and 8.47% for difference. In a 15-sample matched
+cross-kernel run, cold exact difference measured 1.908 ms versus CGAL EPECK's
+1.896 ms, and cold union measured 2.693 ms versus 2.480 ms. Retained CSGRS was
+20.49x faster than CGAL for difference and 17.55x for union, while both cold
+and retained rows remained well ahead of tight OpenCascade. Focused tests
+verify retained source orientation, invalid-source rejection, output flat-normal
+orientation, exact buffers, and metadata.
+
+Validation passed the locked default and all-feature suites (305/369 library
+tests plus all integration tests), every locked feature check, all-target and
+all-feature Clippy with warnings denied, warning-denied rustdoc, spelling, both
+adversarial scripts, and the benchmark and fuzz-target builds. The retained
+Boolean adapter and mesh-pair sanitizer targets each completed 1,000 ASAN runs
+without failure.
+
 `Mesh::ray_intersections` now streams triangle vertex references from each
 polygon's certified triangulation indices instead of cloning a temporary
 `[Vertex; 3]` for every ray test. The HyperLimit ray/triangle predicate, exact
