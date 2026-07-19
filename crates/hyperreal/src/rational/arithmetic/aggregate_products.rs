@@ -1,4 +1,109 @@
+#[derive(Clone, Debug)]
+struct HalfGcdMatrix {
+    u00: BigUint,
+    u01: BigUint,
+    u10: BigUint,
+    u11: BigUint,
+}
+
+impl HalfGcdMatrix {
+    fn identity() -> Self {
+        Self {
+            u00: BigUint::one(),
+            u01: BigUint::ZERO,
+            u10: BigUint::ZERO,
+            u11: BigUint::one(),
+        }
+    }
+
+    fn apply_inverse(&self, left: &BigUint, right: &BigUint) -> Option<(BigUint, BigUint)> {
+        let first_positive =
+            Rational::multiply_magnitudes("half-gcd-matrix-apply", &self.u11, left);
+        let first_negative =
+            Rational::multiply_magnitudes("half-gcd-matrix-apply", &self.u01, right);
+        let second_positive =
+            Rational::multiply_magnitudes("half-gcd-matrix-apply", &self.u00, right);
+        let second_negative =
+            Rational::multiply_magnitudes("half-gcd-matrix-apply", &self.u10, left);
+        if first_positive < first_negative || second_positive < second_negative {
+            return None;
+        }
+        Some((
+            first_positive - first_negative,
+            second_positive - second_negative,
+        ))
+    }
+
+    fn multiply_right(&mut self, right: &Self) {
+        let u00 = Rational::multiply_magnitudes("half-gcd-matrix-compose", &self.u00, &right.u00)
+            + Rational::multiply_magnitudes(
+                "half-gcd-matrix-compose",
+                &self.u01,
+                &right.u10,
+            );
+        let u01 = Rational::multiply_magnitudes("half-gcd-matrix-compose", &self.u00, &right.u01)
+            + Rational::multiply_magnitudes(
+                "half-gcd-matrix-compose",
+                &self.u01,
+                &right.u11,
+            );
+        let u10 = Rational::multiply_magnitudes("half-gcd-matrix-compose", &self.u10, &right.u00)
+            + Rational::multiply_magnitudes(
+                "half-gcd-matrix-compose",
+                &self.u11,
+                &right.u10,
+            );
+        let u11 = Rational::multiply_magnitudes("half-gcd-matrix-compose", &self.u10, &right.u01)
+            + Rational::multiply_magnitudes(
+                "half-gcd-matrix-compose",
+                &self.u11,
+                &right.u11,
+            );
+        (self.u00, self.u01, self.u10, self.u11) = (u00, u01, u10, u11);
+    }
+
+    fn update_left_column(&mut self, quotient: &BigUint) {
+        self.u00 += Rational::multiply_magnitudes(
+            "half-gcd-matrix-column-update",
+            &self.u01,
+            quotient,
+        );
+        self.u10 += Rational::multiply_magnitudes(
+            "half-gcd-matrix-column-update",
+            &self.u11,
+            quotient,
+        );
+    }
+
+    fn update_right_column(&mut self, quotient: &BigUint) {
+        self.u01 += Rational::multiply_magnitudes(
+            "half-gcd-matrix-column-update",
+            &self.u00,
+            quotient,
+        );
+        self.u11 += Rational::multiply_magnitudes(
+            "half-gcd-matrix-column-update",
+            &self.u10,
+            quotient,
+        );
+    }
+}
+
+struct HalfGcdReduction {
+    left: BigUint,
+    right: BigUint,
+    matrix: HalfGcdMatrix,
+}
+
 impl Rational {
+    // Tuned below after the Lehmer path is benchmarked against the full-width
+    // Euclidean remainder loop. Keeping the boundary explicit lets the trace
+    // and crossover tests describe the selected algorithm rather than merely
+    // the operand size.
+    const LEHMER_GCD_THRESHOLD_BITS: u64 = 192;
+    const HALF_GCD_RECURSION_BASE_BITS: u64 = 1024;
+    const HALF_GCD_THRESHOLD_BITS: u64 = 16_384;
+
     const POWERS_OF_FIVE: [u128; 56] = {
         let mut powers = [1_u128; 56];
         let mut index = 1;
@@ -73,7 +178,252 @@ impl Rational {
     /// subtractions. Preserve the tuned binary reducer for values that fit the
     /// scalar word path, and reduce a wide/small pair to that path after one
     /// remainder.
-    fn gcd_magnitudes(left: &BigUint, right: &BigUint) -> BigUint {
+    fn lehmer_gcd_matrix(larger: &BigUint, smaller: &BigUint) -> Option<[i128; 4]> {
+        debug_assert!(larger >= smaller);
+        let shift = larger.bits().saturating_sub(62);
+        let mut high_larger = (larger >> usize::try_from(shift).ok()?).to_i128()?;
+        let mut high_smaller = (smaller >> usize::try_from(shift).ok()?).to_i128()?;
+        if high_smaller == 0 {
+            return None;
+        }
+
+        // The matrix maps the original pair to consecutive Euclidean
+        // remainders. Two quotient estimates must agree at both interval
+        // endpoints before a step is retained; this is Lehmer's guard against
+        // a quotient depending on the discarded low limbs.
+        let (mut a, mut b, mut c, mut d) = (1_i128, 0_i128, 0_i128, 1_i128);
+        let mut steps = 0_u8;
+        while let Some(numerator_low) = high_larger.checked_add(a) {
+            let Some(numerator_high) = high_larger.checked_add(b) else {
+                break;
+            };
+            let Some(denominator_low) = high_smaller.checked_add(c) else {
+                break;
+            };
+            let Some(denominator_high) = high_smaller.checked_add(d) else {
+                break;
+            };
+            if numerator_low < 0
+                || numerator_high < 0
+                || denominator_low <= 0
+                || denominator_high <= 0
+            {
+                break;
+            }
+            let quotient = numerator_low / denominator_low;
+            if quotient == 0 || quotient != numerator_high / denominator_high {
+                break;
+            }
+
+            let Some(next_c) = a.checked_sub(quotient.checked_mul(c)?) else {
+                break;
+            };
+            let Some(next_d) = b.checked_sub(quotient.checked_mul(d)?) else {
+                break;
+            };
+            let Some(next_high_smaller) =
+                high_larger.checked_sub(quotient.checked_mul(high_smaller)?)
+            else {
+                break;
+            };
+            if next_high_smaller < 0 {
+                break;
+            }
+
+            // Scalar multiplication by coefficients larger than one machine
+            // word loses the property that makes a Lehmer batch cheap.
+            if [c, d, next_c, next_d]
+                .into_iter()
+                .any(|value| value.unsigned_abs() > u128::from(u64::MAX))
+            {
+                break;
+            }
+
+            (a, b, c, d) = (c, d, next_c, next_d);
+            (high_larger, high_smaller) = (high_smaller, next_high_smaller);
+            steps += 1;
+        }
+
+        (steps >= 2).then_some([a, b, c, d])
+    }
+
+    fn apply_lehmer_gcd_matrix(
+        larger: &BigUint,
+        smaller: &BigUint,
+        [a, b, c, d]: [i128; 4],
+    ) -> Option<(BigUint, BigUint)> {
+        let larger_signed = BigInt::from(larger.clone());
+        let smaller_signed = BigInt::from(smaller.clone());
+        let first = &larger_signed * a + &smaller_signed * b;
+        let second = larger_signed * c + smaller_signed * d;
+        let first = first.magnitude().clone();
+        let second = second.magnitude().clone();
+        if &first >= larger || &second >= larger {
+            return None;
+        }
+        Some((first, second))
+    }
+
+    fn magnitude_difference_bits(left: &BigUint, right: &BigUint) -> u64 {
+        if left >= right {
+            (left - right).bits()
+        } else {
+            (right - left).bits()
+        }
+    }
+
+    fn half_gcd_sdiv_step(
+        left: &mut BigUint,
+        right: &mut BigUint,
+        stop_bits: u64,
+        matrix: &mut HalfGcdMatrix,
+    ) -> Option<()> {
+        if left == right {
+            return None;
+        }
+        if left > right {
+            let mut quotient = &*left / &*right;
+            let mut remainder = &*left
+                - Self::multiply_magnitudes("half-gcd-sdiv-product", &quotient, right);
+            if remainder.bits() <= stop_bits {
+                quotient -= 1_u8;
+                remainder += &*right;
+            }
+            if quotient.is_zero() || remainder >= *left {
+                return None;
+            }
+            *left = remainder;
+            matrix.update_right_column(&quotient);
+        } else {
+            let mut quotient = &*right / &*left;
+            let mut remainder = &*right
+                - Self::multiply_magnitudes("half-gcd-sdiv-product", &quotient, left);
+            if remainder.bits() <= stop_bits {
+                quotient -= 1_u8;
+                remainder += &*left;
+            }
+            if quotient.is_zero() || remainder >= *right {
+                return None;
+            }
+            *right = remainder;
+            matrix.update_left_column(&quotient);
+        }
+        Some(())
+    }
+
+    fn half_gcd_slow(left: &BigUint, right: &BigUint) -> Option<HalfGcdReduction> {
+        let stop_bits = left.bits().max(right.bits()) / 2 + 1;
+        let mut left = left.clone();
+        let mut right = right.clone();
+        let mut matrix = HalfGcdMatrix::identity();
+        while Self::magnitude_difference_bits(&left, &right) > stop_bits {
+            Self::half_gcd_sdiv_step(&mut left, &mut right, stop_bits, &mut matrix)?;
+        }
+        Some(HalfGcdReduction {
+            left,
+            right,
+            matrix,
+        })
+    }
+
+    fn half_gcd_reduce(left: &BigUint, right: &BigUint) -> Option<HalfGcdReduction> {
+        let input_bits = left.bits().max(right.bits());
+        if input_bits <= Self::HALF_GCD_RECURSION_BASE_BITS {
+            return Self::half_gcd_slow(left, right);
+        }
+
+        let stop_bits = input_bits / 2 + 1;
+        let three_quarter_bits = input_bits.saturating_mul(3) / 4;
+        let first_shift = input_bits / 2;
+        let first_shift_usize = usize::try_from(first_shift).ok()?;
+        let high_left = left >> first_shift_usize;
+        let high_right = right >> first_shift_usize;
+        let first = Self::half_gcd_reduce(&high_left, &high_right)?;
+        let mut matrix = first.matrix;
+        let (mut reduced_left, mut reduced_right) = matrix.apply_inverse(left, right)?;
+
+        while reduced_left.bits().max(reduced_right.bits()) > three_quarter_bits + 1
+            && Self::magnitude_difference_bits(&reduced_left, &reduced_right) > stop_bits
+        {
+            Self::half_gcd_sdiv_step(
+                &mut reduced_left,
+                &mut reduced_right,
+                stop_bits,
+                &mut matrix,
+            )?;
+        }
+
+        let reduced_bits = reduced_left.bits().max(reduced_right.bits());
+        if reduced_bits > stop_bits + 2 {
+            let second_shift = stop_bits
+                .saturating_mul(2)
+                .checked_sub(reduced_bits)?
+                .checked_add(1)?;
+            if second_shift == 0 {
+                return Self::half_gcd_slow(left, right);
+            }
+            let second_shift_usize = usize::try_from(second_shift).ok()?;
+            let high_left = &reduced_left >> second_shift_usize;
+            let high_right = &reduced_right >> second_shift_usize;
+            if high_left.bits().max(high_right.bits()) >= input_bits {
+                return Self::half_gcd_slow(left, right);
+            }
+            let second = Self::half_gcd_reduce(&high_left, &high_right)?;
+            let (next_left, next_right) = second
+                .matrix
+                .apply_inverse(&reduced_left, &reduced_right)?;
+            reduced_left = next_left;
+            reduced_right = next_right;
+            matrix.multiply_right(&second.matrix);
+        }
+
+        while Self::magnitude_difference_bits(&reduced_left, &reduced_right) > stop_bits {
+            Self::half_gcd_sdiv_step(
+                &mut reduced_left,
+                &mut reduced_right,
+                stop_bits,
+                &mut matrix,
+            )?;
+        }
+        Some(HalfGcdReduction {
+            left: reduced_left,
+            right: reduced_right,
+            matrix,
+        })
+    }
+
+    /// Exact magnitude GCD used by rational cross-cancellation.
+    ///
+    /// This is public only so the benchmark harness can compare the selected
+    /// implementation with an otherwise identical full-width Euclidean loop.
+    #[doc(hidden)]
+    pub fn gcd_magnitudes(left: &BigUint, right: &BigUint) -> BigUint {
+        let (divisor, algorithm) = if left.is_zero() {
+            (right.clone(), "binary-word")
+        } else if right.is_zero() {
+            (left.clone(), "binary-word")
+        } else if let (Some(left), Some(right)) = (left.to_u128(), right.to_u128()) {
+            (
+                BigUint::from(Self::gcd_word(left, right)),
+                "binary-word",
+            )
+        } else {
+            Self::gcd_wide_magnitudes(left, right, false)
+        };
+
+        #[cfg(feature = "dispatch-trace")]
+        {
+            crate::trace_dispatch!("rational_algorithm", "gcd", algorithm);
+            crate::dispatch_trace::record_rational_gcd(left, right, &divisor);
+        }
+        #[cfg(not(feature = "dispatch-trace"))]
+        let _ = algorithm;
+        divisor
+    }
+
+    /// Quadratic Lehmer baseline retained for paired half-GCD benchmarks.
+    #[doc(hidden)]
+    pub fn gcd_magnitudes_lehmer_baseline(left: &BigUint, right: &BigUint) -> BigUint {
         if left.is_zero() {
             return right.clone();
         }
@@ -83,6 +433,37 @@ impl Rational {
         if let (Some(left), Some(right)) = (left.to_u128(), right.to_u128()) {
             return BigUint::from(Self::gcd_word(left, right));
         }
+        Self::gcd_wide_magnitudes(left, right, false).0
+    }
+
+    /// Recursive Möller half-GCD candidate retained for benchmark comparison.
+    #[doc(hidden)]
+    pub fn gcd_magnitudes_half_gcd_candidate(left: &BigUint, right: &BigUint) -> BigUint {
+        if left.is_zero() {
+            return right.clone();
+        }
+        if right.is_zero() {
+            return left.clone();
+        }
+        if let (Some(left), Some(right)) = (left.to_u128(), right.to_u128()) {
+            return BigUint::from(Self::gcd_word(left, right));
+        }
+        let (divisor, algorithm) = Self::gcd_wide_magnitudes(left, right, true);
+        #[cfg(feature = "dispatch-trace")]
+        {
+            crate::trace_dispatch!("rational_algorithm", "gcd", algorithm);
+            crate::dispatch_trace::record_rational_gcd(left, right, &divisor);
+        }
+        #[cfg(not(feature = "dispatch-trace"))]
+        let _ = algorithm;
+        divisor
+    }
+
+    fn gcd_wide_magnitudes(
+        left: &BigUint,
+        right: &BigUint,
+        half_gcd_enabled: bool,
+    ) -> (BigUint, &'static str) {
 
         let (larger, smaller) = if left >= right {
             (left, right)
@@ -93,17 +474,75 @@ impl Rational {
             let remainder = (larger % smaller)
                 .to_u128()
                 .expect("remainder is smaller than a u128 divisor");
-            return BigUint::from(Self::gcd_word(smaller_word, remainder));
+            return (
+                BigUint::from(Self::gcd_word(smaller_word, remainder)),
+                "euclidean-wide-word",
+            );
         }
 
         let mut larger = larger.clone();
         let mut smaller = smaller.clone();
+        let mut used_half_gcd = false;
+        while half_gcd_enabled
+            && smaller.bits() >= Self::HALF_GCD_THRESHOLD_BITS
+            && larger.bits().abs_diff(smaller.bits()) <= 1
+        {
+            let before_bits = larger.bits().max(smaller.bits());
+            let Some(reduction) = Self::half_gcd_reduce(&larger, &smaller) else {
+                break;
+            };
+            let (mut first, mut second) = (reduction.left, reduction.right);
+            if first == second {
+                return (first, "recursive-half-gcd");
+            }
+            if first > second {
+                first -= &second;
+            } else {
+                second -= &first;
+            }
+            (larger, smaller) = if first >= second {
+                (first, second)
+            } else {
+                (second, first)
+            };
+            if larger.bits().max(smaller.bits()) >= before_bits {
+                break;
+            }
+            used_half_gcd = true;
+        }
+        let lehmer_selected = smaller.bits() >= Self::LEHMER_GCD_THRESHOLD_BITS
+            && larger.bits().abs_diff(smaller.bits()) <= 1;
+        let mut used_lehmer = false;
         while !smaller.is_zero() {
+            if lehmer_selected
+                && smaller.bits() > 128
+                && larger.bits().abs_diff(smaller.bits()) <= 1
+                && let Some(matrix) = Self::lehmer_gcd_matrix(&larger, &smaller)
+                && let Some((first, second)) =
+                    Self::apply_lehmer_gcd_matrix(&larger, &smaller, matrix)
+            {
+                used_lehmer = true;
+                (larger, smaller) = if first >= second {
+                    (first, second)
+                } else {
+                    (second, first)
+                };
+                continue;
+            }
             let remainder = &larger % &smaller;
             larger = smaller;
             smaller = remainder;
         }
-        larger
+        (
+            larger,
+            if used_half_gcd {
+                "recursive-half-gcd"
+            } else if used_lehmer {
+                "lehmer-leading-limb"
+            } else {
+                "euclidean-wide-remainder"
+            },
+        )
     }
 
     /// Multiply a fixed set of rationals by one positive common denominator.

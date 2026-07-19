@@ -1,5 +1,6 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Computable, Rational, Real};
+use num::Integer as _;
 use num::bigint::{BigInt, BigUint};
 
 #[path = "support/bench_docs.rs"]
@@ -345,6 +346,356 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "real_pow_small_integer_exponent",
                 description: "Dispatches `Real::pow` with an exact small-integer exponent.",
+            },
+        ],
+    },
+    BenchGroupDoc {
+        name: "rational_algorithm_dispatch_speed",
+        description: "Cold backend algorithm families and retained rational fact dispatch selected from GMP-style operand shapes.",
+        benches: &[
+            BenchDoc {
+                name: "dyadic_fact_cold",
+                description: "Classifies a fresh non-dyadic denominator and retains the result.",
+            },
+            BenchDoc {
+                name: "dyadic_fact_retained",
+                description: "Reads an already-retained non-dyadic denominator classification.",
+            },
+            BenchDoc {
+                name: "mul_backend_basecase_cold",
+                description: "Multiplies fresh balanced 16-limb integers through the backend basecase kernel.",
+            },
+            BenchDoc {
+                name: "mul_backend_half_karatsuba_cold",
+                description: "Multiplies fresh unbalanced 33-by-66-limb integers through half-Karatsuba.",
+            },
+            BenchDoc {
+                name: "mul_backend_karatsuba_cold",
+                description: "Multiplies fresh balanced 40-limb integers through Karatsuba.",
+            },
+            BenchDoc {
+                name: "mul_backend_toom3_cold",
+                description: "Multiplies fresh balanced 257-limb integers through Toom-3.",
+            },
+            BenchDoc {
+                name: "mul_toom4_candidate_4096_bits",
+                description: "Runs Hyperreal's seven-product Rust-native Toom-4 candidate on balanced 4,096-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_backend_reference_4096_bits",
+                description: "Runs the native backend product on the same 4,096-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom4_candidate_16384_bits",
+                description: "Runs Hyperreal's Rust-native Toom-4 candidate on balanced 16,384-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_backend_reference_16384_bits",
+                description: "Runs the native backend product on the same 16,384-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom4_candidate_65536_bits",
+                description: "Runs Hyperreal's Rust-native Toom-4 candidate on balanced 65,536-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_backend_reference_65536_bits",
+                description: "Runs the native backend product on the same 65,536-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom4_candidate_262144_bits",
+                description: "Runs Hyperreal's Rust-native Toom-4 candidate on balanced 262,144-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_backend_reference_262144_bits",
+                description: "Runs the native backend product on the same 262,144-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom4_candidate_524288_bits",
+                description: "Runs Hyperreal's Rust-native Toom-4 candidate on balanced 524,288-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_backend_reference_524288_bits",
+                description: "Runs the native backend product on the same 524,288-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom4_candidate_1048576_bits",
+                description: "Runs Hyperreal's Rust-native Toom-4 candidate on balanced 1,048,576-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_backend_reference_1048576_bits",
+                description: "Runs the native backend product on the same 1,048,576-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom4_candidate_2097152_bits",
+                description: "Runs Hyperreal's Rust-native Toom-4 candidate on balanced 2,097,152-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_backend_reference_2097152_bits",
+                description: "Runs the native backend product on the same 2,097,152-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_selected_1048576_bits",
+                description: "Runs the retained production Toom-8 selector above its balanced crossover.",
+            },
+            BenchDoc {
+                name: "mul_selected_2097152_bits",
+                description: "Runs the retained production Toom-8 selector on balanced 2,097,152-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom6_candidate_1048576_bits",
+                description: "Runs Hyperreal's eleven-product Rust-native Toom-6 candidate above its crossover.",
+            },
+            BenchDoc {
+                name: "mul_toom6_candidate_131072_bits",
+                description: "Runs Hyperreal's Rust-native Toom-6 candidate on balanced 131,072-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_backend_reference_131072_bits",
+                description: "Runs the retained native backend selector on the same 131,072-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom6_candidate_262144_bits",
+                description: "Runs Hyperreal's Rust-native Toom-6 candidate on balanced 262,144-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom6_candidate_524288_bits",
+                description: "Runs Hyperreal's Rust-native Toom-6 candidate on balanced 524,288-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_selected_524288_bits",
+                description: "Runs the retained production Toom-8 selector above its balanced crossover.",
+            },
+            BenchDoc {
+                name: "mul_toom6_candidate_2097152_bits",
+                description: "Runs Hyperreal's Rust-native Toom-6 candidate on balanced 2,097,152-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_selected_toom4_unbalanced_1258291_by_1048576",
+                description: "Runs retained Toom-4 on a 6:5 operand pair outside Toom-6's balance band.",
+            },
+            BenchDoc {
+                name: "mul_backend_unbalanced_1258291_by_1048576",
+                description: "Runs the native backend on the same 6:5 operand pair.",
+            },
+            BenchDoc {
+                name: "mul_toom8_candidate_262144_bits",
+                description: "Runs Hyperreal's fifteen-product Rust-native Toom-8 candidate on balanced 262,144-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_selected_262144_bits",
+                description: "Runs the retained production Toom-8 selector at its balanced crossover.",
+            },
+            BenchDoc {
+                name: "mul_toom8_candidate_65536_bits",
+                description: "Runs Hyperreal's Rust-native Toom-8 candidate on balanced 65,536-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom8_candidate_131072_bits",
+                description: "Runs Hyperreal's Rust-native Toom-8 candidate on balanced 131,072-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom8_candidate_524288_bits",
+                description: "Runs Hyperreal's Rust-native Toom-8 candidate at the Toom-6 crossover.",
+            },
+            BenchDoc {
+                name: "mul_toom8_candidate_1048576_bits",
+                description: "Runs Hyperreal's Rust-native Toom-8 candidate on balanced 1,048,576-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom8_candidate_2097152_bits",
+                description: "Runs Hyperreal's Rust-native Toom-8 candidate on balanced 2,097,152-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_toom8_candidate_4194304_bits",
+                description: "Runs Hyperreal's Rust-native Toom-8 candidate on balanced 4,194,304-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_selected_4194304_bits",
+                description: "Runs the retained production Toom-8 selector on the same 4,194,304-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_selected_toom6_unbalanced_599186_by_524288",
+                description: "Runs retained Toom-6 on an 8:7 operand pair outside Toom-8's balance band.",
+            },
+            BenchDoc {
+                name: "mul_backend_unbalanced_599186_by_524288",
+                description: "Runs the native backend on the same 8:7 operand pair.",
+            },
+            BenchDoc {
+                name: "mul_ntt_candidate_262144_bits",
+                description: "Runs Hyperreal's exact two-prime Rust-native NTT/CRT candidate on balanced 262,144-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_ntt_candidate_1048576_bits",
+                description: "Runs the Rust-native NTT/CRT candidate on balanced 1,048,576-bit operands.",
+            },
+            BenchDoc {
+                name: "mul_ntt_candidate_4194304_bits",
+                description: "Runs the Rust-native NTT/CRT candidate on balanced 4,194,304-bit operands.",
+            },
+            BenchDoc {
+                name: "reduce_backend_single_limb_cold",
+                description: "Reduces a fresh wide fraction by a single-limb exact divisor.",
+            },
+            BenchDoc {
+                name: "reduce_backend_knuth_cold",
+                description: "Reduces a fresh wide fraction through normalized Knuth basecase division.",
+            },
+            BenchDoc {
+                name: "reduce_backend_large_knuth_cold",
+                description: "Reduces a fresh 129-limb numerator by a 65-limb exact divisor through normalized Knuth division.",
+            },
+            BenchDoc {
+                name: "exact_remainder_large_knuth",
+                description: "Computes a wide rational fractional remainder through the traced normalized Knuth backend.",
+            },
+            BenchDoc {
+                name: "division_trivial_small_quotient",
+                description: "Exercises the backend's zero-quotient magnitude division exit on wide operands.",
+            },
+            BenchDoc {
+                name: "gcd_selected_192_bits",
+                description: "Runs selected magnitude GCD at the retained three-limb Lehmer crossover.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_192_bits",
+                description: "Runs the full-width Euclidean baseline on the same 192-bit pair.",
+            },
+            BenchDoc {
+                name: "gcd_selected_512_bits",
+                description: "Runs selected magnitude GCD above the Lehmer crossover.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_512_bits",
+                description: "Runs the full-width Euclidean baseline on the same 512-bit pair.",
+            },
+            BenchDoc {
+                name: "gcd_selected_1024_bits",
+                description: "Runs selected magnitude GCD above the Lehmer crossover.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_1024_bits",
+                description: "Runs the full-width Euclidean baseline on the same 1,024-bit pair.",
+            },
+            BenchDoc {
+                name: "gcd_selected_4096_bits",
+                description: "Runs selected magnitude GCD well above the Lehmer crossover.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_4096_bits",
+                description: "Runs the full-width Euclidean baseline on the same 4,096-bit pair.",
+            },
+            BenchDoc {
+                name: "half_gcd_candidate_8192_bits",
+                description: "Runs the recursive half-GCD candidate below its provisional crossover.",
+            },
+            BenchDoc {
+                name: "half_gcd_lehmer_8192_bits",
+                description: "Runs the quadratic Lehmer baseline on the same 8,192-bit pair.",
+            },
+            BenchDoc {
+                name: "half_gcd_candidate_16384_bits",
+                description: "Runs the recursive half-GCD candidate at its provisional crossover.",
+            },
+            BenchDoc {
+                name: "half_gcd_lehmer_16384_bits",
+                description: "Runs the quadratic Lehmer baseline on the same 16,384-bit pair.",
+            },
+            BenchDoc {
+                name: "half_gcd_candidate_65536_bits",
+                description: "Runs the recursive half-GCD candidate well above its provisional crossover.",
+            },
+            BenchDoc {
+                name: "half_gcd_lehmer_65536_bits",
+                description: "Runs the quadratic Lehmer baseline on the same 65,536-bit pair.",
+            },
+            BenchDoc {
+                name: "half_gcd_candidate_262144_bits",
+                description: "Runs recursive half-GCD with selected higher-Toom matrix products at 262,144 bits.",
+            },
+            BenchDoc {
+                name: "half_gcd_lehmer_262144_bits",
+                description: "Runs the Lehmer baseline on the same 262,144-bit pair.",
+            },
+            BenchDoc {
+                name: "half_gcd_candidate_1048576_bits",
+                description: "Runs recursive half-GCD with selected higher-Toom matrix products at 1,048,576 bits.",
+            },
+            BenchDoc {
+                name: "half_gcd_lehmer_1048576_bits",
+                description: "Runs the Lehmer baseline on the same 1,048,576-bit pair.",
+            },
+            BenchDoc {
+                name: "barrett_one_shot_8192_by_1024",
+                description: "Prepares a Rust-native Barrett reciprocal and divides one 8,192-bit value by a 1,024-bit divisor.",
+            },
+            BenchDoc {
+                name: "backend_one_shot_8192_by_1024",
+                description: "Runs the native backend div-rem baseline for the same one-shot operands.",
+            },
+            BenchDoc {
+                name: "barrett_batch16_8192_by_1024",
+                description: "Amortizes one Rust-native Barrett reciprocal over sixteen 8,192-bit dividends.",
+            },
+            BenchDoc {
+                name: "backend_batch16_8192_by_1024",
+                description: "Runs sixteen native backend div-rem operations on the same values.",
+            },
+            BenchDoc {
+                name: "barrett_batch16_65536_by_4096",
+                description: "Amortizes one Rust-native Barrett reciprocal over sixteen 65,536-bit dividends.",
+            },
+            BenchDoc {
+                name: "backend_batch16_65536_by_4096",
+                description: "Runs sixteen native backend div-rem operations on the same large values.",
+            },
+            BenchDoc {
+                name: "perfect_power_factor_reject",
+                description: "Rejects 12 after small-factor multiplicities collapse to gcd one.",
+            },
+            BenchDoc {
+                name: "perfect_power_general_seventh",
+                description: "Discovers an exact rational seventh power whose base primes exceed the trial table.",
+            },
+            BenchDoc {
+                name: "perfect_power_fixed_seventh",
+                description: "Checks the same value when the seventh-root degree is already known.",
+            },
+            BenchDoc {
+                name: "perfect_power_unfactored_reject",
+                description: "Rejects mismatched seventh- and fifth-power rational components beyond the trial table.",
+            },
+            BenchDoc {
+                name: "radix_format_small_integer",
+                description: "Formats a 16-limb integer using repeated single-limb radix division.",
+            },
+            BenchDoc {
+                name: "radix_format_large_integer",
+                description: "Formats a 32-limb integer using divide-and-conquer radix conversion.",
+            },
+            BenchDoc {
+                name: "radix_parse_large_integer",
+                description: "Parses a large below-threshold decimal fixture through chunked multiply-add conversion.",
+            },
+            BenchDoc {
+                name: "radix_parse_divide_conquer_10240_digits",
+                description: "Parses 10,240 digits through the divide-and-conquer product tree.",
+            },
+            BenchDoc {
+                name: "radix_parse_backend_chunked_10240_digits",
+                description: "Parses the same 10,240 digits with the backend chunked multiply-add baseline.",
+            },
+            BenchDoc {
+                name: "radix_parse_divide_conquer_20480_digits",
+                description: "Parses 20,480 digits through the divide-and-conquer product tree.",
+            },
+            BenchDoc {
+                name: "radix_parse_backend_chunked_20480_digits",
+                description: "Parses the same 20,480 digits with the backend chunked multiply-add baseline.",
+            },
+            BenchDoc {
+                name: "radix_format_fraction_decimal",
+                description: "Formats a rational decimal through exact repeated digit division.",
             },
         ],
     },
@@ -1030,6 +1381,586 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
             |(base, exponent)| black_box(base.pow(exponent).unwrap()),
             BatchSize::SmallInput,
         )
+    });
+
+    group.finish();
+}
+
+fn backend_limb_rational(limbs: usize, low: u8) -> Rational {
+    let magnitude =
+        (BigUint::from(1_u8) << ((limbs - 1) * usize::BITS as usize)) + BigUint::from(low);
+    Rational::from_bigint(BigInt::from(magnitude))
+}
+
+fn benchmark_magnitude(bits: usize, mut state: u64) -> BigUint {
+    let mut value = BigUint::ZERO;
+    for _ in 0..bits.div_ceil(64) {
+        state = state
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        value = (value << 64_usize) + state;
+    }
+    let mask = (BigUint::from(1_u8) << bits) - 1_u8;
+    (value & mask) | (BigUint::from(1_u8) << (bits - 1))
+}
+
+fn euclidean_magnitude_gcd(left: &BigUint, right: &BigUint) -> BigUint {
+    let (mut larger, mut smaller) = if left >= right {
+        (left.clone(), right.clone())
+    } else {
+        (right.clone(), left.clone())
+    };
+    while smaller != BigUint::ZERO {
+        let remainder = &larger % &smaller;
+        larger = smaller;
+        smaller = remainder;
+    }
+    larger
+}
+
+fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
+    let mut group = c.benchmark_group("rational_algorithm_dispatch_speed");
+
+    group.bench_function("dyadic_fact_cold", |b| {
+        b.iter_batched(
+            || Rational::fraction(7, 15).unwrap(),
+            |value| black_box(value.is_dyadic()),
+            BatchSize::SmallInput,
+        )
+    });
+    let retained_non_dyadic = Rational::fraction(7, 15).unwrap();
+    assert!(!retained_non_dyadic.is_dyadic());
+    group.bench_function("dyadic_fact_retained", |b| {
+        b.iter(|| black_box(black_box(&retained_non_dyadic).is_dyadic()))
+    });
+
+    for (name, left_limbs, right_limbs) in [
+        ("mul_backend_basecase_cold", 16, 16),
+        ("mul_backend_half_karatsuba_cold", 33, 66),
+        ("mul_backend_karatsuba_cold", 40, 40),
+        ("mul_backend_toom3_cold", 257, 257),
+    ] {
+        group.bench_function(name, |b| {
+            b.iter_batched(
+                || {
+                    (
+                        backend_limb_rational(left_limbs, 3),
+                        backend_limb_rational(right_limbs, 5),
+                    )
+                },
+                |(left, right)| black_box(black_box(&left) * black_box(&right)),
+                BatchSize::SmallInput,
+            )
+        });
+    }
+
+    for (bits, candidate_name, backend_name) in [
+        (
+            4096,
+            "mul_toom4_candidate_4096_bits",
+            "mul_backend_reference_4096_bits",
+        ),
+        (
+            16_384,
+            "mul_toom4_candidate_16384_bits",
+            "mul_backend_reference_16384_bits",
+        ),
+        (
+            65_536,
+            "mul_toom4_candidate_65536_bits",
+            "mul_backend_reference_65536_bits",
+        ),
+        (
+            262_144,
+            "mul_toom4_candidate_262144_bits",
+            "mul_backend_reference_262144_bits",
+        ),
+        (
+            524_288,
+            "mul_toom4_candidate_524288_bits",
+            "mul_backend_reference_524288_bits",
+        ),
+        (
+            1_048_576,
+            "mul_toom4_candidate_1048576_bits",
+            "mul_backend_reference_1048576_bits",
+        ),
+        (
+            2_097_152,
+            "mul_toom4_candidate_2097152_bits",
+            "mul_backend_reference_2097152_bits",
+        ),
+    ] {
+        let left = benchmark_magnitude(bits, 0x6a09_e667_f3bc_c909);
+        let right = benchmark_magnitude(bits, 0xbb67_ae85_84ca_a73b);
+        assert_eq!(
+            Rational::multiply_magnitudes_toom4_candidate(&left, &right),
+            &left * &right
+        );
+        group.bench_function(candidate_name, |b| {
+            b.iter(|| {
+                black_box(Rational::multiply_magnitudes_toom4_candidate(
+                    black_box(&left),
+                    black_box(&right),
+                ))
+            })
+        });
+        group.bench_function(backend_name, |b| {
+            b.iter(|| black_box(black_box(&left) * black_box(&right)))
+        });
+        if bits >= 1_048_576 {
+            let selected_name = if bits == 1_048_576 {
+                "mul_selected_1048576_bits"
+            } else {
+                "mul_selected_2097152_bits"
+            };
+            group.bench_function(selected_name, |b| {
+                b.iter(|| {
+                    black_box(Rational::multiply_magnitudes_selected(
+                        black_box(&left),
+                        black_box(&right),
+                    ))
+                })
+            });
+        }
+    }
+
+    for (bits, candidate_name, selected_name) in [
+        (
+            131_072,
+            "mul_toom6_candidate_131072_bits",
+            "mul_backend_reference_131072_bits",
+        ),
+        (
+            262_144,
+            "mul_toom6_candidate_262144_bits",
+            "mul_backend_reference_262144_bits",
+        ),
+        (
+            524_288,
+            "mul_toom6_candidate_524288_bits",
+            "mul_selected_524288_bits",
+        ),
+        (
+            1_048_576,
+            "mul_toom6_candidate_1048576_bits",
+            "mul_selected_1048576_bits",
+        ),
+        (
+            2_097_152,
+            "mul_toom6_candidate_2097152_bits",
+            "mul_selected_2097152_bits",
+        ),
+    ] {
+        // The first two selected baselines are already registered above.
+        let left = benchmark_magnitude(bits, 0x5be0_cd19_137e_2179);
+        let right = benchmark_magnitude(bits, 0x1f83_d9ab_fb41_bd6b);
+        assert_eq!(
+            Rational::multiply_magnitudes_toom6_candidate(&left, &right),
+            &left * &right
+        );
+        group.bench_function(candidate_name, |b| {
+            b.iter(|| {
+                black_box(Rational::multiply_magnitudes_toom6_candidate(
+                    black_box(&left),
+                    black_box(&right),
+                ))
+            })
+        });
+        if bits == 131_072 || bits == 524_288 {
+            group.bench_function(selected_name, |b| {
+                b.iter(|| {
+                    black_box(Rational::multiply_magnitudes_selected(
+                        black_box(&left),
+                        black_box(&right),
+                    ))
+                })
+            });
+        }
+    }
+
+    let toom4_shorter_bits = 1_048_576;
+    let toom4_longer_bits = toom4_shorter_bits + toom4_shorter_bits / 5;
+    let toom4_unbalanced_left = benchmark_magnitude(toom4_longer_bits, 0xa54f_f53a_5f1d_36f1);
+    let toom4_unbalanced_right = benchmark_magnitude(toom4_shorter_bits, 0x3c6e_f372_fe94_f82b);
+    assert!(
+        Rational::multiply_magnitudes_selected(&toom4_unbalanced_left, &toom4_unbalanced_right)
+            == &toom4_unbalanced_left * &toom4_unbalanced_right
+    );
+    group.bench_function("mul_selected_toom4_unbalanced_1258291_by_1048576", |b| {
+        b.iter(|| {
+            black_box(Rational::multiply_magnitudes_selected(
+                black_box(&toom4_unbalanced_left),
+                black_box(&toom4_unbalanced_right),
+            ))
+        })
+    });
+    group.bench_function("mul_backend_unbalanced_1258291_by_1048576", |b| {
+        b.iter(|| black_box(black_box(&toom4_unbalanced_left) * black_box(&toom4_unbalanced_right)))
+    });
+
+    for (bits, candidate_name, selected_name) in [
+        (
+            65_536,
+            "mul_toom8_candidate_65536_bits",
+            "mul_backend_reference_65536_bits",
+        ),
+        (
+            131_072,
+            "mul_toom8_candidate_131072_bits",
+            "mul_backend_reference_131072_bits",
+        ),
+        (
+            262_144,
+            "mul_toom8_candidate_262144_bits",
+            "mul_selected_262144_bits",
+        ),
+        (
+            524_288,
+            "mul_toom8_candidate_524288_bits",
+            "mul_selected_524288_bits",
+        ),
+        (
+            1_048_576,
+            "mul_toom8_candidate_1048576_bits",
+            "mul_selected_1048576_bits",
+        ),
+        (
+            2_097_152,
+            "mul_toom8_candidate_2097152_bits",
+            "mul_selected_2097152_bits",
+        ),
+        (
+            4_194_304,
+            "mul_toom8_candidate_4194304_bits",
+            "mul_selected_4194304_bits",
+        ),
+    ] {
+        let left = benchmark_magnitude(bits, 0xcbbb_9d5d_c105_9ed8);
+        let right = benchmark_magnitude(bits, 0x629a_292a_367c_d507);
+        assert_eq!(
+            Rational::multiply_magnitudes_toom8_candidate(&left, &right),
+            &left * &right
+        );
+        group.bench_function(candidate_name, |b| {
+            b.iter(|| {
+                black_box(Rational::multiply_magnitudes_toom8_candidate(
+                    black_box(&left),
+                    black_box(&right),
+                ))
+            })
+        });
+        if bits == 262_144 || bits == 4_194_304 {
+            group.bench_function(selected_name, |b| {
+                b.iter(|| {
+                    black_box(Rational::multiply_magnitudes_selected(
+                        black_box(&left),
+                        black_box(&right),
+                    ))
+                })
+            });
+        }
+    }
+
+    let toom6_shorter_bits = 524_288;
+    let toom6_longer_bits = toom6_shorter_bits + toom6_shorter_bits / 7;
+    let toom6_unbalanced_left = benchmark_magnitude(toom6_longer_bits, 0x6c44_198c_4a47_5817);
+    let toom6_unbalanced_right = benchmark_magnitude(toom6_shorter_bits, 0x7f4a_7c15_f39c_c060);
+    assert!(
+        Rational::multiply_magnitudes_selected(&toom6_unbalanced_left, &toom6_unbalanced_right)
+            == &toom6_unbalanced_left * &toom6_unbalanced_right
+    );
+    group.bench_function("mul_selected_toom6_unbalanced_599186_by_524288", |b| {
+        b.iter(|| {
+            black_box(Rational::multiply_magnitudes_selected(
+                black_box(&toom6_unbalanced_left),
+                black_box(&toom6_unbalanced_right),
+            ))
+        })
+    });
+    group.bench_function("mul_backend_unbalanced_599186_by_524288", |b| {
+        b.iter(|| black_box(black_box(&toom6_unbalanced_left) * black_box(&toom6_unbalanced_right)))
+    });
+
+    for (bits, candidate_name) in [
+        (262_144, "mul_ntt_candidate_262144_bits"),
+        (1_048_576, "mul_ntt_candidate_1048576_bits"),
+        (4_194_304, "mul_ntt_candidate_4194304_bits"),
+    ] {
+        let left = benchmark_magnitude(bits, 0x9159_015a_3070_dd17);
+        let right = benchmark_magnitude(bits, 0x152f_ecd8_f70e_5939);
+        assert_eq!(
+            Rational::multiply_magnitudes_ntt_candidate(&left, &right),
+            &left * &right
+        );
+        group.bench_function(candidate_name, |b| {
+            b.iter(|| {
+                black_box(Rational::multiply_magnitudes_ntt_candidate(
+                    black_box(&left),
+                    black_box(&right),
+                ))
+            })
+        });
+    }
+
+    let single_limb_magnitude = (BigUint::from(1_u8) << (9 * usize::BITS as usize)) * 3_u8;
+    group.bench_function("reduce_backend_single_limb_cold", |b| {
+        b.iter_batched(
+            || (single_limb_magnitude.clone(), BigUint::from(3_u8)),
+            |(numerator, denominator)| {
+                black_box(
+                    Rational::from_bigint_fraction(BigInt::from(numerator), denominator).unwrap(),
+                )
+            },
+            BatchSize::SmallInput,
+        )
+    });
+
+    let knuth_common = (BigUint::from(1_u8) << (9 * usize::BITS as usize)) + 1_u8;
+    group.bench_function("reduce_backend_knuth_cold", |b| {
+        b.iter_batched(
+            || (&knuth_common * 3_u8, &knuth_common * 5_u8),
+            |(numerator, denominator)| {
+                black_box(
+                    Rational::from_bigint_fraction(BigInt::from(numerator), denominator).unwrap(),
+                )
+            },
+            BatchSize::SmallInput,
+        )
+    });
+
+    let large_knuth_common = (BigUint::from(1_u8) << (64 * usize::BITS as usize)) + 1_u8;
+    let large_knuth_factor = (BigUint::from(1_u8) << (64 * usize::BITS as usize)) + 2_u8;
+    group.bench_function("reduce_backend_large_knuth_cold", |b| {
+        b.iter_batched(
+            || {
+                (
+                    &large_knuth_common * &large_knuth_factor,
+                    &large_knuth_common * 3_u8,
+                )
+            },
+            |(numerator, denominator)| {
+                black_box(
+                    Rational::from_bigint_fraction(BigInt::from(numerator), denominator).unwrap(),
+                )
+            },
+            BatchSize::SmallInput,
+        )
+    });
+
+    let remainder_denominator = (BigUint::from(1_u8) << (64 * usize::BITS as usize)) + 3_u8;
+    let remainder_numerator = (&remainder_denominator << (64 * usize::BITS as usize)) + 17_u8;
+    let remainder_rational =
+        Rational::from_bigint_fraction(BigInt::from(remainder_numerator), remainder_denominator)
+            .unwrap();
+    group.bench_function("exact_remainder_large_knuth", |b| {
+        b.iter(|| black_box(black_box(&remainder_rational).fract()))
+    });
+
+    let small_quotient_divisor = benchmark_magnitude(8192, 0x510e_527f_ade6_82d1);
+    let small_quotient_dividend = &small_quotient_divisor - 1_u8;
+    group.bench_function("division_trivial_small_quotient", |b| {
+        b.iter(|| {
+            black_box(black_box(&small_quotient_dividend) / black_box(&small_quotient_divisor))
+        })
+    });
+
+    for (bits, selected_name, euclidean_name) in [
+        (192, "gcd_selected_192_bits", "gcd_euclidean_192_bits"),
+        (512, "gcd_selected_512_bits", "gcd_euclidean_512_bits"),
+        (1024, "gcd_selected_1024_bits", "gcd_euclidean_1024_bits"),
+        (4096, "gcd_selected_4096_bits", "gcd_euclidean_4096_bits"),
+    ] {
+        let left = benchmark_magnitude(bits, 0x243f_6a88_85a3_08d3);
+        let right = benchmark_magnitude(bits, 0xa409_3822_299f_31d0);
+        assert_eq!(
+            Rational::gcd_magnitudes(&left, &right),
+            euclidean_magnitude_gcd(&left, &right)
+        );
+        group.bench_function(selected_name, |b| {
+            b.iter(|| {
+                black_box(Rational::gcd_magnitudes(
+                    black_box(&left),
+                    black_box(&right),
+                ))
+            })
+        });
+        group.bench_function(euclidean_name, |b| {
+            b.iter(|| black_box(euclidean_magnitude_gcd(black_box(&left), black_box(&right))))
+        });
+    }
+
+    for (bits, selected_name, lehmer_name) in [
+        (
+            8192,
+            "half_gcd_candidate_8192_bits",
+            "half_gcd_lehmer_8192_bits",
+        ),
+        (
+            16_384,
+            "half_gcd_candidate_16384_bits",
+            "half_gcd_lehmer_16384_bits",
+        ),
+        (
+            65_536,
+            "half_gcd_candidate_65536_bits",
+            "half_gcd_lehmer_65536_bits",
+        ),
+        (
+            262_144,
+            "half_gcd_candidate_262144_bits",
+            "half_gcd_lehmer_262144_bits",
+        ),
+        (
+            1_048_576,
+            "half_gcd_candidate_1048576_bits",
+            "half_gcd_lehmer_1048576_bits",
+        ),
+    ] {
+        let left = benchmark_magnitude(bits, 0x1319_8a2e_0370_7344);
+        let right = benchmark_magnitude(bits, 0x082e_fa98_ec4e_6c89);
+        assert_eq!(
+            Rational::gcd_magnitudes_half_gcd_candidate(&left, &right),
+            Rational::gcd_magnitudes_lehmer_baseline(&left, &right)
+        );
+        group.bench_function(selected_name, |b| {
+            b.iter(|| {
+                black_box(Rational::gcd_magnitudes_half_gcd_candidate(
+                    black_box(&left),
+                    black_box(&right),
+                ))
+            })
+        });
+        group.bench_function(lehmer_name, |b| {
+            b.iter(|| {
+                black_box(Rational::gcd_magnitudes_lehmer_baseline(
+                    black_box(&left),
+                    black_box(&right),
+                ))
+            })
+        });
+    }
+
+    let barrett_divisor_1024 = benchmark_magnitude(1024, 0x3bd3_9e10_cb0e_f593);
+    let barrett_dividend_8192 = benchmark_magnitude(8192, 0xc0ac_29b7_c97c_50dd);
+    assert_eq!(
+        Rational::div_rem_magnitudes_barrett_candidate(
+            &barrett_dividend_8192,
+            &barrett_divisor_1024,
+        ),
+        barrett_dividend_8192.div_rem(&barrett_divisor_1024)
+    );
+    group.bench_function("barrett_one_shot_8192_by_1024", |b| {
+        b.iter(|| {
+            black_box(Rational::div_rem_magnitudes_barrett_candidate(
+                black_box(&barrett_dividend_8192),
+                black_box(&barrett_divisor_1024),
+            ))
+        })
+    });
+    group.bench_function("backend_one_shot_8192_by_1024", |b| {
+        b.iter(|| {
+            black_box(black_box(&barrett_dividend_8192).div_rem(black_box(&barrett_divisor_1024)))
+        })
+    });
+
+    for (divisor_bits, dividend_bits, barrett_name, backend_name) in [
+        (
+            1024,
+            8192,
+            "barrett_batch16_8192_by_1024",
+            "backend_batch16_8192_by_1024",
+        ),
+        (
+            4096,
+            65_536,
+            "barrett_batch16_65536_by_4096",
+            "backend_batch16_65536_by_4096",
+        ),
+    ] {
+        let divisor = benchmark_magnitude(divisor_bits, 0x9b05_688c_2b3e_6c1f);
+        let dividends: Vec<_> = (0_u64..16)
+            .map(|index| {
+                benchmark_magnitude(
+                    dividend_bits,
+                    0x1f83_d9ab_fb41_bd6b ^ index.wrapping_mul(0x9e37_79b9),
+                )
+            })
+            .collect();
+        assert_eq!(
+            Rational::div_rem_magnitudes_barrett_batch_candidate(&dividends, &divisor),
+            Rational::div_rem_magnitudes_backend_batch(&dividends, &divisor)
+        );
+        group.bench_function(barrett_name, |b| {
+            b.iter(|| {
+                black_box(Rational::div_rem_magnitudes_barrett_batch_candidate(
+                    black_box(&dividends),
+                    black_box(&divisor),
+                ))
+            })
+        });
+        group.bench_function(backend_name, |b| {
+            b.iter(|| {
+                black_box(Rational::div_rem_magnitudes_backend_batch(
+                    black_box(&dividends),
+                    black_box(&divisor),
+                ))
+            })
+        });
+    }
+
+    let perfect_power_reject = Rational::new(12);
+    let perfect_power_seventh = Rational::fraction(101_i64.pow(7), 103_u64.pow(7)).unwrap();
+    let perfect_power_mismatch = Rational::fraction(101_i64.pow(7), 103_u64.pow(5)).unwrap();
+    group.bench_function("perfect_power_factor_reject", |b| {
+        b.iter(|| black_box(black_box(&perfect_power_reject).is_perfect_power()))
+    });
+    group.bench_function("perfect_power_general_seventh", |b| {
+        b.iter(|| black_box(black_box(&perfect_power_seventh).is_perfect_power()))
+    });
+    group.bench_function("perfect_power_fixed_seventh", |b| {
+        b.iter(|| black_box(black_box(&perfect_power_seventh).perfect_nth_root(7)))
+    });
+    group.bench_function("perfect_power_unfactored_reject", |b| {
+        b.iter(|| black_box(black_box(&perfect_power_mismatch).is_perfect_power()))
+    });
+
+    let small_radix = backend_limb_rational(16, 3);
+    let large_radix = backend_limb_rational(32, 17);
+    let large_radix_decimal = large_radix.to_string();
+    let divide_conquer_decimal_10240 = "1234567890".repeat(1024);
+    let divide_conquer_decimal_20480 = "1234567890".repeat(2048);
+    let decimal_fraction = Rational::fraction(1, 7).unwrap();
+    group.bench_function("radix_format_small_integer", |b| {
+        b.iter(|| black_box(format!("{}", black_box(&small_radix))))
+    });
+    group.bench_function("radix_format_large_integer", |b| {
+        b.iter(|| black_box(format!("{}", black_box(&large_radix))))
+    });
+    group.bench_function("radix_parse_large_integer", |b| {
+        b.iter(|| black_box(black_box(&large_radix_decimal).parse::<Rational>().unwrap()))
+    });
+    for (digits, divide_conquer_name, backend_name) in [
+        (
+            &divide_conquer_decimal_10240,
+            "radix_parse_divide_conquer_10240_digits",
+            "radix_parse_backend_chunked_10240_digits",
+        ),
+        (
+            &divide_conquer_decimal_20480,
+            "radix_parse_divide_conquer_20480_digits",
+            "radix_parse_backend_chunked_20480_digits",
+        ),
+    ] {
+        group.bench_function(divide_conquer_name, |b| {
+            b.iter(|| black_box(black_box(digits).parse::<Rational>().unwrap()))
+        });
+        group.bench_function(backend_name, |b| {
+            b.iter(|| black_box(BigUint::parse_bytes(black_box(digits.as_bytes()), 10).unwrap()))
+        });
+    }
+    group.bench_function("radix_format_fraction_decimal", |b| {
+        b.iter(|| black_box(format!("{:#.32}", black_box(&decimal_fraction))))
     });
 
     group.finish();
@@ -1802,6 +2733,7 @@ criterion_group!(
     bench_raw_cache_hit_cost,
     bench_structural_query_speed,
     bench_pure_scalar_algorithm_speed,
+    bench_rational_algorithm_dispatch_speed,
     bench_borrowed_op_overhead,
     bench_dense_algebra,
     bench_exact_transcendental_special_forms,

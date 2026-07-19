@@ -10,6 +10,10 @@ impl Rational {
         (17, 289),
     ];
     const SMALL_SQUARE_PRODUCT: u64 = 260_620_460_100;
+    const PERFECT_POWER_TRIAL_PRIMES: [u32; 24] = [
+        3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79,
+        83, 89, 97,
+    ];
 
     #[inline]
     fn could_be_perfect_square(n: &BigUint) -> bool {
@@ -50,6 +54,7 @@ impl Rational {
         }
         // BigUint::sqrt is cheap enough as a final check once small square
         // factors have been stripped.
+        crate::trace_dispatch!("rational_algorithm", "root-extraction", "newton-square-root");
         let root = n.sqrt();
         let square = &root * &root;
         if square == *n { Some(root) } else { None }
@@ -243,13 +248,8 @@ impl Rational {
         if let Some(reduction) = self.retained_square_reduction() {
             return reduction;
         }
-        if !self
-            .square_reuse_seen
-            .load(std::sync::atomic::Ordering::Relaxed)
-        {
+        if !self.observe_retained_fact(RETAINED_SQUARE_REUSE_SEEN) {
             crate::trace_dispatch!("rational", "square_extraction", "reuse-observed");
-            self.square_reuse_seen
-                .store(true, std::sync::atomic::Ordering::Relaxed);
             return self.extract_square_reduced();
         }
 
@@ -278,6 +278,7 @@ impl Rational {
             return None;
         }
 
+        crate::trace_dispatch!("rational_algorithm", "root-extraction", "newton-nth-root");
         let numerator = self.numerator.nth_root(n);
         if numerator.pow(n) != self.numerator {
             return None;
@@ -291,6 +292,128 @@ impl Rational {
         Some(Self::from_parts_raw(self.sign, numerator, denominator))
     }
 
+    fn retain_perfect_power_factor_exponents(value: &BigUint, exponent_gcd: &mut u64) {
+        if value.is_one() {
+            return;
+        }
+        let mut rest = value.clone();
+        let twos = rest.trailing_zeros().unwrap_or(0);
+        if twos > 0 {
+            *exponent_gcd = if *exponent_gcd == 0 {
+                twos
+            } else {
+                Self::gcd_u64(*exponent_gcd, twos)
+            };
+            rest >>= usize::try_from(twos).expect("BigUint shift fits usize");
+        }
+
+        for prime in Self::PERFECT_POWER_TRIAL_PRIMES {
+            if rest.is_one() || *exponent_gcd == 1 {
+                break;
+            }
+            let prime = BigUint::from(prime);
+            let mut multiplicity = 0_u64;
+            while (&rest % &prime).is_zero() {
+                rest /= &prime;
+                multiplicity += 1;
+            }
+            if multiplicity > 0 {
+                *exponent_gcd = if *exponent_gcd == 0 {
+                    multiplicity
+                } else {
+                    Self::gcd_u64(*exponent_gcd, multiplicity)
+                };
+            }
+        }
+    }
+
+    fn is_prime_exponent(candidate: u32) -> bool {
+        if candidate < 2 {
+            return false;
+        }
+        if candidate.is_multiple_of(2) {
+            return candidate == 2;
+        }
+        let mut divisor = 3_u32;
+        while divisor <= candidate / divisor {
+            if candidate.is_multiple_of(divisor) {
+                return false;
+            }
+            divisor += 2;
+        }
+        true
+    }
+
+    fn magnitude_is_exact_power(value: &BigUint, exponent: u32) -> bool {
+        if value.is_one() {
+            return true;
+        }
+        let root = value.nth_root(exponent);
+        root.pow(exponent) == *value
+    }
+
+    /// Return whether this rational is an integer power with exponent greater
+    /// than one.
+    ///
+    /// Zero, one, and negative one are perfect powers. Negative values are
+    /// tested only at odd prime exponents, matching the integer definition.
+    pub fn is_perfect_power(&self) -> bool {
+        if self.sign == NoSign || (self.numerator.is_one() && self.denominator.is_one()) {
+            crate::trace_dispatch!("rational_algorithm", "perfect-power", "unit");
+            return true;
+        }
+
+        let mut exponent_gcd = 0_u64;
+        Self::retain_perfect_power_factor_exponents(&self.numerator, &mut exponent_gcd);
+        Self::retain_perfect_power_factor_exponents(&self.denominator, &mut exponent_gcd);
+        if exponent_gcd == 1 {
+            crate::trace_dispatch!(
+                "rational_algorithm",
+                "perfect-power",
+                "factor-multiplicity-reject"
+            );
+            return false;
+        }
+
+        let max_exponent = [&self.numerator, &self.denominator]
+            .into_iter()
+            .filter(|value| !value.is_one())
+            .map(|value| value.bits().saturating_sub(1))
+            .min()
+            .unwrap_or(2)
+            .min(u64::from(u32::MAX)) as u32;
+
+        for exponent in 2..=max_exponent {
+            if !Self::is_prime_exponent(exponent)
+                || (self.sign == Minus && exponent.is_multiple_of(2))
+                || (exponent_gcd > 0 && !exponent_gcd.is_multiple_of(u64::from(exponent)))
+            {
+                continue;
+            }
+            crate::trace_dispatch!(
+                "rational_algorithm",
+                "perfect-power",
+                "prime-root-candidate"
+            );
+            if Self::magnitude_is_exact_power(&self.numerator, exponent)
+                && Self::magnitude_is_exact_power(&self.denominator, exponent)
+            {
+                crate::trace_dispatch!(
+                    "rational_algorithm",
+                    "perfect-power",
+                    "prime-root-exact"
+                );
+                return true;
+            }
+        }
+        crate::trace_dispatch!(
+            "rational_algorithm",
+            "perfect-power",
+            "prime-root-reject"
+        );
+        false
+    }
+
     #[inline]
     fn pow_up_u64(&self, exp: u64) -> Self {
         if exp == 0 {
@@ -301,18 +424,16 @@ impl Rational {
         // through borrowed multiplication: each edge then reuses the bounded
         // product cache on subsequent calls without adding a power-specific
         // result cache or enlarging RationalData.
-        if (2..=5).contains(&exp) {
-            if self
-                .power_reuse_seen
-                .load(std::sync::atomic::Ordering::Relaxed)
-            {
-                crate::trace_dispatch!("rational", "powi", "retained-product-chain");
-                return self.pow_up_by_retained_multiplication(exp);
-            }
-            // A racing first call may also use the direct path. Both results
-            // are exact, and either call supplies reuse evidence for the next.
-            self.power_reuse_seen
-                .store(true, std::sync::atomic::Ordering::Relaxed);
+        if (2..=5).contains(&exp)
+            && self.observe_retained_fact(RETAINED_POWER_REUSE_SEEN)
+        {
+            crate::trace_dispatch!("rational", "powi", "retained-product-chain");
+            crate::trace_dispatch!(
+                "rational_algorithm",
+                "powering",
+                "retained-binary-product-chain"
+            );
+            return self.pow_up_by_retained_multiplication(exp);
         }
         if let Ok(exp) = u32::try_from(exp)
             && exp <= 64
@@ -323,6 +444,7 @@ impl Rational {
                     (numerator.checked_pow(exp), denominator.checked_pow(exp))
             {
                 crate::trace_dispatch!("rational", "powi", "word-sized");
+                crate::trace_dispatch!("rational_algorithm", "powering", "word-checked-pow");
                 return Self::from_reduced_word_parts(
                     if self.sign == Minus && exp % 2 == 1 {
                         Minus
@@ -343,6 +465,7 @@ impl Rational {
                     BigUint::one() << shift
                 })
                 .unwrap_or_else(|| self.denominator.pow(exp));
+            crate::trace_dispatch!("rational_algorithm", "powering", "backend-binary-pow");
             return Self::from_parts_raw(
                 if self.sign == Minus && exp % 2 == 1 {
                     Minus
@@ -354,6 +477,11 @@ impl Rational {
             );
         }
 
+        crate::trace_dispatch!(
+            "rational_algorithm",
+            "powering",
+            "binary-repeated-squaring"
+        );
         self.pow_up_by_multiplication(exp)
     }
 

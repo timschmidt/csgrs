@@ -111,6 +111,16 @@ struct CachedRationalArithmetic {
     square_reduction: OnceLock<CachedRationalSquareReduction>,
 }
 
+const RETAINED_LINEAR_REUSE_SEEN: u8 = 1 << 0;
+const RETAINED_POWER_REUSE_SEEN: u8 = 1 << 1;
+const RETAINED_SQUARE_REUSE_SEEN: u8 = 1 << 2;
+const RETAINED_EXACT_F64_VIEW: u8 = 1 << 3;
+const RETAINED_DYADIC_KNOWN: u8 = 1 << 4;
+const RETAINED_DYADIC_VALUE: u8 = 1 << 5;
+const RETAINED_REUSE_MASK: u8 = RETAINED_LINEAR_REUSE_SEEN
+    | RETAINED_POWER_REUSE_SEEN
+    | RETAINED_SQUARE_REUSE_SEEN;
+
 #[doc(hidden)]
 pub struct RationalData {
     sign: Sign,
@@ -118,10 +128,10 @@ pub struct RationalData {
     denominator: BigUint,
     product_cache: OnceLock<CachedRationalProduct>,
     linear_cache: OnceLock<Box<CachedRationalArithmetic>>,
-    linear_reuse_seen: std::sync::atomic::AtomicBool,
-    power_reuse_seen: std::sync::atomic::AtomicBool,
-    square_reuse_seen: std::sync::atomic::AtomicBool,
-    exact_f64_view: std::sync::atomic::AtomicBool,
+    /// Monotonic representation and reuse evidence retained by this immutable
+    /// rational. Packing these facts keeps the node layout bounded while
+    /// leaving room for additional benchmark-proven dispatch certificates.
+    retained_facts: std::sync::atomic::AtomicU8,
 }
 
 impl std::fmt::Debug for Rational {
@@ -216,6 +226,34 @@ static SMALL_POSITIVE_DYADICS: [OnceLock<Rational>; SMALL_DYADIC_CACHE_LEN] =
 static SMALL_NEGATIVE_DYADICS: [OnceLock<Rational>; SMALL_DYADIC_CACHE_LEN] =
     [const { OnceLock::new() }; SMALL_DYADIC_CACHE_LEN];
 
+impl Rational {
+    #[inline]
+    fn retained_fact(&self, fact: u8) -> bool {
+        self.retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed)
+            & fact
+            != 0
+    }
+
+    #[inline]
+    fn retain_fact(&self, fact: u8) {
+        self.retained_facts
+            .fetch_or(fact, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// Mark a monotonic observation and return whether it had already been
+    /// retained. Racing observers may both take the cold path; subsequent
+    /// calls see the evidence without locks or node growth.
+    #[inline]
+    fn observe_retained_fact(&self, fact: u8) -> bool {
+        self.retained_facts
+            .fetch_or(fact, std::sync::atomic::Ordering::Relaxed)
+            & fact
+            != 0
+    }
+
+}
+
 macro_rules! trace_rational_temporary {
     () => {{
         #[cfg(feature = "dispatch-trace")]
@@ -233,7 +271,24 @@ macro_rules! trace_rational_reduction {
 macro_rules! trace_rational_gcd {
     ($left:expr, $right:expr, $divisor:expr) => {{
         #[cfg(feature = "dispatch-trace")]
-        crate::dispatch_trace::record_rational_gcd($left, $right, $divisor);
+        {
+            Rational::trace_backend_gcd_algorithm();
+            crate::dispatch_trace::record_rational_gcd($left, $right, $divisor);
+        }
+    }};
+}
+
+macro_rules! trace_rational_division_algorithm {
+    ($operation:expr, $dividend:expr, $divisor:expr) => {{
+        #[cfg(feature = "dispatch-trace")]
+        Rational::trace_backend_division($operation, $dividend, $divisor);
+    }};
+}
+
+macro_rules! trace_rational_radix_output_algorithm {
+    ($value:expr) => {{
+        #[cfg(feature = "dispatch-trace")]
+        Rational::trace_backend_radix_output($value);
     }};
 }
 

@@ -10,6 +10,12 @@ use std::ops::Deref;
 use std::sync::{Arc, LazyLock, OnceLock};
 
 include!("arithmetic/representation.rs");
+include!("arithmetic/algorithm_dispatch.rs");
+include!("arithmetic/barrett_division.rs");
+include!("arithmetic/toom4_multiplication.rs");
+include!("arithmetic/toom6_multiplication.rs");
+include!("arithmetic/toom8_multiplication.rs");
+include!("arithmetic/ntt_multiplication.rs");
 include!("arithmetic/construction.rs");
 include!("arithmetic/aggregate_products.rs");
 include!("arithmetic/queries_conversion.rs");

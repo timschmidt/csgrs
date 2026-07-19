@@ -231,11 +231,11 @@ Speed of public structural queries across exact, transcendental, and composite `
 | `structural_query_speed/pi_zero_status` | not run | not run | Checks zero/nonzero facts for pi. |
 | `structural_query_speed/pi_sign_query` | not run | not run | Reads sign facts for pi. |
 | `structural_query_speed/pi_msd_query` | not run | not run | Reads magnitude facts for pi. |
-| `structural_query_speed/pi_structural_facts` | not run | not run | Computes full structural facts for pi. |
+| `structural_query_speed/pi_structural_facts` | 17.35 ns | 17.32 ns - 17.38 ns | Computes full structural facts for pi. |
 | `structural_query_speed/e_zero_status` | not run | not run | Checks zero/nonzero facts for e. |
 | `structural_query_speed/e_sign_query` | not run | not run | Reads sign facts for e. |
 | `structural_query_speed/e_msd_query` | not run | not run | Reads magnitude facts for e. |
-| `structural_query_speed/e_structural_facts` | not run | not run | Computes full structural facts for e. |
+| `structural_query_speed/e_structural_facts` | 17.32 ns | 17.30 ns - 17.33 ns | Computes full structural facts for e. |
 | `structural_query_speed/tau_zero_status` | not run | not run | Checks zero/nonzero facts for tau. |
 | `structural_query_speed/tau_sign_query` | not run | not run | Reads sign facts for tau. |
 | `structural_query_speed/tau_msd_query` | not run | not run | Reads magnitude facts for tau. |
@@ -243,7 +243,7 @@ Speed of public structural queries across exact, transcendental, and composite `
 | `structural_query_speed/sqrt_two_zero_status` | not run | not run | Checks zero/nonzero facts for sqrt(2). |
 | `structural_query_speed/sqrt_two_sign_query` | not run | not run | Reads sign facts for sqrt(2). |
 | `structural_query_speed/sqrt_two_msd_query` | not run | not run | Reads magnitude facts for sqrt(2). |
-| `structural_query_speed/sqrt_two_structural_facts` | not run | not run | Computes full structural facts for sqrt(2). |
+| `structural_query_speed/sqrt_two_structural_facts` | 17.49 ns | 17.43 ns - 17.56 ns | Computes full structural facts for sqrt(2). |
 | `structural_query_speed/pi_minus_three_zero_status` | not run | not run | Checks zero/nonzero facts for pi - 3. |
 | `structural_query_speed/pi_minus_three_sign_query` | not run | not run | Reads sign facts for pi - 3. |
 | `structural_query_speed/pi_minus_three_msd_query` | not run | not run | Reads magnitude facts for pi - 3. |
@@ -259,33 +259,126 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `pure_scalar_algorithm_speed/rational_add` | 8.465 ns | 8.446 ns - 8.487 ns | Adds two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_sub` | 9.047 ns | 9.035 ns - 9.061 ns | Subtracts two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_add_wide_dyadic_cold` | 87.781 ns | 87.454 ns - 88.170 ns | Adds fresh integer and wide-dyadic operands without retained work. |
-| `pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold` | 87.780 ns | 87.519 ns - 88.053 ns | Subtracts fresh integer and wide-dyadic operands without retained work. |
+| `pure_scalar_algorithm_speed/rational_add` | 8.46 ns | 8.44 ns - 8.48 ns | Adds two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_sub` | 9.05 ns | 9.04 ns - 9.07 ns | Subtracts two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_add_wide_dyadic_cold` | 87.69 ns | 86.15 ns - 89.49 ns | Adds fresh integer and wide-dyadic operands without retained work. |
+| `pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold` | 86.42 ns | 85.48 ns - 87.30 ns | Subtracts fresh integer and wide-dyadic operands without retained work. |
 | `pure_scalar_algorithm_speed/rational_mul` | not run | not run | Multiplies two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_mul_retained_general` | 10.41 ns | 10.38 ns - 10.45 ns | Reuses one retained exact product for an immutable rational operand pair. |
-| `pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold` | 164.90 ns | 160.72 ns - 171.42 ns | Multiplies fresh wide-denominator dyadics whose numerators fit `u128`. |
-| `pure_scalar_algorithm_speed/rational_mul_dyadic_general_cross_cancel` | 1.194 us | 1.188 us - 1.201 us | Multiplies a wide dyadic rational by a general rational with a power-of-two numerator. |
+| `pure_scalar_algorithm_speed/rational_mul_retained_general` | 10.40 ns | 10.38 ns - 10.42 ns | Reuses one retained exact product for an immutable rational operand pair. |
+| `pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold` | 153.72 ns | 149.82 ns - 160.30 ns | Multiplies fresh wide-denominator dyadics whose numerators fit `u128`. |
+| `pure_scalar_algorithm_speed/rational_mul_dyadic_general_cross_cancel` | 1.208 us | 1.198 us - 1.219 us | Multiplies a wide dyadic rational by a general rational with a power-of-two numerator. |
 | `pure_scalar_algorithm_speed/rational_div` | not run | not run | Divides two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_inverse_owned_cold` | 21.13 ns | 21.08 ns - 21.17 ns | Inverts a fresh uniquely owned nontrivial rational. |
+| `pure_scalar_algorithm_speed/rational_inverse_owned_cold` | 20.92 ns | 20.88 ns - 20.96 ns | Inverts a fresh uniquely owned nontrivial rational. |
 | `pure_scalar_algorithm_speed/rational_inverse_retained` | 7.45 ns | 7.44 ns - 7.46 ns | Reuses the retained reciprocal of a shared nontrivial rational. |
 | `pure_scalar_algorithm_speed/rational_neg_owned_cold` | 7.12 ns | 7.09 ns - 7.16 ns | Negates a fresh uniquely owned nontrivial rational in place. |
 | `pure_scalar_algorithm_speed/rational_neg_retained` | 6.14 ns | 6.12 ns - 6.15 ns | Reuses the retained opposite sign of a shared nontrivial rational. |
-| `pure_scalar_algorithm_speed/real_exact_powi_i64_owned_cold` | 234.46 ns | 233.37 ns - 236.13 ns | Raises a fresh uniquely owned exact rational Real to the fifth power. |
-| `pure_scalar_algorithm_speed/real_exact_powi_i64_retained` | 59.16 ns | 58.98 ns - 59.37 ns | Reuses the bounded exact product chain for a shared fifth power. |
-| `pure_scalar_algorithm_speed/real_exact_add` | 22.776 ns | 22.714 ns - 22.847 ns | Adds exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_sub` | 22.578 ns | 22.529 ns - 22.638 ns | Subtracts exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_powi_i64_owned_cold` | 247.59 ns | 246.51 ns - 248.82 ns | Raises a fresh uniquely owned exact rational Real to the fifth power. |
+| `pure_scalar_algorithm_speed/real_exact_powi_i64_retained` | 59.11 ns | 58.91 ns - 59.37 ns | Reuses the bounded exact product chain for a shared fifth power. |
+| `pure_scalar_algorithm_speed/real_exact_add` | 22.40 ns | 22.35 ns - 22.47 ns | Adds exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_sub` | 22.64 ns | 22.61 ns - 22.66 ns | Subtracts exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_mul_retained` | 23.13 ns | 23.05 ns - 23.21 ns | Reuses the retained exact product beneath rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_mul_retained` | 23.17 ns | 23.05 ns - 23.33 ns | Reuses the retained exact product beneath rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_div` | not run | not run | Divides exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_sqrt_owned_cold` | 165.32 ns | 164.35 ns - 166.48 ns | Reduces a fresh uniquely owned exact square-root expression. |
-| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | 78.79 ns | 78.05 ns - 80.15 ns | Reuses the retained reduction of an exact square-root expression. |
-| `pure_scalar_algorithm_speed/real_exact_dyadic_sqrt_reduce` | 75.33 ns | 75.20 ns - 75.46 ns | Reuses the square-root reduction of a large exact dyadic rational. |
-| `pure_scalar_algorithm_speed/real_exact_general_sqrt_reduce` | 54.31 ns | 54.25 ns - 54.38 ns | Reuses the square-root reduction of a non-dyadic rational sum of squares. |
-| `pure_scalar_algorithm_speed/real_exact_dyadic_radical_scale` | 239.73 ns | 238.42 ns - 241.10 ns | Scales an exact reciprocal radical by one exact f64 coordinate. |
+| `pure_scalar_algorithm_speed/real_exact_sqrt_owned_cold` | 165.47 ns | 161.73 ns - 171.47 ns | Reduces a fresh uniquely owned exact square-root expression. |
+| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | 78.66 ns | 77.95 ns - 79.60 ns | Reuses the retained reduction of an exact square-root expression. |
+| `pure_scalar_algorithm_speed/real_exact_dyadic_sqrt_reduce` | 75.04 ns | 74.84 ns - 75.26 ns | Reuses the square-root reduction of a large exact dyadic rational. |
+| `pure_scalar_algorithm_speed/real_exact_general_sqrt_reduce` | 54.11 ns | 53.98 ns - 54.23 ns | Reuses the square-root reduction of a non-dyadic rational sum of squares. |
+| `pure_scalar_algorithm_speed/real_exact_dyadic_radical_scale` | 239.55 ns | 238.21 ns - 241.10 ns | Scales an exact reciprocal radical by one exact f64 coordinate. |
 | `pure_scalar_algorithm_speed/real_exact_ln_reduce` | not run | not run | Reduces an exact logarithm of a power of two. |
 | `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | not run | not run | Dispatches `Real::pow` with an exact small-integer exponent. |
+
+### `rational_algorithm_dispatch_speed`
+
+Cold backend algorithm families and retained rational fact dispatch selected from GMP-style operand shapes.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `rational_algorithm_dispatch_speed/dyadic_fact_cold` | 31.71 ns | 30.28 ns - 33.09 ns | Classifies a fresh non-dyadic denominator and retains the result. |
+| `rational_algorithm_dispatch_speed/dyadic_fact_retained` | 1.71 ns | 1.71 ns - 1.71 ns | Reads an already-retained non-dyadic denominator classification. |
+| `rational_algorithm_dispatch_speed/mul_backend_basecase_cold` | 298.52 ns | 251.66 ns - 380.80 ns | Multiplies fresh balanced 16-limb integers through the backend basecase kernel. |
+| `rational_algorithm_dispatch_speed/mul_backend_half_karatsuba_cold` | 494.34 ns | 490.18 ns - 498.53 ns | Multiplies fresh unbalanced 33-by-66-limb integers through half-Karatsuba. |
+| `rational_algorithm_dispatch_speed/mul_backend_karatsuba_cold` | 796.46 ns | 793.52 ns - 799.80 ns | Multiplies fresh balanced 40-limb integers through Karatsuba. |
+| `rational_algorithm_dispatch_speed/mul_backend_toom3_cold` | 8.895 us | 8.462 us - 9.698 us | Multiplies fresh balanced 257-limb integers through Toom-3. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_4096_bits` | 7.739 us | 7.723 us - 7.761 us | Runs Hyperreal's seven-product Rust-native Toom-4 candidate on balanced 4,096-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_4096_bits` | 2.785 us | 2.781 us - 2.790 us | Runs the native backend product on the same 4,096-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_16384_bits` | 34.984 us | 34.819 us - 35.192 us | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 16,384-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_16384_bits` | 27.189 us | 26.892 us - 27.559 us | Runs the native backend product on the same 16,384-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_65536_bits` | 226.727 us | 226.004 us - 227.497 us | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 65,536-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_65536_bits` | 205.532 us | 205.078 us - 206.075 us | Runs the native backend product on the same 65,536-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_262144_bits` | 1.652 ms | 1.649 ms - 1.654 ms | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_262144_bits` | 1.613 ms | 1.609 ms - 1.618 ms | Runs the native backend product on the same 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_524288_bits` | 4.582 ms | 4.569 ms - 4.597 ms | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 524,288-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_524288_bits` | 4.493 ms | 4.486 ms - 4.502 ms | Runs the native backend product on the same 524,288-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_1048576_bits` | 12.096 ms | 12.057 ms - 12.137 ms | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 1,048,576-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_1048576_bits` | 13.275 ms | 13.176 ms - 13.381 ms | Runs the native backend product on the same 1,048,576-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_2097152_bits` | 33.211 ms | 33.112 ms - 33.324 ms | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_2097152_bits` | 35.010 ms | 34.893 ms - 35.143 ms | Runs the native backend product on the same 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_1048576_bits` | 10.774 ms | 10.755 ms - 10.796 ms | Runs the retained production Toom-8 selector above its balanced crossover. |
+| `rational_algorithm_dispatch_speed/mul_selected_2097152_bits` | 28.948 ms | 28.884 ms - 29.027 ms | Runs the retained production Toom-8 selector on balanced 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_1048576_bits` | 11.128 ms | 11.073 ms - 11.190 ms | Runs Hyperreal's eleven-product Rust-native Toom-6 candidate above its crossover. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_131072_bits` | 601.395 us | 598.477 us - 604.641 us | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 131,072-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_131072_bits` | 606.345 us | 601.642 us - 611.591 us | Runs the retained native backend selector on the same 131,072-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_262144_bits` | 1.592 ms | 1.587 ms - 1.599 ms | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_524288_bits` | 4.159 ms | 4.132 ms - 4.189 ms | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 524,288-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_524288_bits` | 3.989 ms | 3.978 ms - 4.004 ms | Runs the retained production Toom-8 selector above its balanced crossover. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_2097152_bits` | 30.441 ms | 30.310 ms - 30.587 ms | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_toom4_unbalanced_1258291_by_1048576` | 14.849 ms | 14.821 ms - 14.881 ms | Runs retained Toom-4 on a 6:5 operand pair outside Toom-6's balance band. |
+| `rational_algorithm_dispatch_speed/mul_backend_unbalanced_1258291_by_1048576` | 16.422 ms | 16.356 ms - 16.496 ms | Runs the native backend on the same 6:5 operand pair. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_262144_bits` | 1.528 ms | 1.524 ms - 1.532 ms | Runs Hyperreal's fifteen-product Rust-native Toom-8 candidate on balanced 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_262144_bits` | 1.536 ms | 1.531 ms - 1.541 ms | Runs the retained production Toom-8 selector at its balanced crossover. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_65536_bits` | 257.266 us | 256.364 us - 258.260 us | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 65,536-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_131072_bits` | 599.306 us | 598.146 us - 600.704 us | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 131,072-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_524288_bits` | 3.973 ms | 3.969 ms - 3.977 ms | Runs Hyperreal's Rust-native Toom-8 candidate at the Toom-6 crossover. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_1048576_bits` | 10.762 ms | 10.732 ms - 10.797 ms | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 1,048,576-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_2097152_bits` | 29.568 ms | 29.497 ms - 29.647 ms | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_4194304_bits` | 78.638 ms | 78.223 ms - 79.075 ms | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 4,194,304-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_4194304_bits` | 77.324 ms | 77.079 ms - 77.611 ms | Runs the retained production Toom-8 selector on the same 4,194,304-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_toom6_unbalanced_599186_by_524288` | 4.895 ms | 4.871 ms - 4.922 ms | Runs retained Toom-6 on an 8:7 operand pair outside Toom-8's balance band. |
+| `rational_algorithm_dispatch_speed/mul_backend_unbalanced_599186_by_524288` | 5.485 ms | 5.459 ms - 5.513 ms | Runs the native backend on the same 8:7 operand pair. |
+| `rational_algorithm_dispatch_speed/mul_ntt_candidate_262144_bits` | 16.448 ms | 16.438 ms - 16.458 ms | Runs Hyperreal's exact two-prime Rust-native NTT/CRT candidate on balanced 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_ntt_candidate_1048576_bits` | 76.790 ms | 76.665 ms - 76.924 ms | Runs the Rust-native NTT/CRT candidate on balanced 1,048,576-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_ntt_candidate_4194304_bits` | 351.761 ms | 350.989 ms - 352.577 ms | Runs the Rust-native NTT/CRT candidate on balanced 4,194,304-bit operands. |
+| `rational_algorithm_dispatch_speed/reduce_backend_single_limb_cold` | 186.58 ns | 177.77 ns - 203.78 ns | Reduces a fresh wide fraction by a single-limb exact divisor. |
+| `rational_algorithm_dispatch_speed/reduce_backend_knuth_cold` | 456.99 ns | 421.67 ns - 526.13 ns | Reduces a fresh wide fraction through normalized Knuth basecase division. |
+| `rational_algorithm_dispatch_speed/reduce_backend_large_knuth_cold` | 105.608 us | 105.035 us - 106.261 us | Reduces a fresh 129-limb numerator by a 65-limb exact divisor through normalized Knuth division. |
+| `rational_algorithm_dispatch_speed/exact_remainder_large_knuth` | 5.156 us | 5.124 us - 5.195 us | Computes a wide rational fractional remainder through the traced normalized Knuth backend. |
+| `rational_algorithm_dispatch_speed/division_trivial_small_quotient` | 60.58 ns | 59.92 ns - 61.28 ns | Exercises the backend's zero-quotient magnitude division exit on wide operands. |
+| `rational_algorithm_dispatch_speed/gcd_selected_192_bits` | 5.209 us | 5.196 us - 5.224 us | Runs selected magnitude GCD at the retained three-limb Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_192_bits` | 8.229 us | 8.195 us - 8.268 us | Runs the full-width Euclidean baseline on the same 192-bit pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_512_bits` | 11.237 us | 11.201 us - 11.281 us | Runs selected magnitude GCD above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_512_bits` | 31.548 us | 31.472 us - 31.638 us | Runs the full-width Euclidean baseline on the same 512-bit pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_1024_bits` | 21.872 us | 21.855 us - 21.890 us | Runs selected magnitude GCD above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_1024_bits` | 73.295 us | 72.968 us - 73.799 us | Runs the full-width Euclidean baseline on the same 1,024-bit pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_4096_bits` | 121.220 us | 120.956 us - 121.542 us | Runs selected magnitude GCD well above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_4096_bits` | 485.439 us | 483.835 us - 487.376 us | Runs the full-width Euclidean baseline on the same 4,096-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_8192_bits` | 319.270 us | 317.801 us - 320.962 us | Runs the recursive half-GCD candidate below its provisional crossover. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_8192_bits` | 316.034 us | 314.394 us - 317.847 us | Runs the quadratic Lehmer baseline on the same 8,192-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_16384_bits` | 3.008 ms | 2.998 ms - 3.020 ms | Runs the recursive half-GCD candidate at its provisional crossover. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_16384_bits` | 916.208 us | 912.680 us - 920.079 us | Runs the quadratic Lehmer baseline on the same 16,384-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_65536_bits` | 24.058 ms | 23.949 ms - 24.173 ms | Runs the recursive half-GCD candidate well above its provisional crossover. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_65536_bits` | 9.064 ms | 9.048 ms - 9.083 ms | Runs the quadratic Lehmer baseline on the same 65,536-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_262144_bits` | 272.265 ms | 271.100 ms - 273.892 ms | Runs recursive half-GCD with selected higher-Toom matrix products at 262,144 bits. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_262144_bits` | 132.224 ms | 131.613 ms - 132.826 ms | Runs the Lehmer baseline on the same 262,144-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_1048576_bits` | 3.880 s | 3.863 s - 3.903 s | Runs recursive half-GCD with selected higher-Toom matrix products at 1,048,576 bits. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_1048576_bits` | 2.044 s | 2.035 s - 2.054 s | Runs the Lehmer baseline on the same 1,048,576-bit pair. |
+| `rational_algorithm_dispatch_speed/barrett_one_shot_8192_by_1024` | 5.584 us | 5.550 us - 5.625 us | Prepares a Rust-native Barrett reciprocal and divides one 8,192-bit value by a 1,024-bit divisor. |
+| `rational_algorithm_dispatch_speed/backend_one_shot_8192_by_1024` | 2.854 us | 2.842 us - 2.868 us | Runs the native backend div-rem baseline for the same one-shot operands. |
+| `rational_algorithm_dispatch_speed/barrett_batch16_8192_by_1024` | 84.257 us | 83.695 us - 84.970 us | Amortizes one Rust-native Barrett reciprocal over sixteen 8,192-bit dividends. |
+| `rational_algorithm_dispatch_speed/backend_batch16_8192_by_1024` | 49.899 us | 49.814 us - 49.994 us | Runs sixteen native backend div-rem operations on the same values. |
+| `rational_algorithm_dispatch_speed/barrett_batch16_65536_by_4096` | 1.511 ms | 1.497 ms - 1.528 ms | Amortizes one Rust-native Barrett reciprocal over sixteen 65,536-bit dividends. |
+| `rational_algorithm_dispatch_speed/backend_batch16_65536_by_4096` | 1.229 ms | 1.225 ms - 1.233 ms | Runs sixteen native backend div-rem operations on the same large values. |
+| `rational_algorithm_dispatch_speed/perfect_power_factor_reject` | 73.33 ns | 73.06 ns - 73.66 ns | Rejects 12 after small-factor multiplicities collapse to gcd one. |
+| `rational_algorithm_dispatch_speed/perfect_power_general_seventh` | 1.625 us | 1.621 us - 1.631 us | Discovers an exact rational seventh power whose base primes exceed the trial table. |
+| `rational_algorithm_dispatch_speed/perfect_power_fixed_seventh` | 211.09 ns | 210.10 ns - 212.36 ns | Checks the same value when the seventh-root degree is already known. |
+| `rational_algorithm_dispatch_speed/perfect_power_unfactored_reject` | 3.331 us | 3.318 us - 3.345 us | Rejects mismatched seventh- and fifth-power rational components beyond the trial table. |
+| `rational_algorithm_dispatch_speed/radix_format_small_integer` | 943.06 ns | 941.77 ns - 944.37 ns | Formats a 16-limb integer using repeated single-limb radix division. |
+| `rational_algorithm_dispatch_speed/radix_format_large_integer` | 2.988 us | 2.982 us - 2.994 us | Formats a 32-limb integer using divide-and-conquer radix conversion. |
+| `rational_algorithm_dispatch_speed/radix_parse_large_integer` | 1.451 us | 1.446 us - 1.457 us | Parses a large below-threshold decimal fixture through chunked multiply-add conversion. |
+| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_10240_digits` | 99.559 us | 99.421 us - 99.723 us | Parses 10,240 digits through the divide-and-conquer product tree. |
+| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_10240_digits` | 102.612 us | 102.431 us - 102.808 us | Parses the same 10,240 digits with the backend chunked multiply-add baseline. |
+| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_20480_digits` | 281.616 us | 281.162 us - 282.138 us | Parses 20,480 digits through the divide-and-conquer product tree. |
+| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_20480_digits` | 368.546 us | 368.279 us - 368.840 us | Parses the same 20,480 digits with the backend chunked multiply-add baseline. |
+| `rational_algorithm_dispatch_speed/radix_format_fraction_decimal` | 3.371 us | 3.360 us - 3.382 us | Formats a rational decimal through exact repeated digit division. |
 
 ### `borrowed_op_overhead`
 
@@ -330,21 +423,21 @@ Construction-time shortcuts for exact rational multiples of pi and inverse compo
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `exact_transcendental_special_forms/sin_pi_7` | not run | not run | Builds the exact special form for sin(pi/7). |
-| `exact_transcendental_special_forms/cos_pi_7` | not run | not run | Builds the exact special form for cos(pi/7). |
+| `exact_transcendental_special_forms/sin_pi_7` | 230.38 ns | 229.43 ns - 231.89 ns | Builds the exact special form for sin(pi/7). |
+| `exact_transcendental_special_forms/cos_pi_7` | 216.84 ns | 215.43 ns - 219.01 ns | Builds the exact special form for cos(pi/7). |
 | `exact_transcendental_special_forms/tan_pi_7` | not run | not run | Builds the exact special form for tan(pi/7). |
 | `exact_transcendental_special_forms/asin_sin_6pi_7` | not run | not run | Recognizes the principal branch of asin(sin(6pi/7)). |
-| `exact_transcendental_special_forms/acos_cos_9pi_7` | not run | not run | Recognizes the principal branch of acos(cos(9pi/7)). |
+| `exact_transcendental_special_forms/acos_cos_9pi_7` | 471.91 ns | 471.15 ns - 472.72 ns | Recognizes the principal branch of acos(cos(9pi/7)). |
 | `exact_transcendental_special_forms/atan_tan_6pi_7` | not run | not run | Recognizes the principal branch of atan(tan(6pi/7)). |
 | `exact_transcendental_special_forms/asinh_large` | not run | not run | Builds a large inverse hyperbolic sine without exact intermediate Reals. |
 | `exact_transcendental_special_forms/atanh_sqrt_half` | not run | not run | Builds atanh(sqrt(2)/2) after exact structural domain checks. |
 | `exact_transcendental_special_forms/atanh_sqrt_two_error` | not run | not run | Rejects atanh(sqrt(2)) through exact structural domain checks. |
-| `exact_transcendental_special_forms/sinh_ln_two` | 140.12 ns | 139.39 ns - 141.11 ns | Folds sinh(ln(2)) to the exact rational 3/4 via the integer-log-collapse shortcut. |
-| `exact_transcendental_special_forms/cosh_ln_two` | 141.73 ns | 141.36 ns - 142.08 ns | Folds cosh(ln(2)) to the exact rational 5/4 via the integer-log-collapse shortcut. |
-| `exact_transcendental_special_forms/tanh_ln_two` | 281.85 ns | 281.48 ns - 282.24 ns | Folds tanh(ln(2)) to the exact rational 3/5 via the integer-log-collapse shortcut. |
-| `exact_transcendental_special_forms/sinh_rational_one` | 367.72 ns | 367.06 ns - 368.67 ns | Builds sinh(1) through the generic (exp(x) - exp(-x))/2 identity path. |
-| `exact_transcendental_special_forms/cosh_rational_one` | 337.13 ns | 336.25 ns - 338.30 ns | Builds cosh(1) through the generic (exp(x) + exp(-x))/2 identity path. |
-| `exact_transcendental_special_forms/tanh_rational_one` | 502.86 ns | 499.31 ns - 507.25 ns | Builds tanh(1) through the generic (exp(x) - exp(-x))/(exp(x) + exp(-x)) identity path. |
+| `exact_transcendental_special_forms/sinh_ln_two` | 140.16 ns | 139.59 ns - 140.83 ns | Folds sinh(ln(2)) to the exact rational 3/4 via the integer-log-collapse shortcut. |
+| `exact_transcendental_special_forms/cosh_ln_two` | 141.57 ns | 141.12 ns - 141.97 ns | Folds cosh(ln(2)) to the exact rational 5/4 via the integer-log-collapse shortcut. |
+| `exact_transcendental_special_forms/tanh_ln_two` | 281.20 ns | 280.27 ns - 282.01 ns | Folds tanh(ln(2)) to the exact rational 3/5 via the integer-log-collapse shortcut. |
+| `exact_transcendental_special_forms/sinh_rational_one` | 368.09 ns | 367.45 ns - 368.88 ns | Builds sinh(1) through the generic (exp(x) - exp(-x))/2 identity path. |
+| `exact_transcendental_special_forms/cosh_rational_one` | 337.12 ns | 336.42 ns - 337.94 ns | Builds cosh(1) through the generic (exp(x) + exp(-x))/2 identity path. |
+| `exact_transcendental_special_forms/tanh_rational_one` | 502.96 ns | 499.37 ns - 507.20 ns | Builds tanh(1) through the generic (exp(x) - exp(-x))/(exp(x) + exp(-x)) identity path. |
 | `exact_transcendental_special_forms/atan2_origin` | not run | not run | Hits the origin (0, 0) short-circuit returning exact zero. |
 | `exact_transcendental_special_forms/atan2_axis_positive_y` | not run | not run | Hits the positive-y axis short-circuit returning exact pi/2. |
 | `exact_transcendental_special_forms/atan2_axis_negative_x` | not run | not run | Hits the negative-x axis short-circuit returning exact pi. |

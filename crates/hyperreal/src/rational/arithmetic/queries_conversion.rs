@@ -127,7 +127,11 @@ impl Rational {
         if self.is_integer() {
             return Self::zero();
         }
-        let n = &self.numerator % &self.denominator;
+        let n = Self::remainder_magnitudes(
+            "exact-fractional-remainder",
+            &self.numerator,
+            &self.denominator,
+        );
         Self::from_parts_raw(self.sign, n, self.denominator.clone())
     }
 
@@ -359,19 +363,21 @@ impl Rational {
 
     #[inline]
     pub(crate) fn has_exact_f64_view(&self) -> bool {
-        self.exact_f64_view
-            .load(std::sync::atomic::Ordering::Relaxed)
+        self.retained_fact(RETAINED_EXACT_F64_VIEW)
     }
 
     #[inline]
     pub(crate) fn denominator_could_be_dyadic(&self) -> bool {
+        if self.retained_fact(RETAINED_DYADIC_KNOWN) {
+            crate::trace_dispatch!("rational", "retained-facts", "dyadic-prefilter-hit");
+            return self.retained_fact(RETAINED_DYADIC_VALUE);
+        }
         self.denominator == *ONE || !self.denominator.bit(0)
     }
 
     #[inline]
     pub(crate) fn mark_exact_f64_view(&self) {
-        self.exact_f64_view
-            .store(true, std::sync::atomic::Ordering::Relaxed);
+        self.retain_fact(RETAINED_EXACT_F64_VIEW);
     }
 
     /// Is this Rational better understood as a fraction?

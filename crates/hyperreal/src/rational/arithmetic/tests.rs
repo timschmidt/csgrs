@@ -12,6 +12,695 @@ mod tests {
         );
     }
 
+    fn magnitude_with_backend_limbs(limbs: usize) -> BigUint {
+        assert!(limbs > 0);
+        BigUint::one() << ((limbs - 1) * usize::BITS as usize)
+    }
+
+    #[test]
+    fn backend_multiplication_classifier_matches_locked_num_bigint_thresholds() {
+        let limbs = magnitude_with_backend_limbs;
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(32), &limbs(400)),
+            BackendMultiplicationAlgorithm::Basecase
+        );
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(33), &limbs(66)),
+            BackendMultiplicationAlgorithm::HalfKaratsuba
+        );
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(33), &limbs(65)),
+            BackendMultiplicationAlgorithm::Karatsuba
+        );
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(256), &limbs(256)),
+            BackendMultiplicationAlgorithm::Karatsuba
+        );
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(257), &limbs(257)),
+            BackendMultiplicationAlgorithm::Toom3
+        );
+    }
+
+    #[test]
+    fn rust_native_toom4_matches_backend_products() {
+        let threshold = usize::try_from(Rational::TOOM4_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        assert!(!Rational::should_use_toom4_multiplication(
+            &(BigUint::one() << (threshold - 2)),
+            &(BigUint::one() << (threshold - 2))
+        ));
+        assert!(Rational::should_use_toom4_multiplication(
+            &(BigUint::one() << (threshold - 1)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+        assert!(!Rational::should_use_toom4_multiplication(
+            &(BigUint::one() << (threshold + threshold / 2)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+
+        for left in 0_u32..128 {
+            for right in 0_u32..128 {
+                let left = BigUint::from(left);
+                let right = BigUint::from(right);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom4_candidate(&left, &right),
+                    &left * &right
+                );
+            }
+        }
+
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0xa409_3822_299f_31d0_u64;
+        for bits in [257, 1024, 4096, 16_384, 65_536] {
+            for shorter_bits in [bits, bits - 1, bits * 3 / 4] {
+                let left = generated_magnitude(bits, &mut state);
+                let right = generated_magnitude(shorter_bits, &mut state);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom4_candidate(&left, &right),
+                    &left * &right,
+                    "failed for {bits}-by-{shorter_bits}-bit operands"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom4_candidate_path_is_traced() {
+        let left = (BigUint::one() << 4096_usize) + 17_u8;
+        let right = (BigUint::one() << 4095_usize) + 19_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes_toom4_candidate(&left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "multiplication-candidate",
+                "rust-native-toom4"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom4_selected_path_is_traced_at_crossover() {
+        let shorter_bits = usize::try_from(Rational::TOOM4_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        let longer_bits = shorter_bits + shorter_bits / 5;
+        let left = (BigUint::one() << (longer_bits - 1)) + 17_u8;
+        let right = (BigUint::one() << (shorter_bits - 1)) + 19_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes("toom4-selection-test", &left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "toom4-selection-test",
+                "rust-native-toom4"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn rust_native_toom6_matches_backend_products() {
+        let threshold = usize::try_from(Rational::TOOM6_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        assert!(!Rational::should_use_toom6_multiplication(
+            &(BigUint::one() << (threshold - 2)),
+            &(BigUint::one() << (threshold - 2))
+        ));
+        assert!(Rational::should_use_toom6_multiplication(
+            &(BigUint::one() << (threshold - 1)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+        assert!(!Rational::should_use_toom6_multiplication(
+            &(BigUint::one() << (threshold + threshold / 5)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+
+        for left in 0_u32..64 {
+            for right in 0_u32..64 {
+                let left = BigUint::from(left);
+                let right = BigUint::from(right);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom6_candidate(&left, &right),
+                    &left * &right
+                );
+            }
+        }
+
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0x082e_fa98_ec4e_6c89_u64;
+        for bits in [257, 1024, 4096, 65_536, 131_072] {
+            for shorter_bits in [bits, bits - 1, bits * 5 / 6] {
+                let left = generated_magnitude(bits, &mut state);
+                let right = generated_magnitude(shorter_bits, &mut state);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom6_candidate(&left, &right),
+                    &left * &right,
+                    "failed for {bits}-by-{shorter_bits}-bit operands"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom6_candidate_path_is_traced() {
+        let left = (BigUint::one() << 4096_usize) + 23_u8;
+        let right = (BigUint::one() << 4095_usize) + 29_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes_toom6_candidate(&left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "multiplication-candidate",
+                "rust-native-toom6"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom6_selected_path_is_traced_at_crossover() {
+        let shorter_bits = usize::try_from(Rational::TOOM6_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        let longer_bits = shorter_bits + shorter_bits / 7;
+        let left = (BigUint::one() << (longer_bits - 1)) + 31_u8;
+        let right = (BigUint::one() << (shorter_bits - 1)) + 37_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes("toom6-selection-test", &left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "toom6-selection-test",
+                "rust-native-toom6"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn rust_native_toom8_matches_backend_products() {
+        let threshold = usize::try_from(Rational::TOOM8_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        assert!(!Rational::should_use_toom8_multiplication(
+            &(BigUint::one() << (threshold - 2)),
+            &(BigUint::one() << (threshold - 2))
+        ));
+        assert!(Rational::should_use_toom8_multiplication(
+            &(BigUint::one() << (threshold - 1)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+        assert!(!Rational::should_use_toom8_multiplication(
+            &(BigUint::one() << (threshold + threshold / 7)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+
+        for left in 0_u32..32 {
+            for right in 0_u32..32 {
+                let left = BigUint::from(left);
+                let right = BigUint::from(right);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom8_candidate(&left, &right),
+                    &left * &right
+                );
+            }
+        }
+
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0x4528_21e6_38d0_1377_u64;
+        for bits in [257, 1024, 4096, 65_536, 131_072] {
+            for shorter_bits in [bits, bits - 1, bits * 7 / 8] {
+                let left = generated_magnitude(bits, &mut state);
+                let right = generated_magnitude(shorter_bits, &mut state);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom8_candidate(&left, &right),
+                    &left * &right,
+                    "failed for {bits}-by-{shorter_bits}-bit operands"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom8_candidate_path_is_traced() {
+        let left = (BigUint::one() << 4096_usize) + 41_u8;
+        let right = (BigUint::one() << 4095_usize) + 43_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes_toom8_candidate(&left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "multiplication-candidate",
+                "rust-native-toom8"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom8_selected_path_is_traced_at_crossover() {
+        let bits = usize::try_from(Rational::TOOM8_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        let left = (BigUint::one() << (bits - 1)) + 47_u8;
+        let right = (BigUint::one() << (bits - 1)) + 53_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes("toom8-selection-test", &left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "toom8-selection-test",
+                "rust-native-toom8"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn rust_native_ntt_matches_backend_products() {
+        for left in 0_u32..32 {
+            for right in 0_u32..32 {
+                let left = BigUint::from(left);
+                let right = BigUint::from(right);
+                assert_eq!(
+                    Rational::multiply_magnitudes_ntt_candidate(&left, &right),
+                    &left * &right
+                );
+            }
+        }
+
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0xbe54_66cf_34e9_0c6c_u64;
+        for bits in [1, 15, 16, 31, 32, 257, 4096, 65_536, 262_144] {
+            let left = generated_magnitude(bits, &mut state);
+            let right = generated_magnitude(bits.saturating_sub(1).max(1), &mut state);
+            assert_eq!(
+                Rational::multiply_magnitudes_ntt_candidate(&left, &right),
+                &left * &right,
+                "failed for {bits}-bit operands"
+            );
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_ntt_candidate_path_is_traced() {
+        let left = (BigUint::one() << 4096_usize) + 59_u8;
+        let right = (BigUint::one() << 4095_usize) + 61_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes_ntt_candidate(&left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "multiplication-candidate",
+                "rust-native-ntt-crt"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn backend_division_classifier_matches_locked_num_bigint_thresholds() {
+        let limbs = magnitude_with_backend_limbs;
+        assert_eq!(
+            Rational::backend_division_algorithm(&limbs(2), &limbs(3)),
+            BackendDivisionAlgorithm::TrivialOrSmallQuotient
+        );
+        assert_eq!(
+            Rational::backend_division_algorithm(&limbs(10), &BigUint::from(3_u8)),
+            BackendDivisionAlgorithm::SingleLimb
+        );
+        assert_eq!(
+            Rational::backend_division_algorithm(&limbs(128), &limbs(64)),
+            BackendDivisionAlgorithm::KnuthBasecase
+        );
+        assert_eq!(
+            Rational::backend_division_algorithm(&limbs(129), &limbs(65)),
+            BackendDivisionAlgorithm::KnuthBasecase
+        );
+    }
+
+    #[test]
+    fn block_wise_barrett_matches_backend_div_rem() {
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        use num::Integer as _;
+        for divisor in 1_u32..128 {
+            let divisor = BigUint::from(divisor);
+            for quotient in [0_u32, 1, 2, 7, 31, 127, 1021] {
+                for remainder in [0_u32, 1, 3, 17, 63, 126] {
+                    let remainder = BigUint::from(remainder) % &divisor;
+                    let dividend = &divisor * quotient + remainder;
+                    assert_eq!(
+                        Rational::div_rem_magnitudes_barrett_candidate(&dividend, &divisor),
+                        dividend.div_rem(&divisor)
+                    );
+                }
+            }
+        }
+
+        let mut state = 0x243f_6a88_85a3_08d3_u64;
+        for divisor_bits in [64, 65, 192, 1024, 4096] {
+            for blocks in [1, 2, 3, 8] {
+                for case in 0..8 {
+                    let divisor = generated_magnitude(divisor_bits, &mut state);
+                    let dividend_bits = divisor_bits * blocks + case;
+                    let dividend = generated_magnitude(dividend_bits.max(1), &mut state);
+                    assert_eq!(
+                        Rational::div_rem_magnitudes_barrett_candidate(&dividend, &divisor),
+                        dividend.div_rem(&divisor),
+                        "failed for {divisor_bits}-bit divisor, {blocks} blocks, case {case}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn block_wise_barrett_batch_reuses_one_reciprocal() {
+        let divisor = (BigUint::one() << 1023_usize) + 0x9e37_79b9_u64;
+        let dividends: Vec<_> = (1_u32..=16)
+            .map(|index| {
+                (&divisor << (usize::try_from(index).unwrap() * 257))
+                    + &divisor * index
+                    + (index - 1)
+            })
+            .collect();
+        assert_eq!(
+            Rational::div_rem_magnitudes_barrett_batch_candidate(&dividends, &divisor),
+            Rational::div_rem_magnitudes_backend_batch(&dividends, &divisor)
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn block_wise_barrett_candidate_path_is_traced() {
+        let divisor = (BigUint::one() << 1023_usize) + 17_u8;
+        let dividend = (&divisor << 4096_usize) + 19_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let _ = Rational::div_rem_magnitudes_barrett_candidate(&dividend, &divisor);
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "division-candidate",
+                "block-wise-barrett"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn backend_radix_classifier_matches_locked_num_bigint_threshold() {
+        assert_eq!(
+            Rational::backend_radix_output_algorithm(&magnitude_with_backend_limbs(31)),
+            BackendRadixOutputAlgorithm::RepeatedSingleLimbDivision
+        );
+        assert_eq!(
+            Rational::backend_radix_output_algorithm(&magnitude_with_backend_limbs(32)),
+            BackendRadixOutputAlgorithm::DivideAndConquer
+        );
+    }
+
+    #[test]
+    fn divide_conquer_decimal_parser_matches_backend_reference() {
+        let digits = "1234567890".repeat(1024);
+        let expected = Rational::from_bigint(BigInt::from(
+            BigUint::parse_bytes(digits.as_bytes(), 10).unwrap(),
+        ));
+        assert_eq!(digits.parse::<Rational>().unwrap(), expected);
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn retained_dyadic_fact_and_backend_algorithm_paths_are_traced() {
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let non_dyadic = Rational::fraction(7, 15).unwrap();
+            assert!(!non_dyadic.is_dyadic());
+            assert!(!non_dyadic.is_dyadic());
+
+            let left = Rational::from_bigint(BigInt::from_biguint(
+                Plus,
+                magnitude_with_backend_limbs(40) + 1_u8,
+            ));
+            let right = Rational::from_bigint(BigInt::from_biguint(
+                Plus,
+                magnitude_with_backend_limbs(40) + 3_u8,
+            ));
+            let _ = &left * &right;
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("rational", "retained-facts", "dyadic-learned"),
+            1
+        );
+        assert_eq!(
+            trace.path_count("rational", "retained-facts", "dyadic-hit"),
+            3
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "multiplication-wide-dyadic",
+                "backend-karatsuba"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn exact_reduction_traces_single_limb_and_small_and_large_knuth_division() {
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let single_limb_numerator = magnitude_with_backend_limbs(10) * 3_u8;
+            assert_eq!(
+                Rational::from_bigint_fraction(
+                    BigInt::from(single_limb_numerator),
+                    BigUint::from(3_u8),
+                )
+                .unwrap(),
+                Rational::from_bigint(BigInt::from(magnitude_with_backend_limbs(10)))
+            );
+
+            let common = magnitude_with_backend_limbs(10) + 1_u8;
+            assert_eq!(
+                Rational::from_bigint_fraction(
+                    BigInt::from(&common * 3_u8),
+                    &common * 5_u8,
+                )
+                .unwrap(),
+                Rational::fraction(3, 5).unwrap()
+            );
+
+            let wide_common = magnitude_with_backend_limbs(65) + 1_u8;
+            let wide_factor = magnitude_with_backend_limbs(65) + 2_u8;
+            let _ = Rational::from_bigint_fraction(
+                BigInt::from(&wide_common * &wide_factor),
+                &wide_common * 3_u8,
+            )
+            .unwrap();
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert!(
+            trace.path_count(
+                "rational_algorithm",
+                "reduction-numerator",
+                "backend-single-limb"
+            )
+                >= 1
+        );
+        assert!(
+            trace.path_count(
+                "rational_algorithm",
+                "reduction-numerator",
+                "backend-knuth-basecase"
+            )
+                >= 2
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn exact_fractional_remainder_traces_backend_division() {
+        let denominator = magnitude_with_backend_limbs(65) + 3_u8;
+        let numerator = (&denominator << (64 * usize::BITS as usize)) + 17_u8;
+        let value = Rational::from_bigint_fraction(BigInt::from(numerator), denominator).unwrap();
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert!(!value.fract().is_integer());
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "exact-fractional-remainder",
+                "backend-knuth-basecase"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn radix_conversion_paths_are_traced_at_backend_crossover() {
+        let large = Rational::from_bigint(BigInt::from_biguint(
+            Plus,
+            magnitude_with_backend_limbs(32) + 17_u8,
+        ));
+        let large_decimal = large.to_string();
+
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(Rational::new(17).to_string(), "17");
+            assert_eq!(large.to_string(), large_decimal);
+            assert_eq!(large_decimal.parse::<Rational>().unwrap(), large);
+            assert_eq!(format!("{:#.4}", Rational::fraction(1, 7).unwrap()), "0.1428");
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert!(
+            trace.path_count(
+                "rational_algorithm",
+                "binary-to-radix",
+                "backend-repeated-single-limb-division"
+            )
+                >= 1
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "binary-to-radix",
+                "backend-divide-and-conquer"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "radix-to-binary",
+                "backend-chunked-multiply-add"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "binary-to-radix",
+                "rational-repeated-digit-division"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn divide_conquer_radix_input_path_is_traced() {
+        let digits = "3141592653".repeat(1024);
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let parsed = digits.parse::<Rational>().unwrap();
+            assert!(parsed.is_integer());
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "radix-to-binary",
+                "divide-conquer-product-tree"
+            ),
+            1
+        );
+    }
+
     #[test]
     fn binary_word_gcd_matches_euclidean_reference() {
         fn reference(mut left: u128, mut right: u128) -> u128 {
@@ -62,6 +751,195 @@ mod tests {
         assert_eq!(
             Rational::gcd_magnitudes(&BigUint::ZERO, &wide),
             wide
+        );
+    }
+
+    #[test]
+    fn lehmer_magnitude_gcd_matches_backend_reference() {
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0x243f_6a88_85a3_08d3_u64;
+        for bits in [192, 193, 256, 1024, 1031, 2048, 4096] {
+            for case in 0..24 {
+                let common = BigUint::from((case % 7) + 1);
+                let left = generated_magnitude(bits, &mut state) * &common;
+                let right = generated_magnitude(bits - case % 2, &mut state) * &common;
+                assert_eq!(
+                    Rational::gcd_magnitudes(&left, &right),
+                    num::Integer::gcd(&left, &right),
+                    "failed for {bits}-bit case {case}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_half_gcd_preserves_matrix_and_stop_invariants() {
+        fn generated_magnitude(bits: usize, mut state: u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        for bits in [1024, 1025, 2048, 4096] {
+            let left = generated_magnitude(bits, 0x243f_6a88_85a3_08d3);
+            let right = generated_magnitude(bits, 0xa409_3822_299f_31d0);
+            let reduction = Rational::half_gcd_reduce(&left, &right)
+                .unwrap_or_else(|| panic!("half-GCD failed for {bits}-bit operands"));
+            let matrix = &reduction.matrix;
+            assert_eq!(
+                &matrix.u00 * &reduction.left + &matrix.u01 * &reduction.right,
+                left
+            );
+            assert_eq!(
+                &matrix.u10 * &reduction.left + &matrix.u11 * &reduction.right,
+                right
+            );
+            assert_eq!(
+                &matrix.u00 * &matrix.u11 - &matrix.u01 * &matrix.u10,
+                BigUint::one()
+            );
+            let stop_bits = left.bits().max(right.bits()) / 2 + 1;
+            assert!(reduction.left.bits().min(reduction.right.bits()) > stop_bits);
+            assert!(
+                Rational::magnitude_difference_bits(&reduction.left, &reduction.right)
+                    <= stop_bits,
+                "{bits}-bit reduction stopped at {} difference bits with [{}, {}]-bit remainders (target {stop_bits})",
+                Rational::magnitude_difference_bits(&reduction.left, &reduction.right),
+                reduction.left.bits(),
+                reduction.right.bits()
+            );
+            assert_eq!(
+                num::Integer::gcd(&reduction.left, &reduction.right),
+                num::Integer::gcd(&left, &right)
+            );
+        }
+    }
+
+    #[test]
+    fn half_gcd_candidate_matches_lehmer_baseline() {
+        fn generated_magnitude(bits: usize, mut state: u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        for (bits, seed) in [(16_384, 1_u64), (16_391, 2), (32_768, 3)] {
+            let left = generated_magnitude(bits, 0x243f_6a88_85a3_08d3 ^ seed);
+            let right = generated_magnitude(bits, 0xa409_3822_299f_31d0 ^ seed);
+            assert_eq!(
+                Rational::gcd_magnitudes_half_gcd_candidate(&left, &right),
+                Rational::gcd_magnitudes_lehmer_baseline(&left, &right),
+                "failed for {bits}-bit operands"
+            );
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn recursive_half_gcd_path_is_traced() {
+        let bits = usize::try_from(Rational::HALF_GCD_THRESHOLD_BITS).unwrap();
+        let generated_magnitude = |mut state: u64| {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + state;
+            }
+            value | (BigUint::one() << (bits - 1))
+        };
+        let left = generated_magnitude(0x243f_6a88_85a3_08d3);
+        let right = generated_magnitude(0xa409_3822_299f_31d0);
+        let expected = Rational::gcd_magnitudes_lehmer_baseline(&left, &right);
+
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes_half_gcd_candidate(&left, &right),
+                expected
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "recursive-half-gcd"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn lehmer_magnitude_gcd_path_is_traced() {
+        fn fibonacci_pair_at_least(bits: u64) -> (BigUint, BigUint) {
+            let (mut previous, mut current) = (BigUint::one(), BigUint::one());
+            while current.bits() < bits {
+                (previous, current) = (current.clone(), previous + current);
+            }
+            (current, previous)
+        }
+
+        let (below, below_previous) =
+            fibonacci_pair_at_least(Rational::LEHMER_GCD_THRESHOLD_BITS - 1);
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes(&below, &below_previous),
+                BigUint::one()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "euclidean-wide-remainder"
+            ),
+            1
+        );
+
+        let (current, previous) =
+            fibonacci_pair_at_least(Rational::LEHMER_GCD_THRESHOLD_BITS + 128);
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes(&current, &previous),
+                BigUint::one()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "lehmer-leading-limb"
+            ),
+            1
         );
     }
 
@@ -845,6 +1723,63 @@ mod tests {
         assert_eq!(Rational::new(2).perfect_nth_root(3), None);
         assert_eq!(Rational::new(-16).perfect_nth_root(4), None);
         assert_eq!(Rational::new(16).perfect_nth_root(0), None);
+    }
+
+    #[test]
+    fn general_perfect_power_detection_matches_integer_definition() {
+        for value in [
+            Rational::zero(),
+            Rational::one(),
+            Rational::new(-1),
+            Rational::new(64),
+            Rational::new(729),
+            Rational::new(-27),
+            Rational::new(-512),
+            Rational::fraction(8, 27).unwrap(),
+            Rational::fraction(101_i64.pow(7), 103_u64.pow(7)).unwrap(),
+        ] {
+            assert!(value.is_perfect_power(), "expected {value} to be a perfect power");
+        }
+        for value in [
+            Rational::new(2),
+            Rational::new(12),
+            Rational::new(-16),
+            Rational::fraction(4, 8).unwrap(),
+            Rational::fraction(101_i64.pow(7), 103_u64.pow(5)).unwrap(),
+        ] {
+            assert!(!value.is_perfect_power(), "expected {value} not to be a perfect power");
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn general_perfect_power_paths_are_traced() {
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert!(!Rational::new(12).is_perfect_power());
+            assert!(
+                Rational::fraction(101_i64.pow(7), 103_u64.pow(7))
+                    .unwrap()
+                    .is_perfect_power()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "perfect-power",
+                "factor-multiplicity-reject"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "perfect-power",
+                "prime-root-exact"
+            ),
+            1
+        );
     }
 
     #[test]

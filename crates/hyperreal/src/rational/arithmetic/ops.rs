@@ -357,8 +357,8 @@ impl Rational {
     }
 
     fn mul_wide_with_dyadic_denominator(&self, other: &Self) -> Option<Self> {
-        let left_dyadic = Self::is_power_of_two(&self.denominator);
-        let right_dyadic = Self::is_power_of_two(&other.denominator);
+        let left_dyadic = self.is_dyadic();
+        let right_dyadic = other.is_dyadic();
         if !left_dyadic && !right_dyadic {
             return None;
         }
@@ -375,7 +375,13 @@ impl Rational {
             let left_cancel = usize::try_from(left_cancel).ok()?;
             let right_cancel = usize::try_from(right_cancel).ok()?;
             let denominator_shift = usize::try_from(denominator_shift).ok()?;
-            let numerator = (&self.numerator >> left_cancel) * (&other.numerator >> right_cancel);
+            let left_numerator = &self.numerator >> left_cancel;
+            let right_numerator = &other.numerator >> right_cancel;
+            let numerator = Self::multiply_magnitudes(
+                "multiplication-wide-dyadic",
+                &left_numerator,
+                &right_numerator,
+            );
             let denominator = BigUint::one() << denominator_shift;
             crate::trace_dispatch!("rational", "mul", "wide-dyadic-cross-cancel");
             trace_rational_temporary!();
@@ -418,11 +424,14 @@ impl Rational {
         let remaining_denominator_shift = usize::try_from(remaining_denominator_shift).ok()?;
 
         let cross = Self::gcd_magnitudes(&dyadic_numerator, &general_denominator);
-        trace_rational_gcd!(&dyadic_numerator, &general_denominator, &cross);
         let dyadic_numerator = dyadic_numerator / &cross;
         let general_denominator = general_denominator / &cross;
         let general_numerator = general_numerator >> power_cancel;
-        let numerator = dyadic_numerator * general_numerator;
+        let numerator = Rational::multiply_magnitudes(
+            "multiplication-dyadic-general",
+            &dyadic_numerator,
+            &general_numerator,
+        );
         let denominator = general_denominator << remaining_denominator_shift;
         crate::trace_dispatch!("rational", "mul", "dyadic-general-cross-cancel");
         trace_rational_temporary!();
@@ -590,15 +599,12 @@ impl Rational {
         if Arc::strong_count(&self.0) > 1
             || self.product_cache.get().is_some()
             || self.linear_cache.get().is_some()
-            || self
-                .linear_reuse_seen
-                .load(std::sync::atomic::Ordering::Relaxed)
+            || self.retained_fact(RETAINED_LINEAR_REUSE_SEEN)
         {
             return true;
         }
         crate::trace_dispatch!("rational", "arithmetic-reuse", "first-observation");
-        self.linear_reuse_seen
-            .store(true, std::sync::atomic::Ordering::Relaxed);
+        self.retain_fact(RETAINED_LINEAR_REUSE_SEEN);
         false
     }
 
@@ -869,12 +875,10 @@ impl Neg for Rational {
             // retained arithmetic results describe the old sign and must go.
             data.product_cache.take();
             data.linear_cache.take();
-            data.linear_reuse_seen
-                .store(false, std::sync::atomic::Ordering::Relaxed);
-            data.power_reuse_seen
-                .store(false, std::sync::atomic::Ordering::Relaxed);
-            data.square_reuse_seen
-                .store(false, std::sync::atomic::Ordering::Relaxed);
+            data.retained_facts.fetch_and(
+                !RETAINED_REUSE_MASK,
+                std::sync::atomic::Ordering::Relaxed,
+            );
             return self;
         }
         -&self
@@ -991,8 +995,16 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
             self.retain_product_pair(other, &result);
             return result;
         }
-        let numerator = &self.numerator * &other.numerator;
-        let denominator = &self.denominator * &other.denominator;
+        let numerator = Rational::multiply_magnitudes(
+            "multiplication-numerator",
+            &self.numerator,
+            &other.numerator,
+        );
+        let denominator = Rational::multiply_magnitudes(
+            "multiplication-denominator",
+            &self.denominator,
+            &other.denominator,
+        );
         trace_rational_temporary!();
         let result = Self::Output::maybe_reduce(Self::Output::from_parts_raw(
             sign,
@@ -1049,12 +1061,28 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
             trace_rational_temporary!();
             return Self::Output::from_parts_raw(
                 sign,
-                &self.numerator * &self.numerator,
-                &self.denominator * &self.denominator,
+                Rational::multiply_magnitudes(
+                    "division-reciprocal-numerator",
+                    &self.numerator,
+                    &self.numerator,
+                ),
+                Rational::multiply_magnitudes(
+                    "division-reciprocal-denominator",
+                    &self.denominator,
+                    &self.denominator,
+                ),
             );
         }
-        let numerator = &self.numerator * &other.denominator;
-        let denominator = &self.denominator * &other.numerator;
+        let numerator = Rational::multiply_magnitudes(
+            "division-cross-numerator",
+            &self.numerator,
+            &other.denominator,
+        );
+        let denominator = Rational::multiply_magnitudes(
+            "division-cross-denominator",
+            &self.denominator,
+            &other.numerator,
+        );
         trace_rational_temporary!();
         Self::Output::maybe_reduce(Self::Output::from_parts_raw(sign, numerator, denominator))
     }

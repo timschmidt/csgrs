@@ -354,14 +354,17 @@ impl Real {
     #[inline]
     pub(crate) fn exact_dyadic_f64_cached(&self) -> Option<f64> {
         let rational = self.exact_rational_ref()?;
-        // Every non-unit dyadic denominator is even. Reject the common odd
-        // rational schedules before touching the retained-view atomic; this
-        // keeps exact fraction fallback as cheap as it was before the cache.
-        if !rational.denominator_could_be_dyadic() {
-            return None;
-        }
+        // Primitive imports retain both their exact-origin fact and their
+        // already-populated primitive cache. Check that hot path before
+        // inspecting the denominator so certified geometry filters do not
+        // repeatedly walk BigUint storage for values they have already seen.
         if rational.has_exact_f64_view() {
             return self.to_f64_lossy();
+        }
+        // Every non-unit dyadic denominator is even. Reject the common odd
+        // rational schedules before attempting an exact conversion.
+        if !rational.denominator_could_be_dyadic() {
+            return None;
         }
 
         let value = rational.dyadic_to_f64_exact()?;

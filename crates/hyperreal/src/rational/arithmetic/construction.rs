@@ -7,10 +7,7 @@ impl Rational {
             denominator,
             product_cache: OnceLock::new(),
             linear_cache: OnceLock::new(),
-            linear_reuse_seen: std::sync::atomic::AtomicBool::new(false),
-            power_reuse_seen: std::sync::atomic::AtomicBool::new(false),
-            square_reuse_seen: std::sync::atomic::AtomicBool::new(false),
-            exact_f64_view: std::sync::atomic::AtomicBool::new(false),
+            retained_facts: std::sync::atomic::AtomicU8::new(0),
         }))
     }
 
@@ -21,20 +18,14 @@ impl Rational {
             denominator,
             product_cache: _,
             linear_cache: _,
-            linear_reuse_seen: _,
-            power_reuse_seen: _,
-            square_reuse_seen: _,
-            exact_f64_view: _,
+            retained_facts: _,
         } = Arc::try_unwrap(self.0).unwrap_or_else(|shared| RationalData {
             sign: shared.sign,
             numerator: shared.numerator.clone(),
             denominator: shared.denominator.clone(),
             product_cache: OnceLock::new(),
             linear_cache: OnceLock::new(),
-            linear_reuse_seen: std::sync::atomic::AtomicBool::new(false),
-            power_reuse_seen: std::sync::atomic::AtomicBool::new(false),
-            square_reuse_seen: std::sync::atomic::AtomicBool::new(false),
-            exact_f64_view: std::sync::atomic::AtomicBool::new(false),
+            retained_facts: std::sync::atomic::AtomicU8::new(0),
         });
         (sign, numerator, denominator)
     }
@@ -382,6 +373,12 @@ impl Rational {
         if divisor == *ONE.deref() {
             self
         } else {
+            trace_rational_division_algorithm!("reduction-numerator", &self.numerator, &divisor);
+            trace_rational_division_algorithm!(
+                "reduction-denominator",
+                &self.denominator,
+                &divisor
+            );
             trace_rational_temporary!();
             Self::from_parts_raw(
                 self.sign,
@@ -409,6 +406,12 @@ impl Rational {
         if divisor == *ONE.deref() {
             self
         } else {
+            trace_rational_division_algorithm!("reduction-numerator", &self.numerator, &divisor);
+            trace_rational_division_algorithm!(
+                "reduction-denominator",
+                &self.denominator,
+                &divisor
+            );
             let numerator = &self.numerator / &divisor;
             let denominator = &self.denominator / &divisor;
             trace_rational_temporary!();
@@ -522,7 +525,21 @@ impl Rational {
     /// kernels to decide whether extra multiplication will stay on dyadic
     /// shift-only reductions or will likely trigger full BigInt gcd work.
     pub fn is_dyadic(&self) -> bool {
-        Self::is_power_of_two(&self.denominator)
+        if self.retained_fact(RETAINED_DYADIC_KNOWN) {
+            crate::trace_dispatch!("rational", "retained-facts", "dyadic-hit");
+            return self.retained_fact(RETAINED_DYADIC_VALUE);
+        }
+        let is_dyadic = Self::is_power_of_two(&self.denominator);
+        self.retain_fact(
+            RETAINED_DYADIC_KNOWN
+                | if is_dyadic {
+                    RETAINED_DYADIC_VALUE
+                } else {
+                    0
+                },
+        );
+        crate::trace_dispatch!("rational", "retained-facts", "dyadic-learned");
+        is_dyadic
     }
 
     /// Return whether two rationals share the same reduced denominator.
@@ -539,7 +556,22 @@ impl Rational {
     }
 
     pub(crate) fn dyadic_denominator_shift(&self) -> Option<u64> {
-        Self::biguint_power_of_two_shift(&self.denominator)
+        if self.retained_fact(RETAINED_DYADIC_KNOWN)
+            && !self.retained_fact(RETAINED_DYADIC_VALUE)
+        {
+            crate::trace_dispatch!("rational", "retained-facts", "non-dyadic-hit");
+            return None;
+        }
+        let shift = Self::biguint_power_of_two_shift(&self.denominator);
+        self.retain_fact(
+            RETAINED_DYADIC_KNOWN
+                | if shift.is_some() {
+                    RETAINED_DYADIC_VALUE
+                } else {
+                    0
+                },
+        );
+        shift
     }
 
     fn from_signed_magnitude_difference(

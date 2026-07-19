@@ -28,6 +28,7 @@ serde_json = { version = "1.0.149", optional = true }
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.7.0"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
 
 [[bin]]
 name = "hyperreal"
@@ -58,6 +59,10 @@ harness = false
 
 [[bench]]
 name = "scalar_micro"
+harness = false
+
+[[bench]]
+name = "gmp_api"
 harness = false
 
 [[bench]]
