@@ -11,16 +11,17 @@ keywords = ["graphics", "renderer", "hyperreal", "geometry", "opengl"]
 categories = ["graphics", "rendering", "mathematics"]
 
 [features]
-default = []
-dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
+default = ["exact"]
+exact = ["dep:hyperreal", "dep:hyperlattice", "dep:hyperlimit", "dep:hypertri", "dep:nalgebra"]
+dispatch-trace = ["exact", "hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperreal = { path = "../hyperreal" }
-hyperlattice = { path = "../hyperlattice" }
-hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
-hypertri = { path = "../hypertri", default-features = false, features = ["earcut"] }
+hyperreal = { path = "../hyperreal", optional = true }
+hyperlattice = { path = "../hyperlattice", optional = true }
+hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
+hypertri = { path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
 # hyperreal = { version = "0.13.0" }
 # hyperlattice = { version = "0.6.0" }
 # hyperlimit = { version = "0.4.0", default-features = false, features = ["std"] }
@@ -28,7 +29,7 @@ hypertri = { path = "../hypertri", default-features = false, features = ["earcut
 
 bytemuck = "1.23"
 glow = "0.16"
-nalgebra = "0.34"
+nalgebra = { version = "0.34", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
@@ -36,6 +37,7 @@ criterion = "0.5"
 [[bench]]
 name = "graphics"
 harness = false
+required-features = ["exact"]
 
 # Keep transitive Hyper crates unified while using sibling path dependencies.
 [patch.crates-io]

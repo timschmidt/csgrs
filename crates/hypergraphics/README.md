@@ -52,13 +52,25 @@ context current and observe its thread-affinity rules.
 GPU meshes and programs expose consuming, context-bound `destroy` methods so GL
 objects can be released while their owning context is current.
 
+Applications that only need the primitive-float renderer can disable the exact
+geometry stack:
+
+```toml
+hypergraphics = { version = "0.1", default-features = false }
+```
+
+That configuration retains `Projection64`, `RenderVertex64`, `GpuColoredMesh`,
+and `UnlitProgram`. `Projection64::try_from_column_major_f32` accepts external
+camera matrices, while `GpuColoredMesh::upload_xyz_rgb_f32` uploads existing
+interleaved buffers without an intermediate repack.
+
 Criterion results and the reference-by-reference implementation audit are in
 [`PERFORMANCE.md`](PERFORMANCE.md).
 
 The renderer originated in CopperForge's `render3d` module, which credits the
 MIT-licensed `alumina-interface` project by Timothy Schmidt. This crate retains
 the compact renderer architecture while moving geometry ownership and robust
-decisions into the Hyper stack.
+decisions into the Hyper stack; Alumina now consumes the shared backend directly.
 
 ## References
 

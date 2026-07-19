@@ -39,6 +39,13 @@ pub enum Error {
         /// Rejected vertex count.
         count: usize,
     },
+    /// A flat vertex buffer does not contain a whole number of vertices.
+    InvalidVertexDataLength {
+        /// Number of scalar values in the buffer.
+        values: usize,
+        /// Required scalar values per vertex.
+        stride: usize,
+    },
     /// The requested triangle index does not exist in a triangle mesh.
     TriangleIndexOutOfBounds {
         /// Requested triangle index.
@@ -49,8 +56,10 @@ pub enum Error {
     /// The operation requires a triangle mesh.
     RequiresTriangles,
     /// Hyperreal or hyperlattice arithmetic rejected an operation.
+    #[cfg(feature = "exact")]
     Arithmetic(hyperlattice::Problem),
     /// Hypertri rejected or could not triangulate the polygon.
+    #[cfg(feature = "exact")]
     Triangulation(hypertri::Error),
     /// OpenGL shader/program/buffer setup failed.
     Backend(String),
@@ -80,6 +89,10 @@ impl fmt::Display for Error {
             Self::VertexCountOverflow { count } => {
                 write!(f, "vertex count {count} exceeds the OpenGL draw limit")
             }
+            Self::InvalidVertexDataLength { values, stride } => write!(
+                f,
+                "vertex buffer contains {values} values, which is not divisible by stride {stride}"
+            ),
             Self::TriangleIndexOutOfBounds {
                 index,
                 triangle_count,
@@ -88,7 +101,9 @@ impl fmt::Display for Error {
                 "triangle index {index} is out of bounds for {triangle_count} triangles"
             ),
             Self::RequiresTriangles => write!(f, "operation requires a triangle mesh"),
+            #[cfg(feature = "exact")]
             Self::Arithmetic(problem) => write!(f, "hyperreal arithmetic failed: {problem}"),
+            #[cfg(feature = "exact")]
             Self::Triangulation(error) => write!(f, "triangulation failed: {error}"),
             Self::Backend(error) => write!(f, "backend error: {error}"),
         }
@@ -97,12 +112,14 @@ impl fmt::Display for Error {
 
 impl StdError for Error {}
 
+#[cfg(feature = "exact")]
 impl From<hyperlattice::Problem> for Error {
     fn from(value: hyperlattice::Problem) -> Self {
         Self::Arithmetic(value)
     }
 }
 
+#[cfg(feature = "exact")]
 impl From<hypertri::Error> for Error {
     fn from(value: hypertri::Error) -> Self {
         Self::Triangulation(value)

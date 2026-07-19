@@ -7,7 +7,9 @@ use glow::{Context, HasContext as _};
 
 use crate::camera::Projection64;
 use crate::error::{Error, Result};
-use crate::geometry::{ExactMesh, Primitive, RenderVertex64};
+#[cfg(feature = "exact")]
+use crate::geometry::ExactMesh;
+use crate::render::{Primitive, RenderVertex64};
 
 const VS_UNLIT: &str = r#"#version 330
 uniform mat4 u_mvp;
@@ -131,11 +133,31 @@ impl GpuColoredMesh {
         Ok(())
     }
 
+    /// Upload a flat interleaved `xyz rgb` f32 buffer without repacking it.
+    ///
+    /// # Safety
+    ///
+    /// `gl` must be the context that owns this mesh's objects.
+    pub unsafe fn upload_xyz_rgb_f32(&mut self, gl: &Context, values: &[f32]) -> Result<()> {
+        let vertex_count = validate_xyz_rgb_f32(values)?;
+        unsafe {
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.vbo));
+            gl.buffer_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                bytemuck::cast_slice(values),
+                glow::STATIC_DRAW,
+            );
+        }
+        self.vertex_count = vertex_count;
+        Ok(())
+    }
+
     /// Export and upload a hyperreal-owned mesh.
     ///
     /// # Safety
     ///
     /// `gl` must be the context that owns this mesh's objects.
+    #[cfg(feature = "exact")]
     pub unsafe fn upload_exact_mesh(&mut self, gl: &Context, mesh: &ExactMesh) -> Result<()> {
         let vertex_count = vertex_count_i32(mesh.vertex_count())?;
         let mut packed = Vec::with_capacity(mesh.vertex_count().checked_mul(6).ok_or(
@@ -167,6 +189,11 @@ impl GpuColoredMesh {
         }
         self.vertex_count = vertex_count;
         Ok(())
+    }
+
+    /// Return whether the mesh currently has no uploaded vertices.
+    pub const fn is_empty(&self) -> bool {
+        self.vertex_count == 0
     }
 
     /// Draw the mesh.
@@ -386,6 +413,22 @@ fn vertex_count_i32(count: usize) -> Result<i32> {
     i32::try_from(count).map_err(|_| Error::VertexCountOverflow { count })
 }
 
+fn validate_xyz_rgb_f32(values: &[f32]) -> Result<i32> {
+    const STRIDE: usize = 6;
+    if !values.len().is_multiple_of(STRIDE) {
+        return Err(Error::InvalidVertexDataLength {
+            values: values.len(),
+            stride: STRIDE,
+        });
+    }
+    if values.iter().any(|value| !value.is_finite()) {
+        return Err(Error::NonFinitePrimitive {
+            value: "render vertex",
+        });
+    }
+    vertex_count_i32(values.len() / STRIDE)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -427,5 +470,23 @@ mod tests {
                 Err(Error::VertexCountOverflow { .. })
             ));
         }
+    }
+
+    #[test]
+    fn flat_vertex_data_requires_complete_xyz_rgb_vertices() {
+        assert!(matches!(
+            validate_xyz_rgb_f32(&[0.0; 7]),
+            Err(Error::InvalidVertexDataLength {
+                values: 7,
+                stride: 6
+            })
+        ));
+        assert!(matches!(
+            validate_xyz_rgb_f32(&[0.0, 0.0, f32::NAN, 1.0, 1.0, 1.0]),
+            Err(Error::NonFinitePrimitive {
+                value: "render vertex"
+            })
+        ));
+        assert_eq!(validate_xyz_rgb_f32(&[0.0; 12]).unwrap(), 2);
     }
 }

@@ -1,6 +1,8 @@
 //! Exact camera state and explicit f64 projection.
 
+#[cfg(feature = "exact")]
 use hyperlattice::{Point3, Real, Vector3, pi};
+#[cfg(feature = "exact")]
 use nalgebra::{Matrix4, Perspective3, Translation3, UnitQuaternion, Vector4};
 
 use crate::error::{Error, Result};
@@ -71,16 +73,46 @@ pub struct ScreenPoint {
 /// `f64` render projection matrix.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Projection64 {
+    #[cfg(feature = "exact")]
     matrix: Matrix4<f64>,
+    #[cfg(not(feature = "exact"))]
+    matrix: [f64; 16],
 }
 
 impl Projection64 {
     /// Construct from a nalgebra matrix.
+    #[cfg(feature = "exact")]
     pub const fn new(matrix: Matrix4<f64>) -> Self {
         Self { matrix }
     }
 
+    /// Construct from a finite column-major f32 matrix.
+    ///
+    /// This is an interoperability boundary for applications whose camera math
+    /// uses another matrix package or nalgebra version. The input ordering
+    /// matches OpenGL uniform matrices and [`Matrix4::as_slice`].
+    pub fn try_from_column_major_f32(values: [f32; 16]) -> Result<Self> {
+        let mut widened = [0.0_f64; 16];
+        for (index, value) in values.into_iter().enumerate() {
+            if !value.is_finite() {
+                return Err(Error::NonFinitePrimitive {
+                    value: "projection matrix",
+                });
+            }
+            widened[index] = f64::from(value);
+        }
+        #[cfg(feature = "exact")]
+        {
+            Ok(Self::new(Matrix4::from_column_slice(&widened)))
+        }
+        #[cfg(not(feature = "exact"))]
+        {
+            Ok(Self { matrix: widened })
+        }
+    }
+
     /// Borrow the matrix.
+    #[cfg(feature = "exact")]
     pub const fn matrix(&self) -> &Matrix4<f64> {
         &self.matrix
     }
@@ -88,7 +120,11 @@ impl Projection64 {
     /// Return a finite f32 column-major slice for OpenGL uniforms.
     pub fn to_f32_array(&self) -> Result<[f32; 16]> {
         let mut out = [0.0_f32; 16];
-        for (index, value) in self.matrix.as_slice().iter().copied().enumerate() {
+        #[cfg(feature = "exact")]
+        let values = self.matrix.as_slice();
+        #[cfg(not(feature = "exact"))]
+        let values = &self.matrix;
+        for (index, value) in values.iter().copied().enumerate() {
             let narrowed = value as f32;
             if !narrowed.is_finite() {
                 return Err(Error::F32Overflow {
@@ -102,6 +138,7 @@ impl Projection64 {
 }
 
 /// Hyperreal-owned orbit camera parameters.
+#[cfg(feature = "exact")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCamera {
     /// Yaw angle in radians.
@@ -122,6 +159,7 @@ pub struct ExactCamera {
     pub far: Real,
 }
 
+#[cfg(feature = "exact")]
 impl Default for ExactCamera {
     fn default() -> Self {
         Self {
@@ -137,6 +175,7 @@ impl Default for ExactCamera {
     }
 }
 
+#[cfg(feature = "exact")]
 impl ExactCamera {
     /// Apply an exact orbit delta in radians.
     pub fn orbit(&mut self, yaw_delta: Real, pitch_delta: Real) {
@@ -202,6 +241,7 @@ impl ExactCamera {
 }
 
 /// Project a hyperreal world point through an f64 projection matrix.
+#[cfg(feature = "exact")]
 pub fn project_point(
     projection: &Projection64,
     viewport: Viewport,
@@ -226,6 +266,7 @@ pub fn project_point(
 }
 
 /// Unproject a screen point onto the Z=0 world plane.
+#[cfg(feature = "exact")]
 pub fn unproject_to_z0(
     projection: &Projection64,
     viewport: Viewport,
@@ -257,10 +298,12 @@ pub fn unproject_to_z0(
     Ok(Some(Point3::from(world)))
 }
 
+#[cfg(feature = "exact")]
 fn degrees(value: i32) -> Real {
     (Real::from(value) * pi() / Real::from(180)).expect("180 is a known nonzero divisor")
 }
 
+#[cfg(feature = "exact")]
 fn real_to_f64(value: &Real, name: &'static str) -> Result<f64> {
     value
         .to_f64_lossy()
@@ -272,6 +315,7 @@ fn real_to_f64(value: &Real, name: &'static str) -> Result<f64> {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "exact")]
     #[test]
     fn default_camera_projects_origin() {
         let camera = ExactCamera::default();
@@ -285,7 +329,7 @@ mod tests {
     }
 
     #[test]
-    fn viewport_and_camera_reject_invalid_projection_domains() {
+    fn viewport_rejects_invalid_projection_domains() {
         assert!(matches!(
             Viewport::new(0.0, 0.0, 0.0, 600.0),
             Err(Error::NonPositiveViewportExtent { value: "width" })
@@ -294,7 +338,11 @@ mod tests {
             Viewport::new(0.0, 0.0, 800.0, -1.0),
             Err(Error::NonPositiveViewportExtent { value: "height" })
         ));
+    }
 
+    #[cfg(feature = "exact")]
+    #[test]
+    fn camera_rejects_invalid_projection_domains() {
         let viewport = Viewport::new(0.0, 0.0, 800.0, 600.0).unwrap();
         let camera = ExactCamera {
             near: Real::zero(),
@@ -303,6 +351,27 @@ mod tests {
         assert!(matches!(
             camera.projection64(viewport),
             Err(Error::InvalidCameraParameter { value: "near" })
+        ));
+    }
+
+    #[test]
+    fn projection_accepts_external_column_major_f32_matrix() {
+        let values = [
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
+        ];
+        let projection = Projection64::try_from_column_major_f32(values).unwrap();
+        assert_eq!(projection.to_f32_array().unwrap(), values);
+    }
+
+    #[test]
+    fn projection_rejects_non_finite_external_matrix() {
+        let mut values = [0.0; 16];
+        values[7] = f32::NAN;
+        assert!(matches!(
+            Projection64::try_from_column_major_f32(values),
+            Err(Error::NonFinitePrimitive {
+                value: "projection matrix"
+            })
         ));
     }
 }

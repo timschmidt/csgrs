@@ -5,6 +5,10 @@
 //! meshes, an orbit camera, grid and axis helpers, and an unlit OpenGL/WebGL
 //! backend.
 //!
+//! The default `exact` feature enables Hyperreal-owned geometry, predicates,
+//! triangulation, and camera helpers. Renderer-only consumers can disable
+//! default features and retain the primitive-float projection and backend APIs.
+//!
 //! `hyperlimit` supplies robust geometric predicates and `hypertri` supplies
 //! triangulation. Rendering APIs expose lossy `f64`/`f32` views and must not be
 //! used as topology certificates.
@@ -14,15 +18,22 @@
 pub mod backend;
 pub mod camera;
 pub mod error;
+#[cfg(feature = "exact")]
 pub mod geometry;
+pub mod render;
+#[cfg(feature = "exact")]
 pub mod scene;
 
-pub use camera::{ExactCamera, Projection64, ScreenPoint, Viewport};
+#[cfg(feature = "exact")]
+pub use camera::ExactCamera;
+pub use camera::{Projection64, ScreenPoint, Viewport};
 pub use error::{Error, Result};
-pub use geometry::{
-    Color3, ExactMesh, ExactVertex, PreparedTriangleOrientation, Primitive, RenderVertex64,
-    TriangleOrientation,
-};
+#[cfg(feature = "exact")]
+pub use geometry::{ExactMesh, ExactVertex, PreparedTriangleOrientation, TriangleOrientation};
+#[cfg(feature = "exact")]
 pub use hyperlattice::{Point2, Point3, Vector2, Vector3};
+#[cfg(feature = "exact")]
 pub use hyperreal::{Rational, Real};
+pub use render::{Color3, Primitive, RenderVertex64};
+#[cfg(feature = "exact")]
 pub use scene::{axes_mesh, grid_mesh, polygon_surface_mesh};
