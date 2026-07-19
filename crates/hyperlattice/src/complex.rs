@@ -402,7 +402,7 @@ impl Neg for &Complex {
 
     fn neg(self) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "neg-ref");
-        Complex::new(-self.re.clone(), -self.im.clone())
+        Complex::new(-&self.re, -&self.im)
     }
 }
 

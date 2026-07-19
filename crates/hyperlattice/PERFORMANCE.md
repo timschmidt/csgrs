@@ -365,8 +365,32 @@ arithmetic cache. The forward edge owns that result and its reverse edge is weak
 repeated division presents a stable factor identity to every lane's product cache
 without an ownership cycle. The rational-fixture division rows are similarly
 118.51--377.44 ns. Mat4 subtraction remained statistically unchanged at 671.87 ns
-while the cache layout was varied. Owned negation remains the adjacent componentwise
-carrier deficit.
+while the cache layout was varied.
+
+Exact negation now retains one opposite-sign rational beside the existing reciprocal
+without enlarging `RationalData` or displacing either linear-result slot. Fixed-size
+owned and borrowed vector/matrix kernels make each lane explicit, and borrowed exact
+`Real` negation constructs the result directly instead of cloning and then replacing
+its rational scale. The clone-inclusive scalar row falls from 57.60 ns to 19.23 ns,
+beating Numerica 128 at 20.38 ns and Symbolica at 1.06 us. Matched carrier medians are:
+
+| Operation | Previous Hyperreal | Optimized Hyperreal | Numerica 128 | Symbolica |
+| --- | ---: | ---: | ---: | ---: |
+| Vec3 neg (clone-inclusive owned row) | 195.68 ns | 89.59 ns | 50.34 ns | 3.13 us |
+| Vec4 neg (clone-inclusive owned row) | 222.00 ns | 108.93 ns | 63.70 ns | 4.02 us |
+| Mat3 neg (clone-inclusive owned row) | 775.02 ns | 209.49 ns | 423.07 ns | 9.02 us |
+| Mat4 neg (clone-inclusive owned row) | 1.20 us | 357.86 ns | 728.99 ns | 13.98 us |
+| Vec3 neg ref | 169.24 ns | 42.82 ns | 46.09 ns | 3.09 us |
+| Vec4 neg ref | 214.43 ns | 50.90 ns | 63.57 ns | 4.04 us |
+| Mat3 neg ref | 538.23 ns | 118.77 ns | 416.49 ns | 8.43 us |
+| Mat4 neg ref | 766.60 ns | 197.26 ns | 748.76 ns | 13.80 us |
+
+Borrowed negation and both matrix ownership forms now beat Numerica at every fixed
+carrier size. The main owned vector row still times cloning the reusable fixture inside
+the loop, unlike the external engines' reference-to-result API; that 42--47 ns setup
+cost is recorded separately instead of being attributed to the negation kernel. The
+clone-inclusive owned vector rows still improve by 51--54%, and all optimized rows
+remain at least 34 times faster than Symbolica.
 
 ## Rejected zero-mask multiplication experiment
 

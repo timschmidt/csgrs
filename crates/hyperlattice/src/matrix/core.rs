@@ -3144,6 +3144,80 @@ where
     })
 }
 
+trait MatrixNegOwned: Sized {
+    fn neg_owned(self) -> Self;
+}
+
+trait MatrixNegRefs: Sized {
+    fn neg_refs(&self) -> Self;
+}
+
+#[inline]
+fn neg_row3_owned(row: [Real; 3]) -> [Real; 3] {
+    let [x, y, z] = row;
+    [-x, -y, -z]
+}
+
+#[inline]
+fn neg_row3_refs(row: &[Real; 3]) -> [Real; 3] {
+    [-&row[0], -&row[1], -&row[2]]
+}
+
+#[inline]
+fn neg_row4_owned(row: [Real; 4]) -> [Real; 4] {
+    let [x, y, z, w] = row;
+    [-x, -y, -z, -w]
+}
+
+#[inline]
+fn neg_row4_refs(row: &[Real; 4]) -> [Real; 4] {
+    [-&row[0], -&row[1], -&row[2], -&row[3]]
+}
+
+impl MatrixNegOwned for [[Real; 3]; 3] {
+    #[inline]
+    fn neg_owned(self) -> Self {
+        let [x, y, z] = self;
+        [neg_row3_owned(x), neg_row3_owned(y), neg_row3_owned(z)]
+    }
+}
+
+impl MatrixNegRefs for [[Real; 3]; 3] {
+    #[inline]
+    fn neg_refs(&self) -> Self {
+        [
+            neg_row3_refs(&self[0]),
+            neg_row3_refs(&self[1]),
+            neg_row3_refs(&self[2]),
+        ]
+    }
+}
+
+impl MatrixNegOwned for [[Real; 4]; 4] {
+    #[inline]
+    fn neg_owned(self) -> Self {
+        let [x, y, z, w] = self;
+        [
+            neg_row4_owned(x),
+            neg_row4_owned(y),
+            neg_row4_owned(z),
+            neg_row4_owned(w),
+        ]
+    }
+}
+
+impl MatrixNegRefs for [[Real; 4]; 4] {
+    #[inline]
+    fn neg_refs(&self) -> Self {
+        [
+            neg_row4_refs(&self[0]),
+            neg_row4_refs(&self[1]),
+            neg_row4_refs(&self[2]),
+            neg_row4_refs(&self[3]),
+        ]
+    }
+}
+
 #[inline]
 fn matrix_power_with<const N: usize, F>(
     base: [[Real; N]; N],
@@ -13805,11 +13879,7 @@ macro_rules! impl_matrix {
 
             fn neg(self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "neg-owned");
-                if true {
-                    Self(self.0.map(|row| row.map(|value| -value)))
-                } else {
-                    Self(from_fn(|row| from_fn(|col| -self.0[row][col].clone())))
-                }
+                Self(<[[Real; $n]; $n] as MatrixNegOwned>::neg_owned(self.0))
             }
         }
 
@@ -13818,7 +13888,7 @@ macro_rules! impl_matrix {
 
             fn neg(self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "neg-ref");
-                $name(from_fn(|row| from_fn(|col| -self.0[row][col].clone())))
+                $name(<[[Real; $n]; $n] as MatrixNegRefs>::neg_refs(&self.0))
             }
         }
 

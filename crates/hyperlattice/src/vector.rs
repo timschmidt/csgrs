@@ -1003,6 +1003,59 @@ where
     left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
 }
 
+trait VectorNegRefs: Sized {
+    fn neg_refs(&self) -> Self;
+}
+
+trait VectorNegOwned: Sized {
+    fn neg_owned(self) -> Self;
+}
+
+impl VectorNegOwned for [Real; 2] {
+    #[inline]
+    fn neg_owned(self) -> Self {
+        let [x, y] = self;
+        [-x, -y]
+    }
+}
+
+impl VectorNegOwned for [Real; 3] {
+    #[inline]
+    fn neg_owned(self) -> Self {
+        let [x, y, z] = self;
+        [-x, -y, -z]
+    }
+}
+
+impl VectorNegOwned for [Real; 4] {
+    #[inline]
+    fn neg_owned(self) -> Self {
+        let [x, y, z, w] = self;
+        [-x, -y, -z, -w]
+    }
+}
+
+impl VectorNegRefs for [Real; 2] {
+    #[inline]
+    fn neg_refs(&self) -> Self {
+        [-&self[0], -&self[1]]
+    }
+}
+
+impl VectorNegRefs for [Real; 3] {
+    #[inline]
+    fn neg_refs(&self) -> Self {
+        [-&self[0], -&self[1], -&self[2]]
+    }
+}
+
+impl VectorNegRefs for [Real; 4] {
+    #[inline]
+    fn neg_refs(&self) -> Self {
+        [-&self[0], -&self[1], -&self[2], -&self[3]]
+    }
+}
+
 macro_rules! impl_vector {
     ($name:ident, $n:expr) => {
         impl $name {
@@ -1442,11 +1495,7 @@ macro_rules! impl_vector {
 
             fn neg(self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "neg-owned");
-                if true {
-                    Self(self.0.map(|value| -value))
-                } else {
-                    Self(from_fn(|i| -self.0[i].clone()))
-                }
+                Self(<[Real; $n] as VectorNegOwned>::neg_owned(self.0))
             }
         }
 
@@ -1455,7 +1504,7 @@ macro_rules! impl_vector {
 
             fn neg(self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "neg-ref");
-                $name(from_fn(|i| -self.0[i].clone()))
+                $name(<[Real; $n] as VectorNegRefs>::neg_refs(&self.0))
             }
         }
 

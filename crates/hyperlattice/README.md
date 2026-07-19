@@ -70,9 +70,10 @@ The crate reduces exact cost by exploiting fixed sizes and retained structure. M
 multiplication is unrolled, small powers are specialized before exponentiation by
 squaring, borrowed arithmetic avoids unnecessary cloning, owned linear and scalar
 operations reuse the consumed left carrier, and fixed-size matrix clones expose
-their lanes directly. Product-sum reducers preserve rational structure. Repeated
-exact scalar products use bounded retention, while borrowed linear operations adapt
-after observing reuse without allocating on first use. Prepared matrix and
+their lanes directly. Fixed-size negation kernels expose every lane to the retained
+exact sign-pair path. Product-sum reducers preserve rational structure. Repeated
+exact scalar products and sign flips use bounded retention, while borrowed linear
+operations adapt after observing reuse without allocating on first use. Prepared matrix and
 right-divisor handles let callers reuse determinant,
 adjugate, reciprocal, minor, and inverse work without exposing internal cache storage.
 
