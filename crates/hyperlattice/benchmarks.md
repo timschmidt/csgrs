@@ -176,18 +176,18 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `free i` | 16.48 ns | 16.82 ns | 43.74 ns | 32.88 ns | 0.38x | 0.50x |
 | `conjugate` | 75.21 ns | 78.23 ns | 35.81 ns | 1.09 us | 2.10x | 0.07x |
 | `norm squared` | 263.22 ns | 229.85 ns | 122.43 ns | 4.32 us | 2.15x | 0.06x |
-| `reciprocal` | 1.38 us | 1.19 us | 260.09 ns | 10.84 us | 5.30x | 0.13x |
-| `reciprocal checked` | 1.40 us | 1.15 us | 260.37 ns | 10.84 us | 5.39x | 0.13x |
+| `reciprocal` | 214.64 ns | 239.19 ns | 276.47 ns | 10.88 us | 0.78x | 0.02x |
+| `reciprocal checked` | 218.43 ns | 248.39 ns | 275.94 ns | 10.89 us | 0.79x | 0.02x |
 | `powi` | 679.67 ns | 788.02 ns | 1.23 us | 45.33 us | 0.55x | 0.01x |
 | `powi checked` | 677.20 ns | 792.04 ns | 1.23 us | 44.95 us | 0.55x | 0.02x |
-| `div checked` | 1.97 us | 1.70 us | 550.99 ns | 22.97 us | 3.58x | 0.09x |
+| `div checked` | 375.42 ns | 470.50 ns | 632.26 ns | 22.41 us | 0.59x | 0.02x |
 | `div real checked` | 221.87 ns | 233.70 ns | 118.57 ns | 5.30 us | 1.87x | 0.04x |
 | `from scalar` | 32.19 ns | 32.72 ns | 30.79 ns | 10.19 ns | 1.05x | 3.16x |
 | `add` | 62.13 ns | 62.54 ns | 84.50 ns | 2.59 us | 0.74x | 0.02x |
 | `sub` | 63.04 ns | 63.76 ns | 93.07 ns | 5.20 us | 0.68x | 0.01x |
 | `neg` | 95.66 ns | 95.89 ns | 32.34 ns | 2.19 us | 2.96x | 0.04x |
 | `mul` | 157.85 ns | 162.59 ns | 247.72 ns | 10.11 us | 0.64x | 0.02x |
-| `div` | 2.01 us | 1.71 us | 562.90 ns | 22.59 us | 3.56x | 0.09x |
+| `div` | 373.81 ns | 474.95 ns | 615.42 ns | 22.03 us | 0.61x | 0.02x |
 | `div real` | 220.68 ns | 230.48 ns | 117.91 ns | 5.29 us | 1.87x | 0.04x |
 
 #### Cold Complex Multiplication
@@ -357,6 +357,6 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `complex add refs` | 34.44 ns | 35.62 ns | 84.70 ns | 2.55 us | 0.41x | 0.01x |
 | `complex sub refs` | 35.33 ns | 36.48 ns | 93.02 ns | 4.78 us | 0.38x | 0.01x |
 | `complex mul refs` | 138.77 ns | 140.11 ns | 235.87 ns | 10.11 us | 0.59x | 0.01x |
-| `complex div refs` | 1.91 us | 1.63 us | 543.99 ns | 21.88 us | 3.50x | 0.09x |
+| `complex div refs` | 349.79 ns | 457.13 ns | 503.22 ns | 21.84 us | 0.70x | 0.02x |
 | `complex neg ref` | 93.45 ns | 95.17 ns | 35.42 ns | 2.13 us | 2.64x | 0.04x |
 | `complex div_real_ref` | 219.38 ns | 238.92 ns | 115.42 ns | 5.23 us | 1.90x | 0.04x |

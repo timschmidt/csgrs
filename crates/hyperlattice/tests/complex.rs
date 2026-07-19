@@ -24,6 +24,23 @@ fn complex_multiplication_preserves_exact_components_for_all_ownership_forms() {
 }
 
 #[test]
+fn complex_division_preserves_exact_components_for_all_ownership_forms() {
+    let lhs = Complex::new(frac(3, 7), frac(-5, 11));
+    let rhs = Complex::new(frac(13, 17), frac(19, 23));
+    let denominator = &rhs.re * &rhs.re + &rhs.im * &rhs.im;
+    let expected = Complex::new(
+        (((&lhs.re * &rhs.re) + (&lhs.im * &rhs.im)) / &denominator).unwrap(),
+        (((&lhs.im * &rhs.re) - (&lhs.re * &rhs.im)) / &denominator).unwrap(),
+    );
+
+    assert_eq!((lhs.clone() / rhs.clone()).unwrap(), expected);
+    assert_eq!((lhs.clone() / &rhs).unwrap(), expected);
+    assert_eq!((&lhs / rhs.clone()).unwrap(), expected);
+    assert_eq!((&lhs / &rhs).unwrap(), expected);
+    assert_eq!(lhs.div_checked(rhs).unwrap(), expected);
+}
+
+#[test]
 fn complex_negative_one_power_uses_reciprocal_semantics() {
     let value = Complex::new(r(3), r(4));
 

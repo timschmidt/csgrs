@@ -136,15 +136,8 @@ impl Complex {
     /// Divides by another complex value after rejecting unknown-zero norms.
     pub fn div_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_complex", "method", "div-checked");
-        let denom = &rhs.re * &rhs.re + &rhs.im * &rhs.im;
-        require_known_nonzero(&denom)?;
-        let inv_denom = denom.inverse()?;
-        let (re, im) = complex_division_numerators(&self, &rhs);
-        // The inverse norm is reused for both components, so keep it borrowed.
-        Ok(Self::new(
-            re.mul_cached(&inv_denom),
-            im.mul_cached(&inv_denom),
-        ))
+        let (re, im) = complex_divide_components(&self, &rhs, true)?;
+        Ok(Self::new(re, im))
     }
 
     /// Divides by a real scalar after rejecting unknown-zero divisors.
@@ -204,33 +197,50 @@ fn complex_multiply_for_powi(lhs: Complex, rhs: Complex) -> Complex {
 
 #[inline(always)]
 fn complex_division_numerators(lhs: &Complex, rhs: &Complex) -> (Real, Real) {
-    let known_exact_rational = lhs.re.exact_rational_kind() != ExactRationalKind::NonRational
-        && lhs.im.exact_rational_kind() != ExactRationalKind::NonRational
-        && rhs.re.exact_rational_kind() != ExactRationalKind::NonRational
-        && rhs.im.exact_rational_kind() != ExactRationalKind::NonRational;
-    if known_exact_rational {
-        crate::trace_dispatch!(
-            "hyperlattice_complex",
-            "op",
-            "div-numerators-fused-known-exact-rational"
-        );
-        return (
-            Real::active_signed_product_sum2_known_exact_rational(
-                [true, true],
-                [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
-            ),
-            Real::active_signed_product_sum2_known_exact_rational(
-                [true, false],
-                [[&lhs.im, &rhs.re], [&lhs.re, &rhs.im]],
-            ),
-        );
-    }
-
     crate::trace_dispatch!("hyperlattice_complex", "op", "div-numerators-fused-exact");
     (
         Real::active_signed_product_sum2([true, true], [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]]),
         Real::active_signed_product_sum2([true, false], [[&lhs.im, &rhs.re], [&lhs.re, &rhs.im]]),
     )
+}
+
+#[inline]
+fn complex_divide_components(
+    lhs: &Complex,
+    rhs: &Complex,
+    checked: bool,
+) -> BlasResult<(Real, Real)> {
+    let kinds = [
+        lhs.re.exact_rational_kind(),
+        lhs.im.exact_rational_kind(),
+        rhs.re.exact_rational_kind(),
+        rhs.im.exact_rational_kind(),
+    ];
+    let known_exact_rational = kinds
+        .iter()
+        .all(|kind| *kind != ExactRationalKind::NonRational);
+    if known_exact_rational {
+        crate::trace_dispatch!(
+            "hyperlattice_complex",
+            "op",
+            "div-components-fused-exact-rational"
+        );
+        return Real::exact_rational_complex_quotient_known_exact(
+            [&lhs.re, &lhs.im],
+            [&rhs.re, &rhs.im],
+        );
+    }
+
+    let denominator = &rhs.re * &rhs.re + &rhs.im * &rhs.im;
+    if checked {
+        require_known_nonzero(&denominator)?;
+    }
+    let inverse_denominator = denominator.inverse()?;
+    let (re, im) = complex_division_numerators(lhs, rhs);
+    Ok((
+        re.mul_cached(&inverse_denominator),
+        im.mul_cached(&inverse_denominator),
+    ))
 }
 
 #[inline]
@@ -450,12 +460,8 @@ impl Div for Complex {
 
     fn div(self, rhs: Self) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-owned-owned");
-        let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
-        let (re, im) = complex_division_numerators(&self, &rhs);
-        Ok(Self::new(
-            re.mul_cached(&inv_denom),
-            im.mul_cached(&inv_denom),
-        ))
+        let (re, im) = complex_divide_components(&self, &rhs, false)?;
+        Ok(Self::new(re, im))
     }
 }
 
@@ -464,12 +470,8 @@ impl Div<&Complex> for Complex {
 
     fn div(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-owned-ref");
-        let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
-        let (re, im) = complex_division_numerators(&self, rhs);
-        Ok(Self::new(
-            re.mul_cached(&inv_denom),
-            im.mul_cached(&inv_denom),
-        ))
+        let (re, im) = complex_divide_components(&self, rhs, false)?;
+        Ok(Self::new(re, im))
     }
 }
 
@@ -478,12 +480,8 @@ impl Div<Complex> for &Complex {
 
     fn div(self, rhs: Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-ref-owned");
-        let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
-        let (re, im) = complex_division_numerators(self, &rhs);
-        Ok(Complex::new(
-            re.mul_cached(&inv_denom),
-            im.mul_cached(&inv_denom),
-        ))
+        let (re, im) = complex_divide_components(self, &rhs, false)?;
+        Ok(Complex::new(re, im))
     }
 }
 
@@ -492,12 +490,8 @@ impl Div<&Complex> for &Complex {
 
     fn div(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-ref-ref");
-        let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
-        let (re, im) = complex_division_numerators(self, rhs);
-        Ok(Complex::new(
-            re.mul_cached(&inv_denom),
-            im.mul_cached(&inv_denom),
-        ))
+        let (re, im) = complex_divide_components(self, rhs, false)?;
+        Ok(Complex::new(re, im))
     }
 }
 

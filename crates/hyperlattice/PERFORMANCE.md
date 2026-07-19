@@ -488,6 +488,31 @@ by the scalar-owned `paired-word-sized` reducer. The cold Criterion group uses
 `iter_batched`, so input construction and decimal parsing are excluded from the
 measured multiplication interval for every engine.
 
+## Common-scale exact complex division
+
+Owned, borrowed, and checked complex division now share one component helper.
+When all four components are exact rationals, Hyperreal forms the conjugate
+product and squared norm at common integer scales, then cross-cancels those
+scales into the two final fractions. Dyadic inputs align exponents directly;
+word-sized general denominators use LCM scaling with identity-GCD elision.
+Overflow and wider arbitrary-precision rationals retain the exact general
+fallback, while symbolic inputs retain the previous norm/inverse/product-sum
+schedule. Exact zero norms still return `DivideByZero`; checked symbolic norms
+still reject `UnknownZero`.
+
+| Workload | Hyperreal f64 | Hyperreal rational | Numerica 128 | Symbolica |
+| --- | ---: | ---: | ---: | ---: |
+| reciprocal | 214.64 ns | 239.19 ns | 276.47 ns | 10.88 us |
+| reciprocal checked | 218.43 ns | 248.39 ns | 275.94 ns | 10.89 us |
+| complex division | 373.81 ns | 474.95 ns | 615.42 ns | 22.03 us |
+| complex division checked | 375.42 ns | 470.50 ns | 632.26 ns | 22.41 us |
+| borrowed complex division | 349.79 ns | 457.13 ns | 503.22 ns | 21.84 us |
+
+The exact-rational object trace records
+`div-components-fused-exact-rational`; the scalar trace distinguishes
+`paired-dyadic-word-sized`, `paired-general-word-sized`, and the
+arbitrary-precision fallback.
+
 ## Trace evidence
 
 `dispatch_trace.md` was regenerated from the diagnostic build. It confirms that dense

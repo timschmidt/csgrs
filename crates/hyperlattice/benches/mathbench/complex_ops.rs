@@ -41,6 +41,27 @@ fn bench_complex_operations_for<F>(
         },
     );
     trace_dispatch_cases(
+        format!("complex_ops/{label}/div"),
+        &[0_usize, 1, 2, 3],
+        |index| {
+            let _ = black_box(
+                (lhs_cases[*index].clone() / rhs_cases[*index].clone()).unwrap(),
+            );
+        },
+    );
+    trace_dispatch_cases(
+        format!("complex_ops/{label}/div_checked"),
+        &[0_usize, 1, 2, 3],
+        |index| {
+            let _ = black_box(
+                lhs_cases[*index]
+                    .clone()
+                    .div_checked(rhs_cases[*index].clone())
+                    .unwrap(),
+            );
+        },
+    );
+    trace_dispatch_cases(
         format!("complex_ops/{label}/powi_negative_one"),
         &lhs_cases,
         |value| {

@@ -43,12 +43,15 @@ fn complex_fuzz(input: Input) {
     let _ = &z + &w;
     let _ = &z - &w;
     let _ = &z * &w;
+    let _ = &z / &w;
     let _ = z.clone() + &w;
     let _ = z.clone() - &w;
     let _ = z.clone() * &w;
+    let _ = z.clone() / &w;
     let _ = &z + w.clone();
     let _ = &z - w.clone();
     let _ = &z * w.clone();
+    let _ = &z / w.clone();
     let _ = -z.clone();
     let _ = -&z;
 
@@ -163,6 +166,21 @@ fn complex_fuzz(input: Input) {
         z.clone() * w.clone(),
         z.clone() * &w,
         "Complex * Complex must equal Complex * &Complex"
+    );
+    assert_eq!(
+        z.clone() / w.clone(),
+        z.clone() / &w,
+        "Complex / Complex must equal Complex / &Complex"
+    );
+    assert_eq!(
+        z.clone() / w.clone(),
+        &z / w.clone(),
+        "Complex / Complex must equal &Complex / Complex"
+    );
+    assert_eq!(
+        z.clone() / w.clone(),
+        &z / &w,
+        "Complex / Complex must equal &Complex / &Complex"
     );
 
     // ── Invariant: zero complex number has zero norm ──────────────────────────

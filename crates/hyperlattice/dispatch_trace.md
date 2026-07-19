@@ -246,7 +246,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | Benchmark Row | Dispatch | Predicate | Linear Algebra | Object Facts | Scalar Facts | Detailed Facts | Unknown Facts | Rational Kinds | Sign/Zero Queries | Exact Reducers | Approximation | Approx Starts | Approx Cache | Refinement | Predicate Stages | Cache | Fallback/Abort | Rational Temps | Rational Reductions | Rational GCDs |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `borrowed_ops/hyperreal-rational/complex add refs` | 126 | 0 | 24 | 0 | 6 | 0 | 0 | 0 | 8 | 72 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 14 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | 146 | 0 | 20 | 0 | 0 | 0 | 0 | 35 | 0 | 130 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 5 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | 32 | 0 | 12 | 0 | 0 | 0 | 0 | 5 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | 134 | 0 | 12 | 0 | 2 | 0 | 0 | 20 | 3 | 104 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 10 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/complex sub refs` | 104 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 56 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 2 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | 416 | 0 | 12 | 0 | 21 | 0 | 0 | 2 | 25 | 275 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | 73 | 0 | 0 |
@@ -276,7 +276,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/vec4 mul_scalar_ref` | 79 | 0 | 20 | 0 | 0 | 0 | 0 | 16 | 0 | 75 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 4 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/vec4 sub refs` | 164 | 0 | 12 | 0 | 3 | 0 | 0 | 0 | 4 | 101 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 14 | 0 | 0 |
 | `borrowed_ops/hyperreal/complex add refs` | 126 | 0 | 24 | 0 | 6 | 0 | 0 | 8 | 8 | 72 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 16 | 0 | 0 |
-| `borrowed_ops/hyperreal/complex div refs` | 139 | 0 | 20 | 0 | 0 | 0 | 0 | 48 | 0 | 123 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 13 | 1 | 3 |
+| `borrowed_ops/hyperreal/complex div refs` | 32 | 0 | 12 | 0 | 0 | 0 | 0 | 8 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `borrowed_ops/hyperreal/complex mul refs` | 124 | 0 | 12 | 0 | 2 | 0 | 0 | 29 | 3 | 94 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 14 | 2 | 2 |
 | `borrowed_ops/hyperreal/complex sub refs` | 104 | 0 | 24 | 0 | 0 | 0 | 0 | 5 | 0 | 56 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 3 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat3 add refs` | 416 | 0 | 12 | 0 | 21 | 0 | 0 | 28 | 25 | 275 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 69 | 0 | 0 |
@@ -307,11 +307,15 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/vec4 sub refs` | 164 | 0 | 12 | 0 | 3 | 0 | 0 | 7 | 4 | 101 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 14 | 0 | 0 |
 | `complex_mul_cold/hyperreal-rational/varying` | 26 | 0 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 22 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `complex_mul_cold/hyperreal/varying` | 18 | 0 | 5 | 0 | 0 | 0 | 0 | 3 | 0 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 4 | 0 |
+| `complex_ops/hyperreal-rational/div` | 32 | 0 | 12 | 0 | 0 | 0 | 0 | 5 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `complex_ops/hyperreal-rational/div_checked` | 32 | 0 | 12 | 0 | 0 | 0 | 0 | 5 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `complex_ops/hyperreal-rational/mul` | 130 | 0 | 12 | 0 | 2 | 0 | 0 | 20 | 2 | 100 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 8 | 0 | 0 |
 | `complex_ops/hyperreal-rational/powi` | 306 | 0 | 44 | 0 | 5 | 0 | 0 | 43 | 8 | 219 | 0 | 0 | 0 | 0 | 0 | 20 | 2 | 40 | 14 | 21 |
 | `complex_ops/hyperreal-rational/powi_checked` | 298 | 0 | 44 | 0 | 5 | 0 | 0 | 43 | 5 | 211 | 0 | 0 | 0 | 0 | 0 | 13 | 2 | 13 | 0 | 0 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | 107 | 0 | 32 | 0 | 4 | 0 | 0 | 18 | 12 | 71 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 3 | 0 | 0 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | 100 | 0 | 24 | 0 | 0 | 0 | 0 | 21 | 0 | 76 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 6 | 0 | 0 |
+| `complex_ops/hyperreal/div` | 32 | 0 | 12 | 0 | 0 | 0 | 0 | 8 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `complex_ops/hyperreal/div_checked` | 32 | 0 | 12 | 0 | 0 | 0 | 0 | 8 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `complex_ops/hyperreal/mul` | 123 | 0 | 12 | 0 | 2 | 0 | 0 | 30 | 2 | 93 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 16 | 2 | 2 |
 | `complex_ops/hyperreal/powi` | 334 | 0 | 44 | 0 | 5 | 0 | 0 | 64 | 6 | 242 | 0 | 0 | 0 | 0 | 0 | 33 | 2 | 48 | 8 | 10 |
 | `complex_ops/hyperreal/powi_checked` | 322 | 0 | 44 | 0 | 5 | 0 | 0 | 46 | 5 | 230 | 0 | 0 | 0 | 0 | 0 | 17 | 2 | 13 | 0 | 0 |
@@ -858,29 +862,14 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/complex add refs` | `real` | `add` | `same-symbolic-basis` | 24 |
 | `borrowed_ops/hyperreal-rational/complex add refs` | `real` | `constructor` | `rational` | 18 |
 | `borrowed_ops/hyperreal-rational/complex add refs` | `real` | `constructor` | `zero` | 6 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 8 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `hyperlattice_complex` | `op` | `div-numerators-fused-known-exact-rational` | 4 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `hyperlattice_complex` | `op` | `div-components-fused-exact-rational` | 4 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `hyperlattice_complex` | `op` | `div-ref-ref` | 4 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `add` | `word-sized` | 3 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `arithmetic-reuse` | `first-observation` | 5 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `inverse` | `retained` | 1 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `linear` | `retained-sum` | 1 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `mul` | `retained-product` | 1 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 5 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `mul` | `word-sized` | 15 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `product_sum` | `word-sized` | 8 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `cached-small-integer` | 3 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `small-general-fraction` | 10 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `uncached-integer-wide` | 4 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `wide-general-fraction` | 7 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `add` | `same-symbolic-basis` | 4 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `constructor` | `rational` | 28 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `inverse` | `prechecked-one` | 4 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `mul` | `exact-rational` | 16 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `product_sum` | `exact-rational-known-shared-denom` | 8 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `complex-quotient` | `paired-dyadic-word-sized` | 1 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `complex-quotient` | `paired-general-word-sized` | 3 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `constructor` | `rational` | 8 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `hyperlattice_complex` | `op` | `mul-components-three-product-exact-rational` | 4 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `hyperlattice_complex` | `op` | `mul-ref-ref` | 4 |
@@ -1277,29 +1266,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/complex add refs` | `real` | `add` | `same-symbolic-basis` | 24 |
 | `borrowed_ops/hyperreal/complex add refs` | `real` | `constructor` | `rational` | 18 |
 | `borrowed_ops/hyperreal/complex add refs` | `real` | `constructor` | `zero` | 6 |
-| `borrowed_ops/hyperreal/complex div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 8 |
 | `borrowed_ops/hyperreal/complex div refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
-| `borrowed_ops/hyperreal/complex div refs` | `hyperlattice_complex` | `op` | `div-numerators-fused-known-exact-rational` | 4 |
+| `borrowed_ops/hyperreal/complex div refs` | `hyperlattice_complex` | `op` | `div-components-fused-exact-rational` | 4 |
 | `borrowed_ops/hyperreal/complex div refs` | `hyperlattice_complex` | `op` | `div-ref-ref` | 4 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `add` | `word-sized` | 3 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `arithmetic-reuse` | `first-observation` | 5 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `mul` | `dyadic-general-cross-cancel` | 2 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `mul` | `wide-dyadic-word-numerators` | 2 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 6 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `mul` | `word-sized` | 12 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `product_sum` | `dyadic-shared-denominator` | 2 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `product_sum` | `word-sized` | 6 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `cached-small-dyadic` | 3 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `cached-small-integer` | 3 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `dyadic-fraction` | 5 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `small-general-fraction` | 4 |
-| `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `uncached-integer-wide` | 4 |
+| `borrowed_ops/hyperreal/complex div refs` | `rational` | `complex-quotient` | `paired-dyadic-word-sized` | 4 |
+| `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `small-general-fraction` | 6 |
 | `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `wide-general-fraction` | 2 |
-| `borrowed_ops/hyperreal/complex div refs` | `real` | `add` | `same-symbolic-basis` | 4 |
-| `borrowed_ops/hyperreal/complex div refs` | `real` | `constructor` | `rational` | 28 |
-| `borrowed_ops/hyperreal/complex div refs` | `real` | `inverse` | `prechecked-one` | 4 |
-| `borrowed_ops/hyperreal/complex div refs` | `real` | `mul` | `exact-rational` | 16 |
-| `borrowed_ops/hyperreal/complex div refs` | `real` | `product_sum` | `exact-rational-known-shared-denom` | 8 |
+| `borrowed_ops/hyperreal/complex div refs` | `real` | `constructor` | `rational` | 8 |
 | `borrowed_ops/hyperreal/complex mul refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
 | `borrowed_ops/hyperreal/complex mul refs` | `hyperlattice_complex` | `op` | `mul-components-three-product-exact-rational` | 4 |
 | `borrowed_ops/hyperreal/complex mul refs` | `hyperlattice_complex` | `op` | `mul-ref-ref` | 4 |
@@ -1696,6 +1669,22 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `complex_mul_cold/hyperreal/varying` | `rational` | `complex-product` | `paired-word-sized` | 1 |
 | `complex_mul_cold/hyperreal/varying` | `rational` | `word-result` | `dyadic-fraction` | 2 |
 | `complex_mul_cold/hyperreal/varying` | `real` | `constructor` | `rational` | 6 |
+| `complex_ops/hyperreal-rational/div` | `hyperlattice_complex` | `constructor` | `new` | 4 |
+| `complex_ops/hyperreal-rational/div` | `hyperlattice_complex` | `op` | `div-components-fused-exact-rational` | 4 |
+| `complex_ops/hyperreal-rational/div` | `hyperlattice_complex` | `op` | `div-owned-owned` | 4 |
+| `complex_ops/hyperreal-rational/div` | `rational` | `complex-quotient` | `paired-dyadic-word-sized` | 1 |
+| `complex_ops/hyperreal-rational/div` | `rational` | `complex-quotient` | `paired-general-word-sized` | 3 |
+| `complex_ops/hyperreal-rational/div` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `complex_ops/hyperreal-rational/div` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `complex_ops/hyperreal-rational/div` | `real` | `constructor` | `rational` | 8 |
+| `complex_ops/hyperreal-rational/div_checked` | `hyperlattice_complex` | `constructor` | `new` | 4 |
+| `complex_ops/hyperreal-rational/div_checked` | `hyperlattice_complex` | `method` | `div-checked` | 4 |
+| `complex_ops/hyperreal-rational/div_checked` | `hyperlattice_complex` | `op` | `div-components-fused-exact-rational` | 4 |
+| `complex_ops/hyperreal-rational/div_checked` | `rational` | `complex-quotient` | `paired-dyadic-word-sized` | 1 |
+| `complex_ops/hyperreal-rational/div_checked` | `rational` | `complex-quotient` | `paired-general-word-sized` | 3 |
+| `complex_ops/hyperreal-rational/div_checked` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `complex_ops/hyperreal-rational/div_checked` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `complex_ops/hyperreal-rational/div_checked` | `real` | `constructor` | `rational` | 8 |
 | `complex_ops/hyperreal-rational/mul` | `hyperlattice_complex` | `constructor` | `new` | 4 |
 | `complex_ops/hyperreal-rational/mul` | `hyperlattice_complex` | `op` | `mul-components-three-product-exact-rational` | 4 |
 | `complex_ops/hyperreal-rational/mul` | `hyperlattice_complex` | `op` | `mul-owned-owned` | 4 |
@@ -1813,6 +1802,20 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `complex_ops/hyperreal-rational/powi_negative_one` | `real` | `constructor` | `rational` | 20 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `real` | `inverse` | `prechecked-one` | 4 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `real` | `mul` | `exact-rational` | 16 |
+| `complex_ops/hyperreal/div` | `hyperlattice_complex` | `constructor` | `new` | 4 |
+| `complex_ops/hyperreal/div` | `hyperlattice_complex` | `op` | `div-components-fused-exact-rational` | 4 |
+| `complex_ops/hyperreal/div` | `hyperlattice_complex` | `op` | `div-owned-owned` | 4 |
+| `complex_ops/hyperreal/div` | `rational` | `complex-quotient` | `paired-dyadic-word-sized` | 4 |
+| `complex_ops/hyperreal/div` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `complex_ops/hyperreal/div` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `complex_ops/hyperreal/div` | `real` | `constructor` | `rational` | 8 |
+| `complex_ops/hyperreal/div_checked` | `hyperlattice_complex` | `constructor` | `new` | 4 |
+| `complex_ops/hyperreal/div_checked` | `hyperlattice_complex` | `method` | `div-checked` | 4 |
+| `complex_ops/hyperreal/div_checked` | `hyperlattice_complex` | `op` | `div-components-fused-exact-rational` | 4 |
+| `complex_ops/hyperreal/div_checked` | `rational` | `complex-quotient` | `paired-dyadic-word-sized` | 4 |
+| `complex_ops/hyperreal/div_checked` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `complex_ops/hyperreal/div_checked` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `complex_ops/hyperreal/div_checked` | `real` | `constructor` | `rational` | 8 |
 | `complex_ops/hyperreal/mul` | `hyperlattice_complex` | `constructor` | `new` | 4 |
 | `complex_ops/hyperreal/mul` | `hyperlattice_complex` | `op` | `mul-components-three-product-exact-rational` | 4 |
 | `complex_ops/hyperreal/mul` | `hyperlattice_complex` | `op` | `mul-owned-owned` | 4 |
