@@ -670,6 +670,28 @@ operation for `-20`. A focused `perf` profile of the large-tanh output row found
 the remaining cost in exact node construction, rational conversion, and
 allocation; the cached primitive read itself no longer appears as a hot path.
 
+### Thread-local tracing and paired word reduction
+
+Dispatch recording enablement and counters now share thread-local ownership.
+Concurrent recording scopes can reset and drain only their own events, removing
+the global mutex from every diagnostic dispatch and eliminating cross-test
+trace races. Hypercurve's two parallel dispatch tests passed 100 consecutive
+default-harness runs after this change.
+
+The exact rational aggregate layer now initializes a word LCM from its first
+live denominator, uses native `u64` binary GCD when possible, and recognizes
+2/5-smooth decimal denominators through a precomputed power table. Complex
+products can request a paired word reducer that converts four components once
+and returns `(ac - bd, ad + bc)` as two independently canonical rationals.
+Overflow and non-word inputs fall back to the existing arbitrary-precision
+signed-product reducers.
+
+These scalar changes support both cold and retained object schedules. A new
+observational reuse fact returns false on an isolated rational's first query and
+true on subsequent borrowed queries, without consulting approximations or
+altering exact arithmetic. Hyperlattice uses it to distinguish a 222.77 ns cold
+dyadic complex product from a 138.77 ns retained borrowed product.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

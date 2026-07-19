@@ -2771,6 +2771,18 @@ mod tests {
     }
 
     #[test]
+    fn exact_rational_reuse_evidence_distinguishes_isolated_and_shared_storage() {
+        let value = Real::new(Rational::fraction(1_000_003, 1_000_033).unwrap());
+        assert_eq!(value.exact_rational_reuse_evidence(), Some(false));
+        assert_eq!(value.exact_rational_reuse_evidence(), Some(true));
+
+        let shared = value.clone();
+        assert_eq!(value.exact_rational_reuse_evidence(), Some(true));
+        assert_eq!(shared.exact_rational_reuse_evidence(), Some(true));
+        assert_eq!(Real::pi().exact_rational_reuse_evidence(), None);
+    }
+
+    #[test]
     fn signed_product_sum_preserves_mixed_symbolic_products() {
         let pi = Real::pi();
         let e = Real::e();

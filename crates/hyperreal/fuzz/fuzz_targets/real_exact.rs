@@ -60,6 +60,11 @@ fuzz_target!(|input: Input| {
     let fused = Real::signed_product_sum([true, false], [[a, b], [c, &values[3]]]);
     assert_eq!(fused, (a * b) - (c * &values[3]));
 
+    let (complex_re, complex_im) =
+        Real::exact_rational_complex_product_known_exact([a, b], [c, &values[3]]);
+    assert_eq!(complex_re, (a * c) - (b * &values[3]));
+    assert_eq!(complex_im, (a * &values[3]) + (b * c));
+
     let determinant =
         Real::certified_affine_det2_sign([a, b], [c, &values[3]], [&values[4], &values[5]]);
     if let Some(prepared) = Real::prepare_affine_det2_filter([a, b], [c, &values[3]]) {

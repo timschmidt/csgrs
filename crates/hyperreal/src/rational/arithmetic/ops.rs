@@ -586,20 +586,25 @@ impl Rational {
     }
 
     #[inline]
-    fn has_linear_reuse_evidence(&self) -> bool {
-        if Arc::strong_count(&self.0) > 1 || self.linear_cache.get().is_some() {
-            return true;
-        }
-        if self
-            .linear_reuse_seen
-            .load(std::sync::atomic::Ordering::Relaxed)
+    pub(crate) fn has_arithmetic_reuse_evidence(&self) -> bool {
+        if Arc::strong_count(&self.0) > 1
+            || self.product_cache.get().is_some()
+            || self.linear_cache.get().is_some()
+            || self
+                .linear_reuse_seen
+                .load(std::sync::atomic::Ordering::Relaxed)
         {
             return true;
         }
-        crate::trace_dispatch!("rational", "linear", "reuse-observed");
+        crate::trace_dispatch!("rational", "arithmetic-reuse", "first-observation");
         self.linear_reuse_seen
             .store(true, std::sync::atomic::Ordering::Relaxed);
         false
+    }
+
+    #[inline]
+    fn has_linear_reuse_evidence(&self) -> bool {
+        self.has_arithmetic_reuse_evidence()
     }
 
     #[cold]

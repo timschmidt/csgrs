@@ -1,6 +1,5 @@
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::collections::BTreeMap;
-use std::sync::{Mutex, OnceLock};
 
 use num::{BigUint, One, Zero};
 
@@ -415,19 +414,10 @@ struct DispatchKey {
     path: &'static str,
 }
 
-static COUNTS: OnceLock<Mutex<BTreeMap<DispatchKey, u64>>> = OnceLock::new();
-static RATIONAL_STATS: OnceLock<Mutex<RationalTraceStats>> = OnceLock::new();
-
 thread_local! {
     static RECORDING: Cell<bool> = const { Cell::new(false) };
-}
-
-fn counts() -> &'static Mutex<BTreeMap<DispatchKey, u64>> {
-    COUNTS.get_or_init(|| Mutex::new(BTreeMap::new()))
-}
-
-fn rational_stats() -> &'static Mutex<RationalTraceStats> {
-    RATIONAL_STATS.get_or_init(|| Mutex::new(RationalTraceStats::default()))
+    static COUNTS: RefCell<BTreeMap<DispatchKey, u64>> = const { RefCell::new(BTreeMap::new()) };
+    static RATIONAL_STATS: RefCell<RationalTraceStats> = RefCell::new(RationalTraceStats::default());
 }
 
 fn is_recording() -> bool {
@@ -445,10 +435,7 @@ impl Drop for RecordingGuard {
 }
 
 pub fn reset() {
-    counts()
-        .lock()
-        .expect("dispatch trace lock poisoned")
-        .clear();
+    COUNTS.with(|counts| counts.borrow_mut().clear());
     reset_rational_stats();
 }
 
@@ -475,11 +462,9 @@ pub fn record(layer: &'static str, operation: &'static str, path: &'static str) 
         operation,
         path,
     };
-    *counts()
-        .lock()
-        .expect("dispatch trace lock poisoned")
-        .entry(key)
-        .or_insert(0) += 1;
+    COUNTS.with(|counts| {
+        *counts.borrow_mut().entry(key).or_insert(0) += 1;
+    });
 }
 
 fn update_peak(stats: &mut RationalTraceStats, value: &BigUint) {
@@ -504,100 +489,94 @@ pub fn record_rational_temporary() {
     if !is_recording() {
         return;
     }
-    rational_stats()
-        .lock()
-        .expect("rational trace lock poisoned")
-        .temporary_rationals += 1;
+    RATIONAL_STATS.with(|stats| stats.borrow_mut().temporary_rationals += 1);
 }
 
 pub fn record_rational_reduction(numerator: &BigUint, denominator: &BigUint) {
     if !is_recording() {
         return;
     }
-    let mut stats = rational_stats()
-        .lock()
-        .expect("rational trace lock poisoned");
-    stats.reductions += 1;
-    update_peak(&mut stats, numerator);
-    update_peak(&mut stats, denominator);
+    RATIONAL_STATS.with(|stats| {
+        let mut stats = stats.borrow_mut();
+        stats.reductions += 1;
+        update_peak(&mut stats, numerator);
+        update_peak(&mut stats, denominator);
+    });
 }
 
 pub fn record_rational_gcd(left: &BigUint, right: &BigUint, divisor: &BigUint) {
     if !is_recording() {
         return;
     }
-    let mut stats = rational_stats()
-        .lock()
-        .expect("rational trace lock poisoned");
-    stats.gcds += 1;
-    update_peak(&mut stats, left);
-    update_peak(&mut stats, right);
-    update_peak(&mut stats, divisor);
-    record_common_factor(&mut stats, divisor);
+    RATIONAL_STATS.with(|stats| {
+        let mut stats = stats.borrow_mut();
+        stats.gcds += 1;
+        update_peak(&mut stats, left);
+        update_peak(&mut stats, right);
+        update_peak(&mut stats, divisor);
+        record_common_factor(&mut stats, divisor);
+    });
 }
 
 pub fn record_rational_power_of_two_common_factor(shift: u64) {
     if !is_recording() {
         return;
     }
-    let mut stats = rational_stats()
-        .lock()
-        .expect("rational trace lock poisoned");
-    if shift == 0 {
-        stats.common_factors.none += 1;
-    } else {
-        stats.common_factors.power_of_two += 1;
-    }
+    RATIONAL_STATS.with(|stats| {
+        let mut stats = stats.borrow_mut();
+        if shift == 0 {
+            stats.common_factors.none += 1;
+        } else {
+            stats.common_factors.power_of_two += 1;
+        }
+    });
 }
 
 pub fn reset_rational_stats() {
-    *rational_stats()
-        .lock()
-        .expect("rational trace lock poisoned") = RationalTraceStats::default();
+    RATIONAL_STATS.with(|stats| *stats.borrow_mut() = RationalTraceStats::default());
 }
 
 pub fn snapshot_rational_stats() -> RationalTraceStats {
-    *rational_stats()
-        .lock()
-        .expect("rational trace lock poisoned")
+    RATIONAL_STATS.with(|stats| *stats.borrow())
 }
 
 pub fn take_rational_stats() -> RationalTraceStats {
-    let mut stats = rational_stats()
-        .lock()
-        .expect("rational trace lock poisoned");
-    let snapshot = *stats;
-    *stats = RationalTraceStats::default();
-    snapshot
+    RATIONAL_STATS.with(|stats| {
+        let mut stats = stats.borrow_mut();
+        std::mem::take(&mut *stats)
+    })
 }
 
 pub fn snapshot() -> Vec<DispatchCount> {
-    counts()
-        .lock()
-        .expect("dispatch trace lock poisoned")
-        .iter()
-        .map(|(key, count)| DispatchCount {
-            layer: key.layer,
-            operation: key.operation,
-            path: key.path,
-            count: *count,
-        })
-        .collect()
+    COUNTS.with(|counts| {
+        counts
+            .borrow()
+            .iter()
+            .map(|(key, count)| DispatchCount {
+                layer: key.layer,
+                operation: key.operation,
+                path: key.path,
+                count: *count,
+            })
+            .collect()
+    })
 }
 
 pub fn take() -> Vec<DispatchCount> {
-    let mut counts = counts().lock().expect("dispatch trace lock poisoned");
-    let snapshot = counts
-        .iter()
-        .map(|(key, count)| DispatchCount {
-            layer: key.layer,
-            operation: key.operation,
-            path: key.path,
-            count: *count,
-        })
-        .collect();
-    counts.clear();
-    snapshot
+    COUNTS.with(|counts| {
+        let mut counts = counts.borrow_mut();
+        let snapshot = counts
+            .iter()
+            .map(|(key, count)| DispatchCount {
+                layer: key.layer,
+                operation: key.operation,
+                path: key.path,
+                count: *count,
+            })
+            .collect();
+        counts.clear();
+        snapshot
+    })
 }
 
 /// Return a unified snapshot without clearing counters.
@@ -619,13 +598,9 @@ pub fn take_trace() -> TraceSnapshot {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
-
-    static TEST_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn dispatch_trace_records_only_inside_scope() {
-        let _lock = TEST_LOCK.lock().expect("dispatch trace test lock poisoned");
         reset();
         record("real", "sin", "ignored");
         assert!(snapshot().is_empty());
@@ -651,7 +626,6 @@ mod tests {
     fn rational_trace_records_reductions_and_gcds() {
         use crate::Rational;
 
-        let _lock = TEST_LOCK.lock().expect("dispatch trace test lock poisoned");
         reset();
         with_recording(|| {
             let left = Rational::fraction(6, 8).unwrap();
@@ -668,7 +642,6 @@ mod tests {
 
     #[test]
     fn unified_trace_snapshot_groups_cross_stack_counts() {
-        let _lock = TEST_LOCK.lock().expect("dispatch trace test lock poisoned");
         reset();
         with_recording(|| {
             record("hyperlimit", "resolve_real_sign", "structural-real-facts");
@@ -713,7 +686,6 @@ mod tests {
 
     #[test]
     fn correlation_summary_groups_exact_geometry_ladder_events() {
-        let _lock = TEST_LOCK.lock().expect("dispatch trace test lock poisoned");
         reset();
         with_recording(|| {
             record("hyperlimit", "orient2d", "exact-rational-kernel");
@@ -748,5 +720,29 @@ mod tests {
         assert_eq!(summary.rational_temporaries, 1);
         assert_eq!(summary.rational_reductions, 0);
         assert_eq!(summary.rational_gcds, 0);
+    }
+
+    #[test]
+    fn concurrent_recording_scopes_keep_independent_snapshots() {
+        let threads = (0..8)
+            .map(|index| {
+                std::thread::spawn(move || {
+                    reset();
+                    with_recording(|| {
+                        for _ in 0..=index {
+                            record("real", "parallel", "thread-local");
+                            record_rational_temporary();
+                        }
+                    });
+                    take_trace()
+                })
+            })
+            .collect::<Vec<_>>();
+
+        for (index, thread) in threads.into_iter().enumerate() {
+            let snapshot = thread.join().expect("recording thread panicked");
+            assert_eq!(snapshot.layer_count("real"), index as u64 + 1);
+            assert_eq!(snapshot.rational.temporary_rationals, index as u64 + 1);
+        }
     }
 }

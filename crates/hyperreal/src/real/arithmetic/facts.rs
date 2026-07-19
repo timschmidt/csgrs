@@ -72,6 +72,19 @@ impl Real {
         }
     }
 
+    /// Returns storage-level reuse evidence when this value is an exact rational.
+    ///
+    /// This is an advisory scheduling fact for aggregate arithmetic. It is true
+    /// when the rational storage is shared or already carries retained arithmetic
+    /// state, `Some(false)` for the first observation of an isolated exact
+    /// rational, and `None` for a symbolic value. The first isolated observation
+    /// is remembered so a repeated borrowed call can select a retained schedule.
+    /// It does not inspect an approximation or affect exact decisions.
+    #[inline]
+    pub fn exact_rational_reuse_evidence(&self) -> Option<bool> {
+        matches!(self.class, One).then(|| self.rational.has_arithmetic_reuse_evidence())
+    }
+
     #[inline]
     fn scaled_by_rational(&self, scale: &Rational) -> Real {
         // Keep exact rational scaling as a structural operation. This is the
@@ -166,6 +179,40 @@ impl Real {
         let rational_terms = terms.map(|term| term.map(|factor| &factor.rational));
         crate::trace_dispatch!("real", "product_sum", "exact-rational-known-shared-denom");
         Real::new(Rational::signed_product_sum(positive_terms, rational_terms))
+    }
+
+    /// Return a two-term exact-rational product sum after the caller has
+    /// already proved all four factors exact.
+    ///
+    /// This fixed-shape entry point lets complex and 2x2 determinant kernels
+    /// attempt the scalar word reducer without first entering the generic
+    /// product-shape planner.
+    pub fn exact_rational_signed_product_sum2_known_exact(
+        positive_terms: [bool; 2],
+        terms: [[&Real; 2]; 2],
+    ) -> Real {
+        let rational_terms = terms.map(|term| term.map(|factor| &factor.rational));
+        Real::new(Rational::signed_product_sum2(
+            positive_terms,
+            rational_terms,
+        ))
+    }
+
+    /// Multiply exact-rational complex component pairs after the caller has
+    /// proved all four factors exact.
+    ///
+    /// The scalar layer converts each rational storage value once and returns
+    /// `(ac - bd, ad + bc)` without exposing numerator or denominator storage
+    /// to the complex-number layer.
+    pub fn exact_rational_complex_product_known_exact(
+        left: [&Real; 2],
+        right: [&Real; 2],
+    ) -> (Real, Real) {
+        let (re, im) = Rational::complex_product_components(
+            left.map(|value| &value.rational),
+            right.map(|value| &value.rational),
+        );
+        (Real::new(re), Real::new(im))
     }
 
     /// Return a fused exact-rational product sum using a carried shared-scale

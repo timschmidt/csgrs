@@ -1,10 +1,47 @@
 impl Rational {
+    const POWERS_OF_FIVE: [u128; 56] = {
+        let mut powers = [1_u128; 56];
+        let mut index = 1;
+        while index < powers.len() {
+            powers[index] = powers[index - 1] * 5;
+            index += 1;
+        }
+        powers
+    };
+
+    #[inline]
+    fn gcd_u64(left: u64, right: u64) -> u64 {
+        if left == 0 {
+            return right;
+        }
+        if right == 0 {
+            return left;
+        }
+
+        let common_shift = left.trailing_zeros().min(right.trailing_zeros());
+        let mut left = left >> left.trailing_zeros();
+        let mut right = right;
+        loop {
+            right >>= right.trailing_zeros();
+            if left > right {
+                std::mem::swap(&mut left, &mut right);
+            }
+            right -= left;
+            if right == 0 {
+                return left << common_shift;
+            }
+        }
+    }
+
     fn gcd_word(left: u128, right: u128) -> u128 {
         if left == 0 {
             return right;
         }
         if right == 0 {
             return left;
+        }
+        if left <= u128::from(u64::MAX) && right <= u128::from(u64::MAX) {
+            return u128::from(Self::gcd_u64(left as u64, right as u64));
         }
 
         // u128 remainder is a compiler-rt software call on common 64-bit
@@ -39,14 +76,32 @@ impl Rational {
                 return Self::zero();
             }
         };
-        let (magnitude, denominator) = if denominator.is_power_of_two() {
-            let common_shift =
-                magnitude.trailing_zeros().min(denominator.trailing_zeros());
-            (magnitude >> common_shift, denominator >> common_shift)
+        if denominator.is_power_of_two() {
+            let common_shift = magnitude.trailing_zeros().min(denominator.trailing_zeros());
+            return Self::from_reduced_word_parts(
+                sign,
+                magnitude >> common_shift,
+                denominator >> common_shift,
+            );
+        }
+
+        let common_shift = magnitude.trailing_zeros().min(denominator.trailing_zeros());
+        let mut magnitude = magnitude >> common_shift;
+        let mut denominator = denominator >> common_shift;
+        let odd_denominator = denominator >> denominator.trailing_zeros();
+        if Self::POWERS_OF_FIVE
+            .binary_search(&odd_denominator)
+            .is_ok()
+        {
+            while denominator.is_multiple_of(5) && magnitude.is_multiple_of(5) {
+                denominator /= 5;
+                magnitude /= 5;
+            }
         } else {
             let divisor = Self::gcd_word(magnitude, denominator);
-            (magnitude / divisor, denominator / divisor)
-        };
+            magnitude /= divisor;
+            denominator /= divisor;
+        }
         Self::from_reduced_word_parts(sign, magnitude, denominator)
     }
 
@@ -175,7 +230,7 @@ impl Rational {
     ) -> Option<(u128, u128, u128)> {
         let mut magnitudes = [0_u128; TERMS];
         let mut denominators = [1_u128; TERMS];
-        let mut common_denominator = 1_u128;
+        let mut common_denominator = None::<u128>;
         for i in 0..TERMS {
             if signs[i] == NoSign {
                 continue;
@@ -183,10 +238,17 @@ impl Rational {
             let (magnitude, denominator) = Self::product_term_words(terms[i])?;
             magnitudes[i] = magnitude;
             denominators[i] = denominator;
-            let divisor = Self::gcd_word(common_denominator, denominator);
-            common_denominator =
-                common_denominator.checked_mul(denominator / divisor)?;
+            common_denominator = Some(match common_denominator {
+                None => denominator,
+                Some(common) if common == denominator => common,
+                Some(common) => {
+                    let divisor = Self::gcd_word(common, denominator);
+                    common.checked_mul(denominator / divisor)?
+                }
+            });
         }
+
+        let common_denominator = common_denominator.unwrap_or(1);
 
         let mut positive = 0_u128;
         let mut negative = 0_u128;
@@ -204,6 +266,92 @@ impl Rational {
             }
         }
         Some((positive, negative, common_denominator))
+    }
+
+    fn two_product_word_sum(
+        first: (Sign, u128, u128),
+        second: (Sign, u128, u128),
+    ) -> Option<Self> {
+        let common_denominator = match (first.0, second.0) {
+            (NoSign, NoSign) => return Some(Self::zero()),
+            (NoSign, _) => second.2,
+            (_, NoSign) => first.2,
+            _ if first.2 == second.2 => first.2,
+            _ => {
+                let divisor = Self::gcd_word(first.2, second.2);
+                first.2.checked_mul(second.2 / divisor)?
+            }
+        };
+        let mut positive = 0_u128;
+        let mut negative = 0_u128;
+        for (sign, magnitude, denominator) in [first, second] {
+            if sign == NoSign {
+                continue;
+            }
+            let magnitude = magnitude.checked_mul(common_denominator / denominator)?;
+            match sign {
+                Plus => positive = positive.checked_add(magnitude)?,
+                Minus => negative = negative.checked_add(magnitude)?,
+                NoSign => {}
+            }
+        }
+        Some(Self::from_word_magnitude_difference(
+            positive,
+            negative,
+            common_denominator,
+        ))
+    }
+
+    fn word_product(
+        left: (Sign, u128, u128),
+        right: (Sign, u128, u128),
+        positive: bool,
+    ) -> Option<(Sign, u128, u128)> {
+        let sign = (if positive { Plus } else { Minus }) * left.0 * right.0;
+        if sign == NoSign {
+            return Some((NoSign, 0, 1));
+        }
+        Some((
+            sign,
+            left.1.checked_mul(right.1)?,
+            left.2.checked_mul(right.2)?,
+        ))
+    }
+
+    /// Multiply two exact complex component pairs with one shared word scan.
+    ///
+    /// Returns `(ac - bd, ad + bc)` for left `(a, b)` and right `(c, d)`.
+    /// Word-sized operands convert once; wider products fall back to the
+    /// general exact signed-product reducers.
+    pub fn complex_product_components(left: [&Self; 2], right: [&Self; 2]) -> (Self, Self) {
+        let word_parts = [left[0], left[1], right[0], right[1]].map(|value| {
+            Some((
+                value.sign,
+                value.numerator.to_u128()?,
+                value.denominator.to_u128()?,
+            ))
+        });
+        if let [Some(a), Some(b), Some(c), Some(d)] = word_parts
+            && let (Some(ac), Some(bd), Some(ad), Some(bc)) = (
+                Self::word_product(a, c, true),
+                Self::word_product(b, d, false),
+                Self::word_product(a, d, true),
+                Self::word_product(b, c, true),
+            )
+            && let (Some(re), Some(im)) = (
+                Self::two_product_word_sum(ac, bd),
+                Self::two_product_word_sum(ad, bc),
+            )
+        {
+            crate::trace_dispatch!("rational", "complex-product", "paired-word-sized");
+            return (re, im);
+        }
+
+        crate::trace_dispatch!("rational", "complex-product", "paired-general-fallback");
+        (
+            Self::signed_product_sum2([true, false], [[left[0], right[0]], [left[1], right[1]]]),
+            Self::signed_product_sum2([true, true], [[left[0], right[1]], [left[1], right[0]]]),
+        )
     }
 
     fn dot_products_dyadic<const N: usize>(
@@ -542,6 +690,27 @@ impl Rational {
     ///
     /// The fraction-delay strategy keeps algebraic object shape visible before
     /// scalar expansion.
+    pub fn signed_product_sum2(
+        positive_terms: [bool; 2],
+        terms: [[&Self; 2]; 2],
+    ) -> Self {
+        let signs = [
+            Self::product_term_sign(positive_terms[0], terms[0]),
+            Self::product_term_sign(positive_terms[1], terms[1]),
+        ];
+        if let Some(word) = Self::signed_product_sum_words(terms, signs) {
+            crate::trace_dispatch!("rational", "product_sum", "fixed-two-by-two-word-sized");
+            return word;
+        }
+        crate::trace_dispatch!("rational", "product_sum", "fixed-two-by-two-fallback");
+        Self::signed_product_sum(positive_terms, terms)
+    }
+
+    /// Evaluate a fixed-size signed sum of products exactly.
+    ///
+    /// This general entry point accepts any fixed product shape. Two products
+    /// of two factors should use [`Self::signed_product_sum2`] so word-sized
+    /// complex and determinant kernels can bypass the generic shape planner.
     pub fn signed_product_sum<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
