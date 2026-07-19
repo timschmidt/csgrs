@@ -298,19 +298,12 @@ impl Rational {
             return Some(0.0);
         }
 
-        // Exact binary inputs dominate geometric filters. For denominators in
-        // binary64's normal range, their exponent is already certified by the
-        // power-of-two denominator, so avoid an exact shifted-magnitude
-        // comparison and a second BigUint-to-f64 conversion.
+        // Exact binary inputs dominate geometric filters. Combine the
+        // numerator and denominator exponents before scaling so normal results
+        // avoid an exact shifted-magnitude comparison, `powi`, and division.
         if let Some(denominator_shift) = self.dyadic_denominator_shift()
-            && denominator_shift <= 1023
+            && let Some(value) = self.normal_dyadic_f64_magnitude(denominator_shift)
         {
-            let numerator = self.numerator.to_f64()?;
-            let denominator = f64::from_bits((denominator_shift + 1023) << 52);
-            let value = numerator / denominator;
-            if !value.is_finite() {
-                return None;
-            }
             return Some(match self.sign {
                 Minus => -value,
                 NoSign => 0.0,
@@ -338,6 +331,46 @@ impl Rational {
             NoSign => 0.0,
             Plus => value,
         })
+    }
+
+    #[inline]
+    fn normal_dyadic_f64_magnitude(&self, denominator_shift: u64) -> Option<f64> {
+        let numerator_bits = self.numerator.bits();
+        let exponent = i128::from(numerator_bits - 1) - i128::from(denominator_shift);
+        if !(-1022..=1023).contains(&exponent) {
+            return None;
+        }
+
+        let high = Self::normalized_high_u64_round_to_odd(&self.numerator)?;
+        let significand = (high as f64) * f64::from_bits((1023_u64 - 63) << 52);
+        let scale_exponent = u64::try_from(exponent + 1023).ok()?;
+        let value = significand * f64::from_bits(scale_exponent << 52);
+        value.is_finite().then_some(value)
+    }
+
+    #[inline]
+    fn normalized_high_u64_round_to_odd(value: &BigUint) -> Option<u64> {
+        let bits = value.bits();
+        let mut digits = value.iter_u64_digits();
+        let highest = digits.next_back()?;
+        if bits <= 64 {
+            return Some(highest << (64 - bits));
+        }
+
+        let highest_bits = u64::from(64 - highest.leading_zeros());
+        let (mut high, discarded) = if highest_bits == 64 {
+            (highest, digits.any(|digit| digit != 0))
+        } else {
+            let next = digits.next_back().unwrap_or_default();
+            let high = (highest << (64 - highest_bits)) | (next >> highest_bits);
+            let discarded_mask = (1_u64 << highest_bits) - 1;
+            (
+                high,
+                next & discarded_mask != 0 || digits.any(|digit| digit != 0),
+            )
+        };
+        high |= u64::from(discarded);
+        Some(high)
     }
 
     /// Return an `f64` only when conversion preserves this dyadic rational exactly.

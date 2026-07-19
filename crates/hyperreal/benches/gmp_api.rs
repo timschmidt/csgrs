@@ -470,6 +470,19 @@ fn bench_rational_api(c: &mut Criterion) {
         ),
         (shared_g[0].clone() * &shared_g[1] - shared_g[2].clone() * &shared_g[3]).cmp0()
     );
+    let shared_h_refs = shared_h.iter().collect::<Vec<_>>();
+    group.bench_function(BenchmarkId::new("hyperreal", "mean_refs"), |b| {
+        b.iter(|| black_box(Rational::mean_refs(black_box(&shared_h_refs)).unwrap()))
+    });
+    group.bench_function(BenchmarkId::new("gmp", "mean_refs"), |b| {
+        b.iter(|| {
+            let sum = shared_g.iter().fold(GmpRational::new(), |mut sum, value| {
+                sum += value;
+                sum
+            });
+            black_box(sum / 4)
+        })
+    });
 
     group.finish();
 }

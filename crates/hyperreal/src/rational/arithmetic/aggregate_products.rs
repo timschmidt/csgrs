@@ -1593,6 +1593,121 @@ impl Rational {
         ))
     }
 
+    /// Return the exact arithmetic mean of borrowed rationals, reducing once.
+    ///
+    /// The denominator schedule is built across the complete input before the
+    /// final division by the number of values. This avoids reducing every
+    /// partial sum and then reducing the quotient again.
+    pub fn mean_refs(values: &[&Self]) -> Option<Self> {
+        if values.is_empty() {
+            return None;
+        }
+        let count = BigUint::from(values.len());
+        Some(Self::sum_refs_with_denominator_factor(values, &count))
+    }
+
+    fn sum_refs_with_denominator_factor(values: &[&Self], factor: &BigUint) -> Self {
+        let mut live_count = 0_usize;
+        let mut common_dyadic_shift = Some(0_u64);
+        let mut shared_denominator = None::<&BigUint>;
+        let mut equal_denominator = true;
+        for &value in values {
+            if value.sign == NoSign {
+                continue;
+            }
+            live_count += 1;
+            common_dyadic_shift = match (common_dyadic_shift, value.dyadic_denominator_shift()) {
+                (Some(current), Some(shift)) => Some(current.max(shift)),
+                _ => None,
+            };
+            match shared_denominator {
+                None => shared_denominator = Some(&value.denominator),
+                Some(shared) if shared == &value.denominator => {}
+                Some(_) => equal_denominator = false,
+            }
+        }
+        if live_count == 0 {
+            crate::trace_dispatch!("rational", "mean", "all-zero");
+            return Self::zero();
+        }
+
+        if let Some(common_shift) = common_dyadic_shift {
+            let mut positive = BigUint::ZERO;
+            let mut negative = BigUint::ZERO;
+            for &value in values {
+                if value.sign == NoSign {
+                    continue;
+                }
+                let shift = value
+                    .dyadic_denominator_shift()
+                    .expect("all live mean inputs were certified dyadic");
+                let magnitude = &value.numerator << (common_shift - shift);
+                match value.sign {
+                    Plus => positive += magnitude,
+                    Minus => negative += magnitude,
+                    NoSign => {}
+                }
+            }
+            let mut denominator = BigUint::one() << common_shift;
+            denominator *= factor;
+            crate::trace_dispatch!("rational", "mean", "dyadic-shared-denominator");
+            return Self::from_signed_magnitude_difference(positive, negative, denominator);
+        }
+
+        if equal_denominator {
+            let mut positive = BigUint::ZERO;
+            let mut negative = BigUint::ZERO;
+            for &value in values {
+                match value.sign {
+                    Plus => positive += &value.numerator,
+                    Minus => negative += &value.numerator,
+                    NoSign => {}
+                }
+            }
+            let mut denominator = shared_denominator
+                .expect("nonzero mean has a shared denominator")
+                .clone();
+            denominator *= factor;
+            crate::trace_dispatch!("rational", "mean", "equal-denominator");
+            return Self::from_signed_magnitude_difference(positive, negative, denominator);
+        }
+
+        let mut common_denominator = BigUint::one();
+        for &value in values {
+            if value.sign == NoSign {
+                continue;
+            }
+            if value.denominator != *ONE.deref() {
+                let divisor = Self::gcd_magnitudes_with_mixed_width_fast_path(
+                    &common_denominator,
+                    &value.denominator,
+                );
+                trace_rational_gcd!(&common_denominator, &value.denominator, &divisor);
+                common_denominator *= &value.denominator / &divisor;
+            }
+        }
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for &value in values {
+            if value.sign == NoSign {
+                continue;
+            }
+            let mut magnitude = value.numerator.clone();
+            if value.denominator != common_denominator {
+                magnitude *= &common_denominator / &value.denominator;
+            }
+            match value.sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+        common_denominator *= factor;
+        crate::trace_dispatch!("rational", "mean", "lcm-shared-denominator");
+        Self::from_signed_magnitude_difference(positive, negative, common_denominator)
+    }
+
     /// Evaluate a fixed-size signed sum of products exactly.
     ///
     /// Each row in `terms` is multiplied, then added or subtracted according to

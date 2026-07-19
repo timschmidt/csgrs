@@ -752,6 +752,40 @@ and fuzz-build gate. AddressSanitizer campaigns completed 1,000 rational,
 failure. All-feature Hyperlattice, Hyperlimit, Hypersolve, Hypercurve, and
 Hypermesh suites passed, as did all 304 downstream CSGRS library tests.
 
+### Combined dyadic exponents and one-reduction rational means
+
+Normal dyadic filter views now borrow the numerator's leading limbs, retain a
+sticky bit through a round-to-odd reduction, and combine numerator and
+denominator exponents before constructing binary64 scale factors. This handles
+ratios whose numerator and denominator are individually outside binary64 while
+avoiding BigUint conversion, `powi`, and division on the normal-result path.
+Subnormal and non-dyadic inputs retain the general exact-magnitude fallback. A
+5,000-case generated oracle compares the resulting bits with a 53-bit GMP/MPFR
+rounding for 65- to 2,048-bit dyadic numerators.
+
+Against the preceding direct-denominator view, seven runs of 500 fresh
+sphere/box arrangements measured:
+
+| exact Boolean | direct denominator | combined exponent | result |
+| --- | ---: | ---: | ---: |
+| union | 12,151,588,013 | 11,171,830,223 | 8.06% fewer instructions |
+| difference | 9,866,988,732 | 8,914,639,640 | 9.65% fewer instructions |
+
+`Rational::mean_refs` adds a scalar-owned exact aggregate for borrowed values.
+It scans once to select a dyadic, equal-denominator, or general LCM schedule,
+incorporates the element count into the final denominator, and canonicalizes
+only the result. Dyadic, equal-denominator, mixed-LCM, zero, wide, and empty
+schedules are checked against expanded exact arithmetic. On a four-value exact
+rational mean, Hyperreal measured 222.36--224.87 ns versus 231.29--232.21 ns
+for GMP.
+
+Validation passed all 526 all-feature library tests and every integration,
+oracle, benchmark-smoke, strict Clippy, warning-denied rustdoc, benchmark-build,
+and fuzz-build gate. AddressSanitizer campaigns completed 1,000 rational,
+1,300 Real-exact, 2,437 Real-elementary, and 1,000 Computable executions
+without failure. All-feature Hyperlattice, Hyperlimit, Hypersolve, Hypercurve,
+and Hypermesh suites passed, as did all 304 downstream CSGRS library tests.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

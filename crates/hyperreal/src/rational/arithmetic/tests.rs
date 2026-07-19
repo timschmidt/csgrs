@@ -1149,6 +1149,63 @@ mod tests {
 
         assert_eq!(positive.to_f64_lossy(), Some(expected));
         assert_eq!(negative.to_f64_lossy(), Some(-expected));
+
+        let wide_denominator = BigUint::one() << 2048_usize;
+        let wide_numerator = &wide_denominator
+            + (BigUint::one() << 1996_usize)
+            + BigUint::one();
+        let balanced = Rational::from_fraction_parts(
+            Plus,
+            wide_numerator,
+            wide_denominator,
+        );
+        assert_eq!(balanced.to_f64_lossy(), Some(1.0 + 2.0_f64.powi(-52)));
+    }
+
+    #[test]
+    fn normal_dyadic_view_matches_gmp_rounding() {
+        use rug::{Float, Integer, Rational as GmpRational, integer::Order};
+
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut checked = 0;
+        for _ in 0..5_000 {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let bits = 65_u64 + state % 1_984;
+            let mut numerator = BigUint::from(state | (1_u64 << 63)) << (bits - 64);
+            state ^= state.rotate_left(29);
+            numerator |= BigUint::from(state) << ((bits - 64) / 2);
+            numerator |= BigUint::one();
+
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let denominator_shift = state % 3_000;
+            let exponent = i128::from(numerator.bits() - 1) - i128::from(denominator_shift);
+            if !(-1022..=1023).contains(&exponent) {
+                continue;
+            }
+
+            let denominator = BigUint::one() << denominator_shift;
+            let value = Rational::from_fraction_parts(
+                Plus,
+                numerator.clone(),
+                denominator,
+            );
+            let gmp_numerator = Integer::from_digits(
+                &numerator.to_u64_digits(),
+                Order::Lsf,
+            );
+            let gmp_denominator =
+                Integer::from(1) << usize::try_from(denominator_shift).unwrap();
+            let gmp = GmpRational::from((gmp_numerator, gmp_denominator));
+            let expected = Float::with_val(53, &gmp).to_f64();
+
+            assert_eq!(value.to_f64_lossy().map(f64::to_bits), Some(expected.to_bits()));
+            checked += 1;
+        }
+        assert!(checked > 3_000);
     }
 
     #[test]
@@ -1334,6 +1391,54 @@ mod tests {
             let expanded = (&left + &right) * &half;
             assert_eq!(Rational::average_pair(&left, &right), expanded);
             assert_eq!(Rational::average_pair(&right, &left), expanded);
+        }
+    }
+
+    #[test]
+    fn mean_refs_matches_expanded_exact_arithmetic() {
+        let schedules = [
+            vec![
+                Rational::fraction(1, 8).unwrap(),
+                Rational::fraction(-5, 16).unwrap(),
+                Rational::fraction(9, 32).unwrap(),
+                Rational::zero(),
+            ],
+            vec![
+                Rational::fraction(2, 15).unwrap(),
+                Rational::fraction(-7, 15).unwrap(),
+                Rational::fraction(11, 15).unwrap(),
+            ],
+            vec![
+                Rational::fraction(5, 12).unwrap(),
+                Rational::fraction(-7, 18).unwrap(),
+                Rational::fraction(13, 35).unwrap(),
+                Rational::zero(),
+                Rational::fraction(17, 22).unwrap(),
+            ],
+            vec![
+                Rational::from_parts_raw(
+                    Plus,
+                    (BigUint::one() << 160_usize) + BigUint::one(),
+                    BigUint::one() << 220_usize,
+                ),
+                Rational::from_parts_raw(
+                    Minus,
+                    (BigUint::one() << 159_usize) + BigUint::one(),
+                    BigUint::one() << 221_usize,
+                ),
+                Rational::zero(),
+            ],
+        ];
+
+        assert_eq!(Rational::mean_refs(&[]), None);
+        for values in schedules {
+            let sum = values
+                .iter()
+                .fold(Rational::zero(), |sum, value| &sum + value);
+            let count = Rational::new(i64::try_from(values.len()).unwrap());
+            let expected = &sum / &count;
+            let refs = values.iter().collect::<Vec<_>>();
+            assert_eq!(Rational::mean_refs(&refs), Some(expected));
         }
     }
 
