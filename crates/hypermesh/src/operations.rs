@@ -562,9 +562,14 @@ impl ProjectiveCycle {
         if edge_identities.len() != points.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
+        let edges = match polygon.edges.len() {
+            len if len == points.len() => polygon.edges.as_ref().clone(),
+            1 => vec![polygon.edges[0].clone(); points.len()],
+            _ => return Err(crate::error::HypermeshError::UnknownClassification),
+        };
         Ok(Self {
             points,
-            edges: polygon.edges.as_ref().clone(),
+            edges,
             edge_identities,
             source_plane,
             source_unchanged: true,
@@ -1713,5 +1718,27 @@ mod tests {
     #[test]
     fn default_config_uses_finite_split_basis_without_a_depth_budget() {
         assert_eq!(EmberConfig::default().max_depth, usize::MAX);
+    }
+
+    #[test]
+    fn projective_cycle_expands_deferred_source_edges_on_demand() {
+        let polygon = crate::polygon::make_triangle_with_deferred_edges(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )
+        .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        assert_eq!(polygon.edges.len(), 1);
+        assert_eq!(polygon.vertex_count(), 3);
+
+        let cycle = ProjectiveCycle::from_polygon(
+            &polygon,
+            ConstructionPlaneIdentity { mesh: 0, plane: 0 },
+        )
+        .unwrap();
+        assert_eq!(cycle.edges.len(), 3);
+        assert!(cycle.edges.iter().all(|edge| edge == &polygon.support));
     }
 }

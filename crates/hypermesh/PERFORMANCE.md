@@ -544,6 +544,40 @@ ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
 benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
 campaign completed 358 `boolean_pipeline` executions without failure.
 
+## 2026-07-19: defer certified-convex source-edge placeholders
+
+Status: **kept**
+
+Certified two-convex input preparation rebuilds exact edge planes only for
+selected output fragments. Its initial triangle carriers nevertheless cloned
+the four-coefficient support plane into all three edge slots before knowing
+whether a source triangle would reach projective clipping. The carrier now
+retains one placeholder support plane. `ProjectiveCycle` expands that value to
+the source vertex count only when the triangle actually needs clipping; direct
+inside/outside transitions avoid the two unused clones entirely. Exact support
+classification, crossing construction, final edge-plane rebuilding, and output
+closure certification are unchanged.
+
+Five interleaved release runs per side forced a fresh arrangement for each of
+500 alternating CSGRS sphere/box operations:
+
+| operation | eager placeholders | deferred placeholders | result |
+| --- | ---: | ---: | ---: |
+| union | 1,238.474 ms | 1,219.832 ms | 1.51% faster |
+| difference | 1,009.196 ms | 999.312 ms | 0.98% faster |
+
+An exact algebraic alternative expanded each `(p1 - p0) x (p2 - p0)` normal
+component into one six-term product sum. It was rejected: the additional
+products outweighed delayed rational normalization, regressing union by 6.05%
+and difference by 8.83% against the retained deferred-placeholder version.
+
+Validation passed the default and all-feature matrices (956 unit tests, 59/60
+core integration tests, and 48 regressions with one benchmark smoke test
+ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
+benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
+campaign completed 362 `boolean_pipeline` executions without failure, and the
+downstream CSGRS library suite passed all 304 tests.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

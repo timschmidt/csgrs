@@ -103,10 +103,12 @@ impl ConvexPolygon {
 
     /// Returns the number of vertices.
     pub fn vertex_count(&self) -> usize {
-        self.edges.len()
+        self.known_vertices
+            .as_ref()
+            .map_or(self.edges.len(), |vertices| vertices.len())
     }
 
-    /// Returns true when this polygon has at least three edge planes and a
+    /// Returns true when this polygon has at least three vertices and a
     /// non-zero support normal.
     pub fn is_valid(&self) -> bool {
         self.vertex_count() >= 3 && self.support.is_valid()
@@ -292,7 +294,10 @@ pub(crate) fn make_triangle_with_deferred_edges(
 ) -> ConvexPolygon {
     let support = Plane::from_points(p0, p1, p2);
     ConvexPolygon {
-        edges: Arc::new(vec![support.clone(); 3]),
+        // Certified two-convex preparation needs only aligned placeholders
+        // for source edges that actually reach projective clipping. Retain one
+        // shared value here and expand it at that narrower boundary.
+        edges: Arc::new(vec![support.clone()]),
         support,
         mesh_index,
         polygon_index,
