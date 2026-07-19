@@ -62,6 +62,7 @@ impl Workload {
 fn bench_predicates(c: &mut Criterion) {
     bench_representation(c, "hyperreal", hyperreal_real);
     bench_robust_predicates(c);
+    bench_filter_cost_breakdown(c);
     bench_certified_filters(c);
     bench_prepared_construction(c);
     bench_plane_composition_filters(c);
@@ -76,6 +77,84 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_filter_cost_breakdown(c: &mut Criterion) {
+    let raw_cases = raw_orient2d_cases(Workload::Easy);
+    let cases = orient2d_cases(Workload::Easy, hyperreal_real);
+    let mut group = c.benchmark_group("filter_cost_breakdown");
+
+    group.bench_function("orient2d/robust_arithmetic", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for &(a, b, c) in &raw_cases {
+                score += determinant_score(robust::orient2d(
+                    black_box(coord2(a)),
+                    black_box(coord2(b)),
+                    black_box(coord2(c)),
+                ));
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("orient2d/exact_view_6", |bench| {
+        bench.iter(|| {
+            let mut bits = 0_u64;
+            for (a, b, c) in &cases {
+                for value in [&a.x, &a.y, &b.x, &b.y, &c.x, &c.y] {
+                    bits ^= black_box(value)
+                        .to_f64_exact_dyadic()
+                        .expect("benchmark points retain exact binary64 views")
+                        .to_bits();
+                }
+            }
+            black_box(bits)
+        });
+    });
+    group.bench_function("orient2d/lossy_cached_view_6", |bench| {
+        bench.iter(|| {
+            let mut bits = 0_u64;
+            for (a, b, c) in &cases {
+                for value in [&a.x, &a.y, &b.x, &b.y, &c.x, &c.y] {
+                    bits ^= black_box(value)
+                        .to_f64_lossy()
+                        .expect("benchmark points have finite binary64 views")
+                        .to_bits();
+                }
+            }
+            black_box(bits)
+        });
+    });
+    group.bench_function("orient2d/certified_filter", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &cases {
+                score += real_sign_score(
+                    hyperreal::Real::certified_affine_det2_sign(
+                        [&a.x, &a.y],
+                        [&b.x, &b.y],
+                        [&c.x, &c.y],
+                    )
+                    .expect("easy benchmark determinant is certified"),
+                );
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("orient2d/public_predicate", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &cases {
+                score += sign_score(black_box(orient2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                )));
+            }
+            black_box(score)
+        });
+    });
+    group.finish();
 }
 
 fn bench_robust_predicates(c: &mut Criterion) {
@@ -2586,6 +2665,15 @@ fn determinant_score(determinant: f64) -> i64 {
         -1
     } else {
         0
+    }
+}
+
+#[inline]
+fn real_sign_score(sign: hyperreal::RealSign) -> i64 {
+    match sign {
+        hyperreal::RealSign::Negative => -1,
+        hyperreal::RealSign::Zero => 0,
+        hyperreal::RealSign::Positive => 1,
     }
 }
 
