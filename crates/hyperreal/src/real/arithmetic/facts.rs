@@ -215,6 +215,23 @@ impl Real {
         (Real::new(re), Real::new(im))
     }
 
+    /// Divide exact-rational complex component pairs after the caller has
+    /// proved all four factors exact.
+    ///
+    /// This keeps conjugate-product formation, norm construction, and the two
+    /// final quotient reductions in the scalar layer. Division by an exact
+    /// zero norm returns [`Problem::DivideByZero`](crate::Problem::DivideByZero).
+    pub fn exact_rational_complex_quotient_known_exact(
+        left: [&Real; 2],
+        right: [&Real; 2],
+    ) -> Result<(Real, Real), crate::Problem> {
+        let (re, im) = Rational::complex_quotient_components(
+            left.map(|value| &value.rational),
+            right.map(|value| &value.rational),
+        )?;
+        Ok((Real::new(re), Real::new(im)))
+    }
+
     /// Return a fused exact-rational product sum using a carried shared-scale
     /// certificate.
     ///

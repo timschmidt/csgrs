@@ -318,12 +318,215 @@ impl Rational {
         ))
     }
 
-    /// Multiply two exact complex component pairs with one shared word scan.
-    ///
-    /// Returns `(ac - bd, ad + bc)` for left `(a, b)` and right `(c, d)`.
-    /// Word-sized operands convert once; wider products fall back to the
-    /// general exact signed-product reducers.
-    pub fn complex_product_components(left: [&Self; 2], right: [&Self; 2]) -> (Self, Self) {
+    fn signed_word_sum(first: (Sign, u128), second: (Sign, u128)) -> Option<(Sign, u128)> {
+        match (first.0, second.0) {
+            (NoSign, _) => Some(second),
+            (_, NoSign) => Some(first),
+            (left, right) if left == right => Some((left, first.1.checked_add(second.1)?)),
+            _ if first.1 > second.1 => Some((first.0, first.1 - second.1)),
+            _ if second.1 > first.1 => Some((second.0, second.1 - first.1)),
+            _ => Some((NoSign, 0)),
+        }
+    }
+
+    fn scaled_dyadic_word_part(
+        part: (Sign, u128, u128),
+        common_shift: u32,
+    ) -> Option<(Sign, u128, u128)> {
+        let shift = common_shift.checked_sub(part.2.trailing_zeros())?;
+        Some((part.0, part.1.checked_shl(shift)?, 1))
+    }
+
+    fn from_scaled_dyadic_quotient_component(
+        sign: Sign,
+        mut magnitude: u128,
+        mut denominator: u128,
+        scale_shift: i32,
+    ) -> Option<Self> {
+        if sign == NoSign || magnitude == 0 {
+            return Some(Self::zero());
+        }
+
+        let divisor = Self::gcd_word(magnitude, denominator);
+        magnitude /= divisor;
+        denominator /= divisor;
+        if scale_shift >= 0 {
+            let shift = scale_shift as u32;
+            let cancel = shift.min(denominator.trailing_zeros());
+            denominator >>= cancel;
+            magnitude = magnitude.checked_shl(shift - cancel)?;
+        } else {
+            let shift = scale_shift.unsigned_abs();
+            let cancel = shift.min(magnitude.trailing_zeros());
+            magnitude >>= cancel;
+            denominator = denominator.checked_shl(shift - cancel)?;
+        }
+        Some(Self::from_reduced_word_parts(
+            sign,
+            magnitude,
+            denominator,
+        ))
+    }
+
+    fn complex_dyadic_quotient_words(
+        parts: [(Sign, u128, u128); 4],
+    ) -> Option<Result<(Self, Self), crate::Problem>> {
+        if !parts.iter().all(|part| part.2.is_power_of_two()) {
+            return None;
+        }
+        let left_shift = parts[0]
+            .2
+            .trailing_zeros()
+            .max(parts[1].2.trailing_zeros());
+        let right_shift = parts[2]
+            .2
+            .trailing_zeros()
+            .max(parts[3].2.trailing_zeros());
+        let a = Self::scaled_dyadic_word_part(parts[0], left_shift)?;
+        let b = Self::scaled_dyadic_word_part(parts[1], left_shift)?;
+        let c = Self::scaled_dyadic_word_part(parts[2], right_shift)?;
+        let d = Self::scaled_dyadic_word_part(parts[3], right_shift)?;
+
+        let ac = Self::word_product(a, c, true)?;
+        let bd = Self::word_product(b, d, true)?;
+        let bc = Self::word_product(b, c, true)?;
+        let ad = Self::word_product(a, d, false)?;
+        let cc = Self::word_product(c, c, true)?;
+        let dd = Self::word_product(d, d, true)?;
+        let re = Self::signed_word_sum((ac.0, ac.1), (bd.0, bd.1))?;
+        let im = Self::signed_word_sum((bc.0, bc.1), (ad.0, ad.1))?;
+        let norm = Self::signed_word_sum((cc.0, cc.1), (dd.0, dd.1))?;
+        if norm.0 == NoSign {
+            return Some(Err(crate::Problem::DivideByZero));
+        }
+        let scale_shift = i32::try_from(right_shift).ok()? - i32::try_from(left_shift).ok()?;
+        let re = Self::from_scaled_dyadic_quotient_component(
+            re.0,
+            re.1,
+            norm.1,
+            scale_shift,
+        )?;
+        let im = Self::from_scaled_dyadic_quotient_component(
+            im.0,
+            im.1,
+            norm.1,
+            scale_shift,
+        )?;
+        crate::trace_dispatch!("rational", "complex-quotient", "paired-dyadic-word-sized");
+        Some(Ok((re, im)))
+    }
+
+    fn from_scaled_word_quotient_component(
+        sign: Sign,
+        mut magnitude: u128,
+        mut norm: u128,
+        mut scale_numerator: u128,
+        mut scale_denominator: u128,
+    ) -> Option<Self> {
+        if sign == NoSign || magnitude == 0 {
+            return Some(Self::zero());
+        }
+
+        let divisor = Self::gcd_word(magnitude, norm);
+        magnitude /= divisor;
+        norm /= divisor;
+        if scale_numerator == scale_denominator {
+            scale_numerator = 1;
+            scale_denominator = 1;
+        } else {
+            let divisor = Self::gcd_word(scale_numerator, scale_denominator);
+            scale_numerator /= divisor;
+            scale_denominator /= divisor;
+        }
+        if scale_denominator != 1 {
+            let divisor = Self::gcd_word(magnitude, scale_denominator);
+            magnitude /= divisor;
+            scale_denominator /= divisor;
+        }
+        if scale_numerator != 1 {
+            let divisor = Self::gcd_word(scale_numerator, norm);
+            scale_numerator /= divisor;
+            norm /= divisor;
+        }
+
+        Some(Self::from_reduced_word_parts(
+            sign,
+            magnitude.checked_mul(scale_numerator)?,
+            norm.checked_mul(scale_denominator)?,
+        ))
+    }
+
+    fn complex_word_quotient_words(
+        parts: [(Sign, u128, u128); 4],
+    ) -> Option<Result<(Self, Self), crate::Problem>> {
+        let left_denominator = if parts[0].2 == parts[1].2 {
+            parts[0].2
+        } else {
+            let divisor = Self::gcd_word(parts[0].2, parts[1].2);
+            parts[0].2.checked_mul(parts[1].2 / divisor)?
+        };
+        let right_denominator = if parts[2].2 == parts[3].2 {
+            parts[2].2
+        } else {
+            let divisor = Self::gcd_word(parts[2].2, parts[3].2);
+            parts[2].2.checked_mul(parts[3].2 / divisor)?
+        };
+        let a = (
+            parts[0].0,
+            parts[0].1.checked_mul(left_denominator / parts[0].2)?,
+            1,
+        );
+        let b = (
+            parts[1].0,
+            parts[1].1.checked_mul(left_denominator / parts[1].2)?,
+            1,
+        );
+        let c = (
+            parts[2].0,
+            parts[2].1.checked_mul(right_denominator / parts[2].2)?,
+            1,
+        );
+        let d = (
+            parts[3].0,
+            parts[3].1.checked_mul(right_denominator / parts[3].2)?,
+            1,
+        );
+
+        let ac = Self::word_product(a, c, true)?;
+        let bd = Self::word_product(b, d, true)?;
+        let bc = Self::word_product(b, c, true)?;
+        let ad = Self::word_product(a, d, false)?;
+        let cc = Self::word_product(c, c, true)?;
+        let dd = Self::word_product(d, d, true)?;
+        let re = Self::signed_word_sum((ac.0, ac.1), (bd.0, bd.1))?;
+        let im = Self::signed_word_sum((bc.0, bc.1), (ad.0, ad.1))?;
+        let norm = Self::signed_word_sum((cc.0, cc.1), (dd.0, dd.1))?;
+        if norm.0 == NoSign {
+            return Some(Err(crate::Problem::DivideByZero));
+        }
+        let re = Self::from_scaled_word_quotient_component(
+            re.0,
+            re.1,
+            norm.1,
+            right_denominator,
+            left_denominator,
+        )?;
+        let im = Self::from_scaled_word_quotient_component(
+            im.0,
+            im.1,
+            norm.1,
+            right_denominator,
+            left_denominator,
+        )?;
+        crate::trace_dispatch!("rational", "complex-quotient", "paired-general-word-sized");
+        Some(Ok((re, im)))
+    }
+
+    fn complex_product_components_impl(
+        left: [&Self; 2],
+        right: [&Self; 2],
+        conjugate_right: bool,
+    ) -> (Self, Self) {
         let word_parts = [left[0], left[1], right[0], right[1]].map(|value| {
             Some((
                 value.sign,
@@ -334,8 +537,8 @@ impl Rational {
         if let [Some(a), Some(b), Some(c), Some(d)] = word_parts
             && let (Some(ac), Some(bd), Some(ad), Some(bc)) = (
                 Self::word_product(a, c, true),
-                Self::word_product(b, d, false),
-                Self::word_product(a, d, true),
+                Self::word_product(b, d, conjugate_right),
+                Self::word_product(a, d, !conjugate_right),
                 Self::word_product(b, c, true),
             )
             && let (Some(re), Some(im)) = (
@@ -343,15 +546,99 @@ impl Rational {
                 Self::two_product_word_sum(ad, bc),
             )
         {
-            crate::trace_dispatch!("rational", "complex-product", "paired-word-sized");
+            crate::trace_dispatch!(
+                "rational",
+                "complex-product",
+                if conjugate_right {
+                    "paired-conjugate-word-sized"
+                } else {
+                    "paired-word-sized"
+                }
+            );
             return (re, im);
         }
 
-        crate::trace_dispatch!("rational", "complex-product", "paired-general-fallback");
-        (
-            Self::signed_product_sum2([true, false], [[left[0], right[0]], [left[1], right[1]]]),
-            Self::signed_product_sum2([true, true], [[left[0], right[1]], [left[1], right[0]]]),
-        )
+        crate::trace_dispatch!(
+            "rational",
+            "complex-product",
+            if conjugate_right {
+                "paired-conjugate-general-fallback"
+            } else {
+                "paired-general-fallback"
+            }
+        );
+        if conjugate_right {
+            (
+                Self::signed_product_sum2(
+                    [true, true],
+                    [[left[0], right[0]], [left[1], right[1]]],
+                ),
+                Self::signed_product_sum2(
+                    [false, true],
+                    [[left[0], right[1]], [left[1], right[0]]],
+                ),
+            )
+        } else {
+            (
+                Self::signed_product_sum2(
+                    [true, false],
+                    [[left[0], right[0]], [left[1], right[1]]],
+                ),
+                Self::signed_product_sum2(
+                    [true, true],
+                    [[left[0], right[1]], [left[1], right[0]]],
+                ),
+            )
+        }
+    }
+
+    /// Multiply two exact complex component pairs with one shared word scan.
+    ///
+    /// Returns `(ac - bd, ad + bc)` for left `(a, b)` and right `(c, d)`.
+    /// Word-sized operands convert once; wider products fall back to the
+    /// general exact signed-product reducers.
+    pub fn complex_product_components(left: [&Self; 2], right: [&Self; 2]) -> (Self, Self) {
+        Self::complex_product_components_impl(left, right, false)
+    }
+
+    /// Divide two exact complex component pairs with delayed canonicalization.
+    ///
+    /// The conjugate product `(ac + bd, bc - ad)` is formed with one shared
+    /// word scan, while `c² + d²` is reduced once and reused by both output
+    /// components. No approximation participates in the zero check or result.
+    pub fn complex_quotient_components(
+        left: [&Self; 2],
+        right: [&Self; 2],
+    ) -> Result<(Self, Self), crate::Problem> {
+        let word_parts = [left[0], left[1], right[0], right[1]].map(|value| {
+            Some((
+                value.sign,
+                value.numerator.to_u128()?,
+                value.denominator.to_u128()?,
+            ))
+        });
+        if let [Some(a), Some(b), Some(c), Some(d)] = word_parts
+        {
+            if let Some(result) = Self::complex_dyadic_quotient_words([a, b, c, d]) {
+                return result;
+            }
+            if let Some(result) = Self::complex_word_quotient_words([a, b, c, d]) {
+                return result;
+            }
+        }
+
+        let (re_numerator, im_numerator) =
+            Self::complex_product_components_impl(left, right, true);
+        let denominator =
+            Self::signed_product_sum2([true, true], [[right[0], right[0]], [right[1], right[1]]]);
+        if denominator.sign == NoSign {
+            return Err(crate::Problem::DivideByZero);
+        }
+        crate::trace_dispatch!("rational", "complex-quotient", "paired-exact-rational");
+        Ok((
+            &re_numerator / &denominator,
+            &im_numerator / &denominator,
+        ))
     }
 
     fn dot_products_dyadic<const N: usize>(

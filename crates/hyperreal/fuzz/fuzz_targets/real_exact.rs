@@ -65,6 +65,23 @@ fuzz_target!(|input: Input| {
     assert_eq!(complex_re, (a * c) - (b * &values[3]));
     assert_eq!(complex_im, (a * &values[3]) + (b * c));
 
+    if !c.definitely_zero() || !values[3].definitely_zero() {
+        let denominator = (c * c) + (&values[3] * &values[3]);
+        let (quotient_re, quotient_im) =
+            Real::exact_rational_complex_quotient_known_exact([a, b], [c, &values[3]])
+                .expect("nonzero exact complex denominator");
+        assert_eq!(
+            quotient_re,
+            (((a * c) + (b * &values[3])) / &denominator)
+                .expect("nonzero exact real quotient")
+        );
+        assert_eq!(
+            quotient_im,
+            (((b * c) - (a * &values[3])) / denominator)
+                .expect("nonzero exact imaginary quotient")
+        );
+    }
+
     let determinant =
         Real::certified_affine_det2_sign([a, b], [c, &values[3]], [&values[4], &values[5]]);
     if let Some(prepared) = Real::prepare_affine_det2_filter([a, b], [c, &values[3]]) {

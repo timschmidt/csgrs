@@ -1368,6 +1368,66 @@ mod tests {
     }
 
     #[test]
+    fn paired_complex_quotient_matches_independent_exact_arithmetic() {
+        let cases = [
+            [
+                Rational::fraction(3, 7).unwrap(),
+                Rational::fraction(-5, 11).unwrap(),
+                Rational::fraction(13, 17).unwrap(),
+                Rational::fraction(19, 23).unwrap(),
+            ],
+            [
+                Rational::try_from(1.0e-9_f64).unwrap(),
+                Rational::try_from(-2.0e-9_f64).unwrap(),
+                Rational::try_from(-1.0e-9_f64).unwrap(),
+                Rational::try_from(2.0e-9_f64).unwrap(),
+            ],
+        ];
+        for [a, b, c, d] in &cases {
+            let denominator = c * c + d * d;
+            let (re, im) = Rational::complex_quotient_components([a, b], [c, d]).unwrap();
+            assert_eq!(re, (a * c + b * d) / &denominator);
+            assert_eq!(im, (b * c - a * d) / &denominator);
+        }
+
+        let wide = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 170_usize) + BigUint::from(3_u8)),
+            (BigUint::one() << 149_usize) + BigUint::one(),
+        )
+        .unwrap();
+        let wide_other = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 163_usize) + BigUint::from(5_u8)),
+            (BigUint::one() << 137_usize) + BigUint::from(3_u8),
+        )
+        .unwrap();
+        let denominator = &wide_other * &wide_other + Rational::one();
+        let (re, im) = Rational::complex_quotient_components(
+            [&wide, &Rational::minus_one()],
+            [&wide_other, &Rational::one()],
+        )
+        .unwrap();
+        assert_eq!(
+            re,
+            (&wide * &wide_other - Rational::one()) / &denominator
+        );
+        assert_eq!(
+            im,
+            (-&wide_other - &wide) / &denominator
+        );
+
+        let a = &cases[0][0];
+        let b = &cases[0][1];
+
+        assert_eq!(
+            Rational::complex_quotient_components(
+                [a, b],
+                [&Rational::zero(), &Rational::zero()],
+            ),
+            Err(crate::Problem::DivideByZero),
+        );
+    }
+
+    #[test]
     fn compare() {
         assert!(Rational::one() > Rational::zero());
         assert!(Rational::new(5) > Rational::new(4));

@@ -692,6 +692,23 @@ true on subsequent borrowed queries, without consulting approximations or
 altering exact arithmetic. Hyperlattice uses it to distinguish a 222.77 ns cold
 dyadic complex product from a 138.77 ns retained borrowed product.
 
+### Common-scale exact complex quotients
+
+Exact complex division now has a scalar-owned quotient kernel. Four rational
+components are converted once, each complex pair is lifted to one common
+integer scale, and the conjugate product and norm are formed before either
+output is canonicalized. Dyadic inputs use exponent alignment and shift
+cancellation; arbitrary word denominators use two LCMs and cross-cancel the
+left/right scales before multiplication. Equal denominators and equal scales
+bypass GCD entirely. Wider values fall back to the existing arbitrary-precision
+conjugate-product, norm, and exact-division operations.
+
+This changes neither division-by-zero semantics nor representation exactness.
+In Hyperlattice's 50-sample comparison, f64-derived complex division measured
+373.81 ns and decimal-rational division 474.95 ns, versus 615.42 ns for
+Numerica128 and 22.03 us for Symbolica. Borrowed division measured 349.79 ns
+and 457.13 ns for the two Hyperreal inputs versus 503.22 ns for Numerica128.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
