@@ -2,7 +2,9 @@
 
 use std::sync::{Arc, OnceLock};
 
-use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
+use hyperlattice::{
+    HomogeneousPoint3, Point3, Rational, Real, Vector3, homogeneous_point_plane_expression,
+};
 use hyperreal::PreparedRationalLinearForm4Query;
 
 use crate::error::HypermeshResult;
@@ -62,6 +64,26 @@ impl PartialEq for BooleanArrangement {
 }
 
 impl BooleanArrangement {
+    /// Returns the retained exact source-plane normal with output orientation.
+    ///
+    /// Triangle extraction keeps a global source index and an orientation for
+    /// every emitted triangle. This accessor lets adapters reuse the support
+    /// normal already constructed during exact input preparation instead of
+    /// rebuilding the same cross product at an output boundary.
+    pub fn oriented_source_normal(&self, source: crate::output::TriangleSource) -> Option<Vector3> {
+        let index = usize::try_from(source.triangle).ok()?;
+        let polygon = self.soup.polygons.get(index)?;
+        if polygon.mesh_index != source.mesh || polygon.polygon_index != source.triangle {
+            return None;
+        }
+        let normal = polygon.support.normal.to_vector();
+        match source.orientation {
+            1 => Some(normal),
+            -1 => Some(-normal),
+            _ => None,
+        }
+    }
+
     /// Extracts and closure-certifies one Boolean operation from this
     /// arrangement's stored front/back winding evidence.
     pub fn extract(&self, op: BooleanOp) -> HypermeshResult<BooleanResult> {

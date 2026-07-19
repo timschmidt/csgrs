@@ -3,11 +3,11 @@ use hypermesh::bvh::bounds_overlap;
 use hypermesh::clip::{ClipSide, clip_polygon};
 use hypermesh::{
     BooleanOp, Classification, EmberConfig, HypermeshError, MeshRef, Plane, SubdivisionConfig,
-    SubdivisionTask, Triangle, boolean_operation, build_boolean_arrangement,
+    SubdivisionTask, Triangle, TriangleSource, boolean_operation, build_boolean_arrangement,
     certify_output_polygon_closure, classify_leaf_polygon, classify_point, classify_polygon_output,
     intersect_polygons, make_indicator, make_quad, make_triangle, prepare_boolean_operations,
-    prepare_input, process_leaf_into, subdivide, trace_axis_segment, trace_segment,
-    triangulate_and_resolve_certified,
+    prepare_boolean_operations_with_certified_convex_inputs, prepare_input, process_leaf_into,
+    subdivide, trace_axis_segment, trace_segment, triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -1065,6 +1065,61 @@ fn reusable_arrangement_shares_certified_extraction_cache_across_clones() {
         .unwrap();
 
     assert!(std::sync::Arc::ptr_eq(&first, &second));
+}
+
+#[test]
+fn reusable_arrangement_exposes_oriented_source_normals() {
+    let left = cube_mesh(0, 2);
+    let right = cube_mesh(1, 3);
+    let meshes = [left.as_ref(), right.as_ref()];
+    let arrangement = prepare_boolean_operations_with_certified_convex_inputs(
+        &meshes,
+        &[BooleanOp::Union],
+        &[true, true],
+        EmberConfig::default(),
+    )
+    .unwrap();
+    let soup = arrangement.extract_triangle_soup(BooleanOp::Union).unwrap();
+    let source = soup.sources[0];
+    let source_index = usize::try_from(source.triangle).unwrap();
+    let (mesh, triangle_index) = if source.mesh == 0 {
+        (&left, source_index)
+    } else {
+        (&right, source_index - left.triangles.len())
+    };
+    let triangle = mesh.triangles[triangle_index].indices();
+    let expected = Plane::from_points(
+        &mesh.positions[triangle[0]],
+        &mesh.positions[triangle[1]],
+        &mesh.positions[triangle[2]],
+    )
+    .normal
+    .to_vector();
+    let expected = if source.orientation == 1 {
+        expected
+    } else {
+        -expected
+    };
+
+    assert_eq!(
+        arrangement.oriented_source_normal(source),
+        Some(expected),
+        "{source:?}"
+    );
+    assert_eq!(
+        arrangement.oriented_source_normal(TriangleSource {
+            orientation: 0,
+            ..source
+        }),
+        None
+    );
+    assert_eq!(
+        arrangement.oriented_source_normal(TriangleSource {
+            triangle: -1,
+            ..source
+        }),
+        None
+    );
 }
 
 #[test]

@@ -700,6 +700,45 @@ builds, and the release WASM demo. A 20-second ASAN campaign completed 376
 `boolean_pipeline` executions without failure, and the downstream CSGRS library
 suite passed all 304 tests.
 
+## 2026-07-19: center expanded fans from source geometry
+
+Status: **kept**
+
+An exact T-junction expands a convex polygon's emitted boundary but does not
+change the polygon interior. The closure-preserving triangle fan therefore now
+chooses its center from the original polygon vertex cycle instead of averaging
+every inserted boundary point. The center remains a strict convex combination
+inside the same support plane, while the exact fan boundary, triangle count,
+source provenance, and represented surface remain unchanged. A focused
+regression inserts a midpoint into a source triangle edge and verifies that the
+fan retains the source triangle's exact `(2/3, 2/3, 0)` centroid.
+
+Preserved release binaries each prepared 500 fresh sphere/box arrangements.
+Seven counter runs measured:
+
+| operation | expanded-boundary mean | source-cycle mean | result |
+| --- | ---: | ---: | ---: |
+| union | 10,664,618,650 | 9,926,385,863 | 6.92% fewer instructions |
+| difference | 8,599,114,266 | 8,294,119,288 | 3.55% fewer instructions |
+
+Cycles fell 4.91% for union and 2.79% for difference. A two-midpoint dyadic
+interior point was rejected after increasing union instructions by 0.81%.
+
+Certified convex arrangements now also expose the already-constructed exact
+source support normal by global source triangle and output orientation. The
+lookup validates retained source identity and returns no value for general
+arrangements that consumed their source polygon carrier. This lets downstream
+adapters reuse exact support work without adding normals to `TriangleSoup` or
+changing its public storage contract.
+
+Validation passed the default and all-feature matrices (958 unit tests, 60/61
+core integration tests, and 48 regressions plus one intentional benchmark
+ignore), the no-default-feature check, warning-denied Clippy and rustdoc,
+benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
+campaign completed 352 `boolean_pipeline` executions without failure. The
+downstream CSGRS default and all-feature suites passed all 305/369 library tests
+and their integration tests.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

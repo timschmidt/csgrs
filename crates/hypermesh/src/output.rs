@@ -671,7 +671,7 @@ where
             continue;
         }
         let polygon_triangles = if boundary.len() > indexed.len() {
-            let center = append_output_polygon_centroid(&mut vertices, &boundary)?;
+            let center = append_output_polygon_centroid(&mut vertices, &indexed)?;
             (0..boundary.len())
                 .map(|index| {
                     [
@@ -2603,6 +2603,32 @@ mod tests {
                 reverse: 2,
             })
         );
+    }
+
+    #[test]
+    fn expanded_boundary_fan_uses_source_polygon_centroid() {
+        let polygons = vec![
+            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, -1, 0), 0, 1),
+            make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(2, -1, 0), 0, 2),
+        ];
+
+        let (soup, _) = triangulate_closed_polygon_arrangement(
+            &polygons,
+            &[1, 1, 1],
+            None,
+            false,
+            false,
+            false,
+        )
+        .unwrap();
+        let two_thirds = Real::from(Rational::fraction(2, 3).unwrap());
+
+        assert!(soup.vertices.contains(&OutputVertex {
+            x: two_thirds.clone(),
+            y: two_thirds,
+            z: Real::zero(),
+        }));
     }
 
     #[test]
