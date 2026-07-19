@@ -1,5 +1,6 @@
 //! Boolean result extraction and triangulation helpers.
 
+use std::borrow::Borrow;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::error::{HypermeshError, HypermeshResult};
@@ -578,14 +579,17 @@ fn boolean_result_has_complete_orientation_evidence(result: &BooleanResult) -> b
         && result.winding_pairs.iter().all(Option::is_some)
 }
 
-fn triangulate_closed_polygon_arrangement(
-    polygons: &[ConvexPolygon],
+fn triangulate_closed_polygon_arrangement<P>(
+    polygons: &[P],
     orientations: &[i8],
     polygon_windings: Option<&[WindingPair]>,
     prefer_precomputed_f64_scan: bool,
     prefer_construction_candidates: bool,
     filter_recovery_candidates: bool,
-) -> HypermeshResult<(TriangleSoup, Vec<WindingPair>)> {
+) -> HypermeshResult<(TriangleSoup, Vec<WindingPair>)>
+where
+    P: Borrow<ConvexPolygon>,
+{
     if polygons.len() != orientations.len() {
         return Err(HypermeshError::UnknownClassification);
     }
@@ -613,6 +617,7 @@ fn triangulate_closed_polygon_arrangement(
         .zip(orientations.iter().copied())
         .enumerate()
     {
+        let polygon = polygon.borrow();
         if orientation == 0 {
             continue;
         }
@@ -760,7 +765,7 @@ fn triangulate_preclassified_arrangement_construction_candidates_with_recovery(
 ) -> HypermeshResult<TriangleSoup> {
     let polygons = classified
         .iter()
-        .map(|classified| classified.polygon.clone())
+        .map(|classified| &classified.polygon)
         .collect::<Vec<_>>();
     let orientations = classified
         .iter()
@@ -797,7 +802,7 @@ fn triangulate_classified_arrangement_with_strategy(
 ) -> HypermeshResult<ClassifiedTriangleArrangement> {
     let polygons = classified
         .iter()
-        .map(|classified| classified.polygon.clone())
+        .map(|classified| &classified.polygon)
         .collect::<Vec<_>>();
     let windings = classified
         .iter()
@@ -1048,14 +1053,18 @@ fn merge_duplicate_polygon_vertices(
     (vertices, indexed_polygons)
 }
 
-fn merge_duplicate_convex_polygon_vertices(
-    polygons: &[ConvexPolygon],
-) -> HypermeshResult<(Vec<OutputVertex>, Vec<Vec<usize>>)> {
+fn merge_duplicate_convex_polygon_vertices<P>(
+    polygons: &[P],
+) -> HypermeshResult<(Vec<OutputVertex>, Vec<Vec<usize>>)>
+where
+    P: Borrow<ConvexPolygon>,
+{
     let mut positions = Vec::new();
     let mut indexed_polygons = Vec::with_capacity(polygons.len());
     let mut flat_index = 0usize;
 
     for (polygon_index, polygon) in polygons.iter().enumerate() {
+        let polygon = polygon.borrow();
         let points = polygon.vertices()?;
         indexed_polygons.push(vec![0; points.len()]);
         for (vertex_index, point) in points.into_iter().enumerate() {
@@ -1185,10 +1194,13 @@ struct ConstructionEdgeCandidateGroup {
     same_plane: Vec<usize>,
 }
 
-fn build_construction_edge_candidates(
-    polygons: &[ConvexPolygon],
+fn build_construction_edge_candidates<P>(
+    polygons: &[P],
     indexed_polygons: &[Vec<usize>],
-) -> HypermeshResult<ConstructionEdgeCandidates> {
+) -> HypermeshResult<ConstructionEdgeCandidates>
+where
+    P: Borrow<ConvexPolygon>,
+{
     if polygons.len() != indexed_polygons.len() {
         return Err(HypermeshError::UnknownClassification);
     }
@@ -1199,6 +1211,7 @@ fn build_construction_edge_candidates(
     let mut groups: Vec<ConstructionEdgeCandidateGroup> = Vec::new();
     let mut polygon_edges = Vec::with_capacity(polygons.len());
     for (polygon, indexed) in polygons.iter().zip(indexed_polygons) {
+        let polygon = polygon.borrow();
         let identities = polygon
             .known_edge_identities
             .as_ref()

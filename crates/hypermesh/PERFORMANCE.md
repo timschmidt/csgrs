@@ -578,6 +578,39 @@ benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
 campaign completed 362 `boolean_pipeline` executions without failure, and the
 downstream CSGRS library suite passed all 304 tests.
 
+## 2026-07-19: borrow classified polygons during triangulation
+
+Status: **kept**
+
+The arrangement already owns every classified polygon through final triangle
+extraction. The construction-candidate triangulator nevertheless cloned the
+whole polygon set into a temporary vector, including exact support coefficients
+and winding vectors, before immediately borrowing those clones. Its internal
+polygon consumers now accept either owned or borrowed carriers and the two
+classified-arrangement entry points pass references. Vertex materialization,
+exact duplicate merging, construction-edge T-junction recovery, orientation,
+and closure certification are unchanged.
+
+Five interleaved release runs per side forced a fresh arrangement for each of
+500 alternating CSGRS sphere/box operations:
+
+| operation | cloned polygons | borrowed polygons | result |
+| --- | ---: | ---: | ---: |
+| union | 1,235.264 ms | 1,224.814 ms | 0.85% faster |
+| difference | 995.178 ms | 987.234 ms | 0.80% faster |
+
+A follow-up that also borrowed each polygon's retained vertex cycle was
+rejected. Avoiding its temporary `Vec<Point3>` changed union by -0.10% and
+difference by +0.06%, which is noise, while adding a second materialization
+branch.
+
+Validation passed the default and all-feature matrices (956 unit tests, 59/60
+core integration tests, and 48 regressions with one benchmark smoke test
+ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
+benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
+campaign completed 359 `boolean_pipeline` executions without failure, and the
+downstream CSGRS library suite passed all 304 tests.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:
