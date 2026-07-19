@@ -516,6 +516,34 @@ ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
 benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
 campaign completed 371 `boolean_pipeline` executions without failure.
 
+## 2026-07-19: keep unselected union fragments recovery-only
+
+Status: **kept for union**
+
+Union needs vertices from unselected arrangement fragments to split selected
+boundaries at exact T-junctions, but it does not need to triangulate those
+fragments, clone their winding vectors onto every triangle, and then copy the
+selected triangle list. The single-union path now classifies each fragment
+once. Zero-classification fragments remain in the merged vertex pool and
+construction-candidate index but skip boundary triangulation; selected
+fragments emit triangles in their final exact orientation. Closure is still
+certified, and any failure retains the existing classified-triangle fallback.
+XOR remains on its prior path because the broader experiment did not improve
+it.
+
+A 301-pair fresh-process release A/B isolated the CSGRS sphere/box union and
+alternated the preserved binaries. Every output size and checksum matched:
+
+| operation | classified triangle selection | recovery-only fragments | result |
+| --- | ---: | ---: | ---: |
+| union | 4.272108 ms | 4.248489 ms | 0.55% faster |
+
+Validation passed the default and all-feature matrices (955 unit tests, 59/60
+core integration tests, and 48 regressions with one benchmark smoke test
+ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
+benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
+campaign completed 358 `boolean_pipeline` executions without failure.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

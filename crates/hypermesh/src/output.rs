@@ -613,6 +613,9 @@ fn triangulate_closed_polygon_arrangement(
         .zip(orientations.iter().copied())
         .enumerate()
     {
+        if orientation == 0 {
+            continue;
+        }
         if indexed.len() < 3 {
             continue;
         }
@@ -732,15 +735,42 @@ pub(crate) fn triangulate_preclassified_arrangement_construction_candidates(
     classified: &[ClassifiedPolygon],
     filter_recovery_candidates: bool,
 ) -> HypermeshResult<TriangleSoup> {
+    triangulate_preclassified_arrangement_construction_candidates_with_recovery(
+        classified,
+        filter_recovery_candidates,
+        false,
+    )
+}
+
+pub(crate) fn triangulate_selected_preclassified_arrangement_construction_candidates(
+    classified: &[ClassifiedPolygon],
+    filter_recovery_candidates: bool,
+) -> HypermeshResult<TriangleSoup> {
+    triangulate_preclassified_arrangement_construction_candidates_with_recovery(
+        classified,
+        filter_recovery_candidates,
+        true,
+    )
+}
+
+fn triangulate_preclassified_arrangement_construction_candidates_with_recovery(
+    classified: &[ClassifiedPolygon],
+    filter_recovery_candidates: bool,
+    retain_unselected_recovery: bool,
+) -> HypermeshResult<TriangleSoup> {
     let polygons = classified
         .iter()
         .map(|classified| classified.polygon.clone())
         .collect::<Vec<_>>();
     let orientations = classified
         .iter()
-        .map(|classified| match classified.classification {
-            orientation @ (-1 | 1) => Ok(orientation),
-            _ => Err(HypermeshError::UnknownClassification),
+        .map(|classified| {
+            let orientation = classified.classification;
+            if matches!(orientation, -1 | 1) || (retain_unselected_recovery && orientation == 0) {
+                Ok(orientation)
+            } else {
+                Err(HypermeshError::UnknownClassification)
+            }
         })
         .collect::<HypermeshResult<Vec<_>>>()?;
     let (mut soup, _) = triangulate_closed_polygon_arrangement(

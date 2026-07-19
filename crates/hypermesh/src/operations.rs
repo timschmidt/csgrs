@@ -1143,31 +1143,41 @@ fn prepare_two_convex_inputs_projectively(
     }
 
     let triangle_soups = if let [operation] = operations {
-        let soup = if matches!(operation, BooleanOp::Difference | BooleanOp::Intersection) {
+        if *operation != BooleanOp::SymmetricDifference {
             let indicator = make_indicator(*operation, support_planes.len());
             for fragment in &mut classified {
                 let winding = fragment
                     .winding()
                     .ok_or(crate::error::HypermeshError::UnknownClassification)?;
-                let classification = crate::winding::classify_polygon_output(
+                fragment.classification = crate::winding::classify_polygon_output(
                     &winding.w_front,
                     &winding.w_back,
                     &indicator,
                 );
-                if !matches!(classification, -1 | 1) {
-                    return Ok(None);
-                }
-                fragment.classification = classification;
+            }
+        }
+        let soup = if matches!(operation, BooleanOp::Difference | BooleanOp::Intersection) {
+            if classified
+                .iter()
+                .any(|fragment| !matches!(fragment.classification, -1 | 1))
+            {
+                return Ok(None);
             }
             crate::output::triangulate_preclassified_arrangement_construction_candidates(
                 &classified,
                 false,
             )
             .and_then(certify_triangle_soup_closure)
+        } else if *operation == BooleanOp::Union {
+            crate::output::triangulate_selected_preclassified_arrangement_construction_candidates(
+                &classified,
+                true,
+            )
+            .and_then(certify_triangle_soup_closure)
         } else {
             crate::output::triangulate_classified_arrangement_construction_candidates(
                 &classified,
-                matches!(operation, BooleanOp::Union | BooleanOp::SymmetricDifference),
+                true,
             )
             .and_then(|triangles| {
                 select_triangle_arrangement(&triangles, *operation, support_planes.len())
