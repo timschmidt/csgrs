@@ -125,6 +125,17 @@ fn univariate_quadratic_problem(row_count: usize) -> Problem {
     problem
 }
 
+fn sqrt_two_quadratic_problem() -> Problem {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", r(1));
+    problem.add_constraint(Constraint::equality(
+        "x squared minus two",
+        x.clone() * x - Expr::int(2),
+    ));
+    problem
+}
+
 fn multivariate_quadratic_problem(row_count: usize) -> Problem {
     let x = Expr::symbol(SymbolId(0), "x");
     let y = Expr::symbol(SymbolId(1), "y");
@@ -4552,6 +4563,11 @@ fn certification(c: &mut Criterion) {
     let quadratic_context = context_from_problem(&quadratic_problem);
     c.bench_function("solve_direct_univariate_quadratic_rows", |b| {
         b.iter(|| solve_direct_univariate_quadratic_equalities(&prepared_quadratic))
+    });
+    let sqrt_two_problem = sqrt_two_quadratic_problem();
+    let prepared_sqrt_two = PreparedProblem::new(&sqrt_two_problem);
+    c.bench_function("competitor_exact_quadratic_roots/hypersolve", |b| {
+        b.iter(|| solve_direct_univariate_quadratic_equalities(&prepared_sqrt_two))
     });
     c.bench_function("certify_direct_univariate_quadratic_roots", |b| {
         b.iter(|| {

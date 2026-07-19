@@ -406,6 +406,70 @@ pub enum DirectSolveError {
     },
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum DirectQuadraticRootError {
+    ZeroQuadratic,
+    UnknownQuadraticSign,
+    UnsupportedDivision,
+    UnsupportedSquareRoot,
+}
+
+pub(crate) fn direct_quadratic_roots(
+    quadratic: &Real,
+    linear: &Real,
+    constant: &Real,
+) -> Result<Vec<Real>, DirectQuadraticRootError> {
+    let quadratic_sign = match quadratic.structural_facts().sign {
+        Some(RealSign::Zero) => return Err(DirectQuadraticRootError::ZeroQuadratic),
+        Some(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+        None => return Err(DirectQuadraticRootError::UnknownQuadraticSign),
+    };
+
+    if linear.structural_facts().sign == Some(RealSign::Zero) {
+        let radicand = (-constant.clone() / quadratic.clone())
+            .map_err(|_| DirectQuadraticRootError::UnsupportedDivision)?;
+        return match radicand.structural_facts().sign {
+            Some(RealSign::Negative) => Ok(Vec::new()),
+            Some(RealSign::Zero) => Ok(vec![Real::zero()]),
+            Some(RealSign::Positive) | None => {
+                let root = radicand
+                    .sqrt()
+                    .map_err(|_| DirectQuadraticRootError::UnsupportedSquareRoot)?;
+                let negative_root = -root.clone();
+                if quadratic_sign == RealSign::Positive {
+                    Ok(vec![root, negative_root])
+                } else {
+                    Ok(vec![negative_root, root])
+                }
+            }
+        };
+    }
+
+    let discriminant =
+        linear.clone() * linear.clone() - Real::from(4) * quadratic.clone() * constant.clone();
+    match discriminant.structural_facts().sign {
+        Some(RealSign::Negative) => Ok(Vec::new()),
+        Some(RealSign::Zero) => {
+            let denominator = quadratic.clone() + quadratic.clone();
+            Ok(vec![(-linear.clone() / denominator).map_err(|_| {
+                DirectQuadraticRootError::UnsupportedDivision
+            })?])
+        }
+        Some(RealSign::Positive) | None => {
+            let sqrt = discriminant
+                .sqrt()
+                .map_err(|_| DirectQuadraticRootError::UnsupportedSquareRoot)?;
+            let denominator = quadratic.clone() + quadratic.clone();
+            let negative_linear = -linear.clone();
+            let first = ((negative_linear.clone() + sqrt.clone()) / denominator.clone())
+                .map_err(|_| DirectQuadraticRootError::UnsupportedDivision)?;
+            let second = ((negative_linear - sqrt) / denominator)
+                .map_err(|_| DirectQuadraticRootError::UnsupportedDivision)?;
+            Ok(vec![first, second])
+        }
+    }
+}
+
 /// Solve a square active affine equality system exactly.
 ///
 /// This helper is intentionally stricter than the lossy dense solver: every
@@ -612,7 +676,8 @@ fn direct_affine_system_report(
 pub fn solve_direct_univariate_quadratic_equalities(
     prepared: &PreparedProblem<'_>,
 ) -> Result<Vec<DirectQuadraticSolution>, DirectSolveError> {
-    let mut solutions = Vec::new();
+    let mut solutions =
+        Vec::with_capacity(prepared.facts().prepared_univariate_quadratic_active_rows);
     for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
@@ -620,10 +685,14 @@ pub fn solve_direct_univariate_quadratic_equalities(
         let Some(quadratic) = &prepared.univariate_quadratic_residuals()[constraint_index] else {
             continue;
         };
-        match quadratic.quadratic().structural_facts().sign {
-            Some(RealSign::Zero) => continue,
-            Some(RealSign::Negative | RealSign::Positive) => {}
-            None => {
+        let roots = match direct_quadratic_roots(
+            quadratic.quadratic(),
+            quadratic.linear(),
+            quadratic.constant(),
+        ) {
+            Ok(roots) => roots,
+            Err(DirectQuadraticRootError::ZeroQuadratic) => continue,
+            Err(DirectQuadraticRootError::UnknownQuadraticSign) => {
                 return Err(DirectSolveError::UnknownCoefficientSign {
                     constraint_index,
                     variable_column: prepared
@@ -634,31 +703,11 @@ pub fn solve_direct_univariate_quadratic_equalities(
                         .unwrap_or(0),
                 });
             }
-        }
-
-        let four = Real::from(4);
-        let two = Real::from(2);
-        let discriminant = quadratic.linear().clone() * quadratic.linear().clone()
-            - four * quadratic.quadratic().clone() * quadratic.constant().clone();
-        let roots = match discriminant.structural_facts().sign {
-            Some(RealSign::Negative) => Vec::new(),
-            Some(RealSign::Zero) => {
-                let denominator = two * quadratic.quadratic().clone();
-                vec![
-                    (-quadratic.linear().clone() / denominator)
-                        .map_err(|_| DirectSolveError::UnsupportedDivision { constraint_index })?,
-                ]
+            Err(DirectQuadraticRootError::UnsupportedDivision) => {
+                return Err(DirectSolveError::UnsupportedDivision { constraint_index });
             }
-            Some(RealSign::Positive) | None => {
-                let sqrt = discriminant
-                    .sqrt()
-                    .map_err(|_| DirectSolveError::UnsupportedSquareRoot { constraint_index })?;
-                let denominator = two * quadratic.quadratic().clone();
-                let first = (((-quadratic.linear().clone()) + sqrt.clone()) / denominator.clone())
-                    .map_err(|_| DirectSolveError::UnsupportedDivision { constraint_index })?;
-                let second = (((-quadratic.linear().clone()) - sqrt) / denominator)
-                    .map_err(|_| DirectSolveError::UnsupportedDivision { constraint_index })?;
-                vec![first, second]
+            Err(DirectQuadraticRootError::UnsupportedSquareRoot) => {
+                return Err(DirectSolveError::UnsupportedSquareRoot { constraint_index });
             }
         };
         solutions.push(DirectQuadraticSolution {

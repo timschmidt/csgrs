@@ -36,7 +36,9 @@ fuzz_target!(|data: [i16; 2]| {
     );
     assert_eq!(
         report.status,
-        if root >= bound {
+        // An inactive inequality must be strictly satisfied; equality is a
+        // binding-mask mismatch even when the positive root is feasible.
+        if root > bound {
             ActiveSetQuadraticRegenerationStatus::Certified
         } else {
             ActiveSetQuadraticRegenerationStatus::RejectedCandidate

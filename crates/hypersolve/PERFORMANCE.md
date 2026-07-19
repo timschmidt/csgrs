@@ -45,6 +45,22 @@ are regression evidence for these workloads, not portable absolute claims.
 | Degree-64 polynomial versus constant resultant | 6.397 us | 1.710 us | 73.3% faster |
 | Sparse arrowhead solve, 32 x 32 | 4.901 ms authored | 0.790 ms minimum degree | 83.9% faster |
 | Sparse tridiagonal solve, 32 x 32 | 315.46 us authored | 388.12 us minimum degree | 23.0% slower |
+| Exact roots of `x^2 - 2`, Hypersolve versus CGAL 6.0.3 | 428.90 ns CGAL median | 270.97 ns Hypersolve estimate | 36.8% faster |
+
+The exact-quadratic competitor row compares Hypersolve's public prepared-row
+solver with CGAL's exact `Gmpq`
+[`compute_roots_of_2`](https://doc.cgal.org/latest/Number_types/group__nt__ralgebraic.html)
+API. Both construct both irrational roots of `x^2 - 2`; the Hypersolve result
+additionally retains the source constraint index and symbol. Run the Criterion
+`competitor_exact_quadratic_roots/hypersolve` filter and
+`bash benches/competitors/run_cgal_quadratic.sh` to reproduce the paired release
+measurements. The retained zero-linear fast path constructs
+`sqrt(-c/a)` directly, preserves the generic quadratic formula's root order for
+both signs of `a`, and falls back to the unchanged discriminant path otherwise.
+Open CASCADE's corresponding
+[`math_DirectPolynomialRoots`](https://dev.opencascade.org/doc/refman/html/classmath___direct_polynomial_roots.html)
+constructor consumes `double`, so it is a lossy proposal baseline rather than a
+correctness-equivalent competitor for this exact row.
 
 The sparse-solve result has two independently measured increments. Reusing the
 certified symbolic rows for numeric elimination improved 4.325 us to 4.115 us

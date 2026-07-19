@@ -7,11 +7,12 @@
 //! through exact residual certification before it can be treated as certified.
 //!
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
 use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
 };
+use crate::direct::{DirectQuadraticRootError, direct_quadratic_roots};
 use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
 use crate::prepared::PreparedProblem;
@@ -140,7 +141,19 @@ pub fn enumerate_direct_univariate_quadratic_branches_with_config(
             quadratic.constant(),
         ) {
             Ok(roots) => roots,
-            Err(status) => {
+            Err(error) => {
+                let status = match error {
+                    DirectQuadraticRootError::ZeroQuadratic => ExactBranchStatus::UnsupportedRow,
+                    DirectQuadraticRootError::UnknownQuadraticSign => {
+                        ExactBranchStatus::UnsupportedCoefficientSign
+                    }
+                    DirectQuadraticRootError::UnsupportedDivision => {
+                        ExactBranchStatus::UnsupportedDivision
+                    }
+                    DirectQuadraticRootError::UnsupportedSquareRoot => {
+                        ExactBranchStatus::UnsupportedSquareRoot
+                    }
+                };
                 report.unsupported_rows += 1;
                 report.branches.push(ExactSolutionBranch {
                     constraint_index,
@@ -190,42 +203,4 @@ pub fn enumerate_direct_univariate_quadratic_branches_with_config(
     }
 
     report
-}
-
-fn direct_quadratic_roots(
-    quadratic: &Real,
-    linear: &Real,
-    constant: &Real,
-) -> Result<Vec<Real>, ExactBranchStatus> {
-    match quadratic.structural_facts().sign {
-        Some(RealSign::Zero) => return Err(ExactBranchStatus::UnsupportedRow),
-        Some(RealSign::Negative | RealSign::Positive) => {}
-        None => return Err(ExactBranchStatus::UnsupportedCoefficientSign),
-    }
-
-    let four = Real::from(4);
-    let two = Real::from(2);
-    let discriminant =
-        linear.clone() * linear.clone() - four * quadratic.clone() * constant.clone();
-    match discriminant.structural_facts().sign {
-        Some(RealSign::Negative) => Ok(Vec::new()),
-        Some(RealSign::Zero) => {
-            let denominator = two * quadratic.clone();
-            Ok(vec![
-                (-linear.clone() / denominator)
-                    .map_err(|_| ExactBranchStatus::UnsupportedDivision)?,
-            ])
-        }
-        Some(RealSign::Positive) | None => {
-            let sqrt = discriminant
-                .sqrt()
-                .map_err(|_| ExactBranchStatus::UnsupportedSquareRoot)?;
-            let denominator = two * quadratic.clone();
-            let first = (((-linear.clone()) + sqrt.clone()) / denominator.clone())
-                .map_err(|_| ExactBranchStatus::UnsupportedDivision)?;
-            let second = (((-linear.clone()) - sqrt) / denominator)
-                .map_err(|_| ExactBranchStatus::UnsupportedDivision)?;
-            Ok(vec![first, second])
-        }
-    }
 }

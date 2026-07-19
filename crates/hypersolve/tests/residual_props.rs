@@ -5963,17 +5963,20 @@ proptest! {
     fn direct_quadratic_solver_generated_integer_roots_replay_exactly(
         first in -16_i16..=16,
         second in -16_i16..=16,
+        scale in prop_oneof![-8_i16..=-1, 1_i16..=8],
     ) {
         let x = Expr::symbol(SymbolId(0), "x");
         let first = i64::from(first);
         let second = i64::from(second);
+        let scale = i64::from(scale);
         let mut problem = Problem::default();
         problem.add_variable("x", Real::from(0));
         problem.add_constraint(Constraint::equality(
             "generated integer roots",
-            x.clone().powi(2)
+            (x.clone().powi(2)
                 - x.clone() * Expr::int(first + second)
-                + Expr::int(first * second),
+                + Expr::int(first * second))
+                * Expr::int(scale),
         ));
         let prepared = PreparedProblem::new(&problem);
         let solutions = solve_direct_univariate_quadratic_equalities(&prepared).unwrap();
@@ -5982,9 +5985,14 @@ proptest! {
         if first == second {
             prop_assert_eq!(&solutions[0].roots, &vec![Real::from(first)]);
         } else {
+            let expected = if scale.is_positive() {
+                vec![Real::from(first.max(second)), Real::from(first.min(second))]
+            } else {
+                vec![Real::from(first.min(second)), Real::from(first.max(second))]
+            };
             prop_assert_eq!(
                 &solutions[0].roots,
-                &vec![Real::from(first.max(second)), Real::from(first.min(second))]
+                &expected
             );
         }
     }
