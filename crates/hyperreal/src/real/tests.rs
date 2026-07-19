@@ -2675,6 +2675,29 @@ mod tests {
     }
 
     #[test]
+    fn exact_rational_normalize_cancels_common_denominator() {
+        let values = [
+            Real::new(Rational::fraction(3, 2).unwrap()),
+            Real::from(2),
+            Real::zero(),
+        ];
+        assert_eq!(
+            Real::exact_rational_normalize_known_exact([&values[0], &values[1], &values[2],])
+                .unwrap(),
+            [
+                Real::new(Rational::fraction(3, 5).unwrap()),
+                Real::new(Rational::fraction(4, 5).unwrap()),
+                Real::zero(),
+            ]
+        );
+        let zero = Real::zero();
+        assert_eq!(
+            Real::exact_rational_normalize_known_exact([&zero, &zero, &zero]),
+            Err(Problem::DivideByZero)
+        );
+    }
+
+    #[test]
     fn exact_set_facts_report_dyadic_and_shared_denominator_routes() {
         let dyadic = [
             Real::new(Rational::fraction(1, 4).unwrap()),

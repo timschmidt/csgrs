@@ -66,6 +66,19 @@ mod tests {
     }
 
     #[test]
+    fn clear_common_denominator_preserves_one_positive_shared_scale() {
+        let values = [
+            Rational::fraction(3, 8).unwrap(),
+            Rational::fraction(-5, 12).unwrap(),
+            Rational::zero(),
+        ];
+        assert_eq!(
+            Rational::clear_common_denominator([&values[0], &values[1], &values[2]]),
+            [Rational::new(9), Rational::new(-10), Rational::zero()]
+        );
+    }
+
+    #[test]
     fn word_multiplication_cross_cancellation_stays_reduced() {
         let dyadic = Rational::try_from(0.123_456_789_f64).unwrap();
         let scaled = &dyadic * Rational::new(10);

@@ -248,6 +248,26 @@ impl Real {
         Ok(result.map(|row| row.map(Real::new)))
     }
 
+    /// Normalize a fixed nonempty exact-rational coordinate set after the
+    /// caller has proved every component exact.
+    ///
+    /// A shared positive denominator is irrelevant to direction, so this
+    /// aggregate clears it before forming the norm. The returned coordinates
+    /// are exactly equivalent to dividing each original value by its Euclidean
+    /// magnitude; a zero vector returns [`Problem::DivideByZero`].
+    pub fn exact_rational_normalize_known_exact<const N: usize>(
+        values: [&Real; N],
+    ) -> Result<[Real; N], crate::Problem> {
+        assert!(N > 0, "normalization requires at least one coordinate");
+        let rationals = values.map(|value| &value.rational);
+        let integers = Rational::clear_common_denominator(rationals);
+        let terms = core::array::from_fn(|index| [&integers[index], &integers[index]]);
+        let norm_squared = Rational::signed_product_sum([true; N], terms);
+        let inverse_norm = Real::new(norm_squared).sqrt()?.inverse()?;
+        crate::trace_dispatch!("real", "normalize", "exact-rational-common-scale");
+        Ok(integers.map(|value| inverse_norm.scaled_by_rational(&value)))
+    }
+
     /// Return a fused exact-rational product sum using a carried shared-scale
     /// certificate.
     ///

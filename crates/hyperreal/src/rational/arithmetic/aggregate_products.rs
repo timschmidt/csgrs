@@ -106,6 +106,48 @@ impl Rational {
         larger
     }
 
+    /// Multiply a fixed set of rationals by one positive common denominator.
+    ///
+    /// Vector normalization is invariant under this shared scale. Clearing it
+    /// before the self-dot prevents the common denominator from passing through
+    /// square extraction, reciprocal construction, and every output lane.
+    pub(crate) fn clear_common_denominator<const N: usize>(values: [&Self; N]) -> [Self; N] {
+        let common_denominator = if values
+            .iter()
+            .all(|value| value.denominator == values[0].denominator)
+        {
+            values[0].denominator.clone()
+        } else if values
+            .iter()
+            .all(|value| Self::is_power_of_two(&value.denominator))
+        {
+            values
+                .iter()
+                .max_by_key(|value| value.denominator.bits())
+                .expect("fixed rational set is nonempty")
+                .denominator
+                .clone()
+        } else {
+            values.iter().skip(1).fold(
+                values[0].denominator.clone(),
+                |common, value| {
+                    let divisor = Self::gcd_magnitudes(&common, &value.denominator);
+                    (common / divisor) * &value.denominator
+                },
+            )
+        };
+
+        crate::trace_dispatch!("rational", "common-scale", "clear-denominator");
+        core::array::from_fn(|index| {
+            let value = values[index];
+            if value.sign == NoSign {
+                return Self::zero();
+            }
+            let scale = &common_denominator / &value.denominator;
+            Self::from_integer_magnitude(value.sign, &value.numerator * scale)
+        })
+    }
+
     fn from_word_magnitude_difference(
         positive: u128,
         negative: u128,
