@@ -445,18 +445,73 @@ fn signed_axis4_from_index(index: usize, negative: bool) -> Option<SignedAxis4> 
 }
 
 /// Three-by-three row-major matrix.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Matrix3(
     /// Matrix entries in row-major order.
     pub [[Real; 3]; 3],
 );
 
 /// Four-by-four row-major matrix.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Matrix4(
     /// Matrix entries in row-major order.
     pub [[Real; 4]; 4],
 );
+
+impl Clone for Matrix3 {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self([
+            [
+                self.0[0][0].clone(),
+                self.0[0][1].clone(),
+                self.0[0][2].clone(),
+            ],
+            [
+                self.0[1][0].clone(),
+                self.0[1][1].clone(),
+                self.0[1][2].clone(),
+            ],
+            [
+                self.0[2][0].clone(),
+                self.0[2][1].clone(),
+                self.0[2][2].clone(),
+            ],
+        ])
+    }
+}
+
+impl Clone for Matrix4 {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self([
+            [
+                self.0[0][0].clone(),
+                self.0[0][1].clone(),
+                self.0[0][2].clone(),
+                self.0[0][3].clone(),
+            ],
+            [
+                self.0[1][0].clone(),
+                self.0[1][1].clone(),
+                self.0[1][2].clone(),
+                self.0[1][3].clone(),
+            ],
+            [
+                self.0[2][0].clone(),
+                self.0[2][1].clone(),
+                self.0[2][2].clone(),
+                self.0[2][3].clone(),
+            ],
+            [
+                self.0[3][0].clone(),
+                self.0[3][1].clone(),
+                self.0[3][2].clone(),
+                self.0[3][3].clone(),
+            ],
+        ])
+    }
+}
 
 /// Advisory determinant schedule selected from retained matrix facts.
 ///
@@ -3048,38 +3103,12 @@ fn matrix4_facts_assuming_const4<const N: usize>(matrix: &[[Real; N]; N]) -> Mat
     }
 }
 
-fn map_array2<const N: usize, F>(left: [Real; N], right: [Real; N], mut op: F) -> [Real; N]
-where
-    F: FnMut(Real, Real) -> Real,
-{
-    let mut right = right.into_iter();
-    left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
-}
-
 fn map_array_ref<const N: usize, F>(left: [Real; N], right: &[Real; N], mut op: F) -> [Real; N]
 where
     F: FnMut(Real, &Real) -> Real,
 {
     let mut right = right.iter();
     left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
-}
-
-fn map_matrix2<const N: usize, F>(
-    left: [[Real; N]; N],
-    right: [[Real; N]; N],
-    mut op: F,
-) -> [[Real; N]; N]
-where
-    F: FnMut(Real, Real) -> Real,
-{
-    let mut right = right.into_iter();
-    left.map(|lhs_row| {
-        map_array2(
-            lhs_row,
-            right.next().expect("matrices have equal row counts"),
-            &mut op,
-        )
-    })
 }
 
 fn map_matrix_ref<const N: usize, F>(
@@ -13628,15 +13657,14 @@ macro_rules! impl_matrix {
         impl Add for $name {
             type Output = Self;
 
-            fn add(self, rhs: Self) -> Self::Output {
+            fn add(mut self, rhs: Self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "add-owned-owned");
-                if true {
-                    Self(map_matrix2(self.0, rhs.0, |lhs, rhs| lhs + rhs))
-                } else {
-                    Self(from_fn(|row| {
-                        from_fn(|col| self.0[row][col].clone() + rhs.0[row][col].clone())
-                    }))
+                for row in 0..$n {
+                    for col in 0..$n {
+                        self.0[row][col] += &rhs.0[row][col];
+                    }
                 }
+                self
             }
         }
 
@@ -13701,15 +13729,14 @@ macro_rules! impl_matrix {
         impl Sub for $name {
             type Output = Self;
 
-            fn sub(self, rhs: Self) -> Self::Output {
+            fn sub(mut self, rhs: Self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-owned-owned");
-                if true {
-                    Self(map_matrix2(self.0, rhs.0, |lhs, rhs| lhs - rhs))
-                } else {
-                    Self(from_fn(|row| {
-                        from_fn(|col| self.0[row][col].clone() - rhs.0[row][col].clone())
-                    }))
+                for row in 0..$n {
+                    for col in 0..$n {
+                        self.0[row][col] -= &rhs.0[row][col];
+                    }
                 }
+                self
             }
         }
 

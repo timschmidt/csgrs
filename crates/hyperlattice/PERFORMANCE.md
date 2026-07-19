@@ -317,9 +317,35 @@ prior direct 299.67 ns / 300.79 ns. Repeated borrowed medians are:
 | Mat4 sub refs | 964.41 ns | 555.35 ns | 817.04 ns | 32.0% |
 
 Borrowed `Point3 - Point3` also falls from 75.03 ns with cloned scalar
-operands to 53.03 ns, a 29.3% reduction. The remaining componentwise gap is
-owned-carrier cloning and destruction: owned Vec3 add/sub are still 1.49x /
-1.39x Numerica, Mat3 2.20x / 2.18x, and Mat4 1.52x / 1.64x.
+operands to 53.03 ns, a 29.3% reduction.
+
+## Owned linear carrier operations
+
+Owned vector and matrix operators previously moved every `Real` through nested
+array iterators, built a second result array, and then destroyed both consumed
+inputs. Nested derived matrix cloning also compiled into substantially more work
+than the equivalent fixed set of vector clones.
+
+Owned add/sub now update the consumed left carrier through exact `AddAssign` or
+`SubAssign` lanes and return that storage. Exact-rational assignment replaces
+only the rational scale, while explicit fixed-size Matrix3/Matrix4 clones expose
+every lane directly to cross-crate inlining. The public row-major representation
+and exact results are unchanged.
+
+| Operation | Previous Hyperreal | Reused Hyperreal | Numerica 128 | Hyperreal advantage |
+| --- | ---: | ---: | ---: | ---: |
+| Vec3 add | 185.97 ns | 118.64 ns | 123.73 ns | 4.1% |
+| Vec3 sub | 189.31 ns | 117.81 ns | 135.87 ns | 13.3% |
+| Vec4 add | 225.02 ns | 159.83 ns | 174.44 ns | 8.4% |
+| Vec4 sub | 231.31 ns | 159.87 ns | 176.50 ns | 9.4% |
+| Mat3 add | 993.23 ns | 332.77 ns | 452.86 ns | 26.5% |
+| Mat3 sub | 1.040 us | 347.12 ns | 482.26 ns | 28.0% |
+| Mat4 add | 1.253 us | 635.13 ns | 758.16 ns | 16.2% |
+| Mat4 sub | 1.338 us | 665.25 ns | 816.63 ns | 18.5% |
+
+The next componentwise deficits are owned negation and scalar
+multiplication/division, where cloned exact handles and avoidable result storage
+still dominate vector and matrix kernels.
 
 ## Rejected zero-mask multiplication experiment
 

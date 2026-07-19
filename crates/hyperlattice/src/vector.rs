@@ -995,14 +995,6 @@ impl VectorSelfDot for [Real; 4] {
     }
 }
 
-fn map_array2<const N: usize, F>(left: [Real; N], right: [Real; N], mut op: F) -> [Real; N]
-where
-    F: FnMut(Real, Real) -> Real,
-{
-    let mut right = right.into_iter();
-    left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
-}
-
 fn map_array_ref<const N: usize, F>(left: [Real; N], right: &[Real; N], mut op: F) -> [Real; N]
 where
     F: FnMut(Real, &Real) -> Real,
@@ -1306,13 +1298,12 @@ macro_rules! impl_vector {
         impl Add for $name {
             type Output = Self;
 
-            fn add(self, rhs: Self) -> Self::Output {
+            fn add(mut self, rhs: Self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "add-owned-owned");
-                if true {
-                    Self(map_array2(self.0, rhs.0, |lhs, rhs| lhs + rhs))
-                } else {
-                    Self(from_fn(|i| self.0[i].clone() + rhs.0[i].clone()))
+                for i in 0..$n {
+                    self.0[i] += &rhs.0[i];
                 }
+                self
             }
         }
 
@@ -1377,13 +1368,12 @@ macro_rules! impl_vector {
         impl Sub for $name {
             type Output = Self;
 
-            fn sub(self, rhs: Self) -> Self::Output {
+            fn sub(mut self, rhs: Self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-owned-owned");
-                if true {
-                    Self(map_array2(self.0, rhs.0, |lhs, rhs| lhs - rhs))
-                } else {
-                    Self(from_fn(|i| self.0[i].clone() - rhs.0[i].clone()))
+                for i in 0..$n {
+                    self.0[i] -= &rhs.0[i];
                 }
+                self
             }
         }
 
