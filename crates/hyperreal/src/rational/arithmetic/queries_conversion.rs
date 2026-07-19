@@ -328,6 +328,7 @@ impl Rational {
             return None;
         }
         if self.is_zero() {
+            self.mark_exact_f64_view();
             return Some(0.0);
         }
 
@@ -349,7 +350,28 @@ impl Rational {
         }
 
         let value = self.to_f64_lossy()?;
-        (value != 0.0).then_some(value)
+        if value == 0.0 {
+            return None;
+        }
+        self.mark_exact_f64_view();
+        Some(value)
+    }
+
+    #[inline]
+    pub(crate) fn has_exact_f64_view(&self) -> bool {
+        self.exact_f64_view
+            .load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    #[inline]
+    pub(crate) fn denominator_could_be_dyadic(&self) -> bool {
+        self.denominator == *ONE || !self.denominator.bit(0)
+    }
+
+    #[inline]
+    pub(crate) fn mark_exact_f64_view(&self) {
+        self.exact_f64_view
+            .store(true, std::sync::atomic::Ordering::Relaxed);
     }
 
     /// Is this Rational better understood as a fraction?

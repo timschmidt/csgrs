@@ -873,34 +873,9 @@ impl Real {
         b: [&Real; 2],
         c: [&Real; 2],
     ) -> Option<RealSign> {
-        let rationals = [
-            a[0].exact_rational_ref()?,
-            a[1].exact_rational_ref()?,
-            b[0].exact_rational_ref()?,
-            b[1].exact_rational_ref()?,
-            c[0].exact_rational_ref()?,
-            c[1].exact_rational_ref()?,
-        ];
-        // Query-point coordinates are the most likely lanes to carry a
-        // different rational scale, so reject them before anchor coordinates.
-        if ![
-            rationals[4],
-            rationals[5],
-            rationals[2],
-            rationals[3],
-            rationals[0],
-            rationals[1],
-        ]
-        .into_iter()
-        .all(Rational::is_dyadic)
-        {
-            return None;
-        }
-        let [Some(ax), Some(ay), Some(bx), Some(by), Some(cx), Some(cy)] =
-            rationals.map(Rational::dyadic_to_f64_exact)
-        else {
-            return None;
-        };
+        let [cx, cy, bx, by, ax, ay] = Self::exact_dyadic_f64([
+            c[0], c[1], b[0], b[1], a[0], a[1],
+        ])?;
         Self::certified_affine_det2_sign_f64([ax, ay], [bx, by], [cx, cy])
     }
 
@@ -1426,11 +1401,7 @@ impl Real {
     fn exact_dyadic_f64<const N: usize>(values: [&Real; N]) -> Option<[f64; N]> {
         let mut result = [0.0; N];
         for (index, value) in values.into_iter().enumerate() {
-            let rational = value.exact_rational_ref()?;
-            if !rational.is_dyadic() {
-                return None;
-            }
-            result[index] = rational.dyadic_to_f64_exact()?;
+            result[index] = value.exact_dyadic_f64_cached()?;
         }
         Some(result)
     }

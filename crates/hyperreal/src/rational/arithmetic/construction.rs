@@ -10,6 +10,7 @@ impl Rational {
             linear_reuse_seen: std::sync::atomic::AtomicBool::new(false),
             power_reuse_seen: std::sync::atomic::AtomicBool::new(false),
             square_reuse_seen: std::sync::atomic::AtomicBool::new(false),
+            exact_f64_view: std::sync::atomic::AtomicBool::new(false),
         }))
     }
 
@@ -23,6 +24,7 @@ impl Rational {
             linear_reuse_seen: _,
             power_reuse_seen: _,
             square_reuse_seen: _,
+            exact_f64_view: _,
         } = Arc::try_unwrap(self.0).unwrap_or_else(|shared| RationalData {
             sign: shared.sign,
             numerator: shared.numerator.clone(),
@@ -32,6 +34,7 @@ impl Rational {
             linear_reuse_seen: std::sync::atomic::AtomicBool::new(false),
             power_reuse_seen: std::sync::atomic::AtomicBool::new(false),
             square_reuse_seen: std::sync::atomic::AtomicBool::new(false),
+            exact_f64_view: std::sync::atomic::AtomicBool::new(false),
         });
         (sign, numerator, denominator)
     }

@@ -163,34 +163,33 @@ impl TryFrom<f64> for Rational {
         let neg = (bits & NEG_BITS) == NEG_BITS;
         let exp = (bits & EXP_BITS) >> EXP_BITS.trailing_zeros();
         let sig = bits & SIG_BITS;
-        match exp {
+        let rational = match exp {
             0 => {
                 if sig == 0 {
-                    Ok(Rational::zero())
+                    Rational::zero()
                 } else {
-                    Ok(pow2_fraction_u64(sig, 1074, neg))
+                    pow2_fraction_u64(sig, 1074, neg)
                 }
             }
             1..=1075 => {
                 let n = SIG_BITS + 1 + sig;
-                Ok(pow2_fraction_u64(n, (1075 - exp) as u32, neg))
+                pow2_fraction_u64(n, (1075 - exp) as u32, neg)
             }
             1076..=2046 => {
                 let n = SIG_BITS + 1 + sig;
-                Ok(integer_from_unsigned_magnitude(
-                    BigUint::from(n) << (exp - 1075),
-                    neg,
-                ))
+                integer_from_unsigned_magnitude(BigUint::from(n) << (exp - 1075), neg)
             }
             2047 => {
                 if sig == 0 {
-                    Err(Problem::Infinity)
+                    return Err(Problem::Infinity);
                 } else {
-                    Err(Problem::NotANumber)
+                    return Err(Problem::NotANumber);
                 }
             }
             _ => unreachable!(),
-        }
+        };
+        rational.mark_exact_f64_view();
+        Ok(rational)
     }
 }
 
@@ -302,6 +301,28 @@ mod tests {
         assert_eq!(value, Rational::fraction(3, 4).unwrap());
         assert_eq!(*value.numerator(), BigUint::from(3_u8));
         assert_eq!(*value.denominator(), BigUint::from(4_u8));
+        assert!(value.has_exact_f64_view());
+    }
+
+    #[test]
+    fn f64_import_retains_exact_view_for_normal_subnormal_and_integer_values() {
+        for source in [
+            -987_654_321.0,
+            -0.0,
+            f64::from_bits(1),
+            0.123_456_789,
+            f64::MAX,
+        ] {
+            let value = Rational::try_from(source).unwrap();
+            assert!(value.has_exact_f64_view());
+            if source.is_normal() || source == 0.0 {
+                let expected = if source == 0.0 { 0.0 } else { source };
+                assert_eq!(
+                    value.dyadic_to_f64_exact().map(f64::to_bits),
+                    Some(expected.to_bits())
+                );
+            }
+        }
     }
 
     #[test]

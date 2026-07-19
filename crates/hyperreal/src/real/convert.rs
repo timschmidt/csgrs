@@ -48,7 +48,11 @@ impl TryFrom<f32> for Real {
         // Import floats as exact dyadic rationals. That preserves structural
         // facts and avoids immediately lowering user data to Computable nodes.
         let rational: Rational = n.try_into()?;
-        Ok(Real::new(rational))
+        rational.mark_exact_f64_view();
+        let real = Real::new(rational);
+        real.primitive_approx_cache
+            .set(PrimitiveApproxCache::F64(Some(f64::from(n))));
+        Ok(real)
     }
 }
 
@@ -59,7 +63,10 @@ impl TryFrom<f64> for Real {
         // Same exact dyadic import as f32; the public Real constructor keeps the
         // value in the rational class so matrix inputs stay cheap.
         let rational: Rational = n.try_into()?;
-        Ok(Real::new(rational))
+        let real = Real::new(rational);
+        real.primitive_approx_cache
+            .set(PrimitiveApproxCache::F64(Some(n)));
+        Ok(real)
     }
 }
 
@@ -341,7 +348,26 @@ impl Real {
     /// Return an `f64` only when this value is an exact dyadic rational whose
     /// conversion is lossless.
     pub fn to_f64_exact_dyadic(&self) -> Option<f64> {
-        self.exact_rational_ref()?.dyadic_to_f64_exact()
+        self.exact_dyadic_f64_cached()
+    }
+
+    #[inline]
+    pub(crate) fn exact_dyadic_f64_cached(&self) -> Option<f64> {
+        let rational = self.exact_rational_ref()?;
+        // Every non-unit dyadic denominator is even. Reject the common odd
+        // rational schedules before touching the retained-view atomic; this
+        // keeps exact fraction fallback as cheap as it was before the cache.
+        if !rational.denominator_could_be_dyadic() {
+            return None;
+        }
+        if rational.has_exact_f64_view() {
+            return self.to_f64_lossy();
+        }
+
+        let value = rational.dyadic_to_f64_exact()?;
+        self.primitive_approx_cache
+            .set(PrimitiveApproxCache::F64(Some(value)));
+        Some(value)
     }
 
     /// Return a finite borrowed lossy `f64` approximation, or `None` on overflow.
@@ -638,6 +664,42 @@ mod tests {
         assert_eq!(987654321_f32, roundtrip(987654321_f32));
         assert_eq!(0.123456789_f64, roundtrip(0.123456789_f64));
         assert_eq!(987654321_f64, roundtrip(987654321_f64));
+    }
+
+    #[test]
+    fn exact_f64_import_seeds_and_reuses_the_certified_primitive_view() {
+        let source = 0.123_456_789_f64;
+        let value = Real::try_from(source).unwrap();
+        assert!(value.rational.has_exact_f64_view());
+        assert!(matches!(
+            value.primitive_approx_cache.get(),
+            PrimitiveApproxCache::F64(Some(cached)) if cached.to_bits() == source.to_bits()
+        ));
+        assert_eq!(
+            value.exact_dyadic_f64_cached().map(f64::to_bits),
+            Some(source.to_bits())
+        );
+
+        let cloned = value.clone();
+        assert_eq!(
+            cloned.exact_dyadic_f64_cached().map(f64::to_bits),
+            Some(source.to_bits())
+        );
+        assert!(matches!(
+            cloned.primitive_approx_cache.get(),
+            PrimitiveApproxCache::F64(Some(cached)) if cached.to_bits() == source.to_bits()
+        ));
+    }
+
+    #[test]
+    fn certified_primitive_view_rejects_non_dyadic_rationals() {
+        let value = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(value.exact_dyadic_f64_cached(), None);
+        assert!(!value.rational.has_exact_f64_view());
+        assert!(matches!(
+            value.primitive_approx_cache.get(),
+            PrimitiveApproxCache::Empty
+        ));
     }
 
     #[test]

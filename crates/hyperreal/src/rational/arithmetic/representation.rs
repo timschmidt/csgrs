@@ -121,6 +121,7 @@ pub struct RationalData {
     linear_reuse_seen: std::sync::atomic::AtomicBool,
     power_reuse_seen: std::sync::atomic::AtomicBool,
     square_reuse_seen: std::sync::atomic::AtomicBool,
+    exact_f64_view: std::sync::atomic::AtomicBool,
 }
 
 impl std::fmt::Debug for Rational {
