@@ -373,7 +373,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             Some(PreparedMeshBooleanShortcut::LeftEmpty)
         } else if right_input.buffers.indices.is_empty() {
             Some(PreparedMeshBooleanShortcut::RightEmpty)
-        } else if left_input.buffers == right_input.buffers {
+        } else if hypermesh_buffers_have_same_indexed_geometry(
+            &left_input.buffers,
+            &right_input.buffers,
+        ) {
             Some(PreparedMeshBooleanShortcut::Identical)
         } else {
             None
@@ -521,7 +524,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         retain_sources: bool,
     ) -> Option<HypermeshAdapterInput> {
         let layout = self.polygons.retained_transform_layout()?;
-        layout.indexed_triangle_pool.as_ref()?;
         let all_triangles = self.polygons.topology().2;
         if layout.indexed_polygon_corner_counts.is_none() && !all_triangles {
             return None;
@@ -837,6 +839,37 @@ fn input_mesh_from_buffers(buffers: &HypermeshBuffers) -> InputMesh {
     InputMesh::new(positions, triangles)
 }
 
+fn hypermesh_buffers_have_same_indexed_geometry(
+    left: &HypermeshBuffers,
+    right: &HypermeshBuffers,
+) -> bool {
+    if left.positions.len() != right.positions.len()
+        || left.indices.len() != right.indices.len()
+    {
+        return false;
+    }
+    left.indices
+        .iter()
+        .zip(&right.indices)
+        .all(|(&left_index, &right_index)| {
+            let Some(left_start) = left_index.checked_mul(3) else {
+                return false;
+            };
+            let Some(right_start) = right_index.checked_mul(3) else {
+                return false;
+            };
+            left_start
+                .checked_add(3)
+                .and_then(|end| left.positions.get(left_start..end))
+                .zip(
+                    right_start
+                        .checked_add(3)
+                        .and_then(|end| right.positions.get(right_start..end)),
+                )
+                .is_some_and(|(left, right)| left == right)
+        })
+}
+
 fn validate_surface_input(mesh: &InputMesh) -> ::hypermesh::HypermeshResult<()> {
     for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
         let [a, b, c] = triangle.indices();
@@ -973,6 +1006,58 @@ mod tests {
 
         assert_eq!(positions.len(), 4);
         assert!(positions.iter().any(|point| point.x == epsilon));
+    }
+
+    #[test]
+    fn translated_cuboid_retained_adapter_matches_generic_triangulation() {
+        let translated =
+            Mesh::cuboid(Real::from(2_u8), Real::from(4_u8), Real::from(6_u8), ()).translate(
+                Real::from(3_u8),
+                Real::from(-2_i8),
+                Real::from(5_u8),
+            );
+        let generic = Mesh::from_polygons(translated.polygons.iter().cloned().collect());
+
+        let retained_input = translated.build_hypermesh_input(true);
+        let generic_input = generic.build_hypermesh_input(true);
+        let triangle_rows = |input: &HypermeshAdapterInput| {
+            let positions = input
+                .buffers
+                .positions
+                .chunks_exact(3)
+                .map(|row| Point3::new(row[0].clone(), row[1].clone(), row[2].clone()))
+                .collect::<Vec<_>>();
+            input
+                .buffers
+                .indices
+                .chunks_exact(3)
+                .map(|triangle| {
+                    [
+                        positions[triangle[0]].clone(),
+                        positions[triangle[1]].clone(),
+                        positions[triangle[2]].clone(),
+                    ]
+                })
+                .collect::<Vec<_>>()
+        };
+        let position_for_id = |input: &HypermeshAdapterInput, position_id: u64| {
+            let position_index = input.position_ids[&position_id];
+            let start = position_index * 3;
+            Point3::new(
+                input.buffers.positions[start].clone(),
+                input.buffers.positions[start + 1].clone(),
+                input.buffers.positions[start + 2].clone(),
+            )
+        };
+
+        assert_eq!(triangle_rows(&retained_input), triangle_rows(&generic_input));
+        assert_eq!(retained_input.source_polygons, generic_input.source_polygons);
+        for position_id in retained_input.position_ids.keys() {
+            assert_eq!(
+                position_for_id(&retained_input, *position_id),
+                position_for_id(&generic_input, *position_id)
+            );
+        }
     }
 
     #[test]

@@ -2910,52 +2910,65 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             })
             .collect::<Vec<_>>();
         let position_ids = reserve_position_ids(transformed_positions.len());
-        cache_position_f64_range(
-            position_ids,
-            transformed_positions.len(),
-            transformed_positions.iter().map(|(_, finite)| *finite),
-        );
-        let coordinate_ids = transform_layout.coordinate_counts.map(reserve_position_ids);
-        let plane_ids = reserve_plane_ids(transform_layout.plane_count);
-        let indexed_vertices = transformed_positions
-            .iter()
-            .enumerate()
-            .map(|(position_slot, (position, _))| {
-                let source =
-                    transform_layout.position_representative(&self.polygons, position_slot);
-                Vertex {
-                    position: position.clone(),
-                    normal: source.normal.clone(),
-                    position_id: position_ids
-                        + u64::try_from(position_slot).expect("position slot fits u64"),
-                    coordinate_ids: std::array::from_fn(|axis| {
-                        coordinate_ids[axis]
-                            + u64::try_from(position_slot).expect("coordinate slot fits u64")
-                    }),
-                    ruled_line: source.ruled_line,
-                    hull_candidate: source.hull_candidate,
-                }
-            })
-            .collect();
         let indexed_position_f64 = transformed_positions
             .iter()
             .map(|(_, finite)| *finite)
             .collect::<Option<Vec<_>>>()
             .map(Arc::new);
-        if let Some(translated) = self.retained_indexed_triangle_output(
-            &transform_layout,
-            indexed_vertices,
-            indexed_position_f64,
-            plane_ids,
-        ) {
-            return self.finish_indexed_translation(
-                translated,
-                translated_bounds,
-                vector,
-                source_geometry_identity,
-                cache_on_completion,
-                convex_pwn,
+        if let Some(position_f64) = indexed_position_f64.as_ref() {
+            cache_shared_position_f64_range(position_ids, Arc::clone(position_f64));
+        } else {
+            cache_position_f64_range(
+                position_ids,
+                transformed_positions.len(),
+                transformed_positions.iter().map(|(_, finite)| *finite),
             );
+        }
+        let coordinate_ids = transform_layout.coordinate_counts.map(reserve_position_ids);
+        let plane_ids = reserve_plane_ids(transform_layout.plane_count);
+        if transform_layout.normals_match_positions
+            && transform_layout
+                .corner_coordinate_slots
+                .iter()
+                .all(Option::is_none)
+            && self.polygons.topology().2
+        {
+            let indexed_vertices = transformed_positions
+                .iter()
+                .enumerate()
+                .map(|(position_slot, (position, _))| {
+                    let source = transform_layout
+                        .position_representative(&self.polygons, position_slot);
+                    Vertex {
+                        position: position.clone(),
+                        normal: source.normal.clone(),
+                        position_id: position_ids
+                            + u64::try_from(position_slot).expect("position slot fits u64"),
+                        coordinate_ids: std::array::from_fn(|axis| {
+                            coordinate_ids[axis]
+                                + u64::try_from(position_slot)
+                                    .expect("coordinate slot fits u64")
+                        }),
+                        ruled_line: source.ruled_line,
+                        hull_candidate: source.hull_candidate,
+                    }
+                })
+                .collect();
+            if let Some(translated) = self.retained_indexed_triangle_output(
+                &transform_layout,
+                indexed_vertices,
+                indexed_position_f64.clone(),
+                plane_ids,
+            ) {
+                return self.finish_indexed_translation(
+                    translated,
+                    translated_bounds,
+                    vector,
+                    source_geometry_identity,
+                    cache_on_completion,
+                    convex_pwn,
+                );
+            }
         }
         let mut vertices = Vec::with_capacity(self.vertex_count());
         let mut push_corner = |corner_index: usize, vertex: &Vertex| {
@@ -3016,12 +3029,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let mut translated = Mesh::from_polygons(polygons);
         let mut translated_layout = (*transform_layout).clone();
         translated_layout.indexed_triangle_pool = None;
-        translated_layout.indexed_polygon_corner_counts = None;
-        translated_layout.position_f64 = transformed_positions
-            .iter()
-            .map(|(_, finite)| *finite)
-            .collect::<Option<Vec<_>>>()
-            .map(Arc::new);
+        translated_layout.position_f64 = indexed_position_f64;
         translated
             .polygons
             .retain_transform_layout(Arc::new(translated_layout));
