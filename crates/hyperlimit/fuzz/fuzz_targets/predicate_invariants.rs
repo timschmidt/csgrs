@@ -308,36 +308,19 @@ fn predicate_invariants(input: Input) {
         "certified ball signs must agree with their exact interval enclosure"
     );
 
-    let strict_no_refine = PredicatePolicy {
-        allow_refinement: false,
-        ..PredicatePolicy::STRICT
-    };
-    let no_refine = hyperlimit::orient2d_with_policy(&a, &b, &c, strict_no_refine);
+    let strict = hyperlimit::orient2d_with_policy(&a, &b, &c, PredicatePolicy::STRICT);
     if let Some(sign) = orient2d(&a, &b, &c).value() {
-        // For exact rational fuzz inputs, disabling refinement must not change
-        // decided orientation signs: exact rational predicates are not
-        // primitive-float filters.
-        assert_eq!(no_refine.value(), Some(sign));
+        // The explicit strict policy and convenience entry point must preserve
+        // the same exact-rational orientation decision.
+        assert_eq!(strict.value(), Some(sign));
     }
 
     let common_a = common_scale_point3(input.p.x_num, input.p.y_num, input.p.z_num);
     let common_b = common_scale_point3(input.q.x_num, input.q.y_num, input.q.z_num);
     let common_c = common_scale_point3(input.r.x_num, input.r.y_num, input.r.z_num);
     let common_d = common_scale_point3(input.s.x_num, input.s.y_num, input.s.z_num);
-    let common = hyperlimit::orient3d_with_policy(
-        &common_a,
-        &common_b,
-        &common_c,
-        &common_d,
-        strict_no_refine,
-    );
-    let swapped = hyperlimit::orient3d_with_policy(
-        &common_b,
-        &common_a,
-        &common_c,
-        &common_d,
-        strict_no_refine,
-    );
+    let common = hyperlimit::orient3d(&common_a, &common_b, &common_c, &common_d);
+    let swapped = hyperlimit::orient3d(&common_b, &common_a, &common_c, &common_d);
     if let (Some(sign), Some(swapped)) = (common.value(), swapped.value()) {
         // These generated points all use one unreduced prime denominator, so
         // they cover the common-scale rational-vector regime before scalar
@@ -703,8 +686,7 @@ fn predicate_invariants(input: Input) {
                 .validate_against_sources(
                     &unit_dop,
                     &Point3::new(1.into(), 0.into(), 0.into()),
-                    &Point3::new(2.into(), 1.into(), 1.into()),
-                    PredicatePolicy::default()
+                    &Point3::new(2.into(), 1.into(), 1.into())
                 )
                 .is_ok(),
             "support-DOP/AABB report evidence must replay from exact sources"
@@ -733,8 +715,7 @@ fn predicate_invariants(input: Input) {
                 .validate_against_sources(
                     &unit_dop,
                     &Point3::new(2.into(), 0.into(), 0.into()),
-                    &Point3::new(3.into(), 1.into(), 1.into()),
-                    PredicatePolicy::default()
+                    &Point3::new(3.into(), 1.into(), 1.into())
                 )
                 .is_ok(),
             "separating support-DOP/AABB report must replay its terminal slab"
@@ -749,7 +730,7 @@ fn predicate_invariants(input: Input) {
         );
         assert!(
             report
-                .validate_against_sources(&unit_dop, &unit_plane, PredicatePolicy::default())
+                .validate_against_sources(&unit_dop, &unit_plane)
                 .is_ok(),
             "support-DOP/plane feasibility evidence must replay from exact sources"
         );
@@ -763,7 +744,7 @@ fn predicate_invariants(input: Input) {
         );
         assert!(
             report
-                .validate_against_sources(&unit_dop, &outside_plane, PredicatePolicy::default())
+                .validate_against_sources(&unit_dop, &outside_plane)
                 .is_ok(),
             "one-sided support-DOP/plane evidence must replay"
         );
@@ -784,7 +765,7 @@ fn predicate_invariants(input: Input) {
         );
         assert_eq!(
             feasibility
-                .validate_against_planes(&fixed_point_halfspaces, PredicatePolicy::default())
+                .validate_against_planes(&fixed_point_halfspaces)
                 .value(),
             Some(true),
             "halfspace feasibility witness must replay through point-plane predicates"
@@ -831,7 +812,7 @@ fn predicate_invariants(input: Input) {
         );
         assert_eq!(
             report
-                .validate_against_planes(&impossible_halfspaces, PredicatePolicy::default())
+                .validate_against_planes(&impossible_halfspaces)
                 .value(),
             Some(true),
             "halfspace infeasibility certificate must replay exactly"

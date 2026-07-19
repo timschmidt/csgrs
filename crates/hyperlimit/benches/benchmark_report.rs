@@ -151,7 +151,10 @@ fn compare_rows(left: &Row, right: &Row) -> Ordering {
 }
 
 fn row_is_current_real_benchmark(row: &Row) -> bool {
-    matches!(row.function_id.as_str(), "hyperreal" | "hyperreal_prepared")
+    matches!(
+        row.function_id.as_str(),
+        "hyperreal" | "hyperreal_prepared" | "robust"
+    )
 }
 
 fn render_markdown(rows: &[Row]) -> String {

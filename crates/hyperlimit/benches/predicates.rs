@@ -25,6 +25,7 @@ use hyperlimit::{
     orient2d, orient3d, projected_line_parameter3, projected_segment_parameter3,
     support_dop3_from_points,
 };
+use robust::{Coord, Coord3D};
 
 const BATCH: usize = 512;
 
@@ -34,6 +35,12 @@ type Incircle2Case = (Point2, Point2, Point2, Point2);
 type Insphere3Case = (Point3, Point3, Point3, Point3, Point3);
 type Segment3Case = (Point3, Point3, Point3, Point3);
 type SegmentTriangle3Case = (Point3, Point3, Point3, Point3, Point3);
+type RawPoint2 = [f64; 2];
+type RawPoint3 = [f64; 3];
+type RawOrient2Case = (RawPoint2, RawPoint2, RawPoint2);
+type RawOrient3Case = (RawPoint3, RawPoint3, RawPoint3, RawPoint3);
+type RawIncircle2Case = (RawPoint2, RawPoint2, RawPoint2, RawPoint2);
+type RawInsphere3Case = (RawPoint3, RawPoint3, RawPoint3, RawPoint3, RawPoint3);
 
 #[derive(Clone, Copy)]
 enum Workload {
@@ -54,6 +61,7 @@ impl Workload {
 
 fn bench_predicates(c: &mut Criterion) {
     bench_representation(c, "hyperreal", hyperreal_real);
+    bench_robust_predicates(c);
     bench_certified_filters(c);
     bench_prepared_construction(c);
     bench_plane_composition_filters(c);
@@ -68,6 +76,104 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_robust_predicates(c: &mut Criterion) {
+    let mut orient2_group = c.benchmark_group("orient2d");
+    for workload in Workload::ALL {
+        let cases = raw_orient2d_cases(workload);
+        orient2_group.bench_with_input(
+            BenchmarkId::new("robust", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c) in cases {
+                        score += determinant_score(robust::orient2d(
+                            black_box(coord2(a)),
+                            black_box(coord2(b)),
+                            black_box(coord2(c)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    orient2_group.finish();
+
+    let mut orient3_group = c.benchmark_group("orient3d");
+    for workload in Workload::ALL {
+        let cases = raw_orient3d_cases(workload);
+        orient3_group.bench_with_input(
+            BenchmarkId::new("robust", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d) in cases {
+                        score += determinant_score(robust::orient3d(
+                            black_box(coord3(a)),
+                            black_box(coord3(b)),
+                            black_box(coord3(c)),
+                            black_box(coord3(d)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    orient3_group.finish();
+
+    let mut incircle_group = c.benchmark_group("incircle2d");
+    for workload in Workload::ALL {
+        let cases = raw_incircle2d_cases(workload);
+        incircle_group.bench_with_input(
+            BenchmarkId::new("robust", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d) in cases {
+                        score += determinant_score(robust::incircle(
+                            black_box(coord2(a)),
+                            black_box(coord2(b)),
+                            black_box(coord2(c)),
+                            black_box(coord2(d)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    incircle_group.finish();
+
+    let mut insphere_group = c.benchmark_group("insphere3d");
+    for workload in Workload::ALL {
+        let cases = raw_insphere3d_cases(workload);
+        insphere_group.bench_with_input(
+            BenchmarkId::new("robust", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d, e) in cases {
+                        score += determinant_score(robust::insphere(
+                            black_box(coord3(a)),
+                            black_box(coord3(b)),
+                            black_box(coord3(c)),
+                            black_box(coord3(d)),
+                            black_box(coord3(e)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    insphere_group.finish();
 }
 
 fn bench_plane_composition_filters(c: &mut Criterion) {
@@ -1683,24 +1789,33 @@ fn orient2d_cases(
     workload: Workload,
     real: fn(f64) -> hyperreal::Real,
 ) -> Vec<(Point2, Point2, Point2)> {
+    raw_orient2d_cases(workload)
+        .into_iter()
+        .map(|(a, b, c)| {
+            (
+                point2(a[0], a[1], real),
+                point2(b[0], b[1], real),
+                point2(c[0], c[1], real),
+            )
+        })
+        .collect()
+}
+
+fn raw_orient2d_cases(workload: Workload) -> Vec<RawOrient2Case> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
         let t = unit(i);
         let u = unit(i.wrapping_mul(17).wrapping_add(3));
         let (a, b, c) = match workload {
             Workload::Easy => (
-                point2(-0.75 + 0.2 * t, -0.35 + 0.1 * u, real),
-                point2(0.85 - 0.15 * u, -0.25 + 0.2 * t, real),
-                point2(-0.15 + 0.9 * u, 0.8 - 0.4 * t, real),
+                [-0.75 + 0.2 * t, -0.35 + 0.1 * u],
+                [0.85 - 0.15 * u, -0.25 + 0.2 * t],
+                [-0.15 + 0.9 * u, 0.8 - 0.4 * t],
             ),
             Workload::NearDegenerate => {
                 let x = -0.9 + 1.8 * t;
                 let eps = alternating_eps(i, 1.0e-13);
-                (
-                    point2(-1.0, -1.0, real),
-                    point2(1.0, 1.0, real),
-                    point2(x, x + eps, real),
-                )
+                ([-1.0, -1.0], [1.0, 1.0], [x, x + eps])
             }
         };
         cases.push((a, b, c));
@@ -1727,6 +1842,20 @@ fn fixed_line_cases(
 }
 
 fn orient3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Orient3Case> {
+    raw_orient3d_cases(workload)
+        .into_iter()
+        .map(|(a, b, c, d)| {
+            (
+                point3(a[0], a[1], a[2], real),
+                point3(b[0], b[1], b[2], real),
+                point3(c[0], c[1], c[2], real),
+                point3(d[0], d[1], d[2], real),
+            )
+        })
+        .collect()
+}
+
+fn raw_orient3d_cases(workload: Workload) -> Vec<RawOrient3Case> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
         let t = unit(i);
@@ -1734,20 +1863,20 @@ fn orient3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<O
         let v = unit(i.wrapping_mul(29).wrapping_add(11));
         let (a, b, c, d) = match workload {
             Workload::Easy => (
-                point3(-0.4 + 0.2 * t, -0.7, -0.2 + 0.1 * u, real),
-                point3(0.8, -0.25 + 0.2 * u, 0.1, real),
-                point3(-0.2, 0.75, 0.25 + 0.1 * v, real),
-                point3(-0.1 + 0.5 * v, -0.05 + 0.3 * t, 0.95, real),
+                [-0.4 + 0.2 * t, -0.7, -0.2 + 0.1 * u],
+                [0.8, -0.25 + 0.2 * u, 0.1],
+                [-0.2, 0.75, 0.25 + 0.1 * v],
+                [-0.1 + 0.5 * v, -0.05 + 0.3 * t, 0.95],
             ),
             Workload::NearDegenerate => {
                 let x = -0.8 + 1.6 * t;
                 let y = -0.8 + 1.6 * u;
                 let eps = alternating_eps(i, 1.0e-13);
                 (
-                    point3(0.0, 0.0, 0.0, real),
-                    point3(1.0, 0.0, 0.0, real),
-                    point3(0.0, 1.0, 0.0, real),
-                    point3(x, y, eps, real),
+                    [0.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                    [x, y, eps],
                 )
             }
         };
@@ -1802,9 +1931,23 @@ fn oriented_plane_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) ->
 }
 
 fn incircle2d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Incircle2Case> {
-    let a = point2(0.82, 0.0, real);
-    let b = point2(0.0, 0.82, real);
-    let c = point2(-0.82, 0.0, real);
+    raw_incircle2d_cases(workload)
+        .into_iter()
+        .map(|(a, b, c, d)| {
+            (
+                point2(a[0], a[1], real),
+                point2(b[0], b[1], real),
+                point2(c[0], c[1], real),
+                point2(d[0], d[1], real),
+            )
+        })
+        .collect()
+}
+
+fn raw_incircle2d_cases(workload: Workload) -> Vec<RawIncircle2Case> {
+    let a = [0.82, 0.0];
+    let b = [0.0, 0.82];
+    let c = [-0.82, 0.0];
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
         let theta = std::f64::consts::TAU * unit(i);
@@ -1812,17 +1955,32 @@ fn incircle2d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec
             Workload::Easy => 0.35 + 0.45 * unit(i.wrapping_mul(11).wrapping_add(1)),
             Workload::NearDegenerate => 0.82 + alternating_eps(i, 1.0e-12),
         };
-        let d = point2(r * theta.cos(), r * theta.sin(), real);
-        cases.push((a.clone(), b.clone(), c.clone(), d));
+        let d = [r * theta.cos(), r * theta.sin()];
+        cases.push((a, b, c, d));
     }
     cases
 }
 
 fn insphere3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Insphere3Case> {
-    let a = point3(0.82, 0.0, 0.0, real);
-    let b = point3(-0.82, 0.0, 0.0, real);
-    let c = point3(0.0, 0.82, 0.0, real);
-    let d = point3(0.0, 0.0, 0.82, real);
+    raw_insphere3d_cases(workload)
+        .into_iter()
+        .map(|(a, b, c, d, e)| {
+            (
+                point3(a[0], a[1], a[2], real),
+                point3(b[0], b[1], b[2], real),
+                point3(c[0], c[1], c[2], real),
+                point3(d[0], d[1], d[2], real),
+                point3(e[0], e[1], e[2], real),
+            )
+        })
+        .collect()
+}
+
+fn raw_insphere3d_cases(workload: Workload) -> Vec<RawInsphere3Case> {
+    let a = [0.82, 0.0, 0.0];
+    let b = [-0.82, 0.0, 0.0];
+    let c = [0.0, 0.82, 0.0];
+    let d = [0.0, 0.0, 0.82];
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
         let theta = std::f64::consts::TAU * unit(i);
@@ -1833,8 +1991,8 @@ fn insphere3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec
                 (0.82_f64.powi(2) - z * z).max(0.0).sqrt() + alternating_eps(i, 1.0e-12)
             }
         };
-        let e = point3(r * theta.cos(), r * theta.sin(), z, real);
-        cases.push((a.clone(), b.clone(), c.clone(), d.clone(), e));
+        let e = [r * theta.cos(), r * theta.sin(), z];
+        cases.push((a, b, c, d, e));
     }
     cases
 }
@@ -2320,6 +2478,23 @@ fn point3(x: f64, y: f64, z: f64, real: fn(f64) -> hyperreal::Real) -> Point3 {
     Point3::new(real(x), real(y), real(z))
 }
 
+#[inline]
+fn coord2(point: [f64; 2]) -> Coord<f64> {
+    Coord {
+        x: point[0],
+        y: point[1],
+    }
+}
+
+#[inline]
+fn coord3(point: [f64; 3]) -> Coord3D<f64> {
+    Coord3D {
+        x: point[0],
+        y: point[1],
+        z: point[2],
+    }
+}
+
 fn hyperreal_real(value: f64) -> hyperreal::Real {
     hyperreal::Real::try_from(value).expect("finite benchmark real")
 }
@@ -2400,6 +2575,17 @@ fn sign_score(outcome: PredicateOutcome<Sign>) -> i64 {
             Sign::Positive => 1,
         },
         PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+#[inline]
+fn determinant_score(determinant: f64) -> i64 {
+    if determinant > 0.0 {
+        1
+    } else if determinant < 0.0 {
+        -1
+    } else {
+        0
     }
 }
 
