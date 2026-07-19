@@ -9,6 +9,7 @@ impl Rational {
             linear_cache: OnceLock::new(),
             linear_reuse_seen: std::sync::atomic::AtomicBool::new(false),
             power_reuse_seen: std::sync::atomic::AtomicBool::new(false),
+            square_reuse_seen: std::sync::atomic::AtomicBool::new(false),
         }))
     }
 
@@ -21,6 +22,7 @@ impl Rational {
             linear_cache: _,
             linear_reuse_seen: _,
             power_reuse_seen: _,
+            square_reuse_seen: _,
         } = Arc::try_unwrap(self.0).unwrap_or_else(|shared| RationalData {
             sign: shared.sign,
             numerator: shared.numerator.clone(),
@@ -29,6 +31,7 @@ impl Rational {
             linear_cache: OnceLock::new(),
             linear_reuse_seen: std::sync::atomic::AtomicBool::new(false),
             power_reuse_seen: std::sync::atomic::AtomicBool::new(false),
+            square_reuse_seen: std::sync::atomic::AtomicBool::new(false),
         });
         (sign, numerator, denominator)
     }
@@ -56,11 +59,20 @@ impl Rational {
                 _ => {}
             }
         }
-        let inverse = cached.quaternary.get()?;
-        match inverse.kind {
-            CachedRationalLinearKind::StrongInversePlaceholder => {
-                Some(inverse.result.clone())
+        if let Some(inverse) = cached.quaternary.get() {
+            match inverse.kind {
+                CachedRationalLinearKind::StrongInversePlaceholder => {
+                    return Some(inverse.result.clone());
+                }
+                CachedRationalLinearKind::WeakInversePlaceholder => {
+                    return inverse.other.upgrade().map(Self);
+                }
+                _ => {}
             }
+        }
+        let inverse = cached.quinary.get()?;
+        match inverse.kind {
+            CachedRationalLinearKind::StrongInversePlaceholder => Some(inverse.result.clone()),
             CachedRationalLinearKind::WeakInversePlaceholder => inverse.other.upgrade().map(Self),
             _ => None,
         }
@@ -83,21 +95,26 @@ impl Rational {
                     result: RATIONAL_ZERO.clone(),
                 },
             };
-            if cached.primary.kind.is_unary_placeholder() {
-                return cached.quaternary.set(entry).is_ok();
+            if cached.primary.kind.is_primary_placeholder() {
+                return cached
+                    .quaternary
+                    .set(entry)
+                    .or_else(|entry| cached.quinary.set(entry))
+                    .is_ok();
             }
             return cached
                 .tertiary
                 .set(entry)
                 .or_else(|entry| cached.quaternary.set(entry))
+                .or_else(|entry| cached.quinary.set(entry))
                 .is_ok();
         }
 
         // Preserve a direct primary linear-cache load on the established
         // add/sub hot path. When inverse retention initializes this lazy box
         // first, the inert primary slot marks secondary and tertiary as the
-        // two available linear entries; quaternary remains available for the
-        // other cycle-free unary pair.
+        // two available linear entries; quaternary and quinary remain available
+        // for the other cycle-free unary pair and future placeholder layouts.
         let (kind, other, placeholder) = match inverse {
             CachedRationalUnary::Strong(inverse) => (
                 CachedRationalLinearKind::StrongInversePlaceholder,
@@ -120,6 +137,8 @@ impl Rational {
                 secondary: OnceLock::new(),
                 tertiary: OnceLock::new(),
                 quaternary: OnceLock::new(),
+                quinary: OnceLock::new(),
+                square_reduction: OnceLock::new(),
             }))
             .is_ok()
     }

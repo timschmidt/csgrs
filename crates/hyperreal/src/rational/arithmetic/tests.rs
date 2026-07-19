@@ -606,6 +606,53 @@ mod tests {
     }
 
     #[test]
+    fn repeated_square_reduction_reuses_exact_factors_without_a_cycle() {
+        let value = Rational::fraction(90_000_000_054_i64, 49_000_000_063).unwrap();
+        let owner = Arc::downgrade(&value.0);
+
+        let cold = value.clone().extract_square_reduced_retained();
+        let retained = value.clone().extract_square_reduced_retained();
+        let reused = value.clone().extract_square_reduced_retained();
+
+        assert_eq!(cold, retained);
+        assert!(Arc::ptr_eq(&retained.0.0, &reused.0.0));
+        assert!(Arc::ptr_eq(&retained.1.0, &reused.1.0));
+
+        drop(value);
+        drop(cold);
+        drop(retained);
+        drop(reused);
+        assert!(owner.upgrade().is_none());
+    }
+
+    #[test]
+    fn square_reduction_first_cache_retains_both_unary_and_linear_pairs() {
+        let left = Rational::new(5_000_000_000);
+        let _shared_left = left.clone();
+        let _cold_reduction = left.clone().extract_square_reduced_retained();
+        let reduction = left.clone().extract_square_reduced_retained();
+        let inverse = left.clone().inverse().unwrap();
+        let negation = -&left;
+        let first_right = Rational::try_from(11.0e-9_f64).unwrap();
+        let second_right = Rational::try_from(13.0e-9_f64).unwrap();
+
+        let first = &left + &first_right;
+        let second = &left + &second_right;
+        let reduction_reused = left.clone().extract_square_reduced_retained();
+        let inverse_reused = left.clone().inverse().unwrap();
+        let negation_reused = -&left;
+        let first_reused = &left + &first_right;
+        let second_reused = &left + &second_right;
+
+        assert!(Arc::ptr_eq(&reduction.0.0, &reduction_reused.0.0));
+        assert!(Arc::ptr_eq(&reduction.1.0, &reduction_reused.1.0));
+        assert!(Arc::ptr_eq(&inverse.0, &inverse_reused.0));
+        assert!(Arc::ptr_eq(&negation.0, &negation_reused.0));
+        assert!(Arc::ptr_eq(&first.0, &first_reused.0));
+        assert!(Arc::ptr_eq(&second.0, &second_reused.0));
+    }
+
+    #[test]
     fn small_dyadic_products_share_canonical_storage() {
         let left = Rational::fraction(5, 4).unwrap();
         let right = Rational::fraction(5, 2).unwrap();

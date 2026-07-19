@@ -319,16 +319,20 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Divides exact rational-backed `Real` values.",
             },
             BenchDoc {
+                name: "real_exact_sqrt_owned_cold",
+                description: "Reduces a fresh uniquely owned exact square-root expression.",
+            },
+            BenchDoc {
                 name: "real_exact_sqrt_reduce",
-                description: "Reduces an exact square-root expression.",
+                description: "Reuses the retained reduction of an exact square-root expression.",
             },
             BenchDoc {
                 name: "real_exact_dyadic_sqrt_reduce",
-                description: "Reduces the square root of a large exact dyadic rational.",
+                description: "Reuses the square-root reduction of a large exact dyadic rational.",
             },
             BenchDoc {
                 name: "real_exact_general_sqrt_reduce",
-                description: "Reduces a large non-dyadic rational sum of squares.",
+                description: "Reuses the square-root reduction of a non-dyadic rational sum of squares.",
             },
             BenchDoc {
                 name: "real_exact_dyadic_radical_scale",
@@ -844,7 +848,9 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     let retained_real_rhs =
         Real::new(Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly"));
     let _ = black_box(&retained_real_lhs * &retained_real_rhs);
-    let sqrt_input = Real::new(Rational::new(18));
+    let sqrt_input = Real::new(Rational::new(90));
+    let _cold_sqrt = sqrt_input.clone().sqrt().unwrap();
+    let _retained_sqrt = sqrt_input.clone().sqrt().unwrap();
     let dyadic_components = [
         Rational::try_from(1.234_567_890_123_45_f64).expect("finite f64 imports exactly"),
         Rational::try_from(-2.345_678_901_234_56_f64).expect("finite f64 imports exactly"),
@@ -979,6 +985,13 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     });
     group.bench_function("real_exact_div", |b| {
         b.iter(|| black_box((black_box(&exact_real_lhs) / black_box(&exact_real_rhs)).unwrap()))
+    });
+    group.bench_function("real_exact_sqrt_owned_cold", |b| {
+        b.iter_batched(
+            || Real::new(Rational::new(90)),
+            |value| black_box(value.sqrt().unwrap()),
+            BatchSize::SmallInput,
+        )
     });
     group.bench_function("real_exact_sqrt_reduce", |b| {
         b.iter_batched(

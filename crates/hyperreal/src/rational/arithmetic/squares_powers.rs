@@ -199,6 +199,65 @@ impl Rational {
         )
     }
 
+    #[inline]
+    fn retained_square_reduction(&self) -> Option<(Self, Self)> {
+        let reduction = self
+            .linear_cache
+            .get()?
+            .square_reduction
+            .get()?;
+        crate::trace_dispatch!("rational", "square_extraction", "retained-reduction");
+        Some((reduction.square.clone(), reduction.rest.clone()))
+    }
+
+    #[cold]
+    fn retain_square_reduction(&self, square: &Self, rest: &Self) {
+        let reduction = CachedRationalSquareReduction {
+            square: square.clone(),
+            rest: rest.clone(),
+        };
+        if let Some(cached) = self.linear_cache.get() {
+            let _ = cached.square_reduction.set(reduction);
+            return;
+        }
+
+        let square_reduction = OnceLock::new();
+        let _ = square_reduction.set(reduction);
+        let _ = self
+            .linear_cache
+            .set(Box::new(CachedRationalArithmetic {
+                primary: CachedRationalLinearEntry {
+                    other: std::sync::Weak::new(),
+                    kind: CachedRationalLinearKind::SquareReductionPlaceholder,
+                    result: RATIONAL_ZERO.clone(),
+                },
+                secondary: OnceLock::new(),
+                tertiary: OnceLock::new(),
+                quaternary: OnceLock::new(),
+                quinary: OnceLock::new(),
+                square_reduction,
+            }));
+    }
+
+    pub(crate) fn extract_square_reduced_retained(self) -> (Self, Self) {
+        if let Some(reduction) = self.retained_square_reduction() {
+            return reduction;
+        }
+        if !self
+            .square_reuse_seen
+            .load(std::sync::atomic::Ordering::Relaxed)
+        {
+            crate::trace_dispatch!("rational", "square_extraction", "reuse-observed");
+            self.square_reuse_seen
+                .store(true, std::sync::atomic::Ordering::Relaxed);
+            return self.extract_square_reduced();
+        }
+
+        let reduction = self.clone().extract_square_reduced();
+        self.retain_square_reduction(&reduction.0, &reduction.1);
+        reduction
+    }
+
     /// For very big rationals, the algorithm used for calculating a square
     /// root is not viable, in this case the predicate is false.
     pub fn extract_square_will_succeed(&self) -> bool {

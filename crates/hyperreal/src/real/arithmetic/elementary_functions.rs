@@ -152,7 +152,7 @@ impl Real {
         match &self.class {
             One if self.rational.extract_square_will_succeed() => {
                 // Extract rational square factors before creating sqrt nodes.
-                let (square, rest) = self.rational.extract_square_reduced();
+                let (square, rest) = self.rational.extract_square_reduced_retained();
                 if rest.is_one() {
                     crate::trace_dispatch!("real", "sqrt", "rational-perfect-square");
                     return Ok(Self {

@@ -279,9 +279,10 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_mul_retained` | 23.13 ns | 23.05 ns - 23.21 ns | Reuses the retained exact product beneath rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_div` | not run | not run | Divides exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | not run | not run | Reduces an exact square-root expression. |
-| `pure_scalar_algorithm_speed/real_exact_dyadic_sqrt_reduce` | 433.54 ns | 432.70 ns .. 434.50 ns | Reduces the exact dyadic square-root radicand produced by an f64 vector norm. |
-| `pure_scalar_algorithm_speed/real_exact_general_sqrt_reduce` | 2.03 us | 1.94 us .. 2.20 us | Reduces a large non-dyadic exact-rational square-root radicand. |
+| `pure_scalar_algorithm_speed/real_exact_sqrt_owned_cold` | 165.32 ns | 164.35 ns - 166.48 ns | Reduces a fresh uniquely owned exact square-root expression. |
+| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | 78.79 ns | 78.05 ns - 80.15 ns | Reuses the retained reduction of an exact square-root expression. |
+| `pure_scalar_algorithm_speed/real_exact_dyadic_sqrt_reduce` | 75.33 ns | 75.20 ns - 75.46 ns | Reuses the square-root reduction of a large exact dyadic rational. |
+| `pure_scalar_algorithm_speed/real_exact_general_sqrt_reduce` | 54.31 ns | 54.25 ns - 54.38 ns | Reuses the square-root reduction of a non-dyadic rational sum of squares. |
 | `pure_scalar_algorithm_speed/real_exact_dyadic_radical_scale` | 239.73 ns | 238.42 ns - 241.10 ns | Scales an exact reciprocal radical by one exact f64 coordinate. |
 | `pure_scalar_algorithm_speed/real_exact_ln_reduce` | not run | not run | Reduces an exact logarithm of a power of two. |
 | `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | not run | not run | Dispatches `Real::pow` with an exact small-integer exponent. |

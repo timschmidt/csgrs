@@ -68,6 +68,9 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
   unshared first-use operands only record a one-byte hint, the second observation
   admits a bounded result, and later calls reuse it; the lazy arithmetic box has room
   for two weak-keyed linear results while `RationalData` remains 96 bytes
+- repeated square-root reductions use the same adaptive schedule, retaining the exact
+  square factor and residual only after reuse is observed; the dedicated
+  lazy slot remains cycle-free and does not displace either linear result or unary pair
 - shared rationals retain one exact reciprocal in that same bounded lazy box; the
   reciprocal points back weakly, avoiding ownership cycles while stabilizing the
   multiplier identity used by repeated scalar division

@@ -107,8 +107,10 @@ Relevant path notes:
   two weak-keyed linear results and, for shared values, one reciprocal and one
   opposite-sign result. Unary owners retain their result strongly while reverse
   edges are weak, so repeated division and negation reuse stable identities without
-  ownership cycles. The four-entry layout leaves room for both unary pairs and two
-  linear results regardless of which operation initializes it. Sum and
+  ownership cycles. Five polymorphic entries leave room for both unary pairs and two
+  linear results regardless of which operation initializes the box. A dedicated lazy
+  slot retains an exact square factor and residual only after repeated
+  square extraction is observed, without displacing those arithmetic entries. Sum and
   directed-difference entries can also
   occupy opposite operand caches and remain ignored by serialization. Occupied
   entries are checked before constructing a candidate. Cold wide-dyadic add/sub
@@ -510,6 +512,35 @@ were removed. Sanitizer-backed nightly fuzzing completed 774,516 rational
 arithmetic cases, 93,237 exact-real cases, and 35,767 elementary-real cases
 without a failure. Dispatch tracing distinguishes residue rejection, the
 large-power-of-two path, and both shared-remainder schedules.
+
+### Retained experiment: exact square-root reductions
+
+Repeated public square roots were still re-running exact square-factor
+extraction even though the immutable rational radicand was unchanged. The
+retained path now records a one-byte reuse observation, keeps the first call on
+the original exact extractor, and only admits the exact square factor and
+residual on the second observation. Later calls clone those two
+canonical results. The lazy pair is bounded, ignored by serialization, and
+cannot point back to its source, while reciprocal, negation, and both linear
+cache identities remain independently available. The added observation byte
+fits existing padding, so `RationalData` remains 96 bytes.
+
+Fresh 50-sample direct medians measured 165.32 ns for a fresh uniquely owned
+`sqrt(90)` and 78.79 ns for its retained shared-input route, a 52.3% reduction.
+More expensive repeated reductions fell from 433.54 ns to 75.33 ns for the exact
+dyadic vector-norm sentinel and from 2.03 us to 54.31 ns for the non-dyadic
+sum-of-squares sentinel. The cold fixture is deliberately outside the global
+small-integer pool, so it also proves one-shot inputs do not receive an eager
+cache allocation.
+
+On Hyperlattice's matched four-case scalar facade, exact f64 imports now measure
+49.18 ns and explicit rationals 34.07 ns, versus 96.34 ns for Numerica 128 and
+1.478 us for Symbolica. Both exact forms beat the fixed-precision control. The
+four individual cases also beat Numerica, including the imported tiny dyadic
+(83.26 ns versus 94.73 ns) and imported `e` (63.00 ns versus 100.52 ns).
+Regression tests prove exact factor equality, stable retained identities,
+cycle-free destruction, and coexistence with both unary and both linear pairs;
+dispatch tracing records `reuse-observed` followed by `retained-reduction`.
 
 ### Retained experiment: exact dyadic/general product cancellation
 

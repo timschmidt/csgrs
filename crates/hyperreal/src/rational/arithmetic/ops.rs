@@ -559,7 +559,7 @@ impl Rational {
                 kind,
                 result: result.clone(),
             };
-            if cached.primary.kind.is_unary_placeholder() {
+            if cached.primary.kind.is_primary_placeholder() {
                 return cached
                     .secondary
                     .set(entry)
@@ -579,6 +579,8 @@ impl Rational {
                 secondary: OnceLock::new(),
                 tertiary: OnceLock::new(),
                 quaternary: OnceLock::new(),
+                quinary: OnceLock::new(),
+                square_reduction: OnceLock::new(),
             }))
             .is_ok()
     }
@@ -737,6 +739,7 @@ impl Rational {
             .quaternary
             .get()
             .and_then(Self::negation_from_entry)
+            .or_else(|| cached.quinary.get().and_then(Self::negation_from_entry))
     }
 
     fn retain_negation_entry(&self, negation: CachedRationalUnary) -> bool {
@@ -756,13 +759,18 @@ impl Rational {
                     result: RATIONAL_ZERO.clone(),
                 },
             };
-            if cached.primary.kind.is_unary_placeholder() {
-                return cached.quaternary.set(entry).is_ok();
+            if cached.primary.kind.is_primary_placeholder() {
+                return cached
+                    .quaternary
+                    .set(entry)
+                    .or_else(|entry| cached.quinary.set(entry))
+                    .is_ok();
             }
             return cached
                 .tertiary
                 .set(entry)
                 .or_else(|entry| cached.quaternary.set(entry))
+                .or_else(|entry| cached.quinary.set(entry))
                 .is_ok();
         }
 
@@ -788,6 +796,8 @@ impl Rational {
                 secondary: OnceLock::new(),
                 tertiary: OnceLock::new(),
                 quaternary: OnceLock::new(),
+                quinary: OnceLock::new(),
+                square_reduction: OnceLock::new(),
             }))
             .is_ok()
     }
@@ -857,6 +867,8 @@ impl Neg for Rational {
             data.linear_reuse_seen
                 .store(false, std::sync::atomic::Ordering::Relaxed);
             data.power_reuse_seen
+                .store(false, std::sync::atomic::Ordering::Relaxed);
+            data.square_reuse_seen
                 .store(false, std::sync::atomic::Ordering::Relaxed);
             return self;
         }

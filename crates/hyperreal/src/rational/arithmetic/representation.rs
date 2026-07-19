@@ -55,6 +55,7 @@ enum CachedRationalLinearKind {
     WeakInversePlaceholder,
     StrongNegationPlaceholder,
     WeakNegationPlaceholder,
+    SquareReductionPlaceholder,
 }
 
 impl CachedRationalLinearKind {
@@ -78,6 +79,11 @@ impl CachedRationalLinearKind {
     fn is_unary_placeholder(self) -> bool {
         self.is_inverse_placeholder() || self.is_negation_placeholder()
     }
+
+    #[inline]
+    fn is_primary_placeholder(self) -> bool {
+        self.is_unary_placeholder() || matches!(self, Self::SquareReductionPlaceholder)
+    }
 }
 
 struct CachedRationalLinearEntry {
@@ -91,11 +97,18 @@ enum CachedRationalUnary {
     Weak(std::sync::Weak<RationalData>),
 }
 
+struct CachedRationalSquareReduction {
+    square: Rational,
+    rest: Rational,
+}
+
 struct CachedRationalArithmetic {
     primary: CachedRationalLinearEntry,
     secondary: OnceLock<CachedRationalLinearEntry>,
     tertiary: OnceLock<CachedRationalLinearEntry>,
     quaternary: OnceLock<CachedRationalLinearEntry>,
+    quinary: OnceLock<CachedRationalLinearEntry>,
+    square_reduction: OnceLock<CachedRationalSquareReduction>,
 }
 
 #[doc(hidden)]
@@ -107,6 +120,7 @@ pub struct RationalData {
     linear_cache: OnceLock<Box<CachedRationalArithmetic>>,
     linear_reuse_seen: std::sync::atomic::AtomicBool,
     power_reuse_seen: std::sync::atomic::AtomicBool,
+    square_reuse_seen: std::sync::atomic::AtomicBool,
 }
 
 impl std::fmt::Debug for Rational {
