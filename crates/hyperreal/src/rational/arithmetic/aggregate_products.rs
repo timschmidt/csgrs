@@ -63,6 +63,49 @@ impl Rational {
         }
     }
 
+    /// Compute an arbitrary-precision GCD without entering `BigUint`'s
+    /// subtraction-heavy binary reducer for balanced wide operands.
+    ///
+    /// Exact binary-float matrix inversion repeatedly cross-cancels a dyadic
+    /// cofactor numerator against the same odd determinant. Those operands are
+    /// commonly only two or three machine words wide, where Euclidean
+    /// remainder steps are substantially cheaper than long runs of shifts and
+    /// subtractions. Preserve the tuned binary reducer for values that fit the
+    /// scalar word path, and reduce a wide/small pair to that path after one
+    /// remainder.
+    fn gcd_magnitudes(left: &BigUint, right: &BigUint) -> BigUint {
+        if left.is_zero() {
+            return right.clone();
+        }
+        if right.is_zero() {
+            return left.clone();
+        }
+        if let (Some(left), Some(right)) = (left.to_u128(), right.to_u128()) {
+            return BigUint::from(Self::gcd_word(left, right));
+        }
+
+        let (larger, smaller) = if left >= right {
+            (left, right)
+        } else {
+            (right, left)
+        };
+        if let Some(smaller_word) = smaller.to_u128() {
+            let remainder = (larger % smaller)
+                .to_u128()
+                .expect("remainder is smaller than a u128 divisor");
+            return BigUint::from(Self::gcd_word(smaller_word, remainder));
+        }
+
+        let mut larger = larger.clone();
+        let mut smaller = smaller.clone();
+        while !smaller.is_zero() {
+            let remainder = &larger % &smaller;
+            larger = smaller;
+            smaller = remainder;
+        }
+        larger
+    }
+
     fn from_word_magnitude_difference(
         positive: u128,
         negative: u128,
@@ -639,6 +682,81 @@ impl Rational {
             &re_numerator / &denominator,
             &im_numerator / &denominator,
         ))
+    }
+
+    /// Invert a fixed 3x3 exact-rational matrix as one aggregate operation.
+    ///
+    /// Keeping the cofactors and shared determinant reciprocal in `Rational`
+    /// avoids repeatedly reclassifying and wrapping intermediate `Real`
+    /// values. Each signed product is still fused and every returned component
+    /// remains canonically exact.
+    pub(crate) fn matrix3_inverse_components(
+        matrix: [[&Self; 3]; 3],
+    ) -> Result<[[Self; 3]; 3], crate::Problem> {
+        let m = matrix;
+        let c00 = Self::signed_product_sum2(
+            [true, false],
+            [[m[1][1], m[2][2]], [m[1][2], m[2][1]]],
+        );
+        let c01 = Self::signed_product_sum2(
+            [true, false],
+            [[m[0][2], m[2][1]], [m[0][1], m[2][2]]],
+        );
+        let c02 = Self::signed_product_sum2(
+            [true, false],
+            [[m[0][1], m[1][2]], [m[0][2], m[1][1]]],
+        );
+        let c10 = Self::signed_product_sum2(
+            [true, false],
+            [[m[1][2], m[2][0]], [m[1][0], m[2][2]]],
+        );
+        let c11 = Self::signed_product_sum2(
+            [true, false],
+            [[m[0][0], m[2][2]], [m[0][2], m[2][0]]],
+        );
+        let c12 = Self::signed_product_sum2(
+            [true, false],
+            [[m[0][2], m[1][0]], [m[0][0], m[1][2]]],
+        );
+        let c20 = Self::signed_product_sum2(
+            [true, false],
+            [[m[1][0], m[2][1]], [m[1][1], m[2][0]]],
+        );
+        let c21 = Self::signed_product_sum2(
+            [true, false],
+            [[m[0][1], m[2][0]], [m[0][0], m[2][1]]],
+        );
+        let c22 = Self::signed_product_sum2(
+            [true, false],
+            [[m[0][0], m[1][1]], [m[0][1], m[1][0]]],
+        );
+        let determinant = Self::signed_product_sum(
+            [true, true, true],
+            [
+                [m[0][0], &c00],
+                [m[0][1], &c10],
+                [m[0][2], &c20],
+            ],
+        );
+        let inverse_determinant = determinant.inverse()?;
+        crate::trace_dispatch!("rational", "matrix3-inverse", "aggregate-cofactor");
+        Ok([
+            [
+                c00 * &inverse_determinant,
+                c01 * &inverse_determinant,
+                c02 * &inverse_determinant,
+            ],
+            [
+                c10 * &inverse_determinant,
+                c11 * &inverse_determinant,
+                c12 * &inverse_determinant,
+            ],
+            [
+                c20 * &inverse_determinant,
+                c21 * &inverse_determinant,
+                c22 * &inverse_determinant,
+            ],
+        ])
     }
 
     fn dot_products_dyadic<const N: usize>(

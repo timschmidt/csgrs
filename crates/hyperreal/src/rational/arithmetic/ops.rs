@@ -417,7 +417,7 @@ impl Rational {
         let power_cancel = usize::try_from(power_cancel).ok()?;
         let remaining_denominator_shift = usize::try_from(remaining_denominator_shift).ok()?;
 
-        let cross = num::Integer::gcd(&dyadic_numerator, &general_denominator);
+        let cross = Self::gcd_magnitudes(&dyadic_numerator, &general_denominator);
         trace_rational_gcd!(&dyadic_numerator, &general_denominator, &cross);
         let dyadic_numerator = dyadic_numerator / &cross;
         let general_denominator = general_denominator / &cross;

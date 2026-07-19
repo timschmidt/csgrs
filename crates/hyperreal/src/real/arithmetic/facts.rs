@@ -232,6 +232,22 @@ impl Real {
         Ok((Real::new(re), Real::new(im)))
     }
 
+    /// Invert a dense 3x3 matrix after the caller has proved every component
+    /// is an exact rational.
+    ///
+    /// Fixed-size matrix crates use this aggregate entry point to keep all nine
+    /// cofactors and their shared determinant reciprocal inside the scalar
+    /// representation layer. Division by a singular exact matrix returns
+    /// [`Problem::DivideByZero`](crate::Problem::DivideByZero).
+    pub fn exact_rational_matrix3_inverse_known_exact(
+        matrix: [[&Real; 3]; 3],
+    ) -> Result<[[Real; 3]; 3], crate::Problem> {
+        let rationals = matrix.map(|row| row.map(|value| &value.rational));
+        let result = Rational::matrix3_inverse_components(rationals)?;
+        crate::trace_dispatch!("real", "matrix3-inverse", "exact-rational-aggregate");
+        Ok(result.map(|row| row.map(Real::new)))
+    }
+
     /// Return a fused exact-rational product sum using a carried shared-scale
     /// certificate.
     ///

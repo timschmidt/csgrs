@@ -49,6 +49,23 @@ mod tests {
     }
 
     #[test]
+    fn wide_magnitude_gcd_handles_balanced_and_wide_word_operands() {
+        let common = (BigUint::one() << 192_usize) + BigUint::one();
+        assert_eq!(
+            Rational::gcd_magnitudes(&(&common * 17_u8), &(&common * 19_u8)),
+            common
+        );
+
+        let word = BigUint::from(15_u8);
+        let wide = ((BigUint::one() << 260_usize) + BigUint::from(2_u8)) * &word;
+        assert_eq!(Rational::gcd_magnitudes(&wide, &word), word);
+        assert_eq!(
+            Rational::gcd_magnitudes(&BigUint::ZERO, &wide),
+            wide
+        );
+    }
+
+    #[test]
     fn word_multiplication_cross_cancellation_stays_reduced() {
         let dyadic = Rational::try_from(0.123_456_789_f64).unwrap();
         let scaled = &dyadic * Rational::new(10);

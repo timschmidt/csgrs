@@ -2638,6 +2638,43 @@ mod tests {
     }
 
     #[test]
+    fn exact_rational_matrix3_inverse_uses_shared_exact_aggregate() {
+        let q =
+            |numerator, denominator| Real::new(Rational::fraction(numerator, denominator).unwrap());
+        let matrix = [
+            [q(1, 2), q(1, 1), q(3, 2)],
+            [q(0, 1), q(1, 4), q(1, 1)],
+            [q(5, 8), q(3, 4), q(0, 1)],
+        ];
+        let actual = Real::exact_rational_matrix3_inverse_known_exact([
+            [&matrix[0][0], &matrix[0][1], &matrix[0][2]],
+            [&matrix[1][0], &matrix[1][1], &matrix[1][2]],
+            [&matrix[2][0], &matrix[2][1], &matrix[2][2]],
+        ])
+        .unwrap();
+        let expected = [
+            [Real::from(-48), Real::from(72), Real::from(40)],
+            [Real::from(40), Real::from(-60), Real::from(-32)],
+            [Real::from(-10), Real::from(16), Real::from(8)],
+        ];
+        assert_eq!(actual, expected);
+
+        let singular = [
+            [Real::from(1), Real::from(2), Real::from(3)],
+            [Real::from(1), Real::from(2), Real::from(3)],
+            [Real::from(0), Real::from(0), Real::from(1)],
+        ];
+        assert_eq!(
+            Real::exact_rational_matrix3_inverse_known_exact([
+                [&singular[0][0], &singular[0][1], &singular[0][2]],
+                [&singular[1][0], &singular[1][1], &singular[1][2]],
+                [&singular[2][0], &singular[2][1], &singular[2][2]],
+            ]),
+            Err(Problem::DivideByZero)
+        );
+    }
+
+    #[test]
     fn exact_set_facts_report_dyadic_and_shared_denominator_routes() {
         let dyadic = [
             Real::new(Rational::fraction(1, 4).unwrap()),
