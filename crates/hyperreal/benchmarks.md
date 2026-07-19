@@ -259,13 +259,17 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `pure_scalar_algorithm_speed/rational_add` | not run | not run | Adds two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_add` | 8.77 ns | 8.75 ns - 8.79 ns | Adds two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_sub` | 8.99 ns | 8.96 ns - 9.01 ns | Subtracts two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_add_wide_dyadic_cold` | 91.24 ns | 90.65 ns - 91.88 ns | Adds fresh integer and wide-dyadic operands without retained work. |
+| `pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold` | 89.97 ns | 89.78 ns - 90.16 ns | Subtracts fresh integer and wide-dyadic operands without retained work. |
 | `pure_scalar_algorithm_speed/rational_mul` | not run | not run | Multiplies two nontrivial rational values. |
 | `pure_scalar_algorithm_speed/rational_mul_retained_general` | 10.41 ns | 10.38 ns - 10.45 ns | Reuses one retained exact product for an immutable rational operand pair. |
 | `pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold` | 164.90 ns | 160.72 ns - 171.42 ns | Multiplies fresh wide-denominator dyadics whose numerators fit `u128`. |
 | `pure_scalar_algorithm_speed/rational_mul_dyadic_general_cross_cancel` | 1.194 us | 1.188 us - 1.201 us | Multiplies a wide dyadic rational by a general rational with a power-of-two numerator. |
 | `pure_scalar_algorithm_speed/rational_div` | not run | not run | Divides two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/real_exact_add` | not run | not run | Adds exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_add` | 22.38 ns | 22.27 ns - 22.50 ns | Adds exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_sub` | 22.70 ns | 22.65 ns - 22.76 ns | Subtracts exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_mul_retained` | 23.13 ns | 23.05 ns - 23.21 ns | Reuses the retained exact product beneath rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_div` | not run | not run | Divides exact rational-backed `Real` values. |

@@ -39,6 +39,9 @@ fuzz_target!(|input: Input| {
 
     assert_eq!(add, a.clone() + b.clone());
     assert_eq!(sub, a.clone() - b.clone());
+    assert_eq!(add, &a + &b);
+    assert_eq!(add, &b + &a);
+    assert_eq!(sub, &a - &b);
     assert_eq!(mul, a.clone() * b.clone());
     assert_eq!(mul, &b * &a);
     assert_eq!(&a * &c, &c * &a);

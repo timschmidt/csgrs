@@ -46,12 +46,26 @@ struct CachedRationalProduct {
     result: Rational,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CachedRationalLinearKind {
+    Sum,
+    OwnerMinusOther,
+    OtherMinusOwner,
+}
+
+struct CachedRationalLinear {
+    other: std::sync::Weak<RationalData>,
+    kind: CachedRationalLinearKind,
+    result: Rational,
+}
+
 #[doc(hidden)]
 pub struct RationalData {
     sign: Sign,
     numerator: BigUint,
     denominator: BigUint,
     product_cache: OnceLock<CachedRationalProduct>,
+    linear_cache: OnceLock<Box<CachedRationalLinear>>,
 }
 
 impl std::fmt::Debug for Rational {

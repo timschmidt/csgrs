@@ -488,6 +488,97 @@ impl Rational {
         });
     }
 
+    #[inline]
+    fn retained_linear(
+        owner: &Self,
+        other: &Self,
+        kind: CachedRationalLinearKind,
+        _path: &'static str,
+    ) -> Option<Self> {
+        let cached = owner.linear_cache.get()?;
+        (cached.kind == kind
+            && std::ptr::eq(cached.other.as_ptr(), Arc::as_ptr(&other.0)))
+        .then(|| {
+            crate::trace_dispatch!("rational", "linear", _path);
+            cached.result.clone()
+        })
+    }
+
+    #[inline]
+    fn retained_sum(&self, other: &Self) -> Option<Self> {
+        Self::retained_linear(self, other, CachedRationalLinearKind::Sum, "retained-sum")
+            .or_else(|| {
+                Self::retained_linear(
+                    other,
+                    self,
+                    CachedRationalLinearKind::Sum,
+                    "retained-sum",
+                )
+            })
+    }
+
+    #[inline]
+    fn retained_difference(&self, other: &Self) -> Option<Self> {
+        Self::retained_linear(
+            self,
+            other,
+            CachedRationalLinearKind::OwnerMinusOther,
+            "retained-difference",
+        )
+        .or_else(|| {
+            Self::retained_linear(
+                other,
+                self,
+                CachedRationalLinearKind::OtherMinusOwner,
+                "retained-difference",
+            )
+        })
+    }
+
+    #[inline]
+    fn retain_linear(
+        owner: &Self,
+        other: &Self,
+        kind: CachedRationalLinearKind,
+        result: &Self,
+    ) -> bool {
+        owner
+            .linear_cache
+            .set(Box::new(CachedRationalLinear {
+                other: Arc::downgrade(&other.0),
+                kind,
+                result: result.clone(),
+            }))
+            .is_ok()
+    }
+
+    fn retain_sum_pair(&self, other: &Self, result: &Self) {
+        if Arc::strong_count(&self.0) == 1 {
+            return;
+        }
+        if !Self::retain_linear(self, other, CachedRationalLinearKind::Sum, result) {
+            let _ = Self::retain_linear(other, self, CachedRationalLinearKind::Sum, result);
+        }
+    }
+
+    fn retain_difference_pair(&self, other: &Self, result: &Self) {
+        if Arc::strong_count(&self.0) == 1 {
+            return;
+        }
+        if !Self::retain_linear(
+            self,
+            other,
+            CachedRationalLinearKind::OwnerMinusOther,
+            result,
+        ) {
+            let _ = Self::retain_linear(
+                other,
+                self,
+                CachedRationalLinearKind::OtherMinusOwner,
+                result,
+            );
+        }
+    }
 }
 
 impl<T: AsRef<Rational>> Add<T> for &Rational {
@@ -509,8 +600,12 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
         if other.is_one() {
             return self.add_one();
         }
+        if let Some(result) = self.retained_sum(other) {
+            return result;
+        }
         if let Some(result) = self.add_sub_words(other, false) {
             crate::trace_dispatch!("rational", "add", "word-sized");
+            self.retain_sum_pair(other, &result);
             return result;
         }
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
@@ -526,14 +621,18 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
             (x, y) => match a.cmp(&b) {
                 Greater => (x, a - b),
                 Equal => {
-                    return Self::Output::zero();
+                    let result = Self::Output::zero();
+                    self.retain_sum_pair(other, &result);
+                    return result;
                 }
                 Less => (y, b - a),
             },
         };
         trace_rational_temporary!();
-        Self::Output::from_parts_raw(sign, numerator, denominator)
-        .reduce_with_possible_divisor(&common_denominator)
+        let result = Self::Output::from_parts_raw(sign, numerator, denominator)
+            .reduce_with_possible_divisor(&common_denominator);
+        self.retain_sum_pair(other, &result);
+        result
     }
 }
 
@@ -595,8 +694,12 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
         if self.is_one() {
             return -other.subtract_one();
         }
+        if let Some(result) = self.retained_difference(other) {
+            return result;
+        }
         if let Some(result) = self.add_sub_words(other, true) {
             crate::trace_dispatch!("rational", "sub", "word-sized");
+            self.retain_difference_pair(other, &result);
             return result;
         }
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
@@ -612,14 +715,18 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
             (x, y) => match a.cmp(&b) {
                 Greater => (x, a - b),
                 Equal => {
-                    return Self::Output::zero();
+                    let result = Self::Output::zero();
+                    self.retain_difference_pair(other, &result);
+                    return result;
                 }
                 Less => (-y, b - a),
             },
         };
         trace_rational_temporary!();
-        Self::Output::from_parts_raw(sign, numerator, denominator)
-        .reduce_with_possible_divisor(&common_denominator)
+        let result = Self::Output::from_parts_raw(sign, numerator, denominator)
+            .reduce_with_possible_divisor(&common_denominator);
+        self.retain_difference_pair(other, &result);
+        result
     }
 }
 

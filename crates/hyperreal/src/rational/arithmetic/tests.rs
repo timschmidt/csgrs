@@ -554,6 +554,28 @@ mod tests {
     }
 
     #[test]
+    fn linear_operations_retain_exact_results_without_competing_for_one_slot() {
+        let left = Rational::new(1_000_000_000);
+        let right = Rational::try_from(1.0e-9_f64).unwrap();
+        let _retained_left = left.clone();
+        let _retained_right = right.clone();
+
+        let sum = &left + &right;
+        let retained_sum = &left + &right;
+        let reversed_sum = &right + &left;
+        assert!(Arc::ptr_eq(&sum.0, &retained_sum.0));
+        assert!(Arc::ptr_eq(&sum.0, &reversed_sum.0));
+
+        let difference = &left - &right;
+        let retained_difference = &left - &right;
+        assert!(Arc::ptr_eq(&difference.0, &retained_difference.0));
+
+        let product = &left * &right;
+        let retained_product = &left * &right;
+        assert!(Arc::ptr_eq(&product.0, &retained_product.0));
+    }
+
+    #[test]
     fn perfect_nth_root_detects_exact_rational_roots() {
         assert_eq!(
             Rational::new(27).perfect_nth_root(3),

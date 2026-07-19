@@ -74,8 +74,12 @@ Current timing anchors:
 | `pure_scalar_algorithm_speed/rational_mul` | 117.5 ns |
 | `pure_scalar_algorithm_speed/rational_mul_retained_general` | 10.38 ns |
 | `pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold` | 166.78 ns |
-| `borrowed_op_overhead/rational_add_refs` | 385.0 ns |
-| `pure_scalar_algorithm_speed/rational_add` | 399.2 ns |
+| `pure_scalar_algorithm_speed/rational_add` (retained) | 8.77 ns |
+| `pure_scalar_algorithm_speed/rational_sub` (retained) | 8.99 ns |
+| `pure_scalar_algorithm_speed/rational_add_wide_dyadic_cold` | 91.24 ns |
+| `pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold` | 89.97 ns |
+| `pure_scalar_algorithm_speed/real_exact_add` (retained) | 22.38 ns |
+| `pure_scalar_algorithm_speed/real_exact_sub` (retained) | 22.70 ns |
 | `pure_scalar_algorithm_speed/rational_div` | 595.3 ns |
 | `borrowed_op_overhead/rational_add_owned` | 973.5 ns |
 | `dense_algebra/rational_dot_64` | 36.8 us |
@@ -90,6 +94,12 @@ Relevant path notes:
 - Each immutable rational retains one exact multiplication result under weak operand
   keys in both commutative directions. The cache is bounded, cycle-free, and ignored
   by serialization; misses continue through the same exact word/BigUint kernels.
+- Shared immutable left operands can retain one exact linear result. A sum occupies
+  the first operand's slot and a directed difference can occupy the second operand's
+  slot, so one pair can reuse both operations without an unbounded map. The lazily
+  boxed entry uses a weak operand key and is ignored by serialization. Unshared
+  first-use operands skip retention and measured 91.24 ns add / 89.97 ns subtract
+  on the wide-dyadic sentinel.
 - When a dyadic denominator product overflows `u128` but both numerators and their
   product fit, multiplication cancels and multiplies those numerators in registers
   before allocating only the final exact result.

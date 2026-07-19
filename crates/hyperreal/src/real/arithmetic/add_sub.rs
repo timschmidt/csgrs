@@ -53,6 +53,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
     fn add(self, other: T) -> Self::Output {
         let other = other.as_ref();
         if self.same_symbolic_basis(other) {
+            crate::trace_dispatch!("real", "add", "same-symbolic-basis");
             // Same symbolic basis: combine only the rational scale and keep the existing
             // computable certificate.
             let rational = &self.rational + &other.rational;
@@ -70,9 +71,11 @@ impl<T: AsRef<Real>> Add<T> for &Real {
             };
         }
         if self.has_zero_scale() {
+            crate::trace_dispatch!("real", "add", "lhs-zero");
             return other.clone();
         }
         if other.has_zero_scale() {
+            crate::trace_dispatch!("real", "add", "rhs-zero");
             return self.clone();
         }
         if self.class.is_ln() && other.class.is_ln() {
@@ -88,6 +91,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
                 Self::Output::simple_log_sum(self.rational.clone(), b, other.rational.clone(), d)
                 && let Ok(simple) = Self::Output::ln_rational(r)
             {
+                crate::trace_dispatch!("real", "add", "ln-combination");
                 return simple;
             }
         }
@@ -96,6 +100,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
             && let Some(sum) =
                 Self::Output::try_add_rational_to_const_term(self, other.rational.clone())
         {
+            crate::trace_dispatch!("real", "add", "rhs-rational-const-offset");
             // Preserve certified offsets such as `pi - 3` as exact structural
             // classes. This avoids paying generic addition during sign/MSD
             // predicates on almost-simple constants.
@@ -106,8 +111,10 @@ impl<T: AsRef<Real>> Add<T> for &Real {
             && let Some(sum) =
                 Self::Output::try_add_rational_to_const_term(other, self.rational.clone())
         {
+            crate::trace_dispatch!("real", "add", "lhs-rational-const-offset");
             return sum;
         }
+        crate::trace_dispatch!("real", "add", "generic-computable");
         let left = self.fold_ref();
         let right = other.fold_ref();
         let computable = Computable::add(left, right);
@@ -205,6 +212,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
     fn sub(self, other: T) -> Self::Output {
         let other = other.as_ref();
         if self.same_symbolic_basis(other) {
+            crate::trace_dispatch!("real", "sub", "same-symbolic-basis");
             // Same symbolic basis subtraction mirrors addition: update the scale only.
             let rational = &self.rational - &other.rational;
             if rational.sign() == Sign::NoSign {
@@ -237,9 +245,11 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
             return -constants::pi_minus_three();
         }
         if other.has_zero_scale() {
+            crate::trace_dispatch!("real", "sub", "rhs-zero");
             return self.clone();
         }
         if self.has_zero_scale() {
+            crate::trace_dispatch!("real", "sub", "lhs-zero");
             return -other;
         }
         if self.class.is_ln() && other.class.is_ln() {
@@ -255,6 +265,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
                 Self::Output::simple_log_sum(self.rational.clone(), b, -other.rational.clone(), d)
                 && let Ok(simple) = Self::Output::ln_rational(r)
             {
+                crate::trace_dispatch!("real", "sub", "ln-combination");
                 return simple;
             }
         }
@@ -263,6 +274,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
             && let Some(difference) =
                 Self::Output::try_add_rational_to_const_term(self, -other.rational.clone())
         {
+            crate::trace_dispatch!("real", "sub", "rhs-rational-const-offset");
             return difference;
         }
         if self.class == One
@@ -270,8 +282,10 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
             && let Some(difference) =
                 Self::Output::try_add_rational_to_const_term(other, -self.rational.clone())
         {
+            crate::trace_dispatch!("real", "sub", "lhs-rational-const-offset");
             return -difference;
         }
+        crate::trace_dispatch!("real", "sub", "generic-computable");
         let left = self.fold_ref();
         let right = other.fold_ref().negate();
         let computable = Computable::add(left, right);

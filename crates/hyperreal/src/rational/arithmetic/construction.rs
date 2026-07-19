@@ -6,6 +6,7 @@ impl Rational {
             numerator,
             denominator,
             product_cache: OnceLock::new(),
+            linear_cache: OnceLock::new(),
         }))
     }
 
@@ -15,11 +16,13 @@ impl Rational {
             numerator,
             denominator,
             product_cache: _,
+            linear_cache: _,
         } = Arc::try_unwrap(self.0).unwrap_or_else(|shared| RationalData {
             sign: shared.sign,
             numerator: shared.numerator.clone(),
             denominator: shared.denominator.clone(),
             product_cache: OnceLock::new(),
+            linear_cache: OnceLock::new(),
         });
         (sign, numerator, denominator)
     }

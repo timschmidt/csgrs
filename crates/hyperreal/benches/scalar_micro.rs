@@ -243,6 +243,18 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Adds two nontrivial rational values.",
             },
             BenchDoc {
+                name: "rational_sub",
+                description: "Subtracts two nontrivial rational values.",
+            },
+            BenchDoc {
+                name: "rational_add_wide_dyadic_cold",
+                description: "Adds fresh integer and wide-dyadic operands without retained work.",
+            },
+            BenchDoc {
+                name: "rational_sub_wide_dyadic_cold",
+                description: "Subtracts fresh integer and wide-dyadic operands without retained work.",
+            },
+            BenchDoc {
                 name: "rational_mul",
                 description: "Multiplies two nontrivial rational values.",
             },
@@ -265,6 +277,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "real_exact_add",
                 description: "Adds exact rational-backed `Real` values.",
+            },
+            BenchDoc {
+                name: "real_exact_sub",
+                description: "Subtracts exact rational-backed `Real` values.",
             },
             BenchDoc {
                 name: "real_exact_mul",
@@ -838,6 +854,33 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     group.bench_function("rational_add", |b| {
         b.iter(|| black_box(black_box(&lhs) + black_box(&rhs)))
     });
+    group.bench_function("rational_sub", |b| {
+        b.iter(|| black_box(black_box(&lhs) - black_box(&rhs)))
+    });
+    group.bench_function("rational_add_wide_dyadic_cold", |b| {
+        b.iter_batched(
+            || {
+                (
+                    Rational::new(1_000_000_000),
+                    Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly"),
+                )
+            },
+            |(left, right)| black_box(black_box(&left) + black_box(&right)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("rational_sub_wide_dyadic_cold", |b| {
+        b.iter_batched(
+            || {
+                (
+                    Rational::new(1_000_000_000),
+                    Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly"),
+                )
+            },
+            |(left, right)| black_box(black_box(&left) - black_box(&right)),
+            BatchSize::SmallInput,
+        )
+    });
     group.bench_function("rational_mul", |b| {
         b.iter(|| black_box(black_box(&lhs) * black_box(&rhs)))
     });
@@ -863,6 +906,9 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     });
     group.bench_function("real_exact_add", |b| {
         b.iter(|| black_box(black_box(&exact_real_lhs) + black_box(&exact_real_rhs)))
+    });
+    group.bench_function("real_exact_sub", |b| {
+        b.iter(|| black_box(black_box(&exact_real_lhs) - black_box(&exact_real_rhs)))
     });
     group.bench_function("real_exact_mul", |b| {
         b.iter(|| black_box(black_box(&exact_real_lhs) * black_box(&exact_real_rhs)))
