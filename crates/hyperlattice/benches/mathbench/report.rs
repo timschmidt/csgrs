@@ -442,6 +442,12 @@ const COMPLEX_OP_ROWS: &[BenchRow] = &[
     },
 ];
 
+const COMPLEX_MUL_COLD_ROWS: &[BenchRow] = &[BenchRow {
+    title: "varying exact inputs",
+    group: "complex_mul_cold",
+    id: "varying",
+}];
+
 const VECTOR_COMPARISON_ROWS: &[BenchRow] = &[
     BenchRow {
         title: "vec3 dot",
@@ -980,6 +986,8 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     out.push_str(&render_table(estimates, SCALAR_OP_ROWS));
     out.push_str("\n### Complex Operations\n\n");
     out.push_str(&render_table(estimates, COMPLEX_OP_ROWS));
+    out.push_str("\n#### Cold Complex Multiplication\n\n");
+    out.push_str(&render_table(estimates, COMPLEX_MUL_COLD_ROWS));
     out.push_str("\n### Vector Operations\n\n#### Vector Comparisons\n\n");
     out.push_str(&render_table(estimates, VECTOR_COMPARISON_ROWS));
     out.push_str("\n#### Vector API Operations\n\n");

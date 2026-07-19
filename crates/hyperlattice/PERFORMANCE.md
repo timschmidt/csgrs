@@ -460,6 +460,34 @@ no change (`p = 0.55`), while 4x4 moved from about 8.192 us to 8.153 us within n
 The production experiment was therefore removed completely. The focused benchmark rows
 remain because they directly guard the Gustavson-style sparse scheduling surface.
 
+## Retained and cold exact complex multiplication
+
+Complex multiplication now has one canonical component scheduler across all
+owned and borrowed operators and integer powers. Exact rationals with retained
+reuse evidence use Gauss's three-product identity, exposing stable sums and
+products to Hyperreal's arithmetic caches. Isolated values instead enter one
+paired scalar reducer that converts all four exact rational components once and
+returns both canonical results. Wider or symbolic inputs retain the general
+exact product-sum fallback.
+
+The cold reducer recognizes word-sized dyadic and 2/5-smooth decimal
+denominators without entering a general GCD. This is exact fraction reduction,
+not decimal approximation. General denominators and overflowing word products
+still fall through to the arbitrary-precision reducer.
+
+| Workload | Hyperreal f64 | Hyperreal rational | Numerica 128 | Symbolica |
+| --- | ---: | ---: | ---: | ---: |
+| retained owned multiply | 157.85 ns | 162.59 ns | 247.72 ns | 10.11 us |
+| retained borrowed multiply | 138.77 ns | 140.11 ns | 235.87 ns | 10.11 us |
+| cold varying multiply | 222.77 ns | 280.76 ns | 286.27 ns | 10.24 us |
+| integer power five | 679.67 ns | 788.02 ns | 1.2294 us | 45.329 us |
+
+The retained trace records `mul-components-three-product-exact-rational`.
+Fresh varying inputs record `mul-components-fused-cold-exact-rational` followed
+by the scalar-owned `paired-word-sized` reducer. The cold Criterion group uses
+`iter_batched`, so input construction and decimal parsing are excluded from the
+measured multiplication interval for every engine.
+
 ## Trace evidence
 
 `dispatch_trace.md` was regenerated from the diagnostic build. It confirms that dense

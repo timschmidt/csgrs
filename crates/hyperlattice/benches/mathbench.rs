@@ -88,6 +88,7 @@ fn main() {
     bench_scalar_hyperbolic_f64_cases(&mut criterion);
     bench_large_integer_exp(&mut criterion);
     bench_complex_operations(&mut criterion);
+    bench_complex_mul_cold(&mut criterion);
     bench_vector_operations(&mut criterion);
     bench_matrix_operations(&mut criterion);
     bench_targeted_matrix_forms(&mut criterion);

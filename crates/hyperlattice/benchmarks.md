@@ -178,17 +178,23 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `norm squared` | 263.22 ns | 229.85 ns | 122.43 ns | 4.32 us | 2.15x | 0.06x |
 | `reciprocal` | 1.38 us | 1.19 us | 260.09 ns | 10.84 us | 5.30x | 0.13x |
 | `reciprocal checked` | 1.40 us | 1.15 us | 260.37 ns | 10.84 us | 5.39x | 0.13x |
-| `powi` | 1.86 us | 9.99 us | 1.26 us | 44.37 us | 1.47x | 0.04x |
-| `powi checked` | 1.84 us | 10.71 us | 1.25 us | 44.52 us | 1.47x | 0.04x |
+| `powi` | 679.67 ns | 788.02 ns | 1.23 us | 45.33 us | 0.55x | 0.01x |
+| `powi checked` | 677.20 ns | 792.04 ns | 1.23 us | 44.95 us | 0.55x | 0.02x |
 | `div checked` | 1.97 us | 1.70 us | 550.99 ns | 22.97 us | 3.58x | 0.09x |
 | `div real checked` | 221.87 ns | 233.70 ns | 118.57 ns | 5.30 us | 1.87x | 0.04x |
 | `from scalar` | 32.19 ns | 32.72 ns | 30.79 ns | 10.19 ns | 1.05x | 3.16x |
 | `add` | 62.13 ns | 62.54 ns | 84.50 ns | 2.59 us | 0.74x | 0.02x |
 | `sub` | 63.04 ns | 63.76 ns | 93.07 ns | 5.20 us | 0.68x | 0.01x |
 | `neg` | 95.66 ns | 95.89 ns | 32.34 ns | 2.19 us | 2.96x | 0.04x |
-| `mul` | 1.31 us | 1.14 us | 251.97 ns | 10.06 us | 5.19x | 0.13x |
+| `mul` | 157.85 ns | 162.59 ns | 247.72 ns | 10.11 us | 0.64x | 0.02x |
 | `div` | 2.01 us | 1.71 us | 562.90 ns | 22.59 us | 3.56x | 0.09x |
 | `div real` | 220.68 ns | 230.48 ns | 117.91 ns | 5.29 us | 1.87x | 0.04x |
+
+#### Cold Complex Multiplication
+
+| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `varying exact inputs` | 222.77 ns | 280.76 ns | 286.27 ns | 10.24 us | 0.78x | 0.02x |
 
 ### Vector Operations
 
@@ -350,7 +356,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `mat4 transform_vec refs` | 3.79 us | 3.19 us | 1.28 us | 35.26 us | 2.96x | 0.11x |
 | `complex add refs` | 34.44 ns | 35.62 ns | 84.70 ns | 2.55 us | 0.41x | 0.01x |
 | `complex sub refs` | 35.33 ns | 36.48 ns | 93.02 ns | 4.78 us | 0.38x | 0.01x |
-| `complex mul refs` | 1.28 us | 1.09 us | 244.88 ns | 9.94 us | 5.23x | 0.13x |
+| `complex mul refs` | 138.77 ns | 140.11 ns | 235.87 ns | 10.11 us | 0.59x | 0.01x |
 | `complex div refs` | 1.91 us | 1.63 us | 543.99 ns | 21.88 us | 3.50x | 0.09x |
 | `complex neg ref` | 93.45 ns | 95.17 ns | 35.42 ns | 2.13 us | 2.64x | 0.04x |
 | `complex div_real_ref` | 219.38 ns | 238.92 ns | 115.42 ns | 5.23 us | 1.90x | 0.04x |

@@ -34,6 +34,13 @@ fn bench_complex_operations_for<F>(
         let _ = black_box(value.clone().powi(5).unwrap());
     });
     trace_dispatch_cases(
+        format!("complex_ops/{label}/mul"),
+        &[0_usize, 1, 2, 3],
+        |index| {
+            let _ = black_box(lhs_cases[*index].clone() * rhs_cases[*index].clone());
+        },
+    );
+    trace_dispatch_cases(
         format!("complex_ops/{label}/powi_negative_one"),
         &lhs_cases,
         |value| {
@@ -229,6 +236,104 @@ fn bench_complex_operations(c: &mut Criterion) {
     bench_complex_operations_for::<_>(&mut group, "hyperreal-rational", qr);
     bench_numerica_complex_operations(&mut group, "numerica128");
     bench_symbolica_complex_operations(&mut group, "symbolica");
+    group.finish();
+}
+
+fn varying_complex_mul_values(index: u64) -> [f64; 4] {
+    let delta = index as f64 * f64::from_bits((1023_u64 - 40) << 52);
+    [
+        3.25 + delta,
+        -2.125 + delta * 2.0,
+        1.75 - delta,
+        0.625 + delta * 3.0,
+    ]
+}
+
+fn bench_cold_complex_mul_for<F>(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+    make_scalar: F,
+) where
+    F: Copy + Fn(f64) -> Real,
+{
+    group.bench_function(format!("{label}/varying"), |b| {
+        let sequence = Cell::new(0_u64);
+        b.iter_batched(
+            || {
+                let index = sequence.get();
+                sequence.set(index + 1);
+                let [ar, ai, br, bi] = varying_complex_mul_values(index);
+                (
+                    Complex::new(make_scalar(ar), make_scalar(ai)),
+                    Complex::new(make_scalar(br), make_scalar(bi)),
+                )
+            },
+            |(lhs, rhs)| black_box(black_box(lhs) * black_box(rhs)),
+            BatchSize::SmallInput,
+        )
+    });
+}
+
+fn bench_complex_mul_cold(c: &mut Criterion) {
+    let mut group = c.benchmark_group("complex_mul_cold");
+    trace_dispatch_cases(
+        "complex_mul_cold/hyperreal/varying",
+        &[1_000_003_u64],
+        |index| {
+            let [ar, ai, br, bi] = varying_complex_mul_values(*index);
+            let lhs = Complex::new(s(ar), s(ai));
+            let rhs = Complex::new(s(br), s(bi));
+            let _ = black_box(lhs * rhs);
+        },
+    );
+    trace_dispatch_cases(
+        "complex_mul_cold/hyperreal-rational/varying",
+        &[1_000_003_u64],
+        |index| {
+            let [ar, ai, br, bi] = varying_complex_mul_values(*index);
+            let lhs = Complex::new(qr(ar), qr(ai));
+            let rhs = Complex::new(qr(br), qr(bi));
+            let _ = black_box(lhs * rhs);
+        },
+    );
+    bench_cold_complex_mul_for(&mut group, "hyperreal", s);
+    bench_cold_complex_mul_for(&mut group, "hyperreal-rational", qr);
+
+    let numerica_ctx = numerica_engine::Ctx::new(128);
+    group.bench_function("numerica128/varying", |b| {
+        let sequence = Cell::new(0_u64);
+        b.iter_batched(
+            || {
+                let index = sequence.get();
+                sequence.set(index + 1);
+                let [ar, ai, br, bi] = varying_complex_mul_values(index);
+                (
+                    numerica_engine::Complex::new(&numerica_ctx, ar, ai),
+                    numerica_engine::Complex::new(&numerica_ctx, br, bi),
+                )
+            },
+            |(lhs, rhs)| black_box(lhs.mul(&rhs, &numerica_ctx)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let symbolica_ctx = symbolica_engine::Ctx::new(128);
+    group.bench_function("symbolica/varying", |b| {
+        let sequence = Cell::new(0_u64);
+        b.iter_batched(
+            || {
+                let index = sequence.get();
+                sequence.set(index + 1);
+                let [ar, ai, br, bi] = varying_complex_mul_values(index);
+                (
+                    symbolica_engine::Complex::new(&symbolica_ctx, ar, ai),
+                    symbolica_engine::Complex::new(&symbolica_ctx, br, bi),
+                )
+            },
+            |(lhs, rhs)| black_box(lhs.mul(&rhs, &symbolica_ctx)),
+            BatchSize::SmallInput,
+        )
+    });
     group.finish();
 }
 

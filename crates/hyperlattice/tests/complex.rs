@@ -9,6 +9,21 @@ fn complex_i_squared() {
 }
 
 #[test]
+fn complex_multiplication_preserves_exact_components_for_all_ownership_forms() {
+    let lhs = Complex::new(frac(3, 7), frac(-5, 11));
+    let rhs = Complex::new(frac(13, 17), frac(19, 23));
+    let expected = Complex::new(
+        &lhs.re * &rhs.re - &lhs.im * &rhs.im,
+        &lhs.re * &rhs.im + &lhs.im * &rhs.re,
+    );
+
+    assert_eq!(lhs.clone() * rhs.clone(), expected);
+    assert_eq!(lhs.clone() * &rhs, expected);
+    assert_eq!(&lhs * rhs.clone(), expected);
+    assert_eq!(&lhs * &rhs, expected);
+}
+
+#[test]
 fn complex_negative_one_power_uses_reciprocal_semantics() {
     let value = Complex::new(r(3), r(4));
 

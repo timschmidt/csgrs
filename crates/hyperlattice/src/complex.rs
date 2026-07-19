@@ -49,17 +49,12 @@ impl Complex {
     /// Returns `re^2 + im^2`.
     pub fn norm_squared(&self) -> Real {
         crate::trace_dispatch!("hyperlattice_complex", "method", "norm-squared");
-        if true {
-            // Isolated exact complex norms are two positive product terms. Fuse
-            // only this public norm query so exact-rational hyperreal Real kernels
-            // can share one denominator and reduce once. Reciprocal/division deliberately
-            // use `norm_squared_direct`; targeted Criterion showed their larger
-            // arithmetic kernels regress when this fused expression is inlined
-            // into denominator construction.
-            Real::signed_product_sum2([true, true], [[&self.re, &self.re], [&self.im, &self.im]])
-        } else {
-            &self.re * &self.re + &self.im * &self.im
-        }
+        // Isolated exact complex norms are two positive product terms. Fuse
+        // only this public norm query so exact-rational hyperreal Real kernels
+        // can share one denominator and reduce once. Reciprocal/division deliberately
+        // build their denominator inline; targeted Criterion showed their larger
+        // arithmetic kernels regress when this fused expression is substituted.
+        Real::signed_product_sum2([true, true], [[&self.re, &self.re], [&self.im, &self.im]])
     }
 
     /// Returns the multiplicative inverse.
@@ -202,80 +197,84 @@ fn complex_powi_positive(base: Complex, exponent: u64) -> Complex {
 
 #[inline(always)]
 fn complex_multiply_for_powi(lhs: Complex, rhs: Complex) -> Complex {
-    if true {
-        crate::trace_dispatch!("hyperlattice_complex", "powi", "mul-fused-exact");
-        let (re, im) = complex_multiply_components(&lhs, &rhs);
-        Complex::new(re, im)
-    } else {
-        crate::trace_dispatch!("hyperlattice_complex", "powi", "mul-direct");
-        lhs * rhs
-    }
+    crate::trace_dispatch!("hyperlattice_complex", "powi", "mul-canonical-components");
+    let (re, im) = complex_multiply_components(&lhs, &rhs);
+    Complex::new(re, im)
 }
 
 #[inline(always)]
 fn complex_division_numerators(lhs: &Complex, rhs: &Complex) -> (Real, Real) {
-    if true {
-        let known_exact_rational = lhs.re.exact_rational_kind() != ExactRationalKind::NonRational
-            && lhs.im.exact_rational_kind() != ExactRationalKind::NonRational
-            && rhs.re.exact_rational_kind() != ExactRationalKind::NonRational
-            && rhs.im.exact_rational_kind() != ExactRationalKind::NonRational;
-        if known_exact_rational {
-            crate::trace_dispatch!(
-                "hyperlattice_complex",
-                "op",
-                "div-numerators-fused-known-exact-rational"
-            );
-            return (
-                Real::active_signed_product_sum2_known_exact_rational(
-                    [true, true],
-                    [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
-                ),
-                Real::active_signed_product_sum2_known_exact_rational(
-                    [true, false],
-                    [[&lhs.im, &rhs.re], [&lhs.re, &rhs.im]],
-                ),
-            );
-        }
-        crate::trace_dispatch!("hyperlattice_complex", "op", "div-numerators-fused-exact");
+    let known_exact_rational = lhs.re.exact_rational_kind() != ExactRationalKind::NonRational
+        && lhs.im.exact_rational_kind() != ExactRationalKind::NonRational
+        && rhs.re.exact_rational_kind() != ExactRationalKind::NonRational
+        && rhs.im.exact_rational_kind() != ExactRationalKind::NonRational;
+    if known_exact_rational {
+        crate::trace_dispatch!(
+            "hyperlattice_complex",
+            "op",
+            "div-numerators-fused-known-exact-rational"
+        );
         return (
-            Real::active_signed_product_sum2(
+            Real::active_signed_product_sum2_known_exact_rational(
                 [true, true],
                 [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
             ),
-            Real::active_signed_product_sum2(
+            Real::active_signed_product_sum2_known_exact_rational(
                 [true, false],
                 [[&lhs.im, &rhs.re], [&lhs.re, &rhs.im]],
             ),
         );
     }
 
-    crate::trace_dispatch!("hyperlattice_complex", "op", "div-numerators-direct");
+    crate::trace_dispatch!("hyperlattice_complex", "op", "div-numerators-fused-exact");
     (
-        &lhs.re * &rhs.re + &lhs.im * &rhs.im,
-        &lhs.im * &rhs.re - &lhs.re * &rhs.im,
+        Real::active_signed_product_sum2([true, true], [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]]),
+        Real::active_signed_product_sum2([true, false], [[&lhs.im, &rhs.re], [&lhs.re, &rhs.im]]),
     )
 }
 
 #[inline]
 fn complex_multiply_components(lhs: &Complex, rhs: &Complex) -> (Real, Real) {
-    if true {
-        crate::trace_dispatch!("hyperlattice_complex", "op", "mul-components-fused-exact");
-        return (
-            Real::active_signed_product_sum2(
-                [true, false],
-                [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
-            ),
-            Real::active_signed_product_sum2(
-                [true, true],
-                [[&lhs.re, &rhs.im], [&lhs.im, &rhs.re]],
-            ),
+    let reuse_evidence = [
+        lhs.re.exact_rational_reuse_evidence(),
+        lhs.im.exact_rational_reuse_evidence(),
+        rhs.re.exact_rational_reuse_evidence(),
+        rhs.im.exact_rational_reuse_evidence(),
+    ];
+    let known_exact_rational = reuse_evidence.iter().all(Option::is_some);
+    if reuse_evidence
+        .iter()
+        .all(|evidence| *evidence == Some(true))
+    {
+        crate::trace_dispatch!(
+            "hyperlattice_complex",
+            "op",
+            "mul-components-three-product-exact-rational"
+        );
+        let real_product = &lhs.re * &rhs.re;
+        let imaginary_product = &lhs.im * &rhs.im;
+        let cross_product = (&lhs.re + &lhs.im) * (&rhs.re + &rhs.im);
+        let re = &real_product - &imaginary_product;
+        let im = (cross_product - real_product) - imaginary_product;
+        return (re, im);
+    }
+
+    if known_exact_rational {
+        crate::trace_dispatch!(
+            "hyperlattice_complex",
+            "op",
+            "mul-components-fused-cold-exact-rational"
+        );
+        return Real::exact_rational_complex_product_known_exact(
+            [&lhs.re, &lhs.im],
+            [&rhs.re, &rhs.im],
         );
     }
 
-    crate::trace_dispatch!("hyperlattice_complex", "op", "mul-components-direct");
+    crate::trace_dispatch!("hyperlattice_complex", "op", "mul-components-fused-exact");
     (
-        &lhs.re * &rhs.re - &lhs.im * &rhs.im,
-        &lhs.re * &rhs.im + &lhs.im * &rhs.re,
+        Real::active_signed_product_sum2([true, false], [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]]),
+        Real::active_signed_product_sum2([true, true], [[&lhs.re, &rhs.im], [&lhs.im, &rhs.re]]),
     )
 }
 
@@ -411,8 +410,7 @@ impl Mul for Complex {
 
     fn mul(self, rhs: Self) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "mul-owned-owned");
-        let re = &self.re * &rhs.re - &self.im * &rhs.im;
-        let im = &self.re * &rhs.im + &self.im * &rhs.re;
+        let (re, im) = complex_multiply_components(&self, &rhs);
         Self::new(re, im)
     }
 }
@@ -422,8 +420,7 @@ impl Mul<&Complex> for Complex {
 
     fn mul(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "mul-owned-ref");
-        let re = &self.re * &rhs.re - &self.im * &rhs.im;
-        let im = &self.re * &rhs.im + &self.im * &rhs.re;
+        let (re, im) = complex_multiply_components(&self, rhs);
         Self::new(re, im)
     }
 }
@@ -433,8 +430,7 @@ impl Mul<Complex> for &Complex {
 
     fn mul(self, rhs: Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "mul-ref-owned");
-        let re = &self.re * &rhs.re - &self.im * &rhs.im;
-        let im = &self.re * &rhs.im + &self.im * &rhs.re;
+        let (re, im) = complex_multiply_components(self, &rhs);
         Complex::new(re, im)
     }
 }
@@ -444,8 +440,7 @@ impl Mul<&Complex> for &Complex {
 
     fn mul(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "mul-ref-ref");
-        let re = &self.re * &rhs.re - &self.im * &rhs.im;
-        let im = &self.re * &rhs.im + &self.im * &rhs.re;
+        let (re, im) = complex_multiply_components(self, rhs);
         Complex::new(re, im)
     }
 }
