@@ -488,10 +488,11 @@ impl PointPlaneClassificationCache {
                 Classification::Positive => has_positive = true,
                 Classification::On => {}
             }
+            if has_positive && has_negative {
+                return Ok(SourcePlaneRelation::Crossing);
+            }
         }
-        Ok(if has_positive && has_negative {
-            SourcePlaneRelation::Crossing
-        } else if has_positive {
+        Ok(if has_positive {
             SourcePlaneRelation::Outside
         } else {
             SourcePlaneRelation::Inside
@@ -1740,5 +1741,18 @@ mod tests {
         .unwrap();
         assert_eq!(cycle.edges.len(), 3);
         assert!(cycle.edges.iter().all(|edge| edge == &polygon.support));
+    }
+
+    #[test]
+    fn source_relation_stops_after_exact_crossing_is_certified() {
+        let polygon = crate::polygon::make_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0);
+        let plane = Plane::axis_aligned(2, Real::zero());
+        let mut cache = PointPlaneClassificationCache::default();
+
+        assert!(matches!(
+            cache.source_relation(&polygon, &plane, 0, 1).unwrap(),
+            SourcePlaneRelation::Crossing
+        ));
+        assert_eq!(cache.points.len(), 2);
     }
 }

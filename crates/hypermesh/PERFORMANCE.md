@@ -638,6 +638,35 @@ benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
 campaign completed 359 `boolean_pipeline` executions without failure, and the
 downstream CSGRS library suite passed all 304 tests.
 
+## 2026-07-19: stop source-plane classification at exact crossing
+
+Status: **kept**
+
+Once one source-triangle vertex is exactly positive and another is exactly
+negative against an opposing support plane, the triangle's `Crossing` relation
+cannot change. The classifier previously continued through the remaining
+vertex. It now returns immediately, avoiding an unnecessary prepared predicate
+query and allowing a decided crossing even when a later irrelevant query would
+be undecidable.
+
+Wall-clock movement was below scheduler noise, so five interleaved release runs
+per side measured retired instructions for 500 alternating fresh arrangements:
+
+| operation | visit every vertex | stop at crossing | result |
+| --- | ---: | ---: | ---: |
+| union | 11,289,466,082 | 11,277,251,607 | 0.108% fewer instructions |
+| difference | 9,012,280,707 | 8,999,990,649 | 0.136% fewer instructions |
+
+Every paired run retired fewer instructions. The focused test also verifies
+that only the two decisive source points enter the exact point/plane cache.
+
+Validation passed the default and all-feature matrices (957 unit tests, 59/60
+core tests, and 48 regressions plus one intentional ignore), the no-default-
+feature check, warning-denied Clippy and rustdoc, benchmark and fuzz-target
+builds, and the release WASM demo. A 20-second ASAN campaign completed 358
+`boolean_pipeline` executions without failure, and the downstream CSGRS library
+suite passed all 304 tests.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:
