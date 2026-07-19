@@ -641,6 +641,42 @@ mod tests {
     }
 
     #[test]
+    fn shared_inverse_is_retained_with_weak_reverse_link() {
+        let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
+        let shared = value.clone();
+
+        let inverse = value.clone().inverse().unwrap();
+        let reused = shared.clone().inverse().unwrap();
+        assert!(Arc::ptr_eq(&inverse.0, &reused.0));
+
+        let reversed = inverse.inverse().unwrap();
+        assert!(Arc::ptr_eq(&value.0, &reversed.0));
+
+        let owner = Arc::downgrade(&value.0);
+        drop(value);
+        drop(shared);
+        drop(reversed);
+        assert!(owner.upgrade().is_none());
+    }
+
+    #[test]
+    fn inverse_first_cache_still_retains_two_linear_results() {
+        let left = Rational::new(5_000_000_000);
+        let _shared_left = left.clone();
+        let _inverse = left.clone().inverse().unwrap();
+        let first_right = Rational::try_from(11.0e-9_f64).unwrap();
+        let second_right = Rational::try_from(13.0e-9_f64).unwrap();
+
+        let first = &left + &first_right;
+        let second = &left + &second_right;
+        let first_reused = &left + &first_right;
+        let second_reused = &left + &second_right;
+
+        assert!(Arc::ptr_eq(&first.0, &first_reused.0));
+        assert!(Arc::ptr_eq(&second.0, &second_reused.0));
+    }
+
+    #[test]
     fn perfect_nth_root_detects_exact_rational_roots() {
         assert_eq!(
             Rational::new(27).perfect_nth_root(3),

@@ -30,6 +30,83 @@ impl Rational {
         (sign, numerator, denominator)
     }
 
+    #[inline]
+    fn retained_inverse(&self) -> Option<Self> {
+        let cached = self.linear_cache.get()?;
+        match cached.primary.kind {
+            CachedRationalLinearKind::StrongInversePlaceholder => {
+                return Some(cached.primary.result.clone());
+            }
+            CachedRationalLinearKind::WeakInversePlaceholder => {
+                return cached.primary.other.upgrade().map(Self);
+            }
+            _ => {}
+        }
+        let inverse = cached.tertiary.get()?;
+        match inverse.kind {
+            CachedRationalLinearKind::StrongInversePlaceholder => {
+                Some(inverse.result.clone())
+            }
+            CachedRationalLinearKind::WeakInversePlaceholder => inverse.other.upgrade().map(Self),
+            _ => None,
+        }
+    }
+
+    fn retain_inverse_entry(&self, inverse: CachedRationalInverse) -> bool {
+        if let Some(cached) = self.linear_cache.get() {
+            if cached.primary.kind.is_inverse_placeholder() {
+                return false;
+            }
+            let entry = match inverse {
+                CachedRationalInverse::Strong(inverse) => CachedRationalLinearEntry {
+                    other: std::sync::Weak::new(),
+                    kind: CachedRationalLinearKind::StrongInversePlaceholder,
+                    result: inverse,
+                },
+                CachedRationalInverse::Weak(inverse) => CachedRationalLinearEntry {
+                    other: inverse,
+                    kind: CachedRationalLinearKind::WeakInversePlaceholder,
+                    result: RATIONAL_ZERO.clone(),
+                },
+            };
+            return cached.tertiary.set(entry).is_ok();
+        }
+
+        // Preserve a direct primary linear-cache load on the established
+        // add/sub hot path. When inverse retention initializes this lazy box
+        // first, the inert primary slot marks secondary and tertiary as the
+        // two available linear entries.
+        let (kind, other, placeholder) = match inverse {
+            CachedRationalInverse::Strong(inverse) => (
+                CachedRationalLinearKind::StrongInversePlaceholder,
+                std::sync::Weak::new(),
+                inverse,
+            ),
+            CachedRationalInverse::Weak(inverse) => (
+                CachedRationalLinearKind::WeakInversePlaceholder,
+                inverse,
+                RATIONAL_ZERO.clone(),
+            ),
+        };
+        self.linear_cache
+            .set(Box::new(CachedRationalArithmetic {
+                primary: CachedRationalLinearEntry {
+                    other,
+                    kind,
+                    result: placeholder,
+                },
+                secondary: OnceLock::new(),
+                tertiary: OnceLock::new(),
+            }))
+            .is_ok()
+    }
+
+    #[cold]
+    fn retain_inverse_pair(&self, inverse: &Self) {
+        let _ = inverse.retain_inverse_entry(CachedRationalInverse::Weak(Arc::downgrade(&self.0)));
+        let _ = self.retain_inverse_entry(CachedRationalInverse::Strong(inverse.clone()));
+    }
+
     /// Zero, the additive identity.
     pub fn zero() -> Self {
         trace_rational_temporary!();
@@ -354,11 +431,30 @@ impl Rational {
     /// assert_eq!(a_fifth.clone().inverse().unwrap(), five);
     /// ```
     pub fn inverse(self) -> Result<Self, Problem> {
+        if let Some(inverse) = self.retained_inverse() {
+            crate::trace_dispatch!("rational", "inverse", "retained");
+            return Ok(inverse);
+        }
         if self.numerator == BigUint::ZERO {
             return Err(Problem::DivideByZero);
         }
-        let (sign, numerator, denominator) = self.into_parts();
-        Ok(Self::from_parts_raw(sign, denominator, numerator))
+        match Arc::try_unwrap(self.0) {
+            Ok(data) => Ok(Self::from_parts_raw(
+                data.sign,
+                data.denominator,
+                data.numerator,
+            )),
+            Err(shared) => {
+                let owner = Self(shared);
+                let inverse = Self::from_parts_raw(
+                    owner.sign,
+                    owner.denominator.clone(),
+                    owner.numerator.clone(),
+                );
+                owner.retain_inverse_pair(&inverse);
+                Ok(inverse)
+            }
+        }
     }
 
     /// Checks if the value is an integer.

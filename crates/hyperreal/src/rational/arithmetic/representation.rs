@@ -51,6 +51,18 @@ enum CachedRationalLinearKind {
     Sum,
     OwnerMinusOther,
     OtherMinusOwner,
+    StrongInversePlaceholder,
+    WeakInversePlaceholder,
+}
+
+impl CachedRationalLinearKind {
+    #[inline]
+    fn is_inverse_placeholder(self) -> bool {
+        matches!(
+            self,
+            Self::StrongInversePlaceholder | Self::WeakInversePlaceholder
+        )
+    }
 }
 
 struct CachedRationalLinearEntry {
@@ -59,9 +71,15 @@ struct CachedRationalLinearEntry {
     result: Rational,
 }
 
-struct CachedRationalLinear {
+enum CachedRationalInverse {
+    Strong(Rational),
+    Weak(std::sync::Weak<RationalData>),
+}
+
+struct CachedRationalArithmetic {
     primary: CachedRationalLinearEntry,
     secondary: OnceLock<CachedRationalLinearEntry>,
+    tertiary: OnceLock<CachedRationalLinearEntry>,
 }
 
 #[doc(hidden)]
@@ -70,7 +88,7 @@ pub struct RationalData {
     numerator: BigUint,
     denominator: BigUint,
     product_cache: OnceLock<CachedRationalProduct>,
-    linear_cache: OnceLock<Box<CachedRationalLinear>>,
+    linear_cache: OnceLock<Box<CachedRationalArithmetic>>,
     linear_reuse_seen: std::sync::atomic::AtomicBool,
 }
 

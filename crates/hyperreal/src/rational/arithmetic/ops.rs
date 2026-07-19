@@ -504,9 +504,14 @@ impl Rational {
             return Some(cached.primary.result.clone());
         }
         let secondary = cached.secondary.get()?;
-        (secondary.kind == kind && std::ptr::eq(secondary.other.as_ptr(), other_ptr)).then(|| {
+        if secondary.kind == kind && std::ptr::eq(secondary.other.as_ptr(), other_ptr) {
             crate::trace_dispatch!("rational", "linear", _path);
-            secondary.result.clone()
+            return Some(secondary.result.clone());
+        }
+        let tertiary = cached.tertiary.get()?;
+        (tertiary.kind == kind && std::ptr::eq(tertiary.other.as_ptr(), other_ptr)).then(|| {
+            crate::trace_dispatch!("rational", "linear", _path);
+            tertiary.result.clone()
         })
     }
 
@@ -549,27 +554,30 @@ impl Rational {
         result: &Self,
     ) -> bool {
         if let Some(cached) = owner.linear_cache.get() {
-            if cached.secondary.get().is_some() {
-                return false;
+            let entry = CachedRationalLinearEntry {
+                other: Arc::downgrade(&other.0),
+                kind,
+                result: result.clone(),
+            };
+            if cached.primary.kind.is_inverse_placeholder() {
+                return cached
+                    .secondary
+                    .set(entry)
+                    .or_else(|entry| cached.tertiary.set(entry))
+                    .is_ok();
             }
-            return cached
-                .secondary
-                .set(CachedRationalLinearEntry {
-                    other: Arc::downgrade(&other.0),
-                    kind,
-                    result: result.clone(),
-                })
-                .is_ok();
+            return cached.secondary.set(entry).is_ok();
         }
         owner
             .linear_cache
-            .set(Box::new(CachedRationalLinear {
+            .set(Box::new(CachedRationalArithmetic {
                 primary: CachedRationalLinearEntry {
                     other: Arc::downgrade(&other.0),
                     kind,
                     result: result.clone(),
                 },
                 secondary: OnceLock::new(),
+                tertiary: OnceLock::new(),
             }))
             .is_ok()
     }

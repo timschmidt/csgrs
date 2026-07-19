@@ -150,8 +150,8 @@ Version `0.13.1` is active and benchmark-driven. Current implementation work inc
 - bounded sign refinement and certified equality/ordering/sign reports;
 - cached approximation and structural-fact propagation through computable nodes;
 - borrowed arithmetic paths for `Rational` and `Real`;
-- canonical small-dyadic storage and one bounded retained exact product per immutable
-  rational operand pair;
+- canonical small-dyadic storage, bounded retained exact products, and cycle-free
+  reciprocal reuse for shared immutable rationals;
 - shared-denominator and signed-product-sum hooks used by matrix/vector callers;
 - `serde` support for expression structure, excluding transient caches and abort
   signals;

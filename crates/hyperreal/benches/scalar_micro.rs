@@ -275,6 +275,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Divides two nontrivial rational values.",
             },
             BenchDoc {
+                name: "rational_inverse_owned_cold",
+                description: "Inverts a fresh uniquely owned nontrivial rational.",
+            },
+            BenchDoc {
+                name: "rational_inverse_retained",
+                description: "Reuses the retained reciprocal of a shared nontrivial rational.",
+            },
+            BenchDoc {
                 name: "real_exact_add",
                 description: "Adds exact rational-backed `Real` values.",
             },
@@ -809,6 +817,8 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     let retained_lhs = Rational::new(1_000_000_000);
     let retained_rhs = Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly");
     let _ = black_box(&retained_lhs * &retained_rhs);
+    let retained_inverse_input = rational(123_456_789, 987_654_321);
+    let _retained_inverse = retained_inverse_input.clone().inverse().unwrap();
     let retained_real_lhs = Real::new(Rational::new(1_000_000_000));
     let retained_real_rhs =
         Real::new(Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly"));
@@ -903,6 +913,16 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     });
     group.bench_function("rational_div", |b| {
         b.iter(|| black_box(black_box(&lhs) / black_box(&rhs)))
+    });
+    group.bench_function("rational_inverse_owned_cold", |b| {
+        b.iter_batched(
+            || rational(123_456_789, 987_654_321),
+            |value| black_box(value.inverse().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("rational_inverse_retained", |b| {
+        b.iter(|| black_box(black_box(retained_inverse_input.clone()).inverse().unwrap()))
     });
     group.bench_function("real_exact_add", |b| {
         b.iter(|| black_box(black_box(&exact_real_lhs) + black_box(&exact_real_rhs)))
