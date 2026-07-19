@@ -66,6 +66,7 @@ pub struct RationalData {
     denominator: BigUint,
     product_cache: OnceLock<CachedRationalProduct>,
     linear_cache: OnceLock<Box<CachedRationalLinear>>,
+    linear_reuse_seen: std::sync::atomic::AtomicBool,
 }
 
 impl std::fmt::Debug for Rational {

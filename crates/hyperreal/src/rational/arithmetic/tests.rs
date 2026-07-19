@@ -1,6 +1,16 @@
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::mem::size_of;
+
+    #[test]
+    fn rational_data_layout_stays_bounded() {
+        assert!(
+            size_of::<RationalData>() <= 96,
+            "RationalData grew to {} bytes",
+            size_of::<RationalData>()
+        );
+    }
 
     #[test]
     fn binary_word_gcd_matches_euclidean_reference() {
@@ -573,6 +583,45 @@ mod tests {
         let product = &left * &right;
         let retained_product = &left * &right;
         assert!(Arc::ptr_eq(&product.0, &retained_product.0));
+    }
+
+    #[test]
+    fn borrowed_linear_operations_retain_only_after_reuse_evidence() {
+        let left = Rational::new(1_000_000_000);
+        let right = Rational::try_from(1.0e-9_f64).unwrap();
+
+        let cold_sum = &left + &right;
+        let retained_sum = &left + &right;
+        let reused_sum = &left + &right;
+        assert_eq!(cold_sum, retained_sum);
+        assert!(!Arc::ptr_eq(&cold_sum.0, &retained_sum.0));
+        assert!(Arc::ptr_eq(&retained_sum.0, &reused_sum.0));
+
+        let difference_left = Rational::new(2_000_000_000);
+        let difference_right = Rational::try_from(3.0e-9_f64).unwrap();
+        let cold_difference = &difference_left - &difference_right;
+        let retained_difference = &difference_left - &difference_right;
+        let reused_difference = &difference_left - &difference_right;
+        assert_eq!(cold_difference, retained_difference);
+        assert!(!Arc::ptr_eq(
+            &cold_difference.0,
+            &retained_difference.0
+        ));
+        assert!(Arc::ptr_eq(
+            &retained_difference.0,
+            &reused_difference.0
+        ));
+    }
+
+    #[test]
+    fn shared_right_operand_can_retain_a_directed_difference() {
+        let left = Rational::new(3_000_000_000);
+        let right = Rational::try_from(7.0e-9_f64).unwrap();
+        let _shared_right = right.clone();
+
+        let difference = &left - &right;
+        let reused = &left - &right;
+        assert!(Arc::ptr_eq(&difference.0, &reused.0));
     }
 
     #[test]

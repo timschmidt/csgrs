@@ -7,6 +7,7 @@ impl Rational {
             denominator,
             product_cache: OnceLock::new(),
             linear_cache: OnceLock::new(),
+            linear_reuse_seen: std::sync::atomic::AtomicBool::new(false),
         }))
     }
 
@@ -17,12 +18,14 @@ impl Rational {
             denominator,
             product_cache: _,
             linear_cache: _,
+            linear_reuse_seen: _,
         } = Arc::try_unwrap(self.0).unwrap_or_else(|shared| RationalData {
             sign: shared.sign,
             numerator: shared.numerator.clone(),
             denominator: shared.denominator.clone(),
             product_cache: OnceLock::new(),
             linear_cache: OnceLock::new(),
+            linear_reuse_seen: std::sync::atomic::AtomicBool::new(false),
         });
         (sign, numerator, denominator)
     }

@@ -12,7 +12,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/compare/exact_msd_gap` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
 | `computable/compare/exact_rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 2 |
 | `computable/compare/opposite_sign` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| `computable/compare_absolute/dominant_add` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 6 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 5 | 3 | 3 |
+| `computable/compare_absolute/dominant_add` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 8 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 5 | 3 | 3 |
 | `computable/compare_absolute/exact_msd_gap` | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 3 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
 | `computable/compare_absolute/exact_rational` | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 3 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 2 |
 | `computable/compare_absolute/exact_rational_same_numerator` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 2 | 1 |
@@ -22,7 +22,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_hyperbolic_adversarial/acosh_large` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 7 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny` | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 8 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/acosh_sqrt_two` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 14 | 2 | 2 |
-| `computable/inverse_hyperbolic_adversarial/acosh_two` | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 11 | 2 | 2 |
+| `computable/inverse_hyperbolic_adversarial/acosh_two` | 21 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 11 | 2 | 2 |
 | `computable/inverse_hyperbolic_adversarial/asinh_large` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 9 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/asinh_large_negative` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 11 | 0 | 0 |
 | `computable/inverse_hyperbolic_adversarial/asinh_mid` | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 4 | 0 | 0 |
@@ -55,43 +55,43 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/ln_square_plus_one_promoted_generated_677_222` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 12 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 5 | 1 | 1 |
 | `computable/promoted_library_slow/atan_generated_10704_pos_1_371_412` | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 8 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 6 | 3 | 2 |
 | `computable/promoted_library_slow/atan_generated_11034_pos_1_367_518` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 5 | 3 | 2 |
-| `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 2 | 1 | 1 |
-| `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 3 | 2 | 1 |
-| `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
-| `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
+| `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 2 | 1 | 1 |
+| `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 3 | 2 | 1 |
+| `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 15 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
+| `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 15 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
 | `computable/promoted_library_slow/ln_generated_11497_pos_1_137_564` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 12 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 7 | 1 | 1 |
-| `computable/promoted_library_slow/ln_generated_14377_neg_1_189_764` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
-| `computable/promoted_library_slow/ln_generated_14947_pos_3_11_222` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
-| `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
+| `computable/promoted_library_slow/ln_generated_14377_neg_1_189_764` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 15 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
+| `computable/promoted_library_slow/ln_generated_14947_pos_3_11_222` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 15 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
+| `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 15 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
 | `computable/promoted_library_slow/ln_generated_16417_pos_41_241` | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 1 | 1 |
 | `computable/promoted_library_slow/ln_generated_17797_pos_1_328_503` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 12 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 8 | 1 | 1 |
-| `computable/promoted_library_slow/ln_generated_18352_neg_1_133_500` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
+| `computable/promoted_library_slow/ln_generated_18352_neg_1_133_500` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 15 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
 | `computable/promoted_library_slow/ln_generated_7447_pos_1_53_76` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 12 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 8 | 1 | 1 |
-| `computable/promoted_library_slow/ln_generated_7642_neg_1_25_36` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 7 | 1 | 1 |
-| `computable/promoted_library_slow/ln_generated_9457_neg_3_23_90` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
-| `computable/promoted_library_slow/ln_generated_9862_neg_1_221_492` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 14 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 7 | 1 | 1 |
-| `computable/promoted_library_slow/sin_generated_10834_pos_4_34_61` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 2 | 1 | 1 |
-| `computable/promoted_library_slow/sin_generated_11359_pos_4_66_139` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 2 | 1 | 1 |
-| `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 2 | 1 | 1 |
-| `computable/promoted_library_slow/tan_generated_13446_neg_5_15_187` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 4 | 2 | 2 |
-| `computable/promoted_library_slow/tan_generated_13866_neg_5_1_2` | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 9 | 4 | 4 | 0 | 0 | 0 | 3 | 0 | 5 | 2 | 0 |
-| `computable/promoted_library_slow/tan_generated_14421_pos_5_25_47` | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 4 | 4 | 0 | 0 | 0 | 2 | 0 | 4 | 2 | 1 |
-| `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 4 | 4 | 0 | 0 | 0 | 2 | 0 | 2 | 1 | 1 |
-| `computable/promoted_library_slow/tan_generated_16806_pos_5_3_22` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 3 | 2 | 2 |
-| `computable/promoted_library_slow/tan_generated_17496_pos_3_190_219` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 3 | 3 | 0 | 0 | 0 | 2 | 0 | 4 | 3 | 2 |
-| `computable/promoted_library_slow/tan_generated_18666_pos_5_15_17` | 22 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 5 | 5 | 0 | 0 | 0 | 3 | 0 | 2 | 1 | 1 |
-| `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | 21 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 3 | 2 | 1 |
-| `computable/promoted_library_slow/tan_generated_9591_neg_3_125_127` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 3 | 3 | 0 | 0 | 0 | 2 | 0 | 4 | 3 | 2 |
+| `computable/promoted_library_slow/ln_generated_7642_neg_1_25_36` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 15 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 7 | 1 | 1 |
+| `computable/promoted_library_slow/ln_generated_9457_neg_3_23_90` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 15 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 1 |
+| `computable/promoted_library_slow/ln_generated_9862_neg_1_221_492` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 15 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 7 | 1 | 1 |
+| `computable/promoted_library_slow/sin_generated_10834_pos_4_34_61` | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 2 | 1 | 1 |
+| `computable/promoted_library_slow/sin_generated_11359_pos_4_66_139` | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 2 | 1 | 1 |
+| `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 2 | 1 | 1 |
+| `computable/promoted_library_slow/tan_generated_13446_neg_5_15_187` | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 4 | 2 | 2 |
+| `computable/promoted_library_slow/tan_generated_13866_neg_5_1_2` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 10 | 4 | 4 | 0 | 0 | 0 | 3 | 0 | 5 | 2 | 0 |
+| `computable/promoted_library_slow/tan_generated_14421_pos_5_25_47` | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 4 | 4 | 0 | 0 | 0 | 2 | 0 | 4 | 2 | 1 |
+| `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 4 | 4 | 0 | 0 | 0 | 2 | 0 | 2 | 1 | 1 |
+| `computable/promoted_library_slow/tan_generated_16806_pos_5_3_22` | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 3 | 2 | 2 |
+| `computable/promoted_library_slow/tan_generated_17496_pos_3_190_219` | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 3 | 3 | 0 | 0 | 0 | 2 | 0 | 4 | 3 | 2 |
+| `computable/promoted_library_slow/tan_generated_18666_pos_5_15_17` | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 5 | 5 | 0 | 0 | 0 | 3 | 0 | 2 | 1 | 1 |
+| `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | 22 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 3 | 2 | 1 |
+| `computable/promoted_library_slow/tan_generated_9591_neg_3_125_127` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 3 | 3 | 0 | 0 | 0 | 2 | 0 | 4 | 3 | 2 |
 | `computable/sign/deep_half_product_sign_cached` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | `computable/sign/deep_scaled_product_sign` | 443 | 0 | 0 | 0 | 0 | 0 | 0 | 199 | 1 | 441 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 160 | 1 | 0 |
 | `computable/sign/deep_scaled_product_sign_cached` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | `computable/sign/deep_scaled_product_sign_until` | 443 | 0 | 0 | 0 | 0 | 0 | 0 | 199 | 1 | 441 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 160 | 1 | 0 |
 | `computable/sign/exp_unknown_sign_arg` | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 10 | 2 | 2 |
 | `computable/sign/exp_unknown_sign_arg_cached` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
-| `computable/sign/perturbed_scaled_product_sign` | 449 | 0 | 0 | 0 | 0 | 0 | 0 | 199 | 1 | 447 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 165 | 4 | 2 |
-| `computable/sign/pi_minus_one` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 7 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 7 | 2 | 2 |
+| `computable/sign/perturbed_scaled_product_sign` | 451 | 0 | 0 | 0 | 0 | 0 | 0 | 199 | 1 | 449 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 165 | 4 | 2 |
+| `computable/sign/pi_minus_one` | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 10 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 7 | 2 | 2 |
 | `computable/sign/pi_minus_one_cached` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
-| `computable/sign/pi_minus_one_sign_until` | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 7 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 7 | 2 | 2 |
+| `computable/sign/pi_minus_one_sign_until` | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 10 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 7 | 2 | 2 |
 | `computable/sqrt_squarefree_rational` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `computable/trig` | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 1 | 0 |
 | `computable/trig/large` | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 8 | 2 | 2 |
@@ -115,7 +115,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/trig_adversarial/tan_near_half_pi` | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 0 |
 | `computable/trig_adversarial/tan_promoted_generated_604_125` | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | `computable/trig_adversarial/tan_tiny` | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `real/arithmetic/exact` | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 16 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 5 | 0 | 0 |
+| `real/arithmetic/exact` | 21 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 18 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 5 | 0 | 0 |
 | `real/constants` | 17 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 6 | 0 | 0 |
 | `real/div/const_product_sqrt_over_e` | 33 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 4 | 0 | 0 |
 | `real/div/div_const_product_sqrt` | 41 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 10 | 0 | 0 | 0 | 0 | 0 | 12 | 2 | 9 | 0 | 0 |
@@ -123,13 +123,13 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/div/rational_over_symbolic` | 15 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 4 | 0 | 0 |
 | `real/div/sqrt_two_over_sqrt_three` | 12 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 10 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 7 | 1 | 1 |
 | `real/dot_product/active_dot3_dense_symbolic` | 53 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 6 | 0 | 0 |
-| `real/dot_product/active_dot4_dense_symbolic` | 72 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 32 | 0 | 0 | 0 | 0 | 0 | 25 | 1 | 11 | 0 | 0 |
+| `real/dot_product/active_dot4_dense_symbolic` | 73 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 33 | 0 | 0 | 0 | 0 | 0 | 25 | 1 | 11 | 0 | 0 |
 | `real/dot_product/dot3_all_zero` | 12 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 5 | 0 | 0 |
 | `real/dot_product/dot3_dense_symbolic` | 58 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 0 | 23 | 1 | 7 | 0 | 0 |
 | `real/dot_product/dot3_mixed_structural` | 20 | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 5 | 1 | 6 | 1 | 1 |
-| `real/dot_product/dot4_dense_symbolic` | 72 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 32 | 0 | 0 | 0 | 0 | 0 | 25 | 1 | 11 | 0 | 0 |
-| `real/dot_product/dot4_mixed_structural` | 27 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 12 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 14 | 3 | 3 |
-| `real/geometry_polynomial_substrate` | 279 | 0 | 0 | 2 | 28 | 0 | 0 | 22 | 24 | 189 | 0 | 0 | 0 | 0 | 0 | 43 | 5 | 86 | 19 | 15 |
+| `real/dot_product/dot4_dense_symbolic` | 73 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 33 | 0 | 0 | 0 | 0 | 0 | 25 | 1 | 11 | 0 | 0 |
+| `real/dot_product/dot4_mixed_structural` | 30 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 15 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 14 | 3 | 3 |
+| `real/geometry_polynomial_substrate` | 286 | 0 | 0 | 2 | 28 | 0 | 0 | 22 | 24 | 196 | 0 | 0 | 0 | 0 | 0 | 43 | 5 | 86 | 19 | 15 |
 | `real/hyperbolic_log_exp` | 17 | 0 | 0 | 1 | 4 | 0 | 0 | 1 | 5 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 0 |
 | `real/inverse/inverse_generic` | 9 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 1 | 1 |
 | `real/inverse_hyperbolic/exact_rational` | 32 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 11 | 21 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 3 | 1 |
@@ -138,14 +138,14 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/inverse_trig/exact` | 36 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 5 | 20 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 6 | 5 | 2 |
 | `real/inverse_trig/mid-domain` | 34 | 0 | 0 | 0 | 5 | 0 | 0 | 2 | 5 | 32 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 14 | 6 | 1 |
 | `real/log/scaled_e` | 16 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 6 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 18 | 4 | 4 |
-| `real/normal_scientific_substrate` | 714 | 0 | 0 | 16 | 59 | 1 | 0 | 63 | 98 | 486 | 0 | 0 | 0 | 0 | 0 | 97 | 45 | 269 | 19 | 7 |
+| `real/normal_scientific_substrate` | 718 | 0 | 0 | 16 | 59 | 1 | 0 | 63 | 98 | 490 | 0 | 0 | 0 | 0 | 0 | 97 | 45 | 269 | 19 | 7 |
 | `real/pow/small_integer_exponent` | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 1 |
 | `real/pow/symbolic_negative_one` | 17 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 2 | 0 | 0 |
 | `real/powi_i64/exact_17` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 1 |
 | `real/sqrt_scaled_exp` | 14 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 8 | 0 | 0 | 0 | 0 | 0 | 1 | 2 | 7 | 0 | 0 |
 | `real/sqrt_scaled_rational` | 5 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
-| `real/stable_scalar_substrate` | 181 | 0 | 0 | 5 | 14 | 0 | 0 | 19 | 14 | 143 | 0 | 0 | 0 | 0 | 0 | 1 | 6 | 96 | 19 | 19 |
-| `real/structural_queries` | 16 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 3 | 8 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 10 | 2 | 2 |
+| `real/stable_scalar_substrate` | 190 | 0 | 0 | 5 | 14 | 0 | 0 | 19 | 14 | 152 | 0 | 0 | 0 | 0 | 0 | 1 | 6 | 96 | 19 | 19 |
+| `real/structural_queries` | 19 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 3 | 11 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 10 | 2 | 2 |
 | `real/trig/general` | 13 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 3 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 2 | 0 |
 | `real/trig/large` | 7 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
 | `real/trig/large-exact-rational` | 24 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 6 | 24 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 8 | 0 | 0 |
@@ -181,6 +181,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/compare_absolute/dominant_add` | `computable` | `constructor` | `shared-constant-wrapper` | 3 |
 | `computable/compare_absolute/dominant_add` | `rational` | `add` | `word-sized` | 2 |
 | `computable/compare_absolute/dominant_add` | `rational` | `comparison` | `word-sized` | 1 |
+| `computable/compare_absolute/dominant_add` | `rational` | `linear` | `reuse-observed` | 2 |
 | `computable/compare_absolute/dominant_add` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `computable/compare_absolute/exact_msd_gap` | `computable` | `compare_absolute` | `exact-sign-msd-gap` | 2 |
 | `computable/compare_absolute/exact_msd_gap` | `computable` | `constructor` | `cached-pi` | 1 |
@@ -243,6 +244,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/inverse_hyperbolic_adversarial/acosh_two` | `computable` | `sqrt` | `generic-sqrt-node` | 2 |
 | `computable/inverse_hyperbolic_adversarial/acosh_two` | `rational` | `add` | `word-sized` | 2 |
 | `computable/inverse_hyperbolic_adversarial/acosh_two` | `rational` | `comparison` | `word-sized` | 1 |
+| `computable/inverse_hyperbolic_adversarial/acosh_two` | `rational` | `linear` | `reuse-observed` | 3 |
 | `computable/inverse_hyperbolic_adversarial/acosh_two` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `computable/inverse_hyperbolic_adversarial/asinh_large` | `computable` | `asinh` | `exact-large-direct-ln-sqrt` | 1 |
 | `computable/inverse_hyperbolic_adversarial/asinh_large` | `computable` | `constructor` | `one` | 1 |
@@ -473,6 +475,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | `computable_approx` | `trig` | `fixed-half-pi-multiple-5` | 1 |
 | `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | `rational` | `comparison` | `word-sized` | 8 |
+| `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/cos_generated_16610_pos_7_4_19` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | `computable` | `constructor` | `cached-pi` | 1 |
 | `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | `computable` | `constructor` | `cos-large-rational-deferred` | 1 |
@@ -482,6 +485,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | `computable_approx` | `trig` | `fixed-half-pi-multiple-5` | 1 |
 | `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | `rational` | `comparison` | `word-sized` | 8 |
+| `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/cos_generated_9365_pos_7_14_139` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | `computable` | `constructor` | `one` | 1 |
 | `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | `computable` | `constructor` | `rational-node` | 3 |
@@ -490,6 +494,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
 | `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | `rational` | `comparison` | `word-sized` | 5 |
+| `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_10732_pos_6_6_137` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | `computable` | `constructor` | `one` | 1 |
@@ -498,6 +503,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
 | `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
 | `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | `rational` | `comparison` | `word-sized` | 5 |
+| `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_11317_neg_8_21_53` | `rational` | `word-result` | `small-general-fraction` | 2 |
@@ -515,6 +521,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/ln_generated_14377_neg_1_189_764` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
 | `computable/promoted_library_slow/ln_generated_14377_neg_1_189_764` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
 | `computable/promoted_library_slow/ln_generated_14377_neg_1_189_764` | `rational` | `comparison` | `word-sized` | 5 |
+| `computable/promoted_library_slow/ln_generated_14377_neg_1_189_764` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/ln_generated_14377_neg_1_189_764` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_14377_neg_1_189_764` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_14377_neg_1_189_764` | `rational` | `word-result` | `small-general-fraction` | 2 |
@@ -525,6 +532,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/ln_generated_14947_pos_3_11_222` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
 | `computable/promoted_library_slow/ln_generated_14947_pos_3_11_222` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_14947_pos_3_11_222` | `rational` | `comparison` | `word-sized` | 5 |
+| `computable/promoted_library_slow/ln_generated_14947_pos_3_11_222` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/ln_generated_14947_pos_3_11_222` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_14947_pos_3_11_222` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | `computable` | `constructor` | `one` | 1 |
@@ -533,6 +541,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
 | `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
 | `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | `rational` | `comparison` | `word-sized` | 5 |
+| `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_15472_neg_3_13_50` | `rational` | `word-result` | `small-general-fraction` | 2 |
@@ -556,6 +565,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/ln_generated_18352_neg_1_133_500` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
 | `computable/promoted_library_slow/ln_generated_18352_neg_1_133_500` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
 | `computable/promoted_library_slow/ln_generated_18352_neg_1_133_500` | `rational` | `comparison` | `word-sized` | 5 |
+| `computable/promoted_library_slow/ln_generated_18352_neg_1_133_500` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/ln_generated_18352_neg_1_133_500` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_18352_neg_1_133_500` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_18352_neg_1_133_500` | `rational` | `word-result` | `small-general-fraction` | 2 |
@@ -573,6 +583,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/ln_generated_7642_neg_1_25_36` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
 | `computable/promoted_library_slow/ln_generated_7642_neg_1_25_36` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
 | `computable/promoted_library_slow/ln_generated_7642_neg_1_25_36` | `rational` | `comparison` | `word-sized` | 5 |
+| `computable/promoted_library_slow/ln_generated_7642_neg_1_25_36` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/ln_generated_7642_neg_1_25_36` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_7642_neg_1_25_36` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_7642_neg_1_25_36` | `rational` | `word-result` | `small-general-fraction` | 2 |
@@ -582,6 +593,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/ln_generated_9457_neg_3_23_90` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
 | `computable/promoted_library_slow/ln_generated_9457_neg_3_23_90` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
 | `computable/promoted_library_slow/ln_generated_9457_neg_3_23_90` | `rational` | `comparison` | `word-sized` | 5 |
+| `computable/promoted_library_slow/ln_generated_9457_neg_3_23_90` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/ln_generated_9457_neg_3_23_90` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_9457_neg_3_23_90` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_9457_neg_3_23_90` | `rational` | `word-result` | `small-general-fraction` | 2 |
@@ -591,6 +603,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/ln_generated_9862_neg_1_221_492` | `computable` | `ln` | `exact-rational-binary-scaled-ln1p` | 1 |
 | `computable/promoted_library_slow/ln_generated_9862_neg_1_221_492` | `computable_approx` | `ln` | `binary-scaled-rational` | 1 |
 | `computable/promoted_library_slow/ln_generated_9862_neg_1_221_492` | `rational` | `comparison` | `word-sized` | 5 |
+| `computable/promoted_library_slow/ln_generated_9862_neg_1_221_492` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/ln_generated_9862_neg_1_221_492` | `rational` | `mul` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_9862_neg_1_221_492` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/ln_generated_9862_neg_1_221_492` | `rational` | `word-result` | `small-general-fraction` | 2 |
@@ -602,6 +615,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/sin_generated_10834_pos_4_34_61` | `computable_approx` | `trig` | `fixed-half-pi-multiple-3` | 1 |
 | `computable/promoted_library_slow/sin_generated_10834_pos_4_34_61` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/sin_generated_10834_pos_4_34_61` | `rational` | `comparison` | `word-sized` | 4 |
+| `computable/promoted_library_slow/sin_generated_10834_pos_4_34_61` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/sin_generated_10834_pos_4_34_61` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/sin_generated_11359_pos_4_66_139` | `computable` | `constructor` | `cached-pi` | 1 |
 | `computable/promoted_library_slow/sin_generated_11359_pos_4_66_139` | `computable` | `constructor` | `rational-node` | 1 |
@@ -611,6 +625,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/sin_generated_11359_pos_4_66_139` | `computable_approx` | `trig` | `fixed-half-pi-multiple-3` | 1 |
 | `computable/promoted_library_slow/sin_generated_11359_pos_4_66_139` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/sin_generated_11359_pos_4_66_139` | `rational` | `comparison` | `word-sized` | 4 |
+| `computable/promoted_library_slow/sin_generated_11359_pos_4_66_139` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/sin_generated_11359_pos_4_66_139` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | `computable` | `constructor` | `cached-pi` | 3 |
 | `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | `computable` | `constructor` | `rational-node` | 1 |
@@ -620,6 +635,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | `computable_approx` | `tan` | `large-rational-direct-quotient` | 1 |
 | `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | `computable_approx` | `trig` | `fixed-half-pi-multiple-neg3` | 1 |
 | `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | `rational` | `comparison` | `word-sized` | 4 |
+| `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_11841_neg_5_2_17` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/tan_generated_13446_neg_5_15_187` | `computable` | `constructor` | `cached-pi` | 3 |
@@ -630,6 +646,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_13446_neg_5_15_187` | `computable_approx` | `tan` | `large-rational-direct-quotient` | 1 |
 | `computable/promoted_library_slow/tan_generated_13446_neg_5_15_187` | `computable_approx` | `trig` | `fixed-half-pi-multiple-neg3` | 1 |
 | `computable/promoted_library_slow/tan_generated_13446_neg_5_15_187` | `rational` | `comparison` | `word-sized` | 4 |
+| `computable/promoted_library_slow/tan_generated_13446_neg_5_15_187` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_13446_neg_5_15_187` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_13446_neg_5_15_187` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/tan_generated_13866_neg_5_1_2` | `computable` | `constructor` | `cached-pi` | 2 |
@@ -642,6 +659,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_13866_neg_5_1_2` | `computable_approx` | `trig` | `fixed-half-pi-multiple-neg4` | 1 |
 | `computable/promoted_library_slow/tan_generated_13866_neg_5_1_2` | `computable_approx` | `trig` | `fixed-half-pi-residual-two-pi` | 1 |
 | `computable/promoted_library_slow/tan_generated_13866_neg_5_1_2` | `rational` | `comparison` | `word-sized` | 2 |
+| `computable/promoted_library_slow/tan_generated_13866_neg_5_1_2` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_13866_neg_5_1_2` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_13866_neg_5_1_2` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `computable/promoted_library_slow/tan_generated_14421_pos_5_25_47` | `computable` | `constructor` | `cached-pi` | 2 |
@@ -655,6 +673,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_14421_pos_5_25_47` | `computable_approx` | `trig` | `fixed-half-pi-residual-two-pi` | 1 |
 | `computable/promoted_library_slow/tan_generated_14421_pos_5_25_47` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_14421_pos_5_25_47` | `rational` | `comparison` | `word-sized` | 6 |
+| `computable/promoted_library_slow/tan_generated_14421_pos_5_25_47` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_14421_pos_5_25_47` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | `computable` | `constructor` | `cached-pi` | 2 |
 | `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | `computable` | `constructor` | `rational-node` | 1 |
@@ -666,6 +685,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | `computable_approx` | `trig` | `fixed-half-pi-multiple-neg4` | 1 |
 | `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | `computable_approx` | `trig` | `fixed-half-pi-residual-two-pi` | 1 |
 | `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | `rational` | `comparison` | `word-sized` | 6 |
+| `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_15891_neg_5_23_33` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/tan_generated_16806_pos_5_3_22` | `computable` | `constructor` | `cached-pi` | 3 |
@@ -677,6 +697,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_16806_pos_5_3_22` | `computable_approx` | `trig` | `fixed-half-pi-multiple-3` | 1 |
 | `computable/promoted_library_slow/tan_generated_16806_pos_5_3_22` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_16806_pos_5_3_22` | `rational` | `comparison` | `word-sized` | 4 |
+| `computable/promoted_library_slow/tan_generated_16806_pos_5_3_22` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_16806_pos_5_3_22` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/tan_generated_17496_pos_3_190_219` | `computable` | `constructor` | `cached-pi` | 2 |
 | `computable/promoted_library_slow/tan_generated_17496_pos_3_190_219` | `computable` | `constructor` | `rational-node` | 1 |
@@ -688,6 +709,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_17496_pos_3_190_219` | `computable_approx` | `trig` | `fixed-half-pi-multiple-2` | 1 |
 | `computable/promoted_library_slow/tan_generated_17496_pos_3_190_219` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_17496_pos_3_190_219` | `rational` | `comparison` | `word-sized` | 2 |
+| `computable/promoted_library_slow/tan_generated_17496_pos_3_190_219` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_17496_pos_3_190_219` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/tan_generated_18666_pos_5_15_17` | `computable` | `constructor` | `cached-pi` | 3 |
 | `computable/promoted_library_slow/tan_generated_18666_pos_5_15_17` | `computable` | `constructor` | `rational-node` | 1 |
@@ -699,6 +721,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_18666_pos_5_15_17` | `computable_approx` | `trig` | `fixed-half-pi-residual-two-pi` | 3 |
 | `computable/promoted_library_slow/tan_generated_18666_pos_5_15_17` | `rational` | `add` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_18666_pos_5_15_17` | `rational` | `comparison` | `word-sized` | 6 |
+| `computable/promoted_library_slow/tan_generated_18666_pos_5_15_17` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_18666_pos_5_15_17` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | `computable` | `constructor` | `cached-pi` | 3 |
 | `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | `computable` | `constructor` | `rational-node` | 1 |
@@ -708,6 +731,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | `computable_approx` | `tan` | `large-rational-direct-quotient` | 1 |
 | `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | `computable_approx` | `trig` | `fixed-half-pi-multiple-neg5` | 1 |
 | `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | `rational` | `comparison` | `word-sized` | 8 |
+| `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_9231_neg_7_5_6` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/promoted_library_slow/tan_generated_9591_neg_3_125_127` | `computable` | `constructor` | `cached-pi` | 2 |
@@ -719,6 +743,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/promoted_library_slow/tan_generated_9591_neg_3_125_127` | `computable_approx` | `tan` | `quarter-pi-large-rational` | 1 |
 | `computable/promoted_library_slow/tan_generated_9591_neg_3_125_127` | `computable_approx` | `trig` | `fixed-half-pi-multiple-neg3` | 1 |
 | `computable/promoted_library_slow/tan_generated_9591_neg_3_125_127` | `rational` | `comparison` | `word-sized` | 4 |
+| `computable/promoted_library_slow/tan_generated_9591_neg_3_125_127` | `rational` | `linear` | `reuse-observed` | 1 |
 | `computable/promoted_library_slow/tan_generated_9591_neg_3_125_127` | `rational` | `sub` | `word-sized` | 1 |
 | `computable/promoted_library_slow/tan_generated_9591_neg_3_125_127` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `computable/sign/deep_half_product_sign_cached` | `computable` | `sign` | `exact-sign-cache` | 1 |
@@ -754,6 +779,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/sign/perturbed_scaled_product_sign` | `computable` | `sign` | `exact-sign-cache` | 1 |
 | `computable/sign/perturbed_scaled_product_sign` | `rational` | `add` | `word-sized` | 2 |
 | `computable/sign/perturbed_scaled_product_sign` | `rational` | `comparison` | `word-sized` | 1 |
+| `computable/sign/perturbed_scaled_product_sign` | `rational` | `linear` | `reuse-observed` | 2 |
 | `computable/sign/perturbed_scaled_product_sign` | `rational` | `mul` | `wide-dyadic-cross-cancel` | 155 |
 | `computable/sign/perturbed_scaled_product_sign` | `rational` | `mul` | `wide-dyadic-word-numerators` | 3 |
 | `computable/sign/perturbed_scaled_product_sign` | `rational` | `mul` | `word-sized` | 41 |
@@ -767,6 +793,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/sign/pi_minus_one` | `computable` | `sign` | `exact-sign-cache` | 1 |
 | `computable/sign/pi_minus_one` | `rational` | `add` | `word-sized` | 2 |
 | `computable/sign/pi_minus_one` | `rational` | `comparison` | `word-sized` | 1 |
+| `computable/sign/pi_minus_one` | `rational` | `linear` | `reuse-observed` | 3 |
 | `computable/sign/pi_minus_one` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `computable/sign/pi_minus_one_cached` | `computable` | `sign` | `exact-sign-cache` | 1 |
 | `computable/sign/pi_minus_one_sign_until` | `computable` | `constructor` | `cached-pi` | 1 |
@@ -776,6 +803,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/sign/pi_minus_one_sign_until` | `computable` | `sign_until` | `exact-sign-cache` | 1 |
 | `computable/sign/pi_minus_one_sign_until` | `rational` | `add` | `word-sized` | 2 |
 | `computable/sign/pi_minus_one_sign_until` | `rational` | `comparison` | `word-sized` | 1 |
+| `computable/sign/pi_minus_one_sign_until` | `rational` | `linear` | `reuse-observed` | 3 |
 | `computable/sign/pi_minus_one_sign_until` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `computable/sqrt_squarefree_rational` | `computable` | `constructor` | `rational-integer-canonicalized` | 3 |
 | `computable/sqrt_squarefree_rational` | `computable` | `constructor` | `shared-constant-wrapper` | 1 |
@@ -900,6 +928,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `computable/trig_adversarial/tan_tiny` | `computable` | `tan` | `structural-small-prescaled` | 1 |
 | `real/arithmetic/exact` | `rational` | `add` | `word-sized` | 1 |
 | `real/arithmetic/exact` | `rational` | `div` | `word-sized` | 1 |
+| `real/arithmetic/exact` | `rational` | `linear` | `reuse-observed` | 2 |
 | `real/arithmetic/exact` | `rational` | `mul` | `word-sized` | 1 |
 | `real/arithmetic/exact` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `real/arithmetic/exact` | `rational` | `sub` | `word-sized` | 1 |
@@ -991,6 +1020,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/dot_product/active_dot4_dense_symbolic` | `computable` | `constructor` | `shared-constant-wrapper` | 14 |
 | `real/dot_product/active_dot4_dense_symbolic` | `rational` | `add` | `word-sized` | 1 |
 | `real/dot_product/active_dot4_dense_symbolic` | `rational` | `div` | `word-sized` | 1 |
+| `real/dot_product/active_dot4_dense_symbolic` | `rational` | `linear` | `reuse-observed` | 1 |
 | `real/dot_product/active_dot4_dense_symbolic` | `rational` | `mul` | `word-sized` | 4 |
 | `real/dot_product/active_dot4_dense_symbolic` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `real/dot_product/active_dot4_dense_symbolic` | `rational` | `word-result` | `cached-small-integer` | 1 |
@@ -1051,6 +1081,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/dot_product/dot4_dense_symbolic` | `computable` | `constructor` | `shared-constant-wrapper` | 14 |
 | `real/dot_product/dot4_dense_symbolic` | `rational` | `add` | `word-sized` | 1 |
 | `real/dot_product/dot4_dense_symbolic` | `rational` | `div` | `word-sized` | 1 |
+| `real/dot_product/dot4_dense_symbolic` | `rational` | `linear` | `reuse-observed` | 1 |
 | `real/dot_product/dot4_dense_symbolic` | `rational` | `mul` | `word-sized` | 4 |
 | `real/dot_product/dot4_dense_symbolic` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `real/dot_product/dot4_dense_symbolic` | `rational` | `word-result` | `cached-small-integer` | 1 |
@@ -1072,6 +1103,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/dot_product/dot4_mixed_structural` | `computable` | `constructor` | `shared-constant-wrapper` | 4 |
 | `real/dot_product/dot4_mixed_structural` | `rational` | `add` | `word-sized` | 2 |
 | `real/dot_product/dot4_mixed_structural` | `rational` | `comparison` | `word-sized` | 1 |
+| `real/dot_product/dot4_mixed_structural` | `rational` | `linear` | `reuse-observed` | 3 |
 | `real/dot_product/dot4_mixed_structural` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `real/dot_product/dot4_mixed_structural` | `real` | `add` | `rhs-rational-const-offset` | 1 |
 | `real/dot_product/dot4_mixed_structural` | `real` | `constructor` | `cached-e` | 1 |
@@ -1098,6 +1130,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/geometry_polynomial_substrate` | `rational` | `div` | `word-sized` | 6 |
 | `real/geometry_polynomial_substrate` | `rational` | `dot_product` | `word-sized` | 3 |
 | `real/geometry_polynomial_substrate` | `rational` | `linear` | `retained-sum` | 3 |
+| `real/geometry_polynomial_substrate` | `rational` | `linear` | `reuse-observed` | 7 |
 | `real/geometry_polynomial_substrate` | `rational` | `mul` | `retained-product` | 4 |
 | `real/geometry_polynomial_substrate` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 4 |
 | `real/geometry_polynomial_substrate` | `rational` | `mul` | `word-sized` | 14 |
@@ -1291,6 +1324,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/normal_scientific_substrate` | `rational` | `comparison` | `word-sized` | 22 |
 | `real/normal_scientific_substrate` | `rational` | `div` | `word-sized` | 4 |
 | `real/normal_scientific_substrate` | `rational` | `linear` | `retained-difference` | 2 |
+| `real/normal_scientific_substrate` | `rational` | `linear` | `reuse-observed` | 4 |
 | `real/normal_scientific_substrate` | `rational` | `mul` | `retained-product` | 3 |
 | `real/normal_scientific_substrate` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 1 |
 | `real/normal_scientific_substrate` | `rational` | `mul` | `word-sized` | 36 |
@@ -1410,6 +1444,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/stable_scalar_substrate` | `rational` | `add` | `word-sized` | 8 |
 | `real/stable_scalar_substrate` | `rational` | `comparison` | `word-sized` | 9 |
 | `real/stable_scalar_substrate` | `rational` | `div` | `word-sized` | 1 |
+| `real/stable_scalar_substrate` | `rational` | `linear` | `reuse-observed` | 9 |
 | `real/stable_scalar_substrate` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 8 |
 | `real/stable_scalar_substrate` | `rational` | `mul` | `word-sized` | 9 |
 | `real/stable_scalar_substrate` | `rational` | `sub` | `word-sized` | 2 |
@@ -1452,6 +1487,7 @@ This table groups raw trace labels into Yap-aligned diagnostic buckets so scalar
 | `real/structural_queries` | `computable` | `structural_facts` | `exact-sign-cache` | 1 |
 | `real/structural_queries` | `rational` | `add` | `word-sized` | 2 |
 | `real/structural_queries` | `rational` | `comparison` | `word-sized` | 1 |
+| `real/structural_queries` | `rational` | `linear` | `reuse-observed` | 3 |
 | `real/structural_queries` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `real/structural_queries` | `real` | `constructor` | `cached-pi` | 1 |
 | `real/structural_queries` | `real` | `constructor` | `rational` | 1 |

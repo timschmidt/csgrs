@@ -542,6 +542,9 @@ impl Rational {
         kind: CachedRationalLinearKind,
         result: &Self,
     ) -> bool {
+        if owner.linear_cache.get().is_some() {
+            return false;
+        }
         owner
             .linear_cache
             .set(Box::new(CachedRationalLinear {
@@ -552,25 +555,60 @@ impl Rational {
             .is_ok()
     }
 
+    #[inline]
+    fn has_linear_reuse_evidence(&self) -> bool {
+        if Arc::strong_count(&self.0) > 1 || self.linear_cache.get().is_some() {
+            return true;
+        }
+        if self
+            .linear_reuse_seen
+            .load(std::sync::atomic::Ordering::Relaxed)
+        {
+            return true;
+        }
+        crate::trace_dispatch!("rational", "linear", "reuse-observed");
+        self.linear_reuse_seen
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+        false
+    }
+
+    #[cold]
+    #[inline(never)]
     fn retain_sum_pair(&self, other: &Self, result: &Self) {
-        if Arc::strong_count(&self.0) == 1 {
+        let self_shared = self.has_linear_reuse_evidence();
+        let other_shared = other.has_linear_reuse_evidence();
+        if !self_shared && !other_shared {
             return;
         }
-        if !Self::retain_linear(self, other, CachedRationalLinearKind::Sum, result) {
+        if self_shared
+            && Self::retain_linear(self, other, CachedRationalLinearKind::Sum, result)
+        {
+            return;
+        }
+        if other_shared {
             let _ = Self::retain_linear(other, self, CachedRationalLinearKind::Sum, result);
         }
     }
 
+    #[cold]
+    #[inline(never)]
     fn retain_difference_pair(&self, other: &Self, result: &Self) {
-        if Arc::strong_count(&self.0) == 1 {
+        let self_shared = self.has_linear_reuse_evidence();
+        let other_shared = other.has_linear_reuse_evidence();
+        if !self_shared && !other_shared {
             return;
         }
-        if !Self::retain_linear(
+        if self_shared
+            && Self::retain_linear(
             self,
             other,
             CachedRationalLinearKind::OwnerMinusOther,
             result,
-        ) {
+        )
+        {
+            return;
+        }
+        if other_shared {
             let _ = Self::retain_linear(
                 other,
                 self,
