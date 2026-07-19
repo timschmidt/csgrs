@@ -82,8 +82,10 @@ impl Rational {
             }
         }
 
-        let common_denominator =
-            num::Integer::gcd(&left.denominator, &right.denominator);
+        let common_denominator = Rational::gcd_magnitudes_with_mixed_width_fast_path(
+            &left.denominator,
+            &right.denominator,
+        );
         trace_rational_gcd!(
             &left.denominator,
             &right.denominator,
@@ -411,7 +413,10 @@ impl Rational {
         {
             BigUint::one()
         } else {
-            let divisor = num::Integer::gcd(&general.numerator, &general.denominator);
+            let divisor = Self::gcd_magnitudes_with_mixed_width_fast_path(
+                &general.numerator,
+                &general.denominator,
+            );
             trace_rational_gcd!(&general.numerator, &general.denominator, &divisor);
             divisor
         };
@@ -687,7 +692,10 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
             self.retain_sum_pair(other, &result);
             return result;
         }
-        let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
+        let common_denominator = Rational::gcd_magnitudes_with_mixed_width_fast_path(
+            &self.denominator,
+            &other.denominator,
+        );
         trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
         let left_scale = &other.denominator / &common_denominator;
         let right_scale = &self.denominator / &common_denominator;
@@ -912,7 +920,10 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
             self.retain_difference_pair(other, &result);
             return result;
         }
-        let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
+        let common_denominator = Rational::gcd_magnitudes_with_mixed_width_fast_path(
+            &self.denominator,
+            &other.denominator,
+        );
         trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
         let left_scale = &other.denominator / &common_denominator;
         let right_scale = &self.denominator / &common_denominator;

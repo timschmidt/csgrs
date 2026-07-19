@@ -93,6 +93,15 @@ Relevant path notes:
 
 - Integer identity constructors avoid BigInt conversion and reduction.
 - Dyadic denominators use shift-only reduction instead of full gcd.
+- General rational reduction, add/subtract, and product-sum LCM construction
+  dispatch exactly mixed-width GCDs (one operand through `u128`, one wider) to
+  one full-width remainder followed by native-word GCD. Word/word and
+  wide/wide inputs stay on `BigUint`'s binary GCD: routing all reductions
+  through the wide cross-cancellation algorithm regressed a 500-operation
+  cold-union profile from 1.28 s to 1.85--1.90 s. The mixed-only dispatch
+  instead reduced the same alternating-input profile to 1.22--1.26 s
+  (roughly 3--4%), while preserved-binary 50-million-operation add/sub checks
+  kept the retained scalar paths neutral or faster.
 - Reduced dyadics with odd magnitude at most 63 and denominator through `2^63`
   share canonical immutable storage.
 - Each immutable rational retains one exact multiplication result under weak operand

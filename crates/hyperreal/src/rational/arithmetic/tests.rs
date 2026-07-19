@@ -755,6 +755,34 @@ mod tests {
     }
 
     #[test]
+    fn rational_operation_gcd_dispatch_handles_mixed_width_and_zero_operands() {
+        let word = BigUint::from(15_u8);
+        let wide = ((BigUint::one() << 260_usize) + BigUint::from(2_u8)) * &word;
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &word),
+            word
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&word, &wide),
+            word
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&BigUint::ZERO, &wide),
+            wide
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &BigUint::ZERO),
+            wide
+        );
+
+        let other = ((BigUint::one() << 259_usize) + BigUint::from(7_u8)) * 21_u8;
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &other),
+            num::Integer::gcd(&wide, &other)
+        );
+    }
+
+    #[test]
     fn lehmer_magnitude_gcd_matches_backend_reference() {
         fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;

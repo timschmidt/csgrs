@@ -368,7 +368,8 @@ impl Rational {
             return self.reduce_by_power_of_two_divisor(possible_divisor);
         }
 
-        let divisor = num::Integer::gcd(&self.numerator, possible_divisor);
+        let divisor =
+            Self::gcd_magnitudes_with_mixed_width_fast_path(&self.numerator, possible_divisor);
         trace_rational_gcd!(&self.numerator, possible_divisor, &divisor);
         if divisor == *ONE.deref() {
             self
@@ -401,7 +402,8 @@ impl Rational {
             return self.reduce_by_power_of_two_divisor(&denominator);
         }
 
-        let divisor = num::Integer::gcd(&self.numerator, &self.denominator);
+        let divisor =
+            Self::gcd_magnitudes_with_mixed_width_fast_path(&self.numerator, &self.denominator);
         trace_rational_gcd!(&self.numerator, &self.denominator, &divisor);
         if divisor == *ONE.deref() {
             self

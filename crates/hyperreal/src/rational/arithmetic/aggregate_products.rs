@@ -96,6 +96,35 @@ struct HalfGcdReduction {
 }
 
 impl Rational {
+    /// Use one full-width remainder when exactly one operand fits a native word.
+    ///
+    /// `BigUint`'s binary GCD remains faster for word/word and balanced wide
+    /// operands. Mixed-width rational reductions are different: reducing the
+    /// wide value modulo the word once avoids a long subtraction/shift chain.
+    pub(crate) fn gcd_magnitudes_with_mixed_width_fast_path(
+        left: &BigUint,
+        right: &BigUint,
+    ) -> BigUint {
+        match (left.to_u128(), right.to_u128()) {
+            (Some(_), Some(_)) => num::Integer::gcd(left, right),
+            (Some(0), None) => right.clone(),
+            (None, Some(0)) => left.clone(),
+            (Some(word), None) => {
+                let remainder = (right % left)
+                    .to_u128()
+                    .expect("remainder is smaller than a u128 divisor");
+                BigUint::from(Self::gcd_word(word, remainder))
+            }
+            (None, Some(word)) => {
+                let remainder = (left % right)
+                    .to_u128()
+                    .expect("remainder is smaller than a u128 divisor");
+                BigUint::from(Self::gcd_word(word, remainder))
+            }
+            (None, None) => num::Integer::gcd(left, right),
+        }
+    }
+
     // Tuned below after the Lehmer path is benchmarked against the full-width
     // Euclidean remainder loop. Keeping the boundary explicit lets the trace
     // and crossover tests describe the selected algorithm rather than merely
@@ -1720,7 +1749,8 @@ impl Rational {
             }
             let denominator = &denominators[i];
             if denominator != ONE.deref() {
-                let divisor = num::Integer::gcd(&common_denominator, denominator);
+                let divisor =
+                    Self::gcd_magnitudes_with_mixed_width_fast_path(&common_denominator, denominator);
                 trace_rational_gcd!(&common_denominator, denominator, &divisor);
                 common_denominator *= denominator / &divisor;
             }
@@ -1816,7 +1846,8 @@ impl Rational {
             }
             let denominator = &denominators[i];
             if denominator != ONE.deref() {
-                let divisor = num::Integer::gcd(&common_denominator, denominator);
+                let divisor =
+                    Self::gcd_magnitudes_with_mixed_width_fast_path(&common_denominator, denominator);
                 trace_rational_gcd!(&common_denominator, denominator, &divisor);
                 common_denominator *= denominator / &divisor;
             }
@@ -1939,7 +1970,8 @@ impl Rational {
             }
             let denominator = &left[i].denominator * &right[i].denominator;
             if denominator != *ONE.deref() {
-                let divisor = num::Integer::gcd(&common_denominator, &denominator);
+                let divisor =
+                    Self::gcd_magnitudes_with_mixed_width_fast_path(&common_denominator, &denominator);
                 trace_rational_gcd!(&common_denominator, &denominator, &divisor);
                 common_denominator *= denominator / &divisor;
             }
