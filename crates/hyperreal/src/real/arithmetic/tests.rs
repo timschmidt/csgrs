@@ -27,11 +27,22 @@ mod tests {
         exact -= &exact_rhs;
         assert_eq!(exact, expected_difference);
 
+        let expected_product = &exact * &exact_rhs;
+        exact *= &exact_rhs;
+        assert_eq!(exact, expected_product);
+
+        exact *= Real::zero();
+        assert_eq!(exact, Real::zero());
+
         let mut symbolic = Real::from(2_i32) * Real::pi();
         let symbolic_rhs = Real::from(3_i32) * Real::pi();
         let expected_symbolic = &symbolic + &symbolic_rhs;
         symbolic += &symbolic_rhs;
         assert_eq!(symbolic, expected_symbolic);
+
+        let expected_scaled_symbolic = &symbolic * &exact_rhs;
+        symbolic *= &exact_rhs;
+        assert_eq!(symbolic, expected_scaled_symbolic);
 
         let cancellation_rhs = symbolic.clone();
         symbolic -= &cancellation_rhs;

@@ -453,8 +453,17 @@ impl Mul<Real> for f64 {
 }
 
 impl<T: AsRef<Real>> MulAssign<T> for Real {
+    #[inline]
     fn mul_assign(&mut self, other: T) {
-        *self = &*self * other.as_ref();
+        let other = other.as_ref();
+        if matches!(self.class, One) && matches!(other.class, One) {
+            crate::trace_dispatch!("real", "mul", "exact-rational-assign");
+            self.rational = &self.rational * &other.rational;
+            self.primitive_approx_cache
+                .set(PrimitiveApproxCache::Empty);
+            return;
+        }
+        *self = &*self * other;
     }
 }
 

@@ -105,10 +105,11 @@ Relevant path notes:
   operand caches and remain ignored by serialization. Occupied entries are checked
   before constructing a candidate. Cold wide-dyadic sentinels measured 87.78 ns for
   both addition and subtraction.
-- Exact-rational `Real += &Real` and `Real -= &Real` replace only the rational
-  scale and invalidate the lossy approximation accelerator, preserving the existing
-  exact class payload in place. Default-feature exact clones do not load the disabled
-  primitive cache; cache-enabled builds continue copying their populated accelerator.
+- Exact-rational `Real += &Real`, `Real -= &Real`, and `Real *= &Real` replace
+  only the rational scale and invalidate the lossy approximation accelerator,
+  preserving the existing exact class payload in place. Default-feature exact
+  clones do not load the disabled primitive cache; cache-enabled builds continue
+  copying their populated accelerator.
 - When a dyadic denominator product overflows `u128` but both numerators and their
   product fit, multiplication cancels and multiplies those numerators in registers
   before allocating only the final exact result.
