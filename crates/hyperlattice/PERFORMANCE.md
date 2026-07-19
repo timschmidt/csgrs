@@ -208,6 +208,13 @@ cross-stack trace replaces the multiplication chain with
 word-sized or dyadic-denominator Rational power path. Regression tests cover
 fractional fifth powers and symbolic reciprocal preservation.
 
+Hyperreal's follow-up adaptive product-chain reuse removes the remaining repeated
+`powi(..., 5)` gap without changing this facade. Matched medians are now
+43.44 ns for exact-f64 inputs and 75.84 ns for explicit rational inputs, versus
+83.31 ns for Numerica 128 and 1.507 us for Symbolica. The first call still uses
+the direct exact integer kernel; only an observed repeated base takes the bounded
+retained-product chain.
+
 ## Canonical square-root domain ownership
 
 The compatibility `sqrt` facade formerly built complete structural and domain
