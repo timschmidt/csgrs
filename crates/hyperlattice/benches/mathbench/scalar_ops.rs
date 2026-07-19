@@ -626,6 +626,68 @@ fn bench_scalar_sqrt_cases(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_scalar_hyperbolic_cases(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalar_hyperbolic_cases");
+    let numerica_ctx = numerica_engine::Ctx::new(128);
+    let symbolica_ctx = symbolica_engine::Ctx::new(128);
+
+    for (name, value) in [
+        ("half", 0.5),
+        ("negative_tiny", -1.0e-12),
+        ("positive_20", 20.0),
+        ("negative_20", -20.0),
+    ] {
+        let hyperreal = s(value);
+        let hyperreal_rational = qr(value);
+        let numerica = numerica_ctx.f(value);
+        let symbolica = symbolica_ctx.f(value);
+
+        for operation in ["sinh", "cosh", "tanh"] {
+            group.bench_function(format!("hyperreal/{operation}/{name}"), |b| {
+                b.iter(|| {
+                    let value = black_box(hyperreal.clone());
+                    black_box(match operation {
+                        "sinh" => hyperlattice::sinh(value),
+                        "cosh" => hyperlattice::cosh(value),
+                        _ => hyperlattice::tanh(value),
+                    }
+                    .unwrap())
+                })
+            });
+            group.bench_function(format!("hyperreal-rational/{operation}/{name}"), |b| {
+                b.iter(|| {
+                    let value = black_box(hyperreal_rational.clone());
+                    black_box(match operation {
+                        "sinh" => hyperlattice::sinh(value),
+                        "cosh" => hyperlattice::cosh(value),
+                        _ => hyperlattice::tanh(value),
+                    }
+                    .unwrap())
+                })
+            });
+            group.bench_function(format!("numerica128/{operation}/{name}"), |b| {
+                b.iter(|| {
+                    black_box(match operation {
+                        "sinh" => numerica_ctx.sinh(black_box(&numerica)),
+                        "cosh" => numerica_ctx.cosh(black_box(&numerica)),
+                        _ => numerica_ctx.tanh(black_box(&numerica)),
+                    })
+                })
+            });
+            group.bench_function(format!("symbolica/{operation}/{name}"), |b| {
+                b.iter(|| {
+                    black_box(match operation {
+                        "sinh" => symbolica_ctx.sinh(black_box(&symbolica)),
+                        "cosh" => symbolica_ctx.cosh(black_box(&symbolica)),
+                        _ => symbolica_ctx.tanh(black_box(&symbolica)),
+                    })
+                })
+            });
+        }
+    }
+    group.finish();
+}
+
 fn bench_large_integer_exp(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_large_integer_exp");
     let hyperreal = s(128.0);
