@@ -625,6 +625,22 @@ mod tests {
     }
 
     #[test]
+    fn shared_operand_retains_two_distinct_linear_results() {
+        let left = Rational::new(5_000_000_000);
+        let _shared_left = left.clone();
+        let first_right = Rational::try_from(11.0e-9_f64).unwrap();
+        let second_right = Rational::try_from(13.0e-9_f64).unwrap();
+
+        let first = &left + &first_right;
+        let second = &left + &second_right;
+        let first_reused = &left + &first_right;
+        let second_reused = &left + &second_right;
+
+        assert!(Arc::ptr_eq(&first.0, &first_reused.0));
+        assert!(Arc::ptr_eq(&second.0, &second_reused.0));
+    }
+
+    #[test]
     fn perfect_nth_root_detects_exact_rational_roots() {
         assert_eq!(
             Rational::new(27).perfect_nth_root(3),

@@ -16,6 +16,29 @@ mod tests {
     }
 
     #[test]
+    fn same_basis_assignments_match_borrowed_arithmetic() {
+        let mut exact = Real::new(Rational::fraction(5, 7).unwrap());
+        let exact_rhs = Real::new(Rational::fraction(11, 13).unwrap());
+        let expected_sum = &exact + &exact_rhs;
+        exact += &exact_rhs;
+        assert_eq!(exact, expected_sum);
+
+        let expected_difference = &exact - &exact_rhs;
+        exact -= &exact_rhs;
+        assert_eq!(exact, expected_difference);
+
+        let mut symbolic = Real::from(2_i32) * Real::pi();
+        let symbolic_rhs = Real::from(3_i32) * Real::pi();
+        let expected_symbolic = &symbolic + &symbolic_rhs;
+        symbolic += &symbolic_rhs;
+        assert_eq!(symbolic, expected_symbolic);
+
+        let cancellation_rhs = symbolic.clone();
+        symbolic -= &cancellation_rhs;
+        assert_eq!(symbolic, Real::zero());
+    }
+
+    #[test]
     fn layout_sizes() {
         const MAX_REAL_SIZE: usize = 48;
 

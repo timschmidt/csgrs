@@ -126,8 +126,8 @@ control. `hyperreal` uses several small performance strategies together:
   caches so refinement grows with caller demand.
 - Keep hot kernels predictable. Borrowed arithmetic, shared-denominator/product-sum
   reducers, cached constants, bounded exact product retention, adaptive linear-result
-  admission, and capability-gated symbolic shortcuts are preferred over speculative
-  approximation in dense loops.
+  admission, in-place exact scale assignment, and capability-gated symbolic shortcuts
+  are preferred over speculative approximation in dense loops.
 - Measure regressions directly. Dispatch tracing and benchmark families track GCDs,
   rational temporaries, peak operand sizes, repeated approximation, exact reducer use,
   cache pressure, and stack-facing behavior for `hyperlattice` and `hyperlimit`.

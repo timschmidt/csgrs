@@ -160,8 +160,22 @@ impl Add<Real> for f64 {
 }
 
 impl<T: AsRef<Real>> AddAssign<T> for Real {
+    #[inline]
     fn add_assign(&mut self, other: T) {
-        *self = &*self + other.as_ref();
+        let other = other.as_ref();
+        if matches!(self.class, One) && matches!(other.class, One) {
+            crate::trace_dispatch!("real", "add", "exact-rational-assign");
+            let rational = &self.rational + &other.rational;
+            if rational.sign() == Sign::NoSign {
+                *self = Self::zero();
+                return;
+            }
+            self.rational = rational;
+            self.primitive_approx_cache
+                .set(PrimitiveApproxCache::Empty);
+            return;
+        }
+        *self = &*self + other;
     }
 }
 
@@ -331,8 +345,22 @@ impl Sub<Real> for f64 {
 }
 
 impl<T: AsRef<Real>> SubAssign<T> for Real {
+    #[inline]
     fn sub_assign(&mut self, other: T) {
-        *self = &*self - other.as_ref();
+        let other = other.as_ref();
+        if matches!(self.class, One) && matches!(other.class, One) {
+            crate::trace_dispatch!("real", "sub", "exact-rational-assign");
+            let rational = &self.rational - &other.rational;
+            if rational.sign() == Sign::NoSign {
+                *self = Self::zero();
+                return;
+            }
+            self.rational = rational;
+            self.primitive_approx_cache
+                .set(PrimitiveApproxCache::Empty);
+            return;
+        }
+        *self = &*self - other;
     }
 }
 

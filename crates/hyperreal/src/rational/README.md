@@ -64,7 +64,8 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
   numerator/denominator values or retaining either operand strongly
 - adaptive linear-result retention reuses repeated exact translations and differences;
   unshared first-use operands only record a one-byte hint, the second observation
-  admits one bounded result, and later calls reuse it
+  admits a bounded result, and later calls reuse it; the lazy box has two weak-keyed
+  entries while `RationalData` remains 96 bytes
 - shared-denominator dot products and signed product sums accumulate related
   terms before the final reduction
 - all-zero and single-term exits avoid building denominators that will be

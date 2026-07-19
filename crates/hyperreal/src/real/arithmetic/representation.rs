@@ -56,6 +56,7 @@ pub struct Real {
 }
 
 impl Clone for Real {
+    #[inline]
     fn clone(&self) -> Self {
         if matches!(self.class, One) && self.computable.is_none() {
             // Exact rationals dominate dense geometry carriers. They have no
@@ -66,9 +67,22 @@ impl Clone for Real {
                 rational: self.rational.clone(),
                 class: One,
                 computable: None,
-                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
-                    self.primitive_approx_cache.get(),
-                ),
+                primitive_approx_cache: {
+                    #[cfg(any(
+                        feature = "cached-f32-approx",
+                        feature = "cached-f64-approx"
+                    ))]
+                    {
+                        AtomicPrimitiveApproxCache::new(self.primitive_approx_cache.get())
+                    }
+                    #[cfg(not(any(
+                        feature = "cached-f32-approx",
+                        feature = "cached-f64-approx"
+                    )))]
+                    {
+                        AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty)
+                    }
+                },
             };
         }
 

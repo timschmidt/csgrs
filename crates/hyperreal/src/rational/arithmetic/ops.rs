@@ -496,11 +496,17 @@ impl Rational {
         _path: &'static str,
     ) -> Option<Self> {
         let cached = owner.linear_cache.get()?;
-        (cached.kind == kind
-            && std::ptr::eq(cached.other.as_ptr(), Arc::as_ptr(&other.0)))
-        .then(|| {
+        let other_ptr = Arc::as_ptr(&other.0);
+        if cached.primary.kind == kind
+            && std::ptr::eq(cached.primary.other.as_ptr(), other_ptr)
+        {
             crate::trace_dispatch!("rational", "linear", _path);
-            cached.result.clone()
+            return Some(cached.primary.result.clone());
+        }
+        let secondary = cached.secondary.get()?;
+        (secondary.kind == kind && std::ptr::eq(secondary.other.as_ptr(), other_ptr)).then(|| {
+            crate::trace_dispatch!("rational", "linear", _path);
+            secondary.result.clone()
         })
     }
 
@@ -542,15 +548,28 @@ impl Rational {
         kind: CachedRationalLinearKind,
         result: &Self,
     ) -> bool {
-        if owner.linear_cache.get().is_some() {
-            return false;
+        if let Some(cached) = owner.linear_cache.get() {
+            if cached.secondary.get().is_some() {
+                return false;
+            }
+            return cached
+                .secondary
+                .set(CachedRationalLinearEntry {
+                    other: Arc::downgrade(&other.0),
+                    kind,
+                    result: result.clone(),
+                })
+                .is_ok();
         }
         owner
             .linear_cache
             .set(Box::new(CachedRationalLinear {
-                other: Arc::downgrade(&other.0),
-                kind,
-                result: result.clone(),
+                primary: CachedRationalLinearEntry {
+                    other: Arc::downgrade(&other.0),
+                    kind,
+                    result: result.clone(),
+                },
+                secondary: OnceLock::new(),
             }))
             .is_ok()
     }

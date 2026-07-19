@@ -99,10 +99,16 @@ Relevant path notes:
   observation, the second result is admitted, and later calls reuse it. This keeps
   one-shot operands allocation-light while making retained outer carriers visible
   without cloning their scalar fields. The hint fits existing `RationalData` padding,
-  keeping that allocation at 96 bytes. Sum and directed-difference entries can occupy
-  opposite operand slots, use weak identity keys, and remain ignored by serialization.
-  Occupied slots are checked before allocating a candidate entry. Cold wide-dyadic
-  sentinels measured 87.78 ns for both addition and subtraction.
+  keeping that allocation at 96 bytes. The lazily allocated linear cache holds a
+  primary and secondary weak-keyed result, covering two reused operand pairs without
+  growing every rational. Sum and directed-difference entries can also occupy opposite
+  operand caches and remain ignored by serialization. Occupied entries are checked
+  before constructing a candidate. Cold wide-dyadic sentinels measured 87.78 ns for
+  both addition and subtraction.
+- Exact-rational `Real += &Real` and `Real -= &Real` replace only the rational
+  scale and invalidate the lossy approximation accelerator, preserving the existing
+  exact class payload in place. Default-feature exact clones do not load the disabled
+  primitive cache; cache-enabled builds continue copying their populated accelerator.
 - When a dyadic denominator product overflows `u128` but both numerators and their
   product fit, multiplication cancels and multiplies those numerators in registers
   before allocating only the final exact result.

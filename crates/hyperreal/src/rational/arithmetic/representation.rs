@@ -53,10 +53,15 @@ enum CachedRationalLinearKind {
     OtherMinusOwner,
 }
 
-struct CachedRationalLinear {
+struct CachedRationalLinearEntry {
     other: std::sync::Weak<RationalData>,
     kind: CachedRationalLinearKind,
     result: Rational,
+}
+
+struct CachedRationalLinear {
+    primary: CachedRationalLinearEntry,
+    secondary: OnceLock<CachedRationalLinearEntry>,
 }
 
 #[doc(hidden)]
