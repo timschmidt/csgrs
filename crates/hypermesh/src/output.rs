@@ -728,6 +728,37 @@ pub(crate) fn triangulate_classified_arrangement_construction_candidates(
     )
 }
 
+pub(crate) fn triangulate_preclassified_arrangement_construction_candidates(
+    classified: &[ClassifiedPolygon],
+    filter_recovery_candidates: bool,
+) -> HypermeshResult<TriangleSoup> {
+    let polygons = classified
+        .iter()
+        .map(|classified| classified.polygon.clone())
+        .collect::<Vec<_>>();
+    let orientations = classified
+        .iter()
+        .map(|classified| match classified.classification {
+            orientation @ (-1 | 1) => Ok(orientation),
+            _ => Err(HypermeshError::UnknownClassification),
+        })
+        .collect::<HypermeshResult<Vec<_>>>()?;
+    let (mut soup, _) = triangulate_closed_polygon_arrangement(
+        &polygons,
+        &orientations,
+        None,
+        false,
+        true,
+        filter_recovery_candidates,
+    )?;
+    for (triangle, source) in soup.triangles.iter_mut().zip(&soup.sources) {
+        if source.orientation == -1 {
+            triangle.swap(1, 2);
+        }
+    }
+    Ok(soup)
+}
+
 fn triangulate_classified_arrangement_with_strategy(
     classified: &[ClassifiedPolygon],
     prefer_precomputed_f64_scan: bool,
@@ -1020,6 +1051,10 @@ fn merge_duplicate_convex_polygon_vertices(
         let mut vertices: Vec<OutputVertex> = Vec::with_capacity(positions.len());
         let mut storage_vertices: StorageHashMap<[usize; 3], usize> = StorageHashMap::default();
         storage_vertices.reserve(positions.len());
+        // Rational's retained arithmetic caches use interior mutability, but
+        // its Eq and Hash implementations depend only on the immutable exact
+        // value. This map intentionally canonicalizes by that value.
+        #[allow(clippy::mutable_key_type)]
         let mut exact_vertices: HashMap<ExactOutputVertexKey, usize> =
             HashMap::with_capacity(positions.len());
         for (polygon_index, vertex_index, _, vertex) in positions {

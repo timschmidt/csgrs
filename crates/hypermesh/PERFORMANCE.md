@@ -412,6 +412,36 @@ no-default-feature build, warning-denied Clippy, rustdoc, benchmark and fuzz
 target builds, the release WASM UI build, and a 15-second sanitizer campaign
 over `polygon_predicates` (35,735 executions with no failure).
 
+## 2026-07-19: consume single-operation orientation during triangulation
+
+Status: **kept for difference and intersection**
+
+The certified two-convex path already prunes fragments for one requested
+operation and retains their exact front/back winding evidence. Difference and
+intersection nevertheless cloned both winding vectors onto every generated
+triangle, then immediately classified those copies, allocated a second
+triangle/source list, and cloned the merged exact vertex pool. Their operation
+orientation is now classified once per retained polygon and consumed directly
+while triangulating. The arrangement keeps its original winding pairs for
+public retained extraction, closure is still certified on the oriented soup,
+and failure still enters the existing precomputed-f64 exact fallback.
+
+Union and symmetric difference retain the prior construction-plus-winding
+selection path after the direct path did not improve both workloads. A
+31-fresh-process CSGRS/CGAL/OpenCascade sphere/box matrix compared the selective
+version with the clean implementation on the same host:
+
+| operation | clean cold | selective cold | cold result | clean warm | selective warm |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| difference | 2.651918 ms | 2.582393 ms | 2.62% faster | 111.867 us | 88.964 us |
+| intersection | 2.005512 ms | 1.981404 ms | 1.20% faster | 33.222 us | 33.023 us |
+| union (control) | 4.010995 ms | 3.912562 ms | run-order variation | 129.991 us | 102.673 us |
+| symmetric difference (control) | 3.431765 ms | 3.439824 ms | 0.23% noise | 135.436 us | 132.836 us |
+
+Every operation retained the same output size and checksum. Difference and
+intersection remained much faster than OpenCascade; intersection also beat
+CGAL in the selective run, while the remaining cold competitor gaps stay open.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

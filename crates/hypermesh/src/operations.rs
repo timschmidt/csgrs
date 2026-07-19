@@ -203,6 +203,12 @@ fn select_triangle_arrangement(
         triangles,
         sources,
     };
+    certify_triangle_soup_closure(soup)
+}
+
+fn certify_triangle_soup_closure(
+    soup: crate::output::TriangleSoup,
+) -> HypermeshResult<crate::output::TriangleSoup> {
     let closure = crate::output::triangle_soup_closure_report(&soup);
     if !closure.has_no_boundary() {
         return Err(crate::error::HypermeshError::OpenOutput {
@@ -1125,13 +1131,36 @@ fn prepare_two_convex_inputs_projectively(
     }
 
     let triangle_soups = if let [operation] = operations {
-        let soup = crate::output::triangulate_classified_arrangement_construction_candidates(
-            &classified,
-            matches!(operation, BooleanOp::Union | BooleanOp::SymmetricDifference),
-        )
-        .and_then(|triangles| {
-            select_triangle_arrangement(&triangles, *operation, support_planes.len())
-        })
+        let soup = if matches!(operation, BooleanOp::Difference | BooleanOp::Intersection) {
+            let indicator = make_indicator(*operation, support_planes.len());
+            for fragment in &mut classified {
+                let winding = fragment
+                    .winding()
+                    .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+                let classification = crate::winding::classify_polygon_output(
+                    &winding.w_front,
+                    &winding.w_back,
+                    &indicator,
+                );
+                if !matches!(classification, -1 | 1) {
+                    return Ok(None);
+                }
+                fragment.classification = classification;
+            }
+            crate::output::triangulate_preclassified_arrangement_construction_candidates(
+                &classified,
+                false,
+            )
+            .and_then(certify_triangle_soup_closure)
+        } else {
+            crate::output::triangulate_classified_arrangement_construction_candidates(
+                &classified,
+                matches!(operation, BooleanOp::Union | BooleanOp::SymmetricDifference),
+            )
+            .and_then(|triangles| {
+                select_triangle_arrangement(&triangles, *operation, support_planes.len())
+            })
+        }
         .or_else(|_| {
             crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
                 .and_then(|triangles| {
