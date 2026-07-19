@@ -736,8 +736,12 @@ fn q(numerator: i64, denominator: u64) -> Real {
 }
 
 fn qr(value: f64) -> Real {
-    let scaled = (value * 1_000_000_000_000_000.0).round() as i64;
-    q(scaled, 1_000_000_000_000_000)
+    Real::from(
+        value
+            .to_string()
+            .parse::<Rational>()
+            .expect("finite benchmark decimal rational"),
+    )
 }
 
 fn blas_vec3(value: SampleVec3) -> Vector3 {

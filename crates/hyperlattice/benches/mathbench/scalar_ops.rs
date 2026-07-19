@@ -64,6 +64,23 @@ fn bench_scalar_operations_for<F>(
     ];
     let signal = abort_signal();
 
+    trace_dispatch_cases(format!("scalar_ops/{label}/add"), &arithmetic_cases, |(lhs, rhs)| {
+        let _ = black_box(lhs + rhs);
+    });
+    trace_dispatch_cases(format!("scalar_ops/{label}/sub"), &arithmetic_cases, |(lhs, rhs)| {
+        let _ = black_box(lhs - rhs);
+    });
+    trace_dispatch_cases(format!("scalar_ops/{label}/neg"), &reciprocal_cases, |value| {
+        let _ = black_box(-value);
+    });
+    trace_dispatch_cases(format!("scalar_ops/{label}/mul"), &arithmetic_cases, |(lhs, rhs)| {
+        let _ = black_box(lhs * rhs);
+        let _ = black_box(lhs * rhs);
+    });
+    trace_dispatch_cases(format!("scalar_ops/{label}/div"), &arithmetic_cases, |(lhs, rhs)| {
+        let _ = black_box((lhs / rhs).unwrap());
+    });
+
     trace_dispatch_cases(format!("scalar_ops/{label}/pow"), &pow_cases, |(lhs, rhs)| {
         let _ = black_box(hyperlattice::pow(lhs.clone(), rhs.clone()).unwrap());
     });

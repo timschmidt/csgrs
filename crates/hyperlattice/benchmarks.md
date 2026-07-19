@@ -86,10 +86,10 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `e` | 48.57 ns | 48.23 ns | 1.10 us | 226.87 ns | 0.04x | 0.21x |
 | `pi` | 36.60 ns | 36.36 ns | 48.37 ns | 228.97 ns | 0.76x | 0.16x |
 | `tau` | 36.66 ns | 36.34 ns | 100.25 ns | 1.91 us | 0.37x | 0.02x |
-| `add` | 110.32 ns | 107.10 ns | 44.66 ns | 1.29 us | 2.47x | 0.09x |
-| `sub` | 137.84 ns | 119.08 ns | 45.19 ns | 2.47 us | 3.05x | 0.06x |
+| `add` | 54.11 ns | 63.69 ns | 42.53 ns | 1.29 us | 1.27x | 0.04x |
+| `sub` | 66.75 ns | 86.77 ns | 44.72 ns | 2.46 us | 1.49x | 0.03x |
 | `neg` | 57.60 ns | 57.65 ns | 24.34 ns | 1.06 us | 2.37x | 0.05x |
-| `mul` | 170.86 ns | 142.19 ns | 45.81 ns | 1.56 us | 3.73x | 0.11x |
+| `mul` | 31.08 ns | 34.33 ns | 46.47 ns | 1.53 us | 0.67x | 0.02x |
 | `div` | 107.27 ns | 78.26 ns | 63.43 ns | 2.56 us | 1.69x | 0.04x |
 | `reciprocal` | 62.98 ns | 62.80 ns | 60.57 ns | 1.58 us | 1.04x | 0.04x |
 | `reciprocal checked` | 70.17 ns | 70.39 ns | 60.44 ns | 1.64 us | 1.16x | 0.04x |

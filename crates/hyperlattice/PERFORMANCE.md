@@ -226,6 +226,46 @@ The regenerated trace removes four domain-fact, four detailed-fact, and four
 structural-fact events from each four-case workload. Canonical `Real::sqrt`
 still records every exact sign and perfect-square or retained-radical route.
 
+## Retained exact scalar products
+
+Fresh core arithmetic measurements replaced stale ledger rows and identified
+multiplication as the largest scalar gap: 105.23 ns for exact f64 imports and
+198.74 ns for explicit decimal rationals, versus 48.48 ns for Numerica 128 and
+1.532 us for Symbolica. Perf sampling attributed most exact cost to result
+allocation/free, word-result construction, and a wide dyadic BigUint schedule;
+`Real` dispatch itself accounted for only about 1.5% of samples.
+
+Hyperreal now shares canonical storage for small reduced dyadics, keeps
+word-sized numerators in `u128` when only a combined dyadic denominator is
+wide, and retains one exact product per immutable operand under weak,
+cycle-free keys in both commutative directions. A direct dependency benchmark
+measures a retained rational product at 10.38 ns and the rational-backed
+`Real` product at 23.03 ns. The separately recorded fresh wide-dyadic row is
+166.78 ns, keeping cold construction visible rather than folding it into the
+retained result claim.
+
+The decimal-rational fixture also formerly saturated `value * 10^15` into
+`i64` for values above about 9,223. It now parses Rust's finite decimal display
+exactly, so the intended `10^9 * 10^-9` case matches every competitor instead
+of timing an unrelated wide fraction.
+
+Final matched Criterion medians are:
+
+| Operation | Hyperreal f64 | Exact decimal rational | Numerica 128 | Symbolica |
+| --- | ---: | ---: | ---: | ---: |
+| add | 54.11 ns | 63.69 ns | 42.53 ns | 1.288 us |
+| subtract | 66.75 ns | 86.77 ns | 44.72 ns | 2.457 us |
+| multiply (retained workload) | 31.08 ns | 34.33 ns | 46.47 ns | 1.532 us |
+
+Multiplication is therefore 33.1% faster than Numerica 128 and 49.3 times
+faster than Symbolica for the exact-f64 facade, after starting 2.17 times
+slower than Numerica. Addition and subtraction also improved by 24.6% and
+20.1% from the fresh pre-change measurements because their recurring small
+dyadic results now share canonical storage. The complete regenerated trace
+exercises all five arithmetic operators; multiplication records cold
+word/wide routes followed by `retained-product` hits while `Real` reports its
+authoritative `exact-rational` route.
+
 ## Rejected zero-mask multiplication experiment
 
 Matrix multiplication obtains `Matrix3StructuralFacts` or `Matrix4StructuralFacts`
