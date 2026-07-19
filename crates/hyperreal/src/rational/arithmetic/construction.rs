@@ -5,6 +5,7 @@ impl Rational {
             sign,
             numerator,
             denominator,
+            product_cache: OnceLock::new(),
         }))
     }
 
@@ -13,10 +14,12 @@ impl Rational {
             sign,
             numerator,
             denominator,
+            product_cache: _,
         } = Arc::try_unwrap(self.0).unwrap_or_else(|shared| RationalData {
             sign: shared.sign,
             numerator: shared.numerator.clone(),
             denominator: shared.denominator.clone(),
+            product_cache: OnceLock::new(),
         });
         (sign, numerator, denominator)
     }
@@ -50,6 +53,33 @@ impl Rational {
                 sign,
                 BigUint::from((index + 2) as u8),
                 BigUint::one(),
+            )
+        });
+        trace_rational_temporary!();
+        Some(value.clone())
+    }
+
+    fn small_dyadic(sign: Sign, magnitude: u128, denominator: u128) -> Option<Self> {
+        if magnitude == 0 || magnitude > 63 || magnitude & 1 == 0 || !denominator.is_power_of_two()
+        {
+            return None;
+        }
+        let shift = usize::try_from(denominator.trailing_zeros()).ok()?;
+        if shift == 0 || shift > SMALL_DYADIC_MAX_SHIFT {
+            return None;
+        }
+        let magnitude_index = usize::try_from(magnitude >> 1).ok()?;
+        let index = (shift - 1) * SMALL_DYADIC_ODD_MAGNITUDES + magnitude_index;
+        let values = match sign {
+            Plus => &SMALL_POSITIVE_DYADICS,
+            Minus => &SMALL_NEGATIVE_DYADICS,
+            NoSign => return Some(Self::zero()),
+        };
+        let value = values.get(index)?.get_or_init(|| {
+            Self::from_parts_raw(
+                sign,
+                BigUint::from(magnitude),
+                BigUint::from(denominator),
             )
         });
         trace_rational_temporary!();

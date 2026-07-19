@@ -247,6 +247,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Multiplies two nontrivial rational values.",
             },
             BenchDoc {
+                name: "rational_mul_retained_general",
+                description: "Reuses one retained exact product for an immutable rational operand pair.",
+            },
+            BenchDoc {
+                name: "rational_mul_wide_dyadic_cold",
+                description: "Multiplies fresh wide-denominator dyadics whose numerators fit `u128`.",
+            },
+            BenchDoc {
                 name: "rational_mul_dyadic_general_cross_cancel",
                 description: "Multiplies a wide dyadic rational by a general rational with a power-of-two numerator.",
             },
@@ -261,6 +269,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "real_exact_mul",
                 description: "Multiplies exact rational-backed `Real` values.",
+            },
+            BenchDoc {
+                name: "real_exact_mul_retained",
+                description: "Reuses the retained exact product beneath rational-backed `Real` values.",
             },
             BenchDoc {
                 name: "real_exact_div",
@@ -778,6 +790,13 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     let rhs = rational(987_654_321, 123_456_789);
     let exact_real_lhs = Real::new(lhs.clone());
     let exact_real_rhs = Real::new(rhs.clone());
+    let retained_lhs = Rational::new(1_000_000_000);
+    let retained_rhs = Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly");
+    let _ = black_box(&retained_lhs * &retained_rhs);
+    let retained_real_lhs = Real::new(Rational::new(1_000_000_000));
+    let retained_real_rhs =
+        Real::new(Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly"));
+    let _ = black_box(&retained_real_lhs * &retained_real_rhs);
     let sqrt_input = Real::new(Rational::new(18));
     let dyadic_components = [
         Rational::try_from(1.234_567_890_123_45_f64).expect("finite f64 imports exactly"),
@@ -822,6 +841,20 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     group.bench_function("rational_mul", |b| {
         b.iter(|| black_box(black_box(&lhs) * black_box(&rhs)))
     });
+    group.bench_function("rational_mul_retained_general", |b| {
+        b.iter(|| black_box(black_box(&retained_lhs) * black_box(&retained_rhs)))
+    });
+    group.bench_function("rational_mul_wide_dyadic_cold", |b| {
+        b.iter_batched(
+            || {
+                let value = Rational::try_from(1.0e-12_f64).expect("finite f64 imports exactly");
+                let negative = -value.clone();
+                (value, negative)
+            },
+            |(left, right)| black_box(black_box(&left) * black_box(&right)),
+            BatchSize::SmallInput,
+        )
+    });
     group.bench_function("rational_mul_dyadic_general_cross_cancel", |b| {
         b.iter(|| black_box(black_box(&dyadic_general_lhs) * black_box(&dyadic_general_rhs)))
     });
@@ -833,6 +866,9 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     });
     group.bench_function("real_exact_mul", |b| {
         b.iter(|| black_box(black_box(&exact_real_lhs) * black_box(&exact_real_rhs)))
+    });
+    group.bench_function("real_exact_mul_retained", |b| {
+        b.iter(|| black_box(black_box(&retained_real_lhs) * black_box(&retained_real_rhs)))
     });
     group.bench_function("real_exact_div", |b| {
         b.iter(|| black_box((black_box(&exact_real_lhs) / black_box(&exact_real_rhs)).unwrap()))

@@ -40,6 +40,8 @@ fuzz_target!(|input: Input| {
     assert_eq!(add, a.clone() + b.clone());
     assert_eq!(sub, a.clone() - b.clone());
     assert_eq!(mul, a.clone() * b.clone());
+    assert_eq!(mul, &b * &a);
+    assert_eq!(&a * &c, &c * &a);
     assert_eq!(&a + &Rational::zero(), a);
     assert_eq!(&a * &Rational::one(), a);
     assert_eq!(&a * (&b + &c), (&a * &b) + (&a * &c));

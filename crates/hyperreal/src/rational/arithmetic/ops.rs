@@ -433,6 +433,61 @@ impl Rational {
         ))
     }
 
+    fn mul_wide_dyadic_with_word_numerators(&self, other: &Self) -> Option<Self> {
+        let mut denominator_shift = self
+            .dyadic_denominator_shift()?
+            .checked_add(other.dyadic_denominator_shift()?)?;
+        let mut left_numerator = self.numerator.to_u128()?;
+        let mut right_numerator = other.numerator.to_u128()?;
+        let left_cancel = u64::from(left_numerator.trailing_zeros()).min(denominator_shift);
+        left_numerator >>= left_cancel;
+        denominator_shift -= left_cancel;
+        let right_cancel = u64::from(right_numerator.trailing_zeros()).min(denominator_shift);
+        right_numerator >>= right_cancel;
+        denominator_shift -= right_cancel;
+        let numerator = left_numerator.checked_mul(right_numerator)?;
+        let sign = self.sign * other.sign;
+
+        if denominator_shift < u64::from(u128::BITS) {
+            let denominator = 1_u128 << denominator_shift;
+            crate::trace_dispatch!(
+                "rational",
+                "mul",
+                "wide-dyadic-word-numerators-word-result"
+            );
+            return Some(Self::from_reduced_word_parts(sign, numerator, denominator));
+        }
+
+        let denominator_shift = usize::try_from(denominator_shift).ok()?;
+        crate::trace_dispatch!("rational", "mul", "wide-dyadic-word-numerators");
+        trace_rational_temporary!();
+        Some(Self::from_parts_raw(
+            sign,
+            BigUint::from(numerator),
+            BigUint::one() << denominator_shift,
+        ))
+    }
+
+    #[inline]
+    fn retained_product(&self, other: &Self) -> Option<Self> {
+        let cached = self.product_cache.get()?;
+        std::ptr::eq(cached.other.as_ptr(), Arc::as_ptr(&other.0)).then(|| {
+            crate::trace_dispatch!("rational", "mul", "retained-product");
+            cached.result.clone()
+        })
+    }
+
+    fn retain_product_pair(&self, other: &Self, result: &Self) {
+        let _ = self.product_cache.set(CachedRationalProduct {
+            other: Arc::downgrade(&other.0),
+            result: result.clone(),
+        });
+        let _ = other.product_cache.set(CachedRationalProduct {
+            other: Arc::downgrade(&self.0),
+            result: result.clone(),
+        });
+    }
+
 }
 
 impl<T: AsRef<Rational>> Add<T> for &Rational {
@@ -597,6 +652,9 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
         if other.is_minus_one() {
             return -self;
         }
+        if let Some(result) = self.retained_product(other) {
+            return result;
+        }
         if self.numerator == other.denominator && self.denominator == other.numerator {
             return if sign == Minus {
                 Self::Output::minus_one()
@@ -606,15 +664,27 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
         }
         if let Some(result) = self.mul_div_words(other, false) {
             crate::trace_dispatch!("rational", "mul", "word-sized");
+            self.retain_product_pair(other, &result);
+            return result;
+        }
+        if let Some(result) = self.mul_wide_dyadic_with_word_numerators(other) {
+            self.retain_product_pair(other, &result);
             return result;
         }
         if let Some(result) = self.mul_wide_with_dyadic_denominator(other) {
+            self.retain_product_pair(other, &result);
             return result;
         }
         let numerator = &self.numerator * &other.numerator;
         let denominator = &self.denominator * &other.denominator;
         trace_rational_temporary!();
-        Self::Output::maybe_reduce(Self::Output::from_parts_raw(sign, numerator, denominator))
+        let result = Self::Output::maybe_reduce(Self::Output::from_parts_raw(
+            sign,
+            numerator,
+            denominator,
+        ));
+        self.retain_product_pair(other, &result);
+        result
     }
 }
 

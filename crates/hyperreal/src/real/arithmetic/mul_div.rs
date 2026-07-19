@@ -4,17 +4,22 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
     fn mul(self, other: T) -> Self::Output {
         let other = other.as_ref();
         if self.class == One && other.class == One {
+            crate::trace_dispatch!("real", "mul", "exact-rational");
             return Self::Output::new(&self.rational * &other.rational);
         }
         if self.has_zero_scale() || other.has_zero_scale() {
+            crate::trace_dispatch!("real", "mul", "zero");
             return Self::Output::zero();
         }
         if self.class == One {
+            crate::trace_dispatch!("real", "mul", "lhs-rational-scale");
             return other.scaled_by_rational(&self.rational);
         }
         if other.class == One {
+            crate::trace_dispatch!("real", "mul", "rhs-rational-scale");
             return self.scaled_by_rational(&other.rational);
         }
+        crate::trace_dispatch!("real", "mul", "symbolic-class-table");
         // The table below is deliberately explicit. The generic fallback can
         // represent every product, but these hot symbolic arms preserve exact
         // pi/e/sqrt/log structure and avoid building opaque Computable graphs.

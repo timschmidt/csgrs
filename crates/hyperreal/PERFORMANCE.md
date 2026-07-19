@@ -5,8 +5,8 @@ These notes are hand-maintained profiling anchors. `benchmarks.md` and
 targets, the important dispatch paths behind them, and the goals to preserve or
 improve during later optimization work.
 
-Timings below are Criterion medians from the stored benchmark data on
-2026-05-08. Treat them as local guardrails, not portable absolute limits.
+Timings below are Criterion medians from the stored benchmark data through
+2026-07-18. Treat them as local guardrails, not portable absolute limits.
 
 ## Benchmark Commands
 
@@ -72,6 +72,8 @@ Current timing anchors:
 | `construction_speed/rational_new_one` | 16.9 ns |
 | `borrowed_op_overhead/rational_clone_pair` | 44.3 ns |
 | `pure_scalar_algorithm_speed/rational_mul` | 117.5 ns |
+| `pure_scalar_algorithm_speed/rational_mul_retained_general` | 10.38 ns |
+| `pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold` | 166.78 ns |
 | `borrowed_op_overhead/rational_add_refs` | 385.0 ns |
 | `pure_scalar_algorithm_speed/rational_add` | 399.2 ns |
 | `pure_scalar_algorithm_speed/rational_div` | 595.3 ns |
@@ -83,6 +85,14 @@ Relevant path notes:
 
 - Integer identity constructors avoid BigInt conversion and reduction.
 - Dyadic denominators use shift-only reduction instead of full gcd.
+- Reduced dyadics with odd magnitude at most 63 and denominator through `2^63`
+  share canonical immutable storage.
+- Each immutable rational retains one exact multiplication result under weak operand
+  keys in both commutative directions. The cache is bounded, cycle-free, and ignored
+  by serialization; misses continue through the same exact word/BigUint kernels.
+- When a dyadic denominator product overflows `u128` but both numerators and their
+  product fit, multiplication cancels and multiplies those numerators in registers
+  before allocating only the final exact result.
 - Dispatch tracing records rational temporary construction, reductions, gcds,
   power-of-two common factors, common-factor distributions, and peak operand
   sizes. Matrix regressions should be investigated with those counters before
@@ -108,6 +118,7 @@ Current timing anchors:
 | `construction_speed/real_new_rational_one` | 74.6 ns |
 | `construction_speed/real_one` | 75.5 ns |
 | `pure_scalar_algorithm_speed/real_exact_mul` | 186.8 ns |
+| `pure_scalar_algorithm_speed/real_exact_mul_retained` | 23.03 ns |
 | `pure_scalar_algorithm_speed/real_exact_add` | 454.5 ns |
 | `pure_scalar_algorithm_speed/real_exact_div` | 664.9 ns |
 | `structural_query_speed/pi_minus_three_sign_query` | 34.9 ns |

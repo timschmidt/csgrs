@@ -132,6 +132,21 @@ mod tests {
     }
 
     #[test]
+    fn wide_dyadic_word_numerator_product_matches_biguint_reference() {
+        let tiny = Rational::try_from(1.0e-12_f64).unwrap();
+        assert!(tiny.denominator.bits() * 2 > u64::from(u128::BITS));
+        assert!(tiny.numerator.to_u128().is_some());
+        let negative = -tiny.clone();
+        let product = &tiny * &negative;
+        let expected = Rational::from_bigint_fraction(
+            -BigInt::from_biguint(Plus, &tiny.numerator * &tiny.numerator),
+            &tiny.denominator * &tiny.denominator,
+        )
+        .unwrap();
+        assert_eq!(product, expected);
+    }
+
+    #[test]
     fn exact_dyadic_f64_view_round_trips_finite_binary64_values() {
         let mut state = 0xbb67_ae85_84ca_a73b_u64;
         let mut recovered_count = 0_u32;
@@ -503,6 +518,39 @@ mod tests {
         assert!(Arc::ptr_eq(&zero.0, &another_zero.0));
         assert!(Arc::ptr_eq(&one.0, &another_one.0));
         assert!(!Arc::ptr_eq(&zero.0, &one.0));
+    }
+
+    #[test]
+    fn small_dyadic_products_share_canonical_storage() {
+        let left = Rational::fraction(5, 4).unwrap();
+        let right = Rational::fraction(5, 2).unwrap();
+        let first = &left * &right;
+        let second = &left * &right;
+        assert_eq!(first, Rational::fraction(25, 8).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+
+        let negative = -Rational::fraction(11, 4).unwrap();
+        let eighth = Rational::fraction(1, 8).unwrap();
+        let first = &negative * &eighth;
+        let second = &negative * &eighth;
+        assert_eq!(first, Rational::fraction(-11, 32).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+    }
+
+    #[test]
+    fn products_retain_exact_results_in_both_operand_orders() {
+        let value = Rational::try_from(1.0e-12_f64).unwrap();
+        let positive = &value * &value;
+        let retained_positive = &value * &value;
+        assert!(Arc::ptr_eq(&positive.0, &retained_positive.0));
+
+        let left = Rational::new(1_000_000_000);
+        let right = Rational::try_from(1.0e-9_f64).unwrap();
+        let product = &left * &right;
+        let retained = &left * &right;
+        let reversed = &right * &left;
+        assert!(Arc::ptr_eq(&product.0, &retained.0));
+        assert!(Arc::ptr_eq(&product.0, &reversed.0));
     }
 
     #[test]

@@ -41,11 +41,17 @@
 /// ```
 pub struct Rational(Arc<RationalData>);
 
+struct CachedRationalProduct {
+    other: std::sync::Weak<RationalData>,
+    result: Rational,
+}
+
 #[doc(hidden)]
 pub struct RationalData {
     sign: Sign,
     numerator: BigUint,
     denominator: BigUint,
+    product_cache: OnceLock<CachedRationalProduct>,
 }
 
 impl std::fmt::Debug for Rational {
@@ -131,6 +137,14 @@ static SMALL_POSITIVE_RATIONALS: [OnceLock<Rational>; 63] =
     [const { OnceLock::new() }; 63];
 static SMALL_NEGATIVE_RATIONALS: [OnceLock<Rational>; 63] =
     [const { OnceLock::new() }; 63];
+const SMALL_DYADIC_ODD_MAGNITUDES: usize = 32;
+const SMALL_DYADIC_MAX_SHIFT: usize = 63;
+const SMALL_DYADIC_CACHE_LEN: usize =
+    SMALL_DYADIC_ODD_MAGNITUDES * SMALL_DYADIC_MAX_SHIFT;
+static SMALL_POSITIVE_DYADICS: [OnceLock<Rational>; SMALL_DYADIC_CACHE_LEN] =
+    [const { OnceLock::new() }; SMALL_DYADIC_CACHE_LEN];
+static SMALL_NEGATIVE_DYADICS: [OnceLock<Rational>; SMALL_DYADIC_CACHE_LEN] =
+    [const { OnceLock::new() }; SMALL_DYADIC_CACHE_LEN];
 
 macro_rules! trace_rational_temporary {
     () => {{

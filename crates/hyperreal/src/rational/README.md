@@ -40,6 +40,10 @@ the needed facts:
 
 - signs are stored separately from magnitudes
 - dyadic denominators reduce by shifts instead of full GCDs
+- small reduced dyadics share canonical storage, and immutable operand pairs retain one
+  exact product through weak, cycle-free keys
+- wide dyadic products keep word-sized numerators in `u128` even when the combined
+  power-of-two denominator requires `BigUint`
 - exact dot products and signed product sums build shared denominators and
   reduce once at the end
 - product-sum signs are computed once and reused across reducer stages
@@ -55,6 +59,8 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
 - canonical zero and separate sign storage keep common identities small
 - finite float imports become exact dyadics, preserving shift-only denominator
   reduction where possible
+- bounded product retention reuses repeated coefficients without changing canonical
+  numerator/denominator values or retaining either operand strongly
 - shared-denominator dot products and signed product sums accumulate related
   terms before the final reduction
 - all-zero and single-term exits avoid building denominators that will be

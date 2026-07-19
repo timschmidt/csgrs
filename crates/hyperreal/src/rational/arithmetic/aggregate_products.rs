@@ -68,6 +68,10 @@ impl Rational {
             crate::trace_dispatch!("rational", "word-result", "cached-small-integer");
             return value;
         }
+        if let Some(value) = Self::small_dyadic(sign, magnitude, denominator) {
+            crate::trace_dispatch!("rational", "word-result", "cached-small-dyadic");
+            return value;
+        }
         if denominator == 1 {
             #[cfg(feature = "dispatch-trace")]
             {
