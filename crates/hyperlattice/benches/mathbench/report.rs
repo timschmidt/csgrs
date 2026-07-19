@@ -44,6 +44,20 @@ fn scalar_trig_rows() -> Vec<BenchRow> {
     rows
 }
 
+fn scalar_hyperbolic_case_rows(group: &'static str) -> Vec<BenchRow> {
+    let mut rows = Vec::new();
+    for case in ["half", "negative_tiny", "positive_20", "negative_20"] {
+        for operation in ["sinh", "cosh", "tanh"] {
+            rows.push(BenchRow {
+                title: Box::leak(format!("{operation} {case}").into_boxed_str()),
+                group,
+                id: Box::leak(format!("{operation}/{case}").into_boxed_str()),
+            });
+        }
+    }
+    rows
+}
+
 fn borrowed_op_rows() -> Vec<BenchRow> {
     let mut rows = Vec::new();
     for op in ["add", "sub", "mul", "div"] {
@@ -952,6 +966,16 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     out.push_str("## Benchmark Results\n\nThe following Criterion median estimates were collected on an AMD Ryzen 7 5800X3D on Fedora. Values are formatted to two digits after the decimal.\n\n");
     out.push_str("### Real Operations\n\n#### Real Trigonometric And Inverse Comparisons\n\n");
     out.push_str(&render_table(estimates, &scalar_trig_rows()));
+    out.push_str("\n#### Forward Hyperbolic Construction Cases\n\n");
+    out.push_str(&render_table(
+        estimates,
+        &scalar_hyperbolic_case_rows("scalar_hyperbolic_cases"),
+    ));
+    out.push_str("\n#### Forward Hyperbolic Explicit f64 Output Cases\n\n");
+    out.push_str(&render_table(
+        estimates,
+        &scalar_hyperbolic_case_rows("scalar_hyperbolic_f64_cases"),
+    ));
     out.push_str("\n#### Real API Operations\n\n");
     out.push_str(&render_table(estimates, SCALAR_OP_ROWS));
     out.push_str("\n### Complex Operations\n\n");

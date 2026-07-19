@@ -54,6 +54,37 @@ lands within 1.65% of the 86.164 ns exact-dyadic hyperreal control while
 beating the 1.6814 us Numerica 128 and 9.8471 us Symbolica rows on the same
 construction workload.
 
+## Canonical forward-hyperbolic ownership and crossover
+
+The `sinh`, `cosh`, and `tanh` compatibility facades now delegate to their
+canonical `Real` methods instead of independently rebuilding two exponentials.
+This preserves the exact zero and integer-log collapses and lets Hyperreal own a
+measured hybrid: ordinary inputs retain the compact two-exp structure, while
+exact rationals with magnitude at least eight use one `expm1` node and explicit
+negative symmetry.
+
+Fresh 50-sample combined construction medians were:
+
+| Operation | Hyperreal f64 | Hyperreal rational | Numerica 128 | Symbolica |
+| --- | ---: | ---: | ---: | ---: |
+| `sinh` | 543.51 ns | 532.01 ns | 1.1279 us | 10.839 us |
+| `cosh` | 498.27 ns | 481.75 ns | 1.0596 us | 9.5707 us |
+| `tanh` | 537.20 ns | 521.00 ns | 1.2054 us | 23.036 us |
+
+Permanent half, negative-tiny, positive-20, and negative-20 controls guard the
+crossover. Across those cases Hyperreal construction spans 282.10--595.51 ns
+for ordinary inputs and 395.11--585.82 ns for large inputs, while Numerica spans
+612.47 ns--1.3376 us. The former large-input gaps of roughly 2.5 us for
+`sinh`/`cosh` and 5.0 us for `tanh` are now 526.06--585.82 ns,
+534.75--558.47 ns, and 395.11--406.15 ns respectively.
+
+A second permanent group forces an explicit borrowed `f64` result, making the
+lazy/eager comparison fair at the IO boundary. Hyperreal spans
+326.70--715.36 ns across all 24 input/representation/operation rows, versus
+662.83 ns--1.3919 us for Numerica 128. The view is seeded only from an exact
+rational input and remains an approximation accelerator, never an exact
+predicate.
+
 ## One-pass exact rational-turn cosine
 
 Hyperreal's canonical cosine reducer now returns the signed `SinPi` complement

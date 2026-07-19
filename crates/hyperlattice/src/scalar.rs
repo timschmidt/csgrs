@@ -236,26 +236,20 @@ pub fn tan(value: Real) -> BlasResult<Real> {
 
 /// Returns the hyperbolic sine of `value`.
 pub fn sinh(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "sinh-exp-formula");
-    let positive = value.clone().exp()?;
-    let negative = (-value).exp()?;
-    (positive - negative) / Real::from(2_i8)
+    crate::trace_dispatch!("hyperlattice", "free_function", "sinh");
+    value.sinh()
 }
 
 /// Returns the hyperbolic cosine of `value`.
 pub fn cosh(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "cosh-exp-formula");
-    let positive = value.clone().exp()?;
-    let negative = (-value).exp()?;
-    (positive + negative) / Real::from(2_i8)
+    crate::trace_dispatch!("hyperlattice", "free_function", "cosh");
+    value.cosh()
 }
 
 /// Returns the hyperbolic tangent of `value`.
 pub fn tanh(value: Real) -> BlasResult<Real> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "tanh-exp-formula");
-    let positive = value.clone().exp()?;
-    let negative = (-value).exp()?;
-    (positive.clone() - negative.clone()) / (positive + negative)
+    crate::trace_dispatch!("hyperlattice", "free_function", "tanh");
+    value.tanh()
 }
 
 /// Returns the inverse sine of `value`.

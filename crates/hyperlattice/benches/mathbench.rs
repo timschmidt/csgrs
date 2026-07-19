@@ -3,6 +3,7 @@ use std::{cell::Cell, collections::BTreeMap, env, fs, hint::black_box, path::Pat
 use criterion::{BatchSize, BenchmarkGroup, Criterion};
 use hyperlattice::Rational;
 use hyperlattice::{Complex, Matrix3, Matrix4, Real, SignedAxis4, Vector3, Vector4};
+use symbolica::domains::float::RealLike;
 
 include!("mathbench/engines.rs");
 include!("mathbench/fixtures.rs");
@@ -84,6 +85,7 @@ fn main() {
     bench_scalar_operations(&mut criterion);
     bench_scalar_sqrt_cases(&mut criterion);
     bench_scalar_hyperbolic_cases(&mut criterion);
+    bench_scalar_hyperbolic_f64_cases(&mut criterion);
     bench_large_integer_exp(&mut criterion);
     bench_complex_operations(&mut criterion);
     bench_vector_operations(&mut criterion);

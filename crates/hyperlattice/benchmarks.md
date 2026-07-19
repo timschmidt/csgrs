@@ -77,6 +77,40 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `acosh 1e6` | 126.46 ns | 126.00 ns | 1.61 us | 9.97 us | 0.08x | 0.01x |
 | `acosh e` | 115.93 ns | 1.13 us | 1.65 us | 9.81 us | 0.07x | 0.01x |
 
+#### Forward Hyperbolic Construction Cases
+
+| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `sinh half` | 580.21 ns | 595.51 ns | 1.12 us | 10.78 us | 0.52x | 0.05x |
+| `cosh half` | 548.85 ns | 285.76 ns | 1.13 us | 9.35 us | 0.49x | 0.06x |
+| `tanh half` | 423.80 ns | 587.20 ns | 1.17 us | 22.92 us | 0.36x | 0.02x |
+| `sinh negative_tiny` | 282.77 ns | 289.00 ns | 906.14 ns | 10.89 us | 0.31x | 0.03x |
+| `cosh negative_tiny` | 282.10 ns | 283.28 ns | 612.47 ns | 9.70 us | 0.46x | 0.03x |
+| `tanh negative_tiny` | 399.00 ns | 402.57 ns | 839.45 ns | 22.45 us | 0.48x | 0.02x |
+| `sinh positive_20` | 526.06 ns | 541.96 ns | 1.20 us | 10.48 us | 0.44x | 0.05x |
+| `cosh positive_20` | 535.78 ns | 534.75 ns | 1.20 us | 9.32 us | 0.45x | 0.06x |
+| `tanh positive_20` | 402.98 ns | 406.15 ns | 1.34 us | 22.44 us | 0.30x | 0.02x |
+| `sinh negative_20` | 576.62 ns | 585.82 ns | 1.19 us | 10.27 us | 0.48x | 0.06x |
+| `cosh negative_20` | 558.27 ns | 558.47 ns | 1.20 us | 9.29 us | 0.47x | 0.06x |
+| `tanh negative_20` | 395.11 ns | 399.57 ns | 1.34 us | 22.39 us | 0.30x | 0.02x |
+
+#### Forward Hyperbolic Explicit f64 Output Cases
+
+| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `sinh half` | 355.01 ns | 350.60 ns | 1.15 us | - | 0.31x | - |
+| `cosh half` | 328.48 ns | 326.70 ns | 1.18 us | - | 0.28x | - |
+| `tanh half` | 451.12 ns | 457.64 ns | 1.22 us | - | 0.37x | - |
+| `sinh negative_tiny` | 347.72 ns | 330.97 ns | 953.15 ns | - | 0.36x | - |
+| `cosh negative_tiny` | 336.39 ns | 330.67 ns | 662.83 ns | - | 0.51x | - |
+| `tanh negative_tiny` | 456.85 ns | 455.89 ns | 890.71 ns | - | 0.51x | - |
+| `sinh positive_20` | 617.43 ns | 629.91 ns | 1.23 us | - | 0.50x | - |
+| `cosh positive_20` | 603.05 ns | 601.14 ns | 1.24 us | - | 0.49x | - |
+| `tanh positive_20` | 538.85 ns | 541.64 ns | 1.39 us | - | 0.39x | - |
+| `sinh negative_20` | 715.36 ns | 707.73 ns | 1.24 us | - | 0.58x | - |
+| `cosh negative_20` | 662.91 ns | 665.14 ns | 1.24 us | - | 0.54x | - |
+| `tanh negative_20` | 622.43 ns | 627.57 ns | 1.39 us | - | 0.45x | - |
+
 #### Real API Operations
 
 | Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
@@ -105,9 +139,9 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `sin` | 47.07 ns | 47.36 ns | 1.27 us | 2.27 us | 0.04x | 0.02x |
 | `cos` | 46.65 ns | 47.09 ns | 655.93 ns | 1.78 us | 0.07x | 0.03x |
 | `tan` | 48.06 ns | 50.83 ns | 1.62 us | 7.32 us | 0.03x | 0.01x |
-| `sinh` | 2.16 us | 2.22 us | 1.15 us | 10.97 us | 1.88x | 0.20x |
-| `cosh` | 2.14 us | 2.15 us | 1.09 us | 10.06 us | 1.97x | 0.21x |
-| `tanh` | 4.13 us | 4.18 us | 1.24 us | 23.45 us | 3.34x | 0.18x |
+| `sinh` | 543.51 ns | 532.01 ns | 1.13 us | 10.84 us | 0.48x | 0.05x |
+| `cosh` | 498.27 ns | 481.75 ns | 1.06 us | 9.57 us | 0.47x | 0.05x |
+| `tanh` | 537.20 ns | 521.00 ns | 1.21 us | 23.04 us | 0.45x | 0.02x |
 | `asin` | 199.32 ns | 213.29 ns | 2.44 us | 14.32 us | 0.08x | 0.01x |
 | `asin abort` | 219.02 ns | 231.39 ns | 2.46 us | 14.16 us | 0.09x | 0.02x |
 | `acos` | 193.48 ns | 202.00 ns | 2.60 us | 14.14 us | 0.07x | 0.01x |

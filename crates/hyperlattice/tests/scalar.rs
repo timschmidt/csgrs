@@ -1,11 +1,12 @@
 mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
+use hyperlattice::cosh;
 use hyperlattice::{
     Problem, RealFacts, RealSign, ZeroStatus, acos, acosh, acosh_with_abort, asin, asin_with_abort,
     atanh, ln, log10, log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked,
-    reciprocal_checked_with_abort, reciprocal_ref, reciprocal_ref_checked, sin, sqrt, tan, tau,
-    zero, zero_status, zero_status_with_abort,
+    reciprocal_checked_with_abort, reciprocal_ref, reciprocal_ref_checked, sin, sinh, sqrt, tan,
+    tanh, tau, zero, zero_status, zero_status_with_abort,
 };
 
 #[test]
@@ -20,6 +21,15 @@ fn scalar_functions() {
 
     let signal = abort_signal();
     assert_eq!(log10_with_abort(r(1_000), &signal).unwrap(), r(3));
+}
+
+#[test]
+fn hyperbolic_facades_preserve_canonical_exact_log_collapses() {
+    let ln_two = ln(r(2)).unwrap();
+
+    assert_eq!(sinh(ln_two.clone()).unwrap(), frac(3, 4));
+    assert_eq!(cosh(ln_two.clone()).unwrap(), frac(5, 4));
+    assert_eq!(tanh(ln_two).unwrap(), frac(3, 5));
 }
 
 #[test]
