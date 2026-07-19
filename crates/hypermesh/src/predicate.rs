@@ -186,6 +186,51 @@ pub fn classify_projective_point(
     classify_real(&homogeneous_point_plane_expression(point, plane))
 }
 
+/// Borrowed homogeneous coordinates prepared for repeated plane predicates.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct PreparedProjectivePoint3<'a> {
+    point: &'a HomogeneousPoint3,
+    exact_coordinates: Option<[&'a Rational; 4]>,
+    rational_filter_query: Option<PreparedRationalLinearForm4Query>,
+}
+
+impl<'a> PreparedProjectivePoint3<'a> {
+    pub(crate) fn new(point: &'a HomogeneousPoint3) -> Self {
+        let exact_coordinates = match (
+            point.x.exact_rational_ref(),
+            point.y.exact_rational_ref(),
+            point.z.exact_rational_ref(),
+            point.w.exact_rational_ref(),
+        ) {
+            (Some(x), Some(y), Some(z), Some(w)) => Some([x, y, z, w]),
+            _ => None,
+        };
+        let rational_filter_query =
+            exact_coordinates.and_then(Real::prepare_rational_linear_form4_query);
+        Self {
+            point,
+            exact_coordinates,
+            rational_filter_query,
+        }
+    }
+
+    pub(crate) fn classify(&self, plane: &Plane) -> HypermeshResult<Classification> {
+        if let Some([x, y, z, weight]) = self.exact_coordinates
+            && let Some(classification) = classify_exact_rational_coordinates(
+                plane,
+                [x, y, z],
+                weight,
+                self.rational_filter_query.as_ref(),
+            )
+        {
+            crate::trace_dispatch!("classify-point", "projective-exact-rational");
+            return Ok(classification);
+        }
+        crate::trace_dispatch!("classify-point", "projective-real-fallback");
+        classify_real(&homogeneous_point_plane_expression(self.point, plane))
+    }
+}
+
 fn classify_exact_rational_terms(
     plane: &Plane,
     coordinates: [&Real; 3],
@@ -331,6 +376,34 @@ mod tests {
             classify_projective_point(&point, &plane).unwrap(),
             Classification::On
         );
+    }
+
+    #[test]
+    fn prepared_projective_point_matches_repeated_plane_classification() {
+        let point =
+            HomogeneousPoint3::new(Real::from(6), Real::from(3), Real::zero(), Real::from(3));
+        let prepared = PreparedProjectivePoint3::new(&point);
+        let planes = [
+            Plane::from_coefficients(Real::one(), Real::zero(), Real::zero(), Real::from(-2)),
+            Plane::from_coefficients(Real::zero(), Real::one(), Real::zero(), Real::from(-2)),
+            Plane::from_coefficients(Real::pi(), Real::zero(), Real::zero(), Real::from(-3)),
+        ];
+
+        assert_eq!(prepared.classify(&planes[0]).unwrap(), Classification::On);
+        assert_eq!(
+            prepared.classify(&planes[1]).unwrap(),
+            Classification::Negative
+        );
+        assert_eq!(
+            prepared.classify(&planes[2]).unwrap(),
+            Classification::Positive
+        );
+        for plane in &planes {
+            assert_eq!(
+                prepared.classify(plane),
+                classify_projective_point(&point, plane)
+            );
+        }
     }
 
     #[test]

@@ -482,6 +482,40 @@ ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
 benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
 campaign completed 371 `boolean_pipeline` executions without failure.
 
+## 2026-07-19: prepare projective points once for plane recertification
+
+Status: **kept**
+
+The two-convex path first uses an inexact clip only to propose a smaller set of
+active opposing planes, then certifies the resulting homogeneous cycle against
+every exact candidate plane. That certification previously converted the same
+four exact projective coordinates into conservative floating intervals once
+per point/plane pair. `PreparedProjectivePoint3` now retains those intervals
+once per cycle point while visiting the candidate planes. The traversal remains
+fully certified: inconclusive filters evaluate the unchanged exact rational
+four-term signed product sum, and non-rational coordinates retain the general
+`Real` predicate fallback.
+
+Both release binaries were preserved and alternated for 101 fresh processes
+per side. Output sizes and checksums matched for every sample.
+
+| operation | repeated projective query | prepared projective query | cold result |
+| --- | ---: | ---: | ---: |
+| difference | 2.540766 ms | 2.415564 ms | 4.93% faster |
+| intersection | 1.914299 ms | 1.786318 ms | 6.69% faster |
+| union | 4.300215 ms | 4.199283 ms | 2.35% faster |
+| symmetric difference | 3.384948 ms | 3.257197 ms | 3.77% faster |
+
+Thirty-one interleaved warm processes also improved every operation by
+1.2--1.8%. The focused predicate test checks repeated negative, on-plane, and
+positive results, including the non-rational coefficient fallback.
+
+Validation passed the default and all-feature matrices (955 unit tests, 59/60
+core integration tests, and 48 regressions with one benchmark smoke test
+ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
+benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
+campaign completed 371 `boolean_pipeline` executions without failure.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

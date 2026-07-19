@@ -6,9 +6,7 @@ use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_
 use hyperreal::PreparedRationalLinearForm4Query;
 
 use crate::error::HypermeshResult;
-use crate::geometry::{
-    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_projective_point,
-};
+use crate::geometry::{Aabb, Classification, Plane, axis_mut, axis_ref, classify_point};
 use crate::mesh::{
     MeshRef, prepare_input_with_certified_convex_inputs, prepare_input_with_deferred_edges,
 };
@@ -16,6 +14,7 @@ use crate::output::{
     ARRANGEMENT_CLASSIFICATION, BooleanResult, ClassifiedPolygon, certify_output_polygon_closure,
 };
 use crate::polygon::{ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConvexPolygon};
+use crate::predicate::PreparedProjectivePoint3;
 use crate::storage_hash::StorageHashMap;
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask};
 use crate::winding::{BooleanOp, WindingPair, make_indicator};
@@ -1367,9 +1366,13 @@ fn cycle_satisfies_planes(
     support_planes: &[Plane],
     plane_indices: &[usize],
 ) -> HypermeshResult<bool> {
-    for &plane_index in plane_indices {
-        for point in &cycle.points {
-            if classify_projective_point(point, &support_planes[plane_index])?.is_positive() {
+    for point in &cycle.points {
+        let prepared = PreparedProjectivePoint3::new(point);
+        for &plane_index in plane_indices {
+            if prepared
+                .classify(&support_planes[plane_index])?
+                .is_positive()
+            {
                 return Ok(false);
             }
         }
