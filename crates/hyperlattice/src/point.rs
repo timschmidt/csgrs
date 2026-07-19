@@ -594,10 +594,7 @@ impl Sub<&Point2> for &Point2 {
     type Output = Vector2;
 
     fn sub(self, rhs: &Point2) -> Self::Output {
-        Vector2::new([
-            self.x.clone() - rhs.x.clone(),
-            self.y.clone() - rhs.y.clone(),
-        ])
+        Vector2::new([&self.x - &rhs.x, &self.y - &rhs.y])
     }
 }
 
@@ -679,11 +676,7 @@ impl Sub<&Point3> for &Point3 {
     type Output = Vector3;
 
     fn sub(self, rhs: &Point3) -> Self::Output {
-        Vector3::new([
-            self.x.clone() - rhs.x.clone(),
-            self.y.clone() - rhs.y.clone(),
-            self.z.clone() - rhs.z.clone(),
-        ])
+        Vector3::new([&self.x - &rhs.x, &self.y - &rhs.y, &self.z - &rhs.z])
     }
 }
 

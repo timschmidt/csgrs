@@ -105,9 +105,18 @@ fn trace_points() -> hyperreal::dispatch_trace::TraceSnapshot {
         black_box(Point3::into_vector(q3.clone()));
         black_box(Point3::lerp(&p3, &q3, &frac(1, 2)));
         black_box(Point3::centroid(&[p3.clone(), q3.clone()]));
-        black_box(Point3::weighted_sum(&[p3.clone(), q3], &[r(1), r(2)]));
+        black_box(Point3::weighted_sum(
+            &[p3.clone(), q3.clone()],
+            &[r(1), r(2)],
+        ));
         black_box(Point3::shared_scale_view(&p3));
         black_box(Point3::structural_facts(&p3));
+
+        let retained_left = Point3::new(frac(5, 7), frac(-11, 13), frac(17, 19));
+        let retained_right = Point3::new(frac(-23, 29), frac(31, 37), frac(-41, 43));
+        for _ in 0..3 {
+            black_box(&retained_left - &retained_right);
+        }
     })
 }
 

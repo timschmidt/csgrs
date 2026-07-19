@@ -47,12 +47,15 @@ fn bench_borrowed_operations_for<F>(
     for name in ["add", "sub", "mul", "div"] {
         trace_dispatch_row(format!("borrowed_ops/{label}/scalar {name} refs"), || {
             for (lhs, rhs) in &scalar_pairs {
-                match name {
-                    "add" => black_box(black_box(lhs) + black_box(rhs)),
-                    "sub" => black_box(black_box(lhs) - black_box(rhs)),
-                    "mul" => black_box(black_box(lhs) * black_box(rhs)),
-                    _ => black_box((black_box(lhs) / black_box(rhs)).unwrap()),
-                };
+                let repetitions = if matches!(name, "add" | "sub") { 3 } else { 1 };
+                for _ in 0..repetitions {
+                    match name {
+                        "add" => black_box(black_box(lhs) + black_box(rhs)),
+                        "sub" => black_box(black_box(lhs) - black_box(rhs)),
+                        "mul" => black_box(black_box(lhs) * black_box(rhs)),
+                        _ => black_box((black_box(lhs) / black_box(rhs)).unwrap()),
+                    };
+                }
             }
         });
         group.bench_function(format!("{label}/scalar {name} owned_ref"), |b| {
@@ -129,12 +132,16 @@ fn bench_borrowed_operations_for<F>(
         ($dimension:literal, $lhs:ident, $rhs:ident) => {
             trace_dispatch_row(format!("borrowed_ops/{label}/{} add refs", $dimension), || {
                 for index in 0..$lhs.len() {
-                    black_box(black_box(&$lhs[index]) + black_box(&$rhs[index]));
+                    for _ in 0..3 {
+                        black_box(black_box(&$lhs[index]) + black_box(&$rhs[index]));
+                    }
                 }
             });
             trace_dispatch_row(format!("borrowed_ops/{label}/{} sub refs", $dimension), || {
                 for index in 0..$lhs.len() {
-                    black_box(black_box(&$lhs[index]) - black_box(&$rhs[index]));
+                    for _ in 0..3 {
+                        black_box(black_box(&$lhs[index]) - black_box(&$rhs[index]));
+                    }
                 }
             });
             trace_dispatch_row(format!("borrowed_ops/{label}/{} mul_scalar_ref", $dimension), || {
@@ -212,12 +219,16 @@ fn bench_borrowed_operations_for<F>(
         ($dimension:literal, $lhs:ident, $rhs:ident) => {
             trace_dispatch_row(format!("borrowed_ops/{label}/{} add refs", $dimension), || {
                 for index in 0..$lhs.len() {
-                    black_box(black_box(&$lhs[index]) + black_box(&$rhs[index]));
+                    for _ in 0..3 {
+                        black_box(black_box(&$lhs[index]) + black_box(&$rhs[index]));
+                    }
                 }
             });
             trace_dispatch_row(format!("borrowed_ops/{label}/{} sub refs", $dimension), || {
                 for index in 0..$lhs.len() {
-                    black_box(black_box(&$lhs[index]) - black_box(&$rhs[index]));
+                    for _ in 0..3 {
+                        black_box(black_box(&$lhs[index]) - black_box(&$rhs[index]));
+                    }
                 }
             });
             trace_dispatch_row(format!("borrowed_ops/{label}/{} mul refs", $dimension), || {
@@ -352,20 +363,24 @@ fn bench_borrowed_operations_for<F>(
     for name in ["add", "sub", "mul", "div"] {
         trace_dispatch_row(format!("borrowed_ops/{label}/complex {name} refs"), || {
             for index in 0..complex_lhs.len() {
-                match name {
-                    "add" => {
-                        black_box(black_box(&complex_lhs[index]) + black_box(&complex_rhs[index]))
-                    }
-                    "sub" => {
-                        black_box(black_box(&complex_lhs[index]) - black_box(&complex_rhs[index]))
-                    }
-                    "mul" => {
-                        black_box(black_box(&complex_lhs[index]) * black_box(&complex_rhs[index]))
-                    }
-                    _ => black_box(
-                        (black_box(&complex_lhs[index]) / black_box(&complex_rhs[index])).unwrap(),
-                    ),
-                };
+                let repetitions = if matches!(name, "add" | "sub") { 3 } else { 1 };
+                for _ in 0..repetitions {
+                    match name {
+                        "add" => black_box(
+                            black_box(&complex_lhs[index]) + black_box(&complex_rhs[index]),
+                        ),
+                        "sub" => black_box(
+                            black_box(&complex_lhs[index]) - black_box(&complex_rhs[index]),
+                        ),
+                        "mul" => black_box(
+                            black_box(&complex_lhs[index]) * black_box(&complex_rhs[index]),
+                        ),
+                        _ => black_box(
+                            (black_box(&complex_lhs[index]) / black_box(&complex_rhs[index]))
+                                .unwrap(),
+                        ),
+                    };
+                }
             }
         });
         group.bench_function(format!("{label}/complex {name} refs"), |b| {

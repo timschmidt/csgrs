@@ -69,11 +69,10 @@ the scalar terms.
 The crate reduces exact cost by exploiting fixed sizes and retained structure. Matrix
 multiplication is unrolled, small powers are specialized before exponentiation by
 squaring, borrowed arithmetic avoids unnecessary cloning, and product-sum reducers
-preserve rational structure. Repeated exact scalar products and linear operations reuse
-Hyperreal's bounded rational result retention. Prepared matrix and right-divisor
-handles let callers reuse
-determinant, adjugate, reciprocal, minor, and inverse work without exposing internal
-cache storage.
+preserve rational structure. Repeated exact scalar products use bounded retention,
+while borrowed linear operations adapt after observing reuse without allocating on
+first use. Prepared matrix and right-divisor handles let callers reuse determinant,
+adjugate, reciprocal, minor, and inverse work without exposing internal cache storage.
 
 Benchmarks track scalar, vector, matrix, prepared-cache, and dispatch-trace behavior so
 shortcuts can be accepted only when they help the target surface without destabilizing

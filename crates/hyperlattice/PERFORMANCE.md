@@ -271,28 +271,55 @@ about 1-3 ns of Numerica 128. The remaining aggregate deficit came from repeated
 wide-dyadic results: exact `10^9 +/- 10^-9` cost about 79-80 ns, while
 subtracting opposite exact `10^-12` inputs cost about 86 ns.
 
-Hyperreal now gives each immutable rational one lazily boxed linear-result slot,
-separate from product retention. A shared left operand can retain a sum in its
-slot; if that slot is occupied, a directed difference can use the paired
-operand's slot. Weak operand keys keep cache identity exact without retaining
-the key, serialization ignores the accelerator, and operands with no evidence
-of shared ownership skip retention. Direct cold sentinels measured 91.24 ns for
-wide-dyadic addition and 89.97 ns for subtraction, while retained rational
-operations measured 8.77 ns and 8.99 ns.
+Hyperreal gives each immutable rational one lazily boxed linear-result slot,
+separate from product retention. Shared storage on either operand admits a
+result immediately. Otherwise, the first borrowed operation records a one-byte
+reuse hint without allocating, the second admits the bounded result, and later
+operations reuse it. Sum and directed-difference results can use opposite
+operand slots. Weak keys keep identity exact, serialization ignores the
+accelerator, occupied slots avoid speculative allocation, and `RationalData`
+remains 96 bytes. Direct cold sentinels measured 87.78 ns for both operations;
+retained rational operations measured 8.47 ns and 9.05 ns.
 
 Matched facade medians fell from 55.58 ns to 29.68 ns for addition and from
 68.41 ns to 31.14 ns for subtraction, reductions of 46.6% and 54.5%.
 Hyperreal is now 29.9% faster than Numerica 128 on addition and 30.3% faster on
-subtraction; the adjacent multiplication rerun remains 25.3% faster. Trace
-coverage executes each linear case twice and records the cold exact route
-followed by `rational/linear/retained-sum` or
-`rational/linear/retained-difference`, with the corresponding
-`real/add|sub/same-symbolic-basis` route.
+subtraction; the adjacent multiplication rerun remains 25.3% faster. Shared
+scalar trace rows execute twice, while borrowed carrier rows execute three
+times to record `rational/linear/reuse-observed`, admission on the second
+operation, and `retained-sum` or `retained-difference` on later operations.
 
-Borrowed `Vec3` construction is now the next measured carrier gap: addition is
-187.50 ns versus Numerica 128's 126.64 ns (1.48x), and subtraction is
-221.44 ns versus 139.03 ns (1.59x). The scalar kernels now win, so the next
-cycle can isolate vector result construction and ownership overhead.
+## Adaptive borrowed carrier operations
+
+The original carrier decomposition showed no meaningful array-construction
+penalty: representative scalar lanes accounted for the complete `Vec3` time.
+The missing information was reuse of a rational stored uniquely inside a
+borrowed `Real`; its `Arc` count alone could not see that the outer vector,
+matrix, complex number, or point was retained.
+
+Adaptive admission removes that blind spot without penalizing first use. A
+fresh exact `Vec3` add/sub sentinel measured 293.31 ns / 296.81 ns versus the
+prior direct 299.67 ns / 300.79 ns. Repeated borrowed medians are:
+
+| Operation | Previous Hyperreal | Adaptive Hyperreal | Numerica 128 | Hyperreal advantage |
+| --- | ---: | ---: | ---: | ---: |
+| scalar add refs | 157.91 ns | 19.74 ns | 44.28 ns | 55.4% |
+| scalar sub refs | 123.80 ns | 19.97 ns | 47.00 ns | 57.5% |
+| Vec3 add refs | 187.50 ns | 72.61 ns | 122.07 ns | 40.5% |
+| Vec3 sub refs | 221.44 ns | 76.22 ns | 136.57 ns | 44.2% |
+| Vec4 add refs | 382.04 ns | 93.99 ns | 176.08 ns | 46.6% |
+| Vec4 sub refs | 369.78 ns | 98.57 ns | 179.82 ns | 45.2% |
+| Complex add refs | 160.77 ns | 34.44 ns | 84.70 ns | 59.3% |
+| Complex sub refs | 188.79 ns | 35.33 ns | 93.02 ns | 62.0% |
+| Mat3 add refs | 679.18 ns | 355.33 ns | 439.02 ns | 19.1% |
+| Mat3 sub refs | 757.42 ns | 385.40 ns | 470.46 ns | 18.1% |
+| Mat4 add refs | 807.89 ns | 493.29 ns | 765.62 ns | 35.6% |
+| Mat4 sub refs | 964.41 ns | 555.35 ns | 817.04 ns | 32.0% |
+
+Borrowed `Point3 - Point3` also falls from 75.03 ns with cloned scalar
+operands to 53.03 ns, a 29.3% reduction. The remaining componentwise gap is
+owned-carrier cloning and destruction: owned Vec3 add/sub are still 1.49x /
+1.39x Numerica, Mat3 2.20x / 2.18x, and Mat4 1.52x / 1.64x.
 
 ## Rejected zero-mask multiplication experiment
 
