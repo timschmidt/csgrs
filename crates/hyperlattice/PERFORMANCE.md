@@ -348,21 +348,24 @@ division now use the same consumed-carrier schedule. The exact multiplier update
 only each lane's rational scale; symbolic lanes retain the general borrowed
 arithmetic fallback.
 
-| Operation | Previous current path | In-place exact scale | Numerica 128 | Hyperreal / Numerica |
+| Operation | Previous current path | Optimized current | Numerica 128 | Hyperreal / Numerica |
 | --- | ---: | ---: | ---: | ---: |
 | Vec3 mul scalar | 126.30 ns | 91.63 ns | 119.31 ns | 0.77x |
 | Vec4 mul scalar | 150.85 ns | 108.07 ns | 158.24 ns | 0.68x |
 | Mat3 mul scalar | 412.60 ns | 184.44 ns | 647.22 ns | 0.28x |
 | Mat4 mul scalar | 553.19 ns | 305.44 ns | 1.124 us | 0.27x |
-| Vec3 div scalar | 423.62 ns | 382.95 ns | 168.95 ns | 2.27x |
-| Vec4 div scalar | 476.96 ns | 438.33 ns | 226.52 ns | 1.94x |
-| Mat3 div scalar | 1.269 us | 1.040 us | 784.49 ns | 1.33x |
-| Mat4 div scalar | 1.820 us | 1.527 us | 1.390 us | 1.10x |
+| Vec3 div scalar | 382.95 ns | 118.51 ns | 169.34 ns | 0.70x |
+| Vec4 div scalar | 438.33 ns | 147.80 ns | 225.42 ns | 0.66x |
+| Mat3 div scalar | 1.040 us | 229.99 ns | 787.66 ns | 0.29x |
+| Mat4 div scalar | 1.527 us | 381.16 ns | 1.37 us | 0.28x |
 
-Scalar multiplication now beats the comparison baseline at every fixed carrier
-size. Division still pays for zero certification and construction of one exact
-reciprocal before its faster in-place lane updates; that shared reciprocal is the
-next division-specific target. Owned negation remains the adjacent componentwise
+Scalar multiplication and division now beat the comparison baseline at every fixed
+carrier size. Shared exact divisors retain one reciprocal in Hyperreal's bounded
+arithmetic cache. The forward edge owns that result and its reverse edge is weak, so
+repeated division presents a stable factor identity to every lane's product cache
+without an ownership cycle. The rational-fixture division rows are similarly
+118.51--377.44 ns. Mat4 subtraction remained statistically unchanged at 671.87 ns
+while the cache layout was varied. Owned negation remains the adjacent componentwise
 carrier deficit.
 
 ## Rejected zero-mask multiplication experiment

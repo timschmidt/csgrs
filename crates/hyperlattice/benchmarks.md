@@ -175,7 +175,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `vec3 sub scalar` | 481.92 ns | 403.79 ns | 123.86 ns | 7.01 us | 3.89x | 0.07x |
 | `vec3 neg` | 195.68 ns | 191.45 ns | 50.51 ns | 3.35 us | 3.87x | 0.06x |
 | `vec3 mul scalar` | 91.63 ns | 88.89 ns | 119.31 ns | 4.34 us | 0.77x | 0.02x |
-| `vec3 div scalar` | 382.95 ns | 477.06 ns | 168.95 ns | 7.60 us | 2.27x | 0.05x |
+| `vec3 div scalar` | 118.51 ns | 120.47 ns | 169.34 ns | 7.65 us | 0.70x | 0.02x |
 | `vec4 dot` | 408.77 ns | 251.40 ns | 326.88 ns | 9.68 us | 1.25x | 0.04x |
 | `vec4 magnitude` | 832.44 ns | 1.30 us | 409.78 ns | 11.65 us | 2.03x | 0.07x |
 | `vec4 normalize` | 3.16 us | 2.67 us | 736.42 ns | 22.07 us | 4.29x | 0.14x |
@@ -185,7 +185,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `vec4 sub scalar` | 500.94 ns | 406.39 ns | 170.91 ns | 9.52 us | 2.93x | 0.05x |
 | `vec4 neg` | 222.00 ns | 234.00 ns | 66.48 ns | 3.98 us | 3.34x | 0.06x |
 | `vec4 mul scalar` | 108.07 ns | 112.90 ns | 158.24 ns | 5.65 us | 0.68x | 0.02x |
-| `vec4 div scalar` | 438.33 ns | 510.50 ns | 226.52 ns | 10.02 us | 1.94x | 0.04x |
+| `vec4 div scalar` | 147.80 ns | 146.40 ns | 225.42 ns | 10.15 us | 0.66x | 0.01x |
 
 ### Matrix Operations
 
@@ -227,7 +227,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `mat3 sub scalar` | 1.29 us | 1.31 us | 695.68 ns | 21.35 us | 1.85x | 0.06x |
 | `mat3 neg` | 775.02 ns | 748.29 ns | 466.58 ns | 8.53 us | 1.66x | 0.09x |
 | `mat3 mul scalar` | 184.44 ns | 192.68 ns | 647.22 ns | 11.89 us | 0.28x | 0.02x |
-| `mat3 div scalar` | 1.040 us | 1.260 us | 784.49 ns | 21.91 us | 1.33x | 0.05x |
+| `mat3 div scalar` | 229.99 ns | 233.38 ns | 787.66 ns | 22.43 us | 0.29x | 0.01x |
 | `mat3 div matrix` | 17.29 us | 11.86 us | 4.43 us | 157.16 us | 3.90x | 0.11x |
 | `mat3 bitxor` | 6.84 us | 11.47 us | 6.21 us | 152.68 us | 1.10x | 0.04x |
 | `mat4 zero` | 217.98 ns | 205.93 ns | 325.06 ns | 15.79 ns | 0.67x | 13.81x |
@@ -243,7 +243,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `mat4 sub scalar` | 2.02 us | 1.80 us | 1.17 us | 79.13 us | 1.72x | 0.03x |
 | `mat4 neg` | 1.20 us | 987.40 ns | 762.11 ns | 29.74 us | 1.57x | 0.04x |
 | `mat4 mul scalar` | 305.44 ns | 309.18 ns | 1.124 us | 20.00 us | 0.27x | 0.02x |
-| `mat4 div scalar` | 1.527 us | 1.882 us | 1.390 us | 37.62 us | 1.10x | 0.04x |
+| `mat4 div scalar` | 381.16 ns | 377.44 ns | 1.37 us | 38.21 us | 0.28x | 0.01x |
 | `mat4 div matrix` | 29.33 us | 32.86 us | 14.10 us | 533.86 us | 2.08x | 0.05x |
 | `mat4 bitxor` | 12.46 us | 21.39 us | 13.74 us | 721.23 us | 0.91x | 0.02x |
 
