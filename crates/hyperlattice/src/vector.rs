@@ -1462,18 +1462,12 @@ macro_rules! impl_vector {
         impl Mul<Real> for $name {
             type Output = Self;
 
-            fn mul(self, rhs: Real) -> Self::Output {
+            fn mul(mut self, rhs: Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "mul-scalar-owned");
-                let rhs = &rhs;
-                if true {
-                    Self(self.0.map(|value| value.mul_cached(rhs)))
-                } else {
-                    let mut values = self.0;
-                    for value in &mut values {
-                        *value = value.clone().mul_cached(rhs);
-                    }
-                    Self(values)
+                for value in &mut self.0 {
+                    *value *= &rhs;
                 }
+                self
             }
         }
 
@@ -1486,24 +1480,19 @@ macro_rules! impl_vector {
             }
         }
 
+        // The shared reciprocal is computed once, then applied to every lane.
+        #[allow(clippy::suspicious_arithmetic_impl)]
         impl Div<Real> for $name {
             type Output = BlasResult<Self>;
 
-            fn div(self, rhs: Real) -> Self::Output {
+            fn div(mut self, rhs: Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                if true && $n == 3 {
-                    Ok(Self(self.0.map(|value| &value * &inv_rhs)))
-                } else if true {
-                    Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
-                } else {
-                    let mut values = self.0;
-                    for value in &mut values {
-                        *value = value.clone().mul_cached(&inv_rhs);
-                    }
-                    Ok(Self(values))
+                for value in &mut self.0 {
+                    *value *= &inv_rhs;
                 }
+                Ok(self)
             }
         }
 

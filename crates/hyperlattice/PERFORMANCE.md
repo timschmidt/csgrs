@@ -343,9 +343,27 @@ and exact results are unchanged.
 | Mat4 add | 1.253 us | 635.13 ns | 758.16 ns | 16.2% |
 | Mat4 sub | 1.338 us | 665.25 ns | 816.63 ns | 18.5% |
 
-The next componentwise deficits are owned negation and scalar
-multiplication/division, where cloned exact handles and avoidable result storage
-still dominate vector and matrix kernels.
+Owned scalar multiplication and the reciprocal-multiply phase of owned scalar
+division now use the same consumed-carrier schedule. The exact multiplier updates
+only each lane's rational scale; symbolic lanes retain the general borrowed
+arithmetic fallback.
+
+| Operation | Previous current path | In-place exact scale | Numerica 128 | Hyperreal / Numerica |
+| --- | ---: | ---: | ---: | ---: |
+| Vec3 mul scalar | 126.30 ns | 91.63 ns | 119.31 ns | 0.77x |
+| Vec4 mul scalar | 150.85 ns | 108.07 ns | 158.24 ns | 0.68x |
+| Mat3 mul scalar | 412.60 ns | 184.44 ns | 647.22 ns | 0.28x |
+| Mat4 mul scalar | 553.19 ns | 305.44 ns | 1.124 us | 0.27x |
+| Vec3 div scalar | 423.62 ns | 382.95 ns | 168.95 ns | 2.27x |
+| Vec4 div scalar | 476.96 ns | 438.33 ns | 226.52 ns | 1.94x |
+| Mat3 div scalar | 1.269 us | 1.040 us | 784.49 ns | 1.33x |
+| Mat4 div scalar | 1.820 us | 1.527 us | 1.390 us | 1.10x |
+
+Scalar multiplication now beats the comparison baseline at every fixed carrier
+size. Division still pays for zero certification and construction of one exact
+reciprocal before its faster in-place lane updates; that shared reciprocal is the
+next division-specific target. Owned negation remains the adjacent componentwise
+carrier deficit.
 
 ## Rejected zero-mask multiplication experiment
 

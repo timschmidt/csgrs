@@ -13825,20 +13825,14 @@ macro_rules! impl_matrix {
         impl Mul<Real> for $name {
             type Output = Self;
 
-            fn mul(self, rhs: Real) -> Self::Output {
+            fn mul(mut self, rhs: Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-scalar-owned");
-                let rhs = &rhs;
-                if true {
-                    Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
-                } else {
-                    let mut values = self.0;
-                    for row in &mut values {
-                        for value in row {
-                            *value = value.clone().mul_cached(rhs);
-                        }
+                for row in &mut self.0 {
+                    for value in row {
+                        *value *= &rhs;
                     }
-                    Self(values)
                 }
+                self
             }
         }
 
@@ -13851,29 +13845,21 @@ macro_rules! impl_matrix {
             }
         }
 
+        // The shared reciprocal is computed once, then applied to every lane.
+        #[allow(clippy::suspicious_arithmetic_impl)]
         impl Div<Real> for $name {
             type Output = BlasResult<Self>;
 
-            fn div(self, rhs: Real) -> Self::Output {
+            fn div(mut self, rhs: Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                if true && $n == 3 {
-                    Ok(Self(self.0.map(|row| row.map(|value| &value * &inv_rhs))))
-                } else if true {
-                    Ok(Self(
-                        self.0
-                            .map(|row| row.map(|value| value.mul_cached(&inv_rhs))),
-                    ))
-                } else {
-                    let mut values = self.0;
-                    for row in &mut values {
-                        for value in row {
-                            *value = value.clone().mul_cached(&inv_rhs);
-                        }
+                for row in &mut self.0 {
+                    for value in row {
+                        *value *= &inv_rhs;
                     }
-                    Ok(Self(values))
                 }
+                Ok(self)
             }
         }
 
