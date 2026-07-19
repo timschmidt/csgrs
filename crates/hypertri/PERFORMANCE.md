@@ -62,6 +62,48 @@ builder outputs.
 | `exact_delaunay_400_located_insertions`, original to final | 54.530 ms | 39.026 ms | 28.4% faster |
 | `exact_nd_4d_delaunay_complex` | 5.2777 ms | 2.7994 ms | 47.0% faster |
 
+## Retained structural boundary-conformity certificate
+
+Holed earcut output previously entered `split_edges_at_input_vertices`
+unconditionally. That exact repair is deliberately conservative: it compares every
+authored vertex with every emitted triangle edge so a source vertex skipped during
+normalization cannot remain in the interior of a long boundary edge. Most ordinary
+earcut results already contain every authored boundary edge, making the scan duplicate
+work.
+
+The retained path first counts undirected triangle edges and compares them with the
+authored exterior and hole edges. It skips the geometric scan only when every authored
+boundary edge occurs once and every other emitted edge occurs twice. Any missing,
+extra-boundary, or malformed edge rejects the structural certificate and runs the
+unchanged exact repair. A collinear-boundary regression constructs an incomplete mesh,
+proves rejection, repairs the long edge into three triangles, and then proves the
+result satisfies the certificate.
+
+On Hypercurve's eight-triangle finite-ring workload, five same-machine release runs
+reduced the median from 62.656 us/iter with the unconditional scan to 32.671 us/iter
+(47.9%), preserving the 80,000 checksum over 10,000 calls. Dispatch events fell from
+8,460,001 to 7,260,001 (14.2%) and exact predicate calls from 5,460,000 to 4,260,000
+(22.0%), with zero refinement events on both paths. The complete all-target/all-feature
+HyperTri gate, strict Clippy, and warning-denied rustdoc remained green.
+
+The next trace showed that the certified result still spent 141 exact scalar
+comparisons and 87 orientations bridging and clipping the common one-hole rectangular
+annulus. A second structural dispatch now recognizes exactly four structural x/y
+corner combinations in both rings, proves strict hole containment with exact scalar
+comparisons, emits the four surrounding quadrilateral bands as eight triangles, and
+accepts them only if the same authored boundary-edge certificate passes. Rotated start
+vertices and reversed winding are canonicalized. Nonrectangular, touching, symbolic-
+equivalent-but-structurally-distinct, multi-hole, and authored-collinear cases retain
+the general exact path.
+
+Five release runs reduced the already-optimized median from 32.671 to 6.254 us/iter
+(80.9%), or 90.0% from the original 62.656 us/iter control, with the same checksum.
+One-call trace events fell from 726 to 136 (81.3%), predicates from 426 to 52 (87.8%),
+exact scalar comparisons from 141 to 8, and orientations from 87 to 8; refinements
+remained zero. The full gate included 52 unit tests, 26 adversarial tests, six
+`earcutr` differential tests, eight property tests, and every benchmark and example
+target.
+
 ## Rejected experiment
 
 The Lawson/Lee-Lin legalization loop first certifies that an illegal edge is flippable,

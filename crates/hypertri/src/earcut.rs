@@ -5,10 +5,11 @@
 //! used only as a development-time differential oracle.
 
 use std::cmp::Ordering;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::error::{Error, Result};
 use crate::kernel::{ExactKernel, Kernel};
-use crate::polygon::{RingRange, open_ring_indices, rings_from_hole_indices};
+use crate::polygon::{PolygonRings, RingRange, open_ring_indices, rings_from_hole_indices};
 use crate::predicates;
 use crate::types::Sign;
 use crate::types::{ExactPoint, Point2, TriangleIndices};
@@ -109,6 +110,17 @@ where
     }
 
     let holes = normalized_holes::<K>(vertices, rings.holes(), winding)?;
+    if holes.len() == 1
+        && let Some(triangles) =
+            triangulate_rectangular_annulus(vertices, &ring, &holes[0], winding)?
+        && triangles_match_input_boundary(vertices, &rings, &triangles)
+    {
+        diagnostics.emitted_triangles = triangles.len() / 3;
+        return Ok(EarcutReport {
+            triangles,
+            diagnostics,
+        });
+    }
     if !holes.is_empty() {
         ring = bridge_holes::<K>(vertices, ring, &holes)?;
         ring = filter_ring::<K>(vertices, ring)?;
@@ -124,7 +136,7 @@ where
     let triangles = if holes.is_empty() {
         triangles
     } else {
-        split_edges_at_input_vertices(vertices, triangles)?
+        ensure_input_conformity(vertices, &rings, triangles)?
     };
     Ok(EarcutReport {
         triangles,
@@ -183,6 +195,63 @@ fn split_edges_at_input_vertices(
     Ok(conforming)
 }
 
+fn ensure_input_conformity(
+    vertices: &[Point2],
+    rings: &PolygonRings,
+    triangles: TriangleIndices,
+) -> Result<TriangleIndices> {
+    if triangles_match_input_boundary(vertices, rings, &triangles) {
+        Ok(triangles)
+    } else {
+        split_edges_at_input_vertices(vertices, triangles)
+    }
+}
+
+fn triangles_match_input_boundary(
+    vertices: &[Point2],
+    rings: &PolygonRings,
+    triangles: &[usize],
+) -> bool {
+    let mut boundary_edges = BTreeSet::new();
+    for range in std::iter::once(rings.exterior()).chain(rings.holes().iter().copied()) {
+        let ring = open_ring_indices(vertices, range);
+        for position in 0..ring.len() {
+            let start = ring[position];
+            let end = ring[(position + 1) % ring.len()];
+            if !same_point(vertices, start, end) {
+                boundary_edges.insert(ordered_edge(start, end));
+            }
+        }
+    }
+
+    let mut edge_counts = BTreeMap::new();
+    for triangle in triangles.chunks_exact(3) {
+        for edge in [
+            ordered_edge(triangle[0], triangle[1]),
+            ordered_edge(triangle[1], triangle[2]),
+            ordered_edge(triangle[2], triangle[0]),
+        ] {
+            *edge_counts.entry(edge).or_insert(0_usize) += 1;
+        }
+    }
+
+    triangles.len().is_multiple_of(3)
+        && boundary_edges
+            .iter()
+            .all(|edge| edge_counts.get(edge) == Some(&1))
+        && edge_counts
+            .iter()
+            .all(|(edge, &count)| count == if boundary_edges.contains(edge) { 1 } else { 2 })
+}
+
+fn ordered_edge(first: usize, second: usize) -> (usize, usize) {
+    if first <= second {
+        (first, second)
+    } else {
+        (second, first)
+    }
+}
+
 fn normalized_ring<K>(vertices: &[Point2], range: RingRange) -> Result<Vec<usize>>
 where
     K: Kernel,
@@ -222,6 +291,149 @@ where
     }
 
     Ok(holes)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct AxisAlignedRectangle {
+    lower_left: usize,
+    lower_right: usize,
+    upper_right: usize,
+    upper_left: usize,
+}
+
+fn triangulate_rectangular_annulus(
+    vertices: &[Point2],
+    exterior: &[usize],
+    hole: &[usize],
+    winding: Sign,
+) -> Result<Option<TriangleIndices>> {
+    let Some(exterior) = axis_aligned_rectangle(vertices, exterior)? else {
+        return Ok(None);
+    };
+    let Some(hole) = axis_aligned_rectangle(vertices, hole)? else {
+        return Ok(None);
+    };
+
+    let strictly_contains = compare_real_coordinates(
+        &vertices[exterior.lower_left].x,
+        &vertices[hole.lower_left].x,
+    )? == Ordering::Less
+        && compare_real_coordinates(
+            &vertices[exterior.lower_left].y,
+            &vertices[hole.lower_left].y,
+        )? == Ordering::Less
+        && compare_real_coordinates(
+            &vertices[hole.upper_right].x,
+            &vertices[exterior.upper_right].x,
+        )? == Ordering::Less
+        && compare_real_coordinates(
+            &vertices[hole.upper_right].y,
+            &vertices[exterior.upper_right].y,
+        )? == Ordering::Less;
+    if !strictly_contains {
+        return Ok(None);
+    }
+
+    let mut triangles = Vec::with_capacity(24);
+    for [a, b, c] in [
+        [exterior.lower_left, exterior.lower_right, hole.lower_right],
+        [exterior.lower_left, hole.lower_right, hole.lower_left],
+        [exterior.lower_right, exterior.upper_right, hole.upper_right],
+        [exterior.lower_right, hole.upper_right, hole.lower_right],
+        [exterior.upper_right, exterior.upper_left, hole.upper_left],
+        [exterior.upper_right, hole.upper_left, hole.upper_right],
+        [exterior.upper_left, exterior.lower_left, hole.lower_left],
+        [exterior.upper_left, hole.lower_left, hole.upper_left],
+    ] {
+        push_triangle(&mut triangles, a, b, c, winding);
+    }
+    Ok(Some(triangles))
+}
+
+fn axis_aligned_rectangle(
+    vertices: &[Point2],
+    ring: &[usize],
+) -> Result<Option<AxisAlignedRectangle>> {
+    if ring.len() != 4 {
+        return Ok(None);
+    }
+
+    let first = &vertices[ring[0]];
+    let Some(other_x_index) = ring
+        .iter()
+        .copied()
+        .find(|&index| vertices[index].x != first.x)
+    else {
+        return Ok(None);
+    };
+    let Some(other_y_index) = ring
+        .iter()
+        .copied()
+        .find(|&index| vertices[index].y != first.y)
+    else {
+        return Ok(None);
+    };
+    let other_x = &vertices[other_x_index].x;
+    let other_y = &vertices[other_y_index].y;
+
+    let x_order = compare_real_coordinates(&first.x, other_x)?;
+    let y_order = compare_real_coordinates(&first.y, other_y)?;
+    if x_order == Ordering::Equal || y_order == Ordering::Equal {
+        return Ok(None);
+    }
+
+    let mut corners = [None; 4];
+    for &index in ring {
+        let point = &vertices[index];
+        let x_slot = if point.x == first.x {
+            0
+        } else if point.x == *other_x {
+            1
+        } else {
+            return Ok(None);
+        };
+        let y_slot = if point.y == first.y {
+            0
+        } else if point.y == *other_y {
+            1
+        } else {
+            return Ok(None);
+        };
+        let low_x = (x_slot == 0) == (x_order == Ordering::Less);
+        let low_y = (y_slot == 0) == (y_order == Ordering::Less);
+        let corner = match (low_x, low_y) {
+            (true, true) => 0,
+            (false, true) => 1,
+            (false, false) => 2,
+            (true, false) => 3,
+        };
+        if corners[corner].replace(index).is_some() {
+            return Ok(None);
+        }
+    }
+
+    let [
+        Some(lower_left),
+        Some(lower_right),
+        Some(upper_right),
+        Some(upper_left),
+    ] = corners
+    else {
+        return Ok(None);
+    };
+    Ok(Some(AxisAlignedRectangle {
+        lower_left,
+        lower_right,
+        upper_right,
+        upper_left,
+    }))
+}
+
+fn compare_real_coordinates(
+    left: &crate::types::Real,
+    right: &crate::types::Real,
+) -> Result<Ordering> {
+    decide_hyperlimit_ordering(hyperlimit::compare_reals(left, right), "compare_reals")
 }
 
 fn bridge_holes<K>(
@@ -1142,6 +1354,57 @@ mod tests {
     }
 
     #[test]
+    fn rectangular_annulus_dispatch_handles_rotated_winding_and_preserves_authored_edges() {
+        let vertices = vec![
+            exact_point(8, 6),
+            exact_point(8, 0),
+            exact_point(0, 0),
+            exact_point(0, 6),
+            exact_point(2, 2),
+            exact_point(2, 4),
+            exact_point(6, 4),
+            exact_point(6, 2),
+        ];
+
+        let report = triangulate_report(&vertices, &[4]).unwrap();
+        let rings = rings_from_hole_indices(&vertices, &[4]).unwrap();
+
+        assert_eq!(report.triangles.len(), 24);
+        assert_eq!(report.diagnostics.emitted_triangles, 8);
+        assert_eq!(report.diagnostics.ear_tests, 0);
+        assert!(triangles_match_input_boundary(
+            &vertices,
+            &rings,
+            &report.triangles
+        ));
+    }
+
+    #[test]
+    fn rectangular_annulus_dispatch_falls_back_for_authored_collinear_boundary() {
+        let vertices = vec![
+            exact_point(0, 0),
+            exact_point(4, 0),
+            exact_point(8, 0),
+            exact_point(8, 6),
+            exact_point(0, 6),
+            exact_point(2, 2),
+            exact_point(2, 4),
+            exact_point(6, 4),
+            exact_point(6, 2),
+        ];
+
+        let report = triangulate_report(&vertices, &[5]).unwrap();
+        let rings = rings_from_hole_indices(&vertices, &[5]).unwrap();
+
+        assert!(report.diagnostics.ear_tests > 0);
+        assert!(triangles_match_input_boundary(
+            &vertices,
+            &rings,
+            &report.triangles
+        ));
+    }
+
+    #[test]
     fn triangulates_multiple_holes_with_mixed_winding() {
         let vertices = vec![
             exact_point(0, 0),
@@ -1251,6 +1514,39 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn conformity_certificate_accepts_complete_mesh_and_repairs_skipped_boundary_vertices() {
+        let square = vec![
+            exact_point(0, 0),
+            exact_point(4, 0),
+            exact_point(4, 4),
+            exact_point(0, 4),
+        ];
+        let square_rings = rings_from_hole_indices(&square, &[]).unwrap();
+        let square_triangles = vec![0, 1, 2, 0, 2, 3];
+        assert_eq!(
+            ensure_input_conformity(&square, &square_rings, square_triangles.clone()).unwrap(),
+            square_triangles
+        );
+
+        let collinear = vec![
+            exact_point(0, 0),
+            exact_point(0, 1),
+            exact_point(0, 2),
+            exact_point(0, 3),
+            exact_point(2, 0),
+        ];
+        let collinear_rings = rings_from_hole_indices(&collinear, &[]).unwrap();
+        let repaired =
+            ensure_input_conformity(&collinear, &collinear_rings, vec![0, 3, 4]).unwrap();
+        assert_eq!(repaired.len(), 9);
+        assert!(triangles_match_input_boundary(
+            &collinear,
+            &collinear_rings,
+            &repaired
+        ));
     }
 
     #[test]
