@@ -1751,17 +1751,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             return Vector3::z(); // degenerate or empty
         }
 
-        if let Some(normal) = POLYGON_NORMALS.with_borrow(|normals| {
-            normals.get(&self.plane_id).and_then(|cached| {
-                (cached.vertex_ids.len() == self.vertices.len()
-                    && cached
-                        .vertex_ids
-                        .iter()
-                        .zip(&self.vertices)
-                        .all(|(id, vertex)| *id == vertex.position_id))
-                .then(|| cached.normal.clone())
-            })
-        }) {
+        if let Some(normal) = self.cached_new_normal() {
             return normal;
         }
 
@@ -1778,6 +1768,39 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             hyper_polygon_newell_normal(&self.vertices).unwrap_or_else(Vector3::z)
         };
 
+        self.cache_new_normal(normal.clone());
+        normal
+    }
+
+    pub(crate) fn calculate_normal_from_retained_area(
+        &self,
+        area_normal: &Vector3,
+    ) -> Vector3 {
+        if let Some(normal) = self.cached_new_normal() {
+            return normal;
+        }
+        let normal = finite_normalized_exact_rational(area_normal)
+            .or_else(|| area_normal.normalize().ok())
+            .unwrap_or_else(Vector3::z);
+        self.cache_new_normal(normal.clone());
+        normal
+    }
+
+    pub(crate) fn cached_new_normal(&self) -> Option<Vector3> {
+        POLYGON_NORMALS.with_borrow(|normals| {
+            normals.get(&self.plane_id).and_then(|cached| {
+                (cached.vertex_ids.len() == self.vertices.len()
+                    && cached
+                        .vertex_ids
+                        .iter()
+                        .zip(&self.vertices)
+                        .all(|(id, vertex)| *id == vertex.position_id))
+                .then(|| cached.normal.clone())
+            })
+        })
+    }
+
+    fn cache_new_normal(&self, normal: Vector3) {
         POLYGON_NORMALS.with_borrow_mut(|normals| {
             if normals.len() == POLYGON_NORMAL_CACHE_CAPACITY {
                 normals.clear();
@@ -1790,11 +1813,10 @@ impl<M: Clone + Send + Sync> Polygon<M> {
                         .iter()
                         .map(|vertex| vertex.position_id)
                         .collect(),
-                    normal: normal.clone(),
+                    normal,
                 },
             );
         });
-        normal
     }
 
     /// Recompute this polygon's normal from all vertices, then set all vertices' normals to match (flat shading).
