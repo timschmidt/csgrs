@@ -253,18 +253,46 @@ Final matched Criterion medians are:
 
 | Operation | Hyperreal f64 | Exact decimal rational | Numerica 128 | Symbolica |
 | --- | ---: | ---: | ---: | ---: |
-| add | 54.11 ns | 63.69 ns | 42.53 ns | 1.288 us |
-| subtract | 66.75 ns | 86.77 ns | 44.72 ns | 2.457 us |
-| multiply (retained workload) | 31.08 ns | 34.33 ns | 46.47 ns | 1.532 us |
+| add (retained workload) | 29.68 ns | 31.27 ns | 42.36 ns | 1.287 us |
+| subtract (retained workload) | 31.14 ns | 32.72 ns | 44.66 ns | 2.434 us |
+| multiply (retained workload) | 32.98 ns | 32.90 ns | 44.16 ns | 1.532 us |
 
-Multiplication is therefore 33.1% faster than Numerica 128 and 49.3 times
-faster than Symbolica for the exact-f64 facade, after starting 2.17 times
-slower than Numerica. Addition and subtraction also improved by 24.6% and
-20.1% from the fresh pre-change measurements because their recurring small
-dyadic results now share canonical storage. The complete regenerated trace
-exercises all five arithmetic operators; multiplication records cold
-word/wide routes followed by `retained-product` hits while `Real` reports its
-authoritative `exact-rational` route.
+The adjacent multiplication rerun remains 25.3% faster than Numerica 128 and
+46 times faster than Symbolica for the exact-f64 facade, after starting 2.17
+times slower than Numerica. The complete regenerated trace exercises all five
+arithmetic operators; multiplication records cold word/wide routes followed by
+`retained-product` hits while `Real` reports its authoritative
+`exact-rational` route.
+
+## Retained exact scalar linear operations
+
+Per-case probes showed that small-dyadic add/subtract cases were already within
+about 1-3 ns of Numerica 128. The remaining aggregate deficit came from repeated
+wide-dyadic results: exact `10^9 +/- 10^-9` cost about 79-80 ns, while
+subtracting opposite exact `10^-12` inputs cost about 86 ns.
+
+Hyperreal now gives each immutable rational one lazily boxed linear-result slot,
+separate from product retention. A shared left operand can retain a sum in its
+slot; if that slot is occupied, a directed difference can use the paired
+operand's slot. Weak operand keys keep cache identity exact without retaining
+the key, serialization ignores the accelerator, and operands with no evidence
+of shared ownership skip retention. Direct cold sentinels measured 91.24 ns for
+wide-dyadic addition and 89.97 ns for subtraction, while retained rational
+operations measured 8.77 ns and 8.99 ns.
+
+Matched facade medians fell from 55.58 ns to 29.68 ns for addition and from
+68.41 ns to 31.14 ns for subtraction, reductions of 46.6% and 54.5%.
+Hyperreal is now 29.9% faster than Numerica 128 on addition and 30.3% faster on
+subtraction; the adjacent multiplication rerun remains 25.3% faster. Trace
+coverage executes each linear case twice and records the cold exact route
+followed by `rational/linear/retained-sum` or
+`rational/linear/retained-difference`, with the corresponding
+`real/add|sub/same-symbolic-basis` route.
+
+Borrowed `Vec3` construction is now the next measured carrier gap: addition is
+187.50 ns versus Numerica 128's 126.64 ns (1.48x), and subtraction is
+221.44 ns versus 139.03 ns (1.59x). The scalar kernels now win, so the next
+cycle can isolate vector result construction and ownership overhead.
 
 ## Rejected zero-mask multiplication experiment
 

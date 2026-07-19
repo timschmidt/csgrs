@@ -86,10 +86,10 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `e` | 48.57 ns | 48.23 ns | 1.10 us | 226.87 ns | 0.04x | 0.21x |
 | `pi` | 36.60 ns | 36.36 ns | 48.37 ns | 228.97 ns | 0.76x | 0.16x |
 | `tau` | 36.66 ns | 36.34 ns | 100.25 ns | 1.91 us | 0.37x | 0.02x |
-| `add` | 54.11 ns | 63.69 ns | 42.53 ns | 1.29 us | 1.27x | 0.04x |
-| `sub` | 66.75 ns | 86.77 ns | 44.72 ns | 2.46 us | 1.49x | 0.03x |
+| `add` | 29.68 ns | 31.27 ns | 42.36 ns | 1.29 us | 0.70x | 0.02x |
+| `sub` | 31.14 ns | 32.72 ns | 44.66 ns | 2.43 us | 0.70x | 0.01x |
 | `neg` | 57.60 ns | 57.65 ns | 24.34 ns | 1.06 us | 2.37x | 0.05x |
-| `mul` | 31.08 ns | 34.33 ns | 46.47 ns | 1.53 us | 0.67x | 0.02x |
+| `mul` | 32.98 ns | 32.90 ns | 44.16 ns | 1.53 us | 0.75x | 0.02x |
 | `div` | 107.27 ns | 78.26 ns | 63.43 ns | 2.56 us | 1.69x | 0.04x |
 | `reciprocal` | 62.98 ns | 62.80 ns | 60.57 ns | 1.58 us | 1.04x | 0.04x |
 | `reciprocal checked` | 70.17 ns | 70.39 ns | 60.44 ns | 1.64 us | 1.16x | 0.04x |
@@ -271,8 +271,8 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `scalar div refs` | 87.68 ns | 59.48 ns | 65.69 ns | 2.60 us | 1.33x | 0.03x |
 | `scalar div owned_ref_with_clone` | 96.96 ns | 68.35 ns | 80.40 ns | 4.92 us | 1.21x | 0.02x |
 | `scalar div ref_owned_with_clone` | 97.54 ns | 66.92 ns | 76.61 ns | 2.91 us | 1.27x | 0.03x |
-| `vec3 add refs` | 335.23 ns | 272.97 ns | 122.49 ns | 4.22 us | 2.74x | 0.08x |
-| `vec3 sub refs` | 394.42 ns | 341.58 ns | 136.15 ns | 7.56 us | 2.90x | 0.05x |
+| `vec3 add refs` | 187.50 ns | 375.78 ns | 126.64 ns | 3.96 us | 1.48x | 0.05x |
+| `vec3 sub refs` | 221.44 ns | 423.85 ns | 139.03 ns | 7.43 us | 1.59x | 0.03x |
 | `vec3 neg ref` | 169.24 ns | 166.53 ns | 49.23 ns | 3.15 us | 3.44x | 0.05x |
 | `vec3 add_scalar_ref` | 471.89 ns | 381.17 ns | 134.25 ns | 3.97 us | 3.52x | 0.12x |
 | `vec3 sub_scalar_ref` | 467.29 ns | 399.44 ns | 126.26 ns | 7.17 us | 3.70x | 0.07x |

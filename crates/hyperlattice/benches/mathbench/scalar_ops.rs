@@ -65,10 +65,12 @@ fn bench_scalar_operations_for<F>(
     let signal = abort_signal();
 
     trace_dispatch_cases(format!("scalar_ops/{label}/add"), &arithmetic_cases, |(lhs, rhs)| {
-        let _ = black_box(lhs + rhs);
+        let _ = black_box(lhs.clone() + rhs.clone());
+        let _ = black_box(lhs.clone() + rhs.clone());
     });
     trace_dispatch_cases(format!("scalar_ops/{label}/sub"), &arithmetic_cases, |(lhs, rhs)| {
-        let _ = black_box(lhs - rhs);
+        let _ = black_box(lhs.clone() - rhs.clone());
+        let _ = black_box(lhs.clone() - rhs.clone());
     });
     trace_dispatch_cases(format!("scalar_ops/{label}/neg"), &reciprocal_cases, |value| {
         let _ = black_box(-value);

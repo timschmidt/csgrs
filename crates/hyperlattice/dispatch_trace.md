@@ -90,10 +90,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `mat4` | `affine_div_matrix_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44.50 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `affine_div_matrix_translation` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `affine_div_matrix_translation` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `affine_div_matrix_translation_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `affine_div_matrix_translation_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `affine_div_matrix_translation_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `affine_div_matrix_translation_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
+| `mat4` | `affine_div_matrix_translation_checked` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
+| `mat4` | `affine_div_matrix_translation_checked` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
+| `mat4` | `affine_div_matrix_translation_checked_abort` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
+| `mat4` | `affine_div_matrix_translation_checked_abort` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `diagonal_direction_batch` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6.500 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `diagonal_direction_batch` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6.500 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `diagonal_point_batch` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6.500 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
@@ -165,7 +165,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `mat4` | `known_translation_inverse` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 31 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `known_translation_inverse` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 31 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `known_uniform_diagonal_div_vector` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `known_uniform_diagonal_div_vector` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
+| `mat4` | `known_uniform_diagonal_div_vector` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 27 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `known_uniform_diagonal_div_vector_direction` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `known_uniform_diagonal_div_vector_direction` | `rational` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `known_uniform_diagonal_div_vector_point` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 27 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
@@ -245,74 +245,74 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 
 | Benchmark Row | Dispatch | Predicate | Linear Algebra | Object Facts | Scalar Facts | Detailed Facts | Unknown Facts | Rational Kinds | Sign/Zero Queries | Exact Reducers | Approximation | Approx Starts | Approx Cache | Refinement | Predicate Stages | Cache | Fallback/Abort | Rational Temps | Rational Reductions | Rational GCDs |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `borrowed_ops/hyperreal-rational/complex add refs` | 31 | 0 | 8 | 0 | 2 | 0 | 0 | 0 | 3 | 21 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 6 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | 139 | 0 | 20 | 0 | 0 | 0 | 0 | 37 | 0 | 127 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 6 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/complex mul refs` | 95 | 0 | 8 | 0 | 1 | 0 | 0 | 20 | 1 | 86 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 9 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/complex sub refs` | 32 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 2 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/mat3 add refs` | 92 | 0 | 4 | 0 | 7 | 0 | 0 | 1 | 9 | 81 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 29 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/complex add refs` | 39 | 0 | 8 | 0 | 2 | 0 | 0 | 0 | 3 | 21 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 6 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | 142 | 0 | 20 | 0 | 0 | 0 | 0 | 36 | 0 | 126 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 5 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/complex mul refs` | 102 | 0 | 8 | 0 | 1 | 0 | 0 | 19 | 1 | 85 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 7 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/complex sub refs` | 40 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 2 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/mat3 add refs` | 128 | 0 | 4 | 0 | 7 | 0 | 0 | 1 | 9 | 81 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 29 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | 1017 | 0 | 96 | 0 | 484 | 88 | 0 | 360 | 272 | 929 | 0 | 0 | 0 | 0 | 0 | 45 | 0 | 21 | 2 | 5 |
 | `borrowed_ops/hyperreal-rational/mat3 div_scalar_ref` | 166 | 0 | 8 | 0 | 4 | 0 | 0 | 60 | 8 | 154 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 2 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 mul refs` | 860 | 0 | 12 | 0 | 704 | 176 | 0 | 452 | 192 | 752 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 1 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 mul_scalar_ref` | 182 | 0 | 40 | 0 | 0 | 0 | 0 | 50 | 0 | 178 | 0 | 0 | 0 | 0 | 0 | 46 | 0 | 1 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/mat3 sub refs` | 96 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 92 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 19 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/mat3 sub refs` | 132 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 92 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 19 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | 368 | 0 | 4 | 0 | 316 | 88 | 0 | 220 | 60 | 316 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/mat4 add refs` | 141 | 0 | 4 | 0 | 15 | 0 | 0 | 0 | 18 | 122 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 68 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/mat4 add refs` | 205 | 0 | 4 | 0 | 15 | 0 | 0 | 0 | 18 | 122 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 68 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | 1807 | 0 | 222 | 0 | 633 | 115 | 0 | 582 | 365 | 1697 | 0 | 0 | 0 | 0 | 0 | 127 | 0 | 75 | 4 | 12 |
 | `borrowed_ops/hyperreal-rational/mat4 div_scalar_ref` | 318 | 0 | 72 | 0 | 4 | 0 | 0 | 96 | 8 | 306 | 0 | 0 | 0 | 0 | 0 | 74 | 0 | 13 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat4 mul refs` | 1631 | 0 | 76 | 0 | 1299 | 306 | 0 | 860 | 471 | 1404 | 0 | 0 | 0 | 0 | 0 | 23 | 0 | 3 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/mat4 mul_scalar_ref` | 297 | 0 | 68 | 0 | 0 | 0 | 0 | 77 | 0 | 293 | 0 | 0 | 0 | 0 | 0 | 90 | 0 | 12 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/mat4 sub refs` | 151 | 0 | 4 | 0 | 1 | 0 | 0 | 0 | 1 | 146 | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 50 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | 686 | 0 | 8 | 0 | 604 | 158 | 0 | 392 | 148 | 566 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 8 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/scalar add refs` | 12 | 0 | 0 | 0 | 1 | 0 | 0 | 2 | 2 | 11 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/mat4 sub refs` | 215 | 0 | 4 | 0 | 1 | 0 | 0 | 0 | 1 | 146 | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 50 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | 690 | 0 | 8 | 0 | 604 | 158 | 0 | 392 | 148 | 566 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 8 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/scalar add refs` | 16 | 0 | 0 | 0 | 1 | 0 | 0 | 2 | 2 | 11 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/scalar div refs` | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 3 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/scalar mul refs` | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 15 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/scalar sub refs` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 2 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/vec3 add refs` | 36 | 0 | 4 | 0 | 3 | 0 | 0 | 0 | 4 | 29 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/scalar sub refs` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 2 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/vec3 add refs` | 48 | 0 | 4 | 0 | 3 | 0 | 0 | 0 | 4 | 29 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/vec3 div_scalar_ref` | 59 | 0 | 8 | 0 | 4 | 0 | 0 | 17 | 8 | 47 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 6 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/vec3 mul_scalar_ref` | 66 | 0 | 16 | 0 | 0 | 0 | 0 | 15 | 0 | 62 | 0 | 0 | 0 | 0 | 0 | 14 | 0 | 0 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/vec3 sub refs` | 38 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 34 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/vec4 add refs` | 46 | 0 | 4 | 0 | 2 | 0 | 0 | 0 | 2 | 40 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 10 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/vec3 sub refs` | 50 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 34 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/vec4 add refs` | 62 | 0 | 4 | 0 | 2 | 0 | 0 | 0 | 2 | 40 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 10 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/vec4 div_scalar_ref` | 85 | 0 | 24 | 0 | 4 | 0 | 0 | 21 | 8 | 73 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 11 | 0 | 0 |
 | `borrowed_ops/hyperreal-rational/vec4 mul_scalar_ref` | 79 | 0 | 20 | 0 | 0 | 0 | 0 | 16 | 0 | 75 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 4 | 0 | 0 |
-| `borrowed_ops/hyperreal-rational/vec4 sub refs` | 48 | 0 | 4 | 0 | 1 | 0 | 0 | 0 | 2 | 43 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 8 | 0 | 0 |
-| `borrowed_ops/hyperreal/complex add refs` | 31 | 0 | 8 | 0 | 2 | 0 | 0 | 4 | 3 | 21 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 7 | 0 | 0 |
-| `borrowed_ops/hyperreal/complex div refs` | 130 | 0 | 20 | 0 | 0 | 0 | 0 | 48 | 0 | 118 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 13 | 1 | 3 |
-| `borrowed_ops/hyperreal/complex mul refs` | 83 | 0 | 8 | 0 | 1 | 0 | 0 | 28 | 1 | 74 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 15 | 2 | 2 |
-| `borrowed_ops/hyperreal/complex sub refs` | 32 | 0 | 8 | 0 | 0 | 0 | 0 | 5 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 3 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat3 add refs` | 92 | 0 | 4 | 0 | 7 | 0 | 0 | 14 | 9 | 81 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 27 | 0 | 0 |
+| `borrowed_ops/hyperreal-rational/vec4 sub refs` | 64 | 0 | 4 | 0 | 1 | 0 | 0 | 0 | 2 | 43 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 8 | 0 | 0 |
+| `borrowed_ops/hyperreal/complex add refs` | 39 | 0 | 8 | 0 | 2 | 0 | 0 | 4 | 3 | 21 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 7 | 0 | 0 |
+| `borrowed_ops/hyperreal/complex div refs` | 134 | 0 | 20 | 0 | 0 | 0 | 0 | 48 | 0 | 118 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 13 | 1 | 3 |
+| `borrowed_ops/hyperreal/complex mul refs` | 91 | 0 | 8 | 0 | 1 | 0 | 0 | 28 | 1 | 74 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 15 | 2 | 2 |
+| `borrowed_ops/hyperreal/complex sub refs` | 40 | 0 | 8 | 0 | 0 | 0 | 0 | 5 | 0 | 24 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 3 | 0 | 0 |
+| `borrowed_ops/hyperreal/mat3 add refs` | 128 | 0 | 4 | 0 | 7 | 0 | 0 | 14 | 9 | 81 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 27 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat3 div refs` | 995 | 0 | 92 | 0 | 484 | 88 | 0 | 446 | 272 | 907 | 0 | 0 | 0 | 0 | 0 | 45 | 0 | 50 | 0 | 15 |
 | `borrowed_ops/hyperreal/mat3 div_scalar_ref` | 160 | 0 | 8 | 0 | 4 | 0 | 0 | 63 | 8 | 148 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat3 mul refs` | 857 | 0 | 12 | 0 | 704 | 176 | 0 | 483 | 192 | 749 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 4 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat3 mul_scalar_ref` | 165 | 0 | 40 | 0 | 0 | 0 | 0 | 55 | 0 | 161 | 0 | 0 | 0 | 0 | 0 | 45 | 0 | 4 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat3 sub refs` | 96 | 0 | 4 | 0 | 0 | 0 | 0 | 15 | 0 | 92 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 19 | 0 | 0 |
+| `borrowed_ops/hyperreal/mat3 sub refs` | 132 | 0 | 4 | 0 | 0 | 0 | 0 | 15 | 0 | 92 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 19 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat3 transform_vec refs` | 365 | 0 | 4 | 0 | 316 | 88 | 0 | 230 | 60 | 313 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat4 add refs` | 141 | 0 | 4 | 0 | 15 | 0 | 0 | 6 | 18 | 122 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 68 | 0 | 0 |
+| `borrowed_ops/hyperreal/mat4 add refs` | 205 | 0 | 4 | 0 | 15 | 0 | 0 | 6 | 18 | 122 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 68 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat4 div refs` | 1741 | 0 | 222 | 0 | 633 | 115 | 0 | 707 | 363 | 1631 | 0 | 0 | 0 | 0 | 0 | 125 | 0 | 136 | 0 | 31 |
 | `borrowed_ops/hyperreal/mat4 div_scalar_ref` | 321 | 0 | 72 | 0 | 4 | 0 | 0 | 101 | 8 | 309 | 0 | 0 | 0 | 0 | 0 | 71 | 0 | 13 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat4 mul refs` | 1627 | 0 | 76 | 0 | 1299 | 306 | 0 | 901 | 471 | 1400 | 0 | 0 | 0 | 0 | 0 | 23 | 0 | 7 | 0 | 0 |
 | `borrowed_ops/hyperreal/mat4 mul_scalar_ref` | 280 | 0 | 68 | 0 | 0 | 0 | 0 | 84 | 0 | 276 | 0 | 0 | 0 | 0 | 0 | 88 | 0 | 16 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat4 sub refs` | 151 | 0 | 4 | 0 | 1 | 0 | 0 | 9 | 1 | 146 | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 50 | 0 | 0 |
-| `borrowed_ops/hyperreal/mat4 transform_vec refs` | 682 | 0 | 8 | 0 | 604 | 158 | 0 | 402 | 148 | 562 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 12 | 0 | 0 |
-| `borrowed_ops/hyperreal/scalar add refs` | 12 | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 2 | 11 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 0 | 0 |
+| `borrowed_ops/hyperreal/mat4 sub refs` | 215 | 0 | 4 | 0 | 1 | 0 | 0 | 9 | 1 | 146 | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 50 | 0 | 0 |
+| `borrowed_ops/hyperreal/mat4 transform_vec refs` | 686 | 0 | 8 | 0 | 604 | 158 | 0 | 402 | 148 | 562 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 12 | 0 | 0 |
+| `borrowed_ops/hyperreal/scalar add refs` | 16 | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 2 | 11 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 0 | 0 |
 | `borrowed_ops/hyperreal/scalar div refs` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
 | `borrowed_ops/hyperreal/scalar mul refs` | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 15 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
-| `borrowed_ops/hyperreal/scalar sub refs` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 2 | 0 | 0 |
-| `borrowed_ops/hyperreal/vec3 add refs` | 36 | 0 | 4 | 0 | 3 | 0 | 0 | 8 | 4 | 29 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 |
+| `borrowed_ops/hyperreal/scalar sub refs` | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 2 | 0 | 0 |
+| `borrowed_ops/hyperreal/vec3 add refs` | 48 | 0 | 4 | 0 | 3 | 0 | 0 | 8 | 4 | 29 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 |
 | `borrowed_ops/hyperreal/vec3 div_scalar_ref` | 58 | 0 | 8 | 0 | 4 | 0 | 0 | 19 | 8 | 46 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 5 | 0 | 0 |
 | `borrowed_ops/hyperreal/vec3 mul_scalar_ref` | 58 | 0 | 16 | 0 | 0 | 0 | 0 | 21 | 0 | 54 | 0 | 0 | 0 | 0 | 0 | 14 | 0 | 4 | 0 | 0 |
-| `borrowed_ops/hyperreal/vec3 sub refs` | 38 | 0 | 4 | 0 | 0 | 0 | 0 | 9 | 0 | 34 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
-| `borrowed_ops/hyperreal/vec4 add refs` | 46 | 0 | 4 | 0 | 2 | 0 | 0 | 8 | 2 | 40 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 10 | 0 | 0 |
+| `borrowed_ops/hyperreal/vec3 sub refs` | 50 | 0 | 4 | 0 | 0 | 0 | 0 | 9 | 0 | 34 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
+| `borrowed_ops/hyperreal/vec4 add refs` | 62 | 0 | 4 | 0 | 2 | 0 | 0 | 8 | 2 | 40 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 10 | 0 | 0 |
 | `borrowed_ops/hyperreal/vec4 div_scalar_ref` | 88 | 0 | 24 | 0 | 4 | 0 | 0 | 24 | 8 | 76 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 10 | 0 | 0 |
 | `borrowed_ops/hyperreal/vec4 mul_scalar_ref` | 73 | 0 | 20 | 0 | 0 | 0 | 0 | 24 | 0 | 69 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 9 | 0 | 0 |
-| `borrowed_ops/hyperreal/vec4 sub refs` | 48 | 0 | 4 | 0 | 1 | 0 | 0 | 7 | 2 | 43 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 8 | 0 | 0 |
+| `borrowed_ops/hyperreal/vec4 sub refs` | 64 | 0 | 4 | 0 | 1 | 0 | 0 | 7 | 2 | 43 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 8 | 0 | 0 |
 | `complex_ops/hyperreal-rational/powi` | 156 | 0 | 68 | 0 | 0 | 0 | 0 | 52 | 26 | 136 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 13 | 6 | 12 |
 | `complex_ops/hyperreal-rational/powi_checked` | 156 | 0 | 68 | 0 | 0 | 0 | 0 | 52 | 26 | 136 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 13 | 6 | 12 |
-| `complex_ops/hyperreal-rational/powi_checked_negative_one` | 108 | 0 | 32 | 0 | 4 | 0 | 0 | 21 | 12 | 76 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 7 | 0 | 0 |
-| `complex_ops/hyperreal-rational/powi_negative_one` | 105 | 0 | 24 | 0 | 0 | 0 | 0 | 21 | 0 | 85 | 0 | 0 | 0 | 0 | 0 | 14 | 0 | 9 | 0 | 0 |
+| `complex_ops/hyperreal-rational/powi_checked_negative_one` | 109 | 0 | 32 | 0 | 4 | 0 | 0 | 21 | 12 | 73 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 6 | 0 | 0 |
+| `complex_ops/hyperreal-rational/powi_negative_one` | 108 | 0 | 24 | 0 | 0 | 0 | 0 | 21 | 0 | 84 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 8 | 0 | 0 |
 | `complex_ops/hyperreal/powi` | 153 | 0 | 68 | 0 | 0 | 0 | 0 | 57 | 25 | 133 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 13 | 0 | 0 |
 | `complex_ops/hyperreal/powi_checked` | 153 | 0 | 68 | 0 | 0 | 0 | 0 | 57 | 25 | 133 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 13 | 0 | 0 |
-| `complex_ops/hyperreal/powi_checked_negative_one` | 104 | 0 | 32 | 0 | 4 | 0 | 0 | 24 | 12 | 72 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 11 | 1 | 3 |
-| `complex_ops/hyperreal/powi_negative_one` | 97 | 0 | 24 | 0 | 0 | 0 | 0 | 28 | 0 | 77 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 15 | 1 | 3 |
+| `complex_ops/hyperreal/powi_checked_negative_one` | 107 | 0 | 32 | 0 | 4 | 0 | 0 | 23 | 12 | 71 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 8 | 0 | 2 |
+| `complex_ops/hyperreal/powi_negative_one` | 101 | 0 | 24 | 0 | 0 | 0 | 0 | 28 | 0 | 77 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 15 | 1 | 3 |
 | `matrix3/hyperreal-rational/mat3 determinant` | 33 | 0 | 5 | 0 | 12 | 0 | 0 | 7 | 15 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix3/hyperreal-rational/mat3 inverse` | 111 | 0 | 31 | 0 | 3 | 0 | 0 | 28 | 12 | 104 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 |
 | `matrix3/hyperreal-rational/mat3 mul mat3` | 215 | 0 | 3 | 0 | 176 | 44 | 0 | 113 | 48 | 188 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -324,14 +324,14 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-rational/mat3 transform vec3 batch structural facts` | 150 | 0 | 5 | 0 | 97 | 22 | 0 | 73 | 24 | 124 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix3/hyperreal-rational/mat3 transform vec3 one-coord approx` | 92 | 0 | 1 | 0 | 79 | 22 | 0 | 55 | 15 | 79 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix3/hyperreal-rational/mat3 transform vec3 sign/zero facts` | 98 | 0 | 1 | 0 | 85 | 22 | 0 | 58 | 18 | 82 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3` | 139 | 0 | 1 | 13 | 79 | 22 | 0 | 32 | 41 | 77 | 0 | 0 | 0 | 0 | 0 | 25 | 0 | 12 | 2 | 2 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | 146 | 0 | 1 | 14 | 85 | 23 | 0 | 30 | 47 | 76 | 0 | 0 | 0 | 4 | 0 | 25 | 0 | 11 | 2 | 2 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | 233 | 0 | 5 | 13 | 79 | 22 | 0 | 30 | 41 | 126 | 0 | 0 | 0 | 0 | 0 | 37 | 0 | 44 | 8 | 8 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | 260 | 0 | 5 | 16 | 97 | 25 | 0 | 30 | 59 | 129 | 0 | 0 | 0 | 12 | 0 | 40 | 0 | 44 | 8 | 8 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | 236 | 0 | 5 | 13 | 81 | 22 | 0 | 30 | 43 | 126 | 0 | 0 | 0 | 2 | 0 | 37 | 0 | 44 | 8 | 8 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | 263 | 0 | 5 | 16 | 97 | 22 | 6 | 30 | 62 | 132 | 0 | 0 | 0 | 0 | 0 | 43 | 6 | 44 | 8 | 8 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | 140 | 0 | 1 | 13 | 81 | 22 | 0 | 30 | 43 | 75 | 0 | 0 | 0 | 2 | 0 | 24 | 0 | 15 | 2 | 2 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | 146 | 0 | 1 | 14 | 85 | 23 | 0 | 30 | 47 | 76 | 0 | 0 | 0 | 4 | 0 | 25 | 0 | 11 | 2 | 2 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3` | 145 | 0 | 1 | 13 | 79 | 22 | 0 | 32 | 41 | 78 | 0 | 0 | 0 | 0 | 0 | 25 | 5 | 12 | 2 | 2 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | 152 | 0 | 1 | 14 | 85 | 23 | 0 | 30 | 47 | 77 | 0 | 0 | 0 | 4 | 0 | 25 | 5 | 11 | 2 | 2 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | 257 | 0 | 5 | 13 | 79 | 22 | 0 | 30 | 41 | 130 | 0 | 0 | 0 | 0 | 0 | 37 | 20 | 44 | 8 | 8 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | 284 | 0 | 5 | 16 | 97 | 25 | 0 | 30 | 59 | 133 | 0 | 0 | 0 | 12 | 0 | 40 | 20 | 44 | 8 | 8 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | 260 | 0 | 5 | 13 | 81 | 22 | 0 | 30 | 43 | 130 | 0 | 0 | 0 | 2 | 0 | 37 | 20 | 44 | 8 | 8 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | 287 | 0 | 5 | 16 | 97 | 22 | 6 | 30 | 62 | 136 | 0 | 0 | 0 | 0 | 0 | 43 | 26 | 44 | 8 | 8 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | 146 | 0 | 1 | 13 | 81 | 22 | 0 | 30 | 43 | 76 | 0 | 0 | 0 | 2 | 0 | 24 | 5 | 15 | 2 | 2 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | 152 | 0 | 1 | 14 | 85 | 23 | 0 | 30 | 47 | 77 | 0 | 0 | 0 | 4 | 0 | 25 | 5 | 11 | 2 | 2 |
 | `matrix3/hyperreal/mat3 determinant` | 130 | 0 | 20 | 0 | 48 | 0 | 0 | 42 | 60 | 130 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
 | `matrix3/hyperreal/mat3 inverse` | 435 | 0 | 124 | 0 | 12 | 0 | 0 | 178 | 50 | 407 | 0 | 0 | 0 | 0 | 0 | 42 | 0 | 26 | 0 | 18 |
 | `matrix3/hyperreal/mat3 mul mat3` | 857 | 0 | 12 | 0 | 704 | 176 | 0 | 483 | 192 | 749 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 4 | 0 | 0 |
@@ -341,50 +341,50 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 mul mat4` | 407 | 0 | 19 | 0 | 324 | 77 | 0 | 216 | 116 | 352 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 2 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform direction vec4` | 168 | 0 | 2 | 0 | 150 | 40 | 0 | 100 | 35 | 139 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts` | 176 | 0 | 2 | 0 | 158 | 40 | 0 | 104 | 39 | 143 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 |
-| `matrix4/hyperreal-rational/mat4 transform point vec4` | 268 | 0 | 1 | 0 | 149 | 39 | 0 | 99 | 37 | 219 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 45 | 16 | 16 |
-| `matrix4/hyperreal-rational/mat4 transform vec4` | 179 | 0 | 2 | 0 | 151 | 40 | 0 | 99 | 36 | 150 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 8 | 0 | 0 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | 179 | 0 | 2 | 0 | 151 | 40 | 0 | 99 | 36 | 150 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 8 | 0 | 0 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch` | 271 | 0 | 7 | 0 | 160 | 43 | 0 | 117 | 44 | 234 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 32 | 0 | 0 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | 271 | 0 | 7 | 0 | 160 | 43 | 0 | 117 | 44 | 234 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 32 | 0 | 0 |
+| `matrix4/hyperreal-rational/mat4 transform point vec4` | 278 | 0 | 1 | 0 | 149 | 39 | 0 | 99 | 37 | 227 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 45 | 16 | 16 |
+| `matrix4/hyperreal-rational/mat4 transform vec4` | 183 | 0 | 2 | 0 | 151 | 40 | 0 | 99 | 36 | 150 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 8 | 0 | 0 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | 180 | 0 | 2 | 0 | 151 | 40 | 0 | 99 | 36 | 147 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 5 | 0 | 0 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch` | 275 | 0 | 7 | 0 | 160 | 43 | 0 | 117 | 44 | 222 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 20 | 0 | 0 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | 275 | 0 | 7 | 0 | 160 | 43 | 0 | 117 | 44 | 222 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 20 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch direction` | 230 | 0 | 6 | 0 | 160 | 43 | 0 | 121 | 39 | 194 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 4 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch direction all-coord approx` | 230 | 0 | 6 | 0 | 160 | 43 | 0 | 121 | 39 | 194 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 4 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch direction one-coord approx` | 230 | 0 | 6 | 0 | 160 | 43 | 0 | 121 | 39 | 194 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 4 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch direction structural facts` | 262 | 0 | 6 | 0 | 192 | 43 | 0 | 137 | 55 | 210 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 4 | 0 | 0 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | 271 | 0 | 7 | 0 | 160 | 43 | 0 | 117 | 44 | 234 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 32 | 0 | 0 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | 303 | 0 | 7 | 0 | 192 | 43 | 0 | 133 | 60 | 250 | 0 | 0 | 0 | 0 | 0 | 28 | 0 | 32 | 0 | 0 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | 275 | 0 | 7 | 0 | 160 | 43 | 0 | 117 | 44 | 222 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 20 | 0 | 0 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | 307 | 0 | 7 | 0 | 192 | 43 | 0 | 133 | 60 | 238 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 20 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 no-translation` | 167 | 0 | 2 | 0 | 150 | 39 | 0 | 97 | 38 | 137 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 no-translation all-coord approx` | 167 | 0 | 2 | 0 | 150 | 39 | 0 | 97 | 38 | 137 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 no-translation one-coord approx` | 167 | 0 | 2 | 0 | 150 | 39 | 0 | 97 | 38 | 137 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 no-translation structural facts` | 175 | 0 | 2 | 0 | 158 | 39 | 0 | 101 | 42 | 141 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | 179 | 0 | 2 | 0 | 151 | 40 | 0 | 99 | 36 | 150 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 8 | 0 | 0 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | 187 | 0 | 2 | 0 | 159 | 40 | 0 | 103 | 40 | 154 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 8 | 0 | 0 |
-| `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | 225 | 0 | 2 | 14 | 149 | 39 | 0 | 72 | 64 | 158 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 18 | 4 | 4 |
-| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | 235 | 0 | 2 | 16 | 155 | 41 | 0 | 72 | 71 | 161 | 0 | 0 | 0 | 2 | 0 | 21 | 0 | 18 | 4 | 4 |
-| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | 228 | 0 | 2 | 14 | 151 | 39 | 0 | 72 | 66 | 158 | 0 | 0 | 0 | 2 | 0 | 19 | 0 | 18 | 4 | 4 |
-| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | 237 | 0 | 2 | 16 | 157 | 39 | 1 | 73 | 73 | 162 | 0 | 0 | 0 | 0 | 0 | 22 | 1 | 18 | 4 | 4 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4` | 281 | 0 | 2 | 14 | 150 | 39 | 0 | 75 | 65 | 189 | 0 | 0 | 0 | 0 | 0 | 33 | 0 | 45 | 10 | 10 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | 284 | 0 | 2 | 16 | 158 | 41 | 0 | 70 | 73 | 182 | 0 | 0 | 0 | 4 | 0 | 33 | 0 | 43 | 10 | 10 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | 575 | 0 | 6 | 14 | 171 | 46 | 1 | 87 | 72 | 398 | 0 | 0 | 0 | 0 | 0 | 62 | 1 | 172 | 40 | 40 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | 623 | 0 | 6 | 22 | 203 | 54 | 1 | 87 | 104 | 406 | 0 | 0 | 0 | 16 | 0 | 70 | 1 | 172 | 40 | 40 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | 400 | 0 | 6 | 14 | 159 | 42 | 0 | 91 | 68 | 311 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 74 | 16 | 16 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | 435 | 0 | 6 | 22 | 183 | 50 | 0 | 87 | 96 | 318 | 0 | 0 | 0 | 8 | 0 | 30 | 0 | 72 | 16 | 16 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | 398 | 0 | 6 | 14 | 161 | 42 | 0 | 87 | 70 | 306 | 0 | 0 | 0 | 2 | 0 | 22 | 0 | 74 | 16 | 16 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | 443 | 0 | 6 | 22 | 191 | 42 | 4 | 91 | 104 | 322 | 0 | 0 | 0 | 0 | 0 | 34 | 4 | 72 | 16 | 16 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | 578 | 0 | 6 | 14 | 173 | 46 | 1 | 87 | 74 | 398 | 0 | 0 | 0 | 2 | 0 | 62 | 1 | 172 | 40 | 40 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | 631 | 0 | 6 | 22 | 203 | 46 | 9 | 87 | 112 | 414 | 0 | 0 | 0 | 0 | 0 | 78 | 9 | 172 | 40 | 40 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | 230 | 0 | 2 | 14 | 150 | 39 | 0 | 71 | 65 | 146 | 0 | 0 | 0 | 0 | 0 | 27 | 0 | 19 | 4 | 4 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | 238 | 0 | 2 | 16 | 158 | 41 | 0 | 69 | 73 | 144 | 0 | 0 | 0 | 4 | 0 | 28 | 0 | 18 | 4 | 4 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | 229 | 0 | 2 | 14 | 152 | 39 | 0 | 69 | 67 | 142 | 0 | 0 | 0 | 2 | 0 | 26 | 0 | 18 | 4 | 4 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | 240 | 0 | 2 | 16 | 158 | 39 | 2 | 69 | 75 | 146 | 0 | 0 | 0 | 0 | 0 | 30 | 2 | 18 | 4 | 4 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | 275 | 0 | 2 | 14 | 152 | 39 | 0 | 70 | 67 | 180 | 0 | 0 | 0 | 2 | 0 | 31 | 0 | 43 | 10 | 10 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | 284 | 0 | 2 | 16 | 158 | 41 | 0 | 70 | 73 | 182 | 0 | 0 | 0 | 4 | 0 | 33 | 0 | 43 | 10 | 10 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | 180 | 0 | 2 | 0 | 151 | 40 | 0 | 99 | 36 | 147 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 5 | 0 | 0 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | 188 | 0 | 2 | 0 | 159 | 40 | 0 | 103 | 40 | 151 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 5 | 0 | 0 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | 231 | 0 | 2 | 14 | 149 | 39 | 0 | 72 | 64 | 159 | 0 | 0 | 0 | 0 | 0 | 19 | 4 | 18 | 4 | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | 241 | 0 | 2 | 16 | 155 | 41 | 0 | 72 | 71 | 162 | 0 | 0 | 0 | 2 | 0 | 21 | 4 | 18 | 4 | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | 234 | 0 | 2 | 14 | 151 | 39 | 0 | 72 | 66 | 159 | 0 | 0 | 0 | 2 | 0 | 19 | 4 | 18 | 4 | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | 243 | 0 | 2 | 16 | 157 | 39 | 1 | 73 | 73 | 163 | 0 | 0 | 0 | 0 | 0 | 22 | 5 | 18 | 4 | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4` | 293 | 0 | 2 | 14 | 150 | 39 | 0 | 75 | 65 | 194 | 0 | 0 | 0 | 0 | 0 | 33 | 7 | 45 | 10 | 10 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | 296 | 0 | 2 | 16 | 158 | 41 | 0 | 70 | 73 | 187 | 0 | 0 | 0 | 4 | 0 | 33 | 7 | 43 | 10 | 10 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | 623 | 0 | 6 | 14 | 171 | 46 | 1 | 87 | 72 | 418 | 0 | 0 | 0 | 0 | 0 | 62 | 29 | 172 | 40 | 40 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | 671 | 0 | 6 | 22 | 203 | 54 | 1 | 87 | 104 | 426 | 0 | 0 | 0 | 16 | 0 | 70 | 29 | 172 | 40 | 40 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | 424 | 0 | 6 | 14 | 159 | 42 | 0 | 91 | 68 | 315 | 0 | 0 | 0 | 0 | 0 | 24 | 16 | 74 | 16 | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | 459 | 0 | 6 | 22 | 183 | 50 | 0 | 87 | 96 | 322 | 0 | 0 | 0 | 8 | 0 | 30 | 16 | 72 | 16 | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | 422 | 0 | 6 | 14 | 161 | 42 | 0 | 87 | 70 | 310 | 0 | 0 | 0 | 2 | 0 | 22 | 16 | 74 | 16 | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | 467 | 0 | 6 | 22 | 191 | 42 | 4 | 91 | 104 | 326 | 0 | 0 | 0 | 0 | 0 | 34 | 20 | 72 | 16 | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | 626 | 0 | 6 | 14 | 173 | 46 | 1 | 87 | 74 | 418 | 0 | 0 | 0 | 2 | 0 | 62 | 29 | 172 | 40 | 40 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | 679 | 0 | 6 | 22 | 203 | 46 | 9 | 87 | 112 | 434 | 0 | 0 | 0 | 0 | 0 | 78 | 37 | 172 | 40 | 40 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | 238 | 0 | 2 | 14 | 150 | 39 | 0 | 71 | 65 | 148 | 0 | 0 | 0 | 0 | 0 | 27 | 6 | 19 | 4 | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | 246 | 0 | 2 | 16 | 158 | 41 | 0 | 69 | 73 | 146 | 0 | 0 | 0 | 4 | 0 | 28 | 6 | 18 | 4 | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | 237 | 0 | 2 | 14 | 152 | 39 | 0 | 69 | 67 | 144 | 0 | 0 | 0 | 2 | 0 | 26 | 6 | 18 | 4 | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | 248 | 0 | 2 | 16 | 158 | 39 | 2 | 69 | 75 | 148 | 0 | 0 | 0 | 0 | 0 | 30 | 8 | 18 | 4 | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | 287 | 0 | 2 | 14 | 152 | 39 | 0 | 70 | 67 | 185 | 0 | 0 | 0 | 2 | 0 | 31 | 7 | 43 | 10 | 10 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | 296 | 0 | 2 | 16 | 158 | 41 | 0 | 70 | 73 | 187 | 0 | 0 | 0 | 4 | 0 | 33 | 7 | 43 | 10 | 10 |
 | `matrix4/hyperreal/mat4 determinant` | 365 | 0 | 65 | 0 | 108 | 0 | 0 | 82 | 120 | 358 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 20 | 0 | 0 |
 | `matrix4/hyperreal/mat4 determinant sparse` | 316 | 0 | 64 | 0 | 204 | 0 | 0 | 15 | 204 | 227 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 42 | 0 | 0 |
 | `matrix4/hyperreal/mat4 inverse` | 1280 | 0 | 291 | 0 | 335 | 39 | 0 | 501 | 343 | 1217 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 96 | 0 | 42 |
-| `matrix4/hyperreal/mat4 inverse sparse` | 917 | 0 | 38 | 0 | 705 | 161 | 0 | 444 | 243 | 670 | 0 | 0 | 0 | 0 | 0 | 34 | 0 | 150 | 0 | 0 |
+| `matrix4/hyperreal/mat4 inverse sparse` | 947 | 0 | 38 | 0 | 705 | 161 | 0 | 444 | 243 | 670 | 0 | 0 | 0 | 0 | 0 | 34 | 0 | 150 | 0 | 0 |
 | `matrix4/hyperreal/mat4 mul mat4` | 1627 | 0 | 76 | 0 | 1299 | 306 | 0 | 901 | 471 | 1400 | 0 | 0 | 0 | 0 | 0 | 23 | 0 | 7 | 0 | 0 |
 | `matrix4/hyperreal/mat4 mul mat4 sparse` | 1471 | 0 | 32 | 0 | 1333 | 322 | 0 | 804 | 414 | 1211 | 0 | 0 | 0 | 0 | 0 | 34 | 0 | 56 | 0 | 0 |
-| `matrix4/hyperreal/mat4 transform vec4` | 682 | 0 | 8 | 0 | 604 | 158 | 0 | 402 | 148 | 562 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 12 | 0 | 0 |
+| `matrix4/hyperreal/mat4 transform vec4` | 686 | 0 | 8 | 0 | 604 | 158 | 0 | 402 | 148 | 562 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 12 | 0 | 0 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | 266 | 0 | 23 | 0 | 121 | 22 | 0 | 117 | 66 | 244 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 4 | 0 | 0 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | 164 | 0 | 36 | 0 | 6 | 0 | 0 | 56 | 15 | 149 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 2 | 0 | 0 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | 121 | 0 | 32 | 0 | 3 | 0 | 0 | 47 | 12 | 113 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 2 | 0 | 0 |
@@ -433,9 +433,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | 864 | 0 | 71 | 0 | 601 | 114 | 0 | 355 | 287 | 740 | 0 | 0 | 0 | 0 | 0 | 41 | 0 | 38 | 0 | 0 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | 566 | 0 | 73 | 0 | 278 | 38 | 0 | 184 | 188 | 496 | 0 | 0 | 0 | 0 | 0 | 25 | 0 | 24 | 0 | 0 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | 481 | 0 | 53 | 0 | 275 | 38 | 0 | 152 | 169 | 418 | 0 | 0 | 0 | 0 | 0 | 27 | 0 | 26 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | 896 | 0 | 40 | 0 | 705 | 176 | 0 | 460 | 205 | 765 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 23 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | 732 | 0 | 24 | 0 | 664 | 176 | 0 | 424 | 152 | 600 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 17 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 affine_inverse` | 560 | 0 | 46 | 0 | 358 | 88 | 0 | 248 | 118 | 432 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 46 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | 906 | 0 | 40 | 0 | 705 | 176 | 0 | 460 | 205 | 762 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 23 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | 732 | 0 | 24 | 0 | 664 | 176 | 0 | 424 | 152 | 592 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 affine_inverse` | 580 | 0 | 46 | 0 | 358 | 88 | 0 | 248 | 118 | 430 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 46 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat3 bitxor` | 350 | 0 | 32 | 0 | 36 | 0 | 0 | 79 | 36 | 286 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 10 | 6 | 24 |
 | `matrix_ops/hyperreal-rational/mat3 div_matrix` | 1017 | 0 | 96 | 0 | 484 | 88 | 0 | 360 | 272 | 929 | 0 | 0 | 0 | 0 | 0 | 45 | 0 | 21 | 2 | 5 |
 | `matrix_ops/hyperreal-rational/mat3 div_matrix_checked` | 1029 | 0 | 104 | 0 | 488 | 88 | 0 | 360 | 284 | 929 | 0 | 0 | 0 | 0 | 0 | 45 | 0 | 21 | 2 | 5 |
@@ -445,16 +445,16 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 known_diagonal_div_matrix` | 52 | 0 | 10 | 0 | 0 | 0 | 0 | 13 | 0 | 48 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 1 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat3 known_diagonal_div_vector` | 33 | 0 | 5 | 0 | 0 | 0 | 0 | 7 | 0 | 28 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat3 known_diagonal_inverse` | 11 | 0 | 2 | 0 | 6 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_div_matrix` | 93 | 0 | 14 | 0 | 0 | 0 | 0 | 24 | 3 | 88 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 1 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | 53 | 0 | 6 | 0 | 6 | 0 | 0 | 12 | 6 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 11 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | 62 | 0 | 12 | 0 | 9 | 0 | 0 | 12 | 15 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 11 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | 62 | 0 | 12 | 0 | 9 | 0 | 0 | 12 | 15 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 4 | 11 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_div_matrix` | 96 | 0 | 14 | 0 | 0 | 0 | 0 | 24 | 3 | 88 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 1 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | 57 | 0 | 6 | 0 | 6 | 0 | 0 | 12 | 6 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 11 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | 66 | 0 | 12 | 0 | 9 | 0 | 0 | 12 | 15 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 11 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | 66 | 0 | 12 | 0 | 9 | 0 | 0 | 12 | 15 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 4 | 11 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat3 known_uniform_diagonal_div_vector` | 34 | 0 | 6 | 0 | 0 | 0 | 0 | 9 | 0 | 30 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat3 known_uniform_scale_inverse` | 9 | 0 | 2 | 0 | 6 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_div_matrix` | 94 | 0 | 14 | 0 | 0 | 0 | 0 | 26 | 3 | 89 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 2 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | 55 | 0 | 6 | 0 | 6 | 0 | 0 | 13 | 6 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | 64 | 0 | 12 | 0 | 9 | 0 | 0 | 13 | 15 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | 64 | 0 | 12 | 0 | 9 | 0 | 0 | 13 | 15 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 4 | 9 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_div_matrix` | 97 | 0 | 14 | 0 | 0 | 0 | 0 | 26 | 3 | 89 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 2 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | 59 | 0 | 6 | 0 | 6 | 0 | 0 | 13 | 6 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | 68 | 0 | 12 | 0 | 9 | 0 | 0 | 13 | 15 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | 68 | 0 | 12 | 0 | 9 | 0 | 0 | 13 | 15 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 4 | 9 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat3 powi` | 346 | 0 | 28 | 0 | 36 | 0 | 0 | 79 | 36 | 286 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 10 | 6 | 24 |
 | `matrix_ops/hyperreal-rational/mat3 powi_checked` | 346 | 0 | 28 | 0 | 36 | 0 | 0 | 79 | 36 | 286 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 10 | 6 | 24 |
 | `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | 346 | 0 | 28 | 0 | 36 | 0 | 0 | 79 | 36 | 286 | 0 | 0 | 0 | 0 | 0 | 5 | 4 | 10 | 6 | 24 |
@@ -475,13 +475,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 transform_vec3_batch` | 131 | 0 | 4 | 0 | 79 | 22 | 0 | 65 | 15 | 115 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat3 transform_vec3_handle` | 368 | 0 | 4 | 0 | 316 | 88 | 0 | 220 | 60 | 316 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat3 uniform_scale_reciprocal` | 92 | 0 | 5 | 0 | 86 | 22 | 0 | 52 | 22 | 67 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | 1969 | 0 | 98 | 0 | 1509 | 378 | 0 | 1004 | 430 | 1640 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | 47 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | 1985 | 0 | 109 | 0 | 1514 | 378 | 0 | 1004 | 445 | 1641 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | 47 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | 1989 | 0 | 111 | 0 | 1514 | 378 | 0 | 1004 | 445 | 1641 | 0 | 0 | 0 | 0 | 0 | 29 | 19 | 47 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | 1360 | 0 | 32 | 0 | 1240 | 328 | 0 | 798 | 304 | 1096 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 36 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | 1364 | 0 | 36 | 0 | 1240 | 328 | 0 | 798 | 304 | 1096 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 36 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | 1364 | 0 | 36 | 0 | 1240 | 328 | 0 | 798 | 304 | 1096 | 0 | 0 | 0 | 0 | 0 | 19 | 12 | 36 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 affine_inverse` | 1101 | 0 | 114 | 0 | 675 | 155 | 0 | 475 | 263 | 856 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 103 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | 1984 | 0 | 98 | 0 | 1509 | 378 | 0 | 1004 | 430 | 1637 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | 47 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | 2000 | 0 | 109 | 0 | 1514 | 378 | 0 | 1004 | 445 | 1638 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | 47 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | 2004 | 0 | 111 | 0 | 1514 | 378 | 0 | 1004 | 445 | 1638 | 0 | 0 | 0 | 0 | 0 | 29 | 19 | 47 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | 1361 | 0 | 32 | 0 | 1240 | 328 | 0 | 796 | 304 | 1085 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | 1365 | 0 | 36 | 0 | 1240 | 328 | 0 | 796 | 304 | 1085 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | 1365 | 0 | 36 | 0 | 1240 | 328 | 0 | 796 | 304 | 1085 | 0 | 0 | 0 | 0 | 0 | 11 | 12 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 affine_inverse` | 1127 | 0 | 114 | 0 | 675 | 155 | 0 | 475 | 263 | 856 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 103 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 bitxor` | 1345 | 0 | 160 | 0 | 679 | 155 | 0 | 632 | 357 | 1180 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 26 | 6 | 30 |
 | `matrix_ops/hyperreal-rational/mat4 diagonal_direction_batch` | 216 | 0 | 13 | 0 | 155 | 39 | 0 | 105 | 42 | 185 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 10 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 diagonal_point_batch` | 222 | 0 | 13 | 0 | 157 | 42 | 0 | 111 | 35 | 188 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 10 | 0 | 0 |
@@ -495,36 +495,36 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 identity_direction_transform_handle` | 191 | 0 | 1 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 identity_point_batch_assumed` | 192 | 0 | 2 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 identity_point_materialize` | 191 | 0 | 1 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 identity_point_transform` | 25 | 0 | 4 | 0 | 12 | 1 | 0 | 5 | 9 | 23 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 identity_point_transform` | 28 | 0 | 4 | 0 | 12 | 1 | 0 | 5 | 9 | 23 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 identity_point_transform_handle` | 191 | 0 | 1 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | 1352 | 0 | 299 | 0 | 339 | 39 | 0 | 401 | 355 | 1277 | 0 | 0 | 0 | 0 | 0 | 108 | 0 | 42 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked_abort` | 1360 | 0 | 303 | 0 | 339 | 39 | 0 | 401 | 355 | 1277 | 0 | 0 | 0 | 0 | 0 | 108 | 11 | 42 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_matrix` | 79 | 0 | 17 | 0 | 0 | 0 | 0 | 25 | 0 | 74 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 5 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector` | 83 | 0 | 10 | 0 | 13 | 3 | 0 | 23 | 7 | 73 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector` | 87 | 0 | 10 | 0 | 13 | 3 | 0 | 23 | 7 | 73 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_direction` | 43 | 0 | 5 | 0 | 5 | 1 | 0 | 13 | 3 | 36 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_direction_only` | 40 | 0 | 5 | 0 | 2 | 0 | 0 | 11 | 2 | 34 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 3 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_point` | 86 | 0 | 10 | 0 | 13 | 3 | 0 | 24 | 7 | 76 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 2 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_point` | 90 | 0 | 10 | 0 | 13 | 3 | 0 | 24 | 7 | 76 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 2 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_inverse` | 18 | 0 | 2 | 0 | 12 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_div_matrix` | 160 | 0 | 26 | 0 | 0 | 0 | 0 | 47 | 8 | 154 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 3 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse` | 144 | 0 | 11 | 0 | 22 | 0 | 0 | 33 | 22 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | 156 | 0 | 19 | 0 | 26 | 0 | 0 | 33 | 34 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked_abort` | 156 | 0 | 19 | 0 | 26 | 0 | 0 | 33 | 34 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 5 | 32 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | 98 | 0 | 8 | 0 | 3 | 0 | 0 | 19 | 5 | 94 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 29 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_orthonormal_inverse` | 26 | 0 | 4 | 0 | 6 | 0 | 0 | 3 | 6 | 18 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 13 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_div_matrix` | 164 | 0 | 26 | 0 | 0 | 0 | 0 | 47 | 8 | 154 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 3 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse` | 154 | 0 | 11 | 0 | 22 | 0 | 0 | 33 | 22 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | 166 | 0 | 19 | 0 | 26 | 0 | 0 | 33 | 34 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked_abort` | 166 | 0 | 19 | 0 | 26 | 0 | 0 | 33 | 34 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 5 | 32 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | 105 | 0 | 8 | 0 | 3 | 0 | 0 | 19 | 5 | 94 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 29 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_orthonormal_inverse` | 29 | 0 | 4 | 0 | 6 | 0 | 0 | 3 | 6 | 18 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 13 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_signed_permutation_batch` | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_signed_permutation_div_matrix` | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_signed_permutation_inverse` | 21 | 0 | 1 | 0 | 16 | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_signed_permutation_transform` | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | 35 | 0 | 9 | 0 | 0 | 0 | 0 | 4 | 0 | 30 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 8 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | 36 | 0 | 9 | 0 | 0 | 0 | 0 | 4 | 0 | 27 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 5 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_translation_inverse` | 15 | 0 | 2 | 0 | 9 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | 76 | 0 | 11 | 0 | 13 | 3 | 0 | 22 | 7 | 67 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 14 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | 78 | 0 | 11 | 0 | 13 | 3 | 0 | 22 | 7 | 65 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 12 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_direction` | 40 | 0 | 6 | 0 | 5 | 1 | 0 | 14 | 3 | 34 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 7 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | 76 | 0 | 11 | 0 | 13 | 3 | 0 | 24 | 7 | 67 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 12 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | 79 | 0 | 11 | 0 | 13 | 3 | 0 | 23 | 7 | 66 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 12 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_scale_inverse` | 15 | 0 | 2 | 0 | 12 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | 145 | 0 | 26 | 0 | 0 | 0 | 0 | 44 | 8 | 139 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 10 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse` | 140 | 0 | 11 | 0 | 22 | 0 | 0 | 31 | 22 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 35 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | 152 | 0 | 19 | 0 | 26 | 0 | 0 | 31 | 34 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 35 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked_abort` | 152 | 0 | 19 | 0 | 26 | 0 | 0 | 31 | 34 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 5 | 35 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | 146 | 0 | 26 | 0 | 0 | 0 | 0 | 42 | 8 | 136 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 7 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse` | 150 | 0 | 11 | 0 | 22 | 0 | 0 | 31 | 22 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 35 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | 162 | 0 | 19 | 0 | 26 | 0 | 0 | 31 | 34 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 35 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked_abort` | 162 | 0 | 19 | 0 | 26 | 0 | 0 | 31 | 34 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 5 | 35 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 powi` | 1341 | 0 | 156 | 0 | 679 | 155 | 0 | 632 | 357 | 1180 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 26 | 6 | 30 |
 | `matrix_ops/hyperreal-rational/mat4 powi_checked` | 1341 | 0 | 156 | 0 | 679 | 155 | 0 | 632 | 357 | 1180 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 26 | 6 | 30 |
 | `matrix_ops/hyperreal-rational/mat4 powi_checked_abort` | 1341 | 0 | 156 | 0 | 679 | 155 | 0 | 632 | 357 | 1180 | 0 | 0 | 0 | 0 | 0 | 39 | 4 | 26 | 6 | 30 |
@@ -550,15 +550,15 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_direction_batch_public_assumed` | 63 | 0 | 14 | 0 | 13 | 0 | 0 | 12 | 13 | 57 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 4 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_direction_materialize` | 165 | 0 | 4 | 1 | 149 | 39 | 0 | 96 | 36 | 137 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 4 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_direction_transform` | 29 | 0 | 4 | 1 | 13 | 1 | 0 | 5 | 10 | 26 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 4 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | 246 | 0 | 17 | 0 | 157 | 42 | 0 | 111 | 38 | 212 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 0 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | 235 | 0 | 14 | 0 | 145 | 38 | 0 | 103 | 34 | 204 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 4 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | 236 | 0 | 15 | 0 | 145 | 38 | 0 | 103 | 34 | 204 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 4 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | 173 | 0 | 4 | 0 | 148 | 39 | 0 | 96 | 35 | 146 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | 37 | 0 | 4 | 0 | 12 | 1 | 0 | 5 | 9 | 35 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | 249 | 0 | 17 | 0 | 157 | 42 | 0 | 111 | 38 | 203 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 0 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | 238 | 0 | 14 | 0 | 145 | 38 | 0 | 103 | 34 | 195 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 4 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | 239 | 0 | 15 | 0 | 145 | 38 | 0 | 103 | 34 | 195 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 4 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | 173 | 0 | 4 | 0 | 148 | 39 | 0 | 96 | 35 | 143 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 3 | 0 | 0 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | 37 | 0 | 4 | 0 | 12 | 1 | 0 | 5 | 9 | 32 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal-rational/mat4 uniform_scale_reciprocal` | 162 | 0 | 4 | 0 | 157 | 38 | 0 | 91 | 46 | 119 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 affine_div_matrix` | 906 | 0 | 40 | 0 | 705 | 176 | 0 | 473 | 205 | 775 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 23 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | 732 | 0 | 24 | 0 | 664 | 176 | 0 | 427 | 152 | 600 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 18 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 affine_inverse` | 572 | 0 | 46 | 0 | 358 | 88 | 0 | 262 | 118 | 444 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 46 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 affine_div_matrix` | 916 | 0 | 40 | 0 | 705 | 176 | 0 | 470 | 205 | 772 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 23 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | 732 | 0 | 24 | 0 | 664 | 176 | 0 | 424 | 152 | 592 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 affine_inverse` | 592 | 0 | 46 | 0 | 358 | 88 | 0 | 260 | 118 | 442 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 46 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 bitxor` | 329 | 0 | 32 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 28 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | 995 | 0 | 92 | 0 | 484 | 88 | 0 | 446 | 272 | 907 | 0 | 0 | 0 | 0 | 0 | 45 | 0 | 50 | 0 | 15 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | 1007 | 0 | 100 | 0 | 488 | 88 | 0 | 446 | 284 | 907 | 0 | 0 | 0 | 0 | 0 | 45 | 0 | 50 | 0 | 15 |
@@ -568,16 +568,16 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 known_diagonal_div_matrix` | 55 | 0 | 10 | 0 | 0 | 0 | 0 | 19 | 0 | 51 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 1 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 known_diagonal_div_vector` | 34 | 0 | 5 | 0 | 0 | 0 | 0 | 9 | 0 | 29 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 known_diagonal_inverse` | 11 | 0 | 2 | 0 | 6 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 known_lower_triangular_div_matrix` | 96 | 0 | 14 | 0 | 0 | 0 | 0 | 27 | 3 | 91 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 1 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | 53 | 0 | 6 | 0 | 6 | 0 | 0 | 12 | 6 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 11 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | 62 | 0 | 12 | 0 | 9 | 0 | 0 | 12 | 15 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 11 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | 62 | 0 | 12 | 0 | 9 | 0 | 0 | 12 | 15 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 4 | 11 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_div_matrix` | 99 | 0 | 14 | 0 | 0 | 0 | 0 | 27 | 3 | 91 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 1 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | 57 | 0 | 6 | 0 | 6 | 0 | 0 | 12 | 6 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 11 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | 66 | 0 | 12 | 0 | 9 | 0 | 0 | 12 | 15 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 11 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | 66 | 0 | 12 | 0 | 9 | 0 | 0 | 12 | 15 | 43 | 0 | 0 | 0 | 0 | 0 | 7 | 4 | 11 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 known_uniform_diagonal_div_vector` | 31 | 0 | 6 | 0 | 0 | 0 | 0 | 12 | 0 | 27 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 known_uniform_scale_inverse` | 9 | 0 | 2 | 0 | 6 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 known_upper_triangular_div_matrix` | 90 | 0 | 14 | 0 | 0 | 0 | 0 | 30 | 3 | 85 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 1 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | 55 | 0 | 6 | 0 | 6 | 0 | 0 | 13 | 6 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | 64 | 0 | 12 | 0 | 9 | 0 | 0 | 13 | 15 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
-| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | 64 | 0 | 12 | 0 | 9 | 0 | 0 | 13 | 15 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 4 | 9 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_div_matrix` | 93 | 0 | 14 | 0 | 0 | 0 | 0 | 30 | 3 | 85 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 1 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | 59 | 0 | 6 | 0 | 6 | 0 | 0 | 13 | 6 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | 68 | 0 | 12 | 0 | 9 | 0 | 0 | 13 | 15 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 0 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | 68 | 0 | 12 | 0 | 9 | 0 | 0 | 13 | 15 | 45 | 0 | 0 | 0 | 0 | 0 | 5 | 4 | 9 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 powi` | 325 | 0 | 28 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 28 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 powi_checked` | 325 | 0 | 28 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 28 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 powi_checked_abort` | 325 | 0 | 28 | 0 | 36 | 0 | 0 | 139 | 36 | 265 | 0 | 0 | 0 | 0 | 0 | 5 | 4 | 28 | 0 | 0 |
@@ -598,13 +598,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 transform_vec3_batch` | 125 | 0 | 4 | 0 | 79 | 22 | 0 | 76 | 15 | 109 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 transform_vec3_handle` | 365 | 0 | 4 | 0 | 316 | 88 | 0 | 230 | 60 | 313 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal/mat3 uniform_scale_reciprocal` | 92 | 0 | 5 | 0 | 86 | 22 | 0 | 52 | 22 | 67 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix` | 1918 | 0 | 98 | 0 | 1509 | 378 | 0 | 1071 | 430 | 1589 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | 121 | 27 | 122 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | 1934 | 0 | 109 | 0 | 1514 | 378 | 0 | 1071 | 445 | 1590 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | 121 | 27 | 122 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | 1938 | 0 | 111 | 0 | 1514 | 378 | 0 | 1071 | 445 | 1590 | 0 | 0 | 0 | 0 | 0 | 29 | 19 | 121 | 27 | 122 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | 1360 | 0 | 32 | 0 | 1240 | 328 | 0 | 802 | 304 | 1096 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 36 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | 1364 | 0 | 36 | 0 | 1240 | 328 | 0 | 802 | 304 | 1096 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 36 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | 1364 | 0 | 36 | 0 | 1240 | 328 | 0 | 802 | 304 | 1096 | 0 | 0 | 0 | 0 | 0 | 19 | 12 | 36 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 affine_inverse` | 1078 | 0 | 114 | 0 | 675 | 155 | 0 | 518 | 263 | 833 | 0 | 0 | 0 | 0 | 0 | 38 | 0 | 131 | 6 | 33 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | 1933 | 0 | 98 | 0 | 1509 | 378 | 0 | 1068 | 430 | 1586 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | 121 | 27 | 122 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | 1949 | 0 | 109 | 0 | 1514 | 378 | 0 | 1068 | 445 | 1587 | 0 | 0 | 0 | 0 | 0 | 29 | 0 | 121 | 27 | 122 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | 1953 | 0 | 111 | 0 | 1514 | 378 | 0 | 1068 | 445 | 1587 | 0 | 0 | 0 | 0 | 0 | 29 | 19 | 121 | 27 | 122 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | 1361 | 0 | 32 | 0 | 1240 | 328 | 0 | 797 | 304 | 1085 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | 1365 | 0 | 36 | 0 | 1240 | 328 | 0 | 797 | 304 | 1085 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | 1365 | 0 | 36 | 0 | 1240 | 328 | 0 | 797 | 304 | 1085 | 0 | 0 | 0 | 0 | 0 | 11 | 12 | 28 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 affine_inverse` | 1104 | 0 | 114 | 0 | 675 | 155 | 0 | 518 | 263 | 833 | 0 | 0 | 0 | 0 | 0 | 38 | 0 | 131 | 6 | 33 |
 | `matrix_ops/hyperreal/mat4 bitxor` | 1321 | 0 | 160 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 47 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 diagonal_direction_batch` | 216 | 0 | 13 | 0 | 155 | 39 | 0 | 105 | 42 | 185 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 10 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 diagonal_point_batch` | 222 | 0 | 13 | 0 | 157 | 42 | 0 | 111 | 35 | 188 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 10 | 0 | 0 |
@@ -618,36 +618,36 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 identity_direction_transform_handle` | 191 | 0 | 1 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 identity_point_batch_assumed` | 192 | 0 | 2 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 identity_point_materialize` | 191 | 0 | 1 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 identity_point_transform` | 25 | 0 | 4 | 0 | 12 | 1 | 0 | 5 | 9 | 23 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 identity_point_transform` | 28 | 0 | 4 | 0 | 12 | 1 | 0 | 5 | 9 | 23 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 identity_point_transform_handle` | 191 | 0 | 1 | 0 | 190 | 53 | 0 | 121 | 49 | 150 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | 1294 | 0 | 299 | 0 | 339 | 39 | 0 | 502 | 355 | 1219 | 0 | 0 | 0 | 0 | 0 | 100 | 0 | 96 | 0 | 42 |
 | `matrix_ops/hyperreal/mat4 inverse_checked_abort` | 1302 | 0 | 303 | 0 | 339 | 39 | 0 | 502 | 355 | 1219 | 0 | 0 | 0 | 0 | 0 | 100 | 11 | 96 | 0 | 42 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_matrix` | 79 | 0 | 17 | 0 | 0 | 0 | 0 | 25 | 0 | 74 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 5 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | 83 | 0 | 10 | 0 | 13 | 3 | 0 | 23 | 7 | 73 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | 87 | 0 | 10 | 0 | 13 | 3 | 0 | 23 | 7 | 73 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_direction` | 43 | 0 | 5 | 0 | 5 | 1 | 0 | 13 | 3 | 36 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_direction_only` | 40 | 0 | 5 | 0 | 2 | 0 | 0 | 11 | 2 | 34 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 3 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_point` | 86 | 0 | 10 | 0 | 13 | 3 | 0 | 24 | 7 | 76 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 2 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_point` | 90 | 0 | 10 | 0 | 13 | 3 | 0 | 24 | 7 | 76 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 2 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_inverse` | 18 | 0 | 2 | 0 | 12 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_lower_triangular_div_matrix` | 160 | 0 | 26 | 0 | 0 | 0 | 0 | 47 | 8 | 154 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 3 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse` | 144 | 0 | 11 | 0 | 22 | 0 | 0 | 33 | 22 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | 156 | 0 | 19 | 0 | 26 | 0 | 0 | 33 | 34 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked_abort` | 156 | 0 | 19 | 0 | 26 | 0 | 0 | 33 | 34 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 5 | 32 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | 98 | 0 | 8 | 0 | 3 | 0 | 0 | 19 | 5 | 94 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 29 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_orthonormal_inverse` | 26 | 0 | 4 | 0 | 6 | 0 | 0 | 3 | 6 | 18 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 13 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_lower_triangular_div_matrix` | 164 | 0 | 26 | 0 | 0 | 0 | 0 | 47 | 8 | 154 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 3 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse` | 154 | 0 | 11 | 0 | 22 | 0 | 0 | 33 | 22 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | 166 | 0 | 19 | 0 | 26 | 0 | 0 | 33 | 34 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 32 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked_abort` | 166 | 0 | 19 | 0 | 26 | 0 | 0 | 33 | 34 | 113 | 0 | 0 | 0 | 0 | 0 | 10 | 5 | 32 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | 103 | 0 | 8 | 0 | 3 | 0 | 0 | 19 | 5 | 92 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 27 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_orthonormal_inverse` | 29 | 0 | 4 | 0 | 6 | 0 | 0 | 3 | 6 | 18 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 13 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_signed_permutation_batch` | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_signed_permutation_div_matrix` | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_signed_permutation_inverse` | 21 | 0 | 1 | 0 | 16 | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 22 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_signed_permutation_transform` | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | 35 | 0 | 9 | 0 | 0 | 0 | 0 | 4 | 0 | 30 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 8 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | 36 | 0 | 9 | 0 | 0 | 0 | 0 | 4 | 0 | 27 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 5 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_translation_inverse` | 15 | 0 | 2 | 0 | 9 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | 76 | 0 | 11 | 0 | 13 | 3 | 0 | 22 | 7 | 67 | 0 | 0 | 0 | 0 | 0 | 19 | 0 | 14 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | 78 | 0 | 11 | 0 | 13 | 3 | 0 | 22 | 7 | 65 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 12 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_direction` | 40 | 0 | 6 | 0 | 5 | 1 | 0 | 14 | 3 | 34 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 7 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | 76 | 0 | 11 | 0 | 13 | 3 | 0 | 24 | 7 | 67 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 12 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | 79 | 0 | 11 | 0 | 13 | 3 | 0 | 23 | 7 | 66 | 0 | 0 | 0 | 0 | 0 | 17 | 0 | 12 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 known_uniform_scale_inverse` | 15 | 0 | 2 | 0 | 12 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | 144 | 0 | 26 | 0 | 0 | 0 | 0 | 43 | 8 | 138 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 9 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | 140 | 0 | 11 | 0 | 22 | 0 | 0 | 31 | 22 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 35 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | 152 | 0 | 19 | 0 | 26 | 0 | 0 | 31 | 34 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 35 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | 152 | 0 | 19 | 0 | 26 | 0 | 0 | 31 | 34 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 5 | 35 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | 145 | 0 | 26 | 0 | 0 | 0 | 0 | 41 | 8 | 135 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 6 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | 150 | 0 | 11 | 0 | 22 | 0 | 0 | 31 | 22 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 35 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | 162 | 0 | 19 | 0 | 26 | 0 | 0 | 31 | 34 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 35 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | 162 | 0 | 19 | 0 | 26 | 0 | 0 | 31 | 34 | 109 | 0 | 0 | 0 | 0 | 0 | 13 | 5 | 35 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 powi` | 1317 | 0 | 156 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 47 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 powi_checked` | 1317 | 0 | 156 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 47 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 powi_checked_abort` | 1317 | 0 | 156 | 0 | 679 | 155 | 0 | 715 | 357 | 1156 | 0 | 0 | 0 | 0 | 0 | 39 | 4 | 47 | 0 | 0 |
@@ -673,11 +673,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 translated_diagonal_direction_batch_public_assumed` | 63 | 0 | 14 | 0 | 13 | 0 | 0 | 12 | 13 | 57 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 4 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_direction_materialize` | 165 | 0 | 4 | 1 | 149 | 39 | 0 | 96 | 36 | 137 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 4 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_direction_transform` | 29 | 0 | 4 | 1 | 13 | 1 | 0 | 5 | 10 | 26 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 4 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | 246 | 0 | 17 | 0 | 157 | 42 | 0 | 111 | 38 | 212 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 0 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | 235 | 0 | 14 | 0 | 145 | 38 | 0 | 103 | 34 | 204 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 4 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | 236 | 0 | 15 | 0 | 145 | 38 | 0 | 103 | 34 | 204 | 0 | 0 | 0 | 0 | 0 | 24 | 0 | 4 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | 173 | 0 | 4 | 0 | 148 | 39 | 0 | 96 | 35 | 146 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | 37 | 0 | 4 | 0 | 12 | 1 | 0 | 5 | 9 | 35 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 3 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | 246 | 0 | 17 | 0 | 157 | 42 | 0 | 111 | 38 | 200 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | 235 | 0 | 14 | 0 | 145 | 38 | 0 | 103 | 34 | 192 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 4 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | 236 | 0 | 15 | 0 | 145 | 38 | 0 | 103 | 34 | 192 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 4 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | 173 | 0 | 4 | 0 | 148 | 39 | 0 | 96 | 35 | 143 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 3 | 0 | 0 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | 37 | 0 | 4 | 0 | 12 | 1 | 0 | 5 | 9 | 32 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 3 | 0 | 0 |
 | `matrix_ops/hyperreal/mat4 uniform_scale_reciprocal` | 162 | 0 | 4 | 0 | 157 | 38 | 0 | 91 | 46 | 119 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 |
 | `scalar_large_integer_exp/hyperreal-rational/exp_128` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 | 0 | 0 |
 | `scalar_large_integer_exp/hyperreal/exp_128` | 8 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 | 0 | 0 |
@@ -685,7 +685,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/acos_abort` | 55 | 0 | 12 | 4 | 15 | 4 | 0 | 8 | 11 | 30 | 0 | 0 | 0 | 0 | 0 | 3 | 11 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/acosh` | 19 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/acosh_abort` | 27 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/add` | 12 | 0 | 0 | 0 | 1 | 0 | 0 | 2 | 2 | 11 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 0 | 0 |
+| `scalar_ops/hyperreal-rational/add` | 28 | 0 | 0 | 0 | 2 | 0 | 0 | 2 | 3 | 18 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 5 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/asin` | 40 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 9 | 29 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/asin_abort` | 48 | 0 | 12 | 4 | 12 | 4 | 0 | 8 | 9 | 29 | 0 | 0 | 0 | 0 | 0 | 2 | 8 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/asinh` | 20 | 0 | 4 | 0 | 6 | 0 | 0 | 0 | 8 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
@@ -695,7 +695,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/atanh` | 24 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/atanh_abort` | 32 | 0 | 8 | 0 | 4 | 0 | 0 | 0 | 4 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/cos` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/cosh` | 92 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 48 | 4 | 4 |
+| `scalar_ops/hyperreal-rational/cosh` | 96 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 6 | 4 | 48 | 4 | 4 |
 | `scalar_ops/hyperreal-rational/div` | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/exp` | 20 | 0 | 4 | 4 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/ln` | 37 | 0 | 8 | 4 | 12 | 4 | 0 | 9 | 8 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 |
@@ -706,16 +706,16 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/powi` | 11 | 0 | 4 | 0 | 0 | 0 | 0 | 1 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/powi_negative_one` | 16 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/sinh` | 92 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 48 | 4 | 4 |
+| `scalar_ops/hyperreal-rational/sinh` | 96 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 6 | 4 | 48 | 4 | 4 |
 | `scalar_ops/hyperreal-rational/sqrt` | 13 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/sub` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 2 | 0 | 0 |
+| `scalar_ops/hyperreal-rational/sub` | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 20 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 2 | 0 | 0 |
 | `scalar_ops/hyperreal-rational/tan` | 20 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal-rational/tanh` | 136 | 0 | 4 | 12 | 12 | 0 | 0 | 8 | 12 | 88 | 0 | 0 | 0 | 0 | 0 | 4 | 4 | 68 | 8 | 8 |
+| `scalar_ops/hyperreal-rational/tanh` | 144 | 0 | 4 | 12 | 12 | 0 | 0 | 8 | 12 | 88 | 0 | 0 | 0 | 0 | 0 | 4 | 12 | 68 | 8 | 8 |
 | `scalar_ops/hyperreal/acos` | 42 | 0 | 8 | 4 | 15 | 4 | 0 | 8 | 11 | 25 | 0 | 0 | 0 | 0 | 0 | 3 | 3 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/acos_abort` | 50 | 0 | 12 | 4 | 15 | 4 | 0 | 8 | 11 | 25 | 0 | 0 | 0 | 0 | 0 | 3 | 11 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/acosh` | 17 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/acosh_abort` | 25 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal/add` | 12 | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 2 | 11 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 0 | 0 |
+| `scalar_ops/hyperreal/add` | 28 | 0 | 0 | 0 | 2 | 0 | 0 | 3 | 3 | 18 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 5 | 0 | 0 |
 | `scalar_ops/hyperreal/asin` | 36 | 0 | 8 | 4 | 12 | 4 | 0 | 8 | 9 | 25 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal/asin_abort` | 44 | 0 | 12 | 4 | 12 | 4 | 0 | 8 | 9 | 25 | 0 | 0 | 0 | 0 | 0 | 2 | 8 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal/asinh` | 20 | 0 | 4 | 0 | 6 | 0 | 0 | 0 | 8 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
@@ -725,7 +725,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/atanh` | 21 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal/atanh_abort` | 29 | 0 | 8 | 0 | 4 | 0 | 0 | 0 | 4 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal/cos` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal/cosh` | 92 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 48 | 4 | 4 |
+| `scalar_ops/hyperreal/cosh` | 96 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 6 | 4 | 48 | 4 | 4 |
 | `scalar_ops/hyperreal/div` | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
 | `scalar_ops/hyperreal/exp` | 20 | 0 | 4 | 4 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
 | `scalar_ops/hyperreal/ln` | 41 | 0 | 8 | 4 | 12 | 4 | 0 | 10 | 8 | 25 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 |
@@ -736,11 +736,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/powi` | 13 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 0 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal/powi_negative_one` | 16 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `scalar_ops/hyperreal/sin` | 18 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal/sinh` | 92 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 48 | 4 | 4 |
+| `scalar_ops/hyperreal/sinh` | 96 | 0 | 4 | 6 | 8 | 0 | 0 | 8 | 8 | 66 | 0 | 0 | 0 | 0 | 0 | 6 | 4 | 48 | 4 | 4 |
 | `scalar_ops/hyperreal/sqrt` | 15 | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 4 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `scalar_ops/hyperreal/sub` | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 2 | 0 | 0 |
+| `scalar_ops/hyperreal/sub` | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 20 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 2 | 0 | 0 |
 | `scalar_ops/hyperreal/tan` | 20 | 0 | 4 | 2 | 4 | 0 | 0 | 0 | 4 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| `scalar_ops/hyperreal/tanh` | 136 | 0 | 4 | 12 | 12 | 0 | 0 | 8 | 12 | 88 | 0 | 0 | 0 | 0 | 0 | 4 | 4 | 68 | 8 | 8 |
+| `scalar_ops/hyperreal/tanh` | 144 | 0 | 4 | 12 | 12 | 0 | 0 | 8 | 12 | 88 | 0 | 0 | 0 | 0 | 0 | 4 | 12 | 68 | 8 | 8 |
 | `scalar_trig/hyperreal-rational/0.1/cos` | 5 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/0.1/sin` | 5 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | `scalar_trig/hyperreal-rational/0.5/acos` | 9 | 0 | 2 | 1 | 3 | 1 | 0 | 2 | 2 | 4 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
@@ -849,41 +849,48 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/complex add refs` | `rational` | `word-result` | `small-general-fraction` | 4 |
 | `borrowed_ops/hyperreal-rational/complex add refs` | `rational` | `word-result` | `unit` | 1 |
 | `borrowed_ops/hyperreal-rational/complex add refs` | `rational` | `word-result` | `zero` | 1 |
+| `borrowed_ops/hyperreal-rational/complex add refs` | `real` | `add` | `same-symbolic-basis` | 8 |
 | `borrowed_ops/hyperreal-rational/complex add refs` | `real` | `constructor` | `rational` | 6 |
 | `borrowed_ops/hyperreal-rational/complex add refs` | `real` | `constructor` | `zero` | 2 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 8 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `hyperlattice_complex` | `op` | `div-numerators-fused-known-exact-rational` | 4 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `hyperlattice_complex` | `op` | `div-ref-ref` | 4 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `add` | `word-sized` | 4 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `add` | `word-sized` | 3 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `linear` | `retained-sum` | 1 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 6 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `mul` | `word-sized` | 16 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `product_sum` | `word-sized` | 8 |
-| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `cached-small-dyadic` | 3 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `cached-small-integer` | 3 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `small-general-fraction` | 11 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `uncached-integer-wide` | 4 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `rational` | `word-result` | `wide-general-fraction` | 7 |
+| `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `constructor` | `rational` | 28 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `inverse` | `prechecked-one` | 4 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `mul` | `exact-rational` | 16 |
 | `borrowed_ops/hyperreal-rational/complex div refs` | `real` | `product_sum` | `exact-rational-known-shared-denom` | 8 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `hyperlattice_complex` | `op` | `mul-ref-ref` | 4 |
-| `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `add` | `word-sized` | 4 |
+| `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `add` | `word-sized` | 3 |
+| `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `linear` | `retained-difference` | 1 |
+| `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `linear` | `retained-sum` | 1 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 2 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `mul` | `word-sized` | 14 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `mul-div` | `proven-reduced-word-product` | 2 |
-| `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `sub` | `word-sized` | 4 |
-| `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
+| `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `sub` | `word-sized` | 3 |
+| `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `cached-small-integer` | 3 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `small-general-fraction` | 6 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `uncached-integer-wide` | 4 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `rational` | `word-result` | `wide-general-fraction` | 6 |
+| `borrowed_ops/hyperreal-rational/complex mul refs` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `real` | `constructor` | `rational` | 23 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `real` | `constructor` | `zero` | 1 |
 | `borrowed_ops/hyperreal-rational/complex mul refs` | `real` | `mul` | `exact-rational` | 16 |
+| `borrowed_ops/hyperreal-rational/complex mul refs` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal-rational/complex sub refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
 | `borrowed_ops/hyperreal-rational/complex sub refs` | `hyperlattice_complex` | `op` | `sub-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/complex sub refs` | `rational` | `sub` | `word-sized` | 8 |
@@ -891,6 +898,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/complex sub refs` | `rational` | `word-result` | `small-general-fraction` | 5 |
 | `borrowed_ops/hyperreal-rational/complex sub refs` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
 | `borrowed_ops/hyperreal-rational/complex sub refs` | `real` | `constructor` | `rational` | 8 |
+| `borrowed_ops/hyperreal-rational/complex sub refs` | `real` | `sub` | `same-symbolic-basis` | 8 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `hyperlattice_matrix` | `op` | `add-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `add` | `word-sized` | 28 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
@@ -898,6 +906,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `word-result` | `small-general-fraction` | 12 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `rational` | `word-result` | `zero` | 2 |
+| `borrowed_ops/hyperreal-rational/mat3 add refs` | `real` | `add` | `same-symbolic-basis` | 36 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `real` | `constructor` | `rational` | 29 |
 | `borrowed_ops/hyperreal-rational/mat3 add refs` | `real` | `constructor` | `zero` | 7 |
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 36 |
@@ -976,6 +985,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/mat3 sub refs` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
 | `borrowed_ops/hyperreal-rational/mat3 sub refs` | `rational` | `word-result` | `unit` | 1 |
 | `borrowed_ops/hyperreal-rational/mat3 sub refs` | `real` | `constructor` | `rational` | 36 |
+| `borrowed_ops/hyperreal-rational/mat3 sub refs` | `real` | `sub` | `same-symbolic-basis` | 36 |
 | `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `hyperlattice_matrix` | `op` | `transform-vector-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `rational` | `dot_product` | `word-sized` | 12 |
 | `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `rational` | `word-result` | `small-general-fraction` | 8 |
@@ -994,6 +1004,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `rational` | `word-result` | `small-general-fraction` | 6 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `rational` | `word-result` | `zero` | 3 |
+| `borrowed_ops/hyperreal-rational/mat4 add refs` | `real` | `add` | `same-symbolic-basis` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `real` | `constructor` | `rational` | 49 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `real` | `constructor` | `zero` | 15 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 64 |
@@ -1104,6 +1115,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/mat4 sub refs` | `rational` | `word-result` | `unit` | 2 |
 | `borrowed_ops/hyperreal-rational/mat4 sub refs` | `real` | `constructor` | `rational` | 63 |
 | `borrowed_ops/hyperreal-rational/mat4 sub refs` | `real` | `constructor` | `zero` | 1 |
+| `borrowed_ops/hyperreal-rational/mat4 sub refs` | `real` | `sub` | `same-symbolic-basis` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 3 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `hyperlattice_matrix` | `helper` | `transform-vector-point` | 1 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `hyperlattice_matrix` | `op` | `transform-vector-ref-ref` | 4 |
@@ -1113,6 +1125,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `rational` | `word-result` | `small-general-fraction` | 7 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `rational` | `word-result` | `uncached-integer-wide` | 3 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `real` | `constructor` | `rational` | 20 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `real` | `definitely_one` | `identity-facts` | 80 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `real` | `definitely_zero` | `rational-sign` | 116 |
@@ -1128,6 +1141,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/scalar add refs` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `borrowed_ops/hyperreal-rational/scalar add refs` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `borrowed_ops/hyperreal-rational/scalar add refs` | `rational` | `word-result` | `zero` | 1 |
+| `borrowed_ops/hyperreal-rational/scalar add refs` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal-rational/scalar add refs` | `real` | `constructor` | `rational` | 3 |
 | `borrowed_ops/hyperreal-rational/scalar add refs` | `real` | `constructor` | `zero` | 1 |
 | `borrowed_ops/hyperreal-rational/scalar div refs` | `rational` | `div` | `word-sized` | 3 |
@@ -1146,10 +1160,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/scalar sub refs` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `borrowed_ops/hyperreal-rational/scalar sub refs` | `rational` | `word-result` | `small-general-fraction` | 2 |
 | `borrowed_ops/hyperreal-rational/scalar sub refs` | `real` | `constructor` | `rational` | 4 |
+| `borrowed_ops/hyperreal-rational/scalar sub refs` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal-rational/vec3 add refs` | `hyperlattice_vector` | `op` | `add-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/vec3 add refs` | `rational` | `add` | `word-sized` | 11 |
 | `borrowed_ops/hyperreal-rational/vec3 add refs` | `rational` | `word-result` | `small-general-fraction` | 8 |
 | `borrowed_ops/hyperreal-rational/vec3 add refs` | `rational` | `word-result` | `zero` | 1 |
+| `borrowed_ops/hyperreal-rational/vec3 add refs` | `real` | `add` | `same-symbolic-basis` | 12 |
 | `borrowed_ops/hyperreal-rational/vec3 add refs` | `real` | `constructor` | `rational` | 9 |
 | `borrowed_ops/hyperreal-rational/vec3 add refs` | `real` | `constructor` | `zero` | 3 |
 | `borrowed_ops/hyperreal-rational/vec3 div_scalar_ref` | `hyperlattice` | `zero_guard` | `not-definitely-zero` | 4 |
@@ -1177,11 +1193,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/vec3 sub refs` | `rational` | `word-result` | `small-general-fraction` | 9 |
 | `borrowed_ops/hyperreal-rational/vec3 sub refs` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
 | `borrowed_ops/hyperreal-rational/vec3 sub refs` | `real` | `constructor` | `rational` | 12 |
+| `borrowed_ops/hyperreal-rational/vec3 sub refs` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `borrowed_ops/hyperreal-rational/vec4 add refs` | `hyperlattice_vector` | `op` | `add-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/vec4 add refs` | `rational` | `add` | `word-sized` | 14 |
 | `borrowed_ops/hyperreal-rational/vec4 add refs` | `rational` | `word-result` | `cached-small-integer` | 3 |
 | `borrowed_ops/hyperreal-rational/vec4 add refs` | `rational` | `word-result` | `small-general-fraction` | 8 |
 | `borrowed_ops/hyperreal-rational/vec4 add refs` | `rational` | `word-result` | `unit` | 1 |
+| `borrowed_ops/hyperreal-rational/vec4 add refs` | `real` | `add` | `same-symbolic-basis` | 16 |
 | `borrowed_ops/hyperreal-rational/vec4 add refs` | `real` | `constructor` | `rational` | 14 |
 | `borrowed_ops/hyperreal-rational/vec4 add refs` | `real` | `constructor` | `zero` | 2 |
 | `borrowed_ops/hyperreal-rational/vec4 div_scalar_ref` | `hyperlattice` | `real_kernel` | `mul-cached` | 16 |
@@ -1214,6 +1232,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal-rational/vec4 sub refs` | `rational` | `word-result` | `zero` | 1 |
 | `borrowed_ops/hyperreal-rational/vec4 sub refs` | `real` | `constructor` | `rational` | 15 |
 | `borrowed_ops/hyperreal-rational/vec4 sub refs` | `real` | `constructor` | `zero` | 1 |
+| `borrowed_ops/hyperreal-rational/vec4 sub refs` | `real` | `sub` | `same-symbolic-basis` | 16 |
 | `borrowed_ops/hyperreal/complex add refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
 | `borrowed_ops/hyperreal/complex add refs` | `hyperlattice_complex` | `op` | `add-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/complex add refs` | `rational` | `add` | `word-sized` | 8 |
@@ -1222,6 +1241,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/complex add refs` | `rational` | `word-result` | `dyadic-fraction` | 3 |
 | `borrowed_ops/hyperreal/complex add refs` | `rational` | `word-result` | `unit` | 1 |
 | `borrowed_ops/hyperreal/complex add refs` | `rational` | `word-result` | `zero` | 1 |
+| `borrowed_ops/hyperreal/complex add refs` | `real` | `add` | `same-symbolic-basis` | 8 |
 | `borrowed_ops/hyperreal/complex add refs` | `real` | `constructor` | `rational` | 6 |
 | `borrowed_ops/hyperreal/complex add refs` | `real` | `constructor` | `zero` | 2 |
 | `borrowed_ops/hyperreal/complex div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 8 |
@@ -1241,6 +1261,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `small-general-fraction` | 4 |
 | `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `uncached-integer-wide` | 4 |
 | `borrowed_ops/hyperreal/complex div refs` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `borrowed_ops/hyperreal/complex div refs` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal/complex div refs` | `real` | `constructor` | `rational` | 28 |
 | `borrowed_ops/hyperreal/complex div refs` | `real` | `inverse` | `prechecked-one` | 4 |
 | `borrowed_ops/hyperreal/complex div refs` | `real` | `mul` | `exact-rational` | 16 |
@@ -1255,9 +1276,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/complex mul refs` | `rational` | `word-result` | `cached-small-integer` | 3 |
 | `borrowed_ops/hyperreal/complex mul refs` | `rational` | `word-result` | `dyadic-fraction` | 6 |
 | `borrowed_ops/hyperreal/complex mul refs` | `rational` | `word-result` | `uncached-integer-wide` | 4 |
+| `borrowed_ops/hyperreal/complex mul refs` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal/complex mul refs` | `real` | `constructor` | `rational` | 23 |
 | `borrowed_ops/hyperreal/complex mul refs` | `real` | `constructor` | `zero` | 1 |
 | `borrowed_ops/hyperreal/complex mul refs` | `real` | `mul` | `exact-rational` | 16 |
+| `borrowed_ops/hyperreal/complex mul refs` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal/complex sub refs` | `hyperlattice_complex` | `constructor` | `new` | 4 |
 | `borrowed_ops/hyperreal/complex sub refs` | `hyperlattice_complex` | `op` | `sub-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/complex sub refs` | `rational` | `sub` | `word-sized` | 8 |
@@ -1266,12 +1289,14 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/complex sub refs` | `rational` | `word-result` | `dyadic-fraction` | 4 |
 | `borrowed_ops/hyperreal/complex sub refs` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
 | `borrowed_ops/hyperreal/complex sub refs` | `real` | `constructor` | `rational` | 8 |
+| `borrowed_ops/hyperreal/complex sub refs` | `real` | `sub` | `same-symbolic-basis` | 8 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `hyperlattice_matrix` | `op` | `add-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `add` | `word-sized` | 28 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `word-result` | `cached-small-integer` | 6 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `word-result` | `dyadic-fraction` | 14 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `rational` | `word-result` | `zero` | 2 |
+| `borrowed_ops/hyperreal/mat3 add refs` | `real` | `add` | `same-symbolic-basis` | 36 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `real` | `constructor` | `rational` | 29 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `real` | `constructor` | `zero` | 7 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 36 |
@@ -1350,6 +1375,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/mat3 sub refs` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
 | `borrowed_ops/hyperreal/mat3 sub refs` | `rational` | `word-result` | `unit` | 1 |
 | `borrowed_ops/hyperreal/mat3 sub refs` | `real` | `constructor` | `rational` | 36 |
+| `borrowed_ops/hyperreal/mat3 sub refs` | `real` | `sub` | `same-symbolic-basis` | 36 |
 | `borrowed_ops/hyperreal/mat3 transform_vec refs` | `hyperlattice_matrix` | `op` | `transform-vector-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/mat3 transform_vec refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 3 |
 | `borrowed_ops/hyperreal/mat3 transform_vec refs` | `rational` | `dot_product` | `word-sized` | 9 |
@@ -1368,6 +1394,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/mat4 add refs` | `rational` | `word-result` | `dyadic-fraction` | 6 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `rational` | `word-result` | `zero` | 3 |
+| `borrowed_ops/hyperreal/mat4 add refs` | `real` | `add` | `same-symbolic-basis` | 64 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `real` | `constructor` | `rational` | 49 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `real` | `constructor` | `zero` | 15 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `real_kernel` | `mul-cached` | 64 |
@@ -1476,6 +1503,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/mat4 sub refs` | `rational` | `word-result` | `unit` | 2 |
 | `borrowed_ops/hyperreal/mat4 sub refs` | `real` | `constructor` | `rational` | 63 |
 | `borrowed_ops/hyperreal/mat4 sub refs` | `real` | `constructor` | `zero` | 1 |
+| `borrowed_ops/hyperreal/mat4 sub refs` | `real` | `sub` | `same-symbolic-basis` | 64 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 3 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `hyperlattice_matrix` | `helper` | `transform-vector-point` | 1 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `hyperlattice_matrix` | `op` | `transform-vector-ref-ref` | 4 |
@@ -1485,6 +1513,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `rational` | `word-result` | `cached-small-integer` | 7 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `rational` | `word-result` | `dyadic-fraction` | 6 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
+| `borrowed_ops/hyperreal/mat4 transform_vec refs` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `real` | `constructor` | `rational` | 20 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `real` | `definitely_one` | `identity-facts` | 80 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `real` | `definitely_zero` | `rational-sign` | 116 |
@@ -1500,6 +1529,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/scalar add refs` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `borrowed_ops/hyperreal/scalar add refs` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `borrowed_ops/hyperreal/scalar add refs` | `rational` | `word-result` | `zero` | 1 |
+| `borrowed_ops/hyperreal/scalar add refs` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal/scalar add refs` | `real` | `constructor` | `rational` | 3 |
 | `borrowed_ops/hyperreal/scalar add refs` | `real` | `constructor` | `zero` | 1 |
 | `borrowed_ops/hyperreal/scalar div refs` | `rational` | `div` | `word-sized` | 3 |
@@ -1518,10 +1548,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/scalar sub refs` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `borrowed_ops/hyperreal/scalar sub refs` | `rational` | `word-result` | `dyadic-fraction` | 2 |
 | `borrowed_ops/hyperreal/scalar sub refs` | `real` | `constructor` | `rational` | 4 |
+| `borrowed_ops/hyperreal/scalar sub refs` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `hyperlattice_vector` | `op` | `add-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `rational` | `add` | `word-sized` | 11 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `rational` | `word-result` | `dyadic-fraction` | 8 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `rational` | `word-result` | `zero` | 1 |
+| `borrowed_ops/hyperreal/vec3 add refs` | `real` | `add` | `same-symbolic-basis` | 12 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `real` | `constructor` | `rational` | 9 |
 | `borrowed_ops/hyperreal/vec3 add refs` | `real` | `constructor` | `zero` | 3 |
 | `borrowed_ops/hyperreal/vec3 div_scalar_ref` | `hyperlattice` | `zero_guard` | `not-definitely-zero` | 4 |
@@ -1549,11 +1581,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/vec3 sub refs` | `rational` | `word-result` | `dyadic-fraction` | 9 |
 | `borrowed_ops/hyperreal/vec3 sub refs` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
 | `borrowed_ops/hyperreal/vec3 sub refs` | `real` | `constructor` | `rational` | 12 |
+| `borrowed_ops/hyperreal/vec3 sub refs` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `hyperlattice_vector` | `op` | `add-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `rational` | `add` | `word-sized` | 14 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `rational` | `word-result` | `cached-small-integer` | 3 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `rational` | `word-result` | `dyadic-fraction` | 8 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `rational` | `word-result` | `unit` | 1 |
+| `borrowed_ops/hyperreal/vec4 add refs` | `real` | `add` | `same-symbolic-basis` | 16 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `real` | `constructor` | `rational` | 14 |
 | `borrowed_ops/hyperreal/vec4 add refs` | `real` | `constructor` | `zero` | 2 |
 | `borrowed_ops/hyperreal/vec4 div_scalar_ref` | `hyperlattice` | `real_kernel` | `mul-cached` | 16 |
@@ -1586,6 +1620,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `borrowed_ops/hyperreal/vec4 sub refs` | `rational` | `word-result` | `zero` | 1 |
 | `borrowed_ops/hyperreal/vec4 sub refs` | `real` | `constructor` | `rational` | 15 |
 | `borrowed_ops/hyperreal/vec4 sub refs` | `real` | `constructor` | `zero` | 1 |
+| `borrowed_ops/hyperreal/vec4 sub refs` | `real` | `sub` | `same-symbolic-basis` | 16 |
 | `complex_ops/hyperreal-rational/powi` | `hyperlattice` | `real_kernel` | `signed-product-sum-exact-rational` | 24 |
 | `complex_ops/hyperreal-rational/powi` | `hyperlattice_complex` | `constructor` | `new` | 12 |
 | `complex_ops/hyperreal-rational/powi` | `hyperlattice_complex` | `method` | `powi` | 4 |
@@ -1637,14 +1672,14 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `hyperlattice_complex` | `method` | `powi-checked` | 4 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `hyperlattice_complex` | `method` | `reciprocal-checked` | 4 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `hyperlattice_complex` | `powi` | `negative-one-reciprocal-checked` | 4 |
-| `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `add` | `word-sized` | 3 |
+| `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `linear` | `retained-sum` | 3 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `mul` | `retained-product` | 7 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 5 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `mul` | `word-sized` | 7 |
-| `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `word-result` | `cached-small-integer` | 1 |
-| `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `word-result` | `small-general-fraction` | 4 |
+| `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `word-result` | `small-general-fraction` | 3 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
-| `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `word-result` | `wide-general-fraction` | 3 |
+| `complex_ops/hyperreal-rational/powi_checked_negative_one` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `complex_ops/hyperreal-rational/powi_checked_negative_one` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `real` | `constructor` | `rational` | 20 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `real` | `inverse` | `prechecked-one` | 4 |
 | `complex_ops/hyperreal-rational/powi_checked_negative_one` | `real` | `mul` | `exact-rational` | 16 |
@@ -1654,14 +1689,16 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `complex_ops/hyperreal-rational/powi_negative_one` | `hyperlattice_complex` | `method` | `powi` | 4 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `hyperlattice_complex` | `method` | `reciprocal` | 4 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `hyperlattice_complex` | `powi` | `negative-one-reciprocal` | 4 |
-| `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `add` | `word-sized` | 3 |
+| `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `add` | `word-sized` | 2 |
+| `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `linear` | `retained-sum` | 1 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 5 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `mul` | `word-sized` | 14 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `mul-div` | `proven-reduced-word-product` | 2 |
-| `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `word-result` | `cached-small-integer` | 3 |
+| `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `word-result` | `cached-small-integer` | 2 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `word-result` | `small-general-fraction` | 6 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `word-result` | `uncached-integer-wide` | 3 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `rational` | `word-result` | `wide-general-fraction` | 5 |
+| `complex_ops/hyperreal-rational/powi_negative_one` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `real` | `constructor` | `rational` | 20 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `real` | `inverse` | `prechecked-one` | 4 |
 | `complex_ops/hyperreal-rational/powi_negative_one` | `real` | `mul` | `exact-rational` | 16 |
@@ -1708,15 +1745,14 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `complex_ops/hyperreal/powi_checked_negative_one` | `hyperlattice_complex` | `method` | `powi-checked` | 4 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `hyperlattice_complex` | `method` | `reciprocal-checked` | 4 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `hyperlattice_complex` | `powi` | `negative-one-reciprocal-checked` | 4 |
-| `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `add` | `word-sized` | 2 |
+| `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `linear` | `retained-sum` | 3 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `mul` | `dyadic-general-cross-cancel` | 2 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `mul` | `retained-product` | 7 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 5 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `mul` | `word-sized` | 5 |
-| `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `word-result` | `cached-small-integer` | 1 |
-| `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `word-result` | `small-general-fraction` | 3 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `complex_ops/hyperreal/powi_checked_negative_one` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `real` | `constructor` | `rational` | 20 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `real` | `inverse` | `prechecked-one` | 4 |
 | `complex_ops/hyperreal/powi_checked_negative_one` | `real` | `mul` | `exact-rational` | 16 |
@@ -1736,6 +1772,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `complex_ops/hyperreal/powi_negative_one` | `rational` | `word-result` | `small-general-fraction` | 3 |
 | `complex_ops/hyperreal/powi_negative_one` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
 | `complex_ops/hyperreal/powi_negative_one` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `complex_ops/hyperreal/powi_negative_one` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `complex_ops/hyperreal/powi_negative_one` | `real` | `constructor` | `rational` | 20 |
 | `complex_ops/hyperreal/powi_negative_one` | `real` | `inverse` | `prechecked-one` | 4 |
 | `complex_ops/hyperreal/powi_negative_one` | `real` | `mul` | `exact-rational` | 16 |
@@ -1878,6 +1915,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `rational` | `word-result` | `small-general-fraction` | 3 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3` | `real` | `add` | `generic-computable` | 5 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3` | `real` | `add` | `rhs-rational-const-offset` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `real` | `constructor` | `rational` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `real` | `definitely_one` | `identity-facts` | 12 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `real` | `definitely_zero` | `rational-sign` | 15 |
@@ -1902,6 +1941,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `rational` | `mul` | `retained-product` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `rational` | `word-result` | `small-general-fraction` | 3 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `add` | `generic-computable` | 5 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 2 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `certified_sign_until` | `structural-facts` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `constructor` | `rational` | 1 |
@@ -1929,6 +1970,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `rational` | `mul` | `retained-product` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `rational` | `mul-div` | `proven-reduced-word-product` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `real` | `add` | `generic-computable` | 20 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `real` | `add` | `rhs-rational-const-offset` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `real` | `constructor` | `rational` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `real` | `definitely_one` | `identity-facts` | 12 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `real` | `definitely_zero` | `rational-sign` | 15 |
@@ -1954,6 +1997,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `rational` | `mul` | `retained-product` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `add` | `generic-computable` | 20 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 6 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `certified_sign_until` | `structural-facts` | 3 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `constructor` | `rational` | 4 |
@@ -1982,6 +2027,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `rational` | `mul` | `retained-product` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `add` | `generic-computable` | 20 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `constructor` | `rational` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `definitely_one` | `identity-facts` | 12 |
@@ -2010,6 +2057,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `rational` | `mul` | `retained-product` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `rational` | `mul-div` | `proven-reduced-word-product` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `add` | `generic-computable` | 20 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `add` | `rhs-rational-const-offset` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `constructor` | `rational` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `definitely_one` | `identity-facts` | 12 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `definitely_zero` | `rational-sign` | 15 |
@@ -2036,6 +2085,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `rational` | `mul` | `retained-product` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `rational` | `word-result` | `small-general-fraction` | 3 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `add` | `generic-computable` | 5 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `constructor` | `rational` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `definitely_one` | `identity-facts` | 12 |
@@ -2062,6 +2113,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `rational` | `mul` | `retained-product` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `rational` | `word-result` | `small-general-fraction` | 3 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `add` | `generic-computable` | 5 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `add` | `rhs-rational-const-offset` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `certified_sign_until` | `computable-refine` | 2 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `certified_sign_until` | `structural-facts` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `constructor` | `rational` | 1 |
@@ -2247,6 +2300,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `rational` | `word-result` | `cached-small-dyadic` | 3 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `rational` | `word-result` | `cached-small-integer` | 3 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `rational` | `word-result` | `small-general-fraction` | 27 |
+| `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `add` | `rhs-rational-const-offset` | 8 |
+| `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `add` | `same-symbolic-basis` | 2 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `constructor` | `rational` | 7 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `definitely_zero` | `rational-sign` | 30 |
@@ -2262,6 +2317,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `rational` | `add` | `word-sized` | 3 |
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `rational` | `dot_product` | `word-sized` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `rational` | `word-result` | `cached-small-integer` | 7 |
+| `matrix4/hyperreal-rational/mat4 transform vec4` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `real` | `constructor` | `rational` | 8 |
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2274,9 +2330,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `real` | `zero_status` | `zero-scale` | 2 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector-point` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `rational` | `add` | `word-sized` | 3 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `rational` | `dot_product` | `word-sized` | 4 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `rational` | `word-result` | `cached-small-integer` | 7 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `rational` | `linear` | `retained-sum` | 3 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `rational` | `word-result` | `cached-small-integer` | 4 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `real` | `constructor` | `rational` | 8 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2291,9 +2348,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `hyperlattice_matrix` | `helper` | `transform-vector4-batch-point-all-nonzero` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-all-nonzero` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `rational` | `add` | `word-sized` | 12 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `rational` | `dot_product` | `word-sized` | 16 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `rational` | `word-result` | `cached-small-integer` | 28 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `rational` | `linear` | `retained-sum` | 12 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `rational` | `word-result` | `cached-small-integer` | 16 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `real` | `add` | `same-symbolic-basis` | 16 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `real` | `constructor` | `rational` | 32 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2308,9 +2366,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector4-batch-point-all-nonzero` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-all-nonzero` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `rational` | `add` | `word-sized` | 12 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `rational` | `dot_product` | `word-sized` | 16 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `rational` | `word-result` | `cached-small-integer` | 28 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `rational` | `linear` | `retained-sum` | 12 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `rational` | `word-result` | `cached-small-integer` | 16 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `real` | `add` | `same-symbolic-basis` | 16 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `real` | `constructor` | `rational` | 32 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2385,9 +2444,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector4-batch-point-all-nonzero` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-all-nonzero` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `rational` | `add` | `word-sized` | 12 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `rational` | `dot_product` | `word-sized` | 16 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `rational` | `word-result` | `cached-small-integer` | 28 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `rational` | `linear` | `retained-sum` | 12 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `rational` | `word-result` | `cached-small-integer` | 16 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `real` | `add` | `same-symbolic-basis` | 16 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `real` | `constructor` | `rational` | 32 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2402,9 +2462,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `hyperlattice_matrix` | `helper` | `transform-vector4-batch-point-all-nonzero` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-all-nonzero` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `rational` | `add` | `word-sized` | 12 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `rational` | `dot_product` | `word-sized` | 16 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `rational` | `word-result` | `cached-small-integer` | 28 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `rational` | `linear` | `retained-sum` | 12 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `rational` | `word-result` | `cached-small-integer` | 16 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `real` | `add` | `same-symbolic-basis` | 16 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `real` | `constructor` | `rational` | 32 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2477,9 +2538,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 transform vec4 no-translation structural facts` | `real` | `zero_status` | `zero-scale` | 2 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector-point` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `rational` | `add` | `word-sized` | 3 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `rational` | `dot_product` | `word-sized` | 4 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `rational` | `word-result` | `cached-small-integer` | 7 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `rational` | `linear` | `retained-sum` | 3 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `rational` | `word-result` | `cached-small-integer` | 4 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `real` | `constructor` | `rational` | 8 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2492,9 +2554,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx` | `real` | `zero_status` | `zero-scale` | 2 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `hyperlattice_matrix` | `helper` | `transform-vector-point` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `rational` | `add` | `word-sized` | 3 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `rational` | `dot_product` | `word-sized` | 4 |
-| `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `rational` | `word-result` | `cached-small-integer` | 7 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `rational` | `linear` | `retained-sum` | 3 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `rational` | `word-result` | `cached-small-integer` | 4 |
+| `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `real` | `constructor` | `rational` | 8 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2520,6 +2583,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `rational` | `mul` | `word-sized` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `add` | `generic-computable` | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `add` | `lhs-rational-const-offset` | 1 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `constructor` | `rational` | 7 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `definitely_zero` | `rational-sign` | 28 |
@@ -2549,6 +2615,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `rational` | `mul` | `word-sized` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `add` | `generic-computable` | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `add` | `lhs-rational-const-offset` | 1 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `certified_sign_until` | `structural-facts` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `constructor` | `rational` | 7 |
@@ -2581,6 +2650,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `rational` | `mul` | `word-sized` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `add` | `generic-computable` | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `add` | `lhs-rational-const-offset` | 1 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `constructor` | `rational` | 7 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `definitely_one` | `identity-facts` | 20 |
@@ -2613,6 +2685,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `rational` | `mul` | `word-sized` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `add` | `generic-computable` | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `add` | `lhs-rational-const-offset` | 1 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `constructor` | `rational` | 7 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `definitely_zero` | `rational-sign` | 28 |
@@ -2643,6 +2718,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `rational` | `mul-div` | `proven-reduced-word-product` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `rational` | `word-result` | `cached-small-dyadic` | 3 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `rational` | `word-result` | `small-general-fraction` | 19 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `add` | `generic-computable` | 7 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `add` | `rhs-rational-const-offset` | 5 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `constructor` | `rational` | 5 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2672,6 +2749,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 3 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `rational` | `word-result` | `small-general-fraction` | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `add` | `generic-computable` | 7 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 5 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `certified_sign_until` | `structural-facts` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `constructor` | `rational` | 5 |
@@ -2704,6 +2783,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `rational` | `mul-div` | `proven-reduced-word-product` | 12 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `rational` | `word-result` | `cached-small-dyadic` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `rational` | `word-result` | `small-general-fraction` | 64 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `add` | `generic-computable` | 28 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `add` | `rhs-rational-const-offset` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `constructor` | `rational` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2734,6 +2815,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 12 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `rational` | `word-result` | `cached-small-dyadic` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `rational` | `word-result` | `small-general-fraction` | 64 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `add` | `generic-computable` | 28 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 8 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `certified_sign_until` | `structural-facts` | 8 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `constructor` | `rational` | 20 |
@@ -2766,6 +2849,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `rational` | `mul` | `word-sized` | 19 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `rational` | `word-result` | `small-general-fraction` | 49 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `add` | `generic-computable` | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `add` | `lhs-rational-const-offset` | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `constructor` | `rational` | 28 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2795,6 +2881,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 8 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `rational` | `mul` | `word-sized` | 16 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `rational` | `word-result` | `small-general-fraction` | 48 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `add` | `generic-computable` | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `add` | `lhs-rational-const-offset` | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `certified_sign_until` | `structural-facts` | 8 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `constructor` | `rational` | 28 |
@@ -2827,6 +2916,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 8 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `rational` | `mul` | `word-sized` | 16 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `rational` | `word-result` | `small-general-fraction` | 48 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `add` | `generic-computable` | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `add` | `lhs-rational-const-offset` | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `constructor` | `rational` | 28 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `definitely_one` | `identity-facts` | 20 |
@@ -2859,6 +2951,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 8 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `rational` | `mul` | `word-sized` | 16 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `rational` | `word-result` | `small-general-fraction` | 48 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `add` | `generic-computable` | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `add` | `lhs-rational-const-offset` | 4 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `constructor` | `rational` | 28 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2891,6 +2986,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 12 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `rational` | `word-result` | `cached-small-dyadic` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `rational` | `word-result` | `small-general-fraction` | 64 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `add` | `generic-computable` | 28 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `constructor` | `rational` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `definitely_one` | `identity-facts` | 20 |
@@ -2924,6 +3021,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `rational` | `mul-div` | `proven-reduced-word-product` | 12 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `rational` | `word-result` | `cached-small-dyadic` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `rational` | `word-result` | `small-general-fraction` | 64 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `add` | `generic-computable` | 28 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `add` | `rhs-rational-const-offset` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `constructor` | `rational` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2954,6 +3053,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `rational` | `mul-div` | `proven-reduced-word-product` | 3 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `rational` | `word-result` | `small-general-fraction` | 7 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `add` | `generic-computable` | 6 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `add` | `rhs-rational-const-offset` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `constructor` | `rational` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -2981,6 +3082,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `rational` | `mul` | `retained-product` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `add` | `generic-computable` | 6 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `certified_sign_until` | `structural-facts` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `constructor` | `rational` | 2 |
@@ -3011,6 +3114,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `rational` | `mul` | `retained-product` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `add` | `generic-computable` | 6 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `constructor` | `rational` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `definitely_one` | `identity-facts` | 20 |
@@ -3041,6 +3146,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `rational` | `mul` | `retained-product` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `rational` | `mul-div` | `proven-reduced-word-product` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `add` | `generic-computable` | 6 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `add` | `rhs-rational-const-offset` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `constructor` | `rational` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -3072,6 +3179,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `rational` | `mul-div` | `proven-reduced-word-product` | 3 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `rational` | `word-result` | `small-general-fraction` | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `add` | `generic-computable` | 7 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `add` | `rhs-rational-const-offset` | 5 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `certified_sign_until` | `computable-refine` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `constructor` | `rational` | 5 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `definitely_one` | `identity-facts` | 20 |
@@ -3103,6 +3212,8 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `rational` | `mul-div` | `proven-reduced-word-product` | 3 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `rational` | `word-result` | `small-general-fraction` | 16 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `add` | `generic-computable` | 7 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `add` | `rhs-rational-const-offset` | 5 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `certified_sign_until` | `computable-refine` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `certified_sign_until` | `structural-facts` | 2 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `constructor` | `rational` | 5 |
@@ -3221,6 +3332,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal/mat4 inverse sparse` | `real` | `inverse` | `prechecked-one` | 16 |
 | `matrix4/hyperreal/mat4 inverse sparse` | `real` | `mul` | `exact-rational` | 60 |
 | `matrix4/hyperreal/mat4 inverse sparse` | `real` | `structural_facts` | `exact-rational` | 221 |
+| `matrix4/hyperreal/mat4 inverse sparse` | `real` | `sub` | `same-symbolic-basis` | 30 |
 | `matrix4/hyperreal/mat4 inverse sparse` | `real` | `zero_one_or_minus_one` | `identity-facts` | 13 |
 | `matrix4/hyperreal/mat4 inverse sparse` | `real` | `zero_status` | `symbolic-nonzero-scale` | 14 |
 | `matrix4/hyperreal/mat4 inverse sparse` | `real` | `zero_status` | `zero-scale` | 8 |
@@ -3278,6 +3390,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal/mat4 transform vec4` | `rational` | `word-result` | `cached-small-integer` | 7 |
 | `matrix4/hyperreal/mat4 transform vec4` | `rational` | `word-result` | `dyadic-fraction` | 6 |
 | `matrix4/hyperreal/mat4 transform vec4` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
+| `matrix4/hyperreal/mat4 transform vec4` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix4/hyperreal/mat4 transform vec4` | `real` | `constructor` | `rational` | 20 |
 | `matrix4/hyperreal/mat4 transform vec4` | `real` | `definitely_one` | `identity-facts` | 80 |
 | `matrix4/hyperreal/mat4 transform vec4` | `real` | `definitely_zero` | `rational-sign` | 116 |
@@ -4462,11 +4575,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide3-affine-left-affine-upper-triangular` | 2 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `rational` | `add` | `word-sized` | 2 |
+| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `rational` | `mul` | `retained-product` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `rational` | `mul` | `word-sized` | 12 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `rational` | `product_sum` | `word-sized` | 12 |
-| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `rational` | `sub` | `word-sized` | 5 |
-| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `rational` | `word-result` | `small-general-fraction` | 31 |
+| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `rational` | `sub` | `word-sized` | 2 |
+| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `rational` | `word-result` | `small-general-fraction` | 28 |
+| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `real` | `add` | `same-symbolic-basis` | 2 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `real` | `constructor` | `rational` | 45 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `real` | `constructor` | `zero` | 12 |
@@ -4478,13 +4593,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `real` | `mul` | `exact-rational` | 20 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 12 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `real` | `structural_facts` | `exact-rational` | 240 |
+| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 11 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `affine-translation-column-subtract2` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `mul-add-pruned` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `right-divide3-affine-left-affine-translation` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `rational` | `sub` | `word-sized` | 8 |
-| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-integer` | 5 |
-| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `rational` | `word-result` | `small-general-fraction` | 3 |
+| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `rational` | `linear` | `retained-difference` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `real` | `constructor` | `rational` | 16 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `real` | `constructor` | `zero` | 8 |
@@ -4494,6 +4608,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `real` | `exact_set_facts` | `scan` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `real` | `mul` | `exact-rational` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `real` | `structural_facts` | `exact-rational` | 240 |
+| `matrix_ops/hyperreal-rational/mat3 affine_div_matrix_translation` | `real` | `sub` | `same-symbolic-basis` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 18 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `hyperlattice` | `zero_status` | `real-query` | 8 |
@@ -4502,11 +4617,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `hyperlattice_matrix` | `helper` | `invert-matrix3-checked-upper-triangular` | 2 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `hyperlattice_matrix` | `method` | `matrix3-inverse-checked` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `rational` | `add` | `word-sized` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `rational` | `linear` | `retained-difference` | 2 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `rational` | `mul` | `retained-product` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `rational` | `mul` | `word-sized` | 18 |
-| `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `rational` | `sub` | `word-sized` | 2 |
-| `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `rational` | `word-result` | `small-general-fraction` | 24 |
+| `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `rational` | `word-result` | `small-general-fraction` | 22 |
+| `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `add` | `same-symbolic-basis` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `constructor` | `one` | 2 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `constructor` | `rational` | 54 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `constructor` | `zero` | 26 |
@@ -4517,6 +4633,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `inverse` | `prechecked-one` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `mul` | `exact-rational` | 34 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `structural_facts` | `exact-rational` | 120 |
+| `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `sub` | `same-symbolic-basis` | 16 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
 | `matrix_ops/hyperreal-rational/mat3 affine_inverse` | `real` | `zero_status` | `zero-scale` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 bitxor` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-cube` | 4 |
@@ -4720,6 +4837,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_div_matrix` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_div_matrix` | `real` | `mul` | `exact-rational` | 12 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 3 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `hyperlattice_matrix` | `method` | `lower-triangular3-inverse` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `rational` | `add` | `word-sized` | 1 |
@@ -4728,10 +4846,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `real-query` | 3 |
@@ -4742,10 +4862,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `real-query` | 3 |
@@ -4757,10 +4879,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_uniform_diagonal_div_vector` | `hyperlattice` | `real_kernel` | `mul-cached` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_uniform_diagonal_div_vector` | `hyperlattice_matrix` | `helper` | `div-diagonal3-vector-uniform-scale` | 1 |
@@ -4793,16 +4917,19 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_div_matrix` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_div_matrix` | `real` | `mul` | `exact-rational` | 12 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 3 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `hyperlattice_matrix` | `method` | `upper-triangular3-inverse` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `rational` | `add` | `word-sized` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `rational` | `mul` | `word-sized` | 7 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `rational` | `word-result` | `small-general-fraction` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `real-query` | 3 |
@@ -4811,10 +4938,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `rational` | `mul` | `word-sized` | 7 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `rational` | `word-result` | `small-general-fraction` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `real-query` | 3 |
@@ -4824,10 +4953,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `rational` | `mul` | `word-sized` | 7 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `rational` | `word-result` | `small-general-fraction` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_ops/hyperreal-rational/mat3 powi` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-cube` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 powi` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-cube` | 4 |
@@ -5283,15 +5414,16 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `add` | `word-sized` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `dot_product` | `word-sized` | 32 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `mul` | `retained-product` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `mul` | `word-sized` | 24 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `product_sum` | `all-zero` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `product_sum` | `word-sized` | 15 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `sub` | `word-sized` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `word-result` | `small-general-fraction` | 77 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `word-result` | `small-general-fraction` | 74 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `rational` | `word-result` | `unit` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `add` | `same-symbolic-basis` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `constructor` | `rational` | 103 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `constructor` | `zero` | 22 |
@@ -5305,6 +5437,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `mul` | `exact-rational` | 39 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `structural_facts` | `exact-rational` | 522 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `zero_one_or_minus_one` | `identity-facts` | 16 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 44 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `zero_status` | `zero-scale` | 14 |
@@ -5333,15 +5466,16 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_matrix` | `method` | `div-matrix-checked` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `add` | `word-sized` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `dot_product` | `word-sized` | 32 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `mul` | `retained-product` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `mul` | `word-sized` | 24 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `product_sum` | `all-zero` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `product_sum` | `word-sized` | 15 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `sub` | `word-sized` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `cached-small-integer` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `small-general-fraction` | 77 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `small-general-fraction` | 74 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `unit` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `add` | `same-symbolic-basis` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `constructor` | `rational` | 103 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `constructor` | `zero` | 22 |
@@ -5355,6 +5489,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `mul` | `exact-rational` | 39 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `structural_facts` | `exact-rational` | 522 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `zero_one_or_minus_one` | `identity-facts` | 16 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 49 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 14 |
@@ -5386,15 +5521,16 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice_matrix` | `method` | `div-matrix-checked-with-abort` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `add` | `word-sized` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `dot_product` | `word-sized` | 32 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `mul` | `retained-product` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `mul` | `word-sized` | 24 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `product_sum` | `all-zero` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `product_sum` | `word-sized` | 15 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `sub` | `word-sized` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `cached-small-integer` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `small-general-fraction` | 77 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `small-general-fraction` | 74 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `unit` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `add` | `same-symbolic-basis` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `constructor` | `rational` | 103 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `constructor` | `zero` | 22 |
@@ -5408,6 +5544,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `mul` | `exact-rational` | 39 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `structural_facts` | `exact-rational` | 522 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `zero_one_or_minus_one` | `identity-facts` | 16 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 49 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 14 |
@@ -5416,10 +5553,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `right-divide4-affine-left-affine-translation` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `dot_product` | `word-sized` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `sub` | `word-sized` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-dyadic` | 10 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-integer` | 9 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `small-general-fraction` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `linear` | `retained-difference` | 11 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `sub` | `word-sized` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-dyadic` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-integer` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `unit` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `constructor` | `rational` | 24 |
@@ -5430,6 +5568,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `exact_set_facts` | `scan` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `structural_facts` | `exact-rational` | 448 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `zero_one_or_minus_one` | `identity-facts` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `zero-scale` | 12 |
@@ -5439,10 +5578,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-affine-left-affine-translation` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_matrix` | `method` | `div-matrix-checked` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `dot_product` | `word-sized` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `sub` | `word-sized` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `cached-small-dyadic` | 10 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `cached-small-integer` | 9 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `small-general-fraction` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `linear` | `retained-difference` | 11 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `sub` | `word-sized` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `cached-small-dyadic` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `cached-small-integer` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `unit` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `constructor` | `rational` | 24 |
@@ -5453,6 +5593,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `exact_set_facts` | `scan` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `structural_facts` | `exact-rational` | 448 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `zero_one_or_minus_one` | `identity-facts` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `zero-scale` | 12 |
@@ -5462,10 +5603,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-abort-affine-left-affine-translation` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_matrix` | `method` | `div-matrix-checked-with-abort` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `dot_product` | `word-sized` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `sub` | `word-sized` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `cached-small-dyadic` | 10 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `cached-small-integer` | 9 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `small-general-fraction` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `linear` | `retained-difference` | 11 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `sub` | `word-sized` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `cached-small-dyadic` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `cached-small-integer` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `unit` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `constructor` | `rational` | 24 |
@@ -5476,6 +5618,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `exact_set_facts` | `scan` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `structural_facts` | `exact-rational` | 448 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_one_or_minus_one` | `identity-facts` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `zero-scale` | 12 |
@@ -5510,6 +5653,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `real` | `mul` | `exact-rational` | 58 |
 | `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `real` | `product_sum` | `exact-rational-shared-denom` | 18 |
 | `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `real` | `structural_facts` | `exact-rational` | 215 |
+| `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `real` | `sub` | `same-symbolic-basis` | 26 |
 | `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `real` | `zero_one_or_minus_one` | `identity-facts` | 7 |
 | `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `real` | `zero_status` | `symbolic-nonzero-scale` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `real` | `zero_status` | `zero-scale` | 8 |
@@ -5801,6 +5945,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 identity_point_materialize` | `real` | `zero_status` | `zero-scale` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 identity_point_transform` | `hyperlattice` | `real_kernel` | `mul-cached` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 identity_point_transform` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-affine-linear-diagonal` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 identity_point_transform` | `real` | `add` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 identity_point_transform` | `real` | `constructor` | `rational` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 identity_point_transform` | `real` | `definitely_one` | `identity-facts` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 identity_point_transform` | `real` | `definitely_zero` | `rational-sign` | 9 |
@@ -5922,6 +6067,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector` | `rational` | `mul` | `word-sized` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector` | `rational` | `word-result` | `small-general-fraction` | 11 |
+| `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector` | `real` | `constructor` | `rational` | 15 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector` | `real` | `definitely_one` | `identity-facts` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector` | `real` | `definitely_zero` | `rational-sign` | 4 |
@@ -5972,6 +6118,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_point` | `rational` | `mul` | `word-sized` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_point` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_point` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_point` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_point` | `real` | `constructor` | `rational` | 15 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_point` | `real` | `definitely_one` | `identity-facts` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 known_diagonal_div_vector_point` | `real` | `definitely_zero` | `rational-sign` | 4 |
@@ -5999,6 +6146,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_div_matrix` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_div_matrix` | `real` | `mul` | `exact-rational` | 20 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse` | `hyperlattice_matrix` | `method` | `lower-triangular4-inverse` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 13 |
@@ -6010,6 +6158,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `real-query` | 4 |
@@ -6023,6 +6172,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `real-query` | 4 |
@@ -6037,6 +6187,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 7 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `hyperlattice_matrix` | `method` | `div-affine-orthonormal4` | 1 |
@@ -6045,9 +6196,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `rational` | `dot_product` | `word-sized` | 17 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 17 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `rational` | `word-result` | `unit` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `real` | `constructor` | `rational` | 26 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `real` | `constructor` | `zero` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `real` | `dot_product` | `active-dot3-exact-rational` | 19 |
+| `matrix_ops/hyperreal-rational/mat4 known_orthonormal_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_inverse` | `hyperlattice_matrix` | `constructor` | `affine-orthonormal-inverse` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_inverse` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_inverse` | `rational` | `dot_product` | `word-sized` | 3 |
@@ -6056,6 +6209,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_inverse` | `real` | `constructor` | `rational` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_inverse` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 known_orthonormal_inverse` | `real` | `dot_product` | `active-dot3-exact-rational` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 known_orthonormal_inverse` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 known_signed_permutation_batch` | `hyperlattice_matrix` | `method` | `transform-signed-permutation4-batch` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_signed_permutation_div_matrix` | `hyperlattice_matrix` | `method` | `div-signed-permutation4` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_signed_permutation_inverse` | `hyperlattice_matrix` | `constructor` | `signed-permutation4-inverse` | 1 |
@@ -6066,10 +6220,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `hyperlattice_matrix` | `method` | `div-affine-translation4` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `rational` | `dot_product` | `word-sized` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `rational` | `sub` | `word-sized` | 3 |
-| `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 7 |
+| `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `rational` | `linear` | `retained-difference` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `real` | `constructor` | `rational` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `real` | `dot_product` | `active-dot3-exact-rational` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 known_translation_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_translation_inverse` | `hyperlattice_matrix` | `constructor` | `affine-translation` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_translation_inverse` | `hyperlattice_matrix` | `constructor` | `affine-translation-inverse` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_translation_inverse` | `real` | `constructor` | `one` | 4 |
@@ -6079,11 +6234,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-scaled-w-full-nonzero` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-scaled-w-full-nonzero-active` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `hyperlattice_matrix` | `method` | `div-diagonal4-vector` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `rational` | `add` | `word-sized` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `rational` | `dot_product` | `word-sized` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `rational` | `linear` | `retained-sum` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `rational` | `mul` | `word-sized` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `rational` | `word-result` | `cached-small-dyadic` | 5 |
-| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `rational` | `word-result` | `cached-small-integer` | 7 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `rational` | `word-result` | `cached-small-integer` | 5 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `real` | `constructor` | `rational` | 15 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `real` | `definitely_one` | `identity-facts` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector` | `real` | `definitely_zero` | `rational-sign` | 4 |
@@ -6116,12 +6273,14 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-scaled-w-full-nonzero` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-scaled-w-full-nonzero-active` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `hyperlattice_matrix` | `method` | `div-diagonal4-vector` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `add` | `word-sized` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `dot_product` | `word-sized` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `linear` | `retained-sum` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `mul` | `word-sized` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `word-result` | `cached-small-dyadic` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `word-result` | `cached-small-integer` | 5 |
-| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `word-result` | `dyadic-fraction` | 2 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `word-result` | `dyadic-fraction` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `real` | `constructor` | `rational` | 15 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `real` | `definitely_one` | `identity-facts` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 known_uniform_diagonal_div_vector_point` | `real` | `definitely_zero` | `rational-sign` | 4 |
@@ -6139,19 +6298,19 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `hyperlattice` | `real_kernel` | `signed-product-sum-exact-rational` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `hyperlattice_matrix` | `helper` | `divide4-upper-triangular-fused-exact` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `hyperlattice_matrix` | `method` | `div-upper-triangular4` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `mul` | `word-sized` | 14 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `product_sum` | `word-sized` | 8 |
-| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `sub` | `word-sized` | 3 |
-| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `word-result` | `cached-small-dyadic` | 5 |
-| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `word-result` | `cached-small-dyadic` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `rational` | `word-result` | `small-general-fraction` | 19 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `real` | `constructor` | `one` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `real` | `constructor` | `rational` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `real` | `mul` | `exact-rational` | 20 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse` | `hyperlattice_matrix` | `method` | `upper-triangular4-inverse` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 8 |
@@ -6165,6 +6324,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `real-query` | 4 |
@@ -6180,6 +6340,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `real-query` | 4 |
@@ -6196,6 +6357,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 powi` | `hyperlattice` | `real_kernel` | `signed-product-sum-exact-rational` | 128 |
 | `matrix_ops/hyperreal-rational/mat4 powi` | `hyperlattice_matrix` | `helper` | `matrix-power4-borrowed-cube` | 4 |
@@ -7034,11 +7196,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `hyperlattice` | `real_kernel` | `mul-cached` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `hyperlattice_matrix` | `helper` | `transform-vector4-batch-point` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-affine-linear-diagonal` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `rational` | `add` | `word-sized` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `rational` | `linear` | `retained-sum` | 9 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `rational` | `mul` | `retained-product` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `rational` | `word-result` | `uncached-integer-128-255` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `rational` | `word-result` | `uncached-integer-256-1023` | 6 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `rational` | `word-result` | `uncached-integer-65-127` | 2 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `rational` | `word-result` | `uncached-integer-128-255` | 2 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `rational` | `word-result` | `uncached-integer-65-127` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `real` | `add` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `real` | `constructor` | `rational` | 24 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -7052,11 +7215,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `hyperlattice` | `real_kernel` | `mul-cached` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-batch-affine-linear-diagonal-assumed` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `hyperlattice_matrix` | `method` | `transform-vector4-point-batch-assumed` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `rational` | `add` | `word-sized` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `rational` | `linear` | `retained-sum` | 9 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `rational` | `mul` | `retained-product` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `rational` | `word-result` | `uncached-integer-128-255` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `rational` | `word-result` | `uncached-integer-256-1023` | 6 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `rational` | `word-result` | `uncached-integer-65-127` | 2 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `rational` | `word-result` | `uncached-integer-128-255` | 2 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `rational` | `word-result` | `uncached-integer-65-127` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `real` | `add` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `real` | `constructor` | `rational` | 24 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_assumed` | `real` | `definitely_one` | `identity-facts` | 20 |
@@ -7072,11 +7236,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-batch-affine-linear-diagonal-assumed` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-point-batch` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `hyperlattice_matrix` | `method` | `transform-vector4-point-batch-assumed` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `add` | `word-sized` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `linear` | `retained-sum` | 9 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `mul` | `retained-product` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `word-result` | `uncached-integer-128-255` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `word-result` | `uncached-integer-256-1023` | 6 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `word-result` | `uncached-integer-65-127` | 2 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `word-result` | `uncached-integer-128-255` | 2 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `word-result` | `uncached-integer-65-127` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `add` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `constructor` | `rational` | 24 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `definitely_one` | `identity-facts` | 20 |
@@ -7090,12 +7255,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `zero_status` | `zero-scale` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `hyperlattice` | `real_kernel` | `mul-cached` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-affine-linear-diagonal` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `rational` | `linear` | `retained-sum` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `rational` | `mul` | `word-sized` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `rational` | `word-result` | `cached-small-integer` | 3 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `rational` | `word-result` | `uncached-integer-128-255` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `rational` | `word-result` | `uncached-integer-256-1023` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `rational` | `word-result` | `uncached-integer-65-127` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `real` | `add` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `real` | `constructor` | `rational` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -7108,12 +7271,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_materialize` | `real` | `zero_status` | `zero-scale` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `hyperlattice` | `real_kernel` | `mul-cached` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-affine-linear-diagonal` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `rational` | `linear` | `retained-sum` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `rational` | `mul` | `word-sized` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `rational` | `word-result` | `cached-small-integer` | 3 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `rational` | `word-result` | `uncached-integer-128-255` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `rational` | `word-result` | `uncached-integer-256-1023` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `rational` | `word-result` | `uncached-integer-65-127` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `real` | `add` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `real` | `constructor` | `rational` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `real` | `definitely_one` | `identity-facts` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 translated_diagonal_point_transform` | `real` | `definitely_zero` | `rational-sign` | 9 |
@@ -7146,14 +7307,15 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide3-affine-left-affine-upper-triangular` | 2 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `add` | `word-sized` | 2 |
+| `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `mul` | `retained-product` | 3 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 10 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `mul` | `word-sized` | 12 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `product_sum` | `word-sized` | 12 |
-| `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `sub` | `word-sized` | 5 |
-| `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `word-result` | `dyadic-fraction` | 3 |
+| `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `sub` | `word-sized` | 2 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `word-result` | `small-general-fraction` | 4 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `rational` | `word-result` | `wide-general-fraction` | 24 |
+| `matrix_ops/hyperreal/mat3 affine_div_matrix` | `real` | `add` | `same-symbolic-basis` | 2 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `real` | `constructor` | `rational` | 45 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `real` | `constructor` | `zero` | 12 |
@@ -7165,14 +7327,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `real` | `mul` | `exact-rational` | 20 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 12 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix` | `real` | `structural_facts` | `exact-rational` | 240 |
+| `matrix_ops/hyperreal/mat3 affine_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 11 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `affine-translation-column-subtract2` | 8 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `mul-add-pruned` | 8 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `right-divide3-affine-left-affine-translation` | 4 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 4 |
-| `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `rational` | `sub` | `word-sized` | 8 |
-| `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
-| `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-integer` | 5 |
-| `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `rational` | `word-result` | `dyadic-fraction` | 2 |
+| `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `rational` | `linear` | `retained-difference` | 8 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `real` | `constructor` | `rational` | 16 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `real` | `constructor` | `zero` | 8 |
@@ -7182,6 +7342,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `real` | `exact_set_facts` | `scan` | 8 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `real` | `mul` | `exact-rational` | 8 |
 | `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `real` | `structural_facts` | `exact-rational` | 240 |
+| `matrix_ops/hyperreal/mat3 affine_div_matrix_translation` | `real` | `sub` | `same-symbolic-basis` | 8 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 18 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 8 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `hyperlattice` | `zero_status` | `real-query` | 8 |
@@ -7190,13 +7351,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `hyperlattice_matrix` | `helper` | `invert-matrix3-checked-upper-triangular` | 2 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `hyperlattice_matrix` | `method` | `matrix3-inverse-checked` | 4 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `rational` | `add` | `word-sized` | 4 |
+| `matrix_ops/hyperreal/mat3 affine_inverse` | `rational` | `linear` | `retained-difference` | 2 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `rational` | `mul` | `retained-product` | 4 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 18 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `rational` | `mul` | `word-sized` | 18 |
-| `matrix_ops/hyperreal/mat3 affine_inverse` | `rational` | `sub` | `word-sized` | 2 |
-| `matrix_ops/hyperreal/mat3 affine_inverse` | `rational` | `word-result` | `dyadic-fraction` | 2 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `rational` | `word-result` | `small-general-fraction` | 7 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `rational` | `word-result` | `wide-general-fraction` | 15 |
+| `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `add` | `same-symbolic-basis` | 6 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `constructor` | `one` | 2 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `constructor` | `rational` | 54 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `constructor` | `zero` | 26 |
@@ -7207,6 +7368,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `inverse` | `prechecked-one` | 8 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `mul` | `exact-rational` | 34 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `structural_facts` | `exact-rational` | 120 |
+| `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `sub` | `same-symbolic-basis` | 16 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
 | `matrix_ops/hyperreal/mat3 affine_inverse` | `real` | `zero_status` | `zero-scale` | 4 |
 | `matrix_ops/hyperreal/mat3 bitxor` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-cube` | 4 |
@@ -7425,6 +7587,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_div_matrix` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_div_matrix` | `real` | `mul` | `exact-rational` | 12 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 3 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `hyperlattice_matrix` | `method` | `lower-triangular3-inverse` | 1 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `rational` | `add` | `word-sized` | 1 |
@@ -7433,10 +7596,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `real-query` | 3 |
@@ -7447,10 +7612,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `real-query` | 3 |
@@ -7462,10 +7629,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `rational` | `word-result` | `small-general-fraction` | 6 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat3 known_lower_triangular_inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_ops/hyperreal/mat3 known_uniform_diagonal_div_vector` | `hyperlattice` | `real_kernel` | `mul-cached` | 3 |
 | `matrix_ops/hyperreal/mat3 known_uniform_diagonal_div_vector` | `hyperlattice_matrix` | `helper` | `div-diagonal3-vector-uniform-scale` | 1 |
@@ -7497,16 +7666,19 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_div_matrix` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_div_matrix` | `real` | `mul` | `exact-rational` | 12 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 3 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `hyperlattice_matrix` | `method` | `upper-triangular3-inverse` | 1 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `rational` | `add` | `word-sized` | 1 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 6 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `rational` | `mul` | `word-sized` | 7 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `rational` | `word-result` | `small-general-fraction` | 8 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `real-query` | 3 |
@@ -7515,10 +7687,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 6 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `rational` | `mul` | `word-sized` | 7 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `rational` | `word-result` | `small-general-fraction` | 8 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `real_kernel` | `mul-cached` | 5 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `real-query` | 3 |
@@ -7528,10 +7702,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 6 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `rational` | `mul` | `word-sized` | 7 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `rational` | `word-result` | `small-general-fraction` | 8 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `add` | `same-symbolic-basis` | 1 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `constructor` | `rational` | 11 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `inverse` | `prechecked-one` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `mul` | `exact-rational` | 7 |
+| `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat3 known_upper_triangular_inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_ops/hyperreal/mat3 powi` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-cube` | 4 |
 | `matrix_ops/hyperreal/mat3 powi` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-cube` | 4 |
@@ -8032,19 +8208,20 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `dot_product` | `lcm-shared-denominator` | 25 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `dot_product` | `single-term-product` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `dot_product` | `word-sized` | 5 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `mul` | `dyadic-general-cross-cancel` | 16 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `mul` | `retained-product` | 2 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `mul` | `word-sized` | 8 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `product_sum` | `all-zero` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `product_sum` | `word-sized` | 15 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `sub` | `word-sized` | 3 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 1 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `word-result` | `dyadic-fraction` | 21 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `word-result` | `dyadic-fraction` | 18 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `word-result` | `small-general-fraction` | 5 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `word-result` | `unit` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `add` | `same-symbolic-basis` | 6 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `constructor` | `rational` | 103 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `constructor` | `zero` | 22 |
@@ -8058,6 +8235,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `mul` | `exact-rational` | 39 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `structural_facts` | `exact-rational` | 522 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `zero_one_or_minus_one` | `identity-facts` | 16 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 44 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `zero_status` | `zero-scale` | 14 |
@@ -8088,19 +8266,20 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `dot_product` | `lcm-shared-denominator` | 25 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `dot_product` | `single-term-product` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `dot_product` | `word-sized` | 5 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `mul` | `dyadic-general-cross-cancel` | 16 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `mul` | `retained-product` | 2 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `mul` | `word-sized` | 8 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `product_sum` | `all-zero` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `product_sum` | `word-sized` | 15 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `sub` | `word-sized` | 3 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `cached-small-integer` | 1 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `dyadic-fraction` | 21 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `dyadic-fraction` | 18 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `small-general-fraction` | 5 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `unit` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `add` | `same-symbolic-basis` | 6 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `constructor` | `rational` | 103 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `constructor` | `zero` | 22 |
@@ -8114,6 +8293,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `mul` | `exact-rational` | 39 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `structural_facts` | `exact-rational` | 522 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `zero_one_or_minus_one` | `identity-facts` | 16 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 49 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 14 |
@@ -8147,19 +8327,20 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `dot_product` | `lcm-shared-denominator` | 25 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `dot_product` | `single-term-product` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `dot_product` | `word-sized` | 5 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `mul` | `dyadic-general-cross-cancel` | 16 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `mul` | `retained-product` | 2 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `mul` | `word-sized` | 8 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `product_sum` | `all-zero` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `product_sum` | `word-sized` | 15 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `sub` | `word-sized` | 3 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `cached-small-dyadic` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `cached-small-integer` | 1 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `dyadic-fraction` | 21 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `dyadic-fraction` | 18 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `small-general-fraction` | 5 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `unit` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `rational` | `word-result` | `wide-general-fraction` | 2 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `add` | `same-symbolic-basis` | 6 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `constructor` | `rational` | 103 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `constructor` | `zero` | 22 |
@@ -8173,6 +8354,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `mul` | `exact-rational` | 39 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `structural_facts` | `exact-rational` | 522 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `zero_one_or_minus_one` | `identity-facts` | 16 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 49 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 14 |
@@ -8181,10 +8363,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `right-divide4-affine-left-affine-translation` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `dot_product` | `word-sized` | 12 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `sub` | `word-sized` | 12 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-dyadic` | 10 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-integer` | 9 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `dyadic-fraction` | 4 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `linear` | `retained-difference` | 11 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `sub` | `word-sized` | 1 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-dyadic` | 8 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `cached-small-integer` | 3 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `rational` | `word-result` | `unit` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `constructor` | `rational` | 24 |
@@ -8195,6 +8378,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `exact_set_facts` | `scan` | 8 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `structural_facts` | `exact-rational` | 448 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `zero_one_or_minus_one` | `identity-facts` | 32 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `zero-scale` | 12 |
@@ -8204,10 +8388,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-affine-left-affine-translation` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_matrix` | `method` | `div-matrix-checked` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `dot_product` | `word-sized` | 12 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `sub` | `word-sized` | 12 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `cached-small-dyadic` | 10 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `cached-small-integer` | 9 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `dyadic-fraction` | 4 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `linear` | `retained-difference` | 11 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `sub` | `word-sized` | 1 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `cached-small-dyadic` | 8 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `cached-small-integer` | 3 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `rational` | `word-result` | `unit` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `constructor` | `rational` | 24 |
@@ -8218,6 +8403,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `exact_set_facts` | `scan` | 8 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `structural_facts` | `exact-rational` | 448 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `zero_one_or_minus_one` | `identity-facts` | 32 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `zero-scale` | 12 |
@@ -8227,10 +8413,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-abort-affine-left-affine-translation` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_matrix` | `method` | `div-matrix-checked-with-abort` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `dot_product` | `word-sized` | 12 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `sub` | `word-sized` | 12 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `cached-small-dyadic` | 10 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `cached-small-integer` | 9 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `dyadic-fraction` | 4 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `linear` | `retained-difference` | 11 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `sub` | `word-sized` | 1 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `cached-small-dyadic` | 8 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `cached-small-integer` | 3 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `rational` | `word-result` | `unit` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `constructor` | `rational` | 24 |
@@ -8241,6 +8428,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `exact_set_facts` | `scan` | 8 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `structural_facts` | `exact-rational` | 448 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_one_or_minus_one` | `identity-facts` | 32 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `zero-scale` | 12 |
@@ -8278,6 +8466,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 affine_inverse` | `real` | `mul` | `exact-rational` | 58 |
 | `matrix_ops/hyperreal/mat4 affine_inverse` | `real` | `product_sum` | `exact-rational-shared-denom` | 18 |
 | `matrix_ops/hyperreal/mat4 affine_inverse` | `real` | `structural_facts` | `exact-rational` | 215 |
+| `matrix_ops/hyperreal/mat4 affine_inverse` | `real` | `sub` | `same-symbolic-basis` | 26 |
 | `matrix_ops/hyperreal/mat4 affine_inverse` | `real` | `zero_one_or_minus_one` | `identity-facts` | 7 |
 | `matrix_ops/hyperreal/mat4 affine_inverse` | `real` | `zero_status` | `symbolic-nonzero-scale` | 36 |
 | `matrix_ops/hyperreal/mat4 affine_inverse` | `real` | `zero_status` | `zero-scale` | 8 |
@@ -8571,6 +8760,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 identity_point_materialize` | `real` | `zero_status` | `zero-scale` | 1 |
 | `matrix_ops/hyperreal/mat4 identity_point_transform` | `hyperlattice` | `real_kernel` | `mul-cached` | 3 |
 | `matrix_ops/hyperreal/mat4 identity_point_transform` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-affine-linear-diagonal` | 1 |
+| `matrix_ops/hyperreal/mat4 identity_point_transform` | `real` | `add` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat4 identity_point_transform` | `real` | `constructor` | `rational` | 6 |
 | `matrix_ops/hyperreal/mat4 identity_point_transform` | `real` | `definitely_one` | `identity-facts` | 1 |
 | `matrix_ops/hyperreal/mat4 identity_point_transform` | `real` | `definitely_zero` | `rational-sign` | 9 |
@@ -8696,6 +8886,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | `rational` | `mul` | `word-sized` | 5 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | `rational` | `word-result` | `small-general-fraction` | 11 |
+| `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | `real` | `constructor` | `rational` | 15 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | `real` | `definitely_one` | `identity-facts` | 2 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector` | `real` | `definitely_zero` | `rational-sign` | 4 |
@@ -8746,6 +8937,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_point` | `rational` | `mul` | `word-sized` | 6 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_point` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_point` | `rational` | `word-result` | `small-general-fraction` | 12 |
+| `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_point` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_point` | `real` | `constructor` | `rational` | 15 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_point` | `real` | `definitely_one` | `identity-facts` | 2 |
 | `matrix_ops/hyperreal/mat4 known_diagonal_div_vector_point` | `real` | `definitely_zero` | `rational-sign` | 4 |
@@ -8773,6 +8965,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_div_matrix` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_div_matrix` | `real` | `mul` | `exact-rational` | 20 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 8 |
+| `matrix_ops/hyperreal/mat4 known_lower_triangular_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse` | `hyperlattice_matrix` | `method` | `lower-triangular4-inverse` | 1 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 13 |
@@ -8784,6 +8977,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `real-query` | 4 |
@@ -8797,6 +8991,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `real-query` | 4 |
@@ -8811,17 +9006,21 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal/mat4 known_lower_triangular_inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 7 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `hyperlattice_matrix` | `method` | `div-affine-orthonormal4` | 1 |
-| `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `rational` | `add` | `word-sized` | 1 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `rational` | `dot_product` | `all-zero` | 2 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `rational` | `dot_product` | `word-sized` | 17 |
-| `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 17 |
+| `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `rational` | `linear` | `retained-sum` | 2 |
+| `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 15 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `rational` | `word-result` | `unit` | 3 |
+| `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `real` | `constructor` | `rational` | 26 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `real` | `constructor` | `zero` | 3 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `real` | `dot_product` | `active-dot3-exact-rational` | 19 |
+| `matrix_ops/hyperreal/mat4 known_orthonormal_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_inverse` | `hyperlattice_matrix` | `constructor` | `affine-orthonormal-inverse` | 1 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_inverse` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 3 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_inverse` | `rational` | `dot_product` | `word-sized` | 3 |
@@ -8830,6 +9029,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_orthonormal_inverse` | `real` | `constructor` | `rational` | 6 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_inverse` | `real` | `constructor` | `zero` | 6 |
 | `matrix_ops/hyperreal/mat4 known_orthonormal_inverse` | `real` | `dot_product` | `active-dot3-exact-rational` | 3 |
+| `matrix_ops/hyperreal/mat4 known_orthonormal_inverse` | `real` | `sub` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat4 known_signed_permutation_batch` | `hyperlattice_matrix` | `method` | `transform-signed-permutation4-batch` | 1 |
 | `matrix_ops/hyperreal/mat4 known_signed_permutation_div_matrix` | `hyperlattice_matrix` | `method` | `div-signed-permutation4` | 1 |
 | `matrix_ops/hyperreal/mat4 known_signed_permutation_inverse` | `hyperlattice_matrix` | `constructor` | `signed-permutation4-inverse` | 1 |
@@ -8840,10 +9040,11 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 4 |
 | `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `hyperlattice_matrix` | `method` | `div-affine-translation4` | 1 |
 | `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `rational` | `dot_product` | `word-sized` | 4 |
-| `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `rational` | `sub` | `word-sized` | 3 |
-| `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 7 |
+| `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `rational` | `linear` | `retained-difference` | 3 |
+| `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 4 |
 | `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `real` | `constructor` | `rational` | 8 |
 | `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `real` | `dot_product` | `active-dot3-exact-rational` | 4 |
+| `matrix_ops/hyperreal/mat4 known_translation_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal/mat4 known_translation_inverse` | `hyperlattice_matrix` | `constructor` | `affine-translation` | 1 |
 | `matrix_ops/hyperreal/mat4 known_translation_inverse` | `hyperlattice_matrix` | `constructor` | `affine-translation-inverse` | 1 |
 | `matrix_ops/hyperreal/mat4 known_translation_inverse` | `real` | `constructor` | `one` | 4 |
@@ -8853,11 +9054,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-scaled-w-full-nonzero` | 1 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-scaled-w-full-nonzero-active` | 1 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `hyperlattice_matrix` | `method` | `div-diagonal4-vector` | 1 |
-| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `rational` | `add` | `word-sized` | 1 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `rational` | `dot_product` | `word-sized` | 4 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `rational` | `linear` | `retained-sum` | 2 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `rational` | `mul` | `word-sized` | 5 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `rational` | `word-result` | `cached-small-dyadic` | 5 |
-| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `rational` | `word-result` | `cached-small-integer` | 7 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `rational` | `word-result` | `cached-small-integer` | 5 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `real` | `constructor` | `rational` | 15 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `real` | `definitely_one` | `identity-facts` | 2 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector` | `real` | `definitely_zero` | `rational-sign` | 4 |
@@ -8890,12 +9093,14 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-scaled-w-full-nonzero` | 1 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-scaled-w-full-nonzero-active` | 1 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `hyperlattice_matrix` | `method` | `div-diagonal4-vector` | 1 |
-| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `add` | `word-sized` | 2 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `dot_product` | `word-sized` | 4 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `linear` | `retained-sum` | 1 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `mul` | `word-sized` | 5 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `word-result` | `cached-small-dyadic` | 5 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `word-result` | `cached-small-integer` | 5 |
-| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `word-result` | `dyadic-fraction` | 2 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `rational` | `word-result` | `dyadic-fraction` | 1 |
+| `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `real` | `add` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `real` | `constructor` | `rational` | 15 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `real` | `definitely_one` | `identity-facts` | 2 |
 | `matrix_ops/hyperreal/mat4 known_uniform_diagonal_div_vector_point` | `real` | `definitely_zero` | `rational-sign` | 4 |
@@ -8913,20 +9118,20 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `hyperlattice` | `real_kernel` | `signed-product-sum-exact-rational` | 8 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `hyperlattice_matrix` | `helper` | `divide4-upper-triangular-fused-exact` | 1 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `hyperlattice_matrix` | `method` | `div-upper-triangular4` | 1 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `linear` | `retained-difference` | 3 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `mul` | `retained-product` | 1 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 3 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `mul` | `word-sized` | 13 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `mul-div` | `proven-reduced-word-product` | 1 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `product_sum` | `word-sized` | 8 |
-| `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `sub` | `word-sized` | 3 |
-| `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `word-result` | `cached-small-dyadic` | 4 |
-| `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `word-result` | `cached-small-integer` | 1 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `rational` | `word-result` | `small-general-fraction` | 19 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `real` | `constructor` | `one` | 1 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `real` | `constructor` | `rational` | 32 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `real` | `mul` | `exact-rational` | 20 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 8 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_div_matrix` | `real` | `sub` | `same-symbolic-basis` | 4 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | `hyperlattice_matrix` | `method` | `upper-triangular4-inverse` | 1 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 8 |
@@ -8940,6 +9145,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `real-query` | 4 |
@@ -8955,6 +9161,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `real_kernel` | `mul-cached` | 10 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `real-query` | 4 |
@@ -8971,6 +9178,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `constructor` | `zero` | 22 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `mul` | `exact-rational` | 20 |
+| `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `sub` | `same-symbolic-basis` | 10 |
 | `matrix_ops/hyperreal/mat4 known_upper_triangular_inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal/mat4 powi` | `hyperlattice` | `real_kernel` | `signed-product-sum-exact-rational` | 128 |
 | `matrix_ops/hyperreal/mat4 powi` | `hyperlattice_matrix` | `helper` | `matrix-power4-borrowed-cube` | 4 |
@@ -9826,11 +10034,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `hyperlattice` | `real_kernel` | `mul-cached` | 12 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `hyperlattice_matrix` | `helper` | `transform-vector4-batch-point` | 1 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-affine-linear-diagonal` | 4 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `rational` | `add` | `word-sized` | 12 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `rational` | `linear` | `retained-sum` | 12 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `rational` | `mul` | `retained-product` | 12 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `rational` | `word-result` | `uncached-integer-128-255` | 4 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `rational` | `word-result` | `uncached-integer-256-1023` | 6 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `rational` | `word-result` | `uncached-integer-65-127` | 2 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `real` | `add` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `real` | `constructor` | `rational` | 24 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -9844,11 +10050,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `hyperlattice` | `real_kernel` | `mul-cached` | 12 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-batch-affine-linear-diagonal-assumed` | 1 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `hyperlattice_matrix` | `method` | `transform-vector4-point-batch-assumed` | 1 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `rational` | `add` | `word-sized` | 12 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `rational` | `linear` | `retained-sum` | 12 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `rational` | `mul` | `retained-product` | 12 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `rational` | `word-result` | `uncached-integer-128-255` | 4 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `rational` | `word-result` | `uncached-integer-256-1023` | 6 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `rational` | `word-result` | `uncached-integer-65-127` | 2 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `real` | `add` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `real` | `constructor` | `rational` | 24 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_assumed` | `real` | `definitely_one` | `identity-facts` | 20 |
@@ -9864,11 +10068,9 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-batch-affine-linear-diagonal-assumed` | 1 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-point-batch` | 1 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `hyperlattice_matrix` | `method` | `transform-vector4-point-batch-assumed` | 1 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `add` | `word-sized` | 12 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `linear` | `retained-sum` | 12 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `mul` | `retained-product` | 12 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `word-result` | `uncached-integer-128-255` | 4 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `word-result` | `uncached-integer-256-1023` | 6 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `rational` | `word-result` | `uncached-integer-65-127` | 2 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `add` | `same-symbolic-basis` | 12 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `constructor` | `rational` | 24 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `definitely_one` | `identity-facts` | 20 |
@@ -9882,12 +10084,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_batch_public_assumed` | `real` | `zero_status` | `zero-scale` | 1 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `hyperlattice` | `real_kernel` | `mul-cached` | 3 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-affine-linear-diagonal` | 1 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `rational` | `linear` | `retained-sum` | 3 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `rational` | `mul` | `word-sized` | 3 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `rational` | `word-result` | `cached-small-integer` | 3 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `rational` | `word-result` | `uncached-integer-128-255` | 1 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `rational` | `word-result` | `uncached-integer-256-1023` | 1 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `rational` | `word-result` | `uncached-integer-65-127` | 1 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `real` | `add` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `real` | `constructor` | `rational` | 6 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `real` | `definitely_one` | `identity-facts` | 20 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `real` | `definitely_zero` | `rational-sign` | 29 |
@@ -9900,12 +10100,10 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_materialize` | `real` | `zero_status` | `zero-scale` | 1 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `hyperlattice` | `real_kernel` | `mul-cached` | 3 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-affine-linear-diagonal` | 1 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `rational` | `add` | `word-sized` | 3 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `rational` | `linear` | `retained-sum` | 3 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `rational` | `mul` | `word-sized` | 3 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `rational` | `word-result` | `cached-small-integer` | 3 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `rational` | `word-result` | `uncached-integer-128-255` | 1 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `rational` | `word-result` | `uncached-integer-256-1023` | 1 |
-| `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `rational` | `word-result` | `uncached-integer-65-127` | 1 |
+| `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `real` | `add` | `same-symbolic-basis` | 3 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `real` | `constructor` | `rational` | 6 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `real` | `definitely_one` | `identity-facts` | 1 |
 | `matrix_ops/hyperreal/mat4 translated_diagonal_point_transform` | `real` | `definitely_zero` | `rational-sign` | 9 |
@@ -10001,11 +10199,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/acosh_abort` | `real` | `acosh` | `near-one-deferred-node` | 1 |
 | `scalar_ops/hyperreal-rational/acosh_abort` | `real` | `acosh` | `rational-at-least-two-direct-deferred-node` | 3 |
 | `scalar_ops/hyperreal-rational/add` | `rational` | `add` | `word-sized` | 4 |
+| `scalar_ops/hyperreal-rational/add` | `rational` | `linear` | `retained-sum` | 4 |
 | `scalar_ops/hyperreal-rational/add` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `scalar_ops/hyperreal-rational/add` | `rational` | `word-result` | `small-general-fraction` | 1 |
 | `scalar_ops/hyperreal-rational/add` | `rational` | `word-result` | `zero` | 1 |
-| `scalar_ops/hyperreal-rational/add` | `real` | `constructor` | `rational` | 3 |
-| `scalar_ops/hyperreal-rational/add` | `real` | `constructor` | `zero` | 1 |
+| `scalar_ops/hyperreal-rational/add` | `real` | `add` | `same-symbolic-basis` | 8 |
+| `scalar_ops/hyperreal-rational/add` | `real` | `constructor` | `rational` | 6 |
+| `scalar_ops/hyperreal-rational/add` | `real` | `constructor` | `zero` | 2 |
 | `scalar_ops/hyperreal-rational/asin` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
 | `scalar_ops/hyperreal-rational/asin` | `computable` | `asin` | `exact-tiny-rational-series` | 1 |
 | `scalar_ops/hyperreal-rational/asin` | `computable` | `asin` | `signed-rational-deferred` | 1 |
@@ -10125,6 +10325,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/cosh` | `rational` | `mul-div` | `proven-reduced-word-product` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `rational` | `word-result` | `cached-small-dyadic` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `rational` | `word-result` | `small-general-fraction` | 8 |
+| `scalar_ops/hyperreal-rational/cosh` | `real` | `add` | `generic-computable` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `constructor` | `rational` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `div` | `rhs-one` | 4 |
@@ -10254,15 +10455,18 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `div` | `rhs-one` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `exp` | `rational-exp-special-form` | 8 |
+| `scalar_ops/hyperreal-rational/sinh` | `real` | `sub` | `generic-computable` | 4 |
 | `scalar_ops/hyperreal-rational/sqrt` | `computable` | `constructor` | `rational-node` | 1 |
 | `scalar_ops/hyperreal-rational/sqrt` | `hyperlattice` | `free_function` | `sqrt` | 4 |
 | `scalar_ops/hyperreal-rational/sqrt` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
 | `scalar_ops/hyperreal-rational/sqrt` | `real` | `sqrt` | `rational-perfect-square` | 3 |
 | `scalar_ops/hyperreal-rational/sqrt` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
+| `scalar_ops/hyperreal-rational/sub` | `rational` | `linear` | `retained-difference` | 4 |
 | `scalar_ops/hyperreal-rational/sub` | `rational` | `sub` | `word-sized` | 4 |
 | `scalar_ops/hyperreal-rational/sub` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `scalar_ops/hyperreal-rational/sub` | `rational` | `word-result` | `small-general-fraction` | 2 |
-| `scalar_ops/hyperreal-rational/sub` | `real` | `constructor` | `rational` | 4 |
+| `scalar_ops/hyperreal-rational/sub` | `real` | `constructor` | `rational` | 8 |
+| `scalar_ops/hyperreal-rational/sub` | `real` | `sub` | `same-symbolic-basis` | 8 |
 | `scalar_ops/hyperreal-rational/tan` | `computable` | `constructor` | `prescaled-tan-rational` | 2 |
 | `scalar_ops/hyperreal-rational/tan` | `computable` | `constructor` | `tan-large-rational-deferred` | 2 |
 | `scalar_ops/hyperreal-rational/tan` | `computable` | `tan` | `large-rational-deferred` | 2 |
@@ -10285,10 +10489,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal-rational/tanh` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 8 |
 | `scalar_ops/hyperreal-rational/tanh` | `rational` | `mul` | `word-sized` | 8 |
 | `scalar_ops/hyperreal-rational/tanh` | `rational` | `word-result` | `small-general-fraction` | 16 |
+| `scalar_ops/hyperreal-rational/tanh` | `real` | `add` | `generic-computable` | 4 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `definitely_zero` | `rational-sign` | 12 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `exp` | `rational-exp-special-form` | 8 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `inverse_ref` | `generic` | 4 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `mul` | `symbolic-class-table` | 4 |
+| `scalar_ops/hyperreal-rational/tanh` | `real` | `sub` | `generic-computable` | 4 |
 | `scalar_ops/hyperreal/acos` | `computable` | `acos` | `negative-rational-deferred` | 1 |
 | `scalar_ops/hyperreal/acos` | `computable` | `acos` | `positive-rational-deferred` | 1 |
 | `scalar_ops/hyperreal/acos` | `computable` | `acos` | `tiny-via-asin` | 1 |
@@ -10344,11 +10550,13 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/acosh_abort` | `real` | `acosh` | `near-one-deferred-node` | 1 |
 | `scalar_ops/hyperreal/acosh_abort` | `real` | `acosh` | `rational-at-least-two-direct-deferred-node` | 3 |
 | `scalar_ops/hyperreal/add` | `rational` | `add` | `word-sized` | 4 |
+| `scalar_ops/hyperreal/add` | `rational` | `linear` | `retained-sum` | 4 |
 | `scalar_ops/hyperreal/add` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `scalar_ops/hyperreal/add` | `rational` | `word-result` | `dyadic-fraction` | 1 |
 | `scalar_ops/hyperreal/add` | `rational` | `word-result` | `zero` | 1 |
-| `scalar_ops/hyperreal/add` | `real` | `constructor` | `rational` | 3 |
-| `scalar_ops/hyperreal/add` | `real` | `constructor` | `zero` | 1 |
+| `scalar_ops/hyperreal/add` | `real` | `add` | `same-symbolic-basis` | 8 |
+| `scalar_ops/hyperreal/add` | `real` | `constructor` | `rational` | 6 |
+| `scalar_ops/hyperreal/add` | `real` | `constructor` | `zero` | 2 |
 | `scalar_ops/hyperreal/asin` | `computable` | `asin` | `endpoint-rational-deferred` | 1 |
 | `scalar_ops/hyperreal/asin` | `computable` | `asin` | `exact-tiny-rational-series` | 1 |
 | `scalar_ops/hyperreal/asin` | `computable` | `asin` | `signed-rational-deferred` | 1 |
@@ -10464,6 +10672,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/cosh` | `rational` | `mul-div` | `proven-reduced-word-product` | 4 |
 | `scalar_ops/hyperreal/cosh` | `rational` | `word-result` | `cached-small-dyadic` | 4 |
 | `scalar_ops/hyperreal/cosh` | `rational` | `word-result` | `small-general-fraction` | 8 |
+| `scalar_ops/hyperreal/cosh` | `real` | `add` | `generic-computable` | 4 |
 | `scalar_ops/hyperreal/cosh` | `real` | `constructor` | `rational` | 4 |
 | `scalar_ops/hyperreal/cosh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal/cosh` | `real` | `div` | `rhs-one` | 4 |
@@ -10598,6 +10807,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/sinh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal/sinh` | `real` | `div` | `rhs-one` | 4 |
 | `scalar_ops/hyperreal/sinh` | `real` | `exp` | `rational-exp-special-form` | 8 |
+| `scalar_ops/hyperreal/sinh` | `real` | `sub` | `generic-computable` | 4 |
 | `scalar_ops/hyperreal/sqrt` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
 | `scalar_ops/hyperreal/sqrt` | `computable` | `constructor` | `rational-node` | 1 |
 | `scalar_ops/hyperreal/sqrt` | `hyperlattice` | `free_function` | `sqrt` | 4 |
@@ -10605,10 +10815,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/sqrt` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
 | `scalar_ops/hyperreal/sqrt` | `real` | `sqrt` | `rational-perfect-square` | 2 |
 | `scalar_ops/hyperreal/sqrt` | `real` | `sqrt` | `rational-sqrt-special-form` | 2 |
+| `scalar_ops/hyperreal/sub` | `rational` | `linear` | `retained-difference` | 4 |
 | `scalar_ops/hyperreal/sub` | `rational` | `sub` | `word-sized` | 4 |
 | `scalar_ops/hyperreal/sub` | `rational` | `word-result` | `cached-small-dyadic` | 2 |
 | `scalar_ops/hyperreal/sub` | `rational` | `word-result` | `dyadic-fraction` | 2 |
-| `scalar_ops/hyperreal/sub` | `real` | `constructor` | `rational` | 4 |
+| `scalar_ops/hyperreal/sub` | `real` | `constructor` | `rational` | 8 |
+| `scalar_ops/hyperreal/sub` | `real` | `sub` | `same-symbolic-basis` | 8 |
 | `scalar_ops/hyperreal/tan` | `computable` | `constructor` | `prescaled-tan-rational` | 2 |
 | `scalar_ops/hyperreal/tan` | `computable` | `constructor` | `tan-large-rational-deferred` | 2 |
 | `scalar_ops/hyperreal/tan` | `computable` | `tan` | `large-rational-deferred` | 2 |
@@ -10631,10 +10843,12 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `scalar_ops/hyperreal/tanh` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 8 |
 | `scalar_ops/hyperreal/tanh` | `rational` | `mul` | `word-sized` | 8 |
 | `scalar_ops/hyperreal/tanh` | `rational` | `word-result` | `small-general-fraction` | 16 |
+| `scalar_ops/hyperreal/tanh` | `real` | `add` | `generic-computable` | 4 |
 | `scalar_ops/hyperreal/tanh` | `real` | `definitely_zero` | `rational-sign` | 12 |
 | `scalar_ops/hyperreal/tanh` | `real` | `exp` | `rational-exp-special-form` | 8 |
 | `scalar_ops/hyperreal/tanh` | `real` | `inverse_ref` | `generic` | 4 |
 | `scalar_ops/hyperreal/tanh` | `real` | `mul` | `symbolic-class-table` | 4 |
+| `scalar_ops/hyperreal/tanh` | `real` | `sub` | `generic-computable` | 4 |
 | `scalar_trig/hyperreal-rational/0.1/cos` | `computable` | `constructor` | `prescaled-cos-rational` | 1 |
 | `scalar_trig/hyperreal-rational/0.1/cos` | `computable` | `cos` | `structural-small-prescaled` | 1 |
 | `scalar_trig/hyperreal-rational/0.1/cos` | `hyperlattice` | `free_function` | `cos` | 1 |
