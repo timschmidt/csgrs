@@ -1,5 +1,9 @@
 # Performance and Reference Audit
 
+Cross-crate measurements live in
+[`COMPARATIVE_BENCHMARKS.md`](COMPARATIVE_BENCHMARKS.md). They are kept separate from
+this exact-path audit because peer crates use different numeric and topology contracts.
+
 This document records how every source in the README reference list maps to
 `hypercurve`, which ideas are already embodied by the implementation, and which
 optimization experiments were retained or rejected. The governing constraint is

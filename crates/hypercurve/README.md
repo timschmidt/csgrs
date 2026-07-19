@@ -251,6 +251,9 @@ preparation/candidate filtering, and ordinary, prepared, and mixed-prepared path
 
 The complete reference-to-implementation audit, retained benchmark results, and
 rejected optimization experiments are recorded in [PERFORMANCE.md](PERFORMANCE.md).
+Cross-crate release benchmarks against `cavalier_contours`, `curvo`, `i_overlay`, and
+`geo`, including equivalent-workload and numeric-model caveats, are documented in
+[COMPARATIVE_BENCHMARKS.md](COMPARATIVE_BENCHMARKS.md).
 Runtime exact-computation paths can be audited with
 `cargo bench --features dispatch-trace --bench dispatch_trace`; the matching
 feature-gated integration test verifies that public curve queries continue to

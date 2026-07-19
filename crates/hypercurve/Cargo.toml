@@ -25,8 +25,12 @@ hypersolve = { version = "0.3.0", default-features = false }
 hyperlimit = { version = "0.4.0", default-features = false, features = ["std"], optional = true }
 hypertri = { version = "0.4.0", default-features = false, features = ["earcut"], optional = true }
 num = { version = "0.4.3", features = ["num-bigint"] }
+cavalier_contours = { version = "0.7.0", optional = true }
+curvo = { version = "0.1.91", optional = true }
+i_overlay = { version = "7.0.2", default-features = false, optional = true }
+nalgebra = { version = "0.35", optional = true }
 [dev-dependencies]
-geo = "0.32"
+geo = "0.33.1"
 proptest = "1"
 
 [features]
@@ -36,6 +40,12 @@ dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit?/dispatch-trace"]
 serde = []
 svg = []
 triangulation = ["dep:hypertri"]
+comparative-benchmarks = [
+    "dep:cavalier_contours",
+    "dep:curvo",
+    "dep:i_overlay",
+    "dep:nalgebra",
+]
 
 [[bench]]
 name = "containment"
@@ -119,6 +129,11 @@ required-features = ["dispatch-trace", "predicates"]
 name = "api_surface"
 harness = false
 required-features = ["triangulation"]
+
+[[bench]]
+name = "comparative"
+harness = false
+required-features = ["comparative-benchmarks"]
 
 [patch.crates-io]
 hyperreal = { path = "../hyperreal" }
