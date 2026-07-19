@@ -832,25 +832,38 @@ fn append_output_polygon_centroid(
     vertices: &mut Vec<OutputVertex>,
     boundary: &[usize],
 ) -> HypermeshResult<usize> {
-    let mut x = Real::zero();
-    let mut y = Real::zero();
-    let mut z = Real::zero();
-    for &index in boundary {
-        x += vertices[index].x.clone();
-        y += vertices[index].y.clone();
-        z += vertices[index].z.clone();
-    }
-    let count = Real::from(
-        u64::try_from(boundary.len()).map_err(|_| HypermeshError::UnknownClassification)?,
-    );
     let center = OutputVertex {
-        x: (x / &count).map_err(|_| HypermeshError::UnknownClassification)?,
-        y: (y / &count).map_err(|_| HypermeshError::UnknownClassification)?,
-        z: (z / count).map_err(|_| HypermeshError::UnknownClassification)?,
+        x: mean_output_coordinate(vertices, boundary, |vertex| &vertex.x)?,
+        y: mean_output_coordinate(vertices, boundary, |vertex| &vertex.y)?,
+        z: mean_output_coordinate(vertices, boundary, |vertex| &vertex.z)?,
     };
     let index = vertices.len();
     vertices.push(center);
     Ok(index)
+}
+
+fn mean_output_coordinate<'a>(
+    vertices: &'a [OutputVertex],
+    boundary: &[usize],
+    coordinate: impl Fn(&'a OutputVertex) -> &'a Real,
+) -> HypermeshResult<Real> {
+    if boundary.is_empty() {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    if let Some(rationals) = boundary
+        .iter()
+        .map(|&index| coordinate(&vertices[index]).exact_rational_ref())
+        .collect::<Option<Vec<_>>>()
+    {
+        return Rational::mean_refs(&rationals)
+            .map(Real::from)
+            .ok_or(HypermeshError::UnknownClassification);
+    }
+    let count = Real::from(
+        u64::try_from(boundary.len()).map_err(|_| HypermeshError::UnknownClassification)?,
+    );
+    (Real::sum_refs(boundary.iter().map(|&index| coordinate(&vertices[index]))) / count)
+        .map_err(|_| HypermeshError::UnknownClassification)
 }
 
 fn triangulate_construction_boundary(

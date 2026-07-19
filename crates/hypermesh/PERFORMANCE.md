@@ -667,6 +667,39 @@ builds, and the release WASM demo. A 20-second ASAN campaign completed 358
 `boolean_pipeline` executions without failure, and the downstream CSGRS library
 suite passed all 304 tests.
 
+## 2026-07-19: reduce exact output centroids once
+
+Status: **kept**
+
+Expanded polygon boundaries require a centroid fan to preserve the certified
+closed output. Each coordinate previously accumulated canonical `Real` sums
+and then performed another exact division. Exact-rational coordinates now use
+Hyperreal's borrowed mean reducer, which chooses one common-denominator
+schedule and canonicalizes only the final mean. Non-rational coordinates keep
+the original exact `Real` sum and division path, and triangulation topology is
+unchanged.
+
+Preserved release binaries each prepared 500 fresh sphere/box arrangements.
+Seven counter runs measured:
+
+| operation | repeated reduction | one final reduction | result |
+| --- | ---: | ---: | ---: |
+| union | 11,171,163,355 | 10,665,871,420 | 4.52% fewer instructions |
+| difference | 8,915,422,180 | 8,599,082,893 | 3.55% fewer instructions |
+
+Cycles fell 4.89% for union and 3.60% for difference. In the matched
+five-sample cross-kernel run, cold exact difference reached 1.966 ms versus
+CGAL EPECK's 1.882 ms, while cold union measured 3.097 ms versus 2.496 ms.
+Retained CSGRS remained 22.33x faster than CGAL for difference and 17.75x for
+union, and exceeded the tight OpenCascade rows at both temperatures.
+
+Validation passed the default and all-feature matrices (957 unit tests, all 60
+core tests, and 48 regressions plus one intentional ignore), the no-default-
+feature check, warning-denied Clippy and rustdoc, benchmark and fuzz-target
+builds, and the release WASM demo. A 20-second ASAN campaign completed 376
+`boolean_pipeline` executions without failure, and the downstream CSGRS library
+suite passed all 304 tests.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:
