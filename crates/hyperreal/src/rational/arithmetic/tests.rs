@@ -1134,6 +1134,24 @@ mod tests {
     }
 
     #[test]
+    fn lossy_dyadic_view_handles_wide_geometry_coefficients() {
+        let numerator = (BigUint::one() << 200_usize)
+            + (BigUint::one() << 148_usize)
+            + BigUint::one();
+        let denominator = BigUint::one() << 180_usize;
+        let expected = 2.0_f64.powi(20) + 2.0_f64.powi(-32);
+        let positive = Rational::from_fraction_parts(
+            Plus,
+            numerator.clone(),
+            denominator.clone(),
+        );
+        let negative = Rational::from_fraction_parts(Minus, numerator, denominator);
+
+        assert_eq!(positive.to_f64_lossy(), Some(expected));
+        assert_eq!(negative.to_f64_lossy(), Some(-expected));
+    }
+
+    #[test]
     fn display() {
         let many: Rational = "12345".parse().unwrap();
         let s = format!("{many}");

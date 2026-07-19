@@ -298,6 +298,26 @@ impl Rational {
             return Some(0.0);
         }
 
+        // Exact binary inputs dominate geometric filters. For denominators in
+        // binary64's normal range, their exponent is already certified by the
+        // power-of-two denominator, so avoid an exact shifted-magnitude
+        // comparison and a second BigUint-to-f64 conversion.
+        if let Some(denominator_shift) = self.dyadic_denominator_shift()
+            && denominator_shift <= 1023
+        {
+            let numerator = self.numerator.to_f64()?;
+            let denominator = f64::from_bits((denominator_shift + 1023) << 52);
+            let value = numerator / denominator;
+            if !value.is_finite() {
+                return None;
+            }
+            return Some(match self.sign {
+                Minus => -value,
+                NoSign => 0.0,
+                Plus => value,
+            });
+        }
+
         let msd = self.msd_exact()?;
         if msd > 1023 {
             return None;

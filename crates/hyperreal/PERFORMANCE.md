@@ -718,6 +718,40 @@ In Hyperlattice's 50-sample comparison, f64-derived complex division measured
 Numerica128 and 22.03 us for Symbolica. Borrowed division measured 349.79 ns
 and 457.13 ns for the two Hyperreal inputs versus 503.22 ns for Numerica128.
 
+### Direct dyadic approximate filter views
+
+The borrowed rational-to-`f64` view now recognizes power-of-two denominators
+within binary64's normal exponent range before computing an exact shifted
+most-significant bit. The denominator's certified shift directly constructs
+the exact binary64 power of two, avoiding both the shifted BigUint comparison
+and a second BigUint conversion. Non-dyadic rationals, extreme exponents, and
+all general Computable values retain the previous path. This remains only an
+approximate filter view: predicate error bounds and exact fallbacks are
+unchanged.
+
+A preserved release binary and the candidate each prepared 500 sphere/box
+arrangements with fresh thread-local Boolean state. Retired instructions were
+stable to 0.01% or better across seven runs:
+
+| exact Boolean | previous view | direct dyadic view | result |
+| --- | ---: | ---: | ---: |
+| union | 12,591,702,744 | 12,151,185,037 | 3.50% fewer instructions |
+| difference | 10,131,421,412 | 9,870,401,358 | 2.58% fewer instructions |
+
+One-operation fresh-process measurements, after subtracting identical input
+construction and process overhead, confirmed 3.21% fewer union instructions
+and 2.38% fewer difference instructions. The matched five-sample kernel run
+still identifies cold CSGRS-to-CGAL gaps for both operations, while retained
+CSGRS extraction is 17.75x faster for union and 20.46x faster for difference;
+CSGRS also exceeds the tight OpenCascade rows at both temperatures.
+
+Validation passed all 524 all-feature library tests and every integration,
+oracle, benchmark-smoke, strict Clippy, warning-denied rustdoc, benchmark-build,
+and fuzz-build gate. AddressSanitizer campaigns completed 1,000 rational,
+1,292 Real-exact, 2,439 Real-elementary, and 1,000 Computable executions without
+failure. All-feature Hyperlattice, Hyperlimit, Hypersolve, Hypercurve, and
+Hypermesh suites passed, as did all 304 downstream CSGRS library tests.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
