@@ -12569,6 +12569,22 @@ fn matrix3_scaled_adjugate_dense_exact(matrix: &[[Real; 3]; 3]) -> BlasResult<[[
         "helper",
         "matrix3-scaled-adjugate-dense-exact"
     );
+    if matrix
+        .iter()
+        .flatten()
+        .all(|value| value.exact_rational_ref().is_some())
+    {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "matrix3-scaled-adjugate-dense-exact-rational-aggregate"
+        );
+        return Real::exact_rational_matrix3_inverse_known_exact([
+            [&matrix[0][0], &matrix[0][1], &matrix[0][2]],
+            [&matrix[1][0], &matrix[1][1], &matrix[1][2]],
+            [&matrix[2][0], &matrix[2][1], &matrix[2][2]],
+        ]);
+    }
     let m = &matrix;
     let c00 = mul_sub_dense_exact(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c01 = mul_sub_dense_exact(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);

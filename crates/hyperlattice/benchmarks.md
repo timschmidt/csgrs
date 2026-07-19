@@ -243,11 +243,11 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `mat3 determinant` | 894.96 ns | 396.21 ns | 949.80 ns | 22.87 us | 0.94x | 0.04x |
-| `mat3 inverse` | 12.15 us | 2.46 us | 2.51 us | 84.21 us | 4.84x | 0.14x |
+| `mat3 inverse` | 5.74 us | 2.42 us | 2.54 us | 85.75 us | 2.26x | 0.07x |
 | `mat3 mul mat3` | 5.52 us | 4.23 us | 2.39 us | 62.00 us | 2.31x | 0.09x |
 | `mat3 transform vec3` | 2.77 us | 2.26 us | 906.03 ns | 21.08 us | 3.05x | 0.13x |
 | `mat4 determinant` | 1.99 us | 637.81 ns | 4.09 us | 96.50 us | 0.49x | 0.02x |
-| `mat4 inverse` | 33.93 us | 5.91 us | 9.29 us | 344.99 us | 3.65x | 0.10x |
+| `mat4 inverse` | 22.21 us | 7.83 us | 9.11 us | 351.38 us | 2.44x | 0.06x |
 | `mat4 mul mat4` | 9.35 us | 6.97 us | 5.46 us | 145.36 us | 1.71x | 0.06x |
 | `mat4 transform vec4` | 7.49 us | 5.74 us | 1.66 us | 35.91 us | 4.52x | 0.21x |
 
