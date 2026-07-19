@@ -126,6 +126,8 @@ fn bench_scalar_operations_for<F>(
     );
     trace_dispatch_cases(format!("scalar_ops/{label}/sqrt"), &positive_cases, |value| {
         let _ = black_box(hyperlattice::sqrt(value.clone()).unwrap());
+        let _ = black_box(hyperlattice::sqrt(value.clone()).unwrap());
+        let _ = black_box(hyperlattice::sqrt(value.clone()).unwrap());
     });
     trace_dispatch_cases(format!("scalar_ops/{label}/sin"), &trig_cases, |value| {
         let _ = black_box(hyperlattice::sin(value.clone()));
@@ -587,6 +589,40 @@ fn bench_scalar_operations(c: &mut Criterion) {
     bench_scalar_operations_for::<_>(&mut group, "hyperreal-rational", qr);
     bench_numerica_scalar_operations(&mut group, "numerica128");
     bench_symbolica_scalar_operations(&mut group, "symbolica");
+    group.finish();
+}
+
+fn bench_scalar_sqrt_cases(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalar_sqrt_cases");
+    let numerica_ctx = numerica_engine::Ctx::new(128);
+    let symbolica_ctx = symbolica_engine::Ctx::new(128);
+
+    for (name, value) in [
+        ("perfect_9", 9.0),
+        ("tiny_1e_12", 1.0e-12),
+        ("perfect_1e12", 1.0e12),
+        ("e_import", std::f64::consts::E),
+    ] {
+        let hyperreal = s(value);
+        let hyperreal_rational = qr(value);
+        let numerica = numerica_ctx.f(value);
+        let symbolica = symbolica_ctx.f(value);
+
+        group.bench_function(format!("hyperreal/{name}"), |b| {
+            b.iter(|| black_box(hyperlattice::sqrt(black_box(hyperreal.clone())).unwrap()))
+        });
+        group.bench_function(format!("hyperreal-rational/{name}"), |b| {
+            b.iter(|| {
+                black_box(hyperlattice::sqrt(black_box(hyperreal_rational.clone())).unwrap())
+            })
+        });
+        group.bench_function(format!("numerica128/{name}"), |b| {
+            b.iter(|| black_box(numerica_ctx.sqrt(black_box(&numerica))))
+        });
+        group.bench_function(format!("symbolica/{name}"), |b| {
+            b.iter(|| black_box(symbolica_ctx.sqrt(black_box(&symbolica))))
+        });
+    }
     group.finish();
 }
 

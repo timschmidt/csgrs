@@ -101,7 +101,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `ln` | 1.23 us | 734.31 ns | 1.34 us | 1.84 us | 0.92x | 0.67x |
 | `log10` | 1.41 us | 916.18 ns | 2.89 us | 6.76 us | 0.49x | 0.21x |
 | `log10 abort` | 1.44 us | 941.40 ns | 3.00 us | 7.06 us | 0.48x | 0.20x |
-| `sqrt` | 153.56 ns | 154.89 ns | 95.12 ns | 1.45 us | 1.61x | 0.11x |
+| `sqrt` | 49.18 ns | 34.07 ns | 96.34 ns | 1.478 us | 0.51x | 0.03x |
 | `sin` | 47.07 ns | 47.36 ns | 1.27 us | 2.27 us | 0.04x | 0.02x |
 | `cos` | 46.65 ns | 47.09 ns | 655.93 ns | 1.78 us | 0.07x | 0.03x |
 | `tan` | 48.06 ns | 50.83 ns | 1.62 us | 7.32 us | 0.03x | 0.01x |
@@ -122,6 +122,15 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `atanh abort` | 145.48 ns | 142.55 ns | 1.28 us | 15.39 us | 0.11x | 0.01x |
 | `zero status` | 1.09 ns | 1.04 ns | 6.87 ns | 8.19 ns | 0.16x | 0.13x |
 | `zero status abort` | 1.17 ns | 1.18 ns | 7.01 ns | 8.20 ns | 0.17x | 0.14x |
+
+#### Retained Square-root Cases
+
+| Input | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica |
+| --- | ---: | ---: | ---: | ---: |
+| `9` | 23.52 ns | 24.69 ns | 90.16 ns | 1.360 us |
+| `1e-12` | 83.26 ns | 23.86 ns | 94.73 ns | 1.619 us |
+| `1e12` | 23.05 ns | 23.37 ns | 90.45 ns | 1.431 us |
+| imported `e` | 63.00 ns | 62.78 ns | 100.52 ns | 1.408 us |
 
 ### Complex Operations
 

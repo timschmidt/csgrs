@@ -82,6 +82,7 @@ fn main() {
     bench_matrix4(&mut criterion);
     bench_scalar_trig(&mut criterion);
     bench_scalar_operations(&mut criterion);
+    bench_scalar_sqrt_cases(&mut criterion);
     bench_large_integer_exp(&mut criterion);
     bench_complex_operations(&mut criterion);
     bench_vector_operations(&mut criterion);

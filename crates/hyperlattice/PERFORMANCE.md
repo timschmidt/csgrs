@@ -233,6 +233,16 @@ The regenerated trace removes four domain-fact, four detailed-fact, and four
 structural-fact events from each four-case workload. Canonical `Real::sqrt`
 still records every exact sign and perfect-square or retained-radical route.
 
+Hyperreal's follow-up adaptive square-reduction retention removes the remaining
+repeated-call gap without changing this facade. Fresh 50-sample medians are
+49.18 ns for exact f64 imports and 34.07 ns for explicit rationals, versus
+96.34 ns for Numerica 128 and 1.478 us for Symbolica. That is 68.0% and 78.0%
+faster than the preceding Hyperreal rows, and both exact forms now beat the
+fixed-precision control. A permanent per-case group confirms the result is not
+an averaging artifact: both Hyperreal forms beat Numerica on `9`, `1e-12`,
+`1e12`, and imported `e`. The trace exercises three calls per source value and
+records both adaptive admission and the retained exact reduction.
+
 ## Retained exact scalar products
 
 Fresh core arithmetic measurements replaced stale ledger rows and identified
