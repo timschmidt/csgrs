@@ -315,7 +315,9 @@ distribution helpers (`erf`, `erfc`, `erfcx`, `dnorm`,
 
 For direct Rust callers, `Real::powi_i64` accepts a machine-sized integer
 exponent without allocating an arbitrary-precision exponent. It preserves the
-same exact rational and retained symbolic results as `Real::powi`.
+same exact rational and retained symbolic results as `Real::powi`. Repeated
+small integer powers reuse the bounded exact-product graph after a direct cold
+evaluation.
 
 Stability-oriented scalar forms keep common statistical expressions from being
 assembled out of cancellation-prone generic arithmetic:

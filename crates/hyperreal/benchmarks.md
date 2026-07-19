@@ -272,6 +272,8 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | `pure_scalar_algorithm_speed/rational_inverse_retained` | 7.45 ns | 7.44 ns - 7.46 ns | Reuses the retained reciprocal of a shared nontrivial rational. |
 | `pure_scalar_algorithm_speed/rational_neg_owned_cold` | 7.12 ns | 7.09 ns - 7.16 ns | Negates a fresh uniquely owned nontrivial rational in place. |
 | `pure_scalar_algorithm_speed/rational_neg_retained` | 6.14 ns | 6.12 ns - 6.15 ns | Reuses the retained opposite sign of a shared nontrivial rational. |
+| `pure_scalar_algorithm_speed/real_exact_powi_i64_owned_cold` | 234.46 ns | 233.37 ns - 236.13 ns | Raises a fresh uniquely owned exact rational Real to the fifth power. |
+| `pure_scalar_algorithm_speed/real_exact_powi_i64_retained` | 59.16 ns | 58.98 ns - 59.37 ns | Reuses the bounded exact product chain for a shared fifth power. |
 | `pure_scalar_algorithm_speed/real_exact_add` | 22.776 ns | 22.714 ns - 22.847 ns | Adds exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_sub` | 22.578 ns | 22.529 ns - 22.638 ns | Subtracts exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |

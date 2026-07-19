@@ -62,6 +62,8 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
   reduction where possible
 - bounded product retention reuses repeated coefficients without changing canonical
   numerator/denominator values or retaining either operand strongly
+- repeated powers two through five first use the direct integer kernel, then reuse
+  that same bounded product graph when the immutable base is observed again
 - adaptive linear-result retention reuses repeated exact translations and differences;
   unshared first-use operands only record a one-byte hint, the second observation
   admits a bounded result, and later calls reuse it; the lazy arithmetic box has room

@@ -592,6 +592,20 @@ mod tests {
     }
 
     #[test]
+    fn repeated_small_power_reuses_the_retained_product_chain() {
+        for exponent in 2..=5 {
+            let base = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
+
+            let cold = base.clone().powi_i64(exponent).unwrap();
+            let retained = base.clone().powi_i64(exponent).unwrap();
+            let reused = base.powi_i64(exponent).unwrap();
+
+            assert_eq!(cold, retained);
+            assert!(Arc::ptr_eq(&retained.0, &reused.0));
+        }
+    }
+
+    #[test]
     fn small_dyadic_products_share_canonical_storage() {
         let left = Rational::fraction(5, 4).unwrap();
         let right = Rational::fraction(5, 2).unwrap();

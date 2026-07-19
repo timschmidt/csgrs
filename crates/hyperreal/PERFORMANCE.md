@@ -570,6 +570,21 @@ The cross-stack trace records `native-real-i64-kernel`,
 symbolic, unknown-sign, negative-exponent, zero-domain, and `i64::MIN` cases;
 none of the new dispatch decisions use a primitive approximation.
 
+A follow-up retained path now records one byte of reuse evidence for exponents
+two through five. The first call stays on the direct checked-integer kernel;
+later calls use an explicitly ordered repeated-squaring chain whose edges are
+already covered by bounded exact-product retention. Commutative multiplication
+also checks the right operand's retained edge when the left slot is occupied.
+No power-result cache is added, and the extra atomic fits existing padding so
+`RationalData` remains 96 bytes.
+
+The cold unique fifth-power sentinel is 234.46 ns, while its retained shared-base
+counterpart is 59.16 ns. On the matched four-case Hyperlattice facade, exact-f64
+inputs measure 43.44 ns and explicit rational inputs 75.84 ns, versus 83.31 ns
+for Numerica 128 and 1.507 us for Symbolica. Both exact input forms now beat the
+fixed-precision control, while the unrelated direct exponent-17 sentinel remains
+at 83.67 ns.
+
 ### Retained experiment: two-thirds arctangent table reduction
 
 Johansson's medium-precision elementary-function work suggests reducing an

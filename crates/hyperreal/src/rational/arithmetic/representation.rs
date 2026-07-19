@@ -106,6 +106,7 @@ pub struct RationalData {
     product_cache: OnceLock<CachedRationalProduct>,
     linear_cache: OnceLock<Box<CachedRationalArithmetic>>,
     linear_reuse_seen: std::sync::atomic::AtomicBool,
+    power_reuse_seen: std::sync::atomic::AtomicBool,
 }
 
 impl std::fmt::Debug for Rational {

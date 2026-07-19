@@ -232,9 +232,28 @@ impl Rational {
         Some(Self::from_parts_raw(self.sign, numerator, denominator))
     }
 
+    #[inline]
     fn pow_up_u64(&self, exp: u64) -> Self {
         if exp == 0 {
             return Self::one();
+        }
+        // A first call keeps the direct integer-power kernel below. If the same
+        // immutable base is powered again, repeated squaring deliberately routes
+        // through borrowed multiplication: each edge then reuses the bounded
+        // product cache on subsequent calls without adding a power-specific
+        // result cache or enlarging RationalData.
+        if (2..=5).contains(&exp) {
+            if self
+                .power_reuse_seen
+                .load(std::sync::atomic::Ordering::Relaxed)
+            {
+                crate::trace_dispatch!("rational", "powi", "retained-product-chain");
+                return self.pow_up_by_retained_multiplication(exp);
+            }
+            // A racing first call may also use the direct path. Both results
+            // are exact, and either call supplies reuse evidence for the next.
+            self.power_reuse_seen
+                .store(true, std::sync::atomic::Ordering::Relaxed);
         }
         if let Ok(exp) = u32::try_from(exp)
             && exp <= 64
@@ -276,9 +295,47 @@ impl Rational {
             );
         }
 
+        self.pow_up_by_multiplication(exp)
+    }
+
+    fn pow_up_by_retained_multiplication(&self, mut exp: u64) -> Self {
+        match exp {
+            2 => return self * self,
+            3 => {
+                let square = self * self;
+                return &square * self;
+            }
+            4 => {
+                let square = self * self;
+                return &square * &square;
+            }
+            5 => {
+                let square = self * self;
+                let fourth = &square * &square;
+                return &fourth * self;
+            }
+            _ => {}
+        }
         let mut result = Self::one();
         let mut factor = self.clone();
-        let mut exp = exp;
+        while exp > 0 {
+            if exp & 1 == 1 {
+                // The successively squared factor owns the useful retained
+                // product edge. Keep it on the left so the common hit needs
+                // one cache probe rather than a failed commutative fallback.
+                result = &factor * &result;
+            }
+            exp >>= 1;
+            if exp > 0 {
+                factor = &factor * &factor;
+            }
+        }
+        result
+    }
+
+    fn pow_up_by_multiplication(&self, mut exp: u64) -> Self {
+        let mut result = Self::one();
+        let mut factor = self.clone();
         while exp > 0 {
             if exp & 1 == 1 {
                 result *= &factor;
@@ -312,6 +369,7 @@ impl Rational {
         result
     }
 
+    #[inline]
     pub(crate) fn powi_i64(self, exp: i64) -> Result<Self, Problem> {
         if exp == 0 {
             return Ok(Self::one());

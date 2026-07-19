@@ -856,6 +856,8 @@ impl Neg for Rational {
             data.linear_cache.take();
             data.linear_reuse_seen
                 .store(false, std::sync::atomic::Ordering::Relaxed);
+            data.power_reuse_seen
+                .store(false, std::sync::atomic::Ordering::Relaxed);
             return self;
         }
         -&self
@@ -946,7 +948,10 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
         if other.is_minus_one() {
             return -self;
         }
-        if let Some(result) = self.retained_product(other) {
+        if let Some(result) = self
+            .retained_product(other)
+            .or_else(|| other.retained_product(self))
+        {
             return result;
         }
         if self.numerator == other.denominator && self.denominator == other.numerator {

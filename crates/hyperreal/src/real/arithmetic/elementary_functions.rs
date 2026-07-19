@@ -3067,6 +3067,7 @@ impl Real {
     /// Exact rational values use the Rational kernel without first allocating
     /// an arbitrary-precision exponent. Other retained symbolic classes reuse
     /// [`Real::powi`].
+    #[inline]
     pub fn powi_i64(self, exp: i64) -> Result<Self, Problem> {
         if exp == 1 {
             crate::trace_dispatch!("real", "powi-i64", "exponent-one");

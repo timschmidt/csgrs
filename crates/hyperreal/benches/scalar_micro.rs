@@ -291,6 +291,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Reuses the retained opposite sign of a shared nontrivial rational.",
             },
             BenchDoc {
+                name: "real_exact_powi_i64_owned_cold",
+                description: "Raises a fresh uniquely owned exact rational Real to the fifth power.",
+            },
+            BenchDoc {
+                name: "real_exact_powi_i64_retained",
+                description: "Reuses the bounded exact product chain for a shared fifth power.",
+            },
+            BenchDoc {
                 name: "real_exact_add",
                 description: "Adds exact rational-backed `Real` values.",
             },
@@ -829,6 +837,9 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     let _retained_inverse = retained_inverse_input.clone().inverse().unwrap();
     let retained_negation_input = rational(123_456_789, 987_654_321);
     let _retained_negation = -&retained_negation_input;
+    let retained_powi_input = Real::new(rational(123_456_789, 987_654_321));
+    let _cold_powi = retained_powi_input.clone().powi_i64(5).unwrap();
+    let _retained_powi = retained_powi_input.clone().powi_i64(5).unwrap();
     let retained_real_lhs = Real::new(Rational::new(1_000_000_000));
     let retained_real_rhs =
         Real::new(Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly"));
@@ -943,6 +954,16 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     });
     group.bench_function("rational_neg_retained", |b| {
         b.iter(|| black_box(-black_box(&retained_negation_input)))
+    });
+    group.bench_function("real_exact_powi_i64_owned_cold", |b| {
+        b.iter_batched(
+            || Real::new(rational(123_456_789, 987_654_321)),
+            |value| black_box(value.powi_i64(5).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("real_exact_powi_i64_retained", |b| {
+        b.iter(|| black_box(black_box(retained_powi_input.clone()).powi_i64(5).unwrap()))
     });
     group.bench_function("real_exact_add", |b| {
         b.iter(|| black_box(black_box(&exact_real_lhs) + black_box(&exact_real_rhs)))
