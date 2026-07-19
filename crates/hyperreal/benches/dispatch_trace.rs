@@ -273,6 +273,21 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
         black_box(x.clone().asinh().unwrap());
         black_box(x.clone().acosh().unwrap());
     });
+    trace_row(&mut rows, filters, "real/forward_hyperbolic/small", || {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        black_box(half.clone().sinh().unwrap());
+        black_box(half.clone().cosh().unwrap());
+        black_box(half.tanh().unwrap());
+    });
+    trace_row(&mut rows, filters, "real/forward_hyperbolic/large", || {
+        let twenty = Real::from(20_i32);
+        let minus_twenty = Real::from(-20_i32);
+        for value in [twenty, minus_twenty] {
+            black_box(value.clone().sinh().unwrap().to_f64_lossy());
+            black_box(value.clone().cosh().unwrap().to_f64_lossy());
+            black_box(value.tanh().unwrap().to_f64_lossy());
+        }
+    });
     trace_row(&mut rows, filters, "real/log/scaled_e", || {
         let scaled_e = Real::from(2) * Real::e();
         black_box(scaled_e.ln().unwrap());

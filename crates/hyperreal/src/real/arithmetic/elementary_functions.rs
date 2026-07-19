@@ -2633,10 +2633,29 @@ impl Real {
             crate::trace_dispatch!("real", "sinh", "integer-log-collapse");
             return Ok(Self::new((positive - negative) / Rational::new(2)));
         }
-        crate::trace_dispatch!("real", "sinh", "generic-exp-identity");
-        let positive = self.clone().exp()?;
-        let negative = self.neg().exp()?;
-        (positive - negative) / Self::new(Rational::new(2))
+        let primitive_hint = self.exact_rational_f64_hint().map(f64::sinh);
+        let result = if !self.prefers_expm1_hyperbolic_identity() {
+            crate::trace_dispatch!("real", "sinh", "generic-exp-identity");
+            let positive = self.clone().exp()?;
+            let negative = self.neg().exp()?;
+            ((positive - negative) / Self::new(Rational::new(2)))?
+        } else if self.rational.sign() == Sign::Minus {
+            crate::trace_dispatch!("real", "sinh", "negative-symmetry");
+            -(-self).sinh()?
+        } else {
+            // With m = expm1(x), sinh(x) = m(m + 2) / (2(m + 1)).  This uses one
+            // stable transcendental node instead of independently constructing
+            // exp(x) and exp(-x).  Negative structural scales enter through odd
+            // symmetry above so m + 1 does not suffer near-minus-one cancellation.
+            crate::trace_dispatch!("real", "sinh", "generic-expm1-identity");
+            let delta = self.expm1();
+            let one = Self::one();
+            let two = Self::new(Rational::new(2));
+            let numerator = &delta * (&delta + &two);
+            let denominator = (&delta + one) * two;
+            (numerator / denominator)?
+        };
+        Ok(result.with_f64_view_hint(primitive_hint))
     }
 
     /// The hyperbolic cosine of this Real.
@@ -2655,10 +2674,28 @@ impl Real {
             crate::trace_dispatch!("real", "cosh", "integer-log-collapse");
             return Ok(Self::new((positive + negative) / Rational::new(2)));
         }
-        crate::trace_dispatch!("real", "cosh", "generic-exp-identity");
-        let positive = self.clone().exp()?;
-        let negative = self.neg().exp()?;
-        (positive + negative) / Self::new(Rational::new(2))
+        let primitive_hint = self.exact_rational_f64_hint().map(f64::cosh);
+        let result = if !self.prefers_expm1_hyperbolic_identity() {
+            crate::trace_dispatch!("real", "cosh", "generic-exp-identity");
+            let positive = self.clone().exp()?;
+            let negative = self.neg().exp()?;
+            ((positive + negative) / Self::new(Rational::new(2)))?
+        } else if self.rational.sign() == Sign::Minus {
+            crate::trace_dispatch!("real", "cosh", "negative-symmetry");
+            (-self).cosh()?
+        } else {
+            // With m = expm1(x), cosh(x) = 1 + m^2 / (2(m + 1)).  This shares the
+            // one-node construction strategy used by sinh and remains stable near
+            // zero.  Even symmetry above keeps the denominator away from zero for
+            // negative structural scales.
+            crate::trace_dispatch!("real", "cosh", "generic-expm1-identity");
+            let delta = self.expm1();
+            let one = Self::one();
+            let denominator = (&delta + &one) * Self::new(Rational::new(2));
+            let correction = ((&delta * &delta) / denominator)?;
+            one + correction
+        };
+        Ok(result.with_f64_view_hint(primitive_hint))
     }
 
     /// The hyperbolic tangent of this Real.
@@ -2677,10 +2714,50 @@ impl Real {
             crate::trace_dispatch!("real", "tanh", "integer-log-collapse");
             return Ok(Self::new((squared.clone() - one.clone()) / (squared + one)));
         }
-        crate::trace_dispatch!("real", "tanh", "generic-exp-identity");
-        let positive = self.clone().exp()?;
-        let negative = self.neg().exp()?;
-        (&positive - &negative) / (positive + negative)
+        let primitive_hint = self.exact_rational_f64_hint().map(f64::tanh);
+        let result = if !self.prefers_expm1_hyperbolic_identity() {
+            crate::trace_dispatch!("real", "tanh", "generic-exp-identity");
+            let positive = self.clone().exp()?;
+            let negative = self.neg().exp()?;
+            ((&positive - &negative) / (positive + negative))?
+        } else if self.rational.sign() == Sign::Minus {
+            crate::trace_dispatch!("real", "tanh", "negative-symmetry");
+            -(-self).tanh()?
+        } else {
+            // tanh(x) = expm1(2x) / (expm1(2x) + 2).  Keeping the residual as a
+            // dedicated expm1 node avoids constructing both exp(x) and exp(-x),
+            // and remains well-conditioned when x is close to zero.
+            crate::trace_dispatch!("real", "tanh", "generic-expm1-identity");
+            let doubled = &self + &self;
+            let delta = doubled.expm1();
+            (delta.clone() / (delta + Self::new(Rational::new(2))))?
+        };
+        Ok(result.with_f64_view_hint(primitive_hint))
+    }
+
+    #[inline]
+    fn exact_rational_f64_hint(&self) -> Option<f64> {
+        self.exact_rational_ref()?.to_f64_lossy()
+    }
+
+    #[inline]
+    fn with_f64_view_hint(self, hint: Option<f64>) -> Self {
+        if let Some(hint) = hint {
+            self.primitive_approx_cache.set(PrimitiveApproxCache::F64(
+                hint.is_finite().then_some(hint),
+            ));
+        }
+        self
+    }
+
+    #[inline]
+    fn prefers_expm1_hyperbolic_identity(&self) -> bool {
+        // The two-exp structural identities are substantially cheaper for
+        // ordinary symbolic values.  Large exact rationals are the crossover:
+        // each structural exp performs range reduction, while one expm1 node
+        // plus rational algebra stays bounded.  Eight is also the expm1
+        // approximation kernel's large-argument transition.
+        self.class == One && self.rational.magnitude_at_least_power_of_two(3)
     }
 
     /// The inverse hyperbolic sine of this Real.

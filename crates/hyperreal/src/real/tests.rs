@@ -1555,6 +1555,28 @@ mod tests {
     }
 
     #[test]
+    fn forward_hyperbolics_stay_stable_for_tiny_and_large_rationals() {
+        for value in [
+            Rational::fraction(1, 1_000_000_000_000_u64).unwrap(),
+            Rational::fraction(-1, 1_000_000_000_000_u64).unwrap(),
+            Rational::new(20),
+            Rational::new(-20),
+        ] {
+            let input = Real::new(value);
+            let primitive = f64::from(input.clone());
+            for (actual, expected) in [
+                (input.clone().sinh().unwrap(), primitive.sinh()),
+                (input.clone().cosh().unwrap(), primitive.cosh()),
+                (input.clone().tanh().unwrap(), primitive.tanh()),
+            ] {
+                let actual: f64 = actual.into();
+                let scale = expected.abs().max(1.0);
+                assert!((actual - expected).abs() <= 1e-14 * scale);
+            }
+        }
+    }
+
+    #[test]
     fn tanh_is_odd_symmetry() {
         let x = Real::new(Rational::fraction(3, 4).unwrap());
         let lhs: f64 = x.clone().tanh().unwrap().into();

@@ -88,7 +88,6 @@ pub(super) enum PrimitiveApproxCache {
     Empty,
     #[cfg(feature = "cached-f32-approx")]
     F32(Option<f32>),
-    #[cfg(feature = "cached-f64-approx")]
     F64(Option<f64>),
 }
 
@@ -104,7 +103,6 @@ impl AtomicPrimitiveApproxCache {
     const EMPTY: u64 = 0x7ff8_0000_0000_0001;
     #[cfg(feature = "cached-f32-approx")]
     const F32_NONE: u64 = 0x7ff8_0000_0000_0002;
-    #[cfg(feature = "cached-f64-approx")]
     const F64_NONE: u64 = 0x7ff8_0000_0000_0003;
     #[cfg(feature = "cached-f32-approx")]
     const F32_TAG: u64 = 0xffff_ffff_0000_0000;
@@ -148,9 +146,7 @@ impl AtomicPrimitiveApproxCache {
             PrimitiveApproxCache::F32(Some(value)) => Self::F32_TAG | u64::from(value.to_bits()),
             #[cfg(feature = "cached-f32-approx")]
             PrimitiveApproxCache::F32(None) => Self::F32_NONE,
-            #[cfg(feature = "cached-f64-approx")]
             PrimitiveApproxCache::F64(Some(value)) => value.to_bits(),
-            #[cfg(feature = "cached-f64-approx")]
             PrimitiveApproxCache::F64(None) => Self::F64_NONE,
         }
     }
@@ -168,15 +164,10 @@ impl AtomicPrimitiveApproxCache {
                 return PrimitiveApproxCache::F32(Some(f32::from_bits(value as u32)));
             }
         }
-        #[cfg(feature = "cached-f64-approx")]
-        {
-            if value == Self::F64_NONE {
-                return PrimitiveApproxCache::F64(None);
-            }
-            return PrimitiveApproxCache::F64(Some(f64::from_bits(value)));
+        if value == Self::F64_NONE {
+            return PrimitiveApproxCache::F64(None);
         }
-        #[allow(unreachable_code)]
-        PrimitiveApproxCache::Empty
+        PrimitiveApproxCache::F64(Some(f64::from_bits(value)))
     }
 
     fn rank(value: u64) -> u8 {
@@ -184,7 +175,6 @@ impl AtomicPrimitiveApproxCache {
             PrimitiveApproxCache::Empty => 0,
             #[cfg(feature = "cached-f32-approx")]
             PrimitiveApproxCache::F32(_) => 1,
-            #[cfg(feature = "cached-f64-approx")]
             PrimitiveApproxCache::F64(_) => 2,
         }
     }

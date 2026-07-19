@@ -1,5 +1,4 @@
 use crate::RealSign;
-#[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
 use crate::real::PrimitiveApproxCache;
 use crate::{Computable, Problem, Rational, Real};
 
@@ -359,13 +358,11 @@ impl Real {
     /// obligations, not replacements for exact decisions.
     #[inline]
     pub fn to_f64_lossy(&self) -> Option<f64> {
-        #[cfg(feature = "cached-f64-approx")]
         if let PrimitiveApproxCache::F64(value) = self.primitive_approx_cache.get() {
             return value;
         }
 
         let value = self.to_f64_lossy_uncached();
-        #[cfg(feature = "cached-f64-approx")]
         if !self.is_aborted() {
             self.primitive_approx_cache
                 .set(PrimitiveApproxCache::F64(value));
@@ -800,7 +797,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "cached-f64-approx")]
     fn primitive_approx_cache_keeps_overflow_state() {
         let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1200));
 
@@ -824,7 +820,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "cached-f64-approx")]
     fn abort_invalidates_primitive_approx_cache() {
         use std::sync::Arc;
         use std::sync::atomic::AtomicBool;

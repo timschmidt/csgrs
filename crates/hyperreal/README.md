@@ -184,7 +184,7 @@ Feature flags:
 | --- | --- | --- |
 | `simple` | no | Enables `Simple` and the package calculator binary. |
 | `cached-f32-approx` | no | Caches selected `f32` approximation paths. |
-| `cached-f64-approx` | no | Caches selected `f64` approximation paths. |
+| `cached-f64-approx` | no | Retains populated `f64` views across exact-rational clones; borrowed `f64` conversion caches in place in every build. |
 | `dispatch-trace` | no | Records scalar dispatch and rational-growth counters. |
 | `serde` | no | Enables JSON/CBOR conversion APIs and serializable expression types. |
 

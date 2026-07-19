@@ -119,9 +119,10 @@ Relevant path notes:
   6.14 ns.
 - Exact-rational `Real += &Real`, `Real -= &Real`, and `Real *= &Real` replace
   only the rational scale and invalidate the lossy approximation accelerator,
-  preserving the existing exact class payload in place. Default-feature exact
-  clones do not load the disabled primitive cache; cache-enabled builds continue
-  copying their populated accelerator.
+  preserving the existing exact class payload in place. Every build caches a
+  borrowed `f64` view in the already-present atomic slot; default-feature exact
+  rational clones leave it empty, while `cached-f64-approx` builds copy a
+  populated view across those clones.
 - When a dyadic denominator product overflows `u128` but both numerators and their
   product fit, multiplication cancels and multiplies those numerators in registers
   before allocating only the final exact result.
@@ -638,6 +639,36 @@ The sweep covers `11/20`, `3/5`, `7/10`, and `4/5`; the upper-edge row guards
 the point with the smallest expected gain.  The full rational inverse-trig
 cross-reference grid passes, and dispatch tracing records
 `two-thirds-anchor-shared` with the existing pi and `atan(1/5)` caches.
+
+### Retained forward-hyperbolic crossover and primitive views
+
+Forward `sinh`, `cosh`, and `tanh` now keep the two-exponential structural
+identity for ordinary exact rationals and symbolic values, where it remains the
+cheapest exact graph. Exact rationals with magnitude at least eight instead use
+one stable `expm1` identity; negative large inputs first enter odd/even symmetry
+so the residual never approaches minus one. Integer multiples of an exact
+logarithm still collapse to exact rationals before either generic route.
+
+The public lossy `f64` edge now uses the lock-free cache slot already present in
+every `Real`. Forward-hyperbolic results seed that view only when the input is an
+exact rational with a finite primitive view. This accelerator is never consulted
+by arithmetic, equality, sign, domain, or topology decisions, and every later
+exact mutation invalidates it normally.
+
+| Direct construction case | Before | After | Result |
+| --- | ---: | ---: | ---: |
+| `sinh(ln(2))` exact collapse | 258.31 ns | 140.12 ns | 45.75% faster |
+| `cosh(ln(2))` exact collapse | 275.88 ns | 141.73 ns | 48.63% faster |
+| `tanh(ln(2))` exact collapse | 546.35 ns | 281.85 ns | 48.41% faster |
+| `sinh(1)` generic | 648.26 ns | 367.72 ns | 43.28% faster |
+| `cosh(1)` generic | 589.89 ns | 337.13 ns | 42.85% faster |
+| `tanh(1)` generic | 873.54 ns | 502.86 ns | 42.43% faster |
+
+The retained trace records `generic-exp-identity` for `1/2`,
+`generic-expm1-identity` for `20`, and one `negative-symmetry` dispatch per
+operation for `-20`. A focused `perf` profile of the large-tanh output row found
+the remaining cost in exact node construction, rational conversion, and
+allocation; the cached primitive read itself no longer appears as a hot path.
 
 ### Architecture and measurement triggers
 
