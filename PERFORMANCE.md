@@ -11,6 +11,9 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `mesh_boolean/prepare_and_extract_four` | 31.542 ms | 9.606 ms | 69.5% faster | 120 polygons, 120 corners, exact buffers and metadata |
 | `mesh_boolean/extract_four_prebuilt` | 31.542 ms | 2.174 ms | 93.1% faster | Same four closure-certified outputs |
 | `mesh_queries/ray_intersections` | 32.851 ms/op | 30.819 ms/op | 6.2% faster | Same exact ordered hit points, distances, and checksum |
+| `kernel/center/translated_box` (cold) | 23.768 us/op | 6.339 us/op | 73.3% faster | Same 12-coordinate checksum; 1.060x faster than CGAL EPECK |
+| `kernel/translate/sphere_medium` (cold) | 0.2513 ms/op | 0.1865 ms/op | 25.8% faster | Same 960-coordinate checksum; 2.095x faster than CGAL EPECK |
+| `kernel/affine_transform/sphere_shear` (cold) | 0.1288 ms/op | 0.1069 ms/op | 17.0% faster | Same 960-coordinate checksum; 5.125x faster than CGAL EPECK |
 | `profile_primitives/constructor/circle_with_keyway` | 4.72 ms/op | 0.209 ms/op | 95.6% faster | Same contour roles, area, exact containment oracle, and checksum |
 | `profile_primitives/constructor/keyhole` | 5.58 ms/op | 0.161 ms/op | 97.1% faster | Same contour roles, area, exact containment oracle, and checksum |
 | `profile_primitives/constructor/crescent` | 10.9 ms/op | 1.42 ms/op | 87.0% faster | Same contour roles, area, 605 exact containment oracle decisions, and checksum |
@@ -75,6 +78,34 @@ polygon's certified triangulation indices instead of cloning a temporary
 `[Vertex; 3]` for every ray test. The HyperLimit ray/triangle predicate, exact
 hit ordering, and exact deduplication are unchanged. A differential test replays
 the former materialized enumeration against the streaming result.
+
+The exact translation path now materializes its complete finite position view
+once, shares that retained allocation with both the coordinate cache and the
+result layout, and skips construction of an indexed vertex pool unless the
+already-known triangle, normal, and coordinate-layout preconditions can accept
+it. Polygon corner counts survive the generic translated fallback because
+translation changes neither polygon order nor arity. That retained fact also
+lets the HyperMesh adapter triangulate translated cuboids directly from their
+canonical position slots instead of requiring the triangle-only pool. A
+differential regression compares every exact triangle coordinate row, source
+polygon row, and position-ID mapping against generic triangulation.
+Independently cached constructors may assign different canonical slot numbers
+to the same triangle rows, so the identical-input shortcut now compares those
+exact indexed coordinate rows instead of treating raw local indices as global
+geometry identity. Seven cold
+cross-kernel samples put translated-box centering at 6.339 us, medium-sphere
+translation at 0.1865 ms, and sphere shear at 0.1069 ms; all three beat both
+CGAL EPECK and OpenCascade while preserving their prior checksums.
+
+AddressSanitizer completed 10,000 transform-matrix executions and 2,000
+HyperMesh-adapter executions with leak detection disabled for the ptrace-hosted
+runner. The adapter campaign exposed two stale harness assumptions rather than
+production faults: the native mesh-buffer view intentionally expands triangle
+corners while connectivity canonicalizes exact positions, and an open or
+otherwise Boolean-invalid triangle stream can still have valid native buffers
+and partial connectivity. The corrected oracle now checks bidirectional exact
+position coverage and reserves closed-manifold claims for successful HyperMesh
+imports.
 
 `Profile::circle_with_keyway` now recognizes the exactly certified case where
 both left cutter corners lie in the convex sampled circle. It constructs that

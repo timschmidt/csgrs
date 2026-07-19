@@ -119,14 +119,20 @@ fuzz_target!(|bytes: &[u8]| {
         assert!(!vertices.is_empty());
         assert!(!indices.is_empty());
         let (vertex_map, adjacency) = mesh.build_connectivity();
-        assert_eq!(vertex_map.vertex_count(), vertices.len());
+        assert!(vertex_map.vertex_count() <= vertices.len());
+        assert!(
+            vertices
+                .iter()
+                .all(|position| vertex_map.find_index(position).is_some())
+        );
+        assert!(
+            vertex_map
+                .get_vertex_positions()
+                .iter()
+                .all(|(position, _)| vertices.contains(position))
+        );
         let directed_edge_count = adjacency.values().map(Vec::len).sum::<usize>();
         assert_eq!(directed_edge_count % 2, 0);
-    } else {
-        let (vertex_map, adjacency) = mesh.build_connectivity();
-        assert_eq!(vertex_map.vertex_count(), 0);
-        assert!(adjacency.is_empty());
-        assert!(mesh.try_get_vertices_and_indices().is_err());
     }
 
     if let Ok(exact) = mesh.to_hypermesh_exact() {
