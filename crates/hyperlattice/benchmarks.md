@@ -204,7 +204,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `vec3 dot` | 453.02 ns | 422.30 ns | 257.12 ns | 7.40 us | 1.76x | 0.06x |
 | `vec3 magnitude` | 796.04 ns | 1.99 us | 354.38 ns | 8.84 us | 2.25x | 0.09x |
-| `vec3 normalize` | 2.57 us | 4.67 us | 591.76 ns | 16.62 us | 4.34x | 0.15x |
+| `vec3 normalize` | 1.69 us | 2.53 us | 588.23 ns | 17.79 us | 2.88x | 0.10x |
 
 #### Vector API Operations
 

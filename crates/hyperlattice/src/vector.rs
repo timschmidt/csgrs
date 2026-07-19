@@ -1176,6 +1176,20 @@ macro_rules! impl_vector {
             /// [`Problem`](crate::Problem) is propagated.
             pub fn normalize(&self) -> BlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "normalize");
+                if self
+                    .0
+                    .iter()
+                    .all(|value| value.exact_rational_ref().is_some())
+                    && self.0.iter().any(|value| !value.is_exact_dyadic_rational())
+                {
+                    crate::trace_dispatch!(
+                        "hyperlattice_vector",
+                        "normalize",
+                        "exact-rational-common-scale"
+                    );
+                    let values = from_fn(|index| &self.0[index]);
+                    return Real::exact_rational_normalize_known_exact(values).map(Self);
+                }
                 let mag = self.magnitude()?;
                 let inv_mag = mag.inverse()?;
                 // Keep the borrowed `Mul` form here. A `mul_cached` prototype
@@ -1192,6 +1206,20 @@ macro_rules! impl_vector {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "normalize-checked");
                 let norm_status = squared_norm_zero_status(&self.0);
                 require_known_nonzero_status(norm_status)?;
+                if self
+                    .0
+                    .iter()
+                    .all(|value| value.exact_rational_ref().is_some())
+                    && self.0.iter().any(|value| !value.is_exact_dyadic_rational())
+                {
+                    crate::trace_dispatch!(
+                        "hyperlattice_vector",
+                        "normalize-checked",
+                        "exact-rational-common-scale"
+                    );
+                    let values = from_fn(|index| &self.0[index]);
+                    return Real::exact_rational_normalize_known_exact(values).map(Self);
+                }
                 let mag_squared = self.magnitude_squared_fast();
                 let mag = mag_squared.sqrt()?;
                 let inv_mag = mag.inverse()?;

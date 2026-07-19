@@ -340,7 +340,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | 295 | 0 | 5 | 16 | 97 | 22 | 6 | 30 | 62 | 144 | 0 | 0 | 0 | 0 | 0 | 43 | 26 | 44 | 8 | 8 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | 148 | 0 | 1 | 13 | 81 | 22 | 0 | 30 | 43 | 78 | 0 | 0 | 0 | 2 | 0 | 24 | 5 | 15 | 2 | 2 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | 154 | 0 | 1 | 14 | 85 | 23 | 0 | 30 | 47 | 79 | 0 | 0 | 0 | 4 | 0 | 25 | 5 | 11 | 2 | 2 |
-| `matrix3/hyperreal/mat3 determinant` | 130 | 0 | 20 | 0 | 48 | 0 | 0 | 42 | 60 | 130 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
+| `matrix3/hyperreal/mat3 determinant` | 130 | 0 | 20 | 0 | 48 | 0 | 0 | 42 | 60 | 130 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 0 | 0 |
 | `matrix3/hyperreal/mat3 inverse` | 220 | 0 | 20 | 0 | 12 | 0 | 0 | 74 | 14 | 196 | 0 | 0 | 0 | 0 | 0 | 6 | 1 | 26 | 0 | 18 |
 | `matrix3/hyperreal/mat3 mul mat3` | 857 | 0 | 12 | 0 | 704 | 176 | 0 | 483 | 192 | 749 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 4 | 0 | 0 |
 | `matrix3/hyperreal/mat3 transform vec3` | 365 | 0 | 4 | 0 | 316 | 88 | 0 | 230 | 60 | 313 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 3 | 0 | 0 |
@@ -370,7 +370,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | 240 | 0 | 2 | 16 | 155 | 41 | 0 | 70 | 71 | 161 | 0 | 0 | 0 | 2 | 0 | 21 | 4 | 18 | 4 | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | 233 | 0 | 2 | 14 | 151 | 39 | 0 | 70 | 66 | 158 | 0 | 0 | 0 | 2 | 0 | 19 | 4 | 18 | 4 | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | 242 | 0 | 2 | 16 | 157 | 39 | 1 | 71 | 73 | 162 | 0 | 0 | 0 | 0 | 0 | 22 | 5 | 18 | 4 | 4 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4` | 302 | 0 | 2 | 14 | 150 | 39 | 0 | 75 | 65 | 203 | 0 | 0 | 0 | 0 | 0 | 33 | 7 | 45 | 10 | 10 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4` | 302 | 0 | 2 | 14 | 150 | 39 | 0 | 75 | 65 | 203 | 0 | 0 | 0 | 0 | 0 | 33 | 7 | 46 | 10 | 10 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | 306 | 0 | 2 | 16 | 158 | 41 | 0 | 70 | 73 | 197 | 0 | 0 | 0 | 4 | 0 | 33 | 7 | 43 | 10 | 10 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | 663 | 0 | 6 | 14 | 171 | 46 | 1 | 87 | 72 | 458 | 0 | 0 | 0 | 0 | 0 | 62 | 29 | 172 | 40 | 40 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | 711 | 0 | 6 | 22 | 203 | 54 | 1 | 87 | 104 | 466 | 0 | 0 | 0 | 16 | 0 | 70 | 29 | 172 | 40 | 40 |
@@ -824,7 +824,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vector_ops/hyperreal-rational/vec3 dot_abort_dense` | 124 | 0 | 60 | 0 | 24 | 0 | 0 | 8 | 32 | 44 | 0 | 0 | 0 | 0 | 0 | 1 | 56 | 0 | 0 | 0 |
 | `vector_ops/hyperreal-rational/vec3 dot_abort_sparse` | 63 | 0 | 25 | 0 | 18 | 0 | 0 | 4 | 20 | 30 | 0 | 0 | 0 | 0 | 0 | 3 | 24 | 3 | 0 | 0 |
 | `vector_ops/hyperreal-rational/vec3 dot_sparse` | 19 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 3 | 0 | 0 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | 131 | 0 | 12 | 4 | 11 | 0 | 0 | 9 | 19 | 109 | 0 | 0 | 0 | 0 | 0 | 1 | 3 | 4 | 0 | 0 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | 106 | 0 | 15 | 4 | 8 | 0 | 0 | 17 | 16 | 90 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 14 | 0 | 0 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked_abort` | 151 | 0 | 28 | 4 | 11 | 0 | 0 | 9 | 23 | 109 | 0 | 0 | 0 | 0 | 0 | 1 | 19 | 4 | 0 | 0 |
 | `vector_ops/hyperreal-rational/vec4 dot_abort_dense` | 156 | 0 | 76 | 0 | 32 | 0 | 0 | 8 | 36 | 52 | 0 | 0 | 0 | 0 | 0 | 2 | 72 | 1 | 0 | 0 |
 | `vector_ops/hyperreal-rational/vec4 dot_abort_sparse` | 82 | 0 | 34 | 0 | 24 | 0 | 0 | 5 | 27 | 37 | 0 | 0 | 0 | 0 | 0 | 3 | 32 | 4 | 0 | 0 |
@@ -839,7 +839,7 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vector_ops/hyperreal/vec4 dot_sparse` | 19 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 4 | 0 | 0 |
 | `vectors/hyperreal-rational/vec3 dot` | 5 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `vectors/hyperreal-rational/vec3 magnitude` | 16 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `vectors/hyperreal-rational/vec3 normalize` | 37 | 0 | 2 | 0 | 2 | 0 | 0 | 2 | 2 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 3 | 0 | 0 |
+| `vectors/hyperreal-rational/vec3 normalize` | 27 | 0 | 2 | 0 | 1 | 0 | 0 | 5 | 1 | 26 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 4 | 0 | 0 |
 | `vectors/hyperreal-rational/vec4 normalize` | 24 | 0 | 2 | 0 | 1 | 0 | 0 | 4 | 1 | 22 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
 | `vectors/hyperreal/vec3 dot` | 18 | 0 | 4 | 0 | 0 | 0 | 0 | 7 | 0 | 14 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
 | `vectors/hyperreal/vec3 magnitude` | 49 | 0 | 4 | 0 | 4 | 0 | 0 | 7 | 4 | 45 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 0 |
@@ -11629,30 +11629,30 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vector_ops/hyperreal-rational/vec3 dot_sparse` | `rational` | `word-result` | `uncached-integer-65-127` | 1 |
 | `vector_ops/hyperreal-rational/vec3 dot_sparse` | `real` | `constructor` | `rational` | 4 |
 | `vector_ops/hyperreal-rational/vec3 dot_sparse` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `computable` | `constructor` | `rational-integer-canonicalized` | 2 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `computable` | `constructor` | `rational-node` | 6 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `computable` | `sqrt` | `generic-sqrt-node` | 3 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `computable` | `constructor` | `rational-integer-canonicalized` | 6 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked` | `hyperlattice_vector` | `method` | `normalize-checked` | 4 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked` | `hyperlattice_vector` | `norm-certificate` | `component-nonzero` | 4 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked` | `hyperlattice_vector` | `norm-facts` | `checked-nonzero` | 4 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `dot_product` | `word-sized` | 4 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 5 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `mul` | `word-sized` | 14 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `square_extraction` | `mod63-reject` | 2 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `square_extraction` | `mod64-reject` | 10 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `hyperlattice_vector` | `normalize-checked` | `exact-rational-common-scale` | 3 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `common-scale` | `clear-denominator` | 3 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `dot_product` | `word-sized` | 1 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 10 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `mul` | `word-sized` | 11 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `product_sum` | `word-sized` | 3 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `square_extraction` | `mod64-reject` | 7 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `square_extraction` | `reuse-observed` | 4 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `square_extraction` | `shared-divisor-remainder` | 6 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 6 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `word-result` | `small-general-fraction` | 7 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `word-result` | `uncached-integer-wide` | 1 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `word-result` | `wide-general-fraction` | 10 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `square_extraction` | `shared-divisor-remainder` | 2 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 2 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `word-result` | `cached-small-integer` | 1 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `word-result` | `small-general-fraction` | 4 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `word-result` | `uncached-integer-wide` | 4 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `rational` | `word-result` | `wide-general-fraction` | 6 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `constructor` | `rational` | 4 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `definitely_zero` | `rational-sign` | 3 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `inverse` | `const-product-sqrt` | 3 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `inverse` | `prechecked-sqrt-rational-radical` | 1 |
-| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `mul` | `lhs-rational-scale` | 12 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `inverse` | `prechecked-sqrt-rational-radical` | 4 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `mul` | `lhs-rational-scale` | 3 |
+| `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `normalize` | `exact-rational-common-scale` | 3 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `sqrt` | `rational-sqrt-special-form` | 4 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `vector_ops/hyperreal-rational/vec3 normalize_checked_abort` | `computable` | `constructor` | `one` | 4 |
@@ -11873,25 +11873,23 @@ This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It
 | `vectors/hyperreal-rational/vec3 magnitude` | `real` | `constructor` | `rational` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `computable` | `constructor` | `rational-node` | 2 |
-| `vectors/hyperreal-rational/vec3 normalize` | `computable` | `sqrt` | `generic-sqrt-node` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `hyperlattice_vector` | `method` | `magnitude` | 1 |
+| `vectors/hyperreal-rational/vec3 normalize` | `computable` | `constructor` | `rational-integer-canonicalized` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `hyperlattice_vector` | `method` | `normalize` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `dot_product` | `word-sized` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 1 |
+| `vectors/hyperreal-rational/vec3 normalize` | `hyperlattice_vector` | `normalize` | `exact-rational-common-scale` | 1 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `common-scale` | `clear-denominator` | 1 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `mul` | `word-dyadic-general-cross-cancel` | 3 |
 | `vectors/hyperreal-rational/vec3 normalize` | `rational` | `mul` | `word-sized` | 4 |
-| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `mod63-reject` | 2 |
-| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `mod64-reject` | 3 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `product_sum` | `word-sized` | 1 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `mod64-reject` | 2 |
 | `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `reuse-observed` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `shared-divisor-remainder` | 3 |
-| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 3 |
-| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `word-result` | `wide-general-fraction` | 5 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `shared-divisor-remainder` | 1 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `square_extraction` | `shared-small-factor-remainder` | 1 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `word-result` | `uncached-integer-wide` | 2 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `word-result` | `wide-general-fraction` | 3 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `best_sign` | `symbolic-or-rational` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `constructor` | `rational` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `real` | `definitely_zero` | `rational-sign` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `real` | `inverse` | `const-product-sqrt` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `real` | `mul` | `lhs-rational-scale` | 3 |
+| `vectors/hyperreal-rational/vec3 normalize` | `real` | `inverse` | `prechecked-sqrt-rational-radical` | 1 |
+| `vectors/hyperreal-rational/vec3 normalize` | `real` | `normalize` | `exact-rational-common-scale` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
 | `vectors/hyperreal-rational/vec4 normalize` | `computable` | `constructor` | `rational-integer-canonicalized` | 2 |
 | `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice_vector` | `method` | `magnitude` | 1 |
