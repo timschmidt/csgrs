@@ -3,6 +3,7 @@
 use std::sync::{Arc, OnceLock};
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
+use hyperreal::PreparedRationalLinearForm4Query;
 
 use crate::error::HypermeshResult;
 use crate::geometry::{
@@ -459,7 +460,12 @@ struct PointClassificationKey([usize; 3]);
 
 #[derive(Default)]
 struct PointPlaneClassificationCache {
-    points: StorageHashMap<PointClassificationKey, Vec<Option<Classification>>>,
+    points: StorageHashMap<PointClassificationKey, CachedPointPlaneClassifications>,
+}
+
+struct CachedPointPlaneClassifications {
+    prepared_query: Option<PreparedRationalLinearForm4Query>,
+    classifications: Vec<Option<Classification>>,
 }
 
 impl PointPlaneClassificationCache {
@@ -508,15 +514,22 @@ impl PointPlaneClassificationCache {
             return classify_point(point, plane);
         };
         let key = PointClassificationKey([x, y, z].map(hyperlattice::Rational::storage_identity));
-        let classifications = self
+        let cached = self
             .points
             .entry(key)
-            .or_insert_with(|| vec![None; plane_count]);
-        if let Some(classification) = classifications[plane_index] {
+            .or_insert_with(|| CachedPointPlaneClassifications {
+                prepared_query: Real::prepare_rational_affine_point3_query([x, y, z]),
+                classifications: vec![None; plane_count],
+            });
+        if let Some(classification) = cached.classifications[plane_index] {
             return Ok(classification);
         }
-        let classification = classify_point(point, plane)?;
-        classifications[plane_index] = Some(classification);
+        let classification = crate::predicate::classify_point_with_prepared_query(
+            point,
+            plane,
+            cached.prepared_query.as_ref(),
+        )?;
+        cached.classifications[plane_index] = Some(classification);
         Ok(classification)
     }
 }

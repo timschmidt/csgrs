@@ -149,6 +149,27 @@ impl<'a> PreparedPoint3<'a> {
     }
 }
 
+pub(crate) fn classify_point_with_prepared_query(
+    point: &Point3,
+    plane: &Plane,
+    rational_filter_query: Option<&PreparedRationalLinearForm4Query>,
+) -> HypermeshResult<Classification> {
+    let exact_coordinates = match (
+        point.x.exact_rational_ref(),
+        point.y.exact_rational_ref(),
+        point.z.exact_rational_ref(),
+    ) {
+        (Some(x), Some(y), Some(z)) => Some([x, y, z]),
+        _ => None,
+    };
+    PreparedPoint3 {
+        point,
+        exact_coordinates,
+        rational_filter_query: rational_filter_query.copied(),
+    }
+    .classify(plane)
+}
+
 /// Classifies a homogeneous point against a plane.
 pub fn classify_projective_point(
     point: &HomogeneousPoint3,

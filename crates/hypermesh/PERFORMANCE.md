@@ -442,6 +442,46 @@ Every operation retained the same output size and checksum. Difference and
 intersection remained much faster than OpenCascade; intersection also beat
 CGAL in the selective run, while the remaining cold competitor gaps stay open.
 
+## 2026-07-19: retain source-point filter queries across support planes
+
+Status: **kept**
+
+The two-convex classifier already caches the certified sign of each exact
+source point against each opposing support plane. It still rebuilt the same
+four-value floating filter query separately for every previously unseen
+point/plane pair. The cache now retains one prepared query per unique source
+point alongside its plane-indexed signs. Only conservative approximate values
+and their certified error radii are retained; uncertain filters continue to
+use the unchanged exact rational signed-product-sum ordering.
+
+A 500-operation alternating-input profile forced a fresh arrangement on every
+call. Rational-to-`f64` conversion fell from 10.97% to 8.20% of sampled cycles,
+a 25.3% reduction in the targeted hotspot's share. Total sampled cycles also
+fell from 4.775 billion to 4.713 billion.
+
+Because sequential release builds showed thermal drift, the end-to-end check
+preserved both binaries and alternated their execution for 101 fresh processes
+per side. Each process ran the same four CSGRS sphere/box operations; output
+sizes and checksums matched throughout.
+
+| operation | repeated query | retained query | cold result |
+| --- | ---: | ---: | ---: |
+| difference | 2.617380 ms | 2.558905 ms | 2.23% faster |
+| intersection | 1.978735 ms | 1.919859 ms | 2.98% faster |
+| union | 4.474474 ms | 4.355922 ms | 2.65% faster |
+| symmetric difference | 3.500130 ms | 3.393198 ms | 3.06% faster |
+
+Warm measurements used 31 similarly interleaved processes. Union and
+symmetric difference were unchanged; difference and intersection moved by
+about 1--2.5% even though prepared-arrangement reuse bypasses the modified
+code, identifying that residual as binary-layout and measurement variation.
+
+Validation passed the default and all-feature matrices (954 unit tests, 59/60
+core integration tests, and 48 regressions with one benchmark smoke test
+ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
+benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
+campaign completed 371 `boolean_pipeline` executions without failure.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:
