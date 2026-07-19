@@ -611,6 +611,33 @@ benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
 campaign completed 359 `boolean_pipeline` executions without failure, and the
 downstream CSGRS library suite passed all 304 tests.
 
+## 2026-07-19: borrow convex support planes during classification
+
+Status: **kept**
+
+Certified two-convex classification used a second owned support-plane table
+even though the input polygon soup remains alive for the whole preparation.
+For the sphere/box workload this cloned every exact normal and offset before
+performing read-only equality, classification, and clipping queries. The table
+now borrows each source polygon's support plane. Emitted fragments still own
+their source or derived polygon geometry, so arrangement lifetime and public
+ownership are unchanged.
+
+Five interleaved release runs per side forced a fresh arrangement for each of
+500 alternating CSGRS sphere/box operations:
+
+| operation | cloned support planes | borrowed support planes | result |
+| --- | ---: | ---: | ---: |
+| union | 1,234.734 ms | 1,216.364 ms | 1.49% faster |
+| difference | 1,004.544 ms | 995.970 ms | 0.85% faster |
+
+Validation passed the default and all-feature matrices (956 unit tests, 59/60
+core integration tests, and 48 regressions with one benchmark smoke test
+ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
+benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
+campaign completed 359 `boolean_pipeline` executions without failure, and the
+downstream CSGRS library suite passed all 304 tests.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

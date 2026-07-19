@@ -945,7 +945,7 @@ fn prepare_two_convex_inputs_projectively(
     polygons: &[ConvexPolygon],
     operations: &[BooleanOp],
 ) -> HypermeshResult<Option<PreparedConvexCandidate>> {
-    let mut support_planes = [Vec::new(), Vec::new()];
+    let mut support_planes: [Vec<&Plane>; 2] = std::array::from_fn(|_| Vec::new());
     let mut storage_support_planes: [StorageHashMap<[usize; 4], usize>; 2] =
         std::array::from_fn(|_| StorageHashMap::default());
     let mut approximate_support_planes: [StorageHashMap<[u64; 4], Vec<usize>>; 2] =
@@ -972,12 +972,12 @@ fn prepare_two_convex_inputs_projectively(
                 .into_iter()
                 .flatten()
                 .copied()
-                .find(|&index| support_planes[mesh][index] == polygon.support)
+                .find(|&index| support_planes[mesh][index] == &polygon.support)
             {
                 index
             } else {
                 let index = support_planes[mesh].len();
-                support_planes[mesh].push(polygon.support.clone());
+                support_planes[mesh].push(&polygon.support);
                 support_plane_f64_values[mesh].push(Some(values));
                 approximate_support_planes[mesh]
                     .entry(key)
@@ -987,12 +987,12 @@ fn prepare_two_convex_inputs_projectively(
             }
         } else if let Some(index) = support_planes[mesh]
             .iter()
-            .position(|plane| plane == &polygon.support)
+            .position(|plane| *plane == &polygon.support)
         {
             index
         } else {
             let index = support_planes[mesh].len();
-            support_planes[mesh].push(polygon.support.clone());
+            support_planes[mesh].push(&polygon.support);
             support_plane_f64_values[mesh].push(None);
             non_exact_support_planes[mesh].push(index);
             index
@@ -1021,7 +1021,7 @@ fn prepare_two_convex_inputs_projectively(
         }
         let mut candidate_planes = Vec::new();
         let mut excluded = false;
-        for (plane_index, plane) in support_planes[other].iter().enumerate() {
+        for (plane_index, &plane) in support_planes[other].iter().enumerate() {
             match point_plane_caches[host].source_relation(
                 polygon,
                 plane,
@@ -1093,7 +1093,7 @@ fn prepare_two_convex_inputs_projectively(
         let mut has_inside = true;
         for plane_index in active_planes {
             let clipped = remainder.clip(
-                &support_planes[other][plane_index],
+                support_planes[other][plane_index],
                 ConstructionPlaneIdentity {
                     mesh: other,
                     plane: plane_index,
@@ -1286,7 +1286,7 @@ fn select_classified_fragments(
 fn exact_inside_and_active_planes(
     polygon: &ConvexPolygon,
     source: &ProjectiveCycle,
-    support_planes: &[Plane],
+    support_planes: &[&Plane],
     support_planes_f64: Option<&[[f64; 4]]>,
     candidate_planes: &[usize],
     support_plane_mesh: usize,
@@ -1331,7 +1331,7 @@ fn exact_inside_and_active_planes(
 
 fn clip_inside_cycle(
     source: &ProjectiveCycle,
-    support_planes: &[Plane],
+    support_planes: &[&Plane],
     plane_indices: &[usize],
     support_plane_mesh: usize,
     point_cache: &mut ProjectivePointCache,
@@ -1339,7 +1339,7 @@ fn clip_inside_cycle(
     let mut inside = source.clone();
     for &plane_index in plane_indices {
         inside = inside.clip_negative(
-            &support_planes[plane_index],
+            support_planes[plane_index],
             ConstructionPlaneIdentity {
                 mesh: support_plane_mesh,
                 plane: plane_index,
@@ -1378,14 +1378,14 @@ fn active_cycle_planes(
 
 fn cycle_satisfies_planes(
     cycle: &ProjectiveCycle,
-    support_planes: &[Plane],
+    support_planes: &[&Plane],
     plane_indices: &[usize],
 ) -> HypermeshResult<bool> {
     for point in &cycle.points {
         let prepared = PreparedProjectivePoint3::new(point);
         for &plane_index in plane_indices {
             if prepared
-                .classify(&support_planes[plane_index])?
+                .classify(support_planes[plane_index])?
                 .is_positive()
             {
                 return Ok(false);
