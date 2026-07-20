@@ -11,7 +11,7 @@ use crate::mesh::polygon::{
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::triangulated::IndexedTriangulated3D;
-use crate::vertex::Vertex;
+use crate::vertex::{Vertex, reserve_position_ids};
 use hashbrown::HashMap;
 use hyperlattice::{Aabb, Point3, Real, Vector3};
 use std::fmt::Debug;
@@ -586,6 +586,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 *source_position = slot;
             }
         }
+        drop(source_position_slots);
+        drop(position_bucket_heads);
+        drop(position_bucket_next);
+        drop(vertices);
 
         let mut position_normals = vec![None; positions.len()];
         let mut normals_match_positions = true;
@@ -599,28 +603,50 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
-        let base_vertices = positions
-            .iter()
-            .cloned()
-            .map(|position| Vertex::new(position, Vector3::z()))
-            .collect::<Vec<_>>();
-        let mut pool_vertices = Vec::new();
+        let identity_count = positions.len().checked_mul(4).ok_or(IoError::SizeOverflow {
+            format: "OBJ",
+            limit: "vertex identity count",
+        })?;
+        let first_vertex_identity = reserve_position_ids(identity_count);
         let mut pool_triangles = Vec::with_capacity(triangles.len());
-        if normals_match_positions {
-            pool_vertices.reserve(positions.len());
-            for (position, normal) in base_vertices.iter().zip(position_normals) {
-                let mut vertex = position.clone();
-                vertex.normal =
-                    normals[normal.expect("used OBJ position has a normal")].clone();
-                pool_vertices.push(vertex);
-            }
+        let pool_vertices = if normals_match_positions {
             pool_triangles.extend(
                 triangles
                     .iter()
                     .map(|triangle| triangle.corners.map(|(position, _)| position)),
             );
+            positions
+                .iter()
+                .cloned()
+                .zip(position_normals)
+                .enumerate()
+                .map(|(slot, (position, normal))| {
+                    Vertex::new_with_reserved_identity(
+                        position,
+                        normals[normal.expect("used OBJ position has a normal")].clone(),
+                        first_vertex_identity,
+                        slot,
+                    )
+                })
+                .collect()
         } else {
-            let mut vertex_slots = HashMap::<(usize, usize), usize>::new();
+            drop(position_normals);
+            let base_vertices = positions
+                .iter()
+                .cloned()
+                .enumerate()
+                .map(|(slot, position)| {
+                    Vertex::new_with_reserved_identity(
+                        position,
+                        Vector3::z(),
+                        first_vertex_identity,
+                        slot,
+                    )
+                })
+                .collect::<Vec<_>>();
+            let mut pool_vertices = Vec::with_capacity(positions.len());
+            let mut vertex_slots =
+                HashMap::<(usize, usize), usize>::with_capacity(positions.len());
             for triangle in &triangles {
                 pool_triangles.push(triangle.corners.map(|(position, normal)| {
                     *vertex_slots.entry((position, normal)).or_insert_with(|| {
@@ -632,7 +658,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     })
                 }));
             }
-        }
+            pool_vertices
+        };
+        drop(normals);
 
         let triangle_count = triangles.len();
         let vertex_pool = Arc::new(LazySubdivisionVertexPool::new(

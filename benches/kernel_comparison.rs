@@ -89,12 +89,15 @@ fn yeahright_boolean_hull_path() -> PathBuf {
         .join("benchmarks/data/yeahright/yeahright_boolean_hull.obj")
 }
 
-fn import_oriented_obj(path: &Path) -> Mesh<()> {
+fn import_obj(path: &Path) -> Mesh<()> {
     let file = File::open(path)
         .unwrap_or_else(|error| panic!("failed to open {}: {error}", path.display()));
-    let mesh = Mesh::from_obj(BufReader::new(file), ())
-        .unwrap_or_else(|error| panic!("failed to import {}: {error}", path.display()));
-    orient_closed_triangle_mesh(&mesh)
+    Mesh::from_obj(BufReader::new(file), ())
+        .unwrap_or_else(|error| panic!("failed to import {}: {error}", path.display()))
+}
+
+fn import_oriented_obj(path: &Path) -> Mesh<()> {
+    orient_closed_triangle_mesh(&import_obj(path))
 }
 
 fn import_yeahright_control() -> Mesh<()> {
@@ -666,6 +669,10 @@ fn run() {
             .expect("cube has an adjacent orthogonal face");
         let angle = Mesh::dihedral_angle(first, second);
         Measurement::new(12, 1, angle.to_f64_lossy().unwrap_or_default().to_bits())
+    });
+
+    config.run("corpus", "from_obj", "yeahright_control_genus131", 1, || {
+        measurement(&black_box(import_obj(&yeahright_control_path())), 5_845)
     });
 
     config.run(
