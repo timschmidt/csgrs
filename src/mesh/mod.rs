@@ -1592,10 +1592,19 @@ fn concatenate_disjoint_meshes<M: Clone + Send + Sync + Debug>(
     left: &Mesh<M>,
     right: &Mesh<M>,
 ) -> Mesh<M> {
+    let (left_facets, left_vertices, left_triangles) = left.polygons.topology();
+    let (right_facets, right_vertices, right_triangles) = right.polygons.topology();
     let mut polygons = Vec::with_capacity(left.polygons.len() + right.polygons.len());
     polygons.extend(left.polygons.iter().cloned());
     polygons.extend(right.polygons.iter().cloned());
-    Mesh::from_polygons(polygons)
+    Mesh::from_polygons_with_topology(
+        polygons,
+        (
+            left_facets + right_facets,
+            left_vertices + right_vertices,
+            left_triangles && right_triangles,
+        ),
+    )
 }
 
 fn hyperphysics_vector3_from_point3(point: &Point3) -> Result<HyperVector3, ValidationError> {
@@ -6785,7 +6794,9 @@ mod tests {
             &left.bounding_box(),
             &right.bounding_box()
         ));
-        assert_eq!(left.try_union(&right).unwrap().polygons.len(), 12);
+        let union = left.try_union(&right).unwrap();
+        assert_eq!(union.polygons.len(), 12);
+        assert_eq!(union.topology_counts(), (24, 48));
         assert_eq!(left.try_difference(&right).unwrap().polygons.len(), 6);
         assert!(left.try_intersection(&right).unwrap().polygons.is_empty());
         assert_eq!(left.try_xor(&right).unwrap().polygons.len(), 12);

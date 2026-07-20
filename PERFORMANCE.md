@@ -55,6 +55,18 @@ the center median fell from the prior approximately 6.9 us to 3.400 us, versus
 the only cold non-win remained the timer-scale identical-box intersection at
 110 ns versus CGAL's 100 ns.
 
+Exactly disjoint mesh concatenation now sums the two retained topology tuples
+instead of rescanning every cloned output polygon to rediscover facet, corner,
+and triangle-only counts. Polygon order, exact vertices, metadata, and set
+semantics are unchanged; the disjoint-set regression now also checks the
+retained 24-facet/48-corner output. A matched cold Callgrind A/B fell from
+35,474,450 to 35,011,530 instructions, 1.30%. In the complete native sweep,
+`boolean_union/disjoint_boxes` fell from the prior 11.389 us to 1.880 us versus
+CGAL EPECK's 11.869 us, widening the cold margin from 1.034x to 6.313x. Warm
+CSGRS measured 0.666 us versus CGAL's 1.140 us. All 47 cold rows beat both
+comparison engines; the only non-win was the timer-scale warm identical-box
+intersection at 24 ns versus approximately 23 ns.
+
 `Mesh::build_graphics_mesh` previously called `Mesh::triangulate`, which built
 temporary triangle polygons, recomputed support planes, allocated metadata and
 IDs, and then discarded that intermediate mesh. The renderer boundary now
