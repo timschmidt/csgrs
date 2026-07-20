@@ -881,6 +881,35 @@ release WASM application build. A 20-second ASAN campaign completed 365
 `boolean_pipeline` executions without failure. The downstream CSGRS all-feature
 suite passed all 370 library tests and every integration test.
 
+## 2026-07-19: pack certified source classification rows
+
+Status: **kept**
+
+Certified source vertices previously stored one independently allocated plane-
+classification vector per vertex. The indexed source path now retains prepared
+queries in one vector and classifications in one contiguous vertex-by-plane
+matrix. Coordinate-keyed fallback points keep their existing independent cache,
+and a changed plane count fails closed instead of indexing an incompatible row.
+
+Eight alternating counter runs each performed 500 fresh, globally shifted 8x4
+sphere/box operations:
+
+| operation | per-vertex rows instructions | packed rows instructions | result | cycle result |
+| --- | ---: | ---: | ---: | ---: |
+| union | 8,048,764,677 | 8,037,695,540 | 0.14% fewer | 0.29% fewer |
+| difference | 6,796,668,533 | 6,787,164,684 | 0.14% fewer | 0.17% fewer |
+
+Heap profiles over 100 unions fell from 1,912,386 to 1,909,782 allocations,
+removing 2,604 allocations, or 26.04 per operation. The source-relation
+regression now verifies both packed query and classification occupancy.
+
+Validation passed the complete 962-test all-target/all-feature suite, the no-
+default-feature build, Clippy with warnings denied, warning-clean documentation,
+benchmark compilation, every fuzz-target build, and the locked release WASM
+application build. A 20-second ASAN campaign completed 373 `boolean_pipeline`
+executions without failure. The downstream CSGRS all-feature suite passed all
+370 library tests and every integration test.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

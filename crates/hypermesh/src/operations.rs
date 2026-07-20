@@ -481,7 +481,9 @@ struct PointClassificationKey([usize; 3]);
 
 #[derive(Default)]
 struct PointPlaneClassificationCache {
-    source_points: Vec<Option<CachedPointPlaneClassifications>>,
+    source_queries: Vec<Option<Option<PreparedRationalLinearForm4Query>>>,
+    source_classifications: Vec<Option<Classification>>,
+    source_plane_count: Option<usize>,
     points: StorageHashMap<PointClassificationKey, CachedPointPlaneClassifications>,
 }
 
@@ -545,16 +547,44 @@ impl PointPlaneClassificationCache {
             prepared_query: Real::prepare_rational_affine_point3_query([x, y, z]),
             classifications: vec![None; plane_count],
         };
-        let cached = if let Some(source_vertex) = source_vertex {
-            if self.source_points.len() <= source_vertex {
-                self.source_points.resize_with(source_vertex + 1, || None);
+        if let Some(source_vertex) = source_vertex {
+            if let Some(cached_plane_count) = self.source_plane_count {
+                if cached_plane_count != plane_count {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+            } else {
+                self.source_plane_count = Some(plane_count);
             }
-            self.source_points[source_vertex].get_or_insert_with(make_cached)
-        } else {
-            let key =
-                PointClassificationKey([x, y, z].map(hyperlattice::Rational::storage_identity));
-            self.points.entry(key).or_insert_with(make_cached)
-        };
+            let source_count = source_vertex
+                .checked_add(1)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            if self.source_queries.len() < source_count {
+                self.source_queries.resize(source_count, None);
+            }
+            let classification_count = source_count
+                .checked_mul(plane_count)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            if self.source_classifications.len() < classification_count {
+                self.source_classifications
+                    .resize(classification_count, None);
+            }
+            let classification_index = source_vertex * plane_count + plane_index;
+            if let Some(classification) = self.source_classifications[classification_index] {
+                return Ok(classification);
+            }
+            let prepared_query = *self.source_queries[source_vertex]
+                .get_or_insert_with(|| Real::prepare_rational_affine_point3_query([x, y, z]));
+            let classification = crate::predicate::classify_point_with_prepared_query(
+                point,
+                plane,
+                prepared_query.as_ref(),
+            )?;
+            self.source_classifications[classification_index] = Some(classification);
+            return Ok(classification);
+        }
+
+        let key = PointClassificationKey([x, y, z].map(hyperlattice::Rational::storage_identity));
+        let cached = self.points.entry(key).or_insert_with(make_cached);
         if let Some(classification) = cached.classifications[plane_index] {
             return Ok(classification);
         }
@@ -1840,11 +1870,20 @@ mod tests {
         assert!(cache.points.is_empty());
         assert_eq!(
             cache
-                .source_points
+                .source_queries
                 .iter()
                 .filter(|cached| cached.is_some())
                 .count(),
             2
         );
+        assert_eq!(
+            cache
+                .source_classifications
+                .iter()
+                .filter(|classification| classification.is_some())
+                .count(),
+            2
+        );
+        assert_eq!(cache.source_plane_count, Some(1));
     }
 }
