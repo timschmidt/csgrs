@@ -1047,6 +1047,11 @@ impl PolygonVertices {
         }
     }
 
+    #[cfg(test)]
+    pub(crate) fn shares_buffer_with(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.buffer, &other.buffer)
+    }
+
     pub(crate) fn from_lazy_subdivision_triangle(
         pool: Arc<LazySubdivisionVertexPool>,
         triangle_slot: usize,
