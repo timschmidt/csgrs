@@ -555,7 +555,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // connectivity, and hypermesh adapters without re-hashing every
         // triangle corner.
         let mut source_position_slots = vec![None; vertices.len()];
-        let mut position_buckets = HashMap::<ObjPositionKey, Vec<usize>>::new();
+        let mut position_bucket_heads = HashMap::<ObjPositionKey, usize>::new();
+        let mut position_bucket_next = Vec::<Option<usize>>::new();
         let mut positions = Vec::<Point3>::new();
         for triangle in &mut triangles {
             for (source_position, _) in &mut triangle.corners {
@@ -564,16 +565,19 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 } else {
                     let position = &vertices[*source_position];
                     let key = ObjPositionKey::new(position);
-                    let slot = position_buckets.get(&key).and_then(|candidates| {
-                        candidates
-                            .iter()
-                            .copied()
-                            .find(|&slot| positions[slot] == *position)
-                    });
+                    let mut candidate = position_bucket_heads.get(&key).copied();
+                    let mut slot = None;
+                    while let Some(current) = candidate {
+                        if positions[current] == *position {
+                            slot = Some(current);
+                            break;
+                        }
+                        candidate = position_bucket_next[current];
+                    }
                     let slot = slot.unwrap_or_else(|| {
                         let slot = positions.len();
                         positions.push(position.clone());
-                        position_buckets.entry(key).or_default().push(slot);
+                        position_bucket_next.push(position_bucket_heads.insert(key, slot));
                         slot
                     });
                     source_position_slots[*source_position] = Some(slot);
@@ -834,6 +838,29 @@ f -3 -2 -1
         assert_eq!(mesh.polygons[0].vertices[0].position.x, expected);
         assert_eq!(mesh.polygons[0].vertices[1].position.y, Real::one());
         assert_eq!(mesh.polygons[0].vertices[2].position.z, Real::from(2_u8));
+    }
+
+    #[test]
+    fn from_obj_keeps_exact_positions_that_share_a_binary64_bucket_distinct() {
+        let obj = "\
+v 9007199254740992 0 0
+v 0 1 0
+v 0 0 1
+v 9007199254740993 0 0
+v 0 -1 0
+v 0 0 -1
+f 1 2 3
+f 4 5 6
+";
+
+        let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
+        let indexed = mesh.indexed_triangles();
+        let left: Real = "9007199254740992".parse().unwrap();
+        let right: Real = "9007199254740993".parse().unwrap();
+
+        assert_eq!(indexed.positions.len(), 6);
+        assert!(indexed.positions.iter().any(|point| point.x == left));
+        assert!(indexed.positions.iter().any(|point| point.x == right));
     }
 
     #[test]
