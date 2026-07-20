@@ -540,6 +540,7 @@ fn collect_role_pairs(
                 second_boxes[second_index].contour.as_ref(),
                 first_segment_boxes,
                 second_segment_boxes,
+                None,
                 policy,
             )?;
             if intersections.is_empty() {

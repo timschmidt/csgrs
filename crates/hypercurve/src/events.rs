@@ -1,10 +1,10 @@
 //! Normalized topology events for contour-level algorithms.
 //!
-//! Small event collections use a candidate-filtered pair scan. Larger contour
-//! pairs order decided segment boxes by their exact minimum x coordinate and
-//! stop each one-sided scan after certified x separation. Bounding boxes only
-//! remove pairs whose disjointness is decided; every remaining candidate goes
-//! through the exact segment kernels.
+//! Small event collections use a candidate-filtered pair scan. Medium or dense
+//! contour pairs scan boxes ordered by exact minimum x; large sampled-sparse
+//! pairs augment that order with one exact subtree-maximum witness per segment.
+//! Bounding boxes only remove pairs whose disjointness is decided; every
+//! remaining candidate goes through the exact segment kernels.
 
 use std::cmp::Ordering;
 
@@ -395,6 +395,7 @@ pub(crate) fn intersect_contours(
         b_box.as_ref(),
         &a_boxes,
         &b_boxes,
+        None,
         policy,
     )
 }
@@ -419,6 +420,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     b_box: Option<&Aabb2>,
     a_segment_boxes: &[Option<Aabb2>],
     b_segment_boxes: &[Option<Aabb2>],
+    b_x_index: Option<&SegmentAabbXIndex>,
     policy: &CurvePolicy,
 ) -> CurveResult<ContourIntersectionSet> {
     if matches!(
@@ -443,6 +445,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
         b_segment_boxes,
         a.segments().len(),
         b.segments().len(),
+        b_x_index,
         policy,
         |a_segment_index, b_segment_index| {
             let a_segment = &a.segments()[a_segment_index];
@@ -488,11 +491,144 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     ContourIntersectionSet::new_with_policy(events, policy)
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct SegmentAabbXIndex {
+    ordered: Vec<usize>,
+    unknown: Vec<usize>,
+    subtree_maxima: Vec<usize>,
+}
+
+impl SegmentAabbXIndex {
+    pub(crate) fn try_new(
+        boxes: &[Option<Aabb2>],
+        segment_count: usize,
+        policy: &CurvePolicy,
+    ) -> Option<Self> {
+        let mut ordered: Vec<_> = (0..segment_count)
+            .filter(|index| boxes.get(*index).and_then(Option::as_ref).is_some())
+            .collect();
+        ordered.sort_by(|left, right| {
+            compare_reals(
+                boxes[*left].as_ref().unwrap().min_x(),
+                boxes[*right].as_ref().unwrap().min_x(),
+                policy,
+            )
+            .unwrap_or(Ordering::Equal)
+            .then_with(|| left.cmp(right))
+        });
+        if ordered.windows(2).any(|window| {
+            !matches!(
+                compare_reals(
+                    boxes[window[0]].as_ref().unwrap().min_x(),
+                    boxes[window[1]].as_ref().unwrap().min_x(),
+                    policy,
+                ),
+                Some(Ordering::Less | Ordering::Equal)
+            )
+        }) {
+            return None;
+        }
+
+        let unknown = (0..segment_count)
+            .filter(|index| boxes.get(*index).and_then(Option::as_ref).is_none())
+            .collect();
+        Some(Self {
+            ordered,
+            unknown,
+            subtree_maxima: Vec::new(),
+        })
+    }
+
+    pub(crate) fn prepare_interval_queries(
+        &mut self,
+        boxes: &[Option<Aabb2>],
+        policy: &CurvePolicy,
+    ) -> bool {
+        self.subtree_maxima.resize(self.ordered.len(), 0);
+        if !self.ordered.is_empty()
+            && build_x_interval_index(
+                boxes,
+                &self.ordered,
+                &mut self.subtree_maxima,
+                0,
+                self.ordered.len(),
+                policy,
+            )
+            .is_none()
+        {
+            self.subtree_maxima.clear();
+        }
+        self.supports_interval_queries()
+    }
+
+    fn segment_count(&self) -> usize {
+        self.ordered.len() + self.unknown.len()
+    }
+
+    fn supports_interval_queries(&self) -> bool {
+        self.ordered.is_empty() || self.subtree_maxima.len() == self.ordered.len()
+    }
+
+    fn collect(
+        &self,
+        boxes: &[Option<Aabb2>],
+        query: &Aabb2,
+        policy: &CurvePolicy,
+        candidates: &mut Vec<usize>,
+    ) {
+        self.collect_range(boxes, 0, self.ordered.len(), query, policy, candidates);
+    }
+
+    fn collect_range(
+        &self,
+        boxes: &[Option<Aabb2>],
+        start: usize,
+        end: usize,
+        query: &Aabb2,
+        policy: &CurvePolicy,
+        candidates: &mut Vec<usize>,
+    ) {
+        if start == end
+            || matches!(
+                compare_reals(
+                    boxes[self.ordered[start]].as_ref().unwrap().min_x(),
+                    query.max_x(),
+                    policy,
+                ),
+                Some(Ordering::Greater)
+            )
+        {
+            return;
+        }
+        let middle = start + (end - start) / 2;
+        if matches!(
+            compare_reals(
+                boxes[self.ordered[self.subtree_maxima[middle]]]
+                    .as_ref()
+                    .unwrap()
+                    .max_x(),
+                query.min_x(),
+                policy,
+            ),
+            Some(Ordering::Less)
+        ) {
+            return;
+        }
+        self.collect_range(boxes, start, middle, query, policy, candidates);
+        let index = self.ordered[middle];
+        if !aabbs_decided_disjoint(query, boxes[index].as_ref().unwrap(), policy) {
+            candidates.push(index);
+        }
+        self.collect_range(boxes, middle + 1, end, query, policy, candidates);
+    }
+}
+
 fn visit_swept_segment_pair_candidates<F>(
     first_boxes: &[Option<Aabb2>],
     second_boxes: &[Option<Aabb2>],
     first_segment_count: usize,
     second_segment_count: usize,
+    prepared_second_index: Option<&SegmentAabbXIndex>,
     policy: &CurvePolicy,
     mut visit: F,
 ) -> Option<CurveResult<()>>
@@ -500,59 +636,66 @@ where
     F: FnMut(usize, usize) -> CurveResult<()>,
 {
     const MIN_CARTESIAN_PAIR_COUNT: usize = 256;
+    const MIN_INDEXED_PAIR_COUNT: usize = 16_384;
 
-    if first_segment_count.checked_mul(second_segment_count)? < MIN_CARTESIAN_PAIR_COUNT {
+    let cartesian_pair_count = first_segment_count.checked_mul(second_segment_count)?;
+    if cartesian_pair_count < MIN_CARTESIAN_PAIR_COUNT {
         return None;
     }
 
-    let mut ordered_second: Vec<_> = (0..second_segment_count)
-        .filter_map(|index| {
-            second_boxes
-                .get(index)
-                .and_then(Option::as_ref)
-                .map(|bbox| (index, bbox))
-        })
-        .collect();
-    ordered_second.sort_by(|(left_index, left), (right_index, right)| {
-        compare_reals(left.min_x(), right.min_x(), policy)
-            .unwrap_or(Ordering::Equal)
-            .then_with(|| left_index.cmp(right_index))
-    });
-    if ordered_second.windows(2).any(|window| {
-        !matches!(
-            compare_reals(window[0].1.min_x(), window[1].1.min_x(), policy),
-            Some(Ordering::Less | Ordering::Equal)
-        )
-    }) {
-        return None;
+    let prepared_index =
+        prepared_second_index.filter(|index| index.segment_count() == second_segment_count);
+    let mut local_index = match prepared_index {
+        Some(_) => None,
+        None => Some(SegmentAabbXIndex::try_new(
+            second_boxes,
+            second_segment_count,
+            policy,
+        )?),
+    };
+    let sparse = cartesian_pair_count >= MIN_INDEXED_PAIR_COUNT
+        && !sampled_x_overlap_is_dense(
+            first_boxes,
+            second_boxes,
+            prepared_index.unwrap_or_else(|| local_index.as_ref().unwrap()),
+            policy,
+        );
+    if sparse && prepared_index.is_none() {
+        local_index
+            .as_mut()
+            .unwrap()
+            .prepare_interval_queries(second_boxes, policy);
     }
-
-    let unknown_second: Vec<_> = (0..second_segment_count)
-        .filter(|index| second_boxes.get(*index).and_then(Option::as_ref).is_none())
-        .collect();
+    let second_index = prepared_index.unwrap_or_else(|| local_index.as_ref().unwrap());
+    let indexed = sparse && second_index.supports_interval_queries();
     let mut candidates = Vec::with_capacity(second_segment_count);
     for first_index in 0..first_segment_count {
         candidates.clear();
         if let Some(Some(first_box)) = first_boxes.get(first_index) {
-            candidates.extend(unknown_second.iter().copied());
-            for (second_index, second_box) in &ordered_second {
-                match compare_reals(second_box.min_x(), first_box.max_x(), policy) {
-                    Some(Ordering::Greater) => break,
-                    Some(Ordering::Less | Ordering::Equal) | None => {}
+            candidates.extend(second_index.unknown.iter().copied());
+            if indexed {
+                second_index.collect(second_boxes, first_box, policy, &mut candidates);
+            } else {
+                for &candidate_index in &second_index.ordered {
+                    let second_box = second_boxes[candidate_index].as_ref().unwrap();
+                    match compare_reals(second_box.min_x(), first_box.max_x(), policy) {
+                        Some(Ordering::Greater) => break,
+                        Some(Ordering::Less | Ordering::Equal) | None => {}
+                    }
+                    if matches!(
+                        compare_reals(second_box.max_x(), first_box.min_x(), policy),
+                        Some(Ordering::Less)
+                    ) || matches!(
+                        compare_reals(first_box.max_y(), second_box.min_y(), policy),
+                        Some(Ordering::Less)
+                    ) || matches!(
+                        compare_reals(second_box.max_y(), first_box.min_y(), policy),
+                        Some(Ordering::Less)
+                    ) {
+                        continue;
+                    }
+                    candidates.push(candidate_index);
                 }
-                if matches!(
-                    compare_reals(second_box.max_x(), first_box.min_x(), policy),
-                    Some(Ordering::Less)
-                ) || matches!(
-                    compare_reals(first_box.max_y(), second_box.min_y(), policy),
-                    Some(Ordering::Less)
-                ) || matches!(
-                    compare_reals(second_box.max_y(), first_box.min_y(), policy),
-                    Some(Ordering::Less)
-                ) {
-                    continue;
-                }
-                candidates.push(*second_index);
             }
         } else {
             candidates.extend(0..second_segment_count);
@@ -565,6 +708,81 @@ where
         }
     }
     Some(Ok(()))
+}
+
+fn sampled_x_overlap_is_dense(
+    first: &[Option<Aabb2>],
+    second_boxes: &[Option<Aabb2>],
+    second_index: &SegmentAabbXIndex,
+    policy: &CurvePolicy,
+) -> bool {
+    const SAMPLE_COUNT: usize = 8;
+
+    let first_count = first.len().min(SAMPLE_COUNT);
+    let second_count = second_index.ordered.len().min(SAMPLE_COUNT);
+    let sample_count = first_count * second_count;
+    if sample_count == 0 {
+        return false;
+    }
+    let mut overlaps = 0;
+    for first_sample in 0..first_count {
+        let first_index = first_sample * (first.len() - 1) / first_count.saturating_sub(1).max(1);
+        let Some(first) = &first[first_index] else {
+            return true;
+        };
+        for second_sample in 0..second_count {
+            let second_position = second_sample * (second_index.ordered.len() - 1)
+                / second_count.saturating_sub(1).max(1);
+            let second = second_boxes[second_index.ordered[second_position]]
+                .as_ref()
+                .unwrap();
+            overlaps += usize::from(
+                !matches!(
+                    compare_reals(first.max_x(), second.min_x(), policy),
+                    Some(Ordering::Less)
+                ) && !matches!(
+                    compare_reals(second.max_x(), first.min_x(), policy),
+                    Some(Ordering::Less)
+                ),
+            );
+        }
+    }
+    overlaps * 8 > sample_count
+}
+
+fn build_x_interval_index(
+    boxes: &[Option<Aabb2>],
+    ordered: &[usize],
+    maxima: &mut [usize],
+    start: usize,
+    end: usize,
+    policy: &CurvePolicy,
+) -> Option<usize> {
+    let middle = start + (end - start) / 2;
+    let mut maximum = middle;
+    for candidate in [
+        (start < middle)
+            .then(|| build_x_interval_index(boxes, ordered, maxima, start, middle, policy)),
+        (middle + 1 < end)
+            .then(|| build_x_interval_index(boxes, ordered, maxima, middle + 1, end, policy)),
+    ]
+    .into_iter()
+    .flatten()
+    {
+        let candidate = candidate?;
+        if matches!(
+            compare_reals(
+                boxes[ordered[maximum]].as_ref().unwrap().max_x(),
+                boxes[ordered[candidate]].as_ref().unwrap().max_x(),
+                policy,
+            )?,
+            Ordering::Less
+        ) {
+            maximum = candidate;
+        }
+    }
+    maxima[middle] = maximum;
+    Some(maximum)
 }
 
 pub(crate) fn intersect_contour_self_with_cached_aabbs(
@@ -972,12 +1190,12 @@ mod tests {
     }
 
     #[test]
-    fn swept_candidates_match_flat_decided_aabb_filter() {
+    fn indexed_sweep_candidates_match_flat_decided_aabb_filter() {
         let policy = CurvePolicy::certified();
-        let first: Vec<_> = (0..16)
+        let first: Vec<_> = (0..128)
             .map(|index| Some(bbox(index * 3, -1, index * 3 + 2, 1)))
             .collect();
-        let mut second: Vec<_> = (0..16)
+        let mut second: Vec<_> = (0..128)
             .map(|index| Some(bbox(index * 3 + 1, 0, index * 3 + 3, 2)))
             .collect();
         second[7] = None;
@@ -988,6 +1206,7 @@ mod tests {
             &second,
             first.len(),
             second.len(),
+            None,
             &policy,
             |first_index, second_index| {
                 swept.push((first_index, second_index));
@@ -996,6 +1215,23 @@ mod tests {
         )
         .expect("large exact boxes support the retained x sweep")
         .expect("candidate visitor succeeds");
+        let mut index = SegmentAabbXIndex::try_new(&second, second.len(), &policy).unwrap();
+        assert!(index.prepare_interval_queries(&second, &policy));
+        let mut prepared = Vec::new();
+        visit_swept_segment_pair_candidates(
+            &first,
+            &second,
+            first.len(),
+            second.len(),
+            Some(&index),
+            &policy,
+            |first_index, second_index| {
+                prepared.push((first_index, second_index));
+                Ok(())
+            },
+        )
+        .unwrap()
+        .unwrap();
         let mut flat = Vec::new();
         for (first_index, first_box) in first.iter().enumerate() {
             for (second_index, second_box) in second.iter().enumerate() {
@@ -1009,5 +1245,6 @@ mod tests {
         }
 
         assert_eq!(swept, flat);
+        assert_eq!(prepared, flat);
     }
 }

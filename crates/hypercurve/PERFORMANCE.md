@@ -702,6 +702,28 @@ The 67-cell, 100 MiB finite exact Boolean tier fell from about 277 to 181 ms
 AddressSanitizer fuzz target completed 1,000 runs at 5,693 coverage points and
 15,929 feature edges without a failure.
 
+Large sparse contour pairs still rescanned the complete minimum-x prefix for
+every first-operand segment. Expired intervals therefore accumulated into a
+quadratic exact-comparison workload even when each segment overlapped only a
+constant number of neighbors. Pairs with at least 16,384 Cartesian segment
+pairs now use a balanced interval index when an eight-by-eight exact sample has
+at most one-eighth x overlap. Each node stores only the source position whose
+box has the greatest certified maximum x in that subtree. Queries prune a
+subtree only when its exact minimum or retained maximum proves separation;
+unknown boxes remain candidates, unorderable maxima retain the previous scan,
+and candidate indices are restored to source order before intersection.
+
+A diagonal-ribbon benchmark keeps whole-contour boxes overlapping while local
+segment boxes stay disjoint. Against the prior ordered-prefix scan, the 64-,
+128-, and 512-rung lanes (130, 258, and 1,026 closed-contour segments) improved
+by approximately 35%, 59%, and 87%, respectively. Temporary index and candidate
+storage remain linear in the second contour rather than in the Cartesian pair
+count. Prepared contours with at least 128 retained segment boxes cache the
+same index for repeated queries.
+The ordinary star64 comparative lane remains below the indexed crossover and
+its complete Callgrind sweep stayed effectively flat (48,341,067 versus
+48,384,838 instructions).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

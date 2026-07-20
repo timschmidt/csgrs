@@ -17,6 +17,7 @@ use crate::curve_string::{
     CurveStringXOverlapCandidates, curve_string_intersection_relation_counts,
     curve_string_x_overlap_schedule, decided_segment_box_count,
 };
+use crate::events::SegmentAabbXIndex;
 use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::region_events::RegionIntersectionWorkload;
 use crate::{
@@ -590,14 +591,15 @@ impl<'a> PreparedCurveStringView2<'a> {
 /// Prepared contours are useful when the same contour participates in many
 /// topology queries. The cached boxes are conservative candidate filters only:
 /// decided disjoint boxes skip a pair, while hits and uncertain boxes still run
-/// the exact line/arc intersection code. This is the same broad-phase role that
-/// sweep-line algorithms assign to ordered geometric candidates, kept here as a
-/// flat pair scan until the crate grows a sweep-line index.
+/// the exact line/arc intersection code. Large contours also retain their
+/// balanced x-interval maximum witnesses so repeated sparse intersections do
+/// not rebuild the same immutable broad-phase index.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedContourView2<'a> {
     contour: &'a Contour2,
     prepared_segments: Vec<PreparedSegment2<'a>>,
     segment_boxes: Vec<Option<Aabb2>>,
+    segment_x_index: Option<SegmentAabbXIndex>,
     winding_segment_indices_by_max_x: Option<Vec<usize>>,
     line_winding_index: Option<PreparedLineWindingIndex>,
     contour_box: Option<Aabb2>,
@@ -623,6 +625,15 @@ impl<'a> PreparedContourView2<'a> {
         // hole/material provenance for future triangulation and Boolean-region
         // dispatch without weakening the exact boundary classifiers.
         let segment_boxes = decided_segment_boxes(contour.segments(), policy);
+        let segment_x_index = (segment_boxes.len() >= 128)
+            .then(|| {
+                let mut index =
+                    SegmentAabbXIndex::try_new(&segment_boxes, segment_boxes.len(), policy)?;
+                index
+                    .prepare_interval_queries(&segment_boxes, policy)
+                    .then_some(index)
+            })
+            .flatten();
         let winding_segment_indices_by_max_x =
             segment_indices_sorted_by_max_x(&segment_boxes, policy);
         let line_winding_index = prepared_line_winding_index(
@@ -643,6 +654,7 @@ impl<'a> PreparedContourView2<'a> {
             contour,
             prepared_segments,
             segment_boxes,
+            segment_x_index,
             winding_segment_indices_by_max_x,
             line_winding_index,
             contour_box,
@@ -716,6 +728,7 @@ impl<'a> PreparedContourView2<'a> {
             other.contour_box(),
             &self.segment_boxes,
             &other.segment_boxes,
+            other.segment_x_index.as_ref(),
             policy,
         )
     }

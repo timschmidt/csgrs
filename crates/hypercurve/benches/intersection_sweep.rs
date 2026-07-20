@@ -1,7 +1,9 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-use hypercurve::{CurvePolicy, CurveString2, LineSeg2, Point2, Real, Segment2};
+use hypercurve::{
+    BulgeVertex2, Contour2, CurvePolicy, CurveString2, LineSeg2, Point2, Real, Segment2,
+};
 
 fn point(x: i32, y: i32) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -83,6 +85,20 @@ fn vertically_dense_zigzag_with_remote_tail(segment_count: usize, y_offset: i32)
     .expect("benchmark path is connected")
 }
 
+fn diagonal_ribbon(rung_count: usize, y_offset: i32) -> Contour2 {
+    let lower = (0..=rung_count).map(|index| point(index as i32, index as i32 + y_offset));
+    let upper = (0..=rung_count)
+        .rev()
+        .map(|index| point(index as i32, index as i32 + y_offset + 1));
+    Contour2::from_bulge_vertices(
+        &lower
+            .chain(upper)
+            .map(|point| BulgeVertex2::new(point, Real::zero()))
+            .collect::<Vec<_>>(),
+    )
+    .expect("diagonal ribbon is a closed simple contour")
+}
+
 fn bench_direct(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
     let first = zigzag(segment_count, 0);
     let second = zigzag_with_remote_tail(segment_count, 100);
@@ -160,11 +176,49 @@ fn bench_x_dense(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
     );
 }
 
+fn bench_sparse_contours(rung_count: usize, iterations: u32, policy: &CurvePolicy) {
+    let first = diagonal_ribbon(rung_count, 0);
+    let second = diagonal_ribbon(rung_count, rung_count as i32 / 2 + 2);
+    let started = Instant::now();
+    let mut checksum = 0;
+    for _ in 0..iterations {
+        let intersections = black_box(&first)
+            .intersect_contour(black_box(&second), black_box(policy))
+            .expect("separated exact contours should be decidable");
+        assert!(intersections.is_empty());
+        checksum += black_box(intersections.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "contour_interval_sparse_{rung_count}_rungs: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+
+    let first = first.prepare_topology_queries(policy);
+    let second = second.prepare_topology_queries(policy);
+    let started = Instant::now();
+    for _ in 0..iterations {
+        let intersections = black_box(&first)
+            .intersect_prepared_contour(black_box(&second), black_box(policy))
+            .expect("separated prepared contours should be decidable");
+        assert!(intersections.is_empty());
+        checksum += black_box(intersections.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "contour_interval_sparse_prepared_{rung_count}_rungs: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+}
+
 fn main() {
     let policy = CurvePolicy::certified();
     for (segment_count, iterations) in [(32, 100), (64, 50), (128, 20), (512, 3)] {
         bench_direct(segment_count, iterations, &policy);
         bench_prepared(segment_count, iterations, &policy);
         bench_x_dense(segment_count, iterations, &policy);
+    }
+    for (segment_count, iterations) in [(64, 100), (128, 50), (512, 10)] {
+        bench_sparse_contours(segment_count, iterations, &policy);
     }
 }
