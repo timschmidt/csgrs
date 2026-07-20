@@ -7105,6 +7105,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 mod tests {
     use super::*;
     use crate::hyper_math::{Real, hreal_from_f64, tolerance};
+    use crate::triangulated::IndexedTriangulated3D;
 
     fn r(value: f64) -> Real {
         hreal_from_f64(value).expect("test values must be finite")
@@ -7139,6 +7140,18 @@ mod tests {
             Aabb::new(p3(0.0, 0.0, 0.0), p3(2.0, 3.0, 0.0))
         );
         assert_eq!(mesh.build_graphics_mesh().vertices.len(), 6);
+    }
+
+    #[test]
+    fn indexed_triangle_export_retains_authored_position_normal_rows() {
+        let indexed = IndexedTriangleMesh3D {
+            positions: vec![p3(0.0, 0.0, 0.0), p3(2.0, 0.0, 0.0), p3(0.0, 3.0, 0.0)],
+            normals: vec![Vector3::x(), Vector3::y(), Vector3::z()],
+            faces: vec![[(0, 0), (1, 1), (2, 2)]],
+        };
+        let mesh = Mesh::from_indexed_triangles(indexed.clone(), ()).unwrap();
+
+        assert_eq!(mesh.indexed_triangles(), indexed);
     }
 
     #[test]

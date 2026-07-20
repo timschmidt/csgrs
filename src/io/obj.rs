@@ -340,6 +340,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut vertices = Vec::new();
         let mut normals = Vec::new();
         let mut triangles = Vec::<ObjTriangle>::new();
+        let mut face_corners = Vec::new();
+        let mut face_position_indices = Vec::new();
+        let mut face_normal_indices = Vec::new();
         let mut triangles_nondegenerate = true;
         let mut reader = reader;
         let mut line_buffer = String::new();
@@ -435,12 +438,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     normals.push(parse_obj_normal([x, y, z], line_number)?);
                 },
                 "f" => {
-                    let corners = Self::parse_obj_face(
+                    Self::parse_obj_face(
                         parts,
                         vertices.len(),
                         normals.len(),
                         line_number,
+                        &mut face_corners,
                     )?;
+                    let corners = &face_corners;
                     if corners.len() < 3 {
                         return Err(invalid_obj_data_at_line(
                             line_number,
@@ -457,19 +462,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                             "face mixes vertices with and without normals",
                         ));
                     }
-                    let (face_triangles, normal_indices, plane_id) = if has_normal {
-                        let position_indices = corners
-                            .iter()
-                            .map(|&(position, _)| position)
-                            .collect::<Vec<_>>();
+                    let (face_triangles, plane_id) = if has_normal {
+                        face_position_indices.clear();
+                        face_position_indices
+                            .extend(corners.iter().map(|&(position, _)| position));
+                        face_normal_indices.clear();
+                        face_normal_indices.extend(corners.iter().map(|(_, normal)| {
+                            normal.expect("face normal presence was checked")
+                        }));
                         (
-                            triangulate_indexed_positions(&vertices, &position_indices),
-                            corners
-                                .iter()
-                                .map(|(_, normal)| {
-                                    normal.expect("face normal presence was checked")
-                                })
-                                .collect::<Vec<_>>(),
+                            triangulate_indexed_positions(&vertices, &face_position_indices),
                             fresh_plane_id(),
                         )
                     } else {
@@ -484,11 +486,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         let normal = face.vertices[0].normal.clone();
                         let normal_index = normals.len();
                         normals.push(normal);
-                        (
-                            face.triangulate_indices(),
-                            vec![normal_index; corners.len()],
-                            face.plane_id,
-                        )
+                        face_normal_indices.clear();
+                        face_normal_indices.resize(corners.len(), normal_index);
+                        (face.triangulate_indices(), face.plane_id)
                     };
                     if face_triangles.is_empty() {
                         return Err(invalid_obj_data_at_line(
@@ -510,8 +510,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     }
                     for triangle in face_triangles {
                         triangles.push(ObjTriangle {
-                            corners: triangle
-                                .map(|corner| (corners[corner].0, normal_indices[corner])),
+                            corners: triangle.map(|corner| {
+                                (corners[corner].0, face_normal_indices[corner])
+                            }),
                             plane_id,
                         });
                     }
@@ -701,8 +702,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         vertex_count: usize,
         normal_count: usize,
         line_number: usize,
-    ) -> Result<Vec<(usize, Option<usize>)>, IoError> {
-        let mut face_vertices = Vec::new();
+        face_vertices: &mut Vec<(usize, Option<usize>)>,
+    ) -> Result<(), IoError> {
+        face_vertices.clear();
         for part in face_parts {
             let mut indices = part.split('/');
             let position = indices.next().unwrap_or("");
@@ -732,7 +734,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 .transpose()?;
             face_vertices.push((vertex_idx, normal_idx));
         }
-        Ok(face_vertices)
+        Ok(())
     }
 }
 
