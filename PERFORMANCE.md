@@ -419,6 +419,47 @@ constructors now use the fallible Boolean surfaces and fail closed instead of
 reaching the panic-based convenience methods; both minimized four-byte inputs
 have permanent unit regressions and replay cleanly.
 
+### Cuboid coordinate provenance and contiguous finite views
+
+Cuboids now retain their topology-only transform layout once and share it
+across instances. The layout distinguishes eight exact positions but only two
+coordinate identities per axis, matching the authored `{0, extent}` values.
+Linear and grid transforms therefore evaluate each unique translated
+coordinate rather than repeating it for all eight corners. Fully finite
+translated batches enter the existing contiguous range cache; partially
+finite batches preserve the prior per-position fallback. Shape-cache pending
+keys also move into their thread-local slot instead of cloning every scalar,
+and cuboid polygon ranges are derived from the fixed four-corner topology
+without a temporary vector.
+
+The exact topology regression checks eight position identities and two
+coordinate identities per axis. In matched 15-sample fresh-process runs, the
+first box fell from 43.95 to 40.46 us, the following cuboid from 14.61 to
+11.69 us, and isolated eight-copy linear distribution from 94.92 to 83.69 us.
+The cuboid row is now 1.32x faster than CGAL EPECK (11.69 versus 15.40 us);
+the linear cold row remains visible as an optimization target, while its
+retained row remains 8.73x faster than CGAL. An alternating-spacing profile
+that prevents distribution-result cache hits showed the contiguous finite
+range path reducing retired instructions by 3.8%, cycles by 22.4%, and cache
+misses by 60.6% across five runs.
+
+The subsequent full 47-workload, two-temperature sweep measured linear
+distribution at 32.90 us versus CGAL's 40.66 us (1.24x faster) and retained
+distribution at 3.80 us versus 35.27 us (9.28x faster). Every retained row
+beat both native kernels. Fresh-process box, cuboid, octahedron, and sphere/box
+union remained below CGAL parity; the union reversal was 1.3%, while the three
+primitive rows preserve the next cold-start targets. Focused and whole-suite
+cold results are both retained because first-use code/data placement remains
+more variable than the repeated-work matrix.
+
+Constructor fuzzing also exposed an ellipsoid-only validation mismatch:
+`segments = 1, stacks = 1` reached the shared sphere recipe even though the
+sphere entry point rejects fewer than three segments or two stacks. Ellipsoid
+now enforces the same tessellation contract before cache lookup, with a unit
+regression for each underspecified dimension. The minimized four-byte artifact
+replays cleanly, followed by 511 primitive-catalog ASAN executions and 14,082
+transform-matrix ASAN executions without another failure.
+
 ## End-to-end dispatch evidence
 
 Dispatch recording now occurs inside each selected benchmark closure, so setup

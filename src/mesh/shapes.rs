@@ -3,11 +3,11 @@
 #[cfg(any(feature = "sketch", feature = "stl-io"))]
 use crate::csg::CSG;
 use crate::errors::ValidationError;
-use crate::mesh::Mesh;
 use crate::mesh::Polygon;
 use crate::mesh::polygon::{
     CertifiedF64Bounds, LazySubdivisionVertexPool, fresh_plane_id, reserve_plane_ids,
 };
+use crate::mesh::{Mesh, TransformLayout};
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::vertex::{Vertex, reserve_position_f64_cache, reserve_position_ids};
@@ -36,6 +36,57 @@ static OCTAHEDRON_NORMALS: LazyLock<[Vector3; 8]> = LazyLock::new(|| {
         Vector3::from_xyz(component, negative.clone(), negative),
     ]
 });
+
+const CUBOID_CORNER_POSITION_SLOTS: [usize; 24] = [
+    0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5,
+];
+const CUBOID_POINT_COORDINATE_SLOTS: [[usize; 3]; 8] = [
+    [0, 0, 0],
+    [1, 0, 0],
+    [1, 1, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+    [1, 0, 1],
+    [1, 1, 1],
+    [0, 1, 1],
+];
+const CUBOID_POSITION_REPRESENTATIVES: [[usize; 2]; 8] = [
+    [0, 0],
+    [0, 3],
+    [0, 2],
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [1, 2],
+    [1, 3],
+];
+
+static CUBOID_TRANSFORM_LAYOUT: LazyLock<Arc<TransformLayout>> = LazyLock::new(|| {
+    Arc::new(TransformLayout {
+        corner_position_slots: Arc::new(CUBOID_CORNER_POSITION_SLOTS.to_vec()),
+        corner_coordinate_slots: std::array::from_fn(|axis| {
+            Some(
+                CUBOID_CORNER_POSITION_SLOTS
+                    .iter()
+                    .map(|&position_slot| CUBOID_POINT_COORDINATE_SLOTS[position_slot][axis])
+                    .collect(),
+            )
+        }),
+        polygon_plane_slots: None,
+        position_representatives: Arc::new(CUBOID_POSITION_REPRESENTATIVES.to_vec()),
+        coordinate_counts: [2; 3],
+        plane_count: 6,
+        normals_match_positions: false,
+        indexed_triangle_pool: None,
+        indexed_polygon_corner_counts: None,
+        position_f64: None,
+    })
+});
+
+fn retain_cuboid_transform_layout<M: Clone + Debug + Send + Sync>(mesh: &Mesh<M>) {
+    mesh.polygons
+        .retain_transform_layout(Arc::clone(&CUBOID_TRANSFORM_LAYOUT));
+}
 
 const OCTAHEDRON_FACES: [[usize; 3]; 8] = [
     [0, 2, 4],
@@ -149,6 +200,7 @@ fn cached_shape<M: Clone + Debug + Send + Sync>(
                     );
                     mesh.bounding_box = std::sync::OnceLock::from(bounds.clone());
                     mesh.polygons.retain_axis_aligned_box_fact(bounds);
+                    retain_cuboid_transform_layout(&mesh);
                     mesh.cache_manifold_fact(true);
                     mesh.cache_convex_pwn_fact();
                 }
@@ -157,11 +209,14 @@ fn cached_shape<M: Clone + Debug + Send + Sync>(
     })
 }
 
-fn shape_cache_on_completion(key: &ShapeCacheKey) -> bool {
+fn shape_cache_on_completion(key: ShapeCacheKey) -> Option<ShapeCacheKey> {
     SHAPE_CACHE.with_borrow_mut(|state| {
-        let repeated = state.pending.as_ref() == Some(key);
-        state.pending = Some(key.clone());
-        repeated
+        if state.pending.as_ref() == Some(&key) {
+            Some(key)
+        } else {
+            state.pending = Some(key);
+            None
+        }
     })
 }
 
@@ -223,6 +278,15 @@ mod retained_topology_tests {
             .collect::<BTreeSet<_>>();
 
         assert_eq!(position_ids.len(), 8);
+        let coordinate_identity_counts = std::array::from_fn(|axis| {
+            mesh.polygons
+                .iter()
+                .flat_map(|polygon| &polygon.vertices)
+                .map(|vertex| vertex.coordinate_ids[axis])
+                .collect::<BTreeSet<_>>()
+                .len()
+        });
+        assert_eq!(coordinate_identity_counts, [2; 3]);
     }
 
     #[test]
@@ -269,6 +333,17 @@ mod retained_topology_tests {
             .collect::<BTreeSet<_>>();
 
         assert_eq!(position_ids.len(), 2 + segments * (stacks - 1));
+    }
+
+    #[test]
+    fn ellipsoid_rejects_underspecified_tessellations() {
+        let radii = (Real::from(2_u8), Real::from(3_u8), Real::from(5_u8));
+        let invalid_segments =
+            Mesh::ellipsoid(radii.0.clone(), radii.1.clone(), radii.2.clone(), 2, 4, ());
+        let invalid_stacks = Mesh::ellipsoid(radii.0, radii.1, radii.2, 6, 1, ());
+
+        assert!(invalid_segments.polygons.is_empty());
+        assert!(invalid_stacks.polygons.is_empty());
     }
 
     #[test]
@@ -538,6 +613,8 @@ fn indexed_sphere_recipe(
     segments: usize,
     stacks: usize,
 ) -> Option<IndexedSphereRecipe> {
+    debug_assert!(segments >= 3);
+    debug_assert!(stacks >= 2);
     let vertex_count = 2 + segments * (stacks - 1);
     let polygon_count = 2 * segments * (stacks - 1);
     let cache_key = SphereCacheKey {
@@ -964,8 +1041,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if let Some(mesh) = cached_shape(&key, &metadata) {
             return mesh;
         }
-        let cache_on_completion = shape_cache_on_completion(&key);
-        let first_vertex_identity = reserve_position_ids(8 * 4);
+        let cache_key_on_completion = shape_cache_on_completion(key);
+        let first_position_identity = reserve_position_ids(8);
+        let first_coordinate_identity = reserve_position_ids(2 * 3);
         let points = [
             Point3::origin(),
             Point3::new(width.clone(), Real::zero(), Real::zero()),
@@ -985,27 +1063,32 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             ([1, 2, 6, 5], Vector3::x()),
         ];
         let mut vertices = Vec::with_capacity(24);
-        let mut ranges = Vec::with_capacity(6);
-        let mut corner_position_slots = Vec::with_capacity(24);
         for (indices, normal) in faces {
             let start = vertices.len();
             for index in indices {
-                vertices.push(Vertex::new_with_reserved_identity(
-                    points[index].clone(),
-                    normal.clone(),
-                    first_vertex_identity,
-                    index,
-                ));
-                corner_position_slots.push(index);
+                vertices.push(Vertex {
+                    position: points[index].clone(),
+                    normal: normal.clone(),
+                    position_id: first_position_identity
+                        + u64::try_from(index).expect("cuboid position slot fits u64"),
+                    coordinate_ids: std::array::from_fn(|axis| {
+                        first_coordinate_identity
+                            + u64::try_from(
+                                axis * 2 + CUBOID_POINT_COORDINATE_SLOTS[index][axis],
+                            )
+                            .expect("cuboid coordinate slot fits u64")
+                    }),
+                    ruled_line: None,
+                    hull_candidate: true,
+                });
             }
-            ranges.push(start..vertices.len());
+            debug_assert_eq!(vertices.len(), start + 4);
         }
         let vertices = Arc::new(vertices);
         let first_plane_id = reserve_plane_ids(6);
-        let polygons = ranges
-            .into_iter()
-            .enumerate()
-            .map(|(index, range)| {
+        let polygons = (0..6)
+            .map(|index| {
+                let range = (index * 4)..((index + 1) * 4);
                 Polygon::from_shared_vertices(
                     Arc::clone(&vertices),
                     range,
@@ -1019,17 +1102,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let bounds = Aabb::new(Point3::origin(), Point3::new(width, length, height));
         mesh.bounding_box = std::sync::OnceLock::from(bounds.clone());
         mesh.polygons.retain_axis_aligned_box_fact(bounds);
-        mesh.retain_shared_position_transform_layout(
-            corner_position_slots,
-            8,
-            None,
-            None,
-            Some(vec![4; 6]),
-            false,
-        );
+        retain_cuboid_transform_layout(&mesh);
         mesh.cache_manifold_fact(true);
         mesh.cache_convex_pwn_fact();
-        if cache_on_completion {
+        if let Some(key) = cache_key_on_completion {
             retain_shape_cache(key, &mesh);
         }
         mesh
@@ -1509,7 +1585,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if let Some(mesh) = cached_shape(&key, &metadata) {
             return mesh;
         }
-        let cache_on_completion = shape_cache_on_completion(&key);
+        let cache_key_on_completion = shape_cache_on_completion(key);
         let mesh = if segments >= 3
             && hmesh_scalar_positive(&radius1)
             && hmesh_scalar_positive(&radius2)
@@ -1527,7 +1603,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 metadata,
             )
         };
-        if cache_on_completion {
+        if let Some(key) = cache_key_on_completion {
             retain_shape_cache(key, &mesh);
         }
         mesh
@@ -1648,7 +1724,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if let Some(mesh) = cached_shape(&key, &metadata) {
             return mesh;
         }
-        let cache_on_completion = shape_cache_on_completion(&key);
+        let cache_key_on_completion = shape_cache_on_completion(key);
         let mesh = Self::vertical_frustum_positive(
             radius.clone(),
             radius,
@@ -1657,7 +1733,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             metadata,
         )
         .unwrap_or_else(Mesh::empty);
-        if cache_on_completion {
+        if let Some(key) = cache_key_on_completion {
             retain_shape_cache(key, &mesh);
         }
         mesh
@@ -1879,8 +1955,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `rx`: X-axis radius.
     /// - `ry`: Y-axis radius.
     /// - `rz`: Z-axis radius.
-    /// - `segments`: Number of horizontal segments.
-    /// - `stacks`: Number of vertical stacks.
+    /// - `segments`: Number of horizontal segments (at least 3).
+    /// - `stacks`: Number of vertical stacks (at least 2).
     /// - `metadata`: Optional metadata.
     pub fn ellipsoid(
         rx: Real,
@@ -1890,9 +1966,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         stacks: usize,
         metadata: M,
     ) -> Self {
-        if !(hmesh_scalar_positive(&rx)
-            && hmesh_scalar_positive(&ry)
-            && hmesh_scalar_positive(&rz))
+        if segments < 3
+            || stacks < 2
+            || !(hmesh_scalar_positive(&rx)
+                && hmesh_scalar_positive(&ry)
+                && hmesh_scalar_positive(&rz))
         {
             return Mesh::empty();
         }
@@ -1901,7 +1979,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if let Some(mesh) = cached_shape(&key, &metadata) {
             return mesh;
         }
-        let cache_on_completion = shape_cache_on_completion(&key);
+        let cache_key_on_completion = shape_cache_on_completion(key);
 
         let Some((source_pool, corner_position_slots, source_position_f64)) =
             indexed_sphere_recipe(&Real::one(), segments, stacks)
@@ -1991,7 +2069,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         );
         ellipsoid.cache_manifold_fact(true);
         ellipsoid.cache_convex_pwn_fact();
-        if cache_on_completion {
+        if let Some(key) = cache_key_on_completion {
             retain_shape_cache(key, &ellipsoid);
         }
         ellipsoid
@@ -2039,7 +2117,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if let Some(mesh) = cached_shape(&key, &metadata) {
             return mesh;
         }
-        let cache_on_completion = shape_cache_on_completion(&key);
+        let cache_key_on_completion = shape_cache_on_completion(key);
         let first_vertex_identity = reserve_position_ids(6 * 4);
         let zero = Real::zero();
         let negative_radius = -radius.clone();
@@ -2119,7 +2197,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             .expect("fresh octahedron bounds are initialized once");
         mesh.cache_manifold_fact(true);
         mesh.cache_convex_pwn_fact();
-        if cache_on_completion {
+        if let Some(key) = cache_key_on_completion {
             retain_shape_cache(key, &mesh);
         }
         mesh
@@ -2140,7 +2218,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if let Some(mesh) = cached_shape(&key, &metadata) {
             return mesh;
         }
-        let cache_on_completion = shape_cache_on_completion(&key);
+        let cache_key_on_completion = shape_cache_on_completion(key);
         let phi_f64 = (1.0_f64 + 5.0_f64.sqrt()) * 0.5;
         let inverse_length_f64 = 1.0_f64 / (1.0_f64 + phi_f64 * phi_f64).sqrt();
         let a_factor = Real::try_from(inverse_length_f64).expect("finite icosahedron scale");
@@ -2289,7 +2367,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             .expect("fresh icosahedron bounds are initialized once");
         mesh.cache_manifold_fact(true);
         mesh.cache_convex_pwn_fact();
-        if cache_on_completion {
+        if let Some(key) = cache_key_on_completion {
             retain_shape_cache(key, &mesh);
         }
         mesh
@@ -2333,7 +2411,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if let Some(mesh) = cached_shape(&key, &metadata) {
             return mesh;
         }
-        let cache_on_completion = shape_cache_on_completion(&key);
+        let cache_key_on_completion = shape_cache_on_completion(key);
 
         let Some(major_samples) = sampled_circle_with_f64(segments_major) else {
             return Mesh::empty();
@@ -2421,7 +2499,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             Some(vec![4; polygon_count]),
             true,
         );
-        if cache_on_completion {
+        if let Some(key) = cache_key_on_completion {
             retain_shape_cache(key, &mesh);
         }
         mesh
