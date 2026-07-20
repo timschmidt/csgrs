@@ -469,6 +469,31 @@ sweep and added about 0.8 million instructions to the offset lane. The exact
 Boolean differential fuzz target completed 1,000 AddressSanitizer-instrumented
 runs at 5,071 coverage points and 14,417 feature edges without a failure.
 
+Prepared winding classification then retained two exact candidate schedules
+instead of re-proving every axis test for every fragment sample. All prepared
+contours with decidable exact boxes retain segment order by maximum x, allowing
+queries to skip the prefix strictly left of the sample. All-line contours with
+at least eight segments additionally retain exact ranks by minimum y and maximum
+y, plus each segment's vertical direction, so the half-open crossing condition
+`min_y <= y < max_y` is intersected with the x candidates using integer ranks.
+Mixed contours, smaller line contours, `EdgePreview` data, and any undecidable
+ordering or query comparison keep the prior conservative scan. Boundary-first
+public classification and exact orientation tests are unchanged. Boolean
+fragment classification also constructs its unchanged one-half, one-third, and
+two-thirds fractions once per selection rather than once per fragment.
+
+In the same 15-sample comparative configuration, star64 intersection fell from
+5.309 to 4.621 ms/iter (13.0%), while rectangle union measured 62.692 us/iter
+and remained within baseline noise. The complete one-iteration Callgrind sweep
+fell from 185,995,006 to 161,994,281 instructions (12.9%). From the original
+checkpoint, star64 is now 87.5% faster and the sweep executes 88.5% fewer
+instructions. Specialized midpoint and affine-step interpolation experiments
+were rejected after increasing either the instruction sweep or multiple wall-time
+lanes. A half-open vertex-level differential regression now covers the retained
+line index, and the exact Boolean differential fuzz target completed 1,000
+AddressSanitizer-instrumented runs at 5,113 coverage points and 14,772 feature
+edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

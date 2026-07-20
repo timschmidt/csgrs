@@ -1281,6 +1281,44 @@ fn prepared_contour_classification_matches_plain_contour() {
 }
 
 #[test]
+fn prepared_line_winding_index_matches_plain_half_open_vertex_cases() {
+    let contour = Contour2::from_bulge_vertices(&[
+        vertex(0, 2, 0),
+        vertex(1, 1, 0),
+        vertex(2, 0, 0),
+        vertex(1, -1, 0),
+        vertex(0, -2, 0),
+        vertex(-1, -1, 0),
+        vertex(-2, 0, 0),
+        vertex(-1, 1, 0),
+    ])
+    .unwrap();
+    let policy = policy();
+    let prepared = contour.prepare_topology_queries(&policy);
+
+    for point in [
+        p(0, 0),
+        p(0, 1),
+        p(0, 2),
+        p(1, 1),
+        p(2, 0),
+        p(3, 0),
+        p(3, 1),
+        p(3, 2),
+        p(0, -2),
+    ] {
+        assert_eq!(
+            prepared.winding_number(&point, &policy),
+            contour.winding_number(&point, &policy)
+        );
+        assert_eq!(
+            prepared.classify_point(&point, &policy),
+            contour.classify_point(&point, &policy)
+        );
+    }
+}
+
+#[test]
 fn contour_aabb_miss_classifies_outside_and_zero_winding() {
     let contour = rectangle();
 

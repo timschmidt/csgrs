@@ -878,6 +878,11 @@ impl RegionFragmentSet {
         let source_contour_count = self.len();
         let source_fragment_count = region_fragment_count(self);
         let source_fragment_kind_counts = region_fragment_kind_counts(self);
+        let interior_sample_fractions = [
+            (Real::one() / Real::from(2_i8))?,
+            (Real::one() / Real::from(3_i8))?,
+            (Real::from(2_i8) / Real::from(3_i8))?,
+        ];
 
         for contour_fragments in self.contours() {
             let source_filled_side_is_left = match source_contour_filled_side_is_left(
@@ -903,23 +908,25 @@ impl RegionFragmentSet {
                 contour_fragments.fragments.fragments().iter().enumerate()
             {
                 let source_side = contour_fragments.key.side;
-                let opposite_location =
-                    match classify_fragment_interior(&fragment.segment, policy, |sample| {
-                        classify_opposite(source_side, sample)
-                    })? {
-                        FragmentInteriorClassification::Decided(location) => location,
-                        FragmentInteriorClassification::Blocked { stage, reason } => {
-                            return Ok(blocked_boolean_fragment_selection_result(
-                                op,
-                                stage,
-                                source_contour_count,
-                                source_fragment_count,
-                                source_fragment_kind_counts,
-                                classifications.len(),
-                                reason,
-                            ));
-                        }
-                    };
+                let opposite_location = match classify_fragment_interior(
+                    &fragment.segment,
+                    &interior_sample_fractions,
+                    policy,
+                    |sample| classify_opposite(source_side, sample),
+                )? {
+                    FragmentInteriorClassification::Decided(location) => location,
+                    FragmentInteriorClassification::Blocked { stage, reason } => {
+                        return Ok(blocked_boolean_fragment_selection_result(
+                            op,
+                            stage,
+                            source_contour_count,
+                            source_fragment_count,
+                            source_fragment_kind_counts,
+                            classifications.len(),
+                            reason,
+                        ));
+                    }
+                };
                 let action =
                     op.action_for(source_side, source_filled_side_is_left, opposite_location);
 
@@ -952,21 +959,17 @@ impl RegionFragmentSet {
 
 fn classify_fragment_interior<F>(
     segment: &Segment2,
+    fractions: &[Real; 3],
     policy: &CurvePolicy,
     mut classify: F,
 ) -> CurveResult<FragmentInteriorClassification>
 where
     F: FnMut(&Point2) -> Classification<RegionPointLocation>,
 {
-    let fractions = [
-        (Real::one() / Real::from(2_i8))?,
-        (Real::one() / Real::from(3_i8))?,
-        (Real::from(2_i8) / Real::from(3_i8))?,
-    ];
     let mut representative_blocker = None;
     let mut classification_blocker = None;
 
-    for fraction in &fractions {
+    for fraction in fractions {
         let sample = match segment.point_at(fraction, policy)? {
             Classification::Decided(sample) => sample,
             Classification::Uncertain(reason) => {

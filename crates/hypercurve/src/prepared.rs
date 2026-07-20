@@ -598,8 +598,21 @@ pub struct PreparedContourView2<'a> {
     contour: &'a Contour2,
     prepared_segments: Vec<PreparedSegment2<'a>>,
     segment_boxes: Vec<Option<Aabb2>>,
+    winding_segment_indices_by_max_x: Option<Vec<usize>>,
+    line_winding_index: Option<PreparedLineWindingIndex>,
     contour_box: Option<Aabb2>,
     facts: CurveStringFacts,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct PreparedLineWindingIndex {
+    segment_indices_by_max_x: Vec<usize>,
+    segment_indices_by_min_y: Vec<usize>,
+    segment_indices_by_max_y: Vec<usize>,
+    max_x_ranks: Vec<usize>,
+    min_y_ranks: Vec<usize>,
+    max_y_ranks: Vec<usize>,
+    directions: Vec<i8>,
 }
 
 impl<'a> PreparedContourView2<'a> {
@@ -610,6 +623,14 @@ impl<'a> PreparedContourView2<'a> {
         // hole/material provenance for future triangulation and Boolean-region
         // dispatch without weakening the exact boundary classifiers.
         let segment_boxes = decided_segment_boxes(contour.segments(), policy);
+        let winding_segment_indices_by_max_x =
+            segment_indices_sorted_by_max_x(&segment_boxes, policy);
+        let line_winding_index = prepared_line_winding_index(
+            contour.segments(),
+            &segment_boxes,
+            winding_segment_indices_by_max_x.as_deref(),
+            policy,
+        );
         let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
         let facts = crate::facts::contour_facts(
             contour,
@@ -622,6 +643,8 @@ impl<'a> PreparedContourView2<'a> {
             contour,
             prepared_segments,
             segment_boxes,
+            winding_segment_indices_by_max_x,
+            line_winding_index,
             contour_box,
             facts,
         }
@@ -1477,18 +1500,52 @@ fn prepared_contour_winding_number_unchecked(
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Classification<i32> {
-    let mut winding = 0;
-    for (index, segment) in contour.prepared_segments.iter().enumerate() {
-        let segment_box = contour.segment_boxes.get(index).and_then(Option::as_ref);
-        if segment_box.is_some_and(|bbox| {
-            matches!(
-                crate::classify::compare_reals(bbox.max_x(), point.x(), policy),
-                Some(Ordering::Less)
-            )
-        }) {
-            continue;
-        }
+    if let Some(index) = contour.line_winding_index.as_ref()
+        && let Some((max_x_start, min_y_end, max_y_start)) =
+            line_winding_candidate_cuts(contour, index, point, policy)
+    {
+        let candidates = (0..index.directions.len()).filter(|segment_index| {
+            index.max_x_ranks[*segment_index] >= max_x_start
+                && index.min_y_ranks[*segment_index] < min_y_end
+                && index.max_y_ranks[*segment_index] >= max_y_start
+        });
+        return accumulate_indexed_line_winding(contour, index, candidates, point, policy);
+    }
 
+    if let Some(candidate_indices) = sorted_winding_candidate_indices(contour, point, policy) {
+        return accumulate_prepared_contour_winding(
+            contour,
+            candidate_indices.iter().copied(),
+            point,
+            policy,
+        );
+    }
+
+    accumulate_prepared_contour_winding(
+        contour,
+        (0..contour.prepared_segments.len()).filter(|index| {
+            !contour.segment_boxes[*index].as_ref().is_some_and(|bbox| {
+                matches!(
+                    crate::classify::compare_reals(bbox.max_x(), point.x(), policy),
+                    Some(Ordering::Less)
+                )
+            })
+        }),
+        point,
+        policy,
+    )
+}
+
+fn accumulate_prepared_contour_winding(
+    contour: &PreparedContourView2<'_>,
+    segment_indices: impl Iterator<Item = usize>,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<i32> {
+    let mut winding = 0;
+    for index in segment_indices {
+        let segment = &contour.prepared_segments[index];
+        let segment_box = contour.segment_boxes.get(index).and_then(Option::as_ref);
         let delta = match segment {
             PreparedSegment2::Line(line) => prepared_line_winding(line, segment_box, point, policy),
             PreparedSegment2::Arc(arc) => {
@@ -1501,6 +1558,166 @@ fn prepared_contour_winding_number_unchecked(
         winding += delta;
     }
     Classification::Decided(winding)
+}
+
+fn segment_indices_sorted_by_max_x(
+    segment_boxes: &[Option<Aabb2>],
+    policy: &CurvePolicy,
+) -> Option<Vec<usize>> {
+    if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
+        return None;
+    }
+    segment_indices_sorted_by_box_coordinate(segment_boxes, policy, Aabb2::max_x)
+}
+
+fn prepared_line_winding_index(
+    segments: &[Segment2],
+    segment_boxes: &[Option<Aabb2>],
+    segment_indices_by_max_x: Option<&[usize]>,
+    policy: &CurvePolicy,
+) -> Option<PreparedLineWindingIndex> {
+    const MIN_INDEXED_LINE_SEGMENTS: usize = 8;
+    if segments.len() < MIN_INDEXED_LINE_SEGMENTS
+        || matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+    {
+        return None;
+    }
+    let segment_indices_by_max_x = segment_indices_by_max_x?.to_vec();
+    let segment_indices_by_min_y =
+        segment_indices_sorted_by_box_coordinate(segment_boxes, policy, Aabb2::min_y)?;
+    let segment_indices_by_max_y =
+        segment_indices_sorted_by_box_coordinate(segment_boxes, policy, Aabb2::max_y)?;
+    let mut directions = Vec::with_capacity(segments.len());
+    for segment in segments {
+        let Segment2::Line(line) = segment else {
+            return None;
+        };
+        directions.push(
+            match crate::classify::compare_reals(line.start().y(), line.end().y(), policy)? {
+                Ordering::Less => 1,
+                Ordering::Equal => 0,
+                Ordering::Greater => -1,
+            },
+        );
+    }
+
+    Some(PreparedLineWindingIndex {
+        max_x_ranks: sorted_segment_ranks(&segment_indices_by_max_x),
+        min_y_ranks: sorted_segment_ranks(&segment_indices_by_min_y),
+        max_y_ranks: sorted_segment_ranks(&segment_indices_by_max_y),
+        segment_indices_by_max_x,
+        segment_indices_by_min_y,
+        segment_indices_by_max_y,
+        directions,
+    })
+}
+
+fn segment_indices_sorted_by_box_coordinate(
+    segment_boxes: &[Option<Aabb2>],
+    policy: &CurvePolicy,
+    coordinate: for<'a> fn(&'a Aabb2) -> &'a crate::Real,
+) -> Option<Vec<usize>> {
+    if segment_boxes.iter().any(Option::is_none) {
+        return None;
+    }
+    let mut order_decided = true;
+    let mut indices: Vec<_> = (0..segment_boxes.len()).collect();
+    indices.sort_by(|left, right| {
+        let left_box = segment_boxes[*left].as_ref().expect("checked above");
+        let right_box = segment_boxes[*right].as_ref().expect("checked above");
+        match crate::classify::compare_reals(coordinate(left_box), coordinate(right_box), policy) {
+            Some(Ordering::Equal) => left.cmp(right),
+            Some(ordering) => ordering,
+            None => {
+                order_decided = false;
+                Ordering::Equal
+            }
+        }
+    });
+    order_decided.then_some(indices)
+}
+
+fn sorted_segment_ranks(indices: &[usize]) -> Vec<usize> {
+    let mut ranks = vec![0; indices.len()];
+    for (rank, segment_index) in indices.iter().copied().enumerate() {
+        ranks[segment_index] = rank;
+    }
+    ranks
+}
+
+fn line_winding_candidate_cuts(
+    contour: &PreparedContourView2<'_>,
+    index: &PreparedLineWindingIndex,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Option<(usize, usize, usize)> {
+    let max_x_start = sorted_box_coordinate_partition(
+        &index.segment_indices_by_max_x,
+        &contour.segment_boxes,
+        point.x(),
+        policy,
+        Aabb2::max_x,
+        false,
+    )?;
+    let min_y_end = sorted_box_coordinate_partition(
+        &index.segment_indices_by_min_y,
+        &contour.segment_boxes,
+        point.y(),
+        policy,
+        Aabb2::min_y,
+        true,
+    )?;
+    let max_y_start = sorted_box_coordinate_partition(
+        &index.segment_indices_by_max_y,
+        &contour.segment_boxes,
+        point.y(),
+        policy,
+        Aabb2::max_y,
+        true,
+    )?;
+    Some((max_x_start, min_y_end, max_y_start))
+}
+
+fn sorted_box_coordinate_partition(
+    indices: &[usize],
+    segment_boxes: &[Option<Aabb2>],
+    query: &crate::Real,
+    policy: &CurvePolicy,
+    coordinate: for<'a> fn(&'a Aabb2) -> &'a crate::Real,
+    include_equal_in_lower_partition: bool,
+) -> Option<usize> {
+    let mut start = 0;
+    let mut end = indices.len();
+    while start < end {
+        let middle = start + (end - start) / 2;
+        let bbox = segment_boxes[indices[middle]].as_ref()?;
+        match crate::classify::compare_reals(coordinate(bbox), query, policy)? {
+            Ordering::Less => start = middle + 1,
+            Ordering::Equal if include_equal_in_lower_partition => start = middle + 1,
+            Ordering::Equal | Ordering::Greater => end = middle,
+        }
+    }
+    Some(start)
+}
+
+fn sorted_winding_candidate_indices<'a>(
+    contour: &'a PreparedContourView2<'_>,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Option<&'a [usize]> {
+    let indices = contour.winding_segment_indices_by_max_x.as_deref()?;
+    let mut start = 0;
+    let mut end = indices.len();
+    while start < end {
+        let middle = start + (end - start) / 2;
+        let bbox = contour.segment_boxes[indices[middle]].as_ref()?;
+        match crate::classify::compare_reals(bbox.max_x(), point.x(), policy) {
+            Some(Ordering::Less) => start = middle + 1,
+            Some(Ordering::Equal | Ordering::Greater) => end = middle,
+            None => return None,
+        }
+    }
+    Some(&indices[start..])
 }
 
 fn prepared_line_winding(
@@ -1520,19 +1737,7 @@ fn prepared_line_winding(
             Ordering::Greater
         );
     if crosses_upward {
-        // The y tests prove one upward ray crossing. If the complete line box
-        // is strictly right of the query, that crossing is necessarily on the
-        // positive ray and no orientation predicate is needed. Equality and
-        // uncertain x order stay on the exact predicate path.
-        if segment_box.is_some_and(|bbox| aabb_decided_strictly_right_of_point(bbox, point, policy))
-        {
-            return Some(1);
-        }
-        return match line.classify_point(point, policy) {
-            Classification::Decided(LineSide::Left) => Some(1),
-            Classification::Decided(LineSide::On | LineSide::Right) => Some(0),
-            Classification::Uncertain(_) => None,
-        };
+        return prepared_line_crossing_winding(line, segment_box, point, 1, policy);
     }
     if start_at_or_below {
         return Some(0);
@@ -1545,14 +1750,61 @@ fn prepared_line_winding(
     if !end_at_or_below {
         return Some(0);
     }
+    prepared_line_crossing_winding(line, segment_box, point, -1, policy)
+}
+
+fn prepared_line_crossing_winding(
+    line: &PreparedLineSeg2<'_>,
+    segment_box: Option<&Aabb2>,
+    point: &Point2,
+    direction: i32,
+    policy: &CurvePolicy,
+) -> Option<i32> {
+    // The y tests or retained interval index prove one ray crossing. If the
+    // complete line box is strictly right of the query, that crossing is on
+    // the positive ray and no orientation predicate is needed. Equality and
+    // uncertain x order stay on the exact predicate path.
     if segment_box.is_some_and(|bbox| aabb_decided_strictly_right_of_point(bbox, point, policy)) {
-        return Some(-1);
+        return Some(direction);
     }
-    match line.classify_point(point, policy) {
-        Classification::Decided(LineSide::Left) => Some(0),
-        Classification::Decided(LineSide::On | LineSide::Right) => Some(-1),
-        Classification::Uncertain(_) => None,
+    match (direction, line.classify_point(point, policy)) {
+        (1, Classification::Decided(LineSide::Left))
+        | (-1, Classification::Decided(LineSide::On | LineSide::Right)) => Some(direction),
+        (1, Classification::Decided(LineSide::On | LineSide::Right))
+        | (-1, Classification::Decided(LineSide::Left)) => Some(0),
+        (_, Classification::Uncertain(_)) => None,
+        _ => None,
     }
+}
+
+fn accumulate_indexed_line_winding(
+    contour: &PreparedContourView2<'_>,
+    index: &PreparedLineWindingIndex,
+    segment_indices: impl Iterator<Item = usize>,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<i32> {
+    let mut winding = 0;
+    for segment_index in segment_indices {
+        let PreparedSegment2::Line(line) = &contour.prepared_segments[segment_index] else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        let direction = i32::from(index.directions[segment_index]);
+        if direction == 0 {
+            continue;
+        }
+        let Some(delta) = prepared_line_crossing_winding(
+            line,
+            contour.segment_boxes[segment_index].as_ref(),
+            point,
+            direction,
+            policy,
+        ) else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        winding += delta;
+    }
+    Classification::Decided(winding)
 }
 
 fn prepared_segment_kind_counts(segments: &[PreparedSegment2<'_>]) -> SegmentKindCounts {
