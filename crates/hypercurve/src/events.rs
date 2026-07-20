@@ -40,15 +40,14 @@ pub struct ContourIntersectionSet {
 impl ContourIntersectionSet {
     /// Constructs an event set from already-normalized events.
     pub fn new(events: Vec<ContourIntersection>) -> CurveResult<Self> {
-        Self::new_with_policy(events, &CurvePolicy::certified())
+        validate_contour_intersection_events(&events, &CurvePolicy::certified())?;
+        Ok(Self { events })
     }
 
-    fn new_with_policy(
-        events: Vec<ContourIntersection>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Self> {
-        validate_contour_intersection_events(&events, policy)?;
-        Ok(Self { events })
+    fn from_normalized_events(events: Vec<ContourIntersection>) -> Self {
+        // Module-private collectors normalize each relation as it is appended;
+        // public or forged event vectors still go through `new` above.
+        Self { events }
     }
 
     /// Returns all events in segment-pair scan order.
@@ -431,13 +430,13 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
                 | crate::contour::RetainedContourOffsetRelation2::SecondContainsFirst
         )
     ) {
-        return ContourIntersectionSet::new_with_policy(Vec::new(), policy);
+        return Ok(ContourIntersectionSet::default());
     }
 
     if let (Some(a_box), Some(b_box)) = (a_box, b_box)
         && aabbs_decided_disjoint(a_box, b_box, policy)
     {
-        return ContourIntersectionSet::new_with_policy(Vec::new(), policy);
+        return Ok(ContourIntersectionSet::default());
     }
 
     let mut events = Vec::new();
@@ -448,10 +447,14 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
         b.segments().len(),
         b_x_index,
         policy,
-        |a_segment_index, b_segment_index| {
+        |a_segment_index, b_segment_index, aabb_overlap_certified| {
             let a_segment = &a.segments()[a_segment_index];
             let b_segment = &b.segments()[b_segment_index];
-            let relation = a_segment.intersect_segment(b_segment, policy)?;
+            let relation = if aabb_overlap_certified {
+                a_segment.intersect_segment_with_certified_aabb_overlap(b_segment, policy)?
+            } else {
+                a_segment.intersect_segment(b_segment, policy)?
+            };
             append_segment_relation_events(
                 &mut events,
                 a_segment_index,
@@ -489,7 +492,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
         }
     }
 
-    ContourIntersectionSet::new_with_policy(events, policy)
+    Ok(ContourIntersectionSet::from_normalized_events(events))
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -791,7 +794,7 @@ fn visit_swept_segment_pair_candidates<F>(
     mut visit: F,
 ) -> Option<CurveResult<()>>
 where
-    F: FnMut(usize, usize) -> CurveResult<()>,
+    F: FnMut(usize, usize, bool) -> CurveResult<()>,
 {
     const MIN_CARTESIAN_PAIR_COUNT: usize = 256;
     const MIN_RANKED_PAIR_COUNT: usize = 4_096;
@@ -886,7 +889,16 @@ where
         }
         candidates.sort_unstable();
         for second_index in candidates.iter().copied() {
-            if let Err(error) = visit(first_index, second_index) {
+            let aabb_overlap_certified = rank_schedule.is_some()
+                && first_boxes
+                    .get(first_index)
+                    .and_then(Option::as_ref)
+                    .is_some()
+                && second_boxes
+                    .get(second_index)
+                    .and_then(Option::as_ref)
+                    .is_some();
+            if let Err(error) = visit(first_index, second_index, aabb_overlap_certified) {
                 return Some(Err(error));
             }
         }
@@ -1015,7 +1027,7 @@ pub(crate) fn intersect_contour_self_with_cached_aabbs(
         }
     }
 
-    ContourIntersectionSet::new_with_policy(events, policy)
+    Ok(ContourIntersectionSet::from_normalized_events(events))
 }
 
 fn append_segment_relation_events(
@@ -1410,7 +1422,7 @@ mod tests {
             second.len(),
             None,
             &policy,
-            |first_index, second_index| {
+            |first_index, second_index, _| {
                 swept.push((first_index, second_index));
                 Ok(())
             },
@@ -1427,7 +1439,7 @@ mod tests {
             second.len(),
             Some(&index),
             &policy,
-            |first_index, second_index| {
+            |first_index, second_index, _| {
                 prepared.push((first_index, second_index));
                 Ok(())
             },
@@ -1459,14 +1471,25 @@ mod tests {
             second.len(),
             None,
             &policy,
-            |first_index, second_index| {
-                ranked.push((first_index, second_index));
+            |first_index, second_index, aabb_overlap_certified| {
+                ranked.push((first_index, second_index, aabb_overlap_certified));
                 Ok(())
             },
         )
         .expect("dense exact boxes support the retained rank schedule")
         .expect("candidate visitor succeeds");
-        assert_eq!(ranked, flat_candidates(&first, &second, &policy));
+        assert_eq!(
+            ranked
+                .iter()
+                .map(|&(first, second, _)| (first, second))
+                .collect::<Vec<_>>(),
+            flat_candidates(&first, &second, &policy),
+        );
+        assert!(
+            ranked
+                .iter()
+                .all(|&(_, second, certified)| certified == (second != 7))
+        );
     }
 
     #[test]

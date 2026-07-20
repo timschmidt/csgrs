@@ -428,9 +428,26 @@ impl Segment2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<SegmentIntersection> {
+        self.intersect_segment_impl(other, policy, false)
+    }
+
+    pub(crate) fn intersect_segment_with_certified_aabb_overlap(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<SegmentIntersection> {
+        self.intersect_segment_impl(other, policy, true)
+    }
+
+    fn intersect_segment_impl(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+        aabb_overlap_certified: bool,
+    ) -> CurveResult<SegmentIntersection> {
         match (self, other) {
             (Self::Line(a), Self::Line(b)) => a
-                .intersect_line(b, policy)
+                .intersect_line_impl(b, policy, aabb_overlap_certified)
                 .map(SegmentIntersection::LineLine),
             (Self::Line(line), Self::Arc(arc)) => Ok(SegmentIntersection::LineArc {
                 order: LineArcOrder::LineThenArc,
@@ -459,7 +476,16 @@ impl LineSeg2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<LineLineIntersection> {
-        if line_segments_decided_axis_separated(self, other, policy) {
+        self.intersect_line_impl(other, policy, false)
+    }
+
+    fn intersect_line_impl(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+        aabb_overlap_certified: bool,
+    ) -> CurveResult<LineLineIntersection> {
+        if !aabb_overlap_certified && line_segments_decided_axis_separated(self, other, policy) {
             return Ok(LineLineIntersection::None);
         }
         if self.retained_support_ranges_decided_disjoint(other, policy) == Some(true) {
@@ -516,7 +542,9 @@ impl LineSeg2 {
                 support_ry,
                 other.support_start().delta_from(self.support_start()),
             ),
-            None if line_segments_decided_axis_separated(self, other, policy) => {
+            None if !aabb_overlap_certified
+                && line_segments_decided_axis_separated(self, other, policy) =>
+            {
                 Ok(LineLineIntersection::None)
             }
             None => Ok(LineLineIntersection::Uncertain {
@@ -759,8 +787,8 @@ fn intersect_non_parallel(
     // parametric solution. Symbolic/mixed lines keep the endpoint-first path:
     // a source endpoint can remain decidable even when an expanded parameter
     // is too complicated to order later in the pipeline.
-    let exact_rational_endpoints = a.structural_facts().coordinate_exact.all_exact_rational
-        && b.structural_facts().coordinate_exact.all_exact_rational;
+    let exact_rational_endpoints =
+        line_endpoints_are_exact_rational(a) && line_endpoints_are_exact_rational(b);
     if !exact_rational_endpoints
         && let Some(intersection) = non_parallel_endpoint_intersection(a, b, policy)?
     {
@@ -779,31 +807,66 @@ fn intersect_non_parallel(
         denominator
     };
     let t_numerator = cross(&qmp.0, &qmp.1, sx, sy);
+    // A rational quotient is in [0, 1] exactly when its numerator lies between
+    // zero and its denominator in denominator-sign order. Prove misses and
+    // endpoint incidence on borrowed carriers before allocating the quotient.
+    let t_exact_location = exact_rational_quotient_unit_interval(&t_numerator, &denominator);
+    if t_exact_location == Some(ExactUnitIntervalLocation::Outside) {
+        return Ok(LineLineIntersection::None);
+    }
     let u_numerator = cross(&qmp.0, &qmp.1, rx, ry);
+    let u_exact_location = exact_rational_quotient_unit_interval(&u_numerator, &denominator);
+    if u_exact_location == Some(ExactUnitIntervalLocation::Outside) {
+        return Ok(LineLineIntersection::None);
+    }
     let t = (t_numerator / &denominator)?;
     let u = (u_numerator / &denominator)?;
 
-    let Some(t_in_range) = in_closed_unit_interval(&t, policy) else {
-        return Ok(LineLineIntersection::Uncertain {
-            reason: UncertaintyReason::Ordering,
-        });
+    let t_in_range = match t_exact_location {
+        Some(ExactUnitIntervalLocation::Interior | ExactUnitIntervalLocation::Endpoint) => true,
+        Some(ExactUnitIntervalLocation::Outside) => {
+            unreachable!("exact miss returned before quotient construction")
+        }
+        None => match in_closed_unit_interval(&t, policy) {
+            Some(in_range) => in_range,
+            None => {
+                return Ok(LineLineIntersection::Uncertain {
+                    reason: UncertaintyReason::Ordering,
+                });
+            }
+        },
     };
-    let Some(u_in_range) = in_closed_unit_interval(&u, policy) else {
-        return Ok(LineLineIntersection::Uncertain {
-            reason: UncertaintyReason::Ordering,
-        });
+    let u_in_range = match u_exact_location {
+        Some(ExactUnitIntervalLocation::Interior | ExactUnitIntervalLocation::Endpoint) => true,
+        Some(ExactUnitIntervalLocation::Outside) => {
+            unreachable!("exact miss returned before quotient construction")
+        }
+        None => match in_closed_unit_interval(&u, policy) {
+            Some(in_range) => in_range,
+            None => {
+                return Ok(LineLineIntersection::Uncertain {
+                    reason: UncertaintyReason::Ordering,
+                });
+            }
+        },
     };
 
     if !(t_in_range && u_in_range) {
         return Ok(LineLineIntersection::None);
     }
 
-    let t_endpoint = at_unit_interval_endpoint(&t, policy).ok_or_else(|| {
-        crate::CurveError::Real("could not classify first line parameter endpoint".into())
-    })?;
-    let u_endpoint = at_unit_interval_endpoint(&u, policy).ok_or_else(|| {
-        crate::CurveError::Real("could not classify second line parameter endpoint".into())
-    })?;
+    let t_endpoint = match t_exact_location {
+        Some(location) => location == ExactUnitIntervalLocation::Endpoint,
+        None => at_unit_interval_endpoint(&t, policy).ok_or_else(|| {
+            crate::CurveError::Real("could not classify first line parameter endpoint".into())
+        })?,
+    };
+    let u_endpoint = match u_exact_location {
+        Some(location) => location == ExactUnitIntervalLocation::Endpoint,
+        None => at_unit_interval_endpoint(&u, policy).ok_or_else(|| {
+            crate::CurveError::Real("could not classify second line parameter endpoint".into())
+        })?,
+    };
     let kind = if t_endpoint || u_endpoint {
         IntersectionKind::Endpoint
     } else {
@@ -811,12 +874,12 @@ fn intersect_non_parallel(
     };
     let point = if t_endpoint {
         line_point_at_unit_endpoint(a, &t, policy)
-            .unwrap_or_else(|| line_intersection_point_at(a, &t))
+            .unwrap_or_else(|| line_intersection_point_at(a, &t, rx, ry))
     } else if u_endpoint {
         line_point_at_unit_endpoint(b, &u, policy)
-            .unwrap_or_else(|| line_intersection_point_at(a, &t))
+            .unwrap_or_else(|| line_intersection_point_at(a, &t, rx, ry))
     } else {
-        line_intersection_point_at(a, &t)
+        line_intersection_point_at(a, &t, rx, ry)
     };
 
     Ok(LineLineIntersection::Point {
@@ -827,17 +890,55 @@ fn intersect_non_parallel(
     })
 }
 
-fn line_intersection_point_at(line: &LineSeg2, parameter: &Real) -> Point2 {
-    let one_minus_parameter = Real::one() - parameter;
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ExactUnitIntervalLocation {
+    Outside,
+    Interior,
+    Endpoint,
+}
+
+fn exact_rational_quotient_unit_interval(
+    numerator: &Real,
+    denominator: &Real,
+) -> Option<ExactUnitIntervalLocation> {
+    let numerator = numerator.exact_rational_ref()?;
+    let denominator = denominator.exact_rational_ref()?;
+    let inside = if denominator.is_positive() {
+        !numerator.is_negative() && numerator <= denominator
+    } else if denominator.is_negative() {
+        !numerator.is_positive() && numerator >= denominator
+    } else {
+        return None;
+    };
+    if !inside {
+        Some(ExactUnitIntervalLocation::Outside)
+    } else if numerator.is_zero() || numerator == denominator {
+        Some(ExactUnitIntervalLocation::Endpoint)
+    } else {
+        Some(ExactUnitIntervalLocation::Interior)
+    }
+}
+
+fn line_endpoints_are_exact_rational(line: &LineSeg2) -> bool {
+    [
+        line.start().x(),
+        line.start().y(),
+        line.end().x(),
+        line.end().y(),
+    ]
+    .into_iter()
+    .all(|coordinate| coordinate.exact_rational_ref().is_some())
+}
+
+fn line_intersection_point_at(
+    line: &LineSeg2,
+    parameter: &Real,
+    delta_x: &Real,
+    delta_y: &Real,
+) -> Point2 {
     Point2::new(
-        Real::dot2_refs(
-            [line.start().x(), line.end().x()],
-            [&one_minus_parameter, parameter],
-        ),
-        Real::dot2_refs(
-            [line.start().y(), line.end().y()],
-            [&one_minus_parameter, parameter],
-        ),
+        Real::affine(line.start().x(), parameter, delta_x),
+        Real::affine(line.start().y(), parameter, delta_y),
     )
 }
 
@@ -1553,4 +1654,37 @@ fn point_on_arc_endpoint(arc: &CircularArc2, point: &Point2, policy: &CurvePolic
     }
     let end = point.distance_squared(arc.end());
     is_zero(&end, policy)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn exact_rational_quotient_interval_handles_both_denominator_signs() {
+        for (numerator, denominator, expected) in [
+            (0, 2, ExactUnitIntervalLocation::Endpoint),
+            (1, 2, ExactUnitIntervalLocation::Interior),
+            (2, 2, ExactUnitIntervalLocation::Endpoint),
+            (3, 2, ExactUnitIntervalLocation::Outside),
+            (-1, 2, ExactUnitIntervalLocation::Outside),
+            (0, -2, ExactUnitIntervalLocation::Endpoint),
+            (-1, -2, ExactUnitIntervalLocation::Interior),
+            (-2, -2, ExactUnitIntervalLocation::Endpoint),
+            (-3, -2, ExactUnitIntervalLocation::Outside),
+            (1, -2, ExactUnitIntervalLocation::Outside),
+        ] {
+            assert_eq!(
+                exact_rational_quotient_unit_interval(
+                    &Real::from(numerator),
+                    &Real::from(denominator),
+                ),
+                Some(expected),
+            );
+        }
+        assert_eq!(
+            exact_rational_quotient_unit_interval(&Real::one(), &Real::zero()),
+            None,
+        );
+    }
 }

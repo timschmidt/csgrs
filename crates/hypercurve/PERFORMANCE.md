@@ -788,6 +788,36 @@ AddressSanitizer differential Boolean fuzzer completed 1,000 runs at 5,647
 coverage points and 15,809 feature edges without a failure; LeakSanitizer alone
 was disabled because the sandbox executes under ptrace.
 
+The exact-rational line kernel now classifies each parametric quotient against
+the closed unit interval from its borrowed numerator and signed denominator.
+An exact miss returns before constructing either quotient, and retained
+interior/endpoint evidence avoids repeating the same comparisons after a hit.
+Symbolic and mixed carriers keep the existing quotient, ordering, and
+uncertainty path. Intersection points reuse the already-computed line delta in
+the affine evaluation, and a direct borrowed-carrier check replaces the full
+four-coordinate structural-fact cache when selecting this rational fast path.
+
+The dense candidate schedule also passes its certified AABB-overlap proof into
+the private segment-pair kernel. Decided ranked candidates therefore avoid two
+redundant endpoint-box tests; candidates involving an unknown box still use the
+complete public intersection path. Finally, module-private event collectors now
+construct their result directly after normalizing every appended relation,
+while the public constructor continues to validate arbitrary event vectors.
+
+Against the preceding checkpoint, the isolated debug-info Callgrind star64 run
+fell from 42,351,387 to 28,656,205 instructions (32.34%). Exact
+`compare_reals` calls fell from 18,264 to 10,527 (42.36%), allocator calls from
+27,290 to 22,742 (16.67%), and deallocator calls from 28,101 to 23,079
+(17.87%). The exact divisions in the line-pair profile fell from 1,074 to 276.
+In paired release measurements, the 11-sample star64 median fell from 1.049 to
+0.700 ms/iter (33.31%), and rectangle union fell from 16.127 to 14.563
+us/iter (9.70%), with unchanged checksums. The all-feature and
+no-default-feature test matrices, format, warnings-as-errors Clippy and rustdoc
+gates, and candidate-proof differential regression passed. The
+AddressSanitizer differential Boolean fuzzer completed 1,000 runs at 5,732
+coverage points and 16,121 feature edges without a failure; LeakSanitizer alone
+was disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
