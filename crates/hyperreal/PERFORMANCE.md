@@ -33,6 +33,23 @@ cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates
 cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
 ```
 
+## Binary32 export fast path
+
+Exact-rational `Real::to_f32_lossy` now narrows the allocation-free binary64
+view at this explicitly approximate IO boundary instead of materializing a
+Computable graph and refining it at binary32 precision. When a binary64 view is
+already retained, narrowing is reused only if its adjacent binary64 values map
+to the same binary32 result; midpoint-adjacent values retain the full fallback.
+The binary64-cache build publishes the rational proposal for later rows without
+adding storage. Overflow and signed-zero handling remain explicit, and property
+tests compare cached and uncached results over 512 generated rationals plus a
+retained midpoint regression.
+
+In the 48,384-row CSG adapter corpus this reduced `f32` export from roughly
+59.4 ms to 1.04 ms (98.2%) while preserving the finite interleaved row/index
+contract used by the HyperMesh boundary. The HyperMesh large-buffer sentinel
+records the current direct binary32 conversion cost independently.
+
 ## Fuzz coverage
 
 The standalone `fuzz` workspace covers four runtime-bearing public families:

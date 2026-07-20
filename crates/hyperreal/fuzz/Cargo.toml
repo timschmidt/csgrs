@@ -13,7 +13,7 @@ cargo-fuzz = true
 arbitrary = { version = "1", features = ["derive"] }
 libfuzzer-sys = "0.4"
 num = { version = "0.4.3", features = ["num-bigint"] }
-hyperreal = { path = "..", features = ["serde"] }
+hyperreal = { path = "..", features = ["serde", "cached-f64-approx"] }
 
 [[bin]]
 name = "rational_arithmetic"

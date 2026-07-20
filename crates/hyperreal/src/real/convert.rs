@@ -1,5 +1,5 @@
 use crate::RealSign;
-use crate::real::PrimitiveApproxCache;
+use crate::real::{Class, PrimitiveApproxCache};
 use crate::{Computable, Problem, Rational, Real};
 
 macro_rules! impl_integer_conversion {
@@ -214,9 +214,17 @@ impl Real {
     /// numerical views.
     #[inline]
     pub fn to_f32_lossy(&self) -> Option<f32> {
-        #[cfg(feature = "cached-f32-approx")]
-        if let PrimitiveApproxCache::F32(value) = self.primitive_approx_cache.get() {
-            return value;
+        #[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+        match self.primitive_approx_cache.get() {
+            #[cfg(feature = "cached-f32-approx")]
+            PrimitiveApproxCache::F32(value) => return value,
+            PrimitiveApproxCache::F64(None) => return None,
+            PrimitiveApproxCache::F64(Some(value)) => {
+                if let Some(value) = unambiguous_f32_from_f64(value) {
+                    return value;
+                }
+            }
+            PrimitiveApproxCache::Empty => {}
         }
 
         let value = self.to_f32_lossy_uncached();
@@ -236,6 +244,24 @@ impl Real {
     fn to_f32_lossy_uncached(&self) -> Option<f32> {
         const NEG_BITS: u32 = 0x8000_0000;
         const EXP_BITS: u32 = 0x7f80_0000;
+
+        if matches!(self.class, Class::One)
+            && self.computable.is_none()
+            && self.abort_signal().is_none()
+            && let Some(value) = self.rational.to_f64_lossy()
+            && value != 0.0
+        {
+            // Exact rationals dominate render buffers. Reuse their allocation-
+            // free borrowed binary64 conversion before narrowing at this
+            // explicitly lossy IO boundary. Zero falls through so the general
+            // path can retain the sign of an underflowed negative value.
+            let narrowed = value as f32;
+            let narrowed = narrowed.is_finite().then_some(narrowed);
+            #[cfg(all(feature = "cached-f64-approx", not(feature = "cached-f32-approx")))]
+            self.primitive_approx_cache
+                .set(PrimitiveApproxCache::F64(Some(value)));
+            return narrowed;
+        }
 
         let c = self.fold_ref();
         let sign = match self.refine_sign_until(-150) {
@@ -265,6 +291,23 @@ impl Real {
         let value = f32::from_bits(bits);
         value.is_finite().then_some(value)
     }
+}
+
+/// Reuses a binary64 approximation only when its complete one-ULP neighborhood
+/// maps to the same binary32 result. This rejects binary32 midpoints and their
+/// immediate neighbors, where narrowing an approximate proposal could select
+/// a different adjacent value. Signed zero deliberately falls through so the
+/// exact sign can be retained.
+#[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+fn unambiguous_f32_from_f64(value: f64) -> Option<Option<f32>> {
+    if value == 0.0 || !value.is_finite() {
+        return None;
+    }
+    let value32 = value as f32;
+    let lower32 = value.next_down() as f32;
+    let upper32 = value.next_up() as f32;
+    (lower32.to_bits() == value32.to_bits() && upper32.to_bits() == value32.to_bits())
+        .then(|| value32.is_finite().then_some(value32))
 }
 
 // (Significand, Exponent)
@@ -862,6 +905,35 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "cached-f64-approx")]
+    fn f64_neighborhood_only_reuses_unambiguous_f32_rounding() {
+        assert_eq!(
+            unambiguous_f32_from_f64(1.1_f64),
+            Some(Some(1.1_f64 as f32))
+        );
+        assert_eq!(unambiguous_f32_from_f64(0.0), None);
+        assert_eq!(unambiguous_f32_from_f64(-0.0), None);
+
+        let lower = 1.0_f32;
+        let upper = f32::from_bits(lower.to_bits() + 1);
+        let midpoint = (f64::from(lower) + f64::from(upper)) * 0.5;
+        assert_eq!(unambiguous_f32_from_f64(midpoint), None);
+        assert_eq!(unambiguous_f32_from_f64(f64::MAX), Some(None));
+    }
+
+    #[test]
+    #[cfg(all(feature = "cached-f64-approx", not(feature = "cached-f32-approx")))]
+    fn rational_f32_export_retains_its_f64_proposal() {
+        let value = Real::new(Rational::fraction(1, 7).unwrap());
+        let expected = value.to_f32_lossy();
+        assert!(matches!(
+            value.primitive_approx_cache.get(),
+            PrimitiveApproxCache::F64(Some(_))
+        ));
+        assert_eq!(value.to_f32_lossy(), expected);
+    }
+
+    #[test]
     fn primitive_approx_cache_keeps_overflow_state() {
         let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1200));
 
@@ -996,6 +1068,16 @@ mod tests {
                 value.primitive_approx_cache.get(),
                 PrimitiveApproxCache::F64(_)
             ));
+        }
+
+        #[test]
+        #[cfg(feature = "cached-f64-approx")]
+        fn cached_f64_proposal_matches_uncached_f32_export(rational in finite_rational_strategy()) {
+            let value = Real::new(rational.clone());
+            let expected = Real::new(rational).to_f32_lossy_uncached();
+
+            let _ = value.to_f64_lossy();
+            prop_assert_eq!(value.to_f32_lossy().map(f32::to_bits), expected.map(f32::to_bits));
         }
 
         #[test]

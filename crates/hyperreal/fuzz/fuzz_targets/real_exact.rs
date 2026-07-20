@@ -89,6 +89,17 @@ fuzz_target!(|input: Input| {
     }
 
     for value in &values {
+        let f64_first = value.clone();
+        let expected_f32 = value.to_f32_lossy().map(f32::to_bits);
+        assert_eq!(value.to_f32_lossy().map(f32::to_bits), expected_f32);
+        let f64_value = f64_first.to_f64_lossy();
+        assert_eq!(
+            f64_first.to_f32_lossy().map(f32::to_bits),
+            expected_f32
+        );
+        assert!(f64_value.is_none_or(f64::is_finite));
+        assert!(expected_f32.is_none_or(|bits| f32::from_bits(bits).is_finite()));
+
         let facts = value.structural_facts();
         assert!(facts.exact_rational);
         assert_eq!(
