@@ -12939,19 +12939,26 @@ fn contour_nesting_depths(
             (Real::one() / Real::from(3_i8))?,
             (Real::from(2_i8) / Real::from(3_i8))?,
         ];
-        let mut samples = Vec::with_capacity(1 + candidate.segments().len() * fractions.len());
-        samples.push(first_sample);
-        for segment in candidate.segments() {
-            for fraction in &fractions {
-                if let Classification::Decided(sample) = segment.point_at(fraction, policy)? {
-                    samples.push(sample);
-                }
-            }
-        }
+        // The exact intersection pass above proves that every point on this
+        // candidate boundary is off every other contour boundary. In the
+        // ordinary decided path its existing first endpoint is therefore a
+        // sufficient nesting sample. Retain the interior samples as exact
+        // fallbacks for an undecided point-containment predicate, but do not
+        // eagerly interpolate them when the first endpoint already decides.
+        let fallback_samples = candidate.segments().iter().flat_map(|segment| {
+            fractions
+                .iter()
+                .map(move |fraction| segment.point_at(fraction, policy))
+        });
+        let samples =
+            std::iter::once(Ok(Classification::Decided(first_sample))).chain(fallback_samples);
 
         let mut last_blocker = None;
         let mut decided_entry = None;
         'sample: for sample in samples {
+            let Classification::Decided(sample) = sample? else {
+                continue;
+            };
             let mut containing_contour_indices = Vec::new();
             for (container_index, container) in contours.iter().enumerate() {
                 if candidate_index == container_index {

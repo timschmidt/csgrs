@@ -429,6 +429,27 @@ table in addition to comparing direct and prepared paths. It completed 1,000
 AddressSanitizer-instrumented runs at 5,067 coverage points and 14,297 feature edges
 without a failure.
 
+Boundary-contour role assignment then accounted for almost the entire next
+output-materialization hotspot. After pairwise exact contour intersection has
+accepted every contour pair, the start point already stored on each candidate
+contour is a valid nesting sample against every other boundary. Nevertheless,
+the implementation eagerly constructed three exact interpolants on every
+segment before trying that start point. Nesting now evaluates those interior
+samples lazily: the existing endpoint is classified first, while the unchanged
+one-half/one-third/two-thirds sequence remains available if an exact
+point-containment predicate is undecided. Intersection validation, containment
+classification, uncertainty propagation, and public role reports are unchanged.
+
+In the same 15-sample, 50 ms comparative configuration, star64 intersection
+fell from 7.822 to 6.379 ms/iter (18.4%) and rectangle union measured 105.207
+us/iter, with unchanged checksums. The complete one-iteration Callgrind sweep
+fell from 280,749,710 to 227,341,565 instructions (19.0%), removing the prior
+53.4-million-instruction eager interpolation cost rather than replacing it with
+an approximate sample. From the original checkpoint, star64 is now 82.8% faster
+and the instruction sweep is 83.9% smaller. The exact Boolean differential fuzz
+target completed 1,000 AddressSanitizer-instrumented runs at 5,054 coverage
+points and 14,451 feature edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
