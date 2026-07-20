@@ -1,6 +1,9 @@
 #![no_main]
 
-use hypercurve::{BooleanOp, BulgeVertex2, Contour2, CurvePolicy, FillRule, Point2, Real, Region2};
+use hypercurve::{
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real, Region2,
+    RegionPointLocation,
+};
 use libfuzzer_sys::fuzz_target;
 
 fn r(value: i32) -> Real {
@@ -22,6 +25,29 @@ fn rectangle(x: u8, y: u8, width: u8, height: u8) -> Region2 {
     Region2::from_material_contours(vec![contour])
 }
 
+fn boolean_membership(
+    op: BooleanOp,
+    first: RegionPointLocation,
+    second: RegionPointLocation,
+) -> Option<bool> {
+    let first = match first {
+        RegionPointLocation::Inside => true,
+        RegionPointLocation::Outside => false,
+        RegionPointLocation::Boundary => return None,
+    };
+    let second = match second {
+        RegionPointLocation::Inside => true,
+        RegionPointLocation::Outside => false,
+        RegionPointLocation::Boundary => return None,
+    };
+    Some(match op {
+        BooleanOp::Union => first || second,
+        BooleanOp::Intersection => first && second,
+        BooleanOp::Difference => first && !second,
+        BooleanOp::Xor => first != second,
+    })
+}
+
 fuzz_target!(|data: &[u8]| {
     if data.len() < 10 {
         return;
@@ -34,6 +60,9 @@ fuzz_target!(|data: &[u8]| {
     let second_view = second.as_view();
     let first_prepared = first.prepare_topology_queries(&policy);
     let second_prepared = second.prepare_topology_queries(&policy);
+    let query = Point2::new(r(data[8] as i32 - 128), r(data[9] as i32 - 128));
+    let first_location = first_view.classify_point(&query, &policy);
+    let second_location = second_view.classify_point(&query, &policy);
 
     for op in [
         BooleanOp::Union,
@@ -45,11 +74,28 @@ fuzz_target!(|data: &[u8]| {
         let prepared =
             first_prepared.boolean_region(&second_prepared, op, FillRule::EvenOdd, &policy);
         assert_eq!(direct, prepared);
+
+        if let (
+            Ok(Classification::Decided(result)),
+            Classification::Decided(first_location),
+            Classification::Decided(second_location),
+        ) = (&direct, first_location, second_location)
+            && let Some(expected_inside) =
+                boolean_membership(op, first_location, second_location)
+        {
+            assert_eq!(
+                result.classify_point(&query, &policy),
+                Classification::Decided(if expected_inside {
+                    RegionPointLocation::Inside
+                } else {
+                    RegionPointLocation::Outside
+                }),
+            );
+        }
     }
 
-    let query = Point2::new(r(data[8] as i32 - 128), r(data[9] as i32 - 128));
     assert_eq!(
-        first_view.classify_point(&query, &policy),
+        first_location,
         first_prepared.classify_point(&query, &policy),
     );
 });

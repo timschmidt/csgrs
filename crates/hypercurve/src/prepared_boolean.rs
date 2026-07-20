@@ -482,14 +482,25 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
             ));
         }
     };
+    // The prepared intersection set is complete, and successful splitting has
+    // excluded unresolved relations. With no overlap event, all remaining
+    // boundary contacts are marker endpoints rather than fragment interiors.
+    let split_interiors_are_off_opposite_boundary =
+        boundary_events.overlap_event_count() == 0 && boundary_events.uncertain_event_count() == 0;
     let selection_result = fragments.classify_for_boolean_with_point_classifier_with_report(
         &first_view,
         &second_view,
         op,
         policy,
-        |source_side, sample| match source_side {
-            RegionSide::First => second.classify_point(sample, policy),
-            RegionSide::Second => first.classify_point(sample, policy),
+        |source_side, sample| match (split_interiors_are_off_opposite_boundary, source_side) {
+            (true, RegionSide::First) => {
+                second.classify_point_assuming_off_boundary(sample, policy)
+            }
+            (true, RegionSide::Second) => {
+                first.classify_point_assuming_off_boundary(sample, policy)
+            }
+            (false, RegionSide::First) => second.classify_point(sample, policy),
+            (false, RegionSide::Second) => first.classify_point(sample, policy),
         },
     )?;
     let selection = match selection_result.selection() {

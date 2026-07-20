@@ -408,6 +408,27 @@ The exact Boolean differential fuzz target completed another 1,000
 AddressSanitizer-instrumented runs after these carrier changes, reaching 4,969
 coverage points and 13,625 feature edges without a failure.
 
+The dominant remaining fragment-classification scan still asked every prepared
+contour to prove boundary exclusion before computing winding. For an internally
+produced split set, successful marker construction has already rejected unresolved
+segment relations. When the complete retained intersection set contains no overlap,
+every opposite-boundary contact is therefore a marker endpoint, so a strict
+one-half/one-third/two-thirds fragment sample cannot lie on that boundary. The direct
+and prepared Boolean pipelines now preserve this proof and use winding-only prepared
+classification in that case. Any overlap or unresolved event keeps the canonical
+boundary-first classifier, as do all public point-classification APIs.
+
+This reduced prepared line classifications from 1,098 to 549 in the comparative
+sweep. Star64 intersection fell from 9.220 to 7.822 ms/iter (15.2%), while rectangle
+union remained in its recent noisy range at 126.046 us/iter. The full Callgrind sweep
+fell from 336,036,245 to 280,749,710 instructions (16.5%). Cumulatively from the
+original checkpoint, star64 is 78.9% faster and the sweep executes 80.1% fewer
+instructions, with unchanged output checksums. The post-change exact Boolean
+differential target now checks decided output membership against the Boolean truth
+table in addition to comparing direct and prepared paths. It completed 1,000
+AddressSanitizer-instrumented runs at 5,067 coverage points and 14,297 feature edges
+without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
