@@ -11,6 +11,7 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `mesh_boolean/prepare_and_extract_four` | 31.542 ms | 9.606 ms | 69.5% faster | 120 polygons, 120 corners, exact buffers and metadata |
 | `mesh_boolean/extract_four_prebuilt` | 31.542 ms | 2.174 ms | 93.1% faster | Same four closure-certified outputs |
 | `mesh_queries/ray_intersections` | 32.851 ms/op | 30.819 ms/op | 6.2% faster | Same exact ordered hit points, distances, and checksum |
+| `kernel/construct_box/unit` (cold) | 36.157 us/op | 28.308 us/op | 21.7% faster | Same 12-facet checksum; 1.338x faster than CGAL EPECK |
 | `kernel/center/translated_box` (cold) | 23.768 us/op | 3.400 us/op | 85.7% faster | Same 12-coordinate checksum; 1.991x faster than CGAL EPECK |
 | `kernel/translate/sphere_medium` (cold) | 0.2513 ms/op | 0.1865 ms/op | 25.8% faster | Same 960-coordinate checksum; 2.095x faster than CGAL EPECK |
 | `kernel/affine_transform/sphere_shear` (cold) | 0.1288 ms/op | 0.1069 ms/op | 17.0% faster | Same 960-coordinate checksum; 5.125x faster than CGAL EPECK |
@@ -66,6 +67,22 @@ CGAL EPECK's 11.869 us, widening the cold margin from 1.034x to 6.313x. Warm
 CSGRS measured 0.666 us versus CGAL's 1.140 us. All 47 cold rows beat both
 comparison engines; the only non-win was the timer-scale warm identical-box
 intersection at 24 ns versus approximately 23 ns.
+
+Original cuboid pools now defer their six-coordinate binary64 boundary view
+until rendering, measurement, or export first requests it. Topology-only cube
+and cuboid construction therefore retains exact coordinate bounds without
+paying for an unused finite adapter. Translated cuboids still precompute their
+final finite bounds because translated centering consumes that view in the
+timed path. `OnceLock` publishes the original pool's boundary once, so later
+finite traversal does not materialize exact face vertices or repeat conversion.
+Exact shared-identity and direct-export regressions cover both access modes.
+
+Across 31 focused cold samples, `construct_box/unit` fell from 32.238 us to
+24.938 us (22.6%) and changed from 0.957x to 1.310x versus CGAL EPECK. In the
+complete native sweep it fell from 36.157 us to 28.308 us (21.7%), versus
+37.876 us for CGAL. The translated-center row remained ahead at 3.580 us versus
+CGAL's 6.810 us. Every cold and warm row beat or tied both comparison engines;
+the only tie was the timer-scale identical-box intersection at 100 ns cold.
 
 `Mesh::build_graphics_mesh` previously called `Mesh::triangulate`, which built
 temporary triangle polygons, recomputed support planes, allocated metadata and
