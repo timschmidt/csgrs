@@ -158,9 +158,4 @@ impl Rational {
         );
     }
 
-    #[cfg(feature = "dispatch-trace")]
-    fn trace_backend_gcd_algorithm() {
-        crate::trace_dispatch!("rational_algorithm", "gcd", "backend-binary");
-    }
-
 }

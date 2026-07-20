@@ -847,6 +847,44 @@ instructions and 14.9--33.4% of its cycles. In the post-shared-output CSGRS
 guard, union instructions fell another 0.14% and cycles 0.78%; difference
 instructions fell 0.14% with cycles neutral.
 
+### Structural operation GCD certificates
+
+The rational-operation GCD now resolves mixed-width identity and power-of-two
+operands without a full-width remainder or binary reduction, and returns equal
+wide operands directly. Word pairs retain the identical native dispatch;
+general mixed pairs retain one exact remainder, and general wide pairs retain
+the backend binary reducer. Dispatch tracing now reports the selected algorithm
+instead of labeling every operation GCD as backend binary.
+
+One exact rational-offset sphere/box union issued 759 operation GCDs: 129 wide
+identity, 189 wide power-of-two, seven equal-wide, 85 native-word, 24 mixed
+wide/word, and 325 general backend-binary calls. Thus the structural proofs
+removed 325 backend entries without changing any exact result. A broader
+one-remainder experiment for balanced wide pairs was rejected after regressing
+union instructions 2.19% and difference instructions 1.37%.
+
+Eight alternating counter runs each performed 500 fresh, globally shifted 8x4
+sphere/box operations:
+
+| operation | backend-only instructions | structural instructions | instruction result | cycle result |
+| --- | ---: | ---: | ---: | ---: |
+| union | 8,037,894,768 | 7,975,123,366 | 0.78% fewer | 0.45% fewer |
+| difference | 6,788,466,262 | 6,745,313,386 | 0.64% fewer | 0.68% fewer |
+
+Heap profiles over 100 unions fell from 1,909,758 to 1,884,759 allocations,
+removing 24,999 allocations, or 249.99 per operation.
+
+Validation passed the 527-test all-feature library gate and its complete
+all-target integration, oracle, and benchmark-smoke matrix; the 460-test default
+library gate plus integrations and doctests; strict Clippy; warning-denied
+rustdoc; every fuzz-target build; and 20-second AddressSanitizer fuzz campaigns
+covering 488,852 rational-arithmetic and 92,656 exact-real cases. Downstream
+validation passed Hypermesh's 962-test all-feature and benchmark-smoke gate,
+no-default build, strict Clippy, warning-denied rustdoc, benchmark and fuzz-target
+builds, locked release WebAssembly build, and 371-case AddressSanitizer Boolean
+pipeline campaign, followed by CSGRS's 370-test all-feature library gate and all
+integration suites.
+
 ### Prepared projected rational point queries
 
 Certified 2D line filters can now consume a `PreparedRationalPoint3Query` and

@@ -784,11 +784,80 @@ mod tests {
             wide
         );
 
+        let one = BigUint::one();
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&one, &wide),
+            one
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &one),
+            one
+        );
+        let word_power_of_two = BigUint::from(8_u8);
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&word_power_of_two, &wide),
+            BigUint::from(2_u8)
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &word_power_of_two),
+            BigUint::from(2_u8)
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &wide),
+            wide
+        );
+        let wide_power_of_two = BigUint::one() << 300_usize;
+        let wide_even = (BigUint::one() << 400_usize) + BigUint::from(12_u8);
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(
+                &wide_power_of_two,
+                &wide_even,
+            ),
+            BigUint::from(4_u8)
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(
+                &wide_even,
+                &wide_power_of_two,
+            ),
+            BigUint::from(4_u8)
+        );
+
         let other = ((BigUint::one() << 259_usize) + BigUint::from(7_u8)) * 21_u8;
         assert_eq!(
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &other),
             num::Integer::gcd(&wide, &other)
         );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rational_operation_gcd_trace_reports_selected_algorithm() {
+        let word = BigUint::from(15_u8);
+        let wide = ((BigUint::one() << 260_usize) + BigUint::from(2_u8)) * &word;
+        let power = BigUint::one() << 300_usize;
+        let other = ((BigUint::one() << 259_usize) + BigUint::from(7_u8)) * 21_u8;
+
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&word, &word);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&BigUint::one(), &wide);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&power, &wide);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &wide);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&word, &wide);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &other);
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        for path in [
+            "binary-word",
+            "identity-wide",
+            "power-of-two-wide",
+            "equal-wide",
+            "euclidean-wide-word",
+            "backend-binary",
+        ] {
+            assert_eq!(trace.path_count("rational_algorithm", "gcd", path), 1);
+        }
     }
 
     #[test]

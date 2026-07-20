@@ -272,7 +272,6 @@ macro_rules! trace_rational_gcd {
     ($left:expr, $right:expr, $divisor:expr) => {{
         #[cfg(feature = "dispatch-trace")]
         {
-            Rational::trace_backend_gcd_algorithm();
             crate::dispatch_trace::record_rational_gcd($left, $right, $divisor);
         }
     }};

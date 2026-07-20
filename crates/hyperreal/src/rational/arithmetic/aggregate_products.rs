@@ -104,31 +104,83 @@ struct DyadicProductSumPlan<const TERMS: usize> {
 impl Rational {
     /// Use one full-width remainder when exactly one operand fits a native word.
     ///
-    /// Word pairs stay in the native binary reducer, while mixed-width values
+    /// Word pairs stay in the native binary reducer. Mixed-width identity and
+    /// power-of-two operands resolve structurally; other mixed-width values
     /// reduce the wide operand modulo the word once to avoid a long BigUint
-    /// subtraction/shift chain. Balanced wide operands retain BigUint's binary
-    /// GCD.
+    /// subtraction/shift chain. Equal wide operands resolve directly, while
+    /// other balanced wide operands retain BigUint's binary GCD.
     pub(crate) fn gcd_magnitudes_with_mixed_width_fast_path(
         left: &BigUint,
         right: &BigUint,
     ) -> BigUint {
         match (left.to_u128(), right.to_u128()) {
-            (Some(left), Some(right)) => BigUint::from(Self::gcd_word(left, right)),
-            (Some(0), None) => right.clone(),
-            (None, Some(0)) => left.clone(),
+            (Some(left), Some(right)) => {
+                crate::trace_dispatch!("rational_algorithm", "gcd", "binary-word");
+                BigUint::from(Self::gcd_word(left, right))
+            }
+            (Some(0), None) => {
+                crate::trace_dispatch!("rational_algorithm", "gcd", "identity-wide");
+                right.clone()
+            }
+            (None, Some(0)) => {
+                crate::trace_dispatch!("rational_algorithm", "gcd", "identity-wide");
+                left.clone()
+            }
+            (Some(1), None) | (None, Some(1)) => {
+                crate::trace_dispatch!("rational_algorithm", "gcd", "identity-wide");
+                BigUint::one()
+            }
+            (Some(word), None) if word.is_power_of_two() => {
+                crate::trace_dispatch!("rational_algorithm", "gcd", "power-of-two-wide");
+                let common_shift = u64::from(word.trailing_zeros()).min(
+                    right
+                        .trailing_zeros()
+                        .expect("nonzero BigUint has trailing zeros"),
+                );
+                BigUint::one() << common_shift
+            }
+            (None, Some(word)) if word.is_power_of_two() => {
+                crate::trace_dispatch!("rational_algorithm", "gcd", "power-of-two-wide");
+                let common_shift = u64::from(word.trailing_zeros()).min(
+                    left.trailing_zeros()
+                        .expect("nonzero BigUint has trailing zeros"),
+                );
+                BigUint::one() << common_shift
+            }
             (Some(word), None) => {
+                crate::trace_dispatch!("rational_algorithm", "gcd", "euclidean-wide-word");
                 let remainder = (right % left)
                     .to_u128()
                     .expect("remainder is smaller than a u128 divisor");
                 BigUint::from(Self::gcd_word(word, remainder))
             }
             (None, Some(word)) => {
+                crate::trace_dispatch!("rational_algorithm", "gcd", "euclidean-wide-word");
                 let remainder = (left % right)
                     .to_u128()
                     .expect("remainder is smaller than a u128 divisor");
                 BigUint::from(Self::gcd_word(word, remainder))
             }
-            (None, None) => num::Integer::gcd(left, right),
+            (None, None) => {
+                if left == right {
+                    crate::trace_dispatch!("rational_algorithm", "gcd", "equal-wide");
+                    return left.clone();
+                }
+                if Self::is_power_of_two(left) || Self::is_power_of_two(right) {
+                    crate::trace_dispatch!("rational_algorithm", "gcd", "power-of-two-wide");
+                    let common_shift = left
+                        .trailing_zeros()
+                        .expect("nonzero BigUint has trailing zeros")
+                        .min(
+                            right
+                                .trailing_zeros()
+                                .expect("nonzero BigUint has trailing zeros"),
+                        );
+                    return BigUint::one() << common_shift;
+                }
+                crate::trace_dispatch!("rational_algorithm", "gcd", "backend-binary");
+                num::Integer::gcd(left, right)
+            }
         }
     }
 
