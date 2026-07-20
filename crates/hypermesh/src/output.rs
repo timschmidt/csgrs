@@ -500,13 +500,7 @@ pub fn extract_output_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<Ve
     let mut out = Vec::with_capacity(polygons.len());
     for polygon in polygons {
         let mut vertices = Vec::with_capacity(polygon.vertex_count());
-        for point in polygon.vertices()? {
-            vertices.push(OutputVertex {
-                x: point.x,
-                y: point.y,
-                z: point.z,
-            });
-        }
+        append_polygon_output_vertices(&mut vertices, polygon)?;
         out.push(OutputPolygon {
             vertices,
             source_mesh: polygon.mesh_index,
@@ -514,6 +508,26 @@ pub fn extract_output_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<Ve
         });
     }
     Ok(out)
+}
+
+fn append_polygon_output_vertices(
+    vertices: &mut Vec<OutputVertex>,
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<()> {
+    if let Some(points) = polygon.known_vertices.as_deref() {
+        vertices.extend(points.iter().map(|point| OutputVertex {
+            x: point.x.clone(),
+            y: point.y.clone(),
+            z: point.z.clone(),
+        }));
+    } else {
+        vertices.extend(polygon.vertices()?.into_iter().map(|point| OutputVertex {
+            x: point.x,
+            y: point.y,
+            z: point.z,
+        }));
+    }
+    Ok(())
 }
 
 fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
@@ -1084,26 +1098,45 @@ fn merge_duplicate_convex_polygon_vertices<P>(
 where
     P: Borrow<ConvexPolygon>,
 {
-    let mut positions = Vec::new();
+    let position_count = polygons
+        .iter()
+        .map(|polygon| polygon.borrow().vertex_count())
+        .sum();
+    let mut positions = Vec::with_capacity(position_count);
     let mut indexed_polygons = Vec::with_capacity(polygons.len());
     let mut flat_index = 0usize;
 
     for (polygon_index, polygon) in polygons.iter().enumerate() {
         let polygon = polygon.borrow();
-        let points = polygon.vertices()?;
-        indexed_polygons.push(vec![0; points.len()]);
-        for (vertex_index, point) in points.into_iter().enumerate() {
-            positions.push((
-                polygon_index,
-                vertex_index,
-                flat_index,
-                OutputVertex {
-                    x: point.x,
-                    y: point.y,
-                    z: point.z,
-                },
-            ));
-            flat_index += 1;
+        indexed_polygons.push(vec![0; polygon.vertex_count()]);
+        if let Some(points) = polygon.known_vertices.as_deref() {
+            for (vertex_index, point) in points.iter().enumerate() {
+                positions.push((
+                    polygon_index,
+                    vertex_index,
+                    flat_index,
+                    OutputVertex {
+                        x: point.x.clone(),
+                        y: point.y.clone(),
+                        z: point.z.clone(),
+                    },
+                ));
+                flat_index += 1;
+            }
+        } else {
+            for (vertex_index, point) in polygon.vertices()?.into_iter().enumerate() {
+                positions.push((
+                    polygon_index,
+                    vertex_index,
+                    flat_index,
+                    OutputVertex {
+                        x: point.x,
+                        y: point.y,
+                        z: point.z,
+                    },
+                ));
+                flat_index += 1;
+            }
         }
     }
 
@@ -1626,13 +1659,7 @@ fn triangulate_polygons(
         }
 
         let base = soup.vertices.len();
-        for point in polygon.vertices()? {
-            soup.vertices.push(OutputVertex {
-                x: point.x,
-                y: point.y,
-                z: point.z,
-            });
-        }
+        append_polygon_output_vertices(&mut soup.vertices, polygon)?;
 
         for index in 1..(vertex_count - 1) {
             soup.triangles.push([base, base + index, base + index + 1]);

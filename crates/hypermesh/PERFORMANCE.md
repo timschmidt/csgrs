@@ -812,6 +812,40 @@ rustdoc, benchmark and fuzz-target builds, and the release WASM demo. A
 failure. The downstream CSGRS all-feature suite passed all 370 library tests and
 every integration test.
 
+## 2026-07-19: borrow retained output vertex cycles
+
+Status: **kept**
+
+Output extraction and triangulation previously called `ConvexPolygon::vertices`
+even when the polygon already retained its exact affine vertex cycle. That call
+cloned the complete cycle into a temporary vector before the output path moved
+or cloned the same coordinates again. Public polygon extraction, fallback fan
+triangulation, and duplicate-vertex merging now borrow retained cycles directly;
+polygons without retained vertices preserve the computed affine fallback. The
+merge path also reserves its exact total input vertex count before collection.
+
+Eight alternating counter runs each performed 500 fresh, globally shifted
+sphere/box operations:
+
+| operation | temporary-cycle instructions | borrowed-cycle instructions | result | cycle result |
+| --- | ---: | ---: | ---: | ---: |
+| union | 9,988,951,430 | 9,955,446,701 | 0.34% fewer | 0.84% fewer |
+| difference | 8,520,274,492 | 8,489,569,986 | 0.36% fewer | 0.82% fewer |
+
+Heap profiles of 50 unions fell from 1,191,406 to 1,183,880 allocations: 7,526
+allocations removed in total, or 150.52 per operation and 0.63% of the complete
+construction, Boolean, and materialization workload. Exact `Real` coordinates,
+polygon order, source provenance, and the non-retained intersection fallback are
+unchanged.
+
+Validation passed the default, all-feature, and all-target matrices (962 unit
+tests, all 61 core integration tests, and 48 regressions plus one intentional
+benchmark ignore), the no-default-feature check, warning-denied Clippy and
+rustdoc, benchmark and fuzz-target builds, and the release WASM demo. A
+20-second ASAN campaign completed 371 `boolean_pipeline` executions without
+failure. The downstream CSGRS all-feature suite passed all 370 library tests and
+every integration test.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:
