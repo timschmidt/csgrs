@@ -214,7 +214,7 @@ pub mod tpms;
 pub mod triangulated;
 
 /// Stored as `(position: [Real; 3], normal: [Real; 3])`.
-pub type GraphicsMeshVertex = ([Real; 3], [Real; 3]);
+pub type GraphicsMeshVertex = ::hypermesh::ExactGpuVertex;
 
 #[derive(Debug, Clone)]
 pub struct SharedVec<T>(Arc<Vec<T>>);
@@ -4572,21 +4572,22 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
     /// Converts this mesh into exact vertex/index buffers suitable for rendering adapters.
     pub fn build_graphics_mesh(&self) -> GraphicsMesh {
+        self.try_build_graphics_mesh()
+            .unwrap_or_else(|error| panic!("graphics mesh construction failed: {error}"))
+    }
+
+    fn try_build_graphics_mesh(&self) -> Result<GraphicsMesh, ::hypermesh::GpuMeshError> {
         if let Some(graphics) = self.polygons.graphics_mesh() {
-            return graphics.clone();
+            return Ok(graphics.clone());
         }
         let triangle_capacity = self
             .polygons
             .iter()
             .map(|polygon| polygon.vertices.len().saturating_sub(2))
             .sum::<usize>();
-
-        let mut indices = Vec::with_capacity(triangle_capacity * 3);
-        let mut vertices = Vec::with_capacity(triangle_capacity * 3);
-
-        for polygon in &self.polygons {
-            for triangle in polygon.triangulate_indices() {
-                for vertex_index in triangle {
+        let triangles = self.polygons.iter().flat_map(|polygon| {
+            polygon.triangulate_indices().into_iter().map(|triangle| {
+                triangle.map(|vertex_index| {
                     let vertex = &polygon.vertices[vertex_index];
                     let position = [
                         vertex.position.x.clone(),
@@ -4598,20 +4599,21 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                         vertex.normal.0[1].clone(),
                         vertex.normal.0[2].clone(),
                     ];
-
-                    let index = vertices.len() as u32;
-                    vertices.push((position, normal));
-                    indices.push(index);
-                }
-            }
-        }
+                    (position, normal)
+                })
+            })
+        });
+        let exact = ::hypermesh::ExactGpuMeshBuffers::from_triangles_with_capacity(
+            triangle_capacity,
+            triangles,
+        )?;
 
         let graphics = GraphicsMesh {
-            vertices: vertices.into(),
-            indices: indices.into(),
+            vertices: exact.vertices.into(),
+            indices: exact.indices.into(),
         };
         self.polygons.retain_graphics_mesh(graphics.clone());
-        graphics
+        Ok(graphics)
     }
 
     /// Try to extract hyperreal vertices and triangle indices.
@@ -4641,6 +4643,40 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
 
         Ok((vertices, indices))
+    }
+
+    /// Approximates this mesh as strict finite-`f32` GPU buffers.
+    pub fn try_to_gpu_mesh_f32(
+        &self,
+    ) -> Result<::hypermesh::GpuMeshBuffersF32, ::hypermesh::GpuMeshError> {
+        let graphics = self.try_build_graphics_mesh()?;
+        ::hypermesh::approximate_gpu_mesh_f32(&graphics.vertices, &graphics.indices)
+    }
+
+    /// Approximates this mesh as GPU buffers, substituting zero for an
+    /// unrepresentable position row or normal component.
+    pub fn to_gpu_mesh_f32_or_zero(
+        &self,
+    ) -> Result<::hypermesh::GpuMeshBuffersF32, ::hypermesh::GpuMeshError> {
+        let graphics = self.try_build_graphics_mesh()?;
+        ::hypermesh::approximate_gpu_mesh_f32_or_zero(&graphics.vertices, &graphics.indices)
+    }
+
+    /// Approximates this mesh as strict finite-`f64` GPU buffers.
+    pub fn try_to_gpu_mesh_f64(
+        &self,
+    ) -> Result<::hypermesh::GpuMeshBuffersF64, ::hypermesh::GpuMeshError> {
+        let graphics = self.try_build_graphics_mesh()?;
+        ::hypermesh::approximate_gpu_mesh_f64(&graphics.vertices, &graphics.indices)
+    }
+
+    /// Approximates this mesh as binary64 GPU buffers, substituting zero for an
+    /// unrepresentable position row or normal component.
+    pub fn to_gpu_mesh_f64_or_zero(
+        &self,
+    ) -> Result<::hypermesh::GpuMeshBuffersF64, ::hypermesh::GpuMeshError> {
+        let graphics = self.try_build_graphics_mesh()?;
+        ::hypermesh::approximate_gpu_mesh_f64_or_zero(&graphics.vertices, &graphics.indices)
     }
 
     /// Casts a ray defined by `origin` + t * `direction` against all triangles
@@ -5293,50 +5329,15 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         use bevy_asset::RenderAssetUsages;
         use bevy_mesh::{Indices, Mesh, PrimitiveTopology};
 
-        let triangulated_mesh = &self.triangulate();
-        let polygons = &triangulated_mesh.polygons;
+        let gpu = self
+            .to_gpu_mesh_f32_or_zero()
+            .unwrap_or_else(|error| panic!("GPU mesh approximation failed: {error}"));
 
-        // Prepare buffers
-        let mut positions_32 = Vec::new();
-        let mut normals_32 = Vec::new();
-        let mut indices = Vec::with_capacity(polygons.len() * 3);
-
-        let mut index_start = 0u32;
-
-        // Each polygon is assumed to have exactly 3 vertices after tessellation.
-        for poly in polygons {
-            // skip any degenerate polygons
-            if poly.vertices.len() != 3 {
-                continue;
-            }
-
-            // push 3 positions/normals
-            for v in &poly.vertices {
-                positions_32.push(v.position.to_f32_array_lossy().unwrap_or([0.0; 3]));
-                normals_32.push([
-                    v.normal.0[0].to_f32_lossy().unwrap_or(0.0),
-                    v.normal.0[1].to_f32_lossy().unwrap_or(0.0),
-                    v.normal.0[2].to_f32_lossy().unwrap_or(0.0),
-                ]);
-            }
-
-            // triangle indices
-            indices.push(index_start);
-            indices.push(index_start + 1);
-            indices.push(index_start + 2);
-            index_start += 3;
-        }
-
-        // Create the mesh with the new 2-argument constructor
         let mut mesh =
             Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
-
-        // Insert attributes. Note the `<Vec<[f32; 3]>>` usage.
-        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions_32);
-        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals_32);
-
-        // Insert triangle indices
-        mesh.insert_indices(Indices::U32(indices));
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, gpu.positions);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, gpu.normals);
+        mesh.insert_indices(Indices::U32(gpu.indices));
 
         mesh
     }
@@ -7227,5 +7228,46 @@ mod tests {
             graphics.indices,
             (0..u32::try_from(expected.len()).unwrap()).collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn gpu_approximation_shims_match_hypermesh_adapters() {
+        let mesh = Mesh::cube(r(2.0), ());
+        let graphics = mesh.build_graphics_mesh();
+        let expected_f32 =
+            ::hypermesh::approximate_gpu_mesh_f32(&graphics.vertices, &graphics.indices)
+                .unwrap();
+        let expected_f64 =
+            ::hypermesh::approximate_gpu_mesh_f64(&graphics.vertices, &graphics.indices)
+                .unwrap();
+
+        assert_eq!(mesh.try_to_gpu_mesh_f32().unwrap(), expected_f32);
+        assert_eq!(mesh.try_to_gpu_mesh_f64().unwrap(), expected_f64);
+        assert_eq!(expected_f32.positions.len(), 36);
+        assert_eq!(expected_f64.positions.len(), 36);
+        assert_eq!(expected_f32.normals.len(), 36);
+        assert_eq!(expected_f64.normals.len(), 36);
+        assert_eq!(expected_f32.indices, (0..36).collect::<Vec<_>>());
+        assert_eq!(expected_f64.indices, expected_f32.indices);
+    }
+
+    #[cfg(feature = "bevymesh")]
+    #[test]
+    fn bevy_mesh_is_a_thin_wrapper_over_hypermesh_gpu_buffers() {
+        use bevy_mesh::{Indices, Mesh as BevyMesh, VertexAttributeValues};
+
+        let source = Mesh::cube(r(2.0), ());
+        let expected = source.to_gpu_mesh_f32_or_zero().unwrap();
+        let bevy = source.to_bevy_mesh();
+
+        assert_eq!(
+            bevy.attribute(BevyMesh::ATTRIBUTE_POSITION),
+            Some(&VertexAttributeValues::Float32x3(expected.positions))
+        );
+        assert_eq!(
+            bevy.attribute(BevyMesh::ATTRIBUTE_NORMAL),
+            Some(&VertexAttributeValues::Float32x3(expected.normals))
+        );
+        assert_eq!(bevy.indices(), Some(&Indices::U32(expected.indices)));
     }
 }
