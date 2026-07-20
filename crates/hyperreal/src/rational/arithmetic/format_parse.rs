@@ -65,7 +65,25 @@ impl Rational {
     // boundary between them.
     const RADIX_INPUT_DIVIDE_CONQUER_THRESHOLD: usize = 8192;
 
+    #[inline]
+    fn parse_decimal_word(digits: &[u8]) -> Option<u128> {
+        if digits.is_empty() {
+            return None;
+        }
+        digits.iter().try_fold(0_u128, |value, &digit| {
+            let digit = digit.checked_sub(b'0')?;
+            if digit > 9 {
+                return None;
+            }
+            value.checked_mul(10)?.checked_add(u128::from(digit))
+        })
+    }
+
     fn parse_decimal_magnitude(digits: &[u8]) -> Option<BigUint> {
+        if let Some(value) = Self::parse_decimal_word(digits) {
+            crate::trace_dispatch!("rational_algorithm", "radix-to-binary", "word-sized");
+            return Some(BigUint::from(value));
+        }
         if digits.len() < Self::RADIX_INPUT_DIVIDE_CONQUER_THRESHOLD {
             crate::trace_dispatch!(
                 "rational_algorithm",
@@ -124,6 +142,25 @@ impl std::str::FromStr for Rational {
         };
         if let Some((n, d)) = s.split_once('/') {
             crate::trace_dispatch!("rational", "parse", "fraction");
+            if let (Some(numerator), Some(denominator)) = (
+                Self::parse_decimal_word(n.as_bytes()),
+                Self::parse_decimal_word(d.as_bytes()),
+            ) {
+                if denominator == 0 {
+                    return Err(Problem::DivideByZero);
+                }
+                crate::trace_dispatch!("rational", "parse", "word-sized-fraction");
+                let (positive, negative) = if sign == Minus {
+                    (0, numerator)
+                } else {
+                    (numerator, 0)
+                };
+                return Ok(Self::from_word_magnitude_difference(
+                    positive,
+                    negative,
+                    denominator,
+                ));
+            }
             let numerator = Self::parse_decimal_magnitude(n.as_bytes())
                 .ok_or(Problem::BadFraction)?;
             if numerator.is_zero() {
@@ -137,6 +174,27 @@ impl std::str::FromStr for Rational {
             Ok(Self::from_fraction_parts(sign, numerator, denominator).reduce())
         } else if let Some((i, d)) = s.split_once('.') {
             crate::trace_dispatch!("rational", "parse", "decimal");
+            if let (Some(whole), Some(fraction), Ok(exponent)) = (
+                Self::parse_decimal_word(i.as_bytes()),
+                Self::parse_decimal_word(d.as_bytes()),
+                u32::try_from(d.len()),
+            ) && let Some(denominator) = 10_u128.checked_pow(exponent)
+                && let Some(numerator) = whole
+                    .checked_mul(denominator)
+                    .and_then(|whole| whole.checked_add(fraction))
+            {
+                crate::trace_dispatch!("rational", "parse", "word-sized-decimal");
+                let (positive, negative) = if sign == Minus {
+                    (0, numerator)
+                } else {
+                    (numerator, 0)
+                };
+                return Ok(Self::from_word_magnitude_difference(
+                    positive,
+                    negative,
+                    denominator,
+                ));
+            }
             let numerator = Self::parse_decimal_magnitude(i.as_bytes())
                 .ok_or(Problem::BadDecimal)?;
             let whole = if numerator.is_zero() {
@@ -154,6 +212,10 @@ impl std::str::FromStr for Rational {
             Ok(whole + fraction)
         } else {
             crate::trace_dispatch!("rational", "parse", "integer");
+            if let Some(numerator) = Self::parse_decimal_word(s.as_bytes()) {
+                crate::trace_dispatch!("rational", "parse", "word-sized-integer");
+                return Ok(Self::from_primitive_integer(sign, numerator));
+            }
             let numerator = Self::parse_decimal_magnitude(s.as_bytes())
                 .ok_or(Problem::BadInteger)?;
             if numerator.is_zero() {

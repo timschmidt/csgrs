@@ -377,6 +377,7 @@ Cold backend algorithm families and retained rational fact dispatch selected fro
 | `rational_algorithm_dispatch_speed/perfect_power_unfactored_reject` | 3.331 us | 3.318 us - 3.345 us | Rejects mismatched seventh- and fifth-power rational components beyond the trial table. |
 | `rational_algorithm_dispatch_speed/radix_format_small_integer` | 943.06 ns | 941.77 ns - 944.37 ns | Formats a 16-limb integer using repeated single-limb radix division. |
 | `rational_algorithm_dispatch_speed/radix_format_large_integer` | 2.988 us | 2.982 us - 2.994 us | Formats a 32-limb integer using divide-and-conquer radix conversion. |
+| `rational_algorithm_dispatch_speed/radix_parse_short_decimal` | 75.77 ns | 75.70 ns - 75.85 ns | Parses a short exact decimal through the checked word-sized path. |
 | `rational_algorithm_dispatch_speed/radix_parse_large_integer` | 1.451 us | 1.446 us - 1.457 us | Parses a large below-threshold decimal fixture through chunked multiply-add conversion. |
 | `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_10240_digits` | 99.559 us | 99.421 us - 99.723 us | Parses 10,240 digits through the divide-and-conquer product tree. |
 | `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_10240_digits` | 102.612 us | 102.431 us - 102.808 us | Parses the same 10,240 digits with the backend chunked multiply-add baseline. |

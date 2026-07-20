@@ -1305,6 +1305,21 @@ mod tests {
         let b: Rational = "2.5".parse().unwrap();
         let answer = a * b;
         assert_eq!(answer, Rational::one());
+
+        let word_limit = u128::MAX.to_string();
+        assert_eq!(word_limit.parse::<Rational>().unwrap().to_string(), word_limit);
+        let beyond_word = "340282366920938463463374607431768211456";
+        assert_eq!(
+            beyond_word.parse::<Rational>().unwrap().to_string(),
+            beyond_word
+        );
+        assert_eq!(
+            "18446744073709551616.5"
+                .parse::<Rational>()
+                .unwrap()
+                .to_string(),
+            "18446744073709551616 1/2"
+        );
     }
 
     #[test]
