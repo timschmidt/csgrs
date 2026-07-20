@@ -896,6 +896,17 @@ fn mean_output_coordinate<'a>(
     if boundary.is_empty() {
         return Err(HypermeshError::UnknownClassification);
     }
+    if let &[first, second, third] = boundary
+        && let (Some(first), Some(second), Some(third)) = (
+            coordinate(&vertices[first]).exact_rational_ref(),
+            coordinate(&vertices[second]).exact_rational_ref(),
+            coordinate(&vertices[third]).exact_rational_ref(),
+        )
+    {
+        return Rational::mean_refs(&[first, second, third])
+            .map(Real::from)
+            .ok_or(HypermeshError::UnknownClassification);
+    }
     if let Some(rationals) = boundary
         .iter()
         .map(|&index| coordinate(&vertices[index]).exact_rational_ref())
