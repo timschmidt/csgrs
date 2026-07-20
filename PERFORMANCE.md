@@ -447,11 +447,20 @@ grid distribution 23.26 us versus 70.59 us (3.04x). The subsequent full
 47-workload sweep measured linear distribution at 13.56 us versus 39.89 us
 (2.94x) and grid distribution at 11.29 us versus 67.90 us (6.01x); their warm
 rows were 9.48x and 9.91x faster than CGAL. Every warm row remained at or
-above native-kernel parity. Whole-suite cold box construction varied to 35.27
-us versus CGAL's 32.68 us, while octahedron construction and sphere/box union
-also remained below cold CGAL parity. Focused and whole-suite results are both
+above native-kernel parity. Whole-suite cold box construction initially varied
+to 35.27 us versus CGAL's 32.68 us. Focused and whole-suite results are both
 retained because first-use code/data placement is substantially more variable
 than repeated work.
+
+Octahedra subsequently adopted the same lazy topology boundary: eight indexed
+triangles reserve six exact position identities but defer their 24 face
+vertices and eight sampled unit normals. A focused cold sweep measured 9.97 us
+versus CGAL's 11.10 us (1.11x faster). In the following full sweep, octahedron
+construction measured 1.89 us versus 8.63 us (4.57x), and box construction
+returned to 26.69 us versus 33.73 us (1.26x). The only cold reversals were then
+the noise-scale sphere/box union and translated-box center rows, at 0.994x and
+0.990x CGAL parity respectively; their warm rows remained 19.79x and 5.33x
+faster.
 
 Constructor fuzzing also exposed an ellipsoid-only validation mismatch:
 `segments = 1, stacks = 1` reached the shared sphere recipe even though the

@@ -9,7 +9,7 @@ use crate::mesh::polygon::{
 };
 use crate::mesh::{
     CUBOID_CORNER_POSITION_SLOTS, CUBOID_POINT_COORDINATE_SLOTS,
-    CUBOID_POSITION_REPRESENTATIVES, Mesh, TransformLayout,
+    CUBOID_POSITION_REPRESENTATIVES, Mesh, OCTAHEDRON_FACES, TransformLayout,
 };
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
@@ -23,22 +23,6 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::{Arc, LazyLock};
-
-static OCTAHEDRON_NORMALS: LazyLock<[Vector3; 8]> = LazyLock::new(|| {
-    let component =
-        Real::try_from(1.0_f64 / 3.0_f64.sqrt()).expect("finite octahedron normal");
-    let negative = -component.clone();
-    [
-        Vector3::from_xyz(component.clone(), component.clone(), component.clone()),
-        Vector3::from_xyz(negative.clone(), component.clone(), component.clone()),
-        Vector3::from_xyz(negative.clone(), negative.clone(), component.clone()),
-        Vector3::from_xyz(component.clone(), negative.clone(), component.clone()),
-        Vector3::from_xyz(component.clone(), component.clone(), negative.clone()),
-        Vector3::from_xyz(negative.clone(), component.clone(), negative.clone()),
-        Vector3::from_xyz(negative.clone(), negative.clone(), negative.clone()),
-        Vector3::from_xyz(component, negative.clone(), negative),
-    ]
-});
 
 static CUBOID_TRANSFORM_LAYOUT: LazyLock<Arc<TransformLayout>> = LazyLock::new(|| {
     Arc::new(TransformLayout {
@@ -77,17 +61,6 @@ fn retain_cuboid_facts<M: Clone + Debug + Send + Sync>(
     mesh.cache_manifold_fact(true);
     mesh.cache_convex_pwn_fact();
 }
-
-const OCTAHEDRON_FACES: [[usize; 3]; 8] = [
-    [0, 2, 4],
-    [2, 1, 4],
-    [1, 3, 4],
-    [3, 0, 4],
-    [5, 2, 0],
-    [5, 1, 2],
-    [5, 3, 1],
-    [5, 0, 3],
-];
 
 #[derive(Clone, Debug, PartialEq)]
 struct SphereCacheKey {
@@ -361,6 +334,35 @@ mod retained_topology_tests {
                 Point3::new(Real::from(5_u8), Real::from(4_u8), Real::one()),
             )
         );
+    }
+
+    #[test]
+    fn octahedron_materializes_six_shared_positions_and_face_normals() {
+        let radius = Real::from(10_u8);
+        let mesh = Mesh::octahedron(radius.clone(), ());
+        assert_eq!(mesh.topology_counts(), (8, 24));
+        assert_eq!(
+            mesh.bounding_box(),
+            Aabb::new(
+                Point3::new(-radius.clone(), -radius.clone(), -radius.clone()),
+                Point3::new(radius.clone(), radius.clone(), radius),
+            )
+        );
+        let position_ids = mesh
+            .polygons
+            .iter()
+            .flat_map(|polygon| &polygon.vertices)
+            .map(|vertex| vertex.position_id)
+            .collect::<BTreeSet<_>>();
+        assert_eq!(position_ids.len(), 6);
+        for polygon in &mesh.polygons {
+            assert!(
+                polygon
+                    .vertices
+                    .iter()
+                    .all(|vertex| vertex.normal == polygon.vertices[0].normal)
+            );
+        }
     }
 
     #[test]
@@ -2173,65 +2175,21 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
         let cache_key_on_completion = shape_cache_on_completion(key);
         let first_vertex_identity = reserve_position_ids(6 * 4);
-        let zero = Real::zero();
         let negative_radius = -radius.clone();
-        let zero_normal = Vector3::zero();
-        let points = [
-            Vertex::new_with_reserved_identity(
-                Point3::new(radius.clone(), zero.clone(), zero.clone()),
-                zero_normal.clone(),
-                first_vertex_identity,
-                0,
-            ),
-            Vertex::new_with_reserved_identity(
-                Point3::new(negative_radius.clone(), zero.clone(), zero.clone()),
-                zero_normal.clone(),
-                first_vertex_identity,
-                1,
-            ),
-            Vertex::new_with_reserved_identity(
-                Point3::new(zero.clone(), radius.clone(), zero.clone()),
-                zero_normal.clone(),
-                first_vertex_identity,
-                2,
-            ),
-            Vertex::new_with_reserved_identity(
-                Point3::new(zero.clone(), negative_radius.clone(), zero.clone()),
-                zero_normal.clone(),
-                first_vertex_identity,
-                3,
-            ),
-            Vertex::new_with_reserved_identity(
-                Point3::new(zero.clone(), zero.clone(), radius.clone()),
-                zero_normal.clone(),
-                first_vertex_identity,
-                4,
-            ),
-            Vertex::new_with_reserved_identity(
-                Point3::new(zero.clone(), zero, negative_radius.clone()),
-                zero_normal,
-                first_vertex_identity,
-                5,
-            ),
-        ];
-        let mut vertices = Vec::with_capacity(3 * OCTAHEDRON_FACES.len());
-        let mut ranges = Vec::with_capacity(OCTAHEDRON_FACES.len());
-        for (indices, normal) in OCTAHEDRON_FACES.into_iter().zip(OCTAHEDRON_NORMALS.iter()) {
-            let start = vertices.len();
-            for index in indices {
-                vertices.push(points[index].clone().with_normal(normal.clone()));
-            }
-            ranges.push(start..vertices.len());
-        }
-        let vertices = Arc::new(vertices);
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_octahedron(
+            radius.clone(),
+            first_vertex_identity,
+        ));
         let first_plane_id = reserve_plane_ids(OCTAHEDRON_FACES.len());
-        let polygons = ranges
-            .into_iter()
+        let polygons = OCTAHEDRON_FACES
+            .iter()
             .enumerate()
-            .map(|(index, range)| {
-                Polygon::from_shared_vertices(
-                    Arc::clone(&vertices),
-                    range,
+            .map(|(index, _)| {
+                let first_corner = index * 3;
+                Polygon::from_lazy_subdivision_triangle(
+                    Arc::clone(&vertex_pool),
+                    index,
+                    [first_corner, first_corner + 1, first_corner + 2],
                     metadata.clone(),
                     first_plane_id
                         + u64::try_from(index).expect("octahedron polygon index fits u64"),

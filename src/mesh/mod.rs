@@ -281,6 +281,16 @@ const CUBOID_POSITION_REPRESENTATIVES: [[usize; 2]; 8] = [
     [1, 2],
     [1, 3],
 ];
+const OCTAHEDRON_FACES: [[usize; 3]; 8] = [
+    [0, 2, 4],
+    [2, 1, 4],
+    [1, 3, 4],
+    [3, 0, 4],
+    [5, 2, 0],
+    [5, 1, 2],
+    [5, 3, 1],
+    [5, 0, 3],
+];
 
 #[derive(Clone, Debug)]
 struct TransformLayout {
