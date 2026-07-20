@@ -2108,7 +2108,7 @@ impl Rational {
         }
 
         if let Some(dyadic) = Self::dot_products_dyadic(left, right, signs) {
-            // Dyadic f64 imports are the hottest exact-rational matrix path.
+            // Binary64-derived dyadics are the hottest exact-rational matrix path.
             // A common power-of-two denominator lets us scale numerators with
             // shifts and lets `maybe_reduce` avoid a BigInt gcd.
             // Structural-dispatch note: matrix/vector callers with retained

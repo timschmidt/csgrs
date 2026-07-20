@@ -102,7 +102,7 @@ impl Rational {
             return (BigUint::from(root), BigUint::from(rest));
         }
 
-        // Exact f64 imports and fixed-grid geometry produce large dyadic
+        // Exact binary64-derived dyadics and fixed-grid geometry produce large dyadic
         // denominators. A power of two needs no trial division: split its
         // exponent into a square root and at most one residual factor of two.
         let exponent = n.bits() - 1;

@@ -188,7 +188,7 @@ impl Computable {
             let (shift, reduced) = r.factor_two_powers();
             if shift != 0 {
                 // ln(r * 2^k) = ln(r) + k ln(2). Pulling dyadic scale out keeps
-                // f64-derived rationals on a cheap symbolic/log path. The
+                // binary64-derived dyadics on a cheap symbolic/log path. The
                 // reduced factor is routed through exact-rational log reduction
                 // so smooth values like 45/14 become cached prime-log sums
                 // instead of low-precision probing plus a fresh ln1p tree.

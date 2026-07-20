@@ -365,7 +365,7 @@ impl Rational {
         if Self::is_power_of_two(&self.denominator) {
             let denominator = self.denominator.clone();
             trace_rational_reduction!(&self.numerator, &self.denominator);
-            // Dyadic rationals dominate f64 imports and trig reduction scales.  When the
+            // Binary64-derived dyadics and trig reduction scales dominate. When the
             // denominator is a power of two, remove common factors with shifts instead of a
             // full BigInt gcd.
             self.reduce_by_power_of_two_divisor(&denominator)

@@ -245,11 +245,11 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
             },
             BenchDoc {
                 name: "sin_f64_cold_p96",
-                description: "Approximates sin(1.23456789 imported exactly from f64).",
+                description: "Approximates sin of the exact binary64-derived dyadic for 1.23456789.",
             },
             BenchDoc {
                 name: "cos_f64_cold_p96",
-                description: "Approximates cos(1.23456789 imported exactly from f64).",
+                description: "Approximates cos of the exact binary64-derived dyadic for 1.23456789.",
             },
             BenchDoc {
                 name: "sin_1e6_cold_p96",

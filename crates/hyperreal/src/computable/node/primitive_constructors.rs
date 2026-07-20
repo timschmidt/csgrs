@@ -688,7 +688,7 @@ impl Computable {
         }
         if r.is_one() {
             // Route rational one through the dedicated One node so callers that
-            // import exact f64/integer identities get the same cheap constructor
+            // import binary64-derived dyadic/integer identities get the same cheap constructor
             // and structural facts as `Computable::one()`.
             crate::trace_dispatch!("computable", "constructor", "rational-one-canonicalized");
             return Self::one();

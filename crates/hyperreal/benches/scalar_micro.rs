@@ -353,7 +353,7 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             },
             BenchDoc {
                 name: "real_exact_dyadic_radical_scale",
-                description: "Scales an exact reciprocal radical by one exact f64 coordinate.",
+                description: "Scales an exact reciprocal radical by one exact binary64-derived dyadic coordinate.",
             },
             BenchDoc {
                 name: "real_exact_ln_reduce",

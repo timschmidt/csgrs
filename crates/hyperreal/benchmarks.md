@@ -114,8 +114,8 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/sin_cold_p96` | not run | not run | Approximates sin(7/5). |
 | `computable_transcendentals/sin_cached_p96` | not run | not run | Repeats a cached sin(7/5) approximation. |
 | `computable_transcendentals/cos_cold_p96` | not run | not run | Approximates cos(7/5). |
-| `computable_transcendentals/sin_f64_cold_p96` | not run | not run | Approximates sin(1.23456789 imported exactly from f64). |
-| `computable_transcendentals/cos_f64_cold_p96` | not run | not run | Approximates cos(1.23456789 imported exactly from f64). |
+| `computable_transcendentals/sin_f64_cold_p96` | not run | not run | Approximates sin of the exact binary64-derived dyadic for 1.23456789. |
+| `computable_transcendentals/cos_f64_cold_p96` | not run | not run | Approximates cos of the exact binary64-derived dyadic for 1.23456789. |
 | `computable_transcendentals/sin_1e6_cold_p96` | not run | not run | Approximates sin(1000000). |
 | `computable_transcendentals/cos_1e6_cold_p96` | not run | not run | Approximates cos(1000000). |
 | `computable_transcendentals/sin_1e30_cold_p96` | not run | not run | Approximates sin(10^30). |
@@ -287,7 +287,7 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | 78.66 ns | 77.95 ns - 79.60 ns | Reuses the retained reduction of an exact square-root expression. |
 | `pure_scalar_algorithm_speed/real_exact_dyadic_sqrt_reduce` | 75.04 ns | 74.84 ns - 75.26 ns | Reuses the square-root reduction of a large exact dyadic rational. |
 | `pure_scalar_algorithm_speed/real_exact_general_sqrt_reduce` | 54.11 ns | 53.98 ns - 54.23 ns | Reuses the square-root reduction of a non-dyadic rational sum of squares. |
-| `pure_scalar_algorithm_speed/real_exact_dyadic_radical_scale` | 239.55 ns | 238.21 ns - 241.10 ns | Scales an exact reciprocal radical by one exact f64 coordinate. |
+| `pure_scalar_algorithm_speed/real_exact_dyadic_radical_scale` | 239.55 ns | 238.21 ns - 241.10 ns | Scales an exact reciprocal radical by one exact binary64-derived dyadic coordinate. |
 | `pure_scalar_algorithm_speed/real_exact_ln_reduce` | not run | not run | Reduces an exact logarithm of a power of two. |
 | `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | not run | not run | Dispatches `Real::pow` with an exact small-integer exponent. |
 

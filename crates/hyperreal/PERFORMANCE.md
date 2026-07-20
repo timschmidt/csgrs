@@ -138,7 +138,7 @@ Relevant path notes:
   power-of-two common factors, common-factor distributions, and peak operand
   sizes. Matrix regressions should be investigated with those counters before
   changing algebra code.
-- Exact f64 imports are intentionally kept rational/dyadic when possible so
+- Finite binary64 inputs are imported as exact dyadic rationals so
   `hyperlattice` and `hyperlimit` can stay on structural paths.
 
 Goals:
@@ -492,7 +492,7 @@ benchmark rows remain as regression guards.
 
 ### Retained experiment: exact square-factor screens
 
-Exact f64 vector coordinates become dyadic rationals, so their squared norm
+Exactly imported binary64 vector coordinates are dyadic rationals, so their squared norm
 often has a denominator that is a large power of two. The former rational
 square extractor repeatedly divided that denominator by four and issued
 separate arbitrary-precision remainder probes for every small square factor
@@ -542,7 +542,7 @@ sum-of-squares sentinel. The cold fixture is deliberately outside the global
 small-integer pool, so it also proves one-shot inputs do not receive an eager
 cache allocation.
 
-On Hyperlattice's matched four-case scalar facade, exact f64 imports now measure
+On Hyperlattice's matched four-case scalar facade, exact binary64-derived dyadics now measure
 49.18 ns and explicit rationals 34.07 ns, versus 96.34 ns for Numerica 128 and
 1.478 us for Symbolica. Both exact forms beat the fixed-precision control. The
 four individual cases also beat Numerica, including the imported tiny dyadic
@@ -553,7 +553,7 @@ dispatch tracing records `reuse-observed` followed by `retained-reduction`.
 
 ### Retained experiment: exact dyadic/general product cancellation
 
-Profiling one exact f64 coordinate multiplied by a reciprocal vector-norm
+Profiling one exact binary64-derived dyadic coordinate multiplied by a reciprocal vector-norm
 radical placed most samples in the word-sized rational multiplication and
 result-reduction paths. The retained multiplier recognizes products with one
 power-of-two denominator, removes internal dyadic factors by shifts, reduces
@@ -597,9 +597,9 @@ uses the former arbitrary-precision schedule as the exact fallback. The public
 retains the existing rational and symbolic `Real::powi` semantics.
 
 Fresh cross-library medians for the four-case Hyperlattice facade moved from
-376.76 ns to 161.11 ns for exact f64 inputs and from 2.813 us to 210.93 ns for
+376.76 ns to 161.11 ns for exact dyadic inputs and from 2.813 us to 210.93 ns for
 explicit rational inputs. The Numerica 128 control was 84.53 ns and Symbolica
-was 1.545 us, reducing the exact-f64/Numerica gap from 4.41x to 1.91x while
+was 1.545 us, reducing the exact-dyadic/Numerica gap from 4.41x to 1.91x while
 remaining 9.6x faster than Symbolica. Hyperreal's direct exact-17 benchmark
 moved from 290.51 ns to 115.72 ns, and the Rational row from 185.66 ns to
 80.40 ns.
@@ -619,7 +619,7 @@ No power-result cache is added, and the extra atomic fits existing padding so
 `RationalData` remains 96 bytes.
 
 The cold unique fifth-power sentinel is 234.46 ns, while its retained shared-base
-counterpart is 59.16 ns. On the matched four-case Hyperlattice facade, exact-f64
+counterpart is 59.16 ns. On the matched four-case Hyperlattice facade, exact-dyadic
 inputs measure 43.44 ns and explicit rational inputs 75.84 ns, versus 83.31 ns
 for Numerica 128 and 1.507 us for Symbolica. Both exact input forms now beat the
 fixed-precision control, while the unrelated direct exponent-17 sentinel remains
@@ -712,7 +712,7 @@ bypass GCD entirely. Wider values fall back to the existing arbitrary-precision
 conjugate-product, norm, and exact-division operations.
 
 This changes neither division-by-zero semantics nor representation exactness.
-In Hyperlattice's 50-sample comparison, f64-derived complex division measured
+In Hyperlattice's 50-sample comparison, exact-dyadic-input complex division measured
 373.81 ns and decimal-rational division 474.95 ns, versus 615.42 ns for
 Numerica128 and 22.03 us for Symbolica. Borrowed division measured 349.79 ns
 and 457.13 ns for the two Hyperreal inputs versus 503.22 ns for Numerica128.

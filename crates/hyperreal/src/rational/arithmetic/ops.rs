@@ -305,7 +305,7 @@ impl Rational {
             denominator_shift -= power_cancel;
 
             let cross = if dyadic_numerator <= u128::from(u64::MAX) {
-                // Exact f64 numerators fit one word. Reduce the opposing wide
+                // Binary64-derived dyadic numerators fit one word. Reduce the opposing wide
                 // denominator once before the binary GCD so coprime vector
                 // scales do not take a long u128 subtraction schedule.
                 Self::gcd_word(
