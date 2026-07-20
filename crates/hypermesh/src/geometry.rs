@@ -52,6 +52,22 @@ impl Plane {
         Self::new(normal, offset)
     }
 
+    /// Returns whether three affine points structurally define a valid plane.
+    ///
+    /// This is the allocation-reduced validation counterpart of
+    /// `Plane::from_points(...).is_valid()`: it evaluates cross-product
+    /// components only until one is not structurally zero and does not build
+    /// the unused plane offset.
+    pub fn points_are_nondegenerate(p0: &Point3, p1: &Point3, p2: &Point3) -> bool {
+        let u = sub_points(p1, p0);
+        let v = sub_points(p2, p0);
+        [[1, 2, 2, 1], [2, 0, 0, 2], [0, 1, 1, 0]]
+            .into_iter()
+            .any(|[ua, vb, ub, va]| {
+                !Real::diff_of_products(&u[ua], &v[vb], &u[ub], &v[va]).definitely_zero()
+            })
+    }
+
     /// Returns this plane with all coefficients negated.
     pub fn inverted(&self) -> Self {
         Self::new(
@@ -249,5 +265,21 @@ mod tests {
             Plane::from_coefficients(Real::from(0), Real::from(2), Real::from(0), Real::from(-6));
 
         assert_eq!(plane.axis_split_value(), Some((1, Real::from(3))));
+    }
+
+    #[test]
+    fn point_nondegeneracy_matches_materialized_plane_validation() {
+        let point = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
+        let cases = [
+            [point(0, 0, 0), point(2, 0, 0), point(0, 3, 0)],
+            [point(1, 1, 1), point(2, 2, 2), point(3, 3, 3)],
+        ];
+
+        for [a, b, c] in cases {
+            assert_eq!(
+                Plane::points_are_nondegenerate(&a, &b, &c),
+                Plane::from_points(&a, &b, &c).is_valid()
+            );
+        }
     }
 }
