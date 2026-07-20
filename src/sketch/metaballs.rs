@@ -1,131 +1,191 @@
-//! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
+//! Provides a `MetaBall` struct and functions for creating a `Profile` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{Real, tolerance};
-use crate::sketch::Sketch;
-use geo::{
-    CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,
-};
+use crate::hyper_math::{Real, hreal_from_f64, hreal_gt_f64, hreal_sign};
+use crate::sketch::Profile;
 use hashbrown::HashMap;
-use std::fmt::Debug;
+use hypercurve::{Contour2, Point2, Region2};
+use hyperlimit::{real_max, real_min};
+use hyperreal::RealSign;
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
-    /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+enum GridEdge {
+    Horizontal(usize, usize),
+    Vertical(usize, usize),
+}
+
+#[derive(Clone, Debug)]
+struct SamplePoint {
+    coordinates: [Real; 2],
+    edge: GridEdge,
+}
+
+type Segment = [SamplePoint; 2];
+
+impl Profile {
+    /// Create a 2D metaball iso-contour in XY plane from hypercurve centers.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.
     /// - `iso_value`: threshold for the iso-surface.
     /// - `padding`: extra boundary beyond each ball's radius.
-    /// - `metadata`: optional user metadata.
+    ///
+    /// This samples a Wyvill-style soft object field and extracts 2D
+    /// isocontours with the marching-squares analogue of Lorensen and Cline's
+    /// marching-cubes cell traversal. Centers are native `hypercurve::Point2`
+    /// values and influence distances are evaluated with hyperreal squared
+    /// point distance before exporting finite samples to the marching-squares
+    /// boundary. Closed contour loops are promoted directly into
+    /// `hypercurve::Region2`, so CAD topology is carried by hyper geometry
+    /// instead of by a temporary finite polygon. See Wyvill, McPheeters, and
+    /// Wyvill, "Data structure for soft objects", *The Visual Computer* 2(4),
+    /// 1986, DOI: 10.1007/BF01900346; Lorensen and Cline, "Marching Cubes: A
+    /// High Resolution 3D Surface Construction Algorithm", SIGGRAPH 1987, DOI:
+    /// 10.1145/37401.37422; and Yap, "Towards Exact Geometric Computation",
+    /// *Computational Geometry* 7(1-2), 1997,
+    /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
     pub fn metaballs(
-        balls: &[(nalgebra::Point2<Real>, Real)],
+        balls: &[(Point2, Real)],
         resolution: (usize, usize),
         iso_value: Real,
         padding: Real,
-        metadata: M,
-    ) -> Sketch<M> {
+    ) -> Profile {
         let (nx, ny) = resolution;
         if balls.is_empty() || nx < 2 || ny < 2 {
-            return Sketch::empty(metadata);
+            return Profile::empty();
         }
 
-        // 1) Compute bounding box around all metaballs
-        let mut min_x = Real::MAX;
-        let mut min_y = Real::MAX;
-        let mut max_x = -Real::MAX;
-        let mut max_y = -Real::MAX;
-        for (center, r) in balls {
-            let rr = *r + padding;
-            if center.x - rr < min_x {
-                min_x = center.x - rr;
-            }
-            if center.x + rr > max_x {
-                max_x = center.x + rr;
-            }
-            if center.y - rr < min_y {
-                min_y = center.y - rr;
-            }
-            if center.y + rr > max_y {
-                max_y = center.y + rr;
-            }
+        let Some(padding_h) = hreal_from_f64(&padding).ok() else {
+            return Profile::empty();
+        };
+        if matches!(hreal_sign(&padding_h), Some(RealSign::Negative)) {
+            return Profile::empty();
+        }
+        let Some(iso_value_h) = hreal_from_f64(&iso_value).ok() else {
+            return Profile::empty();
+        };
+
+        let valid_balls = balls
+            .iter()
+            .filter_map(|(center, radius)| {
+                let radius = hreal_from_f64(radius).ok()?;
+                matches!(hreal_sign(&radius), Some(RealSign::Positive))
+                    .then_some((center, radius))
+            })
+            .collect::<Vec<_>>();
+        if valid_balls.is_empty() {
+            return Profile::empty();
         }
 
-        let dx = (max_x - min_x) / (nx as Real - 1.0);
-        let dy = (max_y - min_y) / (ny as Real - 1.0);
+        // 1) Compute bounding box around all metaballs in hyperreal space.
+        let Some((min_x, min_y, max_x, max_y)) =
+            metaball_bounds_hreal(&valid_balls, &padding_h)
+        else {
+            return Profile::empty();
+        };
+
+        let Some(nx_step_count) = hreal_from_f64(nx - 1).ok() else {
+            return Profile::empty();
+        };
+        let Some(ny_step_count) = hreal_from_f64(ny - 1).ok() else {
+            return Profile::empty();
+        };
+        let Some(dx) = ((max_x.clone() - min_x.clone()) / nx_step_count).ok() else {
+            return Profile::empty();
+        };
+        let Some(dy) = ((max_y.clone() - min_y.clone()) / ny_step_count).ok() else {
+            return Profile::empty();
+        };
+        let Some(x_coords) = grid_axis_coords(&min_x, &dx, nx) else {
+            return Profile::empty();
+        };
+        let Some(y_coords) = grid_axis_coords(&min_y, &dy, ny) else {
+            return Profile::empty();
+        };
 
         // 2) Fill a grid with the summed "influence" minus iso_value
-        /// **Mathematical Foundation**: 2D metaball influence I(p) = r²/(|p-c|² + ε)
+        /// **Mathematical Foundation**: 2D metaball influence I(p) = r²/|p-c|².
+        /// Exact center singularities are mapped to a finite extraction sentinel
+        /// instead of perturbing every denominator with a tolerance.
         /// **Optimization**: Iterator-based computation with early termination for distant points.
-        fn scalar_field(balls: &[(nalgebra::Point2<Real>, Real)], x: Real, y: Real) -> Real {
-            balls
-                .iter()
-                .map(|(center, radius)| {
-                    let dx = x - center.x;
-                    let dy = y - center.y;
-                    let distance_sq = dx * dx + dy * dy;
+        fn scalar_field(balls: &[(&Point2, Real)], sample: &Point2) -> Option<Real> {
+            let mut sum = Real::zero();
+            for (center, radius) in balls {
+                let radius_squared = radius.clone() * radius.clone();
+                let distance_sq = sample.distance_squared(center);
 
-                    // Early termination for very distant points
-                    let threshold_distance_sq = radius * radius * 1000.0;
-                    if distance_sq > threshold_distance_sq {
-                        0.0
-                    } else {
-                        let denominator = distance_sq + tolerance();
-                        (radius * radius) / denominator
-                    }
-                })
-                .sum()
+                // Early termination for very distant points.
+                let threshold_distance_sq =
+                    radius_squared.clone() * hreal_from_f64(1000.0).ok()?;
+                if hreal_gt_f64(&(distance_sq.clone() - threshold_distance_sq), 0.0) {
+                    continue;
+                }
+
+                if matches!(hreal_sign(&distance_sq), Some(RealSign::Zero)) {
+                    sum += hreal_from_f64(1.0e10).ok()?;
+                    continue;
+                }
+                let denominator = distance_sq;
+                sum += (radius_squared / denominator).ok()?;
+            }
+            Some(sum)
         }
 
-        let mut grid = vec![0.0; nx * ny];
+        let mut grid = vec![Real::zero(); nx * ny];
         let index = |ix: usize, iy: usize| -> usize { iy * nx + ix };
         for iy in 0..ny {
-            let yv = min_y + (iy as Real) * dy;
+            let yv = &y_coords[iy];
             for ix in 0..nx {
-                let xv = min_x + (ix as Real) * dx;
-                let val = scalar_field(balls, xv, yv) - iso_value;
+                let xv = &x_coords[ix];
+                let sample = Point2::new(xv.clone(), yv.clone());
+                let val = scalar_field(&valid_balls, &sample).unwrap_or_else(Real::zero)
+                    - iso_value_h.clone();
                 grid[index(ix, iy)] = val;
             }
         }
 
-        // 3) Marching squares -> line segments
-        let mut contours = Vec::<LineString<Real>>::new();
+        // 3) Marching squares -> exact interpolated line segments.
+        let mut contours = Vec::<Segment>::new();
 
         // Interpolator:
-        let interpolate = |(x1, y1, v1): (Real, Real, Real),
-                           (x2, y2, v2): (Real, Real, Real)|
-         -> (Real, Real) {
-            let denom = (v2 - v1).abs();
-            if denom < tolerance() {
-                (x1, y1)
+        let interpolate = |(x1, y1, v1): (&Real, &Real, &Real),
+                           (x2, y2, v2): (&Real, &Real, &Real)|
+         -> Option<[Real; 2]> {
+            let delta = v2.clone() - v1.clone();
+            if matches!(hreal_sign(&delta), Some(RealSign::Zero)) {
+                Some([x1.clone(), y1.clone()])
             } else {
-                let t = -v1 / (v2 - v1); // crossing at 0
-                (x1 + t * (x2 - x1), y1 + t * (y2 - y1))
+                let t = (Real::zero() - v1.clone()) / delta; // crossing at 0
+                let t = t.ok()?;
+                let x = x1.clone() + t.clone() * (x2.clone() - x1.clone());
+                let y = y1.clone() + t * (y2.clone() - y1.clone());
+                Some([x, y])
             }
         };
 
         for iy in 0..(ny - 1) {
-            let y0 = min_y + (iy as Real) * dy;
-            let y1 = min_y + ((iy + 1) as Real) * dy;
+            let y0 = &y_coords[iy];
+            let y1 = &y_coords[iy + 1];
 
             for ix in 0..(nx - 1) {
-                let x0 = min_x + (ix as Real) * dx;
-                let x1 = min_x + ((ix + 1) as Real) * dx;
+                let x0 = &x_coords[ix];
+                let x1 = &x_coords[ix + 1];
 
-                let v0 = grid[index(ix, iy)];
-                let v1 = grid[index(ix + 1, iy)];
-                let v2 = grid[index(ix + 1, iy + 1)];
-                let v3 = grid[index(ix, iy + 1)];
+                let v0 = &grid[index(ix, iy)];
+                let v1 = &grid[index(ix + 1, iy)];
+                let v2 = &grid[index(ix + 1, iy + 1)];
+                let v3 = &grid[index(ix, iy + 1)];
 
                 // classification
                 let mut c = 0u8;
-                if v0 >= 0.0 {
+                if !matches!(hreal_sign(v0), Some(RealSign::Negative) | None) {
                     c |= 1;
                 }
-                if v1 >= 0.0 {
+                if !matches!(hreal_sign(v1), Some(RealSign::Negative) | None) {
                     c |= 2;
                 }
-                if v2 >= 0.0 {
+                if !matches!(hreal_sign(v2), Some(RealSign::Negative) | None) {
                     c |= 4;
                 }
-                if v3 >= 0.0 {
+                if !matches!(hreal_sign(v3), Some(RealSign::Negative) | None) {
                     c |= 8;
                 }
                 if c == 0 || c == 15 {
@@ -136,67 +196,98 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
                 let mut pts = Vec::new();
                 // function to check each edge
-                let mut check_edge = |mask_a: u8, mask_b: u8, a: usize, b: usize| {
-                    let inside_a = (c & mask_a) != 0;
-                    let inside_b = (c & mask_b) != 0;
-                    if inside_a != inside_b {
-                        let (px, py) = interpolate(corners[a], corners[b]);
-                        pts.push((px, py));
-                    }
-                };
+                let mut check_edge =
+                    |mask_a: u8, mask_b: u8, a: usize, b: usize, edge: GridEdge| {
+                        let inside_a = (c & mask_a) != 0;
+                        let inside_b = (c & mask_b) != 0;
+                        if inside_a != inside_b
+                            && let Some(coordinates) = interpolate(corners[a], corners[b])
+                        {
+                            pts.push(SamplePoint { coordinates, edge });
+                        }
+                    };
 
-                check_edge(1, 2, 0, 1);
-                check_edge(2, 4, 1, 2);
-                check_edge(4, 8, 2, 3);
-                check_edge(8, 1, 3, 0);
+                check_edge(1, 2, 0, 1, GridEdge::Horizontal(ix, iy));
+                check_edge(2, 4, 1, 2, GridEdge::Vertical(ix + 1, iy));
+                check_edge(4, 8, 2, 3, GridEdge::Horizontal(ix, iy + 1));
+                check_edge(8, 1, 3, 0, GridEdge::Vertical(ix, iy));
 
-                // we might get 2 intersection points => single line segment
-                // or 4 => two line segments, etc.
-                // For simplicity, we just store them in a small open polyline:
-                if pts.len() >= 2 {
-                    let mut pl = LineString::new(vec![]);
-                    for &(px, py) in &pts {
-                        pl.0.push(coord! {x: px, y: py});
-                    }
-                    // Do not close. These are just line segments from this cell.
-                    contours.push(pl);
+                // 2 intersections => one segment; 4 intersections in ambiguous
+                // cells => two segments. Keep these as native point pairs so
+                // Finite polygon samples are not the source representation for metaball topology.
+                for pair in pts.chunks_exact(2) {
+                    contours.push([pair[0].clone(), pair[1].clone()]);
                 }
             }
         }
 
-        // 4) Convert these line segments into geo::LineStrings or geo::Polygons if closed.
-        //    We store them in a GeometryCollection.
-        let mut gc = GeometryCollection::default();
-
+        // 4) Stitch line segments and promote closed loops directly to Region2.
         let stitched = stitch(&contours);
+        let material = stitched
+            .iter()
+            .filter(|line| line.len() >= 4 && same_point(&line[0], line.last().unwrap()))
+            .filter_map(|line| {
+                let coordinates = line
+                    .iter()
+                    .map(|point| point.coordinates.clone())
+                    .collect::<Vec<_>>();
+                Contour2::from_real_ring(&coordinates).ok()
+            })
+            .collect::<Vec<_>>();
 
-        for pl in stitched {
-            if pl.is_closed() && pl.coords_count() >= 4 {
-                let polygon = GeoPolygon::new(pl, vec![]);
-                gc.0.push(Geometry::Polygon(polygon));
-            }
+        if material.is_empty() {
+            return Profile::empty();
         }
 
-        Sketch::from_geo(gc, metadata)
+        Profile::from_region(Region2::from_material_contours(material))
     }
 }
 
-// helper – quantise to avoid FP noise
-#[inline]
-fn key(x: Real, y: Real) -> (i64, i64) {
-    ((x * 1e8).round() as i64, (y * 1e8).round() as i64)
+fn metaball_bounds_hreal(
+    balls: &[(&Point2, Real)],
+    padding: &Real,
+) -> Option<(Real, Real, Real, Real)> {
+    let mut bounds = balls.iter().map(|(center, radius)| {
+        let extent = radius.clone() + padding.clone();
+        Some((
+            center.x().clone() - extent.clone(),
+            center.y().clone() - extent.clone(),
+            center.x().clone() + extent.clone(),
+            center.y().clone() + extent,
+        ))
+    });
+    let (mut min_x, mut min_y, mut max_x, mut max_y) = bounds.next()??;
+    for bounds in bounds {
+        let (next_min_x, next_min_y, next_max_x, next_max_y) = bounds?;
+        min_x = real_min(&min_x, &next_min_x).value().cloned()?;
+        min_y = real_min(&min_y, &next_min_y).value().cloned()?;
+        max_x = real_max(&max_x, &next_max_x).value().cloned()?;
+        max_y = real_max(&max_y, &next_max_y).value().cloned()?;
+    }
+    Some((min_x, min_y, max_x, max_y))
+}
+
+fn grid_axis_coords(origin: &Real, step: &Real, count: usize) -> Option<Vec<Real>> {
+    (0..count)
+        .map(|index| {
+            let index = hreal_from_f64(index).ok()?;
+            Some(origin.clone() + step.clone() * index)
+        })
+        .collect()
+}
+
+fn same_point(a: &SamplePoint, b: &SamplePoint) -> bool {
+    a.edge == b.edge
 }
 
 /// stitch all 2-point segments into longer polylines,
 /// close them when the ends meet
-fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
+fn stitch(contours: &[Segment]) -> Vec<Vec<SamplePoint>> {
     // adjacency map  endpoint -> (line index, end-id 0|1)
-    let mut adj: HashMap<(i64, i64), Vec<(usize, usize)>> = HashMap::new();
-    for (idx, ls) in contours.iter().enumerate() {
-        let p0 = ls[0]; // first point
-        let p1 = ls[1]; // second point
-        adj.entry(key(p0.x, p0.y)).or_default().push((idx, 0));
-        adj.entry(key(p1.x, p1.y)).or_default().push((idx, 1));
+    let mut adj: HashMap<GridEdge, Vec<(usize, usize)>> = HashMap::new();
+    for (idx, segment) in contours.iter().enumerate() {
+        adj.entry(segment[0].edge).or_default().push((idx, 0));
+        adj.entry(segment[1].edge).or_default().push((idx, 1));
     }
 
     let mut used = vec![false; contours.len()];
@@ -209,36 +300,52 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
         used[start] = true;
 
         // current chain of points
-        let mut chain = contours[start].0.clone();
+        let mut chain = vec![contours[start][0].clone(), contours[start][1].clone()];
 
-        // walk forward
-        loop {
-            let last = *chain.last().unwrap();
-            let Some(cands) = adj.get(&key(last.x, last.y)) else {
-                break;
-            };
-            let mut found = None;
-            for &(idx, end_id) in cands {
-                if used[idx] {
-                    continue;
-                }
-                used[idx] = true;
-                // choose the *other* endpoint
-                let other = contours[idx][1 - end_id];
-                chain.push(other);
-                found = Some(());
-                break;
-            }
-            if found.is_none() {
-                break;
-            }
-        }
+        extend_chain(&mut chain, contours, &adj, &mut used, true);
+        extend_chain(&mut chain, contours, &adj, &mut used, false);
 
-        // close if ends coincide
-        if chain.len() >= 3 && (chain[0] != *chain.last().unwrap()) {
-            chain.push(chain[0]);
+        if chain.len() >= 3 && !same_point(&chain[0], chain.last().unwrap()) {
+            chain.push(chain[0].clone());
         }
-        chains.push(LineString::new(chain));
+        chains.push(chain);
     }
     chains
+}
+
+fn extend_chain(
+    chain: &mut Vec<SamplePoint>,
+    contours: &[Segment],
+    adj: &HashMap<GridEdge, Vec<(usize, usize)>>,
+    used: &mut [bool],
+    forward: bool,
+) {
+    loop {
+        let endpoint = if forward {
+            chain.last().unwrap()
+        } else {
+            &chain[0]
+        };
+        let Some(cands) = adj.get(&endpoint.edge) else {
+            break;
+        };
+        let mut found = None;
+        for &(idx, end_id) in cands {
+            if used[idx] {
+                continue;
+            }
+            used[idx] = true;
+            let other = contours[idx][1 - end_id].clone();
+            found = Some(other);
+            break;
+        }
+        let Some(other) = found else {
+            break;
+        };
+        if forward {
+            chain.push(other);
+        } else {
+            chain.insert(0, other);
+        }
+    }
 }

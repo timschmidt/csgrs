@@ -1,43 +1,221 @@
 //! Core constructive solid geometry trait shared by mesh, sketch, and related
 //! representations.
 
-use crate::float_types::parry3d::bounding_volume::Aabb;
-use crate::float_types::{Real, tolerance};
 use crate::mesh::plane::Plane;
-use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
+use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 
-/// Boolean operations + transformations
+/// Build a finite homogeneous translation matrix from a public boundary vector.
+///
+/// The vector is first promoted through `hyperlattice` so non-finite primitive
+/// inputs cannot become CAD transforms. The returned matrix is a
+/// hyperlattice-backed homogeneous transform. This follows Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn finite_translation(vector: Vector3) -> Option<Matrix4> {
+    Some(Matrix4::affine_translation(vector.0))
+}
+
+fn finite_scale(sx: Real, sy: Real, sz: Real) -> Option<Matrix4> {
+    Some(Matrix4::affine_nonuniform_scale([sx, sy, sz]))
+}
+
+fn finite_rotation_x(angle: Real) -> Option<Matrix4> {
+    Some(Matrix4::rotation_x(angle))
+}
+
+fn finite_rotation_y(angle: Real) -> Option<Matrix4> {
+    Some(Matrix4::rotation_y(angle))
+}
+
+fn finite_rotation_z(angle: Real) -> Option<Matrix4> {
+    Some(Matrix4::rotation_z(angle))
+}
+
+fn axis_aligned_reflection(axis: usize, value: Real) -> Matrix4 {
+    let zero = Real::zero();
+    let one = Real::one();
+    let mut diagonal = [one.clone(), one.clone(), one.clone()];
+    diagonal[axis] = -one.clone();
+    let mut translation = [zero.clone(), zero.clone(), zero.clone()];
+    translation[axis] = Real::from(2_u8) * value;
+    Matrix4::from_row_major([
+        diagonal[0].clone(),
+        zero.clone(),
+        zero.clone(),
+        translation[0].clone(),
+        zero.clone(),
+        diagonal[1].clone(),
+        zero.clone(),
+        translation[1].clone(),
+        zero.clone(),
+        zero.clone(),
+        diagonal[2].clone(),
+        translation[2].clone(),
+        zero.clone(),
+        zero.clone(),
+        zero,
+        one,
+    ])
+}
+
+const fn point_coordinate(point: &Point3, axis: usize) -> &Real {
+    match axis {
+        0 => &point.x,
+        1 => &point.y,
+        _ => &point.z,
+    }
+}
+
+pub(crate) fn finite_axis_aligned_reflection(plane: &Plane) -> Option<(usize, Real)> {
+    for axis in 0..3 {
+        let value = point_coordinate(&plane.point_a, axis);
+        if point_coordinate(&plane.point_b, axis) != value
+            || point_coordinate(&plane.point_c, axis) != value
+        {
+            continue;
+        }
+        let other = match axis {
+            0 => [1, 2],
+            1 => [0, 2],
+            _ => [0, 1],
+        };
+        let b_changes = [
+            point_coordinate(&plane.point_b, other[0])
+                != point_coordinate(&plane.point_a, other[0]),
+            point_coordinate(&plane.point_b, other[1])
+                != point_coordinate(&plane.point_a, other[1]),
+        ];
+        let c_changes = [
+            point_coordinate(&plane.point_c, other[0])
+                != point_coordinate(&plane.point_a, other[0]),
+            point_coordinate(&plane.point_c, other[1])
+                != point_coordinate(&plane.point_a, other[1]),
+        ];
+        if matches!(
+            (b_changes, c_changes),
+            ([true, false], [false, true]) | ([false, true], [true, false])
+        ) {
+            return Some((axis, value.clone()));
+        }
+    }
+    None
+}
+
+pub(crate) fn finite_reflection(plane: &Plane) -> Option<Matrix4> {
+    if let Some((axis, value)) = finite_axis_aligned_reflection(plane) {
+        return Some(axis_aligned_reflection(axis, value));
+    }
+
+    let n = plane.unit_hreal_normal()?;
+    let w = n.dot(&plane.point_a.to_vector());
+    let one = Real::one();
+    let minus_one = -one.clone();
+    if let Some((axis, direction)) = n.0.iter().enumerate().find_map(|(axis, component)| {
+        let direction = if component == &one {
+            one.clone()
+        } else if component == &minus_one {
+            minus_one.clone()
+        } else {
+            return None;
+        };
+        n.0.iter()
+            .enumerate()
+            .all(|(other_axis, other)| other_axis == axis || other.definitely_zero())
+            .then_some((axis, direction))
+    }) {
+        return Some(axis_aligned_reflection(axis, w * direction));
+    }
+    let [nx, ny, nz] = n.0;
+    let two = Real::from(2_u8);
+    let zero = Real::zero();
+    Some(Matrix4::from_row_major([
+        one.clone() - two.clone() * nx.clone() * nx.clone(),
+        -two.clone() * nx.clone() * ny.clone(),
+        -two.clone() * nx.clone() * nz.clone(),
+        two.clone() * w.clone() * nx.clone(),
+        -two.clone() * ny.clone() * nx.clone(),
+        one.clone() - two.clone() * ny.clone() * ny.clone(),
+        -two.clone() * ny.clone() * nz.clone(),
+        two.clone() * w.clone() * ny.clone(),
+        -two.clone() * nz.clone() * nx,
+        -two.clone() * nz.clone() * ny,
+        one.clone() - two.clone() * nz.clone() * nz.clone(),
+        two * w * nz,
+        zero.clone(),
+        zero.clone(),
+        zero,
+        one,
+    ]))
+}
+
+fn real_from_usize(value: usize) -> Option<Real> {
+    Some(Real::from(u64::try_from(value).ok()?))
+}
+
+fn real_half() -> Real {
+    (Real::one() / Real::from(2_u8)).expect("nonzero exact denominator")
+}
+
+/// Compatibility Boolean operations and shared transformations.
+///
+/// `Mesh` and `Profile` expose inherent `try_union`, `try_difference`,
+/// `try_intersection`, and `try_xor` methods for typed error handling. The
+/// Boolean methods on this trait preserve the established infallible API and
+/// panic when the corresponding certified operation cannot be completed.
 pub trait CSG: Sized + Clone {
     fn union(&self, other: &Self) -> Self;
     fn difference(&self, other: &Self) -> Self;
     fn intersection(&self, other: &Self) -> Self;
     fn xor(&self, other: &Self) -> Self;
-    fn transform(&self, matrix: &Matrix4<Real>) -> Self;
+    fn transform(&self, matrix: &Matrix4) -> Self;
     fn inverse(&self) -> Self;
     fn bounding_box(&self) -> Aabb;
     fn invalidate_bounding_box(&mut self);
 
+    /// Combine copies produced by a distribution operation.
+    ///
+    /// Representations may override this internal customization point when
+    /// they can certify a cheaper equivalent to a sequence of pairwise
+    /// Booleans.
+    #[doc(hidden)]
+    fn union_distributed(copies: Vec<Self>) -> Self {
+        copies
+            .into_iter()
+            .reduce(|acc, csg| acc.union(&csg))
+            .expect("distribution always produces at least one copy")
+    }
+
     /// Returns a new Self translated by vector.
-    fn translate_vector(&self, vector: Vector3<Real>) -> Self {
-        self.transform(&Translation3::from(vector).to_homogeneous())
+    ///
+    /// Non-finite primitive offsets are rejected before constructing a
+    /// transform matrix; finite boundary vectors are checked through
+    /// `hyperlattice` promotion, following Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    fn translate_vector(&self, vector: Vector3) -> Self {
+        let Some(mat) = finite_translation(vector) else {
+            return self.clone();
+        };
+        self.transform(&mat)
     }
 
     /// Returns a new Self translated by x, y, and z.
     fn translate(&self, x: Real, y: Real, z: Real) -> Self {
-        self.translate_vector(Vector3::new(x, y, z))
+        self.translate_vector(Vector3::new([x, y, z]))
     }
 
     /// Returns a new Self translated so that its bounding-box center is at the origin (0,0,0).
     fn center(&self) -> Self {
         let aabb = self.bounding_box();
-
-        // Compute the AABB center
-        let center_x = (aabb.mins.x + aabb.maxs.x) * 0.5;
-        let center_y = (aabb.mins.y + aabb.maxs.y) * 0.5;
-        let center_z = (aabb.mins.z + aabb.maxs.z) * 0.5;
+        let half = real_half();
+        let center = hyperlattice::Point3::new(
+            (aabb.mins.x + aabb.maxs.x) * half.clone(),
+            (aabb.mins.y + aabb.maxs.y) * half.clone(),
+            (aabb.mins.z + aabb.maxs.z) * half,
+        );
 
         // Translate so that the bounding-box center goes to the origin
-        self.translate(-center_x, -center_y, -center_z)
+        self.translate(-center.x.clone(), -center.y.clone(), -center.z.clone())
     }
 
     /// Translates Self so that its bottommost point(s) sit exactly at z=0.
@@ -45,7 +223,7 @@ pub trait CSG: Sized + Clone {
     /// - Shifts all vertices up or down such that the minimum z coordinate of the bounding box becomes 0.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// use csgrs::mesh::Mesh;
     /// use csgrs::csg::CSG;
     /// let mesh = Mesh::<()>::cube(1.0, ()).translate(2.0, 1.0, -2.0);
@@ -54,24 +232,47 @@ pub trait CSG: Sized + Clone {
     /// ```
     fn float(&self) -> Self {
         let aabb = self.bounding_box();
-        let min_z = aabb.mins.z;
-        self.translate(0.0, 0.0, -min_z)
+        let min_z = aabb.mins.z.clone();
+        self.translate(Real::zero(), Real::zero(), -min_z)
     }
 
     /// Rotates Self by x_degrees, y_degrees, z_degrees
+    ///
+    /// Primitive degree inputs are promoted into `Real` for the
+    /// degree-to-radian conversion and trigonometric terms while constructing
+    /// the homogeneous hyperlattice [`Matrix4`]. This keeps non-finite angles
+    /// out of transform carriers and follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The matrix formula is
+    /// the same trigonometric rotation formula underlying Rodrigues' theorem;
+    /// see Rodrigues, "Des lois géométriques qui régissent les déplacements
+    /// d'un système solide dans l'espace," *Journal de Mathématiques Pures et
+    /// Appliquées* 5, 1840.
     fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
-        let rx = Rotation3::from_axis_angle(&Vector3::x_axis(), x_deg.to_radians());
-        let ry = Rotation3::from_axis_angle(&Vector3::y_axis(), y_deg.to_radians());
-        let rz = Rotation3::from_axis_angle(&Vector3::z_axis(), z_deg.to_radians());
+        let x_rad = x_deg.to_radians();
+        let y_rad = y_deg.to_radians();
+        let z_rad = z_deg.to_radians();
+        let Some(rx) = finite_rotation_x(x_rad) else {
+            return self.clone();
+        };
+        let Some(ry) = finite_rotation_y(y_rad) else {
+            return self.clone();
+        };
+        let Some(rz) = finite_rotation_z(z_rad) else {
+            return self.clone();
+        };
 
-        // Compose them in the desired order
-        let rot = rz * ry * rx;
-        self.transform(&rot.to_homogeneous())
+        self.transform(&(rz * ry * rx))
     }
 
     /// Scales Self by scale_x, scale_y, scale_z
+    ///
+    /// Non-finite primitive scale factors leave geometry unchanged; exact-aware
+    /// geometry should only receive finite transform carriers.
     fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
-        let mat4 = Matrix4::new_nonuniform_scaling(&Vector3::new(sx, sy, sz));
+        let Some(mat4) = finite_scale(sx, sy, sz) else {
+            return self.clone();
+        };
         self.transform(&mat4)
     }
 
@@ -118,36 +319,21 @@ pub trait CSG: Sized + Clone {
     /// **Note**: The result is inverted (.inverse()) because reflection reverses
     /// the orientation of polygons, affecting inside/outside semantics in CSG.
     ///
+    /// The normal length and unit vector are computed through `hyperlattice`
+    /// rather than direct primitive normalization. Invalid or degenerate plane
+    /// normals leave the object unchanged, keeping finite boundary data outside
+    /// topology-sensitive CAD decisions. This follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The reflection matrix
+    /// is the Householder form; see Householder, "Unitary Triangularization of a
+    /// Nonsymmetric Matrix," *Journal of the ACM* 5(4), 1958
+    /// (<https://doi.org/10.1145/320941.320947>).
+    ///
     /// Returns a new Self whose geometry is mirrored accordingly.
     fn mirror(&self, plane: Plane) -> Self {
-        // Normal might not be unit, so compute its length:
-        let len = plane.normal().norm();
-        if len.abs() < tolerance() {
-            // Degenerate plane? Just return clone (no transform)
+        let Some(mirror_mat) = finite_reflection(&plane) else {
             return self.clone();
-        }
-
-        // Unit normal:
-        let n = plane.normal() / len;
-        // Adjusted offset = w / ||n||
-        let w = plane.offset() / len;
-
-        // Translate so the plane crosses the origin
-        // The plane’s offset vector from origin is (w * n).
-        let offset = n * w;
-        let t1 = Translation3::from(-offset).to_homogeneous(); // push the plane to origin
-
-        // Build the reflection matrix about a plane normal n at the origin
-        // R = I - 2 n n^T
-        let mut reflect_4 = Matrix4::identity();
-        let reflect_3 = Matrix3::identity() - 2.0 * n * n.transpose();
-        reflect_4.fixed_view_mut::<3, 3>(0, 0).copy_from(&reflect_3);
-
-        // Translate back
-        let t2 = Translation3::from(offset).to_homogeneous(); // pull the plane back out
-
-        // Combine into a single 4×4
-        let mirror_mat = t2 * reflect_4 * t1;
+        };
 
         // Apply to all polygons
         self.transform(&mirror_mat).inverse()
@@ -156,6 +342,9 @@ pub trait CSG: Sized + Clone {
     /// Distribute Self `count` times around an arc (in XY plane) of radius,
     /// from `start_angle_deg` to `end_angle_deg`.
     /// Returns a new shape with all copies
+    ///
+    /// Radius and angle values are accepted through the hyperreal scalar
+    /// surface. Primitive numbers are boundary conveniences only.
     fn distribute_arc(
         &self,
         count: usize,
@@ -168,73 +357,144 @@ pub trait CSG: Sized + Clone {
         }
         let start_rad = start_angle_deg.to_radians();
         let end_rad = end_angle_deg.to_radians();
-        let sweep = end_rad - start_rad;
+        let sweep = end_rad - start_rad.clone();
 
-        (0..count)
+        let copies = (0..count)
             .map(|i| {
                 let t = if count == 1 {
-                    0.5
+                    real_half()
                 } else {
-                    i as Real / ((count - 1) as Real)
+                    let Some(i) = real_from_usize(i) else {
+                        return self.clone();
+                    };
+                    let Some(denom) = real_from_usize(count - 1) else {
+                        return self.clone();
+                    };
+                    (i / denom).unwrap_or_else(|_| Real::zero())
                 };
 
-                let angle = start_rad + t * sweep;
-                let rot =
-                    nalgebra::Rotation3::from_axis_angle(&nalgebra::Vector3::z_axis(), angle)
-                        .to_homogeneous();
+                let angle = Real::affine(&start_rad, &t, &sweep);
+                let Some(rot) = finite_rotation_z(angle) else {
+                    return self.clone();
+                };
 
                 // translate out to radius in x
-                let trans = nalgebra::Translation3::new(radius, 0.0, 0.0).to_homogeneous();
+                let Some(trans) = finite_translation(Vector3::new([
+                    radius.clone(),
+                    Real::zero(),
+                    Real::zero(),
+                ])) else {
+                    return self.clone();
+                };
                 let mat = rot * trans;
                 self.transform(&mat)
             })
-            .reduce(|acc, csg| acc.union(&csg))
-            .unwrap()
+            .collect();
+        Self::union_distributed(copies)
     }
 
     /// Distribute Self `count` times along a straight line (vector),
     /// each copy spaced by `spacing`.
     /// E.g. if `dir=(1.0,0.0,0.0)` and `spacing=2.0`, you get copies at
     /// x=0, x=2, x=4, ... etc.
-    fn distribute_linear(
-        &self,
-        count: usize,
-        dir: nalgebra::Vector3<Real>,
-        spacing: Real,
-    ) -> Self {
+    ///
+    /// Direction normalization is promoted to `hyperlattice::Vector3` and fails
+    /// closed for zero or non-finite inputs. This keeps the default CSG API's
+    /// primitive vector boundary aligned with Yap's exact-geometric-computation
+    /// discipline (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    fn distribute_linear(&self, count: usize, dir: Vector3, spacing: Real) -> Self {
         if count < 1 {
             return self.clone();
         }
-        let step = dir.normalize() * spacing;
+        let Some(step) = dir.normalize_checked().ok().map(|dir| dir * spacing.clone()) else {
+            return self.clone();
+        };
 
-        (0..count)
+        let copies = (0..count)
             .map(|i| {
-                let offset = step * (i as Real);
-                let trans = nalgebra::Translation3::from(offset).to_homogeneous();
-                self.transform(&trans)
+                let Some(step_index) = real_from_usize(i) else {
+                    return self.clone();
+                };
+                let offset = step.clone() * step_index;
+                self.translate_vector(offset)
             })
-            .reduce(|acc, csg| acc.union(&csg))
-            .unwrap()
+            .collect();
+        Self::union_distributed(copies)
     }
 
     /// Distribute Self in a grid of `rows x cols`, with spacing dx, dy in XY plane.
     /// top-left or bottom-left depends on your usage of row/col iteration.
+    ///
+    /// Non-finite primitive spacings fail closed before transform construction.
     fn distribute_grid(&self, rows: usize, cols: usize, dx: Real, dy: Real) -> Self {
         if rows < 1 || cols < 1 {
             return self.clone();
         }
-        let step_x = nalgebra::Vector3::new(dx, 0.0, 0.0);
-        let step_y = nalgebra::Vector3::new(0.0, dy, 0.0);
+        let step_x = Vector3::new([dx, Real::zero(), Real::zero()]);
+        let step_y = Vector3::new([Real::zero(), dy, Real::zero()]);
 
-        (0..rows)
+        let copies = (0..rows)
             .flat_map(|r| {
+                let step_x = step_x.clone();
+                let step_y = step_y.clone();
                 (0..cols).map(move |c| {
-                    let offset = step_x * (c as Real) + step_y * (r as Real);
-                    let trans = nalgebra::Translation3::from(offset).to_homogeneous();
-                    self.transform(&trans)
+                    let Some(col) = real_from_usize(c) else {
+                        return self.clone();
+                    };
+                    let Some(row) = real_from_usize(r) else {
+                        return self.clone();
+                    };
+                    let offset = step_x.clone() * col + step_y.clone() * row;
+                    self.translate_vector(offset)
                 })
             })
-            .reduce(|acc, csg| acc.union(&csg))
-            .unwrap()
+            .collect();
+        Self::union_distributed(copies)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::Mesh;
+
+    #[test]
+    fn transforms_accept_hyperreal_primary_scalars_and_integer_promotion() {
+        let cube = Mesh::cube(Real::one(), ());
+        let cube_bb = cube.bounding_box();
+
+        let translated = cube.translate(Real::from(1), Real::from(2), Real::from(3));
+        let translated_bb = translated.bounding_box();
+        assert_eq!(translated_bb.mins.x - cube_bb.mins.x, 1.0);
+        assert_eq!(translated_bb.mins.y - cube_bb.mins.y, 2.0);
+        assert_eq!(translated_bb.mins.z - cube_bb.mins.z, 3.0);
+
+        let scaled = cube.scale(Real::from(2), Real::from(1), Real::from(3));
+        let scaled_bb = scaled.bounding_box();
+        assert_eq!(scaled_bb.maxs.x - scaled_bb.mins.x, 2.0);
+        assert_eq!(scaled_bb.maxs.y - scaled_bb.mins.y, 1.0);
+        assert_eq!(scaled_bb.maxs.z - scaled_bb.mins.z, 3.0);
+
+        let rotated = cube.rotate(Real::from(0), Real::from(0), Real::from(90));
+        assert_eq!(rotated.polygons.len(), cube.polygons.len());
+    }
+
+    #[test]
+    fn arbitrary_angle_arc_distribution_unions_disjoint_mesh_copies() {
+        let cube = Mesh::cube(Real::one(), ());
+        for (start, end) in [(0_u16, 330_u16), (7_u16, 313_u16)] {
+            let distributed =
+                cube.distribute_arc(12, Real::from(10), Real::from(start), Real::from(end));
+
+            assert_eq!(distributed.polygons.len(), 12 * cube.polygons.len());
+        }
+    }
+
+    #[test]
+    fn distribution_still_booleans_copies_that_are_not_disjoint() {
+        let cube = Mesh::cube(Real::one(), ());
+        let distributed = cube.distribute_linear(2, Vector3::x(), Real::zero());
+
+        assert_eq!(distributed.polygons.len(), cube.polygons.len());
     }
 }

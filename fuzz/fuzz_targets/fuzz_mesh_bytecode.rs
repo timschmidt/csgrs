@@ -3,13 +3,32 @@
 #![no_main]
 
 use csgrs::csg::CSG;
-use csgrs::float_types::{tolerance, Real};
 use csgrs::mesh::Mesh;
+use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
+
+fn tolerance() -> Real {
+    real(1.0e-9)
+}
+
+fn clamp_real(value: Real, min: f64, max: f64) -> Real {
+    let min = real(min);
+    let max = real(max);
+    value.max(&min).min(&max).clone()
+}
+
+fn at_least_tolerance(value: Real) -> Real {
+    let tolerance = tolerance();
+    value.max(&tolerance).clone()
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     if bytes.is_empty() {
-        return 0.0;
+        return Real::zero();
     }
     let mut raw = [0u8; 8];
     for slot in &mut raw {
@@ -17,7 +36,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-1.0e4, 1.0e4) as Real
+    real(value.clamp(-1.0e4, 1.0e4))
 }
 
 fn assert_mesh_finite(mesh: &Mesh<()>) {
@@ -25,9 +44,9 @@ fn assert_mesh_finite(mesh: &Mesh<()>) {
         assert!(vertex.position.x.is_finite());
         assert!(vertex.position.y.is_finite());
         assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.x.is_finite());
-        assert!(vertex.normal.y.is_finite());
-        assert!(vertex.normal.z.is_finite());
+        assert!(vertex.normal.0[0].is_finite());
+        assert!(vertex.normal.0[1].is_finite());
+        assert!(vertex.normal.0[2].is_finite());
     }
 }
 
@@ -40,18 +59,18 @@ fuzz_target!(|bytes: &[u8]| {
     let mut stack: Vec<Mesh<()>> = Vec::new();
 
     while idx < bytes.len() && stack.len() < 12 {
-        let op = bytes[idx] % 12;
+        let op = bytes[idx] % 14;
         idx += 1;
         match op {
             0 => {
-                let size = decode_real(bytes, &mut idx).abs().max(tolerance());
-                stack.push(Mesh::cube(size, None));
+                let size = at_least_tolerance(decode_real(bytes, &mut idx).abs());
+                stack.push(Mesh::cube(size, ()));
             },
             1 => {
-                let radius = decode_real(bytes, &mut idx).abs().max(tolerance());
+                let radius = at_least_tolerance(decode_real(bytes, &mut idx).abs());
                 let segments = (bytes[idx % bytes.len()] as usize % 16) + 3;
                 idx += 1;
-                stack.push(Mesh::sphere(radius, segments, segments, None));
+                stack.push(Mesh::sphere(radius, segments, segments, ()));
             },
             2 => {
                 let Some(mesh) = stack.pop() else { continue };
@@ -69,9 +88,9 @@ fuzz_target!(|bytes: &[u8]| {
             },
             4 => {
                 let Some(mesh) = stack.pop() else { continue };
-                let sx = decode_real(bytes, &mut idx).clamp(-10.0, 10.0);
-                let sy = decode_real(bytes, &mut idx).clamp(-10.0, 10.0);
-                let sz = decode_real(bytes, &mut idx).clamp(-10.0, 10.0);
+                let sx = clamp_real(decode_real(bytes, &mut idx), -10.0, 10.0);
+                let sy = clamp_real(decode_real(bytes, &mut idx), -10.0, 10.0);
+                let sz = clamp_real(decode_real(bytes, &mut idx), -10.0, 10.0);
                 stack.push(mesh.scale(sx, sy, sz));
             },
             5 => {
@@ -109,12 +128,30 @@ fuzz_target!(|bytes: &[u8]| {
                     stack.push(a.intersection(&b));
                 }
             },
-            _ => {
+            11 => {
                 if stack.len() >= 2 {
                     let b = stack.pop().unwrap();
                     let a = stack.pop().unwrap();
                     stack.push(a.xor(&b));
                 }
+            },
+            12 => {
+                let Some(mesh) = stack.pop() else { continue };
+                let lambda = clamp_real(decode_real(bytes, &mut idx), -1.0, 1.0);
+                let iterations = bytes[idx % bytes.len()] as usize % 3;
+                idx += 1;
+                stack.push(mesh.triangulate().laplacian_smooth(lambda, iterations, false));
+            },
+            _ => {
+                let Some(mesh) = stack.pop() else { continue };
+                let lambda = clamp_real(decode_real(bytes, &mut idx), -1.0, 1.0);
+                let mu = clamp_real(decode_real(bytes, &mut idx), -1.0, 1.0);
+                let iterations = bytes[idx % bytes.len()] as usize % 3;
+                idx += 1;
+                stack.push(
+                    mesh.triangulate()
+                        .taubin_smooth(lambda, mu, iterations, false),
+                );
             },
         }
     }

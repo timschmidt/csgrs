@@ -30,9 +30,9 @@ if (import.meta.client)
       
       let placeCursorX = 0;
       const sketches = [
-        csgrs.SketchJs.polygon([[-20, -10],[20, -10],[15, 10],[-15, 20]]),
-        csgrs.SketchJs.rectangle(40, 20),
-        csgrs.SketchJs.circle(15, 32),
+        csgrs.ProfileJs.polygon([[-20, -10],[20, -10],[15, 10],[-15, 20]]),
+        csgrs.ProfileJs.rectangle(40, 20),
+        csgrs.ProfileJs.circle(15, 32),
       ].map((sketch, i, arr) => 
       {
           const curBbox = sketch.boundingBox();

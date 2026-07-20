@@ -1,27 +1,305 @@
-//! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
+//! Functions to extrude, revolve, loft, and otherwise transform 2D `Profile`s into 3D `Mesh`s
 
 use crate::errors::ValidationError;
-use crate::float_types::{Real, tolerance};
+use crate::hyper_math::{
+    hreal_lt_f64, hreal_sign, hreal_try_cmp, hrotation_between_vectors, htranslation_matrix,
+    hunit_cross_vector3, hunit_vector3, hvector3_from_point3, hvector3_from_vector3,
+};
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
-use crate::sketch::{OriginTransform, Sketch};
-use crate::vertex::Vertex;
-use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
-use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
+use crate::mesh::Polygon;
+use crate::mesh::polygon::{LazySubdivisionVertexPool, reserve_plane_ids};
+use crate::sketch::Profile;
+use crate::vertex::{Vertex, reserve_position_ids};
+use hypercurve::{
+    Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
+    FiniteTriangle2, triangulate_finite_rings,
+};
+use hyperlattice::{Matrix4, Point3, Real, Vector3};
+use hyperreal::RealSign;
+use std::cell::RefCell;
 use std::fmt::Debug;
-use std::sync::OnceLock;
+use std::sync::Arc;
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+type FiniteRing = Vec<[f64; 2]>;
+type FiniteRegionRings = (FiniteRing, Vec<FiniteRing>);
+
+#[derive(Clone, Debug, PartialEq)]
+struct ExtrusionCacheKey {
+    profile_identity: u64,
+    direction: Vector3,
+}
+
+#[derive(Clone, Debug)]
+struct CachedExtrusion {
+    key: ExtrusionCacheKey,
+    polygons: Vec<Polygon<()>>,
+}
+
+thread_local! {
+    static LAST_EXTRUSION: RefCell<Option<CachedExtrusion>> = const { RefCell::new(None) };
+    static PENDING_EXTRUSION: RefCell<Option<ExtrusionCacheKey>> = const { RefCell::new(None) };
+}
+
+fn mesh_projection_options() -> FiniteProjectionOptions {
+    FiniteProjectionOptions::try_new(1e-3)
+        .expect("positive finite projection tolerance is valid")
+}
+
+fn finite_real(value: f64) -> Option<Real> {
+    Real::try_from(value).ok()
+}
+
+fn finite_xy_point3(x: f64, y: f64) -> Option<Point3> {
+    Some(Point3::new(finite_real(x)?, finite_real(y)?, Real::zero()))
+}
+
+/// Materialize a vertex only after a user-requested sweep/revolution sampling
+/// step has produced its final mesh coordinate.
+fn materialize_mesh_sample_point3(point: Point3) -> Option<Point3> {
+    Some(Point3::new(
+        finite_real(point.x.to_f64_lossy()?)?,
+        finite_real(point.y.to_f64_lossy()?)?,
+        finite_real(point.z.to_f64_lossy()?)?,
+    ))
+}
+
+fn finite_triangles_to_xy_points(triangles: Vec<FiniteTriangle2>) -> Vec<[Point3; 3]> {
+    triangles
+        .into_iter()
+        .filter_map(|tri| {
+            let [[ax, ay], [bx, by], [cx, cy]] = tri;
+            Some([
+                finite_xy_point3(ax, ay)?,
+                finite_xy_point3(bx, by)?,
+                finite_xy_point3(cx, cy)?,
+            ])
+        })
+        .collect()
+}
+
+fn exact_points_equal(lhs: &Point3, rhs: &Point3) -> bool {
+    let lhs = hyperlimit::Point3::new(lhs.x.clone(), lhs.y.clone(), lhs.z.clone());
+    let rhs = hyperlimit::Point3::new(rhs.x.clone(), rhs.y.clone(), rhs.z.clone());
+    matches!(hyperlimit::point3_equal(&lhs, &rhs).value(), Some(true))
+}
+
+fn push_clean_face<M: Clone + Send + Sync>(
+    mut points: Vec<Point3>,
+    reverse: bool,
+    metadata: &M,
+    output: &mut Vec<Polygon<M>>,
+) {
+    points.dedup_by(|right, left| exact_points_equal(left, right));
+    if points.len() > 1 && exact_points_equal(&points[0], points.last().unwrap()) {
+        points.pop();
+    }
+    if points.len() < 3 {
+        return;
+    }
+    if reverse {
+        points.reverse();
+    }
+    output.push(Polygon::new(
+        points
+            .into_iter()
+            .map(|point| Vertex::new(point, Vector3::zeros()))
+            .collect(),
+        metadata.clone(),
+    ));
+}
+
+fn hyper_direction_points_down(direction: &Vector3) -> bool {
+    let Some(direction) = hvector3_from_vector3(direction) else {
+        return false;
+    };
+    let z_axis = Vector3::z();
+    hreal_lt_f64(direction.dot(&z_axis), 0.0)
+}
+
+impl Profile {
+    fn projected_region_profiles_for_mesh(&self) -> Vec<FiniteRegionProfile2> {
+        match self.project_region_profiles(&mesh_projection_options()) {
+            Ok(Classification::Decided(profiles)) => profiles,
+            Ok(Classification::Uncertain(_)) | Err(_) => Vec::new(),
+        }
+    }
+
+    fn projected_wire_polylines_for_mesh(&self) -> Vec<FinitePolyline2> {
+        self.project_wire_polylines(&mesh_projection_options())
+    }
+
+    fn extrude_retained_convex_vertical<M: Clone + Debug + Send + Sync>(
+        &self,
+        direction: &Vector3,
+        metadata: &M,
+    ) -> Option<Mesh<M>> {
+        let points = self.convex_tessellation.as_ref()?;
+        let edge_normals = self.convex_edge_normals.as_ref()?;
+        let exactly_zero = |value: &Real| {
+            value
+                .exact_rational_ref()
+                .is_some_and(|value| value.is_zero())
+        };
+        let exactly_positive = |value: &Real| {
+            value
+                .exact_rational_ref()
+                .is_some_and(|value| value.is_positive())
+        };
+        if points.len() < 3
+            || edge_normals.len() != points.len()
+            || !(exactly_zero(&direction.0[0])
+                || matches!(direction.0[0].refine_sign_until(-128), Some(RealSign::Zero)))
+            || !(exactly_zero(&direction.0[1])
+                || matches!(direction.0[1].refine_sign_until(-128), Some(RealSign::Zero)))
+            || !(exactly_positive(&direction.0[2])
+                || matches!(
+                    direction.0[2].refine_sign_until(-128),
+                    Some(RealSign::Positive)
+                ))
+        {
+            return None;
+        }
+
+        let default_origin =
+            self.origin.position == Point3::origin() && self.origin.normal == Vector3::z();
+        if default_origin {
+            let point_count = points.len();
+            let first_vertex_identity = reserve_position_ids(point_count.checked_mul(8)?);
+            let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_convex_extrusion(
+                points.clone(),
+                edge_normals.clone(),
+                direction.0[2].clone(),
+                first_vertex_identity,
+            ));
+            let first_plane_id = reserve_plane_ids(point_count + 2);
+            let mut polygons = Vec::with_capacity(point_count + 2);
+            polygons.push(Polygon::from_lazy_indexed_polygon(
+                Arc::clone(&vertex_pool),
+                0,
+                (0..point_count).rev().collect(),
+                metadata.clone(),
+                first_plane_id,
+            ));
+            polygons.push(Polygon::from_lazy_indexed_polygon(
+                Arc::clone(&vertex_pool),
+                1,
+                (point_count..2 * point_count).collect(),
+                metadata.clone(),
+                first_plane_id + 1,
+            ));
+            for index in 0..point_count {
+                let polygon_slot = polygons.len();
+                let side_start = 2 * point_count + 4 * index;
+                polygons.push(Polygon::from_lazy_indexed_quad(
+                    Arc::clone(&vertex_pool),
+                    polygon_slot,
+                    [side_start, side_start + 1, side_start + 2, side_start + 3],
+                    metadata.clone(),
+                    first_plane_id + 2 + u64::try_from(index).ok()?,
+                ));
+            }
+            let mesh = Mesh::from_polygons_with_topology(
+                polygons,
+                (4 * point_count - 4, 6 * point_count, false),
+            );
+            mesh.cache_manifold_fact(true);
+            mesh.cache_convex_pwn_fact();
+            return Some(mesh);
+        }
+        let apply_origin = |vertex: Vertex| {
+            Self::apply_origin_transform_vertex(vertex, self.origin_transform.clone())
+        };
+        let first_vertex_identity = reserve_position_ids(points.len().checked_mul(8)?);
+        let bottom = points
+            .iter()
+            .enumerate()
+            .map(|(index, [x, y])| {
+                Vertex::new_with_reserved_identity(
+                    Point3::new(x.clone(), y.clone(), Real::zero()),
+                    -Vector3::z(),
+                    first_vertex_identity,
+                    index,
+                )
+            })
+            .collect::<Vec<_>>();
+        let top = points
+            .iter()
+            .enumerate()
+            .map(|(index, [x, y])| {
+                Vertex::new_with_reserved_identity(
+                    Point3::new(x.clone(), y.clone(), direction.0[2].clone()),
+                    Vector3::z(),
+                    first_vertex_identity,
+                    points.len() + index,
+                )
+            })
+            .collect::<Vec<_>>();
+        let first_plane_id = reserve_plane_ids(points.len() + 2);
+        let mut vertices = Vec::with_capacity(6 * points.len());
+        let mut ranges_and_planes = Vec::with_capacity(points.len() + 2);
+        let start = vertices.len();
+        vertices.extend(bottom.iter().rev().cloned().map(&apply_origin));
+        ranges_and_planes.push((start..vertices.len(), first_plane_id));
+        let start = vertices.len();
+        vertices.extend(top.iter().cloned().map(&apply_origin));
+        ranges_and_planes.push((start..vertices.len(), first_plane_id + 1));
+        for index in 0..points.len() {
+            let next = (index + 1) % points.len();
+            let side_normal = edge_normals[index].clone();
+            let start = vertices.len();
+            vertices.extend(
+                [
+                    bottom[index].clone(),
+                    bottom[next].clone(),
+                    top[next].clone(),
+                    top[index].clone(),
+                ]
+                .into_iter()
+                .map(|vertex| apply_origin(vertex.with_normal(side_normal.clone()))),
+            );
+            ranges_and_planes.push((
+                start..vertices.len(),
+                first_plane_id + 2 + u64::try_from(index).ok()?,
+            ));
+        }
+        let vertices = Arc::new(vertices);
+        let polygons = ranges_and_planes
+            .into_iter()
+            .map(|(range, plane_id)| {
+                Polygon::from_shared_vertices(
+                    Arc::clone(&vertices),
+                    range,
+                    metadata.clone(),
+                    plane_id,
+                )
+            })
+            .collect();
+        let mesh = Mesh::from_polygons_with_topology(
+            polygons,
+            (4 * points.len() - 4, 6 * points.len(), false),
+        );
+        mesh.cache_manifold_fact(true);
+        mesh.cache_convex_pwn_fact();
+        Some(mesh)
+    }
+
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
-    /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
-    pub fn extrude(&self, height: Real) -> Mesh<M> {
-        self.extrude_vector(Vector3::new(0.0, 0.0, height))
+    /// This is just a convenience wrapper around `extrude_vector` with a z-axis direction.
+    pub fn extrude<M: Clone + Debug + Send + Sync>(
+        &self,
+        height: Real,
+        metadata: M,
+    ) -> Mesh<M> {
+        self.extrude_vector(
+            Vector3::from_xyz(Real::zero(), Real::zero(), height),
+            metadata,
+        )
     }
 
     /// **Mathematical Foundation: Vector-Based Linear Extrusion**
     ///
-    /// Linearly extrude any Sketch along the given direction vector.
+    /// Linearly extrude any Profile along the given direction vector.
     /// This implements the complete mathematical theory of linear extrusion
     /// with proper surface generation and normal calculation.
     ///
@@ -38,25 +316,30 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// ### **Surface Normal Computation**
     /// For side surfaces, the normal is computed as:
     /// ```text
-    /// n⃗ = (∂M/∂u × ∂M/∂v).normalize()
-    ///   = (C'(u) × d⃗).normalize()
+    /// n⃗ = checked_unit(∂M/∂u × ∂M/∂v)
+    ///   = checked_unit(C'(u) × d⃗)
     /// ```
-    /// where C'(u) is the tangent to the boundary curve.
+    /// where C'(u) is the tangent to the boundary curve. The checked unit
+    /// vector is computed with `hyperlattice::Vector3`, so
+    /// degenerate or non-finite side normals are rejected before finite mesh
+    /// output. This follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     ///
     /// ### **Surface Classification**
     /// The extrusion generates three surface types:
     ///
     /// 1. **Bottom Caps** (v=0):
     ///    - Triangulated 2D regions at z=0
-    ///    - Normal: n⃗ = -d⃗.normalize() (inward for solid)
+    ///    - Normal: n⃗ = -checked_unit(d⃗) (inward for solid)
     ///
     /// 2. **Top Caps** (v=1):
     ///    - Translated triangulated regions
-    ///    - Normal: n⃗ = +d⃗.normalize() (outward for solid)
+    ///    - Normal: n⃗ = +checked_unit(d⃗) (outward for solid)
     ///
     /// 3. **Side Surfaces**:
     ///    - Quadrilateral strips connecting boundary edges
-    ///    - Normal: n⃗ = (edge × direction).normalize()
+    ///    - Normal: n⃗ = checked_unit(edge × direction)
     ///
     /// ### **Boundary Orientation Rules**
     /// - **Exterior boundaries**: Counter-clockwise → outward-facing sides
@@ -69,7 +352,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - **Centroid**: c⃗ = centroid(base) + 0.5×d⃗
     ///
     /// ## **Numerical Considerations**
-    /// - **Degenerate Direction**: |d⃗| < ε returns original geometry
+    /// - **Degenerate Direction**: exact zero or non-finite directions return no geometry
     /// - **Normal Calculation**: Cross products normalized for unit normals
     /// - **Manifold Preservation**: Ensures watertight mesh topology
     ///
@@ -83,523 +366,573 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// # Parameters
     /// - `direction`: 3D vector defining extrusion direction and magnitude
-    pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
-        let tol = tolerance();
-        if !direction.x.is_finite()
-            || !direction.y.is_finite()
-            || !direction.z.is_finite()
-            || direction.norm_squared() < tol * tol
-        {
-            return Mesh::empty(self.metadata.clone());
+    ///
+    /// Direction degeneracy is tested by promoting the boundary `Vector3<f64>`
+    /// into `hyperlattice::Vector3` and comparing squared length exactly in
+    /// `Real`. This keeps the decision to emit no solid for an
+    /// exact-zero extrusion on the same exact predicate path used by mesh
+    /// topology, while preserving nonzero infinitesimal-scale boundary values;
+    /// see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub fn extrude_vector<M: Clone + Debug + Send + Sync>(
+        &self,
+        direction: Vector3,
+        metadata: M,
+    ) -> Mesh<M> {
+        let exact_components = direction
+            .0
+            .iter()
+            .map(Real::exact_rational_ref)
+            .collect::<Option<Vec<_>>>();
+        if let Some(components) = exact_components {
+            if components.iter().all(|value| value.is_zero()) {
+                return Mesh::empty();
+            }
+        } else {
+            let direction_point = hyperlimit::Point3::new(
+                direction.0[0].clone(),
+                direction.0[1].clone(),
+                direction.0[2].clone(),
+            );
+            let zero = Vector3::zeros();
+            let zero_point = hyperlimit::Point3::new(
+                zero.0[0].clone(),
+                zero.0[1].clone(),
+                zero.0[2].clone(),
+            );
+            if hvector3_from_vector3(&direction).is_none()
+                || matches!(
+                    hyperlimit::point3_equal(&direction_point, &zero_point,).value(),
+                    Some(true)
+                )
+            {
+                return Mesh::empty();
+            }
         }
 
-        // Collect 3-D polygons generated from every `geo` geometry in the sketch
-        let mut out: Vec<Polygon<M>> = Vec::new();
-
-        for geom in &self.geometry {
-            Self::extrude_geometry(
-                geom,
-                direction,
-                self.origin_transform,
-                &self.metadata,
-                &mut out,
+        let cache_key = ExtrusionCacheKey {
+            profile_identity: self.storage_identity(),
+            direction: direction.clone(),
+        };
+        if let Some(polygons) = LAST_EXTRUSION.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| cached.key == cache_key)
+                .map(|cached| cached.polygons.clone())
+        }) {
+            return Mesh::from_polygons(
+                polygons
+                    .into_iter()
+                    .map(|polygon| polygon.with_metadata(metadata.clone()))
+                    .collect(),
             );
         }
+        let cache_on_completion = PENDING_EXTRUSION.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref() == Some(&cache_key);
+            *pending = Some(cache_key.clone());
+            repeated
+        });
 
-        Mesh {
-            polygons: out,
-            bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
-            metadata: self.metadata.clone(),
-        }
-    }
-
-    /// A helper to handle any Geometry
-    fn extrude_geometry(
-        geom: &geo::Geometry<Real>,
-        direction: Vector3<Real>,
-        origin_transform: OriginTransform,
-        metadata: &M,
-        out_polygons: &mut Vec<Polygon<M>>,
-    ) {
-        if !direction.x.is_finite()
-            || !direction.y.is_finite()
-            || !direction.z.is_finite()
-            || direction.norm_squared() < tolerance() * tolerance()
-        {
-            return;
-        }
-
-        let dir_unit = direction.normalize();
-        // When the extrusion opposes the sketch-plane normal (+Z), the solid is
-        // inverted and face orientations must flip.
-        let flip = direction.dot(&Vector3::z()) < 0.0;
-        let bottom_normal = -dir_unit;
-        let top_normal = dir_unit;
-
-        match geom {
-            geo::Geometry::Polygon(poly) => {
-                let exterior_coords: Vec<[Real; 2]> =
-                    poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-                let interior_rings: Vec<Vec<[Real; 2]>> = poly
-                    .interiors()
-                    .iter()
-                    .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
-                    .collect();
-
-                let tris = Sketch::<()>::triangulate_with_holes(
-                    &exterior_coords,
-                    &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>(),
-                );
-
-                // bottom
-                for tri in &tris {
-                    let (a, b, c) = if flip {
-                        (tri[0], tri[1], tri[2])
-                    } else {
-                        (tri[2], tri[1], tri[0])
-                    };
-                    out_polygons.push(Polygon::new(
-                        vec![
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(a, bottom_normal),
-                                origin_transform,
-                            ),
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(b, bottom_normal),
-                                origin_transform,
-                            ),
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(c, bottom_normal),
-                                origin_transform,
-                            ),
-                        ],
-                        metadata.clone(),
-                    ));
-                }
-                // top
-                for tri in &tris {
-                    let p0 = tri[0] + direction;
-                    let p1 = tri[1] + direction;
-                    let p2 = tri[2] + direction;
-                    let (a, b, c) = if flip { (p2, p1, p0) } else { (p0, p1, p2) };
-                    out_polygons.push(Polygon::new(
-                        vec![
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(a, top_normal),
-                                origin_transform,
-                            ),
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(b, top_normal),
-                                origin_transform,
-                            ),
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(c, top_normal),
-                                origin_transform,
-                            ),
-                        ],
-                        metadata.clone(),
-                    ));
-                }
-
-                // sides
-                let all_rings = std::iter::once(poly.exterior()).chain(poly.interiors());
-                for ring in all_rings {
-                    let coords: Vec<_> = ring.coords_iter().collect();
-                    for window in coords.windows(2) {
-                        let c_i = window[0];
-                        let c_j = window[1];
-                        let b_i = Point3::new(c_i.x, c_i.y, 0.0);
-                        let b_j = Point3::new(c_j.x, c_j.y, 0.0);
-                        let t_i = b_i + direction;
-                        let t_j = b_j + direction;
-                        let Some(raw_normal) =
-                            (b_j - b_i).cross(&direction).try_normalize(tolerance())
-                        else {
-                            continue;
-                        };
-                        let normal = if flip { -raw_normal } else { raw_normal };
-                        let verts: Vec<_> = if flip {
-                            vec![
-                                Vertex::new(b_j, normal),
-                                Vertex::new(b_i, normal),
-                                Vertex::new(t_i, normal),
-                                Vertex::new(t_j, normal),
-                            ]
-                        } else {
-                            vec![
-                                Vertex::new(b_i, normal),
-                                Vertex::new(b_j, normal),
-                                Vertex::new(t_j, normal),
-                                Vertex::new(t_i, normal),
-                            ]
-                        }
-                        .into_iter()
-                        .map(|vertex| {
-                            Self::apply_origin_transform_vertex(vertex, origin_transform)
-                        })
-                        .collect();
-                        out_polygons.push(Polygon::new(verts, metadata.clone()));
-                    }
-                }
-            },
-            geo::Geometry::MultiPolygon(mp) => {
-                for poly in &mp.0 {
-                    Self::extrude_geometry(
-                        &geo::Geometry::Polygon(poly.clone()),
-                        direction,
-                        origin_transform,
-                        metadata,
-                        out_polygons,
-                    );
-                }
-            },
-            geo::Geometry::GeometryCollection(gc) => {
-                for sub in &gc.0 {
-                    Self::extrude_geometry(
-                        sub,
-                        direction,
-                        origin_transform,
-                        metadata,
-                        out_polygons,
-                    );
-                }
-            },
-            geo::Geometry::LineString(ls) => {
-                // extrude line strings into side surfaces
-                let coords: Vec<_> = ls.coords_iter().collect();
-                for i in 0..coords.len() - 1 {
-                    let c_i = coords[i];
-                    let c_j = coords[i + 1];
-                    let b_i = Point3::new(c_i.x, c_i.y, 0.0);
-                    let b_j = Point3::new(c_j.x, c_j.y, 0.0);
-                    let t_i = b_i + direction;
-                    let t_j = b_j + direction;
-                    let Some(raw_normal) =
-                        (b_j - b_i).cross(&direction).try_normalize(tolerance())
-                    else {
-                        continue;
-                    };
-                    let normal = if flip { -raw_normal } else { raw_normal };
-                    let verts: Vec<_> = if flip {
-                        vec![
-                            Vertex::new(b_j, normal),
-                            Vertex::new(b_i, normal),
-                            Vertex::new(t_i, normal),
-                            Vertex::new(t_j, normal),
-                        ]
-                    } else {
-                        vec![
-                            Vertex::new(b_i, normal),
-                            Vertex::new(b_j, normal),
-                            Vertex::new(t_j, normal),
-                            Vertex::new(t_i, normal),
-                        ]
-                    }
-                    .into_iter()
-                    .map(|vertex| {
-                        Self::apply_origin_transform_vertex(vertex, origin_transform)
-                    })
-                    .collect();
-                    out_polygons.push(Polygon::new(verts, metadata.clone()));
-                }
-            },
-            // Line: single segment ribbon
-            geo::Geometry::Line(line) => {
-                let c0 = line.start;
-                let c1 = line.end;
-                let b0 = Point3::new(c0.x, c0.y, 0.0);
-                let b1 = Point3::new(c1.x, c1.y, 0.0);
-                let t0 = b0 + direction;
-                let t1 = b1 + direction;
-                let Some(raw_normal) = (b1 - b0).cross(&direction).try_normalize(tolerance())
-                else {
-                    return;
-                };
-                let normal = if flip { -raw_normal } else { raw_normal };
-                let verts: Vec<_> = if flip {
-                    vec![
-                        Vertex::new(b1, normal),
-                        Vertex::new(b0, normal),
-                        Vertex::new(t0, normal),
-                        Vertex::new(t1, normal),
-                    ]
-                } else {
-                    vec![
-                        Vertex::new(b0, normal),
-                        Vertex::new(b1, normal),
-                        Vertex::new(t1, normal),
-                        Vertex::new(t0, normal),
-                    ]
-                }
-                .into_iter()
-                .map(|vertex| Self::apply_origin_transform_vertex(vertex, origin_transform))
-                .collect();
-                out_polygons.push(Polygon::new(verts, metadata.clone()));
-            },
-
-            // Rect: convert to polygon and extrude
-            geo::Geometry::Rect(rect) => {
-                let poly2d = rect.to_polygon();
-                Self::extrude_geometry(
-                    &geo::Geometry::Polygon(poly2d),
-                    direction,
-                    origin_transform,
-                    metadata,
-                    out_polygons,
-                );
-            },
-
-            // Triangle: convert to polygon and extrude
-            geo::Geometry::Triangle(tri) => {
-                let poly2d = tri.to_polygon();
-                Self::extrude_geometry(
-                    &geo::Geometry::Polygon(poly2d),
-                    direction,
-                    origin_transform,
-                    metadata,
-                    out_polygons,
-                );
-            },
-            // Other geometry types (Point, etc.) are skipped or could be handled differently:
-            _ => { /* skip */ },
-        }
-    }
-
-    /// Extrudes (or "lofts") a closed 3D volume between two polygons in space.
-    /// - `bottom` and `top` each have the same number of vertices `n`, in matching order.
-    /// - Returns a new Mesh whose faces are:
-    ///   - The `bottom` polygon,
-    ///   - The `top` polygon,
-    ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
-    pub fn loft(
-        bottom: &Polygon<M>,
-        top: &Polygon<M>,
-        flip_bottom_polygon: bool,
-    ) -> Result<Mesh<M>, ValidationError> {
-        let n = bottom.vertices.len();
-        if n != top.vertices.len() {
-            return Err(ValidationError::MismatchedVertexCount {
-                left: n,
-                right: top.vertices.len(),
+        let mesh =
+            if let Some(mesh) = self.extrude_retained_convex_vertical(&direction, &metadata) {
+                mesh
+            } else if !self.region.material_contours().is_empty()
+                || !self.region.hole_contours().is_empty()
+            {
+                self.extrude_region_vector(direction, &metadata)
+            } else if !self.wires().is_empty() {
+                self.extrude_wires_vector(direction, &metadata)
+            } else {
+                // Finite projection data is not Profile's CAD source of truth.
+                // Linear extrusion emits nothing when native
+                // `Region2`/`CurveString2` topology is absent.
+                Mesh::empty()
+            };
+        if cache_on_completion && !mesh.polygons.is_empty() {
+            LAST_EXTRUSION.with_borrow_mut(|cached| {
+                *cached = Some(CachedExtrusion {
+                    key: cache_key,
+                    polygons: mesh
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
             });
         }
-
-        // Conditionally flip the bottom polygon if requested.
-        let bottom_poly = if flip_bottom_polygon {
-            let mut flipped = bottom.clone();
-            flipped.flip();
-            flipped
-        } else {
-            bottom.clone()
-        };
-
-        // Gather polygons: bottom + top
-        // (Depending on the orientation, you might want to flip one of them.)
-
-        let mut polygons = vec![bottom_poly.clone(), top.clone()];
-
-        // For each edge (i -> i+1) in bottom, connect to the corresponding edge in top.
-        for i in 0..n {
-            let j = (i + 1) % n;
-            let b_i = &bottom.vertices[i];
-            let b_j = &bottom.vertices[j];
-            let t_i = &top.vertices[i];
-            let t_j = &top.vertices[j];
-
-            // Build the side face as a 4-vertex polygon (quad).
-            // Winding order here is chosen so that the polygon's normal faces outward
-            // (depending on the orientation of bottom vs. top).
-            let side_poly = Polygon::new(
-                vec![
-                    *b_i, // bottom[i]
-                    *b_j, // bottom[i+1]
-                    *t_j, // top[i+1]
-                    *t_i, // top[i]
-                ],
-                bottom.metadata.clone(), // carry over bottom polygon metadata
-            );
-            polygons.push(side_poly);
-        }
-
-        Ok(Mesh::from_polygons(&polygons, bottom.metadata.clone()))
+        mesh
     }
 
-    // Perform a linear extrusion along some axis, with optional twist, center, slices, scale, etc.
-    //
-    // # Parameters
-    // - `direction`: Direction vector for the extrusion.
-    // - `twist`: Total twist in degrees around the extrusion axis from bottom to top.
-    // - `segments`: Number of intermediate subdivisions.
-    // - `scale`: A uniform scale factor to apply at the top slice (bottom is scale=1.0).
-    //
-    // # Assumptions
-    // - This CSG is assumed to represent one or more 2D polygons lying in or near the XY plane.
-    // - The resulting shape is extruded *initially* along +Z, then finally rotated if `v != [0,0,1]`.
-    //
-    // # Returns
-    // A new 3D CSG.
-    //
-    // # Example
-    // ```
-    // let shape_2d = CSG::square(2.0, None); // a 2D square in XY
-    // let extruded = shape_2d.linear_extrude(
-    //     direction = Vector3::new(0.0, 0.0, 10.0),
-    //     twist = 360.0,
-    //     segments = 32,
-    //     scale = 1.2,
-    // );
-    // ```
-    // pub fn linear_extrude(
-    // shape: &CCShape<Real>,
-    // direction: Vector3<Real>,
-    // twist_degs: Real,
-    // segments: usize,
-    // scale_top: Real,
-    // metadata: M,
-    // ) -> CSG<M> {
-    // let mut polygons_3d = Vec::new();
-    // if segments < 1 {
-    // return CSG::new();
-    // }
-    // let height = direction.norm();
-    // if height < tolerance() {
-    // no real extrusion
-    // return CSG::new();
-    // }
-    //
-    // Step 1) Build a series of “transforms” from bottom=0..top=height, subdivided into `segments`.
-    //   For each i in [0..=segments], compute fraction f and:
-    //   - scale in XY => s_i
-    //   - twist about Z => rot_i
-    //   - translate in Z => z_i
-    //
-    //   We'll store each “slice” in 3D form as a Vec<Vec<Point3<Real>>>,
-    //   i.e. one 3D polyline for each boundary or hole in the shape.
-    // let mut slices: Vec<Vec<Vec<Point3<Real>>>> = Vec::with_capacity(segments + 1);
-    // The axis to rotate around is the unit of `direction`. We'll do final alignment after constructing them along +Z.
-    // let axis_dir = direction.normalize();
-    //
-    // for i in 0..=segments {
-    // let f = i as Real / segments as Real;
-    // let s_i = 1.0 + (scale_top - 1.0) * f;  // lerp(1, scale_top, f)
-    // let twist_rad = twist_degs.to_radians() * f;
-    // let z_i = height * f;
-    //
-    // Build transform T = Tz * Rz * Sxy
-    //  - scale in XY
-    //  - twist around Z
-    //  - translate in Z
-    // let mat_scale = Matrix4::new_nonuniform_scaling(&Vector3::new(s_i, s_i, 1.0));
-    // let mat_rot = Rotation3::from_axis_angle(&Vector3::z_axis(), twist_rad).to_homogeneous();
-    // let mat_trans = Translation3::new(0.0, 0.0, z_i).to_homogeneous();
-    // let slice_mat = mat_trans * mat_rot * mat_scale;
-    //
-    // let slice_3d = project_shape_3d(shape, &slice_mat);
-    // slices.push(slice_3d);
-    // }
-    //
-    // Step 2) “Stitch” consecutive slices to form side polygons.
-    // For each pair of slices[i], slices[i+1], for each boundary polyline j,
-    // connect edges. We assume each polyline has the same vertex_count in both slices.
-    // (If the shape is closed, we do wrap edges [n..0].)
-    // Then we optionally build bottom & top caps if the polylines are closed.
-    //
-    // a) bottom + top caps, similar to extrude_vector approach
-    //    For slices[0], build a “bottom” by triangulating in XY, flipping normal.
-    //    For slices[segments], build a “top” by normal up.
-    //
-    //    But we only do it if each boundary is closed.
-    //    We must group CCW with matching holes. This is the same logic as `extrude_vector`.
-    //
-    // We'll do a small helper that triangulates shape in 2D, then lifts that triangulation to slice_3d.
-    // You can re‐use the logic from `extrude_vector`.
-    //
-    // Build the “bottom” from slices[0] if polylines are all or partially closed
-    // polygons_3d.extend(
-    // build_caps_from_slice(shape, &slices[0], true, metadata.clone())
-    // );
-    // Build the “top” from slices[segments]
-    // polygons_3d.extend(
-    // build_caps_from_slice(shape, &slices[segments], false, metadata.clone())
-    // );
-    //
-    // b) side walls
-    // for i in 0..segments {
-    // let bottom_slice = &slices[i];
-    // let top_slice = &slices[i + 1];
-    //
-    // We know bottom_slice has shape.ccw_plines.len() + shape.cw_plines.len() polylines
-    // in the same order. Each polyline has the same vertex_count as in top_slice.
-    // So we can do a direct 1:1 match: bottom_slice[j] <-> top_slice[j].
-    // for (pline_idx, bot3d) in bottom_slice.iter().enumerate() {
-    // let top3d = &top_slice[pline_idx];
-    // if bot3d.len() < 2 {
-    // continue;
-    // }
-    // is it closed? We can check shape’s corresponding polyline
-    // let is_closed = if pline_idx < shape.ccw_plines.len() {
-    // shape.ccw_plines[pline_idx].polyline.is_closed()
-    // } else {
-    // shape.cw_plines[pline_idx - shape.ccw_plines.len()].polyline.is_closed()
-    // };
-    // let n = bot3d.len();
-    // let edge_count = if is_closed { n } else { n - 1 };
-    //
-    // for k in 0..edge_count {
-    // let k_next = (k + 1) % n;
-    // let b_i = bot3d[k];
-    // let b_j = bot3d[k_next];
-    // let t_i = top3d[k];
-    // let t_j = top3d[k_next];
-    //
-    // let poly_side = Polygon::new(
-    // vec![
-    // Vertex::new(b_i, Vector3::zeros()),
-    // Vertex::new(b_j, Vector3::zeros()),
-    // Vertex::new(t_j, Vector3::zeros()),
-    // Vertex::new(t_i, Vector3::zeros()),
-    // ],
-    // metadata.clone(),
-    // );
-    // polygons_3d.push(poly_side);
-    // }
-    // }
-    // }
-    //
-    // Step 3) If direction is not along +Z, rotate final mesh so +Z aligns with your direction
-    // (This is optional or can be done up front. Typical OpenSCAD style is to do everything
-    // along +Z, then rotate the final.)
-    // if (axis_dir - Vector3::z()).norm() > tolerance() {
-    // rotate from +Z to axis_dir
-    // let rot_axis = Vector3::z().cross(&axis_dir);
-    // let sin_theta = rot_axis.norm();
-    // if sin_theta > tolerance() {
-    // let cos_theta = Vector3::z().dot(&axis_dir);
-    // let angle = cos_theta.acos();
-    // let rot = Rotation3::from_axis_angle(&Unit::new_normalize(rot_axis), angle);
-    // let mat = rot.to_homogeneous();
-    // transform the polygons
-    // let mut final_polys = Vec::with_capacity(polygons_3d.len());
-    // for mut poly in polygons_3d {
-    // for v in &mut poly.vertices {
-    // let pos4 = mat * nalgebra::Vector4::new(v.position.x, v.position.y, v.position.z, 1.0);
-    // v.position = Point3::new(pos4.x / pos4.w, pos4.y / pos4.w, pos4.z / pos4.w);
-    // }
-    // poly.set_new_normal();
-    // final_polys.push(poly);
-    // }
-    // return CSG::from_polygons(&final_polys);
-    // }
-    // }
-    //
-    // otherwise, just return as is
-    // CSG::from_polygons(&polygons_3d)
-    // }
+    /// Extrude native hypercurve topology without routing through a separate 2D
+    /// backend type.
+    ///
+    /// Filled `Region2` contours receive caps and side walls; open
+    /// `CurveString2` wires are independent ruled side surfaces. Hypercurve
+    /// contours are approximated only at the mesh boundary, while cap
+    /// triangulation is delegated to `hypercurve::triangulate_finite_rings`,
+    /// which promotes finite boundary coordinates back to hyperreal predicates
+    /// before ear clipping. This keeps the data model aligned with Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Meisters,
+    /// "Polygons Have Ears," *American Mathematical Monthly* 82(6), 1975
+    /// (<https://doi.org/10.2307/2319703>).
+    fn extrude_region_vector<M: Clone + Debug + Send + Sync>(
+        &self,
+        direction: Vector3,
+        metadata: &M,
+    ) -> Mesh<M> {
+        let dir_unit = hunit_vector3(&direction).unwrap_or_else(Vector3::z);
+        let flip = hyper_direction_points_down(&direction);
+        let bottom_normal = -dir_unit.clone();
+        let top_normal = dir_unit;
+        let mut polygons = Vec::new();
+
+        for profile in self.projected_region_profiles_for_mesh() {
+            let exterior = profile.material().points().to_vec();
+            let holes = profile
+                .holes()
+                .iter()
+                .map(|hole| hole.points().to_vec())
+                .collect::<Vec<_>>();
+            let Some(exterior) = orient_region_ring(exterior, true) else {
+                continue;
+            };
+            let Some(holes) = holes
+                .into_iter()
+                .map(|hole| orient_region_ring(hole, false))
+                .collect::<Option<Vec<_>>>()
+            else {
+                continue;
+            };
+            let hole_refs = holes.iter().map(Vec::as_slice).collect::<Vec<_>>();
+            let triangles = finite_triangles_to_xy_points(
+                triangulate_finite_rings(&exterior, &hole_refs).unwrap_or_default(),
+            );
+
+            for tri in &triangles {
+                let (a, b, c) = if flip {
+                    (tri[0].clone(), tri[1].clone(), tri[2].clone())
+                } else {
+                    (tri[2].clone(), tri[1].clone(), tri[0].clone())
+                };
+                polygons.push(Polygon::new(
+                    vec![
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(a, bottom_normal.clone()),
+                            self.origin_transform.clone(),
+                        ),
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(b, bottom_normal.clone()),
+                            self.origin_transform.clone(),
+                        ),
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(c, bottom_normal.clone()),
+                            self.origin_transform.clone(),
+                        ),
+                    ],
+                    metadata.clone(),
+                ));
+            }
+
+            for tri in &triangles {
+                let p0 = tri[0].clone() + &direction;
+                let p1 = tri[1].clone() + &direction;
+                let p2 = tri[2].clone() + &direction;
+                let (a, b, c) = if flip { (p2, p1, p0) } else { (p0, p1, p2) };
+                polygons.push(Polygon::new(
+                    vec![
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(a, top_normal.clone()),
+                            self.origin_transform.clone(),
+                        ),
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(b, top_normal.clone()),
+                            self.origin_transform.clone(),
+                        ),
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(c, top_normal.clone()),
+                            self.origin_transform.clone(),
+                        ),
+                    ],
+                    metadata.clone(),
+                ));
+            }
+
+            self.push_region_ring_sides(
+                &exterior,
+                direction.clone(),
+                flip,
+                metadata,
+                &mut polygons,
+            );
+            for hole in &holes {
+                self.push_region_ring_sides(
+                    hole,
+                    direction.clone(),
+                    flip,
+                    metadata,
+                    &mut polygons,
+                );
+            }
+        }
+
+        for wire in self.projected_wire_polylines_for_mesh() {
+            self.push_polyline_sides(
+                wire.points(),
+                direction.clone(),
+                flip,
+                metadata,
+                &mut polygons,
+            );
+        }
+
+        Mesh::from_polygons(polygons)
+    }
+
+    /// Extrude native open hypercurve wires into ruled side surfaces.
+    ///
+    /// The source topology remains in `CurveString2`; only the final mesh
+    /// boundary samples are finite points. This is the ruled-surface analogue
+    /// of area extrusion and keeps CAD ownership on the exact object side of
+    /// Yap's exact-geometric-computation boundary: Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    fn extrude_wires_vector<M: Clone + Debug + Send + Sync>(
+        &self,
+        direction: Vector3,
+        metadata: &M,
+    ) -> Mesh<M> {
+        let flip = hyper_direction_points_down(&direction);
+        let mut polygons = Vec::new();
+        for wire in self.projected_wire_polylines_for_mesh() {
+            self.push_polyline_sides(
+                wire.points(),
+                direction.clone(),
+                flip,
+                metadata,
+                &mut polygons,
+            );
+        }
+        Mesh::from_polygons(polygons)
+    }
+
+    fn push_region_ring_sides<M: Clone + Send + Sync>(
+        &self,
+        ring: &[[f64; 2]],
+        direction: Vector3,
+        flip: bool,
+        metadata: &M,
+        polygons: &mut Vec<Polygon<M>>,
+    ) {
+        // Closed region rings and open wires share side-strip emission after
+        // crossing the hypercurve-to-mesh sampling boundary.
+        self.push_polyline_sides(ring, direction, flip, metadata, polygons);
+    }
+
+    fn push_polyline_sides<M: Clone + Send + Sync>(
+        &self,
+        polyline: &[[f64; 2]],
+        direction: Vector3,
+        flip: bool,
+        metadata: &M,
+        polygons: &mut Vec<Polygon<M>>,
+    ) {
+        for window in polyline.windows(2) {
+            let Some(b_i) = finite_xy_point3(window[0][0], window[0][1]) else {
+                continue;
+            };
+            let Some(b_j) = finite_xy_point3(window[1][0], window[1][1]) else {
+                continue;
+            };
+            let t_i = b_i.clone() + &direction;
+            let t_j = b_j.clone() + &direction;
+            let edge = &b_j - &b_i;
+            let Some(raw_normal) = hunit_cross_vector3(&edge, &direction) else {
+                continue;
+            };
+            let normal = if flip { -raw_normal } else { raw_normal };
+            let vertices = if flip {
+                [b_j, b_i, t_i, t_j]
+            } else {
+                [b_i, b_j, t_j, t_i]
+            }
+            .into_iter()
+            .map(|point| {
+                Self::apply_origin_transform_vertex(
+                    Vertex::new(point, normal.clone()),
+                    self.origin_transform.clone(),
+                )
+            })
+            .collect::<Vec<_>>();
+            polygons.push(Polygon::new(vertices, metadata.clone()));
+        }
+    }
+
+    /// Loft a closed mesh through two or more corresponding polygon sections.
+    ///
+    /// Every section must have at least three vertices and the same vertex
+    /// count in matching cyclic order. Cap and side winding are derived from
+    /// the first section's exact plane orientation relative to the aggregate
+    /// travel direction. Side patches are triangulated because corresponding
+    /// edges in arbitrary sections do not generally form planar quads.
+    pub fn loft<M: Clone + Debug + Send + Sync>(
+        sections: &[Polygon<M>],
+    ) -> Result<Mesh<M>, ValidationError> {
+        if sections.len() < 2 {
+            return Err(ValidationError::FieldLessThan {
+                name: "sections",
+                min: 2,
+            });
+        }
+        let vertex_count = sections[0].vertices.len();
+        if vertex_count < 3 {
+            return Err(ValidationError::InvalidArguments);
+        }
+        for section in &sections[1..] {
+            if section.vertices.len() != vertex_count {
+                return Err(ValidationError::MismatchedVertexCount {
+                    left: vertex_count,
+                    right: section.vertices.len(),
+                });
+            }
+        }
+
+        let sum_positions = |section: &Polygon<M>| {
+            section.vertices.iter().fold(Vector3::zeros(), |sum, vertex| {
+                sum + vertex.position.to_vector()
+            })
+        };
+        let travel = sum_positions(sections.last().unwrap()) - sum_positions(&sections[0]);
+        let Some(orientation) = hreal_sign(&sections[0].plane.normal().dot(&travel)) else {
+            return Err(ValidationError::InvalidArguments);
+        };
+        if orientation == RealSign::Zero {
+            return Err(ValidationError::InvalidArguments);
+        }
+        let forward_winding = orientation == RealSign::Positive;
+
+        let mut bottom = sections[0].clone();
+        if forward_winding {
+            bottom.flip();
+        }
+        let mut top = sections.last().unwrap().clone();
+        if !forward_winding {
+            top.flip();
+        }
+        let mut polygons = vec![bottom, top];
+
+        for pair in sections.windows(2) {
+            for index in 0..vertex_count {
+                let next = (index + 1) % vertex_count;
+                let mut first = vec![
+                    pair[0].vertices[index].clone(),
+                    pair[0].vertices[next].clone(),
+                    pair[1].vertices[next].clone(),
+                ];
+                let mut second = vec![
+                    pair[0].vertices[index].clone(),
+                    pair[1].vertices[next].clone(),
+                    pair[1].vertices[index].clone(),
+                ];
+                if !forward_winding {
+                    first.reverse();
+                    second.reverse();
+                }
+                polygons.push(Polygon::new(first, pair[0].metadata.clone()));
+                polygons.push(Polygon::new(second, pair[0].metadata.clone()));
+            }
+        }
+
+        Ok(Mesh::from_polygons(polygons))
+    }
+
+    /// Extrude along +Z while linearly varying rotation and XY scale.
+    ///
+    /// Slice heights are exact rational multiples of `height`. Rotation and
+    /// scale are sampled once per slice at the finite mesh boundary, then
+    /// promoted to exact dyadic coordinates. Filled regions retain grouped
+    /// holes and receive one cap at each end; wires produce side strips only.
+    pub fn extrude_twisted<M: Clone + Debug + Send + Sync>(
+        &self,
+        height: Real,
+        twist_degrees: Real,
+        end_scale: [Real; 2],
+        slices: usize,
+        metadata: M,
+    ) -> Result<Mesh<M>, ValidationError> {
+        if slices < 1 {
+            return Err(ValidationError::FieldLessThan {
+                name: "slices",
+                min: 1,
+            });
+        }
+        let Some(height_sign) = hreal_sign(&height) else {
+            return Err(ValidationError::InvalidArguments);
+        };
+        if height_sign == RealSign::Zero {
+            return Err(ValidationError::InvalidArguments);
+        }
+        if hreal_sign(&twist_degrees).is_none() {
+            return Err(ValidationError::InvalidArguments);
+        }
+        if !matches!(
+            hreal_try_cmp(&end_scale[0], Real::zero()),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        ) {
+            return Err(ValidationError::InvalidArguments);
+        }
+        if !matches!(
+            hreal_try_cmp(&end_scale[1], Real::zero()),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        ) {
+            return Err(ValidationError::InvalidArguments);
+        }
+
+        #[derive(Clone)]
+        struct Slice {
+            sin: Real,
+            cos: Real,
+            scale_x: Real,
+            scale_y: Real,
+        }
+
+        fn map_point(point: [f64; 2], slice: &Slice, z: &Real) -> Option<Point3> {
+            let x = finite_real(point[0])? * slice.scale_x.clone();
+            let y = finite_real(point[1])? * slice.scale_y.clone();
+            materialize_mesh_sample_point3(Point3::new(
+                x.clone() * slice.cos.clone() - y.clone() * slice.sin.clone(),
+                x * slice.sin.clone() + y * slice.cos.clone(),
+                z.clone(),
+            ))
+        }
+
+        fn emit_ring<M: Clone + Send + Sync>(
+            ring: &[[f64; 2]],
+            slice_parameters: &[Slice],
+            heights: &[Real],
+            height_positive: bool,
+            metadata: &M,
+            polygons: &mut Vec<Polygon<M>>,
+        ) {
+            for edge in ring.windows(2) {
+                for slice in 0..slice_parameters.len() - 1 {
+                    let points = [
+                        map_point(edge[0], &slice_parameters[slice], &heights[slice]),
+                        map_point(edge[1], &slice_parameters[slice], &heights[slice]),
+                        map_point(edge[1], &slice_parameters[slice + 1], &heights[slice + 1]),
+                        map_point(edge[0], &slice_parameters[slice + 1], &heights[slice + 1]),
+                    ]
+                    .into_iter()
+                    .collect::<Option<Vec<_>>>();
+                    if let Some(points) = points {
+                        push_clean_face(
+                            vec![points[0].clone(), points[1].clone(), points[2].clone()],
+                            !height_positive,
+                            metadata,
+                            polygons,
+                        );
+                        push_clean_face(
+                            vec![points[0].clone(), points[2].clone(), points[3].clone()],
+                            !height_positive,
+                            metadata,
+                            polygons,
+                        );
+                    }
+                }
+            }
+        }
+
+        let mut slice_parameters = Vec::with_capacity(slices + 1);
+        let mut heights = Vec::with_capacity(slices + 1);
+        for index in 0..=slices {
+            let fraction = (Real::from(index as u64) / Real::from(slices as u64))
+                .map_err(|_| ValidationError::InvalidArguments)?;
+            let radians =
+                twist_degrees.clone() * fraction.clone() * Real::pi() / Real::from(180_u16);
+            let radians = radians.map_err(|_| ValidationError::InvalidArguments)?;
+            slice_parameters.push(Slice {
+                sin: radians.clone().sin(),
+                cos: radians.cos(),
+                scale_x: Real::one() + (end_scale[0].clone() - Real::one()) * fraction.clone(),
+                scale_y: Real::one() + (end_scale[1].clone() - Real::one()) * fraction.clone(),
+            });
+            heights.push(height.clone() * fraction);
+        }
+
+        let height_positive = height_sign == RealSign::Positive;
+        let mut polygons = Vec::new();
+
+        for profile in self.projected_region_profiles_for_mesh() {
+            let Some(material) =
+                orient_region_ring(profile.material().points().to_vec(), true)
+            else {
+                continue;
+            };
+            let Some(holes) = profile
+                .holes()
+                .iter()
+                .map(|hole| orient_region_ring(hole.points().to_vec(), false))
+                .collect::<Option<Vec<_>>>()
+            else {
+                continue;
+            };
+            emit_ring(
+                &material,
+                &slice_parameters,
+                &heights,
+                height_positive,
+                &metadata,
+                &mut polygons,
+            );
+            for hole in &holes {
+                emit_ring(
+                    hole,
+                    &slice_parameters,
+                    &heights,
+                    height_positive,
+                    &metadata,
+                    &mut polygons,
+                );
+            }
+
+            let hole_refs = holes.iter().map(Vec::as_slice).collect::<Vec<_>>();
+            let triangles =
+                triangulate_finite_rings(&material, &hole_refs).unwrap_or_default();
+            for triangle in triangles {
+                let bottom = triangle
+                    .iter()
+                    .filter_map(|point| map_point(*point, &slice_parameters[0], &heights[0]))
+                    .collect::<Vec<_>>();
+                push_clean_face(bottom, height_positive, &metadata, &mut polygons);
+                let top = triangle
+                    .iter()
+                    .filter_map(|point| {
+                        map_point(*point, &slice_parameters[slices], &heights[slices])
+                    })
+                    .collect::<Vec<_>>();
+                push_clean_face(top, !height_positive, &metadata, &mut polygons);
+            }
+        }
+
+        for wire in self.projected_wire_polylines_for_mesh() {
+            emit_ring(
+                wire.points(),
+                &slice_parameters,
+                &heights,
+                height_positive,
+                &metadata,
+                &mut polygons,
+            );
+        }
+
+        Ok(Mesh::from_polygons(polygons))
+    }
 
     /// **Mathematical Foundation: Surface of Revolution Generation**
     ///
-    /// Revolve 2D Sketch around the Y-axis to create surfaces of revolution.
+    /// Revolve 2D Profile around the Y-axis to create surfaces of revolution.
     /// This implements the complete mathematical theory of revolution surfaces with
     /// proper orientation handling and cap generation.
     ///
@@ -663,15 +996,30 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - **Degeneracy handling**: Skips zero-length edges
     /// - **Precision**: Maintains accuracy for small angles
     ///
+    /// Native area profiles are consumed from hypercurve region rings before
+    /// finite mesh generation. Native open `CurveString2` wires are revolved as
+    /// independent profile curves without end caps. This keeps profile topology
+    /// in hyper geometry and treats mesh vertices as boundary output, following
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// Angular samples are evaluated once as finite mesh-boundary values and
+    /// promoted to exact dyadic vertex coordinates. This avoids retaining
+    /// symbolic trigonometric expressions in hypermesh topology. The Y-axis
+    /// sweep is the same trigonometric rotation formula
+    /// underlying Rodrigues' theorem; see Rodrigues, "Des lois géométriques
+    /// qui régissent les déplacements d'un système solide dans l'espace,"
+    /// *Journal de Mathématiques Pures et Appliquées* 5, 1840.
+    ///
     /// # Parameters
-    /// - `angle_degs`: Revolution angle in degrees (0-360)
+    /// - `angle_degs`: Nonzero revolution angle in degrees in `[-360, 360]`
     /// - `segments`: Number of angular subdivisions (≥ 2)
     ///
-    /// Returns Mesh with revolution surfaces only
-    pub fn revolve(
+    /// Filled profiles produce closed meshes; open wires produce surfaces.
+    pub fn revolve<M: Clone + Debug + Send + Sync>(
         &self,
         angle_degs: Real,
         segments: usize,
+        metadata: M,
     ) -> Result<Mesh<M>, ValidationError> {
         if segments < 2 {
             return Err(ValidationError::FieldLessThan {
@@ -679,262 +1027,170 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                 min: 2,
             });
         }
-        if !angle_degs.is_finite() {
+        let Some(angle_sign) = hreal_sign(&angle_degs) else {
+            return Err(ValidationError::InvalidArguments);
+        };
+        if angle_sign == RealSign::Zero
+            || matches!(
+                hreal_try_cmp(angle_degs.clone().abs(), Real::from(360_u16)),
+                Some(std::cmp::Ordering::Greater) | None
+            )
+        {
             return Err(ValidationError::InvalidArguments);
         }
 
-        let angle_radians = angle_degs.to_radians();
-        let mut new_polygons = Vec::new();
-
-        // A small helper to revolve a point (x,y) in the XY plane around the Y-axis by theta.
-        // The output is a 3D point (X, Y, Z).
-        fn revolve_around_y(x: Real, y: Real, theta: Real) -> Point3<Real> {
-            let cos_t = theta.cos();
-            let sin_t = theta.sin();
-            // Map (x, y, 0) => ( x*cos θ, y, x*sin θ )
-            Point3::new(x * cos_t, y, x * sin_t)
+        fn map_point(point: [f64; 2], sin_cos: &(Real, Real)) -> Option<Point3> {
+            let (sin, cos) = sin_cos;
+            let radius = finite_real(point[0])?;
+            materialize_mesh_sample_point3(Point3::new(
+                radius.clone() * cos.clone(),
+                finite_real(point[1])?,
+                radius * sin.clone(),
+            ))
         }
 
-        // Another helper to determine if a ring (LineString) is CCW or CW in Geo.
-        // In `geo`, ring.exterior() is CCW for an outer boundary, CW for holes.
-        // If the signed area > 0 => CCW; < 0 => CW.
-        fn is_ccw(ring: &LineString<Real>) -> bool {
-            let poly = GeoPolygon::new(ring.clone(), vec![]);
-            poly.signed_area() > 0.0
-        }
-
-        // A helper to extrude one ring of coordinates (including the last->first if needed),
-        // pushing its side polygons into `out_polygons`.
-        // - `ring_coords`: The ring’s sequence of points. Usually closed (last=first).
-        // - `ring_is_ccw`: true if it's an exterior ring, false if interior/hole.
-        // - `angle_radians`: total revolve sweep in radians.
-        // - `segments`: how many discrete slices around the revolve.
-        // - `metadata`: user metadata to attach to side polygons.
-        fn revolve_ring<M: Clone + Send + Sync>(
-            ring_coords: &[geo::Coord<Real>],
-            ring_is_ccw: bool,
-            angle_radians: Real,
+        fn emit_ring<M: Clone + Send + Sync>(
+            ring: &[[f64; 2]],
+            sweep_positive: bool,
+            full_revolve: bool,
             segments: usize,
+            samples: &[(Real, Real)],
             metadata: &M,
-        ) -> Vec<Polygon<M>> {
-            if ring_coords.len() < 2 {
-                return vec![];
-            }
-
-            let mut out_polygons = Vec::new();
-            // Typically the last point = first point for a closed ring.
-            // We'll iterate over each edge i..i+1, and revolve them around by segments slices.
-
-            // The revolve step size in radians:
-            let step = angle_radians / (segments as Real);
-
-            // For each edge in the ring:
-            for i in 0..(ring_coords.len() - 1) {
-                let c_i = ring_coords[i];
-                let c_j = ring_coords[i + 1];
-
-                // If these two points are the same, skip degenerate edge
-                if (c_i.x - c_j.x).abs() < tolerance() && (c_i.y - c_j.y).abs() < tolerance() {
-                    continue;
-                }
-
-                // For each revolve slice j..j+1
-                for s in 0..segments {
-                    let th0 = s as Real * step;
-                    let th1 = (s as Real + 1.0) * step;
-
-                    // revolve bottom edge endpoints at angle th0
-                    let b_i = revolve_around_y(c_i.x, c_i.y, th0);
-                    let b_j = revolve_around_y(c_j.x, c_j.y, th0);
-                    // revolve top edge endpoints at angle th1
-                    let t_i = revolve_around_y(c_i.x, c_i.y, th1);
-                    let t_j = revolve_around_y(c_j.x, c_j.y, th1);
-
-                    // Build a 4-vertex side polygon for the ring edge.
-                    // The orientation depends on ring_is_ccw:
-                    //    If CCW => outward walls -> [b_i, b_j, t_j, t_i]
-                    //    If CW  => reverse it -> [b_j, b_i, t_i, t_j]
-                    let quad_verts = if ring_is_ccw {
-                        vec![b_i, b_j, t_j, t_i]
+            polygons: &mut Vec<Polygon<M>>,
+        ) {
+            for edge in ring.windows(2) {
+                for slice in 0..segments {
+                    let next_slice = if full_revolve {
+                        (slice + 1) % samples.len()
                     } else {
-                        vec![b_j, b_i, t_i, t_j]
-                    }
-                    .into_iter()
-                    .map(|position| Vertex::new(position, Vector3::zeros()))
-                    .collect();
-
-                    out_polygons.push(Polygon::new(quad_verts, metadata.clone()));
+                        slice + 1
+                    };
+                    let Some(a) = map_point(edge[0], &samples[slice]) else {
+                        continue;
+                    };
+                    let Some(b) = map_point(edge[1], &samples[slice]) else {
+                        continue;
+                    };
+                    let Some(c) = map_point(edge[1], &samples[next_slice]) else {
+                        continue;
+                    };
+                    let Some(d) = map_point(edge[0], &samples[next_slice]) else {
+                        continue;
+                    };
+                    push_clean_face(vec![a, b, c, d], !sweep_positive, metadata, polygons);
                 }
             }
-            out_polygons
         }
 
-        // Build a single “cap” polygon from ring_coords at a given angle (0 or angle_radians).
-        //  - revolve each 2D point by `angle`, produce a 3D ring
-        //  - if `flip` is true, reverse the ring so the normal is inverted
-        fn build_cap_polygon<M: Clone + Send + Sync>(
-            ring_coords: &[geo::Coord<Real>],
-            angle: Real,
-            flip: bool,
-            metadata: &M,
-        ) -> Option<Polygon<M>> {
-            if ring_coords.len() < 3 {
-                return None;
+        fn radial_orientation(ring: &[[f64; 2]]) -> Option<bool> {
+            let has_negative = ring.iter().any(|point| point[0] < 0.0);
+            let has_positive = ring.iter().any(|point| point[0] > 0.0);
+            match (has_negative, has_positive) {
+                (false, false) | (true, true) => None,
+                (false, true) => Some(true),
+                (true, false) => Some(false),
             }
-            // revolve each coordinate at the given angle
-            let mut pts_3d: Vec<_> = ring_coords
+        }
+
+        let full_revolve = matches!(
+            hreal_try_cmp(angle_degs.clone().abs(), Real::from(360_u16)),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let angle_positive = angle_sign == RealSign::Positive;
+        let slice_count = if full_revolve { segments } else { segments + 1 };
+        let samples = (0..slice_count)
+            .map(|slice| {
+                let fraction =
+                    (Real::from(slice as u64) / Real::from(segments as u64)).ok()?;
+                let radians =
+                    (angle_degs.clone() * Real::pi() * fraction / Real::from(180_u16)).ok()?;
+                Some((radians.clone().sin(), radians.cos()))
+            })
+            .collect::<Option<Vec<_>>>()
+            .ok_or(ValidationError::InvalidArguments)?;
+        let mut polygons = Vec::new();
+
+        for profile in self.projected_region_profiles_for_mesh() {
+            let Some(material) =
+                orient_region_ring(profile.material().points().to_vec(), true)
+            else {
+                continue;
+            };
+            let Some(holes) = profile
+                .holes()
                 .iter()
-                .map(|c| revolve_around_y(c.x, c.y, angle))
-                .collect();
-
-            // ensure closed if the ring wasn't strictly closed
-            // (the last point in a Geo ring is typically the same as the first)
-            let last = pts_3d.last().unwrap();
-            let first = pts_3d.first().unwrap();
-            if (last.x - first.x).abs() > tolerance()
-                || (last.y - first.y).abs() > tolerance()
-                || (last.z - first.z).abs() > tolerance()
+                .map(|hole| orient_region_ring(hole.points().to_vec(), false))
+                .collect::<Option<Vec<_>>>()
+            else {
+                continue;
+            };
+            let Some(radial_positive) = radial_orientation(&material) else {
+                return Err(ValidationError::InvalidArguments);
+            };
+            if holes
+                .iter()
+                .any(|hole| radial_orientation(hole) != Some(radial_positive))
             {
-                pts_3d.push(*first);
+                return Err(ValidationError::InvalidArguments);
             }
 
-            // Turn into Vertex
-            let mut verts: Vec<_> = pts_3d
-                .into_iter()
-                .map(|p3| Vertex::new(p3, Vector3::zeros()))
-                .collect();
+            emit_ring(
+                &material,
+                angle_positive == radial_positive,
+                full_revolve,
+                segments,
+                &samples,
+                &metadata,
+                &mut polygons,
+            );
+            for hole in &holes {
+                emit_ring(
+                    hole,
+                    angle_positive == radial_positive,
+                    full_revolve,
+                    segments,
+                    &samples,
+                    &metadata,
+                    &mut polygons,
+                );
+            }
 
-            // If flip == true, reverse them and flip each vertex
-            if flip {
-                verts.reverse();
-                for v in &mut verts {
-                    v.flip();
+            if !full_revolve {
+                let sweep_positive = angle_positive == radial_positive;
+                let hole_refs = holes.iter().map(Vec::as_slice).collect::<Vec<_>>();
+                let triangles =
+                    triangulate_finite_rings(&material, &hole_refs).unwrap_or_default();
+                for triangle in triangles {
+                    let start = triangle
+                        .iter()
+                        .filter_map(|point| map_point(*point, &samples[0]))
+                        .collect::<Vec<_>>();
+                    push_clean_face(start, sweep_positive, &metadata, &mut polygons);
+                    let end = triangle
+                        .iter()
+                        .filter_map(|point| map_point(*point, &samples[slice_count - 1]))
+                        .collect::<Vec<_>>();
+                    push_clean_face(end, !sweep_positive, &metadata, &mut polygons);
                 }
             }
-
-            // Build the polygon
-            let poly = Polygon::new(verts, metadata.clone());
-            Some(poly)
         }
 
-        //----------------------------------------------------------------------
-        // 2) Iterate over each geometry (Polygon or MultiPolygon),
-        //    revolve the side walls, and possibly add caps if angle_degs < 360.
-        //----------------------------------------------------------------------
-        let full_revolve = (angle_degs - 360.0).abs() < tolerance(); // or angle_degs >= 359.999..., etc.
-        let do_caps = !full_revolve && (angle_degs > 0.0);
-
-        for geom in &self.geometry {
-            match geom {
-                geo::Geometry::Polygon(poly2d) => {
-                    // Exterior ring
-                    let ext_ring = poly2d.exterior();
-                    let ext_ccw = is_ccw(ext_ring);
-
-                    // (A) side walls
-                    new_polygons.extend(revolve_ring(
-                        &ext_ring.0,
-                        ext_ccw,
-                        angle_radians,
-                        segments,
-                        &self.metadata,
-                    ));
-
-                    // (B) cap(s) if partial revolve
-                    if do_caps {
-                        // start-cap at angle=0
-                        //   flip if ext_ccw == true
-                        if let Some(cap) = build_cap_polygon(
-                            &ext_ring.0,
-                            0.0,
-                            ext_ccw, // exterior ring => flip the start cap
-                            &self.metadata,
-                        ) {
-                            new_polygons.push(cap);
-                        }
-
-                        // end-cap at angle= angle_radians
-                        //   flip if ext_ccw == false
-                        if let Some(cap) = build_cap_polygon(
-                            &ext_ring.0,
-                            angle_radians,
-                            !ext_ccw, // exterior ring => keep normal orientation for end
-                            &self.metadata,
-                        ) {
-                            new_polygons.push(cap);
-                        }
-                    }
-
-                    // Interior rings (holes)
-                    for hole in poly2d.interiors() {
-                        let hole_ccw = is_ccw(hole);
-                        new_polygons.extend(revolve_ring(
-                            &hole.0,
-                            hole_ccw,
-                            angle_radians,
-                            segments,
-                            &self.metadata,
-                        ));
-                    }
-                },
-
-                geo::Geometry::MultiPolygon(mpoly) => {
-                    // Each Polygon inside
-                    for poly2d in &mpoly.0 {
-                        let ext_ring = poly2d.exterior();
-                        let ext_ccw = is_ccw(ext_ring);
-
-                        new_polygons.extend(revolve_ring(
-                            &ext_ring.0,
-                            ext_ccw,
-                            angle_radians,
-                            segments,
-                            &self.metadata,
-                        ));
-                        if do_caps {
-                            if let Some(cap) =
-                                build_cap_polygon(&ext_ring.0, 0.0, ext_ccw, &self.metadata)
-                            {
-                                new_polygons.push(cap);
-                            }
-                            if let Some(cap) = build_cap_polygon(
-                                &ext_ring.0,
-                                angle_radians,
-                                !ext_ccw,
-                                &self.metadata,
-                            ) {
-                                new_polygons.push(cap);
-                            }
-                        }
-
-                        // holes
-                        for hole in poly2d.interiors() {
-                            let hole_ccw = is_ccw(hole);
-                            new_polygons.extend(revolve_ring(
-                                &hole.0,
-                                hole_ccw,
-                                angle_radians,
-                                segments,
-                                &self.metadata,
-                            ));
-                        }
-                    }
-                },
-
-                // We should implement revolve for Lines and PolyLines, but we may ignore points, etc.
-                _ => {},
-            }
+        for wire in self.projected_wire_polylines_for_mesh() {
+            let Some(radial_positive) = radial_orientation(wire.points()) else {
+                return Err(ValidationError::InvalidArguments);
+            };
+            emit_ring(
+                wire.points(),
+                angle_positive == radial_positive,
+                full_revolve,
+                segments,
+                &samples,
+                &metadata,
+                &mut polygons,
+            );
         }
 
-        //----------------------------------------------------------------------
-        // 3) Return the new CSG:
-        //----------------------------------------------------------------------
-        Ok(Mesh {
-            polygons: new_polygons,
-            bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
-            metadata: self.metadata.clone(),
-        })
+        Ok(Mesh::from_polygons(polygons))
     }
 
     /// Sweep (a.k.a. “extrude along path”) –
@@ -942,86 +1198,170 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// aims the sketch’s +Z at the local path tangent,
     /// stitches side walls, and caps open ends.
     ///
+    /// Closed area profiles are read from Profile's native hypercurve
+    /// [`Region2`](hypercurve::Region2) boundary rings and capped when the path
+    /// is open. Native [`CurveString2`](hypercurve::CurveString2) wires are
+    /// swept as independent open profile curves without caps. The path frames
+    /// and mesh vertices are finite output, while the swept profile topology
+    /// stays in hyper geometry until the mesh boundary. This follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>). The
+    /// frame propagation is the standard rotation-minimizing/parallel-transport
+    /// sweep approach; see Bishop, "There is more than one way to frame a
+    /// curve," *American Mathematical Monthly* 82(3), 1975
+    /// (<https://doi.org/10.2307/2319846>).
+    ///
     /// * `path` - ordered list of 3-D points. If the first and last points
-    ///   coincide (`norm(p[0] - p[n]) < tolerance()`) the path is treated as
-    ///   **closed** and no caps are added.
+    ///   coincide under the exact hyperreal squared-distance predicate, the path is
+    ///   treated as **closed** and no caps are added.
     ///
     /// * returns - a `Mesh<M>` containing all side quads plus automatically triangulated caps (respecting any holes).
-    pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<M> {
-        // sanity checks
-        if path.len() < 2 || self.geometry.0.is_empty() {
-            return Mesh::empty(self.metadata.clone());
+    pub fn sweep<M: Clone + Debug + Send + Sync>(
+        &self,
+        path: &[Point3],
+        metadata: M,
+    ) -> Mesh<M> {
+        if path.len() < 2 {
+            return Mesh::empty();
         }
-        if path
-            .iter()
-            .any(|p| !p.x.is_finite() || !p.y.is_finite() || !p.z.is_finite())
-        {
-            return Mesh::empty(self.metadata.clone());
+        if path.iter().any(|p| hvector3_from_point3(p).is_none()) {
+            return Mesh::empty();
         }
+
+        let mut canonical_path = Vec::with_capacity(path.len());
+        for point in path {
+            let is_duplicate = canonical_path.last().is_some_and(|previous: &Point3| {
+                let previous = hyperlimit::Point3::new(
+                    previous.x.clone(),
+                    previous.y.clone(),
+                    previous.z.clone(),
+                );
+                let point =
+                    hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
+                matches!(
+                    hyperlimit::point3_equal(&previous, &point).value(),
+                    Some(true)
+                )
+            });
+            if !is_duplicate {
+                canonical_path.push(point.clone());
+            }
+        }
+        if canonical_path.len() < 2 {
+            return Mesh::empty();
+        }
+
+        let n_path = canonical_path.len();
+        let path_start = hyperlimit::Point3::new(
+            canonical_path[0].x.clone(),
+            canonical_path[0].y.clone(),
+            canonical_path[0].z.clone(),
+        );
+        let path_end = hyperlimit::Point3::new(
+            canonical_path[n_path - 1].x.clone(),
+            canonical_path[n_path - 1].y.clone(),
+            canonical_path[n_path - 1].z.clone(),
+        );
+        let path_is_closed = matches!(
+            hyperlimit::point3_equal(&path_start, &path_end).value(),
+            Some(true)
+        );
+        if path_is_closed {
+            canonical_path.pop();
+        }
+        if canonical_path.len() < if path_is_closed { 3 } else { 2 } {
+            return Mesh::empty();
+        }
+        let path = canonical_path;
         let n_path = path.len();
-        let path_is_closed = (path[0] - path[n_path - 1]).norm() < tolerance();
+
+        let segment_count = if path_is_closed { n_path } else { n_path - 1 };
+        let mut segment_directions = Vec::with_capacity(segment_count);
+        for index in 0..segment_count {
+            let Some(direction) = hunit_vector3(&(&path[(index + 1) % n_path] - &path[index]))
+            else {
+                return Mesh::empty();
+            };
+            segment_directions.push(direction);
+        }
+        let mut tangents = Vec::with_capacity(n_path);
+        for index in 0..n_path {
+            let tangent = if !path_is_closed && index == 0 {
+                segment_directions[0].clone()
+            } else if !path_is_closed && index == n_path - 1 {
+                segment_directions[segment_count - 1].clone()
+            } else {
+                let incoming =
+                    &segment_directions[(index + segment_count - 1) % segment_count];
+                let outgoing = &segment_directions[index % segment_count];
+                let Some(bisector) = hunit_vector3(&(incoming + outgoing)) else {
+                    return Mesh::empty();
+                };
+                bisector
+            };
+            tangents.push(tangent);
+        }
 
         // pre-compute a transform for each path vertex
-        let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
+        let mut slice_xforms: Vec<Matrix4> = Vec::with_capacity(n_path);
 
         // first slice
-        let mut dir_prev = (path[1] - path[0])
-            .try_normalize(tolerance())
-            .unwrap_or_else(Vector3::z);
-        let mut orientation = Rotation3::rotation_between(&Vector3::z(), &dir_prev)
-            .unwrap_or_else(Rotation3::identity)
-            .to_homogeneous();
-        slice_xforms.push(Translation3::from(path[0].coords).to_homogeneous() * orientation);
+        let Some(mut orientation) = hrotation_between_vectors(&Vector3::z(), &tangents[0])
+        else {
+            return Mesh::empty();
+        };
+        let Some(first_translation) = htranslation_matrix(&path[0].to_vector()) else {
+            return Mesh::empty();
+        };
+        slice_xforms.push(first_translation * orientation.clone());
 
         // propagate frame with parallel transport
         for i in 1..n_path {
-            // pick the outgoing tangent _now_
-            let dir_curr = if i == n_path - 1 && !path_is_closed {
-                (path[i] - path[i - 1])
-                    .try_normalize(tolerance())
-                    .unwrap_or(dir_prev) // look back at the end
-            } else {
-                (path[(i + 1) % n_path] - path[i])
-                    .try_normalize(tolerance())
-                    .unwrap_or(dir_prev)
+            // Rotate the frame exactly once. The rotation matrix is assembled
+            // from hyperlattice-checked unit vectors, dot, and cross products.
+            let Some(rot_between) = hrotation_between_vectors(&tangents[i - 1], &tangents[i])
+            else {
+                return Mesh::empty();
             };
-
-            // rotate the frame exactly **once**
-            let rot_between = Rotation3::rotation_between(&dir_prev, &dir_curr)
-                .unwrap_or_else(Rotation3::identity)
-                .to_homogeneous();
             orientation = rot_between * orientation;
 
             // now the slice that lives at path[i]
-            slice_xforms
-                .push(Translation3::from(path[i].coords).to_homogeneous() * orientation);
-
-            // ...and _immediately_ remember this tangent for the next turn
-            dir_prev = dir_curr;
+            let Some(translation) = htranslation_matrix(&path[i].to_vector()) else {
+                return Mesh::empty();
+            };
+            slice_xforms.push(translation * orientation.clone());
         }
 
         // helper: map a 2-D point (x,y,0) through a slice transform
         #[inline]
-        fn map_pt(p2: [Real; 2], m: &Matrix4<Real>) -> Point3<Real> {
-            Point3::from_homogeneous(*m * Point3::new(p2[0], p2[1], 0.0).to_homogeneous())
-                .expect("homogeneous w != 0")
+        fn map_pt(p2: [f64; 2], m: &Matrix4) -> Option<Point3> {
+            let [x, y] = p2;
+            materialize_mesh_sample_point3(m.transform_point3(&finite_xy_point3(x, y)?).ok()?)
         }
 
-        // collect every exterior & interior ring of the sketch
+        #[inline]
+        fn map_real_xy(x: Real, y: Real, m: &Matrix4) -> Option<Point3> {
+            materialize_mesh_sample_point3(
+                m.transform_point3(&Point3::new(x, y, Real::zero())).ok()?,
+            )
+        }
+
+        // collect every closed region ring and open wire profile of the sketch
         #[derive(Debug)]
         struct Ring {
-            coords_2d: Vec<[Real; 2]>,      // original XY coords (first == last)
-            slices: Vec<Vec<Point3<Real>>>, // one Vec<Point3> per path vertex
+            coords_2d: Vec<[f64; 2]>, // original XY coords
+            slices: Vec<Vec<Point3>>, // one Vec<Point3> per path vertex
         }
         let mut rings: Vec<Ring> = Vec::new();
 
-        let mut add_ring = |coords: Vec<[Real; 2]>| {
+        let mut add_ring = |coords: Vec<[f64; 2]>| {
             if coords.len() < 2 {
                 return;
             }
-            let mut slices: Vec<Vec<Point3<Real>>> = Vec::with_capacity(n_path);
+            let mut slices: Vec<Vec<Point3>> = Vec::with_capacity(n_path);
             for xf in &slice_xforms {
-                let slice: Vec<Point3<Real>> = coords.iter().map(|&p| map_pt(p, xf)).collect();
+                let slice: Vec<Point3> =
+                    coords.iter().filter_map(|p| map_pt(*p, xf)).collect();
                 slices.push(slice);
             }
             rings.push(Ring {
@@ -1030,25 +1370,37 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             });
         };
 
-        use geo::Geometry;
-        for geom in &self.geometry {
-            match geom {
-                Geometry::Polygon(poly) => {
-                    add_ring(poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect());
-                    for hole in poly.interiors() {
-                        add_ring(hole.coords_iter().map(|c| [c.x, c.y]).collect());
-                    }
-                },
-                Geometry::MultiPolygon(mp) => {
-                    for poly in &mp.0 {
-                        add_ring(poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect());
-                        for hole in poly.interiors() {
-                            add_ring(hole.coords_iter().map(|c| [c.x, c.y]).collect());
-                        }
-                    }
-                },
-                _ => {},
+        let mut cap_profiles: Vec<FiniteRegionRings> = Vec::new();
+        let region_profiles = self.projected_region_profiles_for_mesh();
+        if !region_profiles.is_empty() {
+            for profile in region_profiles {
+                let Some(material) =
+                    orient_region_ring(profile.material().points().to_vec(), true)
+                else {
+                    continue;
+                };
+                let Some(holes) = profile
+                    .holes()
+                    .iter()
+                    .map(|hole| orient_region_ring(hole.points().to_vec(), false))
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    continue;
+                };
+                add_ring(material.clone());
+                for hole in &holes {
+                    add_ring(hole.clone());
+                }
+                cap_profiles.push((material, holes));
             }
+        }
+
+        for wire in self.projected_wire_polylines_for_mesh() {
+            add_ring(wire.into_points());
+        }
+
+        if rings.is_empty() {
+            return Mesh::empty();
         }
 
         // build polygons
@@ -1058,35 +1410,35 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let end_idx = if path_is_closed { n_path } else { n_path - 1 };
 
         for ring in &rings {
-            let v_per_ring = ring.coords_2d.len() - 1; // last == first
+            let v_per_ring = ring.coords_2d.len() - 1;
             for i in 0..end_idx {
                 let j = (i + 1) % n_path;
                 let slice_i = &ring.slices[i];
                 let slice_j = &ring.slices[j];
 
                 for k in 0..v_per_ring {
-                    let v0 = slice_i[k];
-                    let v1 = slice_i[k + 1];
-                    let v2 = slice_j[k + 1];
-                    let v3 = slice_j[k];
+                    let v0 = slice_i[k].clone();
+                    let v1 = slice_i[k + 1].clone();
+                    let v2 = slice_j[k + 1].clone();
+                    let v3 = slice_j[k].clone();
 
                     // triangle 1  (v0-v1-v2)
                     out_polys.push(Polygon::new(
                         vec![
-                            Vertex::new(v0, Vector3::zeros()),
-                            Vertex::new(v1, Vector3::zeros()),
-                            Vertex::new(v2, Vector3::zeros()),
+                            Vertex::new(v0.clone(), Vector3::zeros()),
+                            Vertex::new(v1.clone(), Vector3::zeros()),
+                            Vertex::new(v2.clone(), Vector3::zeros()),
                         ],
-                        self.metadata.clone(),
+                        metadata.clone(),
                     ));
                     // triangle 2  (v0-v2-v3)
                     out_polys.push(Polygon::new(
                         vec![
-                            Vertex::new(v0, Vector3::zeros()),
-                            Vertex::new(v2, Vector3::zeros()),
-                            Vertex::new(v3, Vector3::zeros()),
+                            Vertex::new(v0.clone(), Vector3::zeros()),
+                            Vertex::new(v2.clone(), Vector3::zeros()),
+                            Vertex::new(v3.clone(), Vector3::zeros()),
                         ],
-                        self.metadata.clone(),
+                        metadata.clone(),
                     ));
                 }
             }
@@ -1098,90 +1450,466 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             // then reuse the triangles for both ends.
 
             // helper so we don’t repeat the capping code twice
-            let mut add_caps = |poly2d: &GeoPolygon<Real>| {
-                let ext: Vec<[Real; 2]> =
-                    poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-                let holes: Vec<Vec<[Real; 2]>> = poly2d
-                    .interiors()
-                    .iter()
-                    .map(|r| r.coords_iter().map(|c| [c.x, c.y]).collect())
-                    .collect();
-                let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
+            let mut add_caps = |ext: &[[f64; 2]], holes: &[Vec<[f64; 2]>]| {
+                let hole_refs: Vec<&[[f64; 2]]> = holes.iter().map(|v| &v[..]).collect();
 
-                let tris = Sketch::<()>::triangulate_with_holes(&ext, &hole_refs);
+                let tris = finite_triangles_to_xy_points(
+                    triangulate_finite_rings(ext, &hole_refs).unwrap_or_default(),
+                );
 
                 // cap at the start of the path (flip winding)
                 for t in &tris {
-                    let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[0]);
-                    let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[0]);
-                    let p2 = map_pt([t[2].x, t[2].y], &slice_xforms[0]);
+                    let Some(p0) =
+                        map_real_xy(t[0].x.clone(), t[0].y.clone(), &slice_xforms[0])
+                    else {
+                        continue;
+                    };
+                    let Some(p1) =
+                        map_real_xy(t[1].x.clone(), t[1].y.clone(), &slice_xforms[0])
+                    else {
+                        continue;
+                    };
+                    let Some(p2) =
+                        map_real_xy(t[2].x.clone(), t[2].y.clone(), &slice_xforms[0])
+                    else {
+                        continue;
+                    };
                     out_polys.push(Polygon::new(
                         vec![
                             Vertex::new(p2, Vector3::zeros()),
                             Vertex::new(p1, Vector3::zeros()),
                             Vertex::new(p0, Vector3::zeros()),
                         ],
-                        self.metadata.clone(),
+                        metadata.clone(),
                     ));
                 }
 
                 // cap at the end of the path
                 for t in &tris {
-                    let p0 = map_pt([t[0].x, t[0].y], &slice_xforms[n_path - 1]);
-                    let p1 = map_pt([t[1].x, t[1].y], &slice_xforms[n_path - 1]);
-                    let p2 = map_pt([t[2].x, t[2].y], &slice_xforms[n_path - 1]);
+                    let Some(p0) =
+                        map_real_xy(t[0].x.clone(), t[0].y.clone(), &slice_xforms[n_path - 1])
+                    else {
+                        continue;
+                    };
+                    let Some(p1) =
+                        map_real_xy(t[1].x.clone(), t[1].y.clone(), &slice_xforms[n_path - 1])
+                    else {
+                        continue;
+                    };
+                    let Some(p2) =
+                        map_real_xy(t[2].x.clone(), t[2].y.clone(), &slice_xforms[n_path - 1])
+                    else {
+                        continue;
+                    };
                     out_polys.push(Polygon::new(
                         vec![
                             Vertex::new(p0, Vector3::zeros()),
                             Vertex::new(p1, Vector3::zeros()),
                             Vertex::new(p2, Vector3::zeros()),
                         ],
-                        self.metadata.clone(),
+                        metadata.clone(),
                     ));
                 }
             };
 
-            for geom in &self.geometry {
-                match geom {
-                    Geometry::Polygon(poly2d) => add_caps(poly2d),
-                    Geometry::MultiPolygon(mp) => {
-                        for poly2d in &mp.0 {
-                            add_caps(poly2d);
-                        }
-                    },
-                    _ => {},
-                }
+            for (outer, holes) in &cap_profiles {
+                add_caps(outer, holes);
             }
         }
 
-        Mesh::from_polygons(&out_polys, self.metadata.clone())
+        Mesh::from_polygons(out_polys)
     }
 }
 
-/// Helper to build a single Polygon from a “slice” of 3D points.
-///
-/// If `flip_winding` is true, we reverse the vertex order (so the polygon’s normal flips).
-fn _polygon_from_slice<M: Clone + Send + Sync>(
-    slice_pts: &[Point3<Real>],
-    flip_winding: bool,
-    metadata: M,
-) -> Polygon<M> {
-    if slice_pts.len() < 3 {
-        // degenerate polygon
-        return Polygon::new(vec![], metadata);
+fn close_region_ring(mut points: Vec<[f64; 2]>) -> Vec<[f64; 2]> {
+    if points.len() >= 2
+        && points
+            .first()
+            .zip(points.last())
+            .is_some_and(|(first, last)| first != last)
+    {
+        let first = points[0];
+        points.push(first);
     }
-    // Build the vertex list
-    let mut verts: Vec<Vertex> = slice_pts
-        .iter()
-        .map(|p| Vertex::new(*p, Vector3::zeros()))
-        .collect();
+    points
+}
 
-    if flip_winding {
-        verts.reverse();
-        for v in &mut verts {
-            v.flip();
+fn clean_region_ring(points: Vec<[f64; 2]>) -> Option<Vec<[f64; 2]>> {
+    if points
+        .iter()
+        .flatten()
+        .any(|coordinate| !coordinate.is_finite())
+    {
+        return None;
+    }
+
+    let mut points = points;
+    while points.len() > 1 && points.first() == points.last() {
+        points.pop();
+    }
+    points.dedup();
+
+    loop {
+        if points.len() < 3 {
+            return None;
+        }
+        let mut keep = vec![true; points.len()];
+        for index in 0..points.len() {
+            let previous = points[(index + points.len() - 1) % points.len()];
+            let current = points[index];
+            let next = points[(index + 1) % points.len()];
+            let cross = (current[0] - previous[0]) * (next[1] - current[1])
+                - (current[1] - previous[1]) * (next[0] - current[0]);
+            if cross == 0.0 {
+                keep[index] = false;
+            }
+        }
+        if keep.iter().all(|value| *value) {
+            break;
+        }
+        points = points
+            .into_iter()
+            .zip(keep)
+            .filter_map(|(point, keep)| keep.then_some(point))
+            .collect();
+    }
+
+    Some(close_region_ring(points))
+}
+
+fn orient_region_ring(points: Vec<[f64; 2]>, counterclockwise: bool) -> Option<Vec<[f64; 2]>> {
+    let mut points = clean_region_ring(points)?;
+    let exact = points
+        .iter()
+        .map(|point| {
+            Some(hyperlimit::Point2::new(
+                Real::try_from(point[0]).ok()?,
+                Real::try_from(point[1]).ok()?,
+            ))
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let sign = hyperlimit::ring_area_sign(&exact).value()?;
+    let is_counterclockwise = match sign {
+        hyperlimit::Sign::Positive => true,
+        hyperlimit::Sign::Negative => false,
+        hyperlimit::Sign::Zero => return None,
+    };
+    if is_counterclockwise != counterclockwise {
+        points.reverse();
+    }
+    Some(points)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::csg::CSG;
+    use crate::hyper_math::{Real, hreal_from_f64};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    #[test]
+    fn repeated_extrusion_cache_preserves_current_metadata() {
+        let profile = Profile::square(r(2.0));
+        let first = profile.extrude(r(3.0), 1_u8);
+        let second = profile.extrude(r(3.0), 2_u8);
+        let cached = profile.extrude(r(3.0), 7_u8);
+
+        assert_eq!(first.polygons.len(), second.polygons.len());
+        assert_eq!(second.polygons.len(), cached.polygons.len());
+        assert!(cached.polygons.iter().all(|polygon| polygon.metadata == 7));
+        for (expected, actual) in second.polygons.iter().zip(&cached.polygons) {
+            assert_eq!(expected.vertices, actual.vertices);
         }
     }
 
-    Polygon::new(verts, metadata)
+    #[test]
+    fn close_region_ring_uses_exact_hyperreal_endpoint_identity() {
+        assert_eq!(close_region_ring(vec![[0.0, 0.0], [0.0, -0.0]]).len(), 2);
+        assert_eq!(close_region_ring(vec![[0.0, 0.0], [1.0e-12, 0.0]]).len(), 3);
+    }
+
+    #[test]
+    fn orient_region_ring_enforces_material_and_hole_winding() {
+        let clockwise = vec![[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [1.0, 0.0]];
+        let material = orient_region_ring(clockwise.clone(), true).expect("material ring");
+        let hole = orient_region_ring(clockwise, false).expect("hole ring");
+
+        let sign = |ring: &[[f64; 2]]| {
+            let exact = ring
+                .iter()
+                .map(|point| {
+                    hyperlimit::Point2::new(
+                        Real::try_from(point[0]).expect("finite x"),
+                        Real::try_from(point[1]).expect("finite y"),
+                    )
+                })
+                .collect::<Vec<_>>();
+            hyperlimit::ring_area_sign(&exact).value()
+        };
+        assert_eq!(sign(&material), Some(hyperlimit::Sign::Positive));
+        assert_eq!(sign(&hole), Some(hyperlimit::Sign::Negative));
+    }
+
+    #[test]
+    fn orient_region_ring_removes_segments_omitted_by_cap_triangulation() {
+        let ring = vec![
+            [0.0, 0.0],
+            [1.0, 0.0],
+            [2.0, 0.0],
+            [2.0, 1.0],
+            [0.0, 1.0],
+            [0.0, 0.0],
+            [0.0, 0.0],
+        ];
+        let cleaned = orient_region_ring(ring, true).expect("valid ring");
+        assert_eq!(cleaned.len(), 5);
+        assert_eq!(cleaned.first(), cleaned.last());
+        assert!(!cleaned.contains(&[1.0, 0.0]));
+    }
+
+    #[test]
+    fn clockwise_material_profile_extrudes_to_closed_mesh() {
+        let profile = Profile::polygon(&[
+            [r(0.0), r(0.0)],
+            [r(0.0), r(2.0)],
+            [r(1.0), r(2.0)],
+            [r(1.0), r(0.0)],
+        ]);
+        let mesh = profile.extrude(r(3.0), ());
+
+        assert!(!mesh.polygons.is_empty());
+        mesh.to_hypermesh_exact()
+            .expect("clockwise material extrusion must be closed and consistently wound");
+    }
+
+    #[test]
+    fn profile_with_hole_extrudes_to_closed_mesh() {
+        let outer = Profile::rectangle(r(4.0), r(4.0));
+        let inner = Profile::rectangle(r(2.0), r(2.0)).translate(r(1.0), r(1.0), r(0.0));
+        let mesh = outer.difference(&inner).extrude(r(3.0), ());
+
+        assert!(!mesh.polygons.is_empty());
+        mesh.to_hypermesh_exact()
+            .expect("material and hole side walls must balance both caps");
+    }
+
+    #[test]
+    fn sweep_discards_consecutive_duplicate_path_points() {
+        let profile = Profile::square(r(1.0));
+        let canonical = [
+            Point3::new(r(0.0), r(0.0), r(0.0)),
+            Point3::new(r(0.0), r(0.0), r(1.0)),
+            Point3::new(r(0.0), r(0.0), r(2.0)),
+        ];
+        let with_duplicate = [
+            canonical[0].clone(),
+            canonical[1].clone(),
+            canonical[1].clone(),
+            canonical[2].clone(),
+        ];
+
+        let expected = profile.sweep(&canonical, ());
+        let actual = profile.sweep(&with_duplicate, ());
+
+        assert_eq!(actual.polygons.len(), expected.polygons.len());
+        actual
+            .to_hypermesh_exact()
+            .expect("duplicate path points must not create degenerate sweep faces");
+    }
+
+    #[test]
+    fn sweep_uses_miter_tangents_at_sharp_path_corners() {
+        let profile = Profile::square(r(1.0)).translate(r(-0.5), r(-0.5), r(0.0));
+        let path = [
+            Point3::new(r(0.0), r(0.0), r(0.0)),
+            Point3::new(r(0.0), r(0.0), r(2.0)),
+            Point3::new(r(2.0), r(0.0), r(2.0)),
+        ];
+        let mesh = profile.sweep(&path, ());
+
+        assert!(!mesh.polygons.is_empty());
+        mesh.to_hypermesh_exact()
+            .expect("a sharp path corner must not collapse its join triangles");
+    }
+
+    #[test]
+    fn sweep_closes_an_explicitly_closed_path_without_a_duplicate_slice() {
+        let profile = Profile::square(r(0.25)).translate(r(-0.125), r(-0.125), r(0.0));
+        let path = [
+            Point3::new(r(0.0), r(0.0), r(0.0)),
+            Point3::new(r(1.0), r(0.0), r(0.0)),
+            Point3::new(r(1.0), r(1.0), r(0.0)),
+            Point3::new(r(0.0), r(1.0), r(0.0)),
+            Point3::new(r(0.0), r(0.0), r(0.0)),
+        ];
+        let mesh = profile.sweep(&path, ());
+
+        assert!(!mesh.polygons.is_empty());
+        mesh.to_hypermesh_exact()
+            .expect("an explicitly closed sweep path must produce a closed manifold");
+    }
+
+    #[test]
+    fn clockwise_profile_with_hole_sweeps_to_closed_mesh() {
+        let outer = Profile::polygon(&[
+            [r(0.0), r(0.0)],
+            [r(0.0), r(4.0)],
+            [r(4.0), r(4.0)],
+            [r(4.0), r(0.0)],
+        ]);
+        let hole = Profile::rectangle(r(2.0), r(2.0)).translate(r(1.0), r(1.0), r(0.0));
+        let profile = outer.difference(&hole);
+        let path = [
+            Point3::new(r(0.0), r(0.0), r(0.0)),
+            Point3::new(r(0.0), r(0.0), r(2.0)),
+        ];
+        let mesh = profile.sweep(&path, ());
+
+        assert!(!mesh.polygons.is_empty());
+        mesh.to_hypermesh_exact()
+            .expect("swept material and hole walls must balance both caps");
+    }
+
+    #[test]
+    fn full_revolve_reuses_the_seam_and_collapses_axis_cells() {
+        let profile = Profile::rectangle(r(1.0), r(2.0));
+        let mesh = profile.revolve(r(360.0), 24, ()).expect("revolve");
+
+        assert!(!mesh.polygons.is_empty());
+        mesh.to_hypermesh_exact()
+            .expect("a profile touching the axis must revolve to a closed manifold");
+    }
+
+    #[test]
+    fn signed_partial_revolves_have_hole_aware_caps() {
+        let outer = Profile::rectangle(r(4.0), r(4.0)).translate(r(1.0), r(0.0), r(0.0));
+        let hole = Profile::rectangle(r(2.0), r(2.0)).translate(r(2.0), r(1.0), r(0.0));
+        let profile = outer.difference(&hole);
+
+        for angle in [120.0, -120.0] {
+            let mesh = profile.revolve(r(angle), 16, ()).expect("revolve");
+            assert!(!mesh.polygons.is_empty());
+            mesh.to_hypermesh_exact()
+                .expect("partial revolve caps must preserve holes and signed winding");
+        }
+    }
+
+    #[test]
+    fn negative_radius_revolve_adjusts_angular_winding() {
+        let profile = Profile::rectangle(r(2.0), r(3.0)).translate(r(-3.0), r(0.0), r(0.0));
+
+        for angle in [360.0, -360.0, 120.0, -120.0] {
+            let mesh = profile.revolve(r(angle), 16, ()).expect("revolve");
+            mesh.to_hypermesh_exact()
+                .expect("negative-radius profiles must retain manifold winding");
+        }
+    }
+
+    #[test]
+    fn revolve_rejects_profiles_that_span_the_axis() {
+        let profile = Profile::rectangle(r(2.0), r(1.0)).translate(r(-1.0), r(0.0), r(0.0));
+        assert!(matches!(
+            profile.revolve(r(180.0), 12, ()),
+            Err(ValidationError::InvalidArguments)
+        ));
+    }
+
+    #[test]
+    fn twisted_anisotropic_extrusion_is_one_closed_mesh() {
+        let outer = Profile::rectangle(r(4.0), r(4.0));
+        let hole = Profile::rectangle(r(2.0), r(2.0)).translate(r(1.0), r(1.0), r(0.0));
+        let profile = outer.difference(&hole);
+        let mesh = profile
+            .extrude_twisted(r(5.0), r(135.0), [r(0.75), r(1.25)], 12, ())
+            .expect("twisted extrusion");
+
+        assert!(!mesh.polygons.is_empty());
+        mesh.to_hypermesh_exact()
+            .expect("twisted extrusion must stitch every slice and preserve holes");
+    }
+
+    #[test]
+    fn negative_twisted_extrusion_preserves_winding() {
+        let mesh = Profile::square(r(2.0))
+            .extrude_twisted(r(-3.0), r(-90.0), [r(0.5), r(0.75)], 8, ())
+            .expect("twisted extrusion");
+
+        assert!(!mesh.polygons.is_empty());
+        mesh.to_hypermesh_exact()
+            .expect("negative twisted extrusion must remain a closed manifold");
+    }
+
+    #[test]
+    fn multi_section_loft_derives_caps_and_triangulates_side_patches() {
+        let section = |z: f64, inset: f64| {
+            Polygon::new(
+                vec![
+                    Vertex::new(Point3::new(r(inset), r(inset), r(z)), Vector3::z()),
+                    Vertex::new(Point3::new(r(2.0 - inset), r(inset), r(z)), Vector3::z()),
+                    Vertex::new(
+                        Point3::new(r(2.0 - inset), r(2.0 - inset), r(z)),
+                        Vector3::z(),
+                    ),
+                    Vertex::new(Point3::new(r(inset), r(2.0 - inset), r(z)), Vector3::z()),
+                ],
+                (),
+            )
+        };
+        let mesh = Profile::loft(&[section(0.0, 0.0), section(1.0, 0.25), section(2.0, 0.0)])
+            .expect("loft");
+
+        assert_eq!(mesh.polygons.len(), 18);
+        mesh.to_hypermesh_exact()
+            .expect("corresponding loft sections must form one closed manifold");
+    }
+
+    #[test]
+    fn ring_orientation_sign_skips_leading_collinear_points() {
+        let ccw = [
+            [r(0.0), r(0.0)],
+            [r(0.25), r(0.0)],
+            [r(1.0), r(0.0)],
+            [r(1.0), r(1.0)],
+            [r(0.0), r(1.0)],
+            [r(0.0), r(0.0)],
+        ];
+        let cw = [
+            [r(0.0), r(0.0)],
+            [r(0.0), r(0.25)],
+            [r(0.0), r(1.0)],
+            [r(1.0), r(1.0)],
+            [r(1.0), r(0.0)],
+            [r(0.0), r(0.0)],
+        ];
+        let collinear = [[r(0.0), r(0.0)], [r(0.25), r(0.0)], [r(1.0), r(0.0)]];
+
+        let ccw = ccw
+            .iter()
+            .map(|point| hyperlimit::Point2::new(point[0].clone(), point[1].clone()))
+            .collect::<Vec<_>>();
+        let cw = cw
+            .iter()
+            .map(|point| hyperlimit::Point2::new(point[0].clone(), point[1].clone()))
+            .collect::<Vec<_>>();
+        let collinear = collinear
+            .iter()
+            .map(|point| hyperlimit::Point2::new(point[0].clone(), point[1].clone()))
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            hyperlimit::ring_area_sign(&ccw).value(),
+            Some(hyperlimit::Sign::Positive)
+        );
+        assert_eq!(
+            hyperlimit::ring_area_sign(&cw).value(),
+            Some(hyperlimit::Sign::Negative)
+        );
+        assert_eq!(
+            hyperlimit::ring_area_sign(&collinear).value(),
+            Some(hyperlimit::Sign::Zero)
+        );
+    }
 }

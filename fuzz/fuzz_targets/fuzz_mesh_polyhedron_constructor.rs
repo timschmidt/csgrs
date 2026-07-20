@@ -3,16 +3,21 @@
 #![no_main]
 
 use csgrs::mesh::Mesh;
+use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
 
-fn decode_real(bytes: &[u8], idx: &mut usize) -> csgrs::float_types::Real {
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
+
+fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
     for slot in &mut raw {
         *slot = bytes[*idx % bytes.len()];
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-1.0e3, 1.0e3) as csgrs::float_types::Real
+    real(value.clamp(-1.0e3, 1.0e3))
 }
 
 fuzz_target!(|bytes: &[u8]| {
@@ -46,14 +51,14 @@ fuzz_target!(|bytes: &[u8]| {
     }
     let faces = owned_faces.iter().map(Vec::as_slice).collect::<Vec<_>>();
 
-    if let Ok(mesh) = Mesh::<()>::polyhedron(&points, &faces, None) {
+    if let Ok(mesh) = Mesh::<()>::polyhedron(&points, &faces, ()) {
         for vertex in mesh.vertices() {
             assert!(vertex.position.x.is_finite());
             assert!(vertex.position.y.is_finite());
             assert!(vertex.position.z.is_finite());
-            assert!(vertex.normal.x.is_finite());
-            assert!(vertex.normal.y.is_finite());
-            assert!(vertex.normal.z.is_finite());
+            assert!(vertex.normal.0[0].is_finite());
+            assert!(vertex.normal.0[1].is_finite());
+            assert!(vertex.normal.0[2].is_finite());
         }
     }
 });

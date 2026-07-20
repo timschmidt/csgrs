@@ -4,7 +4,7 @@ use super::support::*;
 
 #[test]
 fn test_cube_basics() {
-    let cube: Mesh<()> = Mesh::cube(2.0, ());
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
 
     // A cube should have 6 faces
     assert_eq!(cube.polygons.len(), 6);
@@ -20,15 +20,37 @@ fn test_cube_basics() {
     let height = bbox.maxs.y - bbox.mins.y;
     let depth = bbox.maxs.z - bbox.mins.z;
 
-    assert!((width - 2.0).abs() < 1e-10, "Width should be 2.0");
-    assert!((height - 2.0).abs() < 1e-10, "Height should be 2.0");
-    assert!((depth - 2.0).abs() < 1e-10, "Depth should be 2.0");
+    assert!((width - r(2.0)).abs() < r(1e-10), "Width should be 2.0");
+    assert!((height - r(2.0)).abs() < r(1e-10), "Height should be 2.0");
+    assert!((depth - r(2.0)).abs() < r(1e-10), "Depth should be 2.0");
+}
+
+#[test]
+fn mesh_bounds_union_cached_polygon_endpoints() {
+    let mut polygons = Mesh::cube(r(2.0), ()).polygons;
+    polygons.extend(
+        Mesh::cube(r(2.0), ())
+            .translate(r(10.0), r(-4.0), r(3.0))
+            .polygons,
+    );
+    for polygon in polygons.iter().step_by(2) {
+        polygon.bounding_box();
+    }
+    let mesh = Mesh::from_polygons(polygons.into_vec());
+
+    let bounds = mesh.bounding_box();
+
+    assert_eq!(bounds.mins, p3(0.0, -4.0, 0.0));
+    assert_eq!(bounds.maxs, p3(12.0, 2.0, 5.0));
+    for (index, polygon) in mesh.polygons.iter().enumerate() {
+        assert_eq!(polygon.has_cached_bounding_box(), index % 2 == 0);
+    }
 }
 
 #[test]
 fn test_cube_intersection() {
-    let cube1: Mesh<()> = Mesh::cube(2.0, ());
-    let cube2: Mesh<()> = Mesh::cube(2.0, ()).translate(1.0, 0.0, 0.0);
+    let cube1: Mesh<()> = Mesh::cube(r(2.0), ());
+    let cube2: Mesh<()> = Mesh::cube(r(2.0), ()).translate(r(1.0), r(0.0), r(0.0));
 
     let intersection = cube1.intersection(&cube2);
 
@@ -42,16 +64,15 @@ fn test_cube_intersection() {
     let bbox = intersection.bounding_box();
     let width = bbox.maxs.x - bbox.mins.x;
     assert!(
-        width > 0.0 && width < 2.0,
+        width > r(0.0) && width < r(2.0),
         "Intersection width should be between 0 and 2"
     );
 }
 
 #[test]
 fn test_mesh_intersect_polyline_hits_cube() {
-    let cube: Mesh<()> = Mesh::cube(2.0, ());
-    let hits =
-        cube.intersect_polyline(&[Point3::new(-2.0, 0.0, 0.0), Point3::new(2.0, 0.0, 0.0)]);
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
+    let hits = cube.intersect_polyline(&[p3(-2.0, 0.0, 0.0), p3(2.0, 0.0, 0.0)]);
 
     assert!(
         hits.len() >= 2,
@@ -61,83 +82,36 @@ fn test_mesh_intersect_polyline_hits_cube() {
 
 #[test]
 fn test_negative_extrude_has_downward_top_normal() {
-    let square = Sketch::<()>::square(2.0, ());
-    let mesh = square.extrude_vector(Vector3::new(0.0, 0.0, -1.0));
+    let square = Profile::square(r(2.0));
+    let mesh = square.extrude_vector(v3(0.0, 0.0, -1.0), ());
 
     assert!(
-        mesh.polygons.iter().any(|poly| poly
-            .plane
-            .normal()
-            .dot(&Vector3::new(0.0, 0.0, -1.0))
-            > 0.9),
+        mesh.polygons
+            .iter()
+            .any(|poly| poly.plane.normal().dot(&v3(0.0, 0.0, -1.0)) > r(0.9)),
         "Negative extrusion should produce a downward-facing translated cap"
     );
 }
 
 #[test]
-#[cfg(feature = "nurbs")]
-fn test_nurbs_rectangle_bbox_and_transform() {
-    let rect = crate::nurbs::Nurbs::<()>::rectangle(2.0, 4.0, ());
-    let bbox = rect.bounding_box();
-    assert!((bbox.mins.x + 1.0).abs() < tolerance());
-    assert!((bbox.maxs.y - 2.0).abs() < tolerance());
-
-    let moved = rect.translate(3.0, -1.0, 0.0);
-    let moved_bbox = moved.bounding_box();
-    assert!((moved_bbox.mins.x - 2.0).abs() < tolerance());
-    assert!((moved_bbox.maxs.y - 1.0).abs() < tolerance());
-}
-
-#[test]
-#[cfg(all(feature = "nurbs", feature = "sketch"))]
-fn test_nurbs_to_sketch_tessellates_region() {
-    let circle = crate::nurbs::Nurbs::<()>::circle(1.0, ()).unwrap();
-    let sketch = circle.to_sketch(Some(1e-3));
-    let mp = sketch.to_multipolygon();
-
-    assert_eq!(mp.0.len(), 1);
-    assert!(mp.0[0].exterior().coords().count() > 4);
-}
-
-#[test]
-#[cfg(feature = "nurbs")]
-fn test_nurbs_boolean_intersection() {
-    let a = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ());
-    let b = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ()).translate(1.0, 0.0, 0.0);
-    let intersection = a.try_intersection(&b).unwrap();
-    let bbox = intersection.bounding_box();
-
-    assert!(bbox.maxs.x > bbox.mins.x);
-    assert!(bbox.maxs.x <= 1.0 + tolerance());
-    assert!(bbox.mins.x >= 0.0 - tolerance());
-}
-
-#[test]
-#[cfg(all(feature = "nurbs", feature = "sketch", feature = "mesh"))]
-fn test_nurbs_extrudes_to_mesh() {
-    let rect = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ());
-    let mesh = rect.extrude_vector(Vector3::new(0.0, 0.0, 1.0), Some(1e-3));
-
-    assert!(!mesh.polygons.is_empty());
-    assert!(mesh.bounding_box().maxs.z > 0.9);
-}
-
-#[test]
 fn test_taubin_smoothing() {
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 16, ());
-    let original_positions: Vec<_> = sphere
+    let mesh: Mesh<()> = Mesh::cube(r(1.0), ());
+    for polygon in &mesh.polygons {
+        let _ = polygon.bounding_box();
+    }
+    let original_positions: Vec<_> = mesh
         .polygons
         .iter()
-        .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
+        .flat_map(|poly| poly.vertices.iter().map(|v| v.position.clone()))
         .collect();
 
     // Apply Taubin smoothing
-    let smoothed = sphere.taubin_smooth(0.1, -0.105, 2, false);
+    let smoothed = mesh.taubin_smooth(r(0.1), r(-0.105), 2, false);
 
     // Mesh should have same number of polygons
     assert_eq!(
         smoothed.polygons.len(),
-        sphere.polygons.len(),
+        mesh.polygons.len(),
         "Smoothing should preserve polygon count"
     );
 
@@ -145,12 +119,12 @@ fn test_taubin_smoothing() {
     let smoothed_positions: Vec<_> = smoothed
         .polygons
         .iter()
-        .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
+        .flat_map(|poly| poly.vertices.iter().map(|v| v.position.clone()))
         .collect();
 
     let mut moved_count = 0;
     for (orig, smooth) in original_positions.iter().zip(smoothed_positions.iter()) {
-        if (orig - smooth).norm() > 1e-10 {
+        if (orig - smooth).norm() > r(1e-10) {
             moved_count += 1;
         }
     }
@@ -158,4 +132,29 @@ fn test_taubin_smoothing() {
         moved_count > 0,
         "Taubin smoothing should change vertex positions"
     );
+
+    for polygon in &smoothed.polygons {
+        let bounds = polygon.bounding_box();
+        for support in [
+            &polygon.plane().point_a,
+            &polygon.plane().point_b,
+            &polygon.plane().point_c,
+        ] {
+            assert!(
+                polygon
+                    .vertices()
+                    .iter()
+                    .any(|vertex| &vertex.position == support),
+                "the refreshed plane must use current polygon vertices"
+            );
+        }
+        for vertex in polygon.vertices() {
+            assert!(vertex.position.x >= bounds.mins.x);
+            assert!(vertex.position.x <= bounds.maxs.x);
+            assert!(vertex.position.y >= bounds.mins.y);
+            assert!(vertex.position.y <= bounds.maxs.y);
+            assert!(vertex.position.z >= bounds.mins.z);
+            assert!(vertex.position.z <= bounds.maxs.z);
+        }
+    }
 }

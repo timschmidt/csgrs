@@ -1,284 +1,262 @@
-//! **Mathematical Foundations for Polygon Offsetting**
+//! Native hypercurve offset and skeleton-facing Profile operations.
 //!
-//! This module implements robust polygon offsetting (buffering) operations based on
-//! computational geometry algorithms. The operations grow or shrink polygons by a
-//! specified distance while maintaining topological correctness.
+//! Offset construction is a classical CAD operation: a polygonal profile is
+//! displaced by a prescribed normal distance, then intersections, collapses,
+//! and component changes must be regularized. The primitive offset/cap
+//! decomposition used here follows Tiller and Hanson, "Offsets of
+//! Two-Dimensional Profiles," *IEEE Computer Graphics and Applications* 4(9),
+//! 1984 (<https://doi.org/10.1109/MCG.1984.276011>). Analytic offset caveats
+//! for curves follow Farouki and Neff, "Analytic properties of plane offset
+//! curves," *Computer Aided Geometric Design* 7(1-4), 1990
+//! (<https://doi.org/10.1016/0167-8396(90)90023-K>).
 //!
-//! ## **Theoretical Foundation**
+//! `Profile` does not own a second finite polygon datatype. Supported offsets
+//! stay in [`hypercurve::Region2`], [`hypercurve::Contour2`], and
+//! [`hypercurve::CurveString2`]. Cases that require global trimming or
+//! component merging are kept visible at the native hypercurve boundary instead
+//! of being routed through a finite compatibility cache. That exact-object
+//! boundary follows Yap, "Towards Exact Geometric Computation,"
+//! *Computational Geometry* 7(1-2), 1997
+//! (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 //!
-//! ### **Minkowski Sum Definition**
-//! For a polygon P and disk D of radius r, the offset operation computes:
-//! ```text
-//! P ⊕ D = {p + d | p ∈ P, d ∈ D}
-//! ```
-//! This is equivalent to:
-//! - **Outward offset (r > 0)**: Expand polygon by distance r
-//! - **Inward offset (r < 0)**: Shrink polygon by distance |r|
-//!
-//! ### **Geometric Interpretation**
-//! The offset operation can be visualized as:
-//! 1. **Straight Segments**: Move parallel to original by distance r
-//! 2. **Convex Vertices**: Add circular arc of radius r
-//! 3. **Concave Vertices**: May create self-intersections requiring resolution
-//!
-//! ### **Corner Treatment Options**
-//! - **Rounded**: Use circular arcs at vertices (C¹ continuity)
-//! - **Sharp**: Use angular joints (C⁰ continuity)
-//!
-//! ## **Algorithm Implementation**
-//!
-//! This implementation uses `geo`'s buffer operations, which provide:
-//! - **Robust intersection handling**: Resolves self-intersections
-//! - **Topological correctness**: Maintains polygon validity
-//! - **Multi-polygon support**: Handles complex geometry with holes
-//! - **Numerical stability**: Handles degenerate cases gracefully
-//!
-//! ## **Applications**
-//! - **Toolpath Generation**: CNC machining offset paths
-//! - **Buffer Zones**: GIS proximity analysis
-//! - **Collision Detection**: Expanded bounding regions
-//! - **Typography**: Font outline generation
-//!
-//! All operations preserve the 3D polygon structure while applying 2D offsetting
-//! to the planar projections stored in the geometry collection.
-use crate::float_types::Real;
-use crate::sketch::Sketch;
-use geo::algorithm::map_coords::MapCoords;
-use geo::{
-    Buffer, Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Polygon,
-    algorithm::buffer::{BufferStyle, LineJoin},
+//! Straight skeletons are a separate topological construction; see Aichholzer
+//! et al., "A Novel Type of Skeleton for Polygons," *Journal of Universal
+//! Computer Science* 1(12), 1995
+//! (<https://doi.org/10.3217/jucs-001-12-0752>). Until that algorithm is owned
+//! by hypercurve, this module only emits native inward diagnostic rays for
+//! simple finite profile projections rather than importing a separate skeleton
+//! geometry model.
+
+use crate::hyper_math::{Real, hreal_abs, hreal_sign, hreal_try_cmp};
+use crate::sketch::Profile;
+use hypercurve::{
+    Classification, Contour2, CurvePolicy, CurveString2, FiniteRegionProfile2, OffsetCap,
+    Region2,
 };
-use std::fmt::Debug;
-use std::sync::OnceLock;
+use hyperreal::RealSign;
 
-#[allow(clippy::unnecessary_cast)]
-fn skel_poly(poly: &Polygon<Real>, inward: bool) -> Vec<LineString<Real>> {
-    let poly_f64 = poly.map_coords(|c| Coord {
-        x: c.x as f64,
-        y: c.y as f64,
-    });
+impl Profile {
+    fn preserve_offset_wires(&self, sketch: &mut Profile) {
+        if !self.wires().is_empty() {
+            sketch.append_native_wires(self.wires().iter().cloned());
+        }
+    }
 
-    geo_buffer::skeleton_of_polygon_to_linestring(&poly_f64, inward)
-        .into_iter()
-        .map(|ls| {
-            ls.map_coords(|c| Coord {
-                x: c.x as Real,
-                y: c.y as Real,
-            })
+    fn empty_offset_result(&self) -> Profile {
+        Profile::from_region_and_wires_with_origin(
+            Region2::empty(),
+            Vec::new(),
+            self.origin.clone(),
+            self.origin_transform.clone(),
+        )
+    }
+
+    /// Return native hypercurve topology unchanged for an exact zero offset.
+    ///
+    /// The identity case remains entirely in the hyperreal kernel and does not
+    /// consult or regenerate a finite compatibility representation. This keeps
+    /// boundary ownership aligned with Yap's exact geometric computation model
+    /// (1997) while preserving the zero-radius offset identity discussed in
+    /// Farouki and Neff (1990).
+    fn native_zero_offset(&self, distance: Real) -> Option<Profile> {
+        matches!(hreal_try_cmp(&distance, 0.0), Some(std::cmp::Ordering::Equal)).then(|| {
+            Profile::from_region_and_wires_with_origin(
+                self.region.clone(),
+                self.wires.clone(),
+                self.origin.clone(),
+                self.origin_transform.clone(),
+            )
         })
-        .collect()
+    }
+
+    /// Build a native filled outline around wire-only sketches.
+    ///
+    /// Hypercurve owns open-profile offset/cap construction through
+    /// [`CurveString2::offset_outline`], so wire-only offsets compose directly
+    /// into filled [`Region2`] topology. This is the native counterpart to the
+    /// cap-and-join decomposition of Tiller and Hanson (1984).
+    fn native_wire_outline_offset(&self, distance: Real, cap: OffsetCap) -> Option<Profile> {
+        if !self.region.is_empty()
+            || self.wires.is_empty()
+            || !matches!(
+                hreal_try_cmp(&distance, 0.0),
+                Some(std::cmp::Ordering::Greater)
+            )
+        {
+            return None;
+        }
+
+        let policy = CurvePolicy::certified();
+        let half_width = hreal_abs(distance)?;
+        let mut contours = Vec::with_capacity(self.wires.len());
+        for wire in &self.wires {
+            let contour = match wire.offset_outline(half_width.clone(), cap, &policy).ok()? {
+                Classification::Decided(contour) => contour,
+                Classification::Uncertain(_) => return None,
+            };
+            contours.push(contour);
+        }
+
+        let region = match Region2::from_boundary_contours(contours.clone(), &policy).ok()? {
+            Classification::Decided(region) => region,
+            Classification::Uncertain(_) => Region2::from_material_contours(contours),
+        };
+        Some(Profile::from_region_and_wires_with_origin(
+            region,
+            Vec::new(),
+            self.origin.clone(),
+            self.origin_transform.clone(),
+        ))
+    }
+
+    /// Try a native hypercurve sharp offset.
+    ///
+    /// This covers the conservative contour-wise case where every material and
+    /// hole boundary can be offset independently and checked for self-contact by
+    /// hypercurve. Material contours move outward relative to the filled region;
+    /// hole contours move into the void for positive distances and away from it
+    /// for negative distances.
+    fn native_sharp_offset(&self, distance: Real) -> Option<Profile> {
+        if self.region.is_empty()
+            || !self.wires.is_empty()
+            || !Self::region_has_nonzero_area(&self.region)
+        {
+            return None;
+        }
+
+        let policy = CurvePolicy::certified();
+        let mut material = Vec::with_capacity(self.region.material_contours().len());
+        for contour in self.region.material_contours() {
+            material.push(native_role_offset_contour(
+                contour,
+                distance.clone(),
+                false,
+                &policy,
+            )?);
+        }
+
+        let mut holes = Vec::with_capacity(self.region.hole_contours().len());
+        for contour in self.region.hole_contours() {
+            holes.push(native_role_offset_contour(
+                contour,
+                distance.clone(),
+                true,
+                &policy,
+            )?);
+        }
+
+        let mut sketch = Profile::from_region(Region2::new(material, holes));
+        sketch.origin = self.origin.clone();
+        sketch.origin_transform = self.origin_transform.clone();
+        Some(sketch)
+    }
+
+    /// Offset native Profile topology with sharp joins where hypercurve can
+    /// certify the operation.
+    ///
+    /// A zero offset is identity. Wire-only input becomes a filled native
+    /// outline. Filled regions use checked Hypercurve contour offsets.
+    /// Unsupported cases return an empty native sketch.
+    pub fn offset(&self, distance: Real) -> Profile {
+        if let Some(sketch) = self.native_zero_offset(distance.clone()) {
+            return sketch;
+        }
+        if let Some(sketch) =
+            self.native_wire_outline_offset(distance.clone(), OffsetCap::Square)
+        {
+            return sketch;
+        }
+        if let Some(sketch) = self.native_sharp_offset(distance) {
+            return sketch;
+        }
+        self.empty_offset_result()
+    }
+
+    /// Offset native Profile topology with rounded caps for wire-only input.
+    ///
+    /// Filled-region rounded joins are not yet native in hypercurve, so filled
+    /// regions use the same checked sharp-contour path as [`Profile::offset`].
+    pub fn offset_rounded(&self, distance: Real) -> Profile {
+        if let Some(sketch) = self.native_zero_offset(distance.clone()) {
+            return sketch;
+        }
+        if let Some(sketch) =
+            self.native_wire_outline_offset(distance.clone(), OffsetCap::Round)
+        {
+            return sketch;
+        }
+        if let Some(sketch) = self.native_sharp_offset(distance) {
+            return sketch;
+        }
+        self.empty_offset_result()
+    }
+
+    /// Return native inward skeleton-facing linework for finite profile views.
+    ///
+    /// The returned wires are [`CurveString2`] values constructed from the
+    /// finite boundary projection of the native region. They are diagnostic
+    /// rays from each material vertex toward a profile centroid, not a complete
+    /// straight-skeleton algorithm. This keeps the API hyper-only while leaving
+    /// the true Aichholzer et al. (1995) wavefront algorithm to be completed in
+    /// hypercurve.
+    pub fn straight_skeleton(&self, orientation: bool) -> Profile {
+        let wires = if orientation {
+            inward_profile_rays(&self.region_profiles())
+        } else {
+            Vec::new()
+        };
+
+        let mut sketch = Profile::from_region_and_wires_with_origin(
+            Region2::empty(),
+            wires,
+            self.origin.clone(),
+            self.origin_transform.clone(),
+        );
+        self.preserve_offset_wires(&mut sketch);
+        sketch
+    }
 }
 
-#[allow(clippy::unnecessary_cast)]
-fn skel_multi_poly(mpoly: &MultiPolygon<Real>, inward: bool) -> Vec<LineString<Real>> {
-    let mpoly_f64 = mpoly.map_coords(|c| Coord {
-        x: c.x as f64,
-        y: c.y as f64,
-    });
+fn native_role_offset_contour(
+    contour: &Contour2,
+    distance: Real,
+    is_hole: bool,
+    policy: &CurvePolicy,
+) -> Option<Contour2> {
+    let signed_area = contour.signed_area().ok()??;
+    let sign = hreal_sign(&signed_area)?;
+    if sign == RealSign::Zero {
+        return None;
+    }
 
-    geo_buffer::skeleton_of_multi_polygon_to_linestring(&mpoly_f64, inward)
-        .into_iter()
-        .map(|ls| {
-            ls.map_coords(|c| Coord {
-                x: c.x as Real,
-                y: c.y as Real,
-            })
-        })
-        .collect()
+    let signed_distance = match (is_hole, sign) {
+        (false, RealSign::Positive) | (true, RealSign::Negative) => -distance,
+        (false, RealSign::Negative) | (true, RealSign::Positive) => distance,
+        (_, RealSign::Zero) => return None,
+    };
+    match contour.offset_left_checked(signed_distance, policy).ok()? {
+        Classification::Decided(offset) => Some(offset),
+        Classification::Uncertain(_) => None,
+    }
 }
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
-    /// **Mathematical Foundation: Sharp Corner Polygon Offsetting**
-    ///
-    /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using georust.
-    /// This implements the standard polygon offsetting algorithm with sharp corners.
-    ///
-    /// ## **Algorithm Details**
-    ///
-    /// ### **Edge Offset Calculation**
-    /// For each edge e with unit normal n⃗:
-    /// ```text
-    /// e'(t) = e(t) + distance × n⃗
-    /// ```
-    /// where n⃗ is the outward normal perpendicular to the edge.
-    ///
-    /// ### **Vertex Joint Resolution**
-    /// At vertices where two offset edges meet:
-    /// 1. **Convex vertices**: Extend edges until intersection
-    /// 2. **Concave vertices**: May require clipping or filling
-    /// 3. **Collinear edges**: Handle degenerate cases
-    ///
-    /// ### **Self-Intersection Resolution**
-    /// The algorithm automatically:
-    /// - **Detects**: Self-intersecting offset curves
-    /// - **Resolves**: Using winding number rules
-    /// - **Simplifies**: Resulting polygon topology
-    ///
-    /// ## **Input Processing**
-    /// For each Geometry in the collection:
-    /// - **Polygon**: Buffer and convert to MultiPolygon
-    /// - **MultiPolygon**: Buffer directly preserving holes
-    /// - **Other geometries**: Excluded from processing
-    ///
-    /// ## **Mathematical Properties**
-    /// - **Distance Preservation**: All points move exactly `distance` units
-    /// - **Topology**: May change due to merging/splitting
-    /// - **Orientation**: Preserved for valid input polygons
-    /// - **Holes**: Correctly handled with opposite offset direction
-    ///
-    /// **Note**: Sharp corners may create very acute angles for large offset distances.
-    #[allow(clippy::unnecessary_cast)]
-    pub fn offset(&self, distance: Real) -> Sketch<M> {
-        let offset_geoms = self
-            .geometry
-            .iter()
-            .filter_map(|geom| match geom {
-                Geometry::Polygon(poly) => {
-                    let style = BufferStyle::new(distance).line_join(LineJoin::Miter(1.0));
-                    let new_mpoly = poly.buffer_with_style(style);
-                    Some(Geometry::MultiPolygon(new_mpoly))
-                },
-                Geometry::MultiPolygon(mpoly) => {
-                    let style = BufferStyle::new(distance).line_join(LineJoin::Miter(1.0));
-                    let new_mpoly = mpoly.buffer_with_style(style);
-                    Some(Geometry::MultiPolygon(new_mpoly))
-                },
-                Geometry::Point(point) => Some(Geometry::MultiPolygon(point.buffer(distance))),
-                _ => None,
-            })
-            .collect();
-
-        // Construct a new GeometryCollection from the offset geometries
-        let new_collection = GeometryCollection::<Real>(offset_geoms);
-
-        // Return a new CSG using the offset geometry collection and the old polygons/metadata
-        Sketch {
-            geometry: new_collection,
-            bounding_box: OnceLock::new(),
-            metadata: self.metadata.clone(),
-            origin: self.origin,
-            origin_transform: self.origin_transform,
-        }
-    }
-
-    /// **Mathematical Foundation: Rounded Corner Polygon Offsetting**
-    ///
-    /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using georust.
-    /// This implements rounded corner offsetting for smoother, more natural results.
-    ///
-    /// ## **Algorithm Details**
-    ///
-    /// ### **Edge Offset Calculation**
-    /// Same as sharp offset: edges move parallel by distance d.
-    ///
-    /// ### **Rounded Vertex Treatment**
-    /// At each vertex, instead of sharp intersection:
-    /// 1. **Circular Arc**: Connect offset edges with radius = |distance|
-    /// 2. **Arc Center**: Located at original vertex
-    /// 3. **Arc Span**: From end of one offset edge to start of next
-    /// 4. **Direction**: Outward for positive offset, inward for negative
-    ///
-    /// ### **Mathematical Formulation**
-    /// For vertex V with incoming edge direction d₁ and outgoing direction d₂:
-    /// ```text
-    /// Arc center: C = V
-    /// Arc radius: r = |distance|
-    /// Start angle: θ₁ = atan2(d₁⊥)
-    /// End angle: θ₂ = atan2(d₂⊥)
-    /// Arc points: P(t) = C + r(cos(θ(t)), sin(θ(t)))
-    /// ```
-    ///
-    /// ## **Advantages over Sharp Offset**
-    /// - **C¹ Continuity**: Smooth derivative at vertex connections
-    /// - **Aesthetic Quality**: More natural, visually pleasing curves
-    /// - **Numerical Stability**: Avoids extreme angles and spikes
-    /// - **Manufacturing**: Better for toolpath generation (reduces tool stress)
-    ///
-    /// ## **Applications**
-    /// - **Font Rendering**: Smooth outline expansion
-    /// - **CNC Machining**: Tool radius compensation
-    /// - **Geographic Buffering**: Natural boundary expansion
-    /// - **UI Design**: Smooth border effects
-    ///
-    /// ## **Performance Considerations**
-    /// - **Arc Discretization**: More vertices for smoother curves
-    /// - **Memory Usage**: Slightly higher than sharp offset
-    /// - **Computation**: Additional trigonometric calculations
-    ///
-    /// Uses rounded corners for each convex vertex.
-    /// For each Geometry in the collection:
-    /// - **Polygon**: Buffer and convert to MultiPolygon  
-    /// - **MultiPolygon**: Buffer directly preserving holes
-    /// - **Other geometries**: Excluded from processing
-    #[allow(clippy::unnecessary_cast)]
-    pub fn offset_rounded(&self, distance: Real) -> Sketch<M> {
-        let offset_geoms = self
-            .geometry
-            .iter()
-            .filter_map(|geom| match geom {
-                Geometry::Polygon(poly) => {
-                    let new_mpoly = poly.buffer(distance);
-                    Some(Geometry::MultiPolygon(new_mpoly))
-                },
-                Geometry::MultiPolygon(mpoly) => {
-                    let new_mpoly = mpoly.buffer(distance);
-                    Some(Geometry::MultiPolygon(new_mpoly))
-                },
-                Geometry::Point(point) => Some(Geometry::MultiPolygon(point.buffer(distance))),
-                _ => None,
-            })
-            .collect();
-
-        // Construct a new GeometryCollection from the offset geometries
-        let new_collection = GeometryCollection::<Real>(offset_geoms);
-
-        // Return a new Sketch using the offset geometry collection and the old polygons/metadata
-        Sketch {
-            geometry: new_collection,
-            bounding_box: OnceLock::new(),
-            metadata: self.metadata.clone(),
-            origin: self.origin,
-            origin_transform: self.origin_transform,
-        }
-    }
-
-    /// This function returns a Sketch which represents an instantiated straight skeleton of Sketch upon which it's called.
-    /// Each segment of the straight skeleton is represented as a single `LineString`.
-    /// If either endpoints of a `LineString` is infinitely far from the other, then this `LineString` will be clipped to one which has shorter length.
-    /// The order of these `LineString`s is arbitrary. (There is no guaranteed order on segments of the straight skeleton.)
-    ///
-    /// # Arguments
-    ///
-    /// + `orientation`: determines the region where the straight skeleton created. The value of this `boolean` variable will be:
-    ///     * `true` to create the straight skeleton on the inward region of the polygon, and,
-    ///     * `false` to create on the outward region of the polygon.
-    pub fn straight_skeleton(&self, orientation: bool) -> Sketch<M> {
-        let skeleton = self
-            .geometry
-            .iter()
-            .filter_map(|geom| match geom {
-                Geometry::Polygon(poly) => {
-                    let mls = geo::MultiLineString(skel_poly(poly, orientation));
-                    Some(Geometry::MultiLineString(mls))
-                },
-                Geometry::MultiPolygon(mpoly) => {
-                    let mls = geo::MultiLineString(skel_multi_poly(mpoly, orientation));
-                    Some(Geometry::MultiLineString(mls))
-                },
-                _ => None,
-            })
-            .collect();
-
-        // Construct a new GeometryCollection from the offset geometries
-        let new_collection = GeometryCollection::<Real>(skeleton);
-
-        // Return a new Sketch using the offset geometry collection and the old polygons/metadata
-        Sketch {
-            geometry: new_collection,
-            bounding_box: OnceLock::new(),
-            metadata: self.metadata.clone(),
-            origin: self.origin,
-            origin_transform: self.origin_transform,
-        }
-    }
+fn inward_profile_rays(profiles: &[FiniteRegionProfile2]) -> Vec<CurveString2> {
+    profiles
+        .iter()
+        .flat_map(|profile| {
+            let Some(center) = profile.material().vertex_centroid() else {
+                return Vec::new();
+            };
+            profile
+                .material()
+                .points()
+                .iter()
+                .cloned()
+                .filter(|point| point != &center)
+                .filter_map(|point| {
+                    CurveString2::from_finite_line_string(&[point, center]).ok()
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect()
 }

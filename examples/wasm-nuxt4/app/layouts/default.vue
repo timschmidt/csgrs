@@ -26,7 +26,7 @@ const examplePages = ref(
      'animated-booleans' : { label: 'Animated booleans', description: 'Booleans can be fast enough to animate smoothly!' },
      'array-boolean' : { label: 'Array boolean', description: 'An array of a lot of boxes with subtracted big box' },
      'bigger-boolean' : { label: 'Bigger boolean', description: 'More complex shape boolean operations.' },
-     sketch : { label: 'Sketch 2D shapes', description: 'Create 2D sketches and extrude them into 3D meshes.' },
+     profile : { label: 'Profile 2D shapes', description: 'Create 2D profiles and extrude them into 3D meshes.' },
   }
 )
 

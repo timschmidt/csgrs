@@ -4,44 +4,22 @@ A fast, optionally multithreaded **Constructive Solid Geometry (CSG)**
 library in Rust, built around Boolean operations (*union*, *difference*,
 *intersection*, *xor*) on several different internal geometry representations.
 **csgrs** provides data structures and methods for constructing 2D and 3D geometry
-with an [OpenSCAD](https://openscad.org/)-like syntax.  Our aim is for **csgrs**
-to be light weight and full featured through integration with the
-[Dimforge](https://www.dimforge.com/) ecosystem
-(e.g., [`nalgebra`](https://crates.io/crates/nalgebra),
-[`Parry`](https://crates.io/crates/parry3d),
-and [`Rapier`](https://crates.io/crates/rapier3d)) and
-[`geo`](https://crates.io/crates/geo) for robust processing of
-[Simple Features](https://en.wikipedia.org/wiki/Simple_Features).
-**csgrs** has a number of functions useful for generating CNC toolpaths.  The
-library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are
-100% rust and nearly all optional.
+with an [OpenSCAD](https://openscad.org/)-like syntax. It integrates with the
+Hyper geometry crates for exact-aware planar regions, curves, triangulation,
+mesh topology, and physical-property calculations. Core geometry uses
+`hyperreal::Real`; primitive floats are confined to IO, JavaScript, FFI, and
+adapter boundaries. The crate is pure Rust and can be built for WASM.
 
-[Earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
-and
-[constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation)
-and
-[delaunay](https://crates.io/crates/delaunay)
-algorithms used for triangulation work only in 2D, so **csgrs** rotates
-3D polygons into 2D for triangulation then back to 3D. Enable exactly one
-triangulation feature: `delaunay` (spade), `earcut`, or `delaunay-rs`.
+Polygon triangulation uses [hypertri](../hypertri/README.md): **csgrs** rotates
+3D polygons into 2D, lifts projected coordinates to hyperreals, runs exact
+predicate triangulation, then maps triangle indices back onto the original 3D
+vertices. Applications that want an `f32`, `f64`, or `i128` API can use the
+[primitive scalar adapters](adapters/README.md).
 
 ![Example CSG output](docs/csg.png)
 
 ## Community
 [![](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
-
-## Acknowledgments
-
-Thanks to the project contributors whose code, documentation, examples, issue
-reports, review, and implementation guidance have helped shape **csgrs**:
-[Andrei Stepanenko](https://github.com/ftvkyo), Bruce Mitchener, Connor K,
-[Ed Swartz](https://github.com/eswartz), [Hattiffnat](https://github.com/Hattiffnat),
-[Mark van der Net](https://github.com/mvdnet), Markus Sprecher,
-[Naseschwarz](https://github.com/Naseschwarz), Nathan Fenner,
-[PJB3005](https://github.com/PJB3005), [qthree](https://github.com/qthree),
-[Ricardo C. Oliveira](https://github.com/Ricardo-C-Oliveira), Robin Miller, Ryan,
-[TimTheBig](https://github.com/TimTheBig),
-[uttarayan21](https://github.com/uttarayan21), and Wink Saville.
 
 ## Getting started
 
@@ -61,23 +39,27 @@ cargo add csgrs
 
 Change `src/main.rs` to the following code:
 ```rust
-use csgrs::traits::CSG;
+use csgrs::csg::CSG;
+use csgrs::Real;
 
 type Mesh = csgrs::mesh::Mesh<()>;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a cube
-    let cube: Mesh = Mesh::cube(2.0, ()); // 2×2×2 cube at origin, no metadata
+    let cube: Mesh = Mesh::cube(Real::from(2), ());
 
     // Create sphere at (1, 1, 1) with radius 1.25:
-    let sphere: Mesh = Mesh::sphere(1.25, 16, 8, ()).translate(1.0, 1.0, 1.0);
+    let radius = (Real::from(5) / Real::from(4)).unwrap();
+    let sphere = Mesh::sphere(radius, 16, 8, ())
+        .translate(Real::one(), Real::one(), Real::one());
 
     // Perform a difference operation:
-    let result = cube.difference(&sphere);
+    let result = cube.try_difference(&sphere)?;
 
     // Write the result as an ASCII STL:
-    let stl = result.to_stl_ascii("cube_minus_sphere");
-    std::fs::write("cube_sphere_difference.stl", stl).unwrap();
+    let stl = result.to_stl_ascii("cube_minus_sphere")?;
+    std::fs::write("cube_sphere_difference.stl", stl)?;
+    Ok(())
 }
 ```
 
@@ -90,7 +72,8 @@ cargo run
 
 This results in a file named `cube_sphere_difference.stl` in the current directory
 and it can be viewed in a STL viewer such as [f3d](https://github.com/f3d-app/f3d)
-with, `f3d cube_sphere_difference.stl`.
+with, `f3d cube_sphere_difference.stl`, and should look like this:
+![Cube minus sphere](docs/cube_sphere_difference.png)
 
 ### Building for WASM
 
@@ -101,133 +84,128 @@ wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
 
 ## Features and Structures
 
-### Sketch Structure
+### Profile Structure
 
-- **`Sketch<M>`** is the type which stores and manipulates 2D polygonal geometry.  It contains:
-  - a [`geo`](https://crates.io/crates/geo) [`GeometryCollection<Real>`](https://docs.rs/geo/latest/geo/geometry/struct.GeometryCollection.html)
-  - a bounding box wrapped in a OnceLock (bounding_box: OnceLock<Aabb>)
-  - a metadata field of type `M` also defined by you
+- **`Profile`** stores planar CAD geometry as native Hypercurve topology:
+  - a `hypercurve::Region2` for filled material and hole contours,
+  - `hypercurve::CurveString2` values for open wires, and
+  - finite projections used only at IO and display boundaries.
 
-`Sketch<M>` provides methods for working with 2D shapes made of points and lines.
-You can build a `Sketch<M>` from geo Geometries with `Sketch::from_geo(...)`.
-Geometries can be open or closed, and can have holes, but must be planar in the XY.
-`Sketch`'s are triangulated when exported as an STL, or when a Geometry is
-converted into a `Mesh<M>`.
+Use `Profile::from_region`, `Profile::from_wires`, or
+`Profile::from_region_and_wires` to construct profiles without flattening their
+topology. Profiles carry geometry only; callers provide face metadata when
+creating a mesh. Hypertri triangulates profiles for mesh conversion and export.
 
-### 2D Shapes in Sketch
+### 2D Shapes in Profile
 
-- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Sketch::square(width: Real, metadata: M)`**
-- <img src="docs/rectangle.png" width="128" alt="top down view of a rectangle"/> **`Sketch::rectangle(width: Real, length: Real, metadata: M)`**
-- <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Sketch::circle(radius: Real, segments: usize, metadata: M)`**
-- <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Sketch::polygon(&[[x1,y1],[x2,y2],...], metadata: M)`**
-- <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`Sketch::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: M)`**
-- <img src="docs/ellipse.png" width="128" alt="top down view of an ellipse"/> **`Sketch::ellipse(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/regular_ngon.png" width="128" alt="top down view of a 6 sided n-gon"/> **`Sketch::regular_ngon(sides: usize, radius: Real, metadata: M)`**
-- <img src="docs/sketch_arrow.png" width="128" alt="top down view of a 2D arrow"/> **`Sketch::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real, metadata: M)`**
-- <img src="docs/right_triangle.png" width="128" alt="top down view of a right triangle"/> **`Sketch::right_triangle(width: Real, height: Real, metadata: M)`**
-- <img src="docs/trapezoid.png" width="128" alt="top down view of trapezoid"/> **`Sketch::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: M)`**
-- <img src="docs/star.png" width="128" alt="top down view of star"/> **`Sketch::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: M)`**
-- <img src="docs/teardrop.png" width="128" alt="top down view of a teardrop"/> **`Sketch::teardrop(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/sketch_egg.png" width="128" alt="top down view of an egg shape"/> **`Sketch::egg(width: Real, length: Real, segments: usize, metadata: M)`**
-- <img src="docs/squircle.png" width="128" alt="top down view of a squircle"/> **`Sketch::squircle(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/keyhole.png" width="128" alt="top down view of a keyhole"/> **`Sketch::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: M)`**
-- <img src="docs/reuleaux.png" width="128"/> **`Sketch::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: M)`**
-- <img src="docs/ring.png" width="128" alt="top down view of a ring"/> **`Sketch::ring(id: Real, thickness: Real, segments: usize, metadata: M)`**
-- <img src="docs/pie_slice.png" width="128" alt="top down view of a slice of a circle"/> **`Sketch::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: M)`**
-- <img src="docs/supershape.png" width="128"/> **`Sketch::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: M)`**
-- <img src="docs/circle_with_keyway.png" width="128" alt="top down view of a circle with a notch taken out of it"/> **`Sketch::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: M)`**
-- <img src="docs/circle_with_flat.png" width="128" alt="top down view of a circle with a flat edge"/> **`Sketch::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
-- <img src="docs/circle_with_two_flats.png" width="128" alt="top down view of a circle with two flat edges"/> **`Sketch::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
-- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Sketch::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: M)`** - Builds a new CSG from the “on” pixels of a grayscale image
-- <img src="docs/text.png" width="128" alt="top down view of the text 'HELLO'"/> **`Sketch::text(text: &str, font_data: &[u8], size: Real, metadata: M)`** - generate 2D text geometry in the XY plane from TTF fonts
-- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Sketch::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: M)`**
-- <img src="docs/airfoil_naca4.png" width="128" alt="a side view of an airfoil"/> **`Sketch::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize, metadata: M)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
-- <img src="docs/bezier.png" width="128" alt="top down view of a bezier curve"/> **`Sketch::bezier(control: &[[Real; 2]], segments: usize, metadata: M)`**
-- <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Sketch::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: M)`**
-- <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`Sketch::heart(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/crescent.png" width="128" alt="top down view of a crescent"/> **`Sketch::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: M)`** -
-- <img src="docs/hilbert_curve.png" width="128" alt="top down view of a hilbert curve"/> **`Sketch::hilbert(order: usize, padding: Real)`** - fill an existing Sketch with a hilbert curve
-- <img src="docs/involute_gear.png" width="128" alt="top down view of a involute gear profile"/> **`Sketch::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: M)`**
-- **`Sketch::cycloidal_gear(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
-- **`Sketch::involute_rack(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: M)`** - under construction
-- **`Sketch::cycloidal_rack(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
+- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Profile::square(width: Real)`**
+- <img src="docs/rectangle.png" width="128" alt="top down view of a rectangle"/> **`Profile::rectangle(width: Real, length: Real)`**
+- <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Profile::circle(radius: Real, segments: usize)`**
+- <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Profile::polygon(&[[x1,y1],[x2,y2],...])`**
+- <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`Profile::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize)`**
+- <img src="docs/ellipse.png" width="128" alt="top down view of an ellipse"/> **`Profile::ellipse(width: Real, height: Real, segments: usize)`**
+- <img src="docs/ngon.png" width="128" alt="top down view of a 6 sided n-gon"/> **`Profile::regular_ngon(sides: usize, radius: Real)`**
+- <img src="docs/arrow_2d.png" width="128" alt="top down view of a 2D arrow"/> **`Profile::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real)`**
+- <img src="docs/right_triangle.png" width="128" alt="top down view of a right triangle"/> **`Profile::right_triangle(width: Real, height: Real)`**
+- <img src="docs/trapezoid.png" width="128" alt="top down view of trapezoid"/> **`Profile::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real)`**
+- <img src="docs/star.png" width="128" alt="top down view of star"/> **`Profile::star(num_points: usize, outer_radius: Real, inner_radius: Real)`**
+- <img src="docs/teardrop.png" width="128" alt="top down view of a teardrop"/> **`Profile::teardrop(width: Real, height: Real, segments: usize)`**
+- <img src="docs/egg_outline.png" width="128" alt="top down view of an egg shape"/> **`Profile::egg(width: Real, length: Real, segments: usize)`**
+- <img src="docs/squircle.png" width="128" alt="top down view of a squircle"/> **`Profile::squircle(width: Real, height: Real, segments: usize)`**
+- <img src="docs/keyhole.png" width="128" alt="top down view of a keyhole"/> **`Profile::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize)`**
+- <img src="docs/reuleaux3.png" width="128"/> **`Profile::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize)`**
+- <img src="docs/ring.png" width="128" alt="top down view of a ring"/> **`Profile::ring(id: Real, thickness: Real, segments: usize)`**
+- <img src="docs/pie_slice.png" width="128" alt="top down view of a slice of a circle"/> **`Profile::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize)`**
+- <img src="docs/supershape.png" width="128"/> **`Profile::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize)`**
+- <img src="docs/circle_with_keyway.png" width="128" alt="top down view of a circle with a notch taken out of it"/> **`Profile::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real)`**
+- <img src="docs/d.png" width="128" alt="top down view of a circle with a flat edge"/> **`Profile::circle_with_flat(radius: Real, segments: usize, flat_dist: Real)`**
+- <img src="docs/double_flat.png" width="128" alt="top down view of a circle with two flat edges"/> **`Profile::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real)`**
+- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Profile::from_image(img: &GrayImage, threshold: u8, closepaths: bool)`** - Builds a new CSG from the “on” pixels of a grayscale image
+- <img src="docs/truetype.png" width="128" alt="top down view of the text 'HELLO'"/> **`Profile::text(text: &str, font_data: &[u8], size: Real)`** - generate 2D text geometry in the XY plane from TTF fonts
+- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Profile::metaballs(balls: &[(hyperlattice::Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real)`**
+- <img src="docs/airfoil.png" width="128" alt="a side view of an airfoil"/> **`Profile::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
+- <img src="docs/bezier_extruded.png" width="128" alt="an angled view of a bezier cirve"/> **`Profile::bezier(control: &[[Real; 2]], segments: usize)`**
+- <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Profile::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize)`**
+- <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`Profile::heart(width: Real, height: Real, segments: usize)`**
+- <img src="docs/crescent.png" width="128" alt="top down view of a crescent"/> **`Profile::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize)`** -
+- <img src="docs/hilbert_curve.png" width="128" alt="top down view of a Hilbert curve"/> **`profile.hilbert_curve(order: usize, padding: Real)`** - create a Hilbert path clipped to an existing profile
+- <img src="docs/gear_involute.png" width="128" alt="top down view of a involute gear profile"/> **`Profile::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize)`**
+- **`Profile::cycloidal_gear(module_: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize)`**
+- **`Profile::involute_rack(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real)`**
+- **`Profile::cycloidal_rack(module_: Real, num_teeth: usize, clearance: Real, segments_per_flank: usize)`**
 
 ```rust
-// Alias the library’s generic Sketch type with unit metadata:
-type Sketch = csgrs::sketch::Sketch<()>;
+use csgrs::profile::Profile;
+use csgrs::Real;
 
-let square = Sketch::square(1.0, ()); // 1×1 at origin
-let rect = Sketch::rectangle(2.0, 4.0, ());
-let circle = Sketch::circle(1.0, 32, ()); // radius=1, 32 segments
-let circle2 = Sketch::circle(2.0, 64, ());
+let square = Profile::square(Real::one());
+let rect = Profile::rectangle(Real::from(2), Real::from(4));
+let circle = Profile::circle(Real::one(), 32);
+let circle2 = Profile::circle(Real::from(2), 64);
 
 let font_data = include_bytes!("../fonts/MyFont.ttf");
-let sketch_text = Sketch::text("Hello!", font_data, 20.0, ());
+let profile_text = Profile::text("Hello!", font_data, Real::from(20));
 
 // Then extrude the text to make it 3D:
-let text_3d = sketch_text.extrude(1.0);
+let text_3d = profile_text.extrude(Real::one(), ());
 ```
 
 ### Extrusions and Revolves
 
 Extrusions build 3D polygons from 2D Geometries.
 
-- <img src="docs/extrude.png" width="128" alt="an angled view of an extruded star"/> **`Sketch::extrude(height: Real)`** - Simple extrude in Z+
-- <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Sketch::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
-- <img src="docs/revolve.png" width="128"  alt="an arch with round ends"/> **`Sketch::revolve(angle_degs, segments)`** - Extrude while rotating around the Y axis
-- <img src="docs/loft.png" width="128" alt="an angled view of a lofted tapered prism"/> **`Sketch::loft(&bottom_polygon, &top_polygon, false)`** - Helper function which extrudes between two Mesh Polygons, optionally with caps
-- <img src="docs/sweep.png" width="128" alt="a Sketch swept along a 3D path"/> **`Sketch::sweep(path: &[Point3<Real>])`** - Sweep a Sketch along a path defined by a series of Points
+- <img src="docs/extrude.png" width="128" alt="an angled view of an extruded star"/> **`Profile::extrude(height: Real, metadata: M)`** - Simple extrude in Z+
+- <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Profile::extrude_vector(direction: Vector3, metadata: M)`** - Extrude along a direction
+- <img src="docs/rotate_extrude.png" width="128"  alt="an arch with round ends"/> **`Profile::revolve(angle_degs, segments, metadata: M)`** - Extrude while rotating around the Y axis
+- **`Profile::extrude_twisted(height, twist_degrees, [scale_x, scale_y], slices, metadata)`** - Build a connected twisted or tapered extrusion
+- **`Profile::loft(&sections)`** - Loft through corresponding closed polygon sections
+- <img src="docs/sweep.png" width="128" alt="a Profile swept along a 3D path"/> **`Profile::sweep(path: &[Point3<Real>], metadata: M)`** - Sweep a Profile along a 3D path
 
 ```rust
-let square = Sketch::square(2.0, ());
-let prism = square.extrude(5.0);
-
-let revolve_shape = square.revolve(360.0, 16);
-
-let bottom = Sketch::circle(2.0, 64, ());
-let top = bottom.translate(0.0, 0.0, 5.0);
-let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
+let square = Profile::square(Real::from(2));
+let prism = square.extrude(Real::from(5), ());
+let revolve_shape = square.revolve(Real::from(360), 16, ())?;
 ```
 
-### Misc Sketch operations
+### Misc Profile operations
 
-- **`Sketch::offset(distance)`** - outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
-- **`Sketch::offset_rounded(distance)`** - outward (or inward) offset in 2D using [`geo-offset`](https://crates.io/crates/geo-offset).
-- **`Sketch::straight_skeleton(&self, orientation: bool)`** - returns a Sketch containing the inside (orientation: true) or outside (orientation: false) straight skeleton
-- **`Sketch::bounding_box()`** - computes the bounding box of the shape.
-- **`Sketch::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
-- **`Sketch::triangulate()`** - subdivides the Sketch into triangles
+- **`Profile::offset(distance)`** - certified sharp offset through Hypercurve; remaining regularized cases require the optional `offset` feature.
+- **`Profile::offset_rounded(distance)`** - rounded offset behind the optional `offset` feature.
+- **`Profile::straight_skeleton(orientation)`** - inside or outside skeleton behind the optional `offset` feature.
+- **`Profile::bounding_box()`** - computes the bounding box of the shape.
+- **`Profile::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
+- **`Profile::triangulate()`** - subdivides the Profile into triangles
 
 ### Mesh Structure
 
-- **`Mesh<M>`** is the type which stores and manipulates 3D polygonal geometry.  It contains:
-  - a `Vec<Polygon<M>>` polygons, describing 3D shapes, each `Polygon<M>` holds:
+- **`Mesh<M>`** stores and manipulates 3D polygonal geometry. It contains:
+  - a `Vec<Polygon<M>>`; each polygon holds:
     - a `Vec<Vertex>` (positions + normals),
     - a `Plane` describing the polygon’s orientation in 3D.
-    - a lazily cached polygon bounding box (`OnceLock<Aabb>`) used by boolean and query code.
-    - a metadata field of type `M` defined by you
-  - a bounding box wrapped in a OnceLock (bounding_box: OnceLock<Aabb>)
-  - a lazily built Parry `TriMesh` cache for repeated point/ray query operations
-  - another metadata field of type `M` also defined by you
+    - a lazily cached bounding box, and
+    - one metadata value of type `M`.
+  - lazily cached mesh bounds and reusable connectivity/query state.
 
-`Mesh<M>` provides methods for working with 3D shapes. You can build a
-`Mesh<M>` from polygons with `Mesh::from_polygons(...)`.
+`Mesh<M>` provides methods for working with 3D shapes. Build one from polygons
+with `Mesh::from_polygons(...)`.
 Polygons must be closed, planar, and have 3 or more vertices.
-Polygons are triangulated when being exported or converted to query meshes.
+Metadata belongs exclusively to polygons. Boolean operations preserve source
+face metadata through Hypermesh provenance; operations that create unrelated
+faces require an explicit metadata value.
 
 ### 3D Shapes in Mesh
 
 - <img src="docs/cube.png" width="128" alt="an angled view of a cube"/> **`Mesh::cube(width: Real, metadata: M)`**
-- <img src="docs/cuboid.png" width="128" alt="an angled view of a cuboid"/> **`Mesh::cuboid(width: Real, length: Real, height: Real, metadata: M)`**
+- <img src="docs/cube.png" width="128" alt="an angled view of a cube"/> **`Mesh::cuboid(width: Real, length: Real, height: Real, metadata: M)`**
 - <img src="docs/sphere.png" width="128" alt="an angled view of a sphere"/> **`Mesh::sphere(radius: Real, segments: usize, stacks: usize, metadata: M)`**
 - <img src="docs/cylinder.png" width="128" alt="an angled view of a cylinder"/> **`Mesh::cylinder(radius: Real, height: Real, segments: usize, metadata: M)`**
 - <img src="docs/frustum.png" width="128"/> **`Mesh::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: M)`** -
 Construct a frustum at origin with height and `radius1` and `radius2`.
-If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
+An exactly zero radius constructs a cone terminating at a point.
 - <img src="docs/frustum_ptp.png" width="128"/> **`Mesh::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments:
 usize, metadata: M)`** -
 Construct a frustum from `start` to `end` with `radius1` and `radius2`.
-If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
+An exactly zero radius constructs a cone terminating at a point.
 - <img src="docs/polyhedron.png" width="128"/> **`Mesh::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: M)`**
 - <img src="docs/octahedron.png" width="128"/> **`Mesh::octahedron(radius: Real, metadata: M)`** -
 - <img src="docs/icosahedron.png" width="128"/> **`Mesh::icosahedron(radius: Real, metadata: M)`** -
@@ -237,13 +215,13 @@ If either radius is within EPSILON of 0.0, a cone terminating at a point is cons
 - <img src="docs/teardrop_cylinder.png" width="128"/> **`Mesh::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: M)`**
 - <img src="docs/ellipsoid.png" width="128"/> **`Mesh::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: M)`**
 - <img src="docs/metaballs_3d.png" width="128"/> **`Mesh::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: M)`**
-- <img src="docs/sdf.png" width="128"/> **`Mesh::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: M)`** - Return a CSG created by meshing a signed distance field within a bounding box
-- <img src="docs/mesh_arrow.png" width="128"/> **`Mesh::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: M)`** - Create an arrow at start, pointing along direction
-- <img src="docs/gyroid.png" width="128"/> **`Mesh::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: M)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
-- <img src="docs/schwarz_p.png" width="128"/> **`Mesh::schwarz_p(resolution: usize, period: Real, iso_value: Real, metadata: M)`** - Generate a Triply Periodic Minimal Surface (Schwarz P) inside the volume of `self`
-- <img src="docs/schwarz_d.png" width="128"/> **`Mesh::schwarz_d(resolution: usize, period: Real, iso_value: Real, metadata: M)`** - Generate a Triply Periodic Minimal Surface (Schwarz D) inside the volume of `self`
+- <img src="docs/sdf.png" width="128"/> **`Mesh::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: M)`** - Mesh a signed-distance field inside a bounding box
+- <img src="docs/mesh_arrow.png" width="128"/> **`Mesh::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: M)`** - Create an arrow at `start`, pointing along `direction`
+- <img src="docs/gyroid.png" width="128"/> **`Mesh::gyroid_solid(resolution, period, iso_value, thickness, metadata)`** - Generate a capped finite-thickness Gyroid solid
+- <img src="docs/schwarz_p.png" width="128"/> **`Mesh::schwarz_p_solid(resolution, period, iso_value, thickness, metadata)`** - Generate a capped finite-thickness Schwarz P solid
+- <img src="docs/schwarz_d.png" width="128"/> **`Mesh::schwarz_d_solid(resolution, period, iso_value, thickness, metadata)`** - Generate a capped finite-thickness Schwarz D solid
 - <img src="docs/spur_gear_involute.png" width="128"/> **`Mesh::spur_gear_involute(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: M,)`** - Generate an involute spur gear
-- **`Mesh::helical_involute_gear(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: M)`** - under construction
+- **`Mesh::helical_involute_gear(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: M)`** - Generate a helical involute gear
 
 ```rust
 // Unit cube at origin, no metadata
@@ -270,7 +248,7 @@ let faces = vec![
     vec![2, 3, 4],
     vec![3, 0, 4],
 ];
-let pyramid = Mesh::polyhedron(points, &faces, ());
+let pyramid = Mesh::<()>::polyhedron(points, &faces, ());
 
 // Metaballs https://en.wikipedia.org/wiki/Metaballs
 use csgrs::mesh::metaballs::MetaBall;
@@ -283,7 +261,7 @@ let resolution = (60, 60, 60);
 let iso_value = 1.0;
 let padding = 1.0;
 
-let metaball_csg = CSG::from_metaballs(
+let metaball_csg = Mesh::<()>::metaballs(
     &balls,
     resolution,
     iso_value,
@@ -299,21 +277,35 @@ let min_pt = Point3::new(-2.0, -2.0, -2.0);
 let max_pt = Point3::new( 2.0,  2.0,  2.0);
 let iso_value = 0.0; // Typically zero for SDF-based surfaces
 
-let csg_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value, ());
+let csg_shape = Mesh::<()>::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, ());
 ```
 
 ### CSG Boolean Operations
 
 ```rust
-use csgrs::traits::CSG;
+let union_result = cube.try_union(&sphere)?;
+let difference_result = cube.try_difference(&sphere)?;
+let intersection_result = cylinder.try_intersection(&sphere)?;
+let xor_result = cylinder.try_xor(&sphere)?;
 
-let union_result = cube.union(&sphere);
-let difference_result = cube.difference(&sphere);
-let intersection_result = cylinder.intersection(&sphere);
+// When several results are needed for the same pair, retain one certified
+// arrangement and reuse its exact subdivision and winding evidence.
+let prepared = cube.try_prepare_boolean(&sphere)?;
+let union_result = prepared.try_union()?;
+let difference_result = prepared.try_difference()?;
+let intersection_result = prepared.try_intersection()?;
+let xor_result = prepared.try_xor()?;
 ```
 
-Booleans on any type implementing the CSG trait such as `Mesh<M>` or `Sketch<M>` return their own type.
-Types implementing the CSG trait also provide the following transformation functions:
+`Mesh<M>` and `Profile` provide typed `try_union`, `try_difference`,
+`try_intersection`, and `try_xor` methods. Compatibility methods on
+`csgrs::csg::CSG` panic if certification reports an error or uncertainty.
+All mesh Boolean methods use the same prepared pipeline. Direct methods request
+one operation and retain its operation-specific pruning, while
+`Mesh::try_prepare_boolean` retains all four for build-once/extract-many use.
+Its borrow ties the preparation to the source meshes, every general extraction
+remains closure-certified by HyperMesh, and exact empty/disjoint/identical
+shortcuts preserve source metadata and polygonization.
 
 ### Transformations
 
@@ -326,30 +318,32 @@ Types implementing the CSG trait also provide the following transformation funct
 - **`::float()`** - Returns the CSG translated so that its bottommost point(s) sit exactly at z=0
 - **`::transform(&Matrix4)`** - Returns the CSG after applying arbitrary affine transforms
 - <img src="docs/distribute_arc.png" width="128"/> **`::distribute_arc(count: usize, radius: Real, start_angle_deg: Real, end_angle_deg: Real)`**
-- <img src="docs/distribute_linear.png" width="128"/> **`::distribute_linear(count: usize, dir: nalgebra::Vector3, spacing: Real)`**
+- <img src="docs/distribute_linear.png" width="128"/> **`::distribute_linear(count: usize, dir: hyperlattice::Vector3, spacing: Real)`**
 - <img src="docs/distribute_grid.png" width="128"/> **`::distribute_grid(rows: usize, cols: usize, dx: Real, dy: Real)`**
 - <img src="docs/inverse.png" width="128"/> **`::inverse()`** - flips the inside/outside orientation.
 
 ```rust
-use nalgebra::Vector3;
+use hyperlattice::{Real, Vector3};
+use csgrs::csg::CSG;
 use csgrs::mesh::plane::Plane;
-use csgrs::traits::CSG;
 
-let moved = cube.translate(3.0, 0.0, 0.0);
-let moved2 = cube.translate_vector(Vector3::new(3.0, 0.0, 0.0));
-let rotated = sphere.rotate(0.0, 45.0, 90.0);
-let scaled = cylinder.scale(2.0, 1.0, 1.0);
-let plane_x = Plane { normal: Vector3::x(), w: 0.0 }; // x=0 plane
-let plane_y = Plane { normal: Vector3::y(), w: 0.0 }; // y=0 plane
-let plane_z = Plane { normal: Vector3::z(), w: 0.0 }; // z=0 plane
+let moved = cube.translate(Real::from(3), Real::zero(), Real::zero());
+let moved2 = cube.translate_vector(Vector3::from_xyz(
+    Real::from(3),
+    Real::zero(),
+    Real::zero(),
+));
+let rotated = sphere.rotate(Real::zero(), Real::from(45), Real::from(90));
+let scaled = cylinder.scale(Real::from(2), Real::one(), Real::one());
+let plane_x = Plane::from_normal(Vector3::x(), Real::zero());
 let mirrored = cube.mirror(plane_x);
 ```
 
 ### Miscellaneous Mesh Operations
 
 - **`Mesh::vertices()`** - collect all vertices from the `Mesh`
-- <img src="docs/convex_hull.png" width="128"/> **`Mesh::convex_hull()`** - uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
-- <img src="docs/minkowski_sum.png" width="128"/> **`Mesh::minkowski_sum(&other)`** - naive Minkowski sum, then takes the hull.
+- <img src="docs/convex_hull.png" width="128"/> **`Mesh::convex_hull(metadata)`** - generate a hull using exact Hyperreal orientation predicates.
+- <img src="docs/minkowski_sum.png" width="128"/> **`Mesh::minkowski_sum(&other, metadata)`** - compute pairwise sums, then take their hull.
 - **`Mesh::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`Mesh::flatten()`** - flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`Mesh::slice(plane)`** - slices the CSG by a plane and returns the cross-section polygons.
@@ -358,32 +352,32 @@ let mirrored = cube.mirror(plane_x);
 - **`Mesh::bounding_box()`** - computes the bounding box of the shape.
 - **`Mesh::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
 - **`Mesh::triangulate()`** - triangulates all polygons returning a CSG containing triangles.
-- **`Mesh::from_polygons(polygons: &[Polygon<M>])`** - create a new CSG from Polygons.
+- **`Mesh::from_polygons(polygons: &[Polygon<M>])`** - create a mesh from polygons.
 
 ### STL
 
-- **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
-- **Export Binary STL**: `csg.to_stl_binary("solid_name") -> io::Result<Vec<u8>>`
-- **Import STL**: `Mesh::from_stl(&stl_data) -> io::Result<CSG<M>>`
+- **Export ASCII STL**: `mesh.to_stl_ascii("solid_name") -> Result<String, IoError>`
+- **Export Binary STL**: `mesh.to_stl_binary("solid_name") -> Result<Vec<u8>, IoError>`
+- **Import STL**: `Mesh::from_stl(&stl_data, metadata) -> Result<Mesh<M>, IoError>`
 
 ```rust
 // Save to ASCII STL
-let stl_text = csg_union.to_stl_ascii("union_solid");
-std::fs::write("union_ascii.stl", stl_text).unwrap();
+let stl_text = csg_union.to_stl_ascii("union_solid")?;
+std::fs::write("union_ascii.stl", stl_text)?;
 
 // Save to binary STL
-let stl_bytes = csg_union.to_stl_binary("union_solid").unwrap();
-std::fs::write("union_bin.stl", stl_bytes).unwrap();
+let stl_bytes = csg_union.to_stl_binary("union_solid")?;
+std::fs::write("union_bin.stl", stl_bytes)?;
 
 // Load from an STL file on disk
 let file_data = std::fs::read("some_file.stl")?;
-let imported_mesh = Mesh::from_stl(&file_data)?;
+let imported_mesh = Mesh::from_stl(&file_data, ())?;
 ```
 
 ### DXF
 
-- **Export**: `csg.to_dxf() -> Result<Vec<u8>, Box<dyn Error>>`
-- **Import**: `Mesh::from_dxf(&dxf_data) -> Result<CSG<M>, Box<dyn Error>>`
+- **Export**: `mesh.to_dxf() -> Result<Vec<u8>, IoError>`
+- **Import**: `Mesh::from_dxf(&dxf_data, metadata) -> Result<Mesh<M>, IoError>`
 
 ```rust
 // Export DXF
@@ -392,7 +386,7 @@ std::fs::write("output.dxf", dxf_bytes)?;
 
 // Import DXF
 let dxf_data = std::fs::read("some_file.dxf")?;
-let csg_dxf = CSG::from_dxf(&dxf_data)?;
+let mesh_dxf = Mesh::from_dxf(&dxf_data, ())?;
 ```
 
 ### Hershey Text
@@ -400,8 +394,9 @@ let csg_dxf = CSG::from_dxf(&dxf_data)?;
 Hershey fonts are single stroke fonts which produce open ended polylines in the XY plane via [`hershey`](https://crates.io/crates/hershey):
 
 ```rust
-let font_data = include_bytes("../fonts/myfont.jhf");
-let csg_text = Sketch::from_hershey("Hello!", font_data, 20.0, ());
+fn hershey_text(font: &hershey::Font<'_>) -> Profile {
+    Profile::from_hershey("Hello!", font, Real::from(20))
+}
 ```
 
 ### Create a Bevy `Mesh`
@@ -416,50 +411,21 @@ let bevy_mesh = mesh_obj.to_bevy_mesh();
 
 ### Create a Parry `TriMesh`
 
-`mesh.to_trimesh()` returns an `Option<TriMesh<Real>>`. `mesh.to_rapier_shape()`
-wraps the same triangle data in a Rapier `SharedShape`. `Mesh::ray_intersections`,
-`Mesh::intersect_polyline`, and `Mesh::contains_vertex` use Parry ray and point
-queries, and the mesh stores a cached query `TriMesh` where the operation can
-reuse it.
-
-```rust
-use csgrs::float_types::parry3d::query::{Ray, RayCast};
-use nalgebra::{Point3, Vector3};
-
-let trimesh = mesh_obj.to_trimesh().expect("valid triangle mesh");
-let ray = Ray::new(Point3::new(-10.0, 0.0, 0.0), Vector3::x());
-let hit = trimesh.cast_local_ray(&ray, 100.0, false);
-```
+Parry is no longer a core dependency. Use `Mesh::intersect_polyline`,
+`Mesh::contains_vertex`, and the triangulated vertex/index views directly, or
+convert those buffers in an application-specific adapter.
 
 ### Create a Rapier Rigid Body
 
-`csg.to_rigid_body(rb_set, co_set, translation, rotation, density)` helps build and insert both a rigid body and a collider:
-
-```rust
-use nalgebra::Vector3;
-use csgrs::float_types::rapier3d::prelude::*;  // re-exported for f32/f64 support
-use csgrs::float_types::FRAC_PI_2;
-use csgrs::traits::CSG;
-use csgrs::mesh::Mesh;
-
-let mut rb_set = RigidBodySet::new();
-let mut co_set = ColliderSet::new();
-
-let axis_angle = Vector3::z() * FRAC_PI_2; // 90° around Z
-let rb_handle = mesh_obj.to_rigid_body(
-    &mut rb_set,
-    &mut co_set,
-    Vector3::new(0.0, 0.0, 0.0), // translation
-    axis_angle,                  // axis-angle
-    1.0,                         // density
-);
-```
+Rapier integration is intentionally outside the core crate. Applications can
+construct a Rapier collider from the mesh's triangulated vertex/index buffers
+and use `mass_properties` for exact-aware physical properties.
 
 ### Mass Properties
 
 ```rust
-let density = 1.0;
-let (mass, com, inertia_frame) = mesh_obj.mass_properties(density);
+let density = Real::one();
+let (mass, com, inertia_frame) = mesh_obj.mass_properties(density)?;
 println!("Mass: {}", mass);
 println!("Center of Mass: {:?}", com);
 println!("Inertia local frame: {:?}", inertia_frame);
@@ -479,49 +445,22 @@ if (mesh_obj.is_manifold()){
 
 ## Tolerance
 
-To account for error inherent in the storage of IEEE754 floating point numbers, and to maintain the speed of geometric calculations, `csgrs` provides a tunable tolerance value which can be set at compile time or once at the beginning of runtime as follows:
-
-* **Shell**:
-
-  ```bash
-  CSGRS_TOLERANCE=1e-6 cargo build
-  ```
-
-* **Cargo config** (project- or user-level `.cargo/config.toml`):
-
-  ```toml
-  [env]
-  CSGRS_TOLERANCE = "1e-6"
-  ```
-
-* **Build script in the *dependent* crate** (`build.rs`):
-
-  ```rust
-  fn main() {
-      println!("cargo:rustc-env=CSGRS_TOLERANCE=1e-6");
-  }
-  ```
-
-* **Runtime override** (in their `main`):
-
-  ```rust
-  fn main() {
-      csgrs::float_types::set_tolerance(1e-6);
-      // ... rest of the program ...
-  }
-  ```
-
-> `set_tolerance` is a one-shot setter; subsequent calls are ignored. Use it at program start.
+Primitive `f32` and `f64` values are limited to IO, rendering, JavaScript, FFI,
+and adapter boundaries, then promoted into Hyperreal-backed geometry before
+topology-sensitive work. There are no Cargo precision flags and no global
+floating-point tolerance setter.
 
 ## Working with Metadata
 
-`Mesh<M>` and `Sketch<M>` are generic over `M: Clone`. Each polygon in a `Mesh<M>` and each `Mesh<M>` and `Sketch<M>` store `metadata: M`. Use `M = ()` for no metadata or `M = Option<YourMetadata>` for optional metadata.
-Use cases include storing color, ID, or layer info.
+`Mesh<M>` is generic over polygon metadata `M: Clone`; `Profile` is not generic
+and carries no metadata. Each polygon owns one `M`. Use `M = ()` for no metadata
+or `M = Option<YourMetadata>` for optional face metadata. Mesh-level metadata is
+deliberately absent, giving Boolean provenance one unambiguous ownership model.
 
 ```rust
-use csgrs::polygon::Polygon;
+use csgrs::mesh::Polygon;
 use csgrs::vertex::Vertex;
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Vector3};
 
 #[derive(Clone)]
 struct MyMetadata {
@@ -561,149 +500,184 @@ if let Some(data_mut) = poly.metadata_mut() {
 - [csgrs-egui-wasm-example](https://github.com/timschmidt/csgrs-egui-wasm-example)
 - [csgrs-druid-example](https://github.com/timschmidt/csgrs-druid-example)
 
-## Project Status
-
-`csgrs` is usable today as a Rust-first CSG and geometry toolkit. The stable
-core is BSP-backed `Mesh`, `geo`-backed `Sketch`, polygon triangulation, common
-2D/3D primitive construction, extrusion/revolve/sweep/loft operations,
-transformations, metadata propagation, cached bounding boxes, TriMesh query
-conversion, ray intersection helpers, mesh quality utilities, and import/export
-for common mesh and manufacturing formats behind Cargo features.
-
-The project is also intentionally experimental in several areas:
-
-- **Boolean kernels**: BSP booleans are the compatibility baseline. `BMesh`
-  exposes a boolmesh-backed layer behind the `bmesh` feature, and future work is
-  aimed at making indexed mesh booleans lower cost and more robust.
-- **Triangulation**: exactly one of `delaunay`, `earcut`, or `delaunay-rs` must
-  be selected. Delaunay through `geo`/Spade is the current default.
-- **Numeric model**: `Real` is selected by `f64` or `f32`, with `f64` default.
-  The tolerance can be configured through `CSGRS_TOLERANCE` or
-  `set_tolerance`.
-- **NURBS and curves**: Curvo-backed NURBS support is available behind the
-  `nurbs` feature, but it should be treated as an integration layer rather than
-  the final curve kernel.
-- **WASM**: JavaScript bindings cover the core mesh/sketch APIs and are useful
-  for browser previews, but the Rust API remains the source of truth.
-- **Toolpaths**: contour, pocket, FDM layer, lathe roughing, and G-code helpers
-  exist, with more CAM robustness work still needed.
-
-## README Renders
-
-The images in this README are generated by the pure-Rust example renderer:
-
-```shell
-cargo run --example readme_renders
-```
-
-The generator writes every referenced PNG under `docs/` and intentionally covers
-each documented primitive or operation that has a visual representation. It uses
-the existing `image` dependency through the `image-io` feature, frames meshes
-with cached bounding boxes, and deliberately uses a slower projected-triangle
-software path for consistent README previews.
-
-To render into a scratch directory without touching the checked-in baselines,
-set `README_RENDER_OUTPUT_DIR`:
-
-```shell
-README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_renders
-```
-
 ## Roadmap
 
-- **Boolean robustness**: keep BSP as the early verification layer, complete the
-  boolmesh-backed boolean path, reduce excess polygon production by testing
-  only polygons whose cached bounding boxes intersect, and add indexed mesh
-  conversion/merge utilities.
-- **Numeric backend**: continue the f64 default path while preparing a cleaner
-  tolerance/ordering layer around `Real`, including better use of exact or
-  robust predicates where the current tolerance model is weak.
-- **Triangulation and polygon validity**: finish T-junction repair, coplanar
-  polygon merging, validation hooks, and consistent triangulation through Spade,
-  Earcut, or Delaunay backends.
-- **Curves and offsets**: harden Bezier, B-spline, NURBS, offset, straight
-  skeleton, and TrueType text paths; keep Curvo useful immediately while
-  harvesting algorithms that can be owned with a lower maintenance cost.
-- **Feature-complete modeling operations**: add rounded cuboids, chamfers,
-  fillets, 3D offsets, bending, threaded parts, richer gear options, and
-  attachment/alignment helpers.
-- **Representations**: add indexed mesh APIs, half-edge/radial-edge adapters,
-  metadata deduplication, UV support, and better conversion among `Mesh`,
-  `BMesh`, `Sketch`, `Nurbs`, `TriMesh`, and file formats.
-- **Performance**: broaden Rayon use in operations that are embarrassingly
-  parallel, preserve borrowed-slice APIs, minimize allocations, and use cached
-  AABBs/TriMesh acceleration structures in query-heavy code.
-- **I/O and integration**: improve glTF/Gerber output, add STEP/IGES research,
-  continue Bevy/Rapier interop, and keep WASM bindings aligned with the Rust API.
-- **Testing**: keep expanding adversarial, fuzz, and property tests around
-  degeneracy, invalid geometry, boolean edge cases, extrusion/sweep/revolve,
-  import/export round trips, and tolerance boundaries.
+Longer-term directions; the API sections above describe current support.
+
+- **Attachments** Unless you make models containing just one object attachments features can revolutionize your modeling. They will let you position components of a model relative to other components so you don't have to keep track of the positions and orientations of parts of the model. You can instead place something on the TOP of something else, perhaps aligned to the RIGHT.
+- **Rounding and filleting** Provide modules like cuboid() to make a cube with any of the edges rounded, offset_sweep() to round the ends of a linear extrusion, and prism_connector() which works with the attachments feature to create filleted prisms between a variety of objects, or even rounded holes through a single object. Also edge_profile() to apply a variety of different mask profiles to chosen edges of a cubic shape, or directly subtract 3d mask shapes from an edge of objects that are not cubes.
+- **Complex object support** The path_sweep() function/module takes a 2d polygon moves it through space along a path and sweeps out a 3d shape as it moves. Link together a series of arbitrary polygons with skin() or vnf_vertex_array().  Build parts of an object in multiple different representations and combine.
+- **Texturing** Apply textures to many kinds of objects. Create knurling or any repeating pattern.  Applying a texture can actually replace the base object with something different based on repeating copies of the texture element. A texture can also be an image; using texturing you can emboss an arbitrary image onto your model.
+- **Parts library** The parts library will include many useful specific functional parts including gears, generic threading, and specific threading to match plastic bottles, pipe fittings, and standard screws. Also clips, hinges, and dovetail joints, aluminum extrusion, bearings, nuts, bolts, washers, etc.
+- **Shorthands** Shorthands to make your code a little shorter, and more importantly, make it significantly easier to read. Compare up(x) to translate([0,0,x]). Shorthands will include operations for creating copies of objects and for applying transformations to objects.  Drawing like turtle graphics will be possible.
+- **Non-linear solver** Composed of a tree which can contain operations and variables representing systems of equations describing constraints, and functionality to perterb variables, sample the solution space described by the tree expression, determine the local slope, and hill climb toward a solution.
+
+## Performance
+Patterns followed throughout the library to improve performance
+and memory usage:
+- accept borrowed slices where ownership is unnecessary,
+- use Rayon where work is independently parallelizable,
+- minimize allocation and cloning, and
+- retain exact facts, bounds, and topology for reuse across operations.
+
+The retained reference-guided measurements and replay commands are recorded in
+[PERFORMANCE.md](PERFORMANCE.md). In particular, renderer buffers stream from
+certified polygon triangulation without materializing a throwaway triangle
+`Mesh`, and indexed exporters reserve from known topology bounds.
+Repeated mesh Booleans can retain one borrowed certified arrangement through
+`Mesh::try_prepare_boolean`, while ray queries stream borrowed triangle vertices
+without materializing temporary triangle records.
+
+## Todo
+
+This historical investigation backlog is retained with the restored README
+layout; it is not a statement of current feature support. The API sections and
+the issue tracker are authoritative.
+
+- when triangulating, detect T junctions with other polygons with shared edges,
+and insert splitting vertices into polygons to correct
+- implement as_indexed, from_indexed, and merge_vertices (using hashbrown, and an expression of each float out to EPSILON significant digits)
+- ensure re-triangulate unions all coplanar polygons
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.HalfSpace.html and
+https://docs.rs/parry3d/latest/parry3d/query/point/trait.PointQuery.html#method.contains_point
+for plane splitting
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Polyline.html
+for Polygon
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Segment.html
+- evaluate https://docs.rs/nalgebra/latest/nalgebra/geometry/struct.Rotation.html#method.rotation_between-1
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Triangle.html
+- evaluate https://docs.rs/parry3d/latest/parry3d/shape/struct.Segment.html#method.local_split_and_get_intersection in plane splitting and slicing
+- evaluate https://github.com/dimforge/parry/blob/master/src/query/clip/clip_halfspace_polygon.rs
+- evaluate https://github.com/dimforge/parry/blob/master/src/query/clip/clip_segment_segment.rs
+- evaluate https://github.com/dimforge/parry/blob/master/src/transformation/voxelization/voxel_set.rs and https://github.com/dimforge/parry/blob/master/src/transformation/voxelization/voxelized_volume.rs
+- evaluate https://github.com/dimforge/parry/blob/master/src/transformation/convex_hull3/convex_hull.rs instead of chull
+- evaluate https://github.com/dimforge/parry/blob/master/src/utils/ccw_face_normal.rs for normalization
+- update linear_extrude
+- disengage chulls on 2D->3D shapes
+- fix up error handling with result types, eliminate panics
+- ray intersection (singular)
+- https://www.nalgebra.org/docs/user_guide/projections/ for 2d and 3d
+- document coordinate system / coordinate transformations / compounded transformations
+- bending
+- lead-ins, lead-outs
+- gpu acceleration
+  - https://github.com/dimforge/wgmath
+  - https://github.com/pcwalton/pathfinder
+- reduce dependency feature sets
+- space filling curves, hilbert sort polygons / points
+- identify more candidates for par_iter: minkowski, polygon_from_slice, is_manifold
+- http://www.ofitselfso.com/MiscNotes/CAMBamStickFonts.php
+- screw threads
+- support scale and translation along a vector in revolve
+- reimplement 3D offsetting with https://github.com/u65xhd/meshvox or https://docs.rs/parry3d/latest/parry3d/transformation/vhacd/struct.VHACD.html or https://github.com/komadori/bevy_mod_outline/
+- implement 2d/3d convex decomposition with https://docs.rs/parry3d-f64/latest/parry3d_f64/transformation/vhacd/struct.VHACD.html
+  - https://github.com/dimforge/parry/blob/master/src/transformation/hertel_mehlhorn.rs for convex partitioning
+- reimplement transformations and shapes with https://docs.rs/parry3d/latest/parry3d/transformation/utils/index.html
+  - https://github.com/dimforge/parry/tree/master/src/transformation/to_outline or to_polyline
+- std::io::Cursor, std::error::Error - core2 no_std transition
+- https://crates.io/crates/polylabel
+  - pull in https://github.com/fschutt/polylabel-mini/blob/master/src/lib.rs and adjust f64 -> Real
+- history tree
+  - STEP/IGES import / export
+- constraintt solving tree
+- rethink metadata
+  - support storing UV[W] coordinates with vertices at compile time (try to keep runtime cost low too)
+  - accomplish equivalence checks and memory usage reduction by using a hashmap or references instead of storing metadata with each node
+  - with equivalence checks, returning sorted metadata becomes easy
+- implement half-edge, radial edge, etc to and from adapters
+  - chamfers
+  - fillets
+  - manifold tests
+  - 3D offset
+  - attachments
+- align_x_pos, align_x_neg, align_y_pos, align_y_neg, align_z_pos, align_z_neg, center_x, center_y, center_z,
+- attachment points / rapier integration
+  - attachment is a Vertex (Point + normal)
+  - attachments Vec in CSG datastructure
+  - make corners and centers of bb accessible by default, even in empty CSG
+  - make corners, edge midpoints, and centroids of polygons accessible by default (calculate on demand using an iterator)
+  - align_to_attachment(name, csg2, name2)
+- implement C FFI using https://rust-lang.github.io/rust-bindgen/
+- https://proptest-rs.github.io/proptest/intro.html
+- renderer integration
+  - blueprint renders
+  - exploded renders - installation vector
+- implement 2D line, point, LineString functions for Profile
+- https://github.com/hmeyer/tessellation
+- emit TrueType glyphs into the same MultiPolygon for each call of text()
+- evaluate using approx crate
+- evaluate using https://docs.rs/nalgebra/latest/nalgebra/trait.RealField.html instead of float_types::Real
+- mutable API for transmute, etc.
+- gltf output
+- gerber output
+- rework bezier and bspline using https://github.com/mattatz/curvo
+  - import functions from https://github.com/nical/lyon/tree/main/crates/geom/src for cubic and quadratic bezier
+- https://docs.rs/rgeometry/latest/rgeometry/algorithms/polygonization/fn.two_opt_moves.html and other algorithms from rgeometry crate
+- add optional root fillets, dedendum arcs, and backlash/backlash-aware spacing to gears
+- implement GL friendly io modules
+- exhaustively test all polys within intersecting bounding boxes for intersection during booleans, eliminating remaining excess poly production
+- investigate indexed triangulation with spade, earcutr, or delaunay for eliminating floating point instability due to rotation
+
+## Todo shapes
+- geodesic domes / goldberg polyhedra
+- uniform polyhedra
+- molecular models
+- kepler-poinsot polyhedra
+- dodecahedron
+- Archimedean / Catalan solids
+- Johnson solids, near-miss johnson solids
+- deltahedrons
+- regular polytopes
+- regular skew polyhedra
+- toroidal polyhedra
+- shapes from https://iquilezles.org/articles/
+- https://graphite.rs/libraries/bezier-rs/
+
+## Todo easy
+- finish naca airfoil implementations
+- additional renders for documentation
+
+## Todo maybe
+- https://github.com/PsichiX/density-mesh
+- https://github.com/asny/tri-mesh port
+- https://crates.io/crates/flo_curves
+- hyperbolic geometry: https://github.com/agerasev/ccgeom/tree/master/src/hyperbolic
+- https://crates.io/crates/spherical_geometry
+- https://crates.io/crates/miniproj
+- examine https://cadquery.readthedocs.io/en/latest/apireference.html for function ideas
+- https://github.com/tscircuit/tscircuit
 
 ## References
+> [Shape Interrogation for Computer Aided Design and Manufacturing](https://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/)
 
-> Chernyaev, Evgeni. “Marching Cubes 33: Construction of Topologically Correct
-> Isosurfaces.” *CERN Document Server*, 1995,
-> https://cds.cern.ch/record/292771.
+> [Shewchuk, J.R., 1997. Adaptive precision floating-point arithmetic and fast robust geometric predicates. Discrete & Computational Geometry, 18(3), pp.305-363.](https://link.springer.com/content/pdf/10.1007/PL00009321.pdf)
 
-> “CSG.js.” *GitHub*, Evan Wallace, 2011,
-> https://github.com/evanw/csg.js.
+> [Shewchuk, J.R., 1996, May. Robust adaptive floating-point geometric predicates. In Proceedings of the twelfth annual symposium on Computational geometry (pp. 141-150).](https://dl.acm.org/doi/abs/10.1145/237218.237337)
 
-> de Berg, Mark, et al. *Computational Geometry: Algorithms and Applications*.
-> 3rd ed., Springer, 2008.
+> [Floating Point Visually Explained](https://fabiensanglard.net/floating_point_visually_explained/)
 
-> “Earcut.” *GitHub*, Mapbox, https://github.com/mapbox/earcut.
+> [Fast calculation of the distance to cubic Bezier curves on the GPU](https://blog.pkh.me/p/46-fast-calculation-of-the-distance-to-cubic-bezier-curves-on-the-gpu.html)
 
-> Fabien Sanglard. “Floating Point Visually Explained.” *Fabien Sanglard's
-> Website*, 2020, https://fabiensanglard.net/floating_point_visually_explained/.
+### Reference-guided design boundaries
 
-> Farouki, Rida T. “The Bernstein Polynomial Basis: A Centennial Retrospective.”
-> *Computer Aided Geometric Design*, vol. 29, no. 6, 2012, pp. 379-419.
-
-> Held, Martin. “FIST: Fast Industrial-Strength Triangulation of Polygons.”
-> *Algorithmica*, vol. 30, no. 4, 2001, pp. 563-596.
-
-> Hershey, A. V. *Calligraphy for Computers*. U.S. Naval Weapons Laboratory,
-> 1967.
-
-> Lorensen, William E., and Harvey E. Cline. “Marching Cubes: A High Resolution
-> 3D Surface Construction Algorithm.” *Computer Graphics*, vol. 21, no. 4, 1987,
-> pp. 163-169.
-
-> “nalgebra.” *Dimforge*, https://nalgebra.org/.
-
-> Patrikalakis, Nicholas M., Takashi Maekawa, and Wen-Chyung Cho. *Shape
-> Interrogation for Computer Aided Design and Manufacturing*. MIT,
-> https://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/.
-
-> “Parry: 2D and 3D Collision Detection Libraries for Rust.” *Dimforge*,
-> https://parry.rs/.
-
-> Pharr, Matt, Wenzel Jakob, and Greg Humphreys. *Physically Based Rendering:
-> From Theory to Implementation*. 4th ed., MIT Press, 2023,
-> https://pbr-book.org/.
-
-> Prade, Inigo Quilez. “Distance Functions.” *Inigo Quilez*,
-> https://iquilezles.org/articles/distfunctions/.
-
-> “Rapier: 2D and 3D Physics Engines for Rust.” *Dimforge*, https://rapier.rs/.
-
-> Schoen, Alan H. *Infinite Periodic Minimal Surfaces without Self-Intersections*.
-> NASA Technical Note D-5541, 1970.
-
-> Shewchuk, Jonathan Richard. “Adaptive Precision Floating-Point Arithmetic and
-> Fast Robust Geometric Predicates.” *Discrete & Computational Geometry*, vol.
-> 18, no. 3, 1997, pp. 305-363.
-
-> Shewchuk, Jonathan Richard. “Robust Adaptive Floating-Point Geometric
-> Predicates.” *Proceedings of the Twelfth Annual Symposium on Computational
-> Geometry*, ACM, 1996, pp. 141-150.
-
-> “Spade.” *crates.io*, https://crates.io/crates/spade.
-
-> “The OpenSCAD Language.” *OpenSCAD*, https://openscad.org/documentation.html.
-
-> TrueType Reference Manual. *Apple Developer Documentation*,
-> https://developer.apple.com/fonts/TrueType-Reference-Manual/.
+- Patrikalakis, Maekawa, and Cho motivate keeping curve/surface representation,
+  intersection classification, distance queries, and presentation artifacts as
+  separate layers. `csgrs` therefore reuses certified polygon triangulation
+  directly when lowering to graphics buffers instead of rebuilding derived mesh
+  topology solely for export.
+- Both Shewchuk references motivate adaptive, sign-correct predicates. Local
+  topology decisions route through `hyperlimit`, `hypertri`, and exact `Real`
+  comparisons; primitive floating-point values are not compared with a global
+  epsilon to decide connectivity, winding, clipping, or triangulation.
+- Sanglard's explanation makes the scale-dependent spacing of IEEE floating
+  point explicit. Primitive floats remain audited input/output samples, while
+  exact binary promotion or retained source values back topology-affecting
+  decisions.
+- The cubic Bezier GPU distance article is useful for finite rendering and
+  nearest-point query work, but its polynomial/root-selection path is not used
+  as a Boolean or topology certificate. `csgrs` currently exposes no public
+  cubic-distance query for which adopting that approximation would be an API
+  improvement.
 
 ## License
 
@@ -712,10 +686,10 @@ MIT License
 
 Copyright (c) 2025 Timothy Schmidt
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-software and associated documentation files (the "Software"), to deal in the Software 
-without restriction, including without limitation the rights to use, copy, modify, merge, 
-publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
@@ -730,7 +704,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-This library initially based on a translation of **CSG.js** © 2011 Evan Wallace, under the MIT license.  
+This library initially based on a translation of **CSG.js** © 2011 Evan Wallace, under the MIT license.
 
 ---
 

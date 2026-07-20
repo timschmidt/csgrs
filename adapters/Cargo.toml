@@ -1,0 +1,23 @@
+[package]
+name = "csgrs-adapter"
+version = "0.1.0"
+edition = "2024"
+description = "Primitive scalar adapter facade for the hyperreal-backed csgrs core"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/timschmidt/csgrs"
+readme = "README.md"
+
+[dependencies]
+csgrs = { path = "..", default-features = false }
+hyperlattice = { path = "../../hyperlattice" }
+hyperreal = { path = "../../hyperreal", default-features = false }
+
+[features]
+default = ["mesh", "sketch"]
+mesh = ["csgrs/mesh"]
+sketch = ["csgrs/sketch", "mesh"]
+
+[[bench]]
+name = "graphics_export"
+harness = false

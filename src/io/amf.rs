@@ -1,239 +1,243 @@
-#![doc = " AMF file format support for Mesh, Sketch, and BMesh objects"]
-#![doc = ""]
-#![doc = " This module provides export functionality for AMF (Additive Manufacturing File Format),"]
-#![doc = " an XML-based format specifically designed for 3D printing and additive manufacturing."]
+//! AMF export for indexed triangulated geometry.
 
-use crate::float_types::{Real, tolerance};
-use crate::triangulated::Triangulated3D;
-use nalgebra::Point3;
+use crate::io::{IoError, finite_f64, xml_metadata};
+use crate::triangulated::IndexedTriangulated3D;
+use hyperlattice::Real;
 use std::fmt::Debug;
 use std::io::Write;
 
-/// Add a vertex to the list, reusing an existing one if position is within `tolerance()`.
-fn add_unique_vertex_amf(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> usize {
-    for (i, existing) in vertices.iter().enumerate() {
-        if (existing.coords - vertex.coords).norm() < tolerance() {
-            return i;
-        }
+fn validate_units(units: &str) -> Result<&str, IoError> {
+    match units {
+        "meter" | "millimeter" | "micrometer" | "feet" | "inch" => Ok(units),
+        _ => Err(IoError::Unsupported {
+            format: "AMF",
+            detail: format!("unknown unit {units:?}"),
+        }),
     }
-    vertices.push(vertex);
-    vertices.len() - 1
 }
 
-fn build_amf_buffers<T: Triangulated3D>(shape: &T) -> (Vec<Point3<Real>>, Vec<[usize; 3]>) {
-    let mut vertices = Vec::<Point3<Real>>::new();
-    let mut triangles = Vec::<[usize; 3]>::new();
-
-    shape.visit_triangles(|tri| {
-        let i0 = add_unique_vertex_amf(&mut vertices, tri[0].position);
-        let i1 = add_unique_vertex_amf(&mut vertices, tri[1].position);
-        let i2 = add_unique_vertex_amf(&mut vertices, tri[2].position);
-        triangles.push([i0, i1, i2]);
-    });
-
-    (vertices, triangles)
+fn finite_color(color: &(Real, Real, Real)) -> Result<[f64; 3], IoError> {
+    let values = [
+        finite_f64(&color.0, "AMF", "color red")?,
+        finite_f64(&color.1, "AMF", "color green")?,
+        finite_f64(&color.2, "AMF", "color blue")?,
+    ];
+    if values.iter().any(|value| !(0.0..=1.0).contains(value)) {
+        return Err(IoError::MalformedInput(
+            "AMF colors must be in the inclusive range 0..=1".into(),
+        ));
+    }
+    Ok(values)
 }
 
-#[doc = " Export any `Triangulated3D` shape to AMF format as a string"]
-#[doc = ""]
-#[doc = " Creates an AMF (Additive Manufacturing File Format) file containing:"]
-#[doc = " 1. All triangles visited via `Triangulated3D::visit_triangles`"]
-#[doc = ""]
-#[doc = " # Arguments"]
-#[doc = " * `object_name` - Name for the object in the AMF file"]
-#[doc = " * `units` - Units for the geometry (e.g., \"millimeter\", \"inch\")"]
-pub fn to_amf<T: Triangulated3D>(shape: &T, object_name: &str, units: &str) -> String {
-    let (vertices, triangles) = build_amf_buffers(shape);
+fn serialize_amf<T: IndexedTriangulated3D>(
+    shape: &T,
+    object_name: &str,
+    units: &str,
+    color: Option<(Real, Real, Real)>,
+) -> Result<String, IoError> {
+    let units = validate_units(units)?;
+    let object_name = xml_metadata(object_name, "AMF", "object description")?;
+    let indexed = shape.indexed_triangles();
+    let color = color.as_ref().map(finite_color).transpose()?;
 
-    let mut amf_content = String::new();
-    amf_content.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    amf_content.push_str("<amf unit=\"");
-    amf_content.push_str(units);
-    amf_content.push_str("\" version=\"1.1\">\n");
-    amf_content.push_str("  <metadata type=\"producer\">csgrs library</metadata>\n");
-    amf_content.push_str("  <metadata type=\"cad\">Constructive Solid Geometry</metadata>\n");
-    amf_content.push_str(&format!(
+    let mut output = String::new();
+    output.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    output.push_str(&format!("<amf unit=\"{units}\" version=\"1.1\">\n"));
+    output.push_str("  <metadata type=\"producer\">csgrs</metadata>\n");
+    output.push_str(&format!(
         "  <metadata type=\"description\">{object_name}</metadata>\n"
     ));
-
-    amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
-    amf_content.push_str("    <mesh>\n");
-    amf_content.push_str("      <vertices>\n");
-    for (i, vertex) in vertices.iter().enumerate() {
-        amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
-        amf_content.push_str("          <coordinates>\n");
-        amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
-        amf_content.push_str(&format!("            <y>{:.6}</y>\n", vertex.y));
-        amf_content.push_str(&format!("            <z>{:.6}</z>\n", vertex.z));
-        amf_content.push_str("          </coordinates>\n");
-        amf_content.push_str("        </vertex>\n");
+    if let Some([red, green, blue]) = color {
+        output.push_str("  <material id=\"1\"><color>\n");
+        output.push_str(&format!(
+            "    <r>{red:.17}</r><g>{green:.17}</g><b>{blue:.17}</b><a>1</a>\n"
+        ));
+        output.push_str("  </color></material>\n");
     }
-    amf_content.push_str("      </vertices>\n");
-    amf_content.push_str("      <volume>\n");
-    for (i, triangle) in triangles.iter().enumerate() {
-        amf_content.push_str(&format!("        <triangle id=\"{i}\">\n"));
-        amf_content.push_str(&format!("          <v1>{}</v1>\n", triangle[0]));
-        amf_content.push_str(&format!("          <v2>{}</v2>\n", triangle[1]));
-        amf_content.push_str(&format!("          <v3>{}</v3>\n", triangle[2]));
-        amf_content.push_str("        </triangle>\n");
+    output.push_str("  <object id=\"0\"><mesh><vertices>\n");
+    for vertex in &indexed.positions {
+        output.push_str("    <vertex><coordinates>");
+        output.push_str(&format!(
+            "<x>{:.17}</x><y>{:.17}</y><z>{:.17}</z>",
+            finite_f64(&vertex.x, "AMF", "vertex x")?,
+            finite_f64(&vertex.y, "AMF", "vertex y")?,
+            finite_f64(&vertex.z, "AMF", "vertex z")?,
+        ));
+        output.push_str("</coordinates></vertex>\n");
     }
-    amf_content.push_str("      </volume>\n");
-    amf_content.push_str("    </mesh>\n");
-    amf_content.push_str("  </object>\n");
-    amf_content.push_str("</amf>\n");
-    amf_content
+    output.push_str("  </vertices>");
+    if color.is_some() {
+        output.push_str("<volume materialid=\"1\">\n");
+    } else {
+        output.push_str("<volume>\n");
+    }
+    for face in indexed.faces {
+        let [first, second, third] = face.map(|(position, _)| position);
+        if [first, second, third]
+            .iter()
+            .any(|index| *index >= indexed.positions.len())
+        {
+            return Err(IoError::Geometry {
+                format: "AMF",
+                detail: "indexed triangle references a missing position".into(),
+            });
+        }
+        output.push_str(&format!(
+            "    <triangle><v1>{first}</v1><v2>{second}</v2><v3>{third}</v3></triangle>\n"
+        ));
+    }
+    output.push_str("  </volume></mesh></object>\n</amf>\n");
+    Ok(output)
 }
 
-#[doc = " Export any `Triangulated3D` shape to AMF format with color information"]
-#[doc = ""]
-#[doc = " Creates an AMF file with color/material information for enhanced 3D printing."]
-#[doc = ""]
-#[doc = " # Arguments"]
-#[doc = " * `object_name` - Name for the object in the AMF file"]
-#[doc = " * `units` - Units for the geometry (e.g., \"millimeter\", \"inch\")"]
-#[doc = " * `color` - RGB color as (red, green, blue) where each component is 0.0-1.0"]
-pub fn to_amf_with_color<T: Triangulated3D>(
+pub fn to_amf<T: IndexedTriangulated3D>(
+    shape: &T,
+    object_name: &str,
+    units: &str,
+) -> Result<String, IoError> {
+    serialize_amf(shape, object_name, units, None)
+}
+
+pub fn to_amf_with_color<T: IndexedTriangulated3D>(
     shape: &T,
     object_name: &str,
     units: &str,
     color: (Real, Real, Real),
-) -> String {
-    let (vertices, triangles) = build_amf_buffers(shape);
-
-    let mut amf_content = String::new();
-    amf_content.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    amf_content.push_str("<amf unit=\"");
-    amf_content.push_str(units);
-    amf_content.push_str("\" version=\"1.1\">\n");
-    amf_content.push_str("  <metadata type=\"producer\">csgrs library</metadata>\n");
-    amf_content.push_str("  <metadata type=\"cad\">Constructive Solid Geometry</metadata>\n");
-    amf_content.push_str(&format!(
-        "  <metadata type=\"description\">{object_name}</metadata>\n"
-    ));
-
-    amf_content.push_str("  <material id=\"material1\">\n");
-    amf_content.push_str("    <metadata type=\"name\">Default Material</metadata>\n");
-    amf_content.push_str("    <color>\n");
-    amf_content.push_str(&format!("      <r>{:.3}</r>\n", color.0));
-    amf_content.push_str(&format!("      <g>{:.3}</g>\n", color.1));
-    amf_content.push_str(&format!("      <b>{:.3}</b>\n", color.2));
-    amf_content.push_str("      <a>1.0</a>\n");
-    amf_content.push_str("    </color>\n");
-    amf_content.push_str("  </material>\n");
-
-    amf_content.push_str(&format!("  <object id=\"{object_name}\">\n"));
-    amf_content.push_str("    <mesh>\n");
-    amf_content.push_str("      <vertices>\n");
-    for (i, vertex) in vertices.iter().enumerate() {
-        amf_content.push_str(&format!("        <vertex id=\"{i}\">\n"));
-        amf_content.push_str("          <coordinates>\n");
-        amf_content.push_str(&format!("            <x>{:.6}</x>\n", vertex.x));
-        amf_content.push_str(&format!("            <y>{:.6}</y>\n", vertex.y));
-        amf_content.push_str(&format!("            <z>{:.6}</z>\n", vertex.z));
-        amf_content.push_str("          </coordinates>\n");
-        amf_content.push_str("        </vertex>\n");
-    }
-    amf_content.push_str("      </vertices>\n");
-    amf_content.push_str("      <volume materialid=\"material1\">\n");
-    for (i, triangle) in triangles.iter().enumerate() {
-        amf_content.push_str(&format!("        <triangle id=\"{i}\">\n"));
-        amf_content.push_str(&format!("          <v1>{}</v1>\n", triangle[0]));
-        amf_content.push_str(&format!("          <v2>{}</v2>\n", triangle[1]));
-        amf_content.push_str(&format!("          <v3>{}</v3>\n", triangle[2]));
-        amf_content.push_str("        </triangle>\n");
-    }
-    amf_content.push_str("      </volume>\n");
-    amf_content.push_str("    </mesh>\n");
-    amf_content.push_str("  </object>\n");
-    amf_content.push_str("</amf>\n");
-    amf_content
+) -> Result<String, IoError> {
+    serialize_amf(shape, object_name, units, Some(color))
 }
 
-#[doc = " Export any `Triangulated3D` shape to an AMF file"]
-#[doc = ""]
-#[doc = " # Arguments"]
-#[doc = " * `writer` - Where to write the AMF data"]
-#[doc = " * `object_name` - Name for the object in the AMF file"]
-#[doc = " * `units` - Units for the geometry (e.g., \"millimeter\", \"inch\")"]
-pub fn write_amf<T: Triangulated3D, W: Write>(
+pub fn write_amf<T: IndexedTriangulated3D, W: Write>(
     shape: &T,
     writer: &mut W,
     object_name: &str,
     units: &str,
-) -> std::io::Result<()> {
-    let amf_content = to_amf(shape, object_name, units);
-    writer.write_all(amf_content.as_bytes())
+) -> Result<(), IoError> {
+    writer.write_all(to_amf(shape, object_name, units)?.as_bytes())?;
+    Ok(())
 }
 
-impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
-    pub fn to_amf(&self, object_name: &str, units: &str) -> String {
-        self::to_amf(self, object_name, units)
+macro_rules! impl_amf_export {
+    ($type:ty) => {
+        impl<M: Clone + Debug + Send + Sync> $type {
+            pub fn to_amf(&self, name: &str, units: &str) -> Result<String, IoError> {
+                to_amf(self, name, units)
+            }
+
+            pub fn write_amf<W: Write>(
+                &self,
+                writer: &mut W,
+                name: &str,
+                units: &str,
+            ) -> Result<(), IoError> {
+                write_amf(self, writer, name, units)
+            }
+
+            pub fn to_amf_with_color(
+                &self,
+                name: &str,
+                units: &str,
+                color: (Real, Real, Real),
+            ) -> Result<String, IoError> {
+                to_amf_with_color(self, name, units, color)
+            }
+        }
+    };
+}
+
+impl_amf_export!(crate::mesh::Mesh<M>);
+#[cfg(feature = "sketch")]
+impl crate::sketch::Profile {
+    pub fn to_amf(&self, name: &str, units: &str) -> Result<String, IoError> {
+        to_amf(self, name, units)
     }
 
     pub fn write_amf<W: Write>(
         &self,
         writer: &mut W,
-        object_name: &str,
+        name: &str,
         units: &str,
-    ) -> std::io::Result<()> {
-        self::write_amf(self, writer, object_name, units)
+    ) -> Result<(), IoError> {
+        write_amf(self, writer, name, units)
     }
 
     pub fn to_amf_with_color(
         &self,
-        object_name: &str,
+        name: &str,
         units: &str,
         color: (Real, Real, Real),
-    ) -> String {
-        self::to_amf_with_color(self, object_name, units, color)
+    ) -> Result<String, IoError> {
+        to_amf_with_color(self, name, units, color)
     }
 }
 
-impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
-    pub fn to_amf(&self, object_name: &str, units: &str) -> String {
-        self::to_amf(self, object_name, units)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::io::test_support::InvalidIndexed;
+    use crate::mesh::Mesh;
+    use quick_xml::events::Event;
+    use quick_xml::reader::Reader;
+
+    #[test]
+    fn metadata_is_xml_escaped() {
+        let mesh = Mesh::<()>::cube(Real::one(), ());
+        let output = mesh.to_amf("a<&\"b", "millimeter").unwrap();
+        assert!(output.contains("a&lt;&amp;&quot;b"));
+        assert!(mesh.to_amf("bad\0name", "millimeter").is_err());
+
+        let mut reader = Reader::from_str(&output);
+        let mut vertices = 0;
+        let mut triangles = 0;
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(element) if element.name().as_ref() == b"vertex" => vertices += 1,
+                Event::Start(element) if element.name().as_ref() == b"triangle" => {
+                    triangles += 1
+                },
+                Event::Eof => break,
+                _ => {},
+            }
+        }
+        assert_eq!(vertices, 8);
+        assert_eq!(triangles, 12);
     }
 
-    pub fn write_amf<W: Write>(
-        &self,
-        writer: &mut W,
-        object_name: &str,
-        units: &str,
-    ) -> std::io::Result<()> {
-        self::write_amf(self, writer, object_name, units)
+    #[test]
+    fn invalid_units_and_colors_are_rejected() {
+        let mesh = Mesh::<()>::cube(Real::one(), ());
+        assert!(mesh.to_amf("cube", "parsec").is_err());
+        assert!(
+            mesh.to_amf_with_color(
+                "cube",
+                "millimeter",
+                (Real::from(2_u8), Real::zero(), Real::zero()),
+            )
+            .is_err()
+        );
+        assert!(matches!(
+            to_amf(&InvalidIndexed, "invalid", "millimeter"),
+            Err(IoError::Geometry { format: "AMF", .. })
+        ));
     }
 
-    pub fn to_amf_with_color(
-        &self,
-        object_name: &str,
-        units: &str,
-        color: (Real, Real, Real),
-    ) -> String {
-        self::to_amf_with_color(self, object_name, units, color)
-    }
-}
+    #[test]
+    fn public_colored_serializer_and_writer_match_checked_output() {
+        let mesh = Mesh::<()>::cube(Real::one(), ());
+        let plain = to_amf(&mesh, "cube", "millimeter").unwrap();
+        let colored = crate::io::amf::to_amf_with_color(
+            &mesh,
+            "cube",
+            "millimeter",
+            (Real::one(), Real::zero(), Real::zero()),
+        )
+        .unwrap();
+        assert!(colored.contains("<material id=\"1\">"));
+        assert!(colored.contains("<volume materialid=\"1\">"));
 
-#[cfg(feature = "bmesh")]
-impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
-    pub fn to_amf(&self, object_name: &str, units: &str) -> String {
-        self::to_amf(self, object_name, units)
-    }
-
-    pub fn write_amf<W: Write>(
-        &self,
-        writer: &mut W,
-        object_name: &str,
-        units: &str,
-    ) -> std::io::Result<()> {
-        self::write_amf(self, writer, object_name, units)
-    }
-
-    pub fn to_amf_with_color(
-        &self,
-        object_name: &str,
-        units: &str,
-        color: (Real, Real, Real),
-    ) -> String {
-        self::to_amf_with_color(self, object_name, units, color)
+        let mut written = Vec::new();
+        crate::io::amf::write_amf(&mesh, &mut written, "cube", "millimeter").unwrap();
+        assert_eq!(written, plain.as_bytes());
     }
 }

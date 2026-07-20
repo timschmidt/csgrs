@@ -59,14 +59,15 @@ Global invariants to check everywhere
   process with the same feature flags.
 - Parallel and non-parallel builds should produce equivalent geometry modulo
   ordering.
-- f32 and f64 builds should both pass their own tolerance budgets.
+- The hyperreal build should pass one explicit tolerance budget across feature
+  sets; f32/f64 feature matrices are retired.
 - Metadata should survive operations that document preservation, and should not
   be spuriously copied where semantics require new or filtered metadata.
-- Empty meshes, empty sketches, empty NURBS, and empty BMesh values should not
-  crash downstream APIs.
+- Empty meshes, empty sketches, empty NURBS, and exact hypermesh adapters
+  should not crash downstream APIs.
 - Every invariant above should be encoded in reusable proptest assertion
   helpers so generated Mesh, Sketch, Polygon, Plane, Transform, I/O, wasm, and
-  toolpath cases all check the same safety rules.
+  related cases all check the same safety rules.
 - Every panic, hang, non-finite output, invalid index, and minimized proptest
   failure should be promoted into the deterministic regression corpus and, if
   byte-oriented, seeded into the fuzz corpus.
@@ -87,13 +88,14 @@ Proptest should be used throughout for:
   polygons, and polygons with holes
 - valid watertight meshes from primitives and intentionally invalid meshes
   assembled from arbitrary polygons
-- boolean expression trees over Mesh, Sketch, and BMesh
+- boolean expression trees over Mesh and Sketch, with closed solids audited
+  through hypermesh
 - transform sequences and inverse/round-trip checks
 - import/export round trips whose input model can be represented as structured
   Rust values
 - metadata preservation and filtering checks
-- feature-flag differential checks, including f32 vs f64 and parallel vs
-  sequential output normalization
+- feature-flag differential checks, including parallel vs sequential output
+  normalization under the shared hyperreal scalar model
 - operation-chain generation, where a generated object is passed through
   multiple public APIs before invariant checks
 
@@ -121,8 +123,8 @@ Required proptest/fuzz hygiene:
 - Convert every minimized proptest case and every minimized fuzz artifact into
   a named regression fixture.
 - Run fuzz targets with sanitizer builds where practical.
-- Keep native Rust, wasm, f32, f64, parallel, and alternate triangulation
-  backends fed from the same canonical corpora where possible.
+- Keep native Rust, wasm, parallel, and hyper geometry adapters fed from the
+  same canonical corpora where possible.
 
 Global numeric sweeps
 ---------------------
@@ -146,8 +148,8 @@ Finite scalars:
 - -2
 - 0.5
 - -0.5
-- Real::EPSILON
-- -Real::EPSILON
+- tolerance() / 2048
+- -tolerance() / 2048
 - tolerance() / 1024
 - tolerance() / 16
 - tolerance() / 2
@@ -295,7 +297,7 @@ checks.
 - polygon with all vertices coplanar but unsorted
 - polygon with self-crossing projection
 - polygon whose best projection axis is ambiguous
-- polygon with duplicate vertices separated by tiny epsilon
+- polygon with duplicate vertices separated by tiny tolerance
 - polygon with duplicate vertices separated by exactly tolerance
 - polygon with overlapping edges
 - polygon with holes represented as repeated winding if possible
@@ -392,7 +394,7 @@ For `Sketch::rectangle`, `square`, `circle`, `right_triangle`, `polygon`,
   behavior, and import/export round trips.
 - Add proptest strategies for simple valid sketches, invalid sketches, and
   parameterized primitive constructors. Reuse them in boolean, extrusion,
-  offset, toolpath, and I/O tests.
+  offset, and I/O tests.
 - Add fuzz harnesses for `Sketch::polygon`, curve constructors, gear/rack
   constructors, and operation chains that move from Sketch to Mesh and back.
 
@@ -441,8 +443,8 @@ Specific sketch primitive attacks:
 Boolean operation attacks
 -------------------------
 
-Run `union`, `difference`, `intersection`, and `xor` on Mesh, Sketch, and
-BMesh where available.
+Run `union`, `difference`, `intersection`, and `xor` on Mesh and Sketch, then
+audit closed Mesh results through hypermesh where available.
 
 Canonical pairs:
 
@@ -556,7 +558,8 @@ Target `transform`, `translate`, `translate_vector`, `rotate`, `scale`,
   singular, near-singular, affine, and corrupted matrices, with metamorphic
   checks for identity, inverse, composition, and double mirror.
 - Add fuzz targets that decode 16 matrix entries plus a primitive selector and
-  apply the matrix to Mesh, Sketch, BMesh, and wasm wrappers where enabled.
+  apply the matrix to Mesh, Sketch, hypermesh adapters, and wasm wrappers where
+  enabled.
 
 Triangulation attacks
 ---------------------
@@ -650,7 +653,7 @@ Target `Vertex::new`, `flip`, `interpolate`, `slerp_interpolate`,
 - Barycentric interpolation with valid weights, negative weights, weights not
   summing to one, and NaN weights.
 - Cotangent weight for right, acute, obtuse, collinear, and coincident points.
-- Connectivity with duplicate vertices under epsilon.
+- Connectivity with duplicate vertices under tolerance.
 - Curvature with no neighbors, duplicate neighbors, missing face areas,
   negative face areas, and NaN areas.
 - VertexCluster from empty vertices, one vertex, duplicates, and mixed normals.
@@ -659,11 +662,11 @@ Target `Vertex::new`, `flip`, `interpolate`, `slerp_interpolate`,
 - Add fuzz targets for vertex arithmetic that compare finite-input operations
   against finite-output expectations and reject panics.
 
-Sketch boolean and geo conversion attacks
------------------------------------------
+Sketch boolean and hypercurve conversion attacks
+------------------------------------------------
 
-Target `Sketch::from_geo`, `to_multipolygon`, `renormalize`, CSG operations,
-and conversion from `Mesh`.
+Target hypercurve-backed sketch constructors, region normalization, CSG
+operations, and conversion from `Mesh`.
 
 - GeometryCollection containing points only.
 - GeometryCollection containing lines only.
@@ -678,11 +681,11 @@ and conversion from `Mesh`.
 - Xor of touching polygons.
 - `renormalize` on invalid, empty, and nested geometries.
 - Mesh flattening followed by sketch boolean and re-extrusion.
-- Compare geo area before and after round trips where valid.
-- Add proptest strategies for `GeometryCollection` values containing mixed
-  points, lines, polygons, multipolygons, and empty geometry.
-- Add fuzz targets that decode geo-like ring collections and run
-  `from_geo -> to_multipolygon -> renormalize -> boolean`.
+- Compare hypercurve area before and after round trips where valid.
+- Add proptest strategies for mixed point, line, polygon, multipolygon, and
+  empty hypercurve region values.
+- Add fuzz targets that decode ring collections and run constructor ->
+  normalize -> boolean paths.
 
 Extrusion, loft, revolve, and sweep attacks
 -------------------------------------------
@@ -855,27 +858,30 @@ When the `nurbs` feature is enabled, target `Nurbs::empty`, `from_regions`,
   tolerances, and boolean operation pairs.
 - Add fuzz targets for polyline/control-point byte streams and tolerance bytes.
 
-BMesh attacks
--------------
+hypermesh adapter attacks
+-------------------------
 
-When the `bmesh` feature is enabled:
+For the exact hypermesh boundary:
 
-- Convert empty Mesh to BMesh.
-- Convert invalid/non-manifold Mesh to BMesh.
-- Convert mesh with duplicate vertices.
-- Convert mesh with reversed winding.
-- Run all boolean identity and pair tests against BMesh.
-- Compare Mesh boolean result and BMesh boolean result on clean solids.
-- Transform BMesh with singular, negative, zero, and huge scales.
-- Invert BMesh twice.
-- Convert BMesh back through triangulation/export paths.
-- Verify invalid boolmesh conversions fail gracefully or produce empty BMesh
-  without corrupting later operations.
+- Convert empty Mesh values and assert exact validation rejects them without
+  corrupting later operations.
+- Convert invalid/non-manifold Mesh values and assert the retained hypermesh
+  facts report the failure policy.
+- Convert mesh streams with duplicate vertices, reversed winding, repeated
+  triangles, and quantized near-coincident edges.
+- Run manifold and indexed-export checks against accepted closed hypermesh
+  solids.
+- Compare Mesh boolean results and hypermesh validation facts on clean closed
+  solids.
+- Transform Mesh values with singular, negative, zero, and huge scales before
+  exact hypermesh import.
+- Convert accepted exact hypermesh values back through the explicitly lossy
+  compatibility adapter, then through triangulation/export paths.
 - Add proptest differential tests that generate clean Mesh primitives,
-  transform them, then compare Mesh and BMesh boolean outputs after
-  normalization.
-- Add fuzz targets that decode triangle soups, attempt BMesh conversion, and
-  run a small operation sequence if conversion succeeds.
+  transform them, then compare normalized Mesh output with retained hypermesh
+  topology facts.
+- Add fuzz targets that decode triangle soups, attempt exact hypermesh import,
+  and run a small operation sequence if conversion succeeds.
 
 I/O export attacks
 ------------------
@@ -1058,57 +1064,21 @@ When the `wasm` feature is enabled, test `Point3Js`, `Vector3Js`, `VertexJs`,
 - Add JS-side fuzzing for arrays, typed arrays, metadata `JsValue`s, wrong
   arities, and operation sequences crossing the wasm boundary.
 
-Toolpath attacks
-----------------
-
-When `offset` enables the toolpath module, target `Toolpath`, `PathMove`,
-`fdm_layer_from_sketch`, `cut2d_contours`, `pocket2d`,
-`lathe_rough_from_profile`, `contour_only`, and G-code post output.
-
-- Empty sketch/profile.
-- Sketch with holes.
-- Self-intersecting sketch.
-- Open contours if constructible.
-- Nozzle diameter 0, negative, tiny, huge.
-- Tool diameter 0, negative, tiny, huge.
-- Layer height 0, negative, tiny, huge.
-- Feed rates 0, negative, huge.
-- Extrusion multiplier 0, negative, huge, NaN.
-- Kerf side left/right/on with zero kerf and huge kerf.
-- Lead-in/out longer than contour.
-- Pocket stepover 0, negative, larger than tool diameter.
-- Pocket depth 0, negative, huge.
-- Lathe profile crossing axis.
-- Lathe negative stock radius.
-- Travel/cut moves containing NaN or infinity.
-- G-code output with finite coordinates, stable line ordering, sanitized
-  comments, and no impossible feed/extrusion values.
-- Add proptest strategies for sketches, feeds, tool/nozzle dimensions,
-  lead-in/out settings, pocket settings, and lathe profiles.
-- Add fuzz targets that decode sketch rings and toolpath configuration bytes,
-  then postprocess to G-code and check for finite numeric output.
-
 Feature-flag matrix
 -------------------
 
 Build and test these combinations:
 
 - default features
-- `--no-default-features --features f64,delaunay`
-- `--no-default-features --features f64,earcut`
-- `--no-default-features --features f64,delaunay-rs`
-- `--no-default-features --features f32,delaunay`
-- `--no-default-features --features f32,earcut`
+- `--no-default-features --features mesh,sketch`
+- `--no-default-features --features mesh,sketch,parallel`
+- `--no-default-features --features mesh,sketch,stl-io,obj-io,ply-io,amf-io,gltf-io`
 - default plus `parallel`
 - default plus `wasm` for wasm32 where supported
-- default plus `nurbs`
 - default plus `bevymesh`
 - minimal mesh-only combinations where compile rules permit
 - minimal sketch-only combinations where compile rules permit
-- expected compile failures when both `f32` and `f64` are enabled
-- expected compile failures when no real type is enabled
-- expected compile failures when multiple triangulation backends are enabled
-- expected compile failures when no triangulation backend is enabled
+- expected compile failure for the retired `bmesh` feature name
 
 Performance and complexity attacks
 ----------------------------------
@@ -1172,15 +1142,16 @@ Metamorphic properties:
   inputs.
 - Export-import-export is stable after normalization for supported formats.
 - Parallel and sequential outputs have same normalized triangle set.
-- f32 outputs are within a looser envelope of f64 outputs on the same finite
-  corpus.
+- Hyperreal outputs remain within the same finite corpus envelope across
+  feature sets.
 
 Differential testing
 --------------------
 
-- Compare Mesh booleans against BMesh booleans on clean closed solids.
-- Compare Sketch booleans against geo expectations for simple rectangles and
-  circles.
+- Compare Mesh booleans against hypermesh closed-manifold facts on clean closed
+  solids.
+- Compare Sketch booleans against hypercurve expectations for simple
+  rectangles and circles.
 - Compare triangulation backends on identical valid polygons.
 - Compare STL/OBJ/PLY triangle counts from the same object.
 - Compare `to_trimesh` and exported indexed meshes for vertex/index validity.
@@ -1224,7 +1195,6 @@ the global invariants after the decoded operation completes.
 - `fuzz_gerber_import`
 - `fuzz_stl_obj_ply_amf_gltf_export_names`
 - `fuzz_wasm_array_inputs`
-- `fuzz_toolpath_from_sketch`
 - `fuzz_nurbs_polyline_to_sketch`
 
 Minimum adversarial CI tiers
@@ -1245,7 +1215,6 @@ Medium tier:
 - Cross-feature triangulation backend comparison.
 - Parallel vs sequential deterministic corpus.
 - Import malformed fixture corpus.
-- Toolpath malformed geometry corpus.
 
 Long tier:
 
@@ -1253,7 +1222,7 @@ Long tier:
 - Large performance sweeps.
 - Sanitizer/miri runs where supported.
 - wasm browser or wasm-bindgen-test corpus.
-- f32 vs f64 differential runs.
+- Hyperreal adapter differential runs.
 - External parser validation for exported formats.
 
 Concrete "try to break everything" operation chains
@@ -1275,7 +1244,8 @@ Concrete "try to break everything" operation chains
 - Text from corrupt font bytes -> extrude -> export if construction succeeds.
 - Metaballs no-surface -> boolean with cube -> slice -> export.
 - SDF closure returning NaN at one cell -> mesh quality -> export.
-- BMesh from invalid Mesh -> boolean -> transform -> back to Mesh if possible.
+- Invalid Mesh -> hypermesh import rejection -> boolean -> transform -> exact
+  validation if possible.
 - wasm MeshJs from wrong-length arrays -> every method should throw or return
   documented empty output, never trap unexpectedly.
 
@@ -1290,8 +1260,8 @@ For equality-like assertions, avoid relying on raw polygon order. Normalize by:
 - Sorting triangles lexicographically.
 - Comparing quantized coordinates, normals where relevant, triangle count,
   bounding box, surface area, volume, and manifoldness.
-- Allowing backend-specific tolerances for f32 vs f64 and triangulation
-  algorithm differences.
+- Allowing backend-specific tolerances for triangulation and exact-boundary
+  adapter differences.
 
 Final reminder
 --------------

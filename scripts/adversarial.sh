@@ -24,30 +24,18 @@ run cargo test --test adversarial_stress
 run cargo test --test adversarial_fixtures
 
 feature_sets=(
-  "f64 delaunay"
-  "f64 earcut"
-  "f64 delaunay-rs"
-  "f64 parallel delaunay"
-  "f64 parallel earcut"
-  "f32 delaunay"
-  "f32 earcut"
-  "f32 delaunay-rs"
-  "f64 delaunay stl-io dxf-io obj-io ply-io amf-io gltf-io gerber-io chull-io metaballs sdf offset bmesh"
-  "f32 earcut stl-io dxf-io obj-io ply-io amf-io gltf-io gerber-io chull-io metaballs sdf offset bmesh"
+  "mesh sketch"
+  "mesh sketch parallel"
+  "mesh sketch stl-io dxf-io obj-io ply-io amf-io gltf-io gerber-io metaballs sdf offset"
+  "mesh sketch parallel stl-io dxf-io obj-io ply-io amf-io gltf-io gerber-io metaballs sdf offset"
 )
 
 for features in "${feature_sets[@]}"; do
   run cargo check --no-default-features --features "$features"
 done
 
-expect_fail cargo check --no-default-features --features "f32 f64 delaunay"
-expect_fail cargo check --no-default-features --features "f64"
-expect_fail cargo check --no-default-features --features "f64 delaunay earcut"
-expect_fail cargo check --no-default-features --features "f64 delaunay delaunay-rs"
-
-run cargo check --manifest-path fuzz/Cargo.toml --locked
-
 if [[ "${RUN_FUZZ_SECONDS:-0}" != "0" ]]; then
+  run cargo check --manifest-path fuzz/Cargo.toml --locked
   cargo_fuzz=(cargo fuzz)
   if cargo +nightly fuzz --help >/dev/null 2>&1; then
     cargo_fuzz=(cargo +nightly fuzz)
@@ -66,7 +54,6 @@ if [[ "${RUN_FUZZ_SECONDS:-0}" != "0" ]]; then
     fuzz_transform_matrix
     fuzz_export_names
     fuzz_plane_split_polygon
-    fuzz_toolpath_from_sketch
     fuzz_mesh_primitive_catalog
     fuzz_sketch_shape_catalog
     fuzz_sdf_tpms

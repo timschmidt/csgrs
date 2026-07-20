@@ -2,12 +2,26 @@
 
 use super::support::*;
 
+#[derive(Debug)]
+struct CloneCountedMetadata {
+    clones: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+}
+
+impl Clone for CloneCountedMetadata {
+    fn clone(&self) -> Self {
+        self.clones.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        Self {
+            clones: self.clones.clone(),
+        }
+    }
+}
+
 #[test]
 fn test_polygon_metadata_string() {
     let verts = vec![
         Vertex::new(Point3::origin(), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
     let mut poly = Polygon::new(verts, "triangle".to_string());
 
@@ -24,8 +38,8 @@ fn test_polygon_metadata_string() {
 fn test_polygon_metadata_integer() {
     let verts = vec![
         Vertex::new(Point3::origin(), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
     let poly = Polygon::new(verts, 42u32);
 
@@ -40,8 +54,8 @@ fn test_polygon_metadata_custom_struct() {
     };
     let verts = vec![
         Vertex::new(Point3::origin(), Vector3::z()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-        Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+        Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
     let poly = Polygon::new(verts, my_data.clone());
 
@@ -53,20 +67,20 @@ fn test_csg_construction_with_metadata() {
     let poly_a = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 1.0, 0.0), Vector3::z()),
         ],
         "PolyA".to_string(),
     );
     let poly_b = Polygon::new(
         vec![
-            Vertex::new(Point3::new(2.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(3.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(3.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(2.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(3.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(3.0, 1.0, 0.0), Vector3::z()),
         ],
         "PolyB".to_string(),
     );
-    let csg = Mesh::from_polygons(&[poly_a.clone(), poly_b.clone()], "Mesh".to_string());
+    let csg = Mesh::from_polygons(vec![poly_a.clone(), poly_b.clone()]);
 
     assert_eq!(csg.polygons.len(), 2);
     assert_eq!(csg.polygons[0].metadata(), &"PolyA".to_string());
@@ -75,67 +89,87 @@ fn test_csg_construction_with_metadata() {
 
 #[test]
 fn test_union_metadata() {
-    let cube1 = Mesh::cube(1.0, "Cube1".to_string());
-    let cube2 = Mesh::cube(1.0, "Cube2".to_string()).translate(0.5, 0.0, 0.0);
+    let cube1 = Mesh::cube(r(1.0), "Cube1".to_string());
+    let cube2 = Mesh::cube(r(1.0), "Cube2".to_string()).translate(r(0.5), r(0.0), r(0.0));
 
     let union_csg = cube1.union(&cube2);
 
-    for poly in &union_csg.polygons {
-        let data = poly.metadata();
-        assert!(
-            data == "Cube1" || data == "Cube2",
-            "Union polygon has unexpected shared data = {:?}",
-            data
-        );
-    }
+    let metadata = union_csg
+        .polygons
+        .iter()
+        .map(|polygon| polygon.metadata().as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(metadata, std::collections::BTreeSet::from(["Cube1", "Cube2"]));
 }
 
 #[test]
-fn test_difference_metadata() {
-    let cube1 = Mesh::cube(2.0, "Cube1".to_string());
-    let cube2 = Mesh::cube(2.0, "Cube2".to_string()).translate(0.5, 0.5, 0.5);
+fn test_boolean_clones_metadata_only_for_output_faces() {
+    let clones = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let metadata = CloneCountedMetadata {
+        clones: clones.clone(),
+    };
+    let left = Mesh::cube(r(2.0), metadata.clone());
+    let right = Mesh::cube(r(2.0), metadata).translate(r(0.5), r(0.5), r(0.5));
+    clones.store(0, std::sync::atomic::Ordering::Relaxed);
 
-    let result = cube1.difference(&cube2);
+    let result = left
+        .try_union(&right)
+        .expect("overlapping cubes remain a certified union");
 
-    let mut saw_cube1 = false;
-    let mut saw_cube2 = false;
-    for poly in &result.polygons {
-        let metadata = poly.metadata();
-        saw_cube1 |= metadata == "Cube1";
-        saw_cube2 |= metadata == "Cube2";
-        assert!(
-            metadata == "Cube1" || metadata == "Cube2",
-            "Difference polygon has unexpected metadata = {:?}",
-            metadata
-        );
-    }
-
-    assert!(
-        saw_cube1 && saw_cube2,
-        "Difference should retain source metadata from both operands for clipped boundary faces"
+    assert_eq!(
+        clones.load(std::sync::atomic::Ordering::Relaxed),
+        result.polygons.len()
     );
 }
 
 #[test]
+fn test_difference_metadata() {
+    let cube1 = Mesh::cube(r(2.0), "Cube1".to_string());
+    let cube2 = Mesh::cube(r(2.0), "Cube2".to_string()).translate(r(0.5), r(0.5), r(0.5));
+
+    let result = cube1.difference(&cube2);
+
+    let metadata = result
+        .polygons
+        .iter()
+        .map(|polygon| polygon.metadata().as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(metadata, std::collections::BTreeSet::from(["Cube1", "Cube2"]));
+}
+
+#[test]
 fn test_intersect_metadata() {
-    let cube1 = Mesh::cube(2.0, "Cube1".to_string());
-    let cube2 = Mesh::cube(2.0, "Cube2".to_string()).translate(0.5, 0.5, 0.5);
+    let cube1 = Mesh::cube(r(2.0), "Cube1".to_string());
+    let cube2 = Mesh::cube(r(2.0), "Cube2".to_string()).translate(r(0.5), r(0.5), r(0.5));
 
     let result = cube1.intersection(&cube2);
 
-    for poly in &result.polygons {
-        let data = poly.metadata();
-        assert!(
-            data == "Cube1" || data == "Cube2",
-            "Intersection polygon has unexpected shared data = {:?}",
-            data
-        );
-    }
+    let metadata = result
+        .polygons
+        .iter()
+        .map(|polygon| polygon.metadata().as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(metadata, std::collections::BTreeSet::from(["Cube1", "Cube2"]));
+}
+
+#[test]
+fn test_empty_union_does_not_relabel_faces() {
+    let empty = Mesh::<String>::empty();
+    let cube = Mesh::cube(r(1.0), "right".to_string());
+
+    let result = empty.union(&cube);
+
+    assert!(
+        result
+            .polygons
+            .iter()
+            .all(|polygon| polygon.metadata() == "right")
+    );
 }
 
 #[test]
 fn test_flip_invert_metadata() {
-    let csg = Mesh::cube(2.0, "MyCube".to_string());
+    let csg = Mesh::cube(r(2.0), "MyCube".to_string());
 
     let inverted = csg.inverse();
     for poly in &inverted.polygons {
@@ -148,13 +182,13 @@ fn test_subdivide_metadata() {
     let poly = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
-            Vertex::new(Point3::new(2.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(2.0, 2.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 2.0, 0.0), Vector3::z()),
+            Vertex::new(p3(2.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(2.0, 2.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 2.0, 0.0), Vector3::z()),
         ],
         "LargeQuad".to_string(),
     );
-    let csg = Mesh::from_polygons(&[poly], "Mesh".to_string());
+    let csg = Mesh::from_polygons(vec![poly]);
     let subdivided = csg.subdivide_triangles(1.try_into().expect("not 0"));
 
     assert!(subdivided.polygons.len() > 1);
@@ -168,15 +202,15 @@ fn test_transform_metadata() {
     let poly = Polygon::new(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
-            Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
-            Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
         ],
         "Tri".to_string(),
     );
-    let csg = Mesh::from_polygons(&[poly], "Mesh".to_string());
-    let csg_trans = csg.translate(10.0, 5.0, 0.0);
-    let csg_scale = csg_trans.scale(2.0, 2.0, 1.0);
-    let csg_rot = csg_scale.rotate(0.0, 0.0, 45.0);
+    let csg = Mesh::from_polygons(vec![poly]);
+    let csg_trans = csg.translate(r(10.0), r(5.0), r(0.0));
+    let csg_scale = csg_trans.scale(r(2.0), r(2.0), r(1.0));
+    let csg_rot = csg_scale.rotate(r(0.0), r(0.0), r(45.0));
 
     for poly in &csg_rot.polygons {
         assert_eq!(poly.metadata(), &"Tri".to_string());
@@ -188,16 +222,20 @@ fn test_complex_metadata_struct_in_boolean_ops() {
     #[derive(Debug, Clone, PartialEq)]
     struct Color(u8, u8, u8);
 
-    let csg1 = Mesh::cube(2.0, Color(255, 0, 0));
-    let csg2 = Mesh::cube(2.0, Color(0, 255, 0)).translate(0.5, 0.5, 0.5);
+    let csg1 = Mesh::cube(r(2.0), Color(255, 0, 0));
+    let csg2 = Mesh::cube(r(2.0), Color(0, 255, 0)).translate(r(0.5), r(0.5), r(0.5));
 
     let unioned = csg1.union(&csg2);
-    for poly in &unioned.polygons {
-        let col = poly.metadata();
-        assert!(
-            *col == Color(255, 0, 0) || *col == Color(0, 255, 0),
-            "Unexpected color in union: {:?}",
-            col
-        );
-    }
+    assert!(
+        unioned
+            .polygons
+            .iter()
+            .any(|polygon| polygon.metadata() == &Color(255, 0, 0))
+    );
+    assert!(
+        unioned
+            .polygons
+            .iter()
+            .any(|polygon| polygon.metadata() == &Color(0, 255, 0))
+    );
 }

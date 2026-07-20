@@ -3,9 +3,19 @@
 #![no_main]
 
 use csgrs::mesh::Mesh;
-use csgrs::float_types::Real;
+use hyperlattice::{Point3, Real};
+use hyperlimit::Point3 as HPoint3;
+use hypersdf::SdfExpr;
 use libfuzzer_sys::fuzz_target;
-use nalgebra::Point3;
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
+
+fn at_least(value: Real, minimum: f64) -> Real {
+    let minimum = real(minimum);
+    value.max(&minimum).clone()
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -14,7 +24,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-100.0, 100.0) as Real
+    real(value.clamp(-100.0, 100.0))
 }
 
 fn assert_mesh_finite(mesh: &Mesh<()>) {
@@ -22,10 +32,14 @@ fn assert_mesh_finite(mesh: &Mesh<()>) {
         assert!(vertex.position.x.is_finite());
         assert!(vertex.position.y.is_finite());
         assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.x.is_finite());
-        assert!(vertex.normal.y.is_finite());
-        assert!(vertex.normal.z.is_finite());
+        assert!(vertex.normal.0[0].is_finite());
+        assert!(vertex.normal.0[1].is_finite());
+        assert!(vertex.normal.0[2].is_finite());
     }
+}
+
+fn hpoint3(x: Real, y: Real, z: Real) -> HPoint3 {
+    HPoint3::new(x, y, z)
 }
 
 fuzz_target!(|bytes: &[u8]| {
@@ -34,32 +48,54 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     let mut idx = 0usize;
-    let tag = bytes[idx] % 4;
+    let tag = bytes[idx] % 6;
     idx += 1;
     let res = (bytes[idx % bytes.len()] as usize % 10) + 1;
     idx += 1;
-    let period = decode_real(bytes, &mut idx).abs().max(0.001);
+    let period = at_least(decode_real(bytes, &mut idx).abs(), 0.001);
     let iso = decode_real(bytes, &mut idx);
-    let base = Mesh::cube(2.0, None);
+    let base = Mesh::cube(real(2.0), ());
 
     let mesh = match tag {
         0 => Mesh::sdf(
-            |p: &Point3<Real>| {
-                if p.x > 0.9 {
-                    Real::NAN
-                } else {
-                    p.coords.norm() - 0.5
-                }
-            },
+            |p: &Point3| p.to_vector().norm() - real(0.5),
             (res, res, res),
-            Point3::new(-1.0, -1.0, -1.0),
-            Point3::new(1.0, 1.0, 1.0),
+            Point3::new(real(-1.0), real(-1.0), real(-1.0)),
+            Point3::new(real(1.0), real(1.0), real(1.0)),
             iso,
-            None,
+            (),
         ),
-        1 => base.gyroid(res, period, iso, None),
-        2 => base.schwarz_p(res, period, iso, None),
-        _ => base.schwarz_d(res, period, iso, None),
+        1 => {
+            let center = hpoint3(Real::zero(), Real::zero(), Real::zero());
+            let max_radius_squared = real(10.0);
+            let radius_squared = period.min(&max_radius_squared).clone();
+            Mesh::sdf_expr(
+                SdfExpr::sphere(center, radius_squared),
+                (res, res, res),
+                Point3::new(real(-1.0), real(-1.0), real(-1.0)),
+                Point3::new(real(1.0), real(1.0), real(1.0)),
+                iso,
+                (),
+            )
+        },
+        2 => base.gyroid(res, period, iso, ()),
+        3 => base.schwarz_p(res, period, iso, ()),
+        4 => base.schwarz_d(res, period, iso, ()),
+        _ => {
+            let sign = if bytes[idx % bytes.len()] & 1 == 0 {
+                Real::one()
+            } else {
+                -Real::one()
+            };
+            Mesh::sdf(
+                |_| sign.clone() * real(1.0e-50),
+                (res, res, res),
+                Point3::new(real(-1.0), real(-1.0), real(-1.0)),
+                Point3::new(real(1.0), real(1.0), real(1.0)),
+                Real::zero(),
+                (),
+            )
+        },
     };
 
     assert_mesh_finite(&mesh);

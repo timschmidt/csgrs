@@ -1,7 +1,7 @@
 //! JavaScript bindings for metaball construction helpers.
 
 // use crate::mesh::metaballs::MetaBall;
-// use crate::float_types::Real;
+// use hyperlattice::Real;
 // use wasm_bindgen::prelude::*;
 
 // #[wasm_bindgen]

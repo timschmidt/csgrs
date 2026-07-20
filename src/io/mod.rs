@@ -1,133 +1,208 @@
-//! Optional import and export modules for mesh, sketch, and toolpath-adjacent
-//! file formats.
+//! Optional import and export modules for mesh and sketch file formats.
 
 #[cfg(feature = "svg-io")]
 pub mod svg;
 
 #[cfg(feature = "stl-io")]
-mod stl;
+pub mod stl;
 
 #[cfg(feature = "dxf-io")]
-mod dxf;
+pub mod dxf;
 
 #[cfg(feature = "obj-io")]
-mod obj;
+pub mod obj;
 
 #[cfg(feature = "ply-io")]
-mod ply;
+pub mod ply;
 
 #[cfg(feature = "amf-io")]
-mod amf;
+pub mod amf;
 
 #[cfg(feature = "gltf-io")]
-mod gltf;
+pub mod gltf;
 
 #[cfg(feature = "gerber-io")]
 pub mod gerber;
 
-/// Generic I/O and format‑conversion errors.
-///
-/// Many I/O features are behind cargo feature‑flags.  
-/// When a feature is disabled the corresponding variant is *not*
-/// constructed in user code.
-#[derive(Debug)]
-pub enum IoError {
-    StdIo(std::io::Error),
-    ParseFloat(std::num::ParseFloatError),
+#[cfg(any(
+    feature = "obj-io",
+    feature = "ply-io",
+    feature = "amf-io",
+    feature = "stl-io",
+    feature = "gltf-io",
+    feature = "dxf-io",
+    feature = "svg-io"
+))]
+use hyperlattice::Real;
 
+/// Error produced while parsing or serializing a geometry interchange format.
+#[derive(Debug, thiserror::Error)]
+pub enum IoError {
+    #[error(transparent)]
+    StdIo(#[from] std::io::Error),
+    #[error("could not parse a finite number: {0}")]
+    ParseFloat(#[from] std::num::ParseFloatError),
+
+    #[error("input is malformed: {0}")]
     MalformedInput(String),
-    MalformedPath(String),
-    Unimplemented(String),
+    #[error("{format} cannot represent {field} as a finite {target}")]
+    UnrepresentableCoordinate {
+        format: &'static str,
+        field: &'static str,
+        target: &'static str,
+    },
+    #[error("{format} metadata field {field} contains forbidden control characters")]
+    InvalidMetadata {
+        format: &'static str,
+        field: &'static str,
+    },
+    #[error("{format} output exceeds the supported {limit} limit")]
+    SizeOverflow {
+        format: &'static str,
+        limit: &'static str,
+    },
+    #[error("unsupported {format} input: {detail}")]
+    Unsupported {
+        format: &'static str,
+        detail: String,
+    },
+    #[error("{format} geometry conversion failed: {detail}")]
+    Geometry {
+        format: &'static str,
+        detail: String,
+    },
 
     #[cfg(feature = "svg-io")]
     /// Error bubbled up from the `svg` crate during parsing.
-    SvgParsing(::svg::parser::Error),
+    #[error("SVG parsing failed: {0}")]
+    SvgParsing(#[from] ::svg::parser::Error),
 
-    #[cfg(feature = "obj-io")]
-    /// Error during OBJ file processing.
-    ObjParsing(String),
-
-    #[cfg(feature = "ply-io")]
-    /// Error during PLY file processing.
-    PlyParsing(String),
-
-    #[cfg(feature = "amf-io")]
-    /// Error during AMF file processing.
-    AmfParsing(String),
+    #[cfg(feature = "dxf-io")]
+    #[error("DXF processing failed: {0}")]
+    Dxf(#[from] ::dxf::DxfError),
 
     #[cfg(feature = "gerber-io")]
     /// Error during Gerber file processing.
+    #[error("Gerber parsing failed: {0}")]
     GerberParsing(String),
 
     #[cfg(feature = "gerber-io")]
     /// Error during Gerber code generation.
-    GerberCodegen(::gerber_types::GerberError),
+    #[error("Gerber generation failed: {0}")]
+    GerberCodegen(#[from] ::gerber_types::GerberError),
 }
 
-impl std::fmt::Display for IoError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use IoError::*;
+#[cfg(any(
+    feature = "obj-io",
+    feature = "ply-io",
+    feature = "amf-io",
+    feature = "stl-io",
+    feature = "dxf-io",
+    feature = "svg-io"
+))]
+pub(crate) fn finite_f64(
+    value: &Real,
+    format: &'static str,
+    field: &'static str,
+) -> Result<f64, IoError> {
+    value.to_f64_lossy().filter(|value| value.is_finite()).ok_or(
+        IoError::UnrepresentableCoordinate {
+            format,
+            field,
+            target: "f64",
+        },
+    )
+}
 
-        match self {
-            StdIo(error) => write!(f, "std::io::Error: {error}"),
-            ParseFloat(error) => write!(f, "Could not parse float: {error}"),
+#[cfg(any(feature = "stl-io", feature = "gltf-io"))]
+pub(crate) fn finite_f32(
+    value: &Real,
+    format: &'static str,
+    field: &'static str,
+) -> Result<f32, IoError> {
+    // Reuse hyperreal's cached f64 boundary view, which is shared by render,
+    // bounds, and checksum paths. Computing a separate f32 refinement for the
+    // same exact scalar is substantially more expensive and provides no extra
+    // topology information at this explicitly lossy IO boundary.
+    value
+        .to_f64_lossy()
+        .map(|value| value as f32)
+        .filter(|value| value.is_finite())
+        .ok_or(IoError::UnrepresentableCoordinate {
+            format,
+            field,
+            target: "f32",
+        })
+}
 
-            MalformedInput(msg) => write!(f, "Input is malformed: {msg}"),
-            MalformedPath(msg) => write!(f, "The path is malformed: {msg}"),
-            Unimplemented(msg) => write!(f, "Feature is not implemented: {msg}"),
+#[cfg(any(feature = "obj-io", feature = "ply-io", feature = "stl-io"))]
+pub(crate) fn single_line_metadata<'a>(
+    value: &'a str,
+    format: &'static str,
+    field: &'static str,
+) -> Result<&'a str, IoError> {
+    if value.chars().any(char::is_control) {
+        return Err(IoError::InvalidMetadata { format, field });
+    }
+    Ok(value)
+}
 
-            #[cfg(feature = "svg-io")]
-            SvgParsing(error) => write!(f, "SVG Parsing error: {error}"),
+#[cfg(feature = "amf-io")]
+pub(crate) fn xml_metadata(
+    value: &str,
+    format: &'static str,
+    field: &'static str,
+) -> Result<String, IoError> {
+    if value.chars().any(|character| {
+        !matches!(character, '\u{9}' | '\u{a}' | '\u{d}')
+            && (character < '\u{20}' || matches!(character, '\u{fffe}' | '\u{ffff}'))
+    }) {
+        return Err(IoError::InvalidMetadata { format, field });
+    }
+    Ok(value
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;"))
+}
 
-            #[cfg(feature = "obj-io")]
-            ObjParsing(error) => write!(f, "OBJ Parsing error: {error}"),
+#[cfg(test)]
+pub(crate) mod test_support {
+    use crate::triangulated::{IndexedTriangleMesh3D, IndexedTriangulated3D, Triangulated3D};
+    use crate::vertex::Vertex;
+    use hyperlattice::{Point3, Real, Vector3};
 
-            #[cfg(feature = "ply-io")]
-            PlyParsing(error) => write!(f, "PLY Parsing error: {error}"),
+    pub(crate) struct InvalidIndexed;
 
-            #[cfg(feature = "amf-io")]
-            AmfParsing(error) => write!(f, "AMF Parsing error: {error}"),
+    impl Triangulated3D for InvalidIndexed {
+        fn visit_triangles<F>(&self, _visit: F)
+        where
+            F: FnMut([Vertex; 3]),
+        {
+        }
+    }
 
-            #[cfg(feature = "gerber-io")]
-            GerberParsing(error) => write!(f, "Gerber Parsing error: {error}"),
-
-            #[cfg(feature = "gerber-io")]
-            GerberCodegen(error) => write!(f, "Gerber code generation error: {error}"),
+    impl IndexedTriangulated3D for InvalidIndexed {
+        fn indexed_triangles(&self) -> IndexedTriangleMesh3D {
+            IndexedTriangleMesh3D {
+                positions: vec![Point3::new(Real::zero(), Real::zero(), Real::zero())],
+                normals: vec![Vector3::z()],
+                faces: vec![[(1, 0), (0, 0), (0, 0)]],
+            }
         }
     }
 }
 
-impl std::error::Error for IoError {}
+#[cfg(test)]
+mod tests {
+    use super::{finite_f32, finite_f64};
+    use hyperlattice::Real;
 
-impl From<std::io::Error> for IoError {
-    fn from(value: std::io::Error) -> Self {
-        Self::StdIo(value)
-    }
-}
-
-impl From<std::num::ParseFloatError> for IoError {
-    fn from(value: std::num::ParseFloatError) -> Self {
-        Self::ParseFloat(value)
-    }
-}
-
-#[cfg(feature = "svg-io")]
-impl From<::svg::parser::Error> for IoError {
-    fn from(value: ::svg::parser::Error) -> Self {
-        Self::SvgParsing(value)
-    }
-}
-
-#[cfg(feature = "obj-io")]
-impl From<String> for IoError {
-    fn from(value: String) -> Self {
-        Self::ObjParsing(value)
-    }
-}
-
-#[cfg(feature = "gerber-io")]
-impl From<::gerber_types::GerberError> for IoError {
-    fn from(value: ::gerber_types::GerberError) -> Self {
-        Self::GerberCodegen(value)
+    #[test]
+    fn finite_boundary_helpers_reject_unrepresentable_exact_values() {
+        let huge = format!("1{}", "0".repeat(1000)).parse::<Real>().unwrap();
+        assert!(finite_f64(&huge, "test", "coordinate").is_err());
+        assert!(finite_f32(&huge, "test", "coordinate").is_err());
     }
 }

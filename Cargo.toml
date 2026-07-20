@@ -1,8 +1,8 @@
 [package]
 name = "csgrs"
-version = "0.21.0"
+version = "0.23.0"
 edition = "2024"
-description = "Constructive solid geometry (CSG) on meshes using BSP trees in Rust"
+description = "Constructive solid geometry (CSG) on meshes composed from hyper geometry crates"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 # msrv
 rust-version = "1.95.0"
@@ -17,8 +17,6 @@ categories = ["game-development", "graphics", "mathematics", "simulation", "wasm
 [package.metadata.docs.rs]
 no-default-features = true
 features = [
-  "f64",
-  "bmesh",
   "mesh",
   "sketch",
   "stl-io",
@@ -29,20 +27,56 @@ features = [
   "gltf-io",
   "gerber-io",
   "svg-io",
-  "chull-io",
   "image-io",
   "metaballs",
   "sdf",
   "offset",
-  "delaunay",
   "truetype-text",
   "hershey-text",
-  "nurbs",
   "wasm",
 ]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[[bench]]
+name = "part_blueprint"
+harness = false
+
+[[bench]]
+name = "mesh_pipeline"
+harness = false
+
+[[bench]]
+name = "kernel_comparison"
+harness = false
+
+[[bench]]
+name = "feature_pipeline"
+harness = false
+required-features = [
+  "mesh",
+  "sketch",
+  "stl-io",
+  "dxf-io",
+  "obj-io",
+  "ply-io",
+  "amf-io",
+  "gltf-io",
+  "svg-io",
+  "image-io",
+  "metaballs",
+  "sdf",
+  "offset",
+  "truetype-text",
+  "hershey-text",
+  "bevymesh",
+]
+
+[[bench]]
+name = "profile_primitives"
+harness = false
+required-features = ["sketch"]
 
 [profile.release]
 opt-level = 3
@@ -57,24 +91,15 @@ opt-level = "z"
 
 [dependencies]
 # geometry
-nalgebra = { version = "0.34.1", features = ["serde-serialize"] }
 #alum = "0.6.1"
-curvo = { version = "0.1.88", optional = true }
-robust = { version = "1.1.0", default-features = false, features = ["no_std"] }
-geo = { version = "0.31.0", default-features = false, features = ["use-serde"] }
-geo-buffer = { version = "0.2.0", optional = true }
-#geo-booleanop = "0.3.2" # alternative boolean implementation has fewer dependencies
-chull = { version = "0.2.4", optional = true }
-spade = { version = "2.15.0", optional = true }
-earcutr = { version = "0.5.0", optional = true }
-delaunay-triangulator = { package = "delaunay", version = "0.7.6", optional = true }
-boolmesh = { version = "0.1.5", optional = true }
-
-rapier3d-f64 = { version = "0.31.0", optional = true }
-rapier3d = { version = "0.31.0", optional = true }
-parry3d-f64  = { version = "0.25.3", optional = true }
-parry3d  = { version = "0.25.3", optional = true }
-
+hypercurve = { version = "0.3.0", path = "../hypercurve", features = ["triangulation", "svg"] }
+hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
+hypermesh = { version = "0.1.0", path = "../hypermesh" }
+hyperphysics = { version = "0.3.0", path = "../hyperphysics" }
+hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false, features = ["cached-f64-approx"] }
+hypersdf = { version = "0.2.0", path = "../hypersdf", optional = true }
+hypertri = { version = "0.4.0", path = "../hypertri", default-features = false, features = ["earcut"] }
 # bevy mesh conversion
 bevy_mesh = { version = "0.18", optional = true }
 bevy_asset = { version = "0.18", optional = true }
@@ -92,10 +117,12 @@ base64 = { version = "0.22", optional = true }
 #doc-image-embed = "0.2" # fork of https://crates.io/crates/embed-doc-image - should be upstreamed.
 
 # io/load
+chrono = { version = "0.4", optional = true }
 dxf = { version = "0.6", optional = true }
 stl_io = { version = "0.8", optional = true }
 image = { version = "0.25", optional = true }
 svg = { version = "0.18", optional = true }
+svgtypes = { version = "0.16.1", optional = true }
 nom = { version = "7.1", optional = true }
 gerber-types = { version = "0.7.0", optional = true }
 gerber_parser = { version = "0.4.0", optional = true }
@@ -118,49 +145,42 @@ serde = { version = "1.0.228", optional = true }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 uuid = { version = "1.18", features = ["js"] }
 
+# Keep transitive sibling crates unified while using local path development mode.
+[patch.crates-io]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hyperreal = { path = "../hyperreal" }
+hypertri = { path = "../hypertri" }
+hypersolve = { path = "../hypersolve" }
+
 [features]
-default = ["f64", "bmesh", "mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
+default = ["mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
+dispatch-trace = [
+  "hypercurve/dispatch-trace",
+  "hypermesh/dispatch-trace",
+  "hyperreal/dispatch-trace",
+]
 parallel = [
   "rayon",
-  "geo/multithreading",
-  "hashbrown/rayon",
-  "parry3d?/parallel",
-  "parry3d-f64?/parallel",
-  "rapier3d?/parallel",
-  "rapier3d-f64?/parallel"
+  "hashbrown/rayon"
 ]
-f64 = [
-  "rapier3d-f64",
-  "parry3d-f64",
-]
-f32 = [
-  "rapier3d",
-  "parry3d",
-]
-mesh = [
-  # BSP backed Mesh datatype
-]
-mesh-bbopt = [
-  # Enable bounding box optimization for Mesh BSP
-]
+mesh = [] # Compatibility feature; Mesh is the always-available core carrier.
+# Legacy BSP transition features removed after full hypermesh migration.
 sketch = [
-  # geo backed Sketch datatype
-]
-bmesh = [
-  "boolmesh",
-]
-# convex hull and minkowski sum
-chull-io = [
-  "chull",
+  # hypercurve backed Profile datatype
 ]
 stl-io = [
   "stl_io",
 ]
 svg-io = [
+  "sketch",
   "svg",
+  "svgtypes",
   "nom", # Parsing of things not covered by the `svg` crate
 ]
 dxf-io = [
+  "sketch",
+  "chrono",
   "dxf",
 ]
 obj-io = [
@@ -174,8 +194,10 @@ amf-io = [
 ]
 gltf-io = [
   "base64",
+  "serde_json",
 ]
 gerber-io = [
+  "sketch",
   "gerber-types",
   "gerber_parser",
 ]
@@ -196,39 +218,31 @@ metaballs = [
 ]
 sdf = [
   "fast-surface-nets",
+  "hypersdf",
 ]
-offset = [
-  "dep:geo-buffer",
-]
-delaunay = [
-  "spade",
-  "geo/spade",
-]
-delaunay-rs = [
-  "dep:delaunay-triangulator",
-]
-earcut = [
-  "earcutr",
-  "geo/earcutr",
-]
+# Compatibility feature retained for existing consumers. Offset operations are
+# native Hypercurve APIs and no longer activate an external geometry backend.
+offset = ["sketch"]
 bevymesh = [
   "dep:bevy_mesh",
   "dep:bevy_asset",
   "dep:wgpu-types"
 ]
-nurbs = [
-  "dep:curvo",
-]
 wasm = [
+  "mesh",
+  "sketch",
+  "svg-io",
+  "stl-io",
+  "amf-io",
+  "gltf-io",
+  "sdf",
   "uuid",
   "wasm-bindgen",
   "js-sys",
   "serde-wasm-bindgen",
   "serde_json",
   "serde",
-  "earcutr",
 ]
-spade = ["dep:spade"]
 
 [[example]]
 name = "readme_renders"
@@ -240,8 +254,10 @@ required-features = [
   "metaballs",
   "sdf",
   "offset",
-  "chull-io",
 ]
 
 [dev-dependencies]
+gltf = "1.4.1"
+ply-rs = "0.1.3"
 proptest = "1.9"
+quick-xml = "0.39.4"
