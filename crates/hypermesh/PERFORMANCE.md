@@ -846,6 +846,41 @@ rustdoc, benchmark and fuzz-target builds, and the release WASM demo. A
 failure. The downstream CSGRS all-feature suite passed all 370 library tests and
 every integration test.
 
+## 2026-07-19: prepare projected rational output vertices once
+
+Status: **kept**
+
+Construction-aware T-junction filtering projected the same exact output vertex
+into many certified 2D line predicates, converting its arbitrary-precision
+coordinates and rebuilding conservative error radii each time. The output merge
+now prepares every rational 3D vertex once when recovery filtering is enabled.
+Line endpoints and candidate queries select their two axes from those retained
+intervals; failed conversions, invalid projections, and uncertain filters still
+fall through to the unchanged exact point-on-segment predicate.
+
+Eight alternating counter runs each performed 500 fresh, globally shifted
+sphere/box operations:
+
+| operation | repeated-conversion instructions | prepared-point instructions | result | cycle result |
+| --- | ---: | ---: | ---: | ---: |
+| union | 9,955,432,140 | 9,516,772,993 | 4.41% fewer | 4.04% fewer |
+| difference | 8,488,857,196 | 8,487,528,295 | 0.02% fewer | neutral |
+
+`Rational::to_f64_lossy` fell from 4.91% to 2.09% self time in the union
+profile. Heap profiles rose from 1,183,904 to 1,183,949 allocations over 50
+unions—only 0.9 allocation per operation for the prepared-query vector. The
+Hyperreal regression suite locks positive, negative, uncertain, and invalid-axis
+filter behavior while Hypermesh's exact split-edge and output suites retain the
+same topology.
+
+Validation passed 962 unit tests, 60 default integration tests, 48 regression
+tests with the benchmark smoke test ignored, the complete all-target/all-feature
+suite, the no-default-feature build, Clippy with warnings denied, warning-clean
+documentation, benchmark compilation, every fuzz-target build, and the locked
+release WASM application build. A 20-second ASAN campaign completed 365
+`boolean_pipeline` executions without failure. The downstream CSGRS all-feature
+suite passed all 370 library tests and every integration test.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

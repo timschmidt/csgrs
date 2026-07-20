@@ -10,7 +10,7 @@ use crate::polygon::{ConstructionEdgeIdentity, ConvexPolygon};
 use crate::storage_hash::StorageHashMap;
 use crate::winding::WindingPair;
 use hyperlattice::{Rational, Real};
-use hyperreal::PreparedRationalLine2Filter;
+use hyperreal::{PreparedRationalLine2Filter, PreparedRationalPoint3Query};
 
 const RESOLVE_TJUNCTION_MAX_PASSES: usize = 256;
 
@@ -611,6 +611,21 @@ where
         return Err(HypermeshError::UnknownClassification);
     }
     let (mut vertices, indexed_polygons) = merge_duplicate_convex_polygon_vertices(polygons)?;
+    let prepared_rational_vertices = filter_recovery_candidates.then(|| {
+        vertices
+            .iter()
+            .map(|vertex| {
+                let [Some(x), Some(y), Some(z)] = [
+                    vertex.x.exact_rational_ref(),
+                    vertex.y.exact_rational_ref(),
+                    vertex.z.exact_rational_ref(),
+                ] else {
+                    return None;
+                };
+                Real::prepare_rational_point3_query([x, y, z])
+            })
+            .collect::<Vec<_>>()
+    });
     let construction_candidates = prefer_construction_candidates
         .then(|| build_construction_edge_candidates(polygons, &indexed_polygons))
         .transpose()?;
@@ -662,6 +677,7 @@ where
                     &vertices,
                     canonical,
                     &candidates.groups[candidates.polygon_edges[polygon_index][edge_index]],
+                    prepared_rational_vertices.as_deref(),
                     filter_recovery_candidates,
                 )?
             } else if let Some(approximate_vertices) = &approximate_vertices {
@@ -1423,6 +1439,7 @@ fn split_segment_subedges_exact_candidates<'a>(
     vertices: &[OutputVertex],
     edge: [usize; 2],
     candidates: &ConstructionEdgeCandidateGroup,
+    prepared_rational_vertices: Option<&[Option<PreparedRationalPoint3Query>]>,
     filter_recovery_candidates: bool,
 ) -> HypermeshResult<&'a [[usize; 2]]> {
     let edge = sorted_edge(edge);
@@ -1434,18 +1451,20 @@ fn split_segment_subedges_exact_candidates<'a>(
         )?;
         let projection_filters = filter_recovery_candidates
             .then(|| {
+                let prepared = prepared_rational_vertices?;
+                let from = prepared.get(edge[0])?.as_ref()?;
+                let to = prepared.get(edge[1])?.as_ref()?;
                 (0..3)
                     .filter(|&other_axis| other_axis != axis)
                     .map(|other_axis| {
-                        let start = [
-                            vertex_axis(&vertices[edge[0]], axis).exact_rational_ref()?,
-                            vertex_axis(&vertices[edge[0]], other_axis).exact_rational_ref()?,
-                        ];
-                        let end = [
-                            vertex_axis(&vertices[edge[1]], axis).exact_rational_ref()?,
-                            vertex_axis(&vertices[edge[1]], other_axis).exact_rational_ref()?,
-                        ];
-                        Some((other_axis, Real::prepare_rational_line2_filter(start, end)?))
+                        Some((
+                            other_axis,
+                            Real::prepare_rational_line2_filter_from_prepared_point3(
+                                from,
+                                to,
+                                [axis, other_axis],
+                            )?,
+                        ))
                     })
                     .collect::<Option<Vec<(usize, PreparedRationalLine2Filter)>>>()
             })
@@ -1466,15 +1485,16 @@ fn split_segment_subedges_exact_candidates<'a>(
                 continue;
             }
             if projection_filters.as_ref().is_some_and(|filters| {
+                let Some(point) = prepared_rational_vertices
+                    .and_then(|prepared| prepared.get(vertex_index))
+                    .and_then(Option::as_ref)
+                else {
+                    return false;
+                };
                 filters.iter().any(|(other_axis, filter)| {
-                    let point = [
-                        vertex_axis(&vertices[vertex_index], axis).exact_rational_ref(),
-                        vertex_axis(&vertices[vertex_index], *other_axis).exact_rational_ref(),
-                    ];
-                    let [Some(first), Some(second)] = point else {
-                        return false;
-                    };
-                    filter.sign_rational([first, second]).is_some()
+                    filter
+                        .sign_prepared_point3(point, [axis, *other_axis])
+                        .is_some()
                 })
             }) {
                 continue;
