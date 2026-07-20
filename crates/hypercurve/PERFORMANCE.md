@@ -27,6 +27,7 @@ no exact-dispatch requirement.
 | B-spline, polynomial spline, and NURBS construction/evaluation | `hypercurve_bspline`, `hypercurve_polynomial_spline`, `hypercurve_nurbs`, `hypercurve_nurbs_interpolation` | `bspline`, `rational_bezier`, `api_surface` | global NURBS interpolation |
 | Editing, offsets, fitting, and reconstruction | `hypercurve_contour`, `hypercurve_offset`, `hypercurve_bezier_fit_offset`, `hypercurve_reconstruct` | `editing`, `offset`, `reconstruction` | checked curve-string offset |
 | Contours, regions, Boolean topology, and prepared queries | `hypercurve_boolean`, `hypercurve_region*`, `hypercurve_curve_region_boolean` | `containment`, `bezier_region` | region Boolean and prepared containment |
+| Pathological retained-region memory, transforms, intersections, and all Boolean operations | benchmark fixture smoke paths plus the ordinary family/Boolean suites | `pathological_regions`; feature-gated pathological lanes in `comparative` | every curve family and `Real` representation class across calibrated 100 MiB, 500 MiB, and 1 GiB native inputs |
 | Finite projection, retained import, triangulation, and SVG boundary | `hypercurve_region`, `hypercurve_triangulation`, `hypercurve_svg_io` | `api_surface`, `svg_io` | not applicable to the finite-only adapter work; exact reconstruction/topology is traced by the rows above |
 
 The `dispatch-trace` feature enables the shared `hyperreal`/`hyperlimit`
@@ -637,6 +638,37 @@ full all-feature and no-default-feature test matrices, warnings-as-errors Clippy
 and rustdoc gates, and the exact Boolean differential fuzz target all passed; the
 latter completed 1,000 AddressSanitizer-instrumented runs at 5,615 coverage points
 and 15,661 feature edges without a failure.
+
+The retained x sweep originally collected every surviving segment pair in one
+global vector before restoring source order. It now visits one first-operand
+segment at a time, restores only that segment's second-operand order, and then
+reuses the buffer. Exact AABB rejection, uncertain-box retention, event order,
+and the flat-scan fallback are unchanged, while temporary candidate storage is
+bounded by the second contour's segment count instead of the total surviving
+pair count.
+
+The report-bearing region Boolean path also kept borrowed intermediate geometry
+alive through final materialization, cloned closed chains into loops, cloned
+loops into contours, and cloned every completed stage report into the aggregate
+report. Successful stages now consume chains and loops and move their reports;
+the public evidence remains identical without the redundant exact carriers.
+Against the preceding checkpoint, the stripped one-iteration comparative
+Callgrind sweep fell from 55,566,500 to 53,745,141 instructions (3.28%). The
+one-cell all-operation pathological comparison fell from 165,920,306 to
+159,422,324 instructions (3.92%). In the matching 15-sample, 50 ms run,
+star64 intersection measured 1.431 ms/iter, rectangle union 24.758 us/iter,
+offset 20.081 us/iter, and NURBS evaluation 1.113 us/iter, with unchanged
+checksums.
+
+The new native pathological fixture calibrates each all-family shard at roughly
+1.5 MiB. Its 100 MiB construction tier selected 67 shards and observed a
+102.8 MiB resident-set increase in about 135 ms; an exact deep-copy rotation of
+the built tier took 20.5 ms. The curved Boolean lane prepared all 67 pairs and
+retained 9,288 candidate carrier pairs, then reported 268 exact predicate
+blockers rather than approximating them. The common finite projection decided
+all 268 operation/cell combinations in about 277 ms. These lanes are diagnostic
+capacity tests, not claims that unlike numeric and topology models have equal
+semantics.
 
 ## Optimization boundary
 

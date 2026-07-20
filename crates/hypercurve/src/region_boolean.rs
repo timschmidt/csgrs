@@ -2008,61 +2008,61 @@ fn boolean_boundary_contours_between_with_pipeline_report(
         };
     let emission_result =
         selection.emit_boundary_fragments_from_certified_split_with_report(fragments)?;
-    let emitted = match emission_result.fragments() {
+    let (emitted, emission_report) = emission_result.into_parts();
+    let emitted = match emitted {
         Some(emitted) => emitted,
         None => {
             return Ok(Classification::Uncertain(
-                emission_result
-                    .report()
+                emission_report
                     .blocker()
                     .unwrap_or(UncertaintyReason::Unsupported),
             ));
         }
     };
     let chain_result = emitted.assemble_chains_with_report(policy);
-    let chains = match chain_result.chains() {
+    let (chains, chain_report) = chain_result.into_parts();
+    let chains = match chains {
         Some(chains) => chains,
         None => {
             return Ok(Classification::Uncertain(
-                chain_result
-                    .report()
+                chain_report
                     .blocker()
                     .unwrap_or(UncertaintyReason::Unsupported),
             ));
         }
     };
-    let loop_result = chains.closed_loops_with_report();
-    let loops = match loop_result.loops() {
+    let loop_result = chains.into_closed_loops_with_report();
+    let (loops, loop_report) = loop_result.into_parts();
+    let loops = match loops {
         Some(loops) => loops,
         None => {
             return Ok(Classification::Uncertain(
-                loop_result
-                    .report()
+                loop_report
                     .blocker()
                     .unwrap_or(UncertaintyReason::Unsupported),
             ));
         }
     };
-    let contour_result = loops.to_contours_with_report(fill_rule);
-    let contours = match contour_result.contours() {
-        Some(contours) => contours.to_vec(),
+    let contour_result = loops.into_contours_with_report(fill_rule);
+    let (contours, contour_report) = contour_result.into_parts();
+    let contours = match contours {
+        Some(contours) => contours,
         None => {
             return Ok(Classification::Uncertain(
-                contour_result
-                    .report()
+                contour_report
                     .blocker()
                     .unwrap_or(UncertaintyReason::Unsupported),
             ));
         }
     };
     let pipeline_report = RegionBooleanPipelineReport2::new(
-        fragment_result.report().clone(),
-        selection_result.report().clone(),
+        fragment_result.into_report(),
+        selection_result.into_report(),
         shared_boundary_resolutions,
-        emission_result.report().clone(),
-        chain_result.report().clone(),
-        loop_result.report().clone(),
-        contour_result.report().clone(),
+        emission_report,
+        chain_report,
+        loop_report,
+        contour_report,
     );
     Ok(Classification::Decided((
         contours,

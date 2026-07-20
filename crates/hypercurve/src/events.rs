@@ -438,14 +438,13 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     }
 
     let mut events = Vec::new();
-    if let Some(candidate_pairs) = swept_segment_pair_candidates(
+    if let Some(result) = visit_swept_segment_pair_candidates(
         a_segment_boxes,
         b_segment_boxes,
         a.segments().len(),
         b.segments().len(),
         policy,
-    ) {
-        for (a_segment_index, b_segment_index) in candidate_pairs {
+        |a_segment_index, b_segment_index| {
             let a_segment = &a.segments()[a_segment_index];
             let b_segment = &b.segments()[b_segment_index];
             let relation = a_segment.intersect_segment(b_segment, policy)?;
@@ -457,8 +456,10 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
                 b_segment,
                 relation,
                 policy,
-            )?;
-        }
+            )
+        },
+    ) {
+        result?;
     } else {
         for (a_segment_index, a_segment) in a.segments().iter().enumerate() {
             for (b_segment_index, b_segment) in b.segments().iter().enumerate() {
@@ -487,13 +488,17 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     ContourIntersectionSet::new_with_policy(events, policy)
 }
 
-fn swept_segment_pair_candidates(
+fn visit_swept_segment_pair_candidates<F>(
     first_boxes: &[Option<Aabb2>],
     second_boxes: &[Option<Aabb2>],
     first_segment_count: usize,
     second_segment_count: usize,
     policy: &CurvePolicy,
-) -> Option<Vec<(usize, usize)>> {
+    mut visit: F,
+) -> Option<CurveResult<()>>
+where
+    F: FnMut(usize, usize) -> CurveResult<()>,
+{
     const MIN_CARTESIAN_PAIR_COUNT: usize = 256;
 
     if first_segment_count.checked_mul(second_segment_count)? < MIN_CARTESIAN_PAIR_COUNT {
@@ -525,42 +530,41 @@ fn swept_segment_pair_candidates(
     let unknown_second: Vec<_> = (0..second_segment_count)
         .filter(|index| second_boxes.get(*index).and_then(Option::as_ref).is_none())
         .collect();
-    let mut candidates = Vec::new();
+    let mut candidates = Vec::with_capacity(second_segment_count);
     for first_index in 0..first_segment_count {
-        let Some(Some(first_box)) = first_boxes.get(first_index) else {
-            candidates
-                .extend((0..second_segment_count).map(|second_index| (first_index, second_index)));
-            continue;
-        };
-
-        candidates.extend(
-            unknown_second
-                .iter()
-                .copied()
-                .map(|second_index| (first_index, second_index)),
-        );
-        for (second_index, second_box) in &ordered_second {
-            match compare_reals(second_box.min_x(), first_box.max_x(), policy) {
-                Some(Ordering::Greater) => break,
-                Some(Ordering::Less | Ordering::Equal) | None => {}
+        candidates.clear();
+        if let Some(Some(first_box)) = first_boxes.get(first_index) {
+            candidates.extend(unknown_second.iter().copied());
+            for (second_index, second_box) in &ordered_second {
+                match compare_reals(second_box.min_x(), first_box.max_x(), policy) {
+                    Some(Ordering::Greater) => break,
+                    Some(Ordering::Less | Ordering::Equal) | None => {}
+                }
+                if matches!(
+                    compare_reals(second_box.max_x(), first_box.min_x(), policy),
+                    Some(Ordering::Less)
+                ) || matches!(
+                    compare_reals(first_box.max_y(), second_box.min_y(), policy),
+                    Some(Ordering::Less)
+                ) || matches!(
+                    compare_reals(second_box.max_y(), first_box.min_y(), policy),
+                    Some(Ordering::Less)
+                ) {
+                    continue;
+                }
+                candidates.push(*second_index);
             }
-            if matches!(
-                compare_reals(second_box.max_x(), first_box.min_x(), policy),
-                Some(Ordering::Less)
-            ) || matches!(
-                compare_reals(first_box.max_y(), second_box.min_y(), policy),
-                Some(Ordering::Less)
-            ) || matches!(
-                compare_reals(second_box.max_y(), first_box.min_y(), policy),
-                Some(Ordering::Less)
-            ) {
-                continue;
+        } else {
+            candidates.extend(0..second_segment_count);
+        }
+        candidates.sort_unstable();
+        for second_index in candidates.iter().copied() {
+            if let Err(error) = visit(first_index, second_index) {
+                return Some(Err(error));
             }
-            candidates.push((first_index, *second_index));
         }
     }
-    candidates.sort_unstable();
-    Some(candidates)
+    Some(Ok(()))
 }
 
 pub(crate) fn intersect_contour_self_with_cached_aabbs(
@@ -978,9 +982,20 @@ mod tests {
             .collect();
         second[7] = None;
 
-        let swept =
-            swept_segment_pair_candidates(&first, &second, first.len(), second.len(), &policy)
-                .expect("large exact boxes support the retained x sweep");
+        let mut swept = Vec::new();
+        visit_swept_segment_pair_candidates(
+            &first,
+            &second,
+            first.len(),
+            second.len(),
+            &policy,
+            |first_index, second_index| {
+                swept.push((first_index, second_index));
+                Ok(())
+            },
+        )
+        .expect("large exact boxes support the retained x sweep")
+        .expect("candidate visitor succeeds");
         let mut flat = Vec::new();
         for (first_index, first_box) in first.iter().enumerate() {
             for (second_index, second_box) in second.iter().enumerate() {

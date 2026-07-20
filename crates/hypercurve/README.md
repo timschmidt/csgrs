@@ -430,6 +430,44 @@ arrangement, classification, and reporting workflow.
 `RegionArrangement2` retains one canonical evaluation and optional materialized
 region without duplicating report-shaped state.
 
+## Pathological memory benchmarks
+
+`pathological_regions` builds sharded pairs of retained `CurveRegion2` values.
+Every shard contains line, circular-arc, quadratic/cubic Bezier, rational
+quadratic/general Bezier, polynomial B-spline, and NURBS carriers; it also
+retains rational, primitive-dyadic, multi-limb, symbolic constant/root/log/trig,
+and opaque-computable `Real` samples. Its mate is copied through an exact
+3-4-5 rotation plus rational translation. The same shard also carries a
+finite-polyline `Region2` projection so all four Boolean operations have a
+decidable stress lane when a higher-order operation correctly reports an
+unsupported or undecidable exact predicate.
+
+The tier names describe measured release-build native resident-size ranges.
+The benchmark prints both its calibrated estimate and Linux `VmRSS` delta.
+
+```sh
+# Approximately 100 MiB; runs construction, deep rotation, and all Booleans.
+cargo bench --bench pathological_regions
+
+# Run every approximately 100 MiB, 500 MiB, and 1 GiB input.
+HYPERCURVE_PATHOLOGICAL_TIERS=all cargo bench --bench pathological_regions
+
+# Select work, tiers, or a small integration-smoke cell count.
+HYPERCURVE_PATHOLOGICAL_MODE=build HYPERCURVE_PATHOLOGICAL_TIERS=500mb \
+  cargo bench --bench pathological_regions
+HYPERCURVE_PATHOLOGICAL_CELL_LIMIT=1 cargo bench --bench pathological_regions
+```
+
+Cross-suite equivalents are common path samples represented in each peer
+crate's native polygon carrier. They preserve the native tier's geometric cell
+count, rather than padding the smaller floating-point carriers to the same byte
+count:
+
+```sh
+HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS=all HYPERCURVE_COMPARE_ITERS=1 \
+  cargo bench --features comparative-benchmarks --bench comparative
+```
+
 ## Development
 
 Useful local checks:

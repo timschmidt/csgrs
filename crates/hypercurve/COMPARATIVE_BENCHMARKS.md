@@ -26,6 +26,7 @@ HYPERCURVE_COMPARE_ITERS=1 HYPERCURVE_COMPARE_SAMPLES=1 \
 | 64-vertex star intersection | `hypercurve`, `cavalier_contours`, `i_overlay`, `geo` | Allocate an intersection result from the same two line-only rings. |
 | Inward capsule offset | `hypercurve`, `cavalier_contours` | Offset the same closed two-line/two-semicircle bulge contour by five units. |
 | Rational cubic NURBS evaluation | `hypercurve`, `curvo` | Evaluate the same degree, homogeneous controls, weights, knots, and three cycling parameters. |
+| Pathological rotated-region union/intersection/difference/XOR | `hypercurve`, `cavalier_contours`, `i_overlay`, `geo` | Boolean the same finite projections sampled from all-family native shards and their exact rotated mates. The `100mb`, `500mb`, and `1gb` labels retain the native fixture's cell counts. |
 
 `geo` is a relevant consumer-facing baseline, but its Boolean implementation is backed
 by `i_overlay`; the two rows measure different API and conversion layers rather than
@@ -51,6 +52,23 @@ The runner accepts these environment overrides:
 - `HYPERCURVE_COMPARE_SAMPLE_MS`: calibration target per sample (default `75`).
 - `HYPERCURVE_COMPARE_ITERS`: fixed iterations per sample; setting it disables
   calibration and makes every implementation use the same iteration count.
+- `HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS`: optional comma-separated `100mb`,
+  `500mb`, and `1gb` tiers, or `all`. These large lanes are disabled by default.
+- `HYPERCURVE_PATHOLOGICAL_CELL_LIMIT`: caps the number of shards after tier
+  selection and is useful for cross-suite integration smoke runs.
+
+For example:
+
+```sh
+HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS=all HYPERCURVE_COMPARE_ITERS=1 \
+  cargo bench --features comparative-benchmarks --bench comparative
+```
+
+The peer inputs are finite polygon projections because none of the comparison
+Boolean engines accepts all eight exact curve families. They are derived by
+evaluating the authoritative `CurvePath2` at common rational parameters before
+lossy edge export. This makes the adapter boundary explicit and gives every
+suite identical point order and geometry.
 
 ## Interpreting results
 

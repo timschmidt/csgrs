@@ -1,3 +1,6 @@
+#[path = "common/pathological.rs"]
+mod pathological_fixture;
+
 use std::env;
 use std::hint::black_box;
 use std::time::{Duration, Instant};
@@ -16,6 +19,8 @@ use i_overlay::core::overlay_rule::OverlayRule;
 use i_overlay::float::single::SingleFloatOverlay;
 use nalgebra::Point3;
 
+use pathological_fixture::{CrossSuiteDataset, MemoryTier, selected_tiers};
+
 const DEFAULT_SAMPLES: usize = 7;
 const DEFAULT_SAMPLE_MILLIS: u64 = 75;
 const MAX_CALIBRATED_ITERATIONS: u64 = 1 << 20;
@@ -24,6 +29,8 @@ const MAX_CALIBRATED_ITERATIONS: u64 = 1 << 20;
 enum CommonBooleanOp {
     Union,
     Intersection,
+    Difference,
+    Xor,
 }
 
 struct Runner {
@@ -173,6 +180,8 @@ fn hypercurve_boolean_result_size(
     let operation = match operation {
         CommonBooleanOp::Union => BooleanOp::Union,
         CommonBooleanOp::Intersection => BooleanOp::Intersection,
+        CommonBooleanOp::Difference => BooleanOp::Difference,
+        CommonBooleanOp::Xor => BooleanOp::Xor,
     };
     let result = first
         .boolean_region(second, operation, FillRule::EvenOdd, policy)
@@ -196,6 +205,8 @@ fn cavalier_boolean_result_size(
     let operation = match operation {
         CommonBooleanOp::Union => CavalierBooleanOp::Or,
         CommonBooleanOp::Intersection => CavalierBooleanOp::And,
+        CommonBooleanOp::Difference => CavalierBooleanOp::Not,
+        CommonBooleanOp::Xor => CavalierBooleanOp::Xor,
     };
     let result = first.boolean(second, operation);
     result
@@ -214,6 +225,8 @@ fn ioverlay_boolean_result_size(
     let operation = match operation {
         CommonBooleanOp::Union => OverlayRule::Union,
         CommonBooleanOp::Intersection => OverlayRule::Intersect,
+        CommonBooleanOp::Difference => OverlayRule::Difference,
+        CommonBooleanOp::Xor => OverlayRule::Xor,
     };
     first
         .overlay(second, operation, OverlayFillRule::EvenOdd)
@@ -231,6 +244,8 @@ fn geo_boolean_result_size(
     let result = match operation {
         CommonBooleanOp::Union => first.union(second),
         CommonBooleanOp::Intersection => first.intersection(second),
+        CommonBooleanOp::Difference => first.difference(second),
+        CommonBooleanOp::Xor => first.xor(second),
     };
     result
         .iter()
@@ -458,6 +473,107 @@ fn benchmark_nurbs_evaluation(runner: &Runner) {
     });
 }
 
+fn benchmark_pathological_cross_suite(runner: &Runner) {
+    if env::var_os("HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS").is_none() {
+        println!(
+            "pathological cross-suite tiers disabled; set HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS=100mb,500mb,1gb or all"
+        );
+        return;
+    }
+
+    for tier in selected_tiers(
+        "HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS",
+        &[MemoryTier::Mib100],
+    ) {
+        let dataset = CrossSuiteDataset::build(tier);
+        println!(
+            "pathological cross-suite fixture {}: cells={}, allocated neutral coordinates={:.1} MiB",
+            tier.name(),
+            dataset.cells.len(),
+            dataset.allocated_coordinate_bytes as f64 / (1024.0 * 1024.0),
+        );
+        assert_eq!(dataset.tier, tier);
+
+        for operation in [
+            CommonBooleanOp::Union,
+            CommonBooleanOp::Intersection,
+            CommonBooleanOp::Difference,
+            CommonBooleanOp::Xor,
+        ] {
+            let operation_name = match operation {
+                CommonBooleanOp::Union => "union",
+                CommonBooleanOp::Intersection => "intersection",
+                CommonBooleanOp::Difference => "difference",
+                CommonBooleanOp::Xor => "xor",
+            };
+            let group = format!("pathological_{}/{operation_name}", tier.name());
+
+            let hypercurve_cells = dataset
+                .cells
+                .iter()
+                .map(|cell| {
+                    (
+                        hypercurve_region(&cell.source),
+                        hypercurve_region(&cell.rotated),
+                    )
+                })
+                .collect::<Vec<_>>();
+            let policy = CurvePolicy::certified();
+            runner.measure(&group, "hypercurve_flattened", || {
+                hypercurve_cells
+                    .iter()
+                    .map(|(source, rotated)| {
+                        hypercurve_boolean_result_size(source, rotated, operation, &policy)
+                    })
+                    .sum()
+            });
+            drop(hypercurve_cells);
+
+            let cavalier_cells = dataset
+                .cells
+                .iter()
+                .map(|cell| {
+                    (
+                        cavalier_polyline(&cell.source, None),
+                        cavalier_polyline(&cell.rotated, None),
+                    )
+                })
+                .collect::<Vec<_>>();
+            runner.measure(&group, "cavalier_contours", || {
+                cavalier_cells
+                    .iter()
+                    .map(|(source, rotated)| {
+                        cavalier_boolean_result_size(source, rotated, operation)
+                    })
+                    .sum()
+            });
+            drop(cavalier_cells);
+
+            runner.measure(&group, "i_overlay", || {
+                dataset
+                    .cells
+                    .iter()
+                    .map(|cell| {
+                        ioverlay_boolean_result_size(&cell.source, &cell.rotated, operation)
+                    })
+                    .sum()
+            });
+
+            let geo_cells = dataset
+                .cells
+                .iter()
+                .map(|cell| (geo_polygon(&cell.source), geo_polygon(&cell.rotated)))
+                .collect::<Vec<_>>();
+            runner.measure(&group, "geo", || {
+                geo_cells
+                    .iter()
+                    .map(|(source, rotated)| geo_boolean_result_size(source, rotated, operation))
+                    .sum()
+            });
+        }
+    }
+}
+
 fn main() {
     let runner = Runner::from_environment();
     println!(
@@ -470,4 +586,5 @@ fn main() {
     benchmark_polygon_booleans(&runner);
     benchmark_contour_offset(&runner);
     benchmark_nurbs_evaluation(&runner);
+    benchmark_pathological_cross_suite(&runner);
 }
