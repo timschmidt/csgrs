@@ -276,6 +276,27 @@ impl Rational {
         Self::from_integer_magnitude(Plus, numerator)
     }
 
+    pub(super) fn from_reduced_dyadic_word(
+        sign: Sign,
+        numerator: u64,
+        denominator_shift: u32,
+    ) -> Self {
+        debug_assert_ne!(sign, NoSign);
+        debug_assert_ne!(numerator, 0);
+        debug_assert!(denominator_shift == 0 || numerator.trailing_zeros() == 0);
+        // IEEE-754 decoding has already stripped every common power of two.
+        // Entering through the general fraction constructor would rebuild a
+        // signed BigInt and re-check reduction facts that are known here.
+        let value = Self::from_parts_raw(
+            sign,
+            BigUint::from(numerator),
+            BigUint::one() << denominator_shift,
+        );
+        value.retain_fact(RETAINED_DYADIC_KNOWN | RETAINED_DYADIC_VALUE);
+        trace_rational_temporary!();
+        value
+    }
+
     fn from_fraction_parts(sign: Sign, numerator: BigUint, denominator: BigUint) -> Self {
         if sign == NoSign || numerator.is_zero() {
             return Self::zero();

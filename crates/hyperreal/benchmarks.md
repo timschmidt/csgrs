@@ -960,13 +960,13 @@ Exact conversion from IEEE-754 floats into `Rational` and `Real` values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `float_convert/f32_normal` | not run | not run | Converts a normal `f32` into an exact `Rational`. |
-| `float_convert/f64_normal` | not run | not run | Converts a normal `f64` into an exact `Rational`. |
-| `float_convert/f64_binary_fraction` | not run | not run | Converts an exactly representable binary `f64` fraction into `Rational`. |
-| `float_convert/f64_subnormal` | not run | not run | Converts a subnormal `f64` into an exact `Rational`. |
-| `float_convert/real_f32_normal` | not run | not run | Converts a normal `f32` through the public `Real::try_from` path. |
-| `float_convert/real_f64_normal` | not run | not run | Converts a normal `f64` through the public `Real::try_from` path. |
-| `float_convert/real_f64_binary_fraction` | not run | not run | Converts an exactly representable binary `f64` fraction through the public `Real::try_from` path. |
-| `float_convert/real_f64_subnormal` | not run | not run | Converts a subnormal `f64` through the public `Real::try_from` path. |
+| `float_convert/f32_normal` | 48.09 ns | 47.86 ns - 48.41 ns | Converts a normal `f32` into an exact `Rational`. |
+| `float_convert/f64_normal` | 45.53 ns | 45.46 ns - 45.60 ns | Converts a normal `f64` into an exact `Rational`. |
+| `float_convert/f64_binary_fraction` | 45.65 ns | 45.57 ns - 45.74 ns | Converts an exactly representable binary `f64` fraction into `Rational`. |
+| `float_convert/f64_subnormal` | 56.34 ns | 56.24 ns - 56.48 ns | Converts a subnormal `f64` into an exact `Rational`. |
+| `float_convert/real_f32_normal` | 72.59 ns | 72.27 ns - 73.00 ns | Converts a normal `f32` through the public `Real::try_from` path. |
+| `float_convert/real_f64_normal` | 72.55 ns | 72.22 ns - 72.95 ns | Converts a normal `f64` through the public `Real::try_from` path. |
+| `float_convert/real_f64_binary_fraction` | 72.37 ns | 72.25 ns - 72.54 ns | Converts an exactly representable binary `f64` fraction through the public `Real::try_from` path. |
+| `float_convert/real_f64_subnormal` | 79.71 ns | 79.56 ns - 79.91 ns | Converts a subnormal `f64` through the public `Real::try_from` path. |
 
 <!-- END float_convert -->

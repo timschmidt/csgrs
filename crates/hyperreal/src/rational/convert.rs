@@ -1,6 +1,6 @@
 use crate::{Problem, Rational};
+use num::BigUint;
 use num::bigint::Sign;
-use num::{BigInt, BigUint, One};
 
 macro_rules! impl_signed_integer_conversion {
     ($T:ty) => {
@@ -81,9 +81,11 @@ fn pow2_fraction_u32(numerator: u32, denominator_shift: u32, neg: bool) -> Ratio
     let shift = numerator.trailing_zeros().min(denominator_shift);
     let numerator = numerator >> shift;
     let denominator_shift = denominator_shift - shift;
-    let numerator = BigInt::from(BigUint::from(numerator));
-    let numerator = if neg { -numerator } else { numerator };
-    Rational::from_bigint_fraction(numerator, BigUint::one() << denominator_shift).unwrap()
+    Rational::from_reduced_dyadic_word(
+        if neg { Sign::Minus } else { Sign::Plus },
+        u64::from(numerator),
+        denominator_shift,
+    )
 }
 
 fn pow2_fraction_u64(numerator: u64, denominator_shift: u32, neg: bool) -> Rational {
@@ -95,9 +97,11 @@ fn pow2_fraction_u64(numerator: u64, denominator_shift: u32, neg: bool) -> Ratio
     let shift = numerator.trailing_zeros().min(denominator_shift);
     let numerator = numerator >> shift;
     let denominator_shift = denominator_shift - shift;
-    let numerator = BigInt::from(BigUint::from(numerator));
-    let numerator = if neg { -numerator } else { numerator };
-    Rational::from_bigint_fraction(numerator, BigUint::one() << denominator_shift).unwrap()
+    Rational::from_reduced_dyadic_word(
+        if neg { Sign::Minus } else { Sign::Plus },
+        numerator,
+        denominator_shift,
+    )
 }
 
 impl TryFrom<f32> for Rational {
@@ -196,7 +200,7 @@ impl TryFrom<f64> for Rational {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use num::BigInt;
+    use num::{BigInt, One};
 
     #[test]
     fn signed_integers() {
@@ -302,6 +306,25 @@ mod tests {
         assert_eq!(*value.numerator(), BigUint::from(3_u8));
         assert_eq!(*value.denominator(), BigUint::from(4_u8));
         assert!(value.has_exact_f64_view());
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn float_import_retains_the_reduced_dyadic_fact() {
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let value = Rational::try_from(1.234_567_89_f64).unwrap();
+            assert!(value.is_dyadic());
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("rational", "retained-facts", "dyadic-hit"),
+            1
+        );
+        assert_eq!(
+            trace.path_count("rational", "retained-facts", "dyadic-learned"),
+            0
+        );
     }
 
     #[test]
