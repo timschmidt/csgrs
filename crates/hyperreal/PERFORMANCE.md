@@ -835,7 +835,17 @@ Validation passed all 526 all-feature library tests and the complete all-target
 gate, strict Clippy, warning-denied rustdoc, and every fuzz-target build.
 AddressSanitizer campaigns completed 1,000 Rational and 1,124 Real-exact
 executions without failure. Hypermesh's full all-target/all-feature suite and
-all 369 downstream CSGRS library tests plus integrations passed.
+all 370 downstream CSGRS library tests plus integrations passed.
+
+When exactly one native operand fits `u64`, the word GCD now takes one exact
+`u128` remainder and finishes in the existing `u64` binary reducer. A
+power-of-two small operand needs only trailing-zero counts. Balanced two-limb
+operands retain the subtraction/shift reducer, avoiding repeated compiler-rt
+division. Direct 500,000-operation profiles of 96- and 128-bit magnitudes
+against 16-, 32-, 48-, and 64-bit divisors used 20.7--39.1% of the former
+instructions and 14.9--33.4% of its cycles. In the post-shared-output CSGRS
+guard, union instructions fell another 0.14% and cycles 0.78%; difference
+instructions fell 0.14% with cycles neutral.
 
 ### Architecture and measurement triggers
 

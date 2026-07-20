@@ -184,11 +184,26 @@ impl Rational {
         if left <= u128::from(u64::MAX) && right <= u128::from(u64::MAX) {
             return u128::from(Self::gcd_u64(left as u64, right as u64));
         }
+        if left <= u128::from(u64::MAX) {
+            let left = left as u64;
+            if left.is_power_of_two() {
+                return 1_u128 << left.trailing_zeros().min(right.trailing_zeros());
+            }
+            return u128::from(Self::gcd_u64(left, (right % u128::from(left)) as u64));
+        }
+        if right <= u128::from(u64::MAX) {
+            let right = right as u64;
+            if right.is_power_of_two() {
+                return 1_u128 << right.trailing_zeros().min(left.trailing_zeros());
+            }
+            return u128::from(Self::gcd_u64(right, (left % u128::from(right)) as u64));
+        }
 
         // u128 remainder is a compiler-rt software call on common 64-bit
-        // targets. Word-sized exact arithmetic reaches this helper heavily for
-        // imported binary floats, so use Stein's binary GCD: it needs only
-        // trailing-zero counts, shifts, comparisons, and subtraction.
+        // targets. One call is still worthwhile when it reduces the remainder
+        // to u64, as handled above; balanced two-limb inputs instead use Stein's
+        // binary GCD with only trailing-zero counts, shifts, comparisons, and
+        // subtraction.
         let common_shift = left.trailing_zeros().min(right.trailing_zeros());
         let mut left = left >> left.trailing_zeros();
         let mut right = right;
