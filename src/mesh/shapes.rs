@@ -7,7 +7,10 @@ use crate::mesh::Polygon;
 use crate::mesh::polygon::{
     CertifiedF64Bounds, LazySubdivisionVertexPool, fresh_plane_id, reserve_plane_ids,
 };
-use crate::mesh::{Mesh, TransformLayout};
+use crate::mesh::{
+    CUBOID_CORNER_POSITION_SLOTS, CUBOID_POINT_COORDINATE_SLOTS,
+    CUBOID_POSITION_REPRESENTATIVES, Mesh, TransformLayout,
+};
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::vertex::{Vertex, reserve_position_f64_cache, reserve_position_ids};
@@ -37,30 +40,6 @@ static OCTAHEDRON_NORMALS: LazyLock<[Vector3; 8]> = LazyLock::new(|| {
     ]
 });
 
-const CUBOID_CORNER_POSITION_SLOTS: [usize; 24] = [
-    0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5,
-];
-const CUBOID_POINT_COORDINATE_SLOTS: [[usize; 3]; 8] = [
-    [0, 0, 0],
-    [1, 0, 0],
-    [1, 1, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-    [1, 0, 1],
-    [1, 1, 1],
-    [0, 1, 1],
-];
-const CUBOID_POSITION_REPRESENTATIVES: [[usize; 2]; 8] = [
-    [0, 0],
-    [0, 3],
-    [0, 2],
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [1, 2],
-    [1, 3],
-];
-
 static CUBOID_TRANSFORM_LAYOUT: LazyLock<Arc<TransformLayout>> = LazyLock::new(|| {
     Arc::new(TransformLayout {
         corner_position_slots: Arc::new(CUBOID_CORNER_POSITION_SLOTS.to_vec()),
@@ -83,9 +62,20 @@ static CUBOID_TRANSFORM_LAYOUT: LazyLock<Arc<TransformLayout>> = LazyLock::new(|
     })
 });
 
-fn retain_cuboid_transform_layout<M: Clone + Debug + Send + Sync>(mesh: &Mesh<M>) {
-    mesh.polygons
-        .retain_transform_layout(Arc::clone(&CUBOID_TRANSFORM_LAYOUT));
+pub(super) fn cuboid_transform_layout() -> Arc<TransformLayout> {
+    Arc::clone(&CUBOID_TRANSFORM_LAYOUT)
+}
+
+fn retain_cuboid_facts<M: Clone + Debug + Send + Sync>(
+    mesh: &mut Mesh<M>,
+    bounds: Aabb,
+    vertex_pool: Arc<LazySubdivisionVertexPool>,
+) {
+    mesh.bounding_box = std::sync::OnceLock::from(bounds.clone());
+    mesh.polygons.retain_axis_aligned_box_fact(bounds);
+    mesh.polygons.retain_cuboid_vertex_pool(vertex_pool);
+    mesh.cache_manifold_fact(true);
+    mesh.cache_convex_pwn_fact();
 }
 
 const OCTAHEDRON_FACES: [[usize; 3]; 8] = [
@@ -144,6 +134,7 @@ thread_local! {
 
 #[derive(Clone, Debug, PartialEq)]
 enum ShapeCacheKey {
+    Cube(Real),
     Cuboid(Real, Real, Real),
     Cylinder(Real, Real, usize),
     Frustum(Real, Real, Real, usize),
@@ -158,6 +149,7 @@ enum ShapeCacheKey {
 struct CachedShape {
     key: ShapeCacheKey,
     polygons: Vec<Polygon<()>>,
+    cuboid_vertex_pool: Option<Arc<LazySubdivisionVertexPool>>,
 }
 
 #[derive(Clone, Debug)]
@@ -193,16 +185,28 @@ fn cached_shape<M: Clone + Debug + Send + Sync>(
                         .map(|polygon| polygon.with_metadata(metadata.clone()))
                         .collect(),
                 );
-                if let ShapeCacheKey::Cuboid(width, length, height) = key {
-                    let bounds = Aabb::new(
+                let cuboid_bounds = match key {
+                    ShapeCacheKey::Cube(width) => Some(Aabb::new(
+                        Point3::origin(),
+                        Point3::new(width.clone(), width.clone(), width.clone()),
+                    )),
+                    ShapeCacheKey::Cuboid(width, length, height) => Some(Aabb::new(
                         Point3::origin(),
                         Point3::new(width.clone(), length.clone(), height.clone()),
+                    )),
+                    _ => None,
+                };
+                if let Some(bounds) = cuboid_bounds {
+                    retain_cuboid_facts(
+                        &mut mesh,
+                        bounds,
+                        Arc::clone(
+                            cached
+                                .cuboid_vertex_pool
+                                .as_ref()
+                                .expect("cached cuboids retain their vertex pool"),
+                        ),
                     );
-                    mesh.bounding_box = std::sync::OnceLock::from(bounds.clone());
-                    mesh.polygons.retain_axis_aligned_box_fact(bounds);
-                    retain_cuboid_transform_layout(&mesh);
-                    mesh.cache_manifold_fact(true);
-                    mesh.cache_convex_pwn_fact();
                 }
                 mesh
             })
@@ -221,7 +225,7 @@ fn shape_cache_on_completion(key: ShapeCacheKey) -> Option<ShapeCacheKey> {
 }
 
 fn retain_shape_cache<M: Clone + Debug + Send + Sync>(key: ShapeCacheKey, mesh: &Mesh<M>) {
-    if matches!(&key, ShapeCacheKey::Cuboid(_, _, _)) {
+    if matches!(&key, ShapeCacheKey::Cube(_) | ShapeCacheKey::Cuboid(_, _, _)) {
         for polygon in &mesh.polygons {
             let _ = polygon.plane();
         }
@@ -235,6 +239,7 @@ fn retain_shape_cache<M: Clone + Debug + Send + Sync>(key: ShapeCacheKey, mesh: 
                 .cloned()
                 .map(|polygon| polygon.with_metadata(()))
                 .collect(),
+            cuboid_vertex_pool: mesh.polygons.cuboid_vertex_pool().cloned(),
         });
     });
 }
@@ -270,23 +275,92 @@ mod retained_topology_tests {
     #[test]
     fn cuboid_reuses_eight_corner_position_identities() {
         let mesh = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
-        let position_ids = mesh
+        let identity_counts = |mesh: &Mesh<()>| {
+            let position_count = mesh
+                .polygons
+                .iter()
+                .flat_map(|polygon| &polygon.vertices)
+                .map(|vertex| vertex.position_id)
+                .collect::<BTreeSet<_>>()
+                .len();
+            let coordinate_counts = std::array::from_fn(|axis| {
+                mesh.polygons
+                    .iter()
+                    .flat_map(|polygon| &polygon.vertices)
+                    .map(|vertex| vertex.coordinate_ids[axis])
+                    .collect::<BTreeSet<_>>()
+                    .len()
+            });
+            (position_count, coordinate_counts)
+        };
+
+        assert_eq!(identity_counts(&mesh), (8, [2; 3]));
+
+        let translated =
+            mesh.translate(Real::from(7_u8), Real::from(-11_i8), Real::from(13_u8));
+        assert_eq!(identity_counts(&translated), (8, [2; 3]));
+
+        let _cache_resolution = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
+        let cached = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
+        let translated_cached =
+            cached.translate(Real::from(7_u8), Real::from(-11_i8), Real::from(13_u8));
+        assert_eq!(identity_counts(&translated_cached), (8, [2; 3]));
+
+        let cube = Mesh::cube(Real::from(2_u8), ());
+        let _cube_cache_resolution = Mesh::cube(Real::from(2_u8), ());
+        let cached_cube = Mesh::cube(Real::from(2_u8), ());
+        assert_eq!(identity_counts(&cube), (8, [2; 3]));
+        assert_eq!(identity_counts(&cached_cube), (8, [2; 3]));
+        assert_eq!(
+            identity_counts(&cached_cube.translate(
+                Real::from(7_u8),
+                Real::from(-11_i8),
+                Real::from(13_u8),
+            )),
+            (8, [2; 3])
+        );
+    }
+
+    #[test]
+    fn distributed_cuboids_materialize_exact_shared_identities() {
+        let cube = Mesh::cube(Real::one(), ());
+        let linear = cube.distribute_linear(8, Vector3::x(), Real::from(2_u8));
+        assert_eq!(linear.topology_counts(), (96, 192));
+        assert_eq!(
+            linear.bounding_box(),
+            Aabb::new(
+                Point3::origin(),
+                Point3::new(Real::from(15_u8), Real::one(), Real::one()),
+            )
+        );
+        assert_eq!(linear.polygons[6].vertices[0].position.x, Real::from(2_u8));
+
+        let position_ids = linear
             .polygons
             .iter()
             .flat_map(|polygon| &polygon.vertices)
             .map(|vertex| vertex.position_id)
             .collect::<BTreeSet<_>>();
-
-        assert_eq!(position_ids.len(), 8);
+        assert_eq!(position_ids.len(), 8 * 8);
         let coordinate_identity_counts = std::array::from_fn(|axis| {
-            mesh.polygons
+            linear
+                .polygons
                 .iter()
                 .flat_map(|polygon| &polygon.vertices)
                 .map(|vertex| vertex.coordinate_ids[axis])
                 .collect::<BTreeSet<_>>()
                 .len()
         });
-        assert_eq!(coordinate_identity_counts, [2; 3]);
+        assert_eq!(coordinate_identity_counts, [2 * 8; 3]);
+
+        let grid = cube.distribute_grid(2, 3, Real::from(2_u8), Real::from(3_u8));
+        assert_eq!(
+            grid.bounding_box(),
+            Aabb::new(
+                Point3::origin(),
+                Point3::new(Real::from(5_u8), Real::from(4_u8), Real::one()),
+            )
+        );
     }
 
     #[test]
@@ -1038,60 +1112,40 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty();
         }
         let key = ShapeCacheKey::Cuboid(width.clone(), length.clone(), height.clone());
+        Self::cuboid_from_positive(width, length, height, key, metadata)
+    }
+
+    fn cuboid_from_positive(
+        width: Real,
+        length: Real,
+        height: Real,
+        key: ShapeCacheKey,
+        metadata: M,
+    ) -> Mesh<M> {
         if let Some(mesh) = cached_shape(&key, &metadata) {
             return mesh;
         }
         let cache_key_on_completion = shape_cache_on_completion(key);
         let first_position_identity = reserve_position_ids(8);
         let first_coordinate_identity = reserve_position_ids(2 * 3);
-        let points = [
-            Point3::origin(),
-            Point3::new(width.clone(), Real::zero(), Real::zero()),
-            Point3::new(width.clone(), length.clone(), Real::zero()),
-            Point3::new(Real::zero(), length.clone(), Real::zero()),
-            Point3::new(Real::zero(), Real::zero(), height.clone()),
-            Point3::new(width.clone(), Real::zero(), height.clone()),
-            Point3::new(width.clone(), length.clone(), height.clone()),
-            Point3::new(Real::zero(), length.clone(), height.clone()),
-        ];
-        let faces = [
-            ([0, 3, 2, 1], -Vector3::z()),
-            ([4, 5, 6, 7], Vector3::z()),
-            ([0, 1, 5, 4], -Vector3::y()),
-            ([3, 7, 6, 2], Vector3::y()),
-            ([0, 4, 7, 3], -Vector3::x()),
-            ([1, 2, 6, 5], Vector3::x()),
-        ];
-        let mut vertices = Vec::with_capacity(24);
-        for (indices, normal) in faces {
-            let start = vertices.len();
-            for index in indices {
-                vertices.push(Vertex {
-                    position: points[index].clone(),
-                    normal: normal.clone(),
-                    position_id: first_position_identity
-                        + u64::try_from(index).expect("cuboid position slot fits u64"),
-                    coordinate_ids: std::array::from_fn(|axis| {
-                        first_coordinate_identity
-                            + u64::try_from(
-                                axis * 2 + CUBOID_POINT_COORDINATE_SLOTS[index][axis],
-                            )
-                            .expect("cuboid coordinate slot fits u64")
-                    }),
-                    ruled_line: None,
-                    hull_candidate: true,
-                });
-            }
-            debug_assert_eq!(vertices.len(), start + 4);
-        }
-        let vertices = Arc::new(vertices);
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_cuboid(
+            [width.clone(), length.clone(), height.clone()],
+            first_position_identity,
+            first_coordinate_identity,
+        ));
         let first_plane_id = reserve_plane_ids(6);
         let polygons = (0..6)
             .map(|index| {
-                let range = (index * 4)..((index + 1) * 4);
-                Polygon::from_shared_vertices(
-                    Arc::clone(&vertices),
-                    range,
+                let first_corner = index * 4;
+                Polygon::from_lazy_indexed_quad(
+                    Arc::clone(&vertex_pool),
+                    index,
+                    [
+                        first_corner,
+                        first_corner + 1,
+                        first_corner + 2,
+                        first_corner + 3,
+                    ],
                     metadata.clone(),
                     first_plane_id
                         + u64::try_from(index).expect("cuboid polygon index fits u64"),
@@ -1100,11 +1154,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             .collect();
         let mut mesh = Mesh::from_polygons_with_topology(polygons, (12, 24, false));
         let bounds = Aabb::new(Point3::origin(), Point3::new(width, length, height));
-        mesh.bounding_box = std::sync::OnceLock::from(bounds.clone());
-        mesh.polygons.retain_axis_aligned_box_fact(bounds);
-        retain_cuboid_transform_layout(&mesh);
-        mesh.cache_manifold_fact(true);
-        mesh.cache_convex_pwn_fact();
+        retain_cuboid_facts(&mut mesh, bounds, vertex_pool);
         if let Some(key) = cache_key_on_completion {
             retain_shape_cache(key, &mesh);
         }
@@ -1112,7 +1162,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 
     pub fn cube(width: Real, metadata: M) -> Mesh<M> {
-        Self::cuboid(width.clone(), width.clone(), width, metadata)
+        if !hmesh_scalar_positive(&width) {
+            return Mesh::empty();
+        }
+        let key = ShapeCacheKey::Cube(width.clone());
+        Self::cuboid_from_positive(width.clone(), width.clone(), width, key, metadata)
     }
 
     /// **Mathematical Foundation: Spherical Mesh Generation**

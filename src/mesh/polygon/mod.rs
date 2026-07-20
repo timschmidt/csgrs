@@ -1,6 +1,10 @@
 //! Planar n-gon face storage and derived geometry.
 
 use crate::mesh::plane::Plane;
+use crate::mesh::{
+    CUBOID_CORNER_POSITION_SLOTS, CUBOID_POINT_COORDINATE_SLOTS,
+    CUBOID_POSITION_REPRESENTATIVES,
+};
 use crate::vertex::Vertex;
 use hashbrown::HashMap;
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
@@ -57,6 +61,13 @@ struct LazyMappedIdentities {
 #[derive(Debug)]
 enum LazySourceVertices {
     Materialized(Arc<Vec<Vertex>>),
+    Cuboid {
+        dimensions: [Real; 3],
+        position_vertices: Vec<OnceLock<Box<Vertex>>>,
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_position_identity: u64,
+        first_coordinate_identity: u64,
+    },
     Sphere {
         radius: Real,
         longitudes: Vec<(Real, Real)>,
@@ -100,6 +111,17 @@ enum LazySourceVertices {
         vertices: Vec<OnceLock<Box<Vertex>>>,
         first_vertex_identity: u64,
     },
+    TranslatedCopies {
+        source_corners: Arc<Vec<Vertex>>,
+        offsets: Vec<Vector3>,
+        corner_position_slots: Vec<usize>,
+        corner_coordinate_slots: [Vec<usize>; 3],
+        positions_per_copy: usize,
+        coordinates_per_copy: [usize; 3],
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_position_identity: u64,
+        first_coordinate_identities: [u64; 3],
+    },
     ArcCopies {
         source_corners: Arc<Vec<Vertex>>,
         samples: Vec<(Real, Real)>,
@@ -125,10 +147,60 @@ enum LazySourceVertices {
     },
 }
 
+fn cuboid_vertex(
+    dimensions: &[Real; 3],
+    position_slot: usize,
+    face: usize,
+    first_position_identity: u64,
+    first_coordinate_identity: u64,
+) -> Box<Vertex> {
+    let coordinate_slots = CUBOID_POINT_COORDINATE_SLOTS[position_slot];
+    let position = Point3::new(
+        if coordinate_slots[0] == 0 {
+            Real::zero()
+        } else {
+            dimensions[0].clone()
+        },
+        if coordinate_slots[1] == 0 {
+            Real::zero()
+        } else {
+            dimensions[1].clone()
+        },
+        if coordinate_slots[2] == 0 {
+            Real::zero()
+        } else {
+            dimensions[2].clone()
+        },
+    );
+    let normal = match face {
+        0 => -Vector3::z(),
+        1 => Vector3::z(),
+        2 => -Vector3::y(),
+        3 => Vector3::y(),
+        4 => -Vector3::x(),
+        5 => Vector3::x(),
+        _ => unreachable!("cuboid has six faces"),
+    };
+    Box::new(Vertex {
+        position,
+        normal,
+        position_id: first_position_identity
+            + u64::try_from(position_slot).expect("cuboid position slot fits u64"),
+        coordinate_ids: std::array::from_fn(|axis| {
+            first_coordinate_identity
+                + u64::try_from(axis * 2 + coordinate_slots[axis])
+                    .expect("cuboid coordinate slot fits u64")
+        }),
+        ruled_line: None,
+        hull_candidate: true,
+    })
+}
+
 impl LazySourceVertices {
     fn len(&self) -> usize {
         match self {
             Self::Materialized(vertices) => vertices.len(),
+            Self::Cuboid { vertices, .. } => vertices.len(),
             Self::Sphere { vertices, .. } => vertices.len(),
             #[cfg(feature = "sketch")]
             Self::Torus { vertices, .. } => vertices.len(),
@@ -136,6 +208,7 @@ impl LazySourceVertices {
             #[cfg(feature = "sketch")]
             Self::ConvexExtrusion { vertices, .. } => vertices.len(),
             Self::RigidCopies { vertices, .. } => vertices.len(),
+            Self::TranslatedCopies { vertices, .. } => vertices.len(),
             Self::ArcCopies { vertices, .. } => vertices.len(),
             Self::Scaled { vertices, .. } => vertices.len(),
             Self::Mapped { vertices, .. } => vertices.len(),
@@ -145,6 +218,21 @@ impl LazySourceVertices {
     pub(crate) fn vertex(&self, index: usize) -> &Vertex {
         match self {
             Self::Materialized(vertices) => &vertices[index],
+            Self::Cuboid {
+                dimensions,
+                vertices,
+                first_position_identity,
+                first_coordinate_identity,
+                ..
+            } => vertices[index].get_or_init(|| {
+                cuboid_vertex(
+                    dimensions,
+                    CUBOID_CORNER_POSITION_SLOTS[index],
+                    index / 4,
+                    *first_position_identity,
+                    *first_coordinate_identity,
+                )
+            }),
             Self::Sphere {
                 radius,
                 longitudes,
@@ -361,6 +449,40 @@ impl LazySourceVertices {
                 vertex.hull_candidate = source.hull_candidate;
                 Box::new(vertex)
             }),
+            Self::TranslatedCopies {
+                source_corners,
+                offsets,
+                corner_position_slots,
+                corner_coordinate_slots,
+                positions_per_copy,
+                coordinates_per_copy,
+                vertices,
+                first_position_identity,
+                first_coordinate_identities,
+            } => vertices[index].get_or_init(|| {
+                let corners_per_copy = source_corners.len();
+                let copy = index / corners_per_copy;
+                let corner = index % corners_per_copy;
+                let source = &source_corners[corner];
+                let position_slot = corner_position_slots[corner];
+                Box::new(Vertex {
+                    position: source.position.clone() + offsets[copy].clone(),
+                    normal: source.normal.clone(),
+                    position_id: *first_position_identity
+                        + u64::try_from(copy * positions_per_copy + position_slot)
+                            .expect("translated copy position slot fits u64"),
+                    coordinate_ids: std::array::from_fn(|axis| {
+                        first_coordinate_identities[axis]
+                            + u64::try_from(
+                                copy * coordinates_per_copy[axis]
+                                    + corner_coordinate_slots[axis][corner],
+                            )
+                            .expect("translated copy coordinate slot fits u64")
+                    }),
+                    ruled_line: source.ruled_line,
+                    hull_candidate: source.hull_candidate,
+                })
+            }),
             Self::ArcCopies {
                 source_corners,
                 samples,
@@ -523,6 +645,27 @@ impl LazySourceVertices {
         }
     }
 
+    fn cuboid_position_vertex(&self, position_slot: usize) -> &Vertex {
+        match self {
+            Self::Cuboid {
+                dimensions,
+                position_vertices,
+                first_position_identity,
+                first_coordinate_identity,
+                ..
+            } => position_vertices[position_slot].get_or_init(|| {
+                cuboid_vertex(
+                    dimensions,
+                    position_slot,
+                    CUBOID_POSITION_REPRESENTATIVES[position_slot][0],
+                    *first_position_identity,
+                    *first_coordinate_identity,
+                )
+            }),
+            _ => unreachable!("only cuboid pools have cuboid position representatives"),
+        }
+    }
+
     fn position_f64_lossy(&self, index: usize) -> Option<[f64; 3]> {
         match self {
             Self::Mapped {
@@ -565,6 +708,26 @@ impl LazySubdivisionVertexPool {
             midpoints,
             materialized_polygons,
             first_midpoint_identity,
+        }
+    }
+
+    pub(crate) fn new_cuboid(
+        dimensions: [Real; 3],
+        first_position_identity: u64,
+        first_coordinate_identity: u64,
+    ) -> Self {
+        Self {
+            source_vertices: LazySourceVertices::Cuboid {
+                dimensions,
+                position_vertices: std::iter::repeat_with(OnceLock::new).take(8).collect(),
+                vertices: std::iter::repeat_with(OnceLock::new).take(24).collect(),
+                first_position_identity,
+                first_coordinate_identity,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new).take(6).collect(),
+            first_midpoint_identity: first_position_identity,
         }
     }
 
@@ -881,6 +1044,48 @@ impl LazySubdivisionVertexPool {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn new_translated_copies(
+        source_corners: Vec<Vertex>,
+        offsets: Vec<Vector3>,
+        corner_position_slots: Vec<usize>,
+        corner_coordinate_slots: [Vec<usize>; 3],
+        positions_per_copy: usize,
+        coordinates_per_copy: [usize; 3],
+        polygon_count: usize,
+        first_position_identity: u64,
+        first_coordinate_identities: [u64; 3],
+    ) -> Self {
+        debug_assert_eq!(source_corners.len(), corner_position_slots.len());
+        debug_assert!(
+            corner_coordinate_slots
+                .iter()
+                .all(|slots| slots.len() == source_corners.len())
+        );
+        let vertex_count = source_corners.len() * offsets.len();
+        Self {
+            source_vertices: LazySourceVertices::TranslatedCopies {
+                source_corners: Arc::new(source_corners),
+                offsets,
+                corner_position_slots,
+                corner_coordinate_slots,
+                positions_per_copy,
+                coordinates_per_copy,
+                vertices: std::iter::repeat_with(OnceLock::new)
+                    .take(vertex_count)
+                    .collect(),
+                first_position_identity,
+                first_coordinate_identities,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new)
+                .take(polygon_count)
+                .collect(),
+            first_midpoint_identity: first_position_identity,
+        }
+    }
+
     pub(crate) fn new_arc_copies(
         source_corners: Vec<Vertex>,
         samples: Vec<(Real, Real)>,
@@ -951,6 +1156,10 @@ impl LazySubdivisionVertexPool {
                 midpoint_index,
             ))
         })
+    }
+
+    pub(crate) fn cuboid_position_vertex(&self, position_slot: usize) -> &Vertex {
+        self.source_vertices.cuboid_position_vertex(position_slot)
     }
 
     fn position_f64_lossy(&self, index: usize) -> Option<[f64; 3]> {
