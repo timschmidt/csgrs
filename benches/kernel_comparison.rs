@@ -2,13 +2,21 @@
 
 mod support;
 
-use std::{hint::black_box, num::NonZeroU32};
+use std::{
+    collections::{HashMap, VecDeque},
+    fs::File,
+    hint::black_box,
+    io::BufReader,
+    num::NonZeroU32,
+    path::{Path, PathBuf},
+};
 
 use csgrs::{
     Real,
     csg::CSG,
-    mesh::{Mesh, plane::Plane},
+    mesh::{Mesh, Polygon, plane::Plane},
     sketch::Profile,
+    vertex::Vertex,
 };
 use hyperlattice::{Matrix4, Point3, Vector3};
 use support::{Config, Measurement};
@@ -65,6 +73,162 @@ fn geometry_measurement(mesh: &Mesh<()>, input_facets: usize) -> Measurement {
 
 fn facet_count(mesh: &Mesh<()>) -> usize {
     mesh.topology_counts().0
+}
+
+fn yeahright_control_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("benchmarks/data/yeahright/controlmesh.obj")
+}
+
+fn yeahright_boolean_proxy_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("benchmarks/data/yeahright/controlmesh_boolean_proxy.obj")
+}
+
+fn yeahright_boolean_hull_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("benchmarks/data/yeahright/yeahright_boolean_hull.obj")
+}
+
+fn import_oriented_obj(path: &Path) -> Mesh<()> {
+    let file = File::open(path)
+        .unwrap_or_else(|error| panic!("failed to open {}: {error}", path.display()));
+    let mesh = Mesh::from_obj(BufReader::new(file), ())
+        .unwrap_or_else(|error| panic!("failed to import {}: {error}", path.display()));
+    orient_closed_triangle_mesh(&mesh)
+}
+
+fn import_yeahright_control() -> Mesh<()> {
+    import_oriented_obj(&yeahright_control_path())
+}
+
+fn orient_closed_triangle_mesh(source: &Mesh<()>) -> Mesh<()> {
+    type EdgeIncidence = (usize, bool);
+
+    let buffers = source.to_hypermesh_buffers();
+    let mut triangles = buffers
+        .indices
+        .chunks_exact(3)
+        .map(|indices| [indices[0], indices[1], indices[2]])
+        .collect::<Vec<_>>();
+    let mut edges = HashMap::<(usize, usize), Vec<EdgeIncidence>>::new();
+    for (triangle_index, triangle) in triangles.iter().enumerate() {
+        for [a, b] in [
+            [triangle[0], triangle[1]],
+            [triangle[1], triangle[2]],
+            [triangle[2], triangle[0]],
+        ] {
+            edges
+                .entry((a.min(b), a.max(b)))
+                .or_default()
+                .push((triangle_index, a < b));
+        }
+    }
+    assert!(
+        edges.values().all(|incidence| incidence.len() == 2),
+        "YeahRight control mesh must be closed before winding normalization"
+    );
+
+    let mut flipped = vec![None; triangles.len()];
+    let mut components = Vec::<Vec<usize>>::new();
+    let mut adjacent = vec![Vec::<(usize, bool)>::new(); triangles.len()];
+    for incidence in edges.values() {
+        let (left, left_forward) = incidence[0];
+        let (right, right_forward) = incidence[1];
+        let differs = left_forward == right_forward;
+        adjacent[left].push((right, differs));
+        adjacent[right].push((left, differs));
+    }
+    for seed in 0..triangles.len() {
+        if flipped[seed].is_some() {
+            continue;
+        }
+        flipped[seed] = Some(false);
+        let mut queue = VecDeque::from([seed]);
+        let mut component = Vec::new();
+        while let Some(current) = queue.pop_front() {
+            component.push(current);
+            let current_flip = flipped[current].expect("queued triangles have orientation");
+            for &(neighbor, differs) in &adjacent[current] {
+                let required = current_flip ^ differs;
+                if let Some(existing) = flipped[neighbor] {
+                    assert_eq!(existing, required, "YeahRight surface must be orientable");
+                } else {
+                    flipped[neighbor] = Some(required);
+                    queue.push_back(neighbor);
+                }
+            }
+        }
+        components.push(component);
+    }
+    for (triangle, flip) in triangles.iter_mut().zip(flipped) {
+        if flip.expect("every triangle belongs to an oriented component") {
+            triangle.swap(1, 2);
+        }
+    }
+
+    for component in components {
+        let signed_volume = component
+            .iter()
+            .map(|&triangle_index| {
+                let triangle = triangles[triangle_index];
+                let position = |index: usize| {
+                    let offset = index * 3;
+                    [
+                        buffers.positions[offset].to_f64_lossy().unwrap_or_default(),
+                        buffers.positions[offset + 1]
+                            .to_f64_lossy()
+                            .unwrap_or_default(),
+                        buffers.positions[offset + 2]
+                            .to_f64_lossy()
+                            .unwrap_or_default(),
+                    ]
+                };
+                let [ax, ay, az] = position(triangle[0]);
+                let [bx, by, bz] = position(triangle[1]);
+                let [cx, cy, cz] = position(triangle[2]);
+                ax * (by * cz - bz * cy) + ay * (bz * cx - bx * cz) + az * (bx * cy - by * cx)
+            })
+            .sum::<f64>();
+        if signed_volume < 0.0 {
+            for triangle_index in component {
+                triangles[triangle_index].swap(1, 2);
+            }
+        }
+    }
+
+    let positions = buffers
+        .positions
+        .chunks_exact(3)
+        .map(|coordinates| {
+            Point3::new(
+                coordinates[0].clone(),
+                coordinates[1].clone(),
+                coordinates[2].clone(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let polygons = triangles
+        .into_iter()
+        .map(|triangle| {
+            let mut polygon = Polygon::new(
+                triangle
+                    .map(|index| Vertex::new(positions[index].clone(), Vector3::z()))
+                    .to_vec(),
+                (),
+            );
+            polygon.set_new_normal();
+            polygon
+        })
+        .collect();
+    Mesh::from_polygons(polygons)
+}
+
+fn yeahright_boolean_operand(source: &Mesh<()>) -> Mesh<()> {
+    // The quarter turn has exact coefficients, and the offset keeps the two
+    // genus-131 surfaces in substantial but non-identical overlap.
+    source
+        .rotate(Real::zero(), Real::from(90_u8), Real::zero())
+        .translate(Real::one(), Real::from(12_u8), Real::one())
 }
 
 fn main() {
@@ -487,6 +651,195 @@ fn run() {
         let angle = Mesh::dihedral_angle(first, second);
         Measurement::new(12, 1, angle.to_f64_lossy().unwrap_or_default().to_bits())
     });
+
+    config.run(
+        "corpus",
+        "obj_import",
+        "yeahright_control_genus131",
+        1,
+        || measurement(&black_box(import_yeahright_control()), 5_845),
+    );
+
+    let yeahright_source = import_yeahright_control();
+    let yeahright_input = facet_count(&yeahright_source);
+
+    config.run(
+        "corpus",
+        "rotate_translate",
+        "yeahright_control_rot90_offset",
+        1,
+        || {
+            geometry_measurement(
+                &yeahright_boolean_operand(black_box(&yeahright_source)),
+                yeahright_input,
+            )
+        },
+    );
+    config.run(
+        "corpus",
+        "bounding_box",
+        "yeahright_control_genus131",
+        1,
+        || {
+            let bounds = black_box(&yeahright_source).bounding_box();
+            let checksum = bounds.maxs.x.to_f64_lossy().unwrap_or_default().to_bits()
+                ^ bounds.maxs.y.to_f64_lossy().unwrap_or_default().to_bits()
+                ^ bounds.maxs.z.to_f64_lossy().unwrap_or_default().to_bits();
+            Measurement::new(yeahright_input as u64, 6, checksum)
+        },
+    );
+    config.run(
+        "corpus",
+        "graphics_buffers",
+        "yeahright_control_genus131",
+        1,
+        || {
+            let graphics = black_box(&yeahright_source).build_graphics_mesh();
+            Measurement::new(
+                yeahright_input as u64,
+                graphics.indices.len() as u64,
+                (graphics.vertices.len() as u64).rotate_left(17)
+                    ^ graphics.indices.len() as u64,
+            )
+        },
+    );
+    config.run(
+        "corpus",
+        "connectivity",
+        "yeahright_control_genus131",
+        1,
+        || {
+            let (vertices, adjacency) = black_box(&yeahright_source).connectivity_counts();
+            Measurement::new(
+                yeahright_input as u64,
+                vertices as u64,
+                (vertices as u64).rotate_left(17) ^ adjacency as u64,
+            )
+        },
+    );
+    config.run(
+        "corpus",
+        "is_manifold",
+        "yeahright_control_genus131",
+        1,
+        || {
+            let manifold = black_box(&yeahright_source).is_manifold();
+            Measurement::new(yeahright_input as u64, 1, u64::from(manifold))
+        },
+    );
+
+    let yeahright_boolean_source = import_oriented_obj(&yeahright_boolean_hull_path());
+    let yeahright_box =
+        Mesh::cuboid(Real::from(20_u8), Real::from(40_u8), Real::from(40_u8), ()).translate(
+            Real::from(-10_i8),
+            Real::from(6_u8),
+            Real::zero(),
+        );
+    let yeahright_box_input =
+        facet_count(&yeahright_boolean_source) + facet_count(&yeahright_box);
+    config.run("corpus", "boolean_all", "yeahright_hull_box", 1, || {
+        let prepared = black_box(&yeahright_boolean_source)
+            .try_prepare_boolean(black_box(&yeahright_box))
+            .expect("YeahRight box Booleans must prepare");
+        let outputs = [
+            prepared
+                .try_union()
+                .expect("YeahRight box union must remain valid"),
+            prepared
+                .try_difference()
+                .expect("YeahRight box difference must remain valid"),
+            prepared
+                .try_intersection()
+                .expect("YeahRight box intersection must remain valid"),
+            prepared
+                .try_xor()
+                .expect("YeahRight box xor must remain valid"),
+        ];
+        assert!(
+            !outputs[2].polygons.is_empty(),
+            "YeahRight proxy must intersect the clipping box"
+        );
+        outputs.iter().fold(Measurement::default(), |total, output| {
+            let current = measurement(output, yeahright_box_input);
+            Measurement::new(
+                total.work_units.saturating_add(current.work_units),
+                total.output_size.saturating_add(current.output_size),
+                total.checksum.wrapping_add(current.checksum),
+            )
+        })
+    });
+    let yeahright_stress_source = import_oriented_obj(&yeahright_boolean_proxy_path());
+    let yeahright_copy = yeahright_boolean_operand(&yeahright_stress_source);
+    let yeahright_boolean_input =
+        facet_count(&yeahright_stress_source) + facet_count(&yeahright_copy);
+    config.run(
+        "stress",
+        "boolean_union",
+        "yeahright_genus131_proxy_rot90_offset",
+        1,
+        || {
+            let output = black_box(&yeahright_stress_source)
+                .try_union(black_box(&yeahright_copy))
+                .expect("YeahRight union must remain valid");
+            measurement(&output, yeahright_boolean_input)
+        },
+    );
+    config.run(
+        "stress",
+        "boolean_difference",
+        "yeahright_genus131_proxy_rot90_offset",
+        1,
+        || {
+            let output = black_box(&yeahright_stress_source)
+                .try_difference(black_box(&yeahright_copy))
+                .expect("YeahRight difference must remain valid");
+            measurement(&output, yeahright_boolean_input)
+        },
+    );
+    config.run(
+        "stress",
+        "boolean_intersection",
+        "yeahright_genus131_proxy_rot90_offset",
+        1,
+        || {
+            let output = black_box(&yeahright_stress_source)
+                .try_intersection(black_box(&yeahright_copy))
+                .expect("YeahRight intersection must remain valid");
+            assert!(
+                !output.polygons.is_empty(),
+                "YeahRight stress operands must overlap"
+            );
+            measurement(&output, yeahright_boolean_input)
+        },
+    );
+    config.run(
+        "stress",
+        "boolean_xor",
+        "yeahright_genus131_proxy_rot90_offset",
+        1,
+        || {
+            let output = black_box(&yeahright_stress_source)
+                .try_xor(black_box(&yeahright_copy))
+                .expect("YeahRight xor must remain valid");
+            measurement(&output, yeahright_boolean_input)
+        },
+    );
+
+    // Opt-in only: this exact 11,894-by-11,894-triangle preparation reached
+    // roughly 116 GiB RSS and invoked the Linux OOM killer during validation.
+    let yeahright_dangerous_copy = yeahright_boolean_operand(&yeahright_source);
+    config.run(
+        "dangerous",
+        "boolean_intersection",
+        "yeahright_control_full_rot90_offset_dangerous",
+        1,
+        || {
+            let output = black_box(&yeahright_source)
+                .try_intersection(black_box(&yeahright_dangerous_copy))
+                .expect("full-resolution YeahRight intersection must remain valid");
+            measurement(&output, yeahright_input * 2)
+        },
+    );
 
     config.run("kernel", "stl_write", "sphere_medium", 8, || {
         let bytes = black_box(&analysis_source)

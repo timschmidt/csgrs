@@ -355,6 +355,22 @@ static Mesh subdivide_once(const Mesh &source) {
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
+static Mesh mesh_from_obj_soup(const csgrs_bench::ObjTriangleSoup &soup) {
+  std::vector<Point> points;
+  points.reserve(soup.points.size());
+  for (const auto &point : soup.points) {
+    points.emplace_back(point[0], point[1], point[2]);
+  }
+  return mesh_from_soup(std::move(points), soup.triangles);
+}
+
+static Mesh yeahright_boolean_operand(const Mesh &source) {
+  return transformed(source, [](const Point &point) {
+    return Point(point.z() + Kernel::FT(1), point.y() + Kernel::FT(12),
+                 -point.x() + Kernel::FT(1));
+  });
+}
+
 int main() {
   csgrs_bench::Harness harness("cgal-epeck");
   harness.run("kernel", "construct_box", "unit", 64,
@@ -762,6 +778,203 @@ int main() {
         CGAL::approximate_angle(normals.front(), *adjacent));
     return Measurement{12, 1, std::bit_cast<std::uint64_t>(angle)};
   });
+
+  harness.run("corpus", "obj_import", "yeahright_control_genus131", 1, [] {
+    const auto soup =
+        csgrs_bench::read_obj_triangle_soup(csgrs_bench::yeahright_control_path());
+    return measured(mesh_from_obj_soup(soup), soup.source_faces);
+  });
+  const auto yeahright_soup =
+      csgrs_bench::read_obj_triangle_soup(csgrs_bench::yeahright_control_path());
+  const Mesh yeahright_source = mesh_from_obj_soup(yeahright_soup);
+  const std::size_t yeahright_input = yeahright_source.number_of_faces();
+
+  harness.run("corpus", "rotate_translate",
+              "yeahright_control_rot90_offset", 1, [&] {
+                return geometry_measured(
+                    yeahright_boolean_operand(yeahright_source),
+                    yeahright_input);
+              });
+  harness.run("corpus", "bounding_box", "yeahright_control_genus131", 1,
+              [&] {
+                const CGAL::Bbox_3 bounds = PMP::bbox(yeahright_source);
+                return Measurement{
+                    yeahright_input, 6,
+                    std::bit_cast<std::uint64_t>(bounds.xmax()) ^
+                        std::bit_cast<std::uint64_t>(bounds.ymax()) ^
+                        std::bit_cast<std::uint64_t>(bounds.zmax())};
+              });
+  harness.run("corpus", "graphics_buffers", "yeahright_control_genus131", 1,
+              [&] {
+                std::size_t corners{};
+                for (const auto face : yeahright_source.faces()) {
+                  for ([[maybe_unused]] const auto vertex :
+                       CGAL::vertices_around_face(
+                           yeahright_source.halfedge(face),
+                           yeahright_source)) {
+                    ++corners;
+                  }
+                }
+                return Measurement{yeahright_input, corners,
+                                   csgrs_bench::checksum(corners, corners)};
+              });
+  harness.run("corpus", "connectivity", "yeahright_control_genus131", 1,
+              [&] {
+                return Measurement{
+                    yeahright_input, yeahright_source.number_of_vertices(),
+                    csgrs_bench::checksum(
+                        yeahright_source.number_of_vertices(),
+                        yeahright_source.number_of_edges())};
+              });
+  harness.run("corpus", "is_manifold", "yeahright_control_genus131", 1,
+              [&] {
+                const bool manifold = CGAL::is_closed(yeahright_source) &&
+                                      CGAL::is_valid_polygon_mesh(
+                                          yeahright_source);
+                return Measurement{yeahright_input, 1, manifold ? 1U : 0U};
+              });
+
+  const auto yeahright_boolean_soup = csgrs_bench::read_obj_triangle_soup(
+      csgrs_bench::yeahright_boolean_hull_path());
+  const Mesh yeahright_boolean_source =
+      mesh_from_obj_soup(yeahright_boolean_soup);
+  const Mesh yeahright_box = transformed(
+      exact_cuboid(Kernel::FT(20), Kernel::FT(40), Kernel::FT(40)),
+      [](const Point &point) {
+        return Point(point.x() - Kernel::FT(10),
+                     point.y() + Kernel::FT(6), point.z());
+      });
+  const std::size_t yeahright_box_input =
+      yeahright_boolean_source.number_of_faces() +
+      yeahright_box.number_of_faces();
+  const auto yeahright_box_case = [&](auto operation) {
+    Mesh left = yeahright_boolean_source;
+    Mesh right = yeahright_box;
+    Mesh output;
+    if (!operation(left, right, output)) {
+      throw std::runtime_error("CGAL YeahRight box Boolean workload failed");
+    }
+    return measured(output, yeahright_box_input);
+  };
+  harness.run("corpus", "boolean_all", "yeahright_hull_box", 1,
+              [&] {
+                Measurement total;
+                total += yeahright_box_case(
+                    [](Mesh &left, Mesh &right, Mesh &output) {
+                      return PMP::corefine_and_compute_union(left, right,
+                                                             output);
+                    });
+                total += yeahright_box_case(
+                    [](Mesh &left, Mesh &right, Mesh &output) {
+                      return PMP::corefine_and_compute_difference(left, right,
+                                                                  output);
+                    });
+                total += yeahright_box_case(
+                    [](Mesh &left, Mesh &right, Mesh &output) {
+                      return PMP::corefine_and_compute_intersection(left, right,
+                                                                    output);
+                    });
+                Mesh left = yeahright_boolean_source;
+                Mesh right = yeahright_box;
+                Mesh left_only;
+                Mesh right_only;
+                if (!PMP::corefine_and_compute_difference(left, right,
+                                                          left_only)) {
+                  throw std::runtime_error(
+                      "CGAL YeahRight box XOR left difference failed");
+                }
+                left = yeahright_boolean_source;
+                right = yeahright_box;
+                if (!PMP::corefine_and_compute_difference(right, left,
+                                                          right_only)) {
+                  throw std::runtime_error(
+                      "CGAL YeahRight box XOR right difference failed");
+                }
+                Mesh output = left_only;
+                CGAL::copy_face_graph(right_only, output);
+                total += measured(output, yeahright_box_input);
+                return total;
+              });
+  const auto yeahright_stress_soup = csgrs_bench::read_obj_triangle_soup(
+      csgrs_bench::yeahright_boolean_proxy_path());
+  const Mesh yeahright_stress_source = mesh_from_obj_soup(yeahright_stress_soup);
+  const Mesh yeahright_copy =
+      yeahright_boolean_operand(yeahright_stress_source);
+  const std::size_t yeahright_boolean_input =
+      yeahright_stress_source.number_of_faces() +
+      yeahright_copy.number_of_faces();
+  const auto yeahright_boolean_case = [&](auto operation) {
+    Mesh left = yeahright_stress_source;
+    Mesh right = yeahright_copy;
+    Mesh output;
+    if (!operation(left, right, output)) {
+      throw std::runtime_error("CGAL YeahRight Boolean workload failed");
+    }
+    return measured(output, yeahright_boolean_input);
+  };
+  harness.run("stress", "boolean_union",
+              "yeahright_genus131_proxy_rot90_offset", 1,
+              [&] {
+                return yeahright_boolean_case(
+                    [](Mesh &left, Mesh &right, Mesh &output) {
+                      return PMP::corefine_and_compute_union(left, right,
+                                                             output);
+                    });
+              });
+  harness.run("stress", "boolean_difference",
+              "yeahright_genus131_proxy_rot90_offset", 1, [&] {
+                return yeahright_boolean_case(
+                    [](Mesh &left, Mesh &right, Mesh &output) {
+                      return PMP::corefine_and_compute_difference(left, right,
+                                                                  output);
+                    });
+              });
+  harness.run("stress", "boolean_intersection",
+              "yeahright_genus131_proxy_rot90_offset", 1, [&] {
+                return yeahright_boolean_case(
+                    [](Mesh &left, Mesh &right, Mesh &output) {
+                      return PMP::corefine_and_compute_intersection(left, right,
+                                                                    output);
+                    });
+              });
+  harness.run("stress", "boolean_xor",
+              "yeahright_genus131_proxy_rot90_offset", 1,
+              [&] {
+                Mesh left = yeahright_stress_source;
+                Mesh right = yeahright_copy;
+                Mesh left_only;
+                Mesh right_only;
+                if (!PMP::corefine_and_compute_difference(left, right,
+                                                          left_only)) {
+                  throw std::runtime_error(
+                      "CGAL YeahRight XOR left difference failed");
+                }
+                left = yeahright_stress_source;
+                right = yeahright_copy;
+                if (!PMP::corefine_and_compute_difference(right, left,
+                                                          right_only)) {
+                  throw std::runtime_error(
+                      "CGAL YeahRight XOR right difference failed");
+                }
+                Mesh output = left_only;
+                CGAL::copy_face_graph(right_only, output);
+                return measured(output, yeahright_boolean_input);
+              });
+  const Mesh yeahright_dangerous_copy =
+      yeahright_boolean_operand(yeahright_source);
+  harness.run("dangerous", "boolean_intersection",
+              "yeahright_control_full_rot90_offset_dangerous", 1, [&] {
+                Mesh left = yeahright_source;
+                Mesh right = yeahright_dangerous_copy;
+                Mesh output;
+                if (!PMP::corefine_and_compute_intersection(left, right,
+                                                            output)) {
+                  throw std::runtime_error(
+                      "CGAL full-resolution YeahRight intersection failed");
+                }
+                return measured(output, yeahright_input * 2);
+              });
+
   harness.run("kernel", "stl_write", "sphere_medium", 8, [&] {
     std::ostringstream output(std::ios::binary);
     CGAL::IO::set_binary_mode(output);

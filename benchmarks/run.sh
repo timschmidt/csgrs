@@ -27,6 +27,8 @@ done
 if ((quick)); then
   export CSGRS_BENCH_SAMPLES=1
   export CSGRS_BENCH_WARMUP=0
+  export CSGRS_BENCH_SKIP_STRESS=1
+  export CSGRS_BENCH_SKIP_CORPUS_BOOLEANS=1
 fi
 
 mkdir -p "$output"

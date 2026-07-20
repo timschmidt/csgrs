@@ -30,7 +30,7 @@ CROSS_KERNEL_ENGINES = {
     "cgal-epeck",
     "opencascade-double-tight",
 }
-CROSS_KERNEL_SUITES = {"kernel", "precision"}
+CROSS_KERNEL_SUITES = {"kernel", "precision", "corpus"}
 
 
 def load(paths: list[Path]) -> list[dict[str, str]]:

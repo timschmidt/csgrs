@@ -8,6 +8,8 @@
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
+#include <BRepBuilderAPI_MakeSolid.hxx>
+#include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepGProp.hxx>
@@ -37,6 +39,8 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
+#include <TopoDS_Shell.hxx>
+#include <TopoDS_Solid.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <gp_Ax1.hxx>
 #include <gp_Ax2.hxx>
@@ -181,6 +185,49 @@ static TopoDS_Shape polyhedron_surface(
     builder.Add(compound, BRepBuilderAPI_MakeFace(wire.Wire()).Face());
   }
   return compound;
+}
+
+static TopoDS_Shape solid_from_obj_soup(
+    const csgrs_bench::ObjTriangleSoup &soup) {
+  BRepBuilderAPI_Sewing sewing(Precision::Confusion(), Standard_True,
+                               Standard_True, Standard_True, Standard_False);
+  for (const auto &triangle : soup.triangles) {
+    BRepBuilderAPI_MakePolygon wire;
+    for (const std::size_t index : triangle) {
+      const auto &point = soup.points.at(index);
+      wire.Add(gp_Pnt(point[0], point[1], point[2]));
+    }
+    wire.Close();
+    sewing.Add(BRepBuilderAPI_MakeFace(wire.Wire()).Face());
+  }
+  sewing.Perform();
+  const TopoDS_Shape sewed = sewing.SewedShape();
+  BRepBuilderAPI_MakeSolid make_solid;
+  std::size_t shell_count{};
+  for (TopExp_Explorer explorer(sewed, TopAbs_SHELL); explorer.More();
+       explorer.Next()) {
+    make_solid.Add(TopoDS::Shell(explorer.Current()));
+    ++shell_count;
+  }
+  if (shell_count == 0 || !make_solid.IsDone()) {
+    throw std::runtime_error("OCCT could not sew YeahRight into a solid");
+  }
+  TopoDS_Solid solid = make_solid.Solid();
+  if (!BRepCheck_Analyzer(solid, Standard_True).IsValid()) {
+    throw std::runtime_error("OCCT YeahRight solid is invalid after sewing");
+  }
+  return solid;
+}
+
+static TopoDS_Shape yeahright_boolean_operand(const TopoDS_Shape &source) {
+  gp_Trsf rotation;
+  rotation.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 1, 0)),
+                       std::numbers::pi / 2.0);
+  const TopoDS_Shape rotated =
+      BRepBuilderAPI_Transform(source, rotation, Standard_True).Shape();
+  gp_Trsf translation;
+  translation.SetTranslation(gp_Vec(1, 12, 1));
+  return BRepBuilderAPI_Transform(rotated, translation, Standard_True).Shape();
 }
 
 static TopoDS_Shape octahedron(double radius) {
@@ -685,6 +732,159 @@ int main() {
     const double angle = normals.front().Angle(*adjacent);
     return Measurement{12, 1, std::bit_cast<std::uint64_t>(angle)};
   });
+
+  harness.run("corpus", "obj_import", "yeahright_control_genus131", 1, [] {
+    const auto soup =
+        csgrs_bench::read_obj_triangle_soup(csgrs_bench::yeahright_control_path());
+    return measured(solid_from_obj_soup(soup), soup.source_faces);
+  });
+  const auto yeahright_soup =
+      csgrs_bench::read_obj_triangle_soup(csgrs_bench::yeahright_control_path());
+  const TopoDS_Shape yeahright_source = solid_from_obj_soup(yeahright_soup);
+  const std::size_t yeahright_input = yeahright_soup.triangles.size();
+
+  harness.run("corpus", "rotate_translate",
+              "yeahright_control_rot90_offset", 1, [&] {
+                return geometry_measured(
+                    yeahright_boolean_operand(yeahright_source),
+                    yeahright_input);
+              });
+  harness.run("corpus", "bounding_box", "yeahright_control_genus131", 1,
+              [&] {
+                Bnd_Box bounds;
+                BRepBndLib::Add(yeahright_source, bounds, Standard_True);
+                Standard_Real xmin, ymin, zmin, xmax, ymax, zmax;
+                bounds.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+                return Measurement{
+                    yeahright_input, 6,
+                    std::bit_cast<std::uint64_t>(xmax) ^
+                        std::bit_cast<std::uint64_t>(ymax) ^
+                        std::bit_cast<std::uint64_t>(zmax)};
+              });
+  harness.run("corpus", "graphics_buffers", "yeahright_control_genus131", 1,
+              [&] {
+                TopoDS_Shape output =
+                    BRepBuilderAPI_Copy(yeahright_source).Shape();
+                triangulate(output);
+                const std::size_t corners = triangle_count(output) * 3;
+                return Measurement{yeahright_input, corners,
+                                   csgrs_bench::checksum(corners, corners)};
+              });
+  harness.run("corpus", "connectivity", "yeahright_control_genus131", 1,
+              [&] {
+                TopoDS_Shape output =
+                    BRepBuilderAPI_Copy(yeahright_source).Shape();
+                triangulate(output);
+                const auto topology = build_triangulated_connectivity(output);
+                return Measurement{
+                    yeahright_input, topology.vertices,
+                    csgrs_bench::checksum(topology.vertices,
+                                          topology.adjacency_vertices)};
+              });
+  harness.run("corpus", "is_manifold", "yeahright_control_genus131", 1,
+              [&] {
+                const bool valid =
+                    BRepCheck_Analyzer(yeahright_source, Standard_True).IsValid();
+                return Measurement{yeahright_input, 1, valid ? 1U : 0U};
+              });
+  const auto yeahright_boolean_soup = csgrs_bench::read_obj_triangle_soup(
+      csgrs_bench::yeahright_boolean_hull_path());
+  const TopoDS_Shape yeahright_boolean_source =
+      solid_from_obj_soup(yeahright_boolean_soup);
+  gp_Trsf yeahright_box_translation;
+  yeahright_box_translation.SetTranslation(gp_Vec(-10, 6, 0));
+  const TopoDS_Shape yeahright_box = BRepBuilderAPI_Transform(
+                                          centered_cuboid(20.0, 40.0, 40.0),
+                                          yeahright_box_translation,
+                                          Standard_True)
+                                          .Shape();
+  const std::size_t yeahright_box_input =
+      yeahright_boolean_soup.triangles.size() + 12;
+  harness.run("corpus", "boolean_all", "yeahright_hull_box", 1,
+              [&] {
+                Measurement total;
+                total += measured(
+                    boolean_shape<BRepAlgoAPI_Fuse>(yeahright_boolean_source,
+                                                    yeahright_box),
+                    yeahright_box_input);
+                total += measured(
+                    boolean_shape<BRepAlgoAPI_Cut>(yeahright_boolean_source,
+                                                   yeahright_box),
+                    yeahright_box_input);
+                total += measured(
+                    boolean_shape<BRepAlgoAPI_Common>(yeahright_boolean_source,
+                                                      yeahright_box),
+                    yeahright_box_input);
+                const TopoDS_Shape left_only =
+                    boolean_shape<BRepAlgoAPI_Cut>(yeahright_boolean_source,
+                                                   yeahright_box);
+                const TopoDS_Shape right_only =
+                    boolean_shape<BRepAlgoAPI_Cut>(yeahright_box,
+                                                   yeahright_boolean_source);
+                BRep_Builder builder;
+                TopoDS_Compound compound;
+                builder.MakeCompound(compound);
+                builder.Add(compound, left_only);
+                builder.Add(compound, right_only);
+                total += measured(compound, yeahright_box_input);
+                return total;
+              });
+  const auto yeahright_stress_soup = csgrs_bench::read_obj_triangle_soup(
+      csgrs_bench::yeahright_boolean_proxy_path());
+  const TopoDS_Shape yeahright_stress_source =
+      solid_from_obj_soup(yeahright_stress_soup);
+  const TopoDS_Shape yeahright_copy =
+      yeahright_boolean_operand(yeahright_stress_source);
+  const std::size_t yeahright_boolean_input =
+      yeahright_stress_soup.triangles.size() * 2;
+  harness.run("stress", "boolean_union",
+              "yeahright_genus131_proxy_rot90_offset", 1,
+              [&] {
+                return measured(
+                    boolean_shape<BRepAlgoAPI_Fuse>(yeahright_stress_source,
+                                                    yeahright_copy),
+                    yeahright_boolean_input);
+              });
+  harness.run("stress", "boolean_difference",
+              "yeahright_genus131_proxy_rot90_offset", 1, [&] {
+                return measured(
+                    boolean_shape<BRepAlgoAPI_Cut>(yeahright_stress_source,
+                                                   yeahright_copy),
+                    yeahright_boolean_input);
+              });
+  harness.run("stress", "boolean_intersection",
+              "yeahright_genus131_proxy_rot90_offset", 1, [&] {
+                return measured(
+                    boolean_shape<BRepAlgoAPI_Common>(yeahright_stress_source,
+                                                      yeahright_copy),
+                    yeahright_boolean_input);
+              });
+  harness.run("stress", "boolean_xor",
+              "yeahright_genus131_proxy_rot90_offset", 1,
+              [&] {
+                const TopoDS_Shape left_only =
+                    boolean_shape<BRepAlgoAPI_Cut>(yeahright_stress_source,
+                                                   yeahright_copy);
+                const TopoDS_Shape right_only =
+                    boolean_shape<BRepAlgoAPI_Cut>(yeahright_copy,
+                                                   yeahright_stress_source);
+                BRep_Builder builder;
+                TopoDS_Compound compound;
+                builder.MakeCompound(compound);
+                builder.Add(compound, left_only);
+                builder.Add(compound, right_only);
+                return measured(compound, yeahright_boolean_input);
+              });
+  const TopoDS_Shape yeahright_dangerous_copy =
+      yeahright_boolean_operand(yeahright_source);
+  harness.run("dangerous", "boolean_intersection",
+              "yeahright_control_full_rot90_offset_dangerous", 1, [&] {
+                return measured(
+                    boolean_shape<BRepAlgoAPI_Common>(
+                        yeahright_source, yeahright_dangerous_copy),
+                    yeahright_input * 2);
+              });
+
   harness.run("kernel", "stl_write", "sphere_medium", 8, [&] {
     TopoDS_Shape output = analysis_mesh_source;
     const std::filesystem::path path =

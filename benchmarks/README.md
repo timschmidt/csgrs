@@ -9,9 +9,11 @@ This suite provides two complementary optimization anchors:
 
 Every runner emits the same CSV schema. Raw samples are intentionally retained;
 `summarize.py` validates them and reports median nanoseconds per operation plus
-the ratio to csgrs. Full native runs also enforce that every `kernel` and
-`precision` workload has exactly one implementation in each of the three
-engines. See [the cross-kernel coverage matrix](CROSS_KERNEL_COVERAGE.md) for
+the ratio to csgrs. Full native runs also enforce that every `kernel`,
+`precision`, and `corpus` workload has exactly one implementation in each of
+the three engines. Opt-in `stress` and `dangerous` workloads are diagnostic
+ceilings and are not part of the portable parity contract.
+See [the cross-kernel coverage matrix](CROSS_KERNEL_COVERAGE.md) for
 the portable API boundary and explicitly excluded nonportable surfaces.
 
 ## Run
@@ -28,6 +30,10 @@ For a one-sample build and corpus check:
 ```sh
 benchmarks/run.sh --quick
 ```
+
+Quick runs skip the long combined corpus Boolean and opt-in stress workloads,
+but retain the full-resolution YeahRight import, transform, topology, and
+carrier checks.
 
 To record cold and warm cross-kernel results together:
 
@@ -56,12 +62,18 @@ The runners share these environment variables:
 |---|---:|---|
 | `CSGRS_BENCH_SAMPLES` | 10 | Independently timed samples per case |
 | `CSGRS_BENCH_WARMUP` | 2 | Untimed warmup batches per case |
+| `CSGRS_BENCH_STRESS_SAMPLES` | 1 | Samples for `corpus`, `stress`, and `dangerous` cases |
+| `CSGRS_BENCH_STRESS_WARMUP` | 0 | Untimed warmup batches for `corpus`, `stress`, and `dangerous` cases |
 | `CSGRS_BENCH_SCALE` | 1 | Multiplier for iterations within each sample |
 | `CSGRS_BENCH_ITERATIONS` | unset | Override iterations per sample; the cold runner sets this to 1 |
 | `CSGRS_BENCH_SAMPLE_OFFSET` | 0 | First emitted sample number |
 | `CSGRS_BENCH_TEMPERATURE` | `warm` | CSV temperature label: `cold` or `warm` |
 | `CSGRS_BENCH_COLD_SAMPLES` | 5 | Fresh-process samples used by `--cold-warm` |
 | `CSGRS_BENCH_FILTER` | unset | Comma-separated substrings matched against `suite/benchmark/case` |
+| `CSGRS_BENCH_SKIP_STRESS` | unset | Set to a nonzero value to skip normal stress cases; `--quick` sets this |
+| `CSGRS_BENCH_SKIP_CORPUS_BOOLEANS` | unset | Set to a nonzero value to skip the combined corpus Boolean; `--quick` sets this |
+| `CSGRS_BENCH_ENABLE_STRESS` | unset | Set to exactly `1` to enable rotated-copy stress cases that may consume tens of GiB |
+| `CSGRS_BENCH_ENABLE_DANGEROUS` | unset | Set to exactly `1` to enable workloads known to risk exhausting host memory |
 
 For example, this runs only Boolean cases with five samples:
 
@@ -97,6 +109,18 @@ topology-only no-op. Setup objects that can be
 reused without changing operation semantics are built outside the timed region.
 Failed Booleans, invalid mass properties, or failed serialization abort a run
 instead of producing deceptively fast rows.
+
+The committed public-domain YeahRight corpus adds a real arbitrary-polygon OBJ
+boundary. All runners normalize its winding before kernel ingestion. The full
+11,894-triangle genus-131 control mesh drives import, transform, bounds,
+graphics-buffer, connectivity, and manifold workloads. A 1,128-triangle
+convex-hull proxy drives a combined
+union/difference/intersection/XOR clipping-box row in the always-on `corpus`
+suite. A separate 1,146-triangle genus-131 proxy supplies the opt-in rotated-copy
+`stress` suite. The full-control-mesh intersection is retained in the
+`dangerous` suite but disabled by default: one observed CSGRS run reached about
+116 GiB RSS and was killed by Linux. Enable it only with
+`CSGRS_BENCH_ENABLE_DANGEROUS=1` on a disposable, memory-limited benchmark host.
 
 The engines use their natural representations:
 
@@ -147,6 +171,8 @@ output triangles/facets. OCCT's analytic analysis cases report B-rep input faces
 The fixed sphere/box Boolean uses a deliberately moderate 12×6 mesh on the
 polygon kernels because exact topology dominates runtime; larger 32×16 and
 64×32 meshes remain in construction, transformation, analysis, and I/O cases.
+The YeahRight hull and genus-preserving proxy supply separate portable corpus
+and high-genus Boolean stress tiers.
 The `precision` suite adds a 128×64 sphere and the thin-overlap Boolean to make
 exact/tight behavior visible independently of ordinary throughput cases.
 
@@ -178,7 +204,7 @@ mesh and profile trace integration is additionally enforced by
 | Implicit geometry | retained SDF, 2D/3D metaballs, TPMS catalog | `hypersdf`, `fast-surface-nets` |
 | Projection | slice and flatten | `hypercurve`, `hyperlimit` |
 | Raster/text | image contours, TrueType outlines, Hershey strokes | `image`, `contour_tracing`, `ttf-parser`, `hershey` |
-| Mesh I/O | STL, DXF, OBJ, PLY, AMF, glTF; STL/OBJ import | format crates, `serde_json`, `base64` |
+| Mesh I/O | STL, DXF, OBJ, PLY, AMF, glTF; STL/OBJ import, including exact scientific-notation OBJ coordinates | format crates, `serde_json`, `base64` |
 | Profile I/O | SVG and Gerber round trips | `svg`, `svgtypes`, `gerber-types`, `gerber_parser` |
 | Adapters/parts | Bevy conversion, AABB blueprint extraction | `bevy_mesh`, csgrs parts |
 

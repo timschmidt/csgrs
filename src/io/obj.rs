@@ -37,6 +37,79 @@ fn obj_line_error(line: usize, error: IoError) -> IoError {
     invalid_obj_data_at_line(line, error.to_string())
 }
 
+fn parse_obj_real(text: &str) -> Result<Real, hyperlattice::Problem> {
+    const MAX_EXPANDED_DECIMAL_LEN: usize = 1_000_000;
+
+    if !text.contains(['e', 'E']) {
+        return text.parse();
+    }
+
+    let (mantissa, exponent) = text
+        .split_once(['e', 'E'])
+        .ok_or(hyperlattice::Problem::BadDecimal)?;
+    let exponent = exponent
+        .parse::<i64>()
+        .map_err(|_| hyperlattice::Problem::BadDecimal)?;
+    let (sign, magnitude) = if let Some(magnitude) = mantissa.strip_prefix('-') {
+        ("-", magnitude)
+    } else if let Some(magnitude) = mantissa.strip_prefix('+') {
+        ("", magnitude)
+    } else {
+        ("", mantissa)
+    };
+    let (whole, fraction) = magnitude
+        .split_once('.')
+        .map_or((magnitude, ""), |parts| parts);
+    if (whole.is_empty() && fraction.is_empty())
+        || !whole.bytes().all(|byte| byte.is_ascii_digit())
+        || !fraction.bytes().all(|byte| byte.is_ascii_digit())
+    {
+        return Err(hyperlattice::Problem::BadDecimal);
+    }
+
+    let mut digits = String::with_capacity(whole.len().saturating_add(fraction.len()));
+    digits.push_str(whole);
+    digits.push_str(fraction);
+    let decimal_position = i64::try_from(whole.len())
+        .ok()
+        .and_then(|whole_len| whole_len.checked_add(exponent))
+        .ok_or(hyperlattice::Problem::OutOfRange)?;
+    let digits_len =
+        i64::try_from(digits.len()).map_err(|_| hyperlattice::Problem::OutOfRange)?;
+
+    let mut normalized = String::new();
+    normalized.push_str(sign);
+    if decimal_position <= 0 {
+        normalized.push_str("0.");
+        let zero_count = usize::try_from(
+            decimal_position
+                .checked_neg()
+                .ok_or(hyperlattice::Problem::OutOfRange)?,
+        )
+        .map_err(|_| hyperlattice::Problem::OutOfRange)?;
+        if zero_count.saturating_add(digits.len()) > MAX_EXPANDED_DECIMAL_LEN {
+            return Err(hyperlattice::Problem::OutOfRange);
+        }
+        normalized.extend(std::iter::repeat_n('0', zero_count));
+        normalized.push_str(&digits);
+    } else if decimal_position >= digits_len {
+        normalized.push_str(&digits);
+        let zero_count = usize::try_from(decimal_position - digits_len)
+            .map_err(|_| hyperlattice::Problem::OutOfRange)?;
+        if zero_count.saturating_add(digits.len()) > MAX_EXPANDED_DECIMAL_LEN {
+            return Err(hyperlattice::Problem::OutOfRange);
+        }
+        normalized.extend(std::iter::repeat_n('0', zero_count));
+    } else {
+        let decimal_position = usize::try_from(decimal_position)
+            .map_err(|_| hyperlattice::Problem::OutOfRange)?;
+        normalized.push_str(&digits[..decimal_position]);
+        normalized.push('.');
+        normalized.push_str(&digits[decimal_position..]);
+    }
+    normalized.parse()
+}
+
 fn build_obj_buffers<T: IndexedTriangulated3D>(shape: &T) -> Result<ObjBuffers, IoError> {
     let indexed = shape.indexed_triangles();
     for face in &indexed.faces {
@@ -184,19 +257,19 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                             "vertex line needs three coordinates",
                         ));
                     }
-                    let x: Real = parts[1].parse().map_err(|e| {
+                    let x: Real = parse_obj_real(parts[1]).map_err(|e| {
                         invalid_obj_data_at_line(
                             line_number,
                             format!("Invalid vertex x coordinate: {e}"),
                         )
                     })?;
-                    let y: Real = parts[2].parse().map_err(|e| {
+                    let y: Real = parse_obj_real(parts[2]).map_err(|e| {
                         invalid_obj_data_at_line(
                             line_number,
                             format!("Invalid vertex y coordinate: {e}"),
                         )
                     })?;
-                    let z: Real = parts[3].parse().map_err(|e| {
+                    let z: Real = parse_obj_real(parts[3]).map_err(|e| {
                         invalid_obj_data_at_line(
                             line_number,
                             format!("Invalid vertex z coordinate: {e}"),
@@ -211,7 +284,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         });
                     }
                     let point = if let Some(weight) = parts.get(4) {
-                        let weight: Real = weight.parse().map_err(|error| {
+                        let weight: Real = parse_obj_real(weight).map_err(|error| {
                             IoError::MalformedInput(format!(
                                 "OBJ line {line_number}: invalid homogeneous weight: {error}"
                             ))
@@ -239,19 +312,19 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                             "normal line needs three coordinates",
                         ));
                     }
-                    let x: Real = parts[1].parse().map_err(|e| {
+                    let x: Real = parse_obj_real(parts[1]).map_err(|e| {
                         invalid_obj_data_at_line(
                             line_number,
                             format!("Invalid normal x coordinate: {e}"),
                         )
                     })?;
-                    let y: Real = parts[2].parse().map_err(|e| {
+                    let y: Real = parse_obj_real(parts[2]).map_err(|e| {
                         invalid_obj_data_at_line(
                             line_number,
                             format!("Invalid normal y coordinate: {e}"),
                         )
                     })?;
-                    let z: Real = parts[3].parse().map_err(|e| {
+                    let z: Real = parse_obj_real(parts[3]).map_err(|e| {
                         invalid_obj_data_at_line(
                             line_number,
                             format!("Invalid normal z coordinate: {e}"),
@@ -442,6 +515,18 @@ f -3 -2 -1
 
         assert_eq!(mesh.polygons.len(), 1);
         assert_eq!(mesh.polygons[0].vertices.len(), 3);
+    }
+
+    #[test]
+    fn from_obj_accepts_scientific_notation_without_losing_exactness() {
+        let obj = "v 7.78437e-005 0 0\nv 0 +.1E+1 0\nv 0 0 2e0\nf 1 2 3\n";
+
+        let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
+
+        let expected = (Real::from(778_437_u64) / Real::from(10_000_000_000_u64)).unwrap();
+        assert_eq!(mesh.polygons[0].vertices[0].position.x, expected);
+        assert_eq!(mesh.polygons[0].vertices[1].position.y, Real::one());
+        assert_eq!(mesh.polygons[0].vertices[2].position.z, Real::from(2_u8));
     }
 
     #[test]

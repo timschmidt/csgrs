@@ -12,6 +12,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(CSGRS_BENCH_REQUIRE_ALL "Fail unless both comparison kernels are found" ON)
+set(CSGRS_YEAHRIGHT_CONTROL_OBJ
+  "${CMAKE_CURRENT_SOURCE_DIR}/../data/yeahright/controlmesh.obj"
+)
+set(CSGRS_YEAHRIGHT_BOOLEAN_PROXY_OBJ
+  "${CMAKE_CURRENT_SOURCE_DIR}/../data/yeahright/controlmesh_boolean_proxy.obj"
+)
+set(CSGRS_YEAHRIGHT_BOOLEAN_HULL_OBJ
+  "${CMAKE_CURRENT_SOURCE_DIR}/../data/yeahright/yeahright_boolean_hull.obj"
+)
 
 find_package(CGAL QUIET)
 if(CGAL_FOUND)
@@ -21,6 +30,11 @@ if(CGAL_FOUND)
     -O3
     -DNDEBUG
     -Wno-stringop-overflow
+  )
+  target_compile_definitions(csgrs_bench_cgal PRIVATE
+    CSGRS_YEAHRIGHT_CONTROL_OBJ="${CSGRS_YEAHRIGHT_CONTROL_OBJ}"
+    CSGRS_YEAHRIGHT_BOOLEAN_PROXY_OBJ="${CSGRS_YEAHRIGHT_BOOLEAN_PROXY_OBJ}"
+    CSGRS_YEAHRIGHT_BOOLEAN_HULL_OBJ="${CSGRS_YEAHRIGHT_BOOLEAN_HULL_OBJ}"
   )
 elseif(CSGRS_BENCH_REQUIRE_ALL)
   message(FATAL_ERROR "CGAL was not found")
@@ -50,6 +64,11 @@ if(OpenCASCADE_FOUND)
     ${CSGRS_OCCT_STL_LIBRARY}
   )
   target_compile_options(csgrs_bench_occt PRIVATE -O3 -DNDEBUG)
+  target_compile_definitions(csgrs_bench_occt PRIVATE
+    CSGRS_YEAHRIGHT_CONTROL_OBJ="${CSGRS_YEAHRIGHT_CONTROL_OBJ}"
+    CSGRS_YEAHRIGHT_BOOLEAN_PROXY_OBJ="${CSGRS_YEAHRIGHT_BOOLEAN_PROXY_OBJ}"
+    CSGRS_YEAHRIGHT_BOOLEAN_HULL_OBJ="${CSGRS_YEAHRIGHT_BOOLEAN_HULL_OBJ}"
+  )
 elseif(CSGRS_BENCH_REQUIRE_ALL)
   message(FATAL_ERROR "OpenCascade/OCCT was not found")
 else()

@@ -9,6 +9,8 @@ pub const CSV_HEADER: &str = "engine,temperature,suite,benchmark,case,sample,ite
 pub struct Config {
     samples: usize,
     warmup: usize,
+    stress_samples: usize,
+    stress_warmup: usize,
     iteration_scale: usize,
     iterations_override: Option<usize>,
     sample_offset: usize,
@@ -17,9 +19,21 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> Self {
+        if dangerous_enabled() {
+            eprintln!(
+                "WARNING: dangerous benchmark workloads are enabled and may exhaust system memory"
+            );
+        }
+        if stress_enabled() {
+            eprintln!(
+                "WARNING: stress benchmark workloads are enabled and may consume tens of GiB"
+            );
+        }
         Self {
             samples: env_usize("CSGRS_BENCH_SAMPLES", 10).max(1),
             warmup: env_usize("CSGRS_BENCH_WARMUP", 2),
+            stress_samples: env_usize("CSGRS_BENCH_STRESS_SAMPLES", 1).max(1),
+            stress_warmup: env_usize("CSGRS_BENCH_STRESS_WARMUP", 0),
             iteration_scale: env_usize("CSGRS_BENCH_SCALE", 1).max(1),
             iterations_override: env_optional_usize("CSGRS_BENCH_ITERATIONS")
                 .map(|value| value.max(1)),
@@ -39,14 +53,19 @@ impl Config {
         let iterations = self
             .iterations_override
             .unwrap_or_else(|| iterations.saturating_mul(self.iteration_scale).max(1));
+        let (samples, warmup) = if matches!(suite, "corpus" | "stress" | "dangerous") {
+            (self.stress_samples, self.stress_warmup)
+        } else {
+            (self.samples, self.warmup)
+        };
         let mut measure = || {
-            for _ in 0..self.warmup {
+            for _ in 0..warmup {
                 for _ in 0..iterations {
                     black_box(f());
                 }
             }
 
-            for sample in 0..self.samples {
+            for sample in 0..samples {
                 let start = Instant::now();
                 let mut measurement = Measurement::default();
                 for _ in 0..iterations {
@@ -158,6 +177,21 @@ fn benchmark_temperature() -> String {
 }
 
 fn selected(suite: &str, benchmark: &str, case: &str) -> bool {
+    if suite == "corpus"
+        && benchmark == "boolean_all"
+        && std::env::var("CSGRS_BENCH_SKIP_CORPUS_BOOLEANS").is_ok_and(|value| value != "0")
+    {
+        return false;
+    }
+    if suite == "dangerous" && !dangerous_enabled() {
+        return false;
+    }
+    if suite == "stress"
+        && (!stress_enabled()
+            || std::env::var("CSGRS_BENCH_SKIP_STRESS").is_ok_and(|value| value != "0"))
+    {
+        return false;
+    }
     let Ok(filter) = std::env::var("CSGRS_BENCH_FILTER") else {
         return true;
     };
@@ -167,6 +201,14 @@ fn selected(suite: &str, benchmark: &str, case: &str) -> bool {
         .map(str::trim)
         .filter(|part| !part.is_empty())
         .any(|part| qualified.contains(part))
+}
+
+fn dangerous_enabled() -> bool {
+    std::env::var("CSGRS_BENCH_ENABLE_DANGEROUS").is_ok_and(|value| value == "1")
+}
+
+fn stress_enabled() -> bool {
+    std::env::var("CSGRS_BENCH_ENABLE_STRESS").is_ok_and(|value| value == "1")
 }
 
 #[allow(clippy::too_many_arguments)]
