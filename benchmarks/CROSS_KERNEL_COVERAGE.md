@@ -1,9 +1,10 @@
 # Cross-kernel benchmark coverage
 
 `kernel_comparison` measures the portable solid-kernel surface shared by
-CSGRS, CGAL EPECK, and OpenCascade. Every `kernel` and `precision` workload is
-required to occur in all three runners; `benchmarks/summarize.py
---require-engine-parity` rejects missing or extra engine rows.
+CSGRS, CGAL EPECK, and OpenCascade. Every `kernel`, `precision`, and `corpus`
+workload is required to occur in all three runners; `benchmarks/summarize.py
+--require-engine-parity` rejects missing or extra engine rows. Opt-in `stress`
+and `dangerous` rows are diagnostic ceilings outside the portable parity set.
 
 ## Covered portable API
 
@@ -17,12 +18,20 @@ required to occur in all three runners; `benchmarks/summarize.py
 | Mesh refinement and normalization | triangulation, one-level triangle subdivision, normal reconstruction, finite-coordinate materialization |
 | Spatial and physical queries | bounding box, mass properties, point containment, ray intersections, polyline intersections, dihedral angle |
 | Topology and carrier queries | vertex enumeration, graphics buffers, connectivity, manifold validation |
-| Interchange | binary STL writing |
+| Interchange | binary STL writing; YeahRight arbitrary-polygon OBJ ingestion with scientific-notation coordinates |
+| YeahRight corpus | full-resolution transform, bounds, carrier, connectivity, and manifold checks; combined clipping-box Booleans on a 1,128-triangle convex-hull proxy |
 
 The runners use equivalent geometric inputs and operation semantics. Output
 facet counts are reported but are not required to match because OpenCascade
 tessellates analytic B-reps, CGAL operates on exact `Surface_mesh`, and CSGRS
 retains its exact polygon mesh.
+
+The full 11,894-triangle-per-operand YeahRight intersection is retained as the
+disabled-by-default `dangerous` tier. Enable it only with
+`CSGRS_BENCH_ENABLE_DANGEROUS=1`; it has been observed to consume about 116 GiB
+RSS before the Linux OOM killer terminated CSGRS. The opt-in `stress` tier uses
+the committed 1,146-triangle proxy, whose Euler characteristic preserves the
+source model's genus 131; enable it with `CSGRS_BENCH_ENABLE_STRESS=1`.
 
 ## Deliberately outside the three-kernel matrix
 
@@ -41,7 +50,7 @@ comparison kernels has no corresponding abstraction.
 | Gear, egg, teardrop, arrow, text, and raster-derived constructors | Domain constructors, not common kernel primitives |
 | Profile Boolean, offset, skeleton, flatten, and slice APIs | Planar/profile topology has no common representation in this 3D kernel harness |
 | SDF, TPMS, and metaball meshing | Sampling algorithms rather than shared boundary-representation kernel calls |
-| AMF, DXF, Gerber, glTF, OBJ, PLY, SVG, and application adapters | Optional format or application layers; STL is the shared interchange case |
+| AMF, DXF, Gerber, glTF, PLY, SVG, and application adapters | Optional format or application layers; STL and the focused YeahRight OBJ ingestion case are the shared interchange cases |
 | Bevy, WASM, and JavaScript adapters | Host integration rather than geometric-kernel work |
 
 When a genuinely equivalent operation becomes available in all three kernels,
