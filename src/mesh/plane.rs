@@ -120,6 +120,28 @@ fn hlimit_point3(point: &Point3) -> hyperlimit::Point3 {
     hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone())
 }
 
+fn affine_support_component(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> Real {
+    Real::signed_product_sum(
+        [true, false, false, false, true, true],
+        [
+            [b[0], c[1]],
+            [b[0], a[1]],
+            [a[0], c[1]],
+            [b[1], c[0]],
+            [b[1], a[0]],
+            [a[1], c[0]],
+        ],
+    )
+}
+
+fn affine_support_normal(a: &Point3, b: &Point3, c: &Point3) -> Vector3 {
+    Vector3::new([
+        affine_support_component([&a.y, &a.z], [&b.y, &b.z], [&c.y, &c.z]),
+        affine_support_component([&a.z, &a.x], [&b.z, &b.x], [&c.z, &c.x]),
+        affine_support_component([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]),
+    ])
+}
+
 pub(crate) fn first_nondegenerate_support<'a>(
     point_count: usize,
     point: impl Copy + Fn(usize) -> &'a Point3,
@@ -128,10 +150,7 @@ pub(crate) fn first_nondegenerate_support<'a>(
     for i in 0..n.saturating_sub(2) {
         for j in i + 1..n.saturating_sub(1) {
             for k in j + 1..n {
-                let a = point(i).to_vector();
-                let b = point(j).to_vector();
-                let c = point(k).to_vector();
-                let normal = (&b - &a).cross(&(&c - &a));
+                let normal = affine_support_normal(point(i), point(j), point(k));
                 if normal.0.iter().any(|component| {
                     matches!(
                         component.refine_sign_until(-128),
@@ -560,6 +579,16 @@ fn test_point(x: f64, y: f64, z: f64) -> Point3 {
 #[cfg(test)]
 fn test_vector(x: f64, y: f64, z: f64) -> Vector3 {
     Vector3::from_xyz(test_real(x), test_real(y), test_real(z))
+}
+
+#[test]
+fn affine_support_normal_matches_expanded_cross_product() {
+    let a = test_point(1.25, -2.5, 0.75);
+    let b = test_point(4.5, 3.25, -1.5);
+    let c = test_point(-0.5, 2.0, 5.75);
+    let expected = (&b.to_vector() - &a.to_vector()).cross(&(&c.to_vector() - &a.to_vector()));
+
+    assert_eq!(affine_support_normal(&a, &b, &c), expected);
 }
 
 #[test]
