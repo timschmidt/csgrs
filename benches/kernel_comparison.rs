@@ -104,13 +104,36 @@ fn import_yeahright_control() -> Mesh<()> {
 fn orient_closed_triangle_mesh(source: &Mesh<()>) -> Mesh<()> {
     type EdgeIncidence = (usize, bool);
 
+    #[derive(Default)]
+    struct EdgeIncidences {
+        rows: [Option<EdgeIncidence>; 2],
+        overflow: bool,
+    }
+
+    impl EdgeIncidences {
+        fn push(&mut self, incidence: EdgeIncidence) {
+            if let Some(slot) = self.rows.iter_mut().find(|slot| slot.is_none()) {
+                *slot = Some(incidence);
+            } else {
+                self.overflow = true;
+            }
+        }
+
+        fn pair(&self) -> Option<[EdgeIncidence; 2]> {
+            if self.overflow {
+                return None;
+            }
+            Some([self.rows[0]?, self.rows[1]?])
+        }
+    }
+
     let mut indexed = source.indexed_triangles();
     assert_eq!(
         source.polygons.len(),
         indexed.faces.len(),
         "oriented OBJ source must already be triangulated"
     );
-    let mut edges = HashMap::<(usize, usize), Vec<EdgeIncidence>>::new();
+    let mut edges = HashMap::<(usize, usize), EdgeIncidences>::new();
     for (triangle_index, triangle) in indexed.faces.iter().enumerate() {
         for [a, b] in [
             [triangle[0].0, triangle[1].0],
@@ -124,19 +147,25 @@ fn orient_closed_triangle_mesh(source: &Mesh<()>) -> Mesh<()> {
         }
     }
     assert!(
-        edges.values().all(|incidence| incidence.len() == 2),
+        edges.values().all(|incidence| incidence.pair().is_some()),
         "YeahRight control mesh must be closed before winding normalization"
     );
 
     let mut flipped = vec![None; indexed.faces.len()];
     let mut components = Vec::<Vec<usize>>::new();
-    let mut adjacent = vec![Vec::<(usize, bool)>::new(); indexed.faces.len()];
+    let mut adjacent = vec![[None; 3]; indexed.faces.len()];
     for incidence in edges.values() {
-        let (left, left_forward) = incidence[0];
-        let (right, right_forward) = incidence[1];
+        let [(left, left_forward), (right, right_forward)] =
+            incidence.pair().expect("closed edges have two incidences");
         let differs = left_forward == right_forward;
-        adjacent[left].push((right, differs));
-        adjacent[right].push((left, differs));
+        *adjacent[left]
+            .iter_mut()
+            .find(|slot| slot.is_none())
+            .expect("triangle has at most three neighboring faces") = Some((right, differs));
+        *adjacent[right]
+            .iter_mut()
+            .find(|slot| slot.is_none())
+            .expect("triangle has at most three neighboring faces") = Some((left, differs));
     }
     for seed in 0..indexed.faces.len() {
         if flipped[seed].is_some() {
@@ -148,7 +177,10 @@ fn orient_closed_triangle_mesh(source: &Mesh<()>) -> Mesh<()> {
         while let Some(current) = queue.pop_front() {
             component.push(current);
             let current_flip = flipped[current].expect("queued triangles have orientation");
-            for &(neighbor, differs) in &adjacent[current] {
+            for (neighbor, differs) in adjacent[current]
+                .into_iter()
+                .map(|slot| slot.expect("closed triangle has three neighbors"))
+            {
                 let required = current_flip ^ differs;
                 if let Some(existing) = flipped[neighbor] {
                     assert_eq!(existing, required, "YeahRight surface must be orientable");
