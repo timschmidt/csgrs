@@ -1,6 +1,7 @@
 use super::Polygon;
+use crate::mesh::plane::first_nondegenerate_support;
 use crate::vertex::Vertex;
-use hyperlattice::{Real, Vector3};
+use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::RealSign;
 use hypertri::kernel::{ExactKernel, Kernel};
 use hypertri::types::Sign;
@@ -24,27 +25,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
 
     /// Triangulate this polygon into indices of its existing vertices.
     pub fn triangulate_indices(&self) -> Vec<[usize; 3]> {
-        if self.vertices.len() < 3 {
-            return Vec::new();
-        }
-        if self.vertices.len() == 3 {
-            return vec![[0, 1, 2]];
-        }
-
-        let normal = (self.plane.point_b.clone() - self.plane.point_a.clone())
-            .cross(&(self.plane.point_c.clone() - self.plane.point_a.clone()));
-        let Some(points) = project_to_exact_2d(&self.vertices, &normal) else {
-            return Vec::new();
-        };
-        if let Some(indices) = strictly_convex_fan(&points) {
-            return indices;
-        }
-        let reverse_output = winding_is_negative(&points);
-        let Ok(indices) = hypertri::earcut(&points, &[]) else {
-            return Vec::new();
-        };
-
-        triangle_indices(&indices, self.vertices.len(), reverse_output)
+        triangulate_positions(self.vertices.len(), |index| &self.vertices[index].position)
     }
 
     /// Triangulate for a finite renderer or file-format output boundary.
@@ -108,6 +89,42 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             })
             .collect()
     }
+}
+
+#[cfg(feature = "obj-io")]
+pub(crate) fn triangulate_indexed_positions(
+    positions: &[Point3],
+    indices: &[usize],
+) -> Vec<[usize; 3]> {
+    triangulate_positions(indices.len(), |index| &positions[indices[index]])
+}
+
+fn triangulate_positions<'a>(
+    vertex_count: usize,
+    position: impl Copy + Fn(usize) -> &'a Point3,
+) -> Vec<[usize; 3]> {
+    if vertex_count < 3 {
+        return Vec::new();
+    }
+    if vertex_count == 3 {
+        return vec![[0, 1, 2]];
+    }
+
+    let Some((_, normal)) = first_nondegenerate_support(vertex_count, position) else {
+        return Vec::new();
+    };
+    let Some(points) = project_to_exact_2d(vertex_count, position, &normal) else {
+        return Vec::new();
+    };
+    if let Some(indices) = strictly_convex_fan(&points) {
+        return indices;
+    }
+    let reverse_output = winding_is_negative(&points);
+    let Ok(indices) = hypertri::earcut(&points, &[]) else {
+        return Vec::new();
+    };
+
+    triangle_indices(&indices, vertex_count, reverse_output)
 }
 
 fn strictly_convex_fan(points: &[hypertri::Point2]) -> Option<Vec<[usize; 3]>> {
@@ -190,23 +207,23 @@ fn project_to_finite_exact_2d(vertices: &[Vertex]) -> Option<Vec<hypertri::Point
         .collect()
 }
 
-fn project_to_exact_2d(
-    vertices: &[Vertex],
+fn project_to_exact_2d<'a>(
+    vertex_count: usize,
+    position: impl Copy + Fn(usize) -> &'a Point3,
     support_normal: &Vector3,
 ) -> Option<Vec<hypertri::Point2>> {
     let drop_axis = dominant_axis(support_normal)?;
     Some(
-        vertices
-            .iter()
-            .map(|vertex| match drop_axis {
+        (0..vertex_count)
+            .map(|index| match drop_axis {
                 0 => {
-                    hypertri::Point2::new(vertex.position.y.clone(), vertex.position.z.clone())
+                    hypertri::Point2::new(position(index).y.clone(), position(index).z.clone())
                 },
                 1 => {
-                    hypertri::Point2::new(vertex.position.z.clone(), vertex.position.x.clone())
+                    hypertri::Point2::new(position(index).z.clone(), position(index).x.clone())
                 },
                 _ => {
-                    hypertri::Point2::new(vertex.position.x.clone(), vertex.position.y.clone())
+                    hypertri::Point2::new(position(index).x.clone(), position(index).y.clone())
                 },
             })
             .collect(),

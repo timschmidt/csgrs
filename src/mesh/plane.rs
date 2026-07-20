@@ -120,6 +120,32 @@ fn hlimit_point3(point: &Point3) -> hyperlimit::Point3 {
     hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone())
 }
 
+pub(crate) fn first_nondegenerate_support<'a>(
+    point_count: usize,
+    point: impl Copy + Fn(usize) -> &'a Point3,
+) -> Option<([usize; 3], Vector3)> {
+    let n = point_count;
+    for i in 0..n.saturating_sub(2) {
+        for j in i + 1..n.saturating_sub(1) {
+            for k in j + 1..n {
+                let a = point(i).to_vector();
+                let b = point(j).to_vector();
+                let c = point(k).to_vector();
+                let normal = (&b - &a).cross(&(&c - &a));
+                if normal.0.iter().any(|component| {
+                    matches!(
+                        component.refine_sign_until(-128),
+                        Some(RealSign::Positive | RealSign::Negative)
+                    )
+                }) {
+                    return Some(([i, j, k], normal));
+                }
+            }
+        }
+    }
+    None
+}
+
 impl PartialEq for Plane {
     fn eq(&self, other: &Self) -> bool {
         if self.point_a == other.point_a
@@ -172,32 +198,15 @@ impl Plane {
             return reference_plane;
         }
 
-        let mut selected = None;
-        'triples: for i in 0..n - 2 {
-            for j in i + 1..n - 1 {
-                for k in j + 1..n {
-                    let candidate = Plane {
-                        point_a: vertices[i].position.clone(),
-                        point_b: vertices[j].position.clone(),
-                        point_c: vertices[k].position.clone(),
-                    };
-                    let Some(normal) = candidate.unscaled_hreal_normal() else {
-                        continue;
-                    };
-                    if normal.0.iter().any(|component| {
-                        matches!(
-                            component.refine_sign_until(-128),
-                            Some(RealSign::Positive | RealSign::Negative)
-                        )
-                    }) {
-                        selected = Some((candidate, normal));
-                        break 'triples;
-                    }
-                }
-            }
-        }
-        let Some((mut plane, normal)) = selected else {
+        let Some(([i, j, k], normal)) =
+            first_nondegenerate_support(vertices.len(), |index| &vertices[index].position)
+        else {
             return reference_plane;
+        };
+        let mut plane = Plane {
+            point_a: vertices[i].position.clone(),
+            point_b: vertices[j].position.clone(),
+            point_c: vertices[k].position.clone(),
         };
         let points = vertices
             .iter()

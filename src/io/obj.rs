@@ -5,7 +5,9 @@
 
 use crate::mesh::Mesh;
 use crate::mesh::Polygon;
-use crate::mesh::polygon::LazySubdivisionVertexPool;
+use crate::mesh::polygon::{
+    LazySubdivisionVertexPool, fresh_plane_id, triangulate_indexed_positions,
+};
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::triangulated::IndexedTriangulated3D;
@@ -455,32 +457,39 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                             "face mixes vertices with and without normals",
                         ));
                     }
-                    let face_vertices = corners
-                        .iter()
-                        .map(|&(position, normal)| {
-                            Vertex::new(
-                                vertices[position].clone(),
-                                normal
-                                    .map_or_else(Vector3::z, |normal| normals[normal].clone()),
-                            )
-                        })
-                        .collect();
-                    let mut face = Polygon::new(face_vertices, metadata.clone());
-                    let normal_indices = if has_normal {
-                        corners
+                    let (face_triangles, normal_indices, plane_id) = if has_normal {
+                        let position_indices = corners
                             .iter()
-                            .map(|(_, normal)| {
-                                normal.expect("face normal presence was checked")
-                            })
-                            .collect::<Vec<_>>()
+                            .map(|&(position, _)| position)
+                            .collect::<Vec<_>>();
+                        (
+                            triangulate_indexed_positions(&vertices, &position_indices),
+                            corners
+                                .iter()
+                                .map(|(_, normal)| {
+                                    normal.expect("face normal presence was checked")
+                                })
+                                .collect::<Vec<_>>(),
+                            fresh_plane_id(),
+                        )
                     } else {
+                        let face_vertices = corners
+                            .iter()
+                            .map(|&(position, _)| {
+                                Vertex::new(vertices[position].clone(), Vector3::z())
+                            })
+                            .collect();
+                        let mut face = Polygon::new(face_vertices, metadata.clone());
                         face.set_new_normal();
                         let normal = face.vertices[0].normal.clone();
                         let normal_index = normals.len();
                         normals.push(normal);
-                        vec![normal_index; corners.len()]
+                        (
+                            face.triangulate_indices(),
+                            vec![normal_index; corners.len()],
+                            face.plane_id,
+                        )
                     };
-                    let face_triangles = face.triangulate_indices();
                     if face_triangles.is_empty() {
                         return Err(invalid_obj_data_at_line(
                             line_number,
@@ -503,7 +512,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         triangles.push(ObjTriangle {
                             corners: triangle
                                 .map(|corner| (corners[corner].0, normal_indices[corner])),
-                            plane_id: face.plane_id,
+                            plane_id,
                         });
                     }
                 },
