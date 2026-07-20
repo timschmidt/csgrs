@@ -102,6 +102,7 @@ fn compare_word_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp
 fn compare_dyadic_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp::Ordering> {
     let left_denominator_shift = power_of_two_shift(&left.denominator)?;
     let right_denominator_shift = power_of_two_shift(&right.denominator)?;
+    crate::trace_dispatch!("rational", "comparison", "dyadic-borrowed-digits");
     Some(compare_shifted_biguints(
         &left.numerator,
         right_denominator_shift,
@@ -128,17 +129,78 @@ fn compare_shifted_biguints(
         ordering => return ordering,
     }
 
-    match left_shift.cmp(&right_shift) {
-        std::cmp::Ordering::Greater => {
-            let shift = usize::try_from(left_shift - right_shift)
-                .expect("dyadic comparison shift fits usize");
-            (left << shift).cmp(right)
-        },
-        std::cmp::Ordering::Less => {
-            let shift = usize::try_from(right_shift - left_shift)
-                .expect("dyadic comparison shift fits usize");
-            left.cmp(&(right << shift))
-        },
-        std::cmp::Ordering::Equal => left.cmp(right),
+    let common_shift = left_shift.min(right_shift);
+    let mut left_digits = ShiftedU64Digits::new(left, left_shift - common_shift);
+    let mut right_digits = ShiftedU64Digits::new(right, right_shift - common_shift);
+    loop {
+        match (left_digits.next(), right_digits.next()) {
+            (Some(left), Some(right)) => match left.cmp(&right) {
+                std::cmp::Ordering::Equal => {},
+                ordering => return ordering,
+            },
+            (None, None) => return std::cmp::Ordering::Equal,
+            _ => unreachable!("equal-width shifted magnitudes have equal digit counts"),
+        }
+    }
+}
+
+/// Allocation-free, most-significant-first `u64` digits for `value << shift`.
+///
+/// `BigUint` exposes a borrowed double-ended digit iterator. Combining adjacent
+/// source digits while walking backward avoids materializing the shifted value
+/// for exact dyadic comparisons.
+struct ShiftedU64Digits<'a> {
+    digits: num::bigint::U64Digits<'a>,
+    bit_shift: u32,
+    upper: Option<u64>,
+    high_carry: Option<u64>,
+    low_zero_words: u64,
+}
+
+impl<'a> ShiftedU64Digits<'a> {
+    fn new(value: &'a BigUint, shift: u64) -> Self {
+        let bit_shift = (shift % 64) as u32;
+        let mut digits = value.iter_u64_digits();
+        let upper = (bit_shift != 0).then(|| digits.next_back()).flatten();
+        let high_carry = upper
+            .map(|digit| digit >> (64 - bit_shift))
+            .filter(|&digit| digit != 0);
+        Self {
+            digits,
+            bit_shift,
+            upper,
+            high_carry,
+            low_zero_words: shift / 64,
+        }
+    }
+}
+
+impl Iterator for ShiftedU64Digits<'_> {
+    type Item = u64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.bit_shift == 0 {
+            return self.digits.next_back().or_else(|| {
+                (self.low_zero_words != 0).then(|| {
+                    self.low_zero_words -= 1;
+                    0
+                })
+            });
+        }
+        if let Some(carry) = self.high_carry.take() {
+            return Some(carry);
+        }
+        if let Some(upper) = self.upper {
+            let lower = self.digits.next_back();
+            self.upper = lower;
+            return Some(
+                (upper << self.bit_shift)
+                    | lower.unwrap_or_default() >> (64 - self.bit_shift),
+            );
+        }
+        (self.low_zero_words != 0).then(|| {
+            self.low_zero_words -= 1;
+            0
+        })
     }
 }

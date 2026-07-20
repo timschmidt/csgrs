@@ -2728,6 +2728,65 @@ mod tests {
         assert_eq!(Rational::fraction(1, 2).unwrap(), two_quarters);
     }
 
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn dyadic_comparison_trace_reports_borrowed_digit_path() {
+        let left = Rational::fraction(17, 32).unwrap();
+        let right = Rational::fraction(9, 16).unwrap();
+        crate::dispatch_trace::reset();
+        let ordering = crate::dispatch_trace::with_recording(|| left.partial_cmp(&right));
+        assert_eq!(ordering, Some(Ordering::Less));
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("rational", "comparison", "dyadic-borrowed-digits"),
+            1
+        );
+    }
+
+    #[test]
+    fn shifted_biguint_comparison_matches_materialized_shifts() {
+        fn generated(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state ^= *state << 13;
+                *state ^= *state >> 7;
+                *state ^= *state << 17;
+                value = (value << 64_usize) | BigUint::from(*state);
+            }
+            value | (BigUint::one() << (bits - 1))
+        }
+
+        let boundary_value =
+            (BigUint::one() << 130_usize) | (BigUint::one() << 63_usize) | BigUint::one();
+        for shift in [1_u64, 63, 64, 65, 127, 128, 129] {
+            let shifted = &boundary_value << shift as usize;
+            assert_eq!(
+                compare_shifted_biguints(&boundary_value, shift, &shifted, 0),
+                Ordering::Equal
+            );
+            assert_eq!(
+                compare_shifted_biguints(&shifted, 0, &boundary_value, shift),
+                Ordering::Equal
+            );
+        }
+
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        for index in 0..5_000_usize {
+            let left_bits = 1 + (state as usize % 512);
+            let left = generated(left_bits, &mut state);
+            let right_bits = 1 + (state as usize % 512);
+            let right = generated(right_bits, &mut state);
+            let left_shift = ((state >> 11) + index as u64) % 385;
+            let right_shift = ((state >> 29) + index as u64 * 3) % 385;
+            let expected = (&left << left_shift as usize).cmp(&(&right << right_shift as usize));
+            assert_eq!(
+                compare_shifted_biguints(&left, left_shift, &right, right_shift),
+                expected,
+                "generated case {index}"
+            );
+        }
+    }
+
     #[test]
     fn divide_by_zero() {
         let err = Rational::fraction(1, 0).unwrap_err();

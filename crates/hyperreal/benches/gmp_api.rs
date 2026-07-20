@@ -9,6 +9,7 @@ use criterion::{
     BenchmarkGroup, BenchmarkId, Criterion, black_box, criterion_group, criterion_main,
 };
 use hyperreal::{Computable, Rational, Real};
+use num::One;
 use num::bigint::{BigInt, BigUint};
 use rug::{Float, Integer, Rational as GmpRational, float::Constant, integer::Order, ops::Pow};
 
@@ -306,6 +307,39 @@ fn bench_rational_api(c: &mut Criterion) {
         "ordering",
         lhs.partial_cmp(&rhs),
         gmp_lhs.partial_cmp(&gmp_rhs)
+    );
+    let dyadic_left_numerator =
+        (BigUint::one() << 260_usize) | (BigUint::one() << 131_usize) | BigUint::from(3_u8);
+    let dyadic_right_numerator =
+        (BigUint::one() << 259_usize) | (BigUint::one() << 200_usize) | BigUint::from(5_u8);
+    let dyadic_left = Rational::from_bigint_fraction(
+        BigInt::from(dyadic_left_numerator.clone()),
+        BigUint::one() << 192_usize,
+    )
+    .unwrap();
+    let dyadic_right = Rational::from_bigint_fraction(
+        BigInt::from(dyadic_right_numerator.clone()),
+        BigUint::one() << 191_usize,
+    )
+    .unwrap();
+    let gmp_dyadic_left = GmpRational::from((
+        rug::Integer::from_digits(
+            &dyadic_left_numerator.to_u64_digits(),
+            rug::integer::Order::Lsf,
+        ),
+        rug::Integer::from(1) << 192,
+    ));
+    let gmp_dyadic_right = GmpRational::from((
+        rug::Integer::from_digits(
+            &dyadic_right_numerator.to_u64_digits(),
+            rug::integer::Order::Lsf,
+        ),
+        rug::Integer::from(1) << 191,
+    ));
+    pair!(
+        "ordering_wide_dyadic",
+        dyadic_left.partial_cmp(&dyadic_right),
+        gmp_dyadic_left.partial_cmp(&gmp_dyadic_right)
     );
     pair!(
         "average_pair",

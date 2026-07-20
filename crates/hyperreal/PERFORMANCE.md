@@ -885,6 +885,41 @@ builds, locked release WebAssembly build, and 371-case AddressSanitizer Boolean
 pipeline campaign, followed by CSGRS's 370-test all-feature library gate and all
 integration suites.
 
+### Borrowed dyadic comparison digits
+
+Exact rational comparison no longer materializes a shifted `BigUint` when two
+dyadic cross-products have the same bit width. A most-significant-first iterator
+combines adjacent borrowed `u64` digits with the residual bit shift, while common
+whole-value shifts cancel before iteration. Unequal bit widths and equal
+denominators keep their existing constant-time exits. Dispatch tracing records
+the selected path as `dyadic-borrowed-digits`.
+
+A 5,000-case generated oracle plus shifts bracketing consecutive 64-bit
+boundaries compares the borrowed walk with materialized arbitrary-precision
+shifts. The new public GMP comparison row measured a 261-bit dyadic ordering at
+17.334 ns for Hyperreal versus 37.180 ns for GMP, making Hyperreal 53.4% faster.
+
+Eight order-alternating counter pairs each performed 500 fresh, globally shifted
+8x4 sphere/box operations:
+
+| operation | shifted allocation instructions | borrowed-digit instructions | instruction result | cycle result |
+| --- | ---: | ---: | ---: | ---: |
+| union | 4,817,143,439 | 4,730,655,727 | 1.80% fewer | 1.31% fewer |
+| difference | 4,165,783,610 | 4,077,290,648 | 2.12% fewer | 0.83% fewer |
+
+Heap profiles over 100 unions fell from 1,235,801 to 1,158,120 allocations,
+removing 77,681 allocations, or 776.81 per operation (6.29%).
+
+Validation passed the 529-test all-feature library gate and complete all-target
+integration, oracle, and benchmark-smoke matrix; the 461-test default library
+gate plus integrations and doctests; strict Clippy; warning-denied rustdoc; all
+benchmark and fuzz-target builds; and 20-second AddressSanitizer campaigns over
+491,333 rational-arithmetic and 90,527 exact-real cases. Downstream validation
+passed Hypermesh's 962-test all-feature/all-target gate, no-default build, strict
+Clippy, warning-denied rustdoc, benchmark and fuzz-target builds, locked release
+WebAssembly build, and 369-case AddressSanitizer Boolean pipeline, followed by
+CSGRS's 370-test all-feature library gate and every integration suite.
+
 ### Prepared projected rational point queries
 
 Certified 2D line filters can now consume a `PreparedRationalPoint3Query` and
