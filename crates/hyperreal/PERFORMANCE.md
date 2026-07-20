@@ -94,14 +94,13 @@ Relevant path notes:
 - Integer identity constructors avoid BigInt conversion and reduction.
 - Dyadic denominators use shift-only reduction instead of full gcd.
 - General rational reduction, add/subtract, and product-sum LCM construction
-  dispatch exactly mixed-width GCDs (one operand through `u128`, one wider) to
-  one full-width remainder followed by native-word GCD. Word/word and
-  wide/wide inputs stay on `BigUint`'s binary GCD: routing all reductions
-  through the wide cross-cancellation algorithm regressed a 500-operation
-  cold-union profile from 1.28 s to 1.85--1.90 s. The mixed-only dispatch
-  instead reduced the same alternating-input profile to 1.22--1.26 s
-  (roughly 3--4%), while preserved-binary 50-million-operation add/sub checks
-  kept the retained scalar paths neutral or faster.
+  keep pairs through `u128` in the native binary GCD and dispatch exactly
+  mixed-width pairs (one operand through `u128`, one wider) to one full-width
+  remainder followed by that native reducer. Balanced wide inputs stay on
+  `BigUint`'s binary GCD. Routing balanced wide reductions through the custom
+  cross-cancellation algorithm regressed a 500-operation cold-union profile
+  from 1.28 s to 1.85--1.90 s. The mixed-width dispatch instead reduced the
+  same alternating-input profile to 1.22--1.26 s (roughly 3--4%).
 - Reduced dyadics with odd magnitude at most 63 and denominator through `2^63`
   share canonical immutable storage.
 - Each immutable rational retains one exact multiplication result under weak operand
@@ -815,6 +814,28 @@ warning-denied rustdoc, and every fuzz-target build. AddressSanitizer campaigns
 completed 1,000 Rational and 1,293 Real-exact executions without failure. All
 1,067 executed Hypermesh tests and 369 downstream CSGRS all-feature library
 tests passed.
+
+### Native operation GCD for word pairs
+
+The rational-operation reducer now keeps pairs whose magnitudes both fit
+`u128` in the existing native binary GCD instead of converting the same values
+back through `BigUint`'s binary GCD. Mixed-width pairs retain their single wide
+remainder, and balanced arbitrary-precision pairs retain the backend reducer.
+Direct 500,000-operation profiles across generated 32-, 64-, 96-, and 128-bit
+pairs used 7.7--14.7% of the backend instructions and 10.8--22.4% of its
+cycles, including the identical pair-to-`u128` classification cost.
+
+In the alternating-input CSGRS guard, 500 exact sphere/box operations showed
+the downstream effect without an arrangement-cache hit. Across 15 runs, union
+instructions fell from 10,175,942,673 to 10,034,912,735 (1.39%) and cycles
+fell 0.23%. Difference instructions fell from 8,022,265,477 to 7,935,606,012
+(1.08%), with cycles neutral (+0.01%).
+
+Validation passed all 526 all-feature library tests and the complete all-target
+gate, strict Clippy, warning-denied rustdoc, and every fuzz-target build.
+AddressSanitizer campaigns completed 1,000 Rational and 1,124 Real-exact
+executions without failure. Hypermesh's full all-target/all-feature suite and
+all 369 downstream CSGRS library tests plus integrations passed.
 
 ### Architecture and measurement triggers
 

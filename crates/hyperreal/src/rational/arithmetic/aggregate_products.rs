@@ -104,15 +104,16 @@ struct DyadicProductSumPlan<const TERMS: usize> {
 impl Rational {
     /// Use one full-width remainder when exactly one operand fits a native word.
     ///
-    /// `BigUint`'s binary GCD remains faster for word/word and balanced wide
-    /// operands. Mixed-width rational reductions are different: reducing the
-    /// wide value modulo the word once avoids a long subtraction/shift chain.
+    /// Word pairs stay in the native binary reducer, while mixed-width values
+    /// reduce the wide operand modulo the word once to avoid a long BigUint
+    /// subtraction/shift chain. Balanced wide operands retain BigUint's binary
+    /// GCD.
     pub(crate) fn gcd_magnitudes_with_mixed_width_fast_path(
         left: &BigUint,
         right: &BigUint,
     ) -> BigUint {
         match (left.to_u128(), right.to_u128()) {
-            (Some(_), Some(_)) => num::Integer::gcd(left, right),
+            (Some(left), Some(right)) => BigUint::from(Self::gcd_word(left, right)),
             (Some(0), None) => right.clone(),
             (None, Some(0)) => left.clone(),
             (Some(word), None) => {
