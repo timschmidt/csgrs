@@ -885,6 +885,35 @@ passed. The AddressSanitizer Boolean differential fuzzer completed 1,000 runs
 at 5,775 coverage points and 16,241 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Prepared region Boolean convenience queries now enter the same authoritative
+lean arrangement pipeline as ordinary region queries while supplying their
+already-built prepared point and winding classifiers. Report-bearing prepared
+queries select the same shared pipeline with evidence retention enabled. This
+removes a separate 266-line prepared orchestration copy whose convenience path
+always paid report construction, and prevents the two implementations from
+drifting apart again. The comparative polygon lanes now time both ordinary and
+prepared Hypercurve and verify that their boundary sizes match before sampling;
+preparation remains outside the timed operation.
+
+In paired 11-sample, 1,000-iteration release runs, prepared star64 intersection
+fell from 1.275 to 0.565 ms/iter (55.7%) and became 3.7% faster than the 0.587
+ms ordinary lane in the same run. Prepared rectangle union fell from 25.83 to
+12.43 us/iter (51.9%). The complete one-iteration comparative Callgrind process,
+including both Hypercurve lanes and all competitors, fell from 51,897,089 to
+40,095,332 instructions (22.7%); allocator calls fell from 30,978 to 22,784
+(26.5%) and deallocator calls from 31,805 to 23,345 (26.6%). Whole-process DHAT
+traffic fell from 9,108,171 bytes in 35,871 blocks to 7,528,699 bytes in 26,165
+blocks, while peak heap fell from 1,782,938 to 1,144,334 bytes (35.8%). The
+production and benchmark diff removes a net 157 lines before this note.
+
+Both feature-mode test matrices, format, warnings-as-errors Clippy and rustdoc
+passed, including prepared/direct adversarial polygon parity and report
+evidence regressions. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,304 coverage points and 15,624 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace. The prepared star64 lane is
+still about 20.5 times slower than `cavalier_contours`, so the large-curve goal
+remains open despite this API-wide correction.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

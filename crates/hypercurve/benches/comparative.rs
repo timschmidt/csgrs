@@ -12,7 +12,7 @@ use curvo::prelude::NurbsCurve2D as CurvoNurbsCurve2D;
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, NurbsCurve2, Point2,
-    Real, Region2,
+    PreparedRegionView2, Real, Region2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -209,6 +209,32 @@ fn hypercurve_boolean_result_size(
         .sum()
 }
 
+fn hypercurve_prepared_boolean_result_size(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
+    operation: CommonBooleanOp,
+    policy: &CurvePolicy,
+) -> usize {
+    let operation = match operation {
+        CommonBooleanOp::Union => BooleanOp::Union,
+        CommonBooleanOp::Intersection => BooleanOp::Intersection,
+        CommonBooleanOp::Difference => BooleanOp::Difference,
+        CommonBooleanOp::Xor => BooleanOp::Xor,
+    };
+    let result = first
+        .boolean_region(second, operation, FillRule::EvenOdd, policy)
+        .expect("prepared hypercurve boolean benchmark completes");
+    let Classification::Decided(result) = result else {
+        panic!("prepared hypercurve boolean benchmark became uncertain");
+    };
+    result
+        .material_contours()
+        .iter()
+        .chain(result.hole_contours())
+        .map(Contour2::len)
+        .sum()
+}
+
 fn cavalier_boolean_result_size(
     first: &Polyline<f64>,
     second: &Polyline<f64>,
@@ -289,11 +315,24 @@ fn benchmark_boolean_case(
     let geo_first = geo_polygon(&first_points);
     let geo_second = geo_polygon(&second_points);
     let policy = CurvePolicy::certified();
+    let prepared_first = hypercurve_first.prepare_topology_queries(&policy);
+    let prepared_second = hypercurve_second.prepare_topology_queries(&policy);
 
+    let hypercurve_result_size =
+        hypercurve_boolean_result_size(&hypercurve_first, &hypercurve_second, operation, &policy);
     assert_ne!(
-        hypercurve_boolean_result_size(&hypercurve_first, &hypercurve_second, operation, &policy,),
-        0,
+        hypercurve_result_size, 0,
         "hypercurve {name} fixture must produce a boundary",
+    );
+    assert_eq!(
+        hypercurve_prepared_boolean_result_size(
+            &prepared_first,
+            &prepared_second,
+            operation,
+            &policy,
+        ),
+        hypercurve_result_size,
+        "prepared hypercurve {name} fixture must match the ordinary boundary size",
     );
     assert_ne!(
         cavalier_boolean_result_size(&cavalier_first, &cavalier_second, operation),
@@ -315,6 +354,14 @@ fn benchmark_boolean_case(
         hypercurve_boolean_result_size(
             black_box(&hypercurve_first),
             black_box(&hypercurve_second),
+            operation,
+            &policy,
+        )
+    });
+    runner.measure(name, "hypercurve_prepared", || {
+        hypercurve_prepared_boolean_result_size(
+            black_box(&prepared_first),
+            black_box(&prepared_second),
             operation,
             &policy,
         )
