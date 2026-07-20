@@ -1890,10 +1890,29 @@ fn decided_segment_boxes(segments: &[Segment2], policy: &CurvePolicy) -> Vec<Opt
 }
 
 fn line_signed_area_contribution(start: &Point2, end: &Point2) -> CurveResult<Real> {
-    (((start.x() * end.y()) - (end.x() * start.y())) / Real::from(2_i8)).map_err(CurveError::from)
+    (line_doubled_signed_area_contribution(start, end) / Real::from(2_i8)).map_err(CurveError::from)
+}
+
+fn line_doubled_signed_area_contribution(start: &Point2, end: &Point2) -> Real {
+    (start.x() * end.y()) - (end.x() * start.y())
 }
 
 fn compute_contour_signed_area(segments: &[Segment2]) -> CurveResult<Option<Real>> {
+    if segments
+        .iter()
+        .all(|segment| matches!(segment, Segment2::Line(_)))
+    {
+        let doubled_area = segments.iter().fold(Real::zero(), |area, segment| {
+            let Segment2::Line(line) = segment else {
+                unreachable!("all-line contour was checked before accumulation")
+            };
+            area + line_doubled_signed_area_contribution(line.start(), line.end())
+        });
+        return (doubled_area / Real::from(2_i8))
+            .map(Some)
+            .map_err(CurveError::from);
+    }
+
     let mut area = Real::zero();
 
     for segment in segments {
@@ -2407,6 +2426,31 @@ mod tests {
         assert_eq!(contour.signed_area().unwrap(), Some(Real::from(4)));
         assert_eq!(clone.signed_area().unwrap(), Some(Real::from(4)));
         assert!(clone.signed_area_cache.get().is_some());
+    }
+
+    #[test]
+    fn large_exact_polygon_signed_area_matches_closed_form() {
+        let side = 256;
+        let mut vertices = Vec::with_capacity(4 * side as usize);
+        for x in 0..side {
+            vertices.push(BulgeVertex2::new(point(x, 0), Real::zero()));
+        }
+        for y in 0..side {
+            vertices.push(BulgeVertex2::new(point(side, y), Real::zero()));
+        }
+        for x in (1..=side).rev() {
+            vertices.push(BulgeVertex2::new(point(x, side), Real::zero()));
+        }
+        for y in (1..=side).rev() {
+            vertices.push(BulgeVertex2::new(point(0, y), Real::zero()));
+        }
+
+        let contour = Contour2::from_bulge_vertices(&vertices).unwrap();
+        assert_eq!(contour.len(), 1_024);
+        assert_eq!(
+            contour.signed_area().unwrap(),
+            Some(Real::from(side * side))
+        );
     }
 
     #[test]

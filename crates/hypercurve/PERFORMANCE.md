@@ -864,6 +864,27 @@ and shared-support regressions passed. The AddressSanitizer Boolean differential
 fuzzer completed 1,000 runs at 5,771 coverage points and 16,223 feature edges
 without a failure; LeakSanitizer alone remained disabled under ptrace.
 
+All-line contour area now accumulates the doubled shoelace sum with the existing
+exact multiply/subtract kernel and performs the common division by two once
+after the complete edge walk. Mixed line/arc contours retain their existing
+per-segment contribution path. A 1,024-edge subdivided exact rectangle
+regression matches its 65,536-unit closed-form area.
+
+On star64 this removes 126 exact divisions across the two 64-edge input
+contours. Two interleaved 11-sample, 1,000-iteration release comparisons lowered
+the combined median from 0.589 to 0.582 ms/iter (1.29%); allocator calls fell
+from 16,101 to 15,843 (1.60%) and deallocator calls from 16,438 to 16,180
+(1.57%), with unchanged checksums. Rectangle release throughput remained
+neutral near 14.17 us/iter, while its Callgrind lane fell from 1,255,584 to
+1,252,683 instructions (0.23%). The complete star64 Callgrind lane increased
+from 25,085,971 to 25,268,873 instructions (0.73%): retaining the fast dyadic
+multiply/subtract schedule costs more simple instructions than aggregate
+determinant variants, but avoids their measured 7--10% throughput regression.
+Both feature-mode test matrices, format, warnings-as-errors Clippy and rustdoc
+passed. The AddressSanitizer Boolean differential fuzzer completed 1,000 runs
+at 5,775 coverage points and 16,241 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
