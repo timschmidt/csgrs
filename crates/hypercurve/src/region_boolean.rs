@@ -1836,7 +1836,7 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             return Ok(Classification::Uncertain(reason));
         }
     }
-    match boundary_contact_resolution(first, second, policy)? {
+    match boundary_contact_resolution_from_intersections(first, second, boundary_events, policy)? {
         Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
             return match boundary_contact_boundary_contours(
                 first, second, op, fill_rule, policy, kind,
@@ -1877,7 +1877,7 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             }
         }
         Classification::Decided(None) => {
-            if op == BooleanOp::Union && region_boundary_has_overlap(first, second, policy)? {
+            if op == BooleanOp::Union && region_boundary_has_overlap_in(boundary_events) {
                 return match boundary_overlap_union_contours(first, second, op, fill_rule, policy)?
                 {
                     Classification::Decided(contours) => Ok(Classification::Decided((
@@ -1914,7 +1914,23 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             ));
         }
     };
-    let selection_result = fragments.classify_for_boolean_with_report(first, second, op, policy)?;
+    // Fragment classification queries the same two immutable operands once per
+    // emitted fragment. Retain their conservative boxes for this stage instead
+    // of rebuilding contour and region bounds for every representative point.
+    // The prepared views only skip points proved outside cached boxes; all
+    // surviving candidates still use the canonical exact classifier.
+    let first_prepared = crate::PreparedRegionView2::from_region_view(first, policy);
+    let second_prepared = crate::PreparedRegionView2::from_region_view(second, policy);
+    let selection_result = fragments.classify_for_boolean_with_point_classifier_with_report(
+        first,
+        second,
+        op,
+        policy,
+        |source_side, sample| match source_side {
+            RegionSide::First => second_prepared.classify_point(sample, policy),
+            RegionSide::Second => first_prepared.classify_point(sample, policy),
+        },
+    )?;
     let selection = match selection_result.selection() {
         Some(selection) => selection,
         None => {
@@ -2296,11 +2312,20 @@ fn boundary_contact_resolution(
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<BoundaryContactResolution>>> {
     let intersections = first.intersect_region(second, policy)?;
+    boundary_contact_resolution_from_intersections(first, second, &intersections, policy)
+}
+
+fn boundary_contact_resolution_from_intersections(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    intersections: &RegionIntersectionSet,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<BoundaryContactResolution>>> {
     if intersections.is_empty() {
         return Ok(Classification::Decided(None));
     }
 
-    let saw_overlap = match boundary_contact_overlap_flag(&intersections) {
+    let saw_overlap = match boundary_contact_overlap_flag(intersections) {
         Classification::Decided(Some(saw_overlap)) => saw_overlap,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -2310,7 +2335,7 @@ fn boundary_contact_resolution(
     }
 
     let disjoint_interiors = if saw_overlap {
-        split_contact_interiors_are_disjoint(first, second, &intersections, policy)?
+        split_contact_interiors_are_disjoint(first, second, intersections, policy)?
     } else {
         unsplit_contact_interiors_are_disjoint(first, second, policy)?
     };
@@ -2389,10 +2414,14 @@ pub(crate) fn region_boundary_has_overlap(
     policy: &CurvePolicy,
 ) -> CurveResult<bool> {
     let intersections = first.intersect_region(second, policy)?;
-    Ok(matches!(
-        boundary_contact_overlap_flag(&intersections),
+    Ok(region_boundary_has_overlap_in(&intersections))
+}
+
+fn region_boundary_has_overlap_in(intersections: &RegionIntersectionSet) -> bool {
+    matches!(
+        boundary_contact_overlap_flag(intersections),
         Classification::Decided(Some(true))
-    ))
+    )
 }
 
 fn split_contact_interiors_are_disjoint(

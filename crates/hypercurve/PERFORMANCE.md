@@ -301,6 +301,41 @@ AddressSanitizer-instrumented executions (651 coverage points and 1,686 feature
 edges). Its isolated 64-point dispatch sentinel records 128 events and zero
 approximations, refinements, or unknown facts.
 
+## Retained Boolean query work
+
+The report-bearing direct region Boolean path already collected one exact
+boundary-intersection set, but its contact checks recomputed that set and its
+fragment classifier rebuilt both operands' contour and region boxes for every
+representative point. The retained path now consumes the original intersection
+set throughout contact and overlap decisions, constructs transient prepared
+views once for fragment classification, and reuses their conservative segment,
+contour, and region boxes. These remain filters only: a box can discard only a
+certified miss, while every surviving candidate reaches the same exact boundary
+and winding predicates.
+
+Prepared winding classification now also uses each retained segment box's
+maximum x. Winding casts a ray toward positive x, so a segment whose certified
+maximum is strictly left of the query cannot contribute. Equality remains on
+the exact path, preserving boundary behavior, and an undecidable comparison
+retains the candidate.
+
+The comparative 64-vertex star intersection fell from 37.065 ms/iter to
+18.742 ms/iter (49.4% faster), with the same 100-segment checksum. Rectangle
+union fell from 163.476 us/iter to 139.375 us/iter (14.7% faster), with the same
+eight-segment checksum. These are end-to-end medians from the release
+comparative runner; the final run used 15 samples with a 50 ms calibration
+target. A one-iteration Callgrind sweep of all comparative lanes fell from
+1,413,942,582 to 725,893,515 instructions (48.7%). The exact implementation
+still trails finite-only competitors in these lanes, so these numbers are a
+checkpoint rather than a parity claim.
+
+The dedicated `region_boolean` fuzz target compares direct and prepared results
+for all four Boolean operations and point classification over generated exact
+rectangles. It completed 1,000 AddressSanitizer-instrumented executions with
+4,829 coverage points and 10,609 feature edges. The full nightly fuzz build also
+now handles reversed algebraic-endpoint split fragments instead of failing its
+exhaustiveness check.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

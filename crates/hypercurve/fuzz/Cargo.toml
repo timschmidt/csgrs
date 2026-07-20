@@ -74,6 +74,13 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "region_boolean"
+path = "fuzz_targets/region_boolean.rs"
+test = false
+doc = false
+bench = false
+
 [patch.crates-io]
 hyperreal = { path = "../../hyperreal" }
 hyperlattice = { path = "../../hyperlattice" }

@@ -1714,6 +1714,7 @@ pub(crate) fn classify_contour_point_with_cached_aabbs(
         contour,
         point,
         contour_box,
+        segment_boxes,
         policy,
     ) {
         Classification::Decided(winding) => winding,
@@ -1757,7 +1758,13 @@ pub(crate) fn contour_winding_number_with_cached_aabbs(
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
 
-    contour_winding_number_unchecked_with_cached_aabb(contour, point, contour_box, policy)
+    contour_winding_number_unchecked_with_cached_aabb(
+        contour,
+        point,
+        contour_box,
+        segment_boxes,
+        policy,
+    )
 }
 
 pub(crate) fn point_on_contour_boundary_with_cached_aabbs(
@@ -1800,6 +1807,7 @@ fn contour_winding_number_unchecked_with_cached_aabb(
     contour: &Contour2,
     point: &Point2,
     contour_box: Option<&Aabb2>,
+    segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
 ) -> Classification<i32> {
     if contour_box_misses_point(contour_box, point, policy) {
@@ -1807,7 +1815,23 @@ fn contour_winding_number_unchecked_with_cached_aabb(
     }
 
     let mut winding = 0;
-    for segment in contour.segments() {
+    for (index, segment) in contour.segments().iter().enumerate() {
+        // Winding casts a horizontal ray toward positive x. A segment whose
+        // certified maximum x is strictly left of the query cannot cross that
+        // ray. Boundary membership has already been checked, so equality stays
+        // in the exact winding path while strict separation is safe to skip.
+        if segment_boxes
+            .get(index)
+            .and_then(Option::as_ref)
+            .is_some_and(|bbox| {
+                matches!(
+                    compare_reals(bbox.max_x(), point.x(), policy),
+                    Some(Ordering::Less)
+                )
+            })
+        {
+            continue;
+        }
         let delta = match segment {
             Segment2::Line(line) => process_line_winding(line.start(), line.end(), point, policy),
             Segment2::Arc(arc) => process_arc_winding(arc, point, policy),
