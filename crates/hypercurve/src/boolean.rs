@@ -263,6 +263,21 @@ impl BooleanFragmentSelection {
         &self,
         fragments: &RegionFragmentSet,
     ) -> CurveResult<BooleanBoundaryFragmentEmissionResult2> {
+        self.emit_boundary_fragments_with_report_impl(fragments, false)
+    }
+
+    pub(crate) fn emit_boundary_fragments_from_certified_split_with_report(
+        &self,
+        fragments: &RegionFragmentSet,
+    ) -> CurveResult<BooleanBoundaryFragmentEmissionResult2> {
+        self.emit_boundary_fragments_with_report_impl(fragments, true)
+    }
+
+    fn emit_boundary_fragments_with_report_impl(
+        &self,
+        fragments: &RegionFragmentSet,
+        fragments_are_certified_split_output: bool,
+    ) -> CurveResult<BooleanBoundaryFragmentEmissionResult2> {
         validate_boolean_selection_matches_fragments(&self.classifications, fragments)?;
 
         let mut directed_fragments = Vec::new();
@@ -304,7 +319,15 @@ impl BooleanFragmentSelection {
         let directed_source_segment_kind_counts =
             boolean_directed_fragment_report_source_kind_counts(&directed_fragment_reports);
         let unresolved_boundary_count = unresolved_boundaries.len();
-        match BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries) {
+        let fragment_set = if fragments_are_certified_split_output {
+            BooleanBoundaryFragmentSet::from_certified_split_fragments(
+                directed_fragments,
+                unresolved_boundaries,
+            )
+        } else {
+            BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries)
+        };
+        match fragment_set {
             Ok(fragments) => Ok(BooleanBoundaryFragmentEmissionResult2 {
                 fragments: Some(fragments),
                 report: BooleanBoundaryFragmentEmissionReport2 {

@@ -4,11 +4,11 @@ use hypercurve::{
     BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopConstructionStage2,
     BooleanBoundaryLoopExtractionStage2, BooleanBoundaryLoopSet, BooleanFragmentAction,
     BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
-    BooleanOp, BulgeVertex2, Classification, Contour2, ContourFragmentSet, ContourOperand,
-    ContourSplitMarkers, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule,
-    LineLineIntersection, LineSeg2, ParamRange, Real, Region2, RegionContourKey, RegionContourRole,
-    RegionPointLocation, RegionSide, Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts,
-    UncertaintyReason,
+    BooleanOp, BulgeVertex2, Classification, Contour2, ContourFragment, ContourFragmentSet,
+    ContourOperand, ContourSplitMarkers, CurveError, CurvePolicy, DirectedBooleanFragment,
+    FillRule, LineLineIntersection, LineSeg2, ParamRange, Real, Region2, RegionContourFragments,
+    RegionContourKey, RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide,
+    Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -1919,6 +1919,27 @@ fn boolean_boundary_constructors_reject_zero_length_directed_fragments() {
     ));
     assert_topology_error(BooleanBoundaryChain::new(vec![zero.clone()], true));
     assert_topology_error(BooleanBoundaryLoop::new(vec![zero]));
+
+    let key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
+    let source_point = p(0, 0);
+    let fragments = RegionFragmentSet::new(vec![RegionContourFragments {
+        key,
+        fragments: ContourFragmentSet::new(vec![ContourFragment {
+            source_segment_index: 0,
+            source_segment_start_point: source_point.clone(),
+            source_segment_end_point: source_point.clone(),
+            source_range: ParamRange::new(s(0), s(1)),
+            segment: Segment2::Line(LineSeg2::new_unchecked(source_point.clone(), source_point)),
+        }])
+        .unwrap(),
+    }])
+    .unwrap();
+    let selection = BooleanFragmentSelection::new(vec![fragment_classification(
+        0,
+        BooleanFragmentAction::KeepSourceDirection,
+    )])
+    .unwrap();
+    assert_topology_error(selection.emit_boundary_fragments(&fragments));
 }
 
 #[test]

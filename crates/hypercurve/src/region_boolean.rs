@@ -1947,7 +1947,8 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             Classification::Decided(resolved) => resolved,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-    let emission_result = selection.emit_boundary_fragments_with_report(fragments)?;
+    let emission_result =
+        selection.emit_boundary_fragments_from_certified_split_with_report(fragments)?;
     let emitted = match emission_result.fragments() {
         Some(emitted) => emitted,
         None => {

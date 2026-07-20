@@ -381,6 +381,33 @@ below the preceding checkpoint), and the full sweep from 517,904,109 to
 427,921,184 instructions (17.4%). Cumulatively, the star lane and instruction
 sweep are both about 69.5% below the original checkpoint.
 
+Boundary emission then spent 46.2 million instructions re-proving that every
+selected directed fragment had nonzero geometry. Public fragment emission still
+performs that proof because callers can supply their own `ContourFragmentSet`.
+The private region Boolean pipelines now preserve the stronger provenance from
+`ContourFragmentSet::from_split_markers`: strict adjacent marker order on an
+injective source segment certifies nonzero output, and reversal preserves endpoint
+inequality. Ownership uniqueness and unresolved-boundary validation still run at
+the emission boundary. This reduced star intersection from 11.292 to 10.237
+ms/iter (9.3%) and the comparative sweep from 427,921,184 to 383,736,469
+instructions (10.3%).
+
+The sealed `BooleanBoundaryLoop` carrier similarly already guarantees nonzero,
+connected, closed geometry: its public constructor proves those invariants, and
+its private extraction constructor receives an exactly assembled closed chain.
+Contour transfer now constructs the closed carrier directly instead of asking
+`CurveString2` and `Contour2` to replay the same endpoint proofs. Public loop and
+loop-set constructors retain their full validation. Star intersection fell again
+to 9.220 ms/iter (9.9%), rectangle union measured 121.996 us/iter, and the full
+sweep fell to 336,036,245 instructions (12.4%). From the original checkpoint,
+the star lane is 75.1% faster and the instruction sweep is 76.2% smaller, with
+unchanged output checksums. A direct midpoint/lazy fallback experiment was
+rejected after increasing the sweep by 7.8 million instructions.
+
+The exact Boolean differential fuzz target completed another 1,000
+AddressSanitizer-instrumented runs after these carrier changes, reaching 4,969
+coverage points and 13,625 feature edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

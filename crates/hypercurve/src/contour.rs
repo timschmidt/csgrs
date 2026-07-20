@@ -260,6 +260,13 @@ impl Contour2 {
         }
     }
 
+    pub(crate) fn from_validated_closed_segments(
+        segments: Vec<Segment2>,
+        fill_rule: FillRule,
+    ) -> Self {
+        Self::new_unchecked(CurveString2::new_unchecked(segments), fill_rule)
+    }
+
     pub(crate) fn retain_left_offset_from(
         mut self,
         source: &Self,

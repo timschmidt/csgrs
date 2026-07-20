@@ -209,6 +209,22 @@ impl BooleanBoundaryFragmentSet {
         })
     }
 
+    pub(crate) fn from_certified_split_fragments(
+        directed_fragments: Vec<DirectedBooleanFragment>,
+        unresolved_boundaries: Vec<BooleanFragmentClassification>,
+    ) -> CurveResult<Self> {
+        // The internal Boolean pipeline receives these segments directly from
+        // ContourFragmentSet::from_split_markers. Its ordered, distinct marker
+        // intervals already certify nonzero fragment geometry, and reversal
+        // preserves that property. Keep the inventory checks at this carrier
+        // boundary without rediscovering endpoint inequality in exact arithmetic.
+        validate_boolean_boundary_fragment_inventory(&directed_fragments, &unresolved_boundaries)?;
+        Ok(Self {
+            directed_fragments,
+            unresolved_boundaries,
+        })
+    }
+
     /// Returns fragments that can be passed to graph traversal immediately.
     pub fn directed_fragments(&self) -> &[DirectedBooleanFragment] {
         &self.directed_fragments
@@ -907,31 +923,26 @@ impl BooleanBoundaryLoop {
         self.fragments.len()
     }
 
-    /// Clones loop geometry into a checked closed contour.
-    ///
-    /// The checked constructor validates connectivity again instead of trusting
-    /// the boolean graph. Degenerate clipping needs explicit validation around
-    /// boundary coincidences, so this API keeps validation visible at the
-    /// conversion point.
+    /// Clones the already-validated loop geometry into a closed contour.
     pub fn to_contour(&self, fill_rule: FillRule) -> CurveResult<Contour2> {
-        Contour2::try_new_with_fill_rule(
+        Ok(Contour2::from_validated_closed_segments(
             self.fragments
                 .iter()
                 .map(|fragment| fragment.segment.clone())
                 .collect(),
             fill_rule,
-        )
+        ))
     }
 
-    /// Consumes loop geometry into a checked closed contour.
+    /// Consumes the already-validated loop geometry into a closed contour.
     pub fn into_contour(self, fill_rule: FillRule) -> CurveResult<Contour2> {
-        Contour2::try_new_with_fill_rule(
+        Ok(Contour2::from_validated_closed_segments(
             self.fragments
                 .into_iter()
                 .map(|fragment| fragment.segment)
                 .collect(),
             fill_rule,
-        )
+        ))
     }
 }
 
@@ -1096,7 +1107,7 @@ impl BooleanBoundaryLoopSet {
         self.loops.len()
     }
 
-    /// Clones every loop into a checked closed contour.
+    /// Clones every validated loop into a closed contour.
     pub fn to_contours(&self, fill_rule: FillRule) -> CurveResult<Vec<Contour2>> {
         self.loops
             .iter()
@@ -1104,7 +1115,7 @@ impl BooleanBoundaryLoopSet {
             .collect()
     }
 
-    /// Clones every loop into checked closed contours and retains transfer evidence.
+    /// Clones every validated loop into closed contours and retains transfer evidence.
     pub fn to_contours_with_report(
         &self,
         fill_rule: FillRule,
@@ -1135,7 +1146,7 @@ impl BooleanBoundaryLoopSet {
         )
     }
 
-    /// Consumes every loop into a checked closed contour.
+    /// Consumes every validated loop into a closed contour.
     pub fn into_contours(self, fill_rule: FillRule) -> CurveResult<Vec<Contour2>> {
         self.loops
             .into_iter()
@@ -1143,7 +1154,7 @@ impl BooleanBoundaryLoopSet {
             .collect()
     }
 
-    /// Consumes every loop into checked closed contours and retains transfer evidence.
+    /// Consumes every validated loop into closed contours and retains transfer evidence.
     pub fn into_contours_with_report(
         self,
         fill_rule: FillRule,
@@ -1483,6 +1494,13 @@ fn validate_boolean_boundary_fragment_set(
         directed_fragments,
         "boolean boundary fragment set",
     )?;
+    validate_boolean_boundary_fragment_inventory(directed_fragments, unresolved_boundaries)
+}
+
+fn validate_boolean_boundary_fragment_inventory(
+    directed_fragments: &[DirectedBooleanFragment],
+    unresolved_boundaries: &[BooleanFragmentClassification],
+) -> CurveResult<()> {
     for unresolved in unresolved_boundaries {
         validate_boolean_fragment_classification_boundary_action(unresolved)?;
     }
