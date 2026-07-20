@@ -49,11 +49,11 @@ where
         self.inner
     }
 
-    pub fn raw(&self) -> &CoreProfile {
+    pub const fn raw(&self) -> &CoreProfile {
         &self.inner
     }
 
-    pub fn raw_mut(&mut self) -> &mut CoreProfile {
+    pub const fn raw_mut(&mut self) -> &mut CoreProfile {
         &mut self.inner
     }
 

@@ -10,6 +10,7 @@ use std::fmt::Debug;
 use std::marker::PhantomData;
 
 pub type MeshVertex<S> = ([S; 3], [S; 3]);
+pub type IndexedMeshBuffers<S> = (Vec<[S; 3]>, Vec<[u32; 3]>);
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GraphicsMesh<S> {
@@ -58,11 +59,11 @@ where
         self.inner
     }
 
-    pub fn raw(&self) -> &CoreMesh<M> {
+    pub const fn raw(&self) -> &CoreMesh<M> {
         &self.inner
     }
 
-    pub fn raw_mut(&mut self) -> &mut CoreMesh<M> {
+    pub const fn raw_mut(&mut self) -> &mut CoreMesh<M> {
         &mut self.inner
     }
 
@@ -232,11 +233,11 @@ where
 
         Ok(GraphicsMesh {
             vertices,
-            indices: mesh.indices,
+            indices: mesh.indices.to_vec(),
         })
     }
 
-    pub fn vertices_and_indices(&self) -> AdapterResult<(Vec<[A::Scalar; 3]>, Vec<[u32; 3]>)> {
+    pub fn vertices_and_indices(&self) -> AdapterResult<IndexedMeshBuffers<A::Scalar>> {
         let (vertices, indices) =
             self.inner.try_get_vertices_and_indices().map_err(|err| {
                 AdapterError::Validation(format!("could not extract mesh buffers: {err}"))

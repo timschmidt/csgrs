@@ -7,6 +7,8 @@ the release benchmark profile. Times are medians after two warmup batches.
 | Workload | Before | After | Change | Preserved evidence |
 |---|---:|---:|---:|---|
 | `mesh_queries/graphics_buffers` | 1.170 ms/op | 0.139 ms/op | 88.1% faster | 1,584 indices and exact position/normal regression |
+| `adapters/graphics_export/f32_48384` | 59.4 ms/op | 1.04 ms/op | 98.2% faster | Same finite row/index contract and strict overflow error |
+| `adapters/graphics_export/f64_48384` (split-buffer control) | 1.16 ms/op | 0.52 ms/op | 55.2% faster | Same 48,384 interleaved rows and indices with no temporary split buffers |
 | `mesh_io/all_exporters` | 87.602 ms | 81.581 ms | 6.9% faster | 385,166 output bytes and checksum |
 | `mesh_boolean/prepare_and_extract_four` | 31.542 ms | 9.606 ms | 69.5% faster | 120 polygons, 120 corners, exact buffers and metadata |
 | `mesh_boolean/extract_four_prebuilt` | 31.542 ms | 2.174 ms | 93.1% faster | Same four closure-certified outputs |
@@ -36,6 +38,17 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `profile_primitives/constructor/heart` | 0.3378 ms/op | 0.3130 ms/op | 7.3% faster | Legacy finite coordinates within 1e-12; exact requested bounds and symbolic samples |
 
 ## Retained changes
+
+The primitive-scalar adapter now benchmarks its public graphics export on a
+48,384-vertex sphere. It traverses the core's retained exact HyperMesh rows once
+and writes directly into the requested interleaved layout; the benchmark keeps
+the separate-position/normal GPU route plus a merge as a regression control.
+The binary32 path consumes Hyperreal's rational/retained-binary64 fast path;
+its first warmup now publishes each rational proposal in the existing cache,
+while overflow still returns `NotFiniteApproximation`. Exact `RawReal` and
+integer adapters retain their generic conversions. The same audit made the raw
+carrier accessors `const`, named the indexed-buffer return type, and removed the
+now-unnecessary forwarding layer from `Mesh::graphics_mesh`.
 
 Lazy cuboid pools now store exact minimum and maximum coordinates per axis, so
 translation and centering can construct the final cuboid carrier directly from
