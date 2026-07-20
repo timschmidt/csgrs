@@ -95,6 +95,12 @@ struct HalfGcdReduction {
     matrix: HalfGcdMatrix,
 }
 
+struct DyadicProductSumPlan<const TERMS: usize> {
+    denominator_shifts: [u64; TERMS],
+    max_shift: u64,
+    prefer_wide: bool,
+}
+
 impl Rational {
     /// Use one full-width remainder when exactly one operand fits a native word.
     ///
@@ -1388,29 +1394,48 @@ impl Rational {
         sign
     }
 
-    fn signed_product_sum_dyadic<const TERMS: usize, const FACTORS: usize>(
+    fn product_sum_dyadic_plan<const TERMS: usize, const FACTORS: usize>(
         terms: [[&Self; FACTORS]; TERMS],
         signs: [Sign; TERMS],
-    ) -> Option<Self> {
+    ) -> Option<DyadicProductSumPlan<TERMS>> {
         let mut max_shift = 0_u64;
         let mut denominator_shifts = [0_u64; TERMS];
-        let mut any_nonzero = false;
+        let mut numerator_bits = [0_u64; TERMS];
+        let mut live_terms = 0_u64;
         for i in 0..TERMS {
             if signs[i] == NoSign {
                 continue;
             }
+            live_terms += 1;
             let mut shift = 0_u64;
             for factor in terms[i] {
-                shift += factor.dyadic_denominator_shift()?;
+                shift = shift.checked_add(factor.dyadic_denominator_shift()?)?;
+                numerator_bits[i] = numerator_bits[i].saturating_add(factor.numerator.bits());
             }
             denominator_shifts[i] = shift;
             max_shift = max_shift.max(shift);
-            any_nonzero = true;
         }
-        if !any_nonzero {
-            return Some(Self::zero());
-        }
+        let total_growth = live_terms.next_power_of_two().trailing_zeros();
+        let prefer_wide = (0..TERMS).any(|i| {
+            signs[i] != NoSign
+                && numerator_bits[i]
+                    .saturating_add(max_shift - denominator_shifts[i])
+                    .saturating_add(u64::from(total_growth))
+                    > u64::from(u128::BITS)
+        });
+        Some(DyadicProductSumPlan {
+            denominator_shifts,
+            max_shift,
+            prefer_wide,
+        })
+    }
 
+    fn signed_product_sum_dyadic_with_plan<const TERMS: usize, const FACTORS: usize>(
+        terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
+        denominator_shifts: [u64; TERMS],
+        max_shift: u64,
+    ) -> Self {
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..TERMS {
@@ -1433,36 +1458,19 @@ impl Rational {
 
         let denominator =
             BigUint::one() << usize::try_from(max_shift).expect("shift should fit in usize");
-        Some(Self::from_signed_magnitude_difference(
+        Self::from_signed_magnitude_difference(
             positive,
             negative,
             denominator,
-        ))
+        )
     }
 
-    fn signed_product_sum_dyadic_ordering<const TERMS: usize, const FACTORS: usize>(
+    fn signed_product_sum_dyadic_ordering_with_plan<const TERMS: usize, const FACTORS: usize>(
         terms: [[&Self; FACTORS]; TERMS],
         signs: [Sign; TERMS],
-    ) -> Option<Ordering> {
-        let mut max_shift = 0_u64;
-        let mut denominator_shifts = [0_u64; TERMS];
-        let mut any_nonzero = false;
-        for i in 0..TERMS {
-            if signs[i] == NoSign {
-                continue;
-            }
-            let mut shift = 0_u64;
-            for factor in terms[i] {
-                shift = shift.checked_add(factor.dyadic_denominator_shift()?)?;
-            }
-            denominator_shifts[i] = shift;
-            max_shift = max_shift.max(shift);
-            any_nonzero = true;
-        }
-        if !any_nonzero {
-            return Some(Ordering::Equal);
-        }
-
+        denominator_shifts: [u64; TERMS],
+        max_shift: u64,
+    ) -> Ordering {
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..TERMS {
@@ -1482,42 +1490,7 @@ impl Rational {
                 NoSign => {}
             }
         }
-        Some(positive.cmp(&negative))
-    }
-
-    fn product_sum_prefers_wide_dyadic<const TERMS: usize, const FACTORS: usize>(
-        terms: [[&Self; FACTORS]; TERMS],
-        signs: [Sign; TERMS],
-    ) -> bool {
-        let mut denominator_shifts = [0_u64; TERMS];
-        let mut numerator_bits = [0_u64; TERMS];
-        let mut max_shift = 0_u64;
-        let mut live_terms = 0_u64;
-        for i in 0..TERMS {
-            if signs[i] == NoSign {
-                continue;
-            }
-            live_terms += 1;
-            for factor in terms[i] {
-                let Some(shift) = factor.dyadic_denominator_shift() else {
-                    return false;
-                };
-                denominator_shifts[i] =
-                    denominator_shifts[i].saturating_add(shift);
-                numerator_bits[i] = numerator_bits[i]
-                    .saturating_add(factor.numerator.bits());
-            }
-            max_shift = max_shift.max(denominator_shifts[i]);
-        }
-
-        let total_growth = live_terms.next_power_of_two().trailing_zeros();
-        (0..TERMS).any(|i| {
-            signs[i] != NoSign
-                && numerator_bits[i]
-                    .saturating_add(max_shift - denominator_shifts[i])
-                    .saturating_add(u64::from(total_growth))
-                    > u64::from(u128::BITS)
-        })
+        positive.cmp(&negative)
     }
 
     /// Evaluate a signed product sum when every live factor shares one
@@ -1775,8 +1748,10 @@ impl Rational {
             crate::trace_dispatch!("rational", "product_sum", "all-zero");
             return Self::zero();
         }
-        let prefer_wide_dyadic =
-            Self::product_sum_prefers_wide_dyadic(terms, signs);
+        let dyadic_plan = Self::product_sum_dyadic_plan(terms, signs);
+        let prefer_wide_dyadic = dyadic_plan
+            .as_ref()
+            .is_some_and(|plan| plan.prefer_wide);
         if !prefer_wide_dyadic
             && let Some(word) =
                 Self::signed_product_sum_words(terms, signs)
@@ -1810,13 +1785,18 @@ impl Rational {
             }
         }
 
-        if let Some(dyadic) = Self::signed_product_sum_dyadic(terms, signs) {
+        if let Some(plan) = dyadic_plan {
             // Structural-dispatch note: callers that know coordinates are
             // lifted from a common binary grid could pass that grid exponent
             // with the terms and jump directly to this reducer, avoiding the
             // exploratory denominator scans used by generic exact rationals.
             crate::trace_dispatch!("rational", "product_sum", "dyadic-shared-denominator");
-            return dyadic;
+            return Self::signed_product_sum_dyadic_with_plan(
+                terms,
+                signs,
+                plan.denominator_shifts,
+                plan.max_shift,
+            );
         }
 
         let mut denominators: [BigUint; TERMS] = std::array::from_fn(|_| BigUint::ZERO);
@@ -1901,8 +1881,10 @@ impl Rational {
     ) -> Ordering {
         debug_assert!(FACTORS > 0);
         let signs = std::array::from_fn(|i| Self::product_term_sign(positive_terms[i], terms[i]));
-        let prefer_wide_dyadic =
-            Self::product_sum_prefers_wide_dyadic(terms, signs);
+        let dyadic_plan = Self::product_sum_dyadic_plan(terms, signs);
+        let prefer_wide_dyadic = dyadic_plan
+            .as_ref()
+            .is_some_and(|plan| plan.prefer_wide);
         if !prefer_wide_dyadic
             && let Some((positive, negative, _)) =
                 Self::signed_product_sum_word_totals(terms, signs)
@@ -1911,13 +1893,18 @@ impl Rational {
             return positive.cmp(&negative);
         }
 
-        if let Some(ordering) = Self::signed_product_sum_dyadic_ordering(terms, signs) {
+        if let Some(plan) = dyadic_plan {
             crate::trace_dispatch!(
                 "rational",
                 "product_sum_ordering",
                 "arbitrary-precision-dyadic"
             );
-            return ordering;
+            return Self::signed_product_sum_dyadic_ordering_with_plan(
+                terms,
+                signs,
+                plan.denominator_shifts,
+                plan.max_shift,
+            );
         }
 
         let mut denominators: [BigUint; TERMS] = std::array::from_fn(|_| BigUint::ZERO);

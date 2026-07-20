@@ -786,6 +786,36 @@ and fuzz-build gate. AddressSanitizer campaigns completed 1,000 rational,
 without failure. All-feature Hyperlattice, Hyperlimit, Hypersolve, Hypercurve,
 and Hypermesh suites passed, as did all 304 downstream CSGRS library tests.
 
+### Reused dyadic product-sum plans
+
+Fixed signed product sums now retain the denominator shifts, maximum shift, and
+wide-reducer decision produced while classifying their factors. The exact
+dyadic reducer and ordering comparison consume that plan directly instead of
+rescanning every denominator after word arithmetic is rejected. Non-dyadic
+inputs also avoid repeating a failed dyadic scan before entering the general
+LCM reducer. The selected reducer and its exact result are unchanged.
+
+A preserved release binary and the candidate each prepared 500 fresh
+sphere/box arrangements. Across seven runs, the combined plan reduced both
+instructions and cycles:
+
+| exact Boolean | previous instructions | planned instructions | instruction result | cycle result |
+| --- | ---: | ---: | ---: | ---: |
+| union | 9,105,085,369 | 9,000,801,433 | 1.15% fewer | 1.91% fewer |
+| difference | 7,526,352,842 | 7,431,776,799 | 1.26% fewer | 1.80% fewer |
+
+In a matched 15-sample cross-kernel run, cold CSGRS difference measured
+1.882 ms versus 1.887 ms for CGAL EPECK, while union measured 2.677 ms versus
+2.409 ms. Retained CSGRS difference and union were respectively 19.93x and
+13.68x faster than CGAL; the cold union remains the next measured gap.
+
+Validation passed all 526 all-feature library tests and the complete
+all-target integration, oracle, and benchmark-smoke gate, plus strict Clippy,
+warning-denied rustdoc, and every fuzz-target build. AddressSanitizer campaigns
+completed 1,000 Rational and 1,293 Real-exact executions without failure. All
+1,067 executed Hypermesh tests and 369 downstream CSGRS all-feature library
+tests passed.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
