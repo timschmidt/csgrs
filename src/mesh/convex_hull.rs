@@ -1,136 +1,299 @@
-//! The [convex hull](https://en.wikipedia.org/wiki/Convex_hull) of a shape is the smallest convex set that contains it.
-//! It may be visualized as the shape enclosed by a rubber band stretched around the subset.
-//!
-//! This is the set:\
-//! ![Pre-ConvexHull demo image][Pre-ConvexHull demo image]
-//!
-//! And this is the convex hull of that set:\
-//! ![ConvexHull demo image][ConvexHull demo image]
-#![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
-#![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
+//! Exact convex hull and Minkowski sum operations backed by `hypermesh`.
 
-use crate::float_types::{Real, tolerance};
-use crate::mesh::Mesh;
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
-use chull::ConvexHullWrapper;
-use nalgebra::{Point3, Vector3};
+use std::collections::HashMap;
 use std::fmt::Debug;
 
-impl<M: Clone + Debug + Send + Sync> Mesh<M> {
-    /// Compute the convex hull of all vertices in this Mesh.
-    pub fn convex_hull(&self) -> Mesh<M> {
-        // Gather all (x, y, z) coordinates from the polygons
-        let points: Vec<Point3<Real>> = self
-            .polygons
-            .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
-            .collect();
+use hyperlattice::{Point3, Real, Vector3};
+use hypermesh::{ExactPointBvh, InputMesh};
 
-        let points_for_hull: Vec<Vec<Real>> =
-            points.iter().map(|p| vec![p.x, p.y, p.z]).collect();
+use crate::mesh::{Mesh, Polygon};
+use crate::vertex::Vertex;
 
-        // Attempt to compute the convex hull using the robust wrapper
-        let hull = match ConvexHullWrapper::try_new(&points_for_hull, None) {
-            Ok(h) => h,
-            Err(_) => {
-                // Fallback to an empty CSG if hull generation fails
-                return Mesh::empty(self.metadata.clone());
-            },
-        };
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct PositionBucket([Option<u64>; 3]);
 
-        let (verts, indices) = hull.vertices_indices();
-
-        // Reconstruct polygons as triangles
-        let mut polygons = Vec::new();
-        for tri in indices.chunks(3) {
-            let v0 = &verts[tri[0]];
-            let v1 = &verts[tri[1]];
-            let v2 = &verts[tri[2]];
-            let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
-            let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
-            let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()));
-        }
-
-        Mesh::from_polygons(&polygons, self.metadata.clone())
-    }
-
-    /// Compute the Minkowski sum: self ⊕ other
-    ///
-    /// **Mathematical Foundation**: For convex sets A and B, A ⊕ B = {a + b | a ∈ A, b ∈ B}.
-    /// By the Minkowski sum theorem, the convex hull of all pairwise vertex sums equals
-    /// the Minkowski sum of the convex hulls of A and B.
-    ///
-    /// **Algorithm**: O(|A| × |B|) vertex combinations followed by O(n log n) convex hull computation.
-    pub fn minkowski_sum(&self, other: &Mesh<M>) -> Mesh<M> {
-        // Collect all vertices (x, y, z) from self
-        let verts_a: Vec<Point3<Real>> = self
-            .polygons
-            .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
-            .collect();
-
-        // Collect all vertices from other
-        let verts_b: Vec<Point3<Real>> = other
-            .polygons
-            .iter()
-            .flat_map(|poly| poly.vertices.iter().map(|v| v.position))
-            .collect();
-
-        if verts_a.is_empty() || verts_b.is_empty() {
-            return Mesh::empty(self.metadata.clone());
-        }
-
-        // For Minkowski, add every point in A to every point in B
-        let sum_points: Vec<_> = verts_a
-            .iter()
-            .flat_map(|a| verts_b.iter().map(move |b| a + b.coords))
-            .map(|v| vec![v.x, v.y, v.z])
-            .collect();
-
-        // Early return if no points generated
-        if sum_points.is_empty() {
-            return Mesh::empty(self.metadata.clone());
-        }
-
-        // Compute convex hull with proper error handling
-        let hull = match ConvexHullWrapper::try_new(&sum_points, None) {
-            Ok(h) => h,
-            Err(_) => return Mesh::empty(self.metadata.clone()), // Robust fallback for degenerate cases
-        };
-        let (verts, indices) = hull.vertices_indices();
-
-        // Reconstruct polygons with proper normal vector calculation
-        let polygons: Vec<Polygon<M>> = indices
-            .chunks_exact(3)
-            .filter_map(|tri| {
-                let v0 = &verts[tri[0]];
-                let v1 = &verts[tri[1]];
-                let v2 = &verts[tri[2]];
-
-                let p0 = Point3::new(v0[0], v0[1], v0[2]);
-                let p1 = Point3::new(v1[0], v1[1], v1[2]);
-                let p2 = Point3::new(v2[0], v2[1], v2[2]);
-
-                // Calculate proper normal vector using cross product
-                let edge1 = p1 - p0;
-                let edge2 = p2 - p0;
-                let normal = edge1.cross(&edge2);
-
-                // Filter out degenerate triangles
-                if normal.norm_squared() > tolerance() {
-                    let normalized_normal = normal.normalize();
-                    let vv0 = Vertex::new(p0, normalized_normal);
-                    let vv1 = Vertex::new(p1, normalized_normal);
-                    let vv2 = Vertex::new(p2, normalized_normal);
-                    Some(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()))
+impl PositionBucket {
+    fn new(point: &Point3) -> Self {
+        Self([&point.x, &point.y, &point.z].map(|coordinate| {
+            coordinate.to_f64_lossy().map(|value| {
+                if value == 0.0 {
+                    0.0_f64.to_bits()
                 } else {
-                    None
+                    value.to_bits()
                 }
             })
-            .collect();
+        }))
+    }
+}
 
-        Mesh::from_polygons(&polygons, self.metadata.clone())
+fn mesh_from_hull<M: Clone + Debug + Send + Sync>(
+    points: &[Point3],
+    coplanar_groups: &[Vec<usize>],
+    coordinate_ids: Option<&[[u64; 5]]>,
+    metadata: M,
+) -> Mesh<M> {
+    let hull = match coordinate_ids {
+        Some(coordinate_ids) => {
+            hypermesh::convex_hull_with_retained_facts(points, coplanar_groups, coordinate_ids)
+        },
+        None => hypermesh::convex_hull_with_coplanar_groups(points, coplanar_groups),
+    };
+    let hull = match hull {
+        Ok(hull) => hull,
+        Err(_) => return Mesh::empty(),
+    };
+    let positions = hull
+        .positions
+        .into_iter()
+        .map(|position| Vertex::new(position, Vector3::z()))
+        .collect::<Vec<_>>();
+    let polygons = hull
+        .triangles
+        .into_iter()
+        .filter_map(|triangle| {
+            let [a, b, c] = triangle.indices();
+            let p0 = positions.get(a)?;
+            let p1 = positions.get(b)?;
+            let p2 = positions.get(c)?;
+            let normal = triangle_unit_normal(&p0.position, &p1.position, &p2.position)?;
+            Some(Polygon::new(
+                vec![
+                    p0.clone().with_normal(normal.clone()),
+                    p1.clone().with_normal(normal.clone()),
+                    p2.clone().with_normal(normal),
+                ],
+                metadata.clone(),
+            ))
+        })
+        .collect();
+    Mesh::from_polygons(polygons)
+}
+
+fn triangle_unit_normal(p0: &Point3, p1: &Point3, p2: &Point3) -> Option<Vector3> {
+    (p1 - p0).cross(&(p2 - p0)).normalize_checked().ok()
+}
+
+fn unique_mesh_positions<M: Clone + Debug + Send + Sync>(mesh: &Mesh<M>) -> Vec<&Point3> {
+    let mut positions = Vec::new();
+    let mut bucket_heads = HashMap::<PositionBucket, usize>::new();
+    let mut next_in_bucket = Vec::<Option<usize>>::new();
+    for vertex in mesh
+        .polygons
+        .iter()
+        .flat_map(|polygon| polygon.vertices.iter())
+    {
+        let bucket = PositionBucket::new(&vertex.position);
+        let mut candidate = bucket_heads.get(&bucket).copied();
+        let mut duplicate = false;
+        while let Some(candidate_index) = candidate {
+            if positions[candidate_index] == &vertex.position {
+                duplicate = true;
+                break;
+            }
+            candidate = next_in_bucket[candidate_index];
+        }
+        if !duplicate {
+            next_in_bucket.push(bucket_heads.insert(bucket, positions.len()));
+            positions.push(&vertex.position);
+        }
+    }
+    positions
+}
+
+fn certified_convex_triangle_surface(mesh: &InputMesh) -> bool {
+    let mut edge_directions = HashMap::<(usize, usize), [usize; 2]>::new();
+    for triangle in &mesh.triangles {
+        let [a, b, c] = triangle.indices();
+        for [start, end] in [[a, b], [b, c], [c, a]] {
+            let (edge, direction) = if start < end {
+                ((start, end), 0)
+            } else {
+                ((end, start), 1)
+            };
+            edge_directions.entry(edge).or_default()[direction] += 1;
+        }
+    }
+    if edge_directions.is_empty()
+        || edge_directions
+            .values()
+            .any(|directions| *directions != [1, 1])
+    {
+        return false;
+    }
+
+    let Ok(point_bvh) = ExactPointBvh::build(&mesh.positions) else {
+        return false;
+    };
+    for triangle in &mesh.triangles {
+        let [a, b, c] = triangle.indices();
+        let mut outside = false;
+        if point_bvh
+            .query_negative_oriented_plane(
+                &mesh.positions,
+                &mesh.positions[a],
+                &mesh.positions[b],
+                &mesh.positions[c],
+                |_| outside = true,
+            )
+            .is_err()
+            || outside
+        {
+            return false;
+        }
+    }
+    true
+}
+
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
+    pub(super) fn is_certified_convex_triangle_surface(&self) -> bool {
+        self.polygons
+            .iter()
+            .all(|polygon| polygon.vertices.len() == 3)
+            && self
+                .to_hypermesh_triangle_mesh()
+                .is_ok_and(|input| certified_convex_triangle_surface(&input))
+    }
+
+    /// Computes the exact convex hull of all mesh vertices through Hypermesh's
+    /// hierarchical point broad phase and certified hull predicates.
+    pub fn convex_hull(&self, metadata: M) -> Mesh<M> {
+        if self.is_certified_convex_triangle_surface() {
+            return Mesh::from_polygons(
+                self.polygons
+                    .iter()
+                    .cloned()
+                    .map(|polygon| polygon.map_metadata(|_| metadata.clone()))
+                    .collect(),
+            );
+        }
+
+        let mut points = Vec::new();
+        let mut coordinate_ids = Vec::new();
+        let mut point_indices = HashMap::new();
+        let mut coordinate_aliases = HashMap::<(usize, Option<u64>), Vec<(Real, u64)>>::new();
+        let mut coordinate_id_aliases = HashMap::new();
+        let mut coplanar_groups = Vec::<Vec<usize>>::new();
+        let mut coplanar_group_indices = HashMap::<u64, usize>::new();
+        for polygon in &self.polygons {
+            let indices = polygon
+                .vertices
+                .iter()
+                .filter(|vertex| vertex.hull_candidate)
+                .map(|vertex| {
+                    *point_indices.entry(vertex.position_id).or_insert_with(|| {
+                        let index = points.len();
+                        let coordinate_identity: [u64; 3] = std::array::from_fn(|axis| {
+                            if let Some(&id) =
+                                coordinate_id_aliases.get(&vertex.coordinate_ids[axis])
+                            {
+                                return id;
+                            }
+                            let coordinate = match axis {
+                                0 => &vertex.position.x,
+                                1 => &vertex.position.y,
+                                _ => &vertex.position.z,
+                            };
+                            let bucket = coordinate.to_f64_lossy().map(f64::to_bits);
+                            let entries =
+                                coordinate_aliases.entry((axis, bucket)).or_default();
+                            let id = entries
+                                .iter()
+                                .find_map(|(value, id)| (value == coordinate).then_some(*id))
+                                .unwrap_or(vertex.coordinate_ids[axis]);
+                            if !entries.iter().any(|(_, existing)| *existing == id) {
+                                entries.push((coordinate.clone(), id));
+                            }
+                            coordinate_id_aliases.insert(vertex.coordinate_ids[axis], id);
+                            id
+                        });
+                        points.push(vertex.position.clone());
+                        let [surface_id, line_id] = vertex
+                            .ruled_line
+                            .unwrap_or([vertex.position_id, vertex.position_id]);
+                        coordinate_ids.push([
+                            coordinate_identity[0],
+                            coordinate_identity[1],
+                            coordinate_identity[2],
+                            surface_id,
+                            line_id,
+                        ]);
+                        index
+                    })
+                })
+                .collect::<Vec<_>>();
+            let group_index =
+                *coplanar_group_indices
+                    .entry(polygon.plane_id)
+                    .or_insert_with(|| {
+                        coplanar_groups.push(Vec::new());
+                        coplanar_groups.len() - 1
+                    });
+            coplanar_groups[group_index].extend(indices);
+        }
+        mesh_from_hull(&points, &coplanar_groups, Some(&coordinate_ids), metadata)
+    }
+
+    /// Computes `self + other` as the exact hull of all pairwise vertex sums.
+    pub fn minkowski_sum(&self, other: &Mesh<M>, metadata: M) -> Mesh<M> {
+        let left = unique_mesh_positions(self);
+        let right = unique_mesh_positions(other);
+        if left.is_empty() || right.is_empty() {
+            return Mesh::empty();
+        }
+        let sums = left
+            .iter()
+            .flat_map(|left| {
+                right
+                    .iter()
+                    .map(move |right| (*left).clone() + right.to_vector())
+            })
+            .collect::<Vec<_>>();
+        mesh_from_hull(&sums, &[], None, metadata)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use hyperlattice::Real;
+
+    #[test]
+    fn convex_surface_certificate_requires_a_closed_consistently_wound_mesh() {
+        let points = vec![
+            Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            Point3::new(Real::from(2), Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), Real::from(2), Real::zero()),
+            Point3::new(Real::zero(), Real::zero(), Real::from(2)),
+        ];
+        let hull = hypermesh::convex_hull(&points).unwrap();
+        assert!(certified_convex_triangle_surface(&hull));
+
+        let open = InputMesh::new(points, hull.triangles[..3].to_vec());
+        assert!(!certified_convex_triangle_surface(&open));
+    }
+
+    #[test]
+    fn hull_retains_unit_offsets_beyond_f64_resolution() {
+        let base = Real::from(1_i64 << 60);
+        let points = [
+            Point3::new(base.clone(), Real::zero(), Real::zero()),
+            Point3::new(base.clone() + Real::one(), Real::zero(), Real::zero()),
+            Point3::new(base.clone(), Real::one(), Real::zero()),
+            Point3::new(base.clone(), Real::zero(), Real::one()),
+        ];
+        let coordinate_ids = [
+            [0, 1, 2, 3, 4],
+            [5, 6, 7, 8, 9],
+            [10, 11, 12, 13, 14],
+            [15, 16, 17, 18, 19],
+        ];
+        let mesh = mesh_from_hull(&points, &[], Some(&coordinate_ids), ());
+
+        assert!(
+            mesh.polygons
+                .iter()
+                .flat_map(|polygon| &polygon.vertices)
+                .any(|vertex| vertex.position.x == base.clone() + Real::one())
+        );
     }
 }

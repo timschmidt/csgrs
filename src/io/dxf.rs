@@ -1,168 +1,351 @@
-//! DXF import support for converting 2D CAD entities into `csgrs` geometry.
+//! Strict DXF import and triangle export.
 
-use crate::float_types::Real;
+use crate::io::{IoError, finite_f64};
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
-use crate::sketch::Sketch;
+use crate::mesh::Polygon;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
-use geo::{Polygon as GeoPolygon, line_string};
-use nalgebra::{Point3, Vector3};
-use std::error::Error;
-use std::fmt::Debug;
-
+use chrono::{DateTime, Local, Utc};
 use dxf::Drawing;
-use dxf::entities::*;
+use dxf::entities::{Entity, EntityType, Face3D};
+use hyperlattice::{Point3, Real, Vector3};
+use std::fmt::Debug;
 use std::io::Cursor;
 
+// `Drawing::new()` initializes its creation and update dates from the wall
+// clock. Besides making otherwise identical exports differ, the decimal DXF
+// representation of those dates can change length from one second to the next.
+// Use a documented sentinel so `to_dxf` is reproducible.
+const DXF_EXPORT_TIMESTAMP_SECONDS: i64 = 946_728_000; // 2000-01-01 12:00:00 UTC
+
+fn reproducible_drawing() -> Drawing {
+    let mut drawing = Drawing::new();
+    let timestamp = DateTime::<Utc>::from_timestamp(DXF_EXPORT_TIMESTAMP_SECONDS, 0)
+        .expect("the fixed DXF export timestamp is valid");
+    let local_timestamp = timestamp.with_timezone(&Local);
+    drawing.header.creation_date = local_timestamp;
+    drawing.header.update_date = local_timestamp;
+    drawing.header.creation_date_universal = timestamp;
+    drawing.header.update_date_universal = timestamp;
+    drawing
+}
+
+fn real(value: f64, field: &'static str) -> Result<Real, IoError> {
+    Real::try_from(value).map_err(|error| {
+        IoError::MalformedInput(format!("DXF {field} is not finite: {error}"))
+    })
+}
+
+fn ocs_basis(normal: dxf::Vector) -> Result<(Vector3, Vector3, Vector3), IoError> {
+    let normal = Vector3::from_xyz(
+        real(normal.x, "normal x")?,
+        real(normal.y, "normal y")?,
+        real(normal.z, "normal z")?,
+    )
+    .normalize_checked()
+    .map_err(|error| IoError::MalformedInput(format!("invalid DXF OCS normal: {error}")))?;
+    let threshold = (Real::one() / Real::from(64_u8)).map_err(|_| IoError::Geometry {
+        format: "DXF",
+        detail: "could not construct OCS basis threshold".into(),
+    })?;
+    let reference = if normal.0[0].abs() < threshold && normal.0[1].abs() < threshold {
+        Vector3::y()
+    } else {
+        Vector3::z()
+    };
+    let x_axis = reference
+        .cross(&normal)
+        .normalize_checked()
+        .map_err(|error| IoError::MalformedInput(format!("invalid DXF OCS basis: {error}")))?;
+    let y_axis = normal.cross(&x_axis);
+    Ok((x_axis, y_axis, normal))
+}
+
+fn ocs_point(
+    point: dxf::Point,
+    basis: &(Vector3, Vector3, Vector3),
+) -> Result<Point3, IoError> {
+    let x = real(point.x, "point x")?;
+    let y = real(point.y, "point y")?;
+    let z = real(point.z, "point z")?;
+    let vector = basis.0.clone() * x + basis.1.clone() * y + basis.2.clone() * z;
+    Ok(Point3::new(
+        vector.0[0].clone(),
+        vector.0[1].clone(),
+        vector.0[2].clone(),
+    ))
+}
+
+fn polygon<M: Clone + Send + Sync>(
+    points: Vec<Point3>,
+    metadata: M,
+) -> Result<Polygon<M>, IoError> {
+    let normal = (&points[1] - &points[0])
+        .unit_cross_checked(&(&points[2] - &points[0]))
+        .map_err(|error| IoError::Geometry {
+            format: "DXF",
+            detail: format!("entity has a degenerate surface normal: {error}"),
+        })?;
+    Ok(Polygon::new(
+        points
+            .into_iter()
+            .map(|point| Vertex::new(point, normal.clone()))
+            .collect(),
+        metadata,
+    ))
+}
+
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
-    #[doc = " Import a Mesh object from DXF data."]
-    #[doc = ""]
-    #[doc = " ## Parameters"]
-    #[doc = " - `dxf_data`: A byte slice containing the DXF file data."]
-    #[doc = " - `metadata`: metadata that will be attached to all polygons of the resulting `Mesh`"]
-    #[doc = ""]
-    #[doc = " ## Returns"]
-    #[doc = " A `Result` containing the Mesh object or an error if parsing fails."]
-    pub fn from_dxf(dxf_data: &[u8], metadata: M) -> Result<Mesh<M>, Box<dyn Error>> {
-        let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
+    /// Import supported DXF surface entities, rejecting unsupported entities.
+    pub fn from_dxf(data: &[u8], metadata: M) -> Result<Self, IoError> {
+        let drawing = Drawing::load(&mut Cursor::new(data))?;
         let mut polygons = Vec::new();
 
         for entity in drawing.entities() {
             match &entity.specific {
-                EntityType::Line(_line) => {},
-                EntityType::Polyline(polyline) => {
-                    if polyline.is_closed() {
-                        let mut verts = Vec::new();
-                        for vertex in polyline.vertices() {
-                            verts.push(Vertex::new(
-                                Point3::new(
-                                    vertex.location.x as Real,
-                                    vertex.location.y as Real,
-                                    vertex.location.z as Real,
-                                ),
-                                Vector3::z(),
-                            ));
-                        }
-                        if verts.len() >= 3 {
-                            polygons.push(Polygon::new(verts, metadata.clone()));
-                        }
+                EntityType::Polyline(polyline) if polyline.is_closed() => {
+                    if polyline.thickness != 0.0 {
+                        return Err(IoError::Unsupported {
+                            format: "DXF",
+                            detail: "closed POLYLINE thickness is not yet supported".into(),
+                        });
                     }
+                    let basis = ocs_basis(polyline.normal.clone())?;
+                    let points = polyline
+                        .vertices()
+                        .map(|vertex| ocs_point(vertex.location.clone(), &basis))
+                        .collect::<Result<Vec<_>, _>>()?;
+                    if points.len() < 3 {
+                        return Err(IoError::MalformedInput(
+                            "DXF closed POLYLINE has fewer than three vertices".into(),
+                        ));
+                    }
+                    polygons.push(polygon(points, metadata.clone())?);
                 },
                 EntityType::Circle(circle) => {
-                    let center = Point3::new(
-                        circle.center.x as Real,
-                        circle.center.y as Real,
-                        circle.center.z as Real,
-                    );
-                    let radius = circle.radius as Real;
-                    let segments = 32;
-                    let mut verts = Vec::with_capacity(segments + 1);
-                    let normal = Vector3::new(
-                        circle.normal.x as Real,
-                        circle.normal.y as Real,
-                        circle.normal.z as Real,
-                    )
-                    .normalize();
-                    for i in 0..segments {
-                        let theta =
-                            2.0 * crate::float_types::PI * (i as Real) / (segments as Real);
-                        let x = center.x as Real + radius * theta.cos();
-                        let y = center.y as Real + radius * theta.sin();
-                        let z = center.z as Real;
-                        verts.push(Vertex::new(Point3::new(x, y, z), normal));
+                    if circle.thickness != 0.0 {
+                        return Err(IoError::Unsupported {
+                            format: "DXF",
+                            detail: "CIRCLE thickness is not yet supported".into(),
+                        });
                     }
-                    polygons.push(Polygon::new(verts, metadata.clone()));
+                    if !circle.radius.is_finite() || circle.radius <= 0.0 {
+                        return Err(IoError::MalformedInput(
+                            "DXF CIRCLE radius must be finite and positive".into(),
+                        ));
+                    }
+                    let basis = ocs_basis(circle.normal.clone())?;
+                    let center = ocs_point(circle.center.clone(), &basis)?;
+                    let radius = real(circle.radius, "circle radius")?;
+                    let mut points = Vec::with_capacity(64);
+                    for index in 0..64 {
+                        let angle = std::f64::consts::TAU * index as f64 / 64.0;
+                        let offset = basis.0.clone()
+                            * (radius.clone() * real(angle.cos(), "cosine")?)
+                            + basis.1.clone() * (radius.clone() * real(angle.sin(), "sine")?);
+                        points.push(center.clone() + offset);
+                    }
+                    polygons.push(polygon(points, metadata.clone())?);
                 },
                 EntityType::Solid(solid) => {
-                    let thickness = solid.thickness as Real;
-                    let extrusion_direction = Vector3::new(
-                        solid.extrusion_direction.x as Real,
-                        solid.extrusion_direction.y as Real,
-                        solid.extrusion_direction.z as Real,
-                    );
-                    let extruded = Sketch::from_geo(
-                        GeoPolygon::new(
-                            line_string![
-                                (x: solid.first_corner.x  as Real, y: solid.first_corner.y  as Real),
-                                (x: solid.second_corner.x as Real, y: solid.second_corner.y as Real),
-                                (x: solid.third_corner.x  as Real, y: solid.third_corner.y  as Real),
-                                (x: solid.fourth_corner.x as Real, y: solid.fourth_corner.y as Real),
-                                (x: solid.first_corner.x  as Real, y: solid.first_corner.y  as Real),
-                            ],
-                            Vec::new(),
-                        )
-                        .into(),
-                        metadata.clone(),
-                    )
-                    .extrude_vector(extrusion_direction * thickness)
-                    .polygons;
-                    polygons.extend(extruded);
+                    let basis = ocs_basis(solid.extrusion_direction.clone())?;
+                    let bottom = vec![
+                        ocs_point(solid.first_corner.clone(), &basis)?,
+                        ocs_point(solid.second_corner.clone(), &basis)?,
+                        ocs_point(solid.fourth_corner.clone(), &basis)?,
+                        ocs_point(solid.third_corner.clone(), &basis)?,
+                    ];
+                    if solid.thickness == 0.0 {
+                        polygons.push(polygon(bottom, metadata.clone())?);
+                    } else {
+                        let height = real(solid.thickness, "SOLID thickness")?;
+                        let translation = basis.2.clone() * height;
+                        let top = bottom
+                            .iter()
+                            .map(|point| point.clone() + translation.clone())
+                            .collect::<Vec<_>>();
+                        let mut reversed = bottom.clone();
+                        reversed.reverse();
+                        polygons.push(polygon(reversed, metadata.clone())?);
+                        polygons.push(polygon(top.clone(), metadata.clone())?);
+                        for index in 0..4 {
+                            let next = (index + 1) % 4;
+                            polygons.push(polygon(
+                                vec![
+                                    bottom[index].clone(),
+                                    bottom[next].clone(),
+                                    top[next].clone(),
+                                    top[index].clone(),
+                                ],
+                                metadata.clone(),
+                            )?);
+                        }
+                    }
                 },
-                _ => {},
+                EntityType::Face3D(face) => {
+                    let mut points = vec![
+                        point_from_wcs(face.first_corner.clone())?,
+                        point_from_wcs(face.second_corner.clone())?,
+                        point_from_wcs(face.third_corner.clone())?,
+                    ];
+                    let fourth = point_from_wcs(face.fourth_corner.clone())?;
+                    if fourth != points[2] {
+                        points.push(fourth);
+                    }
+                    polygons.push(polygon(points, metadata.clone())?);
+                },
+                other => {
+                    return Err(IoError::Unsupported {
+                        format: "DXF",
+                        detail: format!("entity {other:?}"),
+                    });
+                },
             }
         }
+        Ok(Mesh::from_polygons(polygons))
+    }
 
-        Ok(Mesh::from_polygons(&polygons, metadata))
+    pub fn to_dxf(&self) -> Result<Vec<u8>, IoError> {
+        to_dxf(self)
     }
 }
 
-#[doc = " Export any `Triangulated3D` shape to DXF format."]
-#[doc = ""]
-#[doc = " # Returns"]
-#[doc = " A `Result` containing the DXF file as a byte vector or an error if exporting fails."]
-pub fn to_dxf<T: Triangulated3D>(shape: &T) -> Result<Vec<u8>, Box<dyn Error>> {
-    let mut drawing = Drawing::new();
+fn point_from_wcs(point: dxf::Point) -> Result<Point3, IoError> {
+    Ok(Point3::new(
+        real(point.x, "point x")?,
+        real(point.y, "point y")?,
+        real(point.z, "point z")?,
+    ))
+}
 
-    shape.visit_triangles(|tri| {
-        #[allow(clippy::unnecessary_cast)]
-        let face = dxf::entities::Face3D::new(
-            dxf::Point::new(
-                tri[0].position.x as f64,
-                tri[0].position.y as f64,
-                tri[0].position.z as f64,
-            ),
-            dxf::Point::new(
-                tri[1].position.x as f64,
-                tri[1].position.y as f64,
-                tri[1].position.z as f64,
-            ),
-            dxf::Point::new(
-                tri[2].position.x as f64,
-                tri[2].position.y as f64,
-                tri[2].position.z as f64,
-            ),
-            // OBJ/CSG triangles have 3 distinct vertices; DXF Face3D needs 4, so repeat the last.
-            dxf::Point::new(
-                tri[2].position.x as f64,
-                tri[2].position.y as f64,
-                tri[2].position.z as f64,
-            ),
-        );
-        let entity = dxf::entities::Entity::new(dxf::entities::EntityType::Face3D(face));
-        drawing.add_entity(entity);
+/// Export triangles as DXF `3DFACE` entities.
+pub fn to_dxf<T: Triangulated3D>(shape: &T) -> Result<Vec<u8>, IoError> {
+    let mut drawing = reproducible_drawing();
+    let mut failure = None;
+    shape.visit_triangles(|triangle| {
+        if failure.is_some() {
+            return;
+        }
+        let result = (|| {
+            let first_edge = &triangle[1].position - &triangle[0].position;
+            let second_edge = &triangle[2].position - &triangle[0].position;
+            first_edge.unit_cross_checked(&second_edge).map_err(|error| {
+                IoError::Geometry {
+                    format: "DXF",
+                    detail: format!("degenerate export triangle: {error}"),
+                }
+            })?;
+            let points = triangle
+                .iter()
+                .map(|vertex| {
+                    Ok(dxf::Point::new(
+                        finite_f64(&vertex.position.x, "DXF", "vertex x")?,
+                        finite_f64(&vertex.position.y, "DXF", "vertex y")?,
+                        finite_f64(&vertex.position.z, "DXF", "vertex z")?,
+                    ))
+                })
+                .collect::<Result<Vec<_>, IoError>>()?;
+            Ok::<_, IoError>(Face3D::new(
+                points[0].clone(),
+                points[1].clone(),
+                points[2].clone(),
+                points[2].clone(),
+            ))
+        })();
+        match result {
+            Ok(face) => {
+                drawing.add_entity(Entity::new(EntityType::Face3D(face)));
+            },
+            Err(error) => failure = Some(error),
+        }
     });
-
+    if let Some(error) = failure {
+        return Err(error);
+    }
     let mut buffer = Vec::new();
     drawing.save(&mut buffer)?;
     Ok(buffer)
 }
 
-impl<M: Clone + Debug + Send + Sync> Mesh<M> {
-    pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
-        self::to_dxf(self)
+#[cfg(feature = "sketch")]
+impl crate::sketch::Profile {
+    pub fn to_dxf(&self) -> Result<Vec<u8>, IoError> {
+        to_dxf(self)
     }
 }
 
-impl<M: Clone + Debug + Send + Sync> Sketch<M> {
-    pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
-        self::to_dxf(self)
-    }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[cfg(feature = "bmesh")]
-impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
-    pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
-        self::to_dxf(self)
+    struct DegenerateTriangle;
+
+    impl Triangulated3D for DegenerateTriangle {
+        fn visit_triangles<F>(&self, mut visit: F)
+        where
+            F: FnMut([Vertex; 3]),
+        {
+            let point = Point3::new(Real::zero(), Real::zero(), Real::zero());
+            let vertex = Vertex::new(point, Vector3::z());
+            visit([vertex.clone(), vertex.clone(), vertex]);
+        }
+    }
+
+    #[test]
+    fn arbitrary_normal_circle_is_built_in_its_ocs_plane() {
+        let mut drawing = Drawing::new();
+        let mut circle = dxf::entities::Circle::new(dxf::Point::origin(), 2.0);
+        circle.normal = dxf::Vector::x_axis();
+        drawing.add_entity(Entity::new(EntityType::Circle(circle)));
+        let mut bytes = Vec::new();
+        drawing.save(&mut bytes).unwrap();
+
+        let mesh = Mesh::from_dxf(&bytes, ()).unwrap();
+        assert!(
+            mesh.vertices()
+                .iter()
+                .all(|vertex| vertex.position.x == Real::zero())
+        );
+    }
+
+    #[test]
+    fn face_export_round_trips_through_dxf_parser() {
+        let cube = Mesh::<()>::cube(Real::one(), ());
+        let bytes = cube.to_dxf().unwrap();
+        let imported = Mesh::from_dxf(&bytes, ()).unwrap();
+        assert_eq!(imported.polygons.len(), 12);
+    }
+
+    #[test]
+    fn face_export_is_reproducible() {
+        let cube = Mesh::<()>::cube(Real::one(), ());
+        let first = cube.to_dxf().unwrap();
+        let second = cube.to_dxf().unwrap();
+        assert_eq!(first, second);
+
+        let drawing = reproducible_drawing();
+        assert_eq!(
+            drawing.header.creation_date.timestamp(),
+            DXF_EXPORT_TIMESTAMP_SECONDS
+        );
+        assert_eq!(drawing.header.update_date, drawing.header.creation_date);
+    }
+
+    #[test]
+    fn unsupported_entities_are_reported() {
+        let mut drawing = Drawing::new();
+        let line =
+            dxf::entities::Line::new(dxf::Point::origin(), dxf::Point::new(1.0, 0.0, 0.0));
+        drawing.add_entity(Entity::new(EntityType::Line(line)));
+        let mut bytes = Vec::new();
+        drawing.save(&mut bytes).unwrap();
+        let error = Mesh::<()>::from_dxf(&bytes, ()).unwrap_err();
+        assert!(matches!(error, IoError::Unsupported { format: "DXF", .. }));
+    }
+
+    #[test]
+    fn malformed_input_and_degenerate_export_are_rejected() {
+        assert!(Mesh::<()>::from_dxf(b"not a DXF", ()).is_err());
+        assert!(to_dxf(&DegenerateTriangle).is_err());
     }
 }

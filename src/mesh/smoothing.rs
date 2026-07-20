@@ -1,11 +1,9 @@
 //! Mesh smoothing and refinement operations.
 
-use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
-use crate::vertex::Vertex;
-use nalgebra::Point3;
-use std::collections::HashMap;
+use crate::mesh::connectivity::VertexIndexMap;
+use hashbrown::HashMap;
+use hyperlattice::{Point3, Real};
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -26,9 +24,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Volume Preservation**: Better volume preservation than local smoothing
     ///
     /// ## **Algorithm Improvements**
-    /// - **Tolerance-based Vertex Matching**: Robust floating-point coordinate handling
+    /// - **Exact Vertex Matching**: Hyperreal-backed boundary-coordinate identity
     /// - **Manifold Preservation**: Ensures mesh topology is maintained
     /// - **Feature Detection**: Can preserve sharp features based on neighbor count
+    ///
+    /// Vertex lookup reuses [`VertexIndexMap`],
+    /// whose matching predicate requires exact equality after promotion through
+    /// `hyperlattice::Vector3` and `Real`. This keeps the discrete
+    /// Laplacian's adjacency relation stable before applying the uniform
+    /// smoothing stencil described in Botsch et al., *Polygon Mesh Processing*,
+    /// 2010 (<https://doi.org/10.1201/b10688>).
     pub fn laplacian_smooth(
         &self,
         lambda: Real,
@@ -36,73 +41,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         preserve_boundaries: bool,
     ) -> Mesh<M> {
         let (vertex_map, adjacency) = self.build_connectivity();
+        let polygon_vertex_indices = self.polygon_vertex_indices(&vertex_map);
         let mut smoothed_polygons = self.polygons.clone();
+        let mut positions = indexed_positions(&vertex_map);
 
         for iteration in 0..iterations {
-            // Build current vertex position mapping
-            let mut current_positions: HashMap<usize, Point3<Real>> = HashMap::new();
-            for polygon in &smoothed_polygons {
-                for vertex in &polygon.vertices {
-                    // Find the global index for this position (with tolerance)
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.position);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Compute Laplacian for each vertex
-            let mut laplacian_updates: HashMap<usize, Point3<Real>> = HashMap::new();
-            for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(&current_position) = current_positions.get(&vertex_idx) {
-                    // Check if this is a boundary vertex
-                    if preserve_boundaries && neighbors.len() < 4 {
-                        // Boundary vertex - skip smoothing
-                        laplacian_updates.insert(vertex_idx, current_position);
-                        continue;
-                    }
-
-                    // Compute neighbor average
-                    let mut neighbor_sum = Point3::origin();
-                    let mut valid_neighbors = 0;
-
-                    for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx)
-                        {
-                            neighbor_sum += neighbor_position.coords;
-                            valid_neighbors += 1;
-                        }
-                    }
-
-                    if valid_neighbors > 0 {
-                        let neighbor_avg = neighbor_sum / valid_neighbors as Real;
-                        let laplacian = neighbor_avg - current_position;
-                        let new_position = current_position + laplacian * lambda;
-                        laplacian_updates.insert(vertex_idx, new_position);
-                    } else {
-                        laplacian_updates.insert(vertex_idx, current_position);
-                    }
-                }
-            }
-
-            // Apply updates to mesh vertices
-            for polygon in &mut smoothed_polygons {
-                for vertex in &mut polygon.vertices {
-                    // Find the global index for this vertex
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            if let Some(&new_position) = laplacian_updates.get(idx) {
-                                vertex.position = new_position;
-                            }
-                            break;
-                        }
-                    }
-                }
-                // Recompute polygon plane and normals after smoothing
-                polygon.set_new_normal();
-            }
+            positions = smoothing_pass(&positions, &adjacency, &lambda, preserve_boundaries);
 
             // Progress feedback for long smoothing operations
             if iterations > 10 && iteration % (iterations / 10) == 0 {
@@ -114,7 +58,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
-        Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
+        apply_positions(&mut smoothed_polygons, &polygon_vertex_indices, &positions);
+        Mesh::from_polygons(smoothed_polygons.into_vec())
     }
 
     /// **Mathematical Foundation: Taubin Mesh Smoothing**
@@ -141,262 +86,99 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         preserve_boundaries: bool,
     ) -> Mesh<M> {
         let (vertex_map, adjacency) = self.build_connectivity();
+        let polygon_vertex_indices = self.polygon_vertex_indices(&vertex_map);
         let mut smoothed_polygons = self.polygons.clone();
+        let mut positions = indexed_positions(&vertex_map);
 
         for _ in 0..iterations {
-            // --- Lambda (shrinking) pass ---
-            let mut current_positions: HashMap<usize, Point3<Real>> = HashMap::new();
-            for polygon in &smoothed_polygons {
-                for vertex in &polygon.vertices {
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.position);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            let mut updates: HashMap<usize, Point3<Real>> = HashMap::new();
-            for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(&current_position) = current_positions.get(&vertex_idx) {
-                    if preserve_boundaries && neighbors.len() < 4 {
-                        updates.insert(vertex_idx, current_position);
-                        continue;
-                    }
-
-                    let mut neighbor_sum = Point3::origin();
-                    let mut valid_neighbors = 0;
-                    for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx)
-                        {
-                            neighbor_sum += neighbor_position.coords;
-                            valid_neighbors += 1;
-                        }
-                    }
-
-                    if valid_neighbors > 0 {
-                        let neighbor_avg = neighbor_sum / valid_neighbors as Real;
-                        let laplacian = neighbor_avg - current_position;
-                        updates.insert(vertex_idx, current_position + laplacian * lambda);
-                    }
-                }
-            }
-
-            for polygon in &mut smoothed_polygons {
-                for vertex in &mut polygon.vertices {
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            if let Some(&new_position) = updates.get(idx) {
-                                vertex.position = new_position;
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // --- Mu (inflating) pass ---
-            current_positions.clear();
-            for polygon in &smoothed_polygons {
-                for vertex in &polygon.vertices {
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.position);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            updates.clear();
-            for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(&current_position) = current_positions.get(&vertex_idx) {
-                    if preserve_boundaries && neighbors.len() < 4 {
-                        updates.insert(vertex_idx, current_position);
-                        continue;
-                    }
-
-                    let mut neighbor_sum = Point3::origin();
-                    let mut valid_neighbors = 0;
-                    for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx)
-                        {
-                            neighbor_sum += neighbor_position.coords;
-                            valid_neighbors += 1;
-                        }
-                    }
-
-                    if valid_neighbors > 0 {
-                        let neighbor_avg = neighbor_sum / valid_neighbors as Real;
-                        let laplacian = neighbor_avg - current_position;
-                        updates.insert(vertex_idx, current_position + laplacian * mu);
-                    }
-                }
-            }
-
-            for polygon in &mut smoothed_polygons {
-                for vertex in &mut polygon.vertices {
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            if let Some(&new_position) = updates.get(idx) {
-                                vertex.position = new_position;
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
+            positions = smoothing_pass(&positions, &adjacency, &lambda, preserve_boundaries);
+            positions = smoothing_pass(&positions, &adjacency, &mu, preserve_boundaries);
         }
 
-        // Final pass to recompute normals
-        for polygon in &mut smoothed_polygons {
-            polygon.set_new_normal();
-        }
-
-        Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
+        apply_positions(&mut smoothed_polygons, &polygon_vertex_indices, &positions);
+        Mesh::from_polygons(smoothed_polygons.into_vec())
     }
 
-    /// **Mathematical Foundation: Adaptive Mesh Refinement**
-    ///
-    /// Intelligently refine mesh based on geometric criteria:
-    ///
-    /// ## **Refinement Criteria**
-    /// - **Quality threshold**: Refine triangles with quality score < threshold
-    /// - **Size variation**: Refine where edge lengths vary significantly
-    /// - **Curvature**: Refine high-curvature regions (based on normal variation)
-    /// - **Feature detection**: Preserve sharp edges and corners
-    ///
-    /// ## **Refinement Strategy**
-    /// 1. **Quality-based**: Subdivide poor-quality triangles
-    /// 2. **Size-based**: Subdivide triangles larger than target size
-    /// 3. **Curvature-based**: Subdivide where surface curves significantly
-    ///
-    /// This provides better mesh quality compared to uniform subdivision.
-    pub fn adaptive_refine(
-        &self,
-        quality_threshold: Real,
-        max_edge_length: Real,
-        curvature_threshold_deg: Real,
-    ) -> Mesh<M> {
-        let qualities = self.analyze_triangle_quality();
-        let (mut vertex_map, _adjacency) = self.build_connectivity();
-        let mut refined_polygons = Vec::new();
-        let mut polygon_map: HashMap<usize, Vec<usize>> = HashMap::new();
-
-        for (poly_idx, poly) in self.polygons.iter().enumerate() {
-            for vertex in &poly.vertices {
-                let v_idx = vertex_map.get_or_create_index(vertex.position);
-                polygon_map.entry(v_idx).or_default().push(poly_idx);
-            }
-        }
-
-        for (i, polygon) in self.polygons.iter().enumerate() {
-            let mut should_refine = false;
-
-            // Quality and edge length check
-            if i < qualities.len() {
-                let quality = &qualities[i];
-                if quality.quality_score < quality_threshold
-                    || Self::max_edge_length(&polygon.vertices) > max_edge_length
-                {
-                    should_refine = true;
-                }
-            }
-
-            // Curvature check
-            if !should_refine {
-                'edge_loop: for edge in polygon.edges() {
-                    let v1_idx = vertex_map.get_or_create_index(edge.0.position);
-                    let v2_idx = vertex_map.get_or_create_index(edge.1.position);
-
-                    if let (Some(p1_indices), Some(p2_indices)) =
-                        (polygon_map.get(&v1_idx), polygon_map.get(&v2_idx))
-                    {
-                        for &p1_idx in p1_indices {
-                            if p1_idx == i {
-                                continue;
-                            }
-                            for &p2_idx in p2_indices {
-                                if p1_idx == p2_idx {
-                                    let other_poly = &self.polygons[p1_idx];
-                                    let angle = Self::dihedral_angle(polygon, other_poly);
-                                    if angle > curvature_threshold_deg.to_radians() {
-                                        should_refine = true;
-                                        break 'edge_loop;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if should_refine {
-                let subdivided = polygon.subdivide_triangles(1.try_into().unwrap());
-                for triangle in subdivided {
-                    let vertices = triangle.to_vec();
-                    refined_polygons.push(Polygon::new(vertices, polygon.metadata.clone()));
-                }
-            } else {
-                refined_polygons.push(polygon.clone());
-            }
-        }
-
-        Mesh::from_polygons(&refined_polygons, self.metadata.clone())
+    fn polygon_vertex_indices(&self, vertex_map: &VertexIndexMap) -> Vec<Vec<Option<usize>>> {
+        self.polygons
+            .iter()
+            .map(|polygon| {
+                polygon
+                    .vertices
+                    .iter()
+                    .map(|vertex| vertex_map.find_vertex_index(vertex))
+                    .collect()
+            })
+            .collect()
     }
+}
 
-    /// Calculate maximum edge length in a polygon
-    fn max_edge_length(vertices: &[Vertex]) -> Real {
-        if vertices.len() < 2 {
-            return 0.0;
-        }
-
-        let mut max_length: Real = 0.0;
-        for i in 0..vertices.len() {
-            let j = (i + 1) % vertices.len();
-            let edge_length = (vertices[j].position - vertices[i].position).norm();
-            max_length = max_length.max(edge_length);
-        }
-        max_length
-    }
-
-    /// **Mathematical Foundation: Feature-Preserving Mesh Optimization**
-    ///
-    /// Remove poor-quality triangles while preserving important geometric features:
-    ///
-    /// ## **Quality-Based Filtering**
-    /// Remove triangles that meet criteria:
-    /// - **Sliver triangles**: min_angle < threshold (typically 5°)
-    /// - **Needle triangles**: aspect_ratio > threshold (typically 20)
-    /// - **Small triangles**: area < threshold
-    ///
-    /// ## **Feature Preservation**
-    /// - **Sharp edges**: Preserve edges with large dihedral angles
-    /// - **Boundaries**: Maintain mesh boundaries
-    /// - **Topology**: Ensure mesh remains manifold
-    ///
-    /// Returns cleaned mesh with improved triangle quality.
-    pub fn remove_poor_triangles(&self, min_quality: Real) -> Mesh<M> {
-        let qualities = self.analyze_triangle_quality();
-        let mut filtered_polygons = Vec::new();
-
-        for (i, polygon) in self.polygons.iter().enumerate() {
-            let keep_triangle = if i < qualities.len() {
-                let quality = &qualities[i];
-                quality.quality_score >= min_quality
-                    && quality.area > tolerance()
-                    && quality.min_angle > (5.0 as Real).to_radians()
-                    && quality.aspect_ratio < 20.0
-            } else {
-                true // Keep if we can't assess quality
+fn smoothing_pass(
+    positions: &[Point3],
+    adjacency: &HashMap<usize, Vec<usize>>,
+    factor: &Real,
+    preserve_boundaries: bool,
+) -> Vec<Point3> {
+    let self_scale = Real::one() - factor.clone();
+    let max_neighbors = adjacency.values().map(Vec::len).max().unwrap_or(0);
+    let mut neighbor_scales = vec![None; max_neighbors + 1];
+    positions
+        .iter()
+        .enumerate()
+        .map(|(vertex_index, current)| {
+            let Some(neighbors) = adjacency.get(&vertex_index) else {
+                return current.clone();
             };
+            if preserve_boundaries && neighbors.len() < 4 {
+                return current.clone();
+            }
 
-            if keep_triangle {
-                filtered_polygons.push(polygon.clone());
+            let mut neighbor_sum = Point3::origin();
+            let mut neighbor_count = 0usize;
+            for neighbor in neighbors {
+                let Some(position) = positions.get(*neighbor) else {
+                    continue;
+                };
+                neighbor_sum.x += position.x.clone();
+                neighbor_sum.y += position.y.clone();
+                neighbor_sum.z += position.z.clone();
+                neighbor_count += 1;
+            }
+            if neighbor_count == 0 {
+                return current.clone();
+            }
+            let neighbor_scale = neighbor_scales[neighbor_count].get_or_insert_with(|| {
+                (factor.clone() / Real::from(neighbor_count as u64))
+                    .expect("a non-empty neighborhood has a nonzero size")
+            });
+            Point3::new(
+                Real::dot2_refs([&current.x, &neighbor_sum.x], [&self_scale, neighbor_scale]),
+                Real::dot2_refs([&current.y, &neighbor_sum.y], [&self_scale, neighbor_scale]),
+                Real::dot2_refs([&current.z, &neighbor_sum.z], [&self_scale, neighbor_scale]),
+            )
+        })
+        .collect()
+}
+
+fn indexed_positions(vertex_map: &VertexIndexMap) -> Vec<Point3> {
+    let mut positions = vec![Point3::origin(); vertex_map.vertex_count()];
+    for (position, index) in &vertex_map.position_to_index {
+        positions[*index] = position.clone();
+    }
+    positions
+}
+
+fn apply_positions<M: Clone + Send + Sync>(
+    polygons: &mut [crate::mesh::Polygon<M>],
+    polygon_vertex_indices: &[Vec<Option<usize>>],
+    positions: &[Point3],
+) {
+    for (polygon, indices) in polygons.iter_mut().zip(polygon_vertex_indices) {
+        let mut vertices = polygon.vertices_mut();
+        for (vertex, index) in vertices.iter_mut().zip(indices) {
+            if let Some(position) = index.and_then(|index| positions.get(index)) {
+                vertex.position = position.clone();
             }
         }
-
-        Mesh::from_polygons(&filtered_polygons, self.metadata.clone())
     }
 }

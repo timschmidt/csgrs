@@ -1,1009 +1,850 @@
-//! SVG input and output.
+//! Strict SVG document import and fallible finite SVG export.
+//!
+//! Filled SVG geometry becomes native region topology. Strokes are retained as
+//! centerline wires because `Profile` does not model SVG paint decoration;
+//! width, joins, caps, dashes, and markers are therefore rejected when they
+//! would change the imported topology.
 
 use crate::csg::CSG;
-use crate::float_types::Real;
-use crate::sketch::Sketch;
-use geo::{
-    BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon,
+use crate::io::{IoError, finite_f64};
+use crate::sketch::Profile;
+use hypercurve::{
+    Classification, CurvePolicy, CurveString2, FillRule, FiniteProjectionOptions, Region2,
+    import_svg_path_data_with_report, import_svg_region_path_data_with_report,
 };
+use hyperlattice::{Matrix4, Real};
 use std::fmt::Debug;
-use svg::node::element::path;
 
-use super::IoError;
-
-/// A helper struct to build [`geo::MultiLineString`] from SVG Path commands.
-///
-/// The API aims to be compatible with the [SVG 1.1 Paths specification][svg-paths].
-/// The single instance of this struct is meant to be used for building paths from a single
-/// `d` attribute of an SVG `<path/>`.
-///
-/// In method documentation:
-/// - *Current path* refers to the part of the path that was started by the most recent `M`/`m` (moveto/moveby) command
-/// - *Current point* refers to the last point of the current path
-/// - Method names correspond to SVG Path commands
-/// - Method suffix `_to` indicates a command that uses absolute coordinates
-/// - Method suffix `_by` indicates a command that uses relative coordinates
-///
-/// **At the moment, curves are not supported.**
-/// When support for curves is implemented, the underlying data structure may change to accommodate that.
-///
-/// [svg-paths]: https://www.w3.org/TR/SVG11/paths.html
-struct PathBuilder<F: CoordNum> {
-    inner: MultiLineString<F>,
+/// Controls finite approximation at the SVG boundary.
+#[derive(Clone, Copy, Debug)]
+pub struct SvgOptions {
+    pub curve_tolerance: f64,
+    pub max_curve_segments: usize,
 }
 
-impl<F: CoordNum> From<PathBuilder<F>> for MultiLineString<F> {
-    fn from(val: PathBuilder<F>) -> Self {
-        val.inner
-    }
-}
-
-impl<F: CoordNum> PathBuilder<F> {
-    pub fn new() -> Self {
+impl Default for SvgOptions {
+    fn default() -> Self {
         Self {
-            inner: MultiLineString::new(vec![]),
+            curve_tolerance: 0.1,
+            max_curve_segments: 4096,
         }
     }
+}
 
-    /// Get the current position to be used for relative moves.
-    fn get_position(&self) -> Coord<F> {
-        self.inner
-            .0
-            .last()
-            .and_then(|ls| ls.0.last())
-            .copied()
-            .unwrap_or(Coord::zero())
+impl SvgOptions {
+    fn validate(self) -> Result<Self, IoError> {
+        if !self.curve_tolerance.is_finite()
+            || self.curve_tolerance <= 0.0
+            || self.max_curve_segments < 8
+        {
+            return Err(IoError::MalformedInput(
+                "SVG projection options require a positive finite tolerance and at least 8 segments"
+                    .into(),
+            ));
+        }
+        Ok(self)
     }
 
-    /// Get a mutable reference to the current path, or an error if no path has been started.
-    ///
-    /// To accommodate for the semantics of [`close`], this function will automatically start a new path
-    /// if the last path has 2 or more points and is closed.
-    /// For this reason, using this proxy is recommended for implementing any drawing command.
-    fn get_path_mut_or_fail(&mut self) -> Result<&mut LineString<F>, IoError> {
-        let start_new_path = self
-            .inner
-            .0
-            .last()
-            .map(|p| p.coords_count() >= 2 && p.is_closed())
-            .unwrap_or(false);
-
-        if start_new_path {
-            self.inner.0.push(LineString::new(vec![self.get_position()]));
+    fn segments_for_radius(self, radius: f64) -> Result<usize, IoError> {
+        if !radius.is_finite() || radius <= 0.0 {
+            return Err(IoError::MalformedInput(
+                "SVG radius must be finite and positive".into(),
+            ));
         }
+        let requested = (std::f64::consts::TAU * radius / self.curve_tolerance)
+            .ceil()
+            .max(16.0);
+        if requested > self.max_curve_segments as f64 {
+            return Err(IoError::SizeOverflow {
+                format: "SVG",
+                limit: "configured curve-segment count",
+            });
+        }
+        let requested = requested as usize;
+        Ok(requested)
+    }
+}
 
-        self.inner.0.last_mut().ok_or_else(|| {
-            IoError::MalformedPath(
-                "Attempted to extend the current path, but no path was started.".to_string(),
-            )
+#[derive(Clone, Copy, Debug)]
+struct Affine2([f64; 6]);
+
+impl Affine2 {
+    const IDENTITY: Self = Self([1.0, 0.0, 0.0, 1.0, 0.0, 0.0]);
+
+    fn then(self, rhs: Self) -> Self {
+        let [a, b, c, d, e, f] = self.0;
+        let [g, h, i, j, k, l] = rhs.0;
+        Self([
+            a * g + c * h,
+            b * g + d * h,
+            a * i + c * j,
+            b * i + d * j,
+            a * k + c * l + e,
+            b * k + d * l + f,
+        ])
+    }
+
+    fn matrix(self) -> Result<Matrix4, IoError> {
+        let values = self
+            .0
+            .map(|value| {
+                Real::try_from(value).map_err(|error| {
+                    IoError::MalformedInput(format!("SVG transform is not finite: {error}"))
+                })
+            })
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Matrix4::from_row_major([
+            values[0].clone(),
+            values[2].clone(),
+            Real::zero(),
+            values[4].clone(),
+            values[1].clone(),
+            values[3].clone(),
+            Real::zero(),
+            values[5].clone(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]))
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct StyleContext {
+    transform: Affine2,
+    fill: bool,
+    stroke: bool,
+    displayed: bool,
+    visibility: bool,
+    opacity: f64,
+    fill_opacity: f64,
+    stroke_opacity: f64,
+    stroke_width: f64,
+    fill_rule: FillRule,
+}
+
+impl Default for StyleContext {
+    fn default() -> Self {
+        Self {
+            transform: Affine2::IDENTITY,
+            fill: true,
+            stroke: false,
+            displayed: true,
+            visibility: true,
+            opacity: 1.0,
+            fill_opacity: 1.0,
+            stroke_opacity: 1.0,
+            stroke_width: 1.0,
+            fill_rule: FillRule::NonZero,
+        }
+    }
+}
+
+impl StyleContext {
+    fn visible(self) -> bool {
+        self.displayed && self.visibility && self.opacity > 0.0
+    }
+
+    fn fills(self) -> bool {
+        self.fill && self.fill_opacity > 0.0
+    }
+
+    fn strokes(self) -> bool {
+        self.stroke && self.stroke_opacity > 0.0 && self.stroke_width > 0.0
+    }
+}
+
+fn parse_numbers(value: &str) -> Result<Vec<f64>, IoError> {
+    svgtypes::NumberListParser::from(value)
+        .map(|number| {
+            let number = number.map_err(|error| {
+                IoError::MalformedInput(format!("invalid SVG number list: {error}"))
+            })?;
+            if number.is_finite() {
+                Ok(number)
+            } else {
+                Err(IoError::MalformedInput(
+                    "SVG number list contains a non-finite value".into(),
+                ))
+            }
         })
-    }
+        .collect()
+}
 
-    /// Start a new path at `point`.
-    pub fn move_to(&mut self, point: Coord<F>) {
-        self.inner.0.push(LineString::new(vec![point]));
+fn parse_transform(value: &str) -> Result<Affine2, IoError> {
+    let mut transform = Affine2::IDENTITY;
+    for token in svgtypes::TransformListParser::from(value) {
+        use svgtypes::TransformListToken;
+        let token = token.map_err(|error| {
+            IoError::MalformedInput(format!("invalid SVG transform {value:?}: {error}"))
+        })?;
+        let next = match token {
+            TransformListToken::Matrix { a, b, c, d, e, f } => Affine2([a, b, c, d, e, f]),
+            TransformListToken::Translate { tx, ty } => Affine2([1.0, 0.0, 0.0, 1.0, tx, ty]),
+            TransformListToken::Scale { sx, sy } => Affine2([sx, 0.0, 0.0, sy, 0.0, 0.0]),
+            TransformListToken::Rotate { angle } => rotation(angle),
+            TransformListToken::SkewX { angle } => {
+                Affine2([1.0, 0.0, angle.to_radians().tan(), 1.0, 0.0, 0.0])
+            },
+            TransformListToken::SkewY { angle } => {
+                Affine2([1.0, angle.to_radians().tan(), 0.0, 1.0, 0.0, 0.0])
+            },
+        };
+        if next.0.iter().any(|value| !value.is_finite()) {
+            return Err(IoError::MalformedInput(
+                "SVG transform contains a non-finite value".into(),
+            ));
+        }
+        transform = transform.then(next);
     }
+    Ok(transform)
+}
 
-    /// Start a new path at `delta` relative to the last point.
-    /// If and only if this is the first command, the point is treated as absolute coordinates.
-    pub fn move_by(&mut self, delta: Coord<F>) {
-        let position = self.get_position();
-        self.inner.0.push(LineString::new(vec![position + delta]));
+fn rotation(degrees: f64) -> Affine2 {
+    let (sin, cos) = degrees.to_radians().sin_cos();
+    Affine2([cos, sin, -sin, cos, 0.0, 0.0])
+}
+
+fn apply_style(
+    mut context: StyleContext,
+    attrs: &svg::node::Attributes,
+) -> Result<StyleContext, IoError> {
+    let mut properties = Vec::<(&str, &str)>::new();
+    for name in [
+        "fill",
+        "stroke",
+        "fill-rule",
+        "display",
+        "visibility",
+        "opacity",
+        "fill-opacity",
+        "stroke-opacity",
+        "stroke-width",
+        "clip-path",
+        "mask",
+        "stroke-dasharray",
+        "stroke-dashoffset",
+        "stroke-linecap",
+        "stroke-linejoin",
+        "stroke-miterlimit",
+        "vector-effect",
+        "marker-start",
+        "marker-mid",
+        "marker-end",
+    ] {
+        if let Some(value) = attrs.get(name) {
+            properties.push((name, value));
+        }
     }
-
-    /// Extend the current path to the `point`.
-    /// Can not be the first command.
-    pub fn line_to(&mut self, point: Coord<F>) -> Result<(), IoError> {
-        let line = self.get_path_mut_or_fail()?;
-        line.0.push(point);
-        Ok(())
+    if let Some(style) = attrs.get("style") {
+        for declaration in style.split(';').filter(|part| !part.trim().is_empty()) {
+            let (name, value) = declaration.split_once(':').ok_or_else(|| {
+                IoError::MalformedInput(format!(
+                    "invalid SVG style declaration {declaration:?}"
+                ))
+            })?;
+            properties.push((name.trim(), value.trim()));
+        }
     }
-
-    /// Extend the current path by `delta` relative to the current point.
-    /// Can not be the first command.
-    pub fn line_by(&mut self, delta: Coord<F>) -> Result<(), IoError> {
-        let position = self.get_position();
-        let line = self.get_path_mut_or_fail()?;
-        line.0.push(position + delta);
-        Ok(())
+    let mut local_opacity = 1.0;
+    let mut local_display = true;
+    for (name, value) in properties {
+        match name {
+            "fill" => context.fill = value != "none",
+            "stroke" => context.stroke = value != "none",
+            "fill-rule" => {
+                context.fill_rule = match value {
+                    "nonzero" => FillRule::NonZero,
+                    "evenodd" => FillRule::EvenOdd,
+                    _ => {
+                        return Err(IoError::MalformedInput(format!(
+                            "invalid SVG fill-rule {value:?}"
+                        )));
+                    },
+                }
+            },
+            "display" => local_display = value != "none",
+            "visibility" => context.visibility = !matches!(value, "hidden" | "collapse"),
+            "opacity" => local_opacity = unit_interval(value, "opacity")?,
+            "fill-opacity" => context.fill_opacity = unit_interval(value, "fill-opacity")?,
+            "stroke-opacity" => {
+                context.stroke_opacity = unit_interval(value, "stroke-opacity")?
+            },
+            "stroke-width" => {
+                context.stroke_width = value.parse::<f64>()?;
+                if !context.stroke_width.is_finite() || context.stroke_width < 0.0 {
+                    return Err(IoError::MalformedInput(
+                        "SVG stroke-width must be finite and non-negative".into(),
+                    ));
+                }
+            },
+            "clip-path" | "mask" | "stroke-dasharray" | "stroke-dashoffset"
+            | "stroke-linecap" | "stroke-linejoin" | "stroke-miterlimit" | "vector-effect"
+            | "marker-start" | "marker-mid" | "marker-end" => {
+                return Err(IoError::Unsupported {
+                    format: "SVG",
+                    detail: format!("style property {name}"),
+                });
+            },
+            _ => {},
+        }
     }
-
-    /// Extend the current path with a horizontal move to `x`.
-    /// Can not be the first command.
-    pub fn hline_to(&mut self, x: F) -> Result<(), IoError> {
-        let Coord { y, .. } = self.get_position();
-        let line = self.get_path_mut_or_fail()?;
-        line.0.push(Coord { x, y });
-        Ok(())
+    context.opacity *= local_opacity;
+    context.displayed &= local_display;
+    if let Some(value) = attrs.get("transform") {
+        context.transform = context.transform.then(parse_transform(value)?);
     }
+    Ok(context)
+}
 
-    /// Extend the current path with a horizontal move by `dx` relative to the current point.
-    /// Can not be the first command.
-    pub fn hline_by(&mut self, dx: F) -> Result<(), IoError> {
-        let Coord { x, y } = self.get_position();
-        let line = self.get_path_mut_or_fail()?;
-        line.0.push(Coord { x: x + dx, y });
-        Ok(())
+fn unit_interval(value: &str, name: &str) -> Result<f64, IoError> {
+    let value = if let Some(percent) = value.strip_suffix('%') {
+        percent.parse::<f64>()? / 100.0
+    } else {
+        value.parse::<f64>()?
+    };
+    if !value.is_finite() || !(0.0..=1.0).contains(&value) {
+        return Err(IoError::MalformedInput(format!(
+            "SVG {name} must be between zero and one"
+        )));
     }
+    Ok(value)
+}
 
-    /// Extend the current path with a vertical move to `y`.
-    /// Can not be the first command.
-    pub fn vline_to(&mut self, y: F) -> Result<(), IoError> {
-        let Coord { x, .. } = self.get_position();
-        let line = self.get_path_mut_or_fail()?;
-        line.0.push(Coord { x, y });
-        Ok(())
+fn number(
+    attrs: &svg::node::Attributes,
+    name: &str,
+    default: Option<f64>,
+) -> Result<f64, IoError> {
+    let value = match attrs.get(name) {
+        Some(value) => value.parse::<f64>()?,
+        None => default
+            .ok_or_else(|| IoError::MalformedInput(format!("missing SVG attribute {name}")))?,
+    };
+    if !value.is_finite() {
+        return Err(IoError::MalformedInput(format!("SVG {name} must be finite")));
     }
+    Ok(value)
+}
 
-    /// Extend the current path with a vertical move by `dy` relative to the current point.
-    /// Can not be the first command.
-    pub fn vline_by(&mut self, dy: F) -> Result<(), IoError> {
-        let Coord { x, y } = self.get_position();
-        let line = self.get_path_mut_or_fail()?;
-        line.0.push(Coord { x, y: y + dy });
-        Ok(())
+fn real(value: f64, name: &'static str) -> Result<Real, IoError> {
+    Real::try_from(value)
+        .map_err(|error| IoError::MalformedInput(format!("SVG {name} is invalid: {error}")))
+}
+
+fn points(value: &str) -> Result<Vec<[Real; 2]>, IoError> {
+    let numbers = parse_numbers(value)?;
+    if numbers.len() < 4 || numbers.len() % 2 != 0 {
+        return Err(IoError::MalformedInput(
+            "SVG points require coordinate pairs".into(),
+        ));
     }
+    numbers
+        .chunks_exact(2)
+        .map(|pair| Ok([real(pair[0], "point x")?, real(pair[1], "point y")?]))
+        .collect()
+}
 
-    /// Close the current path.
-    ///
-    /// In SVG, closing a path using a Close command is different from closing a path using a drawing command.
-    /// Specifically, [line caps are handled differently][svg-paths-close] in such cases.
-    /// For the sake of simplicity, this API *does not differentiate these cases* at the moment.
-    ///
-    /// To follow SVG specification:
-    /// - If this is followed by a moveto/moveby command, they determine the start of the new path.
-    /// - If this is followed by any other command, the new path starts at the end of the last path.
-    ///
-    /// Can not be the first command.
-    ///
-    /// [svg-paths-close]: https://www.w3.org/TR/SVG11/paths.html#PathDataClosePathCommand
-    pub fn close(&mut self) -> Result<(), IoError> {
-        // TODO: maybe make sure there are at least 3 points?
-        let line = self.get_path_mut_or_fail()?;
-        line.close();
-        Ok(())
+fn imported_path(
+    data: &str,
+    context: StyleContext,
+    source_index: u64,
+) -> Result<Profile, IoError> {
+    let mut region = Region2::empty();
+    let mut wires = Vec::new();
+    if context.fills() {
+        let result = import_svg_region_path_data_with_report(
+            data,
+            context.fill_rule,
+            source_index,
+            1,
+            None,
+            &CurvePolicy::certified(),
+        );
+        let blocker = result.report().blocker();
+        region = result.into_region().ok_or_else(|| IoError::Geometry {
+            format: "SVG",
+            detail: format!("path region was not certified: {blocker:?}"),
+        })?;
     }
-
-    /// Extend the current path with a quadratic Bézier curve from the current point using absolute coordinates.
-    ///
-    /// - Using the current point as the start point
-    /// - Using `control` as the control point
-    /// - Using `end` as the end point
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    pub fn quadratic_curve_to(
-        &mut self,
-        _control: Coord<F>,
-        _end: Coord<F>,
-    ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(
-            "quadratic curveto (absolute quadratic Bézier curve)".to_string(),
-        ))
+    if context.strokes() {
+        let result = import_svg_path_data_with_report(data, source_index, 1, None);
+        let blocker = result.report().blocker();
+        wires.push(result.into_curve_string().ok_or_else(|| IoError::Geometry {
+            format: "SVG",
+            detail: format!("stroked path was not retained: {blocker:?}"),
+        })?);
     }
+    Ok(Profile::from_region_and_wires(region, wires))
+}
 
-    /// Extend the current path with a quadratic Bézier curve from the current point using coordinates relative
-    /// to the current point.
-    ///
-    /// - Using the current point as the start point
-    /// - Using `control` as the control point
-    /// - Using `end` as the end point
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    pub fn quadratic_curve_by(
-        &mut self,
-        _control: Coord<F>,
-        _end: Coord<F>,
-    ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(
-            "quadratic curveby (relative quadratic Bézier curve)".to_string(),
-        ))
-    }
-
-    /// Extend the current path with a *smooth* quadratic Bézier curve from the current point using absolute coordinates.
-    ///
-    /// - Using the current point as the start point
-    /// - Using a reflection of `control` of the previous command relative to the current point as the control point
-    ///   - If there is no previous command, or if the previous command is not one of [`quadratic_curve_to`],
-    ///     [`quadratic_curve_by`], [`quadratic_smooth_curve_to`], [`quadratic_smooth_curve_by`], current point
-    ///     is used as the first control point
-    /// - Using `end` as the end point
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    pub fn quadratic_smooth_curve_to(&mut self, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(
-            "quadratic smooth curveto (absolute quadratic Bézier curve with a reflected control point)".to_string()
-        ))
-    }
-
-    /// Extend the current path with a *smooth* quadratic Bézier curve from the current point using coordinates relative
-    /// to the current point.
-    ///
-    /// - Using the current point as the start point
-    /// - Using a reflection of `control` of the previous command relative to the current point as the control point
-    ///   - If there is no previous command, or if the previous command is not one of [`quadratic_curve_to`],
-    ///     [`quadratic_curve_by`], [`quadratic_smooth_curve_to`], [`quadratic_smooth_curve_by`], current point
-    ///     is used as the first control point
-    /// - Using `end` as the end point
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    pub fn quadratic_smooth_curve_by(&mut self, _end: Coord<F>) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(
-            "quadratic smooth curveby (relative quadratic Bézier curve with a reflected control point)".to_string()
-        ))
-    }
-
-    /// Extend the current path with a cubic Bézier curve from the current point using absolute coordinates.
-    ///
-    /// - Using the current point as the start point
-    /// - Using `control_start` as the first control point
-    /// - Using `control_end` as the second control point
-    /// - Using `end` as the end point
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    pub fn curve_to(
-        &mut self,
-        _control_start: Coord<F>,
-        _control_end: Coord<F>,
-        _end: Coord<F>,
-    ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(
-            "curveto (absolute cubic Bézier curve)".to_string(),
-        ))
-    }
-
-    /// Extend the current path with a cubic Bézier curve from the current point using coordinates relative
-    /// to the current point.
-    ///
-    /// - Using the current point as the start point
-    /// - Using `control_start` as the first control point
-    /// - Using `control_end` as the second control point
-    /// - Using `end` as the end point
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    pub fn curve_by(
-        &mut self,
-        _control_start: Coord<F>,
-        _control_end: Coord<F>,
-        _end: Coord<F>,
-    ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(
-            "curveby (relative cubic Bézier curve)".to_string(),
-        ))
-    }
-
-    /// Extend the current path with a *smooth* cubic Bézier curve from the current point using absolute coordinates.
-    ///
-    /// - Using the current point as the start point
-    /// - Using a reflection of `control_end` of the previous command relative to the current point as the first control point
-    ///   - If there is no previous command, or if the previous command is not one of [`curve_to`], [`curve_by`],
-    ///     [`smooth_curve_to`], [`smooth_curve_by`], current point is used as the first control point
-    /// - Using `control_end` as the second control point
-    /// - Using `end` as the end point
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    pub fn smooth_curve_to(
-        &mut self,
-        _control_end: Coord<F>,
-        _end: Coord<F>,
-    ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(
-            "smooth curveto (absolute cubic Bézier curve with a reflected start control point)".to_string()
-        ))
-    }
-
-    /// Extend the current path with a *smooth* cubic Bézier curve from the current point using coordinates relative
-    /// to the current point.
-    ///
-    /// - Using the current point as the start point
-    /// - Using a reflection of `control_end` of the previous command relative to the current point as the first control point
-    ///   - If there is no previous command, or if the previous command is not one of [`curve_to`], [`curve_by`],
-    ///     [`smooth_curve_to`], [`smooth_curve_by`], current point is used as the first control point
-    /// - Using `control_end` as the second control point
-    /// - Using `end` as the end point
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    pub fn smooth_curve_by(
-        &mut self,
-        _control_end: Coord<F>,
-        _end: Coord<F>,
-    ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented(
-            "smooth curveby (relative cubic Bézier curve with a reflected start control point)".to_string()
-        ))
-    }
-
-    /// Extend the current path with an elliptical arc from the current point using absolute coordinates.
-    ///
-    /// See [SVG Path Data - Elliptical Arc Curve commands][svg-arc].
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    ///
-    /// Developers: see also [SVG Elliptical Arc Implementation Notes][svg-arc-impl-notes]
-    ///
-    /// [svg-arc]: https://www.w3.org/TR/SVG11/paths.html#PathDataEllipticalArcCommands
-    /// [svg-arc-impl-notes]: https://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
-    pub fn elliptical_arc_to(
-        &mut self,
-        _rx: F,
-        _ry: F,
-        _x_axis_rotation: F,
-        _large_arc_flag: bool,
-        _sweep_flag: bool,
-        _end: Coord<F>,
-    ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented("elliptical arc to".to_string()))
-    }
-
-    /// Extend the current path with an elliptical arc from the current point using coordinates relative
-    /// to the current point.
-    ///
-    /// See [SVG Path Data - Elliptical Arc Curve commands][svg-arc].
-    ///
-    /// Can not be the first command.
-    ///
-    /// **Not implemented**
-    ///
-    /// Developers: see also [SVG Elliptical Arc Implementation Notes][svg-arc-impl-notes]
-    ///
-    /// [svg-arc]: https://www.w3.org/TR/SVG11/paths.html#PathDataEllipticalArcCommands
-    /// [svg-arc-impl-notes]: https://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
-    pub fn elliptical_arc_by(
-        &mut self,
-        _rx: F,
-        _ry: F,
-        _x_axis_rotation: F,
-        _large_arc_flag: bool,
-        _sweep_flag: bool,
-        _end: Coord<F>,
-    ) -> Result<(), IoError> {
-        Err(IoError::Unimplemented("elliptical arc by".to_string()))
+fn styled_shape(shape: Profile, context: StyleContext) -> Profile {
+    if context.fills() && context.strokes() {
+        let wires = shape
+            .as_region()
+            .material_contours()
+            .iter()
+            .chain(shape.as_region().hole_contours())
+            .map(|contour| contour.curve_string().clone())
+            .collect();
+        Profile::from_region_and_wires(shape.as_region().clone(), wires)
+    } else if context.strokes() {
+        let wires = shape
+            .as_region()
+            .material_contours()
+            .iter()
+            .chain(shape.as_region().hole_contours())
+            .map(|contour| contour.curve_string().clone())
+            .collect();
+        Profile::from_wires(wires)
+    } else if context.fills() {
+        shape
+    } else {
+        Profile::empty()
     }
 }
 
-#[allow(unused)]
-pub trait FromSVG<M>: Sized {
-    fn from_svg(doc: &str, metadata: M) -> Result<Self, IoError>;
+pub trait FromSVG: Sized {
+    fn from_svg(document: &str) -> Result<Self, IoError>;
+    fn from_svg_with_options(document: &str, options: SvgOptions) -> Result<Self, IoError>;
 }
 
-impl<M> FromSVG<M> for Sketch<M>
-where
-    M: Clone + Send + Sync + Debug,
-{
-    fn from_svg(doc: &str, metadata: M) -> Result<Self, IoError> {
-        use svg::node::element::tag::{self, Type::*};
+impl FromSVG for Profile {
+    fn from_svg(document: &str) -> Result<Self, IoError> {
+        Self::from_svg_with_options(document, SvgOptions::default())
+    }
+
+    fn from_svg_with_options(document: &str, options: SvgOptions) -> Result<Self, IoError> {
+        use svg::node::element::tag;
+        use svg::node::element::tag::Type::{Empty, End, Start};
         use svg::parser::Event;
 
-        macro_rules! expect_attr {
-            ($attrs:expr, $attr:literal) => {
-                $attrs.get($attr).ok_or_else(|| {
-                    IoError::MalformedInput(format!("Missing attribute {}", $attr))
-                })
-            };
-        }
-
-        macro_rules! option_attr {
-            ($attrs:expr, $attr:literal) => {
-                $attrs.get($attr)
-            };
-        }
-
-        let mut sketch_union = Sketch::empty(metadata.clone());
-
-        for event in svg::read(doc)? {
-            match event {
-                Event::Instruction(..)
-                | Event::Declaration(..)
-                | Event::Text(..)
-                | Event::Comment(..)
-                | Event::Tag(tag::SVG, ..)
-                | Event::Tag(tag::Description, ..)
-                | Event::Tag(tag::Text, ..)
-                | Event::Tag(tag::Title, ..) => {},
-
-                Event::Error(error) => {
+        let options = options.validate()?;
+        let mut contexts = vec![StyleContext::default()];
+        let mut output = Profile::empty();
+        let mut source_index = 0_u64;
+        for event in svg::read(document)? {
+            let Event::Tag(name, kind, attrs) = event else {
+                if let Event::Error(error) = event {
                     return Err(error.into());
-                },
-
-                Event::Tag(tag::Group, ..) => {
-                    // TODO: keep track of transforms
-                    // TODO: keep track of style properties
-                },
-
-                Event::Tag(tag::Path, Empty, attrs) => {
-                    let data = expect_attr!(attrs, "d")?;
-                    let data = path::Data::parse(data)?;
-                    let mls = svg_path_to_multi_line_string(data)?;
-
-                    // TODO: This is tricky.
-                    // Whether a <path/> contains lines or polygons really depends on the current stroke and fill,
-                    // which requires keeping track of them by parsing `style=""` and other attributes,
-                    // and pushing/popping the current "style context" on group entry and exit.
-                    //
-                    // On top of that, when a <path/> is a polygon, subpaths may define additional polygons OR
-                    // holes in existing polygons (and how specifically, may depend on either their winding order
-                    // or on the level of nestedness).
-                    // Read more / see examples here: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill-rule
-                    //
-                    // This is a bit advanced, so (for now) this code just assumes that:
-                    // - every closed subpath is a polygon (as if with solid fill and zero stroke thickness)
-                    // - every unclosed subpath is a line (as if with no fill)
-                    //
-                    // The lines are then (for now) discarded as expanding lines requires knowing current stroke-width.
-
-                    for ls in mls.0.into_iter() {
-                        if ls.is_closed() {
-                            let polygon = Polygon::new(ls, vec![]);
-                            let sketch = Self::from_geo(polygon.into(), metadata.clone());
-                            sketch_union = sketch_union.union(&sketch);
-                        }
-                    }
-                },
-
-                Event::Tag(tag::Circle, Empty, attrs) => {
-                    let cx = expect_attr!(attrs, "cx")?.parse()?;
-                    let cy = expect_attr!(attrs, "cy")?.parse()?;
-                    let r: Real = expect_attr!(attrs, "r")?.parse()?;
-
-                    // TODO: add a way for the user to configure this?
-                    let segments = (r.ceil() as usize).max(6);
-
-                    let sketch =
-                        Self::circle(r, segments, metadata.clone()).translate(cx, cy, 0.0);
-                    sketch_union = sketch_union.union(&sketch);
-                },
-
-                Event::Tag(tag::Rectangle, Empty, attrs) => {
-                    let x: Real = expect_attr!(attrs, "x")?.parse()?;
-                    let y: Real = expect_attr!(attrs, "y")?.parse()?;
-                    let w: Real = expect_attr!(attrs, "width")?.parse()?;
-                    let h: Real = expect_attr!(attrs, "height")?.parse()?;
-                    let rx: Real = option_attr!(attrs, "rx").map_or(Ok(0.0), |a| a.parse())?;
-                    let ry: Real = option_attr!(attrs, "ry").map_or(Ok(0.0), |a| a.parse())?;
-
-                    // TODO: support rx != ry
-                    let r = (rx + ry) / 2.0;
-
-                    // TODO: add a way for the user to configure this?
-                    let segments = (r.ceil() as usize).max(6);
-
-                    let sketch = Self::rounded_rectangle(w, h, r, segments, metadata.clone())
-                        .translate(x, y, 0.0);
-                    sketch_union = sketch_union.union(&sketch);
-                },
-
-                Event::Tag(tag::Ellipse, Empty, attrs) => {
-                    let cx = expect_attr!(attrs, "cx")?.parse()?;
-                    let cy = expect_attr!(attrs, "cy")?.parse()?;
-                    let rx: Real = expect_attr!(attrs, "rx")?.parse()?;
-                    let ry: Real = expect_attr!(attrs, "ry")?.parse()?;
-
-                    // TODO: add a way for the user to configure this?
-                    let segments = (rx.max(ry).ceil() as usize).max(6);
-
-                    let sketch = Self::ellipse(rx * 2.0, ry * 2.0, segments, metadata.clone())
-                        .translate(cx, cy, 0.0);
-                    sketch_union = sketch_union.union(&sketch);
-                },
-
-                Event::Tag(tag::Line, Empty, attrs) => {
-                    let _x1 = expect_attr!(attrs, "x1")?;
-                    let _y1 = expect_attr!(attrs, "y1")?;
-                    let _x2 = expect_attr!(attrs, "x2")?;
-                    let _y2 = expect_attr!(attrs, "y2")?;
-
-                    // TODO: This needs knowing current stroke-width
-                },
-
-                Event::Tag(tag::Polygon, Empty, attrs) => {
-                    let points = expect_attr!(attrs, "points")?;
-                    let polygon = Polygon::new(svg_points_to_line_string(points)?, vec![]);
-                    let sketch = Self::from_geo(polygon.into(), metadata.clone());
-                    sketch_union = sketch_union.union(&sketch);
-                },
-
-                Event::Tag(tag::Polyline, Empty, attrs) => {
-                    let points = expect_attr!(attrs, "points")?;
-                    let _ls = svg_points_to_line_string::<Real>(points)?;
-
-                    // TODO: This needs knowing current stroke-width
-                },
-
-                tag => {
-                    // TODO: Non-empty tags should also be supported
-                    return Err(IoError::Unimplemented(format!("Parsing tag {tag:?}")));
-                },
-            }
-        }
-
-        Ok(sketch_union)
-    }
-}
-
-#[allow(unused)]
-pub trait ToSVG {
-    fn to_svg(&self) -> String;
-}
-
-impl<M: Clone> ToSVG for Sketch<M> {
-    fn to_svg(&self) -> String {
-        use geo::Geometry::*;
-        use svg::node::element;
-
-        let mut g = element::Group::new();
-
-        let make_line_string = |line_string: &geo::LineString<Real>| {
-            let mut data = path::Data::new();
-            let mut points = line_string.coords();
-
-            if let Some(start) = points.next() {
-                data = data.move_to(start.x_y());
-            }
-            for point in points {
-                data = data.line_to(point.x_y());
-            }
-
-            element::Path::new()
-                .set("fill", "none")
-                .set("stroke", "black")
-                .set("stroke-width", 1)
-                .set("vector-effect", "non-scaling-stroke")
-                .set("d", data)
-        };
-
-        #[allow(clippy::unnecessary_cast)]
-        let make_polygon = |polygon: &geo::Polygon<Real>| {
-            let mut data = path::Data::new();
-
-            // `svg::Data` accepts a `Vec<f32>` here, so always cast to `f32`.
-            let exterior = polygon.exterior();
-            data = data.move_to(
-                // Skip the last point because it is equal to the first one
-                exterior.0[..(exterior.0.len() - 1)]
-                    .iter()
-                    .flat_map(|c| [c.x as f32, c.y as f32])
-                    .collect::<Vec<f32>>(),
-            );
-
-            data = data.close();
-
-            #[allow(clippy::unnecessary_cast)]
-            for interior in polygon.interiors() {
-                data = data.move_to(
-                    // Skip the last point because it is equal to the first one
-                    interior.0[..(interior.0.len() - 1)]
-                        .iter()
-                        .flat_map(|c| [c.x as f32, c.y as f32])
-                        .collect::<Vec<f32>>(),
-                );
-
-                data = data.close();
-            }
-
-            element::Path::new()
-                .set("fill", "black")
-                .set("fill-rule", "evenodd")
-                .set("stroke", "none")
-                .set("d", data)
-        };
-
-        let bounds = self.geometry.bounding_rect().unwrap_or(geo::Rect::new(
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 1.0, y: 1.0 },
-        ));
-
-        for geometry in self.geometry.iter() {
-            match geometry {
-                Line(line) => {
-                    g = g.add(
-                        element::Line::new()
-                            .set("stroke", "black")
-                            .set("stroke-width", 1)
-                            .set("vector-effect", "non-scaling-stroke")
-                            .set("x1", line.start.x)
-                            .set("y1", line.start.y)
-                            .set("x2", line.end.x)
-                            .set("y2", line.end.y),
-                    );
-                },
-
-                LineString(line_string) => {
-                    g = g.add(make_line_string(line_string));
-                },
-                Polygon(polygon) => {
-                    g = g.add(make_polygon(polygon));
-                },
-                MultiLineString(multi_line_string) => {
-                    for line_string in multi_line_string {
-                        g = g.add(make_line_string(line_string));
-                    }
-                },
-                MultiPolygon(multi_polygon) => {
-                    for polygon in multi_polygon {
-                        g = g.add(make_polygon(polygon));
-                    }
-                },
-
-                Rect(rect) => {
-                    g = g.add(make_polygon(&rect.to_polygon()));
-                },
-
-                Triangle(triangle) => {
-                    g = g.add(make_polygon(&triangle.to_polygon()));
-                },
-
-                GeometryCollection(_) => {
-                    unimplemented!("Exporting nested geometry collections to SVG")
-                },
-
-                // Can't really export points to SVG
-                Point(_) => {},
-                MultiPoint(_) => {},
-            }
-        }
-
-        let doc = svg::Document::new()
-            .set(
-                "viewBox",
-                (
-                    bounds.min().x,
-                    bounds.min().y,
-                    bounds.width(),
-                    bounds.height(),
-                ),
-            )
-            .add(g);
-
-        doc.to_string()
-    }
-}
-
-fn svg_path_to_multi_line_string<F: CoordNum>(
-    path_data: path::Data,
-) -> Result<MultiLineString<F>, IoError> {
-    // `svg` crate returns `f32`, so that's what is used here.
-    let mut builder = PathBuilder::<f32>::new();
-
-    for cmd in path_data.iter() {
-        use svg::node::element::path::{Command::*, Position::*};
-
-        macro_rules! ensure_param_count {
-            ($count:expr, $div_by:expr) => {
-                if $count % $div_by != 0 {
-                    return Err(IoError::MalformedPath(format!("Expected the number of parameters {} to be divisible by {} in command {cmd:?}", $count, $div_by)));
                 }
-            };
-        }
-
-        let param_count = match cmd {
-            Move(..) | Line(..) => 2,
-
-            HorizontalLine(..) | VerticalLine(..) => 1,
-
-            QuadraticCurve(..) => 4,
-            SmoothQuadraticCurve(..) => 2,
-            CubicCurve(..) => 6,
-            SmoothCubicCurve(..) => 4,
-            EllipticalArc(..) => 7,
-
-            Close => {
-                builder.close()?;
                 continue;
-            },
-        };
-
-        match cmd {
-            Move(Absolute, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut coords = params.chunks(param_count);
-
-                if let Some(&[x, y]) = coords.next() {
-                    builder.move_to(Coord { x, y });
+            };
+            if matches!(name, tag::Group | tag::SVG) {
+                match kind {
+                    Start => {
+                        if name == tag::SVG
+                            && contexts.len() > 1
+                            && ["x", "y", "viewBox", "preserveAspectRatio"]
+                                .iter()
+                                .any(|attribute| attrs.contains_key(*attribute))
+                        {
+                            return Err(IoError::Unsupported {
+                                format: "SVG",
+                                detail: "nested SVG viewport transforms".into(),
+                            });
+                        }
+                        let parent = *contexts.last().ok_or_else(|| {
+                            IoError::MalformedInput("SVG style context stack is empty".into())
+                        })?;
+                        contexts.push(apply_style(parent, &attrs)?);
+                    },
+                    End => {
+                        if contexts.len() > 1 {
+                            contexts.pop();
+                        }
+                    },
+                    Empty => {},
                 }
-
-                // Follow-up coordinates for MoveTo are implicit LineTo
-                while let Some(&[x, y]) = coords.next() {
-                    builder.line_to(Coord { x, y })?;
-                }
-            },
-            Move(Relative, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut coords = params.chunks(param_count);
-
-                if let Some(&[dx, dy]) = coords.next() {
-                    builder.move_by(Coord { x: dx, y: dy });
-                }
-
-                // Follow-up coordinates for MoveTo are implicit LineTo
-                while let Some(&[dx, dy]) = coords.next() {
-                    builder.line_by(Coord { x: dx, y: dy })?;
-                }
-            },
-            Line(Absolute, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut coords = params.chunks(param_count);
-                while let Some(&[x, y]) = coords.next() {
-                    builder.line_to(Coord { x, y })?;
-                }
-            },
-            Line(Relative, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut coords = params.chunks(param_count);
-                while let Some(&[dx, dy]) = coords.next() {
-                    builder.line_by(Coord { x: dx, y: dy })?;
-                }
-            },
-            HorizontalLine(Absolute, params) => {
-                for &x in params.iter() {
-                    builder.hline_to(x)?;
-                }
-            },
-            HorizontalLine(Relative, params) => {
-                for &dx in params.iter() {
-                    builder.hline_by(dx)?;
-                }
-            },
-            VerticalLine(Absolute, params) => {
-                for &y in params.iter() {
-                    builder.vline_to(y)?;
-                }
-            },
-            VerticalLine(Relative, params) => {
-                for &dy in params.iter() {
-                    builder.vline_by(dy)?;
-                }
-            },
-
-            QuadraticCurve(Absolute, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[cx, cy, x, y]) = params.next() {
-                    builder.quadratic_curve_to(Coord { x: cx, y: cy }, Coord { x, y })?;
-                }
-            },
-            QuadraticCurve(Relative, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[cx, cy, x, y]) = params.next() {
-                    builder.quadratic_curve_by(Coord { x: cx, y: cy }, Coord { x, y })?;
-                }
-            },
-            SmoothQuadraticCurve(Absolute, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[x, y]) = params.next() {
-                    builder.quadratic_smooth_curve_to(Coord { x, y })?;
-                }
-            },
-            SmoothQuadraticCurve(Relative, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[x, y]) = params.next() {
-                    builder.quadratic_smooth_curve_by(Coord { x, y })?;
-                }
-            },
-
-            CubicCurve(Absolute, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[c1x, c1y, c2x, c2y, x, y]) = params.next() {
-                    builder.curve_to(
-                        Coord { x: c1x, y: c1y },
-                        Coord { x: c2x, y: c2y },
-                        Coord { x, y },
-                    )?;
-                }
-            },
-            CubicCurve(Relative, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[c1x, c1y, c2x, c2y, x, y]) = params.next() {
-                    builder.curve_by(
-                        Coord { x: c1x, y: c1y },
-                        Coord { x: c2x, y: c2y },
-                        Coord { x, y },
-                    )?;
-                }
-            },
-            SmoothCubicCurve(Absolute, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[c2x, c2y, x, y]) = params.next() {
-                    builder.smooth_curve_to(Coord { x: c2x, y: c2y }, Coord { x, y })?;
-                }
-            },
-            SmoothCubicCurve(Relative, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[c2x, c2y, x, y]) = params.next() {
-                    builder.smooth_curve_by(Coord { x: c2x, y: c2y }, Coord { x, y })?;
-                }
-            },
-
-            EllipticalArc(Absolute, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[rx, ry, x_rot, large_arc, sweep, x, y]) = params.next() {
-                    let large_arc = large_arc == 1.0;
-                    let sweep = sweep == 1.0;
-                    builder.elliptical_arc_to(
-                        rx,
-                        ry,
-                        x_rot,
-                        large_arc,
-                        sweep,
-                        Coord { x, y },
-                    )?;
-                }
-            },
-            EllipticalArc(Relative, params) => {
-                ensure_param_count!(params.len(), param_count);
-                let mut params = params.chunks(param_count);
-                while let Some(&[rx, ry, x_rot, large_arc, sweep, x, y]) = params.next() {
-                    let large_arc = large_arc == 1.0;
-                    let sweep = sweep == 1.0;
-                    builder.elliptical_arc_by(
-                        rx,
-                        ry,
-                        x_rot,
-                        large_arc,
-                        sweep,
-                        Coord { x, y },
-                    )?;
-                }
-            },
-
-            Close => {
-                unreachable!("Expected an early continue.");
-            },
+                continue;
+            }
+            if matches!(kind, End) || matches!(name, tag::Description | tag::Title) {
+                continue;
+            }
+            let parent = *contexts.last().ok_or_else(|| {
+                IoError::MalformedInput("SVG style context stack is empty".into())
+            })?;
+            let context = apply_style(parent, &attrs)?;
+            if !context.visible() {
+                continue;
+            }
+            let shape = match name {
+                tag::Path => {
+                    let data = attrs.get("d").ok_or_else(|| {
+                        IoError::MalformedInput("missing SVG path d attribute".into())
+                    })?;
+                    imported_path(data, context, source_index)?
+                },
+                tag::Circle => {
+                    let radius = number(&attrs, "r", None)?;
+                    let segments = options.segments_for_radius(radius)?;
+                    styled_shape(
+                        Profile::circle(real(radius, "radius")?, segments).translate(
+                            real(number(&attrs, "cx", Some(0.0))?, "cx")?,
+                            real(number(&attrs, "cy", Some(0.0))?, "cy")?,
+                            Real::zero(),
+                        ),
+                        context,
+                    )
+                },
+                tag::Ellipse => {
+                    let rx = number(&attrs, "rx", None)?;
+                    let ry = number(&attrs, "ry", None)?;
+                    if rx <= 0.0 || ry <= 0.0 {
+                        return Err(IoError::MalformedInput(
+                            "SVG ellipse radii must be positive".into(),
+                        ));
+                    }
+                    let segments = options.segments_for_radius(rx.max(ry))?;
+                    styled_shape(
+                        Profile::ellipse(
+                            real(2.0 * rx, "rx")?,
+                            real(2.0 * ry, "ry")?,
+                            segments,
+                        )
+                        .translate(
+                            real(number(&attrs, "cx", Some(0.0))?, "cx")?,
+                            real(number(&attrs, "cy", Some(0.0))?, "cy")?,
+                            Real::zero(),
+                        ),
+                        context,
+                    )
+                },
+                tag::Rectangle => rectangle(&attrs, context, options)?,
+                tag::Line => {
+                    let wire = CurveString2::from_real_point_iter([
+                        [
+                            real(number(&attrs, "x1", Some(0.0))?, "x1")?,
+                            real(number(&attrs, "y1", Some(0.0))?, "y1")?,
+                        ],
+                        [
+                            real(number(&attrs, "x2", Some(0.0))?, "x2")?,
+                            real(number(&attrs, "y2", Some(0.0))?, "y2")?,
+                        ],
+                    ])
+                    .map_err(|error| IoError::Geometry {
+                        format: "SVG",
+                        detail: error.to_string(),
+                    })?;
+                    if context.strokes() {
+                        Profile::from_wires(vec![wire])
+                    } else {
+                        Profile::empty()
+                    }
+                },
+                tag::Polygon => {
+                    let polygon_points = points(attrs.get("points").ok_or_else(|| {
+                        IoError::MalformedInput("missing SVG polygon points".into())
+                    })?)?;
+                    if polygon_points.len() < 3 {
+                        return Err(IoError::MalformedInput(
+                            "SVG polygon requires at least three points".into(),
+                        ));
+                    }
+                    styled_shape(Profile::polygon(&polygon_points), context)
+                },
+                tag::Polyline => {
+                    let polyline_points = points(attrs.get("points").ok_or_else(|| {
+                        IoError::MalformedInput("missing SVG polyline points".into())
+                    })?)?;
+                    let wire = CurveString2::from_real_point_iter(polyline_points.clone())
+                        .map_err(|error| IoError::Geometry {
+                            format: "SVG",
+                            detail: error.to_string(),
+                        })?;
+                    let region = if context.fills() {
+                        Profile::polygon(&polyline_points).as_region().clone()
+                    } else {
+                        Region2::empty()
+                    };
+                    let wires = if context.strokes() {
+                        vec![wire]
+                    } else {
+                        Vec::new()
+                    };
+                    Profile::from_region_and_wires(region, wires)
+                },
+                other => {
+                    return Err(IoError::Unsupported {
+                        format: "SVG",
+                        detail: format!("element {other}"),
+                    });
+                },
+            };
+            source_index += 1;
+            let transformed = shape.transform(&context.transform.matrix()?);
+            output = output
+                .try_union(&transformed)
+                .map_err(|error| IoError::Geometry {
+                    format: "SVG",
+                    detail: error.to_string(),
+                })?;
         }
+        Ok(output)
     }
-
-    let mls: MultiLineString<f32> = builder.into();
-    let mls = mls.map_coords(|c| Coord {
-        x: F::from(c.x).unwrap(),
-        y: F::from(c.y).unwrap(),
-    });
-
-    Ok(mls)
 }
 
-/// Parse contents of the SVG <polyline/> and <polygon/> attribute [`points`][points] into a `LineString`.
-///
-/// [points]: https://www.w3.org/TR/SVG11/shapes.html#PointsBNF
-fn svg_points_to_line_string<F: CoordNum>(points: &str) -> Result<LineString<F>, IoError> {
-    use nom::IResult;
-    use nom::Parser;
-    use nom::branch::alt;
-    use nom::character::complete::{char, multispace0, multispace1};
-    use nom::combinator::opt;
-    use nom::multi::separated_list1;
-    use nom::number::complete::float;
-    use nom::sequence::{delimited, pair, separated_pair, tuple};
+fn rectangle(
+    attrs: &svg::node::Attributes,
+    context: StyleContext,
+    options: SvgOptions,
+) -> Result<Profile, IoError> {
+    let x = number(attrs, "x", Some(0.0))?;
+    let y = number(attrs, "y", Some(0.0))?;
+    let width = number(attrs, "width", None)?;
+    let height = number(attrs, "height", None)?;
+    if width <= 0.0 || height <= 0.0 {
+        return Err(IoError::MalformedInput(
+            "SVG rectangle dimensions must be positive".into(),
+        ));
+    }
+    let rx_attr = attrs
+        .get("rx")
+        .map(|value| value.parse::<f64>())
+        .transpose()?;
+    let ry_attr = attrs
+        .get("ry")
+        .map(|value| value.parse::<f64>())
+        .transpose()?;
+    let (rx, ry) = match (rx_attr, ry_attr) {
+        (None, None) => (0.0, 0.0),
+        (Some(rx), None) => (rx, rx),
+        (None, Some(ry)) => (ry, ry),
+        (Some(rx), Some(ry)) => (rx, ry),
+    };
+    if !rx.is_finite() || !ry.is_finite() || rx < 0.0 || ry < 0.0 {
+        return Err(IoError::MalformedInput(
+            "SVG rectangle corner radii must be finite and non-negative".into(),
+        ));
+    }
+    let rx = rx.clamp(0.0, width / 2.0);
+    let ry = ry.clamp(0.0, height / 2.0);
+    let shape = if rx == 0.0 || ry == 0.0 {
+        Profile::rectangle(real(width, "width")?, real(height, "height")?)
+    } else {
+        let segments = options.segments_for_radius(rx.max(ry))? / 4;
+        let mut boundary = Vec::new();
+        for (cx, cy, start) in [
+            (width - rx, ry, -std::f64::consts::FRAC_PI_2),
+            (width - rx, height - ry, 0.0),
+            (rx, height - ry, std::f64::consts::FRAC_PI_2),
+            (rx, ry, std::f64::consts::PI),
+        ] {
+            for index in 0..=segments {
+                let angle =
+                    start + std::f64::consts::FRAC_PI_2 * index as f64 / segments as f64;
+                boundary.push([
+                    real(cx + rx * angle.cos(), "rounded rectangle x")?,
+                    real(cy + ry * angle.sin(), "rounded rectangle y")?,
+                ]);
+            }
+        }
+        Profile::polygon(&boundary)
+    };
+    Ok(styled_shape(
+        shape.translate(real(x, "x")?, real(y, "y")?, Real::zero()),
+        context,
+    ))
+}
 
-    fn comma_wsp(i: &str) -> IResult<&str, ()> {
-        let (i, _) = alt((
-            tuple((multispace1, opt(char(',')), multispace0)).map(|_| ()),
-            pair(char(','), multispace0).map(|_| ()),
-        ))(i)?;
-        Ok((i, ()))
+pub trait ToSVG {
+    fn to_svg(&self) -> Result<String, IoError>;
+    fn to_svg_with_options(&self, options: SvgOptions) -> Result<String, IoError>;
+}
+
+impl ToSVG for Profile {
+    fn to_svg(&self) -> Result<String, IoError> {
+        self.to_svg_with_options(SvgOptions::default())
     }
 
-    fn point<F: CoordNum>(i: &str) -> IResult<&str, Coord<F>> {
-        let (i, (x, y)) = separated_pair(float, comma_wsp, float)(i)?;
-        Ok((
-            i,
-            Coord {
-                x: F::from(x).unwrap(),
-                y: F::from(y).unwrap(),
+    fn to_svg_with_options(&self, options: SvgOptions) -> Result<String, IoError> {
+        let options = options.validate()?;
+        let projection =
+            FiniteProjectionOptions::try_new(options.curve_tolerance).map_err(|error| {
+                IoError::Geometry {
+                    format: "SVG",
+                    detail: error.to_string(),
+                }
+            })?;
+        let profiles = match self.project_region_profiles(&projection).map_err(|error| {
+            IoError::Geometry {
+                format: "SVG",
+                detail: error.to_string(),
+            }
+        })? {
+            Classification::Decided(profiles) => profiles,
+            Classification::Uncertain(reason) => {
+                return Err(IoError::Geometry {
+                    format: "SVG",
+                    detail: format!("region projection is uncertain: {reason:?}"),
+                });
             },
+        };
+        let (min_x, min_y, max_x, max_y) =
+            self.native_xy_bounds().ok_or_else(|| IoError::Geometry {
+                format: "SVG",
+                detail: "cannot bound empty geometry".into(),
+            })?;
+        let bounds = [
+            finite_f64(&min_x, "SVG", "minimum x")?,
+            finite_f64(&min_y, "SVG", "minimum y")?,
+            finite_f64(&max_x, "SVG", "maximum x")?,
+            finite_f64(&max_y, "SVG", "maximum y")?,
+        ];
+        let mut body = String::new();
+        for profile in profiles {
+            body.push_str("<path fill=\"black\" fill-rule=\"evenodd\" stroke=\"none\" d=\"");
+            append_ring(&mut body, profile.material().points());
+            for hole in profile.holes() {
+                append_ring(&mut body, hole.points());
+            }
+            body.push_str("\"/>\n");
+        }
+        for wire in self.wires() {
+            let polyline = wire
+                .project_to_finite_polyline(&projection)
+                .map_err(|error| IoError::Geometry {
+                    format: "SVG",
+                    detail: error.to_string(),
+                })?;
+            body.push_str("<path fill=\"none\" stroke=\"black\" d=\"");
+            append_open(&mut body, polyline.points());
+            body.push_str("\"/>\n");
+        }
+        Ok(format!(
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{:.17} {:.17} {:.17} {:.17}\">\n{body}</svg>",
+            bounds[0],
+            bounds[1],
+            bounds[2] - bounds[0],
+            bounds[3] - bounds[1]
         ))
     }
+}
 
-    fn all_points<F: CoordNum>(i: &str) -> IResult<&str, Vec<Coord<F>>> {
-        delimited(multispace0, separated_list1(comma_wsp, point), multispace0)(i)
-    }
+fn append_ring(output: &mut String, points: &[[f64; 2]]) {
+    append_open(output, points);
+    output.push_str(" Z ");
+}
 
-    match all_points(points) {
-        Ok(("", points)) => Ok(LineString::new(points)),
-        Ok(_) => Err(IoError::MalformedInput(format!(
-            "Could not parse the list of points: {points}"
-        ))),
-        Err(err) => Err(IoError::MalformedInput(format!(
-            "Could not parse the list of points ({err}): {points}"
-        ))),
+fn append_open(output: &mut String, points: &[[f64; 2]]) {
+    if let Some(first) = points.first() {
+        output.push_str(&format!("M {:.17} {:.17}", first[0], first[1]));
+        for point in &points[1..] {
+            output.push_str(&format!(" L {:.17} {:.17}", point[0], point[1]));
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use geo::line_string;
-
     use super::*;
 
     #[test]
-    fn basic_svg_io() {
-        let svg_in = r#"
-<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-<g>
-<path d="M0,0,100,0,100,100 z" fill="black" fill-rule="evenodd" stroke="none"/>
-</g>
-</svg>
-        "#;
-
-        let sketch = Sketch::<()>::from_svg(svg_in, ()).unwrap();
-        let svg_out = sketch.to_svg();
-        let reparsed = Sketch::<()>::from_svg(&svg_out, ()).unwrap();
-
-        assert_eq!(
-            sketch.to_multipolygon().0.len(),
-            reparsed.to_multipolygon().0.len()
-        );
-        assert_eq!(sketch.triangulate().len(), reparsed.triangulate().len());
+    fn imports_inherited_transform_and_svg_defaults() {
+        let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><g transform="translate(3 4)"><circle r="2"/></g></svg>"#;
+        let profile = Profile::from_svg(document).unwrap();
+        let bounds = profile.bounding_box();
+        for (actual, expected) in [
+            (&bounds.mins.x, 1.0),
+            (&bounds.mins.y, 2.0),
+            (&bounds.maxs.x, 5.0),
+            (&bounds.maxs.y, 6.0),
+        ] {
+            assert!((actual.to_f64_lossy().unwrap() - expected).abs() < 0.001);
+        }
     }
 
     #[test]
-    fn svg_points_parsing() {
-        let expected = line_string![
-            (x: 350.0, y:  75.0),
-            (x: 379.0, y: 161.0),
-            (x: 469.0, y: 161.0),
-            (x: 397.0, y: 215.0),
-            (x: 423.0, y: 301.0),
-            (x: 350.0, y: 250.0),
-            (x: 277.0, y: 301.0),
-            (x: 303.0, y: 215.0),
-            (x: 231.0, y: 161.0),
-            (x: 321.0, y: 161.0),
-        ];
+    fn polyline_fill_closes_but_stroke_remains_open() {
+        let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><polyline points="0,0 2,0 1,1" stroke="black"/></svg>"#;
+        let profile = Profile::from_svg(document).unwrap();
+        assert_eq!(profile.as_region().material_contours().len(), 1);
+        assert_eq!(profile.wires().len(), 1);
+        assert_ne!(profile.wires()[0].start(), profile.wires()[0].end());
+    }
 
-        let points = "
-            350,75  379,161 469,161 397,215
-            423,301 350,250 277,301 303,215
-            231,161 321,161
-        ";
-        let points = svg_points_to_line_string(points).unwrap();
-        assert_eq!(points, expected);
+    #[test]
+    fn export_reports_empty_geometry() {
+        assert!(Profile::empty().to_svg().is_err());
+    }
 
-        let points = "
-            350 75  379 161 469 161 397 215
-            423 301 350 250 277 301 303 215
-            231 161 321 161
-        ";
-        let points = svg_points_to_line_string(points).unwrap();
-        assert_eq!(points, expected);
+    #[test]
+    fn rejects_unbounded_curve_sampling() {
+        let document =
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><circle r="1000000"/></svg>"#;
+        assert!(Profile::from_svg(document).is_err());
+    }
 
-        let points = "
-            350,75,379,161,469,161,397,215,
-            423,301,350,250,277,301,303,215,
-            231,161,321,161
-        ";
-        let points = svg_points_to_line_string(points).unwrap();
-        assert_eq!(points, expected);
+    #[test]
+    fn rejects_invalid_shape_dimensions() {
+        for document in [
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><ellipse rx="2" ry="-1"/></svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><rect width="2" height="2" rx="-1"/></svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 1,1"/></svg>"#,
+        ] {
+            assert!(Profile::from_svg(document).is_err());
+        }
+    }
 
-        let points = "
-            350 , 75 , 379 , 161 , 469 , 161 , 397 , 215 ,
-            423 ,301, 350 ,250, 277 ,301, 303 ,215,
-            231    161    321    161
-        ";
-        let points = svg_points_to_line_string(points).unwrap();
-        assert_eq!(points, expected);
+    #[test]
+    fn parses_svg_number_grammar_and_style_overrides() {
+        let document = r#"<svg xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" transform="translate(3-4)">
+                <polygon fill="black" points="0-0 2-0 2-2 0-2"/>
+                <line x1="0" y1="0" x2="2" y2="2" stroke="black"/>
+                <circle r="10" opacity="0"/>
+            </g>
+        </svg>"#;
+        let profile = Profile::from_svg(document).unwrap();
+        assert_eq!(profile.as_region().material_contours().len(), 1);
+        assert_eq!(profile.wires().len(), 1);
+        let bounds = profile.bounding_box();
+        for (actual, expected) in [
+            (&bounds.mins.x, 3.0),
+            (&bounds.mins.y, -6.0),
+            (&bounds.maxs.x, 5.0),
+            (&bounds.maxs.y, -2.0),
+        ] {
+            let actual = actual.to_f64_lossy().unwrap();
+            assert!(
+                (actual - expected).abs() < 1e-9,
+                "expected {expected}, got {actual}"
+            );
+        }
+    }
+
+    #[test]
+    fn exported_svg_round_trips_through_importer() {
+        let square = Profile::square(Real::from(3_u8));
+        let document = square.to_svg().unwrap();
+        let reparsed = Profile::from_svg(&document).unwrap();
+        let bounds = reparsed.bounding_box();
+        assert_eq!(bounds.mins.x, Real::zero());
+        assert_eq!(bounds.mins.y, Real::zero());
+        assert_eq!(bounds.maxs.x, Real::from(3_u8));
+        assert_eq!(bounds.maxs.y, Real::from(3_u8));
+    }
+
+    #[test]
+    fn reports_unrepresentable_svg_geometry_features() {
+        for document in [
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><text>geometry</text></svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><line x2="1" stroke="black" stroke-dasharray="1 1"/></svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><svg x="1"><rect width="1" height="1"/></svg></svg>"#,
+        ] {
+            assert!(matches!(
+                Profile::from_svg(document),
+                Err(IoError::Unsupported { format: "SVG", .. })
+            ));
+        }
+
+        let transparent = r#"<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" opacity="0%"/></svg>"#;
+        assert!(Profile::from_svg(transparent).unwrap().as_region().is_empty());
     }
 }

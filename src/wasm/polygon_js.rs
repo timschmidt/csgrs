@@ -1,17 +1,26 @@
 //! JavaScript wrapper for polygons.
 
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 use crate::vertex::Vertex;
+use crate::wasm::real_to_js;
 use crate::wasm::{
-    js_metadata_to_string, plane_js::PlaneJs, point_js::Point3Js, vector_js::Vector3Js,
+    js_metadata, metadata_to_js, plane_js::PlaneJs, point_js::Point3Js, vector_js::Vector3Js,
     vertex_js::VertexJs,
 };
 use js_sys::{Object, Reflect};
+use serde_json::Value as JsonValue;
 use wasm_bindgen::prelude::*;
+
+const fn validate_polygon_vertices(vertices: &[VertexJs]) -> Result<(), &'static str> {
+    if vertices.len() < 3 {
+        return Err("Polygon.fromVertices requires at least 3 vertices");
+    }
+    Ok(())
+}
 
 #[wasm_bindgen]
 pub struct PolygonJs {
-    pub(crate) inner: Polygon<Option<String>>,
+    pub(crate) inner: Polygon<Option<JsonValue>>,
 }
 
 #[wasm_bindgen]
@@ -19,25 +28,31 @@ impl PolygonJs {
     /// Construct a polygon from a list of vertices and optional metadata.
     ///
     /// Metadata may be any JSON-serializable value; it is stored as a JSON string
-    /// in the underlying Rust `Polygon<Option<String>>`.
+    /// in the underlying Rust `Polygon<JsonValue>`.
     #[wasm_bindgen(constructor)]
-    pub fn new(vertices: Vec<VertexJs>, metadata: JsValue) -> PolygonJs {
+    pub fn new(vertices: Vec<VertexJs>, metadata: JsValue) -> Result<PolygonJs, JsValue> {
         PolygonJs::from_vertices(vertices, metadata)
     }
 
     /// Construct from vertices (same as constructor, but named).
     #[wasm_bindgen(js_name = fromVertices)]
-    pub fn from_vertices(vertices: Vec<VertexJs>, metadata: JsValue) -> PolygonJs {
-        if vertices.len() < 3 {
-            panic!("Polygon.fromVertices requires at least 3 vertices");
-        }
+    pub fn from_vertices(
+        vertices: Vec<VertexJs>,
+        metadata: JsValue,
+    ) -> Result<PolygonJs, JsValue> {
+        validate_polygon_vertices(&vertices).map_err(JsValue::from_str)?;
 
+        // Vertices are finite wasm boundary wrappers; polygon plane selection
+        // is delegated to hyperlattice/hyperreal predicates in `Polygon`/`Plane`,
+        // following Yap, "Towards Exact Geometric Computation," Computational
+        // Geometry 7(1-2), 1997
+        // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
         let verts: Vec<Vertex> = vertices.into_iter().map(|v| v.inner).collect();
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+        let meta = js_metadata(metadata)?;
 
-        PolygonJs {
+        Ok(PolygonJs {
             inner: Polygon::new(verts, meta),
-        }
+        })
     }
 
     /// Get the vertices as `VertexJs[]`.
@@ -56,7 +71,7 @@ impl PolygonJs {
     /// Get the polygon's plane as a `PlaneJs`.
     #[wasm_bindgen(js_name = plane)]
     pub fn plane(&self) -> PlaneJs {
-        PlaneJs::from(self.inner.plane.clone())
+        PlaneJs::from(self.inner.plane().clone())
     }
 
     /// Flip winding order and vertex normals in place.
@@ -69,8 +84,8 @@ impl PolygonJs {
     #[wasm_bindgen(js_name = boundingBox)]
     pub fn bounding_box(&self) -> JsValue {
         let bb = self.inner.bounding_box();
-        let min_js = Point3Js::from(bb.mins);
-        let max_js = Point3Js::from(bb.maxs);
+        let min_js = Point3Js::from(bb.mins.clone());
+        let max_js = Point3Js::from(bb.maxs.clone());
 
         let obj = Object::new();
         Reflect::set(&obj, &"min".into(), &JsValue::from(min_js)).unwrap();
@@ -79,17 +94,18 @@ impl PolygonJs {
         obj.into()
     }
 
-    /// Get metadata as a JSON string, or `null` if none.
+    /// Get metadata as its original JSON-compatible JavaScript value.
     #[wasm_bindgen(js_name = metadata)]
-    pub fn metadata(&self) -> Option<String> {
-        self.inner.metadata.clone()
+    pub fn metadata(&self) -> Result<JsValue, JsValue> {
+        metadata_to_js(&self.inner.metadata)
     }
 
     /// Set metadata from any JSON-serializable JS value.
     #[wasm_bindgen(js_name = setMetadata)]
-    pub fn set_metadata(&mut self, metadata: JsValue) {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+    pub fn set_metadata(&mut self, metadata: JsValue) -> Result<(), JsValue> {
+        let meta = js_metadata(metadata)?;
         self.inner.set_metadata(meta);
+        Ok(())
     }
 
     /// Recalculate a normal from all vertices and return it.
@@ -112,12 +128,12 @@ impl PolygonJs {
         let mut data = Vec::with_capacity(self.inner.vertices.len() * 6);
 
         for v in &self.inner.vertices {
-            data.push(v.position.x as f64);
-            data.push(v.position.y as f64);
-            data.push(v.position.z as f64);
-            data.push(v.normal.x as f64);
-            data.push(v.normal.y as f64);
-            data.push(v.normal.z as f64);
+            data.push(real_to_js(&v.position.x));
+            data.push(real_to_js(&v.position.y));
+            data.push(real_to_js(&v.position.z));
+            data.push(real_to_js(&v.normal.0[0]));
+            data.push(real_to_js(&v.normal.0[1]));
+            data.push(real_to_js(&v.normal.0[2]));
         }
 
         data
@@ -159,14 +175,26 @@ impl PolygonJs {
 }
 
 // Optional conversions for convenience
-impl From<Polygon<Option<String>>> for PolygonJs {
-    fn from(p: Polygon<Option<String>>) -> Self {
+impl From<Polygon<Option<JsonValue>>> for PolygonJs {
+    fn from(p: Polygon<Option<JsonValue>>) -> Self {
         PolygonJs { inner: p }
     }
 }
 
-impl From<&PolygonJs> for Polygon<Option<String>> {
+impl From<&PolygonJs> for Polygon<Option<JsonValue>> {
     fn from(p: &PolygonJs) -> Self {
         p.inner.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn polygon_js_from_vertices_rejects_short_input_without_panic() {
+        let result = std::panic::catch_unwind(|| validate_polygon_vertices(&[]));
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_err());
     }
 }

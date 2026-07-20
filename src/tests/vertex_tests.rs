@@ -4,10 +4,10 @@ use super::support::*;
 
 #[test]
 fn test_vertex_flip() {
-    let mut v = Vertex::new(Point3::new(1.0, 2.0, 3.0), Vector3::x());
+    let mut v = Vertex::new(p3(1.0, 2.0, 3.0), Vector3::x());
     v.flip();
     // Position remains the same
-    assert_eq!(v.position, Point3::new(1.0, 2.0, 3.0));
+    assert_eq!(v.position, p3(1.0, 2.0, 3.0));
     // Normal should be negated
     assert_eq!(v.normal, -Vector3::x());
 }
@@ -19,8 +19,8 @@ fn test_vertex_flip() {
 #[test]
 fn test_polygon_construction() {
     let v1 = Vertex::new(Point3::origin(), Vector3::y());
-    let v2 = Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::y());
-    let v3 = Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::y());
+    let v2 = Vertex::new(p3(1.0, 0.0, 1.0), Vector3::y());
+    let v3 = Vertex::new(p3(1.0, 0.0, -1.0), Vector3::y());
 
     let poly: Polygon<()> = Polygon::new(vec![v1, v2, v3], ());
     assert_eq!(poly.vertices.len(), 3);
@@ -38,8 +38,8 @@ fn test_polygon_construction() {
 #[test]
 #[cfg(feature = "stl-io")]
 fn test_to_stl_ascii() {
-    let cube: Mesh<()> = Mesh::cube(2.0, ());
-    let stl_str = cube.to_stl_ascii("test_cube");
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
+    let stl_str = cube.to_stl_ascii("test_cube").unwrap();
     // Basic checks
     assert!(stl_str.contains("solid test_cube"));
     assert!(stl_str.contains("endsolid test_cube"));
@@ -51,7 +51,7 @@ fn test_to_stl_ascii() {
 }
 
 // --------------------------------------------------------
-//   Node & Clipping Tests
+//   Plane clipping tests
 //   (Optional: these get more into internal details)
 // --------------------------------------------------------
 
@@ -59,12 +59,12 @@ fn test_to_stl_ascii() {
 fn test_degenerate_polygon_after_clipping() {
     let vertices = vec![
         Vertex::new(Point3::origin(), Vector3::y()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::y()),
-        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::y()),
+        Vertex::new(p3(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
     let polygon: Polygon<()> = Polygon::new(vertices.clone(), ());
-    let plane = Plane::from_normal(Vector3::new(0.0, 0.0, 1.0), 0.0);
+    let plane = Plane::from_normal(v3(0.0, 0.0, 1.0), r(0.0));
 
     eprintln!("Original polygon: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
@@ -82,13 +82,13 @@ fn test_degenerate_polygon_after_clipping() {
 fn test_valid_polygon_clipping() {
     let vertices = vec![
         Vertex::new(Point3::origin(), Vector3::y()),
-        Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::y()),
-        Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
+        Vertex::new(p3(1.0, 0.0, 0.0), Vector3::y()),
+        Vertex::new(p3(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
     let polygon: Polygon<()> = Polygon::new(vertices, ());
 
-    let plane = Plane::from_normal(-Vector3::y(), -0.5);
+    let plane = Plane::from_normal(-Vector3::y(), r(-0.5));
 
     eprintln!("Polygon before clipping: {:?}", polygon);
     eprintln!("Clipping plane: {:?}", plane);
@@ -107,9 +107,9 @@ fn test_valid_polygon_clipping() {
 // ------------------------------------------------------------
 #[test]
 fn test_vertex_new() {
-    let pos = Point3::new(1.0, 2.0, 3.0);
-    let normal = Vector3::new(0.0, 1.0, 0.0);
-    let v = Vertex::new(pos, normal);
+    let pos = p3(1.0, 2.0, 3.0);
+    let normal = v3(0.0, 1.0, 0.0);
+    let v = Vertex::new(pos.clone(), normal.clone());
     assert_eq!(v.position, pos);
     assert_eq!(v.normal, normal);
 }
@@ -117,14 +117,14 @@ fn test_vertex_new() {
 #[test]
 fn test_vertex_interpolate() {
     let v1 = Vertex::new(Point3::origin(), Vector3::x());
-    let v2 = Vertex::new(Point3::new(2.0, 2.0, 2.0), Vector3::y());
-    let v_mid = v1.interpolate(&v2, 0.5);
-    assert!(approx_eq(v_mid.position.x, 1.0, tolerance()));
-    assert!(approx_eq(v_mid.position.y, 1.0, tolerance()));
-    assert!(approx_eq(v_mid.position.z, 1.0, tolerance()));
-    assert!(approx_eq(v_mid.normal.x, 0.5, tolerance()));
-    assert!(approx_eq(v_mid.normal.y, 0.5, tolerance()));
-    assert!(approx_eq(v_mid.normal.z, 0.0, tolerance()));
+    let v2 = Vertex::new(p3(2.0, 2.0, 2.0), Vector3::y());
+    let v_mid = v1.interpolate(&v2, r(0.5));
+    assert!(approx_eq(&v_mid.position.x, 1.0, tolerance()));
+    assert!(approx_eq(&v_mid.position.y, 1.0, tolerance()));
+    assert!(approx_eq(&v_mid.position.z, 1.0, tolerance()));
+    assert!(approx_eq(&v_mid.normal.0[0], 0.5, tolerance()));
+    assert!(approx_eq(&v_mid.normal.0[1], 0.5, tolerance()));
+    assert!(approx_eq(&v_mid.normal.0[2], 0.0, tolerance()));
 }
 
 // ------------------------------------------------------------

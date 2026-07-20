@@ -2,11 +2,14 @@
 
 #![no_main]
 
-use csgrs::float_types::Real;
 use csgrs::vertex::{Vertex, VertexCluster};
 use hashbrown::HashMap;
+use hyperlattice::{Point3, Real, Vector3};
 use libfuzzer_sys::fuzz_target;
-use nalgebra::{Point3, Vector3};
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -15,7 +18,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-100.0, 100.0) as Real
+    real(value.clamp(-100.0, 100.0))
 }
 
 fuzz_target!(|bytes: &[u8]| {
@@ -33,7 +36,7 @@ fuzz_target!(|bytes: &[u8]| {
                 decode_real(bytes, &mut idx),
                 decode_real(bytes, &mut idx),
             ),
-            Vector3::new(
+            Vector3::from_xyz(
                 decode_real(bytes, &mut idx),
                 decode_real(bytes, &mut idx),
                 decode_real(bytes, &mut idx),
@@ -42,7 +45,7 @@ fuzz_target!(|bytes: &[u8]| {
     }
     let weighted = vertices
         .iter()
-        .copied()
+        .cloned()
         .map(|v| (v, decode_real(bytes, &mut idx)))
         .collect::<Vec<_>>();
     if let Some(vertex) = Vertex::weighted_average(&weighted) {
@@ -59,8 +62,8 @@ fuzz_target!(|bytes: &[u8]| {
             decode_real(bytes, &mut idx),
             decode_real(bytes, &mut idx),
         );
-        if v.position.coords.iter().all(|c| c.is_finite()) {
-            assert!(v.normal.x.is_finite());
+        if v.position.x.is_finite() && v.position.y.is_finite() && v.position.z.is_finite() {
+            assert!(v.normal.0[0].is_finite());
         }
     }
     let mut adjacency = HashMap::new();
@@ -68,8 +71,8 @@ fuzz_target!(|bytes: &[u8]| {
     let mut positions = HashMap::new();
     let mut normals = HashMap::new();
     for (i, v) in vertices.iter().enumerate() {
-        positions.insert(i, v.position);
-        normals.insert(i, v.normal);
+        positions.insert(i, v.position.clone());
+        normals.insert(i, v.normal.clone());
     }
     let _ = vertices[0].comprehensive_quality_analysis(0, &adjacency, &positions, &normals);
     if let Some(cluster) = VertexCluster::from_vertices(&vertices) {

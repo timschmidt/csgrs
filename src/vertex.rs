@@ -1,14 +1,112 @@
 //! Struct and functions for working with `Vertex`s.
 
-use crate::float_types::{PI, Real, tolerance};
 use hashbrown::HashMap;
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Real, Vector3};
+use hyperreal::RealSign;
+use std::cell::RefCell;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_POSITION_ID: AtomicU64 = AtomicU64::new(1);
+const FINITE_POSITION_CACHE_CAPACITY: usize = 262_144;
+type FinitePositionRangeCache = (usize, Vec<(u64, Arc<Vec<[f64; 3]>>)>);
+
+thread_local! {
+    static FINITE_POSITIONS: RefCell<HashMap<u64, [f64; 3]>> = RefCell::new(HashMap::new());
+    static FINITE_POSITION_RANGES: RefCell<FinitePositionRangeCache> =
+        const { RefCell::new((0, Vec::new())) };
+}
+
+pub(crate) fn fresh_position_id() -> u64 {
+    reserve_position_ids(1)
+}
+
+pub(crate) fn reserve_position_ids(count: usize) -> u64 {
+    NEXT_POSITION_ID.fetch_add(
+        u64::try_from(count).expect("position identity reservation fits u64"),
+        Ordering::Relaxed,
+    )
+}
+
+pub(crate) fn cache_position_f64(position_id: u64, position: Option<[f64; 3]>) {
+    let Some(position) = position else {
+        return;
+    };
+    FINITE_POSITIONS.with_borrow_mut(|positions| {
+        if positions.len() == FINITE_POSITION_CACHE_CAPACITY {
+            positions.clear();
+        }
+        positions.insert(position_id, position);
+    });
+}
+
+pub(crate) fn cache_position_f64_range<I>(
+    first_position_id: u64,
+    position_count: usize,
+    finite_positions: I,
+) where
+    I: IntoIterator<Item = Option<[f64; 3]>>,
+{
+    FINITE_POSITIONS.with_borrow_mut(|positions| {
+        if positions.len().saturating_add(position_count) >= FINITE_POSITION_CACHE_CAPACITY {
+            positions.clear();
+        }
+        positions.reserve(position_count);
+        for (offset, position) in finite_positions.into_iter().enumerate() {
+            if let Some(position) = position {
+                positions.insert(
+                    first_position_id
+                        + u64::try_from(offset).expect("position cache offset fits u64"),
+                    position,
+                );
+            }
+        }
+    });
+}
+
+pub(crate) fn cache_shared_position_f64_range(
+    first_position_id: u64,
+    finite_positions: Arc<Vec<[f64; 3]>>,
+) {
+    if finite_positions.is_empty() {
+        return;
+    }
+    FINITE_POSITION_RANGES.with_borrow_mut(|(position_count, ranges)| {
+        if position_count.saturating_add(finite_positions.len())
+            >= FINITE_POSITION_CACHE_CAPACITY
+        {
+            *position_count = 0;
+            ranges.clear();
+        }
+        *position_count += finite_positions.len();
+        ranges.push((first_position_id, finite_positions));
+    });
+}
+
+pub(crate) fn reserve_position_f64_cache(additional: usize) {
+    FINITE_POSITIONS.with_borrow_mut(|positions| {
+        if positions.len().saturating_add(additional) >= FINITE_POSITION_CACHE_CAPACITY {
+            positions.clear();
+        }
+        positions.reserve(additional);
+    });
+}
 
 /// A vertex of a polygon, holding position and normal.
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone)]
 pub struct Vertex {
-    pub position: Point3<Real>,
-    pub normal: Vector3<Real>,
+    pub position: Point3,
+    pub normal: Vector3,
+    pub(crate) position_id: u64,
+    pub(crate) coordinate_ids: [u64; 3],
+    pub(crate) ruled_line: Option<[u64; 2]>,
+    pub(crate) hull_candidate: bool,
+}
+
+impl PartialEq for Vertex {
+    fn eq(&self, other: &Self) -> bool {
+        self.position == other.position && self.normal == other.normal
+    }
 }
 
 impl Default for Vertex {
@@ -19,223 +117,199 @@ impl Default for Vertex {
 
 impl Vertex {
     /// Create a new [`Vertex`].
-    ///
-    /// * `position`    – the position in model space  
-    /// * `normal` – (optionally non‑unit) normal; it will be **copied verbatim**, so make sure it is oriented the way you need it for lighting / BSP tests.
     #[inline]
-    pub const fn new(mut position: Point3<Real>, mut normal: Vector3<Real>) -> Self {
-        // Sanitise position
-        // Nasty loop unrolling to allow for const-context evaluations.
-        // Can be replaced with proper for _ in _ {} loops once
-        // https://github.com/rust-lang/rust/issues/87575 is merged
-        let [[x, y, z]]: &mut [[_; 3]; 1] = &mut position.coords.data.0;
-
-        if !x.is_finite() {
-            *x = 0.0;
+    pub fn new(position: Point3, normal: Vector3) -> Self {
+        Self {
+            position,
+            normal,
+            position_id: fresh_position_id(),
+            coordinate_ids: [
+                fresh_position_id(),
+                fresh_position_id(),
+                fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
         }
-        if !y.is_finite() {
-            *y = 0.0;
-        }
-        if !z.is_finite() {
-            *z = 0.0;
-        }
-
-        // Sanitise normal
-        let [[nx, ny, nz]]: &mut [[_; 3]; 1] = &mut normal.data.0;
-
-        if !nx.is_finite() {
-            *nx = 0.0;
-        }
-        if !ny.is_finite() {
-            *ny = 0.0;
-        }
-        if !nz.is_finite() {
-            *nz = 0.0;
-        }
-
-        Vertex { position, normal }
     }
 
-    /// Flip vertex normal
+    pub(crate) fn new_with_reserved_identity(
+        position: Point3,
+        normal: Vector3,
+        first_identity: u64,
+        slot: usize,
+    ) -> Self {
+        let offset = u64::try_from(
+            slot.checked_mul(4)
+                .expect("vertex identity slot multiplication does not overflow"),
+        )
+        .expect("vertex identity offset fits u64");
+        Self {
+            position,
+            normal,
+            position_id: first_identity + offset,
+            coordinate_ids: [
+                first_identity + offset + 1,
+                first_identity + offset + 2,
+                first_identity + offset + 3,
+            ],
+            ruled_line: None,
+            hull_candidate: true,
+        }
+    }
+
+    pub(crate) fn refresh_position_identity(&mut self) {
+        self.position_id = fresh_position_id();
+        self.coordinate_ids = [
+            fresh_position_id(),
+            fresh_position_id(),
+            fresh_position_id(),
+        ];
+        self.ruled_line = None;
+    }
+
+    pub(crate) fn with_normal(mut self, normal: Vector3) -> Self {
+        self.normal = normal;
+        self
+    }
+
+    /// Returns a retained primitive approximation of this position.
+    ///
+    /// Transform paths populate this view from the same affine map used for
+    /// the exact position. It is only an export/rendering convenience and is
+    /// never consumed by topology or predicates.
+    pub fn position_f64_lossy(&self) -> Option<[f64; 3]> {
+        FINITE_POSITIONS
+            .with_borrow(|positions| positions.get(&self.position_id).copied())
+            .or_else(|| {
+                FINITE_POSITION_RANGES.with_borrow(|(_, ranges)| {
+                    ranges
+                        .iter()
+                        .rev()
+                        .find_map(|(first_position_id, positions)| {
+                            let offset = self.position_id.checked_sub(*first_position_id)?;
+                            positions.get(usize::try_from(offset).ok()?).copied()
+                        })
+                })
+            })
+            .or_else(|| {
+                Some([
+                    self.position.x.to_f64_lossy()?,
+                    self.position.y.to_f64_lossy()?,
+                    self.position.z.to_f64_lossy()?,
+                ])
+            })
+    }
+
+    pub(crate) const fn exclude_from_hull(mut self) -> Self {
+        self.hull_candidate = false;
+        self
+    }
+
+    /// Flip vertex normal.
     pub fn flip(&mut self) {
-        self.normal = -self.normal;
+        self.normal = -self.normal.clone();
     }
 
-    /// **Mathematical Foundation: Barycentric Linear Interpolation**
-    ///
-    /// Compute the barycentric linear interpolation between `self` (`t = 0`) and `other` (`t = 1`).
-    /// This implements the fundamental linear interpolation formula:
-    ///
-    /// ## **Interpolation Formula**
-    /// For parameter `t` in the closed interval `[0, 1]`:
-    /// - **Position**: p(t) = (1-t)·p₀ + t·p₁ = p₀ + t·(p₁ - p₀)
-    /// - **Normal**: n(t) = (1-t)·n₀ + t·n₁ = n₀ + t·(n₁ - n₀)
-    ///
-    /// ## **Mathematical Properties**
-    /// - **Affine Combination**: Coefficients sum to 1: (1-t) + t = 1
-    /// - **Endpoint Preservation**: p(0) = p₀, p(1) = p₁
-    /// - **Linearity**: Second derivatives are zero (straight line in parameter space)
-    /// - **Convexity**: Result lies on line segment between endpoints
-    ///
-    /// ## **Geometric Interpretation**
-    /// The interpolated vertex represents a point on the edge connecting the two vertices,
-    /// with both position and normal vectors smoothly blended. This is fundamental for:
-    /// - **Polygon Splitting**: Creating intersection vertices during BSP operations
-    /// - **Triangle Subdivision**: Generating midpoints for mesh refinement
-    /// - **Smooth Shading**: Interpolating normals across polygon edges
-    ///
-    /// **Note**: Normals are linearly interpolated (not spherically), which is appropriate
-    /// for most geometric operations but may require renormalization for lighting calculations.
+    /// Compute the linear interpolation between `self` and `other`.
     pub fn interpolate(&self, other: &Vertex, t: Real) -> Vertex {
-        // For positions (Point3): p(t) = p0 + t * (p1 - p0)
-        let new_position = self.position + (other.position - self.position) * t;
-
-        // For normals (Vector3): n(t) = n0 + t * (n1 - n0)
-        let new_normal = self.normal + (other.normal - self.normal) * t;
+        let new_position = self.position.lerp(&other.position, &t);
+        let new_normal = self.normal.lerp(&other.normal, &t);
         Vertex::new(new_position, new_normal)
     }
 
-    /// **Mathematical Foundation: Spherical Linear Interpolation (SLERP) for Normals**
-    ///
-    /// Compute spherical linear interpolation for normal vectors, preserving unit length:
-    ///
-    /// ## **SLERP Formula**
-    /// For unit vectors n₀, n₁ and parameter `t` in `[0, 1]`:
-    /// ```text
-    /// slerp(n₀, n₁, t) = (sin((1-t)·Ω) · n₀ + sin(t·Ω) · n₁) / sin(Ω)
-    /// ```
-    /// Where Ω = arccos(n₀ · n₁) is the angle between vectors.
-    ///
-    /// ## **Mathematical Properties**
-    /// - **Arc Interpolation**: Follows great circle on unit sphere
-    /// - **Constant Speed**: Angular velocity is constant
-    /// - **Unit Preservation**: Result is always unit length
-    /// - **Orientation**: Shortest path between normals
-    ///
-    /// This is preferred over linear interpolation for normal vectors in lighting
-    /// calculations and smooth shading applications.
+    /// Compute spherical linear interpolation for normal vectors.
     pub fn slerp_interpolate(&self, other: &Vertex, t: Real) -> Vertex {
-        // Linear interpolation for position
-        let new_position = self.position + (other.position - self.position) * t;
+        let new_position = self.position.lerp(&other.position, &t);
 
-        // Spherical linear interpolation for normals
-        let n0 = self.normal.normalize();
-        let n1 = other.normal.normalize();
+        let Ok(n0) = self.normal.normalize_checked() else {
+            return self.interpolate(other, t);
+        };
+        let Ok(n1) = other.normal.normalize_checked() else {
+            return self.interpolate(other, t);
+        };
 
-        let dot = n0.dot(&n1).clamp(-1.0, 1.0);
-
-        // If normals are nearly parallel, use linear interpolation
-        if (dot.abs() - 1.0).abs() < tolerance() {
-            let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
+        let dot = n0.dot(&n1);
+        if real_exactly_zero(&(dot.clone() - Real::one()))
+            || real_exactly_zero(&(dot.clone() + Real::one()))
+        {
+            let one_minus_t = Real::one() - t.clone();
+            let new_normal = Vector3::weighted_sum(&[n0, n1], &[one_minus_t, t])
+                .and_then(|normal| normal.normalize_checked().ok())
+                .unwrap_or_else(Vector3::z);
             return Vertex::new(new_position, new_normal);
         }
 
-        let omega = dot.acos();
-        let sin_omega = omega.sin();
-
-        if sin_omega.abs() < tolerance() {
-            // Fallback to linear interpolation
-            let new_normal = (self.normal + (other.normal - self.normal) * t).normalize();
-            return Vertex::new(new_position, new_normal);
+        let Ok(omega) = n0.angle_to(&n1) else {
+            return self.interpolate(other, t);
+        };
+        let sin_omega = omega.clone().sin();
+        if real_exactly_zero(&sin_omega) {
+            return self.interpolate(other, t);
         }
 
-        let a = ((1.0 - t) * omega).sin() / sin_omega;
-        let b = (t * omega).sin() / sin_omega;
+        let one_minus_t = Real::one() - t.clone();
+        let a_sin = (one_minus_t * omega.clone()).sin();
+        let b_sin = (t * omega).sin();
+        let Ok(a) = a_sin / sin_omega.clone() else {
+            return self.interpolate(other, Real::zero());
+        };
+        let Ok(b) = b_sin / sin_omega else {
+            return self.interpolate(other, Real::zero());
+        };
 
-        let new_normal = (a * n0 + b * n1).normalize();
+        let new_normal = Vector3::weighted_sum(&[n0, n1], &[a, b])
+            .and_then(|normal| normal.normalize_checked().ok())
+            .unwrap_or_else(Vector3::z);
         Vertex::new(new_position, new_normal)
     }
 
-    /// **Mathematical Foundation: Distance Metrics**
-    ///
-    /// Compute Euclidean distance between vertex positions:
-    /// ```text
-    /// d(v₁, v₂) = |p₁ - p₂| = √((x₁-x₂)² + (y₁-y₂)² + (z₁-z₂)²)
-    /// ```
+    /// Compute Euclidean distance between vertex positions.
     pub fn distance_to(&self, other: &Vertex) -> Real {
-        (self.position - other.position).norm()
+        self.distance_squared_to(other)
+            .sqrt()
+            .unwrap_or_else(|_| Real::zero())
     }
 
-    /// **Mathematical Foundation: Squared Distance Optimization**
-    ///
-    /// Compute squared Euclidean distance (avoiding sqrt for performance):
-    /// ```text
-    /// d²(v₁, v₂) = (x₁-x₂)² + (y₁-y₂)² + (z₁-z₂)²
-    /// ```
-    ///
-    /// Useful for distance comparisons without expensive square root operation.
+    /// Compute squared Euclidean distance between vertex positions.
     pub fn distance_squared_to(&self, other: &Vertex) -> Real {
-        (self.position - other.position).norm_squared()
+        self.position
+            .to_vector()
+            .squared_distance(&other.position.to_vector())
     }
 
-    /// **Mathematical Foundation: Normal Vector Angular Difference**
-    ///
-    /// Compute angle between normal vectors using dot product:
-    /// ```text
-    /// θ = arccos(n₁ · n₂ / (|n₁| · |n₂|))
-    /// ```
-    ///
-    /// Returns angle in radians [0, π].
+    /// Compute angle between normal vectors in radians.
     pub fn normal_angle_to(&self, other: &Vertex) -> Real {
-        let Some(n1) = self.normal.try_normalize(tolerance()) else {
-            return 0.0;
-        };
-        let Some(n2) = other.normal.try_normalize(tolerance()) else {
-            return 0.0;
-        };
-        let cos_angle = n1.dot(&n2).clamp(-1.0, 1.0);
-        cos_angle.acos()
+        self.normal
+            .angle_to(&other.normal)
+            .unwrap_or_else(|_| Real::zero())
     }
 
-    /// **Mathematical Foundation: Weighted Average for Mesh Smoothing**
-    ///
-    /// Compute weighted average of vertex positions and normals:
-    /// ```text
-    /// p_avg = Σᵢ(wᵢ · pᵢ) / Σᵢ(wᵢ)
-    /// n_avg = normalize(Σᵢ(wᵢ · nᵢ))
-    /// ```
-    ///
-    /// This is fundamental for Laplacian smoothing and normal averaging.
+    /// Compute weighted average of vertex positions and normals.
     pub fn weighted_average(vertices: &[(Vertex, Real)]) -> Option<Vertex> {
         if vertices.is_empty() {
             return None;
         }
 
-        let total_weight: Real = vertices.iter().map(|(_, w)| *w).sum();
-        if total_weight < tolerance() {
-            return None;
-        }
-
-        let weighted_position = vertices
+        let normalized_weights = normalized_weights(vertices.iter().map(|(_, w)| w.clone()))?;
+        let positions = vertices
             .iter()
-            .fold(Point3::origin(), |acc, (v, w)| acc + v.position.coords * (*w))
-            / total_weight;
-
-        let weighted_normal = vertices
+            .map(|(vertex, _)| vertex.position.clone())
+            .collect::<Vec<_>>();
+        let normals = vertices
             .iter()
-            .fold(Vector3::zeros(), |acc, (v, w)| acc + v.normal * (*w));
+            .map(|(vertex, _)| vertex.normal.clone())
+            .collect::<Vec<_>>();
+        let weighted_position = Point3::weighted_sum(&positions, &normalized_weights)?;
+        let weighted_normal = Vector3::weighted_sum(&normals, &normalized_weights)?;
+        let normalized_normal = weighted_normal
+            .normalize_checked()
+            .unwrap_or_else(|_| Vector3::z());
 
-        let normalized_normal = if weighted_normal.norm() > tolerance() {
-            weighted_normal.normalize()
-        } else {
-            Vector3::z() // Fallback normal
-        };
-
-        Some(Vertex::new(
-            Point3::from(weighted_position),
-            normalized_normal,
-        ))
+        Some(Vertex::new(weighted_position, normalized_normal))
     }
 
-    /// **Mathematical Foundation: Barycentric Coordinates Interpolation**
-    ///
-    /// Interpolate vertex using barycentric coordinates (u, v, w) with u + v + w = 1:
-    /// ```text
-    /// p = u·p₁ + v·p₂ + w·p₃
-    /// n = normalize(u·n₁ + v·n₂ + w·n₃)
-    /// ```
-    ///
-    /// This is fundamental for triangle interpolation and surface parameterization.
+    /// Interpolate vertex using barycentric coordinates.
     pub fn barycentric_interpolate(
         v1: &Vertex,
         v2: &Vertex,
@@ -244,52 +318,143 @@ impl Vertex {
         v: Real,
         w: Real,
     ) -> Vertex {
-        // Ensure barycentric coordinates sum to 1 (normalize if needed)
-        let total = u + v + w;
-        let (u, v, w) = if total.abs() > tolerance() {
-            (u / total, v / total, w / total)
-        } else {
-            (1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0) // Fallback to centroid
-        };
-
-        let new_position = Point3::from(
-            u * v1.position.coords + v * v2.position.coords + w * v3.position.coords,
-        );
-
-        let new_normal = (u * v1.normal + v * v2.normal + w * v3.normal).normalize();
+        let weights = normalized_barycentric_weights(u, v, w).unwrap_or_else(equal_thirds);
+        let [u, v, w] = weights;
+        let weights = [u, v, w];
+        let new_position = Point3::weighted_sum(
+            &[
+                v1.position.clone(),
+                v2.position.clone(),
+                v3.position.clone(),
+            ],
+            &weights,
+        )
+        .unwrap_or_else(Point3::origin);
+        let blended_normal = Vector3::weighted_sum(
+            &[v1.normal.clone(), v2.normal.clone(), v3.normal.clone()],
+            &weights,
+        )
+        .unwrap_or_else(Vector3::z);
+        let new_normal = blended_normal
+            .normalize_checked()
+            .unwrap_or_else(|_| Vector3::z());
 
         Vertex::new(new_position, new_normal)
     }
+}
 
-    /// **Mathematical Foundation: Edge-Length-Based Weighting**
-    ///
-    /// Compute cotangent weights for discrete Laplacian operators:
-    /// ```text
-    /// w_ij = (cot(α) + cot(β)) / 2
-    /// ```
-    /// Where α and β are the angles opposite to edge ij in adjacent triangles.
-    ///
-    /// This provides a better approximation to the continuous Laplacian operator
-    /// compared to uniform weights.
+fn normalized_barycentric_weights(u: Real, v: Real, w: Real) -> Option<[Real; 3]> {
+    let total = u.clone() + v.clone() + w.clone();
+    if real_exactly_zero(&total) {
+        return None;
+    }
+    Some([
+        (u / total.clone()).ok()?,
+        (v / total.clone()).ok()?,
+        (w / total).ok()?,
+    ])
+}
+
+fn equal_thirds() -> [Real; 3] {
+    let third = (Real::one() / Real::from(3_u8)).expect("nonzero exact denominator");
+    [third.clone(), third.clone(), third]
+}
+
+fn real_exactly_zero(value: &Real) -> bool {
+    matches!(value.refine_sign_until(-128), Some(RealSign::Zero))
+}
+
+fn real_positive(value: &Real) -> bool {
+    matches!(value.refine_sign_until(-128), Some(RealSign::Positive))
+}
+
+fn normalized_weights(weights: impl IntoIterator<Item = Real>) -> Option<Vec<Real>> {
+    let weights = weights.into_iter().collect::<Vec<_>>();
+    if weights.is_empty() {
+        return None;
+    }
+
+    let total = Real::sum_refs(weights.iter());
+    if !real_positive(&total) {
+        return None;
+    }
+
+    weights
+        .into_iter()
+        .map(|weight| (weight / total.clone()).ok())
+        .collect()
+}
+
+fn real_from_usize(value: usize) -> Option<Real> {
+    Some(Real::from(u64::try_from(value).ok()?))
+}
+
+fn real_mean(values: &[Real]) -> Option<Real> {
+    Real::mean(values)
+}
+
+fn real_sample_stddev(values: &[Real]) -> Option<Real> {
+    Real::sample_stddev(values)
+}
+
+fn real_clamp_unit(value: Real) -> Real {
+    let zero = Real::zero();
+    let one = Real::one();
+    if matches!(
+        hyperlimit::compare_reals(&value, &zero).value(),
+        Some(std::cmp::Ordering::Less)
+    ) {
+        return zero;
+    }
+    if matches!(
+        hyperlimit::compare_reals(&value, &one).value(),
+        Some(std::cmp::Ordering::Greater)
+    ) {
+        return one;
+    }
+    value
+}
+
+fn point_distance(lhs: &Point3, rhs: &Point3) -> Option<Real> {
+    lhs.to_vector().squared_distance(&rhs.to_vector()).sqrt().ok()
+}
+
+fn vector_distance(lhs: &Vector3, rhs: &Vector3) -> Option<Real> {
+    lhs.squared_distance(rhs).sqrt().ok()
+}
+
+fn cotangent_at_opposite(
+    center: &Vertex,
+    neighbor: &Vertex,
+    opposite: &Vertex,
+) -> Option<Real> {
+    let edge1 = &center.position - &opposite.position;
+    let edge2 = &neighbor.position - &opposite.position;
+    let cross = edge1.cross(&edge2);
+    let cross_len = cross.dot(&cross).sqrt().ok()?;
+    if !real_positive(&cross_len) {
+        return None;
+    }
+    (edge1.dot(&edge2) / cross_len).ok()
+}
+
+impl Vertex {
+    /// Compute cotangent weights for discrete Laplacian operators.
     pub fn compute_cotangent_weight(
         center: &Vertex,
         neighbor: &Vertex,
         triangle_vertices: &[&Vertex],
     ) -> Real {
         if triangle_vertices.len() < 3 {
-            return 1.0; // Fallback to uniform weight
+            return Real::one();
         }
 
-        // Find the third vertex in the triangle
-        let mut cot_sum = 0.0;
-        let mut weight_count = 0;
-
+        let mut cotangents = Vec::new();
         for i in 0..triangle_vertices.len() {
             let v1 = triangle_vertices[i];
             let v2 = triangle_vertices[(i + 1) % triangle_vertices.len()];
             let v3 = triangle_vertices[(i + 2) % triangle_vertices.len()];
 
-            // Check if this triangle contains our edge
             let contains_edge = (v1.position == center.position
                 && v2.position == neighbor.position)
                 || (v2.position == center.position && v3.position == neighbor.position)
@@ -299,7 +464,6 @@ impl Vertex {
                 || (v3.position == neighbor.position && v1.position == center.position);
 
             if contains_edge {
-                // Find the vertex opposite to the edge
                 let opposite = if v1.position != center.position
                     && v1.position != neighbor.position
                 {
@@ -310,44 +474,21 @@ impl Vertex {
                     v3
                 };
 
-                // Compute cotangent of angle at opposite vertex
-                let edge1 = center.position - opposite.position;
-                let edge2 = neighbor.position - opposite.position;
-                let cos_angle = edge1.normalize().dot(&edge2.normalize());
-                let sin_angle = edge1.normalize().cross(&edge2.normalize()).norm();
-
-                if sin_angle > tolerance() {
-                    cot_sum += cos_angle / sin_angle;
-                    weight_count += 1;
+                if let Some(cotangent) = cotangent_at_opposite(center, neighbor, opposite) {
+                    cotangents.push(cotangent);
                 }
             }
         }
 
-        if weight_count > 0 {
-            cot_sum / (2.0 * weight_count as Real)
-        } else {
-            1.0 // Fallback to uniform weight
+        if cotangents.is_empty() {
+            return Real::one();
         }
+        let denom =
+            Real::from(2_u8) * real_from_usize(cotangents.len()).unwrap_or_else(Real::one);
+        (Real::sum_refs(cotangents.iter()) / denom).unwrap_or_else(|_| Real::one())
     }
 
-    /// **Mathematical Foundation: Vertex Valence and Regularity Analysis**
-    ///
-    /// Analyze vertex connectivity in mesh topology using actual adjacency data:
-    /// - **Valence**: Number of edges incident to vertex (from adjacency map)
-    /// - **Regularity**: Measure of how close valence is to optimal (6 for interior vertices)
-    ///
-    /// ## **Vertex Index Lookup**
-    /// This function requires the vertex's global index in the mesh adjacency graph.
-    /// The caller should provide the correct index from the mesh connectivity analysis.
-    ///
-    /// ## **Regularity Scoring**
-    /// ```text
-    /// regularity = 1 / (1 + |valence - target| / target)
-    /// ```
-    /// Where target = 6 for triangular meshes (optimal valence for interior vertices).
-    ///
-    /// Returns `(valence, regularity_score)` where regularity is in `[0, 1]`
-    /// and `1` is optimal.
+    /// Analyze vertex connectivity by graph index.
     pub fn analyze_connectivity_with_index(
         vertex_index: usize,
         adjacency_map: &HashMap<usize, Vec<usize>>,
@@ -357,260 +498,214 @@ impl Vertex {
             .map(|neighbors| neighbors.len())
             .unwrap_or(0);
 
-        // Optimal valence is 6 for interior vertices in triangular meshes
-        let target_valence = 6;
-        let regularity: Real = if valence > 0 {
-            let deviation = (valence as Real - target_valence as Real).abs();
-            (1.0 / (1.0 + deviation / target_valence as Real)).max(0.0)
+        let target_valence = 6_usize;
+        let regularity = if valence > 0 {
+            let deviation = valence.abs_diff(target_valence);
+            let deviation = real_from_usize(deviation).unwrap_or_else(Real::zero);
+            let target = real_from_usize(target_valence).unwrap_or_else(Real::one);
+            let ratio = (deviation / target).unwrap_or_else(|_| Real::zero());
+            (Real::one() / (Real::one() + ratio)).unwrap_or_else(|_| Real::zero())
         } else {
-            0.0
+            Real::zero()
         };
 
         (valence, regularity)
     }
 
-    /// **Mathematical Foundation: Position-Based Vertex Lookup**
-    ///
-    /// Simplified connectivity analysis that searches for the vertex in the adjacency map
-    /// by position matching (with tolerance). This is slower but more convenient
-    /// when you don't have the global vertex index readily available.
-    ///
-    /// **Note**: This is a convenience method. For performance-critical applications,
-    /// use `analyze_connectivity_with_index` with pre-computed vertex indices.
+    /// Search for this vertex in an adjacency-position map.
     pub fn analyze_connectivity_by_position(
         &self,
         adjacency_map: &HashMap<usize, Vec<usize>>,
-        vertex_positions: &HashMap<usize, Point3<Real>>,
-        epsilon: Real,
+        vertex_positions: &HashMap<usize, Point3>,
     ) -> (usize, Real) {
-        // Find the vertex index by position matching
-        let mut vertex_index = None;
-        for (&idx, &position) in vertex_positions {
-            if (self.position - position).norm() < epsilon {
-                vertex_index = Some(idx);
-                break;
-            }
-        }
+        let self_position = hyperlimit::Point3::new(
+            self.position.x.clone(),
+            self.position.y.clone(),
+            self.position.z.clone(),
+        );
+        let vertex_index = vertex_positions.iter().find_map(|(&idx, position)| {
+            let candidate_position = hyperlimit::Point3::new(
+                position.x.clone(),
+                position.y.clone(),
+                position.z.clone(),
+            );
+            matches!(
+                hyperlimit::point3_equal(&self_position, &candidate_position).value(),
+                Some(true)
+            )
+            .then_some(idx)
+        });
 
-        if let Some(idx) = vertex_index {
-            Self::analyze_connectivity_with_index(idx, adjacency_map)
-        } else {
-            // Vertex not found in adjacency map
-            (0, 0.0)
-        }
+        vertex_index
+            .map(|idx| Self::analyze_connectivity_with_index(idx, adjacency_map))
+            .unwrap_or((0, Real::zero()))
     }
 
-    /// **Mathematical Foundation: Curvature Estimation**
-    ///
-    /// Estimate discrete mean curvature using the angle deficit method:
-    /// ```text
-    /// H ≈ (2π - Σθᵢ) / A_mixed
-    /// ```
-    /// Where θᵢ are angles around the vertex and A_mixed is the mixed area.
-    ///
-    /// This provides a discrete approximation to the mean curvature at a vertex.
+    /// Estimate discrete mean curvature using the angle deficit method.
     pub fn estimate_mean_curvature(&self, neighbors: &[Vertex], face_areas: &[Real]) -> Real {
         if neighbors.len() < 3 {
-            return 0.0;
+            return Real::zero();
         }
 
-        // Compute angle sum around vertex
-        let mut angle_sum = 0.0;
+        let mut angles = Vec::with_capacity(neighbors.len());
         for i in 0..neighbors.len() {
             let prev = &neighbors[(i + neighbors.len() - 1) % neighbors.len()];
             let next = &neighbors[(i + 1) % neighbors.len()];
-
-            let v1 = (prev.position - self.position).normalize();
-            let v2 = (next.position - self.position).normalize();
-
-            let dot = v1.dot(&v2).clamp(-1.0, 1.0);
-            angle_sum += dot.acos();
+            let v1 = &prev.position - &self.position;
+            let v2 = &next.position - &self.position;
+            if let Ok(angle) = v1.angle_to(&v2) {
+                angles.push(angle);
+            }
         }
 
-        // Compute mixed area (average of face areas)
-        let mixed_area = if !face_areas.is_empty() {
-            face_areas.iter().sum::<Real>() / face_areas.len() as Real
-        } else {
-            1.0 // Fallback to avoid division by zero
-        };
+        let angle_sum = Real::sum_refs(angles.iter());
+        let finite_face_areas = face_areas
+            .iter()
+            .filter(|area| real_positive(area))
+            .cloned()
+            .collect::<Vec<_>>();
+        let mixed_area = real_mean(&finite_face_areas).unwrap_or_else(Real::one);
 
-        // Discrete mean curvature
-        let angle_deficit = 2.0 * PI - angle_sum;
-        if mixed_area > tolerance() {
-            angle_deficit / mixed_area
-        } else {
-            0.0
+        if !real_positive(&mixed_area) {
+            return Real::zero();
         }
+        let full_turn = Real::from(2_u8) * Real::pi();
+        ((full_turn - angle_sum) / mixed_area).unwrap_or_else(|_| Real::zero())
     }
 
-    /// **Mathematical Foundation: Advanced Mesh Quality Analysis**
-    ///
-    /// Comprehensive vertex quality assessment using multiple metrics:
-    ///
-    /// ## **Quality Metrics**
-    /// - **Regularity**: How close vertex valence is to optimal (6 for triangular meshes)
-    /// - **Curvature**: Discrete mean curvature estimation
-    /// - **Edge Uniformity**: Standard deviation of incident edge lengths
-    /// - **Normal Variation**: Consistency of adjacent face normals
-    ///
-    /// ## **Applications**
-    /// - **Adaptive Refinement**: Identify vertices needing subdivision
-    /// - **Quality Scoring**: Overall mesh quality assessment
-    /// - **Feature Detection**: Identify sharp features and boundaries
-    ///
-    /// Returns (regularity, curvature, edge_uniformity, normal_variation)
+    /// Comprehensive vertex quality assessment.
     pub fn comprehensive_quality_analysis(
         &self,
         vertex_index: usize,
         adjacency_map: &HashMap<usize, Vec<usize>>,
-        vertex_positions: &HashMap<usize, Point3<Real>>,
-        vertex_normals: &HashMap<usize, Vector3<Real>>,
+        vertex_positions: &HashMap<usize, Point3>,
+        vertex_normals: &HashMap<usize, Vector3>,
     ) -> (Real, Real, Real, Real) {
-        // Get connectivity information
         let (valence, regularity) =
             Self::analyze_connectivity_with_index(vertex_index, adjacency_map);
 
         if valence == 0 {
-            return (0.0, 0.0, 0.0, 0.0);
+            return (Real::zero(), Real::zero(), Real::zero(), Real::zero());
         }
 
-        // Get neighbor positions for edge length analysis
-        let neighbors = adjacency_map.get(&vertex_index).unwrap();
+        let Some(neighbors) = adjacency_map.get(&vertex_index) else {
+            return (Real::zero(), Real::zero(), Real::zero(), Real::zero());
+        };
         let mut edge_lengths = Vec::new();
         let mut neighbor_normals = Vec::new();
 
         for &neighbor_idx in neighbors {
-            if let Some(&neighbor_position) = vertex_positions.get(&neighbor_idx) {
-                let edge_length = (self.position - neighbor_position).norm();
+            if let Some(neighbor_position) = vertex_positions.get(&neighbor_idx)
+                && let Some(edge_length) = point_distance(&self.position, neighbor_position)
+            {
                 edge_lengths.push(edge_length);
-
-                if let Some(&neighbor_normal) = vertex_normals.get(&neighbor_idx) {
-                    neighbor_normals.push(neighbor_normal);
-                }
+            }
+            if let Some(neighbor_normal) = vertex_normals.get(&neighbor_idx) {
+                neighbor_normals.push(neighbor_normal.clone());
             }
         }
 
-        // Edge uniformity (lower standard deviation = more uniform)
         let edge_uniformity = if edge_lengths.len() > 1 {
-            let mean_edge = edge_lengths.iter().sum::<Real>() / edge_lengths.len() as Real;
-            let variance = edge_lengths
-                .iter()
-                .map(|&len| (len - mean_edge).powi(2))
-                .sum::<Real>()
-                / edge_lengths.len() as Real;
-            let std_dev = variance.sqrt();
-
-            // Normalize to [0,1] where 1 = perfectly uniform
-            1.0 / (1.0 + std_dev / mean_edge)
-        } else {
-            1.0
-        };
-
-        // Normal variation (lower = more consistent normals)
-        let normal_variation = if neighbor_normals.len() > 1 {
-            let mut max_angle: Real = 0.0;
-            for &neighbor_normal in &neighbor_normals {
-                let angle = self
-                    .normal
-                    .normalize()
-                    .dot(&neighbor_normal.normalize())
-                    .acos();
-                max_angle = max_angle.max(angle);
+            let mean_edge = real_mean(&edge_lengths).unwrap_or_else(Real::zero);
+            let std_dev = real_sample_stddev(&edge_lengths).unwrap_or_else(Real::zero);
+            if real_positive(&mean_edge) {
+                let ratio = (std_dev / mean_edge).unwrap_or_else(|_| Real::zero());
+                real_clamp_unit(
+                    (Real::one() / (Real::one() + ratio)).unwrap_or_else(|_| Real::zero()),
+                )
+            } else {
+                Real::zero()
             }
-
-            // Normalize to [0,1] where 1 = perfectly consistent
-            1.0 - (max_angle / PI).min(1.0)
         } else {
-            1.0
+            Real::one()
         };
 
-        // Simple curvature estimation based on normal variation
-        let curvature = if !neighbor_normals.is_empty() {
-            let avg_normal = neighbor_normals
+        let normal_variation = if neighbor_normals.len() > 1 {
+            let max_angle = neighbor_normals
                 .iter()
-                .fold(Vector3::zeros(), |acc, &n| acc + n)
-                / neighbor_normals.len() as Real;
-            (self.normal - avg_normal).norm() // normal deviation
+                .filter_map(|neighbor_normal| self.normal.angle_to(neighbor_normal).ok())
+                .reduce(|current, angle| {
+                    hyperlimit::real_max(&current, &angle)
+                        .value()
+                        .cloned()
+                        .unwrap_or(current)
+                });
+
+            max_angle
+                .and_then(|angle| (angle / Real::pi()).ok())
+                .map(real_clamp_unit)
+                .map(|ratio| Real::one() - ratio)
+                .unwrap_or_else(Real::one)
         } else {
-            0.0
+            Real::one()
+        };
+
+        let curvature = if neighbor_normals.is_empty() {
+            Real::zero()
+        } else {
+            let avg_normal = Vector3::mean(&neighbor_normals).unwrap_or_else(Vector3::zero);
+            vector_distance(&self.normal, &avg_normal).unwrap_or_else(Real::zero)
         };
 
         (regularity, curvature, edge_uniformity, normal_variation)
     }
 }
 
-/// **Mathematical Foundation: Vertex Clustering for Mesh Simplification**
-///
-/// Advanced vertex operations for mesh processing and optimization.
+/// Vertex clustering for mesh simplification.
 pub struct VertexCluster {
-    /// Representative position (typically centroid)
-    pub position: Point3<Real>,
-    /// Averaged normal vector
-    pub normal: Vector3<Real>,
-    /// Number of vertices in cluster
+    /// Representative position.
+    pub position: Point3,
+    /// Averaged normal vector.
+    pub normal: Vector3,
+    /// Number of vertices in cluster.
     pub count: usize,
-    /// Bounding radius of cluster
+    /// Bounding radius of cluster.
     pub radius: Real,
 }
 
 impl VertexCluster {
-    /// Create a new vertex cluster from a collection of vertices
+    /// Create a new vertex cluster from a collection of vertices.
     pub fn from_vertices(vertices: &[Vertex]) -> Option<Self> {
         if vertices.is_empty() {
             return None;
         }
 
-        // Compute centroid position
-        let centroid = vertices
+        let positions = vertices
             .iter()
-            .fold(Point3::origin(), |acc, v| acc + v.position.coords)
-            / vertices.len() as Real;
+            .map(|vertex| vertex.position.clone())
+            .collect::<Vec<_>>();
+        let centroid = Point3::centroid(&positions)?;
 
-        // Compute average normal
-        let avg_normal = vertices
+        let normals = vertices
             .iter()
-            .fold(Vector3::zeros(), |acc, v| acc + v.normal);
-        let normalized_normal = if avg_normal.norm() > tolerance() {
-            avg_normal.normalize()
-        } else {
-            Vector3::z()
-        };
+            .map(|vertex| vertex.normal.clone())
+            .collect::<Vec<_>>();
+        let avg_normal = Vector3::mean(&normals).unwrap_or_else(Vector3::z);
+        let normalized_normal = avg_normal
+            .normalize_checked()
+            .unwrap_or_else(|_| Vector3::z());
 
-        // Compute bounding radius
         let radius = vertices
             .iter()
-            .map(|v| (v.position - Point3::from(centroid)).norm())
-            .fold(0.0, |a: Real, b| a.max(b));
+            .filter_map(|v| point_distance(&v.position, &centroid))
+            .reduce(|current, radius| {
+                hyperlimit::real_max(&current, &radius)
+                    .value()
+                    .cloned()
+                    .unwrap_or(current)
+            })
+            .unwrap_or_else(Real::zero);
 
         Some(VertexCluster {
-            position: Point3::from(centroid),
+            position: centroid,
             normal: normalized_normal,
             count: vertices.len(),
             radius,
         })
     }
 
-    /// Convert cluster back to a representative vertex
-    pub const fn to_vertex(&self) -> Vertex {
-        Vertex::new(self.position, self.normal)
-    }
-}
-
-#[cfg(test)]
-mod test {
-
-    use nalgebra::{Const, OPoint};
-
-    use super::*;
-
-    #[test]
-    pub fn test_sanitise_vertices() {
-        let vertex = Vertex::new(
-            OPoint::<Real, Const<3>>::new(Real::INFINITY, Real::INFINITY, Real::INFINITY),
-            Vector3::new(Real::INFINITY, Real::NEG_INFINITY, Real::NEG_INFINITY),
-        );
-
-        assert!(vertex.position.iter().copied().all(Real::is_finite));
-        assert!(vertex.normal.iter().copied().all(Real::is_finite));
+    /// Convert cluster back to a representative vertex.
+    pub fn to_vertex(&self) -> Vertex {
+        Vertex::new(self.position.clone(), self.normal.clone())
     }
 }

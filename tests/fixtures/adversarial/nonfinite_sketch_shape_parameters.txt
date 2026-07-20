@@ -1,6 +1,6 @@
 feature_flags: default
 real_type: f64
-operation_sequence: invalid Sketch primitive parameter catalog -> finite-coordinate filter -> triangulate when finite
+operation_sequence: invalid Profile primitive parameter catalog -> finite-coordinate filter -> triangulate when finite
 input_coordinates: zero/negative/sub-tolerance shape dimensions and segment counts
 metadata: varied shape labels
 expected_behavior: Constructors either return empty/finite sketches or are contained for later regression.

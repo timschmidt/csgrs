@@ -1,66 +1,143 @@
-//! Mesh connectivity helpers for tolerance-aware vertex indexing and topology
-//! analysis.
+//! Mesh connectivity helpers for exact vertex indexing and topology analysis.
 
-use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
+use crate::vertex::Vertex;
 use hashbrown::HashMap;
-use nalgebra::Point3;
+use hyperlattice::Point3;
+use std::cell::RefCell;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
 ///
-/// Handles floating-point coordinate comparison with tolerance:
-/// - **Spatial Hashing**: Groups nearby vertices for efficient lookup
-/// - **Tolerance Matching**: Considers vertices within tolerance as identical
+/// Handles boundary-coordinate comparison exactly:
+/// - **Exact Matching**: Considers vertices identical only when promoted
+///   hyperreal coordinates prove equality
 /// - **Global Indexing**: Maintains consistent vertex indices across mesh
+///
+/// The identity predicate promotes candidate positions into `hyperlattice`
+/// vectors and requires exact zero squared distance in `Real`. That
+/// keeps mesh-topology equivalence decisions on the exact-aware side of the API
+/// boundary, following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 #[derive(Debug, Clone)]
 pub struct VertexIndexMap {
-    /// Maps vertex positions to global indices (with tolerance)
-    pub position_to_index: Vec<(Point3<Real>, usize)>,
-    /// Maps global indices to representative positions
-    pub index_to_position: HashMap<usize, Point3<Real>>,
-    /// Spatial tolerance for vertex matching
-    pub epsilon: Real,
+    /// Maps vertex positions to global indices.
+    pub position_to_index: Vec<(Point3, usize)>,
+    /// Maps global indices to representative positions.
+    pub index_to_position: HashMap<usize, Point3>,
+    position_id_to_index: HashMap<u64, usize>,
 }
 
-impl VertexIndexMap {
-    /// Create a new vertex index map with specified tolerance
-    pub fn new(epsilon: Real) -> Self {
+#[derive(Clone, Debug)]
+struct CachedConnectivity {
+    geometry_identity: Vec<u64>,
+    connectivity: Connectivity,
+}
+
+thread_local! {
+    static CONNECTIVITY_FACTS: RefCell<Vec<CachedConnectivity>> = const { RefCell::new(Vec::new()) };
+}
+
+const CONNECTIVITY_FACT_CAPACITY: usize = 8;
+
+/// Shared exact mesh connectivity.
+#[derive(Clone, Debug)]
+pub struct Connectivity {
+    vertex_map: Arc<VertexIndexMap>,
+    adjacency: Arc<HashMap<usize, Vec<usize>>>,
+}
+
+impl Connectivity {
+    fn new(vertex_map: VertexIndexMap, adjacency: HashMap<usize, Vec<usize>>) -> Self {
         Self {
-            position_to_index: Vec::new(),
-            index_to_position: HashMap::new(),
-            epsilon,
+            vertex_map: Arc::new(vertex_map),
+            adjacency: Arc::new(adjacency),
         }
     }
 
+    /// Exact canonical vertex map.
+    pub fn vertices(&self) -> &VertexIndexMap {
+        &self.vertex_map
+    }
+
+    /// Exact undirected vertex adjacency.
+    pub fn adjacency(&self) -> &HashMap<usize, Vec<usize>> {
+        &self.adjacency
+    }
+}
+
+impl VertexIndexMap {
+    /// Create a new exact vertex index map.
+    ///
+    /// No tolerance is stored or accepted: two boundary positions share an index
+    /// only when Hyper proves their promoted coordinates are equal. That keeps
+    /// connectivity equivalence on the exact-aware side of Yap's exact
+    /// geometric computation boundary model (1997).
+    pub fn new() -> Self {
+        Self {
+            position_to_index: Vec::new(),
+            index_to_position: HashMap::new(),
+            position_id_to_index: HashMap::new(),
+        }
+    }
+
+    /// Get the existing index for an exactly equal position.
+    pub fn find_index(&self, position: &Point3) -> Option<usize> {
+        self.position_to_index
+            .iter()
+            .find_map(|(existing_position, existing_index)| {
+                let position = hyperlimit::Point3::new(
+                    position.x.clone(),
+                    position.y.clone(),
+                    position.z.clone(),
+                );
+                let existing_position = hyperlimit::Point3::new(
+                    existing_position.x.clone(),
+                    existing_position.y.clone(),
+                    existing_position.z.clone(),
+                );
+                matches!(
+                    hyperlimit::point3_equal(&position, &existing_position).value(),
+                    Some(true)
+                )
+                .then_some(*existing_index)
+            })
+    }
+
+    pub(crate) fn find_vertex_index(&self, vertex: &Vertex) -> Option<usize> {
+        self.position_id_to_index
+            .get(&vertex.position_id)
+            .copied()
+            .or_else(|| self.find_index(&vertex.position))
+    }
+
     /// Get or create an index for a vertex position
-    pub fn get_or_create_index(&mut self, position: Point3<Real>) -> usize {
-        // Look for existing vertex within epsilon tolerance
-        for (existing_position, existing_index) in &self.position_to_index {
-            if (position - existing_position).norm() < self.epsilon {
-                return *existing_index;
-            }
+    pub fn get_or_create_index(&mut self, position: Point3) -> usize {
+        if let Some(existing_index) = self.find_index(&position) {
+            return existing_index;
         }
 
         // Create new index
         let new_index = self.position_to_index.len();
-        self.position_to_index.push((position, new_index));
+        self.position_to_index.push((position.clone(), new_index));
         self.index_to_position.insert(new_index, position);
         new_index
     }
 
     /// Get the position for a given index
-    pub fn get_position(&self, index: usize) -> Option<Point3<Real>> {
-        self.index_to_position.get(&index).copied()
+    pub fn get_position(&self, index: usize) -> Option<Point3> {
+        self.index_to_position.get(&index).cloned()
     }
 
     /// Get total number of unique vertices
-    pub fn vertex_count(&self) -> usize {
+    pub const fn vertex_count(&self) -> usize {
         self.position_to_index.len()
     }
 
     /// Get all vertex positions and their indices (for iteration)
-    pub const fn get_vertex_positions(&self) -> &Vec<(Point3<Real>, usize)> {
+    pub const fn get_vertex_positions(&self) -> &Vec<(Point3, usize)> {
         &self.position_to_index
     }
 }
@@ -68,52 +145,93 @@ impl VertexIndexMap {
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Mathematical Foundation: Robust Mesh Connectivity Analysis**
     ///
-    /// Build a proper vertex adjacency graph using epsilon-based vertex matching:
+    /// Build a proper vertex adjacency graph from the exact `hypermesh` adapter:
     ///
     /// ## **Vertex Matching Algorithm**
-    /// 1. **Spatial Tolerance**: Vertices within ε distance are considered identical
-    /// 2. **Global Indexing**: Each unique position gets a global index
-    /// 3. **Adjacency Building**: For each edge, record bidirectional connectivity
-    /// 4. **Manifold Validation**: Ensure each edge is shared by at most 2 triangles
+    /// 1. **Exact Import**: the audited `hypermesh` adapter canonicalizes the
+    ///    current triangle stream without requiring Boolean-surface validation
+    /// 2. **Global Indexing**: Each exact hypermesh input vertex keeps its
+    ///    global index
+    /// 3. **Edge Facts**: Triangle indices expose bidirectional connectivity
+    ///    without primitive-coordinate matching
+    /// 4. **Shared Carrier**: Closed-manifold decisions use the same exact
+    ///    imported triangle stream, with their additional validation performed
+    ///    by [`Mesh::is_manifold`]
+    ///
+    /// Keeping adjacency on retained hypermesh edge facts avoids a second
+    /// approximate topology model in `csgrs`. This follows Yap, "Towards Exact
+    /// Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the CGAL
+    /// triangulation-data-structure separation of vertices, edges, and faces
+    /// described by Boissonnat et al., *Computational Geometry* 22.1-3 (2002).
     ///
     /// Returns (vertex_map, adjacency_graph) for robust mesh processing.
     pub fn build_connectivity(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
-        let mut vertex_map = VertexIndexMap::new(tolerance() * 100.0); // Tolerance for vertex matching
+        let connectivity = self.connectivity();
+        (
+            connectivity.vertices().clone(),
+            connectivity.adjacency().clone(),
+        )
+    }
+
+    /// Return shared exact connectivity, retaining it with this mesh geometry.
+    pub fn connectivity(&self) -> Connectivity {
+        if let Some(connectivity) = self.polygons.connectivity() {
+            return connectivity.clone();
+        }
+        if let Some(cached) = CONNECTIVITY_FACTS.with_borrow(|facts| {
+            facts
+                .iter()
+                .rev()
+                .find(|fact| self.geometry_identity_matches(&fact.geometry_identity))
+                .map(|fact| fact.connectivity.clone())
+        }) {
+            self.polygons.retain_connectivity(cached.clone());
+            return cached;
+        }
+
+        let (vertex_map, adjacency) = self.build_connectivity_uncached();
+        let connectivity = Connectivity::new(vertex_map, adjacency);
+        self.retain_connectivity(connectivity.clone());
+        connectivity
+    }
+
+    /// Return retained exact connectivity cardinalities.
+    pub fn connectivity_counts(&self) -> (usize, usize) {
+        if let Some(counts) = self.polygons.connectivity_counts() {
+            return counts;
+        }
+        let connectivity = self.connectivity();
+        let counts = (
+            connectivity.vertices().vertex_count(),
+            connectivity.adjacency().len(),
+        );
+        self.polygons.retain_connectivity_counts(counts);
+        counts
+    }
+
+    fn build_connectivity_uncached(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
+        let mut vertex_map = VertexIndexMap::new();
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
-        // First pass: build vertex index mapping
-        for polygon in &self.polygons {
-            for vertex in &polygon.vertices {
-                vertex_map.get_or_create_index(vertex.position);
+        let Ok((mesh, position_id_to_index)) = self.to_hypermesh_connectivity_mesh() else {
+            return (vertex_map, adjacency);
+        };
+        vertex_map.position_id_to_index = position_id_to_index;
+        for (index, point) in mesh.positions.iter().enumerate() {
+            vertex_map.position_to_index.push((point.clone(), index));
+            vertex_map.index_to_position.insert(index, point.clone());
+        }
+
+        adjacency.reserve(mesh.positions.len());
+        for triangle in &mesh.triangles {
+            let [a, b, c] = triangle.indices();
+            for [a, b] in [[a, b], [b, c], [c, a]] {
+                add_adjacency_edge(&mut adjacency, a, b);
             }
         }
 
-        // Second pass: build adjacency graph
-        for polygon in &self.polygons {
-            let mut vertex_indices = Vec::new();
-
-            // Get indices for this polygon's vertices
-            for vertex in &polygon.vertices {
-                let index = vertex_map.get_or_create_index(vertex.position);
-                vertex_indices.push(index);
-            }
-
-            // Build adjacency for this polygon's edges
-            for i in 0..vertex_indices.len() {
-                let current = vertex_indices[i];
-                let next = vertex_indices[(i + 1) % vertex_indices.len()];
-                let prev =
-                    vertex_indices[(i + vertex_indices.len() - 1) % vertex_indices.len()];
-
-                // Add bidirectional edges
-                adjacency.entry(current).or_default().push(next);
-                adjacency.entry(current).or_default().push(prev);
-                adjacency.entry(next).or_default().push(current);
-                adjacency.entry(prev).or_default().push(current);
-            }
-        }
-
-        // Clean up adjacency lists - remove duplicates and self-references
         for (vertex_idx, neighbors) in adjacency.iter_mut() {
             neighbors.sort_unstable();
             neighbors.dedup();
@@ -121,5 +239,62 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         (vertex_map, adjacency)
+    }
+
+    fn retain_connectivity(&self, connectivity: Connectivity) {
+        self.polygons.retain_connectivity(connectivity.clone());
+        let geometry_identity = self.geometry_identity();
+        CONNECTIVITY_FACTS.with_borrow_mut(|facts| {
+            if let Some(index) = facts
+                .iter()
+                .position(|fact| fact.geometry_identity == geometry_identity)
+            {
+                facts.remove(index);
+            }
+            if facts.len() == CONNECTIVITY_FACT_CAPACITY {
+                facts.remove(0);
+            }
+            facts.push(CachedConnectivity {
+                geometry_identity,
+                connectivity,
+            });
+        });
+    }
+
+    pub(super) fn retain_connectivity_counts(&self, counts: (usize, usize)) {
+        self.polygons.retain_connectivity_counts(counts);
+    }
+}
+
+fn add_adjacency_edge(adjacency: &mut HashMap<usize, Vec<usize>>, a: usize, b: usize) {
+    adjacency.entry(a).or_default().push(b);
+    adjacency.entry(b).or_default().push(a);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::hyper_math::{Real, hreal_from_f64};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    fn p3(x: f64, y: f64, z: f64) -> Point3 {
+        Point3::new(r(x), r(y), r(z))
+    }
+
+    #[test]
+    fn vertex_index_map_shares_only_exact_positions() {
+        let mut map = VertexIndexMap::new();
+        let base = p3(0.0, 0.0, 0.0);
+        let exact = p3(0.0, 0.0, 0.0);
+        let near = p3(1.0e-12, 0.0, 0.0);
+        let far = p3(2.0, 0.0, 0.0);
+
+        let base_index = map.get_or_create_index(base);
+        assert_eq!(map.get_or_create_index(exact), base_index);
+        assert_ne!(map.get_or_create_index(near), base_index);
+        assert_ne!(map.get_or_create_index(far), base_index);
     }
 }

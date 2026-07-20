@@ -2,9 +2,13 @@
 
 #![no_main]
 
-use csgrs::float_types::Real;
-use csgrs::sketch::Sketch;
+use csgrs::sketch::Profile;
+use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -13,7 +17,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e9;
-    value.clamp(-1.0e6, 1.0e6) as Real
+    real(value.clamp(-1.0e6, 1.0e6))
 }
 
 fuzz_target!(|bytes: &[u8]| {
@@ -29,7 +33,7 @@ fuzz_target!(|bytes: &[u8]| {
         points.push([x, y]);
     }
 
-    let sketch: Sketch<()> = Sketch::polygon(&points, None);
+    let sketch: Profile = Profile::polygon(&points );
     for triangle in sketch.triangulate() {
         for point in triangle {
             assert!(point.x.is_finite());

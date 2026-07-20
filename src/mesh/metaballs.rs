@@ -1,16 +1,22 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::float_types::{Real, tolerance};
+use crate::hyper_math::{
+    hreal_from_f32, hreal_from_f64, hreal_sign, hreal_to_f64, htriangle_area2_is_nonzero,
+    hvector3_from_point3, hvector3_from_vector3,
+};
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 use crate::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Real, Vector3};
+use hyperlimit::Point3 as HPoint3;
+use hyperlimit::{real_max, real_min};
+use hyperreal::RealSign;
 use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
 pub struct MetaBall {
-    pub center: Point3<Real>,
+    pub center: Point3,
     pub radius: Real,
 }
 
@@ -36,34 +42,58 @@ pub struct MetaballDiagnostics {
 }
 
 impl MetaBall {
-    pub const fn new(center: Point3<Real>, radius: Real) -> Self {
+    pub const fn new(center: Point3, radius: Real) -> Self {
         Self { center, radius }
     }
 
-    /// **Mathematical Foundation**: Metaball influence function I(p) = r²/(|p-c|² + ε)
-    /// where ε prevents division by zero and maintains numerical stability.
-    /// **Optimization**: Early termination for distant points and vectorized computation.
-    pub fn influence(&self, p: &Point3<Real>) -> Real {
-        let distance_squared = (p - self.center).norm_squared();
+    /// **Mathematical Foundation**: Metaball influence function I(p) = r²/|p-c|².
+    ///
+    /// Radius, distance, denominator, and division are evaluated as `Real`
+    /// through the internal `influence_hreal` sampler, following Yap's exact-geometric-
+    /// computation boundary split (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// The implicit-field model follows Blinn, "A Generalization of Algebraic
+    /// Surface Drawing," *ACM Transactions on Graphics* 1(3), 1982
+    /// (<https://doi.org/10.1145/357306.357310>).
+    pub fn influence(&self, p: &Point3) -> Real {
+        self.influence_hreal(p).unwrap_or_else(Real::zero)
+    }
 
-        // Early termination optimization: if point is very far from metaball,
-        // influence approaches zero - can skip expensive division
-        let threshold_distance_sq = self.radius * self.radius * 1000.0; // 1000x radius
-        if distance_squared > threshold_distance_sq {
-            return 0.0;
+    /// Return this metaball's finite influence as a hyperreal field value.
+    ///
+    /// This is the internal sampling primitive. It keeps the implicit scalar
+    /// field in hyperreal space until diagnostics or `fast_surface_nets` require
+    /// lossy boundary scalars. Exact center singularities are represented by a
+    /// large finite sampling sentinel at that extraction boundary rather than by
+    /// perturbing every denominator with a tolerance.
+    fn influence_hreal(&self, p: &Point3) -> Option<Real> {
+        let radius = hreal_from_f64(self.radius.clone()).ok()?;
+        if !matches!(hreal_sign(&radius), Some(RealSign::Positive)) {
+            return None;
         }
 
-        // Numerically stable influence calculation with tolerance
-        let denominator = distance_squared + tolerance();
-        (self.radius * self.radius) / denominator
+        let distance_squared = hyper_point_distance_squared(p, &self.center)?;
+        let radius_squared = radius.clone() * radius;
+
+        // Early termination optimization: if point is very far from the
+        // metaball, influence approaches zero and can skip division.
+        let threshold_distance_sq = radius_squared.clone() * hreal_from_f64(1000.0).ok()?;
+        if matches!(
+            hreal_sign(&(distance_squared.clone() - threshold_distance_sq)),
+            Some(RealSign::Positive)
+        ) {
+            return Some(Real::zero());
+        }
+
+        if matches!(hreal_sign(&distance_squared), Some(RealSign::Zero)) {
+            return singular_metaball_influence();
+        }
+        let denominator = distance_squared;
+        (radius_squared / denominator).ok()
     }
 }
 
-/// **Mathematical Foundation**: Scalar field F(p) = Σ I_i(p) where I_i is the influence
-/// function of the i-th metaball. This creates smooth isosurfaces at threshold values.
-/// **Optimization**: Iterator-based summation with potential for vectorization.
-fn scalar_field_metaballs(balls: &[MetaBall], p: &Point3<Real>) -> Real {
-    balls.iter().map(|ball| ball.influence(p)).sum()
+fn singular_metaball_influence() -> Option<Real> {
+    hreal_from_f64(1.0e10).ok()
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -85,6 +115,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
     /// Creates a Mesh from metaballs and returns diagnostics for sampling and
     /// surface-net triangle conversion.
+    ///
+    /// Metaball centers, radii, padding, iso values, generated vertices, and
+    /// generated normals are promoted through hyperreal/hyperlattice boundary
+    /// adapters before they contribute to mesh topology. csgrs therefore only
+    /// composes the sampled surface into its transitional `Mesh` carrier while
+    /// exact-aware predicates remain in the hyper crates, following Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>). Surface
+    /// extraction follows Gibson, "Constrained Elastic Surface Nets," MERL
+    /// TR99-24, 1999.
     pub fn metaballs_with_diagnostics(
         balls: &[MetaBall],
         resolution: (usize, usize, usize),
@@ -92,39 +132,6 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         padding: Real,
         metadata: M,
     ) -> (Mesh<M>, MetaballDiagnostics) {
-        if balls.is_empty() {
-            return (
-                Mesh::empty(metadata),
-                MetaballDiagnostics {
-                    resolution: (
-                        resolution.0.max(2) as u32,
-                        resolution.1.max(2) as u32,
-                        resolution.2.max(2) as u32,
-                    ),
-                    ..MetaballDiagnostics::default()
-                },
-            );
-        }
-
-        // Determine bounding box of all metaballs (plus padding).
-        let (min_pt, max_pt) = balls.iter().fold(
-            (
-                Point3::new(Real::MAX, Real::MAX, Real::MAX),
-                Point3::new(-Real::MAX, -Real::MAX, -Real::MAX),
-            ),
-            |(mut min_p, mut max_p), mb| {
-                let r = mb.radius + padding;
-                min_p.x = min_p.x.min(mb.center.x - r);
-                min_p.y = min_p.y.min(mb.center.y - r);
-                min_p.z = min_p.z.min(mb.center.z - r);
-                max_p.x = max_p.x.max(mb.center.x + r);
-                max_p.y = max_p.y.max(mb.center.y + r);
-                max_p.z = max_p.z.max(mb.center.z + r);
-                (min_p, max_p)
-            },
-        );
-
-        // Resolution for X, Y, Z
         let nx = resolution.0.max(2) as u32;
         let ny = resolution.1.max(2) as u32;
         let nz = resolution.2.max(2) as u32;
@@ -135,55 +142,94 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             ..MetaballDiagnostics::default()
         };
 
-        // Spacing in each axis
-        let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
-        let dy = (max_pt.y - min_pt.y) / (ny as Real - 1.0);
-        let dz = (max_pt.z - min_pt.z) / (nz as Real - 1.0);
+        if balls.is_empty() {
+            diagnostics.sample_count = 0;
+            return (Mesh::empty(), diagnostics);
+        }
+
+        let valid_balls = balls
+            .iter()
+            .filter(|ball| {
+                let Some(radius) = hreal_from_f64(ball.radius.clone()).ok() else {
+                    return false;
+                };
+                hvector3_from_point3(&ball.center).is_some()
+                    && matches!(hreal_sign(&radius), Some(RealSign::Positive))
+            })
+            .collect::<Vec<_>>();
+        let Some(padding_h) = hreal_from_f64(padding).ok() else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(), diagnostics);
+        };
+        let padding_is_negative = matches!(hreal_sign(&padding_h), Some(RealSign::Negative));
+        let Some(iso_value_h) = hreal_from_f64(iso_value).ok() else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(), diagnostics);
+        };
+
+        if valid_balls.is_empty() || padding_is_negative {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(), diagnostics);
+        }
+
+        let Some((min_pt, max_pt)) = metaball_bounds_hreal(&valid_balls, &padding_h) else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(), diagnostics);
+        };
+
+        let Some(grid) = MetaballSamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz) else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(), diagnostics);
+        };
 
         // Create and fill the scalar-field array with "field_value - iso_value"
         // so that the isosurface will be at 0.
         let array_size = (nx * ny * nz) as usize;
-        let mut field_values = vec![0.0; array_size];
-
-        let index_3d = |ix: u32, iy: u32, iz: u32| -> usize {
-            (iz * ny + iy) as usize * (nx as usize) + ix as usize
-        };
+        let mut field_values = MetaballSampleField::with_capacity(array_size);
 
         for iz in 0..nz {
-            let zf = min_pt.z + (iz as Real) * dz;
             for iy in 0..ny {
-                let yf = min_pt.y + (iy as Real) * dy;
                 for ix in 0..nx {
-                    let xf = min_pt.x + (ix as Real) * dx;
-                    let p = Point3::new(xf, yf, zf);
+                    let Some(p) = grid.point_at(ix, iy, iz) else {
+                        diagnostics.non_finite_sample_count += 1;
+                        diagnostics.positive_sample_count += 1;
+                        field_values.push_nonfinite_sample();
+                        continue;
+                    };
 
-                    let field_value = scalar_field_metaballs(balls, &p);
-                    field_values[index_3d(ix, iy, iz)] = if field_value.is_finite() {
+                    let Some(field_value_h) =
+                        valid_balls.iter().try_fold(Real::zero(), |acc, ball| {
+                            ball.influence_hreal(&p).map(|value| acc + value)
+                        })
+                    else {
+                        diagnostics.non_finite_sample_count += 1;
+                        diagnostics.positive_sample_count += 1;
+                        field_values.push_nonfinite_sample();
+                        continue;
+                    };
+                    let shifted = field_value_h.clone() - iso_value_h.clone();
+
+                    if field_values.push_hyper_sample(shifted.clone()) {
                         diagnostics.finite_sample_count += 1;
-                        diagnostics.min_finite_value = Some(
-                            diagnostics
-                                .min_finite_value
-                                .map_or(field_value, |current| current.min(field_value)),
-                        );
-                        diagnostics.max_finite_value = Some(
-                            diagnostics
-                                .max_finite_value
-                                .map_or(field_value, |current| current.max(field_value)),
-                        );
-                        let shifted = field_value - iso_value;
-                        if shifted < 0.0 {
-                            diagnostics.negative_sample_count += 1;
-                        } else if shifted > 0.0 {
-                            diagnostics.positive_sample_count += 1;
-                        } else {
-                            diagnostics.zero_sample_count += 1;
+                        record_metaball_finite_sample(&mut diagnostics, &field_value_h);
+                        match hreal_sign(&shifted) {
+                            Some(RealSign::Negative) => diagnostics.negative_sample_count += 1,
+                            Some(RealSign::Positive) => diagnostics.positive_sample_count += 1,
+                            Some(RealSign::Zero) => diagnostics.zero_sample_count += 1,
+                            None => {
+                                diagnostics.non_finite_sample_count += 1;
+                                diagnostics.positive_sample_count += 1;
+                            },
                         }
-                        shifted as f32
                     } else {
                         diagnostics.non_finite_sample_count += 1;
                         diagnostics.positive_sample_count += 1;
-                        1e10_f32
-                    };
+                    }
                 }
             }
         }
@@ -228,7 +274,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         let shape = GridShape { nx, ny, nz };
-        diagnostics.crossing_cell_count = count_crossing_cells(&field_values, nx, ny, nz);
+        diagnostics.crossing_cell_count =
+            count_crossing_cells(&field_values.hyper_values, nx, ny, nz);
 
         // We'll collect the output into a SurfaceNetsBuffer
         let mut sn_buffer = SurfaceNetsBuffer::default();
@@ -238,9 +285,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let (max_x, max_y, max_z) = (nx - 1, ny - 1, nz - 1);
 
         surface_nets(
-            &field_values, // SDF array
-            &shape,        // custom shape
-            [0, 0, 0],     // minimum corner in lattice coords
+            &field_values.surface_nets_values,
+            &shape,
+            [0, 0, 0],
             [max_x, max_y, max_z],
             &mut sn_buffer,
         );
@@ -260,24 +307,18 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let p1_index = sn_buffer.positions[i1];
             let p2_index = sn_buffer.positions[i2];
 
-            // Convert from index space to real (world) space:
-            let p0_real = Point3::new(
-                min_pt.x + p0_index[0] as Real * dx,
-                min_pt.y + p0_index[1] as Real * dy,
-                min_pt.z + p0_index[2] as Real * dz,
-            );
-
-            let p1_real = Point3::new(
-                min_pt.x + p1_index[0] as Real * dx,
-                min_pt.y + p1_index[1] as Real * dy,
-                min_pt.z + p1_index[2] as Real * dz,
-            );
-
-            let p2_real = Point3::new(
-                min_pt.x + p2_index[0] as Real * dx,
-                min_pt.y + p2_index[1] as Real * dy,
-                min_pt.z + p2_index[2] as Real * dz,
-            );
+            let Some(p0_real) = grid.point_from_surface_position(p0_index) else {
+                diagnostics.skipped_non_finite_triangle_count += 1;
+                continue;
+            };
+            let Some(p1_real) = grid.point_from_surface_position(p1_index) else {
+                diagnostics.skipped_non_finite_triangle_count += 1;
+                continue;
+            };
+            let Some(p2_real) = grid.point_from_surface_position(p2_index) else {
+                diagnostics.skipped_non_finite_triangle_count += 1;
+                continue;
+            };
 
             // Likewise for the normals if you want them in true world space.
             // Usually you'd need to do an inverse-transpose transform if your
@@ -287,22 +328,31 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let n1 = sn_buffer.normals[i1];
             let n2 = sn_buffer.normals[i2];
 
-            let n0v = Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real);
-            let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
-            let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
+            let Some(n0v) = vector3_from_f32_boundary(n0) else {
+                diagnostics.skipped_non_finite_triangle_count += 1;
+                continue;
+            };
+            let Some(n1v) = vector3_from_f32_boundary(n1) else {
+                diagnostics.skipped_non_finite_triangle_count += 1;
+                continue;
+            };
+            let Some(n2v) = vector3_from_f32_boundary(n2) else {
+                diagnostics.skipped_non_finite_triangle_count += 1;
+                continue;
+            };
 
-            if !(point_finite(&p0_real)
-                && point_finite(&p1_real)
-                && point_finite(&p2_real)
-                && vec_finite(&n0v)
-                && vec_finite(&n1v)
-                && vec_finite(&n2v))
+            if !(finite_point3(&p0_real)
+                && finite_point3(&p1_real)
+                && finite_point3(&p2_real)
+                && finite_vector3(&n0v)
+                && finite_vector3(&n1v)
+                && finite_vector3(&n2v))
             {
                 diagnostics.skipped_non_finite_triangle_count += 1;
                 continue;
             }
 
-            if triangle_area2(p0_real, p1_real, p2_real) <= Real::EPSILON {
+            if !htriangle_area2_is_nonzero(&p0_real, &p1_real, &p2_real) {
                 diagnostics.degenerate_triangle_count += 1;
             }
 
@@ -318,21 +368,218 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         // Build and return a Mesh from these polygons
-        (Mesh::from_polygons(&triangles, metadata), diagnostics)
+        (Mesh::from_polygons(triangles), diagnostics)
     }
 }
 
-#[inline]
-fn point_finite(p: &Point3<Real>) -> bool {
-    p.coords.iter().all(|&c| c.is_finite())
+#[derive(Clone, Debug)]
+struct MetaballSampleField {
+    hyper_values: Vec<Real>,
+    surface_nets_values: Vec<f32>,
+}
+
+impl MetaballSampleField {
+    fn with_capacity(capacity: usize) -> Self {
+        Self {
+            hyper_values: Vec::with_capacity(capacity),
+            surface_nets_values: Vec::with_capacity(capacity),
+        }
+    }
+
+    fn push_hyper_sample(&mut self, shifted: Real) -> bool {
+        let Some(surface_value) = surface_nets_scalar(&shifted) else {
+            self.push_nonfinite_sample();
+            return false;
+        };
+        self.hyper_values.push(shifted);
+        self.surface_nets_values.push(surface_value);
+        true
+    }
+
+    fn push_nonfinite_sample(&mut self) {
+        let sentinel = hreal_from_f64(1.0e10).expect("finite metaball sentinel");
+        self.hyper_values.push(sentinel);
+        self.surface_nets_values.push(1.0e10_f32);
+    }
+}
+
+fn record_metaball_finite_sample(diagnostics: &mut MetaballDiagnostics, value: &Real) {
+    diagnostics.min_finite_value = match diagnostics.min_finite_value.take() {
+        Some(current) => hyperlimit::real_min(&current, value).value().cloned(),
+        None => Some(value.clone()),
+    };
+    diagnostics.max_finite_value = match diagnostics.max_finite_value.take() {
+        Some(current) => hyperlimit::real_max(&current, value).value().cloned(),
+        None => Some(value.clone()),
+    };
+}
+
+fn metaball_bounds_hreal(balls: &[&MetaBall], padding: &Real) -> Option<(HPoint3, HPoint3)> {
+    let mut bounds = balls.iter().map(|ball| {
+        let center = HPoint3::new(
+            ball.center.x.clone(),
+            ball.center.y.clone(),
+            ball.center.z.clone(),
+        );
+        let radius = hreal_from_f64(ball.radius.clone()).ok()?;
+        let extent = radius + padding.clone();
+        Some((
+            HPoint3::new(
+                center.x.clone() - extent.clone(),
+                center.y.clone() - extent.clone(),
+                center.z.clone() - extent.clone(),
+            ),
+            HPoint3::new(
+                center.x + extent.clone(),
+                center.y + extent.clone(),
+                center.z + extent,
+            ),
+        ))
+    });
+    let (mut min_pt, mut max_pt) = bounds.next()??;
+    for bounds in bounds {
+        let (next_min, next_max) = bounds?;
+        min_pt = HPoint3::new(
+            real_min(&min_pt.x, &next_min.x).value().cloned()?,
+            real_min(&min_pt.y, &next_min.y).value().cloned()?,
+            real_min(&min_pt.z, &next_min.z).value().cloned()?,
+        );
+        max_pt = HPoint3::new(
+            real_max(&max_pt.x, &next_max.x).value().cloned()?,
+            real_max(&max_pt.y, &next_max.y).value().cloned()?,
+            real_max(&max_pt.z, &next_max.z).value().cloned()?,
+        );
+    }
+    Some((min_pt, max_pt))
+}
+
+#[derive(Clone, Debug)]
+struct MetaballSamplingGrid {
+    origin: HPoint3,
+    step: HPoint3,
+}
+
+impl MetaballSamplingGrid {
+    fn from_bounds(
+        min_pt: HPoint3,
+        max_pt: HPoint3,
+        nx: u32,
+        ny: u32,
+        nz: u32,
+    ) -> Option<Self> {
+        let origin = min_pt;
+        let max = max_pt;
+        Some(Self {
+            step: HPoint3::new(
+                ((max.x - origin.x.clone()) / Real::from(u64::from(nx - 1))).ok()?,
+                ((max.y - origin.y.clone()) / Real::from(u64::from(ny - 1))).ok()?,
+                ((max.z - origin.z.clone()) / Real::from(u64::from(nz - 1))).ok()?,
+            ),
+            origin,
+        })
+    }
+
+    fn point_at(&self, ix: u32, iy: u32, iz: u32) -> Option<Point3> {
+        let x = self.origin.x.clone() + self.step.x.clone() * Real::from(u64::from(ix));
+        let y = self.origin.y.clone() + self.step.y.clone() * Real::from(u64::from(iy));
+        let z = self.origin.z.clone() + self.step.z.clone() * Real::from(u64::from(iz));
+        Some(Point3::new(x, y, z))
+    }
+
+    fn point_from_surface_position(&self, position: [f32; 3]) -> Option<Point3> {
+        let x =
+            self.origin.x.clone() + self.step.x.clone() * hreal_from_f32(position[0]).ok()?;
+        let y =
+            self.origin.y.clone() + self.step.y.clone() * hreal_from_f32(position[1]).ok()?;
+        let z =
+            self.origin.z.clone() + self.step.z.clone() * hreal_from_f32(position[2]).ok()?;
+        Some(Point3::new(x, y, z))
+    }
+}
+
+fn hyper_point_distance_squared(lhs: &Point3, rhs: &Point3) -> Option<Real> {
+    let lhs = hvector3_from_point3(lhs)?;
+    let rhs = hvector3_from_point3(rhs)?;
+    Some(lhs.squared_distance(&rhs))
 }
 
 #[inline]
-fn vec_finite(v: &Vector3<Real>) -> bool {
-    v.iter().all(|&c| c.is_finite())
+fn finite_point3(point: &Point3) -> bool {
+    hvector3_from_point3(point).is_some()
 }
 
-fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usize {
+#[inline]
+fn finite_vector3(vector: &Vector3) -> bool {
+    hvector3_from_vector3(vector).is_some()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::hyper_math::{Real, hreal_from_f64, hreal_gt_f64, tolerance};
+
+    fn r(value: f64) -> Real {
+        hreal_from_f64(value).expect("test values must be finite")
+    }
+
+    fn p3(x: Real, y: f64, z: f64) -> Point3 {
+        Point3::new(x, r(y), r(z))
+    }
+
+    #[test]
+    fn metaball_influence_uses_exact_center_singularity_without_tolerance() {
+        let ball = MetaBall::new(Point3::new(r(0.0), r(0.0), r(0.0)), r(1.0));
+        let center = ball
+            .influence_hreal(&Point3::new(r(0.0), r(0.0), r(0.0)))
+            .unwrap();
+        let tiny_offset = ball
+            .influence_hreal(&p3(tolerance() * r(0.25), 0.0, 0.0))
+            .unwrap();
+
+        assert!(hreal_gt_f64(&center, 1.0e9));
+        assert!(hreal_gt_f64(&tiny_offset, 1.0e9));
+    }
+
+    #[test]
+    fn metaball_influence_rejects_exact_zero_radius() {
+        let ball = MetaBall::new(Point3::new(r(0.0), r(0.0), r(0.0)), r(0.0));
+        assert!(
+            ball.influence_hreal(&Point3::new(r(0.0), r(0.0), r(0.0)))
+                .is_none()
+        );
+    }
+}
+
+fn surface_nets_scalar(value: &Real) -> Option<f32> {
+    let boundary = hreal_to_f64(value)?;
+    // Conversion refines the expression and warms its certified approximation;
+    // the exact sign query can then reuse that work for the topology decision.
+    let sign = hreal_sign(value)?;
+    let value = boundary as f32;
+    let value = if value == 0.0 {
+        match sign {
+            RealSign::Negative => -f32::MIN_POSITIVE,
+            RealSign::Positive => f32::MIN_POSITIVE,
+            RealSign::Zero => 0.0,
+        }
+    } else if value.is_infinite() {
+        match sign {
+            RealSign::Negative => -f32::MAX,
+            RealSign::Positive => f32::MAX,
+            RealSign::Zero => 0.0,
+        }
+    } else {
+        value
+    };
+    hreal_from_f32(value).ok()?;
+    Some(value)
+}
+
+fn vector3_from_f32_boundary(vector: [f32; 3]) -> Option<Vector3> {
+    Vector3::try_from_f32_array(vector).ok()
+}
+
+fn count_crossing_cells(field_values: &[Real], nx: u32, ny: u32, nz: u32) -> usize {
     if nx < 2 || ny < 2 || nz < 2 {
         return 0;
     }
@@ -344,18 +591,19 @@ fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usiz
         for y in 0..(ny - 1) {
             for x in 0..(nx - 1) {
                 let corners = [
-                    field_values[index(x, y, z)],
-                    field_values[index(x + 1, y, z)],
-                    field_values[index(x, y + 1, z)],
-                    field_values[index(x + 1, y + 1, z)],
-                    field_values[index(x, y, z + 1)],
-                    field_values[index(x + 1, y, z + 1)],
-                    field_values[index(x, y + 1, z + 1)],
-                    field_values[index(x + 1, y + 1, z + 1)],
+                    &field_values[index(x, y, z)],
+                    &field_values[index(x + 1, y, z)],
+                    &field_values[index(x, y + 1, z)],
+                    &field_values[index(x + 1, y + 1, z)],
+                    &field_values[index(x, y, z + 1)],
+                    &field_values[index(x + 1, y, z + 1)],
+                    &field_values[index(x, y + 1, z + 1)],
+                    &field_values[index(x + 1, y + 1, z + 1)],
                 ];
-                let has_negative = corners.iter().any(|value| *value < 0.0);
-                let has_positive = corners.iter().any(|value| *value > 0.0);
-                let has_zero = corners.contains(&0.0);
+                let signs = corners.map(hreal_sign);
+                let has_negative = signs.contains(&Some(RealSign::Negative));
+                let has_positive = signs.contains(&Some(RealSign::Positive));
+                let has_zero = signs.contains(&Some(RealSign::Zero));
                 if (has_negative && has_positive) || has_zero {
                     count += 1;
                 }
@@ -364,8 +612,4 @@ fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usiz
     }
 
     count
-}
-
-fn triangle_area2(a: Point3<Real>, b: Point3<Real>, c: Point3<Real>) -> Real {
-    (b - a).cross(&(c - a)).norm()
 }

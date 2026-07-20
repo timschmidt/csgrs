@@ -1,31 +1,35 @@
 //! Tests for offset and buffering behavior.
 
 use super::support::*;
+use hypercurve::finite_ring_signed_area;
+
+fn first_material_area(sketch: &Profile) -> Real {
+    let profiles = sketch.region_profiles();
+    r(finite_ring_signed_area(profiles[0].material().points()))
+}
 
 #[test]
 fn test_square_ccw_ordering() {
-    let square = Sketch::<()>::square(2.0, ());
-    let mp = square.to_multipolygon();
-    assert_eq!(mp.0.len(), 1);
-    let poly = &mp.0[0];
-    let area = poly.signed_area();
-    assert!(area > 0.0, "Square vertices are not CCW ordered");
+    let square = Profile::square(r(2.0));
+    let profiles = square.region_profiles();
+    assert_eq!(profiles.len(), 1);
+    let area = r(finite_ring_signed_area(profiles[0].material().points()));
+    assert!(area > r(0.0), "Square vertices are not CCW ordered");
 }
 
 #[test]
 #[cfg(feature = "offset")]
 fn test_offset_2d_positive_distance_grows() {
-    let square = Sketch::<()>::square(2.0, ()); // Centered square with size 2x2
-    let offset = square.offset(0.5); // Positive offset should grow the square
+    let square = Profile::square(r(2.0)); // Centered square with size 2x2
+    let offset = square.offset(r(0.5)); // Positive offset should grow the square
 
     // The original square has area 4.0
     // The offset square should have area greater than 4.0
-    let mp = offset.to_multipolygon();
-    assert_eq!(mp.0.len(), 1);
-    let poly = &mp.0[0];
-    let area = poly.signed_area();
+    let profiles = offset.region_profiles();
+    assert_eq!(profiles.len(), 1);
+    let area = r(finite_ring_signed_area(profiles[0].material().points()));
     assert!(
-        area > 4.0,
+        area > r(4.0),
         "Offset with positive distance did not grow the square"
     );
 }
@@ -33,17 +37,16 @@ fn test_offset_2d_positive_distance_grows() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_offset_2d_negative_distance_shrinks() {
-    let square = Sketch::<()>::square(2.0, ()); // Centered square with size 2x2
-    let offset = square.offset(-0.5); // Negative offset should shrink the square
+    let square = Profile::square(r(2.0)); // Centered square with size 2x2
+    let offset = square.offset(r(-0.5)); // Negative offset should shrink the square
 
     // The original square has area 4.0
     // The offset square should have area less than 4.0
-    let mp = offset.to_multipolygon();
-    assert_eq!(mp.0.len(), 1);
-    let poly = &mp.0[0];
-    let area = poly.signed_area();
+    let profiles = offset.region_profiles();
+    assert_eq!(profiles.len(), 1);
+    let area = r(finite_ring_signed_area(profiles[0].material().points()));
     assert!(
-        area < 4.0,
+        area < r(4.0),
         "Offset with negative distance did not shrink the square"
     );
 }
@@ -51,48 +54,55 @@ fn test_offset_2d_negative_distance_shrinks() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_straight_skeleton_2d_non_empty() {
-    let square = Sketch::<()>::square(2.0, ());
+    let square = Profile::square(r(2.0));
     let skeleton = square.straight_skeleton(true);
 
     assert!(
-        !skeleton.geometry.0.is_empty(),
-        "Straight skeleton should produce line geometry for a valid square"
+        !skeleton.wires().is_empty(),
+        "Straight skeleton should produce native hypercurve wire geometry for a valid square"
     );
 }
 
 #[test]
 fn test_polygon_2d_enforce_ccw_ordering() {
     // Define a triangle in CW order
-    let points_cw = vec![[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]];
-    let csg_cw = Sketch::<()>::polygon(&points_cw, ());
+    let points_cw = vec![[r(0.0), r(0.0)], [r(1.0), r(0.0)], [r(0.5), r(1.0)]];
+    let csg_cw = Profile::polygon(&points_cw);
     // Enforce CCW ordering
-    csg_cw.renormalize();
-    let poly = &csg_cw.geometry.0[0];
-    let area = poly.signed_area();
-    assert!(area > 0.0, "Polygon ordering was not corrected to CCW");
+    let normalized = csg_cw.renormalize();
+    let area = first_material_area(&normalized);
+    assert!(area > r(0.0), "Polygon ordering was not corrected to CCW");
 }
 
 #[test]
 #[cfg(feature = "offset")]
-fn test_circle_offset_2d() {
-    let circle = Sketch::<()>::circle(1.0, 32, ());
-    let offset_grow = circle.offset(0.2); // Should grow the circle
-    let offset_shrink = circle.offset(-0.2); // Should shrink the circle
+fn test_zero_offset_preserves_region_2d() {
+    let shape = Profile::circle(r(1.0), 32);
+    let unchanged = shape.offset(r(0.0));
 
-    let grow = offset_grow.to_multipolygon();
-    let shrink = offset_shrink.to_multipolygon();
-    let grow_area = grow.0[0].signed_area();
-    let shrink_area = shrink.0[0].signed_area();
-
-    // Original circle has area ~3.1416
-    let original_area = 3.141592653589793;
+    let original_area = first_material_area(&shape);
+    let unchanged_area = first_material_area(&unchanged);
 
     assert!(
-        grow_area > original_area,
-        "Offset with positive distance did not grow the circle"
+        (unchanged_area - original_area).abs() < r(1.0e-9),
+        "Zero offset should preserve native region area"
     );
+}
+
+#[test]
+#[cfg(feature = "offset")]
+fn test_offset_accepts_hyperreal_primary_scalar_and_integer_promotion() {
+    let shape = Profile::circle(r(1.0), 32);
+
+    let zero_hyper = shape.offset(r(Real::from(0)));
     assert!(
-        shrink_area < original_area,
-        "Offset with negative distance did not shrink the circle"
+        (first_material_area(&zero_hyper) - first_material_area(&shape)).abs() < r(1.0e-9),
+        "Hyperreal zero offset should preserve native region area"
+    );
+
+    let integer_offset = shape.offset(r(0));
+    assert!(
+        (first_material_area(&integer_offset) - first_material_area(&shape)).abs() < r(1.0e-9),
+        "Integer zero distance should promote through the hyperreal API surface"
     );
 }

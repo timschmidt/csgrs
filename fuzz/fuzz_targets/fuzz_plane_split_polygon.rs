@@ -2,12 +2,19 @@
 
 #![no_main]
 
-use csgrs::float_types::{tolerance, Real};
 use csgrs::mesh::plane::Plane;
-use csgrs::polygon::Polygon;
+use csgrs::mesh::Polygon;
 use csgrs::vertex::Vertex;
+use hyperlattice::{Point3, Real, Vector3};
 use libfuzzer_sys::fuzz_target;
-use nalgebra::{Point3, Vector3};
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
+
+fn tolerance() -> Real {
+    real(1.0e-9)
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -16,10 +23,10 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-1.0e4, 1.0e4) as Real
+    real(value.clamp(-1.0e4, 1.0e4))
 }
 
-fn point(bytes: &[u8], idx: &mut usize) -> Point3<Real> {
+fn point(bytes: &[u8], idx: &mut usize) -> Point3 {
     Point3::new(
         decode_real(bytes, idx),
         decode_real(bytes, idx),
@@ -40,20 +47,20 @@ fuzz_target!(|bytes: &[u8]| {
         points.push(point(bytes, &mut idx));
     }
 
-    let a = points[0];
-    let b = points[1];
-    let c = points[2];
-    let normal = (b - a).cross(&(c - a));
+    let a = points[0].clone();
+    let b = points[1].clone();
+    let c = points[2].clone();
+    let normal = (b - a.clone()).cross(&(c - a));
     if normal.norm() <= tolerance() || !normal.norm().is_finite() {
         return;
     }
     let vertices = points
         .into_iter()
-        .map(|p| Vertex::new(p, normal))
+        .map(|p| Vertex::new(p, normal.clone()))
         .collect::<Vec<_>>();
-    let polygon: Polygon<()> = Polygon::new(vertices, None);
+    let polygon: Polygon<()> = Polygon::new(vertices, ());
 
-    let plane_normal = Vector3::new(
+    let plane_normal = Vector3::from_xyz(
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
@@ -70,7 +77,7 @@ fuzz_target!(|bytes: &[u8]| {
         .chain(front.iter())
         .chain(back.iter())
     {
-        for vertex in &poly.vertices {
+        for vertex in poly.vertices() {
             assert!(vertex.position.x.is_finite());
             assert!(vertex.position.y.is_finite());
             assert!(vertex.position.z.is_finite());

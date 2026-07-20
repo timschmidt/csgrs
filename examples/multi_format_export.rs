@@ -5,6 +5,7 @@
 //! These formats can be opened in most 3D modeling software, CAD programs, and 3D viewers.
 use csgrs::csg::CSG;
 use csgrs::mesh::Mesh;
+use hyperlattice::Real;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Multi-Format Export Demo");
@@ -14,20 +15,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create various Mesh objects to demonstrate OBJ export
 
     // 1. Simple cube
-    let cube: Mesh<()> = Mesh::cube(20.0, ()).center();
+    let cube: Mesh<()> = Mesh::cube(r(20.0), ()).center();
     export_to_obj(&cube, "cube", "Simple 20x20x20mm cube")?;
 
     // 2. Sphere
-    let sphere: Mesh<()> = Mesh::sphere(15.0, 32, 16, ());
+    let sphere: Mesh<()> = Mesh::sphere(r(15.0), 32, 16, ());
     export_to_obj(&sphere, "sphere", "Sphere with 15mm radius")?;
 
     // 3. Cylinder
-    let cylinder: Mesh<()> = Mesh::cylinder(8.0, 25.0, 24, ());
+    let cylinder: Mesh<()> = Mesh::cylinder(r(8.0), r(25.0), 24, ());
     export_to_obj(&cylinder, "cylinder", "Cylinder: 8mm radius, 25mm height")?;
 
     // 4. Complex boolean operation: cube with spherical cavity
-    let cube_large: Mesh<()> = Mesh::cube(30.0, ()).center();
-    let sphere_cavity: Mesh<()> = Mesh::sphere(12.0, 24, 12, ()).translate(5.0, 5.0, 0.0);
+    let cube_large: Mesh<()> = Mesh::cube(r(30.0), ()).center();
+    let sphere_cavity: Mesh<()> =
+        Mesh::sphere(r(12.0), 24, 12, ()).translate(r(5.0), r(5.0), r(0.0));
     let cube_with_cavity = cube_large.difference(&sphere_cavity);
     export_to_obj(
         &cube_with_cavity,
@@ -36,8 +38,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 5. Union operation: cube + sphere
-    let cube_small: Mesh<()> = Mesh::cube(16.0, ()).center();
-    let sphere_union: Mesh<()> = Mesh::sphere(10.0, 20, 10, ()).translate(8.0, 8.0, 8.0);
+    let cube_small: Mesh<()> = Mesh::cube(r(16.0), ()).center();
+    let sphere_union: Mesh<()> =
+        Mesh::sphere(r(10.0), 20, 10, ()).translate(r(8.0), r(8.0), r(8.0));
     let union_object = cube_small.union(&sphere_union);
     export_to_obj(
         &union_object,
@@ -46,8 +49,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 6. Intersection operation
-    let cube_intersect: Mesh<()> = Mesh::cube(25.0, ()).center();
-    let sphere_intersect: Mesh<()> = Mesh::sphere(15.0, 24, 12, ()).translate(5.0, 5.0, 0.0);
+    let cube_intersect: Mesh<()> = Mesh::cube(r(25.0), ()).center();
+    let sphere_intersect: Mesh<()> =
+        Mesh::sphere(r(15.0), 24, 12, ()).translate(r(5.0), r(5.0), r(0.0));
     let intersection_object = cube_intersect.intersection(&sphere_intersect);
     export_to_obj(
         &intersection_object,
@@ -56,10 +60,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 7. More complex shape: cube with cylindrical hole
-    let cube_base: Mesh<()> = Mesh::cube(40.0, ()).center();
-    let hole_cylinder: Mesh<()> = Mesh::cylinder(6.0, 50.0, 16, ())
-        .rotate(90.0, 0.0, 0.0) // Rotate to align with X-axis
-        .translate(0.0, 0.0, 0.0);
+    let cube_base: Mesh<()> = Mesh::cube(r(40.0), ()).center();
+    let hole_cylinder: Mesh<()> = Mesh::cylinder(r(6.0), r(50.0), 16, ())
+        .rotate(r(90.0), r(0.0), r(0.0)) // Rotate to align with X-axis
+        .translate(r(0.0), r(0.0), r(0.0));
     let cube_with_hole = cube_base.difference(&hole_cylinder);
     export_to_obj(
         &cube_with_hole,
@@ -114,6 +118,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn r(value: f64) -> Real {
+    Real::try_from(value).expect("example values must be finite")
+}
+
 fn export_to_obj(
     csg: &Mesh<()>,
     name: &str,
@@ -131,7 +139,7 @@ fn export_to_obj(
         println!("✓ Exported {}: {}", filename, description);
 
         // Print some statistics
-        let obj_content = csg.to_obj(name);
+        let obj_content = csg.to_obj(name)?;
         let vertex_count = obj_content
             .lines()
             .filter(|line| line.starts_with("v "))
@@ -168,7 +176,7 @@ fn export_to_obj(
         println!("✓ Exported {}: {}", filename, description);
 
         // Print some statistics
-        let ply_content = csg.to_ply(description);
+        let ply_content = csg.to_ply(description)?;
         let vertex_count = ply_content
             .lines()
             .filter(|line| {
@@ -210,9 +218,9 @@ fn export_to_obj(
         println!("✓ Exported {}: {}", filename, description);
 
         // Print some statistics
-        let amf_content = csg.to_amf(name, "millimeter");
-        let vertex_count = amf_content.matches("<vertex id=").count();
-        let triangle_count = amf_content.matches("<triangle id=").count();
+        let amf_content = csg.to_amf(name, "millimeter")?;
+        let vertex_count = amf_content.matches("<vertex>").count();
+        let triangle_count = amf_content.matches("<triangle>").count();
 
         println!(
             "  AMF Stats: {} vertices, {} triangles (XML format)",
@@ -238,11 +246,11 @@ mod tests {
     #[test]
     fn test_obj_export() {
         // Test basic OBJ export functionality
-        let cube: Mesh<()> = Mesh::cube(10.0, ());
+        let cube: Mesh<()> = Mesh::cube(r(10.0), ());
 
         #[cfg(feature = "obj-io")]
         {
-            let obj_content = cube.to_obj("test_cube");
+            let obj_content = cube.to_obj("test_cube").unwrap();
 
             // Check that OBJ content contains expected elements
             assert!(obj_content.contains("o test_cube"));
@@ -258,11 +266,11 @@ mod tests {
 
     #[test]
     fn test_obj_content_format() {
-        let sphere: Mesh<()> = Mesh::sphere(5.0, 8, 4, ()); // Low res for testing
+        let sphere: Mesh<()> = Mesh::sphere(r(5.0), 8, 4, ()); // Low res for testing
 
         #[cfg(feature = "obj-io")]
         {
-            let obj_content = sphere.to_obj("test_sphere");
+            let obj_content = sphere.to_obj("test_sphere").unwrap();
 
             // Verify OBJ format structure
             let lines: Vec<&str> = obj_content.lines().collect();
@@ -314,28 +322,28 @@ mod tests {
     #[test]
     fn test_boolean_operations_obj_export() {
         // Test that boolean operations export correctly
-        let cube: Mesh<()> = Mesh::cube(10.0, ());
-        let sphere: Mesh<()> = Mesh::sphere(6.0, 8, 4, ());
+        let cube: Mesh<()> = Mesh::cube(r(10.0), ());
+        let sphere: Mesh<()> = Mesh::sphere(r(6.0), 8, 4, ());
 
         #[cfg(feature = "obj-io")]
         {
             // Test union
             let union_result = cube.union(&sphere);
-            let union_obj = union_result.to_obj("union_test");
+            let union_obj = union_result.to_obj("union_test").unwrap();
             assert!(union_obj.contains("o union_test"));
             assert!(union_obj.contains("v "));
             assert!(union_obj.contains("f "));
 
             // Test difference
             let diff_result = cube.difference(&sphere);
-            let diff_obj = diff_result.to_obj("diff_test");
+            let diff_obj = diff_result.to_obj("diff_test").unwrap();
             assert!(diff_obj.contains("o diff_test"));
             assert!(diff_obj.contains("v "));
             assert!(diff_obj.contains("f "));
 
             // Test intersection
             let intersect_result = cube.intersection(&sphere);
-            let intersect_obj = intersect_result.to_obj("intersect_test");
+            let intersect_obj = intersect_result.to_obj("intersect_test").unwrap();
             assert!(intersect_obj.contains("o intersect_test"));
             assert!(intersect_obj.contains("v "));
             assert!(intersect_obj.contains("f "));
@@ -345,11 +353,11 @@ mod tests {
     #[test]
     fn test_ply_export() {
         // Test basic PLY export functionality
-        let cube: Mesh<()> = Mesh::cube(10.0, ());
+        let cube: Mesh<()> = Mesh::cube(r(10.0), ());
 
         #[cfg(feature = "ply-io")]
         {
-            let ply_content = cube.to_ply("Test cube for PLY export");
+            let ply_content = cube.to_ply("Test cube for PLY export").unwrap();
 
             // Check that PLY content contains expected elements
             assert!(ply_content.contains("ply"));
@@ -358,12 +366,12 @@ mod tests {
             assert!(ply_content.contains("comment Generated by csgrs library"));
             assert!(ply_content.contains("element vertex"));
             assert!(ply_content.contains("element face"));
-            assert!(ply_content.contains("property float x"));
-            assert!(ply_content.contains("property float y"));
-            assert!(ply_content.contains("property float z"));
-            assert!(ply_content.contains("property float nx"));
-            assert!(ply_content.contains("property float ny"));
-            assert!(ply_content.contains("property float nz"));
+            assert!(ply_content.contains("property double x"));
+            assert!(ply_content.contains("property double y"));
+            assert!(ply_content.contains("property double z"));
+            assert!(ply_content.contains("property double nx"));
+            assert!(ply_content.contains("property double ny"));
+            assert!(ply_content.contains("property double nz"));
             assert!(ply_content.contains("end_header"));
 
             // Check data content
@@ -388,11 +396,11 @@ mod tests {
 
     #[test]
     fn test_ply_format_structure() {
-        let sphere: Mesh<()> = Mesh::sphere(5.0, 8, 4, ()); // Low res for testing
+        let sphere: Mesh<()> = Mesh::sphere(r(5.0), 8, 4, ()); // Low res for testing
 
         #[cfg(feature = "ply-io")]
         {
-            let ply_content = sphere.to_ply("Test sphere");
+            let ply_content = sphere.to_ply("Test sphere").unwrap();
 
             // Verify PLY format structure
             let lines: Vec<&str> = ply_content.lines().collect();
@@ -452,34 +460,31 @@ mod tests {
     #[test]
     fn test_amf_export() {
         // Test basic AMF export functionality
-        let cube: Mesh<()> = Mesh::cube(10.0, ());
+        let cube: Mesh<()> = Mesh::cube(r(10.0), ());
 
         #[cfg(feature = "amf-io")]
         {
-            let amf_content = cube.to_amf("test_cube", "millimeter");
+            let amf_content = cube.to_amf("test_cube", "millimeter").unwrap();
 
             // Check that AMF content contains expected XML elements
             assert!(amf_content.contains("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
             assert!(amf_content.contains("<amf unit=\"millimeter\" version=\"1.1\">"));
-            assert!(amf_content.contains("<object id=\"test_cube\">"));
+            assert!(amf_content.contains("<object id=\"0\">"));
             assert!(amf_content.contains("<mesh>"));
             assert!(amf_content.contains("<vertices>"));
             assert!(amf_content.contains("<volume>"));
             assert!(amf_content.contains("</amf>"));
 
             // Check metadata
+            assert!(amf_content.contains("<metadata type=\"producer\">csgrs</metadata>"));
             assert!(
-                amf_content.contains("<metadata type=\"producer\">csgrs library</metadata>")
-            );
-            assert!(
-                amf_content
-                    .contains("<metadata type=\"cad\">Constructive Solid Geometry</metadata>")
+                amf_content.contains("<metadata type=\"description\">test_cube</metadata>")
             );
 
             // Check that vertices and triangles are present
-            assert!(amf_content.contains("<vertex id="));
+            assert!(amf_content.contains("<vertex>"));
             assert!(amf_content.contains("<coordinates>"));
-            assert!(amf_content.contains("<triangle id="));
+            assert!(amf_content.contains("<triangle>"));
             assert!(amf_content.contains("<v1>"));
             assert!(amf_content.contains("<v2>"));
             assert!(amf_content.contains("<v3>"));
@@ -488,46 +493,50 @@ mod tests {
 
     #[test]
     fn test_amf_with_color() {
-        let sphere: Mesh<()> = Mesh::sphere(5.0, 8, 4, ()); // Low res for testing
+        let sphere: Mesh<()> = Mesh::sphere(r(5.0), 8, 4, ()); // Low res for testing
 
         #[cfg(feature = "amf-io")]
         {
-            let amf_content =
-                sphere.to_amf_with_color("red_sphere", "millimeter", (1.0, 0.0, 0.0));
+            let amf_content = sphere
+                .to_amf_with_color("red_sphere", "millimeter", (r(1.0), r(0.0), r(0.0)))
+                .unwrap();
 
             // Check that color/material information is present
-            assert!(amf_content.contains("<material id=\"material1\">"));
+            assert!(amf_content.contains("<material id=\"1\">"));
             assert!(amf_content.contains("<color>"));
-            assert!(amf_content.contains("<r>1.000</r>"));
-            assert!(amf_content.contains("<g>0.000</g>"));
-            assert!(amf_content.contains("<b>0.000</b>"));
-            assert!(amf_content.contains("<a>1.0</a>"));
+            assert!(amf_content.contains("<r>1.00000000000000000</r>"));
+            assert!(amf_content.contains("<g>0.00000000000000000</g>"));
+            assert!(amf_content.contains("<b>0.00000000000000000</b>"));
+            assert!(amf_content.contains("<a>1</a>"));
             assert!(amf_content.contains("</color>"));
             assert!(amf_content.contains("</material>"));
 
             // Check that volume references the material
-            assert!(amf_content.contains("<volume materialid=\"material1\">"));
+            assert!(amf_content.contains("<volume materialid=\"1\">"));
 
             // Verify overall structure
-            assert!(amf_content.contains("<object id=\"red_sphere\">"));
+            assert!(amf_content.contains("<object id=\"0\">"));
+            assert!(
+                amf_content.contains("<metadata type=\"description\">red_sphere</metadata>")
+            );
             assert!(amf_content.contains("</object>"));
         }
     }
 
     #[test]
     fn test_amf_xml_structure() {
-        let cube: Mesh<()> = Mesh::cube(8.0, ());
+        let cube: Mesh<()> = Mesh::cube(r(8.0), ());
 
         #[cfg(feature = "amf-io")]
         {
-            let amf_content = cube.to_amf("test_structure", "inch");
+            let amf_content = cube.to_amf("test_structure", "inch").unwrap();
 
             // Verify proper XML structure and hierarchy
             assert!(amf_content.contains("<amf unit=\"inch\""));
 
             // Count vertices and triangles
-            let vertex_count = amf_content.matches("<vertex id=").count();
-            let triangle_count = amf_content.matches("<triangle id=").count();
+            let vertex_count = amf_content.matches("<vertex>").count();
+            let triangle_count = amf_content.matches("<triangle>").count();
 
             assert!(vertex_count > 0);
             assert!(triangle_count > 0);

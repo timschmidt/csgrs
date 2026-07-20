@@ -3,10 +3,13 @@
 #![no_main]
 
 use csgrs::csg::CSG;
-use csgrs::float_types::Real;
 use csgrs::mesh::Mesh;
+use hyperlattice::{Matrix4, Real};
 use libfuzzer_sys::fuzz_target;
-use nalgebra::Matrix4;
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("fuzz decoder clamps to finite values")
+}
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
@@ -15,7 +18,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
         *idx += 1;
     }
     let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    value.clamp(-1.0e6, 1.0e6) as Real
+    real(value.clamp(-1.0e6, 1.0e6))
 }
 
 fuzz_target!(|bytes: &[u8]| {
@@ -23,20 +26,22 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     }
     let mut idx = 0;
-    let mut values = [0.0 as Real; 16];
+    let mut values: [Real; 16] = std::array::from_fn(|_| Real::zero());
     for value in &mut values {
         *value = decode_real(bytes, &mut idx);
     }
-    let matrix = Matrix4::from_row_slice(&values);
-    let mesh: Mesh<()> = Mesh::cube(1.0, None);
+    let Some(matrix) = Matrix4::from_row_slice(&values) else {
+        return;
+    };
+    let mesh: Mesh<()> = Mesh::cube(Real::one(), ());
     let transformed = mesh.transform(&matrix);
 
     for vertex in transformed.vertices() {
         assert!(vertex.position.x.is_finite());
         assert!(vertex.position.y.is_finite());
         assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.x.is_finite());
-        assert!(vertex.normal.y.is_finite());
-        assert!(vertex.normal.z.is_finite());
+        assert!(vertex.normal.0[0].is_finite());
+        assert!(vertex.normal.0[1].is_finite());
+        assert!(vertex.normal.0[2].is_finite());
     }
 });

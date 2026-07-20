@@ -1,11 +1,19 @@
 //! Create `Mesh`s by meshing signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) within a bounding box.
 
-use crate::float_types::Real;
+use crate::hyper_math::{
+    hreal_from_f32, hreal_from_f64, hreal_sign, hreal_to_f64, htriangle_area2_is_nonzero,
+    hvector3_from_point3, hvector3_from_vector3,
+};
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 use crate::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
-use nalgebra::{Point3, Vector3};
+use hyperlattice::{Point3, Real, Vector3};
+use hyperlimit::Point3 as HPoint3;
+use hyperreal::RealSign;
+use hypersdf::{
+    PreparedSdf, SdfExpr, SdfMeshPreviewReport, SdfPreviewGrid, SdfSamplingPrecision,
+};
 use std::fmt::Debug;
 
 /// Diagnostics captured while sampling and meshing an SDF.
@@ -26,16 +34,18 @@ pub struct SdfDiagnostics {
     pub emitted_triangle_count: usize,
     pub skipped_non_finite_triangle_count: usize,
     pub degenerate_triangle_count: usize,
+    pub hypersdf_preview: Option<SdfMeshPreviewReport>,
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Return a Mesh created by meshing a signed distance field within a bounding box
     ///
-    /// ```
-    /// # use csgrs::{mesh::Mesh, float_types::Real};
-    /// # use nalgebra::Point3;
+    /// ```ignore
+    /// # use csgrs::mesh::Mesh;
+    /// # use hyperlattice::Real;
+    /// # use hyperlattice::Point3;
     /// // Example SDF for a sphere of radius 1.5 centered at (0,0,0)
-    /// let my_sdf = |p: &Point3<Real>| p.coords.norm() - 1.5;
+    /// let my_sdf = |p: &Point3| (p.x * p.x + p.y * p.y + p.z * p.z).sqrt() - 1.5;
     ///
     /// let resolution = (60, 60, 60);
     /// let min_pt = Point3::new(-2.0, -2.0, -2.0);
@@ -49,33 +59,96 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     pub fn sdf<F>(
         sdf: F,
         resolution: (usize, usize, usize),
-        min_pt: Point3<Real>,
-        max_pt: Point3<Real>,
+        min_pt: Point3,
+        max_pt: Point3,
         iso_value: Real,
         metadata: M,
     ) -> Mesh<M>
     where
         // F is a closure or function that takes a 3D point and returns the signed distance.
         // Must be `Sync`/`Send` if you want to parallelize the sampling.
-        F: Fn(&Point3<Real>) -> Real + Sync + Send,
+        F: Fn(&Point3) -> Real,
     {
-        Self::sdf_with_diagnostics(sdf, resolution, min_pt, max_pt, iso_value, metadata).0
+        sdf_with_indexed_sampler(
+            |_, _, _, x, y, z| sdf(&Point3::new(x.clone(), y.clone(), z.clone())),
+            resolution,
+            min_pt,
+            max_pt,
+            iso_value,
+            metadata,
+            false,
+        )
+        .0
     }
 
-    /// Return a Mesh created by meshing a signed distance field and diagnostics
-    /// describing the sampled field and generated triangle stream.
-    pub fn sdf_with_diagnostics<F>(
+    /// Internal regular-grid entry point for fields that can reuse work by
+    /// axis index (for example, separable periodic functions).
+    pub(super) fn sdf_indexed<F>(
         sdf: F,
         resolution: (usize, usize, usize),
-        min_pt: Point3<Real>,
-        max_pt: Point3<Real>,
+        min_pt: Point3,
+        max_pt: Point3,
         iso_value: Real,
         metadata: M,
-    ) -> (Mesh<M>, SdfDiagnostics)
+    ) -> Mesh<M>
     where
-        F: Fn(&Point3<Real>) -> Real + Sync + Send,
+        F: FnMut(usize, usize, usize, &Real, &Real, &Real) -> Real,
     {
-        // Early return if resolution is degenerate
+        sdf_with_indexed_sampler(sdf, resolution, min_pt, max_pt, iso_value, metadata, false).0
+    }
+
+    /// Return a mesh preview generated from a retained [`hypersdf::SdfExpr`].
+    ///
+    /// This is the preferred SDF entry point while csgrs is being reduced to a
+    /// CAD composition layer over Hyper geometry crates. The continuous field,
+    /// metric facts, exact sampling grid, and preview-only topology report are
+    /// owned by `hypersdf`; csgrs only lowers the reported scalar samples into
+    /// its transitional Surface Nets mesh carrier.
+    pub fn sdf_expr(
+        expr: SdfExpr,
+        resolution: (usize, usize, usize),
+        min_pt: Point3,
+        max_pt: Point3,
+        iso_value: Real,
+        metadata: M,
+    ) -> Mesh<M> {
+        Self::sdf_expr_with_diagnostics(expr, resolution, min_pt, max_pt, iso_value, metadata)
+            .0
+    }
+
+    /// Return a mesh preview and diagnostics generated from a retained
+    /// [`hypersdf::SdfExpr`].
+    pub fn sdf_expr_with_diagnostics(
+        expr: SdfExpr,
+        resolution: (usize, usize, usize),
+        min_pt: Point3,
+        max_pt: Point3,
+        iso_value: Real,
+        metadata: M,
+    ) -> (Mesh<M>, SdfDiagnostics) {
+        let prepared = hypersdf::prepare(expr);
+        Self::prepared_sdf_with_diagnostics(
+            &prepared, resolution, min_pt, max_pt, iso_value, metadata,
+        )
+    }
+
+    /// Return a mesh preview and diagnostics generated from a prepared
+    /// [`hypersdf::PreparedSdf`].
+    ///
+    /// `hypersdf` keeps continuous-field ownership and reports that sampled
+    /// scalars are preview-only. csgrs consumes that report to compose a mesh
+    /// preview, in the same separation recommended by Yap's exact geometric
+    /// computation model (<https://doi.org/10.1016/0925-7721(95)00040-2>) and
+    /// by Gibson's Surface Nets preview meshing work, "Constrained Elastic
+    /// Surface Nets," MERL TR99-24, 1999.
+    pub fn prepared_sdf_with_diagnostics(
+        prepared: &PreparedSdf,
+        resolution: (usize, usize, usize),
+        min_pt: Point3,
+        max_pt: Point3,
+        iso_value: Real,
+        metadata: M,
+    ) -> (Mesh<M>, SdfDiagnostics) {
         let nx = resolution.0.max(2) as u32;
         let ny = resolution.1.max(2) as u32;
         let nz = resolution.2.max(2) as u32;
@@ -85,211 +158,469 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             ..SdfDiagnostics::default()
         };
 
-        // Determine grid spacing based on bounding box and resolution
-        let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
-        let dy = (max_pt.y - min_pt.y) / (ny as Real - 1.0);
-        let dz = (max_pt.z - min_pt.z) / (nz as Real - 1.0);
+        let Some(grid) = hypersdf_grid(min_pt.clone(), max_pt.clone(), nx, ny, nz) else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(), diagnostics);
+        };
 
-        // Allocate storage for field values:
-        let array_size = (nx * ny * nz) as usize;
-        let mut field_values = vec![0.0_f32; array_size];
+        let Ok(iso_value) = hreal_from_f64(iso_value) else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(), diagnostics);
+        };
 
-        // Optimized finite value checking with iterator patterns
-        // **Mathematical Foundation**: Ensures all coordinates are finite real numbers
-        #[inline]
-        fn point_finite(p: &Point3<Real>) -> bool {
-            p.coords.iter().all(|&c| c.is_finite())
+        let Ok(grid_report) = prepared.sample_grid_preview(grid, SdfSamplingPrecision::F64)
+        else {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+            diagnostics.positive_sample_count = diagnostics.sample_count;
+            return (Mesh::empty(), diagnostics);
+        };
+
+        diagnostics.hypersdf_preview = Some(SdfMeshPreviewReport::surface_nets_diagnostic(
+            grid_report.clone(),
+        ));
+        let mut field_values =
+            SdfSampleField::with_capacity(grid_report.samples.samples.len(), true);
+        for sample in &grid_report.samples.samples {
+            let value = sample.value.and_then(|value| hreal_from_f64(value).ok());
+            push_sdf_sample(&mut diagnostics, &mut field_values, value, &iso_value);
         }
 
-        #[inline]
-        fn vec_finite(v: &Vector3<Real>) -> bool {
-            v.iter().all(|&c| c.is_finite())
-        }
+        mesh_from_sampled_field(
+            field_values,
+            min_pt,
+            max_pt,
+            nx,
+            ny,
+            nz,
+            metadata,
+            diagnostics,
+            true,
+        )
+    }
 
-        // Sample the SDF at each grid cell with optimized iteration pattern:
-        // **Mathematical Foundation**: For SDF f(p), we sample at regular intervals
-        // and store (f(p) - iso_value) so surface_nets finds zero-crossings at iso_value.
-        // **Optimization**: Linear memory access pattern with better cache locality.
-        #[allow(clippy::unnecessary_cast)]
-        for i in 0..(nx * ny * nz) {
-            let iz = i / (nx * ny);
-            let remainder = i % (nx * ny);
-            let iy = remainder / nx;
-            let ix = remainder % nx;
-
-            let xf = min_pt.x + (ix as Real) * dx;
-            let yf = min_pt.y + (iy as Real) * dy;
-            let zf = min_pt.z + (iz as Real) * dz;
-
-            let p = Point3::new(xf, yf, zf);
-            let sdf_val = sdf(&p);
-
-            // Robust finite value handling with mathematical correctness
-            field_values[i as usize] = if sdf_val.is_finite() {
-                diagnostics.finite_sample_count += 1;
-                diagnostics.min_finite_value = Some(
-                    diagnostics
-                        .min_finite_value
-                        .map_or(sdf_val, |current| current.min(sdf_val)),
-                );
-                diagnostics.max_finite_value = Some(
-                    diagnostics
-                        .max_finite_value
-                        .map_or(sdf_val, |current| current.max(sdf_val)),
-                );
-                let shifted = sdf_val - iso_value;
-                if shifted < 0.0 {
-                    diagnostics.negative_sample_count += 1;
-                } else if shifted > 0.0 {
-                    diagnostics.positive_sample_count += 1;
-                } else {
-                    diagnostics.zero_sample_count += 1;
-                }
-                shifted as f32
-            } else {
-                diagnostics.non_finite_sample_count += 1;
-                diagnostics.positive_sample_count += 1;
-                // For infinite/NaN values, use large positive value to indicate "far outside"
-                // This preserves the mathematical properties of the distance field
-                1e10_f32
-            };
-        }
-
-        // The shape describing our discrete grid for Surface Nets:
-        #[derive(Clone, Copy)]
-        struct GridShape {
-            nx: u32,
-            ny: u32,
-            nz: u32,
-        }
-
-        impl fast_surface_nets::ndshape::Shape<3> for GridShape {
-            type Coord = u32;
-
-            #[inline]
-            fn as_array(&self) -> [Self::Coord; 3] {
-                [self.nx, self.ny, self.nz]
-            }
-
-            fn size(&self) -> Self::Coord {
-                self.nx * self.ny * self.nz
-            }
-
-            fn usize(&self) -> usize {
-                (self.nx * self.ny * self.nz) as usize
-            }
-
-            fn linearize(&self, coords: [Self::Coord; 3]) -> u32 {
-                let [x, y, z] = coords;
-                (z * self.ny + y) * self.nx + x
-            }
-
-            fn delinearize(&self, i: u32) -> [Self::Coord; 3] {
-                let x = i % self.nx;
-                let yz = i / self.nx;
-                let y = yz % self.ny;
-                let z = yz / self.ny;
-                [x, y, z]
-            }
-        }
-
-        let shape = GridShape { nx, ny, nz };
-        diagnostics.crossing_cell_count = count_crossing_cells(&field_values, nx, ny, nz);
-
-        // `SurfaceNetsBuffer` collects the positions, normals, and triangle indices
-        let mut sn_buffer = SurfaceNetsBuffer::default();
-
-        // The max valid coordinate in each dimension
-        let max_x = nx - 1;
-        let max_y = ny - 1;
-        let max_z = nz - 1;
-
-        // Run surface nets
-        surface_nets(
-            &field_values,
-            &shape,
-            [0, 0, 0],
-            [max_x, max_y, max_z],
-            &mut sn_buffer,
-        );
-        diagnostics.surface_nets_vertex_count = sn_buffer.positions.len();
-        diagnostics.surface_nets_index_count = sn_buffer.indices.len();
-
-        // Convert the resulting triangles into Mesh polygons
-        let mut triangles = Vec::with_capacity(sn_buffer.indices.len() / 3);
-
-        for tri in sn_buffer.indices.chunks_exact(3) {
-            let i0 = tri[0] as usize;
-            let i1 = tri[1] as usize;
-            let i2 = tri[2] as usize;
-
-            let p0i = sn_buffer.positions[i0];
-            let p1i = sn_buffer.positions[i1];
-            let p2i = sn_buffer.positions[i2];
-
-            // Convert from [u32; 3] to real coordinates:
-            let p0 = Point3::new(
-                min_pt.x + p0i[0] as Real * dx,
-                min_pt.y + p0i[1] as Real * dy,
-                min_pt.z + p0i[2] as Real * dz,
-            );
-            let p1 = Point3::new(
-                min_pt.x + p1i[0] as Real * dx,
-                min_pt.y + p1i[1] as Real * dy,
-                min_pt.z + p1i[2] as Real * dz,
-            );
-            let p2 = Point3::new(
-                min_pt.x + p2i[0] as Real * dx,
-                min_pt.y + p2i[1] as Real * dy,
-                min_pt.z + p2i[2] as Real * dz,
-            );
-
-            // Retrieve precomputed normal from Surface Nets:
-            let n0 = sn_buffer.normals[i0];
-            let n1 = sn_buffer.normals[i1];
-            let n2 = sn_buffer.normals[i2];
-
-            // Normals come out as [f32;3] – promote to `Real`
-            let n0v = Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real);
-            let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
-            let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
-
-            // ── « gate » ────────────────────────────────────────────────
-            if !(point_finite(&p0)
-                && point_finite(&p1)
-                && point_finite(&p2)
-                && vec_finite(&n0v)
-                && vec_finite(&n1v)
-                && vec_finite(&n2v))
-            {
-                // at least one coordinate was NaN/±∞ – ignore this triangle
-                diagnostics.skipped_non_finite_triangle_count += 1;
-                continue;
-            }
-
-            if triangle_area2(p0, p1, p2) <= Real::EPSILON {
-                diagnostics.degenerate_triangle_count += 1;
-            }
-
-            let v0 =
-                Vertex::new(p0, Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real));
-            let v1 =
-                Vertex::new(p1, Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real));
-            let v2 =
-                Vertex::new(p2, Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real));
-
-            // Note: reverse v1, v2 if you need to fix winding
-            let poly = Polygon::new(vec![v0, v1, v2], metadata.clone());
-            triangles.push(poly);
-            diagnostics.emitted_triangle_count += 1;
-        }
-
-        // Return as a Mesh
-        (Mesh::from_polygons(&triangles, metadata), diagnostics)
+    /// Return a Mesh created by meshing a signed distance field and diagnostics
+    /// describing the sampled field and generated triangle stream.
+    ///
+    /// Surface-net vertices still arrive from `fast_surface_nets` as primitive
+    /// floats, but bounding inputs, iso values, triangle coordinates, normals,
+    /// and degenerate-triangle classification are lifted through
+    /// `hyperlattice`/`hyperreal` before topology diagnostics are recorded.
+    /// This preserves csgrs as a CAD composition layer over hyper geometry
+    /// types and follows Yap's exact-geometric-computation boundary model
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The sampled contouring
+    /// method is Gibson's constrained elastic surface-net construction:
+    /// Gibson, "Constrained Elastic Surface Nets," MERL TR99-24, 1999.
+    pub fn sdf_with_diagnostics<F>(
+        sdf: F,
+        resolution: (usize, usize, usize),
+        min_pt: Point3,
+        max_pt: Point3,
+        iso_value: Real,
+        metadata: M,
+    ) -> (Mesh<M>, SdfDiagnostics)
+    where
+        F: Fn(&Point3) -> Real,
+    {
+        sdf_with_indexed_sampler(
+            |_, _, _, x, y, z| sdf(&Point3::new(x.clone(), y.clone(), z.clone())),
+            resolution,
+            min_pt,
+            max_pt,
+            iso_value,
+            metadata,
+            true,
+        )
     }
 }
 
-fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usize {
+fn sdf_with_indexed_sampler<M, F>(
+    mut sdf: F,
+    resolution: (usize, usize, usize),
+    min_pt: Point3,
+    max_pt: Point3,
+    iso_value: Real,
+    metadata: M,
+    collect_diagnostics: bool,
+) -> (Mesh<M>, SdfDiagnostics)
+where
+    M: Clone + Debug + Send + Sync,
+    F: FnMut(usize, usize, usize, &Real, &Real, &Real) -> Real,
+{
+    let nx = resolution.0.max(2) as u32;
+    let ny = resolution.1.max(2) as u32;
+    let nz = resolution.2.max(2) as u32;
+    let mut diagnostics = SdfDiagnostics {
+        resolution: (nx, ny, nz),
+        sample_count: (nx * ny * nz) as usize,
+        ..SdfDiagnostics::default()
+    };
+
+    if hvector3_from_point3(&min_pt).is_none()
+        || hvector3_from_point3(&max_pt).is_none()
+        || hreal_from_f64(iso_value.clone()).is_err()
+    {
+        diagnostics.non_finite_sample_count = diagnostics.sample_count;
+        diagnostics.positive_sample_count = diagnostics.sample_count;
+        return (Mesh::empty(), diagnostics);
+    }
+
+    let array_size = (nx * ny * nz) as usize;
+    let mut field_values = SdfSampleField::with_capacity(array_size, collect_diagnostics);
+    let Some(grid) =
+        SamplingGrid::from_bounds(min_pt.clone(), max_pt.clone(), nx, ny, nz, iso_value)
+    else {
+        diagnostics.non_finite_sample_count = diagnostics.sample_count;
+        diagnostics.positive_sample_count = diagnostics.sample_count;
+        return (Mesh::empty(), diagnostics);
+    };
+    let x_coordinates = grid.axis_coordinates(&grid.origin.x, &grid.step.x, nx);
+    let y_coordinates = grid.axis_coordinates(&grid.origin.y, &grid.step.y, ny);
+    let z_coordinates = grid.axis_coordinates(&grid.origin.z, &grid.step.z, nz);
+
+    // Store `f(p) - iso` in x-major order, matching `GridShape::linearize`.
+    for (iz, z) in z_coordinates.iter().enumerate() {
+        for (iy, y) in y_coordinates.iter().enumerate() {
+            for (ix, x) in x_coordinates.iter().enumerate() {
+                let sdf_val = sdf(ix, iy, iz, x, y, z);
+                let value = hreal_from_f64(sdf_val).ok();
+                if collect_diagnostics {
+                    push_sdf_sample(&mut diagnostics, &mut field_values, value, &grid.iso);
+                } else {
+                    push_sdf_sample_without_diagnostics(&mut field_values, value, &grid.iso);
+                }
+            }
+        }
+    }
+
+    mesh_from_sampled_field(
+        field_values,
+        min_pt,
+        max_pt,
+        nx,
+        ny,
+        nz,
+        metadata,
+        diagnostics,
+        collect_diagnostics,
+    )
+}
+
+#[derive(Clone, Debug)]
+struct SdfSampleField {
+    hyper_values: Option<Vec<Real>>,
+    surface_nets_values: Vec<f32>,
+}
+
+impl SdfSampleField {
+    fn with_capacity(capacity: usize, retain_hyper_values: bool) -> Self {
+        Self {
+            hyper_values: retain_hyper_values.then(|| Vec::with_capacity(capacity)),
+            surface_nets_values: Vec::with_capacity(capacity),
+        }
+    }
+
+    fn push_hyper_sample(&mut self, shifted: Real) -> bool {
+        let Some(surface_value) = surface_nets_scalar(&shifted) else {
+            self.push_nonfinite_sample();
+            return false;
+        };
+        if let Some(hyper_values) = &mut self.hyper_values {
+            hyper_values.push(shifted);
+        }
+        self.surface_nets_values.push(surface_value);
+        true
+    }
+
+    fn push_nonfinite_sample(&mut self) {
+        if let Some(hyper_values) = &mut self.hyper_values {
+            hyper_values.push(hreal_from_f64(1.0e10).expect("finite SDF sentinel"));
+        }
+        self.surface_nets_values.push(1.0e10_f32);
+    }
+}
+
+#[derive(Clone, Debug)]
+struct SamplingGrid {
+    origin: HPoint3,
+    step: HPoint3,
+    iso: Real,
+}
+
+impl SamplingGrid {
+    fn from_bounds(
+        min_pt: Point3,
+        max_pt: Point3,
+        nx: u32,
+        ny: u32,
+        nz: u32,
+        iso_value: Real,
+    ) -> Option<Self> {
+        let origin = HPoint3::new(min_pt.x.clone(), min_pt.y.clone(), min_pt.z.clone());
+        let max = HPoint3::new(max_pt.x.clone(), max_pt.y.clone(), max_pt.z.clone());
+        let step = HPoint3::new(
+            ((max.x - origin.x.clone()) / Real::from(u64::from(nx - 1))).ok()?,
+            ((max.y - origin.y.clone()) / Real::from(u64::from(ny - 1))).ok()?,
+            ((max.z - origin.z.clone()) / Real::from(u64::from(nz - 1))).ok()?,
+        );
+        Some(Self {
+            origin,
+            step,
+            iso: hreal_from_f64(iso_value).ok()?,
+        })
+    }
+
+    fn axis_coordinates(&self, origin: &Real, step: &Real, count: u32) -> Vec<Real> {
+        (0..count)
+            .map(|index| origin.clone() + step.clone() * Real::from(u64::from(index)))
+            .collect()
+    }
+
+    fn point_from_surface_position(&self, position: [f32; 3]) -> Option<Point3> {
+        let x =
+            self.origin.x.clone() + self.step.x.clone() * hreal_from_f32(position[0]).ok()?;
+        let y =
+            self.origin.y.clone() + self.step.y.clone() * hreal_from_f32(position[1]).ok()?;
+        let z =
+            self.origin.z.clone() + self.step.z.clone() * hreal_from_f32(position[2]).ok()?;
+        Some(Point3::new(x, y, z))
+    }
+}
+
+fn push_sdf_sample(
+    diagnostics: &mut SdfDiagnostics,
+    field_values: &mut SdfSampleField,
+    value: Option<Real>,
+    iso_value: &Real,
+) {
+    if let Some(sdf_val) = value {
+        let shifted = sdf_val.clone() - iso_value.clone();
+        if !field_values.push_hyper_sample(shifted.clone()) {
+            diagnostics.non_finite_sample_count += 1;
+            diagnostics.positive_sample_count += 1;
+            return;
+        }
+        diagnostics.finite_sample_count += 1;
+        record_sdf_finite_sample(diagnostics, &sdf_val);
+        match hreal_sign(&shifted) {
+            Some(RealSign::Negative) => diagnostics.negative_sample_count += 1,
+            Some(RealSign::Positive) => diagnostics.positive_sample_count += 1,
+            Some(RealSign::Zero) => diagnostics.zero_sample_count += 1,
+            None => {
+                diagnostics.non_finite_sample_count += 1;
+                diagnostics.positive_sample_count += 1;
+            },
+        }
+    } else {
+        diagnostics.non_finite_sample_count += 1;
+        diagnostics.positive_sample_count += 1;
+        field_values.push_nonfinite_sample();
+    }
+}
+
+fn push_sdf_sample_without_diagnostics(
+    field_values: &mut SdfSampleField,
+    value: Option<Real>,
+    iso_value: &Real,
+) {
+    if let Some(sdf_val) = value {
+        let _ = field_values.push_hyper_sample(sdf_val - iso_value.clone());
+    } else {
+        field_values.push_nonfinite_sample();
+    }
+}
+
+fn record_sdf_finite_sample(diagnostics: &mut SdfDiagnostics, value: &Real) {
+    diagnostics.min_finite_value = match diagnostics.min_finite_value.take() {
+        Some(current) => hyperlimit::real_min(&current, value).value().cloned(),
+        None => Some(value.clone()),
+    };
+    diagnostics.max_finite_value = match diagnostics.max_finite_value.take() {
+        Some(current) => hyperlimit::real_max(&current, value).value().cloned(),
+        None => Some(value.clone()),
+    };
+}
+
+fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
+    field_values: SdfSampleField,
+    min_pt: Point3,
+    max_pt: Point3,
+    nx: u32,
+    ny: u32,
+    nz: u32,
+    metadata: M,
+    mut diagnostics: SdfDiagnostics,
+    collect_diagnostics: bool,
+) -> (Mesh<M>, SdfDiagnostics) {
+    let Some(grid) = SamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz, Real::zero())
+    else {
+        diagnostics.non_finite_sample_count = diagnostics.sample_count;
+        diagnostics.positive_sample_count = diagnostics.sample_count;
+        return (Mesh::empty(), diagnostics);
+    };
+
+    // The shape describing our discrete grid for Surface Nets:
+    #[derive(Clone, Copy)]
+    struct GridShape {
+        nx: u32,
+        ny: u32,
+        nz: u32,
+    }
+
+    impl fast_surface_nets::ndshape::Shape<3> for GridShape {
+        type Coord = u32;
+
+        #[inline]
+        fn as_array(&self) -> [Self::Coord; 3] {
+            [self.nx, self.ny, self.nz]
+        }
+
+        fn size(&self) -> Self::Coord {
+            self.nx * self.ny * self.nz
+        }
+
+        fn usize(&self) -> usize {
+            (self.nx * self.ny * self.nz) as usize
+        }
+
+        fn linearize(&self, coords: [Self::Coord; 3]) -> u32 {
+            let [x, y, z] = coords;
+            (z * self.ny + y) * self.nx + x
+        }
+
+        fn delinearize(&self, i: u32) -> [Self::Coord; 3] {
+            let x = i % self.nx;
+            let yz = i / self.nx;
+            let y = yz % self.ny;
+            let z = yz / self.ny;
+            [x, y, z]
+        }
+    }
+
+    let shape = GridShape { nx, ny, nz };
+    if collect_diagnostics {
+        diagnostics.crossing_cell_count = field_values
+            .hyper_values
+            .as_deref()
+            .map_or(0, |values| count_crossing_cells(values, nx, ny, nz));
+    }
+
+    // `SurfaceNetsBuffer` collects the positions, normals, and triangle indices
+    let mut sn_buffer = SurfaceNetsBuffer::default();
+
+    // The max valid coordinate in each dimension
+    let max_x = nx - 1;
+    let max_y = ny - 1;
+    let max_z = nz - 1;
+
+    // Run surface nets
+    surface_nets(
+        &field_values.surface_nets_values,
+        &shape,
+        [0, 0, 0],
+        [max_x, max_y, max_z],
+        &mut sn_buffer,
+    );
+    diagnostics.surface_nets_vertex_count = sn_buffer.positions.len();
+    diagnostics.surface_nets_index_count = sn_buffer.indices.len();
+
+    // Convert the resulting triangles into Mesh polygons
+    let mut triangles = Vec::with_capacity(sn_buffer.indices.len() / 3);
+    let converted_vertices = sn_buffer
+        .positions
+        .iter()
+        .zip(&sn_buffer.normals)
+        .map(|(&position, &normal)| {
+            let point = grid.point_from_surface_position(position)?;
+            let normal = vector3_from_f32_boundary(normal)?;
+            (finite_point3(&point) && finite_vector3(&normal))
+                .then(|| Vertex::new(point, normal))
+        })
+        .collect::<Vec<_>>();
+
+    for tri in sn_buffer.indices.chunks_exact(3) {
+        let i0 = tri[0] as usize;
+        let i1 = tri[1] as usize;
+        let i2 = tri[2] as usize;
+
+        let (Some(v0), Some(v1), Some(v2)) = (
+            &converted_vertices[i0],
+            &converted_vertices[i1],
+            &converted_vertices[i2],
+        ) else {
+            diagnostics.skipped_non_finite_triangle_count += 1;
+            continue;
+        };
+
+        if collect_diagnostics
+            && !htriangle_area2_is_nonzero(&v0.position, &v1.position, &v2.position)
+        {
+            diagnostics.degenerate_triangle_count += 1;
+        }
+
+        // Note: reverse v1, v2 if you need to fix winding
+        let poly = Polygon::new(vec![v0.clone(), v1.clone(), v2.clone()], metadata.clone());
+        triangles.push(poly);
+        diagnostics.emitted_triangle_count += 1;
+    }
+
+    // Return as a Mesh
+    (Mesh::from_polygons(triangles), diagnostics)
+}
+
+fn hypersdf_grid(
+    min_pt: Point3,
+    max_pt: Point3,
+    nx: u32,
+    ny: u32,
+    nz: u32,
+) -> Option<SdfPreviewGrid> {
+    let grid = SamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz, Real::zero())?;
+    Some(SdfPreviewGrid::new(grid.origin, grid.step, [nx, ny, nz]))
+}
+
+#[inline]
+fn finite_point3(point: &Point3) -> bool {
+    hvector3_from_point3(point).is_some()
+}
+
+#[inline]
+fn finite_vector3(vector: &Vector3) -> bool {
+    hvector3_from_vector3(vector).is_some()
+}
+
+fn surface_nets_scalar(value: &Real) -> Option<f32> {
+    let boundary = hreal_to_f64(value)?;
+    // Lossy conversion already refines and caches a certified sign for generic
+    // expressions. Ask for the exact sign afterwards so the topology boundary
+    // reuses that work instead of evaluating the expression twice.
+    let sign = hreal_sign(value)?;
+    let value = boundary as f32;
+    let value = if value == 0.0 {
+        match sign {
+            RealSign::Negative => -f32::MIN_POSITIVE,
+            RealSign::Positive => f32::MIN_POSITIVE,
+            RealSign::Zero => 0.0,
+        }
+    } else if value.is_infinite() {
+        match sign {
+            RealSign::Negative => -f32::MAX,
+            RealSign::Positive => f32::MAX,
+            RealSign::Zero => 0.0,
+        }
+    } else {
+        value
+    };
+    hreal_from_f32(value).ok()?;
+    Some(value)
+}
+
+fn vector3_from_f32_boundary(vector: [f32; 3]) -> Option<Vector3> {
+    Vector3::try_from_f32_array(vector).ok()
+}
+
+fn count_crossing_cells(field_values: &[Real], nx: u32, ny: u32, nz: u32) -> usize {
     if nx < 2 || ny < 2 || nz < 2 {
         return 0;
     }
@@ -301,18 +632,19 @@ fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usiz
         for y in 0..(ny - 1) {
             for x in 0..(nx - 1) {
                 let corners = [
-                    field_values[index(x, y, z)],
-                    field_values[index(x + 1, y, z)],
-                    field_values[index(x, y + 1, z)],
-                    field_values[index(x + 1, y + 1, z)],
-                    field_values[index(x, y, z + 1)],
-                    field_values[index(x + 1, y, z + 1)],
-                    field_values[index(x, y + 1, z + 1)],
-                    field_values[index(x + 1, y + 1, z + 1)],
+                    &field_values[index(x, y, z)],
+                    &field_values[index(x + 1, y, z)],
+                    &field_values[index(x, y + 1, z)],
+                    &field_values[index(x + 1, y + 1, z)],
+                    &field_values[index(x, y, z + 1)],
+                    &field_values[index(x + 1, y, z + 1)],
+                    &field_values[index(x, y + 1, z + 1)],
+                    &field_values[index(x + 1, y + 1, z + 1)],
                 ];
-                let has_negative = corners.iter().any(|value| *value < 0.0);
-                let has_positive = corners.iter().any(|value| *value > 0.0);
-                let has_zero = corners.contains(&0.0);
+                let signs = corners.map(hreal_sign);
+                let has_negative = signs.contains(&Some(RealSign::Negative));
+                let has_positive = signs.contains(&Some(RealSign::Positive));
+                let has_zero = signs.contains(&Some(RealSign::Zero));
                 if (has_negative && has_positive) || has_zero {
                     count += 1;
                 }
@@ -321,8 +653,4 @@ fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usiz
     }
 
     count
-}
-
-fn triangle_area2(a: Point3<Real>, b: Point3<Real>, c: Point3<Real>) -> Real {
-    (b - a).cross(&(c - a)).norm()
 }

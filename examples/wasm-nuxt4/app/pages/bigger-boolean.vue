@@ -32,19 +32,19 @@ if (import.meta.client)
       0, 50, 0 
     );
 
-    // Make a 2D Sketch
-    //const sketch = new csgrs.SketchJs();
-    //console.log(sketch.isEmpty()); // true
+    // Make a 2D Profile
+    //const profile = new csgrs.ProfileJs();
+    //console.log(profile.isEmpty()); // true
     
     /*
-    sketch.polygon([
+    profile.polygon([
       -50, 50,
       50, 0,
       0, 50
     ]);
     */
 
-    const circle = csgrs.SketchJs.circle(10, 32);
+    const circle = csgrs.ProfileJs.circle(10, 32);
     // console.log(circle.center()); // Expect the center point, is center operation
     //console.log(circle.boundingBox()); // { min: [-10,-10,0], max: [10,10,0] }
     const translatedCircle = circle.translate(100,0,0); // Expect in-place translation

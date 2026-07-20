@@ -1,6 +1,6 @@
 [package]
 name = "csgrs-fuzz"
-version = "0.0.0"
+version = "0.1.0"
 publish = false
 edition = "2024"
 
@@ -8,9 +8,19 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
-csgrs = { path = ".." }
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+csgrs = { path = "..", features = ["offset"] }
+hypercurve = { path = "../../hypercurve" }
+hyperlimit = { path = "../../hyperlimit" }
+hyperlattice = { path = "../../hyperlattice" }
+hypersdf = { path = "../../hypersdf" }
+# csgrs = { version = "0.23.0", features = ["offset"] }
+# hypercurve = "0.3.0"
+# hyperlimit = "0.4.0"
+# hyperlattice = "0.6.0"
+# hypersdf = "0.2.0"
 libfuzzer-sys = "0.4"
-nalgebra = "0.34.1"
 hashbrown = "0.15"
 
 [[bin]]
@@ -77,13 +87,6 @@ doc = false
 bench = false
 
 [[bin]]
-name = "fuzz_toolpath_from_sketch"
-path = "fuzz_targets/fuzz_toolpath_from_sketch.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
 name = "fuzz_mesh_primitive_catalog"
 path = "fuzz_targets/fuzz_mesh_primitive_catalog.rs"
 test = false
@@ -100,6 +103,13 @@ bench = false
 [[bin]]
 name = "fuzz_sdf_tpms"
 path = "fuzz_targets/fuzz_sdf_tpms.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_metaballs_boundary"
+path = "fuzz_targets/fuzz_metaballs_boundary.rs"
 test = false
 doc = false
 bench = false
@@ -133,6 +143,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "fuzz_mesh_hypermesh_adapter"
+path = "fuzz_targets/fuzz_mesh_hypermesh_adapter.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "fuzz_sketch_boolean_pair"
 path = "fuzz_targets/fuzz_sketch_boolean_pair.rs"
 test = false
@@ -142,6 +159,13 @@ bench = false
 [[bin]]
 name = "fuzz_vertex_quality"
 path = "fuzz_targets/fuzz_vertex_quality.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_part_blueprint"
+path = "fuzz_targets/fuzz_part_blueprint.rs"
 test = false
 doc = false
 bench = false
