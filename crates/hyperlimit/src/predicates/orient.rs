@@ -61,6 +61,22 @@ pub(crate) fn orient2d_report_with_policy(
         );
     }
 
+    if let Some(sign) = Real::prepare_affine_det2_exact_word_filter([&a.x, &a.y], [&b.x, &b.y])
+        .and_then(|filter| filter.sign([&c.x, &c.y]))
+    {
+        crate::trace_dispatch!("hyperlimit", "orient2d", "exact-word-rational-det2-filter");
+        return PredicateReport::new(
+            PredicateOutcome::decided(
+                crate::real::map_real_sign(sign),
+                Certainty::Exact,
+                Escalation::Exact,
+            ),
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Orient2dRationalDet2,
+            },
+        );
+    }
+
     // Structural-dispatch note: when callers carry integer-grid scale,
     // affine-transform conditioning, or dyadic denominator facts, this
     // predicate can choose a faster exact determinant expansion before building
@@ -1563,7 +1579,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient2d_uses_compact_rational_kernel_for_common_denominators() {
+    fn orient2d_uses_exact_word_filter_for_common_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1592,14 +1608,18 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient2d", "rational-det2"),
+            trace.path_count("hyperlimit", "orient2d", "exact-word-rational-det2-filter"),
             1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient2d", "rational-det2"),
+            0
         );
     }
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient2d_uses_compact_rational_kernel_for_mixed_denominators() {
+    fn orient2d_uses_exact_word_filter_for_mixed_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1628,8 +1648,12 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient2d", "rational-det2"),
+            trace.path_count("hyperlimit", "orient2d", "exact-word-rational-det2-filter"),
             1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient2d", "rational-det2"),
+            0
         );
     }
 
