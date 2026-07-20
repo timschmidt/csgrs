@@ -214,19 +214,36 @@ fn project_to_exact_2d(
 }
 
 fn dominant_axis(normal: &Vector3) -> Option<usize> {
-    let squared = normal.0.each_ref().map(|value| value.clone() * value.clone());
     let mut axis = 0;
     for candidate in 1..3 {
-        if matches!(
-            hyperlimit::compare_reals(&squared[candidate], &squared[axis]).value(),
-            Some(Ordering::Greater)
+        let ordering = match (
+            normal.0[candidate].exact_rational_ref(),
+            normal.0[axis].exact_rational_ref(),
         ) {
+            (Some(candidate), Some(current)) => {
+                match (candidate.is_negative(), current.is_negative()) {
+                    (false, false) => candidate.partial_cmp(current),
+                    (true, true) => current.partial_cmp(candidate),
+                    (false, true) => candidate.partial_cmp(&(-current)),
+                    (true, false) => (-candidate).partial_cmp(current),
+                }
+                .unwrap_or(Ordering::Equal)
+            },
+            _ => {
+                let candidate = normal.0[candidate].clone() * normal.0[candidate].clone();
+                let current = normal.0[axis].clone() * normal.0[axis].clone();
+                hyperlimit::compare_reals(&candidate, &current)
+                    .value()
+                    .unwrap_or(Ordering::Equal)
+            },
+        };
+        if ordering == Ordering::Greater {
             axis = candidate;
         }
     }
     if matches!(
-        squared[axis].refine_sign_until(-128),
-        Some(RealSign::Positive)
+        normal.0[axis].refine_sign_until(-128),
+        Some(RealSign::Positive | RealSign::Negative)
     ) {
         Some(axis)
     } else {

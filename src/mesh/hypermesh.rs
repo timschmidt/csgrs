@@ -624,7 +624,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         if mesh.positions.is_empty() {
             return Ok(mesh);
         }
-        validate_surface_input(&mesh)?;
+        if self.polygons.nondegenerate_triangles_fact() != Some(true) {
+            validate_surface_input(&mesh)?;
+        }
         Ok(mesh)
     }
 
@@ -920,13 +922,11 @@ fn validate_surface_input(mesh: &InputMesh) -> ::hypermesh::HypermeshResult<()> 
                 });
             }
         }
-        if !::hypermesh::Plane::from_points(
+        if !::hypermesh::Plane::points_are_nondegenerate(
             &mesh.positions[a],
             &mesh.positions[b],
             &mesh.positions[c],
-        )
-        .is_valid()
-        {
+        ) {
             return Err(::hypermesh::HypermeshError::DegenerateTriangle {
                 mesh_index: 0,
                 triangle_index,
