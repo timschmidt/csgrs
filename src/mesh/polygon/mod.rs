@@ -78,7 +78,7 @@ enum LazySourceVertices {
     Materialized(Arc<Vec<Vertex>>),
     Cuboid {
         coordinate_bounds: [[Real; 2]; 3],
-        coordinate_bounds_f64: Option<[[f64; 2]; 3]>,
+        coordinate_bounds_f64: OnceLock<Option<[[f64; 2]; 3]>>,
         position_vertices: Vec<OnceLock<Box<Vertex>>>,
         vertices: Vec<OnceLock<Box<Vertex>>>,
         first_position_identity: u64,
@@ -166,6 +166,19 @@ enum LazySourceVertices {
         vertices: Vec<OnceLock<Box<Vertex>>>,
         identities: Option<LazyMappedIdentities>,
     },
+}
+
+fn finite_cuboid_bounds(coordinate_bounds: &[[Real; 2]; 3]) -> Option<[[f64; 2]; 3]> {
+    let finite_bounds = |axis: usize| {
+        coordinate_bounds[axis][0]
+            .to_f64_lossy()
+            .zip(coordinate_bounds[axis][1].to_f64_lossy())
+            .map(|(min, max)| [min, max])
+    };
+    finite_bounds(0)
+        .zip(finite_bounds(1))
+        .zip(finite_bounds(2))
+        .map(|((x, y), z)| [x, y, z])
 }
 
 fn cuboid_vertex(
@@ -704,9 +717,13 @@ impl LazySourceVertices {
     fn position_f64_lossy(&self, index: usize) -> Option<[f64; 3]> {
         match self {
             Self::Cuboid {
-                coordinate_bounds_f64: Some(coordinate_bounds),
+                coordinate_bounds,
+                coordinate_bounds_f64,
                 ..
             } => {
+                let coordinate_bounds = coordinate_bounds_f64
+                    .get_or_init(|| finite_cuboid_bounds(coordinate_bounds))
+                    .as_ref()?;
                 let coordinate_slots =
                     CUBOID_POINT_COORDINATE_SLOTS[CUBOID_CORNER_POSITION_SLOTS[index]];
                 Some(std::array::from_fn(|axis| {
@@ -761,8 +778,9 @@ impl LazySubdivisionVertexPool {
         first_position_identity: u64,
         first_coordinate_identity: u64,
     ) -> Self {
-        Self::new_cuboid_bounds(
+        Self::new_cuboid_with_bounds(
             std::array::from_fn(|axis| [Real::zero(), dimensions[axis].clone()]),
+            OnceLock::new(),
             first_position_identity,
             first_coordinate_identity,
         )
@@ -773,16 +791,21 @@ impl LazySubdivisionVertexPool {
         first_position_identity: u64,
         first_coordinate_identity: u64,
     ) -> Self {
-        let finite_bounds = |axis: usize| {
-            coordinate_bounds[axis][0]
-                .to_f64_lossy()
-                .zip(coordinate_bounds[axis][1].to_f64_lossy())
-                .map(|(min, max)| [min, max])
-        };
-        let coordinate_bounds_f64 = finite_bounds(0)
-            .zip(finite_bounds(1))
-            .zip(finite_bounds(2))
-            .map(|((x, y), z)| [x, y, z]);
+        let coordinate_bounds_f64 = OnceLock::from(finite_cuboid_bounds(&coordinate_bounds));
+        Self::new_cuboid_with_bounds(
+            coordinate_bounds,
+            coordinate_bounds_f64,
+            first_position_identity,
+            first_coordinate_identity,
+        )
+    }
+
+    fn new_cuboid_with_bounds(
+        coordinate_bounds: [[Real; 2]; 3],
+        coordinate_bounds_f64: OnceLock<Option<[[f64; 2]; 3]>>,
+        first_position_identity: u64,
+        first_coordinate_identity: u64,
+    ) -> Self {
         Self {
             source_vertices: LazySourceVertices::Cuboid {
                 coordinate_bounds,
