@@ -481,6 +481,7 @@ struct PointClassificationKey([usize; 3]);
 
 #[derive(Default)]
 struct PointPlaneClassificationCache {
+    source_points: Vec<Option<CachedPointPlaneClassifications>>,
     points: StorageHashMap<PointClassificationKey, CachedPointPlaneClassifications>,
 }
 
@@ -499,13 +500,17 @@ impl PointPlaneClassificationCache {
     ) -> HypermeshResult<SourcePlaneRelation> {
         let mut has_negative = false;
         let mut has_positive = false;
-        for point in polygon
+        let edge_identities = polygon.known_edge_identities.as_deref();
+        for (point_index, point) in polygon
             .known_vertices
             .as_ref()
             .ok_or(crate::error::HypermeshError::UnknownClassification)?
             .iter()
+            .enumerate()
         {
-            match self.classify(point, plane, plane_index, plane_count)? {
+            let source_vertex =
+                edge_identities.and_then(|identities| source_vertex_index(identities, point_index));
+            match self.classify(point, source_vertex, plane, plane_index, plane_count)? {
                 Classification::Negative => has_negative = true,
                 Classification::Positive => has_positive = true,
                 Classification::On => {}
@@ -524,6 +529,7 @@ impl PointPlaneClassificationCache {
     fn classify(
         &mut self,
         point: &Point3,
+        source_vertex: Option<usize>,
         plane: &Plane,
         plane_index: usize,
         plane_count: usize,
@@ -535,14 +541,20 @@ impl PointPlaneClassificationCache {
         ] else {
             return classify_point(point, plane);
         };
-        let key = PointClassificationKey([x, y, z].map(hyperlattice::Rational::storage_identity));
-        let cached = self
-            .points
-            .entry(key)
-            .or_insert_with(|| CachedPointPlaneClassifications {
-                prepared_query: Real::prepare_rational_affine_point3_query([x, y, z]),
-                classifications: vec![None; plane_count],
-            });
+        let make_cached = || CachedPointPlaneClassifications {
+            prepared_query: Real::prepare_rational_affine_point3_query([x, y, z]),
+            classifications: vec![None; plane_count],
+        };
+        let cached = if let Some(source_vertex) = source_vertex {
+            if self.source_points.len() <= source_vertex {
+                self.source_points.resize_with(source_vertex + 1, || None);
+            }
+            self.source_points[source_vertex].get_or_insert_with(make_cached)
+        } else {
+            let key =
+                PointClassificationKey([x, y, z].map(hyperlattice::Rational::storage_identity));
+            self.points.entry(key).or_insert_with(make_cached)
+        };
         if let Some(classification) = cached.classifications[plane_index] {
             return Ok(classification);
         }
@@ -553,6 +565,42 @@ impl PointPlaneClassificationCache {
         )?;
         cached.classifications[plane_index] = Some(classification);
         Ok(classification)
+    }
+}
+
+fn source_vertex_index(
+    edge_identities: &[ConstructionEdgeIdentity],
+    point_index: usize,
+) -> Option<usize> {
+    let current = edge_identities.get(point_index)?;
+    let previous_index = if point_index == 0 {
+        edge_identities.len().checked_sub(1)?
+    } else {
+        point_index - 1
+    };
+    let previous = edge_identities.get(previous_index)?;
+    let (
+        ConstructionEdgeIdentity::Source {
+            mesh: current_mesh,
+            endpoints: current_endpoints,
+        },
+        ConstructionEdgeIdentity::Source {
+            mesh: previous_mesh,
+            endpoints: previous_endpoints,
+        },
+    ) = (current, previous)
+    else {
+        return None;
+    };
+    if current_mesh != previous_mesh {
+        return None;
+    }
+    if previous_endpoints.contains(&current_endpoints[0]) {
+        Some(current_endpoints[0])
+    } else if previous_endpoints.contains(&current_endpoints[1]) {
+        Some(current_endpoints[1])
+    } else {
+        None
     }
 }
 
@@ -1776,5 +1824,27 @@ mod tests {
             SourcePlaneRelation::Crossing
         ));
         assert_eq!(cache.points.len(), 2);
+    }
+
+    #[test]
+    fn source_relation_indexes_certified_source_vertices_without_coordinate_hashing() {
+        let polygon = crate::polygon::make_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0)
+            .with_source_triangle_edge_identities(0, [7, 9, 11]);
+        let plane = Plane::axis_aligned(2, Real::zero());
+        let mut cache = PointPlaneClassificationCache::default();
+
+        assert!(matches!(
+            cache.source_relation(&polygon, &plane, 0, 1).unwrap(),
+            SourcePlaneRelation::Crossing
+        ));
+        assert!(cache.points.is_empty());
+        assert_eq!(
+            cache
+                .source_points
+                .iter()
+                .filter(|cached| cached.is_some())
+                .count(),
+            2
+        );
     }
 }

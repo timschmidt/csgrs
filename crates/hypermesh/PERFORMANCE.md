@@ -775,6 +775,43 @@ campaign completed 370 `boolean_pipeline` executions without failure. The
 downstream CSGRS all-feature suite passed all 369 library tests and every
 integration test.
 
+## 2026-07-19: index certified source-point classifications
+
+Status: **kept**
+
+Certified-convex polygon edges retain the source mesh and their original endpoint
+indices. The vertex shared by the incoming and outgoing source edges therefore
+identifies the original source point without hashing its three arbitrary-precision
+coordinates. Source-plane classification now stores prepared point queries and
+per-plane results directly by that certified source index. Split, derived, or
+otherwise unlabeled points continue to use the exact coordinate-identity map, so
+the optimization changes neither the certified floating filter nor its exact
+fallback.
+
+Thirty deterministic counter runs over 500 alternating fresh sphere/box
+operations measured:
+
+| operation | coordinate-map instructions | source-index instructions | result | cycle result |
+| --- | ---: | ---: | ---: | ---: |
+| union | 9,936,194,568 | 9,861,417,347 | 0.75% fewer | 1.14% fewer |
+| difference | 7,860,766,245 | 7,787,262,464 | 0.94% fewer | 0.88% fewer |
+
+In the union profile, `prepare_two_convex_inputs_projectively` fell from 5.20%
+to 3.29% self time. Heap profiles of 50 unions fell only from 1,060,050 to
+1,059,904 allocations (2.92 allocations per operation), confirming that the
+measured CPU reduction comes primarily from avoiding arbitrary-precision
+coordinate hashing. A focused regression verifies that certified source
+vertices populate the indexed cache without touching the coordinate map, while
+the existing early-crossing regression continues to exercise the fallback map.
+
+Validation passed the default, all-feature, and all-target matrices (962 unit
+tests, all 61 core integration tests, and 48 regressions plus one intentional
+benchmark ignore), the no-default-feature check, warning-denied Clippy and
+rustdoc, benchmark and fuzz-target builds, and the release WASM demo. A
+20-second ASAN campaign completed 368 `boolean_pipeline` executions without
+failure. The downstream CSGRS all-feature suite passed all 370 library tests and
+every integration test.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:
