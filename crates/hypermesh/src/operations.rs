@@ -658,8 +658,7 @@ impl ProjectiveCycle {
             .known_edge_identities
             .as_ref()
             .ok_or(crate::error::HypermeshError::UnknownClassification)?
-            .as_ref()
-            .clone();
+            .to_vec();
         if edge_identities.len() != points.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }

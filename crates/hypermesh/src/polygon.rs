@@ -66,8 +66,8 @@ pub struct ConvexPolygon {
     ///
     /// Derived clipping and BSP polygons clear this cache when their edge
     /// cycle changes.
-    pub(crate) known_vertices: Option<Arc<Vec<Point3>>>,
-    pub(crate) known_edge_identities: Option<Arc<Vec<ConstructionEdgeIdentity>>>,
+    pub(crate) known_vertices: Option<Arc<[Point3]>>,
+    pub(crate) known_edge_identities: Option<Arc<[ConstructionEdgeIdentity]>>,
 }
 
 impl PartialEq for ConvexPolygon {
@@ -135,7 +135,7 @@ impl ConvexPolygon {
     /// Computes all affine vertices.
     pub fn vertices(&self) -> HypermeshResult<Vec<Point3>> {
         if let Some(vertices) = &self.known_vertices {
-            return Ok(vertices.as_ref().clone());
+            return Ok(vertices.to_vec());
         }
         (0..self.vertex_count())
             .map(|index| self.vertex_point(index))
@@ -156,13 +156,13 @@ impl ConvexPolygon {
         result.known_vertices = self
             .known_vertices
             .as_ref()
-            .map(|vertices| Arc::new(vertices.iter().rev().cloned().collect()));
+            .map(|vertices| Arc::from(vertices.iter().rev().cloned().collect::<Vec<_>>()));
         result.known_edge_identities = self.known_edge_identities.as_ref().map(|identities| {
             let count = identities.len();
-            Arc::new(
+            Arc::from(
                 (0..count)
                     .map(|index| identities[(count + count - 2 - index) % count].clone())
-                    .collect(),
+                    .collect::<Vec<_>>(),
             )
         });
         result
@@ -183,8 +183,8 @@ impl ConvexPolygon {
         let mut result = self.clone();
         result.edges = Arc::new(edges);
         result.approx_bounds = approx_bounds;
-        result.known_vertices = Some(Arc::new(vertices));
-        result.known_edge_identities = Some(Arc::new(edge_identities));
+        result.known_vertices = Some(Arc::from(vertices));
+        result.known_edge_identities = Some(Arc::from(edge_identities));
         result
     }
 
@@ -193,15 +193,12 @@ impl ConvexPolygon {
         mesh: usize,
         vertices: [usize; 3],
     ) -> Self {
-        self.known_edge_identities = Some(Arc::new(
-            (0..3)
-                .map(|index| {
-                    let mut endpoints = [vertices[index], vertices[(index + 1) % 3]];
-                    endpoints.sort_unstable();
-                    ConstructionEdgeIdentity::Source { mesh, endpoints }
-                })
-                .collect(),
-        ));
+        let identities: [ConstructionEdgeIdentity; 3] = std::array::from_fn(|index| {
+            let mut endpoints = [vertices[index], vertices[(index + 1) % 3]];
+            endpoints.sort_unstable();
+            ConstructionEdgeIdentity::Source { mesh, endpoints }
+        });
+        self.known_edge_identities = Some(Arc::new(identities));
         self
     }
 
@@ -280,7 +277,7 @@ pub fn make_triangle(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
-        known_vertices: Some(Arc::new(vec![p0.clone(), p1.clone(), p2.clone()])),
+        known_vertices: Some(Arc::new([p0.clone(), p1.clone(), p2.clone()])),
         known_edge_identities: None,
     }
 }
@@ -303,7 +300,7 @@ pub(crate) fn make_triangle_with_deferred_edges(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
-        known_vertices: Some(Arc::new(vec![p0.clone(), p1.clone(), p2.clone()])),
+        known_vertices: Some(Arc::new([p0.clone(), p1.clone(), p2.clone()])),
         known_edge_identities: None,
     }
 }
@@ -337,12 +334,7 @@ pub fn make_quad(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2, p3])),
-        known_vertices: Some(Arc::new(vec![
-            p0.clone(),
-            p1.clone(),
-            p2.clone(),
-            p3.clone(),
-        ])),
+        known_vertices: Some(Arc::new([p0.clone(), p1.clone(), p2.clone(), p3.clone()])),
         known_edge_identities: None,
     }
 }

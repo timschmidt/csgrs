@@ -910,6 +910,39 @@ application build. A 20-second ASAN campaign completed 373 `boolean_pipeline`
 executions without failure. The downstream CSGRS all-feature suite passed all
 370 library tests and every integration test.
 
+## 2026-07-20: store retained triangle facts in shared slices
+
+Status: **kept**
+
+Input triangles retained their three exact affine vertices and three source-edge
+identities as `Arc<Vec<_>>`. Each fixed-size cache therefore allocated both an
+`Arc` owner and a separate `Vec` buffer. These internal caches now use
+`Arc<[_]>`; triangle construction places each three-element array directly in
+one shared allocation, while variable-size derived cycles convert their owned
+vectors at the same boundary. Exact coordinates, edge identities, clone
+sharing, polygon order, and every public type remain unchanged.
+
+An isolated cold CSGRS sphere/box union under Callgrind fell from 55,517,396 to
+55,466,235 retired instructions, 51,161 fewer instructions (0.092%). A complete
+47-workload CSGRS/CGAL/OpenCascade sweep kept all warm CSGRS rows ahead of both
+comparison kernels. The cold sphere/box union measured 2.083 ms versus CGAL's
+2.024 ms (0.972x), while the related difference, intersection, and symmetric
+difference rows remained CSGRS wins.
+
+Two nearby ideas were rejected by deterministic measurement. Carrying selected
+fragment orientation through operation-scoped triangulation changed 55,517,396
+instructions to 55,518,574, and a per-arrangement prepared-plane filter cache
+increased the count to 55,531,805. The existing winding and global predicate
+filter paths are already cheaper for this workload.
+
+Validation passed all 962 unit tests, 60 core integration tests, and 48
+regressions plus one intentional benchmark ignore; all-target benchmark
+harnesses, warning-denied Clippy, rustdoc, and every fuzz-target build were
+clean. A 20-second ASAN `boolean_pipeline` campaign completed 369 executions
+without failure (LeakSanitizer was disabled because the runner uses ptrace).
+The downstream CSGRS all-feature suite passed all 373 library tests and the
+nine focused exact adapter/differential tests.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

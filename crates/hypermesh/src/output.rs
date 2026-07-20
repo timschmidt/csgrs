@@ -2452,7 +2452,7 @@ mod tests {
     #[test]
     fn construction_boundary_appends_fan_without_intermediate_triangle_storage() {
         let mut polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-        polygon.known_edge_identities = Some(Arc::new(vec![
+        polygon.known_edge_identities = Some(Arc::from(vec![
             source_edge([0, 1]),
             source_edge([1, 2]),
             source_edge([0, 2]),
@@ -2475,7 +2475,7 @@ mod tests {
     fn construction_boundary_skips_repeated_collinear_edge_identity() {
         let mut polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let repeated = source_edge([0, 1]);
-        polygon.known_edge_identities = Some(Arc::new(vec![
+        polygon.known_edge_identities = Some(Arc::from(vec![
             repeated.clone(),
             repeated,
             source_edge([1, 2]),
@@ -2499,8 +2499,11 @@ mod tests {
     fn construction_boundary_fallback_leaves_output_unchanged() {
         let mut polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let repeated = source_edge([0, 1]);
-        polygon.known_edge_identities =
-            Some(Arc::new(vec![repeated.clone(), repeated.clone(), repeated]));
+        polygon.known_edge_identities = Some(Arc::from(vec![
+            repeated.clone(),
+            repeated.clone(),
+            repeated,
+        ]));
         let mut triangles = vec![[1, 2, 3]];
 
         assert_eq!(
