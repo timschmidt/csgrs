@@ -260,10 +260,24 @@ impl BooleanFragmentSelection {
         &self,
         fragments: &RegionFragmentSet,
     ) -> CurveResult<BooleanBoundaryFragmentSet> {
-        let result = self.emit_boundary_fragments_with_report(fragments)?;
-        result.into_fragments().ok_or_else(|| {
-            CurveError::Topology("boolean boundary fragment emission did not materialize".into())
-        })
+        self.emit_boundary_fragments_impl(fragments, false)?
+            .ok_or_else(|| {
+                CurveError::Topology(
+                    "boolean boundary fragment emission did not materialize".into(),
+                )
+            })
+    }
+
+    pub(crate) fn emit_boundary_fragments_from_certified_split(
+        &self,
+        fragments: &RegionFragmentSet,
+    ) -> CurveResult<BooleanBoundaryFragmentSet> {
+        self.emit_boundary_fragments_impl(fragments, true)?
+            .ok_or_else(|| {
+                CurveError::Topology(
+                    "boolean boundary fragment emission did not materialize".into(),
+                )
+            })
     }
 
     /// Converts selected classifications into boundary fragments and retains evidence.
@@ -286,6 +300,50 @@ impl BooleanFragmentSelection {
         fragments: &RegionFragmentSet,
         fragments_are_certified_split_output: bool,
     ) -> CurveResult<BooleanBoundaryFragmentEmissionResult2> {
+        let Some(fragment_set) =
+            self.emit_boundary_fragments_impl(fragments, fragments_are_certified_split_output)?
+        else {
+            return Ok(blocked_boolean_boundary_fragment_emission_result(
+                self,
+                BooleanBoundaryFragmentEmissionStage2::FragmentEmission,
+                UncertaintyReason::Unsupported,
+            ));
+        };
+        let directed_fragment_count = fragment_set.directed_len();
+        let directed_fragment_kind_counts =
+            directed_boolean_fragment_kind_counts(fragment_set.directed_fragments());
+        let directed_fragment_reports =
+            boolean_directed_fragment_reports(fragment_set.directed_fragments());
+        let directed_source_segment_kind_counts =
+            boolean_directed_fragment_report_source_kind_counts(&directed_fragment_reports);
+        let unresolved_boundary_count = fragment_set.unresolved_len();
+        Ok(BooleanBoundaryFragmentEmissionResult2 {
+            fragments: Some(fragment_set),
+            report: BooleanBoundaryFragmentEmissionReport2 {
+                stage: BooleanBoundaryFragmentEmissionStage2::FragmentEmission,
+                source_classification_count: self.len(),
+                discard_count: self.count_action(BooleanFragmentAction::Discard),
+                keep_source_direction_count: self
+                    .count_action(BooleanFragmentAction::KeepSourceDirection),
+                keep_reversed_count: self.count_action(BooleanFragmentAction::KeepReversed),
+                boundary_needs_resolution_count: self
+                    .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
+                directed_fragment_count: Some(directed_fragment_count),
+                directed_source_segment_kind_counts: Some(directed_source_segment_kind_counts),
+                directed_fragment_kind_counts: Some(directed_fragment_kind_counts),
+                directed_fragments: directed_fragment_reports,
+                unresolved_boundary_count: Some(unresolved_boundary_count),
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+        })
+    }
+
+    fn emit_boundary_fragments_impl(
+        &self,
+        fragments: &RegionFragmentSet,
+        fragments_are_certified_split_output: bool,
+    ) -> CurveResult<Option<BooleanBoundaryFragmentSet>> {
         validate_boolean_selection_matches_fragments(&self.classifications, fragments)?;
 
         let mut directed_fragments = Vec::new();
@@ -320,48 +378,15 @@ impl BooleanFragmentSelection {
             }
         }
 
-        let directed_fragment_count = directed_fragments.len();
-        let directed_fragment_kind_counts =
-            directed_boolean_fragment_kind_counts(&directed_fragments);
-        let directed_fragment_reports = boolean_directed_fragment_reports(&directed_fragments);
-        let directed_source_segment_kind_counts =
-            boolean_directed_fragment_report_source_kind_counts(&directed_fragment_reports);
-        let unresolved_boundary_count = unresolved_boundaries.len();
-        let fragment_set = if fragments_are_certified_split_output {
+        Ok(if fragments_are_certified_split_output {
             BooleanBoundaryFragmentSet::from_certified_split_fragments(
                 directed_fragments,
                 unresolved_boundaries,
             )
         } else {
             BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries)
-        };
-        match fragment_set {
-            Ok(fragments) => Ok(BooleanBoundaryFragmentEmissionResult2 {
-                fragments: Some(fragments),
-                report: BooleanBoundaryFragmentEmissionReport2 {
-                    stage: BooleanBoundaryFragmentEmissionStage2::FragmentEmission,
-                    source_classification_count: self.len(),
-                    discard_count: self.count_action(BooleanFragmentAction::Discard),
-                    keep_source_direction_count: self
-                        .count_action(BooleanFragmentAction::KeepSourceDirection),
-                    keep_reversed_count: self.count_action(BooleanFragmentAction::KeepReversed),
-                    boundary_needs_resolution_count: self
-                        .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
-                    directed_fragment_count: Some(directed_fragment_count),
-                    directed_source_segment_kind_counts: Some(directed_source_segment_kind_counts),
-                    directed_fragment_kind_counts: Some(directed_fragment_kind_counts),
-                    directed_fragments: directed_fragment_reports,
-                    unresolved_boundary_count: Some(unresolved_boundary_count),
-                    status: RetainedTopologyStatus::NativeExact,
-                    blocker: None,
-                },
-            }),
-            Err(_) => Ok(blocked_boolean_boundary_fragment_emission_result(
-                self,
-                BooleanBoundaryFragmentEmissionStage2::FragmentEmission,
-                UncertaintyReason::Unsupported,
-            )),
         }
+        .ok())
     }
 }
 

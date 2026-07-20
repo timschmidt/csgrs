@@ -263,8 +263,10 @@ impl BooleanBoundaryFragmentSet {
     /// incoming tangent. Unresolved overlaps and indistinguishable tangent
     /// continuations remain uncertainty rather than using an arbitrary successor.
     pub fn assemble_chains(&self, policy: &CurvePolicy) -> Classification<BooleanBoundaryChainSet> {
-        self.assemble_chains_with_report(policy)
-            .into_chains_classification()
+        match self.assemble_chains_impl(policy) {
+            Ok(chains) => Classification::Decided(chains),
+            Err((_, reason)) => Classification::Uncertain(reason),
+        }
     }
 
     /// Assembles directed boundary fragments and retains traversal evidence.
@@ -272,12 +274,24 @@ impl BooleanBoundaryFragmentSet {
         &self,
         policy: &CurvePolicy,
     ) -> BooleanBoundaryChainAssemblyResult2 {
+        match self.assemble_chains_impl(policy) {
+            Ok(chains) => decided_boolean_boundary_chain_assembly_result(self, chains),
+            Err((stage, reason)) => {
+                blocked_boolean_boundary_chain_assembly_result(self, stage, reason)
+            }
+        }
+    }
+
+    fn assemble_chains_impl(
+        &self,
+        policy: &CurvePolicy,
+    ) -> Result<BooleanBoundaryChainSet, (BooleanBoundaryChainAssemblyStage2, UncertaintyReason)>
+    {
         if !self.unresolved_boundaries.is_empty() {
-            return blocked_boolean_boundary_chain_assembly_result(
-                self,
+            return Err((
                 BooleanBoundaryChainAssemblyStage2::BoundaryResolution,
                 UncertaintyReason::Boundary,
-            );
+            ));
         }
 
         let adjacency = endpoint_adjacency(&self.directed_fragments, policy);
@@ -286,27 +300,21 @@ impl BooleanBoundaryFragmentSet {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         ) {
             return match tangent_ordered_chains(&self.directed_fragments, policy) {
-                Classification::Decided(chains) => {
-                    decided_boolean_boundary_chain_assembly_result(self, chains)
-                }
-                Classification::Uncertain(reason) => {
-                    blocked_boolean_boundary_chain_assembly_result(
-                        self,
-                        BooleanBoundaryChainAssemblyStage2::EndpointAdjacency,
-                        reason,
-                    )
-                }
+                Classification::Decided(chains) => Ok(chains),
+                Classification::Uncertain(reason) => Err((
+                    BooleanBoundaryChainAssemblyStage2::EndpointAdjacency,
+                    reason,
+                )),
             };
         }
         let Classification::Decided((successors, predecessors)) = adjacency else {
             let Classification::Uncertain(reason) = adjacency else {
                 unreachable!()
             };
-            return blocked_boolean_boundary_chain_assembly_result(
-                self,
+            return Err((
                 BooleanBoundaryChainAssemblyStage2::EndpointAdjacency,
                 reason,
-            );
+            ));
         };
 
         let mut used = vec![false; self.directed_fragments.len()];
@@ -318,11 +326,10 @@ impl BooleanBoundaryFragmentSet {
                     match follow_chain(index, &self.directed_fragments, &successors, &mut used) {
                         Classification::Decided(chain) => chain,
                         Classification::Uncertain(reason) => {
-                            return blocked_boolean_boundary_chain_assembly_result(
-                                self,
+                            return Err((
                                 BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
                                 reason,
-                            );
+                            ));
                         }
                     };
                 chains.push(chain);
@@ -335,21 +342,17 @@ impl BooleanBoundaryFragmentSet {
                     match follow_chain(index, &self.directed_fragments, &successors, &mut used) {
                         Classification::Decided(chain) => chain,
                         Classification::Uncertain(reason) => {
-                            return blocked_boolean_boundary_chain_assembly_result(
-                                self,
+                            return Err((
                                 BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
                                 reason,
-                            );
+                            ));
                         }
                     };
                 chains.push(chain);
             }
         }
 
-        decided_boolean_boundary_chain_assembly_result(
-            self,
-            BooleanBoundaryChainSet::from_assembled(chains),
-        )
+        Ok(BooleanBoundaryChainSet::from_assembled(chains))
     }
 }
 
@@ -623,7 +626,15 @@ impl BooleanBoundaryChainSet {
     /// separate avoids assigning hole/material roles before the graph is fully
     /// resolved.
     pub fn closed_loops(&self) -> Classification<BooleanBoundaryLoopSet> {
-        self.closed_loops_with_report().into_loops_classification()
+        if self.chains.iter().any(|chain| !chain.is_closed()) {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        }
+        Classification::Decided(BooleanBoundaryLoopSet::from_extracted(
+            self.chains
+                .iter()
+                .map(|chain| BooleanBoundaryLoop::from_closed_chain(chain.fragments.clone()))
+                .collect(),
+        ))
     }
 
     /// Extracts closed chains as boolean boundary loops and retains evidence.
@@ -649,8 +660,15 @@ impl BooleanBoundaryChainSet {
 
     /// Consumes the chain set and extracts closed chains as boundary loops.
     pub fn into_closed_loops(self) -> Classification<BooleanBoundaryLoopSet> {
-        self.into_closed_loops_with_report()
-            .into_loops_classification()
+        if self.chains.iter().any(|chain| !chain.is_closed()) {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        }
+        Classification::Decided(BooleanBoundaryLoopSet::from_extracted(
+            self.chains
+                .into_iter()
+                .map(|chain| BooleanBoundaryLoop::from_closed_chain(chain.fragments))
+                .collect(),
+        ))
     }
 
     /// Consumes the chain set and extracts closed chains with retained evidence.

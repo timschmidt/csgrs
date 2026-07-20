@@ -1651,7 +1651,7 @@ pub(crate) fn boolean_region_between(
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Region2>> {
     Ok(
-        boolean_region_between_with_report(first, second, op, fill_rule, policy)?
+        boolean_region_between_impl(first, second, op, fill_rule, policy, false)?
             .into_region_classification(),
     )
 }
@@ -1662,6 +1662,17 @@ pub(crate) fn boolean_region_between_with_report(
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
+) -> CurveResult<RegionBooleanResult2> {
+    boolean_region_between_impl(first, second, op, fill_rule, policy, true)
+}
+
+fn boolean_region_between_impl(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+    retain_pipeline_report: bool,
 ) -> CurveResult<RegionBooleanResult2> {
     let boundary_events = first.intersect_region(second, policy)?;
     if let Some(region) = retained_offset_region_boolean(first, second, op, policy) {
@@ -1712,6 +1723,7 @@ pub(crate) fn boolean_region_between_with_report(
             fill_rule,
             &boundary_events,
             policy,
+            retain_pipeline_report,
         )? {
             Classification::Decided(result) => result,
             Classification::Uncertain(reason) => {
@@ -1727,6 +1739,33 @@ pub(crate) fn boolean_region_between_with_report(
                 ));
             }
         };
+    if !retain_pipeline_report {
+        return Ok(match Region2::from_boundary_contours(contours, policy)? {
+            Classification::Decided(region) => {
+                region_boolean_result_from_role_assigned_shortcut_region(
+                    first,
+                    second,
+                    op,
+                    fill_rule,
+                    RegionBooleanQueryPath2::Direct,
+                    &boundary_events,
+                    region,
+                    boundary_contour_source_path,
+                    None,
+                )
+            }
+            Classification::Uncertain(reason) => blocked_region_boolean_result(
+                first,
+                second,
+                op,
+                fill_rule,
+                RegionBooleanQueryPath2::Direct,
+                &boundary_events,
+                retained_status_for_boolean_blocker(reason),
+                reason,
+            ),
+        });
+    }
     region_boolean_result_from_boundary_contours_with_pipeline_report(
         first,
         second,
@@ -1800,6 +1839,7 @@ fn boolean_boundary_contours_between_with_pipeline_report(
     fill_rule: FillRule,
     boundary_events: &RegionIntersectionSet,
     policy: &CurvePolicy,
+    retain_pipeline_report: bool,
 ) -> CurveResult<
     Classification<(
         Vec<Contour2>,
@@ -2006,6 +2046,22 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             Classification::Decided(resolved) => resolved,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+    if !retain_pipeline_report {
+        let emitted = selection.emit_boundary_fragments_from_certified_split(fragments)?;
+        let chains = match emitted.assemble_chains(policy) {
+            Classification::Decided(chains) => chains,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let loops = match chains.into_closed_loops() {
+            Classification::Decided(loops) => loops,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        return Ok(Classification::Decided((
+            loops.into_contours(fill_rule)?,
+            RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
+            None,
+        )));
+    }
     let emission_result =
         selection.emit_boundary_fragments_from_certified_split_with_report(fragments)?;
     let (emitted, emission_report) = emission_result.into_parts();

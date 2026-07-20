@@ -71,6 +71,10 @@ fuzz_target!(|data: &[u8]| {
         BooleanOp::Xor,
     ] {
         let direct = first_view.boolean_region(&second_view, op, FillRule::EvenOdd, &policy);
+        let reported = first_view
+            .boolean_region_with_report(&second_view, op, FillRule::EvenOdd, &policy)
+            .map(|result| result.into_region_classification());
+        assert_eq!(direct, reported);
         let prepared =
             first_prepared.boolean_region(&second_prepared, op, FillRule::EvenOdd, &policy);
         assert_eq!(direct, prepared);

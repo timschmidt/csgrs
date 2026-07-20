@@ -192,6 +192,13 @@ pub(crate) fn is_zero(value: &Real, policy: &CurvePolicy) -> Option<bool> {
 }
 
 pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Ordering> {
+    if std::ptr::eq(left, right) {
+        return Some(Ordering::Equal);
+    }
+    if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
+        return left.partial_cmp(right);
+    }
+
     #[cfg(feature = "predicates")]
     if !matches!(policy.numeric_mode, NumericMode::EdgePreview) {
         // Curve parameter ordering is a topology predicate: it decides whether

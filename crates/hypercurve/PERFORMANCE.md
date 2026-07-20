@@ -670,6 +670,38 @@ all 268 operation/cell combinations in about 277 ms. These lanes are diagnostic
 capacity tests, not claims that unlike numeric and topology models have equal
 semantics.
 
+Ordinary Boolean and boundary-role APIs then still constructed the complete
+audit trail used by their `*_with_report` counterparts and immediately dropped
+it. Fragment emission and chain assembly now share one topology core with
+separate lean and evidence-retaining materialization. The ordinary consuming
+path moves chains into loops and loops into contours without allocating
+per-fragment provenance, and ordinary boundary nesting assigns material/hole
+roles without retaining per-contour sample copies. Report-bearing methods keep
+the existing reports and blockers unchanged. The Boolean fuzz target now
+differentially compares ordinary, report-bearing, and prepared results for all
+four operations.
+
+Exact scalar ordering also returns directly from two exposed rational carriers
+instead of routing them through general symbolic predicate refinement. The
+curve-string x scheduler likewise reuses exact rational endpoints when present,
+falling back to certified outward dyadic intervals for other representations.
+Sparse schedules are capped at 1,048,576 materialized pairs; larger or dense
+cases retain the authoritative flat scan rather than risking quadratic schedule
+storage. In paired local runs, the rational endpoint path reduced the 64-, 128-,
+and 512-segment prepared sparse intersection lanes by approximately 7.7%, 5.8%,
+and 3.3%, respectively.
+
+Against the preceding checkpoint, the stripped comparative Callgrind sweep fell
+from 53,745,141 to 48,341,067 instructions (10.05%), while the one-cell
+all-operation pathological comparison fell from 159,422,324 to 142,864,302
+instructions (10.39%). In the matching 15-sample run, star64 intersection fell
+from 1.431 to 1.170 ms/iter (18.2%) and rectangle union from 24.758 to
+17.717 us/iter (28.4%); offset and NURBS lanes remained within run-to-run noise.
+The 67-cell, 100 MiB finite exact Boolean tier fell from about 277 to 181 ms
+(34.6%) with all 268 operation/cell results still decided. The updated
+AddressSanitizer fuzz target completed 1,000 runs at 5,693 coverage points and
+15,929 feature edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

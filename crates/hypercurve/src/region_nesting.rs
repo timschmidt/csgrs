@@ -1644,10 +1644,14 @@ impl Region2 {
         contours: Vec<Contour2>,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        Ok(
-            Self::from_boundary_contours_with_report(contours, policy)?
-                .into_region_classification(),
-        )
+        Ok(match contour_nesting_depths(&contours, policy)? {
+            BoundaryContourNestingOutcome::Decided { nesting, .. } => {
+                Classification::Decided(assign_boundary_contour_roles(contours, &nesting, false).0)
+            }
+            BoundaryContourNestingOutcome::Blocked { blocker, .. } => {
+                Classification::Uncertain(blocker.reason)
+            }
+        })
     }
 
     /// Builds a region by nesting borrowed closed boundary contours.
@@ -1659,10 +1663,7 @@ impl Region2 {
         contours: &[Contour2],
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        Ok(
-            Self::from_boundary_contours_borrowed_with_report(contours, policy)?
-                .into_region_classification(),
-        )
+        Self::from_boundary_contours(contours.to_vec(), policy)
     }
 
     /// Builds a region by nesting closed boundary contours and retaining role evidence.
@@ -1694,49 +1695,9 @@ impl Region2 {
                 ));
             }
         };
-        let mut material_contours = Vec::new();
-        let mut hole_contours = Vec::new();
-        let mut role_reports = Vec::with_capacity(source_contour_count);
-
-        for (source_contour_index, (contour, entry)) in
-            contours.into_iter().zip(nesting.entries.iter()).enumerate()
-        {
-            let source_segment_count = contour.segments().len();
-            let source_fill_rule = contour.fill_rule();
-            let depth = entry.containing_contour_indices.len();
-            if depth % 2 == 0 {
-                let output_role_index = material_contours.len();
-                material_contours.push(contour);
-                role_reports.push(RegionBoundaryContourRoleReport2 {
-                    source_contour_index,
-                    source_segment_count,
-                    source_fill_rule,
-                    nesting_sample_point: entry.sample_point.clone(),
-                    containing_contour_indices: entry.containing_contour_indices.clone(),
-                    nesting_depth: depth,
-                    role: RegionBoundaryContourRole2::Material,
-                    output_role_index,
-                    status: RetainedTopologyStatus::NativeExact,
-                });
-            } else {
-                let output_role_index = hole_contours.len();
-                hole_contours.push(contour);
-                role_reports.push(RegionBoundaryContourRoleReport2 {
-                    source_contour_index,
-                    source_segment_count,
-                    source_fill_rule,
-                    nesting_sample_point: entry.sample_point.clone(),
-                    containing_contour_indices: entry.containing_contour_indices.clone(),
-                    nesting_depth: depth,
-                    role: RegionBoundaryContourRole2::Hole,
-                    output_role_index,
-                    status: RetainedTopologyStatus::NativeExact,
-                });
-            }
-        }
-
-        let material_contour_count = material_contours.len();
-        let hole_contour_count = hole_contours.len();
+        let (region, role_reports) = assign_boundary_contour_roles(contours, &nesting, true);
+        let material_contour_count = region.material_contours().len();
+        let hole_contour_count = region.hole_contours().len();
         let output_contour_count = material_contour_count + hole_contour_count;
         let material_segment_count = role_reports
             .iter()
@@ -1750,7 +1711,7 @@ impl Region2 {
             .sum();
         let output_segment_count = material_segment_count + hole_segment_count;
         Ok(RegionBoundaryContourBuildResult2 {
-            region: Some(Region2::new(material_contours, hole_contours)),
+            region: Some(region),
             report: RegionBoundaryContourBuildReport2 {
                 stage: RegionBoundaryContourBuildStage2::RoleAssignment,
                 predicate_path:
@@ -1788,6 +1749,46 @@ impl Region2 {
     ) -> CurveResult<RegionBoundaryContourBuildResult2> {
         Self::from_boundary_contours_with_report(contours.to_vec(), policy)
     }
+}
+
+fn assign_boundary_contour_roles(
+    contours: Vec<Contour2>,
+    nesting: &BoundaryContourNestingDepths,
+    retain_reports: bool,
+) -> (Region2, Vec<RegionBoundaryContourRoleReport2>) {
+    let mut material_contours = Vec::new();
+    let mut hole_contours = Vec::new();
+    let mut role_reports = Vec::with_capacity(usize::from(retain_reports) * contours.len());
+    for (source_contour_index, (contour, entry)) in
+        contours.into_iter().zip(&nesting.entries).enumerate()
+    {
+        let depth = entry.containing_contour_indices.len();
+        let source_segment_count = contour.segments().len();
+        let source_fill_rule = contour.fill_rule();
+        let (role, output_role_index) = if depth % 2 == 0 {
+            let index = material_contours.len();
+            material_contours.push(contour);
+            (RegionBoundaryContourRole2::Material, index)
+        } else {
+            let index = hole_contours.len();
+            hole_contours.push(contour);
+            (RegionBoundaryContourRole2::Hole, index)
+        };
+        if retain_reports {
+            role_reports.push(RegionBoundaryContourRoleReport2 {
+                source_contour_index,
+                source_segment_count,
+                source_fill_rule,
+                nesting_sample_point: entry.sample_point.clone(),
+                containing_contour_indices: entry.containing_contour_indices.clone(),
+                nesting_depth: depth,
+                role,
+                output_role_index,
+                status: RetainedTopologyStatus::NativeExact,
+            });
+        }
+    }
+    (Region2::new(material_contours, hole_contours), role_reports)
 }
 
 impl ExactCurveArrangementRequest2 {

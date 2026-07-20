@@ -9088,6 +9088,7 @@ pub(crate) fn curve_string_x_overlap_schedule(
     second_boxes: &[Option<Aabb2>],
 ) -> Option<CurveStringXOverlapSchedule> {
     const MINIMUM_FLAT_PAIR_COUNT: usize = 4_096;
+    const MAXIMUM_MATERIALIZED_PAIR_COUNT: usize = 1 << 20;
 
     let flat_pair_count = first_boxes.len().saturating_mul(second_boxes.len());
     if flat_pair_count < MINIMUM_FLAT_PAIR_COUNT {
@@ -9164,7 +9165,9 @@ pub(crate) fn curve_string_x_overlap_schedule(
                 active_second_count -= 1;
             }
         }
-        if candidate_pair_count > dense_pair_limit {
+        if candidate_pair_count > dense_pair_limit
+            || candidate_pair_count > MAXIMUM_MATERIALIZED_PAIR_COUNT
+        {
             return None;
         }
     }
@@ -9208,12 +9211,16 @@ pub(crate) fn curve_string_x_overlap_schedule(
 
 fn conservative_x_interval(bbox: &Aabb2) -> Option<[Rational; 2]> {
     Some([
-        bbox.min_x()
-            .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)?[0]
-            .clone(),
-        bbox.max_x()
-            .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)?[1]
-            .clone(),
+        bbox.min_x().exact_rational_ref().cloned().or_else(|| {
+            bbox.min_x()
+                .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)
+                .map(|interval| interval[0].clone())
+        })?,
+        bbox.max_x().exact_rational_ref().cloned().or_else(|| {
+            bbox.max_x()
+                .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)
+                .map(|interval| interval[1].clone())
+        })?,
     ])
 }
 
