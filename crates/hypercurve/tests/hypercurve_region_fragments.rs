@@ -54,6 +54,13 @@ fn region_fragments_split_all_keyed_contours() {
     let built = intersections
         .split_regions_with_report(&region.as_view(), &cutter.as_view(), &policy())
         .unwrap();
+    let Classification::Decided(lean) = intersections
+        .split_regions(&region.as_view(), &cutter.as_view(), &policy())
+        .unwrap()
+    else {
+        panic!("lean split must match the decided report-bearing split");
+    };
+    assert_eq!(Some(&lean), built.fragments());
     assert!(built.report().status().is_native_exact());
     assert_eq!(
         built.report().stage(),

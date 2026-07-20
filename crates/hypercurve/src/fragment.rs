@@ -425,18 +425,10 @@ fn append_segment_fragments(
         source_segment,
         Segment2::Line(line) if line.endpoints_decided_distinct()
     );
+    let unsplit_source_segment = markers.len() == 2;
     for adjacent in markers.windows(2) {
         let start = &adjacent[0];
         let end = &adjacent[1];
-
-        match compare_reals_for_split_ordering(&start.param, &end.param, policy) {
-            Some(Ordering::Less) => {}
-            Some(Ordering::Equal) => continue,
-            Some(Ordering::Greater) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-        }
 
         if !ordered_line_markers_are_distinct {
             let distance = start.point.distance_squared(&end.point);
@@ -447,7 +439,13 @@ fn append_segment_fragments(
             }
         }
 
-        let segment = match build_fragment_segment(source_segment, start, end, policy)? {
+        let segment = match build_fragment_segment(
+            source_segment,
+            start,
+            end,
+            unsplit_source_segment,
+            policy,
+        )? {
             Classification::Decided(segment) => segment,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -467,9 +465,13 @@ fn build_fragment_segment(
     source_segment: &Segment2,
     start: &SegmentSplitMarker,
     end: &SegmentSplitMarker,
+    unsplit_source_segment: bool,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Segment2>> {
-    if start.point == *source_segment.start() && end.point == *source_segment.end() {
+    // Every ContourSplitMarkers constructor certifies a strict sequence from
+    // zero to one, and incidence was checked before this call. Two markers
+    // therefore denote the complete source without point-equality replay.
+    if unsplit_source_segment {
         return Ok(Classification::Decided(source_segment.clone()));
     }
 

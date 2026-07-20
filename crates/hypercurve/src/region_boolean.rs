@@ -1943,16 +1943,30 @@ fn boolean_boundary_contours_between_with_pipeline_report(
         };
     }
 
-    let fragment_result = boundary_events.split_regions_with_report(first, second, policy)?;
-    let fragments = match fragment_result.fragments() {
-        Some(fragments) => fragments,
+    let fragment_result = retain_pipeline_report
+        .then(|| boundary_events.split_regions_with_report(first, second, policy))
+        .transpose()?;
+    let lean_fragments;
+    let fragments = match fragment_result.as_ref() {
+        Some(fragment_result) => match fragment_result.fragments() {
+            Some(fragments) => fragments,
+            None => {
+                return Ok(Classification::Uncertain(
+                    fragment_result
+                        .report()
+                        .blocker()
+                        .unwrap_or(UncertaintyReason::Unsupported),
+                ));
+            }
+        },
         None => {
-            return Ok(Classification::Uncertain(
-                fragment_result
-                    .report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ));
+            lean_fragments = match boundary_events.split_regions(first, second, policy)? {
+                Classification::Decided(fragments) => fragments,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            &lean_fragments
         }
     };
     // Successful splitting excludes unresolved segment relations. When the
@@ -2030,6 +2044,34 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             )?
         }
     };
+    if !retain_pipeline_report {
+        let blocker = selection_result
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        let selection = match selection_result.into_selection() {
+            Some(selection) => selection,
+            None => return Ok(Classification::Uncertain(blocker)),
+        };
+        let selection = match resolve_owned_shared_boundary_selection(fragments, selection, op)? {
+            Classification::Decided(selection) => selection,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let emitted = selection.emit_boundary_fragments_from_certified_split(fragments)?;
+        let chains = match emitted.assemble_chains(policy) {
+            Classification::Decided(chains) => chains,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let loops = match chains.into_closed_loops() {
+            Classification::Decided(loops) => loops,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        return Ok(Classification::Decided((
+            loops.into_contours(fill_rule)?,
+            RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
+            None,
+        )));
+    }
     let selection = match selection_result.selection() {
         Some(selection) => selection,
         None => {
@@ -2046,22 +2088,6 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             Classification::Decided(resolved) => resolved,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-    if !retain_pipeline_report {
-        let emitted = selection.emit_boundary_fragments_from_certified_split(fragments)?;
-        let chains = match emitted.assemble_chains(policy) {
-            Classification::Decided(chains) => chains,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let loops = match chains.into_closed_loops() {
-            Classification::Decided(loops) => loops,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        return Ok(Classification::Decided((
-            loops.into_contours(fill_rule)?,
-            RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
-            None,
-        )));
-    }
     let emission_result =
         selection.emit_boundary_fragments_from_certified_split_with_report(fragments)?;
     let (emitted, emission_report) = emission_result.into_parts();
@@ -2112,7 +2138,9 @@ fn boolean_boundary_contours_between_with_pipeline_report(
         }
     };
     let pipeline_report = RegionBooleanPipelineReport2::new(
-        fragment_result.into_report(),
+        fragment_result
+            .expect("retained pipeline report keeps fragment evidence")
+            .into_report(),
         selection_result.into_report(),
         shared_boundary_resolutions,
         emission_report,
@@ -2936,6 +2964,17 @@ pub(crate) fn resolve_shared_boundary_selection(
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         },
     )
+}
+
+fn resolve_owned_shared_boundary_selection(
+    fragments: &RegionFragmentSet,
+    selection: BooleanFragmentSelection,
+    op: BooleanOp,
+) -> CurveResult<Classification<BooleanFragmentSelection>> {
+    if selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution) == 0 {
+        return Ok(Classification::Decided(selection));
+    }
+    resolve_shared_boundary_selection(fragments, &selection, op)
 }
 
 pub(crate) fn resolve_shared_boundary_selection_with_report(

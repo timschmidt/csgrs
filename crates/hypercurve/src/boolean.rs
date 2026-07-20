@@ -942,10 +942,6 @@ impl RegionFragmentSet {
             || second.material_contours().len() != 1
             || !first.hole_contours().is_empty()
             || !second.hole_contours().is_empty()
-            || self
-                .contours()
-                .iter()
-                .any(|fragments| !crossing_windings.certifies_fragments(fragments, policy))
         {
             return Ok(None);
         }
@@ -1016,21 +1012,20 @@ impl RegionFragmentSet {
                 }
             };
 
+            let mut represented_crossings = 0_usize;
             for (fragment_index, fragment) in fragments.iter().enumerate() {
                 if fragment_index != 0 {
-                    let delta = crossing_windings
-                        .delta_between_fragments(
-                            contour_fragments.key,
-                            &fragments[fragment_index - 1],
-                            fragment,
-                            policy,
-                        )
-                        .ok_or_else(|| {
-                            CurveError::Topology(
-                                "proper-crossing winding proof does not match split fragments"
-                                    .into(),
-                            )
-                        })?;
+                    let Some(delta) = crossing_windings.delta_between_fragments(
+                        contour_fragments.key,
+                        &fragments[fragment_index - 1],
+                        fragment,
+                    ) else {
+                        return Ok(None);
+                    };
+                    represented_crossings += usize::from(
+                        fragments[fragment_index - 1].source_segment_index
+                            == fragment.source_segment_index,
+                    );
                     opposite_winding = opposite_winding.checked_add(delta).ok_or_else(|| {
                         CurveError::Topology("boolean contour winding exceeds i32 range".into())
                     })?;
@@ -1046,6 +1041,9 @@ impl RegionFragmentSet {
                     source_filled_side_is_left,
                     action,
                 });
+            }
+            if represented_crossings != crossing_windings.crossing_count(contour_fragments.key) {
+                return Ok(None);
             }
         }
 

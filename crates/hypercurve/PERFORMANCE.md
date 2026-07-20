@@ -724,6 +724,38 @@ The ordinary star64 comparative lane remains below the indexed crossover and
 its complete Callgrind sweep stayed effectively flat (48,341,067 versus
 48,384,838 instructions).
 
+Ordinary region splitting still called the report-bearing builder and cloned
+every exact source endpoint, parameter range, and output fragment into
+provenance that only `*_with_report` callers observe. Splitting now shares one
+four-role contour traversal with optional report retention. Lean callers keep
+only the fragment inventory; report-bearing calls retain the same successful
+and partial-blocker evidence. The ordinary Boolean pipeline also consumes its
+completed selection when no shared boundary needs resolution instead of
+cloning it out of a report wrapper.
+
+The same profile found two repeated exact-proof walks. `ContourSplitMarkers`
+already guarantees endpoint coverage, strict parameter order, unique inserted
+events, and source incidence, so fragment materialization now trusts that
+private invariant instead of re-comparing every adjacent parameter and point.
+The proper-line crossing proof likewise certifies and applies each transition
+in one traversal. Its deliberately narrow two-contour index now uses two
+segment-indexed vectors instead of a general `BTreeMap`; missing, duplicate,
+non-identical, or non-closing transitions still reject the proof and fall back
+to canonical per-fragment classification.
+
+Against the preceding checkpoint, the stripped one-iteration comparative
+Callgrind sweep fell from 48,384,819 to 45,721,981 instructions (5.50%). The
+corresponding allocator-path instruction cost fell from 2,177,445 to 1,863,759
+(14.4%), and `Real` clone instructions from 958,985 to 829,529 (13.5%). In the
+final 15-sample wall-time run, rectangle union measured 16.127 us/iter versus
+18.014 us/iter (10.5% lower), and star64 intersection measured 1.132 ms/iter
+versus 1.235 ms/iter (8.4% lower). Offset and NURBS evaluation remained within
+run-to-run noise, and all comparative checksums were unchanged. The
+`HYPERCURVE_COMPARE_GROUP` filter now isolates named lanes without changing the
+default complete peer sweep. The AddressSanitizer differential Boolean fuzzer
+completed 1,000 runs at 5,646 coverage points and 15,821 feature edges without
+a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

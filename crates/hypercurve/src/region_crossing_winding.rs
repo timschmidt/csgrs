@@ -7,15 +7,12 @@
 //! contour fragments. Any endpoint, tangent, arc, overlap, duplicate,
 //! unresolved ordering, or non-closing transition set rejects the proof.
 
-use std::collections::BTreeMap;
-
 use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    ContourFragment, ContourIntersection, CurvePolicy, IntersectionKind, RegionContourFragments,
-    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionSide, RegionView2, Segment2,
-    SegmentKind,
+    ContourFragment, ContourIntersection, CurvePolicy, IntersectionKind, RegionContourKey,
+    RegionContourRole, RegionIntersectionSet, RegionSide, RegionView2, Segment2, SegmentKind,
 };
 
 #[derive(Clone, Debug)]
@@ -26,7 +23,8 @@ struct RegionLineCrossing {
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct RegionLineCrossingWindingIndex {
-    crossings: BTreeMap<(RegionContourKey, usize), Vec<RegionLineCrossing>>,
+    first: Vec<Vec<RegionLineCrossing>>,
+    second: Vec<Vec<RegionLineCrossing>>,
 }
 
 impl RegionLineCrossingWindingIndex {
@@ -60,7 +58,10 @@ impl RegionLineCrossingWindingIndex {
 
         let first_contour = first.material_contours()[0];
         let second_contour = second.material_contours()[0];
-        let mut index = Self::default();
+        let mut index = Self {
+            first: (0..first_contour.len()).map(|_| Vec::new()).collect(),
+            second: (0..second_contour.len()).map(|_| Vec::new()).collect(),
+        };
         let mut crossing_count = 0_usize;
         for event in pair.intersections().events() {
             let ContourIntersection::Point(point) = event else {
@@ -132,7 +133,9 @@ impl RegionLineCrossingWindingIndex {
         winding_delta: i32,
         policy: &CurvePolicy,
     ) -> bool {
-        let entries = self.crossings.entry((key, segment_index)).or_default();
+        let Some(entries) = self.crossings_mut(key, segment_index) else {
+            return false;
+        };
         if entries.iter().any(|existing| {
             !matches!(
                 compare_reals(&existing.parameter, &parameter, policy),
@@ -148,21 +151,19 @@ impl RegionLineCrossingWindingIndex {
         true
     }
 
-    fn crossing_count(&self, key: RegionContourKey) -> usize {
-        self.crossings
-            .iter()
-            .filter(|((crossing_key, _), _)| *crossing_key == key)
-            .map(|(_, crossings)| crossings.len())
-            .sum()
+    pub(crate) fn crossing_count(&self, key: RegionContourKey) -> usize {
+        self.crossings_for_key(key)
+            .map_or(0, |crossings| crossings.iter().map(Vec::len).sum())
     }
 
     fn winding_delta_sum(&self, key: RegionContourKey) -> i64 {
-        self.crossings
-            .iter()
-            .filter(|((crossing_key, _), _)| *crossing_key == key)
-            .flat_map(|(_, crossings)| crossings)
-            .map(|crossing| i64::from(crossing.winding_delta))
-            .sum()
+        self.crossings_for_key(key).map_or(0, |crossings| {
+            crossings
+                .iter()
+                .flatten()
+                .map(|crossing| i64::from(crossing.winding_delta))
+                .sum()
+        })
     }
 
     pub(crate) fn delta_between_fragments(
@@ -170,50 +171,53 @@ impl RegionLineCrossingWindingIndex {
         key: RegionContourKey,
         previous: &ContourFragment,
         current: &ContourFragment,
-        policy: &CurvePolicy,
     ) -> Option<i32> {
         if previous.source_segment_index != current.source_segment_index {
             return Some(0);
         }
-        if compare_reals(
-            previous.source_range.end(),
-            current.source_range.start(),
-            policy,
-        ) != Some(std::cmp::Ordering::Equal)
-        {
+        if previous.source_range.end() != current.source_range.start() {
             return None;
         }
-        let crossings = self.crossings.get(&(key, previous.source_segment_index))?;
-        let mut matched = crossings.iter().filter(|crossing| {
-            compare_reals(&crossing.parameter, previous.source_range.end(), policy)
-                == Some(std::cmp::Ordering::Equal)
-        });
+        let crossings = self.crossings(key, previous.source_segment_index)?;
+        let mut matched = crossings
+            .iter()
+            .filter(|crossing| &crossing.parameter == previous.source_range.end());
         let delta = matched.next()?.winding_delta;
         matched.next().is_none().then_some(delta)
     }
 
-    pub(crate) fn certifies_fragments(
+    fn crossings_for_key(&self, key: RegionContourKey) -> Option<&[Vec<RegionLineCrossing>]> {
+        if key.role != RegionContourRole::Material || key.index != 0 {
+            return None;
+        }
+        Some(match key.side {
+            RegionSide::First => &self.first,
+            RegionSide::Second => &self.second,
+        })
+    }
+
+    fn crossings(
         &self,
-        contour_fragments: &RegionContourFragments,
-        policy: &CurvePolicy,
-    ) -> bool {
-        let fragments = contour_fragments.fragments.fragments();
-        if fragments.is_empty() {
-            return false;
+        key: RegionContourKey,
+        segment_index: usize,
+    ) -> Option<&[RegionLineCrossing]> {
+        self.crossings_for_key(key)?
+            .get(segment_index)
+            .map(Vec::as_slice)
+    }
+
+    fn crossings_mut(
+        &mut self,
+        key: RegionContourKey,
+        segment_index: usize,
+    ) -> Option<&mut Vec<RegionLineCrossing>> {
+        if key.role != RegionContourRole::Material || key.index != 0 {
+            return None;
         }
-        let mut represented_crossings = 0_usize;
-        for pair in fragments.windows(2) {
-            if pair[0].source_segment_index == pair[1].source_segment_index {
-                if self
-                    .delta_between_fragments(contour_fragments.key, &pair[0], &pair[1], policy)
-                    .is_none()
-                {
-                    return false;
-                }
-                represented_crossings += 1;
-            }
+        match key.side {
+            RegionSide::First => self.first.get_mut(segment_index),
+            RegionSide::Second => self.second.get_mut(segment_index),
         }
-        represented_crossings == self.crossing_count(contour_fragments.key)
     }
 }
 

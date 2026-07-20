@@ -153,10 +153,15 @@ pub(crate) fn split_region_views_at_intersections(
     intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<RegionFragmentSet>> {
-    Ok(
-        split_region_views_at_intersections_with_report(first, second, intersections, policy)?
-            .into_fragments_classification(),
-    )
+    validate_region_intersection_evidence_against_views(first, second, intersections)?;
+
+    let mut out = Vec::new();
+    if let Classification::Uncertain(reason) =
+        append_all_region_contours(&mut out, None, first, second, intersections, policy)?
+    {
+        return Ok(Classification::Uncertain(reason));
+    }
+    Ok(Classification::Decided(RegionFragmentSet::new(out)?))
 }
 
 pub(crate) fn split_region_views_at_intersections_with_report(
@@ -182,109 +187,27 @@ pub(crate) fn split_region_views_at_intersections_with_report(
     let mut contours = Vec::new();
     let mut contour_reports = Vec::new();
 
-    match append_region_contours(
+    if let Classification::Uncertain(reason) = append_all_region_contours(
         &mut contours,
-        &mut contour_reports,
-        RegionSide::First,
-        first.material_contours(),
-        RegionContourRole::Material,
+        Some(&mut contour_reports),
+        first,
+        second,
         intersections,
         policy,
     )? {
-        Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => {
-            return Ok(blocked_region_fragment_build_result(
-                first_source_contour_count,
-                second_source_contour_count,
-                first_material_source_segment_count,
-                first_hole_source_segment_count,
-                second_material_source_segment_count,
-                second_hole_source_segment_count,
-                first_source_segment_count,
-                second_source_segment_count,
-                intersections,
-                contour_reports,
-                reason,
-            ));
-        }
-    }
-    match append_region_contours(
-        &mut contours,
-        &mut contour_reports,
-        RegionSide::First,
-        first.hole_contours(),
-        RegionContourRole::Hole,
-        intersections,
-        policy,
-    )? {
-        Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => {
-            return Ok(blocked_region_fragment_build_result(
-                first_source_contour_count,
-                second_source_contour_count,
-                first_material_source_segment_count,
-                first_hole_source_segment_count,
-                second_material_source_segment_count,
-                second_hole_source_segment_count,
-                first_source_segment_count,
-                second_source_segment_count,
-                intersections,
-                contour_reports,
-                reason,
-            ));
-        }
-    }
-    match append_region_contours(
-        &mut contours,
-        &mut contour_reports,
-        RegionSide::Second,
-        second.material_contours(),
-        RegionContourRole::Material,
-        intersections,
-        policy,
-    )? {
-        Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => {
-            return Ok(blocked_region_fragment_build_result(
-                first_source_contour_count,
-                second_source_contour_count,
-                first_material_source_segment_count,
-                first_hole_source_segment_count,
-                second_material_source_segment_count,
-                second_hole_source_segment_count,
-                first_source_segment_count,
-                second_source_segment_count,
-                intersections,
-                contour_reports,
-                reason,
-            ));
-        }
-    }
-    match append_region_contours(
-        &mut contours,
-        &mut contour_reports,
-        RegionSide::Second,
-        second.hole_contours(),
-        RegionContourRole::Hole,
-        intersections,
-        policy,
-    )? {
-        Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => {
-            return Ok(blocked_region_fragment_build_result(
-                first_source_contour_count,
-                second_source_contour_count,
-                first_material_source_segment_count,
-                first_hole_source_segment_count,
-                second_material_source_segment_count,
-                second_hole_source_segment_count,
-                first_source_segment_count,
-                second_source_segment_count,
-                intersections,
-                contour_reports,
-                reason,
-            ));
-        }
+        return Ok(blocked_region_fragment_build_result(
+            first_source_contour_count,
+            second_source_contour_count,
+            first_material_source_segment_count,
+            first_hole_source_segment_count,
+            second_material_source_segment_count,
+            second_hole_source_segment_count,
+            first_source_segment_count,
+            second_source_segment_count,
+            intersections,
+            contour_reports,
+            reason,
+        ));
     }
 
     let output_contour_count = contours.len();
@@ -839,7 +762,7 @@ fn validate_event_segment_index(
 
 fn append_region_contours(
     out: &mut Vec<RegionContourFragments>,
-    reports: &mut Vec<RegionContourFragmentReport2>,
+    mut reports: Option<&mut Vec<RegionContourFragmentReport2>>,
     side: RegionSide,
     contours: &[&Contour2],
     role: RegionContourRole,
@@ -848,29 +771,77 @@ fn append_region_contours(
 ) -> CurveResult<Classification<()>> {
     for (index, contour) in contours.iter().enumerate() {
         let key = RegionContourKey::new(side, role, index);
-        let contributing_pair_count = intersections.pairs_for_contour(key).count();
-        let intersection_event_count = intersections
-            .pairs_for_contour(key)
-            .map(|pair| pair.intersections.events().len())
-            .sum();
         let fragments = match split_keyed_contour(contour, key, intersections, policy)? {
             Classification::Decided(fragments) => fragments,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        reports.push(RegionContourFragmentReport2 {
-            key,
-            source_segment_count: contour.len(),
-            source_segment_kind_counts: contour_segment_kind_counts(contour),
-            contributing_pair_count,
-            intersection_event_count,
-            output_fragment_count: fragments.len(),
-            output_fragment_kind_counts: fragment_set_segment_kind_counts(&fragments),
-            output_fragments: region_contour_output_fragment_reports(&fragments),
-            status: RetainedTopologyStatus::NativeExact,
-        });
+        if let Some(reports) = reports.as_deref_mut() {
+            reports.push(RegionContourFragmentReport2 {
+                key,
+                source_segment_count: contour.len(),
+                source_segment_kind_counts: contour_segment_kind_counts(contour),
+                contributing_pair_count: intersections.pairs_for_contour(key).count(),
+                intersection_event_count: intersections
+                    .pairs_for_contour(key)
+                    .map(|pair| pair.intersections.events().len())
+                    .sum(),
+                output_fragment_count: fragments.len(),
+                output_fragment_kind_counts: fragment_set_segment_kind_counts(&fragments),
+                output_fragments: region_contour_output_fragment_reports(&fragments),
+                status: RetainedTopologyStatus::NativeExact,
+            });
+        }
         out.push(RegionContourFragments { key, fragments });
     }
 
+    Ok(Classification::Decided(()))
+}
+
+fn append_all_region_contours(
+    out: &mut Vec<RegionContourFragments>,
+    mut reports: Option<&mut Vec<RegionContourFragmentReport2>>,
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    intersections: &RegionIntersectionSet,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<()>> {
+    for (side, contours, role) in [
+        (
+            RegionSide::First,
+            first.material_contours(),
+            RegionContourRole::Material,
+        ),
+        (
+            RegionSide::First,
+            first.hole_contours(),
+            RegionContourRole::Hole,
+        ),
+        (
+            RegionSide::Second,
+            second.material_contours(),
+            RegionContourRole::Material,
+        ),
+        (
+            RegionSide::Second,
+            second.hole_contours(),
+            RegionContourRole::Hole,
+        ),
+    ] {
+        match append_region_contours(
+            out,
+            reports.as_deref_mut(),
+            side,
+            contours,
+            role,
+            intersections,
+            policy,
+        )? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
     Ok(Classification::Decided(()))
 }
 

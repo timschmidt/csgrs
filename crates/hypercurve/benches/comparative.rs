@@ -37,6 +37,7 @@ struct Runner {
     samples: usize,
     sample_target: Duration,
     fixed_iterations: Option<u64>,
+    group_filter: Option<String>,
 }
 
 impl Runner {
@@ -45,6 +46,7 @@ impl Runner {
         let sample_millis =
             parse_env("HYPERCURVE_COMPARE_SAMPLE_MS").unwrap_or(DEFAULT_SAMPLE_MILLIS);
         let fixed_iterations = parse_env("HYPERCURVE_COMPARE_ITERS");
+        let group_filter = env::var("HYPERCURVE_COMPARE_GROUP").ok();
         assert!(samples > 0, "HYPERCURVE_COMPARE_SAMPLES must be nonzero");
         assert!(
             fixed_iterations != Some(0),
@@ -54,13 +56,23 @@ impl Runner {
             samples,
             sample_target: Duration::from_millis(sample_millis),
             fixed_iterations,
+            group_filter,
         }
+    }
+
+    fn group_enabled(&self, group: &str) -> bool {
+        self.group_filter
+            .as_ref()
+            .is_none_or(|filter| group.contains(filter))
     }
 
     fn measure<F>(&self, group: &str, implementation: &str, mut operation: F)
     where
         F: FnMut() -> usize,
     {
+        if !self.group_enabled(group) {
+            return;
+        }
         black_box(operation());
         let iterations = self
             .fixed_iterations
@@ -267,6 +279,9 @@ fn benchmark_boolean_case(
     second_points: Vec<[f64; 2]>,
     operation: CommonBooleanOp,
 ) {
+    if !runner.group_enabled(name) {
+        return;
+    }
     let hypercurve_first = hypercurve_region(&first_points);
     let hypercurve_second = hypercurve_region(&second_points);
     let cavalier_first = cavalier_polyline(&first_points, None);
@@ -371,6 +386,9 @@ fn benchmark_polygon_booleans(runner: &Runner) {
 }
 
 fn benchmark_contour_offset(runner: &Runner) {
+    if !runner.group_enabled("line_arc_offset/capsule_inward") {
+        return;
+    }
     let points = vec![[-50.0, -20.0], [50.0, -20.0], [50.0, 20.0], [-50.0, 20.0]];
     let bulges = vec![0.0, 1.0, 0.0, 1.0];
     let hypercurve_vertices = points
@@ -412,6 +430,9 @@ fn benchmark_contour_offset(runner: &Runner) {
 }
 
 fn benchmark_nurbs_evaluation(runner: &Runner) {
+    if !runner.group_enabled("nurbs_evaluation/rational_cubic_three_parameters") {
+        return;
+    }
     let control_points = [[0.0, 0.0], [1.0, 3.0], [3.0, 3.0], [5.0, 3.0], [6.0, 0.0]];
     let weights = [1.0, 2.0, 4.0, 8.0, 16.0];
     let knots = [0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0, 2.0];
@@ -577,8 +598,8 @@ fn benchmark_pathological_cross_suite(runner: &Runner) {
 fn main() {
     let runner = Runner::from_environment();
     println!(
-        "hypercurve comparative benchmarks: samples={}, target/sample={:?}, fixed iterations={:?}",
-        runner.samples, runner.sample_target, runner.fixed_iterations,
+        "hypercurve comparative benchmarks: samples={}, target/sample={:?}, fixed iterations={:?}, group filter={:?}",
+        runner.samples, runner.sample_target, runner.fixed_iterations, runner.group_filter,
     );
     println!(
         "timed operations exclude fixture construction; results use each crate's native numeric and topology model"

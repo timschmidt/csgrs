@@ -185,7 +185,7 @@ fn svg_line_path_import_materializes_with_retained_report() {
             .unwrap()
             .path_data()
             .unwrap(),
-        "M 0 0 L 1 5/10 0 L 2 0 L 2 5/10 L 0 0"
+        "M 0 0 L 1 1/2 0 L 2 0 L 2 1/2 L 0 0"
     );
     assert_eq!(imported.report().source_index(), 7);
     assert_eq!(imported.report().source_version(), 3);

@@ -466,6 +466,9 @@ count:
 ```sh
 HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS=all HYPERCURVE_COMPARE_ITERS=1 \
   cargo bench --features comparative-benchmarks --bench comparative
+
+# Isolate one named benchmark group for profiling.
+HYPERCURVE_COMPARE_GROUP=star64 cargo bench --features comparative-benchmarks --bench comparative
 ```
 
 ## Development
