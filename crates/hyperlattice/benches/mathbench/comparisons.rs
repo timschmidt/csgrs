@@ -122,6 +122,33 @@ fn bench_vectors(c: &mut Criterion) {
         })
     });
 
+    let gmp_ctx = gmp_engine::Ctx::new(128);
+    let gmp_lhs_cases =
+        lhs_cases.map(|value| gmp_engine::Vec3::new(&gmp_ctx, value.x, value.y, value.z));
+    let gmp_rhs_cases =
+        rhs_cases.map(|value| gmp_engine::Vec3::new(&gmp_ctx, value.x, value.y, value.z));
+    group.bench_function("gmp_mpfr128/vec3 dot", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % gmp_lhs_cases.len());
+            black_box(gmp_lhs_cases[index].clone())
+                .dot(black_box(&gmp_rhs_cases[index]), &gmp_ctx)
+        })
+    });
+    group.bench_function("gmp_mpfr128/vec3 magnitude", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&gmp_lhs_cases, &cursor).clone()).magnitude(&gmp_ctx)
+        })
+    });
+    group.bench_function("gmp_mpfr128/vec3 normalize", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&gmp_lhs_cases, &cursor).clone()).normalize(&gmp_ctx)
+        })
+    });
+
     let symbolica_ctx = symbolica_engine::Ctx::new(128);
     let symbolica_lhs_cases =
         lhs_cases.map(|value| symbolica_engine::Vec3::new(&symbolica_ctx, value.x, value.y, value.z));
@@ -711,6 +738,45 @@ fn bench_matrix3(c: &mut Criterion) {
             cursor.set((index + 1) % numerica_lhs_cases.len());
             black_box(numerica_lhs_cases[index].clone())
                 .transform_vec3(black_box(&numerica_vector_cases[index]), &numerica_ctx)
+        })
+    });
+
+    let gmp_ctx = gmp_engine::Ctx::new(128);
+    let gmp_lhs_cases =
+        lhs_cases.map(|value| gmp_engine::Mat3::new(&gmp_ctx, value.m));
+    let gmp_rhs_cases =
+        rhs_cases.map(|value| gmp_engine::Mat3::new(&gmp_ctx, value.m));
+    let gmp_vector_cases = vector_cases
+        .map(|value| gmp_engine::Vec3::new(&gmp_ctx, value.x, value.y, value.z));
+    group.bench_function("gmp_mpfr128/mat3 determinant", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&gmp_lhs_cases, &cursor).clone())
+                .determinant(&gmp_ctx)
+        })
+    });
+    group.bench_function("gmp_mpfr128/mat3 inverse", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&gmp_lhs_cases, &cursor).clone()).inverse(&gmp_ctx)
+        })
+    });
+    group.bench_function("gmp_mpfr128/mat3 mul mat3", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % gmp_lhs_cases.len());
+            black_box(gmp_lhs_cases[index].clone())
+                .mul_mat3(black_box(&gmp_rhs_cases[index]), &gmp_ctx)
+        })
+    });
+    group.bench_function("gmp_mpfr128/mat3 transform vec3", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % gmp_lhs_cases.len());
+            black_box(gmp_lhs_cases[index].clone())
+                .transform_vec3(black_box(&gmp_vector_cases[index]), &gmp_ctx)
         })
     });
 
@@ -2224,6 +2290,46 @@ fn bench_matrix4(c: &mut Criterion) {
         })
     });
 
+    let gmp_ctx = gmp_engine::Ctx::new(128);
+    let gmp_lhs_cases =
+        lhs_cases.map(|value| gmp_engine::Mat4::new(&gmp_ctx, value.m));
+    let gmp_rhs_cases =
+        rhs_cases.map(|value| gmp_engine::Mat4::new(&gmp_ctx, value.m));
+    let gmp_vector_cases = vector_cases.map(|value| {
+        gmp_engine::Vec4::new(&gmp_ctx, value.x, value.y, value.z, value.w)
+    });
+    group.bench_function("gmp_mpfr128/mat4 determinant", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&gmp_lhs_cases, &cursor).clone())
+                .determinant(&gmp_ctx)
+        })
+    });
+    group.bench_function("gmp_mpfr128/mat4 inverse", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(next_case(&gmp_lhs_cases, &cursor).clone()).inverse(&gmp_ctx)
+        })
+    });
+    group.bench_function("gmp_mpfr128/mat4 mul mat4", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % gmp_lhs_cases.len());
+            black_box(gmp_lhs_cases[index].clone())
+                .mul_mat4(black_box(&gmp_rhs_cases[index]), &gmp_ctx)
+        })
+    });
+    group.bench_function("gmp_mpfr128/mat4 transform vec4", |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % gmp_lhs_cases.len());
+            black_box(gmp_lhs_cases[index].clone())
+                .transform_vec4(black_box(&gmp_vector_cases[index]), &gmp_ctx)
+        })
+    });
+
     let symbolica_ctx = symbolica_engine::Ctx::new(128);
     let symbolica_lhs_cases =
         lhs_cases.map(|value| symbolica_engine::Mat4::new(&symbolica_ctx, value.m));
@@ -2589,6 +2695,44 @@ fn bench_scalar_trig(c: &mut Criterion) {
         let numerica_value = numerica_ctx.f(case.value);
         group.bench_function(format!("numerica128/{}/acosh", case.name), |b| {
             b.iter(|| numerica_ctx.acosh(black_box(&numerica_value)))
+        });
+    }
+
+    let gmp_ctx = gmp_engine::Ctx::new(128);
+    for case in trig_cases() {
+        let gmp_value = gmp_ctx.f(case.value);
+        group.bench_function(format!("gmp_mpfr128/{}/sin", case.name), |b| {
+            b.iter(|| gmp_ctx.sin(black_box(&gmp_value)))
+        });
+        group.bench_function(format!("gmp_mpfr128/{}/cos", case.name), |b| {
+            b.iter(|| gmp_ctx.cos(black_box(&gmp_value)))
+        });
+    }
+    for case in inverse_unit_cases() {
+        let gmp_value = gmp_ctx.f(case.value);
+        group.bench_function(format!("gmp_mpfr128/{}/asin", case.name), |b| {
+            b.iter(|| gmp_ctx.asin(black_box(&gmp_value)))
+        });
+        group.bench_function(format!("gmp_mpfr128/{}/acos", case.name), |b| {
+            b.iter(|| gmp_ctx.acos(black_box(&gmp_value)))
+        });
+        group.bench_function(format!("gmp_mpfr128/{}/atanh", case.name), |b| {
+            b.iter(|| gmp_ctx.atanh(black_box(&gmp_value)))
+        });
+    }
+    for case in inverse_real_cases() {
+        let gmp_value = gmp_ctx.f(case.value);
+        group.bench_function(format!("gmp_mpfr128/{}/atan", case.name), |b| {
+            b.iter(|| gmp_ctx.atan(black_box(&gmp_value)))
+        });
+        group.bench_function(format!("gmp_mpfr128/{}/asinh", case.name), |b| {
+            b.iter(|| gmp_ctx.asinh(black_box(&gmp_value)))
+        });
+    }
+    for case in inverse_acosh_cases() {
+        let gmp_value = gmp_ctx.f(case.value);
+        group.bench_function(format!("gmp_mpfr128/{}/acosh", case.name), |b| {
+            b.iter(|| gmp_ctx.acosh(black_box(&gmp_value)))
         });
     }
 

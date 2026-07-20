@@ -65,7 +65,7 @@ negative symmetry.
 
 Fresh 50-sample combined construction medians were:
 
-| Operation | Hyperreal f64 | Hyperreal rational | Numerica 128 | Symbolica |
+| Operation | Exact dyadic input | Explicit exact rational | Numerica 128 | Symbolica |
 | --- | ---: | ---: | ---: | ---: |
 | `sinh` | 543.51 ns | 532.01 ns | 1.1279 us | 10.839 us |
 | `cosh` | 498.27 ns | 481.75 ns | 1.0596 us | 9.5707 us |
@@ -129,7 +129,7 @@ the former `ln(2)` range-reduction graph while preserving that fallback for
 negative integers and values above the measured crossover limit.
 
 The dedicated cross-library `exp 128` row measured medians of 251.06 ns for the
-Hyperreal f64 facade and 252.53 ns for the exact-rational facade, versus
+exact-dyadic-input facade and 252.53 ns for the explicit-rational facade, versus
 1.0444 us for Numerica 128 and 1.9075 us for Symbolica. Hyperreal is therefore
 4.16 times and 7.60 times faster on this exact construction workload. A
 controlled build of the former graph measured 3.0952 us, so the retained path
@@ -151,13 +151,13 @@ Hyperlattice arithmetic route or public API changed.
 
 Fresh cross-library medians show the downstream effect:
 
-| Workload | Hyperreal f64 | Exact rational | Numerica 128 | Symbolica |
+| Workload | Exact dyadic input | Explicit exact rational | Numerica 128 | Symbolica |
 | --- | ---: | ---: | ---: | ---: |
 | `vec3 magnitude` | 796.04 ns | 1.99 us | 354.38 ns | 8.84 us |
 | `vec3 normalize` | 3.30 us | 4.77 us | 601.15 ns | 16.87 us |
 | `vec4 normalize` | 3.62 us | 2.70 us | 727.14 ns | 21.87 us |
 
-Relative to the preceding ledger, the f64 facade improves by 75.5% for vec3
+Relative to the preceding ledger, the exact-dyadic-input route improves by 75.5% for vec3
 magnitude, 37.7% for vec3 normalization, and 27.5% for vec4 normalization.
 Numerica remains 2.25--5.48 times faster on these construction workloads;
 Hyperreal is 5.1--11.1 times faster than Symbolica. The regenerated trace
@@ -175,12 +175,12 @@ and public normalization semantics are unchanged.
 
 Fresh matched 100-sample runs measured:
 
-| Workload | Hyperreal f64 | Exact rational | Numerica 128 | Symbolica |
+| Workload | Exact dyadic input | Explicit exact rational | Numerica 128 | Symbolica |
 | --- | ---: | ---: | ---: | ---: |
 | `vec3 normalize` | 2.57 us | 4.67 us | 591.76 ns | 16.62 us |
 | `vec4 normalize` | 3.16 us | 2.67 us | 736.42 ns | 22.07 us |
 
-Relative to the preceding ledger, the f64 facade is 22.2% faster for vec3 and
+Relative to the preceding ledger, the exact-dyadic-input route is 22.2% faster for vec3 and
 12.6% faster for vec4. The exact-rational controls improve by about 2.2% and
 1.1%, respectively. Numerica remains 4.34 and 4.29 times faster on these
 construction rows; Hyperreal is 6.48 and 6.98 times faster than Symbolica.
@@ -201,7 +201,7 @@ and only if at least one component is nonzero. All-zero inputs still report
 
 Fresh matched 100-sample runs measured:
 
-| Workload | Hyperreal f64 | Exact rational | Numerica 128 | Symbolica |
+| Workload | Exact dyadic input | Explicit exact rational | Numerica 128 | Symbolica |
 | --- | ---: | ---: | ---: | ---: |
 | `vec3 normalize checked` | 2.56 us | 3.60 us | 528.75 ns | 17.43 us |
 | `vec3 normalize checked abort` | 2.60 us | 3.63 us | - | - |
@@ -227,12 +227,12 @@ Fresh four-case Criterion medians measured:
 
 | Engine | Before | After | Result |
 | --- | ---: | ---: | ---: |
-| Hyperreal exact f64 | 376.76 ns | 161.11 ns | 57.2% faster |
+| Hyperreal exact dyadic input | 376.76 ns | 161.11 ns | 57.2% faster |
 | Hyperreal explicit rational | 2.813 us | 210.93 ns | 92.5% faster |
 | Numerica 128 control | 85.45 ns | 84.53 ns | unchanged |
 | Symbolica control | 1.559 us | 1.545 us | unchanged |
 
-The exact-f64 gap to Numerica fell from 4.41x to 1.91x, and Hyperreal is 9.6x
+The exact-dyadic gap to Numerica fell from 4.41x to 1.91x, and Hyperreal is 9.6x
 faster than Symbolica on the same construction workload. The regenerated
 cross-stack trace replaces the multiplication chain with
 `native-real-i64-kernel`, `real/powi-i64/rational-exact`, and the exact
@@ -241,7 +241,7 @@ fractional fifth powers and symbolic reciprocal preservation.
 
 Hyperreal's follow-up adaptive product-chain reuse removes the remaining repeated
 `powi(..., 5)` gap without changing this facade. Matched medians are now
-43.44 ns for exact-f64 inputs and 75.84 ns for explicit rational inputs, versus
+43.44 ns for exact dyadic inputs and 75.84 ns for explicit rational inputs, versus
 83.31 ns for Numerica 128 and 1.507 us for Symbolica. The first call still uses
 the direct exact integer kernel; only an observed repeated base takes the bounded
 retained-product chain.
@@ -254,10 +254,10 @@ exact sign/domain check itself. Removing that duplicate preflight preserves the
 same `Problem::SqrtNegative` contract and leaves domain ownership in Hyperreal.
 
 The stored 573.91 ns row had already fallen to 196.04 ns after dependency-side
-square extraction work. Around only the facade change, the four-case exact-f64
+square extraction work. Around only the facade change, the four-case exact-dyadic
 median fell another 21.4% to 153.56 ns and the explicit-rational row fell 22.4%
 to 154.89 ns. Fresh controls measured 95.12 ns for Numerica 128 and 1.450 us
-for Symbolica, reducing the exact-f64/Numerica gap from the stored 5.95x to
+for Symbolica, reducing the exact-dyadic/Numerica gap from the stored 5.95x to
 1.61x while making Hyperreal 9.4x faster than Symbolica.
 
 The regenerated trace removes four domain-fact, four detailed-fact, and four
@@ -266,7 +266,7 @@ still records every exact sign and perfect-square or retained-radical route.
 
 Hyperreal's follow-up adaptive square-reduction retention removes the remaining
 repeated-call gap without changing this facade. Fresh 50-sample medians are
-49.18 ns for exact f64 imports and 34.07 ns for explicit rationals, versus
+49.18 ns for exact binary64-derived dyadics and 34.07 ns for explicit rationals, versus
 96.34 ns for Numerica 128 and 1.478 us for Symbolica. That is 68.0% and 78.0%
 faster than the preceding Hyperreal rows, and both exact forms now beat the
 fixed-precision control. A permanent per-case group confirms the result is not
@@ -277,7 +277,7 @@ records both adaptive admission and the retained exact reduction.
 ## Retained exact scalar products
 
 Fresh core arithmetic measurements replaced stale ledger rows and identified
-multiplication as the largest scalar gap: 105.23 ns for exact f64 imports and
+multiplication as the largest scalar gap: 105.23 ns for exact binary64-derived dyadics and
 198.74 ns for explicit decimal rationals, versus 48.48 ns for Numerica 128 and
 1.532 us for Symbolica. Perf sampling attributed most exact cost to result
 allocation/free, word-result construction, and a wide dyadic BigUint schedule;
@@ -299,14 +299,14 @@ of timing an unrelated wide fraction.
 
 Final matched Criterion medians are:
 
-| Operation | Hyperreal f64 | Exact decimal rational | Numerica 128 | Symbolica |
+| Operation | Exact dyadic input | Explicit exact decimal rational | Numerica 128 | Symbolica |
 | --- | ---: | ---: | ---: | ---: |
 | add (retained workload) | 29.68 ns | 31.27 ns | 42.36 ns | 1.287 us |
 | subtract (retained workload) | 31.14 ns | 32.72 ns | 44.66 ns | 2.434 us |
 | multiply (retained workload) | 32.98 ns | 32.90 ns | 44.16 ns | 1.532 us |
 
 The adjacent multiplication rerun remains 25.3% faster than Numerica 128 and
-46 times faster than Symbolica for the exact-f64 facade, after starting 2.17
+46 times faster than Symbolica for the exact-dyadic-input route, after starting 2.17
 times slower than Numerica. The complete regenerated trace exercises all five
 arithmetic operators; multiplication records cold word/wide routes followed by
 `retained-product` hits while `Real` reports its authoritative
@@ -475,7 +475,7 @@ denominators without entering a general GCD. This is exact fraction reduction,
 not decimal approximation. General denominators and overflowing word products
 still fall through to the arbitrary-precision reducer.
 
-| Workload | Hyperreal f64 | Hyperreal rational | Numerica 128 | Symbolica |
+| Workload | Exact dyadic input | Explicit exact rational | Numerica 128 | Symbolica |
 | --- | ---: | ---: | ---: | ---: |
 | retained owned multiply | 157.85 ns | 162.59 ns | 247.72 ns | 10.11 us |
 | retained borrowed multiply | 138.77 ns | 140.11 ns | 235.87 ns | 10.11 us |
@@ -500,7 +500,7 @@ fallback, while symbolic inputs retain the previous norm/inverse/product-sum
 schedule. Exact zero norms still return `DivideByZero`; checked symbolic norms
 still reject `UnknownZero`.
 
-| Workload | Hyperreal f64 | Hyperreal rational | Numerica 128 | Symbolica |
+| Workload | Exact dyadic input | Explicit exact rational | Numerica 128 | Symbolica |
 | --- | ---: | ---: | ---: | ---: |
 | reciprocal | 214.64 ns | 239.19 ns | 276.47 ns | 10.88 us |
 | reciprocal checked | 218.43 ns | 248.39 ns | 275.94 ns | 10.89 us |

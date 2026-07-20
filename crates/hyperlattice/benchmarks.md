@@ -18,7 +18,7 @@ Refresh this file from existing Criterion estimates without rerunning the full s
 cargo bench --bench mathbench -- --update-benchmarks-md
 ```
 
-The `mathbench` suite benchmarks the Real-primary crate path and writes this file from Criterion's median estimates after a real benchmark run. The `numerica128` comparison column runs at 128-bit precision, while the `symbolica` column exercises Symbolica's symbolic expression engine. Missing cells mean that the corresponding estimate was not present in `target/criterion` when this file was generated.
+The `mathbench` suite benchmarks the Real-primary crate path and writes this file from Criterion's median estimates after a real benchmark run. The exact-dyadic column imports each finite binary64 fixture as its exact dyadic rational value; it does not perform binary64 arithmetic. The explicit-rational column constructs the corresponding authored rational inputs directly. The `numerica128` comparison column runs at 128-bit precision, while the `symbolica` column exercises Symbolica's symbolic expression engine. Missing cells mean that the corresponding estimate was not present in `target/criterion` when this file was generated.
 
 Each benchmarked operation rotates through adversarial inputs for its valid domain: near-zero values, large and tiny magnitudes, cancellation-prone vectors, near-singular matrices, range-reduction-heavy trigonometric arguments, and boundary-adjacent inverse trigonometric and inverse hyperbolic values.
 
@@ -38,7 +38,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Real Trigonometric And Inverse Comparisons
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `sin 0.1` | 55.28 ns | 55.52 ns | 766.98 ns | 1.91 us | 0.07x | 0.03x |
 | `cos 0.1` | 53.07 ns | 52.97 ns | 501.60 ns | 1.69 us | 0.11x | 0.03x |
@@ -79,7 +79,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Forward Hyperbolic Construction Cases
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `sinh half` | 580.21 ns | 595.51 ns | 1.12 us | 10.78 us | 0.52x | 0.05x |
 | `cosh half` | 548.85 ns | 285.76 ns | 1.13 us | 9.35 us | 0.49x | 0.06x |
@@ -96,7 +96,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Forward Hyperbolic Explicit f64 Output Cases
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `sinh half` | 355.01 ns | 350.60 ns | 1.15 us | - | 0.31x | - |
 | `cosh half` | 328.48 ns | 326.70 ns | 1.18 us | - | 0.28x | - |
@@ -113,7 +113,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Real API Operations
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `zero` | 12.20 ns | 11.90 ns | 15.63 ns | 0.95 ns | 0.78x | 12.86x |
 | `one` | 12.31 ns | 11.91 ns | 30.65 ns | 31.22 ns | 0.40x | 0.39x |
@@ -159,7 +159,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Retained Square-root Cases
 
-| Input | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica |
+| Input | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica |
 | --- | ---: | ---: | ---: | ---: |
 | `9` | 23.52 ns | 24.69 ns | 90.16 ns | 1.360 us |
 | `1e-12` | 83.26 ns | 23.86 ns | 94.73 ns | 1.619 us |
@@ -168,7 +168,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 ### Complex Operations
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `zero` | 16.12 ns | 16.18 ns | 22.78 ns | 1.91 ns | 0.71x | 8.46x |
 | `one` | 16.52 ns | 16.70 ns | 42.62 ns | 30.02 ns | 0.39x | 0.55x |
@@ -192,7 +192,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Cold Complex Multiplication
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `varying exact inputs` | 222.77 ns | 280.76 ns | 286.27 ns | 10.24 us | 0.78x | 0.02x |
 
@@ -200,7 +200,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Vector Comparisons
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `vec3 dot` | 453.02 ns | 422.30 ns | 257.12 ns | 7.40 us | 1.76x | 0.06x |
 | `vec3 magnitude` | 796.04 ns | 1.99 us | 354.38 ns | 8.84 us | 2.25x | 0.09x |
@@ -208,7 +208,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Vector API Operations
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `vec3 new` | 235.93 ns | 1.37 us | 56.41 ns | 825.22 ns | 4.18x | 0.29x |
 | `vec3 zero` | 47.89 ns | 47.57 ns | 30.95 ns | 2.82 ns | 1.55x | 16.97x |
@@ -240,7 +240,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Matrix Comparisons
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `mat3 determinant` | 894.96 ns | 396.21 ns | 949.80 ns | 22.87 us | 0.94x | 0.04x |
 | `mat3 inverse` | 5.74 us | 2.42 us | 2.54 us | 85.75 us | 2.26x | 0.07x |
@@ -253,7 +253,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 #### Matrix API Operations
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `mat3 new` | 764.93 ns | 2.21 us | 222.81 ns | 2.38 us | 3.43x | 0.32x |
 | `mat3 zero` | 223.45 ns | 218.56 ns | 200.35 ns | 11.85 ns | 1.12x | 18.86x |
@@ -298,7 +298,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 ### Borrowed API Operations
 
-| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
+| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `scalar add owned_ref` | 18.35 ns | 19.03 ns | 44.37 ns | 1.29 us | 0.41x | 0.01x |
 | `scalar add ref_owned` | 24.06 ns | 23.77 ns | 44.42 ns | 1.28 us | 0.54x | 0.02x |

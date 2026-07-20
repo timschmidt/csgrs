@@ -933,23 +933,26 @@ fn format_ratio(numerator: Option<f64>, denominator: Option<f64>) -> String {
 
 fn render_table(estimates: &BTreeMap<String, f64>, rows: &[BenchRow]) -> String {
     let mut out = String::new();
-    out.push_str("| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |\n");
-    out.push_str("| --- | ---: | ---: | ---: | ---: | ---: | ---: |\n");
+    out.push_str("| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | GMP/MPFR 128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / GMP | Exact dyadic / symbolica |\n");
+    out.push_str("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n");
     for row in rows {
         let hyperreal = estimate_value(estimates, row.group, "hyperreal", row.id)
             .or_else(|| estimate_value(estimates, row.group, "realistic", row.id));
         let rational = estimate_value(estimates, row.group, "hyperreal-rational", row.id)
             .or_else(|| estimate_value(estimates, row.group, "realistic-rational", row.id));
         let numerica = estimate_value(estimates, row.group, "numerica128", row.id);
+        let gmp = estimate_value(estimates, row.group, "gmp_mpfr128", row.id);
         let symbolica = estimate_value(estimates, row.group, "symbolica", row.id);
         out.push_str(&format!(
-            "| `{}` | {} | {} | {} | {} | {} | {} |\n",
+            "| `{}` | {} | {} | {} | {} | {} | {} | {} | {} |\n",
             row.title,
             format_duration(hyperreal),
             format_duration(rational),
             format_duration(numerica),
+            format_duration(gmp),
             format_duration(symbolica),
             format_ratio(hyperreal, numerica),
+            format_ratio(hyperreal, gmp),
             format_ratio(hyperreal, symbolica),
         ));
     }
@@ -961,7 +964,7 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     out.push_str(
         "# Benchmarks\n\nRun the Criterion benchmark suite:\n\n```sh\ncargo bench --bench mathbench\n```\n\nRun dispatch path tracing separately:\n\n```sh\ncargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md\n```\n\nRefresh this file from existing Criterion estimates without rerunning the full suite:\n\n```sh\ncargo bench --bench mathbench -- --update-benchmarks-md\n```\n\n",
     );
-    out.push_str("The `mathbench` suite benchmarks the Real-primary crate path and writes this file from Criterion's median estimates after a real benchmark run. The `numerica128` comparison column runs at 128-bit precision, while the `symbolica` column exercises Symbolica's symbolic expression engine. Missing cells mean that the corresponding estimate was not present in `target/criterion` when this file was generated.\n\n");
+    out.push_str("The `mathbench` suite benchmarks the Real-primary crate path and writes this file from Criterion's median estimates after a real benchmark run. The exact-dyadic column imports each finite binary64 fixture as its exact dyadic rational value; it does not perform binary64 arithmetic. The explicit-rational column constructs the corresponding authored rational inputs directly. The `numerica128` comparison column runs at 128-bit precision, `gmp_mpfr128` uses Rug's GMP/MPFR stack with 128-bit MPFR scalars, and the `symbolica` column exercises Symbolica's symbolic expression engine. Missing cells mean that the corresponding estimate was not present in `target/criterion` when this file was generated.\n\n");
     out.push_str("Each benchmarked operation rotates through adversarial inputs for its valid domain: near-zero values, large and tiny magnitudes, cancellation-prone vectors, near-singular matrices, range-reduction-heavy trigonometric arguments, and boundary-adjacent inverse trigonometric and inverse hyperbolic values.\n\n");
     out.push_str("## Operation Coverage\n\n");
     out.push_str("- Real construction/constants, arithmetic, reciprocal, powers, exponentials, logarithms, square root, trigonometric and hyperbolic functions, inverse helpers, zero-status checks, and abort-aware variants.\n");

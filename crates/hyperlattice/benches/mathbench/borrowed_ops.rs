@@ -422,6 +422,7 @@ fn bench_borrowed_operations(c: &mut Criterion) {
     );
     bench_borrowed_operations_for::<_>(&mut group, "hyperreal-rational", qr);
     bench_numerica_borrowed_operations(&mut group, "numerica128");
+    bench_gmp_borrowed_operations(&mut group, "gmp_mpfr128");
     bench_symbolica_borrowed_operations(&mut group, "symbolica");
     group.finish();
 }
@@ -778,6 +779,13 @@ fn bench_numerica_borrowed_operations(
     label: &str,
 ) {
     bench_external_borrowed_operations!(numerica_engine, group, label);
+}
+
+fn bench_gmp_borrowed_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    bench_external_borrowed_operations!(gmp_engine, group, label);
 }
 
 fn bench_symbolica_borrowed_operations(

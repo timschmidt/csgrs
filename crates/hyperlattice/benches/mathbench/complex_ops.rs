@@ -256,6 +256,7 @@ fn bench_complex_operations(c: &mut Criterion) {
     );
     bench_complex_operations_for::<_>(&mut group, "hyperreal-rational", qr);
     bench_numerica_complex_operations(&mut group, "numerica128");
+    bench_gmp_complex_operations(&mut group, "gmp_mpfr128");
     bench_symbolica_complex_operations(&mut group, "symbolica");
     group.finish();
 }
@@ -334,6 +335,24 @@ fn bench_complex_mul_cold(c: &mut Criterion) {
                 )
             },
             |(lhs, rhs)| black_box(lhs.mul(&rhs, &numerica_ctx)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let gmp_ctx = gmp_engine::Ctx::new(128);
+    group.bench_function("gmp_mpfr128/varying", |b| {
+        let sequence = Cell::new(0_u64);
+        b.iter_batched(
+            || {
+                let index = sequence.get();
+                sequence.set(index + 1);
+                let [ar, ai, br, bi] = varying_complex_mul_values(index);
+                (
+                    gmp_engine::Complex::new(&gmp_ctx, ar, ai),
+                    gmp_engine::Complex::new(&gmp_ctx, br, bi),
+                )
+            },
+            |(lhs, rhs)| black_box(lhs.mul(&rhs, &gmp_ctx)),
             BatchSize::SmallInput,
         )
     });
@@ -473,6 +492,13 @@ fn bench_numerica_complex_operations(
     label: &str,
 ) {
     bench_external_complex_operations!(numerica_engine, group, label);
+}
+
+fn bench_gmp_complex_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    bench_external_complex_operations!(gmp_engine, group, label);
 }
 
 fn bench_symbolica_complex_operations(
