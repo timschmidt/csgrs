@@ -211,7 +211,10 @@ impl Rational {
         // Sign+BigUint, so going through BigInt first only adds allocation and
         // sign extraction work.
         let sign = if n < 0 { Minus } else { Plus };
-        let magnitude = n.unsigned_abs();
+        Self::from_primitive_integer(sign, u128::from(n.unsigned_abs()))
+    }
+
+    pub(crate) fn from_primitive_integer(sign: Sign, magnitude: u128) -> Self {
         if magnitude == 0 {
             return Self::zero();
         }
@@ -222,13 +225,10 @@ impl Rational {
                 Self::one()
             };
         }
-        if let Some(value) = Self::small_integer(sign, u128::from(magnitude)) {
+        if let Some(value) = Self::small_integer(sign, magnitude) {
             return value;
         }
-        Self::from_integer_magnitude(
-            sign,
-            BigUint::from(magnitude),
-        )
+        Self::from_integer_magnitude(sign, BigUint::from(magnitude))
     }
 
     /// The Rational corresponding to the provided [`BigInt`].

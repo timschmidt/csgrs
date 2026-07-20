@@ -953,6 +953,27 @@ test/build/lint/documentation/benchmark/WASM matrix plus 365 ASAN Boolean-pipeli
 executions, and downstream CSGRS passed all 370 library tests and every integration
 test.
 
+### Canonical primitive small integers
+
+Every signed and unsigned primitive `Rational::from` conversion now classifies
+its magnitude before materializing a `BigUint`. Zero and one retain their
+identity constructors, magnitudes 2 through 64 reuse the existing canonical
+small-integer storage, and larger primitive values materialize exactly once.
+`Rational::new(i64)` enters through the same constructor, so primitive widths
+and signs no longer implement different storage policies. Exact value and
+storage-identity tests cover positive and negative conversions through `u8`,
+`u128`, `i8`, `i128`, and `Rational::new`.
+
+Matched 30-sample Criterion measurements show the allocation-free retained
+path:
+
+| constructor | previous | canonical primitive | result |
+| --- | ---: | ---: | ---: |
+| `Rational::from(4_u8)` | 38.53 ns | 4.51 ns | 88.3% faster |
+| `Rational::from(-4_i8)` | 36.64 ns | 5.15 ns | 85.9% faster |
+| `Real::from(4_u8)` | 50.17 ns | 16.65 ns | 66.8% faster |
+| `Real::from(-4_i8)` | 49.92 ns | 17.76 ns | 64.4% faster |
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

@@ -1668,6 +1668,22 @@ mod tests {
     }
 
     #[test]
+    fn primitive_small_integer_constructors_share_canonical_storage() {
+        let positive_u8 = Rational::from(4_u8);
+        let positive_u128 = Rational::from(4_u128);
+        let positive_new = Rational::new(4);
+        let negative_i8 = Rational::from(-4_i8);
+        let negative_i128 = Rational::from(-4_i128);
+        let negative_new = Rational::new(-4);
+
+        assert!(Arc::ptr_eq(&positive_u8.0, &positive_u128.0));
+        assert!(Arc::ptr_eq(&positive_u8.0, &positive_new.0));
+        assert!(Arc::ptr_eq(&negative_i8.0, &negative_i128.0));
+        assert!(Arc::ptr_eq(&negative_i8.0, &negative_new.0));
+        assert!(!Arc::ptr_eq(&positive_u8.0, &negative_i8.0));
+    }
+
+    #[test]
     fn repeated_negation_reuses_exact_storage_without_a_cycle() {
         let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
         let owner = Arc::downgrade(&value.0);

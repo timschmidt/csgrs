@@ -182,16 +182,20 @@ Microbenchmarks for scalar operations, structural queries, cache hits, and dense
 
 ### `construction_speed`
 
-Cost of constructing common exact scalar identities.
+Cost of constructing common exact scalar identities and small integers.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
 | `construction_speed/rational_one` | not run | not run | Constructs `Rational::one()`. |
 | `construction_speed/rational_new_one` | not run | not run | Constructs one through `Rational::new(1)`. |
+| `construction_speed/rational_from_u8_four` | 4.51 ns | 4.49 ns - 4.55 ns | Constructs positive four through unsigned primitive conversion. |
+| `construction_speed/rational_from_i8_minus_four` | 5.15 ns | 5.14 ns - 5.16 ns | Constructs negative four through signed primitive conversion. |
 | `construction_speed/computable_one` | not run | not run | Constructs `Computable::one()`. |
 | `construction_speed/real_new_rational_one` | not run | not run | Constructs one through `Real::new(Rational::one())`. |
 | `construction_speed/real_one` | not run | not run | Constructs one through `Real::one()`. |
 | `construction_speed/real_from_i32_one` | not run | not run | Constructs one through integer conversion. |
+| `construction_speed/real_from_u8_four` | 16.65 ns | 16.63 ns - 16.68 ns | Constructs positive four as an exact `Real` from `u8`. |
+| `construction_speed/real_from_i8_minus_four` | 17.76 ns | 17.72 ns - 17.80 ns | Constructs negative four as an exact `Real` from `i8`. |
 
 ### `raw_cache_hit_cost`
 

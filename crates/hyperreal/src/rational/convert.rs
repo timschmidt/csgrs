@@ -9,9 +9,9 @@ macro_rules! impl_signed_integer_conversion {
             fn from(n: $T) -> Rational {
                 // Split sign from unsigned_abs because Rational stores exactly
                 // that shape; no signed BigInt is needed for primitive inputs.
-                Self::from_integer_magnitude(
+                Self::from_primitive_integer(
                     if n < 0 { Sign::Minus } else { Sign::Plus },
-                    BigUint::from(n.unsigned_abs()),
+                    u128::from(n.unsigned_abs()),
                 )
             }
         }
@@ -35,9 +35,10 @@ macro_rules! impl_unsigned_integer_conversion {
         impl From<$T> for Rational {
             #[inline]
             fn from(n: $T) -> Rational {
-                // Unsigned primitives are already Rational magnitudes, so keep
-                // the conversion in BigUint rather than detouring through BigInt.
-                Self::from_unsigned_integer(BigUint::from(n))
+                // Unsigned primitives are already narrow magnitudes, so let the
+                // shared constructor use canonical small-integer storage before
+                // materializing a BigUint for larger values.
+                Self::from_primitive_integer(Sign::Plus, u128::from(n))
             }
         }
 

@@ -11,7 +11,7 @@ use bench_docs::{BenchDoc, BenchGroupDoc};
 const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
     BenchGroupDoc {
         name: "construction_speed",
-        description: "Cost of constructing common exact scalar identities.",
+        description: "Cost of constructing common exact scalar identities and small integers.",
         benches: &[
             BenchDoc {
                 name: "rational_one",
@@ -20,6 +20,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "rational_new_one",
                 description: "Constructs one through `Rational::new(1)`.",
+            },
+            BenchDoc {
+                name: "rational_from_u8_four",
+                description: "Constructs positive four through unsigned primitive conversion.",
+            },
+            BenchDoc {
+                name: "rational_from_i8_minus_four",
+                description: "Constructs negative four through signed primitive conversion.",
             },
             BenchDoc {
                 name: "computable_one",
@@ -36,6 +44,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "real_from_i32_one",
                 description: "Constructs one through integer conversion.",
+            },
+            BenchDoc {
+                name: "real_from_u8_four",
+                description: "Constructs positive four as an exact `Real` from `u8`.",
+            },
+            BenchDoc {
+                name: "real_from_i8_minus_four",
+                description: "Constructs negative four as an exact `Real` from `i8`.",
             },
         ],
     },
@@ -1038,6 +1054,12 @@ fn bench_construction_speed(c: &mut Criterion) {
     group.bench_function("rational_new_one", |b| {
         b.iter(|| black_box(Rational::new(black_box(1))))
     });
+    group.bench_function("rational_from_u8_four", |b| {
+        b.iter(|| black_box(Rational::from(black_box(4_u8))))
+    });
+    group.bench_function("rational_from_i8_minus_four", |b| {
+        b.iter(|| black_box(Rational::from(black_box(-4_i8))))
+    });
     group.bench_function("computable_one", |b| {
         b.iter(|| black_box(Computable::one()))
     });
@@ -1047,6 +1069,12 @@ fn bench_construction_speed(c: &mut Criterion) {
     group.bench_function("real_one", |b| b.iter(|| black_box(Real::one())));
     group.bench_function("real_from_i32_one", |b| {
         b.iter(|| black_box(Real::from(black_box(1_i32))))
+    });
+    group.bench_function("real_from_u8_four", |b| {
+        b.iter(|| black_box(Real::from(black_box(4_u8))))
+    });
+    group.bench_function("real_from_i8_minus_four", |b| {
+        b.iter(|| black_box(Real::from(black_box(-4_i8))))
     });
 
     group.finish();
