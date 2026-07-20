@@ -144,6 +144,17 @@ fn triangulate_positions_into<'a>(
     else {
         return;
     };
+    if support == [0, 1, 2]
+        && strictly_convex_exact_word_projection(
+            vertex_count,
+            position,
+            drop_axis,
+            support_sign,
+        )
+    {
+        triangles.extend((1..vertex_count - 1).map(|i| [0, i, i + 1]));
+        return;
+    }
     project_to_exact_2d_into(vertex_count, position, drop_axis, projected);
     let first_turn = (support == [0, 1, 2]).then_some(support_sign);
     if strictly_convex(projected, first_turn) {
@@ -155,6 +166,38 @@ fn triangulate_positions_into<'a>(
         return;
     };
     extend_triangle_indices(triangles, &indices, vertex_count, reverse_output);
+}
+
+fn strictly_convex_exact_word_projection<'a>(
+    vertex_count: usize,
+    position: impl Copy + Fn(usize) -> &'a Point3,
+    drop_axis: usize,
+    winding: Sign,
+) -> bool {
+    let projected = |point: &'a Point3| match drop_axis {
+        0 => [&point.y, &point.z],
+        1 => [&point.z, &point.x],
+        _ => [&point.x, &point.y],
+    };
+    for index in 1..vertex_count {
+        let a = projected(position(index));
+        let b = projected(position((index + 1) % vertex_count));
+        let c = projected(position((index + 2) % vertex_count));
+        let Some(sign) = Real::prepare_affine_det2_exact_word_filter(a, b)
+            .and_then(|filter| filter.sign(c))
+        else {
+            return false;
+        };
+        let sign = match sign {
+            RealSign::Positive => Sign::Positive,
+            RealSign::Negative => Sign::Negative,
+            RealSign::Zero => return false,
+        };
+        if sign != winding {
+            return false;
+        }
+    }
+    true
 }
 
 fn strictly_convex(points: &[hypertri::Point2], first_turn: Option<Sign>) -> bool {
