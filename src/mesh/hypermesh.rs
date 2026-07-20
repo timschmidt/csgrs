@@ -20,7 +20,7 @@ use hypermesh::{
 
 use crate::{
     csg::CSG,
-    mesh::Polygon,
+    mesh::{Polygon, polygon::fresh_plane_id},
     triangulated::{IndexedTriangleMesh3D, IndexedTriangulated3D, Triangulated3D},
     vertex::Vertex,
 };
@@ -632,7 +632,8 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         left_source_polygons: &[usize],
         right_source_polygons: &[usize],
     ) -> Result<Self, HypermeshError> {
-        let mut polygons = Vec::with_capacity(soup.triangles.len());
+        let mut vertices = Vec::with_capacity(soup.triangles.len().saturating_mul(3));
+        let mut metadata = Vec::with_capacity(soup.triangles.len());
 
         for (triangle, source) in soup.triangles.iter().zip(&soup.sources) {
             let source_index = usize::try_from(source.triangle).map_err(|_| {
@@ -681,16 +682,28 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 },
                 _ => hyper_triangle_unit_normal(&a, &b, &c).unwrap_or_else(Vector3::z),
             };
-            polygons.push(Polygon::new(
-                vec![
-                    Vertex::new(a, normal.clone()),
-                    Vertex::new(b, normal.clone()),
-                    Vertex::new(c, normal),
-                ],
-                polygon.metadata.clone(),
-            ));
+            vertices.extend([
+                Vertex::new(a, normal.clone()),
+                Vertex::new(b, normal.clone()),
+                Vertex::new(c, normal),
+            ]);
+            metadata.push(polygon.metadata.clone());
         }
 
+        let vertices = Arc::new(vertices);
+        let polygons = metadata
+            .into_iter()
+            .enumerate()
+            .map(|(triangle, metadata)| {
+                let start = triangle * 3;
+                Polygon::from_shared_vertices(
+                    Arc::clone(&vertices),
+                    start..start + 3,
+                    metadata,
+                    fresh_plane_id(),
+                )
+            })
+            .collect();
         Ok(Self::from_polygons(polygons))
     }
 }
@@ -1143,6 +1156,25 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn hypermesh_materialization_shares_one_output_vertex_buffer() {
+        let left = Mesh::cube(Real::from(2_u8), ());
+        let right = Mesh::cube(Real::from(2_u8), ()).translate(
+            Real::one(),
+            (Real::one() / Real::from(2_u8)).unwrap(),
+            Real::zero(),
+        );
+        let output = left.try_union(&right).unwrap();
+
+        assert!(output.polygons.len() > 1);
+        assert!(
+            output
+                .polygons
+                .windows(2)
+                .all(|pair| pair[0].vertices.shares_buffer_with(&pair[1].vertices))
+        );
     }
 
     #[test]

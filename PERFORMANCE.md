@@ -98,12 +98,28 @@ and retained rows remained well ahead of tight OpenCascade. Focused tests
 verify retained source orientation, invalid-source rejection, output flat-normal
 orientation, exact buffers, and metadata.
 
-Validation passed the locked default and all-feature suites (305/369 library
+Validation passed the locked default and all-feature suites (306/370 library
 tests plus all integration tests), every locked feature check, all-target and
 all-feature Clippy with warnings denied, warning-denied rustdoc, spelling, both
 adversarial scripts, and the benchmark and fuzz-target builds. The retained
 Boolean adapter and mesh-pair sanitizer targets each completed 1,000 ASAN runs
 without failure.
+
+Cold HyperMesh output materialization now appends all triangle vertices to one
+preallocated buffer and gives each CSGRS polygon an exact shared range. Source
+metadata, fresh plane identities, flat shading normals, and independent
+copy-on-write mutation are unchanged. This replaces a three-vertex `Vec` and
+its separate `Arc` allocation for every emitted triangle with one result-wide
+buffer.
+
+Across 30 counter runs of 500 alternating-input sphere/box operations, union
+instructions fell from 10,034,937,171 to 9,950,943,190 (0.84%) and cycles fell
+0.55%. Difference instructions fell from 7,935,683,222 to 7,872,306,550
+(0.80%) and cycles fell 0.36%. A 50-union heap trace recorded 1,060,054
+allocations versus 1,084,445, eliminating 24,391 allocations, or about 488 per
+union. A direct regression verifies that every materialized output polygon
+shares the retained vertex buffer while the existing exact-output and metadata
+oracles remain unchanged.
 
 `Mesh::ray_intersections` now streams triangle vertex references from each
 polygon's certified triangulation indices instead of cloning a temporary
