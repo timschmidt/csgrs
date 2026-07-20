@@ -21,6 +21,7 @@ pub struct LineSeg2 {
     support: Option<Rc<LineSupport2>>,
     support_range: Option<ParamRange>,
     offset_provenance: Option<Rc<LineOffsetProvenance2>>,
+    structural_facts: OnceCell<crate::LineSeg2Facts>,
 }
 
 impl PartialEq for LineSeg2 {
@@ -66,6 +67,7 @@ impl LineSeg2 {
             support: None,
             support_range: None,
             offset_provenance: None,
+            structural_facts: OnceCell::new(),
         })
     }
 
@@ -78,6 +80,7 @@ impl LineSeg2 {
             support: None,
             support_range: None,
             offset_provenance: None,
+            structural_facts: OnceCell::new(),
         }
     }
 
@@ -139,6 +142,7 @@ impl LineSeg2 {
             support,
             support_range: None,
             offset_provenance: self.offset_provenance.clone(),
+            structural_facts: OnceCell::new(),
         })
     }
 
@@ -171,6 +175,7 @@ impl LineSeg2 {
             support,
             support_range: Some(support_range),
             offset_provenance: self.offset_provenance.clone(),
+            structural_facts: OnceCell::new(),
         }
     }
 
@@ -285,6 +290,7 @@ impl LineSeg2 {
             support_range: self.support_range.clone(),
             // An arbitrary point map need not preserve signed offset distance.
             offset_provenance: None,
+            structural_facts: OnceCell::new(),
         })
     }
 
@@ -319,6 +325,7 @@ impl LineSeg2 {
                 .as_ref()
                 .map(|range| ParamRange::new(range.end().clone(), range.start().clone())),
             offset_provenance,
+            structural_facts: self.structural_facts.clone(),
         }
     }
 
@@ -376,7 +383,9 @@ impl LineSeg2 {
     /// select faster exact kernels without becoming a substitute for the
     /// orientation predicates used for topology.
     pub fn structural_facts(&self) -> crate::LineSeg2Facts {
-        crate::facts::line_segment_facts(self)
+        *self
+            .structural_facts
+            .get_or_init(|| crate::facts::compute_line_segment_facts(self))
     }
 }
 

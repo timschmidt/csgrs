@@ -329,6 +329,10 @@ pub fn point2_facts(point: &Point2) -> Point2Facts {
 
 /// Collect structural facts for a line segment.
 pub fn line_segment_facts(line: &LineSeg2) -> LineSeg2Facts {
+    line.structural_facts()
+}
+
+pub(crate) fn compute_line_segment_facts(line: &LineSeg2) -> LineSeg2Facts {
     let scalars = [
         line.start().x(),
         line.start().y(),

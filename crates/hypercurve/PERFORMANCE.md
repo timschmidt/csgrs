@@ -450,6 +450,25 @@ and the instruction sweep is 83.9% smaller. The exact Boolean differential fuzz
 target completed 1,000 AddressSanitizer-instrumented runs at 5,054 coverage
 points and 14,451 feature edges without a failure.
 
+Structural report construction and prepared predicates then recomputed the same
+`LineSeg2Facts` across immutable line carriers. Those facts depend only on the
+endpoint coordinate set and the structural zero status of `(dx, dy)`, so lines
+now retain them lazily. Clones carry an already-computed cell, reversal preserves
+it because coordinate-set and zero-mask facts are direction invariant, and any
+operation that changes endpoint geometry starts with an empty cell. The public
+facts API and its conservative scheduling semantics are unchanged.
+
+This reduced line-fact computations in the comparative sweep from 5,790 to 730
+(87.4%). Star64 intersection fell from 6.379 to 5.309 ms/iter (16.8%), and
+rectangle union fell from 105.207 to 62.840 us/iter (40.3%), with unchanged
+checksums. The complete one-iteration Callgrind sweep fell from 227,341,565 to
+185,994,304 instructions (18.2%). From the original checkpoint, star64 is now
+85.7% faster and the sweep executes 86.8% fewer instructions. An alternative
+heap-shared cache representation was rejected because it increased the full
+sweep and added about 0.8 million instructions to the offset lane. The exact
+Boolean differential fuzz target completed 1,000 AddressSanitizer-instrumented
+runs at 5,071 coverage points and 14,417 feature edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
