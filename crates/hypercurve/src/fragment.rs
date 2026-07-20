@@ -6,13 +6,14 @@
 //! split-then-classify structure, with explicit uncertainty for ordering or
 //! finite-preview cases that would otherwise create invalid graph topology.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, rc::Rc};
 
 use hyperreal::Real;
 
 use crate::classify::{
     compare_reals, compare_reals_for_split_ordering, in_closed_unit_interval, is_zero,
 };
+use crate::segment::LineSupport2;
 use crate::{
     CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveError, CurvePolicy,
     CurveResult, NumericMode, ParamRange, Point2, Segment2, SegmentSplitMarker, UncertaintyReason,
@@ -426,6 +427,10 @@ fn append_segment_fragments(
         Segment2::Line(line) if line.endpoints_decided_distinct()
     );
     let unsplit_source_segment = markers.len() == 2;
+    let line_support = match source_segment {
+        Segment2::Line(line) if !unsplit_source_segment => Some(line.fragment_support()),
+        _ => None,
+    };
     for adjacent in markers.windows(2) {
         let start = &adjacent[0];
         let end = &adjacent[1];
@@ -444,6 +449,7 @@ fn append_segment_fragments(
             start,
             end,
             unsplit_source_segment,
+            line_support.as_ref(),
             policy,
         )? {
             Classification::Decided(segment) => segment,
@@ -466,6 +472,7 @@ fn build_fragment_segment(
     start: &SegmentSplitMarker,
     end: &SegmentSplitMarker,
     unsplit_source_segment: bool,
+    line_support: Option<&Rc<LineSupport2>>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Segment2>> {
     // Every ContourSplitMarkers constructor certifies a strict sequence from
@@ -484,6 +491,9 @@ fn build_fragment_segment(
                 start.point.clone(),
                 end.point.clone(),
                 ParamRange::new(start.param.clone(), end.param.clone()),
+                line_support
+                    .expect("split line fragments have prepared source support")
+                    .clone(),
             ),
         ))),
         Segment2::Arc(arc) => arc
@@ -520,4 +530,45 @@ fn radius_delta_is_zero(delta: &Real, radius_squared: &Real, policy: &CurvePolic
     }
 
     is_zero(delta, policy)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::LineSeg2;
+
+    fn point(x: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::zero())
+    }
+
+    fn fraction(numerator: i32, denominator: i32) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
+    #[test]
+    fn sibling_line_fragments_share_retained_source_support() {
+        let source = Segment2::Line(LineSeg2::try_new(point(0), point(6)).unwrap());
+        let marker = |coordinate, numerator| SegmentSplitMarker {
+            segment_index: 0,
+            param: fraction(numerator, 3),
+            point: point(coordinate),
+        };
+        let markers = [marker(0, 0), marker(2, 1), marker(4, 2), marker(6, 3)];
+        let policy = CurvePolicy::certified();
+        let mut fragments = Vec::new();
+
+        assert!(matches!(
+            append_segment_fragments(&mut fragments, &source, 0, &markers, &policy).unwrap(),
+            Classification::Decided(())
+        ));
+        let (Segment2::Line(first), Segment2::Line(last)) =
+            (&fragments[0].segment, &fragments[2].segment)
+        else {
+            panic!("expected line fragments");
+        };
+        assert_eq!(
+            first.retained_support_ranges_decided_disjoint(last, &policy),
+            Some(true)
+        );
+    }
 }

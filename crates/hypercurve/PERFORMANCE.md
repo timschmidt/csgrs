@@ -844,6 +844,26 @@ Boolean differential fuzzer completed 1,000 runs at 5,743 coverage points and
 16,123 feature edges without a failure; LeakSanitizer alone remained disabled
 under ptrace.
 
+Exact contour-multiset identity now uses pointer identity first and cached exact
+signed-area magnitude second. Unequal cached rational magnitudes or denominators
+prove that two contours cannot have the same boundary, while equal areas and
+oppositely oriented boundaries still fall through to the complete cyclic exact
+boundary comparison. Split line fragments also share one retained source-support
+allocation per source segment instead of independently rebuilding an equivalent
+support for every child. On star64 this prepared 234 supports for 510 fragments,
+eliminating 276 allocations while preserving each composed source range.
+
+Against the preceding checkpoint, the isolated debug-info Callgrind star64 run
+fell from 25,735,959 to 25,085,971 instructions (2.53%), allocator calls from
+16,941 to 16,101 (4.96%), and deallocator calls from 17,278 to 16,438 (4.86%).
+The rectangle control lane fell from 1,271,514 to 1,255,584 instructions (1.25%).
+Interleaved 11-sample, 1,000-iteration release runs remained centered near 0.60
+ms/iter amid scheduler noise, with unchanged checksums. Both feature-mode test
+matrices, format, warnings-as-errors Clippy and rustdoc, and focused cached-area
+and shared-support regressions passed. The AddressSanitizer Boolean differential
+fuzzer completed 1,000 runs at 5,771 coverage points and 16,223 feature edges
+without a failure; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

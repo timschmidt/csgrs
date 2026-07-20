@@ -3187,8 +3187,9 @@ fn same_contour_multiset(first: &[&Contour2], second: &[&Contour2]) -> bool {
             .iter()
             .enumerate()
             .find_map(|(index, second_contour)| {
-                (!matched[index] && first_contour.has_same_exact_boundary(second_contour))
-                    .then_some(index)
+                (!matched[index]
+                    && contours_have_same_exact_boundary(first_contour, second_contour))
+                .then_some(index)
             })
         else {
             return false;
@@ -3197,6 +3198,20 @@ fn same_contour_multiset(first: &[&Contour2], second: &[&Contour2]) -> bool {
     }
 
     true
+}
+
+fn contours_have_same_exact_boundary(first: &Contour2, second: &Contour2) -> bool {
+    if std::ptr::eq(first, second) {
+        return true;
+    }
+    if let (Some(first), Some(second)) = (first.cached_signed_area(), second.cached_signed_area())
+        && let (Some(first), Some(second)) =
+            (first.exact_rational_ref(), second.exact_rational_ref())
+        && (first.numerator() != second.numerator() || first.denominator() != second.denominator())
+    {
+        return false;
+    }
+    first.has_same_exact_boundary(second)
 }
 
 pub(crate) fn clone_boundary_contours(region: &RegionView2<'_>) -> Vec<Contour2> {
@@ -3252,6 +3267,16 @@ mod tests {
         Segment2::Line(LineSeg2::try_new(point(x0, y0), point(x1, y1)).unwrap())
     }
 
+    fn rectangle(width: i32, height: i32) -> Contour2 {
+        Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(point(0, 0), Real::zero()),
+            BulgeVertex2::new(point(width, 0), Real::zero()),
+            BulgeVertex2::new(point(width, height), Real::zero()),
+            BulgeVertex2::new(point(0, height), Real::zero()),
+        ])
+        .unwrap()
+    }
+
     fn fragment_set_for(key: RegionContourKey, segment: Segment2) -> RegionContourFragments {
         let source_segment_start_point = segment.start().clone();
         let source_segment_end_point = segment.end().clone();
@@ -3276,6 +3301,28 @@ mod tests {
             source_filled_side_is_left: true,
             action: BooleanFragmentAction::BoundaryNeedsResolution,
         }
+    }
+
+    #[test]
+    fn cached_area_magnitude_rejects_only_distinct_exact_boundaries() {
+        let first = rectangle(4, 3);
+        let reversed = Contour2::from_validated_closed_segments(
+            first
+                .segments()
+                .iter()
+                .rev()
+                .map(Segment2::reversed)
+                .collect(),
+            first.fill_rule(),
+        );
+        let different = rectangle(5, 3);
+        for contour in [&first, &reversed, &different] {
+            assert!(contour.signed_area().unwrap().is_some());
+        }
+
+        assert!(contours_have_same_exact_boundary(&first, &first));
+        assert!(contours_have_same_exact_boundary(&first, &reversed));
+        assert!(!contours_have_same_exact_boundary(&first, &different));
     }
 
     #[test]

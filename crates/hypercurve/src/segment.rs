@@ -31,7 +31,7 @@ impl PartialEq for LineSeg2 {
 }
 
 #[derive(Debug, PartialEq)]
-struct LineSupport2 {
+pub(crate) struct LineSupport2 {
     start: Point2,
     end: Point2,
 }
@@ -129,17 +129,11 @@ impl LineSeg2 {
             ZeroStatus::NonZero => true,
             ZeroStatus::Unknown => false,
         };
-        let support = self.support.clone().or_else(|| {
-            Some(Rc::new(LineSupport2 {
-                start: self.start.clone(),
-                end: self.end.clone(),
-            }))
-        });
         Ok(Self {
             start,
             end,
             endpoints_decided_distinct,
-            support,
+            support: Some(self.fragment_support()),
             support_range: None,
             offset_provenance: self.offset_provenance.clone(),
             structural_facts: OnceCell::new(),
@@ -151,13 +145,8 @@ impl LineSeg2 {
         start: Point2,
         end: Point2,
         source_range: ParamRange,
+        support: Rc<LineSupport2>,
     ) -> Self {
-        let support = self.support.clone().or_else(|| {
-            Some(Rc::new(LineSupport2 {
-                start: self.start.clone(),
-                end: self.end.clone(),
-            }))
-        });
         let support_range = self
             .support_range
             .as_ref()
@@ -172,11 +161,20 @@ impl LineSeg2 {
             start,
             end,
             endpoints_decided_distinct: true,
-            support,
+            support: Some(support),
             support_range: Some(support_range),
             offset_provenance: self.offset_provenance.clone(),
             structural_facts: OnceCell::new(),
         }
+    }
+
+    pub(crate) fn fragment_support(&self) -> Rc<LineSupport2> {
+        self.support.clone().unwrap_or_else(|| {
+            Rc::new(LineSupport2 {
+                start: self.start.clone(),
+                end: self.end.clone(),
+            })
+        })
     }
 
     pub(crate) fn retained_support_ranges_decided_disjoint(

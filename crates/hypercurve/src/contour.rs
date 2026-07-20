@@ -978,6 +978,10 @@ impl Contour2 {
             .clone()
     }
 
+    pub(crate) fn cached_signed_area(&self) -> Option<&Real> {
+        self.signed_area_cache.get()?.as_ref().ok()?.as_ref()
+    }
+
     /// Returns the segment count.
     pub fn len(&self) -> usize {
         self.curve.len()
