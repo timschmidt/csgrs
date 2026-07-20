@@ -6,6 +6,7 @@
 //! ambiguous overlap evidence remains explicit uncertainty.
 
 use crate::classify::compare_reals;
+use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
 use crate::{
     Aabb2, BooleanBoundaryChainAssemblyReport2, BooleanBoundaryContourTransferReport2,
     BooleanBoundaryFragmentEmissionReport2, BooleanBoundaryLoopExtractionReport2,
@@ -1933,8 +1934,35 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             policy,
         )
     });
-    let selection_result = fragments
-        .classify_for_boolean_with_contacts_and_point_classifier_with_report(
+    let crossing_windings = if split_interiors_are_off_opposite_boundary
+        && RegionLineCrossingWindingIndex::event_set_meets_propagation_crossover(boundary_events)
+    {
+        RegionLineCrossingWindingIndex::from_intersections(first, second, boundary_events, policy)
+    } else {
+        None
+    };
+    let crossing_selection_result = match (&endpoint_contacts, &crossing_windings) {
+        (Some(endpoint_contacts), Some(crossing_windings)) => fragments
+            .classify_for_boolean_with_line_crossing_winding_with_report(
+                first,
+                second,
+                op,
+                policy,
+                endpoint_contacts,
+                crossing_windings,
+                |source_side, sample| match source_side {
+                    RegionSide::First => second_prepared
+                        .single_material_winding_assuming_off_boundary(sample, policy),
+                    RegionSide::Second => {
+                        first_prepared.single_material_winding_assuming_off_boundary(sample, policy)
+                    }
+                },
+            )?,
+        _ => None,
+    };
+    let selection_result = match crossing_selection_result {
+        Some(selection_result) => selection_result,
+        None => fragments.classify_for_boolean_with_contacts_and_point_classifier_with_report(
             first,
             second,
             op,
@@ -1950,7 +1978,8 @@ fn boolean_boundary_contours_between_with_pipeline_report(
                 (false, RegionSide::First) => second_prepared.classify_point(sample, policy),
                 (false, RegionSide::Second) => first_prepared.classify_point(sample, policy),
             },
-        )?;
+        )?,
+    };
     let selection = match selection_result.selection() {
         Some(selection) => selection,
         None => {

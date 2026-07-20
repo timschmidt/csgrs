@@ -60,6 +60,7 @@ mod rational_bezier_general;
 mod reconstruct;
 mod region;
 mod region_boolean;
+mod region_crossing_winding;
 mod region_events;
 mod region_fragments;
 mod region_nesting;

@@ -545,6 +545,36 @@ either incident segment. The exact Boolean differential fuzz target completed
 1,000 AddressSanitizer-instrumented runs at 5,229 coverage points and 15,007 feature
 edges without a failure.
 
+The remaining fragment-classification cost was proportional to the number of
+fragments even when the normalized event set already proved a repeated sequence
+of transverse line crossings. A new retained crossing-winding index records the
+exact integer winding change at each strict proper crossing from the sign of the
+two oriented line directions. The Boolean classifier computes one seed winding
+per source contour, then visits its fragments once and applies those retained
+transitions. This tracks the full integer winding rather than toggling an inside
+bit, so both non-zero and even-odd fill rules remain valid even when a contour is
+self-intersecting.
+
+The path is intentionally narrow. It requires one material contour and no holes
+on each side, at least eight retained point events, line primitives on both sides,
+strict-interior `Crossing` events, unique and comparable source parameters, zero
+net winding change around both closed contours, and a one-to-one match between
+events and materialized split boundaries. Endpoint contacts, tangencies, arcs,
+overlaps, duplicate parameters, uncertain predicates, small workloads, and any
+proof mismatch retain the per-fragment classifier. A differential regression
+compares the new selection and report with the canonical classifier and confirms
+that a qualifying two-contour case issues only two seed winding queries.
+
+In the latest 15-sample comparative run, star64 intersection fell from 2.858 to
+2.428 ms/iter (15.0%). Rectangle union stayed on the existing small-event path
+and measured 53.079 us/iter with a 50.727 us minimum; offset and NURBS lanes were
+effectively unchanged. The complete one-iteration Callgrind sweep fell from
+95,828,985 to 80,471,959 instructions (16.0%), with unchanged checksums. From the
+original checkpoint, star64 is now 93.5% faster and the sweep executes 94.3% fewer
+instructions. The exact Boolean differential fuzz target completed 1,000
+AddressSanitizer-instrumented runs at 5,253 coverage points and 15,082 feature
+edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

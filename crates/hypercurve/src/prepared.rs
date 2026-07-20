@@ -1070,6 +1070,31 @@ impl<'a> PreparedRegionView2<'a> {
         }
     }
 
+    pub(crate) fn single_material_winding_assuming_off_boundary(
+        &self,
+        point: &Point2,
+        policy: &CurvePolicy,
+    ) -> Classification<i32> {
+        if self.material_prepared_contours.len() != 1 || !self.hole_prepared_contours.is_empty() {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        }
+        if self
+            .region_box
+            .as_ref()
+            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
+        {
+            return Classification::Decided(0);
+        }
+        let contour = &self.material_prepared_contours[0];
+        if contour
+            .contour_box()
+            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
+        {
+            return Classification::Decided(0);
+        }
+        prepared_contour_winding_number_unchecked(contour, point, policy)
+    }
+
     /// Returns signed containment depth for a non-boundary point.
     ///
     /// This follows the same signed material-minus-hole convention as

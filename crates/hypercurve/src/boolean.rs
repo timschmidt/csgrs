@@ -6,10 +6,12 @@
 
 use crate::boolean_boundary::{BooleanBoundaryFragmentSet, DirectedBooleanFragment};
 use crate::classify::real_sign;
+use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
 use crate::{
-    Classification, CurveError, CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey,
-    RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide, RegionView2,
-    RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    Classification, CurveError, CurvePolicy, CurveResult, FillRule, ParamRange, Point2,
+    RegionContourKey, RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide,
+    RegionView2, RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
+    UncertaintyReason,
 };
 use hyperreal::{Real, RealSign};
 
@@ -114,8 +116,8 @@ pub struct BooleanFragmentSelectionResult2 {
     report: BooleanFragmentSelectionReport2,
 }
 
-enum FragmentInteriorClassification {
-    Decided(RegionPointLocation),
+enum FragmentInteriorClassification<T> {
+    Decided(T),
     Blocked {
         stage: BooleanFragmentSelectionStage2,
         reason: UncertaintyReason,
@@ -898,6 +900,146 @@ impl RegionFragmentSet {
         )
     }
 
+    pub(crate) fn classify_for_boolean_with_line_crossing_winding_with_report<F>(
+        &self,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+        endpoint_contacts: &crate::region_events::RegionPointEndpointContactIndex,
+        crossing_windings: &RegionLineCrossingWindingIndex,
+        mut classify_opposite_winding: F,
+    ) -> CurveResult<Option<BooleanFragmentSelectionResult2>>
+    where
+        F: FnMut(RegionSide, &crate::Point2) -> Classification<i32>,
+    {
+        if first.material_contours().len() != 1
+            || second.material_contours().len() != 1
+            || !first.hole_contours().is_empty()
+            || !second.hole_contours().is_empty()
+            || self
+                .contours()
+                .iter()
+                .any(|fragments| !crossing_windings.certifies_fragments(fragments, policy))
+        {
+            return Ok(None);
+        }
+
+        let mut classifications = Vec::new();
+        let source_contour_count = self.len();
+        let source_fragment_count = region_fragment_count(self);
+        let source_fragment_kind_counts = region_fragment_kind_counts(self);
+        let interior_sample_fractions = [
+            (Real::one() / Real::from(2_i8))?,
+            (Real::one() / Real::from(3_i8))?,
+            (Real::from(2_i8) / Real::from(3_i8))?,
+        ];
+
+        for contour_fragments in self.contours() {
+            let source_contour = source_contour_for_key(first, second, contour_fragments.key)?;
+            let source_filled_side_is_left = match source_contour_filled_side_is_left(
+                first,
+                second,
+                contour_fragments.key,
+                policy,
+            )? {
+                Classification::Decided(filled_side) => filled_side,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(blocked_boolean_fragment_selection_result(
+                        op,
+                        BooleanFragmentSelectionStage2::SourceFillSideClassification,
+                        source_contour_count,
+                        source_fragment_count,
+                        source_fragment_kind_counts,
+                        classifications.len(),
+                        reason,
+                    )));
+                }
+            };
+            let opposite_fill_rule = match contour_fragments.key.side {
+                RegionSide::First => second.material_contours()[0].fill_rule(),
+                RegionSide::Second => first.material_contours()[0].fill_rule(),
+            };
+            let fragments = contour_fragments.fragments.fragments();
+            let first_fragment = &fragments[0];
+            let certified_endpoint = certified_fragment_endpoint(
+                endpoint_contacts,
+                contour_fragments.key,
+                source_contour,
+                first_fragment,
+                policy,
+            );
+            let source_side = contour_fragments.key.side;
+            let mut opposite_winding = match classify_fragment_interior(
+                &first_fragment.segment,
+                certified_endpoint,
+                &interior_sample_fractions,
+                policy,
+                |sample| classify_opposite_winding(source_side, sample),
+            )? {
+                FragmentInteriorClassification::Decided(winding) => winding,
+                FragmentInteriorClassification::Blocked { stage, reason } => {
+                    return Ok(Some(blocked_boolean_fragment_selection_result(
+                        op,
+                        stage,
+                        source_contour_count,
+                        source_fragment_count,
+                        source_fragment_kind_counts,
+                        classifications.len(),
+                        reason,
+                    )));
+                }
+            };
+
+            for (fragment_index, fragment) in fragments.iter().enumerate() {
+                if fragment_index != 0 {
+                    let delta = crossing_windings
+                        .delta_between_fragments(
+                            contour_fragments.key,
+                            &fragments[fragment_index - 1],
+                            fragment,
+                            policy,
+                        )
+                        .ok_or_else(|| {
+                            CurveError::Topology(
+                                "proper-crossing winding proof does not match split fragments"
+                                    .into(),
+                            )
+                        })?;
+                    opposite_winding = opposite_winding.checked_add(delta).ok_or_else(|| {
+                        CurveError::Topology("boolean contour winding exceeds i32 range".into())
+                    })?;
+                }
+                let opposite_location =
+                    contour_location_from_winding(opposite_winding, opposite_fill_rule);
+                let action =
+                    op.action_for(source_side, source_filled_side_is_left, opposite_location);
+                classifications.push(BooleanFragmentClassification {
+                    key: contour_fragments.key,
+                    fragment_index,
+                    opposite_location,
+                    source_filled_side_is_left,
+                    action,
+                });
+            }
+        }
+
+        let selection = BooleanFragmentSelection::new(classifications)?;
+        Ok(Some(BooleanFragmentSelectionResult2 {
+            report: boolean_fragment_selection_report_from_classifications(
+                op,
+                BooleanFragmentSelectionStage2::ActionAssignment,
+                source_contour_count,
+                source_fragment_count,
+                source_fragment_kind_counts,
+                selection.classifications(),
+                RetainedTopologyStatus::NativeExact,
+                None,
+            ),
+            selection: Some(selection),
+        }))
+    }
+
     pub(crate) fn classify_for_boolean_with_contacts_and_point_classifier_with_report<F>(
         &self,
         first: &RegionView2<'_>,
@@ -946,25 +1088,13 @@ impl RegionFragmentSet {
             {
                 let source_side = contour_fragments.key.side;
                 let certified_endpoint = endpoint_contacts.and_then(|contacts| {
-                    if !contacts.parameter_is_contact(
+                    certified_fragment_endpoint(
+                        contacts,
                         contour_fragments.key,
-                        fragment.source_segment_index,
-                        source_contour.len(),
-                        fragment.source_range.start(),
+                        source_contour,
+                        fragment,
                         policy,
-                    ) {
-                        Some(CertifiedFragmentEndpoint::Start)
-                    } else if !contacts.parameter_is_contact(
-                        contour_fragments.key,
-                        fragment.source_segment_index,
-                        source_contour.len(),
-                        fragment.source_range.end(),
-                        policy,
-                    ) {
-                        Some(CertifiedFragmentEndpoint::End)
-                    } else {
-                        None
-                    }
+                    )
                 });
                 let opposite_location = match classify_fragment_interior(
                     &fragment.segment,
@@ -1016,15 +1146,55 @@ impl RegionFragmentSet {
     }
 }
 
-fn classify_fragment_interior<F>(
+fn certified_fragment_endpoint(
+    contacts: &crate::region_events::RegionPointEndpointContactIndex,
+    key: RegionContourKey,
+    source_contour: &crate::Contour2,
+    fragment: &crate::ContourFragment,
+    policy: &CurvePolicy,
+) -> Option<CertifiedFragmentEndpoint> {
+    if !contacts.parameter_is_contact(
+        key,
+        fragment.source_segment_index,
+        source_contour.len(),
+        fragment.source_range.start(),
+        policy,
+    ) {
+        Some(CertifiedFragmentEndpoint::Start)
+    } else if !contacts.parameter_is_contact(
+        key,
+        fragment.source_segment_index,
+        source_contour.len(),
+        fragment.source_range.end(),
+        policy,
+    ) {
+        Some(CertifiedFragmentEndpoint::End)
+    } else {
+        None
+    }
+}
+
+fn contour_location_from_winding(winding: i32, fill_rule: FillRule) -> RegionPointLocation {
+    let inside = match fill_rule {
+        FillRule::NonZero => winding != 0,
+        FillRule::EvenOdd => winding.rem_euclid(2) != 0,
+    };
+    if inside {
+        RegionPointLocation::Inside
+    } else {
+        RegionPointLocation::Outside
+    }
+}
+
+fn classify_fragment_interior<T, F>(
     segment: &Segment2,
     certified_endpoint: Option<CertifiedFragmentEndpoint>,
     fractions: &[Real; 3],
     policy: &CurvePolicy,
     mut classify: F,
-) -> CurveResult<FragmentInteriorClassification>
+) -> CurveResult<FragmentInteriorClassification<T>>
 where
-    F: FnMut(&Point2) -> Classification<RegionPointLocation>,
+    F: FnMut(&Point2) -> Classification<T>,
 {
     let mut representative_blocker = None;
     let mut classification_blocker = None;
@@ -1300,5 +1470,101 @@ fn add_segment_kind_count(counts: &mut SegmentKindCounts, segment: &Segment2) {
     match segment {
         Segment2::Line(_) => counts.lines += 1,
         Segment2::Arc(_) => counts.arcs += 1,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Contour2, LineSeg2, PreparedRegionView2, Region2};
+
+    fn point(x: i8, y: i8) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn rectangle(min_x: i8, min_y: i8, max_x: i8, max_y: i8) -> Region2 {
+        let points = [
+            point(min_x, min_y),
+            point(max_x, min_y),
+            point(max_x, max_y),
+            point(min_x, max_y),
+        ];
+        let segments = (0..4)
+            .map(|index| {
+                Segment2::Line(
+                    LineSeg2::try_new(points[index].clone(), points[(index + 1) % 4].clone())
+                        .unwrap(),
+                )
+            })
+            .collect();
+        Region2::from_material_contours(vec![Contour2::try_new(segments).unwrap()])
+    }
+
+    #[test]
+    fn proper_line_crossing_winding_matches_fragment_classification() {
+        let first = rectangle(0, 0, 4, 3);
+        let second = rectangle(2, -1, 6, 2);
+        let first_view = first.as_view();
+        let second_view = second.as_view();
+        let policy = CurvePolicy::certified();
+        let events = first_view.intersect_region(&second_view, &policy).unwrap();
+        let fragment_result = events
+            .split_regions_with_report(&first_view, &second_view, &policy)
+            .unwrap();
+        let fragments = fragment_result.fragments().unwrap();
+        let contacts = crate::region_events::RegionPointEndpointContactIndex::from_intersections(
+            &events, &policy,
+        );
+        let crossings = RegionLineCrossingWindingIndex::from_intersections(
+            &first_view,
+            &second_view,
+            &events,
+            &policy,
+        )
+        .unwrap();
+        let first_prepared = PreparedRegionView2::from_region(&first, &policy);
+        let second_prepared = PreparedRegionView2::from_region(&second, &policy);
+
+        let expected = fragments
+            .classify_for_boolean_with_contacts_and_point_classifier_with_report(
+                &first_view,
+                &second_view,
+                BooleanOp::Union,
+                &policy,
+                Some(&contacts),
+                |source_side, sample| match source_side {
+                    RegionSide::First => {
+                        second_prepared.classify_point_assuming_off_boundary(sample, &policy)
+                    }
+                    RegionSide::Second => {
+                        first_prepared.classify_point_assuming_off_boundary(sample, &policy)
+                    }
+                },
+            )
+            .unwrap();
+        let mut winding_queries = 0_usize;
+        let actual = fragments
+            .classify_for_boolean_with_line_crossing_winding_with_report(
+                &first_view,
+                &second_view,
+                BooleanOp::Union,
+                &policy,
+                &contacts,
+                &crossings,
+                |source_side, sample| {
+                    winding_queries += 1;
+                    match source_side {
+                        RegionSide::First => second_prepared
+                            .single_material_winding_assuming_off_boundary(sample, &policy),
+                        RegionSide::Second => first_prepared
+                            .single_material_winding_assuming_off_boundary(sample, &policy),
+                    }
+                },
+            )
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(actual, expected);
+        assert_eq!(winding_queries, 2);
     }
 }
