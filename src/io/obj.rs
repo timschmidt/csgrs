@@ -557,7 +557,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut source_position_slots = vec![None; vertices.len()];
         let mut position_bucket_heads = HashMap::<ObjPositionKey, usize>::new();
         let mut position_bucket_next = Vec::<Option<usize>>::new();
-        let mut positions = Vec::<Point3>::new();
+        let mut canonical_source_positions = Vec::<usize>::new();
         for triangle in &mut triangles {
             for (source_position, _) in &mut triangle.corners {
                 let slot = if let Some(slot) = source_position_slots[*source_position] {
@@ -568,15 +568,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     let mut candidate = position_bucket_heads.get(&key).copied();
                     let mut slot = None;
                     while let Some(current) = candidate {
-                        if positions[current] == *position {
+                        if vertices[canonical_source_positions[current]] == *position {
                             slot = Some(current);
                             break;
                         }
                         candidate = position_bucket_next[current];
                     }
                     let slot = slot.unwrap_or_else(|| {
-                        let slot = positions.len();
-                        positions.push(position.clone());
+                        let slot = canonical_source_positions.len();
+                        canonical_source_positions.push(*source_position);
                         position_bucket_next.push(position_bucket_heads.insert(key, slot));
                         slot
                     });
@@ -586,10 +586,39 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 *source_position = slot;
             }
         }
+
+        source_position_slots.fill(None);
+        for (slot, &source_position) in canonical_source_positions.iter().enumerate() {
+            source_position_slots[source_position] = Some(slot);
+        }
+        let mut source_position = 0;
+        let mut final_slot = 0;
+        let mut positions_remapped = false;
+        vertices.retain(|_| {
+            let retained = if let Some(slot) = source_position_slots[source_position] {
+                positions_remapped |= slot != final_slot;
+                canonical_source_positions[slot] = final_slot;
+                final_slot += 1;
+                true
+            } else {
+                false
+            };
+            source_position += 1;
+            retained
+        });
+        debug_assert_eq!(final_slot, canonical_source_positions.len());
+        if positions_remapped {
+            for triangle in &mut triangles {
+                for (position, _) in &mut triangle.corners {
+                    *position = canonical_source_positions[*position];
+                }
+            }
+        }
+        let positions = vertices;
         drop(source_position_slots);
         drop(position_bucket_heads);
         drop(position_bucket_next);
-        drop(vertices);
+        drop(canonical_source_positions);
 
         let mut position_normals = vec![None; positions.len()];
         let mut normals_match_positions = true;
@@ -889,6 +918,26 @@ f 4 5 6
         assert_eq!(indexed.positions.len(), 6);
         assert!(indexed.positions.iter().any(|point| point.x == left));
         assert!(indexed.positions.iter().any(|point| point.x == right));
+    }
+
+    #[test]
+    fn from_obj_compacts_duplicate_rows_when_first_used_out_of_order() {
+        let obj = "\
+v 0 0 0
+v 1 0 0
+v 0 1 0
+v 0 0 0
+v 1 0 0
+v 0 1 0
+vn 0 0 1
+f 4//1 5//1 6//1
+f 1//1 2//1 3//1
+";
+
+        let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
+
+        assert_eq!(mesh.polygons.len(), 2);
+        assert_eq!(mesh.indexed_triangles().positions.len(), 3);
     }
 
     #[test]
