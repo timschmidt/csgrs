@@ -2130,7 +2130,7 @@ fn process_line_winding(
     }
 }
 
-fn process_arc_winding(
+pub(crate) fn process_arc_winding(
     arc: &crate::CircularArc2,
     point: &Point2,
     policy: &CurvePolicy,

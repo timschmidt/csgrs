@@ -416,6 +416,15 @@ fn append_segment_fragments(
     markers: &[SegmentSplitMarker],
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<()>> {
+    // A validated marker lies at its parameter on the source. Affine line
+    // parameters are injective when the source endpoints are already proven
+    // distinct, so strict marker ordering also proves distinct fragment
+    // endpoints. Arcs retain the geometric check because a full-circle sweep
+    // can revisit its start point at a different parameter.
+    let ordered_line_markers_are_distinct = matches!(
+        source_segment,
+        Segment2::Line(line) if line.endpoints_decided_distinct()
+    );
     for adjacent in markers.windows(2) {
         let start = &adjacent[0];
         let end = &adjacent[1];
@@ -429,11 +438,13 @@ fn append_segment_fragments(
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
 
-        let distance = start.point.distance_squared(&end.point);
-        match is_zero(&distance, policy) {
-            Some(true) => continue,
-            Some(false) => {}
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        if !ordered_line_markers_are_distinct {
+            let distance = start.point.distance_squared(&end.point);
+            match is_zero(&distance, policy) {
+                Some(true) => continue,
+                Some(false) => {}
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
         }
 
         let segment = match build_fragment_segment(source_segment, start, end, policy)? {
@@ -463,14 +474,16 @@ fn build_fragment_segment(
     }
 
     match source_segment {
-        Segment2::Line(line) => line
-            .fragment_between_with_source_range(
+        // `append_segment_fragments` has just certified these endpoints as
+        // distinct. Preserve that proof while retaining the source range
+        // instead of asking exact-real arithmetic to prove it a second time.
+        Segment2::Line(line) => Ok(Classification::Decided(Segment2::Line(
+            line.fragment_between_with_source_range_after_distinct_endpoints(
                 start.point.clone(),
                 end.point.clone(),
                 ParamRange::new(start.param.clone(), end.param.clone()),
-            )
-            .map(Segment2::Line)
-            .map(Classification::Decided),
+            ),
+        ))),
         Segment2::Arc(arc) => arc
             .fragment_between_sweep_range(
                 start.point.clone(),

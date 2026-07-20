@@ -7,6 +7,8 @@
 //! generation role of sweep-line scheduling intersection-reporting framework,
 //! while preserving certified predicates for topology branches.
 
+use std::cmp::Ordering;
+
 use crate::bbox::{Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::curve_string::{
     CurveStringXOverlapCandidates, curve_string_intersection_relation_counts,
@@ -295,6 +297,23 @@ impl<'a> PreparedSegment2<'a> {
         match self {
             Self::Line(line) => line.line_segment().end(),
             Self::Arc(arc) => arc.circular_arc().end(),
+        }
+    }
+
+    /// Classifies whether a point lies on this finite prepared segment.
+    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+        match self {
+            Self::Line(line) => {
+                let side = match line.classify_point(point, policy) {
+                    Classification::Decided(side) => side,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+                line.line_segment()
+                    .contains_point_with_classified_side(point, side, policy)
+            }
+            Self::Arc(arc) => arc.contains_point(point, policy),
         }
     }
 
@@ -700,13 +719,35 @@ impl<'a> PreparedContourView2<'a> {
         point: &Point2,
         policy: &CurvePolicy,
     ) -> Classification<ContourPointLocation> {
-        crate::contour::classify_contour_point_with_cached_aabbs(
-            self.contour,
-            point,
-            self.contour_box(),
-            &self.segment_boxes,
-            policy,
-        )
+        if self
+            .contour_box
+            .as_ref()
+            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
+        {
+            return Classification::Decided(ContourPointLocation::Outside);
+        }
+
+        match prepared_point_on_contour_boundary(self, point, policy) {
+            Classification::Decided(true) => {
+                return Classification::Decided(ContourPointLocation::Boundary);
+            }
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+
+        let winding = match prepared_contour_winding_number_unchecked(self, point, policy) {
+            Classification::Decided(winding) => winding,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let inside = match self.contour.fill_rule() {
+            FillRule::NonZero => winding != 0,
+            FillRule::EvenOdd => winding.rem_euclid(2) != 0,
+        };
+        Classification::Decided(if inside {
+            ContourPointLocation::Inside
+        } else {
+            ContourPointLocation::Outside
+        })
     }
 
     /// Returns true when the point lies on this prepared contour boundary.
@@ -1353,6 +1394,110 @@ fn prepared_segments(segments: &[Segment2]) -> Vec<PreparedSegment2<'_>> {
         .iter()
         .map(PreparedSegment2::from_segment)
         .collect()
+}
+
+fn prepared_point_on_contour_boundary(
+    contour: &PreparedContourView2<'_>,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<bool> {
+    let mut blocker = None;
+    for (index, segment) in contour.prepared_segments.iter().enumerate() {
+        if contour
+            .segment_boxes
+            .get(index)
+            .and_then(Option::as_ref)
+            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
+        {
+            continue;
+        }
+        match segment.contains_point(point, policy) {
+            Classification::Decided(true) => return Classification::Decided(true),
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => {
+                blocker.get_or_insert(reason);
+            }
+        }
+    }
+    match blocker {
+        Some(reason) => Classification::Uncertain(reason),
+        None => Classification::Decided(false),
+    }
+}
+
+fn prepared_contour_winding_number_unchecked(
+    contour: &PreparedContourView2<'_>,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<i32> {
+    let mut winding = 0;
+    for (index, segment) in contour.prepared_segments.iter().enumerate() {
+        if contour
+            .segment_boxes
+            .get(index)
+            .and_then(Option::as_ref)
+            .is_some_and(|bbox| {
+                matches!(
+                    crate::classify::compare_reals(bbox.max_x(), point.x(), policy),
+                    Some(Ordering::Less)
+                )
+            })
+        {
+            continue;
+        }
+
+        let delta = match segment {
+            PreparedSegment2::Line(line) => prepared_line_winding(line, point, policy),
+            PreparedSegment2::Arc(arc) => {
+                crate::contour::process_arc_winding(arc.circular_arc(), point, policy)
+            }
+        };
+        let Some(delta) = delta else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        winding += delta;
+    }
+    Classification::Decided(winding)
+}
+
+fn prepared_line_winding(
+    line: &PreparedLineSeg2<'_>,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Option<i32> {
+    let source = line.line_segment();
+    let start_at_or_below = !matches!(
+        crate::classify::compare_reals(source.start().y(), point.y(), policy)?,
+        Ordering::Greater
+    );
+    let crosses_upward = start_at_or_below
+        && matches!(
+            crate::classify::compare_reals(source.end().y(), point.y(), policy)?,
+            Ordering::Greater
+        );
+    if crosses_upward {
+        return match line.classify_point(point, policy) {
+            Classification::Decided(LineSide::Left) => Some(1),
+            Classification::Decided(LineSide::On | LineSide::Right) => Some(0),
+            Classification::Uncertain(_) => None,
+        };
+    }
+    if start_at_or_below {
+        return Some(0);
+    }
+
+    let end_at_or_below = !matches!(
+        crate::classify::compare_reals(source.end().y(), point.y(), policy)?,
+        Ordering::Greater
+    );
+    if !end_at_or_below {
+        return Some(0);
+    }
+    match line.classify_point(point, policy) {
+        Classification::Decided(LineSide::Left) => Some(0),
+        Classification::Decided(LineSide::On | LineSide::Right) => Some(-1),
+        Classification::Uncertain(_) => None,
+    }
 }
 
 fn prepared_segment_kind_counts(segments: &[PreparedSegment2<'_>]) -> SegmentKindCounts {

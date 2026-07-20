@@ -348,6 +348,27 @@ it at every carrier boundary. The star intersection fell again from 18.742 to
 54.3% faster and the sweep executes 55.3% fewer instructions than the original
 checkpoint.
 
+Split materialization then accounted for almost a quarter of the remaining
+Boolean work. Every adjacent marker pair proved its endpoints distinct with an
+exact squared-distance expression, and retained line fragments repeated the
+same proof in their support-range constructor. Line segments now retain whether
+their construction certified distinct endpoints. After split-marker incidence
+and strict parameter order are established, affine injectivity carries that
+fact to each line fragment; arcs keep the geometric check because a full-circle
+sweep may revisit its start point. The private support-range constructor also
+accepts the immediately preceding endpoint proof instead of recomputing it.
+
+Prepared contour point classification now uses its retained line/arc predicate
+handles for both boundary membership and winding orientation. The canonical
+boundary-first order, half-open winding convention, fill rule, and uncertainty
+behavior remain unchanged; only fixed-endpoint predicate preparation is reused.
+Together these changes reduced the star intersection from 16.925 to 13.453
+ms/iter (20.5%) and rectangle union from 135.149 to 127.385 us/iter (5.7%) in
+the same 15-sample, 50 ms comparative configuration. The complete one-iteration
+Callgrind sweep fell from 631,370,861 to 517,904,109 instructions (18.0%). From
+the original checkpoint, the star lane is now 63.7% faster and the sweep uses
+63.4% fewer instructions, with unchanged output checksums.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

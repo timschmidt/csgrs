@@ -17,6 +17,7 @@ use std::cmp::Ordering;
 pub struct LineSeg2 {
     start: Point2,
     end: Point2,
+    endpoints_decided_distinct: bool,
     support: Option<Rc<LineSupport2>>,
     support_range: Option<ParamRange>,
     offset_provenance: Option<Rc<LineOffsetProvenance2>>,
@@ -50,12 +51,18 @@ pub(crate) enum RetainedLineRelation2 {
 impl LineSeg2 {
     /// Constructs a line segment and rejects equal endpoints when provable.
     pub fn try_new(start: Point2, end: Point2) -> CurveResult<Self> {
-        if start == end || start.distance_squared(&end).zero_status() == ZeroStatus::Zero {
+        if start == end {
             return Err(CurveError::ZeroLengthLine);
         }
+        let endpoints_decided_distinct = match start.distance_squared(&end).zero_status() {
+            ZeroStatus::Zero => return Err(CurveError::ZeroLengthLine),
+            ZeroStatus::NonZero => true,
+            ZeroStatus::Unknown => false,
+        };
         Ok(Self {
             start,
             end,
+            endpoints_decided_distinct,
             support: None,
             support_range: None,
             offset_provenance: None,
@@ -67,6 +74,7 @@ impl LineSeg2 {
         Self {
             start,
             end,
+            endpoints_decided_distinct: false,
             support: None,
             support_range: None,
             offset_provenance: None,
@@ -99,6 +107,10 @@ impl LineSeg2 {
         self.support.is_some()
     }
 
+    pub(crate) const fn endpoints_decided_distinct(&self) -> bool {
+        self.endpoints_decided_distinct
+    }
+
     pub(crate) fn support_start(&self) -> &Point2 {
         self.support
             .as_ref()
@@ -106,9 +118,14 @@ impl LineSeg2 {
     }
 
     pub(crate) fn fragment_between(&self, start: Point2, end: Point2) -> CurveResult<Self> {
-        if start == end || start.distance_squared(&end).zero_status() == ZeroStatus::Zero {
+        if start == end {
             return Err(CurveError::ZeroLengthLine);
         }
+        let endpoints_decided_distinct = match start.distance_squared(&end).zero_status() {
+            ZeroStatus::Zero => return Err(CurveError::ZeroLengthLine),
+            ZeroStatus::NonZero => true,
+            ZeroStatus::Unknown => false,
+        };
         let support = self.support.clone().or_else(|| {
             Some(Rc::new(LineSupport2 {
                 start: self.start.clone(),
@@ -118,21 +135,19 @@ impl LineSeg2 {
         Ok(Self {
             start,
             end,
+            endpoints_decided_distinct,
             support,
             support_range: None,
             offset_provenance: self.offset_provenance.clone(),
         })
     }
 
-    pub(crate) fn fragment_between_with_source_range(
+    pub(crate) fn fragment_between_with_source_range_after_distinct_endpoints(
         &self,
         start: Point2,
         end: Point2,
         source_range: ParamRange,
-    ) -> CurveResult<Self> {
-        if start == end || start.distance_squared(&end).zero_status() == ZeroStatus::Zero {
-            return Err(CurveError::ZeroLengthLine);
-        }
+    ) -> Self {
         let support = self.support.clone().or_else(|| {
             Some(Rc::new(LineSupport2 {
                 start: self.start.clone(),
@@ -149,13 +164,14 @@ impl LineSeg2 {
                     parent.start() + width * source_range.end(),
                 )
             });
-        Ok(Self {
+        Self {
             start,
             end,
+            endpoints_decided_distinct: true,
             support,
             support_range: Some(support_range),
             offset_provenance: self.offset_provenance.clone(),
-        })
+        }
     }
 
     pub(crate) fn retained_support_ranges_decided_disjoint(
@@ -247,9 +263,14 @@ impl LineSeg2 {
     where
         F: FnMut(&Point2) -> Point2,
     {
-        if start == end || start.distance_squared(&end).zero_status() == ZeroStatus::Zero {
+        if start == end {
             return Err(CurveError::ZeroLengthLine);
         }
+        let endpoints_decided_distinct = match start.distance_squared(&end).zero_status() {
+            ZeroStatus::Zero => return Err(CurveError::ZeroLengthLine),
+            ZeroStatus::NonZero => true,
+            ZeroStatus::Unknown => false,
+        };
         let support = self.support.as_ref().map(|support| {
             Rc::new(LineSupport2 {
                 start: map(&support.start),
@@ -259,6 +280,7 @@ impl LineSeg2 {
         Ok(Self {
             start,
             end,
+            endpoints_decided_distinct,
             support,
             support_range: self.support_range.clone(),
             // An arbitrary point map need not preserve signed offset distance.
@@ -290,6 +312,7 @@ impl LineSeg2 {
         Self {
             start: self.end.clone(),
             end: self.start.clone(),
+            endpoints_decided_distinct: self.endpoints_decided_distinct,
             support: self.support.clone(),
             support_range: self
                 .support_range
@@ -320,10 +343,21 @@ impl LineSeg2 {
 
     /// Classifies whether a point lies on this finite line segment.
     pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
-        match self.classify_point(point, policy) {
-            Classification::Decided(LineSide::On) => {}
-            Classification::Decided(_) => return Classification::Decided(false),
+        let side = match self.classify_point(point, policy) {
+            Classification::Decided(side) => side,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        self.contains_point_with_classified_side(point, side, policy)
+    }
+
+    pub(crate) fn contains_point_with_classified_side(
+        &self,
+        point: &Point2,
+        side: LineSide,
+        policy: &CurvePolicy,
+    ) -> Classification<bool> {
+        if side != LineSide::On {
+            return Classification::Decided(false);
         }
 
         match parameter_on_line(self, point, policy) {
