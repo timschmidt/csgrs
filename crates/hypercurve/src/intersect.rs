@@ -491,6 +491,20 @@ impl LineSeg2 {
         if self.retained_support_ranges_decided_disjoint(other, policy) == Some(true) {
             return Ok(LineLineIntersection::None);
         }
+        // The dense rank schedule has already certified overlapping boxes and
+        // crossed its measured 4,096-pair threshold. Reuse that crossover for
+        // a bounded orientation filter; small/public pairs retain their lean
+        // exact path, and preview tolerance semantics remain unchanged.
+        let certified_support_relation = if !aabb_overlap_certified
+            || matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+        {
+            CertifiedLineSegmentSupportRelation::Unknown
+        } else {
+            certified_line_segment_support_relation(self, other)
+        };
+        if certified_support_relation == CertifiedLineSegmentSupportRelation::Separated {
+            return Ok(LineLineIntersection::None);
+        }
         if let Some(relation) = self.retained_offset_relation(other, policy) {
             return match relation {
                 RetainedLineRelation2::Coincident => intersect_collinear(self, other, policy),
@@ -515,6 +529,25 @@ impl LineSeg2 {
             .map_or((&sx, &sy), |(x, y)| (x, y));
 
         let denominator = cross(support_rx, support_ry, support_sx, support_sy);
+        let proper_crossing_certified =
+            certified_support_relation == CertifiedLineSegmentSupportRelation::ProperCrossing;
+        if proper_crossing_certified {
+            let fragment_denominator = (!self.has_retained_support()
+                && !other.has_retained_support())
+            .then_some(denominator);
+            return intersect_non_parallel(
+                self,
+                other,
+                policy,
+                &rx,
+                &ry,
+                &sx,
+                &sy,
+                other.start().delta_from(self.start()),
+                fragment_denominator,
+                true,
+            );
+        }
         match is_zero(&denominator, policy) {
             Some(false) => {
                 // Without retained support, this is the fragment determinant:
@@ -532,6 +565,7 @@ impl LineSeg2 {
                     &sy,
                     other.start().delta_from(self.start()),
                     fragment_denominator,
+                    false,
                 )
             }
             Some(true) => intersect_parallel(
@@ -660,6 +694,79 @@ impl LineSeg2 {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CertifiedLineSegmentSupportRelation {
+    Separated,
+    ProperCrossing,
+    Unknown,
+}
+
+fn certified_line_segment_support_relation(
+    first: &LineSeg2,
+    second: &LineSeg2,
+) -> CertifiedLineSegmentSupportRelation {
+    fn orientations(
+        line: &LineSeg2,
+        first: &Point2,
+        second: &Point2,
+    ) -> (Option<RealSign>, Option<RealSign>) {
+        let start = [line.start().x(), line.start().y()];
+        let end = [line.end().x(), line.end().y()];
+        let first = [first.x(), first.y()];
+        let second = [second.x(), second.y()];
+        // A certified dyadic floating sign is cheapest. Inconclusive rational
+        // inputs get the checked homogeneous i128 filter; overflow or symbolic
+        // coordinates retain `None` for the arbitrary-precision fallback.
+        let floating = Real::prepare_affine_det2_filter(start, end);
+        let mut signs = floating.map_or((None, None), |filter| {
+            (filter.sign(first), filter.sign(second))
+        });
+        if signs.0.is_some() && signs.1.is_some() {
+            return signs;
+        }
+
+        if let Some(exact) = Real::prepare_affine_det2_exact_word_filter(start, end) {
+            signs.0 = signs.0.or_else(|| exact.sign(first));
+            signs.1 = signs.1.or_else(|| exact.sign(second));
+        }
+        signs
+    }
+
+    fn strictly_same_side(first: Option<RealSign>, second: Option<RealSign>) -> bool {
+        matches!(
+            (first, second),
+            (Some(RealSign::Positive), Some(RealSign::Positive))
+                | (Some(RealSign::Negative), Some(RealSign::Negative))
+        )
+    }
+
+    fn strictly_opposite_sides(first: Option<RealSign>, second: Option<RealSign>) -> bool {
+        matches!(
+            (first, second),
+            (Some(RealSign::Positive), Some(RealSign::Negative))
+                | (Some(RealSign::Negative), Some(RealSign::Positive))
+        )
+    }
+
+    let (second_start, second_end) = orientations(first, second.start(), second.end());
+    if strictly_same_side(second_start, second_end) {
+        return CertifiedLineSegmentSupportRelation::Separated;
+    }
+
+    let (first_start, first_end) = orientations(second, first.start(), first.end());
+    if strictly_same_side(first_start, first_end) {
+        return CertifiedLineSegmentSupportRelation::Separated;
+    }
+
+    if strictly_opposite_sides(second_start, second_end)
+        && strictly_opposite_sides(first_start, first_end)
+    {
+        CertifiedLineSegmentSupportRelation::ProperCrossing
+    } else {
+        CertifiedLineSegmentSupportRelation::Unknown
+    }
+}
+
 fn line_segments_decided_axis_separated(
     first: &LineSeg2,
     second: &LineSeg2,
@@ -782,13 +889,14 @@ fn intersect_non_parallel(
     sy: &Real,
     qmp: (Real, Real),
     known_denominator: Option<Real>,
+    proper_crossing_certified: bool,
 ) -> CurveResult<LineLineIntersection> {
     // Exact-rational parameters make endpoint incidence decidable from the
     // parametric solution. Symbolic/mixed lines keep the endpoint-first path:
     // a source endpoint can remain decidable even when an expanded parameter
     // is too complicated to order later in the pipeline.
-    let exact_rational_endpoints =
-        line_endpoints_are_exact_rational(a) && line_endpoints_are_exact_rational(b);
+    let exact_rational_endpoints = proper_crossing_certified
+        || (line_endpoints_are_exact_rational(a) && line_endpoints_are_exact_rational(b));
     if !exact_rational_endpoints
         && let Some(intersection) = non_parallel_endpoint_intersection(a, b, policy)?
     {
@@ -799,7 +907,7 @@ fn intersect_non_parallel(
         denominator
     } else {
         let denominator = cross(rx, ry, sx, sy);
-        if is_zero(&denominator, policy) != Some(false) {
+        if !proper_crossing_certified && is_zero(&denominator, policy) != Some(false) {
             return Ok(LineLineIntersection::Uncertain {
                 reason: UncertaintyReason::RealSign,
             });
@@ -810,12 +918,20 @@ fn intersect_non_parallel(
     // A rational quotient is in [0, 1] exactly when its numerator lies between
     // zero and its denominator in denominator-sign order. Prove misses and
     // endpoint incidence on borrowed carriers before allocating the quotient.
-    let t_exact_location = exact_rational_quotient_unit_interval(&t_numerator, &denominator);
+    let t_exact_location = if proper_crossing_certified {
+        Some(ExactUnitIntervalLocation::Interior)
+    } else {
+        exact_rational_quotient_unit_interval(&t_numerator, &denominator)
+    };
     if t_exact_location == Some(ExactUnitIntervalLocation::Outside) {
         return Ok(LineLineIntersection::None);
     }
     let u_numerator = cross(&qmp.0, &qmp.1, rx, ry);
-    let u_exact_location = exact_rational_quotient_unit_interval(&u_numerator, &denominator);
+    let u_exact_location = if proper_crossing_certified {
+        Some(ExactUnitIntervalLocation::Interior)
+    } else {
+        exact_rational_quotient_unit_interval(&u_numerator, &denominator)
+    };
     if u_exact_location == Some(ExactUnitIntervalLocation::Outside) {
         return Ok(LineLineIntersection::None);
     }
@@ -1686,5 +1802,79 @@ mod tests {
             exact_rational_quotient_unit_interval(&Real::one(), &Real::zero()),
             None,
         );
+    }
+
+    #[test]
+    fn certified_support_separation_is_conservative() {
+        let line = |start: (i32, i32), end: (i32, i32)| {
+            LineSeg2::try_new(
+                Point2::new(Real::from(start.0), Real::from(start.1)),
+                Point2::new(Real::from(end.0), Real::from(end.1)),
+            )
+            .unwrap()
+        };
+
+        let diagonal = line((0, 0), (4, 4));
+        let separated = line((0, 3), (1, 4));
+        let crossing = line((0, 4), (4, 0));
+        assert_eq!(
+            certified_line_segment_support_relation(&diagonal, &separated),
+            CertifiedLineSegmentSupportRelation::Separated,
+        );
+        assert_eq!(
+            certified_line_segment_support_relation(&diagonal, &crossing),
+            CertifiedLineSegmentSupportRelation::ProperCrossing,
+        );
+        assert_eq!(
+            certified_line_segment_support_relation(&diagonal, &line((1, 1), (5, 5))),
+            CertifiedLineSegmentSupportRelation::Unknown,
+        );
+
+        let third = Real::new(hyperreal::Rational::fraction(1, 3).unwrap());
+        let rational_diagonal = LineSeg2::try_new(
+            Point2::new(Real::zero(), Real::zero()),
+            Point2::new(third.clone(), third.clone()),
+        )
+        .unwrap();
+        let rational_crossing = LineSeg2::try_new(
+            Point2::new(Real::zero(), third.clone()),
+            Point2::new(third, Real::zero()),
+        )
+        .unwrap();
+        assert_eq!(
+            certified_line_segment_support_relation(&rational_diagonal, &rational_crossing),
+            CertifiedLineSegmentSupportRelation::ProperCrossing,
+        );
+    }
+
+    #[test]
+    fn certified_aabb_line_kernel_matches_public_fallback() {
+        let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let line = |start, end| Segment2::Line(LineSeg2::try_new(start, end).unwrap());
+        let policy = CurvePolicy::certified();
+
+        for (first, second) in [
+            (
+                line(point(0, 0), point(4, 4)),
+                line(point(0, 3), point(1, 4)),
+            ),
+            (
+                line(point(0, 0), point(4, 4)),
+                line(point(0, 4), point(4, 0)),
+            ),
+            (
+                line(point(0, 0), point(4, 4)),
+                line(point(4, 4), point(6, 2)),
+            ),
+            (
+                line(point(0, 0), point(4, 4)),
+                line(point(1, 1), point(5, 5)),
+            ),
+        ] {
+            assert_eq!(
+                first.intersect_segment_with_certified_aabb_overlap(&second, &policy),
+                first.intersect_segment(&second, &policy),
+            );
+        }
     }
 }

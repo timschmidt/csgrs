@@ -818,6 +818,32 @@ AddressSanitizer differential Boolean fuzzer completed 1,000 runs at 5,732
 coverage points and 16,121 feature edges without a failure; LeakSanitizer alone
 was disabled under ptrace.
 
+Dense decided line candidates now reuse the ranked AABB crossover to run a
+bounded exact-sign orientation filter before arbitrary-precision intersection
+algebra. Exact dyadic coordinates use prepared certified `f64` determinant
+signs; inconclusive rational coordinates retry a checked homogeneous `i128`
+filter. A strict same-side proof rejects the finite segment pair, two opposite-
+side proofs certify a proper crossing, and every zero, overflow, symbolic, or
+otherwise inconclusive case falls through to the existing exact kernel. The
+filter is disabled for edge-preview policy and for small/public line pairs, so
+it neither changes tolerance semantics nor taxes the measured rectangle path.
+
+On star64, all 537 dense candidates were decided by the bounded filter: 399
+strictly separated pairs returned without an exact determinant and 138 proper
+crossings carried their nonzero/interior proof into parameter construction.
+Exact line-pair determinant materializations fell from 1,272 to 414 (67.45%).
+Against the preceding checkpoint, the isolated debug-info Callgrind run fell
+from 28,656,205 to 25,735,959 instructions (10.19%), allocator calls from
+22,742 to 16,941 (25.51%), and deallocator calls from 23,079 to 17,278
+(25.14%). A paired 15-sample, 1,000-iteration release run fell from 0.707 to
+0.615 ms/iter (13.05%); the rectangle Callgrind lane also fell slightly from
+1,275,560 to 1,271,514 instructions, and all checksums were unchanged. Both
+feature-mode test matrices, format, warnings-as-errors Clippy and rustdoc, and
+the certified/fallback differential regressions passed. The AddressSanitizer
+Boolean differential fuzzer completed 1,000 runs at 5,743 coverage points and
+16,123 feature edges without a failure; LeakSanitizer alone remained disabled
+under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
