@@ -640,6 +640,29 @@ mod tests {
     }
 
     #[test]
+    fn line_line_intersection_retains_symbolic_shared_endpoint_parameters() {
+        let shared = Point2::new(Real::pi(), Real::one());
+        let a = LineSeg2::try_new(p(0, 0), shared.clone()).unwrap();
+        let b =
+            LineSeg2::try_new(shared.clone(), Point2::new(Real::pi(), Real::from(2_i8))).unwrap();
+
+        let LineLineIntersection::Point {
+            point,
+            a_param,
+            b_param,
+            kind,
+        } = a.intersect_line(&b, &topology_policy()).unwrap()
+        else {
+            panic!("expected symbolic endpoint point intersection");
+        };
+
+        assert_eq!(point, shared);
+        assert_eq!(a_param, Real::one());
+        assert_eq!(b_param, Real::zero());
+        assert_eq!(kind, IntersectionKind::Endpoint);
+    }
+
+    #[test]
     fn line_line_intersection_detects_collinear_overlap() {
         let a = LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap();
         let b = LineSeg2::try_new(p(2, 0), p(6, 0)).unwrap();

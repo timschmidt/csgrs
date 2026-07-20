@@ -494,6 +494,32 @@ line index, and the exact Boolean differential fuzz target completed 1,000
 AddressSanitizer-instrumented runs at 5,113 coverage points and 14,772 feature
 edges without a failure.
 
+Nonparallel line intersection then spent four shared-endpoint comparisons plus
+four endpoint-incidence predicates before solving parameters even when every
+endpoint coordinate was exact rational. For that structural class, the exact
+rational parameters already decide finite-range membership and endpoint status,
+so the kernel now solves first and reuses a source endpoint whenever either
+parameter is zero or one. Symbolic and mixed
+lines retain the endpoint-first path because their source incidence can remain
+decidable when a derived parameter is not; a dedicated symbolic shared-endpoint
+regression preserves that distinction. Ordinary lines also reuse the already
+certified support determinant as their fragment determinant, borrow their
+ordinary deltas instead of cloning support deltas, and construct the support
+origin delta only in the parallel branch. Cross and dot kernels now use
+`Real::diff_of_products` and `Real::dot2_refs`, preserving the same exact
+polynomials while delaying rational normalization.
+
+Star64 intersection fell from 4.621 to 4.233 ms/iter (8.4%) and rectangle union
+from 62.692 to 59.657 us/iter (4.8%) in the final 15-sample comparative run, with
+unchanged checksums and effectively unchanged offset/NURBS lanes. The complete
+one-iteration Callgrind sweep fell from 161,994,281 to 148,433,531 instructions
+(8.4%). From the original checkpoint, star64 is now 88.6% faster and the sweep
+executes 89.5% fewer instructions. A whole-polynomial point-interpolation route
+was rejected after increasing the sweep to 162,499,975 instructions and
+regressing offset/NURBS timing. The exact Boolean differential fuzz target
+completed 1,000 AddressSanitizer-instrumented runs at 5,156 coverage points and
+14,798 feature edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

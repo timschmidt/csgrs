@@ -477,25 +477,45 @@ impl LineSeg2 {
 
         let (rx, ry) = self.delta();
         let (sx, sy) = other.delta();
-        let qmp = other.start().delta_from(self.start());
-        let (support_rx, support_ry) = if self.has_retained_support() {
-            self.support_delta()
-        } else {
-            (rx.clone(), ry.clone())
-        };
-        let (support_sx, support_sy) = if other.has_retained_support() {
-            other.support_delta()
-        } else {
-            (sx.clone(), sy.clone())
-        };
-        let support_qmp = other.support_start().delta_from(self.support_start());
+        let first_retained_support_delta =
+            self.has_retained_support().then(|| self.support_delta());
+        let second_retained_support_delta =
+            other.has_retained_support().then(|| other.support_delta());
+        let (support_rx, support_ry) = first_retained_support_delta
+            .as_ref()
+            .map_or((&rx, &ry), |(x, y)| (x, y));
+        let (support_sx, support_sy) = second_retained_support_delta
+            .as_ref()
+            .map_or((&sx, &sy), |(x, y)| (x, y));
 
-        let denominator = cross(&support_rx, &support_ry, &support_sx, &support_sy);
+        let denominator = cross(support_rx, support_ry, support_sx, support_sy);
         match is_zero(&denominator, policy) {
-            Some(false) => intersect_non_parallel(self, other, policy, &rx, &ry, &sx, &sy, qmp),
-            Some(true) => {
-                intersect_parallel(self, other, policy, &support_rx, &support_ry, support_qmp)
+            Some(false) => {
+                // Without retained support, this is the fragment determinant:
+                // reuse the nonzero proof instead of rebuilding it below.
+                let fragment_denominator = (!self.has_retained_support()
+                    && !other.has_retained_support())
+                .then_some(denominator);
+                intersect_non_parallel(
+                    self,
+                    other,
+                    policy,
+                    &rx,
+                    &ry,
+                    &sx,
+                    &sy,
+                    other.start().delta_from(self.start()),
+                    fragment_denominator,
+                )
             }
+            Some(true) => intersect_parallel(
+                self,
+                other,
+                policy,
+                support_rx,
+                support_ry,
+                other.support_start().delta_from(self.support_start()),
+            ),
             None if line_segments_decided_axis_separated(self, other, policy) => {
                 Ok(LineLineIntersection::None)
             }
@@ -733,17 +753,31 @@ fn intersect_non_parallel(
     sx: &Real,
     sy: &Real,
     qmp: (Real, Real),
+    known_denominator: Option<Real>,
 ) -> CurveResult<LineLineIntersection> {
-    if let Some(intersection) = non_parallel_endpoint_intersection(a, b, policy)? {
+    // Exact-rational parameters make endpoint incidence decidable from the
+    // parametric solution. Symbolic/mixed lines keep the endpoint-first path:
+    // a source endpoint can remain decidable even when an expanded parameter
+    // is too complicated to order later in the pipeline.
+    let exact_rational_endpoints = a.structural_facts().coordinate_exact.all_exact_rational
+        && b.structural_facts().coordinate_exact.all_exact_rational;
+    if !exact_rational_endpoints
+        && let Some(intersection) = non_parallel_endpoint_intersection(a, b, policy)?
+    {
         return Ok(intersection);
     }
 
-    let denominator = cross(rx, ry, sx, sy);
-    if is_zero(&denominator, policy) != Some(false) {
-        return Ok(LineLineIntersection::Uncertain {
-            reason: UncertaintyReason::RealSign,
-        });
-    }
+    let denominator = if let Some(denominator) = known_denominator {
+        denominator
+    } else {
+        let denominator = cross(rx, ry, sx, sy);
+        if is_zero(&denominator, policy) != Some(false) {
+            return Ok(LineLineIntersection::Uncertain {
+                reason: UncertaintyReason::RealSign,
+            });
+        }
+        denominator
+    };
     let t_numerator = cross(&qmp.0, &qmp.1, sx, sy);
     let u_numerator = cross(&qmp.0, &qmp.1, rx, ry);
     let t = (t_numerator / &denominator)?;
@@ -775,13 +809,33 @@ fn intersect_non_parallel(
     } else {
         IntersectionKind::Crossing
     };
+    let point = if t_endpoint {
+        line_point_at_unit_endpoint(a, &t, policy).unwrap_or_else(|| a.point_at(t.clone()))
+    } else if u_endpoint {
+        line_point_at_unit_endpoint(b, &u, policy).unwrap_or_else(|| a.point_at(t.clone()))
+    } else {
+        a.point_at(t.clone())
+    };
 
     Ok(LineLineIntersection::Point {
-        point: a.point_at(t.clone()),
+        point,
         a_param: t,
         b_param: u,
         kind,
     })
+}
+
+fn line_point_at_unit_endpoint(
+    line: &LineSeg2,
+    parameter: &Real,
+    policy: &CurvePolicy,
+) -> Option<Point2> {
+    match compare_reals(parameter, &Real::zero(), policy)? {
+        Ordering::Equal => Some(line.start().clone()),
+        Ordering::Less | Ordering::Greater => (compare_reals(parameter, &Real::one(), policy)?
+            == Ordering::Equal)
+            .then(|| line.end().clone()),
+    }
 }
 
 fn non_parallel_endpoint_intersection(
@@ -910,11 +964,11 @@ fn parameter_on_line(line: &LineSeg2, point: &Point2, policy: &CurvePolicy) -> C
 }
 
 fn cross(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
-    (ax * by) - (ay * bx)
+    Real::diff_of_products(ax, by, ay, bx)
 }
 
 fn dot(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
-    (ax * bx) + (ay * by)
+    Real::dot2_refs([ax, ay], [bx, by])
 }
 
 fn line_arc_two_candidates(
