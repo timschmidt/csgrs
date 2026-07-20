@@ -1,10 +1,12 @@
 //! Normalized topology events for contour-level algorithms.
 //!
-//! Event collection is deliberately a candidate-filtered pair scan today, not
-//! a sweep-line implementation. Bounding boxes only remove pairs whose
-//! disjointness is decided; every remaining candidate goes through the exact
-//! segment kernels. An output-sensitive sweep can replace this flat scan when
-//! the crate needs larger arrangements.
+//! Small event collections use a candidate-filtered pair scan. Larger contour
+//! pairs order decided segment boxes by their exact minimum x coordinate and
+//! stop each one-sided scan after certified x separation. Bounding boxes only
+//! remove pairs whose disjointness is decided; every remaining candidate goes
+//! through the exact segment kernels.
+
+use std::cmp::Ordering;
 
 use hyperreal::Real;
 
@@ -436,17 +438,16 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     }
 
     let mut events = Vec::new();
-
-    for (a_segment_index, a_segment) in a.segments().iter().enumerate() {
-        for (b_segment_index, b_segment) in b.segments().iter().enumerate() {
-            if let (Some(Some(a_box)), Some(Some(b_box))) = (
-                a_segment_boxes.get(a_segment_index),
-                b_segment_boxes.get(b_segment_index),
-            ) && aabbs_decided_disjoint(a_box, b_box, policy)
-            {
-                continue;
-            }
-
+    if let Some(candidate_pairs) = swept_segment_pair_candidates(
+        a_segment_boxes,
+        b_segment_boxes,
+        a.segments().len(),
+        b.segments().len(),
+        policy,
+    ) {
+        for (a_segment_index, b_segment_index) in candidate_pairs {
+            let a_segment = &a.segments()[a_segment_index];
+            let b_segment = &b.segments()[b_segment_index];
             let relation = a_segment.intersect_segment(b_segment, policy)?;
             append_segment_relation_events(
                 &mut events,
@@ -458,9 +459,108 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
                 policy,
             )?;
         }
+    } else {
+        for (a_segment_index, a_segment) in a.segments().iter().enumerate() {
+            for (b_segment_index, b_segment) in b.segments().iter().enumerate() {
+                if let (Some(Some(a_box)), Some(Some(b_box))) = (
+                    a_segment_boxes.get(a_segment_index),
+                    b_segment_boxes.get(b_segment_index),
+                ) && aabbs_decided_disjoint(a_box, b_box, policy)
+                {
+                    continue;
+                }
+
+                let relation = a_segment.intersect_segment(b_segment, policy)?;
+                append_segment_relation_events(
+                    &mut events,
+                    a_segment_index,
+                    b_segment_index,
+                    a_segment,
+                    b_segment,
+                    relation,
+                    policy,
+                )?;
+            }
+        }
     }
 
     ContourIntersectionSet::new_with_policy(events, policy)
+}
+
+fn swept_segment_pair_candidates(
+    first_boxes: &[Option<Aabb2>],
+    second_boxes: &[Option<Aabb2>],
+    first_segment_count: usize,
+    second_segment_count: usize,
+    policy: &CurvePolicy,
+) -> Option<Vec<(usize, usize)>> {
+    const MIN_CARTESIAN_PAIR_COUNT: usize = 256;
+
+    if first_segment_count.checked_mul(second_segment_count)? < MIN_CARTESIAN_PAIR_COUNT {
+        return None;
+    }
+
+    let mut ordered_second: Vec<_> = (0..second_segment_count)
+        .filter_map(|index| {
+            second_boxes
+                .get(index)
+                .and_then(Option::as_ref)
+                .map(|bbox| (index, bbox))
+        })
+        .collect();
+    ordered_second.sort_by(|(left_index, left), (right_index, right)| {
+        compare_reals(left.min_x(), right.min_x(), policy)
+            .unwrap_or(Ordering::Equal)
+            .then_with(|| left_index.cmp(right_index))
+    });
+    if ordered_second.windows(2).any(|window| {
+        !matches!(
+            compare_reals(window[0].1.min_x(), window[1].1.min_x(), policy),
+            Some(Ordering::Less | Ordering::Equal)
+        )
+    }) {
+        return None;
+    }
+
+    let unknown_second: Vec<_> = (0..second_segment_count)
+        .filter(|index| second_boxes.get(*index).and_then(Option::as_ref).is_none())
+        .collect();
+    let mut candidates = Vec::new();
+    for first_index in 0..first_segment_count {
+        let Some(Some(first_box)) = first_boxes.get(first_index) else {
+            candidates
+                .extend((0..second_segment_count).map(|second_index| (first_index, second_index)));
+            continue;
+        };
+
+        candidates.extend(
+            unknown_second
+                .iter()
+                .copied()
+                .map(|second_index| (first_index, second_index)),
+        );
+        for (second_index, second_box) in &ordered_second {
+            match compare_reals(second_box.min_x(), first_box.max_x(), policy) {
+                Some(Ordering::Greater) => break,
+                Some(Ordering::Less | Ordering::Equal) | None => {}
+            }
+            if matches!(
+                compare_reals(second_box.max_x(), first_box.min_x(), policy),
+                Some(Ordering::Less)
+            ) || matches!(
+                compare_reals(first_box.max_y(), second_box.min_y(), policy),
+                Some(Ordering::Less)
+            ) || matches!(
+                compare_reals(second_box.max_y(), first_box.min_y(), policy),
+                Some(Ordering::Less)
+            ) {
+                continue;
+            }
+            candidates.push((first_index, *second_index));
+        }
+    }
+    candidates.sort_unstable();
+    Some(candidates)
 }
 
 pub(crate) fn intersect_contour_self_with_cached_aabbs(
@@ -531,8 +631,8 @@ fn append_segment_relation_events(
         }) => events.push(ContourIntersection::Point(ContourPointIntersection {
             a_segment_index,
             b_segment_index,
-            a_segment_kind: a_segment.structural_facts().kind,
-            b_segment_kind: b_segment.structural_facts().kind,
+            a_segment_kind: a_segment.kind(),
+            b_segment_kind: b_segment.kind(),
             point,
             a_param,
             b_param,
@@ -545,8 +645,8 @@ fn append_segment_relation_events(
         }) => events.push(ContourIntersection::Overlap(ContourOverlapIntersection {
             a_segment_index,
             b_segment_index,
-            a_segment_kind: a_segment.structural_facts().kind,
-            b_segment_kind: b_segment.structural_facts().kind,
+            a_segment_kind: a_segment.kind(),
+            b_segment_kind: b_segment.kind(),
             segment: Segment2::Line(segment),
             a_range,
             b_range,
@@ -621,8 +721,8 @@ fn append_segment_relation_events(
         }) => events.push(ContourIntersection::Overlap(ContourOverlapIntersection {
             a_segment_index,
             b_segment_index,
-            a_segment_kind: a_segment.structural_facts().kind,
-            b_segment_kind: b_segment.structural_facts().kind,
+            a_segment_kind: a_segment.kind(),
+            b_segment_kind: b_segment.kind(),
             segment: Segment2::Arc(segment),
             a_range,
             b_range,
@@ -753,8 +853,8 @@ fn append_certified_point_event(
         events.push(ContourIntersection::Point(ContourPointIntersection {
             a_segment_index,
             b_segment_index,
-            a_segment_kind: a_segment.structural_facts().kind,
-            b_segment_kind: b_segment.structural_facts().kind,
+            a_segment_kind: a_segment.kind(),
+            b_segment_kind: b_segment.kind(),
             point,
             a_param,
             b_param,
@@ -784,8 +884,8 @@ fn append_uncertain(
         ContourUncertainIntersection {
             a_segment_index,
             b_segment_index,
-            a_segment_kind: a_segment.structural_facts().kind,
-            b_segment_kind: b_segment.structural_facts().kind,
+            a_segment_kind: a_segment.kind(),
+            b_segment_kind: b_segment.kind(),
             reason,
         },
     ));
@@ -854,4 +954,45 @@ fn insertion_index(
         }
     }
     Some(sorted.len())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn bbox(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Aabb2 {
+        Aabb2::new_unchecked(
+            Point2::new(Real::from(min_x), Real::from(min_y)),
+            Point2::new(Real::from(max_x), Real::from(max_y)),
+        )
+    }
+
+    #[test]
+    fn swept_candidates_match_flat_decided_aabb_filter() {
+        let policy = CurvePolicy::certified();
+        let first: Vec<_> = (0..16)
+            .map(|index| Some(bbox(index * 3, -1, index * 3 + 2, 1)))
+            .collect();
+        let mut second: Vec<_> = (0..16)
+            .map(|index| Some(bbox(index * 3 + 1, 0, index * 3 + 3, 2)))
+            .collect();
+        second[7] = None;
+
+        let swept =
+            swept_segment_pair_candidates(&first, &second, first.len(), second.len(), &policy)
+                .expect("large exact boxes support the retained x sweep");
+        let mut flat = Vec::new();
+        for (first_index, first_box) in first.iter().enumerate() {
+            for (second_index, second_box) in second.iter().enumerate() {
+                if let (Some(first_box), Some(second_box)) = (first_box, second_box)
+                    && aabbs_decided_disjoint(first_box, second_box, &policy)
+                {
+                    continue;
+                }
+                flat.push((first_index, second_index));
+            }
+        }
+
+        assert_eq!(swept, flat);
+    }
 }

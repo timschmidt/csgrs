@@ -1067,6 +1067,14 @@ pub enum Segment2 {
 }
 
 impl Segment2 {
+    /// Returns the segment primitive family without computing structural facts.
+    pub const fn kind(&self) -> crate::SegmentKind {
+        match self {
+            Self::Line(_) => crate::SegmentKind::Line,
+            Self::Arc(_) => crate::SegmentKind::Arc,
+        }
+    }
+
     /// Constructs a native segment from a bulge value.
     ///
     /// Zero bulge maps to a line. Nonzero bulge maps to a circular arc.

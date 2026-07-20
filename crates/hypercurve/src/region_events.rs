@@ -5,11 +5,12 @@
 //! sweep-line scheduling intersection reporting work: candidate generation may
 //! be optimized, but topology still depends on the exact segment relation.
 
+use std::cell::OnceCell;
 use std::collections::BTreeMap;
 
 use hyperreal::Real;
 
-use crate::bbox::{aabbs_decided_disjoint, decided_contour_aabb};
+use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::compare_reals;
 use crate::{
     Classification, ContourIntersection, ContourIntersectionSet, ContourOperand, CurveError,
@@ -365,13 +366,19 @@ pub(crate) fn intersect_region_views(
 ) -> CurveResult<RegionIntersectionSet> {
     let mut pairs = Vec::new();
     let mut workload = RegionIntersectionWorkload::default();
+    let first_material_boxes = contour_intersection_aabbs(first.material_contours(), policy);
+    let first_hole_boxes = contour_intersection_aabbs(first.hole_contours(), policy);
+    let second_material_boxes = contour_intersection_aabbs(second.material_contours(), policy);
+    let second_hole_boxes = contour_intersection_aabbs(second.hole_contours(), policy);
 
     collect_role_pairs(
         &mut pairs,
         &mut workload,
         first.material_contours(),
+        &first_material_boxes,
         RegionContourRole::Material,
         second.material_contours(),
+        &second_material_boxes,
         RegionContourRole::Material,
         policy,
     )?;
@@ -379,8 +386,10 @@ pub(crate) fn intersect_region_views(
         &mut pairs,
         &mut workload,
         first.material_contours(),
+        &first_material_boxes,
         RegionContourRole::Material,
         second.hole_contours(),
+        &second_hole_boxes,
         RegionContourRole::Hole,
         policy,
     )?;
@@ -388,8 +397,10 @@ pub(crate) fn intersect_region_views(
         &mut pairs,
         &mut workload,
         first.hole_contours(),
+        &first_hole_boxes,
         RegionContourRole::Hole,
         second.material_contours(),
+        &second_material_boxes,
         RegionContourRole::Material,
         policy,
     )?;
@@ -397,8 +408,10 @@ pub(crate) fn intersect_region_views(
         &mut pairs,
         &mut workload,
         first.hole_contours(),
+        &first_hole_boxes,
         RegionContourRole::Hole,
         second.hole_contours(),
+        &second_hole_boxes,
         RegionContourRole::Hole,
         policy,
     )?;
@@ -411,6 +424,24 @@ pub(crate) fn intersect_region_views(
         workload.skipped_aabb_pair_count,
         workload.tested_pair_count,
     )
+}
+
+struct ContourIntersectionAabbs {
+    contour: Option<Aabb2>,
+    segments: OnceCell<Vec<Option<Aabb2>>>,
+}
+
+fn contour_intersection_aabbs(
+    contours: &[&crate::Contour2],
+    policy: &CurvePolicy,
+) -> Vec<ContourIntersectionAabbs> {
+    contours
+        .iter()
+        .map(|contour| ContourIntersectionAabbs {
+            contour: decided_contour_aabb(contour, policy),
+            segments: OnceCell::new(),
+        })
+        .collect()
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -465,36 +496,52 @@ fn collect_role_pairs(
     pairs: &mut Vec<RegionContourIntersection>,
     workload: &mut RegionIntersectionWorkload,
     first_contours: &[&crate::Contour2],
+    first_boxes: &[ContourIntersectionAabbs],
     first_role: RegionContourRole,
     second_contours: &[&crate::Contour2],
+    second_boxes: &[ContourIntersectionAabbs],
     second_role: RegionContourRole,
     policy: &CurvePolicy,
 ) -> CurveResult<()> {
-    let first_boxes: Vec<_> = first_contours
-        .iter()
-        .map(|contour| decided_contour_aabb(contour, policy))
-        .collect();
-    let second_boxes: Vec<_> = second_contours
-        .iter()
-        .map(|contour| decided_contour_aabb(contour, policy))
-        .collect();
-
     for (first_index, first_contour) in first_contours.iter().enumerate() {
         for (second_index, second_contour) in second_contours.iter().enumerate() {
             workload.candidate_pair_count += 1;
             // Region event collection is still contour-pair based. Bounding
             // intervals are only candidate filters: decided disjoint boxes skip
             // the pair, while uncertain boxes fall through to exact events.
-            if let (Some(first_box), Some(second_box)) =
-                (&first_boxes[first_index], &second_boxes[second_index])
-                && aabbs_decided_disjoint(first_box, second_box, policy)
+            if let (Some(first_box), Some(second_box)) = (
+                &first_boxes[first_index].contour,
+                &second_boxes[second_index].contour,
+            ) && aabbs_decided_disjoint(first_box, second_box, policy)
             {
                 workload.skipped_aabb_pair_count += 1;
                 continue;
             }
 
             workload.tested_pair_count += 1;
-            let intersections = first_contour.intersect_contour(second_contour, policy)?;
+            let first_segment_boxes = first_boxes[first_index].segments.get_or_init(|| {
+                first_contour
+                    .segments()
+                    .iter()
+                    .map(|segment| decided_segment_aabb(segment, policy))
+                    .collect()
+            });
+            let second_segment_boxes = second_boxes[second_index].segments.get_or_init(|| {
+                second_contour
+                    .segments()
+                    .iter()
+                    .map(|segment| decided_segment_aabb(segment, policy))
+                    .collect()
+            });
+            let intersections = crate::events::intersect_contours_with_cached_aabbs(
+                first_contour,
+                second_contour,
+                first_boxes[first_index].contour.as_ref(),
+                second_boxes[second_index].contour.as_ref(),
+                first_segment_boxes,
+                second_segment_boxes,
+                policy,
+            )?;
             if intersections.is_empty() {
                 continue;
             }

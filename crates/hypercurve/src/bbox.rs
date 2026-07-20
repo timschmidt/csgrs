@@ -168,6 +168,25 @@ impl Aabb2 {
         curve: &CurveString2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
+        if curve
+            .segments()
+            .iter()
+            .all(|segment| matches!(segment, Segment2::Line(_)))
+        {
+            // Curve strings retain exact endpoint connectivity. Every line
+            // endpoint except the final one is therefore the next segment's
+            // start, so visit each authored vertex once instead of boxing every
+            // edge and repeatedly unioning the same shared vertices.
+            return Ok(Self::from_points(
+                curve
+                    .segments()
+                    .iter()
+                    .map(Segment2::start)
+                    .chain(curve.segments().last().map(Segment2::end)),
+                policy,
+            ));
+        }
+
         let mut segments = curve.segments().iter();
         let Some(first) = segments.next() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -197,6 +216,19 @@ impl Aabb2 {
         contour: &Contour2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
+        if contour
+            .segments()
+            .iter()
+            .all(|segment| matches!(segment, Segment2::Line(_)))
+        {
+            // A contour is closed and endpoint-connected, so its segment starts
+            // are exactly its distinct authored vertex visits. The final end is
+            // the first start and need not be compared again.
+            return Ok(Self::from_points(
+                contour.segments().iter().map(Segment2::start),
+                policy,
+            ));
+        }
         Self::from_curve_string(contour.curve_string(), policy)
     }
 

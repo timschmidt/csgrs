@@ -8,7 +8,7 @@
 use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,
     CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey, RegionContourRole,
-    RegionIntersectionSet, RegionSide, RegionView2, RetainedTopologyStatus, Segment2, SegmentKind,
+    RegionIntersectionSet, RegionSide, RegionView2, RetainedTopologyStatus, SegmentKind,
     SegmentKindCounts, UncertaintyReason,
 };
 
@@ -884,12 +884,12 @@ fn region_contour_output_fragment_reports(
         .map(
             |(output_fragment_index, fragment)| RegionContourOutputFragmentReport2 {
                 source_segment_index: fragment.source_segment_index,
-                source_segment_kind: segment_kind(&fragment.segment),
+                source_segment_kind: fragment.segment.kind(),
                 source_segment_start_point: fragment.source_segment_start_point.clone(),
                 source_segment_end_point: fragment.source_segment_end_point.clone(),
                 source_range: fragment.source_range.clone(),
                 output_fragment_index,
-                output_fragment_kind: segment_kind(&fragment.segment),
+                output_fragment_kind: fragment.segment.kind(),
             },
         )
         .collect()
@@ -898,7 +898,7 @@ fn region_contour_output_fragment_reports(
 fn contour_segment_kind_counts(contour: &Contour2) -> SegmentKindCounts {
     let mut counts = SegmentKindCounts::default();
     for segment in contour.segments() {
-        match segment_kind(segment) {
+        match segment.kind() {
             SegmentKind::Line => counts.lines += 1,
             SegmentKind::Arc => counts.arcs += 1,
         }
@@ -909,19 +909,12 @@ fn contour_segment_kind_counts(contour: &Contour2) -> SegmentKindCounts {
 fn fragment_set_segment_kind_counts(fragments: &ContourFragmentSet) -> SegmentKindCounts {
     let mut counts = SegmentKindCounts::default();
     for fragment in fragments.fragments() {
-        match segment_kind(&fragment.segment) {
+        match fragment.segment.kind() {
             SegmentKind::Line => counts.lines += 1,
             SegmentKind::Arc => counts.arcs += 1,
         }
     }
     counts
-}
-
-const fn segment_kind(segment: &Segment2) -> SegmentKind {
-    match segment {
-        Segment2::Line(_) => SegmentKind::Line,
-        Segment2::Arc(_) => SegmentKind::Arc,
-    }
 }
 
 fn split_keyed_contour(

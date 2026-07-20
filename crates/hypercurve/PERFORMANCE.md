@@ -604,6 +604,40 @@ and the exact Boolean differential fuzz target all passed; the latter completed
 1,000 AddressSanitizer-instrumented runs at 5,587 coverage points and 15,636 feature
 edges without a failure.
 
+Exact AABB construction then remained the largest Hypercurve-owned source of
+coordinate cloning. A connected all-line curve string previously boxed both ends
+of every edge and repeatedly unioned shared vertices; closed contours also revisited
+their final endpoint even though it is the first vertex. Line strings now visit each
+authored vertex once, and line contours visit each segment start once. Mixed and arc
+carriers retain the existing certified sweep-extrema construction. Region event
+collection also retains each contour box and lazily retains each segment-box set once
+across all material/hole role combinations instead of rebuilding the same immutable
+broad-phase evidence for each tested contour pair. Contours rejected by their outer
+boxes never pay for segment boxes.
+
+For contour pairs with at least 256 Cartesian segment pairs, event collection now
+orders decided second-operand boxes by exact minimum x. Each first-operand scan stops
+only after a certified strict x separation; earlier candidates are rejected only by
+the same exact x/y interval comparisons as the flat filter. Missing or uncertain
+boxes remain candidates, an unprovable retained ordering falls back to the flat scan,
+edge contact remains inclusive, and candidate pairs are restored to source segment
+scan order before exact intersection. A differential unit regression compares the
+retained candidates with the original flat AABB filter and includes an unknown box.
+`Segment2::kind` also exposes the authoritative enum family directly so event and
+fragment reports no longer request unrelated structural facts merely to name a
+primitive.
+
+In the final 15-sample comparative run, star64 intersection fell from 1.734 to
+1.565 ms/iter (9.7%) and rectangle union from 35.740 to 30.344 us/iter (15.1%),
+with unchanged checksums. Offset measured 20.854 us/iter and NURBS evaluation
+1.139 us/iter. The complete stripped one-iteration Callgrind sweep fell from
+61,253,225 to 55,566,500 instructions (9.3%). From the original checkpoint,
+star64 is now 95.8% faster and the sweep executes 96.1% fewer instructions. The
+full all-feature and no-default-feature test matrices, warnings-as-errors Clippy
+and rustdoc gates, and the exact Boolean differential fuzz target all passed; the
+latter completed 1,000 AddressSanitizer-instrumented runs at 5,615 coverage points
+and 15,661 feature edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
