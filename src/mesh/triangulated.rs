@@ -39,6 +39,36 @@ impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Mesh<M> {
 
 impl<M: Clone + Send + Sync + std::fmt::Debug> IndexedTriangulated3D for Mesh<M> {
     fn indexed_triangles(&self) -> IndexedTriangleMesh3D {
+        if let Some(layout) = self.polygons.retained_transform_layout()
+            && layout.normals_match_positions
+            && layout.indexed_triangle_pool.is_some()
+            && self.polygons.topology().2
+        {
+            let mut positions = Vec::with_capacity(layout.position_representatives.len());
+            let mut normals = Vec::with_capacity(layout.position_representatives.len());
+            for position_slot in 0..layout.position_representatives.len() {
+                let vertex = layout.position_representative(&self.polygons, position_slot);
+                positions.push(vertex.position.clone());
+                normals.push(vertex.normal.clone());
+            }
+            let faces = layout
+                .corner_position_slots
+                .chunks_exact(3)
+                .map(|slots| {
+                    [
+                        (slots[0], slots[0]),
+                        (slots[1], slots[1]),
+                        (slots[2], slots[2]),
+                    ]
+                })
+                .collect();
+            return IndexedTriangleMesh3D {
+                positions,
+                normals,
+                faces,
+            };
+        }
+
         let position_capacity = self
             .polygons
             .iter()
