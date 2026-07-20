@@ -179,6 +179,103 @@ mod tests {
         }
     }
 
+    #[test]
+    fn dominant_affine_cross_axis_word_path_is_exact() {
+        let rational = |numerator, denominator| {
+            Real::new(Rational::fraction(numerator, denominator).unwrap())
+        };
+        let a = [rational(7, 11), rational(-5, 13), rational(2, 17)];
+        let b = [
+            &a[0] + &rational(1, 2),
+            a[1].clone(),
+            a[2].clone(),
+        ];
+        let c = [
+            a[0].clone(),
+            &a[1] + &rational(2, 3),
+            &a[2] + &rational(3, 5),
+        ];
+
+        assert_eq!(
+            Real::exact_rational_dominant_affine_cross_axis(
+                [&a[0], &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+            ),
+            Some((2, RealSign::Positive))
+        );
+        assert_eq!(
+            Real::exact_rational_dominant_affine_cross_axis(
+                [&a[0], &a[1], &a[2]],
+                [&a[0], &a[1], &a[2]],
+                [&c[0], &c[1], &c[2]],
+            ),
+            None
+        );
+
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut random_real = || {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let numerator = i64::try_from((state >> 32) % 101).unwrap() - 50;
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let denominator = (state >> 32) % 19 + 1;
+            Real::new(Rational::fraction(numerator, denominator).unwrap())
+        };
+        for _ in 0..256 {
+            let points: [[Real; 3]; 3] =
+                core::array::from_fn(|_| core::array::from_fn(|_| random_real()));
+            let rationals = points.each_ref().map(|point| {
+                point
+                    .each_ref()
+                    .map(|value| value.exact_rational_ref().unwrap())
+            });
+            let ab: [Rational; 3] =
+                core::array::from_fn(|axis| rationals[1][axis] - rationals[0][axis]);
+            let ac: [Rational; 3] =
+                core::array::from_fn(|axis| rationals[2][axis] - rationals[0][axis]);
+            let components = [
+                Rational::signed_product_sum2(
+                    [true, false],
+                    [[&ab[1], &ac[2]], [&ab[2], &ac[1]]],
+                ),
+                Rational::signed_product_sum2(
+                    [true, false],
+                    [[&ab[2], &ac[0]], [&ab[0], &ac[2]]],
+                ),
+                Rational::signed_product_sum2(
+                    [true, false],
+                    [[&ab[0], &ac[1]], [&ab[1], &ac[0]]],
+                ),
+            ];
+            let squares = components.each_ref().map(|value| value * value);
+            let mut axis = 0;
+            for candidate in 1..3 {
+                if squares[candidate] > squares[axis] {
+                    axis = candidate;
+                }
+            }
+            let expected = if components[axis].is_positive() {
+                Some((axis, RealSign::Positive))
+            } else if components[axis].is_negative() {
+                Some((axis, RealSign::Negative))
+            } else {
+                None
+            };
+            assert_eq!(
+                Real::exact_rational_dominant_affine_cross_axis(
+                    points[0].each_ref(),
+                    points[1].each_ref(),
+                    points[2].each_ref(),
+                ),
+                expected
+            );
+        }
+    }
+
     fn exact_linear_form3_sign(coefficients: [&Real; 4], point: [&Real; 3]) -> RealSign {
         let [a, b, c, d] = coefficients.map(|value| value.exact_rational().unwrap());
         let [x, y, z] = point.map(|value| value.exact_rational().unwrap());

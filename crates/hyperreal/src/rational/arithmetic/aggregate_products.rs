@@ -895,6 +895,120 @@ impl Rational {
         Some((positive, negative, common_denominator))
     }
 
+    pub(crate) fn dominant_affine_cross_axis_words(
+        a: [&Self; 3],
+        b: [&Self; 3],
+        c: [&Self; 3],
+    ) -> Option<(usize, Sign)> {
+        type Word = (Sign, u128, u128);
+
+        fn words(values: [&Rational; 3]) -> Option<[Word; 3]> {
+            let word = |value: &Rational| {
+                Some((
+                    value.sign,
+                    value.numerator.to_u128()?,
+                    value.denominator.to_u128()?,
+                ))
+            };
+            Some([word(values[0])?, word(values[1])?, word(values[2])?])
+        }
+
+        fn difference(left: Word, right: Word) -> Option<Word> {
+            let (left_scale, right_scale, denominator) = if left.2 == right.2 {
+                (1, 1, left.2)
+            } else {
+                let divisor = Rational::gcd_word(left.2, right.2);
+                let left_scale = right.2 / divisor;
+                (left_scale, left.2 / divisor, left.2.checked_mul(left_scale)?)
+            };
+            let left = (left.0, left.1.checked_mul(left_scale)?);
+            let right = (-right.0, right.1.checked_mul(right_scale)?);
+            let (sign, magnitude) = Rational::signed_word_sum(left, right)?;
+            if sign == NoSign {
+                return Some((NoSign, 0, 1));
+            }
+            let divisor = Rational::gcd_word(magnitude, denominator);
+            Some((sign, magnitude / divisor, denominator / divisor))
+        }
+
+        fn component(ab: [Word; 3], ac: [Word; 3], first: usize, second: usize) -> Option<(u128, u128, u128)> {
+            let products = [
+                Rational::word_product(ab[first], ac[second], true)?,
+                Rational::word_product(ab[second], ac[first], false)?,
+            ];
+            let common_denominator = if products[0].2 == products[1].2 {
+                products[0].2
+            } else {
+                let divisor = Rational::gcd_word(products[0].2, products[1].2);
+                products[0]
+                    .2
+                    .checked_mul(products[1].2 / divisor)?
+            };
+            let mut positive = 0_u128;
+            let mut negative = 0_u128;
+            for (sign, magnitude, denominator) in products {
+                let magnitude = magnitude.checked_mul(common_denominator / denominator)?;
+                match sign {
+                    Plus => positive = positive.checked_add(magnitude)?,
+                    Minus => negative = negative.checked_add(magnitude)?,
+                    NoSign => {},
+                }
+            }
+            Some((positive, negative, common_denominator))
+        }
+
+        fn reduced_magnitude(parts: (u128, u128, u128)) -> (u128, u128, Sign) {
+            let (positive, negative, denominator) = parts;
+            let (magnitude, sign) = match positive.cmp(&negative) {
+                Ordering::Greater => (positive - negative, Plus),
+                Ordering::Less => (negative - positive, Minus),
+                Ordering::Equal => return (0, 1, NoSign),
+            };
+            let divisor = Rational::gcd_word(magnitude, denominator);
+            (magnitude / divisor, denominator / divisor, sign)
+        }
+
+        fn compare_magnitudes(left: (u128, u128), right: (u128, u128)) -> Option<Ordering> {
+            if left.1 == right.1 {
+                return Some(left.0.cmp(&right.0));
+            }
+            let divisor = Rational::gcd_word(left.1, right.1);
+            Some(
+                left.0
+                    .checked_mul(right.1 / divisor)?
+                    .cmp(&right.0.checked_mul(left.1 / divisor)?),
+            )
+        }
+
+        let (a, b, c) = (words(a)?, words(b)?, words(c)?);
+        let ab = [
+            difference(b[0], a[0])?,
+            difference(b[1], a[1])?,
+            difference(b[2], a[2])?,
+        ];
+        let ac = [
+            difference(c[0], a[0])?,
+            difference(c[1], a[1])?,
+            difference(c[2], a[2])?,
+        ];
+        let components = [
+            reduced_magnitude(component(ab, ac, 1, 2)?),
+            reduced_magnitude(component(ab, ac, 2, 0)?),
+            reduced_magnitude(component(ab, ac, 0, 1)?),
+        ];
+        let mut axis = 0;
+        for candidate in 1..3 {
+            if compare_magnitudes(
+                (components[candidate].0, components[candidate].1),
+                (components[axis].0, components[axis].1),
+            )? == Ordering::Greater
+            {
+                axis = candidate;
+            }
+        }
+        (components[axis].2 != NoSign).then_some((axis, components[axis].2))
+    }
+
     fn two_product_word_sum(
         first: (Sign, u128, u128),
         second: (Sign, u128, u128),

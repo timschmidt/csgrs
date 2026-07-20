@@ -81,6 +81,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "certified_incircle2d_sign",
     "certified_insphere3d_sign",
     "certified_linear_form3_sign",
+    "exact_rational_dominant_affine_cross_axis",
     "prepare_affine_det2_exact_word_filter",
     "prepare_affine_det2_filter",
     "prepare_affine_det3_exact_word_filter",

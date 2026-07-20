@@ -72,6 +72,43 @@ impl Real {
         }
     }
 
+    /// Return the dominant component and its sign for `(b - a) × (c - a)`
+    /// when all coordinates fit the checked word-sized exact-rational path.
+    #[doc(hidden)]
+    pub fn exact_rational_dominant_affine_cross_axis(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+    ) -> Option<(usize, RealSign)> {
+        let [ax, ay, az] = a;
+        let [bx, by, bz] = b;
+        let [cx, cy, cz] = c;
+        let a = [
+            ax.exact_rational_ref()?,
+            ay.exact_rational_ref()?,
+            az.exact_rational_ref()?,
+        ];
+        let b = [
+            bx.exact_rational_ref()?,
+            by.exact_rational_ref()?,
+            bz.exact_rational_ref()?,
+        ];
+        let c = [
+            cx.exact_rational_ref()?,
+            cy.exact_rational_ref()?,
+            cz.exact_rational_ref()?,
+        ];
+        let (axis, sign) = Rational::dominant_affine_cross_axis_words(a, b, c)?;
+        Some((
+            axis,
+            match sign {
+                Sign::Plus => RealSign::Positive,
+                Sign::Minus => RealSign::Negative,
+                Sign::NoSign => RealSign::Zero,
+            },
+        ))
+    }
+
     /// Returns storage-level reuse evidence when this value is an exact rational.
     ///
     /// This is an advisory scheduling fact for aggregate arithmetic. It is true
