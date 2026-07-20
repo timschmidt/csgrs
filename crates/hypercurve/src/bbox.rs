@@ -474,6 +474,17 @@ pub(crate) fn aabb_decided_misses_point(
     )
 }
 
+pub(crate) fn aabb_decided_strictly_right_of_point(
+    bbox: &Aabb2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> bool {
+    matches!(
+        compare_reals(bbox.min_x(), point.x(), policy),
+        Some(Ordering::Greater)
+    )
+}
+
 fn include_coordinate(
     min: &mut Real,
     max: &mut Real,

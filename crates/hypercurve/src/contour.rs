@@ -1816,24 +1816,23 @@ fn contour_winding_number_unchecked_with_cached_aabb(
 
     let mut winding = 0;
     for (index, segment) in contour.segments().iter().enumerate() {
+        let segment_box = segment_boxes.get(index).and_then(Option::as_ref);
         // Winding casts a horizontal ray toward positive x. A segment whose
         // certified maximum x is strictly left of the query cannot cross that
         // ray. Boundary membership has already been checked, so equality stays
         // in the exact winding path while strict separation is safe to skip.
-        if segment_boxes
-            .get(index)
-            .and_then(Option::as_ref)
-            .is_some_and(|bbox| {
-                matches!(
-                    compare_reals(bbox.max_x(), point.x(), policy),
-                    Some(Ordering::Less)
-                )
-            })
-        {
+        if segment_box.is_some_and(|bbox| {
+            matches!(
+                compare_reals(bbox.max_x(), point.x(), policy),
+                Some(Ordering::Less)
+            )
+        }) {
             continue;
         }
         let delta = match segment {
-            Segment2::Line(line) => process_line_winding(line.start(), line.end(), point, policy),
+            Segment2::Line(line) => {
+                process_line_winding(line.start(), line.end(), segment_box, point, policy)
+            }
             Segment2::Arc(arc) => process_arc_winding(arc, point, policy),
         };
         let Some(delta) = delta else {
@@ -2114,20 +2113,34 @@ fn same_reversed_segment_cycle(first: &[Segment2], second: &[Segment2]) -> bool 
 fn process_line_winding(
     start: &Point2,
     end: &Point2,
+    segment_box: Option<&Aabb2>,
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<i32> {
     if le_real(start.y(), point.y(), policy)? {
-        if gt_real(end.y(), point.y(), policy)? && is_left(start, end, point, policy)? {
-            Some(1)
-        } else {
-            Some(0)
+        if !gt_real(end.y(), point.y(), policy)? {
+            return Some(0);
         }
-    } else if le_real(end.y(), point.y(), policy)? && !is_left(start, end, point, policy)? {
-        Some(-1)
-    } else {
-        Some(0)
+        if segment_box.is_some_and(|bbox| {
+            crate::bbox::aabb_decided_strictly_right_of_point(bbox, point, policy)
+        }) {
+            return Some(1);
+        }
+        return Some(i32::from(is_left(start, end, point, policy)?));
     }
+    if !le_real(end.y(), point.y(), policy)? {
+        return Some(0);
+    }
+    if segment_box
+        .is_some_and(|bbox| crate::bbox::aabb_decided_strictly_right_of_point(bbox, point, policy))
+    {
+        return Some(-1);
+    }
+    Some(if is_left(start, end, point, policy)? {
+        0
+    } else {
+        -1
+    })
 }
 
 pub(crate) fn process_arc_winding(

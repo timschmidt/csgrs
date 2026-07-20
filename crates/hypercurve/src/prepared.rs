@@ -9,7 +9,10 @@
 
 use std::cmp::Ordering;
 
-use crate::bbox::{Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_segment_aabb};
+use crate::bbox::{
+    Aabb2, aabb_decided_misses_point, aabb_decided_strictly_right_of_point, aabbs_decided_disjoint,
+    decided_segment_aabb,
+};
 use crate::curve_string::{
     CurveStringXOverlapCandidates, curve_string_intersection_relation_counts,
     curve_string_x_overlap_schedule, decided_segment_box_count,
@@ -1432,22 +1435,18 @@ fn prepared_contour_winding_number_unchecked(
 ) -> Classification<i32> {
     let mut winding = 0;
     for (index, segment) in contour.prepared_segments.iter().enumerate() {
-        if contour
-            .segment_boxes
-            .get(index)
-            .and_then(Option::as_ref)
-            .is_some_and(|bbox| {
-                matches!(
-                    crate::classify::compare_reals(bbox.max_x(), point.x(), policy),
-                    Some(Ordering::Less)
-                )
-            })
-        {
+        let segment_box = contour.segment_boxes.get(index).and_then(Option::as_ref);
+        if segment_box.is_some_and(|bbox| {
+            matches!(
+                crate::classify::compare_reals(bbox.max_x(), point.x(), policy),
+                Some(Ordering::Less)
+            )
+        }) {
             continue;
         }
 
         let delta = match segment {
-            PreparedSegment2::Line(line) => prepared_line_winding(line, point, policy),
+            PreparedSegment2::Line(line) => prepared_line_winding(line, segment_box, point, policy),
             PreparedSegment2::Arc(arc) => {
                 crate::contour::process_arc_winding(arc.circular_arc(), point, policy)
             }
@@ -1462,6 +1461,7 @@ fn prepared_contour_winding_number_unchecked(
 
 fn prepared_line_winding(
     line: &PreparedLineSeg2<'_>,
+    segment_box: Option<&Aabb2>,
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<i32> {
@@ -1476,6 +1476,14 @@ fn prepared_line_winding(
             Ordering::Greater
         );
     if crosses_upward {
+        // The y tests prove one upward ray crossing. If the complete line box
+        // is strictly right of the query, that crossing is necessarily on the
+        // positive ray and no orientation predicate is needed. Equality and
+        // uncertain x order stay on the exact predicate path.
+        if segment_box.is_some_and(|bbox| aabb_decided_strictly_right_of_point(bbox, point, policy))
+        {
+            return Some(1);
+        }
         return match line.classify_point(point, policy) {
             Classification::Decided(LineSide::Left) => Some(1),
             Classification::Decided(LineSide::On | LineSide::Right) => Some(0),
@@ -1492,6 +1500,9 @@ fn prepared_line_winding(
     );
     if !end_at_or_below {
         return Some(0);
+    }
+    if segment_box.is_some_and(|bbox| aabb_decided_strictly_right_of_point(bbox, point, policy)) {
+        return Some(-1);
     }
     match line.classify_point(point, policy) {
         Classification::Decided(LineSide::Left) => Some(0),

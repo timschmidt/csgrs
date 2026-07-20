@@ -369,6 +369,18 @@ Callgrind sweep fell from 631,370,861 to 517,904,109 instructions (18.0%). From
 the original checkpoint, the star lane is now 63.7% faster and the sweep uses
 63.4% fewer instructions, with unchanged output checksums.
 
+The next winding profile showed 3,306 exact line-orientation calls despite the
+retained segment boxes. Once a line is certified to straddle the query y, a box
+whose minimum x is strictly greater than the query x proves that the positive
+horizontal ray crosses the line. The crossing direction already determines the
+winding delta, so both prepared and ordinary cached-box classifiers now avoid
+orientation in that case. Equality and uncertain x order still execute the
+exact orientation predicate. This reduced prepared winding orientations to
+1,098 in the comparative sweep, the star intersection to 11.292 ms/iter (16.1%
+below the preceding checkpoint), and the full sweep from 517,904,109 to
+427,921,184 instructions (17.4%). Cumulatively, the star lane and instruction
+sweep are both about 69.5% below the original checkpoint.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
