@@ -6,7 +6,7 @@
 use crate::mesh::Mesh;
 use crate::mesh::Polygon;
 use crate::mesh::polygon::{
-    LazySubdivisionVertexPool, fresh_plane_id, triangulate_indexed_positions,
+    LazySubdivisionVertexPool, fresh_plane_id, triangulate_indexed_positions_into,
 };
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
@@ -343,6 +343,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut face_corners = Vec::new();
         let mut face_position_indices = Vec::new();
         let mut face_normal_indices = Vec::new();
+        let mut face_triangles = Vec::new();
+        let mut face_projected = Vec::new();
         let mut triangles_nondegenerate = true;
         let mut reader = reader;
         let mut line_buffer = String::new();
@@ -462,7 +464,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                             "face mixes vertices with and without normals",
                         ));
                     }
-                    let (face_triangles, plane_id) = if has_normal {
+                    let plane_id = if has_normal {
                         face_position_indices.clear();
                         face_position_indices
                             .extend(corners.iter().map(|&(position, _)| position));
@@ -470,10 +472,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         face_normal_indices.extend(corners.iter().map(|(_, normal)| {
                             normal.expect("face normal presence was checked")
                         }));
-                        (
-                            triangulate_indexed_positions(&vertices, &face_position_indices),
-                            fresh_plane_id(),
-                        )
+                        triangulate_indexed_positions_into(
+                            &vertices,
+                            &face_position_indices,
+                            &mut face_triangles,
+                            &mut face_projected,
+                        );
+                        fresh_plane_id()
                     } else {
                         let face_vertices = corners
                             .iter()
@@ -488,7 +493,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         normals.push(normal);
                         face_normal_indices.clear();
                         face_normal_indices.resize(corners.len(), normal_index);
-                        (face.triangulate_indices(), face.plane_id)
+                        face.triangulate_indices_into(
+                            &mut face_triangles,
+                            &mut face_projected,
+                        );
+                        face.plane_id
                     };
                     if face_triangles.is_empty() {
                         return Err(invalid_obj_data_at_line(
@@ -508,7 +517,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         triangles_nondegenerate =
                             ::hypermesh::Plane::points_are_nondegenerate(a, b, c);
                     }
-                    for triangle in face_triangles {
+                    for &triangle in &face_triangles {
                         triangles.push(ObjTriangle {
                             corners: triangle.map(|corner| {
                                 (corners[corner].0, face_normal_indices[corner])

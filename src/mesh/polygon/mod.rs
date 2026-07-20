@@ -1674,7 +1674,7 @@ pub(crate) fn reserve_plane_ids(count: usize) -> u64 {
 
 mod triangulation;
 #[cfg(feature = "obj-io")]
-pub(crate) use triangulation::triangulate_indexed_positions;
+pub(crate) use triangulation::triangulate_indexed_positions_into;
 
 /// A polygon, defined by a list of vertices.
 /// - `M` is the generic metadata type stored directly on the polygon. Use
