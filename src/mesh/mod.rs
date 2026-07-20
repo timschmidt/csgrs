@@ -2,6 +2,7 @@
 
 use crate::errors::ValidationError;
 use crate::mesh::plane::Plane;
+use crate::triangulated::IndexedTriangleMesh3D;
 
 use crate::vertex::{
     Vertex, cache_position_f64, cache_position_f64_range, cache_shared_position_f64_range,
@@ -307,6 +308,29 @@ struct TransformLayout {
     position_f64: Option<Arc<Vec<[f64; 3]>>>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct IndexedPositionKey([Option<u64>; 3]);
+
+impl IndexedPositionKey {
+    fn new(position: &Point3) -> Self {
+        fn coordinate_key(value: &Real) -> Option<u64> {
+            value.to_f64_lossy().map(|value| {
+                if value == 0.0 {
+                    0.0_f64.to_bits()
+                } else {
+                    value.to_bits()
+                }
+            })
+        }
+
+        Self([
+            coordinate_key(&position.x),
+            coordinate_key(&position.y),
+            coordinate_key(&position.z),
+        ])
+    }
+}
+
 impl TransformLayout {
     fn from_polygons<M: Clone>(polygons: &[Polygon<M>]) -> Self {
         let corner_count = polygons.iter().map(|polygon| polygon.vertices.len()).sum();
@@ -497,6 +521,7 @@ struct MeshPolygonStorage<M: Clone> {
     cuboid_vertex_pool: OnceLock<Arc<LazySubdivisionVertexPool>>,
     transform_layout: OnceLock<Arc<TransformLayout>>,
     manifold: OnceLock<bool>,
+    nondegenerate_triangles: OnceLock<bool>,
     convex_pwn: OnceLock<()>,
     axis_aligned_box: OnceLock<Aabb>,
     centering_offset: OnceLock<Vector3>,
@@ -535,6 +560,7 @@ impl<M: Clone> MeshPolygonStorage<M> {
             cuboid_vertex_pool: OnceLock::new(),
             transform_layout: OnceLock::new(),
             manifold: OnceLock::new(),
+            nondegenerate_triangles: OnceLock::new(),
             convex_pwn: OnceLock::new(),
             axis_aligned_box: OnceLock::new(),
             centering_offset: OnceLock::new(),
@@ -673,6 +699,14 @@ impl<M: Clone> MeshPolygons<M> {
 
     pub(crate) fn retain_manifold_fact(&self, is_manifold: bool) {
         let _ = self.0.manifold.set(is_manifold);
+    }
+
+    pub(crate) fn nondegenerate_triangles_fact(&self) -> Option<bool> {
+        self.0.nondegenerate_triangles.get().copied()
+    }
+
+    pub(crate) fn retain_nondegenerate_triangles_fact(&self, nondegenerate: bool) {
+        let _ = self.0.nondegenerate_triangles.set(nondegenerate);
     }
 
     pub(crate) fn has_convex_pwn_fact(&self) -> bool {
@@ -2059,6 +2093,220 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             polygons: MeshPolygons::new(polygons),
             bounding_box: OnceLock::new(),
         }
+    }
+
+    /// Build a mesh from exact indexed triangle rows.
+    ///
+    /// Equal position rows are canonicalized exactly, while distinct authored
+    /// normals remain separate render vertices. The indexed construction facts
+    /// are retained for transforms, bounds, connectivity, and hypermesh
+    /// adapters, avoiding a later triangle-corner topology reconstruction.
+    pub fn from_indexed_triangles(
+        indexed: IndexedTriangleMesh3D,
+        metadata: M,
+    ) -> Result<Self, ValidationError> {
+        if indexed.faces.is_empty() {
+            return Ok(Self::empty());
+        }
+        for face in &indexed.faces {
+            for &(position, normal) in face {
+                if position >= indexed.positions.len() {
+                    return Err(ValidationError::IndexOutOfRangeWithLen {
+                        index: position,
+                        len: indexed.positions.len(),
+                    });
+                }
+                if normal >= indexed.normals.len() {
+                    return Err(ValidationError::IndexOutOfRangeWithLen {
+                        index: normal,
+                        len: indexed.normals.len(),
+                    });
+                }
+            }
+        }
+
+        let mut source_position_slots = vec![None; indexed.positions.len()];
+        let mut position_buckets = hashbrown::HashMap::<IndexedPositionKey, Vec<usize>>::new();
+        let mut positions = Vec::<Point3>::new();
+        let mut faces = indexed.faces;
+        for face in &mut faces {
+            for (source_position, _) in face {
+                let slot = if let Some(slot) = source_position_slots[*source_position] {
+                    slot
+                } else {
+                    let position = &indexed.positions[*source_position];
+                    let key = IndexedPositionKey::new(position);
+                    let slot = position_buckets.get(&key).and_then(|candidates| {
+                        candidates
+                            .iter()
+                            .copied()
+                            .find(|&slot| positions[slot] == *position)
+                    });
+                    let slot = slot.unwrap_or_else(|| {
+                        let slot = positions.len();
+                        positions.push(position.clone());
+                        position_buckets.entry(key).or_default().push(slot);
+                        slot
+                    });
+                    source_position_slots[*source_position] = Some(slot);
+                    slot
+                };
+                *source_position = slot;
+            }
+        }
+        let nondegenerate = faces.iter().all(|face| {
+            let [a, b, c] = face.map(|(position, _)| position);
+            ::hypermesh::Plane::points_are_nondegenerate(
+                &positions[a],
+                &positions[b],
+                &positions[c],
+            )
+        });
+
+        let mut position_normals = vec![None; positions.len()];
+        let mut normals_match_positions = true;
+        for face in &faces {
+            for &(position, normal) in face {
+                match position_normals[position] {
+                    Some(existing) if existing != normal => normals_match_positions = false,
+                    Some(_) => {},
+                    None => position_normals[position] = Some(normal),
+                }
+            }
+        }
+
+        let base_vertices = positions
+            .iter()
+            .cloned()
+            .map(|position| Vertex::new(position, Vector3::z()))
+            .collect::<Vec<_>>();
+        let mut pool_vertices = Vec::new();
+        let mut pool_faces = Vec::with_capacity(faces.len());
+        if normals_match_positions {
+            pool_vertices.reserve(positions.len());
+            for (position, normal) in base_vertices.iter().zip(position_normals) {
+                let mut vertex = position.clone();
+                vertex.normal = indexed.normals
+                    [normal.expect("used indexed position has an authored normal")]
+                .clone();
+                pool_vertices.push(vertex);
+            }
+            pool_faces.extend(faces.iter().map(|face| face.map(|(position, _)| position)));
+        } else {
+            let mut vertex_slots = hashbrown::HashMap::<(usize, usize), usize>::new();
+            for face in &faces {
+                pool_faces.push(face.map(|(position, normal)| {
+                    *vertex_slots.entry((position, normal)).or_insert_with(|| {
+                        let slot = pool_vertices.len();
+                        let mut vertex = base_vertices[position].clone();
+                        vertex.normal = indexed.normals[normal].clone();
+                        pool_vertices.push(vertex);
+                        slot
+                    })
+                }));
+            }
+        }
+
+        let triangle_count = faces.len();
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new(
+            pool_vertices,
+            Vec::new(),
+            triangle_count,
+            0,
+        ));
+        let first_plane_id = reserve_plane_ids(triangle_count);
+        let polygons = pool_faces
+            .into_iter()
+            .enumerate()
+            .map(|(triangle_slot, indices)| {
+                Polygon::from_lazy_subdivision_triangle(
+                    Arc::clone(&vertex_pool),
+                    triangle_slot,
+                    indices,
+                    metadata.clone(),
+                    first_plane_id
+                        + u64::try_from(triangle_slot).expect("triangle plane slot fits u64"),
+                )
+            })
+            .collect();
+        let mesh = Self::from_polygons_with_topology(
+            polygons,
+            (triangle_count, triangle_count.saturating_mul(3), true),
+        );
+        let corner_position_slots = faces
+            .iter()
+            .flat_map(|face| face.map(|(position, _)| position))
+            .collect::<Vec<_>>();
+        let position_f64 = positions
+            .iter()
+            .map(|position| {
+                Some([
+                    position.x.to_f64_lossy()?,
+                    position.y.to_f64_lossy()?,
+                    position.z.to_f64_lossy()?,
+                ])
+            })
+            .collect::<Option<Vec<_>>>()
+            .map(Arc::new);
+        mesh.retain_shared_position_transform_layout(
+            corner_position_slots,
+            positions.len(),
+            position_f64,
+            normals_match_positions.then(|| Arc::clone(&vertex_pool)),
+            None,
+            normals_match_positions,
+        );
+
+        let mut adjacent = vec![false; positions.len()];
+        let mut edge_counts = hashbrown::HashMap::<(usize, usize), [u8; 2]>::with_capacity(
+            faces.len().saturating_mul(3) / 2,
+        );
+        let mut directed_edges_valid = true;
+        for face in &faces {
+            let positions = face.map(|(position, _)| position);
+            for [left, right] in [
+                [positions[0], positions[1]],
+                [positions[1], positions[2]],
+                [positions[2], positions[0]],
+            ] {
+                if left != right {
+                    adjacent[left] = true;
+                    adjacent[right] = true;
+                    let (edge, direction) = if left < right {
+                        ((left, right), 0)
+                    } else {
+                        ((right, left), 1)
+                    };
+                    let counts = edge_counts.entry(edge).or_insert([0; 2]);
+                    counts[direction] = counts[direction].saturating_add(1);
+                    directed_edges_valid &= counts[direction] <= 1;
+                } else {
+                    directed_edges_valid = false;
+                }
+            }
+        }
+        mesh.polygons.retain_connectivity_counts((
+            positions.len(),
+            adjacent.into_iter().filter(|adjacent| *adjacent).count(),
+        ));
+        mesh.polygons
+            .retain_nondegenerate_triangles_fact(nondegenerate);
+        mesh.polygons.retain_manifold_fact(
+            nondegenerate
+                && directed_edges_valid
+                && !edge_counts.is_empty()
+                && edge_counts.values().all(|counts| *counts == [1, 1]),
+        );
+        let mut bounds = None;
+        for position in &positions {
+            include_point3_bounds(&mut bounds, position);
+        }
+        if let Some((mins, maxs)) = bounds {
+            let bounds = Aabb::new(mins, maxs);
+            let _ = mesh.bounding_box.set(bounds.clone());
+            mesh.polygons.retain_axis_aligned_box_fact(bounds);
+        }
+        Ok(mesh)
     }
 
     pub(crate) fn from_polygons_with_topology(
@@ -4580,6 +4828,41 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         if let Some(graphics) = self.polygons.graphics_mesh() {
             return Ok(graphics.clone());
         }
+        if let Some(layout) = self.polygons.retained_transform_layout()
+            && layout.normals_match_positions
+            && layout.indexed_triangle_pool.is_some()
+            && self.polygons.topology().2
+        {
+            let vertex_count = layout.corner_position_slots.len();
+            let mut vertices = Vec::with_capacity(vertex_count);
+            for &position_slot in layout.corner_position_slots.iter() {
+                let vertex = layout.position_representative(&self.polygons, position_slot);
+                vertices.push((
+                    [
+                        vertex.position.x.clone(),
+                        vertex.position.y.clone(),
+                        vertex.position.z.clone(),
+                    ],
+                    [
+                        vertex.normal.0[0].clone(),
+                        vertex.normal.0[1].clone(),
+                        vertex.normal.0[2].clone(),
+                    ],
+                ));
+            }
+            let indices = (0..vertex_count)
+                .map(|index| {
+                    u32::try_from(index)
+                        .map_err(|_| ::hypermesh::GpuMeshError::VertexCountExceededU32)
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let graphics = GraphicsMesh {
+                vertices: vertices.into(),
+                indices: indices.into(),
+            };
+            self.polygons.retain_graphics_mesh(graphics.clone());
+            return Ok(graphics);
+        }
         let triangle_capacity = self
             .polygons
             .iter()
@@ -6829,6 +7112,51 @@ mod tests {
 
     fn p3(x: f64, y: f64, z: f64) -> Point3 {
         Point3::new(r(x), r(y), r(z))
+    }
+
+    #[test]
+    fn indexed_triangle_constructor_retains_exact_shared_position_facts() {
+        let mesh = Mesh::from_indexed_triangles(
+            IndexedTriangleMesh3D {
+                positions: vec![
+                    p3(0.0, 0.0, 0.0),
+                    p3(2.0, 0.0, 0.0),
+                    p3(0.0, 3.0, 0.0),
+                    p3(0.0, 0.0, 0.0),
+                ],
+                normals: vec![Vector3::z()],
+                faces: vec![[(0, 0), (1, 0), (2, 0)], [(3, 0), (2, 0), (1, 0)]],
+            },
+            (),
+        )
+        .unwrap();
+
+        assert_eq!(mesh.topology_counts(), (2, 6));
+        assert_eq!(mesh.connectivity_counts(), (3, 3));
+        assert_eq!(mesh.to_hypermesh_buffers().positions.len(), 9);
+        assert_eq!(
+            mesh.bounding_box(),
+            Aabb::new(p3(0.0, 0.0, 0.0), p3(2.0, 3.0, 0.0))
+        );
+        assert_eq!(mesh.build_graphics_mesh().vertices.len(), 6);
+    }
+
+    #[test]
+    fn indexed_triangle_constructor_rejects_missing_rows() {
+        let error = Mesh::from_indexed_triangles(
+            IndexedTriangleMesh3D {
+                positions: vec![p3(0.0, 0.0, 0.0)],
+                normals: vec![Vector3::z()],
+                faces: vec![[(0, 0), (1, 0), (0, 0)]],
+            },
+            (),
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            error,
+            ValidationError::IndexOutOfRangeWithLen { index: 1, len: 1 }
+        );
     }
 
     #[test]

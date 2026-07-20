@@ -14,9 +14,9 @@ use std::{
 use csgrs::{
     Real,
     csg::CSG,
-    mesh::{Mesh, Polygon, plane::Plane},
+    mesh::{Mesh, plane::Plane},
     sketch::Profile,
-    vertex::Vertex,
+    triangulated::IndexedTriangleMesh3D,
 };
 use hyperlattice::{Matrix4, Point3, Vector3};
 use support::{Config, Measurement};
@@ -110,6 +110,25 @@ fn orient_closed_triangle_mesh(source: &Mesh<()>) -> Mesh<()> {
         .chunks_exact(3)
         .map(|indices| [indices[0], indices[1], indices[2]])
         .collect::<Vec<_>>();
+    assert_eq!(
+        source.polygons.len(),
+        triangles.len(),
+        "oriented OBJ source must already be triangulated"
+    );
+    let mut triangle_normals: Vec<[Vector3; 3]> = source
+        .polygons
+        .iter()
+        .map(|polygon| {
+            let mut vertices = polygon.vertex_iter();
+            std::array::from_fn(|_| {
+                vertices
+                    .next()
+                    .expect("triangulated polygon has three vertices")
+                    .normal
+                    .clone()
+            })
+        })
+        .collect::<Vec<_>>();
     let mut edges = HashMap::<(usize, usize), Vec<EdgeIncidence>>::new();
     for (triangle_index, triangle) in triangles.iter().enumerate() {
         for [a, b] in [
@@ -160,9 +179,12 @@ fn orient_closed_triangle_mesh(source: &Mesh<()>) -> Mesh<()> {
         }
         components.push(component);
     }
-    for (triangle, flip) in triangles.iter_mut().zip(flipped) {
+    let mut orientation_changed = false;
+    for (triangle_index, (triangle, flip)) in triangles.iter_mut().zip(flipped).enumerate() {
         if flip.expect("every triangle belongs to an oriented component") {
             triangle.swap(1, 2);
+            triangle_normals[triangle_index].swap(1, 2);
+            orientation_changed = true;
         }
     }
 
@@ -192,8 +214,18 @@ fn orient_closed_triangle_mesh(source: &Mesh<()>) -> Mesh<()> {
         if signed_volume < 0.0 {
             for triangle_index in component {
                 triangles[triangle_index].swap(1, 2);
+                triangle_normals[triangle_index].swap(1, 2);
             }
+            orientation_changed = true;
         }
+    }
+
+    // Preserve the source mesh's indexed carrier and retained construction
+    // facts when normalization proves that no triangle needs flipping. The
+    // YeahRight corpus is already consistently outward-oriented, so rebuilding
+    // 11,894 polygons here would benchmark setup loss rather than OBJ import.
+    if !orientation_changed {
+        return source.clone();
     }
 
     let positions = buffers
@@ -207,20 +239,38 @@ fn orient_closed_triangle_mesh(source: &Mesh<()>) -> Mesh<()> {
             )
         })
         .collect::<Vec<_>>();
-    let polygons = triangles
+    let mut normals = Vec::<Vector3>::new();
+    let mut position_normals = vec![Vec::<(Vector3, usize)>::new(); positions.len()];
+    let faces = triangles
         .into_iter()
-        .map(|triangle| {
-            let mut polygon = Polygon::new(
-                triangle
-                    .map(|index| Vertex::new(positions[index].clone(), Vector3::z()))
-                    .to_vec(),
-                (),
-            );
-            polygon.set_new_normal();
-            polygon
+        .zip(triangle_normals)
+        .map(|(triangle, triangle_normals)| {
+            std::array::from_fn(|corner| {
+                let position = triangle[corner];
+                let normal = &triangle_normals[corner];
+                let normal_index = position_normals[position]
+                    .iter()
+                    .find(|(existing, _)| existing == normal)
+                    .map(|(_, index)| *index)
+                    .unwrap_or_else(|| {
+                        let index = normals.len();
+                        normals.push(normal.clone());
+                        position_normals[position].push((normal.clone(), index));
+                        index
+                    });
+                (position, normal_index)
+            })
         })
         .collect();
-    Mesh::from_polygons(polygons)
+    Mesh::from_indexed_triangles(
+        IndexedTriangleMesh3D {
+            positions,
+            normals,
+            faces,
+        },
+        (),
+    )
+    .expect("oriented YeahRight triangle rows stay in range")
 }
 
 fn yeahright_boolean_operand(source: &Mesh<()>) -> Mesh<()> {

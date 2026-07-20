@@ -5,18 +5,50 @@
 
 use crate::mesh::Mesh;
 use crate::mesh::Polygon;
+use crate::mesh::polygon::LazySubdivisionVertexPool;
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::triangulated::IndexedTriangulated3D;
 use crate::vertex::Vertex;
-use hyperlattice::{Point3, Real, Vector3};
+use hashbrown::HashMap;
+use hyperlattice::{Aabb, Point3, Real, Vector3};
 use std::fmt::Debug;
 use std::io::{BufRead, Write};
+use std::sync::Arc;
 
 use super::{IoError, finite_f64, single_line_metadata};
 
 type ObjFace = Vec<(usize, usize)>;
 type ObjBuffers = (Vec<Point3>, Vec<Vector3>, Vec<ObjFace>);
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct ObjPositionKey([Option<u64>; 3]);
+
+impl ObjPositionKey {
+    fn new(position: &Point3) -> Self {
+        fn coordinate_key(value: &Real) -> Option<u64> {
+            value.to_f64_lossy().map(|value| {
+                if value == 0.0 {
+                    0.0_f64.to_bits()
+                } else {
+                    value.to_bits()
+                }
+            })
+        }
+
+        Self([
+            coordinate_key(&position.x),
+            coordinate_key(&position.y),
+            coordinate_key(&position.z),
+        ])
+    }
+}
+
+#[derive(Debug)]
+struct ObjTriangle {
+    corners: [(usize, usize); 3],
+    plane_id: u64,
+}
 
 fn checked_obj_index(index: usize, limit: &'static str) -> Result<usize, IoError> {
     index.checked_add(1).ok_or(IoError::SizeOverflow {
@@ -108,6 +140,74 @@ fn parse_obj_real(text: &str) -> Result<Real, hyperlattice::Problem> {
         normalized.push_str(&digits[decimal_position..]);
     }
     normalized.parse()
+}
+
+fn parse_obj_normal(coordinates: [&str; 3], line_number: usize) -> Result<Vector3, IoError> {
+    let mut values = [0.0_f64; 3];
+    for (axis, (text, label)) in coordinates.into_iter().zip(["x", "y", "z"]).enumerate() {
+        values[axis] = text.parse::<f64>().map_err(|error| {
+            invalid_obj_data_at_line(
+                line_number,
+                format!("Invalid normal {label} coordinate: {error}"),
+            )
+        })?;
+    }
+    let length = values[0].hypot(values[1]).hypot(values[2]);
+    if !values.iter().all(|value| value.is_finite()) || !length.is_finite() || length == 0.0 {
+        return Err(invalid_obj_data_at_line(
+            line_number,
+            "Invalid normal coordinate: OBJ normals must be finite and non-zero",
+        ));
+    }
+
+    let normalized = values.map(|value| value / length);
+    Ok(Vector3::from_xyz(
+        Real::try_from(normalized[0]).map_err(|error| {
+            invalid_obj_data_at_line(
+                line_number,
+                format!("Invalid normal x coordinate: {error}"),
+            )
+        })?,
+        Real::try_from(normalized[1]).map_err(|error| {
+            invalid_obj_data_at_line(
+                line_number,
+                format!("Invalid normal y coordinate: {error}"),
+            )
+        })?,
+        Real::try_from(normalized[2]).map_err(|error| {
+            invalid_obj_data_at_line(
+                line_number,
+                format!("Invalid normal z coordinate: {error}"),
+            )
+        })?,
+    ))
+}
+
+fn include_obj_coordinate(value: &Real, minimum: &mut Real, maximum: &mut Real) {
+    if matches!(
+        hyperlimit::compare_reals(value, minimum).value(),
+        Some(std::cmp::Ordering::Less)
+    ) {
+        *minimum = value.clone();
+    }
+    if matches!(
+        hyperlimit::compare_reals(value, maximum).value(),
+        Some(std::cmp::Ordering::Greater)
+    ) {
+        *maximum = value.clone();
+    }
+}
+
+fn obj_bounds(positions: &[Point3]) -> Option<Aabb> {
+    let first = positions.first()?.clone();
+    let mut minimum = first.clone();
+    let mut maximum = first;
+    for position in &positions[1..] {
+        include_obj_coordinate(&position.x, &mut minimum.x, &mut maximum.x);
+        include_obj_coordinate(&position.y, &mut minimum.y, &mut maximum.y);
+        include_obj_coordinate(&position.z, &mut minimum.z, &mut maximum.z);
+    }
+    Some(Aabb::new(minimum, maximum))
 }
 
 fn build_obj_buffers<T: IndexedTriangulated3D>(shape: &T) -> Result<ObjBuffers, IoError> {
@@ -226,56 +326,67 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     #[doc = " * `metadata` - Optional metadata to attach to all polygons"]
     ///
     /// Primitive OBJ coordinates are accepted only after they promote through
-    /// the shared hyperlattice boundary adapters. Vertex normals are
-    /// checked-normalized before entering mesh state, so non-finite or zero
-    /// normals fail as malformed OBJ data rather than being silently sanitized
-    /// by [`Vertex::new`]. This keeps file import aligned with Yap, "Towards
+    /// the shared hyperlattice boundary adapters. Vertex normals cross the
+    /// finite file-format boundary as binary64 values and are checked-normalized
+    /// there before promotion, so non-finite or zero normals fail as malformed
+    /// OBJ data rather than being silently sanitized by [`Vertex::new`]. This
+    /// keeps exact positions aligned with Yap, "Towards
     /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), while retaining the
     /// Wavefront OBJ `v`/`vn` finite boundary format.
     pub fn from_obj<R: BufRead>(reader: R, metadata: M) -> Result<Mesh<M>, IoError> {
         let mut vertices = Vec::new();
         let mut normals = Vec::new();
-        let mut polygons = Vec::new();
+        let mut triangles = Vec::<ObjTriangle>::new();
+        let mut triangles_nondegenerate = true;
+        let mut reader = reader;
+        let mut line_buffer = String::new();
+        let mut line_number = 0usize;
 
-        for (line_index, line_result) in reader.lines().enumerate() {
-            let line_number = line_index + 1;
-            let line = line_result?;
+        loop {
+            line_buffer.clear();
+            if reader.read_line(&mut line_buffer)? == 0 {
+                break;
+            }
+            line_number += 1;
+            let line = line_buffer.as_str();
             let line = line.split('#').next().unwrap_or("").trim();
-            if line.is_empty() || line.starts_with('#') {
+            if line.is_empty() {
                 continue;
             }
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            if parts.is_empty() {
+            let mut parts = line.split_whitespace();
+            let Some(directive) = parts.next() else {
                 continue;
-            }
-            match parts[0] {
+            };
+            match directive {
                 "v" => {
-                    if parts.len() < 4 {
+                    let coordinates = [parts.next(), parts.next(), parts.next()];
+                    let [Some(x), Some(y), Some(z)] = coordinates else {
                         return Err(invalid_obj_data_at_line(
                             line_number,
                             "vertex line needs three coordinates",
                         ));
-                    }
-                    let x: Real = parse_obj_real(parts[1]).map_err(|e| {
+                    };
+                    let x: Real = parse_obj_real(x).map_err(|e| {
                         invalid_obj_data_at_line(
                             line_number,
                             format!("Invalid vertex x coordinate: {e}"),
                         )
                     })?;
-                    let y: Real = parse_obj_real(parts[2]).map_err(|e| {
+                    let y: Real = parse_obj_real(y).map_err(|e| {
                         invalid_obj_data_at_line(
                             line_number,
                             format!("Invalid vertex y coordinate: {e}"),
                         )
                     })?;
-                    let z: Real = parse_obj_real(parts[3]).map_err(|e| {
+                    let z: Real = parse_obj_real(z).map_err(|e| {
                         invalid_obj_data_at_line(
                             line_number,
                             format!("Invalid vertex z coordinate: {e}"),
                         )
                     })?;
-                    if parts.len() > 5 {
+                    let weight = parts.next();
+                    if parts.next().is_some() {
                         return Err(IoError::Unsupported {
                             format: "OBJ",
                             detail: format!(
@@ -283,7 +394,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                             ),
                         });
                     }
-                    let point = if let Some(weight) = parts.get(4) {
+                    let point = if let Some(weight) = weight {
                         let weight: Real = parse_obj_real(weight).map_err(|error| {
                             IoError::MalformedInput(format!(
                                 "OBJ line {line_number}: invalid homogeneous weight: {error}"
@@ -306,74 +417,94 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     vertices.push(point);
                 },
                 "vn" => {
-                    if parts.len() != 4 {
+                    let coordinates = [parts.next(), parts.next(), parts.next()];
+                    let [Some(x), Some(y), Some(z)] = coordinates else {
+                        return Err(invalid_obj_data_at_line(
+                            line_number,
+                            "normal line needs three coordinates",
+                        ));
+                    };
+                    if parts.next().is_some() {
                         return Err(invalid_obj_data_at_line(
                             line_number,
                             "normal line needs three coordinates",
                         ));
                     }
-                    let x: Real = parse_obj_real(parts[1]).map_err(|e| {
-                        invalid_obj_data_at_line(
-                            line_number,
-                            format!("Invalid normal x coordinate: {e}"),
-                        )
-                    })?;
-                    let y: Real = parse_obj_real(parts[2]).map_err(|e| {
-                        invalid_obj_data_at_line(
-                            line_number,
-                            format!("Invalid normal y coordinate: {e}"),
-                        )
-                    })?;
-                    let z: Real = parse_obj_real(parts[3]).map_err(|e| {
-                        invalid_obj_data_at_line(
-                            line_number,
-                            format!("Invalid normal z coordinate: {e}"),
-                        )
-                    })?;
-                    let normal = Vector3::from_xyz(x, y, z).normalize_checked().map_err(|_| {
-                        invalid_obj_data_at_line(
-                            line_number,
-                            "Invalid normal coordinate: OBJ normals must be finite and non-zero",
-                        )
-                    })?;
-                    normals.push(normal);
+                    normals.push(parse_obj_normal([x, y, z], line_number)?);
                 },
                 "f" => {
-                    if parts.len() < 4 {
+                    let corners = Self::parse_obj_face(
+                        parts,
+                        vertices.len(),
+                        normals.len(),
+                        line_number,
+                    )?;
+                    if corners.len() < 3 {
                         return Err(invalid_obj_data_at_line(
                             line_number,
                             "face line needs at least three vertices",
                         ));
                     }
-                    let face_vertices =
-                        Self::parse_obj_face(&parts[1..], &vertices, &normals, line_number)?;
-                    let has_normals = parts[1..]
+                    let has_normal = corners[0].1.is_some();
+                    if corners
                         .iter()
-                        .map(|part| {
-                            part.split('/').nth(2).is_some_and(|index| !index.is_empty())
-                        })
-                        .collect::<Vec<_>>();
-                    if has_normals.iter().any(|present| *present)
-                        && has_normals.iter().any(|present| !*present)
+                        .any(|(_, normal)| normal.is_some() != has_normal)
                     {
                         return Err(invalid_obj_data_at_line(
                             line_number,
                             "face mixes vertices with and without normals",
                         ));
                     }
+                    let face_vertices = corners
+                        .iter()
+                        .map(|&(position, normal)| {
+                            Vertex::new(
+                                vertices[position].clone(),
+                                normal
+                                    .map_or_else(Vector3::z, |normal| normals[normal].clone()),
+                            )
+                        })
+                        .collect();
                     let mut face = Polygon::new(face_vertices, metadata.clone());
-                    if !has_normals.iter().any(|present| *present) {
+                    let normal_indices = if has_normal {
+                        corners
+                            .iter()
+                            .map(|(_, normal)| {
+                                normal.expect("face normal presence was checked")
+                            })
+                            .collect::<Vec<_>>()
+                    } else {
                         face.set_new_normal();
-                    }
-                    let triangles = face.triangulate();
-                    if triangles.is_empty() {
+                        let normal = face.vertices[0].normal.clone();
+                        let normal_index = normals.len();
+                        normals.push(normal);
+                        vec![normal_index; corners.len()]
+                    };
+                    let face_triangles = face.triangulate_indices();
+                    if face_triangles.is_empty() {
                         return Err(invalid_obj_data_at_line(
                             line_number,
                             "face could not be triangulated",
                         ));
                     }
-                    for triangle in triangles {
-                        polygons.push(Polygon::new(triangle.to_vec(), metadata.clone()));
+                    // Exact triangulation certifies emitted triangles for
+                    // polygonal faces. A three-corner face bypasses that
+                    // kernel, so certify only that direct carrier here.
+                    if triangles_nondegenerate && corners.len() == 3 {
+                        let [a, b, c] = [
+                            &vertices[corners[0].0],
+                            &vertices[corners[1].0],
+                            &vertices[corners[2].0],
+                        ];
+                        triangles_nondegenerate =
+                            ::hypermesh::Plane::points_are_nondegenerate(a, b, c);
+                    }
+                    for triangle in face_triangles {
+                        triangles.push(ObjTriangle {
+                            corners: triangle
+                                .map(|corner| (corners[corner].0, normal_indices[corner])),
+                            plane_id: face.plane_id,
+                        });
                     }
                 },
                 "o" | "g" | "s" | "usemtl" | "mtllib" => {},
@@ -394,29 +525,186 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
-        if polygons.is_empty() {
+        if triangles.is_empty() {
             return Err(IoError::MalformedInput(
                 "OBJ input contains no polygonal faces".into(),
             ));
         }
-        Ok(Mesh::from_polygons(polygons))
+
+        // Canonicalize exact position rows once while their source indices are
+        // still available. The retained slots then serve transforms,
+        // connectivity, and hypermesh adapters without re-hashing every
+        // triangle corner.
+        let mut source_position_slots = vec![None; vertices.len()];
+        let mut position_buckets = HashMap::<ObjPositionKey, Vec<usize>>::new();
+        let mut positions = Vec::<Point3>::new();
+        for triangle in &mut triangles {
+            for (source_position, _) in &mut triangle.corners {
+                let slot = if let Some(slot) = source_position_slots[*source_position] {
+                    slot
+                } else {
+                    let position = &vertices[*source_position];
+                    let key = ObjPositionKey::new(position);
+                    let slot = position_buckets.get(&key).and_then(|candidates| {
+                        candidates
+                            .iter()
+                            .copied()
+                            .find(|&slot| positions[slot] == *position)
+                    });
+                    let slot = slot.unwrap_or_else(|| {
+                        let slot = positions.len();
+                        positions.push(position.clone());
+                        position_buckets.entry(key).or_default().push(slot);
+                        slot
+                    });
+                    source_position_slots[*source_position] = Some(slot);
+                    slot
+                };
+                *source_position = slot;
+            }
+        }
+
+        let mut position_normals = vec![None; positions.len()];
+        let mut normals_match_positions = true;
+        for triangle in &triangles {
+            for &(position, normal) in &triangle.corners {
+                match position_normals[position] {
+                    Some(existing) if existing != normal => normals_match_positions = false,
+                    Some(_) => {},
+                    None => position_normals[position] = Some(normal),
+                }
+            }
+        }
+
+        let base_vertices = positions
+            .iter()
+            .cloned()
+            .map(|position| Vertex::new(position, Vector3::z()))
+            .collect::<Vec<_>>();
+        let mut pool_vertices = Vec::new();
+        let mut pool_triangles = Vec::with_capacity(triangles.len());
+        if normals_match_positions {
+            pool_vertices.reserve(positions.len());
+            for (position, normal) in base_vertices.iter().zip(position_normals) {
+                let mut vertex = position.clone();
+                vertex.normal =
+                    normals[normal.expect("used OBJ position has a normal")].clone();
+                pool_vertices.push(vertex);
+            }
+            pool_triangles.extend(
+                triangles
+                    .iter()
+                    .map(|triangle| triangle.corners.map(|(position, _)| position)),
+            );
+        } else {
+            let mut vertex_slots = HashMap::<(usize, usize), usize>::new();
+            for triangle in &triangles {
+                pool_triangles.push(triangle.corners.map(|(position, normal)| {
+                    *vertex_slots.entry((position, normal)).or_insert_with(|| {
+                        let slot = pool_vertices.len();
+                        let mut vertex = base_vertices[position].clone();
+                        vertex.normal = normals[normal].clone();
+                        pool_vertices.push(vertex);
+                        slot
+                    })
+                }));
+            }
+        }
+
+        let triangle_count = triangles.len();
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new(
+            pool_vertices,
+            Vec::new(),
+            triangle_count,
+            0,
+        ));
+        let polygons = pool_triangles
+            .into_iter()
+            .zip(&triangles)
+            .enumerate()
+            .map(|(triangle_slot, (indices, triangle))| {
+                Polygon::from_lazy_subdivision_triangle(
+                    Arc::clone(&vertex_pool),
+                    triangle_slot,
+                    indices,
+                    metadata.clone(),
+                    triangle.plane_id,
+                )
+            })
+            .collect();
+        let mesh = Mesh::from_polygons_with_topology(
+            polygons,
+            (triangle_count, triangle_count.saturating_mul(3), true),
+        );
+        let corner_position_slots = triangles
+            .iter()
+            .flat_map(|triangle| triangle.corners.map(|(position, _)| position))
+            .collect::<Vec<_>>();
+        let position_f64 = positions
+            .iter()
+            .map(|position| {
+                Some([
+                    position.x.to_f64_lossy()?,
+                    position.y.to_f64_lossy()?,
+                    position.z.to_f64_lossy()?,
+                ])
+            })
+            .collect::<Option<Vec<_>>>()
+            .map(Arc::new);
+        mesh.retain_shared_position_transform_layout(
+            corner_position_slots,
+            positions.len(),
+            position_f64,
+            normals_match_positions.then(|| Arc::clone(&vertex_pool)),
+            None,
+            normals_match_positions,
+        );
+
+        let mut adjacent = vec![false; positions.len()];
+        for triangle in &triangles {
+            let positions = triangle.corners.map(|(position, _)| position);
+            for [left, right] in [
+                [positions[0], positions[1]],
+                [positions[1], positions[2]],
+                [positions[2], positions[0]],
+            ] {
+                if left != right {
+                    adjacent[left] = true;
+                    adjacent[right] = true;
+                }
+            }
+        }
+        mesh.polygons.retain_connectivity_counts((
+            positions.len(),
+            adjacent.into_iter().filter(|x| *x).count(),
+        ));
+        mesh.polygons
+            .retain_nondegenerate_triangles_fact(triangles_nondegenerate);
+        if let Some(bounds) = obj_bounds(&positions) {
+            let _ = mesh.bounding_box.set(bounds.clone());
+            mesh.polygons.retain_axis_aligned_box_fact(bounds);
+        }
+        Ok(mesh)
     }
 
-    fn parse_obj_face(
-        face_parts: &[&str],
-        vertices: &[Point3],
-        normals: &[Vector3],
+    fn parse_obj_face<'a>(
+        face_parts: impl Iterator<Item = &'a str>,
+        vertex_count: usize,
+        normal_count: usize,
         line_number: usize,
-    ) -> Result<Vec<Vertex>, IoError> {
+    ) -> Result<Vec<(usize, Option<usize>)>, IoError> {
         let mut face_vertices = Vec::new();
         for part in face_parts {
-            let indices: Vec<&str> = part.split('/').collect();
-            if indices.len() > 3 {
+            let mut indices = part.split('/');
+            let position = indices.next().unwrap_or("");
+            let texture = indices.next();
+            let normal = indices.next();
+            if indices.next().is_some() {
                 return Err(IoError::MalformedInput(format!(
                     "OBJ line {line_number}: face token has too many index fields"
                 )));
             }
-            if indices.get(1).is_some_and(|index| !index.is_empty()) {
+            if texture.is_some_and(|index| !index.is_empty()) {
                 return Err(IoError::Unsupported {
                     format: "OBJ",
                     detail: format!(
@@ -424,17 +712,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     ),
                 });
             }
-            let vertex_idx = parse_obj_index(indices[0], "vertex", vertices.len())
+            let vertex_idx = parse_obj_index(position, "vertex", vertex_count)
                 .map_err(|error| obj_line_error(line_number, error))?;
-            let position = vertices[vertex_idx].clone();
-            let normal = if indices.len() >= 3 && !indices[2].is_empty() {
-                let normal_idx = parse_obj_index(indices[2], "normal", normals.len())
-                    .map_err(|error| obj_line_error(line_number, error))?;
-                normals[normal_idx].clone()
-            } else {
-                Vector3::z()
-            };
-            face_vertices.push(Vertex::new(position, normal));
+            let normal_idx = normal
+                .filter(|index| !index.is_empty())
+                .map(|index| {
+                    parse_obj_index(index, "normal", normal_count)
+                        .map_err(|error| obj_line_error(line_number, error))
+                })
+                .transpose()?;
+            face_vertices.push((vertex_idx, normal_idx));
         }
         Ok(face_vertices)
     }
@@ -618,6 +905,23 @@ f 1 2 3 4 5
                 .iter()
                 .all(|polygon| polygon.vertices.len() == 3)
         );
+    }
+
+    #[test]
+    fn from_obj_retains_direct_triangle_degeneracy() {
+        let obj = "v 0 0 0\nv 1 0 0\nv 2 0 0\nf 1 2 3\n";
+
+        let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
+
+        assert!(!mesh.is_manifold());
+    }
+
+    #[test]
+    fn from_obj_rejects_nonfinite_and_zero_normals_at_boundary() {
+        for normal in ["0 0 0", "NaN 0 1", "inf 0 1"] {
+            let obj = format!("v 0 0 0\nv 1 0 0\nv 0 1 0\nvn {normal}\nf 1//1 2//1 3//1\n");
+            assert!(Mesh::<()>::from_obj(Cursor::new(obj), ()).is_err());
+        }
     }
 
     #[test]

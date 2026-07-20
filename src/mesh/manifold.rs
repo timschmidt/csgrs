@@ -29,6 +29,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if let Some(is_manifold) = self.polygons.manifold_fact() {
             return is_manifold;
         }
+        if self.polygons.nondegenerate_triangles_fact() == Some(false) {
+            self.cache_manifold_fact(false);
+            return false;
+        }
 
         let Ok(mesh) = self.to_hypermesh_triangle_mesh() else {
             self.cache_manifold_fact(false);
