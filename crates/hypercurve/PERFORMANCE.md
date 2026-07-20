@@ -756,6 +756,38 @@ default complete peer sweep. The AddressSanitizer differential Boolean fuzzer
 completed 1,000 runs at 5,646 coverage points and 15,821 feature edges without
 a failure.
 
+The retained minimum-x order previously ran an exact comparison throughout its
+sort and repeated all four exact interval comparisons while scanning every
+prefix candidate. It now sorts one finite `f64` preview per source box, then
+certifies every adjacent ordering exactly. A rounded collision or misordering
+retries an allocation-free exact unstable sort; an order that still cannot be
+certified retains the flat scan. The preview therefore schedules work but never
+decides topology. A regression places two exact rationals below one binary64 ulp
+in reverse source order and proves that exact certification recovers their true
+order.
+
+Dense certified contour pairs with at least 4,096 Cartesian pairs also retain
+exact ranks for second-operand maximum x, minimum y, and maximum y. Four exact
+binary-search cuts per first segment replace the repeated interval predicates
+inside the minimum-x prefix. Equal interval boundaries remain candidates,
+unknown boxes bypass the ranks, any uncertain sort or partition falls back to
+the previous scan, and source pair order is restored before intersection. The
+schedule stores four `u32` cuts per first segment and three `u32` ranks per
+second segment (16 and 12 bytes respectively); each coordinate sort reuses only
+16 transient bytes per second segment. A dense differential regression includes
+x/y edge contacts and an unknown box and matches the authoritative flat filter.
+
+Against the preceding checkpoint, the isolated debug-info Callgrind star64 run
+fell from 43,543,161 to 42,351,387 instructions (2.74%), while exact
+`compare_reals` calls fell from 30,165 to 18,264 (39.5%). In the paired
+11-sample, 500-iteration release run, star64 intersection fell from 1.074 to
+1.049 ms/iter (2.32%), with unchanged checksums. The all-feature and
+no-default-feature test matrices, warnings-as-errors Clippy and rustdoc gates,
+and both candidate-schedule differential regressions passed. The
+AddressSanitizer differential Boolean fuzzer completed 1,000 runs at 5,647
+coverage points and 15,809 feature edges without a failure; LeakSanitizer alone
+was disabled because the sandbox executes under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

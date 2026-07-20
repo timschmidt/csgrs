@@ -378,7 +378,7 @@ impl Aabb2 {
     /// Edge and corner contacts count as overlap. This inclusive convention is
     /// necessary for tangent, endpoint, and shared-boundary curve topology.
     pub fn overlaps(&self, other: &Self, policy: &CurvePolicy) -> Classification<bool> {
-        for (_direction, (left, right)) in [
+        for (direction, (left, right)) in [
             (self.max_x(), other.min_x()),
             (other.max_x(), self.min_x()),
             (self.max_y(), other.min_y()),
@@ -387,13 +387,15 @@ impl Aabb2 {
         .into_iter()
         .enumerate()
         {
+            #[cfg(not(feature = "dispatch-trace"))]
+            let _ = direction;
             match real_less(left, right, policy) {
                 Some(true) => {
                     #[cfg(feature = "dispatch-trace")]
                     hyperreal::dispatch_trace::record(
                         "hypercurve",
                         "aabb-overlap",
-                        match _direction {
+                        match direction {
                             0 => "separated-first-x",
                             1 => "separated-second-x",
                             2 => "separated-first-y",
