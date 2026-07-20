@@ -33,6 +33,17 @@ enum CommonBooleanOp {
     Xor,
 }
 
+impl CommonBooleanOp {
+    const fn hypercurve(self) -> BooleanOp {
+        match self {
+            Self::Union => BooleanOp::Union,
+            Self::Intersection => BooleanOp::Intersection,
+            Self::Difference => BooleanOp::Difference,
+            Self::Xor => BooleanOp::Xor,
+        }
+    }
+}
+
 struct Runner {
     samples: usize,
     sample_target: Duration,
@@ -189,12 +200,7 @@ fn hypercurve_boolean_result_size(
     operation: CommonBooleanOp,
     policy: &CurvePolicy,
 ) -> usize {
-    let operation = match operation {
-        CommonBooleanOp::Union => BooleanOp::Union,
-        CommonBooleanOp::Intersection => BooleanOp::Intersection,
-        CommonBooleanOp::Difference => BooleanOp::Difference,
-        CommonBooleanOp::Xor => BooleanOp::Xor,
-    };
+    let operation = operation.hypercurve();
     let result = first
         .boolean_region(second, operation, FillRule::EvenOdd, policy)
         .expect("hypercurve boolean benchmark completes");
@@ -209,18 +215,45 @@ fn hypercurve_boolean_result_size(
         .sum()
 }
 
+fn hypercurve_boundary_contour_result_size(
+    first: &Region2,
+    second: &Region2,
+    operation: CommonBooleanOp,
+    policy: &CurvePolicy,
+) -> usize {
+    let operation = operation.hypercurve();
+    let result = first
+        .boolean_boundary_contours(second, operation, FillRule::EvenOdd, policy)
+        .expect("hypercurve boundary-contour benchmark completes");
+    let Classification::Decided(result) = result else {
+        panic!("hypercurve boundary-contour benchmark became uncertain");
+    };
+    result.iter().map(Contour2::len).sum()
+}
+
+fn hypercurve_boundary_loop_result_size(
+    first: &Region2,
+    second: &Region2,
+    operation: CommonBooleanOp,
+    policy: &CurvePolicy,
+) -> usize {
+    let operation = operation.hypercurve();
+    let result = first
+        .boolean_boundary_loops(second, operation, policy)
+        .expect("hypercurve boundary-loop benchmark completes");
+    let Classification::Decided(result) = result else {
+        panic!("hypercurve boundary-loop benchmark became uncertain");
+    };
+    result.loops().iter().map(|boundary| boundary.len()).sum()
+}
+
 fn hypercurve_prepared_boolean_result_size(
     first: &PreparedRegionView2<'_>,
     second: &PreparedRegionView2<'_>,
     operation: CommonBooleanOp,
     policy: &CurvePolicy,
 ) -> usize {
-    let operation = match operation {
-        CommonBooleanOp::Union => BooleanOp::Union,
-        CommonBooleanOp::Intersection => BooleanOp::Intersection,
-        CommonBooleanOp::Difference => BooleanOp::Difference,
-        CommonBooleanOp::Xor => BooleanOp::Xor,
-    };
+    let operation = operation.hypercurve();
     let result = first
         .boolean_region(second, operation, FillRule::EvenOdd, policy)
         .expect("prepared hypercurve boolean benchmark completes");
@@ -233,6 +266,38 @@ fn hypercurve_prepared_boolean_result_size(
         .chain(result.hole_contours())
         .map(Contour2::len)
         .sum()
+}
+
+fn hypercurve_prepared_boundary_contour_result_size(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
+    operation: CommonBooleanOp,
+    policy: &CurvePolicy,
+) -> usize {
+    let operation = operation.hypercurve();
+    let result = first
+        .boolean_boundary_contours(second, operation, FillRule::EvenOdd, policy)
+        .expect("prepared hypercurve boundary-contour benchmark completes");
+    let Classification::Decided(result) = result else {
+        panic!("prepared hypercurve boundary-contour benchmark became uncertain");
+    };
+    result.iter().map(Contour2::len).sum()
+}
+
+fn hypercurve_prepared_boundary_loop_result_size(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
+    operation: CommonBooleanOp,
+    policy: &CurvePolicy,
+) -> usize {
+    let operation = operation.hypercurve();
+    let result = first
+        .boolean_boundary_loops(second, operation, policy)
+        .expect("prepared hypercurve boundary-loop benchmark completes");
+    let Classification::Decided(result) = result else {
+        panic!("prepared hypercurve boundary-loop benchmark became uncertain");
+    };
+    result.loops().iter().map(|boundary| boundary.len()).sum()
 }
 
 fn cavalier_boolean_result_size(
@@ -324,16 +389,58 @@ fn benchmark_boolean_case(
         hypercurve_result_size, 0,
         "hypercurve {name} fixture must produce a boundary",
     );
-    assert_eq!(
-        hypercurve_prepared_boolean_result_size(
-            &prepared_first,
-            &prepared_second,
-            operation,
-            &policy,
+    for (path, result_size) in [
+        (
+            "boundary contours",
+            hypercurve_boundary_contour_result_size(
+                &hypercurve_first,
+                &hypercurve_second,
+                operation,
+                &policy,
+            ),
         ),
-        hypercurve_result_size,
-        "prepared hypercurve {name} fixture must match the ordinary boundary size",
-    );
+        (
+            "boundary loops",
+            hypercurve_boundary_loop_result_size(
+                &hypercurve_first,
+                &hypercurve_second,
+                operation,
+                &policy,
+            ),
+        ),
+        (
+            "prepared region",
+            hypercurve_prepared_boolean_result_size(
+                &prepared_first,
+                &prepared_second,
+                operation,
+                &policy,
+            ),
+        ),
+        (
+            "prepared boundary contours",
+            hypercurve_prepared_boundary_contour_result_size(
+                &prepared_first,
+                &prepared_second,
+                operation,
+                &policy,
+            ),
+        ),
+        (
+            "prepared boundary loops",
+            hypercurve_prepared_boundary_loop_result_size(
+                &prepared_first,
+                &prepared_second,
+                operation,
+                &policy,
+            ),
+        ),
+    ] {
+        assert_eq!(
+            result_size, hypercurve_result_size,
+            "hypercurve {name} {path} must match the ordinary region boundary size",
+        );
+    }
     assert_ne!(
         cavalier_boolean_result_size(&cavalier_first, &cavalier_second, operation),
         0,
@@ -358,8 +465,40 @@ fn benchmark_boolean_case(
             &policy,
         )
     });
+    runner.measure(name, "hypercurve_contours", || {
+        hypercurve_boundary_contour_result_size(
+            black_box(&hypercurve_first),
+            black_box(&hypercurve_second),
+            operation,
+            &policy,
+        )
+    });
+    runner.measure(name, "hypercurve_loops", || {
+        hypercurve_boundary_loop_result_size(
+            black_box(&hypercurve_first),
+            black_box(&hypercurve_second),
+            operation,
+            &policy,
+        )
+    });
     runner.measure(name, "hypercurve_prepared", || {
         hypercurve_prepared_boolean_result_size(
+            black_box(&prepared_first),
+            black_box(&prepared_second),
+            operation,
+            &policy,
+        )
+    });
+    runner.measure(name, "hypercurve_prepared_contours", || {
+        hypercurve_prepared_boundary_contour_result_size(
+            black_box(&prepared_first),
+            black_box(&prepared_second),
+            operation,
+            &policy,
+        )
+    });
+    runner.measure(name, "hypercurve_prepared_loops", || {
+        hypercurve_prepared_boundary_loop_result_size(
             black_box(&prepared_first),
             black_box(&prepared_second),
             operation,

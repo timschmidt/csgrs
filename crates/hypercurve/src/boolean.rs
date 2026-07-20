@@ -878,32 +878,6 @@ impl RegionFragmentSet {
         )
     }
 
-    /// Classifies fragments using a caller-supplied opposite-region point
-    /// classifier.
-    ///
-    /// Prepared boolean paths use this hook to keep the exact same fragment
-    /// selection rules while reusing cached region classifiers.
-    pub(crate) fn classify_for_boolean_with_point_classifier<F>(
-        &self,
-        first: &RegionView2<'_>,
-        second: &RegionView2<'_>,
-        op: BooleanOp,
-        policy: &CurvePolicy,
-        mut classify_opposite: F,
-    ) -> CurveResult<Classification<BooleanFragmentSelection>>
-    where
-        F: FnMut(RegionSide, &crate::Point2) -> Classification<RegionPointLocation>,
-    {
-        let result = self.classify_for_boolean_with_point_classifier_with_report(
-            first,
-            second,
-            op,
-            policy,
-            &mut classify_opposite,
-        )?;
-        Ok(result.into_selection_classification())
-    }
-
     pub(crate) fn classify_for_boolean_with_point_classifier_with_report<F>(
         &self,
         first: &RegionView2<'_>,

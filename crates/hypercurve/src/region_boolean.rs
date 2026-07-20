@@ -1446,117 +1446,24 @@ pub(crate) fn boolean_boundary_loops_between(
     op: BooleanOp,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
-    if same_region_view(first, second) {
-        return Ok(Classification::Decided(
-            BooleanBoundaryLoopSet::from_contours(match op {
-                BooleanOp::Union | BooleanOp::Intersection => clone_boundary_contours(first),
-                BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
-            })?,
-        ));
+    match boolean_boundary_between_with_pipeline_report(
+        first,
+        second,
+        op,
+        FillRule::NonZero,
+        None,
+        policy,
+        false,
+        BooleanBoundaryOutputKind::Loops,
+        None,
+    )? {
+        Classification::Decided((output, _, _)) => Ok(Classification::Decided(
+            output
+                .into_loops()
+                .expect("boundary-loop query requests loop output"),
+        )),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
-    if first.is_empty() || second.is_empty() {
-        return Ok(Classification::Decided(
-            BooleanBoundaryLoopSet::from_contours(empty_operand_boundary_contours(
-                first, second, op,
-            ))?,
-        ));
-    }
-    match coextensive_axis_rect_region_boolean(first, second, op, policy)? {
-        Classification::Decided(Some(region)) => {
-            return Ok(Classification::Decided(
-                BooleanBoundaryLoopSet::from_contours(clone_boundary_contours(&region.as_view()))?,
-            ));
-        }
-        Classification::Decided(None) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    match boundary_contact_resolution(first, second, policy)? {
-        // Shared-boundary topology is a known degenerate branch. Following the
-        // contour-level policy in `boundary_contact_boundary_contours` keeps this
-        // stage consistent with the explicit regularization used for degenerate
-        // contacts in `BooleanBoundaryLoopSet` construction, which remains a
-        // structural transfer after resolved contacts are decided.
-        Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
-            return boundary_contact_boundary_contours(
-                first,
-                second,
-                op,
-                FillRule::NonZero,
-                policy,
-                kind,
-            )
-            .and_then(BooleanBoundaryLoopSet::from_contour_classification);
-        }
-        Classification::Decided(Some(BoundaryContactResolution::Containment {
-            relation,
-            contact,
-        })) => {
-            // Apply the containment selection decomposition, then convert the
-            // contour-level closed result directly to role-less loops.
-            if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
-                return Ok(Classification::Decided(
-                    BooleanBoundaryLoopSet::from_contours(contours)?,
-                ));
-            }
-            if relation == BoundaryContainmentRelation::FirstContainsSecond
-                && contact == BoundaryContactKind::Overlap
-                && op == BooleanOp::Difference
-            {
-                return containment_difference_boundary_contours(
-                    first,
-                    second,
-                    FillRule::NonZero,
-                    policy,
-                )
-                .and_then(BooleanBoundaryLoopSet::from_contour_classification);
-            }
-        }
-        Classification::Decided(None) => {
-            // Union overlap on a boundary-only contact retains this dedicated
-            // fast path both for region correctness and to prevent shared
-            // boundary leakage when no interior overlap is detected.
-            if op == BooleanOp::Union && region_boundary_has_overlap(first, second, policy)? {
-                return boundary_overlap_union_contours(
-                    first,
-                    second,
-                    op,
-                    FillRule::NonZero,
-                    policy,
-                )
-                .and_then(BooleanBoundaryLoopSet::from_contour_classification);
-            }
-        }
-        Classification::Uncertain(_) => {}
-    }
-
-    if op == BooleanOp::Xor {
-        return xor_boundary_contours_by_region(first, second, FillRule::NonZero, policy)
-            .and_then(BooleanBoundaryLoopSet::from_contour_classification);
-    }
-
-    let intersections = first.intersect_region(second, policy)?;
-
-    let fragments = match intersections.split_regions(first, second, policy)? {
-        Classification::Decided(fragments) => fragments,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-
-    let selection = match fragments.classify_for_boolean(first, second, op, policy)? {
-        Classification::Decided(selection) => selection,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let selection = match resolve_shared_boundary_selection(&fragments, &selection, op)? {
-        Classification::Decided(selection) => selection,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-
-    let emitted = selection.emit_boundary_fragments(&fragments)?;
-    let chains = match emitted.assemble_chains(policy) {
-        Classification::Decided(chains) => chains,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-
-    Ok(chains.into_closed_loops())
 }
 
 pub(crate) fn boolean_boundary_contours_between(
@@ -1566,63 +1473,25 @@ pub(crate) fn boolean_boundary_contours_between(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
-    if same_region_view(first, second) {
-        return Ok(Classification::Decided(match op {
-            BooleanOp::Union | BooleanOp::Intersection => clone_boundary_contours(first),
-            BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
-        }));
-    }
-    if first.is_empty() || second.is_empty() {
-        return Ok(Classification::Decided(empty_operand_boundary_contours(
-            first, second, op,
-        )));
-    }
-    match coextensive_axis_rect_region_boolean(first, second, op, policy)? {
-        Classification::Decided(Some(region)) => {
-            return Ok(Classification::Decided(clone_boundary_contours(
-                &region.as_view(),
-            )));
-        }
-        Classification::Decided(None) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    match boundary_contact_resolution(first, second, policy)? {
-        Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
-            return boundary_contact_boundary_contours(first, second, op, fill_rule, policy, kind);
-        }
-        Classification::Decided(Some(BoundaryContactResolution::Containment {
-            relation,
-            contact,
-        })) => {
-            if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
-                return Ok(Classification::Decided(contours));
-            }
-            if relation == BoundaryContainmentRelation::FirstContainsSecond
-                && contact == BoundaryContactKind::Overlap
-                && op == BooleanOp::Difference
-            {
-                return containment_difference_boundary_contours(first, second, fill_rule, policy);
-            }
-        }
-        Classification::Decided(None) => {
-            if op == BooleanOp::Union && region_boundary_has_overlap(first, second, policy)? {
-                return boundary_overlap_union_contours(first, second, op, fill_rule, policy);
-            }
-        }
-        Classification::Uncertain(_) => {}
-    }
-    if op == BooleanOp::Xor {
-        return xor_boundary_contours_by_region(first, second, fill_rule, policy);
-    }
-
-    match boolean_boundary_loops_between(first, second, op, policy)? {
-        Classification::Decided(loops) => {
-            loops.into_contours(fill_rule).map(Classification::Decided)
-        }
+    match boolean_boundary_between_with_pipeline_report(
+        first,
+        second,
+        op,
+        fill_rule,
+        None,
+        policy,
+        false,
+        BooleanBoundaryOutputKind::Contours,
+        None,
+    )? {
+        Classification::Decided((output, _, _)) => Ok(Classification::Decided(
+            output
+                .into_contours()
+                .expect("boundary-contour query requests contour output"),
+        )),
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
 }
-
 fn xor_boundary_contours_by_region(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
@@ -1715,15 +1584,16 @@ fn boolean_region_between_impl(
             )),
         };
     }
-    let (contours, boundary_contour_source_path, pipeline_report) =
-        match boolean_boundary_contours_between_with_pipeline_report(
+    let (boundary_output, boundary_contour_source_path, pipeline_report) =
+        match boolean_boundary_between_with_pipeline_report(
             first,
             second,
             op,
             fill_rule,
-            &boundary_events,
+            Some(&boundary_events),
             policy,
             retain_pipeline_report,
+            BooleanBoundaryOutputKind::Contours,
             None,
         )? {
             Classification::Decided(result) => result,
@@ -1740,6 +1610,9 @@ fn boolean_region_between_impl(
                 ));
             }
         };
+    let contours = boundary_output
+        .into_contours()
+        .expect("region Boolean requests contour boundary output");
     if !retain_pipeline_report {
         return Ok(match Region2::from_boundary_contours(contours, policy)? {
             Classification::Decided(region) => {
@@ -1833,38 +1706,84 @@ fn clone_region_view(region: &RegionView2<'_>) -> Region2 {
     )
 }
 
-pub(crate) fn boolean_boundary_contours_between_with_pipeline_report(
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum BooleanBoundaryOutputKind {
+    Loops,
+    Contours,
+}
+
+pub(crate) enum BooleanBoundaryOutput {
+    Loops(BooleanBoundaryLoopSet),
+    Contours(Vec<Contour2>),
+}
+
+impl BooleanBoundaryOutput {
+    fn from_contours(
+        contours: Vec<Contour2>,
+        output_kind: BooleanBoundaryOutputKind,
+    ) -> CurveResult<Self> {
+        match output_kind {
+            BooleanBoundaryOutputKind::Loops => {
+                BooleanBoundaryLoopSet::from_contours(contours).map(Self::Loops)
+            }
+            BooleanBoundaryOutputKind::Contours => Ok(Self::Contours(contours)),
+        }
+    }
+
+    pub(crate) fn into_loops(self) -> Option<BooleanBoundaryLoopSet> {
+        match self {
+            Self::Loops(loops) => Some(loops),
+            Self::Contours(_) => None,
+        }
+    }
+
+    pub(crate) fn into_contours(self) -> Option<Vec<Contour2>> {
+        match self {
+            Self::Loops(_) => None,
+            Self::Contours(contours) => Some(contours),
+        }
+    }
+}
+
+pub(crate) fn boolean_boundary_between_with_pipeline_report(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
-    boundary_events: &RegionIntersectionSet,
+    known_boundary_events: Option<&RegionIntersectionSet>,
     policy: &CurvePolicy,
     retain_pipeline_report: bool,
+    output_kind: BooleanBoundaryOutputKind,
     prepared: Option<(
         &crate::PreparedRegionView2<'_>,
         &crate::PreparedRegionView2<'_>,
     )>,
 ) -> CurveResult<
     Classification<(
-        Vec<Contour2>,
+        BooleanBoundaryOutput,
         RegionBooleanBoundaryContourSourcePath2,
         Option<RegionBooleanPipelineReport2>,
     )>,
 > {
     if same_region_view(first, second) {
         return Ok(Classification::Decided((
-            match op {
-                BooleanOp::Union | BooleanOp::Intersection => clone_boundary_contours(first),
-                BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
-            },
+            BooleanBoundaryOutput::from_contours(
+                match op {
+                    BooleanOp::Union | BooleanOp::Intersection => clone_boundary_contours(first),
+                    BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
+                },
+                output_kind,
+            )?,
             RegionBooleanBoundaryContourSourcePath2::IdenticalOperandShortcut,
             None,
         )));
     }
     if first.is_empty() || second.is_empty() {
         return Ok(Classification::Decided((
-            empty_operand_boundary_contours(first, second, op),
+            BooleanBoundaryOutput::from_contours(
+                empty_operand_boundary_contours(first, second, op),
+                output_kind,
+            )?,
             RegionBooleanBoundaryContourSourcePath2::EmptyOperandShortcut,
             None,
         )));
@@ -1872,7 +1791,10 @@ pub(crate) fn boolean_boundary_contours_between_with_pipeline_report(
     match coextensive_axis_rect_region_boolean(first, second, op, policy)? {
         Classification::Decided(Some(region)) => {
             return Ok(Classification::Decided((
-                clone_boundary_contours(&region.as_view()),
+                BooleanBoundaryOutput::from_contours(
+                    clone_boundary_contours(&region.as_view()),
+                    output_kind,
+                )?,
                 RegionBooleanBoundaryContourSourcePath2::CoextensiveAxisRectShortcut,
                 None,
             )));
@@ -1882,13 +1804,24 @@ pub(crate) fn boolean_boundary_contours_between_with_pipeline_report(
             return Ok(Classification::Uncertain(reason));
         }
     }
+    let owned_boundary_events;
+    let boundary_events = match known_boundary_events {
+        Some(boundary_events) => boundary_events,
+        None => {
+            owned_boundary_events = match prepared {
+                Some((first, second)) => first.intersect_prepared_region(second, policy)?,
+                None => first.intersect_region(second, policy)?,
+            };
+            &owned_boundary_events
+        }
+    };
     match boundary_contact_resolution_from_intersections(first, second, boundary_events, policy)? {
         Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
             return match boundary_contact_boundary_contours(
                 first, second, op, fill_rule, policy, kind,
             )? {
                 Classification::Decided(contours) => Ok(Classification::Decided((
-                    contours,
+                    BooleanBoundaryOutput::from_contours(contours, output_kind)?,
                     RegionBooleanBoundaryContourSourcePath2::BoundaryContactShortcut,
                     None,
                 ))),
@@ -1901,7 +1834,7 @@ pub(crate) fn boolean_boundary_contours_between_with_pipeline_report(
         })) => {
             if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
                 return Ok(Classification::Decided((
-                    contours,
+                    BooleanBoundaryOutput::from_contours(contours, output_kind)?,
                     RegionBooleanBoundaryContourSourcePath2::ContainmentShortcut,
                     None,
                 )));
@@ -1914,7 +1847,7 @@ pub(crate) fn boolean_boundary_contours_between_with_pipeline_report(
                     first, second, fill_rule, policy,
                 )? {
                     Classification::Decided(contours) => Ok(Classification::Decided((
-                        contours,
+                        BooleanBoundaryOutput::from_contours(contours, output_kind)?,
                         RegionBooleanBoundaryContourSourcePath2::ContainmentDifferenceOverlapShortcut,
                         None,
                     ))),
@@ -1927,7 +1860,7 @@ pub(crate) fn boolean_boundary_contours_between_with_pipeline_report(
                 return match boundary_overlap_union_contours(first, second, op, fill_rule, policy)?
                 {
                     Classification::Decided(contours) => Ok(Classification::Decided((
-                        contours,
+                        BooleanBoundaryOutput::from_contours(contours, output_kind)?,
                         RegionBooleanBoundaryContourSourcePath2::BoundaryOverlapUnionShortcut,
                         None,
                     ))),
@@ -1940,7 +1873,7 @@ pub(crate) fn boolean_boundary_contours_between_with_pipeline_report(
     if op == BooleanOp::Xor {
         return match xor_boundary_contours_by_region(first, second, fill_rule, policy)? {
             Classification::Decided(contours) => Ok(Classification::Decided((
-                contours,
+                BooleanBoundaryOutput::from_contours(contours, output_kind)?,
                 RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut,
                 None,
             ))),
@@ -2084,8 +2017,14 @@ pub(crate) fn boolean_boundary_contours_between_with_pipeline_report(
             Classification::Decided(loops) => loops,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        let output = match output_kind {
+            BooleanBoundaryOutputKind::Loops => BooleanBoundaryOutput::Loops(loops),
+            BooleanBoundaryOutputKind::Contours => {
+                BooleanBoundaryOutput::Contours(loops.into_contours(fill_rule)?)
+            }
+        };
         return Ok(Classification::Decided((
-            loops.into_contours(fill_rule)?,
+            output,
             RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
             None,
         )));
@@ -2167,7 +2106,7 @@ pub(crate) fn boolean_boundary_contours_between_with_pipeline_report(
         contour_report,
     );
     Ok(Classification::Decided((
-        contours,
+        BooleanBoundaryOutput::Contours(contours),
         RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
         Some(pipeline_report),
     )))
@@ -2468,15 +2407,6 @@ pub(crate) fn retained_status_for_boolean_blocker(
     }
 }
 
-fn boundary_contact_resolution(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    policy: &CurvePolicy,
-) -> CurveResult<Classification<Option<BoundaryContactResolution>>> {
-    let intersections = first.intersect_region(second, policy)?;
-    boundary_contact_resolution_from_intersections(first, second, &intersections, policy)
-}
-
 fn boundary_contact_resolution_from_intersections(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
@@ -2559,24 +2489,6 @@ pub(crate) fn boundary_contact_overlap_flag(
     }
 
     Classification::Decided(saw_contact.then_some(saw_overlap))
-}
-
-/// Tests whether the two region boundaries have any overlapping boundary segment.
-///
-/// This is the boundary-stage part of the classical overlap fast-path used by
-/// clipping kernels: if boundaries share non-point overlap, boolean branches that
-/// are sensitive to shared edges (for example Union and Difference special cases)
-/// can avoid entering the full fragment traversal.
-///
-/// This follows the shared-boundary split analysis in the
-/// degenerate-intersection clipping model.
-pub(crate) fn region_boundary_has_overlap(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    policy: &CurvePolicy,
-) -> CurveResult<bool> {
-    let intersections = first.intersect_region(second, policy)?;
-    Ok(region_boundary_has_overlap_in(&intersections))
 }
 
 fn region_boundary_has_overlap_in(intersections: &RegionIntersectionSet) -> bool {

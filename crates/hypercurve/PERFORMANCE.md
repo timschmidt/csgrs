@@ -914,6 +914,31 @@ LeakSanitizer alone remained disabled under ptrace. The prepared star64 lane is
 still about 20.5 times slower than `cavalier_contours`, so the large-curve goal
 remains open despite this API-wide correction.
 
+Ordinary and prepared boundary-loop and boundary-contour convenience queries
+now reuse that same once-visiting arrangement pipeline. They previously rebuilt
+contact evidence and then classified fragments individually, making adjacent
+public APIs 9--19 times slower than region materialization. One shared output
+selector now preserves extracted loop provenance when loops are requested and
+unwraps contours directly for contour or region callers. The comparative suite
+times all six Hypercurve result shapes and verifies their boundary sizes before
+sampling. The production and benchmark diff removes a net 551 lines before this
+note.
+
+On star64, ordinary contours fell from 10.033 to 0.579 ms/iter (94.2%),
+ordinary loops from 9.632 to 0.586 ms/iter (93.9%), prepared contours from
+5.516 to 0.551 ms/iter (90.0%), and prepared loops from 5.212 to 0.548 ms/iter
+(89.5%). Rectangle controls improved by 57--67%, while ordinary and prepared
+region throughput remained neutral within 0.7%. Across the complete expanded
+one-iteration comparative process, Callgrind instructions fell from
+1,203,208,210 to 107,825,800 (91.0%), allocator calls from 540,759 to 64,523
+(88.1%), and deallocator calls from 560,784 to 65,883 (88.3%). DHAT traffic
+fell from 67,974,402 bytes in 753,945 blocks to 23,670,444 bytes in 76,208
+blocks; peak live heap fell from 1,321,910 to 1,144,334 bytes (13.4%).
+Both feature-mode test matrices, format, warnings-as-errors Clippy and rustdoc
+passed. The AddressSanitizer Boolean differential fuzzer completed 1,000 runs
+at 5,307 coverage points and 15,628 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
