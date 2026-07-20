@@ -139,14 +139,12 @@ fn triangulate_positions_into<'a>(
         return;
     }
 
-    let Some((support, normal)) = first_nondegenerate_support(vertex_count, position) else {
-        return;
-    };
-    let Some(support_sign) =
-        project_to_exact_2d_into(vertex_count, position, &normal, projected)
+    let Some((support, drop_axis, support_sign)) =
+        first_nondegenerate_projection(vertex_count, position)
     else {
         return;
     };
+    project_to_exact_2d_into(vertex_count, position, drop_axis, projected);
     let first_turn = (support == [0, 1, 2]).then_some(support_sign);
     if strictly_convex(projected, first_turn) {
         triangles.extend((1..projected.len() - 1).map(|i| [0, i, i + 1]));
@@ -241,17 +239,39 @@ fn project_to_finite_exact_2d(vertices: &[Vertex]) -> Option<Vec<hypertri::Point
 fn project_to_exact_2d_into<'a>(
     vertex_count: usize,
     position: impl Copy + Fn(usize) -> &'a Point3,
-    support_normal: &Vector3,
+    drop_axis: usize,
     projected: &mut Vec<hypertri::Point2>,
-) -> Option<Sign> {
-    let (drop_axis, support_sign) = dominant_axis(support_normal)?;
+) {
     projected.clear();
     projected.extend((0..vertex_count).map(|index| match drop_axis {
         0 => hypertri::Point2::new(position(index).y.clone(), position(index).z.clone()),
         1 => hypertri::Point2::new(position(index).z.clone(), position(index).x.clone()),
         _ => hypertri::Point2::new(position(index).x.clone(), position(index).y.clone()),
     }));
-    Some(support_sign)
+}
+
+fn first_nondegenerate_projection<'a>(
+    vertex_count: usize,
+    position: impl Copy + Fn(usize) -> &'a Point3,
+) -> Option<([usize; 3], usize, Sign)> {
+    if vertex_count >= 3
+        && let Some((axis, sign)) = Real::exact_rational_dominant_affine_cross_axis(
+            [&position(0).x, &position(0).y, &position(0).z],
+            [&position(1).x, &position(1).y, &position(1).z],
+            [&position(2).x, &position(2).y, &position(2).z],
+        )
+    {
+        let sign = match sign {
+            RealSign::Positive => Sign::Positive,
+            RealSign::Negative => Sign::Negative,
+            RealSign::Zero => return None,
+        };
+        return Some(([0, 1, 2], axis, sign));
+    }
+
+    let (support, normal) = first_nondegenerate_support(vertex_count, position)?;
+    let (axis, sign) = dominant_axis(&normal)?;
+    Some((support, axis, sign))
 }
 
 fn dominant_axis(normal: &Vector3) -> Option<(usize, Sign)> {
