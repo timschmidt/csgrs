@@ -79,6 +79,8 @@ serialized values, never Rust struct layout.
 - Float input rejects `NaN` and infinities through `hyperreal::Real::try_from`.
 - Float input is exact dyadic import, not decimal interpretation.
 - Float output is explicitly lossy and fails if no finite primitive value exists.
+- Graphics export converts the core's retained HyperMesh render rows directly
+  into the requested interleaved scalar layout without temporary split buffers.
 - Integer input is exact.
 - Integer output is fallible unless the value is structurally rational,
   integral, and inside the target range.

@@ -17,3 +17,7 @@ hyperreal = { path = "../../hyperreal", default-features = false }
 default = ["mesh", "sketch"]
 mesh = ["csgrs/mesh"]
 sketch = ["csgrs/sketch", "mesh"]
+
+[[bench]]
+name = "graphics_export"
+harness = false

@@ -80,14 +80,9 @@ impl ScalarAdapter for F32 {
     }
 
     fn from_real(value: &Real) -> AdapterResult<Self::Scalar> {
-        let narrowed = value
-            .to_f64_lossy()
-            .ok_or(AdapterError::NotFiniteApproximation)? as f32;
-        if narrowed.is_finite() {
-            Ok(narrowed)
-        } else {
-            Err(AdapterError::NotFiniteApproximation)
-        }
+        value
+            .to_f32_lossy()
+            .ok_or(AdapterError::NotFiniteApproximation)
     }
 }
 
