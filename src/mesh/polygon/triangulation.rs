@@ -25,7 +25,23 @@ impl<M: Clone + Send + Sync> Polygon<M> {
 
     /// Triangulate this polygon into indices of its existing vertices.
     pub fn triangulate_indices(&self) -> Vec<[usize; 3]> {
-        triangulate_positions(self.vertices.len(), |index| &self.vertices[index].position)
+        let mut triangles = Vec::with_capacity(self.vertices.len().saturating_sub(2));
+        let mut projected = Vec::with_capacity(self.vertices.len());
+        self.triangulate_indices_into(&mut triangles, &mut projected);
+        triangles
+    }
+
+    pub(crate) fn triangulate_indices_into(
+        &self,
+        triangles: &mut Vec<[usize; 3]>,
+        projected: &mut Vec<hypertri::Point2>,
+    ) {
+        triangulate_positions_into(
+            self.vertices.len(),
+            |index| &self.vertices[index].position,
+            triangles,
+            projected,
+        );
     }
 
     /// Triangulate for a finite renderer or file-format output boundary.
@@ -63,7 +79,9 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         let Ok(indices) = hypertri::earcut(&points, &[]) else {
             return Vec::new();
         };
-        triangle_indices(&indices, self.vertices.len(), reverse_output)
+        let mut triangles = Vec::with_capacity(indices.len() / 3);
+        extend_triangle_indices(&mut triangles, &indices, self.vertices.len(), reverse_output);
+        triangles
     }
 
     /// Uniformly split every triangle into four triangles per level.
@@ -92,81 +110,94 @@ impl<M: Clone + Send + Sync> Polygon<M> {
 }
 
 #[cfg(feature = "obj-io")]
-pub(crate) fn triangulate_indexed_positions(
+pub(crate) fn triangulate_indexed_positions_into(
     positions: &[Point3],
     indices: &[usize],
-) -> Vec<[usize; 3]> {
-    triangulate_positions(indices.len(), |index| &positions[indices[index]])
+    triangles: &mut Vec<[usize; 3]>,
+    projected: &mut Vec<hypertri::Point2>,
+) {
+    triangulate_positions_into(
+        indices.len(),
+        |index| &positions[indices[index]],
+        triangles,
+        projected,
+    );
 }
 
-fn triangulate_positions<'a>(
+fn triangulate_positions_into<'a>(
     vertex_count: usize,
     position: impl Copy + Fn(usize) -> &'a Point3,
-) -> Vec<[usize; 3]> {
+    triangles: &mut Vec<[usize; 3]>,
+    projected: &mut Vec<hypertri::Point2>,
+) {
+    triangles.clear();
     if vertex_count < 3 {
-        return Vec::new();
+        return;
     }
     if vertex_count == 3 {
-        return vec![[0, 1, 2]];
+        triangles.push([0, 1, 2]);
+        return;
     }
 
-    let Some((_, normal)) = first_nondegenerate_support(vertex_count, position) else {
-        return Vec::new();
+    let Some((support, normal)) = first_nondegenerate_support(vertex_count, position) else {
+        return;
     };
-    let Some(points) = project_to_exact_2d(vertex_count, position, &normal) else {
-        return Vec::new();
+    let Some(support_sign) =
+        project_to_exact_2d_into(vertex_count, position, &normal, projected)
+    else {
+        return;
     };
-    if let Some(indices) = strictly_convex_fan(&points) {
-        return indices;
+    let first_turn = (support == [0, 1, 2]).then_some(support_sign);
+    if strictly_convex(projected, first_turn) {
+        triangles.extend((1..projected.len() - 1).map(|i| [0, i, i + 1]));
+        return;
     }
-    let reverse_output = winding_is_negative(&points);
-    let Ok(indices) = hypertri::earcut(&points, &[]) else {
-        return Vec::new();
+    let reverse_output = winding_is_negative(projected);
+    let Ok(indices) = hypertri::earcut(projected, &[]) else {
+        return;
     };
-
-    triangle_indices(&indices, vertex_count, reverse_output)
+    extend_triangle_indices(triangles, &indices, vertex_count, reverse_output);
 }
 
-fn strictly_convex_fan(points: &[hypertri::Point2]) -> Option<Vec<[usize; 3]>> {
-    let mut winding = None;
-    for index in 0..points.len() {
-        let sign = ExactKernel::orient2d(
+fn strictly_convex(points: &[hypertri::Point2], first_turn: Option<Sign>) -> bool {
+    let mut winding = first_turn;
+    for index in usize::from(first_turn.is_some())..points.len() {
+        let Ok(sign) = ExactKernel::orient2d(
             &points[index],
             &points[(index + 1) % points.len()],
             &points[(index + 2) % points.len()],
-        )
-        .ok()?;
+        ) else {
+            return false;
+        };
         if sign == Sign::Zero {
-            return None;
+            return false;
         }
         match winding {
             None => winding = Some(sign),
             Some(expected) if expected == sign => {},
-            Some(_) => return None,
+            Some(_) => return false,
         }
     }
-    Some((1..points.len() - 1).map(|i| [0, i, i + 1]).collect())
+    true
 }
 
-fn triangle_indices(
+fn extend_triangle_indices(
+    output: &mut Vec<[usize; 3]>,
     indices: &[usize],
     vertex_count: usize,
     reverse_output: bool,
-) -> Vec<[usize; 3]> {
-    indices
-        .chunks_exact(3)
-        .filter_map(|triangle| {
-            let [i0, i1, i2] = [triangle[0], triangle[1], triangle[2]];
-            if [i0, i1, i2].into_iter().any(|index| index >= vertex_count) {
-                return None;
-            }
-            let mut triangle = [i0, i1, i2];
-            if reverse_output {
-                triangle.swap(1, 2);
-            }
-            Some(triangle)
-        })
-        .collect()
+) {
+    output.extend(indices.chunks_exact(3).filter_map(|triangle| {
+        let [i0, i1, i2] = [triangle[0], triangle[1], triangle[2]];
+        if [i0, i1, i2].into_iter().any(|index| index >= vertex_count) {
+            return None;
+        }
+        let mut triangle = [i0, i1, i2];
+        if reverse_output {
+            triangle.swap(1, 2);
+        }
+        Some(triangle)
+    }));
 }
 
 fn project_to_finite_exact_2d(vertices: &[Vertex]) -> Option<Vec<hypertri::Point2>> {
@@ -207,30 +238,23 @@ fn project_to_finite_exact_2d(vertices: &[Vertex]) -> Option<Vec<hypertri::Point
         .collect()
 }
 
-fn project_to_exact_2d<'a>(
+fn project_to_exact_2d_into<'a>(
     vertex_count: usize,
     position: impl Copy + Fn(usize) -> &'a Point3,
     support_normal: &Vector3,
-) -> Option<Vec<hypertri::Point2>> {
-    let drop_axis = dominant_axis(support_normal)?;
-    Some(
-        (0..vertex_count)
-            .map(|index| match drop_axis {
-                0 => {
-                    hypertri::Point2::new(position(index).y.clone(), position(index).z.clone())
-                },
-                1 => {
-                    hypertri::Point2::new(position(index).z.clone(), position(index).x.clone())
-                },
-                _ => {
-                    hypertri::Point2::new(position(index).x.clone(), position(index).y.clone())
-                },
-            })
-            .collect(),
-    )
+    projected: &mut Vec<hypertri::Point2>,
+) -> Option<Sign> {
+    let (drop_axis, support_sign) = dominant_axis(support_normal)?;
+    projected.clear();
+    projected.extend((0..vertex_count).map(|index| match drop_axis {
+        0 => hypertri::Point2::new(position(index).y.clone(), position(index).z.clone()),
+        1 => hypertri::Point2::new(position(index).z.clone(), position(index).x.clone()),
+        _ => hypertri::Point2::new(position(index).x.clone(), position(index).y.clone()),
+    }));
+    Some(support_sign)
 }
 
-fn dominant_axis(normal: &Vector3) -> Option<usize> {
+fn dominant_axis(normal: &Vector3) -> Option<(usize, Sign)> {
     let mut axis = 0;
     for candidate in 1..3 {
         let ordering = match (
@@ -258,13 +282,10 @@ fn dominant_axis(normal: &Vector3) -> Option<usize> {
             axis = candidate;
         }
     }
-    if matches!(
-        normal.0[axis].refine_sign_until(-128),
-        Some(RealSign::Positive | RealSign::Negative)
-    ) {
-        Some(axis)
-    } else {
-        None
+    match normal.0[axis].refine_sign_until(-128) {
+        Some(RealSign::Positive) => Some((axis, Sign::Positive)),
+        Some(RealSign::Negative) => Some((axis, Sign::Negative)),
+        _ => None,
     }
 }
 
