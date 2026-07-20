@@ -272,26 +272,46 @@ mod retained_topology_tests {
         let translated =
             mesh.translate(Real::from(7_u8), Real::from(-11_i8), Real::from(13_u8));
         assert_eq!(identity_counts(&translated), (8, [2; 3]));
+        assert!(translated.polygons.cuboid_vertex_pool().is_some());
+
+        let restored =
+            translated.translate(Real::from(-7_i8), Real::from(11_u8), Real::from(-13_i8));
+        assert_eq!(identity_counts(&restored), (8, [2; 3]));
+        assert!(restored.polygons.cuboid_vertex_pool().is_some());
+        assert_eq!(
+            restored
+                .polygons
+                .iter()
+                .flat_map(|polygon| &polygon.vertices)
+                .map(|vertex| vertex.position.clone())
+                .collect::<Vec<_>>(),
+            mesh.polygons
+                .iter()
+                .flat_map(|polygon| &polygon.vertices)
+                .map(|vertex| vertex.position.clone())
+                .collect::<Vec<_>>()
+        );
+
+        let centered = translated.center();
+        assert_eq!(identity_counts(&centered), (8, [2; 3]));
+        assert!(centered.polygons.cuboid_vertex_pool().is_some());
 
         let _cache_resolution = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
         let cached = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
         let translated_cached =
             cached.translate(Real::from(7_u8), Real::from(-11_i8), Real::from(13_u8));
         assert_eq!(identity_counts(&translated_cached), (8, [2; 3]));
+        assert!(translated_cached.polygons.cuboid_vertex_pool().is_some());
 
         let cube = Mesh::cube(Real::from(2_u8), ());
         let _cube_cache_resolution = Mesh::cube(Real::from(2_u8), ());
         let cached_cube = Mesh::cube(Real::from(2_u8), ());
         assert_eq!(identity_counts(&cube), (8, [2; 3]));
         assert_eq!(identity_counts(&cached_cube), (8, [2; 3]));
-        assert_eq!(
-            identity_counts(&cached_cube.translate(
-                Real::from(7_u8),
-                Real::from(-11_i8),
-                Real::from(13_u8),
-            )),
-            (8, [2; 3])
-        );
+        let translated_cached_cube =
+            cached_cube.translate(Real::from(7_u8), Real::from(-11_i8), Real::from(13_u8));
+        assert_eq!(identity_counts(&translated_cached_cube), (8, [2; 3]));
+        assert!(translated_cached_cube.polygons.cuboid_vertex_pool().is_some());
     }
 
     #[test]

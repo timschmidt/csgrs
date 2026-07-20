@@ -79,6 +79,7 @@ struct CachedTranslation {
     bounding_box: Option<Aabb>,
     axis_aligned_box: bool,
     centering_offset: Option<Vector3>,
+    cuboid_vertex_pool: Option<Arc<LazySubdivisionVertexPool>>,
 }
 
 #[derive(Clone, Debug)]
@@ -2202,6 +2203,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     bounding_box: translated.bounding_box.get().cloned(),
                     axis_aligned_box: translated.polygons.axis_aligned_box_fact().is_some(),
                     centering_offset: translated.polygons.centering_offset_fact().cloned(),
+                    cuboid_vertex_pool: translated.polygons.cuboid_vertex_pool().cloned(),
                 });
             });
         }
@@ -2289,6 +2291,80 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             cache_on_completion,
             self.has_convex_pwn_fact(),
         ))
+    }
+
+    fn retained_cuboid_translation(&self, vector: Vector3) -> Option<Self> {
+        self.polygons.cuboid_vertex_pool()?;
+        if self.polygons.len() != 6 {
+            return None;
+        }
+        let translated_bounds = self.polygons.axis_aligned_box_fact().map(|bounds| {
+            Aabb::new(
+                bounds.mins.clone() + vector.clone(),
+                bounds.maxs.clone() + vector.clone(),
+            )
+        });
+        let bounds = translated_bounds.as_ref()?;
+        let source_geometry_identity = self.polygons.storage_identity();
+        let cache_on_completion = PENDING_TRANSLATION.with_borrow_mut(|pending| {
+            let repeated = pending.iter().any(|pending| {
+                pending.vector == vector
+                    && pending.source_geometry_identity == source_geometry_identity
+            });
+            if !repeated {
+                if pending.len() == TRANSFORM_CACHE_CAPACITY {
+                    pending.remove(0);
+                }
+                pending.push(PendingTranslation {
+                    source_geometry_identity,
+                    vector: vector.clone(),
+                });
+            }
+            repeated
+        });
+        let first_position_identity = reserve_position_ids(8);
+        let first_coordinate_identity = reserve_position_ids(6);
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_cuboid_bounds(
+            [
+                [bounds.mins.x.clone(), bounds.maxs.x.clone()],
+                [bounds.mins.y.clone(), bounds.maxs.y.clone()],
+                [bounds.mins.z.clone(), bounds.maxs.z.clone()],
+            ],
+            first_position_identity,
+            first_coordinate_identity,
+        ));
+        let first_plane_id = reserve_plane_ids(6);
+        let polygons = (0..6)
+            .map(|index| {
+                let first_corner = index * 4;
+                Polygon::from_lazy_indexed_quad(
+                    Arc::clone(&vertex_pool),
+                    index,
+                    [
+                        first_corner,
+                        first_corner + 1,
+                        first_corner + 2,
+                        first_corner + 3,
+                    ],
+                    self.polygons[index].metadata.clone(),
+                    first_plane_id
+                        + u64::try_from(index).expect("cuboid polygon index fits u64"),
+                )
+            })
+            .collect();
+        let translated = Mesh::from_polygons_with_topology(polygons, self.polygons.topology());
+        translated
+            .polygons
+            .retain_cuboid_vertex_pool(Arc::clone(&vertex_pool));
+        let translated = self.finish_indexed_translation(
+            translated,
+            translated_bounds,
+            vector,
+            source_geometry_identity,
+            cache_on_completion,
+            self.has_convex_pwn_fact(),
+        );
+        Some(translated)
     }
 
     fn finish_indexed_scale(
@@ -3132,6 +3208,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     bounding_box: translated.bounding_box.get().cloned(),
                     axis_aligned_box: translated.polygons.axis_aligned_box_fact().is_some(),
                     centering_offset: translated.polygons.centering_offset_fact().cloned(),
+                    cuboid_vertex_pool: translated.polygons.cuboid_vertex_pool().cloned(),
                 });
             });
         }
@@ -5925,11 +6002,17 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                         if let Some(offset) = cached.centering_offset.clone() {
                             mesh.polygons.retain_centering_offset(offset);
                         }
+                        if let Some(pool) = cached.cuboid_vertex_pool.clone() {
+                            mesh.polygons.retain_cuboid_vertex_pool(pool);
+                        }
                         mesh
                     })
             })
         }) {
             return cached;
+        }
+        if let Some(translated) = self.retained_cuboid_translation(vector.clone()) {
+            return translated;
         }
         if let Some(translated) = self.retained_indexed_translation(vector.clone()) {
             return translated;

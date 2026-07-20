@@ -1,7 +1,7 @@
 # Reference-Guided Performance Notes
 
 These measurements retain only changes that preserve exact rows, output size,
-and benchmark checksums. They were collected on 15, 17, and 18 July 2026 with
+and benchmark checksums. They were collected on 15, 17, 18, and 20 July 2026 with
 the release benchmark profile. Times are medians after two warmup batches.
 
 | Workload | Before | After | Change | Preserved evidence |
@@ -11,7 +11,7 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `mesh_boolean/prepare_and_extract_four` | 31.542 ms | 9.606 ms | 69.5% faster | 120 polygons, 120 corners, exact buffers and metadata |
 | `mesh_boolean/extract_four_prebuilt` | 31.542 ms | 2.174 ms | 93.1% faster | Same four closure-certified outputs |
 | `mesh_queries/ray_intersections` | 32.851 ms/op | 30.819 ms/op | 6.2% faster | Same exact ordered hit points, distances, and checksum |
-| `kernel/center/translated_box` (cold) | 23.768 us/op | 6.339 us/op | 73.3% faster | Same 12-coordinate checksum; 1.060x faster than CGAL EPECK |
+| `kernel/center/translated_box` (cold) | 23.768 us/op | 3.400 us/op | 85.7% faster | Same 12-coordinate checksum; 1.991x faster than CGAL EPECK |
 | `kernel/translate/sphere_medium` (cold) | 0.2513 ms/op | 0.1865 ms/op | 25.8% faster | Same 960-coordinate checksum; 2.095x faster than CGAL EPECK |
 | `kernel/affine_transform/sphere_shear` (cold) | 0.1288 ms/op | 0.1069 ms/op | 17.0% faster | Same 960-coordinate checksum; 5.125x faster than CGAL EPECK |
 | `profile_primitives/constructor/circle_with_keyway` | 4.72 ms/op | 0.209 ms/op | 95.6% faster | Same contour roles, area, exact containment oracle, and checksum |
@@ -35,6 +35,25 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `profile_primitives/constructor/heart` | 0.3378 ms/op | 0.3130 ms/op | 7.3% faster | Legacy finite coordinates within 1e-12; exact requested bounds and symbolic samples |
 
 ## Retained changes
+
+Lazy cuboid pools now store exact minimum and maximum coordinates per axis, so
+translation and centering can construct the final cuboid carrier directly from
+shifted exact bounds. This avoids rebuilding eight exact position
+representatives and 24 face vertices, and avoids nesting symbolic translation
+recipes. A six-coordinate binary64 view is retained only for measurement,
+rendering, and export boundaries; predicates and materialized vertices continue
+to consume the exact coordinate bounds. Translation-cache hits also restore the
+cuboid carrier so chained operations retain the same path. Regression coverage
+checks exact round-trip positions, eight shared position identities, two shared
+coordinate identities per axis, centering, chained translation, and cache hits.
+
+The cold translated-box center counter fell from 35,902,952 to 35,379,545
+instructions, 1.46%. In the complete 47-workload, 15-cold/9-warm native sweep,
+the center median fell from the prior approximately 6.9 us to 3.400 us, versus
+6.770 us for CGAL EPECK and 0.783 ms for tight OpenCascade. Warm CSGRS measured
+1.154 us versus CGAL's 5.462 us. Every warm row beat both comparison engines;
+the only cold non-win remained the timer-scale identical-box intersection at
+110 ns versus CGAL's 100 ns.
 
 `Mesh::build_graphics_mesh` previously called `Mesh::triangulate`, which built
 temporary triangle polygons, recomputed support planes, allocated metadata and
