@@ -739,6 +739,42 @@ campaign completed 352 `boolean_pipeline` executions without failure. The
 downstream CSGRS default and all-feature suites passed all 305/369 library tests
 and their integration tests.
 
+## 2026-07-19: emit construction fans directly
+
+Status: **kept**
+
+Closed-arrangement triangulation formerly allocated one boundary vector and
+one triangle vector for every emitted polygon, then copied each temporary fan
+into the final triangle soup. It now reserves each boundary from the known
+polygon size, preallocates the final triangle/source rows, and appends
+construction-identity fans directly. A single pass skips consecutive segments
+with the same construction-edge identity while retaining the prior weakly
+convex fallback when fewer than three strict corners remain. Exact vertices,
+triangle order, source provenance, winding rows, and closure certification are
+unchanged.
+
+Preserved release binaries each performed 500 fresh sphere/box operations.
+Seven counter runs measured:
+
+| operation | temporary fans | direct fans | instruction result | cycle result |
+| --- | ---: | ---: | ---: | ---: |
+| union | 18,792,107,702 | 18,761,534,911 | 0.16% fewer | 0.98% fewer |
+| difference | 13,681,648,051 | 13,653,035,759 | 0.21% fewer | 0.73% fewer |
+
+Heap profiles of 25 unions fell from 1,045,599 to 1,038,724 allocations: 275
+allocations removed per operation, or 0.66% of the complete construction,
+Boolean, and materialization workload. Direct regressions cover an ordinary
+fan, a repeated collinear construction identity, and an uncertified fan that
+must leave output untouched for the exact fallback.
+
+Validation passed the default and all-feature matrices (961 unit tests, all 61
+core integration tests, and 48 regressions plus one intentional benchmark
+ignore), the no-default-feature check, warning-denied Clippy and rustdoc,
+benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
+campaign completed 370 `boolean_pipeline` executions without failure. The
+downstream CSGRS all-feature suite passed all 369 library tests and every
+integration test.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

@@ -606,10 +606,20 @@ where
     let axis_order = (approximate_vertices.is_none() && construction_candidates.is_none())
         .then(|| sorted_vertex_indices_by_axis(&vertices))
         .transpose()?;
+    let triangle_capacity = indexed_polygons
+        .iter()
+        .zip(orientations)
+        .filter(|(_, orientation)| **orientation != 0)
+        .map(|(polygon, _)| polygon.len().saturating_sub(2))
+        .sum();
     let mut split_edge_cache = SplitEdgeCache::default();
-    let mut triangles = Vec::new();
-    let mut sources = Vec::new();
-    let mut triangle_windings = Vec::new();
+    let mut triangles = Vec::with_capacity(triangle_capacity);
+    let mut sources = Vec::with_capacity(triangle_capacity);
+    let mut triangle_windings = Vec::with_capacity(if polygon_windings.is_some() {
+        triangle_capacity
+    } else {
+        0
+    });
 
     for (polygon_index, ((polygon, indexed), orientation)) in polygons
         .iter()
@@ -624,7 +634,7 @@ where
         if indexed.len() < 3 {
             continue;
         }
-        let mut boundary = Vec::new();
+        let mut boundary = Vec::with_capacity(indexed.len());
         for edge_index in 0..indexed.len() {
             let start = indexed[edge_index];
             let end = indexed[(edge_index + 1) % indexed.len()];
@@ -670,33 +680,39 @@ where
         if boundary.len() < 3 {
             continue;
         }
-        let polygon_triangles = if boundary.len() > indexed.len() {
+        let triangle_start = triangles.len();
+        if boundary.len() > indexed.len() {
             let center = append_output_polygon_centroid(&mut vertices, &indexed)?;
-            (0..boundary.len())
-                .map(|index| {
-                    [
-                        center,
-                        boundary[index],
-                        boundary[(index + 1) % boundary.len()],
-                    ]
-                })
-                .collect()
-        } else if let Some(polygon_triangles) = construction_candidates
-            .as_ref()
-            .and_then(|_| triangulate_construction_boundary(polygon, &indexed, &boundary))
-        {
-            polygon_triangles
-        } else {
-            match triangulate_weakly_convex_boundary(&boundary, &vertices, &polygon.support) {
-                Ok(triangles) => triangles,
-                Err(HypermeshError::UnknownClassification) => (1..(indexed.len() - 1))
-                    .map(|index| [indexed[0], indexed[index], indexed[index + 1]])
-                    .collect(),
-                Err(err) => return Err(err),
+            for index in 0..boundary.len() {
+                triangles.push([
+                    center,
+                    boundary[index],
+                    boundary[(index + 1) % boundary.len()],
+                ]);
             }
-        };
-        for triangle in polygon_triangles {
-            triangles.push(triangle);
+        } else {
+            let appended_construction = construction_candidates.is_some()
+                && append_construction_boundary_triangles(
+                    polygon,
+                    &indexed,
+                    &boundary,
+                    &mut triangles,
+                )
+                .is_some();
+            if !appended_construction {
+                match triangulate_weakly_convex_boundary(&boundary, &vertices, &polygon.support) {
+                    Ok(polygon_triangles) => triangles.extend(polygon_triangles),
+                    Err(HypermeshError::UnknownClassification) => {
+                        for index in 1..(indexed.len() - 1) {
+                            triangles.push([indexed[0], indexed[index], indexed[index + 1]]);
+                        }
+                    }
+                    Err(err) => return Err(err),
+                }
+            }
+        }
+        let triangle_count = triangles.len() - triangle_start;
+        for _ in 0..triangle_count {
             sources.push(TriangleSource {
                 mesh: polygon.mesh_index,
                 triangle: polygon.polygon_index,
@@ -866,11 +882,12 @@ fn mean_output_coordinate<'a>(
         .map_err(|_| HypermeshError::UnknownClassification)
 }
 
-fn triangulate_construction_boundary(
+fn append_construction_boundary_triangles(
     polygon: &ConvexPolygon,
     indexed: &[usize],
     boundary: &[usize],
-) -> Option<Vec<[usize; 3]>> {
+    triangles: &mut Vec<[usize; 3]>,
+) -> Option<()> {
     if indexed != boundary {
         return None;
     }
@@ -878,28 +895,23 @@ fn triangulate_construction_boundary(
     if identities.len() != boundary.len() {
         return None;
     }
-    let strictly_convex = boundary
-        .iter()
-        .enumerate()
-        .filter_map(|(index, &vertex)| {
-            let incoming = (index + identities.len() - 1) % identities.len();
-            (identities[incoming] != identities[index]).then_some(vertex)
-        })
-        .collect::<Vec<_>>();
-    if strictly_convex.len() < 3 {
-        return None;
+    let mut strictly_convex_count = 0usize;
+    let mut anchor = None;
+    let mut previous = None;
+    for (index, &vertex) in boundary.iter().enumerate() {
+        let incoming = (index + identities.len() - 1) % identities.len();
+        if identities[incoming] != identities[index] {
+            strictly_convex_count += 1;
+            if let Some(anchor) = anchor {
+                if let Some(previous) = previous.replace(vertex) {
+                    triangles.push([anchor, previous, vertex]);
+                }
+            } else {
+                anchor = Some(vertex);
+            }
+        }
     }
-    Some(
-        (1..(strictly_convex.len() - 1))
-            .map(|index| {
-                [
-                    strictly_convex[0],
-                    strictly_convex[index],
-                    strictly_convex[index + 1],
-                ]
-            })
-            .collect(),
-    )
+    (strictly_convex_count >= 3).then_some(())
 }
 
 fn triangulate_weakly_convex_boundary(
@@ -2335,6 +2347,8 @@ fn vertex_axis(vertex: &OutputVertex, axis: usize) -> &Real {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use super::*;
     use crate::geometry::Aabb;
     use crate::polygon::make_triangle;
@@ -2371,6 +2385,76 @@ mod tests {
             triangles: vec![[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
             sources: vec![TriangleSource::default(); 4],
         }
+    }
+
+    fn source_edge(endpoints: [usize; 2]) -> ConstructionEdgeIdentity {
+        ConstructionEdgeIdentity::Source { mesh: 0, endpoints }
+    }
+
+    #[test]
+    fn construction_boundary_appends_fan_without_intermediate_triangle_storage() {
+        let mut polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        polygon.known_edge_identities = Some(Arc::new(vec![
+            source_edge([0, 1]),
+            source_edge([1, 2]),
+            source_edge([0, 2]),
+        ]));
+        let mut triangles = Vec::new();
+
+        assert_eq!(
+            append_construction_boundary_triangles(
+                &polygon,
+                &[10, 11, 12],
+                &[10, 11, 12],
+                &mut triangles,
+            ),
+            Some(())
+        );
+        assert_eq!(triangles, vec![[10, 11, 12]]);
+    }
+
+    #[test]
+    fn construction_boundary_skips_repeated_collinear_edge_identity() {
+        let mut polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let repeated = source_edge([0, 1]);
+        polygon.known_edge_identities = Some(Arc::new(vec![
+            repeated.clone(),
+            repeated,
+            source_edge([1, 2]),
+            source_edge([2, 3]),
+        ]));
+        let mut triangles = Vec::new();
+
+        assert_eq!(
+            append_construction_boundary_triangles(
+                &polygon,
+                &[10, 11, 12, 13],
+                &[10, 11, 12, 13],
+                &mut triangles,
+            ),
+            Some(())
+        );
+        assert_eq!(triangles, vec![[10, 12, 13]]);
+    }
+
+    #[test]
+    fn construction_boundary_fallback_leaves_output_unchanged() {
+        let mut polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let repeated = source_edge([0, 1]);
+        polygon.known_edge_identities =
+            Some(Arc::new(vec![repeated.clone(), repeated.clone(), repeated]));
+        let mut triangles = vec![[1, 2, 3]];
+
+        assert_eq!(
+            append_construction_boundary_triangles(
+                &polygon,
+                &[10, 11, 12],
+                &[10, 11, 12],
+                &mut triangles,
+            ),
+            None
+        );
+        assert_eq!(triangles, vec![[1, 2, 3]]);
     }
 
     #[test]
