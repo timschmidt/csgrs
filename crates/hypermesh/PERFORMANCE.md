@@ -943,6 +943,41 @@ without failure (LeakSanitizer was disabled because the runner uses ptrace).
 The downstream CSGRS all-feature suite passed all 373 library tests and the
 nine focused exact adapter/differential tests.
 
+## 2026-07-20: retain certified input vertices by source index
+
+Status: **kept**
+
+Certified two-convex preparation previously cloned the three exact source
+positions into every triangle even though `MeshRef` already supplied an indexed
+position pool. Deferred input polygons now retain one shared exact position
+slice per source mesh plus their three source indices. Owned vertex cycles
+remain available for ordinary input, clipping, inversion, and derived output,
+so this changes neither the public API nor exact fallback behavior. A regression
+verifies that adjacent triangles share the pool while preserving each indexed
+cycle and its affine materialization.
+
+The same projective candidate also built an approximate AABB for every deferred
+triangle. That candidate classifies directly against indexed support planes and
+does not query polygon bounds. Deferred polygons now omit those unused bounds;
+if candidate construction fails, preparation rebuilds ordinary bounded input
+before entering BVH or subdivision code.
+
+On the isolated cold CSGRS sphere/box union, shared indexed positions reduced
+Callgrind's count from 55,466,235 to 55,344,048 instructions. Omitting unused
+deferred AABBs reduced it again to 54,906,147: 560,088 fewer instructions
+(1.01%) than the preceding checkpoint and 611,249 fewer (1.10%) than the
+original 55,517,396 baseline. In the final 47-workload cross-kernel sweep, cold
+sphere/box union measured 1.973 ms versus CGAL's 2.095 ms, a 1.062x CSGRS win;
+the related difference, intersection, and symmetric-difference rows also won,
+and every warm CSGRS row remained ahead of both CGAL and OpenCascade.
+
+Validation passed all 963 unit tests, 60 core integration tests, and 48
+regressions plus one intentional benchmark ignore, including every benchmark
+harness. Warning-denied Clippy, rustdoc, and every fuzz-target build were clean.
+A 20-second ASAN `boolean_pipeline` campaign completed 373 executions without
+failure (LeakSanitizer remained disabled because the runner uses ptrace). The
+downstream CSGRS all-feature suite passed all 373 library tests.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

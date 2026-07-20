@@ -514,7 +514,7 @@ fn append_polygon_output_vertices(
     vertices: &mut Vec<OutputVertex>,
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<()> {
-    if let Some(points) = polygon.known_vertices.as_deref() {
+    if let Some(points) = polygon.known_vertices.as_ref() {
         vertices.extend(points.iter().map(|point| OutputVertex {
             x: point.x.clone(),
             y: point.y.clone(),
@@ -1136,7 +1136,7 @@ where
     for (polygon_index, polygon) in polygons.iter().enumerate() {
         let polygon = polygon.borrow();
         indexed_polygons.push(vec![0; polygon.vertex_count()]);
-        if let Some(points) = polygon.known_vertices.as_deref() {
+        if let Some(points) = polygon.known_vertices.as_ref() {
             for (vertex_index, point) in points.iter().enumerate() {
                 positions.push((
                     polygon_index,

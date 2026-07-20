@@ -35,6 +35,42 @@ pub struct ApproxBounds {
     pub max: Point3,
 }
 
+#[derive(Clone, Debug)]
+pub(crate) enum RetainedVertexCycle {
+    Owned(Arc<[Point3]>),
+    IndexedTriangle {
+        positions: Arc<[Point3]>,
+        indices: [usize; 3],
+    },
+}
+
+impl RetainedVertexCycle {
+    pub(crate) fn len(&self) -> usize {
+        match self {
+            Self::Owned(vertices) => vertices.len(),
+            Self::IndexedTriangle { .. } => 3,
+        }
+    }
+
+    pub(crate) fn get(&self, index: usize) -> Option<&Point3> {
+        match self {
+            Self::Owned(vertices) => vertices.get(index),
+            Self::IndexedTriangle { positions, indices } => positions.get(*indices.get(index)?),
+        }
+    }
+
+    pub(crate) fn iter(&self) -> impl DoubleEndedIterator<Item = &Point3> + ExactSizeIterator {
+        (0..self.len()).map(|index| {
+            self.get(index)
+                .expect("retained vertex indices are validated at input preparation")
+        })
+    }
+
+    fn to_vec(&self) -> Vec<Point3> {
+        self.iter().cloned().collect()
+    }
+}
+
 impl ApproxBounds {
     /// Constructs bounds from min/max points.
     pub const fn new(min: Point3, max: Point3) -> Self {
@@ -66,7 +102,7 @@ pub struct ConvexPolygon {
     ///
     /// Derived clipping and BSP polygons clear this cache when their edge
     /// cycle changes.
-    pub(crate) known_vertices: Option<Arc<[Point3]>>,
+    pub(crate) known_vertices: Option<RetainedVertexCycle>,
     pub(crate) known_edge_identities: Option<Arc<[ConstructionEdgeIdentity]>>,
 }
 
@@ -153,10 +189,11 @@ impl ConvexPolygon {
                 .map(Plane::inverted)
                 .collect::<Vec<_>>(),
         );
-        result.known_vertices = self
-            .known_vertices
-            .as_ref()
-            .map(|vertices| Arc::from(vertices.iter().rev().cloned().collect::<Vec<_>>()));
+        result.known_vertices = self.known_vertices.as_ref().map(|vertices| {
+            RetainedVertexCycle::Owned(Arc::from(
+                vertices.iter().rev().cloned().collect::<Vec<_>>(),
+            ))
+        });
         result.known_edge_identities = self.known_edge_identities.as_ref().map(|identities| {
             let count = identities.len();
             Arc::from(
@@ -183,7 +220,7 @@ impl ConvexPolygon {
         let mut result = self.clone();
         result.edges = Arc::new(edges);
         result.approx_bounds = approx_bounds;
-        result.known_vertices = Some(Arc::from(vertices));
+        result.known_vertices = Some(RetainedVertexCycle::Owned(Arc::from(vertices)));
         result.known_edge_identities = Some(Arc::from(edge_identities));
         result
     }
@@ -277,11 +314,16 @@ pub fn make_triangle(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
-        known_vertices: Some(Arc::new([p0.clone(), p1.clone(), p2.clone()])),
+        known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
+            p0.clone(),
+            p1.clone(),
+            p2.clone(),
+        ]))),
         known_edge_identities: None,
     }
 }
 
+#[cfg(test)]
 pub(crate) fn make_triangle_with_deferred_edges(
     p0: &Point3,
     p1: &Point3,
@@ -300,7 +342,38 @@ pub(crate) fn make_triangle_with_deferred_edges(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
-        known_vertices: Some(Arc::new([p0.clone(), p1.clone(), p2.clone()])),
+        known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
+            p0.clone(),
+            p1.clone(),
+            p2.clone(),
+        ]))),
+        known_edge_identities: None,
+    }
+}
+
+pub(crate) fn make_indexed_triangle_with_deferred_edges(
+    positions: Arc<[Point3]>,
+    indices: [usize; 3],
+    mesh_index: isize,
+    polygon_index: isize,
+) -> ConvexPolygon {
+    let [i0, i1, i2] = indices;
+    let p0 = &positions[i0];
+    let p1 = &positions[i1];
+    let p2 = &positions[i2];
+    let support = Plane::from_points(p0, p1, p2);
+    ConvexPolygon {
+        edges: Arc::new(vec![support.clone()]),
+        support,
+        mesh_index,
+        polygon_index,
+        delta_w: Vec::new(),
+        // The indexed carrier is used only by the certified two-convex
+        // projective candidate, which classifies directly against support
+        // planes and never queries polygon AABBs. A failed candidate rebuilds
+        // ordinary input polygons before entering BVH/subdivision code.
+        approx_bounds: None,
+        known_vertices: Some(RetainedVertexCycle::IndexedTriangle { positions, indices }),
         known_edge_identities: None,
     }
 }
@@ -334,7 +407,12 @@ pub fn make_quad(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(bounds_for_points(&[p0, p1, p2, p3])),
-        known_vertices: Some(Arc::new([p0.clone(), p1.clone(), p2.clone(), p3.clone()])),
+        known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
+            p0.clone(),
+            p1.clone(),
+            p2.clone(),
+            p3.clone(),
+        ]))),
         known_edge_identities: None,
     }
 }

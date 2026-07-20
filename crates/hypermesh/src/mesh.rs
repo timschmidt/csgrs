@@ -1,12 +1,13 @@
 //! Input mesh conversion into polygon soup.
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use hyperlattice::{Point3, Real};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Aabb, axis_ref, compare_real};
-use crate::polygon::{ConvexPolygon, make_triangle, make_triangle_with_deferred_edges};
+use crate::polygon::{ConvexPolygon, make_indexed_triangle_with_deferred_edges, make_triangle};
 
 /// Input triangle: three vertex indices.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -137,6 +138,8 @@ fn prepare_input_with_edge_mode(
     let mut polygons = Vec::new();
     let mut polygon_index = 0isize;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
+        let retained_positions = (defer_edges && certified_convex_inputs[mesh_index])
+            .then(|| Arc::<[Point3]>::from(mesh.positions));
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
@@ -160,8 +163,13 @@ fn prepare_input_with_edge_mode(
                     index: i2,
                     vertex_count: mesh.positions.len(),
                 })?;
-            let mut polygon = if defer_edges && certified_convex_inputs[mesh_index] {
-                make_triangle_with_deferred_edges(p0, p1, p2, mesh_index as isize, polygon_index)
+            let mut polygon = if let Some(positions) = &retained_positions {
+                make_indexed_triangle_with_deferred_edges(
+                    Arc::clone(positions),
+                    [i0, i1, i2],
+                    mesh_index as isize,
+                    polygon_index,
+                )
             } else {
                 make_triangle(p0, p1, p2, mesh_index as isize, polygon_index)
             }
@@ -334,6 +342,44 @@ fn bounds_for_positions<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::polygon::RetainedVertexCycle;
+
+    #[test]
+    fn deferred_certified_triangles_share_one_indexed_position_pool() {
+        let positions = vec![
+            Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            Point3::new(Real::one(), Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), Real::one(), Real::zero()),
+            Point3::new(Real::zero(), Real::zero(), Real::one()),
+        ];
+        let mesh = InputMesh::new(
+            positions.clone(),
+            vec![Triangle::new(0, 1, 2), Triangle::new(0, 3, 1)],
+        );
+        let soup = prepare_input_with_deferred_edges(&[mesh.as_ref()], &[true]).unwrap();
+
+        let (
+            Some(RetainedVertexCycle::IndexedTriangle {
+                positions: first,
+                indices: first_indices,
+            }),
+            Some(RetainedVertexCycle::IndexedTriangle {
+                positions: second,
+                indices: second_indices,
+            }),
+        ) = (
+            &soup.polygons[0].known_vertices,
+            &soup.polygons[1].known_vertices,
+        )
+        else {
+            panic!("certified deferred triangles must retain indexed vertices");
+        };
+
+        assert!(Arc::ptr_eq(first, second));
+        assert_eq!(*first_indices, [0, 1, 2]);
+        assert_eq!(*second_indices, [0, 3, 1]);
+        assert_eq!(soup.polygons[0].vertices().unwrap(), positions[..3]);
+    }
 
     #[test]
     fn indexed_edge_balance_canonicalizes_coincident_input_vertices() {
