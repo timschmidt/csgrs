@@ -1915,13 +1915,6 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             ));
         }
     };
-    // Fragment classification queries the same two immutable operands once per
-    // emitted fragment. Retain their conservative boxes for this stage instead
-    // of rebuilding contour and region bounds for every representative point.
-    // The prepared views only skip points proved outside cached boxes; all
-    // surviving candidates still use the canonical exact classifier.
-    let first_prepared = crate::PreparedRegionView2::from_region_view(first, policy);
-    let second_prepared = crate::PreparedRegionView2::from_region_view(second, policy);
     // Successful splitting excludes unresolved segment relations. When the
     // complete event set also has no positive-dimensional overlap, every
     // opposite-boundary contact is a retained marker endpoint; the strict
@@ -1935,7 +1928,7 @@ fn boolean_boundary_contours_between_with_pipeline_report(
         )
     });
     let crossing_windings = if split_interiors_are_off_opposite_boundary
-        && RegionLineCrossingWindingIndex::event_set_meets_propagation_crossover(boundary_events)
+        && RegionLineCrossingWindingIndex::event_set_may_support_propagation(boundary_events)
     {
         RegionLineCrossingWindingIndex::from_intersections(first, second, boundary_events, policy)
     } else {
@@ -1951,10 +1944,19 @@ fn boolean_boundary_contours_between_with_pipeline_report(
                 endpoint_contacts,
                 crossing_windings,
                 |source_side, sample| match source_side {
-                    RegionSide::First => second_prepared
-                        .single_material_winding_assuming_off_boundary(sample, policy),
+                    RegionSide::First => {
+                        crate::contour::line_contour_winding_assuming_off_boundary(
+                            second.material_contours()[0],
+                            sample,
+                            policy,
+                        )
+                    }
                     RegionSide::Second => {
-                        first_prepared.single_material_winding_assuming_off_boundary(sample, policy)
+                        crate::contour::line_contour_winding_assuming_off_boundary(
+                            first.material_contours()[0],
+                            sample,
+                            policy,
+                        )
                     }
                 },
             )?,
@@ -1962,23 +1964,31 @@ fn boolean_boundary_contours_between_with_pipeline_report(
     };
     let selection_result = match crossing_selection_result {
         Some(selection_result) => selection_result,
-        None => fragments.classify_for_boolean_with_contacts_and_point_classifier_with_report(
-            first,
-            second,
-            op,
-            policy,
-            endpoint_contacts.as_ref(),
-            |source_side, sample| match (split_interiors_are_off_opposite_boundary, source_side) {
-                (true, RegionSide::First) => {
-                    second_prepared.classify_point_assuming_off_boundary(sample, policy)
-                }
-                (true, RegionSide::Second) => {
-                    first_prepared.classify_point_assuming_off_boundary(sample, policy)
-                }
-                (false, RegionSide::First) => second_prepared.classify_point(sample, policy),
-                (false, RegionSide::Second) => first_prepared.classify_point(sample, policy),
-            },
-        )?,
+        None => {
+            // General fragment classification queries the same immutable
+            // operands repeatedly. Retain boxes and prepared predicates only
+            // when the once-visiting crossing proof above is unavailable.
+            let first_prepared = crate::PreparedRegionView2::from_region_view(first, policy);
+            let second_prepared = crate::PreparedRegionView2::from_region_view(second, policy);
+            fragments.classify_for_boolean_with_contacts_and_point_classifier_with_report(
+                first,
+                second,
+                op,
+                policy,
+                endpoint_contacts.as_ref(),
+                |source_side, sample| match (split_interiors_are_off_opposite_boundary, source_side)
+                {
+                    (true, RegionSide::First) => {
+                        second_prepared.classify_point_assuming_off_boundary(sample, policy)
+                    }
+                    (true, RegionSide::Second) => {
+                        first_prepared.classify_point_assuming_off_boundary(sample, policy)
+                    }
+                    (false, RegionSide::First) => second_prepared.classify_point(sample, policy),
+                    (false, RegionSide::Second) => first_prepared.classify_point(sample, policy),
+                },
+            )?
+        }
     };
     let selection = match selection_result.selection() {
         Some(selection) => selection,

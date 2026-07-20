@@ -30,15 +30,8 @@ pub(crate) struct RegionLineCrossingWindingIndex {
 }
 
 impl RegionLineCrossingWindingIndex {
-    const MIN_CROSSINGS_PER_CONTOUR: usize = 8;
-
-    pub(crate) fn event_set_meets_propagation_crossover(
-        intersections: &RegionIntersectionSet,
-    ) -> bool {
-        // Two seed winding queries are already competitive with a handful of
-        // endpoint classifications. Building and validating transition
-        // determinants pays for itself at this modest repeated-crossing count.
-        intersections.point_event_count() >= Self::MIN_CROSSINGS_PER_CONTOUR
+    pub(crate) fn event_set_may_support_propagation(intersections: &RegionIntersectionSet) -> bool {
+        intersections.point_event_count() != 0
     }
 
     pub(crate) fn from_intersections(

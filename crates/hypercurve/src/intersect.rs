@@ -810,11 +810,13 @@ fn intersect_non_parallel(
         IntersectionKind::Crossing
     };
     let point = if t_endpoint {
-        line_point_at_unit_endpoint(a, &t, policy).unwrap_or_else(|| a.point_at(t.clone()))
+        line_point_at_unit_endpoint(a, &t, policy)
+            .unwrap_or_else(|| line_intersection_point_at(a, &t))
     } else if u_endpoint {
-        line_point_at_unit_endpoint(b, &u, policy).unwrap_or_else(|| a.point_at(t.clone()))
+        line_point_at_unit_endpoint(b, &u, policy)
+            .unwrap_or_else(|| line_intersection_point_at(a, &t))
     } else {
-        a.point_at(t.clone())
+        line_intersection_point_at(a, &t)
     };
 
     Ok(LineLineIntersection::Point {
@@ -823,6 +825,20 @@ fn intersect_non_parallel(
         b_param: u,
         kind,
     })
+}
+
+fn line_intersection_point_at(line: &LineSeg2, parameter: &Real) -> Point2 {
+    let one_minus_parameter = Real::one() - parameter;
+    Point2::new(
+        Real::dot2_refs(
+            [line.start().x(), line.end().x()],
+            [&one_minus_parameter, parameter],
+        ),
+        Real::dot2_refs(
+            [line.start().y(), line.end().y()],
+            [&one_minus_parameter, parameter],
+        ),
+    )
 }
 
 fn line_point_at_unit_endpoint(

@@ -556,11 +556,11 @@ bit, so both non-zero and even-odd fill rules remain valid even when a contour i
 self-intersecting.
 
 The path is intentionally narrow. It requires one material contour and no holes
-on each side, at least eight retained point events, line primitives on both sides,
+on each side, at least one retained point event, line primitives on both sides,
 strict-interior `Crossing` events, unique and comparable source parameters, zero
 net winding change around both closed contours, and a one-to-one match between
 events and materialized split boundaries. Endpoint contacts, tangencies, arcs,
-overlaps, duplicate parameters, uncertain predicates, small workloads, and any
+overlaps, duplicate parameters, uncertain predicates, and any
 proof mismatch retain the per-fragment classifier. A differential regression
 compares the new selection and report with the canonical classifier and confirms
 that a qualifying two-contour case issues only two seed winding queries.
@@ -573,6 +573,35 @@ effectively unchanged. The complete one-iteration Callgrind sweep fell from
 original checkpoint, star64 is now 93.5% faster and the sweep executes 94.3% fewer
 instructions. The exact Boolean differential fuzz target completed 1,000
 AddressSanitizer-instrumented runs at 5,253 coverage points and 15,082 feature
+edges without a failure.
+
+Exact line-intersection witnesses then used the general point interpolation path,
+which cloned the source parameter and normalized two independent multiply-add
+expressions per coordinate. The nonparallel line kernel now constructs the same
+`(1 - t) * start + t * end` polynomial with the fused exact two-product sum. This
+is deliberately local to line intersection: applying the representation change to
+all point interpolation increased the offset lane's Callgrind subtree from 742,275
+to 756,286 instructions, while the specialized kernel improved the complete sweep.
+
+The retained crossing-winding path also eagerly built two prepared region views
+before proving that it needed only two seed winding numbers. It now scans each
+already-certified all-line source contour directly for those seeds and constructs
+prepared predicates only on fallback. Because that changes the crossover economics,
+every nonempty event set may attempt the conservative retained-crossing proof; any
+ineligible event still falls through unchanged. Finally, fragment reports recover
+the primitive family directly from the `Segment2` variant instead of recomputing
+full structural facts for each source and materialized fragment. Splitting preserves
+the primitive family, so kind counts and provenance reports remain identical.
+
+In the final 15-sample comparative run, star64 intersection fell from 2.428 to
+1.734 ms/iter (28.6%) and rectangle union from 53.079 to 35.740 us/iter (32.7%).
+Offset measured 20.194 us/iter and NURBS evaluation 1.167 us/iter, with unchanged
+checksums. The complete stripped one-iteration Callgrind sweep fell from 80,471,959
+to 61,253,225 instructions (23.9%). From the original checkpoint, star64 is now
+95.3% faster and the sweep executes 95.7% fewer instructions. The full all-feature
+and no-default-feature test matrices, warnings-as-errors Clippy and rustdoc gates,
+and the exact Boolean differential fuzz target all passed; the latter completed
+1,000 AddressSanitizer-instrumented runs at 5,587 coverage points and 15,636 feature
 edges without a failure.
 
 ## Optimization boundary

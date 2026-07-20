@@ -495,7 +495,7 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
         )
     });
     let crossing_windings = if split_interiors_are_off_opposite_boundary
-        && RegionLineCrossingWindingIndex::event_set_meets_propagation_crossover(boundary_events)
+        && RegionLineCrossingWindingIndex::event_set_may_support_propagation(boundary_events)
     {
         RegionLineCrossingWindingIndex::from_intersections(
             &first_view,
