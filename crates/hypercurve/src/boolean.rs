@@ -13,6 +13,12 @@ use crate::{
 };
 use hyperreal::{Real, RealSign};
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum CertifiedFragmentEndpoint {
+    Start,
+    End,
+}
+
 /// Boolean operation requested between two regions.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BooleanOp {
@@ -651,12 +657,11 @@ impl BooleanOp {
     }
 }
 
-pub(crate) fn source_contour_filled_side_is_left(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
+fn source_contour_for_key<'a>(
+    first: &'a RegionView2<'_>,
+    second: &'a RegionView2<'_>,
     key: RegionContourKey,
-    policy: &CurvePolicy,
-) -> CurveResult<Classification<bool>> {
+) -> CurveResult<&'a crate::Contour2> {
     let view = match key.side {
         RegionSide::First => first,
         RegionSide::Second => second,
@@ -665,9 +670,18 @@ pub(crate) fn source_contour_filled_side_is_left(
         RegionContourRole::Material => view.material_contours(),
         RegionContourRole::Hole => view.hole_contours(),
     };
-    let contour = contours.get(key.index).copied().ok_or_else(|| {
+    contours.get(key.index).copied().ok_or_else(|| {
         CurveError::Topology("boolean classification references a missing contour".into())
-    })?;
+    })
+}
+
+pub(crate) fn source_contour_filled_side_is_left(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    key: RegionContourKey,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<bool>> {
+    let contour = source_contour_for_key(first, second, key)?;
     let Some(area) = contour.signed_area()? else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
@@ -874,6 +888,28 @@ impl RegionFragmentSet {
     where
         F: FnMut(RegionSide, &crate::Point2) -> Classification<RegionPointLocation>,
     {
+        self.classify_for_boolean_with_contacts_and_point_classifier_with_report(
+            first,
+            second,
+            op,
+            policy,
+            None,
+            &mut classify_opposite,
+        )
+    }
+
+    pub(crate) fn classify_for_boolean_with_contacts_and_point_classifier_with_report<F>(
+        &self,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+        endpoint_contacts: Option<&crate::region_events::RegionPointEndpointContactIndex>,
+        mut classify_opposite: F,
+    ) -> CurveResult<BooleanFragmentSelectionResult2>
+    where
+        F: FnMut(RegionSide, &crate::Point2) -> Classification<RegionPointLocation>,
+    {
         let mut classifications = Vec::new();
         let source_contour_count = self.len();
         let source_fragment_count = region_fragment_count(self);
@@ -885,6 +921,7 @@ impl RegionFragmentSet {
         ];
 
         for contour_fragments in self.contours() {
+            let source_contour = source_contour_for_key(first, second, contour_fragments.key)?;
             let source_filled_side_is_left = match source_contour_filled_side_is_left(
                 first,
                 second,
@@ -908,8 +945,30 @@ impl RegionFragmentSet {
                 contour_fragments.fragments.fragments().iter().enumerate()
             {
                 let source_side = contour_fragments.key.side;
+                let certified_endpoint = endpoint_contacts.and_then(|contacts| {
+                    if !contacts.parameter_is_contact(
+                        contour_fragments.key,
+                        fragment.source_segment_index,
+                        source_contour.len(),
+                        fragment.source_range.start(),
+                        policy,
+                    ) {
+                        Some(CertifiedFragmentEndpoint::Start)
+                    } else if !contacts.parameter_is_contact(
+                        contour_fragments.key,
+                        fragment.source_segment_index,
+                        source_contour.len(),
+                        fragment.source_range.end(),
+                        policy,
+                    ) {
+                        Some(CertifiedFragmentEndpoint::End)
+                    } else {
+                        None
+                    }
+                });
                 let opposite_location = match classify_fragment_interior(
                     &fragment.segment,
+                    certified_endpoint,
                     &interior_sample_fractions,
                     policy,
                     |sample| classify_opposite(source_side, sample),
@@ -959,6 +1018,7 @@ impl RegionFragmentSet {
 
 fn classify_fragment_interior<F>(
     segment: &Segment2,
+    certified_endpoint: Option<CertifiedFragmentEndpoint>,
     fractions: &[Real; 3],
     policy: &CurvePolicy,
     mut classify: F,
@@ -968,6 +1028,21 @@ where
 {
     let mut representative_blocker = None;
     let mut classification_blocker = None;
+
+    if let Some(endpoint) = certified_endpoint {
+        let sample = match endpoint {
+            CertifiedFragmentEndpoint::Start => segment.start(),
+            CertifiedFragmentEndpoint::End => segment.end(),
+        };
+        match classify(sample) {
+            Classification::Decided(location) => {
+                return Ok(FragmentInteriorClassification::Decided(location));
+            }
+            Classification::Uncertain(reason) => {
+                classification_blocker.get_or_insert(reason);
+            }
+        }
+    }
 
     for fraction in fractions {
         let sample = match segment.point_at(fraction, policy)? {

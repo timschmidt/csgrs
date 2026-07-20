@@ -1927,22 +1927,30 @@ fn boolean_boundary_contours_between_with_pipeline_report(
     // interior samples below therefore cannot lie on that boundary.
     let split_interiors_are_off_opposite_boundary =
         boundary_events.overlap_event_count() == 0 && boundary_events.uncertain_event_count() == 0;
-    let selection_result = fragments.classify_for_boolean_with_point_classifier_with_report(
-        first,
-        second,
-        op,
-        policy,
-        |source_side, sample| match (split_interiors_are_off_opposite_boundary, source_side) {
-            (true, RegionSide::First) => {
-                second_prepared.classify_point_assuming_off_boundary(sample, policy)
-            }
-            (true, RegionSide::Second) => {
-                first_prepared.classify_point_assuming_off_boundary(sample, policy)
-            }
-            (false, RegionSide::First) => second_prepared.classify_point(sample, policy),
-            (false, RegionSide::Second) => first_prepared.classify_point(sample, policy),
-        },
-    )?;
+    let endpoint_contacts = split_interiors_are_off_opposite_boundary.then(|| {
+        crate::region_events::RegionPointEndpointContactIndex::from_intersections(
+            boundary_events,
+            policy,
+        )
+    });
+    let selection_result = fragments
+        .classify_for_boolean_with_contacts_and_point_classifier_with_report(
+            first,
+            second,
+            op,
+            policy,
+            endpoint_contacts.as_ref(),
+            |source_side, sample| match (split_interiors_are_off_opposite_boundary, source_side) {
+                (true, RegionSide::First) => {
+                    second_prepared.classify_point_assuming_off_boundary(sample, policy)
+                }
+                (true, RegionSide::Second) => {
+                    first_prepared.classify_point_assuming_off_boundary(sample, policy)
+                }
+                (false, RegionSide::First) => second_prepared.classify_point(sample, policy),
+                (false, RegionSide::Second) => first_prepared.classify_point(sample, policy),
+            },
+        )?;
     let selection = match selection_result.selection() {
         Some(selection) => selection,
         None => {

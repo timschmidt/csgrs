@@ -5,10 +5,15 @@
 //! sweep-line scheduling intersection reporting work: candidate generation may
 //! be optimized, but topology still depends on the exact segment relation.
 
+use std::collections::BTreeMap;
+
+use hyperreal::Real;
+
 use crate::bbox::{aabbs_decided_disjoint, decided_contour_aabb};
+use crate::classify::compare_reals;
 use crate::{
-    Classification, ContourIntersectionSet, ContourOperand, CurveError, CurvePolicy, CurveResult,
-    RegionView2, SegmentKind, SegmentKindCounts,
+    Classification, ContourIntersection, ContourIntersectionSet, ContourOperand, CurveError,
+    CurvePolicy, CurveResult, RegionView2, SegmentKind, SegmentKindCounts,
 };
 
 /// Which region side a contour key belongs to.
@@ -99,6 +104,88 @@ pub struct RegionIntersectionSet {
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
+}
+
+#[derive(Clone, Debug, Default)]
+pub(crate) struct RegionPointEndpointContactIndex {
+    vertex_masks: BTreeMap<(RegionContourKey, usize), u8>,
+}
+
+impl RegionPointEndpointContactIndex {
+    const START: u8 = 1;
+    const END: u8 = 2;
+
+    pub(crate) fn from_intersections(
+        intersections: &RegionIntersectionSet,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let mut index = Self::default();
+        for pair in intersections.pairs() {
+            for event in pair.intersections().events() {
+                let ContourIntersection::Point(point) = event else {
+                    continue;
+                };
+                index.record(pair.first(), point.a_segment_index, &point.a_param, policy);
+                index.record(pair.second(), point.b_segment_index, &point.b_param, policy);
+            }
+        }
+        index
+    }
+
+    fn record(
+        &mut self,
+        key: RegionContourKey,
+        segment_index: usize,
+        parameter: &Real,
+        policy: &CurvePolicy,
+    ) {
+        let mask = match compare_reals(parameter, &Real::zero(), policy) {
+            Some(std::cmp::Ordering::Equal) => Self::START,
+            None => Self::START | Self::END,
+            Some(_) => match compare_reals(parameter, &Real::one(), policy) {
+                Some(std::cmp::Ordering::Equal) => Self::END,
+                None => Self::START | Self::END,
+                Some(_) => 0,
+            },
+        };
+        if mask != 0 {
+            *self.vertex_masks.entry((key, segment_index)).or_default() |= mask;
+        }
+    }
+
+    pub(crate) fn parameter_is_contact(
+        &self,
+        key: RegionContourKey,
+        segment_index: usize,
+        segment_count: usize,
+        parameter: &Real,
+        policy: &CurvePolicy,
+    ) -> bool {
+        match compare_reals(parameter, &Real::zero(), policy) {
+            Some(std::cmp::Ordering::Equal) => {
+                let previous = (segment_index + segment_count - 1) % segment_count;
+                self.mask(key, segment_index) & Self::START != 0
+                    || self.mask(key, previous) & Self::END != 0
+            }
+            None => true,
+            Some(_) => match compare_reals(parameter, &Real::one(), policy) {
+                Some(std::cmp::Ordering::Equal) => {
+                    let next = (segment_index + 1) % segment_count;
+                    self.mask(key, segment_index) & Self::END != 0
+                        || self.mask(key, next) & Self::START != 0
+                }
+                None => true,
+                Some(_) => true,
+            },
+        }
+    }
+
+    fn mask(&self, key: RegionContourKey, segment_index: usize) -> u8 {
+        self.vertex_masks
+            .get(&(key, segment_index))
+            .copied()
+            .unwrap_or(0)
+    }
 }
 
 impl RegionIntersectionSet {
@@ -421,4 +508,33 @@ fn collect_role_pairs(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn endpoint_contact_index_checks_both_incident_segments() {
+        let key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
+        let policy = CurvePolicy::certified();
+        let mut index = RegionPointEndpointContactIndex::default();
+        index
+            .vertex_masks
+            .insert((key, 1), RegionPointEndpointContactIndex::START);
+        index
+            .vertex_masks
+            .insert((key, 2), RegionPointEndpointContactIndex::END);
+
+        assert!(index.parameter_is_contact(key, 0, 4, &Real::one(), &policy));
+        assert!(index.parameter_is_contact(key, 3, 4, &Real::zero(), &policy));
+        assert!(!index.parameter_is_contact(key, 0, 4, &Real::zero(), &policy));
+        assert!(index.parameter_is_contact(
+            key,
+            0,
+            4,
+            &(Real::one() / Real::from(2_u8)).unwrap(),
+            &policy,
+        ));
+    }
 }

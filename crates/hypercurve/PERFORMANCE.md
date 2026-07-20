@@ -520,6 +520,31 @@ regressing offset/NURBS timing. The exact Boolean differential fuzz target
 completed 1,000 AddressSanitizer-instrumented runs at 5,156 coverage points and
 14,798 feature edges without a failure.
 
+Fragment classification still constructed at least one new exact interior point
+for every emitted split fragment, even when an existing source vertex had already
+been proved off the opposite boundary. Region event collection now retains a
+point-contact endpoint index keyed by contour and source segment. Endpoint queries
+check both incident segments around the closed contour, so event normalization at
+a shared vertex cannot make the other segment appear contact-free. A fragment may
+classify an existing start or end point only when the complete event set contains
+no overlap or unresolved event and that endpoint has no retained contact. Unknown
+parameter comparisons disable the shortcut, strict-interior split parameters remain
+contacts, and an uncertain endpoint classification falls through to the unchanged
+one-half/one-third/two-thirds sequence. Public and custom fragment classifiers keep
+their canonical sampling path.
+
+In the final 15-sample comparative run, star64 intersection fell from 4.233 to
+2.858 ms/iter (32.5%) and rectangle union fell from 59.657 to 49.612 us/iter
+(16.8%), with unchanged checksums. The complete one-iteration Callgrind sweep fell
+from 148,433,531 to 95,828,985 instructions (35.4%). From the original checkpoint,
+star64 is now 92.3% faster and the sweep executes 93.2% fewer instructions. Direct
+prepared exact-rational orientation and retained-range `point_at` experiments were
+rejected after increasing the sweep to 149,737,564 and 187,988,683 instructions,
+respectively. A closed-contour adjacency regression covers contact ownership by
+either incident segment. The exact Boolean differential fuzz target completed
+1,000 AddressSanitizer-instrumented runs at 5,229 coverage points and 15,007 feature
+edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
