@@ -3,7 +3,6 @@ use crate::mesh::plane::first_nondegenerate_support;
 use crate::vertex::Vertex;
 use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::RealSign;
-use hypertri::kernel::{ExactKernel, Kernel};
 use hypertri::types::Sign;
 use std::cmp::Ordering;
 use std::num::NonZeroU32;
@@ -201,14 +200,24 @@ fn strictly_convex_exact_word_projection<'a>(
 }
 
 fn strictly_convex(points: &[hypertri::Point2], first_turn: Option<Sign>) -> bool {
+    let predicate_points = points
+        .iter()
+        .map(|point| hyperlimit::Point2::new(point.x.clone(), point.y.clone()))
+        .collect::<Vec<_>>();
     let mut winding = first_turn;
     for index in usize::from(first_turn.is_some())..points.len() {
-        let Ok(sign) = ExactKernel::orient2d(
-            &points[index],
-            &points[(index + 1) % points.len()],
-            &points[(index + 2) % points.len()],
-        ) else {
+        let Some(sign) = hyperlimit::orient2d(
+            &predicate_points[index],
+            &predicate_points[(index + 1) % points.len()],
+            &predicate_points[(index + 2) % points.len()],
+        )
+        .value() else {
             return false;
+        };
+        let sign = match sign {
+            hyperlimit::Sign::Negative => Sign::Negative,
+            hyperlimit::Sign::Zero => Sign::Zero,
+            hyperlimit::Sign::Positive => Sign::Positive,
         };
         if sign == Sign::Zero {
             return false;
