@@ -77,7 +77,8 @@ struct LazyMappedIdentities {
 enum LazySourceVertices {
     Materialized(Arc<Vec<Vertex>>),
     Cuboid {
-        dimensions: [Real; 3],
+        coordinate_bounds: [[Real; 2]; 3],
+        coordinate_bounds_f64: Option<[[f64; 2]; 3]>,
         position_vertices: Vec<OnceLock<Box<Vertex>>>,
         vertices: Vec<OnceLock<Box<Vertex>>>,
         first_position_identity: u64,
@@ -168,7 +169,7 @@ enum LazySourceVertices {
 }
 
 fn cuboid_vertex(
-    dimensions: &[Real; 3],
+    coordinate_bounds: &[[Real; 2]; 3],
     position_slot: usize,
     face: usize,
     first_position_identity: u64,
@@ -176,21 +177,9 @@ fn cuboid_vertex(
 ) -> Box<Vertex> {
     let coordinate_slots = CUBOID_POINT_COORDINATE_SLOTS[position_slot];
     let position = Point3::new(
-        if coordinate_slots[0] == 0 {
-            Real::zero()
-        } else {
-            dimensions[0].clone()
-        },
-        if coordinate_slots[1] == 0 {
-            Real::zero()
-        } else {
-            dimensions[1].clone()
-        },
-        if coordinate_slots[2] == 0 {
-            Real::zero()
-        } else {
-            dimensions[2].clone()
-        },
+        coordinate_bounds[0][coordinate_slots[0]].clone(),
+        coordinate_bounds[1][coordinate_slots[1]].clone(),
+        coordinate_bounds[2][coordinate_slots[2]].clone(),
     );
     let normal = match face {
         0 => -Vector3::z(),
@@ -240,14 +229,14 @@ impl LazySourceVertices {
         match self {
             Self::Materialized(vertices) => &vertices[index],
             Self::Cuboid {
-                dimensions,
+                coordinate_bounds,
                 vertices,
                 first_position_identity,
                 first_coordinate_identity,
                 ..
             } => vertices[index].get_or_init(|| {
                 cuboid_vertex(
-                    dimensions,
+                    coordinate_bounds,
                     CUBOID_CORNER_POSITION_SLOTS[index],
                     index / 4,
                     *first_position_identity,
@@ -694,14 +683,14 @@ impl LazySourceVertices {
     fn cuboid_position_vertex(&self, position_slot: usize) -> &Vertex {
         match self {
             Self::Cuboid {
-                dimensions,
+                coordinate_bounds,
                 position_vertices,
                 first_position_identity,
                 first_coordinate_identity,
                 ..
             } => position_vertices[position_slot].get_or_init(|| {
                 cuboid_vertex(
-                    dimensions,
+                    coordinate_bounds,
                     position_slot,
                     CUBOID_POSITION_REPRESENTATIVES[position_slot][0],
                     *first_position_identity,
@@ -714,6 +703,16 @@ impl LazySourceVertices {
 
     fn position_f64_lossy(&self, index: usize) -> Option<[f64; 3]> {
         match self {
+            Self::Cuboid {
+                coordinate_bounds_f64: Some(coordinate_bounds),
+                ..
+            } => {
+                let coordinate_slots =
+                    CUBOID_POINT_COORDINATE_SLOTS[CUBOID_CORNER_POSITION_SLOTS[index]];
+                Some(std::array::from_fn(|axis| {
+                    coordinate_bounds[axis][coordinate_slots[axis]]
+                }))
+            },
             Self::Mapped {
                 position_f64: Some(positions),
                 ..
@@ -762,9 +761,32 @@ impl LazySubdivisionVertexPool {
         first_position_identity: u64,
         first_coordinate_identity: u64,
     ) -> Self {
+        Self::new_cuboid_bounds(
+            std::array::from_fn(|axis| [Real::zero(), dimensions[axis].clone()]),
+            first_position_identity,
+            first_coordinate_identity,
+        )
+    }
+
+    pub(crate) fn new_cuboid_bounds(
+        coordinate_bounds: [[Real; 2]; 3],
+        first_position_identity: u64,
+        first_coordinate_identity: u64,
+    ) -> Self {
+        let finite_bounds = |axis: usize| {
+            coordinate_bounds[axis][0]
+                .to_f64_lossy()
+                .zip(coordinate_bounds[axis][1].to_f64_lossy())
+                .map(|(min, max)| [min, max])
+        };
+        let coordinate_bounds_f64 = finite_bounds(0)
+            .zip(finite_bounds(1))
+            .zip(finite_bounds(2))
+            .map(|((x, y), z)| [x, y, z]);
         Self {
             source_vertices: LazySourceVertices::Cuboid {
-                dimensions,
+                coordinate_bounds,
+                coordinate_bounds_f64,
                 position_vertices: std::iter::repeat_with(OnceLock::new).take(8).collect(),
                 vertices: std::iter::repeat_with(OnceLock::new).take(24).collect(),
                 first_position_identity,
