@@ -330,14 +330,10 @@ impl BooleanBoundaryFragmentSet {
             }
         }
 
-        match BooleanBoundaryChainSet::new(chains) {
-            Ok(chain_set) => decided_boolean_boundary_chain_assembly_result(self, chain_set),
-            Err(_) => blocked_boolean_boundary_chain_assembly_result(
-                self,
-                BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
-                UncertaintyReason::Unsupported,
-            ),
-        }
+        decided_boolean_boundary_chain_assembly_result(
+            self,
+            BooleanBoundaryChainSet::from_assembled(chains),
+        )
     }
 }
 
@@ -531,6 +527,10 @@ impl BooleanBoundaryChain {
         Ok(Self { fragments, closed })
     }
 
+    fn from_assembled(fragments: Vec<DirectedBooleanFragment>, closed: bool) -> Self {
+        Self { fragments, closed }
+    }
+
     /// Returns fragments in traversal order.
     pub fn fragments(&self) -> &[DirectedBooleanFragment] {
         &self.fragments
@@ -568,6 +568,10 @@ impl BooleanBoundaryChainSet {
     pub fn new(chains: Vec<BooleanBoundaryChain>) -> CurveResult<Self> {
         validate_boolean_boundary_chains(&chains)?;
         Ok(Self { chains })
+    }
+
+    fn from_assembled(chains: Vec<BooleanBoundaryChain>) -> Self {
+        Self { chains }
     }
 
     /// Returns chains in assembly order.
@@ -616,29 +620,15 @@ impl BooleanBoundaryChainSet {
             );
         }
 
-        let loops = match self
+        let loops = self
             .chains
             .iter()
-            .map(|chain| BooleanBoundaryLoop::new(chain.fragments.clone()))
-            .collect::<CurveResult<Vec<_>>>()
-        {
-            Ok(loops) => loops,
-            Err(_) => {
-                return blocked_boolean_boundary_loop_extraction_result(
-                    self,
-                    BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
-                    UncertaintyReason::Unsupported,
-                );
-            }
-        };
-        match BooleanBoundaryLoopSet::new(loops) {
-            Ok(loop_set) => decided_boolean_boundary_loop_extraction_result(self, loop_set),
-            Err(_) => blocked_boolean_boundary_loop_extraction_result(
-                self,
-                BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
-                UncertaintyReason::Unsupported,
-            ),
-        }
+            .map(|chain| BooleanBoundaryLoop::from_closed_chain(chain.fragments.clone()))
+            .collect();
+        decided_boolean_boundary_loop_extraction_result(
+            self,
+            BooleanBoundaryLoopSet::from_extracted(loops),
+        )
     }
 
     /// Consumes the chain set and extracts closed chains as boundary loops.
@@ -661,44 +651,19 @@ impl BooleanBoundaryChainSet {
         let source_fragment_count = chain_set_fragment_count(&self);
         let source_fragment_kind_counts = chain_set_fragment_kind_counts(&self);
         let closed_chain_count = self.closed_count();
-        let loops = match self
+        let loops = self
             .chains
             .into_iter()
-            .map(|chain| BooleanBoundaryLoop::new(chain.fragments))
-            .collect::<CurveResult<Vec<_>>>()
-        {
-            Ok(loops) => loops,
-            Err(_) => {
-                return blocked_boolean_boundary_loop_extraction_counts_result(
-                    BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
-                    source_chain_count,
-                    source_fragment_count,
-                    source_fragment_kind_counts,
-                    closed_chain_count,
-                    0,
-                    UncertaintyReason::Unsupported,
-                );
-            }
-        };
-        match BooleanBoundaryLoopSet::new(loops) {
-            Ok(loop_set) => decided_boolean_boundary_loop_extraction_counts_result(
-                source_chain_count,
-                source_fragment_count,
-                source_fragment_kind_counts,
-                closed_chain_count,
-                0,
-                loop_set,
-            ),
-            Err(_) => blocked_boolean_boundary_loop_extraction_counts_result(
-                BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
-                source_chain_count,
-                source_fragment_count,
-                source_fragment_kind_counts,
-                closed_chain_count,
-                0,
-                UncertaintyReason::Unsupported,
-            ),
-        }
+            .map(|chain| BooleanBoundaryLoop::from_closed_chain(chain.fragments))
+            .collect();
+        decided_boolean_boundary_loop_extraction_counts_result(
+            source_chain_count,
+            source_fragment_count,
+            source_fragment_kind_counts,
+            closed_chain_count,
+            0,
+            BooleanBoundaryLoopSet::from_extracted(loops),
+        )
     }
 }
 
@@ -918,6 +883,10 @@ impl BooleanBoundaryLoop {
         Ok(Self { fragments })
     }
 
+    fn from_closed_chain(fragments: Vec<DirectedBooleanFragment>) -> Self {
+        Self { fragments }
+    }
+
     /// Returns directed fragments in traversal order.
     pub fn fragments(&self) -> &[DirectedBooleanFragment] {
         &self.fragments
@@ -977,6 +946,10 @@ impl BooleanBoundaryLoopSet {
     pub fn new(loops: Vec<BooleanBoundaryLoop>) -> CurveResult<Self> {
         validate_boolean_boundary_loops(&loops)?;
         Ok(Self { loops })
+    }
+
+    fn from_extracted(loops: Vec<BooleanBoundaryLoop>) -> Self {
+        Self { loops }
     }
 
     /// Builds a loop set from already-decided closed contours.
@@ -1533,10 +1506,7 @@ fn decided_boolean_boundary_chain(
     fragments: Vec<DirectedBooleanFragment>,
     closed: bool,
 ) -> Classification<BooleanBoundaryChain> {
-    match BooleanBoundaryChain::new(fragments, closed) {
-        Ok(chain) => Classification::Decided(chain),
-        Err(_) => Classification::Uncertain(crate::UncertaintyReason::Unsupported),
-    }
+    Classification::Decided(BooleanBoundaryChain::from_assembled(fragments, closed))
 }
 
 fn decided_boolean_boundary_chain_assembly_result(
@@ -2065,10 +2035,7 @@ fn tangent_ordered_chains(
         }
     }
 
-    match BooleanBoundaryChainSet::new(chains) {
-        Ok(chains) => Classification::Decided(chains),
-        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-    }
+    Classification::Decided(BooleanBoundaryChainSet::from_assembled(chains))
 }
 
 fn boundary_outgoing_adjacency(

@@ -336,6 +336,18 @@ rectangles. It completed 1,000 AddressSanitizer-instrumented executions with
 now handles reversed algebraic-endpoint split fragments instead of failing its
 exhaustiveness check.
 
+The next profile showed that graph traversal repeatedly revalidated the same
+directed-fragment geometry while transferring an already-validated private
+carrier through chain and loop stages. Public chain, chain-set, loop, and
+loop-set constructors still perform their complete ownership, nonzero,
+connectivity, and closure checks. Internal transitions now preserve the proof
+established by fragment emission and adjacency traversal instead of replaying
+it at every carrier boundary. The star intersection fell again from 18.742 to
+16.925 ms/iter (9.7%), and the complete comparative Callgrind sweep fell from
+725,893,515 to 631,370,861 instructions (13.0%). Cumulatively, the star lane is
+54.3% faster and the sweep executes 55.3% fewer instructions than the original
+checkpoint.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
