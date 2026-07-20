@@ -3233,11 +3233,20 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 );
             }
         }
-        cache_position_f64_range(
-            first_position_id,
-            transformed_positions.len(),
-            finite_positions,
-        );
+        let shared_finite_positions = finite_positions
+            .iter()
+            .copied()
+            .collect::<Option<Vec<_>>>()
+            .map(Arc::new);
+        if let Some(finite_positions) = shared_finite_positions {
+            cache_shared_position_f64_range(first_position_id, finite_positions);
+        } else {
+            cache_position_f64_range(
+                first_position_id,
+                transformed_positions.len(),
+                finite_positions,
+            );
+        }
 
         let total_corners = self.vertex_count().checked_mul(copies)?;
         let total_polygons = self.polygons.len().checked_mul(copies)?;
