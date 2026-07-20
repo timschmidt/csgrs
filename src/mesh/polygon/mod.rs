@@ -3,7 +3,7 @@
 use crate::mesh::plane::Plane;
 use crate::mesh::{
     CUBOID_CORNER_POSITION_SLOTS, CUBOID_POINT_COORDINATE_SLOTS,
-    CUBOID_POSITION_REPRESENTATIVES,
+    CUBOID_POSITION_REPRESENTATIVES, OCTAHEDRON_FACES,
 };
 use crate::vertex::Vertex;
 use hashbrown::HashMap;
@@ -31,6 +31,21 @@ thread_local! {
 const POLYGON_NORMAL_CACHE_CAPACITY: usize = 8_192;
 static EMPTY_VERTEX_BUFFER: LazyLock<Arc<Vec<Vertex>>> =
     LazyLock::new(|| Arc::new(Vec::new()));
+static OCTAHEDRON_NORMALS: LazyLock<[Vector3; 8]> = LazyLock::new(|| {
+    let component =
+        Real::try_from(1.0_f64 / 3.0_f64.sqrt()).expect("finite octahedron normal");
+    let negative = -component.clone();
+    [
+        Vector3::from_xyz(component.clone(), component.clone(), component.clone()),
+        Vector3::from_xyz(negative.clone(), component.clone(), component.clone()),
+        Vector3::from_xyz(negative.clone(), negative.clone(), component.clone()),
+        Vector3::from_xyz(component.clone(), negative.clone(), component.clone()),
+        Vector3::from_xyz(component.clone(), component.clone(), negative.clone()),
+        Vector3::from_xyz(negative.clone(), component.clone(), negative.clone()),
+        Vector3::from_xyz(negative.clone(), negative.clone(), negative.clone()),
+        Vector3::from_xyz(component, negative.clone(), negative),
+    ]
+});
 
 #[derive(Debug)]
 enum LazyMappedTransform {
@@ -67,6 +82,11 @@ enum LazySourceVertices {
         vertices: Vec<OnceLock<Box<Vertex>>>,
         first_position_identity: u64,
         first_coordinate_identity: u64,
+    },
+    Octahedron {
+        radius: Real,
+        vertices: Vec<OnceLock<Box<Vertex>>>,
+        first_vertex_identity: u64,
     },
     Sphere {
         radius: Real,
@@ -201,6 +221,7 @@ impl LazySourceVertices {
         match self {
             Self::Materialized(vertices) => vertices.len(),
             Self::Cuboid { vertices, .. } => vertices.len(),
+            Self::Octahedron { vertices, .. } => vertices.len(),
             Self::Sphere { vertices, .. } => vertices.len(),
             #[cfg(feature = "sketch")]
             Self::Torus { vertices, .. } => vertices.len(),
@@ -232,6 +253,31 @@ impl LazySourceVertices {
                     *first_position_identity,
                     *first_coordinate_identity,
                 )
+            }),
+            Self::Octahedron {
+                radius,
+                vertices,
+                first_vertex_identity,
+            } => vertices[index].get_or_init(|| {
+                let face = index / 3;
+                let position_slot = OCTAHEDRON_FACES[face][index % 3];
+                let negative_radius = -radius.clone();
+                let zero = Real::zero();
+                let position = match position_slot {
+                    0 => Point3::new(radius.clone(), zero.clone(), zero),
+                    1 => Point3::new(negative_radius.clone(), zero.clone(), zero),
+                    2 => Point3::new(zero.clone(), radius.clone(), zero),
+                    3 => Point3::new(zero.clone(), negative_radius.clone(), zero),
+                    4 => Point3::new(zero.clone(), zero.clone(), radius.clone()),
+                    5 => Point3::new(zero.clone(), zero, negative_radius),
+                    _ => unreachable!("octahedron has six positions"),
+                };
+                Box::new(Vertex::new_with_reserved_identity(
+                    position,
+                    OCTAHEDRON_NORMALS[face].clone(),
+                    *first_vertex_identity,
+                    position_slot,
+                ))
             }),
             Self::Sphere {
                 radius,
@@ -728,6 +774,20 @@ impl LazySubdivisionVertexPool {
             midpoints: Vec::new(),
             materialized_polygons: std::iter::repeat_with(OnceLock::new).take(6).collect(),
             first_midpoint_identity: first_position_identity,
+        }
+    }
+
+    pub(crate) fn new_octahedron(radius: Real, first_vertex_identity: u64) -> Self {
+        Self {
+            source_vertices: LazySourceVertices::Octahedron {
+                radius,
+                vertices: std::iter::repeat_with(OnceLock::new).take(24).collect(),
+                first_vertex_identity,
+            },
+            midpoint_edges: Vec::new(),
+            midpoints: Vec::new(),
+            materialized_polygons: std::iter::repeat_with(OnceLock::new).take(8).collect(),
+            first_midpoint_identity: first_vertex_identity,
         }
     }
 
