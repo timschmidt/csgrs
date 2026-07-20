@@ -90,9 +90,12 @@ const NO_GMP_ANALOG: &[&str] = &[
     "prepare_linear_form3_filter",
     "prepare_rational_affine_point3_query",
     "prepare_rational_line2_filter",
+    "prepare_rational_line2_filter_from_prepared_point3",
     "prepare_rational_linear_form4_filter",
     "prepare_rational_linear_form4_query",
+    "prepare_rational_point3_query",
     "sign_prepared",
+    "sign_prepared_point3",
     "sign_rational",
 ];
 

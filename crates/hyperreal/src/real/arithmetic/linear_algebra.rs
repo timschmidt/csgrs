@@ -170,6 +170,31 @@ pub struct PreparedRationalLinearForm4Query {
     errors: [f64; 4],
 }
 
+/// Certified floating intervals for a reusable exact-rational 3D point.
+///
+/// Preparing the coordinates once lets several projected predicates reuse the
+/// same conservative conversion bounds. Uncertain predicates still return
+/// `None` for their exact fallback.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedRationalPoint3Query {
+    values: [f64; 3],
+    errors: [f64; 3],
+}
+
+impl PreparedRationalPoint3Query {
+    fn projection(&self, axes: [usize; 2]) -> Option<([f64; 2], [f64; 2])> {
+        let [first, second] = axes;
+        if first >= 3 || second >= 3 || first == second {
+            return None;
+        }
+        Some((
+            [self.values[first], self.values[second]],
+            [self.errors[first], self.errors[second]],
+        ))
+    }
+}
+
 /// Certified floating filter for repeated exact-rational point queries
 /// against one fixed 2D line.
 #[derive(Clone, Copy, Debug)]
@@ -196,6 +221,25 @@ impl PreparedRationalLine2Filter {
             values[index] = value;
             errors[index] = error;
         }
+        Real::certified_rational_line2_sign_f64(
+            self.from,
+            self.from_errors,
+            self.to,
+            self.to_errors,
+            values,
+            errors,
+        )
+    }
+
+    /// Try to certify a projected orientation using a previously prepared 3D
+    /// rational point.
+    #[inline]
+    pub fn sign_prepared_point3(
+        &self,
+        point: &PreparedRationalPoint3Query,
+        axes: [usize; 2],
+    ) -> Option<RealSign> {
+        let (values, errors) = point.projection(axes)?;
         Real::certified_rational_line2_sign_f64(
             self.from,
             self.from_errors,
@@ -434,6 +478,22 @@ impl Real {
         Some(PreparedRationalLinearForm4Query { values, errors })
     }
 
+    /// Prepare reusable conservative floating intervals for one exact-rational
+    /// 3D point.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_rational_point3_query(
+        point: [&Rational; 3],
+    ) -> Option<PreparedRationalPoint3Query> {
+        let mut values = [0.0; 3];
+        let mut errors = [0.0; 3];
+        for (index, coordinate) in point.into_iter().enumerate() {
+            (values[index], errors[index]) =
+                Self::rational_f64_with_error(coordinate)?;
+        }
+        Some(PreparedRationalPoint3Query { values, errors })
+    }
+
     /// Prepare a certified 2D line filter from exact-rational endpoints.
     #[inline]
     #[doc(hidden)]
@@ -451,6 +511,25 @@ impl Real {
             (to_values[index], to_errors[index]) =
                 Self::rational_f64_with_error(to[index])?;
         }
+        Some(PreparedRationalLine2Filter {
+            from: from_values,
+            from_errors,
+            to: to_values,
+            to_errors,
+        })
+    }
+
+    /// Prepare a certified 2D line filter by projecting two reusable rational
+    /// 3D point queries onto the selected coordinate axes.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_rational_line2_filter_from_prepared_point3(
+        from: &PreparedRationalPoint3Query,
+        to: &PreparedRationalPoint3Query,
+        axes: [usize; 2],
+    ) -> Option<PreparedRationalLine2Filter> {
+        let (from_values, from_errors) = from.projection(axes)?;
+        let (to_values, to_errors) = to.projection(axes)?;
         Some(PreparedRationalLine2Filter {
             from: from_values,
             from_errors,

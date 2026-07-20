@@ -597,6 +597,38 @@ mod tests {
             Some(RealSign::Negative),
         );
         assert_eq!(line.sign_rational([&one, &two]), None);
+
+        let height = Rational::new(9);
+        let from = Real::prepare_rational_point3_query([&zero, &zero, &height])
+            .expect("finite rational point should prepare");
+        let to = Real::prepare_rational_point3_query([&third, &two_thirds, &height])
+            .expect("finite rational point should prepare");
+        let projected = Real::prepare_rational_line2_filter_from_prepared_point3(
+            &from,
+            &to,
+            [0, 1],
+        )
+        .expect("distinct valid axes should prepare");
+        let positive = Real::prepare_rational_point3_query([&one, &three, &height])
+            .expect("finite rational point should prepare");
+        let negative = Real::prepare_rational_point3_query([&two, &three, &height])
+            .expect("finite rational point should prepare");
+        let boundary = Real::prepare_rational_point3_query([&one, &two, &height])
+            .expect("finite rational point should prepare");
+        assert_eq!(
+            projected.sign_prepared_point3(&positive, [0, 1]),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            projected.sign_prepared_point3(&negative, [0, 1]),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(projected.sign_prepared_point3(&boundary, [0, 1]), None);
+        assert!(
+            Real::prepare_rational_line2_filter_from_prepared_point3(&from, &to, [1, 1])
+                .is_none()
+        );
+        assert!(projected.sign_prepared_point3(&positive, [0, 3]).is_none());
     }
 
     #[test]

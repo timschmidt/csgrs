@@ -847,6 +847,39 @@ instructions and 14.9--33.4% of its cycles. In the post-shared-output CSGRS
 guard, union instructions fell another 0.14% and cycles 0.78%; difference
 instructions fell 0.14% with cycles neutral.
 
+### Prepared projected rational point queries
+
+Certified 2D line filters can now consume a `PreparedRationalPoint3Query` and
+select two coordinate axes without reconverting the same arbitrary-precision
+rationals. Fixed line endpoints can be projected from the same retained
+value/error intervals. Invalid projections and intervals that cannot certify a
+sign still return `None`; the caller's exact predicate remains authoritative.
+The existing affine four-term query constructor retains its direct conversion
+path so unrelated point-plane predicates do not pay for the new abstraction.
+
+Eight alternating counter runs each performed 500 fresh, globally shifted
+sphere/box operations through downstream CSGRS:
+
+| exact Boolean | repeated-conversion instructions | prepared-point instructions | instruction result | cycle result |
+| --- | ---: | ---: | ---: | ---: |
+| union | 9,955,432,140 | 9,516,772,993 | 4.41% fewer | 4.04% fewer |
+| difference | 8,488,857,196 | 8,487,528,295 | 0.02% fewer | neutral |
+
+In the union profile, `Rational::to_f64_lossy` fell from 4.91% to 2.09% self
+time. Heap profiles added only 45 allocations over 50 unions (0.9 per
+operation) for the prepared-query vector. A focused regression compares direct
+and prepared positive, negative, and uncertain line signs and rejects invalid
+axis projections.
+
+Validation passed the complete default and all-feature test suites, all targets,
+the explicit GMP API-coverage audit, Clippy with warnings denied, warning-clean
+documentation, benchmark compilation, and every fuzz-target build. Twenty-second
+ASAN campaigns completed 505,059 `rational_arithmetic` executions and 92,851
+`real_exact` executions without failure. Downstream Hypermesh passed its full
+test/build/lint/documentation/benchmark/WASM matrix plus 365 ASAN Boolean-pipeline
+executions, and downstream CSGRS passed all 370 library tests and every integration
+test.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
