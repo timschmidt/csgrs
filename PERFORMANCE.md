@@ -84,6 +84,26 @@ complete native sweep it fell from 36.157 us to 28.308 us (21.7%), versus
 CGAL's 6.810 us. Every cold and warm row beat or tied both comparison engines;
 the only tie was the timer-scale identical-box intersection at 100 ns cold.
 
+Mesh polygon storage now distinguishes its unique storage identity from a
+geometry-lineage identity. Metadata-only mapping preserves that lineage, while
+every mutable polygon access assigns a fresh lineage before geometry can
+change. Repeated Boolean arrangement lookup can therefore compare two scalar
+identities instead of allocating and scanning every polygon-corner position
+identity; remapped metadata still reuses the exact arrangement and restores
+the current source metadata. The retained indexed adapter also omits its
+position-ID lookup unless the connectivity API requests it, so Boolean input
+does not materialize lazy sphere corners solely to build an unused map.
+
+On the cold sphere/box union trace, the direct Boolean-preparation subtree fell
+from 16,718,295 to 16,655,056 instructions (0.38%), while the setup-heavy whole
+process fell from 54,481,865 to 54,413,625 instructions (0.13%). The complete
+15-cold/9-warm cross-kernel sweep retained all output sizes and checksums;
+union fell from 1.885881 ms to 1.878861 ms and widened its CGAL EPECK margin
+from 1.076x to 1.080x. Every substantive cold and warm row remained ahead of
+both comparison engines. The only measured non-win was the timer-resolution
+identical-box intersection at 120 ns versus CGAL's 110 ns; its warm result was
+21 ns versus 24 ns.
+
 `Mesh::build_graphics_mesh` previously called `Mesh::triangulate`, which built
 temporary triangle polygons, recomputed support planes, allocated metadata and
 IDs, and then discarded that intermediate mesh. The renderer boundary now

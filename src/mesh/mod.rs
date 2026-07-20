@@ -487,6 +487,8 @@ impl TransformLayout {
 #[derive(Clone, Debug)]
 struct MeshPolygonStorage<M: Clone> {
     identity: u64,
+    // Preserved only across metadata mapping and refreshed before mutable access.
+    geometry_lineage: u64,
     polygons: Vec<Polygon<M>>,
     topology: OnceLock<(usize, usize, bool)>,
     connectivity: OnceLock<connectivity::Connectivity>,
@@ -512,8 +514,19 @@ impl<M: Clone> MeshPolygonStorage<M> {
     }
 
     fn new_with_topology(polygons: Vec<Polygon<M>>, topology: (usize, usize, bool)) -> Self {
+        let identity = fresh_mesh_storage_id();
+        Self::new_with_topology_and_geometry_lineage(polygons, topology, identity, identity)
+    }
+
+    fn new_with_topology_and_geometry_lineage(
+        polygons: Vec<Polygon<M>>,
+        topology: (usize, usize, bool),
+        identity: u64,
+        geometry_lineage: u64,
+    ) -> Self {
         Self {
-            identity: fresh_mesh_storage_id(),
+            identity,
+            geometry_lineage,
             polygons,
             topology: OnceLock::from(topology),
             connectivity: OnceLock::new(),
@@ -559,6 +572,21 @@ impl<M: Clone> MeshPolygons<M> {
         )))
     }
 
+    fn new_with_geometry_lineage(
+        polygons: Vec<Polygon<M>>,
+        topology: (usize, usize, bool),
+        geometry_lineage: u64,
+    ) -> Self {
+        Self(Arc::new(
+            MeshPolygonStorage::new_with_topology_and_geometry_lineage(
+                polygons,
+                topology,
+                fresh_mesh_storage_id(),
+                geometry_lineage,
+            ),
+        ))
+    }
+
     pub fn into_vec(self) -> Vec<Polygon<M>> {
         Arc::try_unwrap(self.0)
             .map(|storage| storage.polygons)
@@ -590,6 +618,10 @@ impl<M: Clone> MeshPolygons<M> {
 
     pub(crate) fn storage_identity(&self) -> u64 {
         self.0.identity
+    }
+
+    pub(crate) fn geometry_lineage_identity(&self) -> u64 {
+        self.0.geometry_lineage
     }
 
     #[inline]
@@ -714,6 +746,7 @@ impl<M: Clone> DerefMut for MeshPolygons<M> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         let storage = Arc::make_mut(&mut self.0);
         storage.identity = fresh_mesh_storage_id();
+        storage.geometry_lineage = storage.identity;
         storage.topology = OnceLock::new();
         storage.connectivity = OnceLock::new();
         storage.connectivity_counts = OnceLock::new();
@@ -4042,14 +4075,20 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         self,
         metadata: NewM,
     ) -> Mesh<NewM> {
+        let topology = self.polygons.topology();
+        let geometry_lineage = self.polygons.geometry_lineage_identity();
         let polygons = self
             .polygons
             .into_iter()
             .map(|polygon| polygon.with_metadata(metadata.clone()))
-            .collect();
+            .collect::<Vec<_>>();
 
         Mesh {
-            polygons,
+            polygons: MeshPolygons::new_with_geometry_lineage(
+                polygons,
+                topology,
+                geometry_lineage,
+            ),
             bounding_box: OnceLock::new(),
         }
     }
@@ -4059,13 +4098,19 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     where
         F: FnMut(M) -> NewM,
     {
+        let topology = self.polygons.topology();
+        let geometry_lineage = self.polygons.geometry_lineage_identity();
         let polygons = self
             .polygons
             .into_iter()
             .map(|polygon| polygon.map_metadata(&mut f))
-            .collect();
+            .collect::<Vec<_>>();
         Mesh {
-            polygons,
+            polygons: MeshPolygons::new_with_geometry_lineage(
+                polygons,
+                topology,
+                geometry_lineage,
+            ),
             bounding_box: OnceLock::new(),
         }
     }

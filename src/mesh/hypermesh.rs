@@ -101,8 +101,8 @@ struct PreparedMeshBooleanArrangement {
 
 #[derive(Clone, Debug)]
 struct CachedPreparedMeshBooleanArrangement {
-    left_geometry_identity: Vec<u64>,
-    right_geometry_identity: Vec<u64>,
+    left_geometry_identity: u64,
+    right_geometry_identity: u64,
     arrangement: Arc<BooleanArrangement>,
     left_source_polygons: Arc<[usize]>,
     right_source_polygons: Arc<[usize]>,
@@ -341,8 +341,8 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             });
         }
 
-        let left_geometry_identity = self.geometry_identity();
-        let right_geometry_identity = other.geometry_identity();
+        let left_geometry_identity = self.polygons.geometry_lineage_identity();
+        let right_geometry_identity = other.polygons.geometry_lineage_identity();
         if let Some(prepared) = LAST_PREPARED_BOOLEAN.with_borrow(|cached| {
             cached
                 .as_ref()
@@ -368,8 +368,8 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             });
         }
 
-        let left_input = self.build_hypermesh_input(true);
-        let right_input = other.build_hypermesh_input(true);
+        let left_input = self.build_hypermesh_input(true, false);
+        let right_input = other.build_hypermesh_input(true, false);
         let shortcut = if left_input.buffers.indices.is_empty() {
             Some(PreparedMeshBooleanShortcut::LeftEmpty)
         } else if right_input.buffers.indices.is_empty() {
@@ -441,11 +441,17 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// topology-bearing vertex identity, so equal finite coordinates are
     /// canonicalized to shared indices before import into `hypermesh`.
     pub fn to_hypermesh_buffers(&self) -> HypermeshBuffers {
-        self.build_hypermesh_input(false).buffers
+        self.build_hypermesh_input(false, false).buffers
     }
 
-    pub(super) fn build_hypermesh_input(&self, retain_sources: bool) -> HypermeshAdapterInput {
-        if let Some(input) = self.build_hypermesh_input_from_retained_layout(retain_sources) {
+    pub(super) fn build_hypermesh_input(
+        &self,
+        retain_sources: bool,
+        retain_position_ids: bool,
+    ) -> HypermeshAdapterInput {
+        if let Some(input) = self
+            .build_hypermesh_input_from_retained_layout(retain_sources, retain_position_ids)
+        {
             return input;
         }
         let triangle_capacity = self
@@ -523,6 +529,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     fn build_hypermesh_input_from_retained_layout(
         &self,
         retain_sources: bool,
+        retain_position_ids: bool,
     ) -> Option<HypermeshAdapterInput> {
         let layout = self.polygons.retained_transform_layout()?;
         let all_triangles = self.polygons.topology().2;
@@ -573,13 +580,18 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             return None;
         }
 
-        let mut position_ids = HashMap::with_capacity(layout.corner_position_slots.len());
-        let mut corner_index = 0usize;
-        for polygon in self.polygons.iter() {
-            for vertex in polygon.vertices.iter() {
-                position_ids
-                    .insert(vertex.position_id, layout.corner_position_slots[corner_index]);
-                corner_index += 1;
+        let mut position_ids = HashMap::new();
+        if retain_position_ids {
+            position_ids.reserve(layout.corner_position_slots.len());
+            let mut corner_index = 0usize;
+            for polygon in self.polygons.iter() {
+                for vertex in polygon.vertices.iter() {
+                    position_ids.insert(
+                        vertex.position_id,
+                        layout.corner_position_slots[corner_index],
+                    );
+                    corner_index += 1;
+                }
             }
         }
         Some(HypermeshAdapterInput {
@@ -619,7 +631,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     pub(super) fn to_hypermesh_connectivity_mesh(
         &self,
     ) -> ::hypermesh::HypermeshResult<(InputMesh, HashMap<u64, usize>)> {
-        let input = self.build_hypermesh_input(false);
+        let input = self.build_hypermesh_input(false, true);
         let mesh = input_mesh_from_buffers(&input.buffers);
         Ok((mesh, input.position_ids))
     }
@@ -964,6 +976,12 @@ mod tests {
     fn sphere_materializes_as_closed_hypermesh_input() {
         let radius = hreal_from_f64(1.0).expect("finite test radius");
         let sphere = Mesh::sphere(radius, 16, 8, ());
+        assert!(
+            sphere
+                .build_hypermesh_input(true, false)
+                .position_ids
+                .is_empty()
+        );
         let surface = sphere
             .to_hypermesh_triangle_mesh()
             .expect("sphere triangles should form a valid indexed carrier");
@@ -1045,8 +1063,8 @@ mod tests {
             );
         let generic = Mesh::from_polygons(translated.polygons.iter().cloned().collect());
 
-        let retained_input = translated.build_hypermesh_input(true);
-        let generic_input = generic.build_hypermesh_input(true);
+        let retained_input = translated.build_hypermesh_input(true, true);
+        let generic_input = generic.build_hypermesh_input(true, true);
         let triangle_rows = |input: &HypermeshAdapterInput| {
             let positions = input
                 .buffers
@@ -1189,8 +1207,35 @@ mod tests {
         let second = left.try_union(&right).unwrap();
         assert_eq!(polygon_rows(&first), polygon_rows(&second));
 
+        let left_storage_identity = left.polygons.storage_identity();
+        let right_storage_identity = right.polygons.storage_identity();
+        let left_geometry_identity = left.polygons.geometry_lineage_identity();
+        let right_geometry_identity = right.polygons.geometry_lineage_identity();
         let remapped_left = left.map_metadata(|_| 31_u8);
         let remapped_right = right.map_metadata(|_| 47_u8);
+        assert_ne!(
+            remapped_left.polygons.storage_identity(),
+            left_storage_identity
+        );
+        assert_ne!(
+            remapped_right.polygons.storage_identity(),
+            right_storage_identity
+        );
+        assert_eq!(
+            remapped_left.polygons.geometry_lineage_identity(),
+            left_geometry_identity
+        );
+        assert_eq!(
+            remapped_right.polygons.geometry_lineage_identity(),
+            right_geometry_identity
+        );
+        let mut edited_left = remapped_left.clone();
+        let edited_x = &edited_left.polygons[0].vertices[0].position.x + Real::one();
+        edited_left.polygons[0].vertices_mut()[0].position.x = edited_x;
+        assert_ne!(
+            edited_left.polygons.geometry_lineage_identity(),
+            left_geometry_identity
+        );
         let remapped = remapped_left.try_union(&remapped_right).unwrap();
         let metadata = remapped
             .polygons
