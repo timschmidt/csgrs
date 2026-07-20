@@ -118,6 +118,29 @@ pub struct GpuMeshBuffersF64 {
     pub indices: Vec<u32>,
 }
 
+/// Interleaved finite binary32 GPU buffers.
+///
+/// This layout avoids a second position/normal merge for consumers whose
+/// vertex type stores both attributes together.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct InterleavedGpuMeshBuffersF32 {
+    /// Finite `(position, normal)` vertex rows.
+    pub vertices: Vec<([f32; 3], [f32; 3])>,
+    /// Flat triangle-list indices.
+    pub indices: Vec<u32>,
+}
+
+/// Interleaved finite binary64 GPU buffers.
+///
+/// This is the binary64 counterpart of [`InterleavedGpuMeshBuffersF32`].
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct InterleavedGpuMeshBuffersF64 {
+    /// Finite `(position, normal)` vertex rows.
+    pub vertices: Vec<([f64; 3], [f64; 3])>,
+    /// Flat triangle-list indices.
+    pub indices: Vec<u32>,
+}
+
 /// Vertex attribute selected while crossing the GPU approximation boundary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GpuVertexAttribute {
@@ -248,6 +271,32 @@ pub fn approximate_gpu_mesh_f64(
     })
 }
 
+/// Approximates exact render rows directly into interleaved finite `f32`
+/// vertices, avoiding temporary separate position and normal buffers.
+pub fn approximate_interleaved_gpu_mesh_f32(
+    vertices: &[ExactGpuVertex],
+    indices: &[u32],
+) -> Result<InterleavedGpuMeshBuffersF32, GpuMeshError> {
+    validate_indices(vertices.len(), indices)?;
+    Ok(InterleavedGpuMeshBuffersF32 {
+        vertices: try_approximate_interleaved_rows(vertices, Real::to_f32_lossy)?,
+        indices: indices.to_vec(),
+    })
+}
+
+/// Approximates exact render rows directly into interleaved finite `f64`
+/// vertices, avoiding temporary separate position and normal buffers.
+pub fn approximate_interleaved_gpu_mesh_f64(
+    vertices: &[ExactGpuVertex],
+    indices: &[u32],
+) -> Result<InterleavedGpuMeshBuffersF64, GpuMeshError> {
+    validate_indices(vertices.len(), indices)?;
+    Ok(InterleavedGpuMeshBuffersF64 {
+        vertices: try_approximate_interleaved_rows(vertices, Real::to_f64_lossy)?,
+        indices: indices.to_vec(),
+    })
+}
+
 /// Approximates exact render rows as binary64 values and substitutes zero for
 /// an unrepresentable position row or normal component.
 pub fn approximate_gpu_mesh_f64_or_zero(
@@ -364,6 +413,29 @@ fn try_approximate_rows<T: Copy>(
     Ok((positions, normals))
 }
 
+fn try_approximate_interleaved_rows<T: Copy>(
+    vertices: &[ExactGpuVertex],
+    approximate: impl Fn(&Real) -> Option<T> + Copy,
+) -> Result<Vec<([T; 3], [T; 3])>, GpuMeshError> {
+    let mut approximated = Vec::with_capacity(vertices.len());
+    for (vertex, (position, normal)) in vertices.iter().enumerate() {
+        let position = try_approximate_row(position, approximate).ok_or(
+            GpuMeshError::AttributeApproximationFailed {
+                vertex,
+                attribute: GpuVertexAttribute::Position,
+            },
+        )?;
+        let normal = try_approximate_row(normal, approximate).ok_or(
+            GpuMeshError::AttributeApproximationFailed {
+                vertex,
+                attribute: GpuVertexAttribute::Normal,
+            },
+        )?;
+        approximated.push((position, normal));
+    }
+    Ok(approximated)
+}
+
 fn approximate_rows_or_zero<T: Copy>(
     vertices: &[ExactGpuVertex],
     zero: T,
@@ -434,6 +506,28 @@ mod tests {
         );
         assert_eq!(gpu_f64.normals, [[0.0, 0.0, 1.0]; 3]);
         assert_eq!(gpu_f64.indices, gpu.indices);
+
+        let interleaved_f32 =
+            approximate_interleaved_gpu_mesh_f32(&exact.vertices, &exact.indices).unwrap();
+        let interleaved_f64 =
+            approximate_interleaved_gpu_mesh_f64(&exact.vertices, &exact.indices).unwrap();
+        assert_eq!(
+            interleaved_f32.vertices,
+            gpu.positions
+                .into_iter()
+                .zip(gpu.normals)
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(interleaved_f32.indices, gpu.indices);
+        assert_eq!(
+            interleaved_f64.vertices,
+            gpu_f64
+                .positions
+                .into_iter()
+                .zip(gpu_f64.normals)
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(interleaved_f64.indices, gpu_f64.indices);
     }
 
     #[test]
@@ -441,6 +535,14 @@ mod tests {
         let vertices = [exact_vertex([0, 0, 0], [0, 0, 1])];
         assert_eq!(
             approximate_gpu_mesh_f32(&vertices, &[0, 0, 1]),
+            Err(GpuMeshError::IndexOutOfBounds {
+                index_offset: 2,
+                index: 1,
+                vertex_count: 1,
+            })
+        );
+        assert_eq!(
+            approximate_interleaved_gpu_mesh_f32(&vertices, &[0, 0, 1]),
             Err(GpuMeshError::IndexOutOfBounds {
                 index_offset: 2,
                 index: 1,

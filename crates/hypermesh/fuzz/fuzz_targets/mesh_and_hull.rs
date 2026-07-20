@@ -1,7 +1,10 @@
 #![no_main]
 
 use hypermesh::{
-    InputMesh, Point3, Real, Triangle, convex_hull, convex_hull_with_coplanar_groups, prepare_input,
+    ExactGpuVertex, InputMesh, Point3, Real, Triangle, approximate_gpu_mesh_f32,
+    approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
+    approximate_interleaved_gpu_mesh_f64, convex_hull, convex_hull_with_coplanar_groups,
+    prepare_input,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -74,5 +77,58 @@ fuzz_target!(|data: [u8; 24]| {
         }));
         let prepared = prepare_input(&[hull.as_ref()]).unwrap();
         assert!(prepared.polygons.iter().all(|polygon| polygon.is_valid()));
+    }
+
+    let render_vertices = points
+        .iter()
+        .map(|point| -> ExactGpuVertex {
+            (
+                [point.x.clone(), point.y.clone(), point.z.clone()],
+                [Real::zero(), Real::zero(), Real::one()],
+            )
+        })
+        .collect::<Vec<_>>();
+    let mut render_indices = data[..data.len() / 3 * 3]
+        .iter()
+        .map(|value| u32::from(*value) % render_vertices.len() as u32)
+        .collect::<Vec<_>>();
+    if data[0] & 4 != 0 {
+        render_indices[0] = render_vertices.len() as u32;
+    }
+
+    let separate_f32 = approximate_gpu_mesh_f32(&render_vertices, &render_indices);
+    let interleaved_f32 = approximate_interleaved_gpu_mesh_f32(&render_vertices, &render_indices);
+    match (separate_f32, interleaved_f32) {
+        (Ok(separate), Ok(interleaved)) => {
+            assert_eq!(
+                interleaved.vertices,
+                separate
+                    .positions
+                    .into_iter()
+                    .zip(separate.normals)
+                    .collect::<Vec<_>>()
+            );
+            assert_eq!(interleaved.indices, separate.indices);
+        }
+        (Err(separate), Err(interleaved)) => assert_eq!(separate, interleaved),
+        results => panic!("split/interleaved f32 results differ: {results:?}"),
+    }
+
+    let separate_f64 = approximate_gpu_mesh_f64(&render_vertices, &render_indices);
+    let interleaved_f64 = approximate_interleaved_gpu_mesh_f64(&render_vertices, &render_indices);
+    match (separate_f64, interleaved_f64) {
+        (Ok(separate), Ok(interleaved)) => {
+            assert_eq!(
+                interleaved.vertices,
+                separate
+                    .positions
+                    .into_iter()
+                    .zip(separate.normals)
+                    .collect::<Vec<_>>()
+            );
+            assert_eq!(interleaved.indices, separate.indices);
+        }
+        (Err(separate), Err(interleaved)) => assert_eq!(separate, interleaved),
+        results => panic!("split/interleaved f64 results differ: {results:?}"),
     }
 });

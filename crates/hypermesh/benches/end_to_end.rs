@@ -5,7 +5,9 @@ use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use hypermesh::{
-    BooleanOp, EmberConfig, Point3, Real, boolean_operation, build_boolean_arrangement,
+    BooleanOp, EmberConfig, ExactGpuMeshBuffers, Point3, Real, approximate_gpu_mesh_f32,
+    approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
+    approximate_interleaved_gpu_mesh_f64, boolean_operation, build_boolean_arrangement,
     convex_hull, convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, extract_output,
     prepare_boolean_operations, prepare_boolean_operations_with_certified_convex_inputs,
     prepare_input, triangulate_and_resolve_certified,
@@ -253,6 +255,60 @@ fn bench_end_to_end(c: &mut Criterion) {
             (owned, borrowed)
         })
     });
+
+    let render_vertex = (
+        [Real::from(1), Real::from(2), Real::from(3)],
+        [Real::zero(), Real::zero(), Real::one()],
+    );
+    let render_buffers = ExactGpuMeshBuffers::from_triangles_with_capacity(
+        16_128,
+        (0..16_128).map(|_| {
+            [
+                render_vertex.clone(),
+                render_vertex.clone(),
+                render_vertex.clone(),
+            ]
+        }),
+    )
+    .expect("large render corpus fits u32 indices");
+    let mut gpu_group = c.benchmark_group("gpu_export/vertices_48384");
+    gpu_group.bench_function("separate_f32", |b| {
+        b.iter(|| {
+            approximate_gpu_mesh_f32(
+                black_box(&render_buffers.vertices),
+                black_box(&render_buffers.indices),
+            )
+            .expect("render corpus approximates to f32")
+        })
+    });
+    gpu_group.bench_function("interleaved_f32", |b| {
+        b.iter(|| {
+            approximate_interleaved_gpu_mesh_f32(
+                black_box(&render_buffers.vertices),
+                black_box(&render_buffers.indices),
+            )
+            .expect("render corpus approximates to interleaved f32")
+        })
+    });
+    gpu_group.bench_function("separate_f64", |b| {
+        b.iter(|| {
+            approximate_gpu_mesh_f64(
+                black_box(&render_buffers.vertices),
+                black_box(&render_buffers.indices),
+            )
+            .expect("render corpus approximates to f64")
+        })
+    });
+    gpu_group.bench_function("interleaved_f64", |b| {
+        b.iter(|| {
+            approximate_interleaved_gpu_mesh_f64(
+                black_box(&render_buffers.vertices),
+                black_box(&render_buffers.indices),
+            )
+            .expect("render corpus approximates to interleaved f64")
+        })
+    });
+    gpu_group.finish();
 
     let hull_points = (-8..=8)
         .flat_map(|x| {

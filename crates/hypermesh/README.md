@@ -53,7 +53,9 @@ closure fact cannot be certified, the operation returns `HypermeshError`.
 - `ExactGpuMeshBuffers` preserves exact position/normal rows with `u32` indices;
   `GpuMeshBuffersF32` and `GpuMeshBuffersF64` are explicit finite approximations
   for graphics APIs. `TriangleSoup::try_to_gpu_mesh_f32` and
-  `TriangleSoup::try_to_gpu_mesh_f64` build flat-shaded buffers directly.
+  `TriangleSoup::try_to_gpu_mesh_f64` build flat-shaded buffers directly;
+  `approximate_interleaved_gpu_mesh_f32` and its `f64` counterpart avoid
+  temporary split buffers for interleaved renderer vertex layouts.
 - `TriangleSoupClosureReport`, `triangle_soup_closure_report`, and
   `triangle_soup_is_closed` expose exact output closure diagnostics.
 

@@ -10,6 +10,25 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-07-20: direct interleaved GPU approximation
+
+Status: **kept**
+
+The public GPU boundary formerly produced separate position and normal vectors.
+Consumers with interleaved vertex layouts then allocated a third vector and
+moved both streams into it, increasing peak memory and repeating traversal.
+`approximate_interleaved_gpu_mesh_f32` and its binary64 counterpart now validate
+the exact input once and write each `(position, normal)` row directly into one
+pre-sized output vector. Exact source rows and topology remain unchanged; only
+the explicitly lossy renderer boundary is affected.
+
+On the 48,384-vertex `end_to_end` corpus, 100-sample Criterion intervals were
+4.749--4.761 ms interleaved versus 5.315--5.358 ms separate for `f32` (10.9%
+faster at the midpoint), and 0.713--0.721 ms versus 1.997--2.002 ms for `f64`
+(64.1% faster). The interleaved path also removes two temporary attribute-vector
+allocations from consumers that otherwise merge the streams. Unit tests prove
+row-for-row equality with the separate APIs and preserve invalid-index errors.
+
 ## Public-path trace coverage
 
 Coverage is audited by executable public family. Constructors, enums, report

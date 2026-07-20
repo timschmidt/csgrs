@@ -101,8 +101,10 @@ pub use error::{HypermeshError, HypermeshResult};
 pub use geometry::{Aabb, Classification, Plane, classify_point, classify_projective_point};
 pub use gpu::{
     ExactGpuMeshBuffers, ExactGpuVertex, GpuMeshBuffersF32, GpuMeshBuffersF64, GpuMeshError,
-    GpuVertexAttribute, approximate_gpu_mesh_f32, approximate_gpu_mesh_f32_or_zero,
-    approximate_gpu_mesh_f64, approximate_gpu_mesh_f64_or_zero,
+    GpuVertexAttribute, InterleavedGpuMeshBuffersF32, InterleavedGpuMeshBuffersF64,
+    approximate_gpu_mesh_f32, approximate_gpu_mesh_f32_or_zero, approximate_gpu_mesh_f64,
+    approximate_gpu_mesh_f64_or_zero, approximate_interleaved_gpu_mesh_f32,
+    approximate_interleaved_gpu_mesh_f64,
 };
 pub use hyperlattice::{Point3, Real, Vector3};
 pub use intersection::{
