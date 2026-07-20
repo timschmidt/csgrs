@@ -63,7 +63,10 @@
 //! while preserving the invariant that open or zero-volume output is rejected
 //! rather than repaired. Use [`certify_output_polygon_closure`] to validate
 //! that invariant directly on the classified polygon arrangement before any
-//! triangulation cleanup runs.
+//! triangulation cleanup runs. [`TriangleSoup::try_to_gpu_mesh_f32`] is the
+//! explicit approximation boundary for backend-neutral finite `f32` position,
+//! normal, and index buffers; the parallel
+//! [`TriangleSoup::try_to_gpu_mesh_f64`] adapter retains binary64 precision.
 
 #![deny(dead_code)]
 #![warn(missing_docs)]
@@ -77,6 +80,7 @@ pub mod clip;
 pub mod convex_hull;
 pub mod error;
 pub mod geometry;
+pub mod gpu;
 mod halfspace;
 pub mod intersection;
 pub mod local_bsp;
@@ -95,6 +99,11 @@ pub use convex_hull::{
 };
 pub use error::{HypermeshError, HypermeshResult};
 pub use geometry::{Aabb, Classification, Plane, classify_point, classify_projective_point};
+pub use gpu::{
+    ExactGpuMeshBuffers, ExactGpuVertex, GpuMeshBuffersF32, GpuMeshBuffersF64, GpuMeshError,
+    GpuVertexAttribute, approximate_gpu_mesh_f32, approximate_gpu_mesh_f32_or_zero,
+    approximate_gpu_mesh_f64, approximate_gpu_mesh_f64_or_zero,
+};
 pub use hyperlattice::{Point3, Real, Vector3};
 pub use intersection::{
     IntersectionSegment, OverlapInfo, PairwiseIntersection, PairwiseIntersectionType,

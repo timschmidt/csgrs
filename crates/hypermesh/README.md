@@ -50,6 +50,10 @@ closure fact cannot be certified, the operation returns `HypermeshError`.
 - `OutputPolygon` is an extracted polygon with explicit exact vertices.
   `TriangleSoup` is the indexed triangle output produced by
   `triangulate_and_resolve_certified`.
+- `ExactGpuMeshBuffers` preserves exact position/normal rows with `u32` indices;
+  `GpuMeshBuffersF32` and `GpuMeshBuffersF64` are explicit finite approximations
+  for graphics APIs. `TriangleSoup::try_to_gpu_mesh_f32` and
+  `TriangleSoup::try_to_gpu_mesh_f64` build flat-shaded buffers directly.
 - `TriangleSoupClosureReport`, `triangle_soup_closure_report`, and
   `triangle_soup_is_closed` expose exact output closure diagnostics.
 
@@ -122,6 +126,8 @@ Implemented today:
 - exact polygon intersection, adaptive subdivision, local BSP splitting, and winding
   classification;
 - certified polygon output and indexed triangle-soup extraction;
+- backend-neutral exact, binary32, and binary64 GPU position, normal, and `u32`
+  index buffers;
 - closure diagnostics and explicit errors for uncertified or unsupported cases;
 - a browser demo built with Rust, Yew, WebAssembly, and Trunk.
 
@@ -129,8 +135,9 @@ Current boundaries:
 
 - `hypermesh` does not parse or write OBJ, STL, or other file formats;
 - open surfaces and arbitrary polygon soups are not Boolean inputs;
-- a successful Boolean result is exact, but callers must still choose how to
-  approximate `Real` coordinates for conventional float-only renderers and formats;
+- a successful Boolean result is exact; the optional GPU adapters make the
+  `Real`-to-`f32` or `Real`-to-`f64` approximation explicit and offer strict or
+  documented zero-fallback conversion policies;
 - explicitly bounded subdivision can fail when the selected depth is insufficient.
 
 ## Installation
@@ -185,8 +192,12 @@ fn main() -> hypermesh::HypermeshResult<()> {
         EmberConfig::default(),
     )?;
     let triangles = triangulate_and_resolve_certified(&result)?;
+    let gpu = triangles
+        .try_to_gpu_mesh_f32()
+        .expect("finite exact output should approximate for the renderer");
 
     println!("{} exact output triangles", triangles.triangles.len());
+    println!("{} GPU indices", gpu.indices.len());
     Ok(())
 }
 ```
