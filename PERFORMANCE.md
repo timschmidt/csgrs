@@ -419,38 +419,39 @@ constructors now use the fallible Boolean surfaces and fail closed instead of
 reaching the panic-based convenience methods; both minimized four-byte inputs
 have permanent unit regressions and replay cleanly.
 
-### Cuboid coordinate provenance and contiguous finite views
+### Lazy cuboid topology and translated distributions
 
-Cuboids now retain their topology-only transform layout once and share it
-across instances. The layout distinguishes eight exact positions but only two
-coordinate identities per axis, matching the authored `{0, extent}` values.
-Linear and grid transforms therefore evaluate each unique translated
-coordinate rather than repeating it for all eight corners. Fully finite
-translated batches enter the existing contiguous range cache; partially
-finite batches preserve the prior per-position fallback. Shape-cache pending
-keys also move into their thread-local slot instead of cloning every scalar,
-and cuboid polygon ranges are derived from the fixed four-corner topology
-without a temporary vector.
+Cuboids now author six lazy indexed quads over one retained vertex pool. The
+constructor reserves the exact eight position identities and two coordinate
+identities per axis immediately, but it materializes none of the 24
+face-corner vertices until geometry is read. Mesh storage retains that cuboid
+fact and initializes the shared topology-only transform layout only on its
+first consumer. Eight separate lazy representative vertices let transform
+layout traversal read unique positions without expanding the pool's 24-corner
+index space. A dedicated cube cache key also validates its one extent once
+instead of rebuilding and comparing a three-scalar cuboid key.
 
-The exact topology regression checks eight position identities and two
-coordinate identities per axis. In matched 15-sample fresh-process runs, the
-first box fell from 43.95 to 40.46 us, the following cuboid from 14.61 to
-11.69 us, and isolated eight-copy linear distribution from 94.92 to 83.69 us.
-The cuboid row is now 1.32x faster than CGAL EPECK (11.69 versus 15.40 us);
-the linear cold row remains visible as an optimization target, while its
-retained row remains 8.73x faster than CGAL. An alternating-spacing profile
-that prevents distribution-result cache hits showed the contiguous finite
-range path reducing retired instructions by 3.8%, cycles by 22.4%, and cache
-misses by 60.6% across five runs.
+Linear and grid distribution now retain lazy translated copies rather than
+constructing every output coordinate and face vertex before returning. The
+pool preserves exact translation, face normals, plane identities, eight
+positions per copy, and the authored two coordinate identities per axis per
+copy. Materialization regressions force every lazy vertex, verify exact linear
+and grid bounds, and check 64 position identities plus 16 coordinate
+identities per axis for eight distributed cubes. Cache-hit cuboids, cubes, and
+their translated results retain the same provenance checks.
 
-The subsequent full 47-workload, two-temperature sweep measured linear
-distribution at 32.90 us versus CGAL's 40.66 us (1.24x faster) and retained
-distribution at 3.80 us versus 35.27 us (9.28x faster). Every retained row
-beat both native kernels. Fresh-process box, cuboid, octahedron, and sphere/box
-union remained below CGAL parity; the union reversal was 1.3%, while the three
-primitive rows preserve the next cold-start targets. Focused and whole-suite
-cold results are both retained because first-use code/data placement remains
-more variable than the repeated-work matrix.
+In a matched 15-cold/9-warm focused sweep, box construction measured 26.45 us
+versus CGAL EPECK's 36.90 us (1.40x faster), cuboid construction 6.56 us versus
+14.90 us (2.27x), linear distribution 32.38 us versus 40.24 us (1.24x), and
+grid distribution 23.26 us versus 70.59 us (3.04x). The subsequent full
+47-workload sweep measured linear distribution at 13.56 us versus 39.89 us
+(2.94x) and grid distribution at 11.29 us versus 67.90 us (6.01x); their warm
+rows were 9.48x and 9.91x faster than CGAL. Every warm row remained at or
+above native-kernel parity. Whole-suite cold box construction varied to 35.27
+us versus CGAL's 32.68 us, while octahedron construction and sphere/box union
+also remained below cold CGAL parity. Focused and whole-suite results are both
+retained because first-use code/data placement is substantially more variable
+than repeated work.
 
 Constructor fuzzing also exposed an ellipsoid-only validation mismatch:
 `segments = 1, stacks = 1` reached the shared sphere recipe even though the

@@ -258,6 +258,30 @@ fn fresh_mesh_storage_id() -> u64 {
     NEXT_MESH_STORAGE_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
 }
 
+const CUBOID_CORNER_POSITION_SLOTS: [usize; 24] = [
+    0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5,
+];
+const CUBOID_POINT_COORDINATE_SLOTS: [[usize; 3]; 8] = [
+    [0, 0, 0],
+    [1, 0, 0],
+    [1, 1, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+    [1, 0, 1],
+    [1, 1, 1],
+    [0, 1, 1],
+];
+const CUBOID_POSITION_REPRESENTATIVES: [[usize; 2]; 8] = [
+    [0, 0],
+    [0, 3],
+    [0, 2],
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [1, 2],
+    [1, 3],
+];
+
 #[derive(Clone, Debug)]
 struct TransformLayout {
     corner_position_slots: Arc<Vec<usize>>,
@@ -416,11 +440,14 @@ impl TransformLayout {
 
     fn position_representative<'a, M: Clone>(
         &'a self,
-        polygons: &'a [Polygon<M>],
+        polygons: &'a MeshPolygons<M>,
         position_slot: usize,
     ) -> &'a Vertex {
         if let Some(pool) = &self.indexed_triangle_pool {
             return pool.vertex(position_slot);
+        }
+        if let Some(pool) = polygons.cuboid_vertex_pool() {
+            return pool.cuboid_position_vertex(position_slot);
         }
         let [polygon_index, vertex_index] = self.position_representatives[position_slot];
         &polygons[polygon_index].vertices[vertex_index]
@@ -454,6 +481,7 @@ struct MeshPolygonStorage<M: Clone> {
     connectivity: OnceLock<connectivity::Connectivity>,
     connectivity_counts: OnceLock<(usize, usize)>,
     disjoint_partner: OnceLock<u64>,
+    cuboid_vertex_pool: OnceLock<Arc<LazySubdivisionVertexPool>>,
     transform_layout: OnceLock<Arc<TransformLayout>>,
     manifold: OnceLock<bool>,
     convex_pwn: OnceLock<()>,
@@ -480,6 +508,7 @@ impl<M: Clone> MeshPolygonStorage<M> {
             connectivity: OnceLock::new(),
             connectivity_counts: OnceLock::new(),
             disjoint_partner: OnceLock::new(),
+            cuboid_vertex_pool: OnceLock::new(),
             transform_layout: OnceLock::new(),
             manifold: OnceLock::new(),
             convex_pwn: OnceLock::new(),
@@ -566,17 +595,33 @@ impl<M: Clone> MeshPolygons<M> {
     }
 
     fn transform_layout(&self) -> &Arc<TransformLayout> {
-        self.0
-            .transform_layout
-            .get_or_init(|| Arc::new(TransformLayout::from_polygons(&self.0.polygons)))
+        self.0.transform_layout.get_or_init(|| {
+            if self.0.cuboid_vertex_pool.get().is_some() {
+                shapes::cuboid_transform_layout()
+            } else {
+                Arc::new(TransformLayout::from_polygons(&self.0.polygons))
+            }
+        })
     }
 
     fn retained_transform_layout(&self) -> Option<&Arc<TransformLayout>> {
-        self.0.transform_layout.get()
+        if self.0.cuboid_vertex_pool.get().is_some() {
+            Some(self.transform_layout())
+        } else {
+            self.0.transform_layout.get()
+        }
     }
 
     fn retain_transform_layout(&self, layout: Arc<TransformLayout>) {
         let _ = self.0.transform_layout.set(layout);
+    }
+
+    pub(crate) fn cuboid_vertex_pool(&self) -> Option<&Arc<LazySubdivisionVertexPool>> {
+        self.0.cuboid_vertex_pool.get()
+    }
+
+    pub(crate) fn retain_cuboid_vertex_pool(&self, pool: Arc<LazySubdivisionVertexPool>) {
+        let _ = self.0.cuboid_vertex_pool.set(pool);
     }
 
     pub(crate) fn manifold_fact(&self) -> Option<bool> {
@@ -662,6 +707,7 @@ impl<M: Clone> DerefMut for MeshPolygons<M> {
         storage.connectivity = OnceLock::new();
         storage.connectivity_counts = OnceLock::new();
         storage.disjoint_partner = OnceLock::new();
+        storage.cuboid_vertex_pool = OnceLock::new();
         storage.transform_layout = OnceLock::new();
         storage.manifold = OnceLock::new();
         storage.convex_pwn = OnceLock::new();
@@ -3124,185 +3170,76 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         });
         let first_plane_id =
             reserve_plane_ids(transform_layout.plane_count.checked_mul(copies)?);
-        let mut unique_offsets: [Vec<Real>; 3] = std::array::from_fn(|_| Vec::new());
-        let mut offset_slots: Vec<[usize; 3]> = Vec::with_capacity(copies);
-        for offset in offsets {
-            offset_slots.push(std::array::from_fn(|axis| {
-                if let Some(slot) = unique_offsets[axis]
-                    .iter()
-                    .position(|candidate| candidate == &offset.0[axis])
-                {
-                    slot
-                } else {
-                    let slot = unique_offsets[axis].len();
-                    unique_offsets[axis].push(offset.0[axis].clone());
-                    slot
-                }
-            }));
-        }
-        let zero = Real::zero();
-        let transformed_coordinates: [Vec<Real>; 3] = std::array::from_fn(|axis| {
-            let mut coordinates = Vec::with_capacity(
-                unique_offsets[axis]
-                    .len()
-                    .checked_mul(positions_per_copy)
-                    .expect("distribution coordinate count does not overflow"),
-            );
-            for offset in &unique_offsets[axis] {
-                for &[polygon_index, vertex_index] in
-                    transform_layout.position_representatives.iter()
-                {
-                    let position =
-                        &self.polygons[polygon_index].vertices[vertex_index].position;
-                    let source = match axis {
-                        0 => &position.x,
-                        1 => &position.y,
-                        _ => &position.z,
-                    };
-                    coordinates.push(if offset == &zero {
-                        source.clone()
-                    } else {
-                        source.clone() + offset.clone()
-                    });
-                }
-            }
-            coordinates
-        });
-        let transformed_finite_coordinates: [Vec<Option<f64>>; 3] =
-            std::array::from_fn(|axis| {
-                let mut coordinates = Vec::with_capacity(
-                    unique_offsets[axis]
-                        .len()
-                        .checked_mul(positions_per_copy)
-                        .expect("distribution finite coordinate count does not overflow"),
-                );
-                for offset in &unique_offsets[axis] {
-                    let finite_offset = offset.to_f64_lossy();
-                    for (position_slot, &[polygon_index, vertex_index]) in
-                        transform_layout.position_representatives.iter().enumerate()
-                    {
-                        let source = transform_layout
-                            .position_f64
-                            .as_ref()
-                            .map(|positions| positions[position_slot][axis])
-                            .or_else(|| {
-                                let position = &self.polygons[polygon_index].vertices
-                                    [vertex_index]
-                                    .position;
-                                match axis {
-                                    0 => &position.x,
-                                    1 => &position.y,
-                                    _ => &position.z,
-                                }
-                                .to_f64_lossy()
-                            });
-                        coordinates.push(
-                            source
-                                .zip(finite_offset)
-                                .map(|(source, offset)| source + offset),
-                        );
-                    }
-                }
-                coordinates
-            });
-        let total_positions = positions_per_copy.checked_mul(copies)?;
-        let mut transformed_positions = Vec::with_capacity(total_positions);
-        let mut finite_positions = Vec::with_capacity(total_positions);
-        for slots in offset_slots {
-            for position_slot in 0..positions_per_copy {
-                transformed_positions.push(Point3::new(
-                    transformed_coordinates[0][slots[0] * positions_per_copy + position_slot]
-                        .clone(),
-                    transformed_coordinates[1][slots[1] * positions_per_copy + position_slot]
-                        .clone(),
-                    transformed_coordinates[2][slots[2] * positions_per_copy + position_slot]
-                        .clone(),
-                ));
-                finite_positions.push(
-                    transformed_finite_coordinates[0]
-                        [slots[0] * positions_per_copy + position_slot]
-                        .zip(
-                            transformed_finite_coordinates[1]
-                                [slots[1] * positions_per_copy + position_slot],
-                        )
-                        .zip(
-                            transformed_finite_coordinates[2]
-                                [slots[2] * positions_per_copy + position_slot],
-                        )
-                        .map(|((x, y), z)| [x, y, z]),
-                );
-            }
-        }
-        let shared_finite_positions = finite_positions
-            .iter()
-            .copied()
-            .collect::<Option<Vec<_>>>()
-            .map(Arc::new);
-        if let Some(finite_positions) = shared_finite_positions {
-            cache_shared_position_f64_range(first_position_id, finite_positions);
-        } else {
-            cache_position_f64_range(
-                first_position_id,
-                transformed_positions.len(),
-                finite_positions,
-            );
-        }
-
-        let total_corners = self.vertex_count().checked_mul(copies)?;
         let total_polygons = self.polygons.len().checked_mul(copies)?;
-        let mut vertices = Vec::with_capacity(total_corners);
-        let mut ranges_and_sources = Vec::with_capacity(total_polygons);
+        let mut source_corners = Vec::with_capacity(self.vertex_count());
+        let polygon_corner_counts = self
+            .polygons
+            .iter()
+            .map(|polygon| {
+                source_corners.extend(polygon.vertices.iter().cloned());
+                polygon.vertices.len()
+            })
+            .collect::<Vec<_>>();
+        let corner_coordinate_slots = std::array::from_fn(|axis| {
+            (0..source_corners.len())
+                .map(|corner| transform_layout.coordinate_slot(axis, corner))
+                .collect()
+        });
+        let corners_per_copy = source_corners.len();
+        let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_translated_copies(
+            source_corners,
+            offsets.to_vec(),
+            transform_layout.corner_position_slots.to_vec(),
+            corner_coordinate_slots,
+            positions_per_copy,
+            transform_layout.coordinate_counts,
+            total_polygons,
+            first_position_id,
+            first_coordinate_ids,
+        ));
+        let mut polygons = Vec::with_capacity(total_polygons);
         for copy_index in 0..copies {
-            let mut corner_index = 0;
-            for (polygon_index, polygon) in self.polygons.iter().enumerate() {
-                let start = vertices.len();
-                for vertex in &polygon.vertices {
-                    let position_slot = transform_layout.corner_position_slots[corner_index];
-                    vertices.push(Vertex {
-                        position: transformed_positions
-                            [copy_index * positions_per_copy + position_slot]
-                            .clone(),
-                        normal: vertex.normal.clone(),
-                        position_id: first_position_id
-                            + u64::try_from(copy_index * positions_per_copy + position_slot)
-                                .ok()?,
-                        coordinate_ids: std::array::from_fn(|axis| {
-                            first_coordinate_ids[axis]
-                                + u64::try_from(
-                                    copy_index * transform_layout.coordinate_counts[axis]
-                                        + transform_layout.coordinate_slot(axis, corner_index),
-                                )
-                                .expect("distribution coordinate slot fits u64")
-                        }),
-                        ruled_line: vertex.ruled_line,
-                        hull_candidate: vertex.hull_candidate,
-                    });
-                    corner_index += 1;
-                }
-                ranges_and_sources.push((
-                    start..vertices.len(),
-                    polygon_index,
-                    first_plane_id
-                        + u64::try_from(
-                            copy_index * transform_layout.plane_count
-                                + transform_layout.plane_slot(polygon_index),
-                        )
-                        .ok()?,
-                ));
+            let mut corner_start = copy_index * corners_per_copy;
+            for (polygon_index, &corner_count) in polygon_corner_counts.iter().enumerate() {
+                let polygon_slot = polygons.len();
+                let plane_id = first_plane_id
+                    + u64::try_from(
+                        copy_index * transform_layout.plane_count
+                            + transform_layout.plane_slot(polygon_index),
+                    )
+                    .ok()?;
+                let metadata = self.polygons[polygon_index].metadata.clone();
+                polygons.push(match corner_count {
+                    3 => Polygon::from_lazy_subdivision_triangle(
+                        Arc::clone(&vertex_pool),
+                        polygon_slot,
+                        [corner_start, corner_start + 1, corner_start + 2],
+                        metadata,
+                        plane_id,
+                    ),
+                    4 => Polygon::from_lazy_indexed_quad(
+                        Arc::clone(&vertex_pool),
+                        polygon_slot,
+                        [
+                            corner_start,
+                            corner_start + 1,
+                            corner_start + 2,
+                            corner_start + 3,
+                        ],
+                        metadata,
+                        plane_id,
+                    ),
+                    _ => Polygon::from_lazy_indexed_polygon(
+                        Arc::clone(&vertex_pool),
+                        polygon_slot,
+                        (corner_start..corner_start + corner_count).collect(),
+                        metadata,
+                        plane_id,
+                    ),
+                });
+                corner_start += corner_count;
             }
         }
-        let vertices = Arc::new(vertices);
-        let polygons = ranges_and_sources
-            .into_iter()
-            .map(|(range, polygon_index, plane_id)| {
-                Polygon::from_shared_vertices(
-                    Arc::clone(&vertices),
-                    range,
-                    self.polygons[polygon_index].metadata.clone(),
-                    plane_id,
-                )
-            })
-            .collect();
         let (source_facets, source_corners, source_triangles) = self.polygons.topology();
         let mesh = Self::from_polygons_with_topology(
             polygons,
