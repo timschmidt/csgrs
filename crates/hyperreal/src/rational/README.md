@@ -46,7 +46,8 @@ the needed facts:
 - wide dyadic products keep word-sized numerators in `u128` even when the combined
   power-of-two denominator requires `BigUint`
 - exact dot products and signed product sums build shared denominators and
-  reduce once at the end
+  reduce once at the end; dyadic dots first align checked `u128` products and
+  fall through to `BigUint` unchanged on overflow
 - product-sum signs are computed once and reused across reducer stages
 - all-zero and single-term sums exit before denominator construction
 
@@ -83,7 +84,8 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
   owns its opposite sign and the reverse edge is weak, while reciprocal and both
   linear-result entries remain independently available
 - shared-denominator dot products and signed product sums accumulate related
-  terms before the final reduction
+  terms before the final reduction; word-sized dyadic accumulators avoid one
+  arbitrary-precision allocation per dense vector lane
 - all-zero and single-term exits avoid building denominators that will be
   discarded immediately
 - reducers should use already-known signs, zero checks, and denominator facts

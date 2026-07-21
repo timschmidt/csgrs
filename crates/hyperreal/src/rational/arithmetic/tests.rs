@@ -2333,6 +2333,37 @@ mod tests {
     }
 
     #[test]
+    fn dyadic_dot_word_accumulator_handles_wide_denominators_and_falls_back() {
+        let tiny = Rational::from_reduced_dyadic_word(Plus, 3, 200);
+        let five = Rational::from(5_u8);
+        let seven = Rational::from(7_u8);
+        let word = Rational::dot_products_dyadic_words(
+            [&tiny, &tiny],
+            [&five, &seven],
+            [Plus, Plus],
+            [200, 200],
+            200,
+        )
+        .unwrap();
+        assert_eq!(word, Rational::dot_products([&tiny, &tiny], [&five, &seven]));
+        assert_eq!(word.denominator(), &(BigUint::one() << 198));
+
+        let too_wide = Rational::from_unsigned_integer(BigUint::one() << 130);
+        assert!(Rational::dot_products_dyadic_words(
+            [&too_wide, &five],
+            [&seven, &tiny],
+            [Plus, Plus],
+            [0, 200],
+            200,
+        )
+        .is_none());
+        assert_eq!(
+            Rational::dot_products([&too_wide, &five], [&seven, &tiny]),
+            &too_wide * &seven + &five * &tiny
+        );
+    }
+
+    #[test]
     fn self_dot_admits_after_observation_and_reuses_result() {
         let values = [
             Rational::fraction(123_456_789_012_345_i64, 1_u64 << 50).unwrap(),

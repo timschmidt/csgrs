@@ -1479,6 +1479,13 @@ impl Rational {
             return Some(Self::zero());
         }
 
+        if let Some(result) =
+            Self::dot_products_dyadic_words(left, right, signs, denominator_shifts, max_shift)
+        {
+            crate::trace_dispatch!("rational", "dot_product", "dyadic-word-accumulator");
+            return Some(result);
+        }
+
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..N {
@@ -1504,6 +1511,59 @@ impl Rational {
         Some(Self::from_signed_magnitude_difference(
             positive,
             negative,
+            denominator,
+        ))
+    }
+
+    fn dot_products_dyadic_words<const N: usize>(
+        left: [&Self; N],
+        right: [&Self; N],
+        signs: [Sign; N],
+        denominator_shifts: [u64; N],
+        max_shift: u64,
+    ) -> Option<Self> {
+        let mut positive = 0_u128;
+        let mut negative = 0_u128;
+        for i in 0..N {
+            let sign = signs[i];
+            if sign == NoSign {
+                continue;
+            }
+            let magnitude = left[i]
+                .numerator
+                .to_u128()?
+                .checked_mul(right[i].numerator.to_u128()?)?;
+            let scale_shift = u32::try_from(max_shift - denominator_shifts[i]).ok()?;
+            let magnitude = magnitude.checked_shl(scale_shift)?;
+            match sign {
+                Plus => positive = positive.checked_add(magnitude)?,
+                Minus => negative = negative.checked_add(magnitude)?,
+                NoSign => {}
+            }
+        }
+
+        let (sign, mut magnitude) = match positive.cmp(&negative) {
+            Ordering::Greater => (Plus, positive - negative),
+            Ordering::Less => (Minus, negative - positive),
+            Ordering::Equal => return Some(Self::zero()),
+        };
+        let common_shift = u64::from(magnitude.trailing_zeros()).min(max_shift);
+        magnitude >>= u32::try_from(common_shift).expect("u128 trailing-zero count fits u32");
+        let denominator_shift = max_shift - common_shift;
+        if denominator_shift < 128 {
+            return Some(Self::from_reduced_word_parts(
+                sign,
+                magnitude,
+                1_u128 << denominator_shift,
+            ));
+        }
+
+        let denominator = BigUint::one()
+            << usize::try_from(denominator_shift).expect("dyadic shift fits usize");
+        trace_rational_temporary!();
+        Some(Self::from_parts_raw(
+            sign,
+            BigUint::from(magnitude),
             denominator,
         ))
     }

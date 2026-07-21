@@ -110,6 +110,12 @@ Relevant path notes:
 
 - Integer identity constructors avoid BigInt conversion and reduction.
 - Dyadic denominators use shift-only reduction instead of full gcd.
+- Dense exact-dyadic dots align lane products in checked `u128` totals before
+  allocating arbitrary-precision magnitudes. Wide aligned sums and shifts fall
+  through to the former `BigUint` reducer. Hyperlattice's public vec3 dot fell
+  from 453.02 ns to 227.11 ns and vec4 dot from 408.77 ns to 223.75 ns; both
+  now beat Numerica 128 at 257.12 ns and 326.88 ns. The sparse vec4 control
+  remains 51.45 ns.
 - General rational reduction, add/subtract, and product-sum LCM construction
   keep pairs through `u128` in the native binary GCD and dispatch exactly
   mixed-width pairs (one operand through `u128`, one wider) to one full-width
