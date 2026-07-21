@@ -5,7 +5,9 @@
 //! to each keyed contour, matching the split-boundary preparation used before
 //! entry/exit or fill-state classification in polygon clipping traversal.
 
-use crate::fragment::{CompactContourFragment, compact_contour_fragments_from_split_markers};
+use crate::fragment::{
+    CompactLineContourFragment, compact_line_contour_fragments_from_split_markers,
+};
 use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,
     CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey, RegionContourRole,
@@ -23,22 +25,22 @@ pub struct RegionContourFragments {
 }
 
 #[derive(Debug)]
-pub(crate) struct CompactRegionContourFragments {
+pub(crate) struct CompactLineRegionContourFragments {
     pub(crate) key: RegionContourKey,
-    pub(crate) fragments: Vec<CompactContourFragment>,
+    pub(crate) fragments: Vec<CompactLineContourFragment>,
 }
 
 #[derive(Debug)]
-pub(crate) struct CompactRegionFragmentSet {
-    contours: Vec<CompactRegionContourFragments>,
+pub(crate) struct CompactLineRegionFragmentSet {
+    contours: Vec<CompactLineRegionContourFragments>,
 }
 
-impl CompactRegionFragmentSet {
-    pub(crate) fn contours(&self) -> &[CompactRegionContourFragments] {
+impl CompactLineRegionFragmentSet {
+    pub(crate) fn contours(&self) -> &[CompactLineRegionContourFragments] {
         &self.contours
     }
 
-    pub(crate) fn into_contours(self) -> Vec<CompactRegionContourFragments> {
+    pub(crate) fn into_contours(self) -> Vec<CompactLineRegionContourFragments> {
         self.contours
     }
 
@@ -193,12 +195,12 @@ pub(crate) fn split_region_views_at_intersections(
     Ok(Classification::Decided(RegionFragmentSet::new(out)?))
 }
 
-pub(crate) fn split_single_material_regions_compact(
+pub(crate) fn split_single_material_line_regions_compact(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<CompactRegionFragmentSet>> {
+) -> CurveResult<Classification<CompactLineRegionFragmentSet>> {
     validate_region_intersection_evidence_against_views(first, second, intersections)?;
     if first.material_contours().len() != 1
         || second.material_contours().len() != 1
@@ -226,15 +228,15 @@ pub(crate) fn split_single_material_regions_compact(
             }
         };
         let fragments =
-            match compact_contour_fragments_from_split_markers(contour, &markers, policy)? {
+            match compact_line_contour_fragments_from_split_markers(contour, &markers, policy)? {
                 Classification::Decided(fragments) => fragments,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        contours.push(CompactRegionContourFragments { key, fragments });
+        contours.push(CompactLineRegionContourFragments { key, fragments });
     }
-    Ok(Classification::Decided(CompactRegionFragmentSet {
+    Ok(Classification::Decided(CompactLineRegionFragmentSet {
         contours,
     }))
 }

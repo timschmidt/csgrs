@@ -1375,6 +1375,17 @@ impl<'a> BorrowedBooleanBoundaryEdge<'a> {
             }
         }
     }
+
+    pub(crate) fn from_endpoints(start: &'a Point2, end: &'a Point2, reversed: bool) -> Self {
+        if reversed {
+            Self {
+                start: end,
+                end: start,
+            }
+        } else {
+            Self { start, end }
+        }
+    }
 }
 
 impl BooleanBoundaryEdge for BorrowedBooleanBoundaryEdge<'_> {

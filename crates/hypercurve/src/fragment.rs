@@ -35,10 +35,33 @@ pub struct ContourFragment {
 }
 
 #[derive(Debug)]
-pub(crate) struct CompactContourFragment {
+pub(crate) struct CompactLineContourFragment {
     pub(crate) source_segment_index: usize,
     pub(crate) source_range: ParamRange,
-    pub(crate) segment: Segment2,
+    pub(crate) start: Point2,
+    pub(crate) end: Point2,
+    source_support: Option<Rc<LineSupport2>>,
+}
+
+impl CompactLineContourFragment {
+    /// Builds full line geometry only after Boolean selection retains this fragment.
+    pub(crate) fn materialize(&self, source_segment: &Segment2) -> CurveResult<Segment2> {
+        let Segment2::Line(source_line) = source_segment else {
+            return Err(CurveError::Topology(
+                "compact line fragment references a non-line source segment".into(),
+            ));
+        };
+        Ok(Segment2::Line(match &self.source_support {
+            Some(support) => source_line
+                .fragment_between_with_source_range_after_distinct_endpoints(
+                    self.start.clone(),
+                    self.end.clone(),
+                    self.source_range.clone(),
+                    support.clone(),
+                ),
+            None => source_line.clone(),
+        }))
+    }
 }
 
 /// Ordered fragments from a split contour.
@@ -136,11 +159,11 @@ impl ContourFragmentSet {
     }
 }
 
-pub(crate) fn compact_contour_fragments_from_split_markers(
+pub(crate) fn compact_line_contour_fragments_from_split_markers(
     contour: &Contour2,
     markers: &ContourSplitMarkers,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<CompactContourFragment>>> {
+) -> CurveResult<Classification<Vec<CompactLineContourFragment>>> {
     if contour.len() != markers.segment_count() {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
@@ -162,24 +185,67 @@ pub(crate) fn compact_contour_fragments_from_split_markers(
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
 
+        let Segment2::Line(source_line) = source_segment else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
         if segment_markers.is_empty() {
-            fragments.push(CompactContourFragment {
+            fragments.push(CompactLineContourFragment {
                 source_segment_index: segment_index,
                 source_range: ParamRange::new(Real::zero(), Real::one()),
-                segment: source_segment.clone(),
+                start: source_line.start().clone(),
+                end: source_line.end().clone(),
+                source_support: None,
             });
             continue;
         }
 
-        match append_compact_segment_fragments(
-            &mut fragments,
-            source_segment,
-            segment_index,
-            segment_markers,
-            policy,
-        )? {
-            Classification::Decided(()) => {}
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        // Strictly ordered parameters certify distinct adjacent points only
+        // when the source line itself is already certified non-degenerate.
+        // Preserve the general fragment builder's exact check for unchecked
+        // or symbolically inconclusive source lines.
+        let markers_are_distinct = source_line.endpoints_decided_distinct();
+        if segment_markers.len() == 2 {
+            if !markers_are_distinct {
+                match is_zero(
+                    &segment_markers[0]
+                        .point
+                        .distance_squared(&segment_markers[1].point),
+                    policy,
+                ) {
+                    Some(true) => continue,
+                    Some(false) => {}
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                }
+            }
+            fragments.push(CompactLineContourFragment {
+                source_segment_index: segment_index,
+                source_range: ParamRange::new(Real::zero(), Real::one()),
+                start: source_line.start().clone(),
+                end: source_line.end().clone(),
+                source_support: None,
+            });
+            continue;
+        }
+
+        let source_support = source_line.fragment_support();
+        for adjacent in segment_markers.windows(2) {
+            if !markers_are_distinct {
+                match is_zero(
+                    &adjacent[0].point.distance_squared(&adjacent[1].point),
+                    policy,
+                ) {
+                    Some(true) => continue,
+                    Some(false) => {}
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                }
+            }
+            fragments.push(CompactLineContourFragment {
+                source_segment_index: segment_index,
+                source_range: ParamRange::new(adjacent[0].param.clone(), adjacent[1].param.clone()),
+                start: adjacent[0].point.clone(),
+                end: adjacent[1].point.clone(),
+                source_support: Some(source_support.clone()),
+            });
         }
     }
 
@@ -539,56 +605,6 @@ fn append_segment_fragments(
     Ok(Classification::Decided(()))
 }
 
-fn append_compact_segment_fragments(
-    fragments: &mut Vec<CompactContourFragment>,
-    source_segment: &Segment2,
-    segment_index: usize,
-    markers: &[SegmentSplitMarker],
-    policy: &CurvePolicy,
-) -> CurveResult<Classification<()>> {
-    let ordered_line_markers_are_distinct = matches!(
-        source_segment,
-        Segment2::Line(line) if line.endpoints_decided_distinct()
-    );
-    let unsplit_source_segment = markers.len() == 2;
-    let line_support = match source_segment {
-        Segment2::Line(line) if !unsplit_source_segment => Some(line.fragment_support()),
-        _ => None,
-    };
-    for adjacent in markers.windows(2) {
-        let start = &adjacent[0];
-        let end = &adjacent[1];
-
-        if !ordered_line_markers_are_distinct {
-            let distance = start.point.distance_squared(&end.point);
-            match is_zero(&distance, policy) {
-                Some(true) => continue,
-                Some(false) => {}
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
-        }
-
-        let segment = match build_fragment_segment(
-            source_segment,
-            start,
-            end,
-            unsplit_source_segment,
-            line_support.as_ref(),
-            policy,
-        )? {
-            Classification::Decided(segment) => segment,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        fragments.push(CompactContourFragment {
-            source_segment_index: segment_index,
-            source_range: ParamRange::new(start.param.clone(), end.param.clone()),
-            segment,
-        });
-    }
-
-    Ok(Classification::Decided(()))
-}
-
 fn build_fragment_segment(
     source_segment: &Segment2,
     start: &SegmentSplitMarker,
@@ -658,6 +674,13 @@ fn radius_delta_is_zero(delta: &Real, radius_squared: &Real, policy: &CurvePolic
 mod tests {
     use super::*;
     use crate::LineSeg2;
+
+    #[test]
+    fn compact_line_fragment_is_smaller_than_mixed_segment_geometry() {
+        assert!(
+            std::mem::size_of::<CompactLineContourFragment>() < std::mem::size_of::<Segment2>()
+        );
+    }
 
     fn point(x: i32) -> Point2 {
         Point2::new(Real::from(x), Real::zero())

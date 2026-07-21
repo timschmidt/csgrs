@@ -10,7 +10,7 @@ use crate::boolean_boundary::{
 };
 use crate::classify::real_sign;
 use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
-use crate::region_fragments::CompactRegionFragmentSet;
+use crate::region_fragments::CompactLineRegionFragmentSet;
 use crate::{
     Classification, CurveError, CurvePolicy, CurveResult, FillRule, ParamRange, Point2,
     RegionContourKey, RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide,
@@ -329,7 +329,7 @@ impl BooleanFragmentSelection {
 
     pub(crate) fn endpoint_chain_indices_from_compact_split(
         &self,
-        fragments: &CompactRegionFragmentSet,
+        fragments: &CompactLineRegionFragmentSet,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Option<BooleanBoundaryChainIndices>>> {
         let mut sources = fragments.contours().iter().flat_map(|contour| {
@@ -358,10 +358,18 @@ impl BooleanFragmentSelection {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
                 BooleanFragmentAction::KeepSourceDirection => {
-                    endpoints.push(BorrowedBooleanBoundaryEdge::new(&source.segment, false));
+                    endpoints.push(BorrowedBooleanBoundaryEdge::from_endpoints(
+                        &source.start,
+                        &source.end,
+                        false,
+                    ));
                 }
                 BooleanFragmentAction::KeepReversed => {
-                    endpoints.push(BorrowedBooleanBoundaryEdge::new(&source.segment, true));
+                    endpoints.push(BorrowedBooleanBoundaryEdge::from_endpoints(
+                        &source.start,
+                        &source.end,
+                        true,
+                    ));
                 }
             }
         }
@@ -378,7 +386,9 @@ impl BooleanFragmentSelection {
 
     pub(crate) fn emit_contours_from_owned_compact_split(
         self,
-        fragments: CompactRegionFragmentSet,
+        fragments: CompactLineRegionFragmentSet,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
         chain_indices: BooleanBoundaryChainIndices,
         fill_rule: FillRule,
     ) -> CurveResult<Classification<Vec<crate::Contour2>>> {
@@ -407,9 +417,23 @@ impl BooleanFragmentSelection {
                 BooleanFragmentAction::BoundaryNeedsResolution => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
-                BooleanFragmentAction::KeepSourceDirection => segments.push(source.segment),
-                BooleanFragmentAction::KeepReversed => {
-                    segments.push(source.segment.into_reversed());
+                BooleanFragmentAction::KeepSourceDirection
+                | BooleanFragmentAction::KeepReversed => {
+                    let source_segment = source_contour_for_key(first, second, key)?
+                        .segments()
+                        .get(source.source_segment_index)
+                        .ok_or_else(|| {
+                            CurveError::Topology(
+                                "compact boolean fragment references a missing source segment"
+                                    .into(),
+                            )
+                        })?;
+                    let segment = source.materialize(source_segment)?;
+                    if classification.action == BooleanFragmentAction::KeepReversed {
+                        segments.push(segment.into_reversed());
+                    } else {
+                        segments.push(segment);
+                    }
                 }
             }
         }
@@ -427,7 +451,7 @@ impl BooleanFragmentSelection {
 
     pub(crate) fn emit_boundary_fragments_from_owned_compact_split(
         self,
-        fragments: CompactRegionFragmentSet,
+        fragments: CompactLineRegionFragmentSet,
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
     ) -> CurveResult<BooleanBoundaryFragmentSet> {
@@ -472,6 +496,7 @@ impl BooleanFragmentSelection {
                             )
                         })?;
                     let reversed = classification.action == BooleanFragmentAction::KeepReversed;
+                    let segment = source.materialize(source_segment)?;
                     directed_fragments.push(DirectedBooleanFragment {
                         key,
                         fragment_index,
@@ -481,9 +506,9 @@ impl BooleanFragmentSelection {
                         source_range: source.source_range,
                         reversed,
                         segment: if reversed {
-                            source.segment.into_reversed()
+                            segment.into_reversed()
                         } else {
-                            source.segment
+                            segment
                         },
                     });
                 }
@@ -738,7 +763,7 @@ impl BooleanFragmentSelection {
     }
 }
 
-impl CompactRegionFragmentSet {
+impl CompactLineRegionFragmentSet {
     pub(crate) fn classify_for_boolean_with_line_crossing_winding<F>(
         &self,
         first: &RegionView2<'_>,
@@ -789,11 +814,18 @@ impl CompactRegionFragmentSet {
                 policy,
             );
             let source_side = contour_fragments.key.side;
-            let mut opposite_winding = match classify_fragment_interior(
-                &first_fragment.segment,
+            let mut opposite_winding = match classify_fragment_interior_with(
+                &first_fragment.start,
+                &first_fragment.end,
                 certified_endpoint,
                 &interior_sample_fractions,
-                policy,
+                |fraction| {
+                    Ok(Classification::Decided(
+                        first_fragment
+                            .start
+                            .lerp(&first_fragment.end, fraction.clone()),
+                    ))
+                },
                 |sample| classify_opposite_winding(source_side, sample),
             )? {
                 FragmentInteriorClassification::Decided(winding) => winding,
@@ -1656,18 +1688,40 @@ fn classify_fragment_interior<T, F>(
     certified_endpoint: Option<CertifiedFragmentEndpoint>,
     fractions: &[Real; 3],
     policy: &CurvePolicy,
+    classify: F,
+) -> CurveResult<FragmentInteriorClassification<T>>
+where
+    F: FnMut(&Point2) -> Classification<T>,
+{
+    classify_fragment_interior_with(
+        segment.start(),
+        segment.end(),
+        certified_endpoint,
+        fractions,
+        |fraction| segment.point_at(fraction, policy),
+        classify,
+    )
+}
+
+fn classify_fragment_interior_with<T, F, S>(
+    start: &Point2,
+    end: &Point2,
+    certified_endpoint: Option<CertifiedFragmentEndpoint>,
+    fractions: &[Real; 3],
+    mut sample_at: S,
     mut classify: F,
 ) -> CurveResult<FragmentInteriorClassification<T>>
 where
     F: FnMut(&Point2) -> Classification<T>,
+    S: FnMut(&Real) -> CurveResult<Classification<Point2>>,
 {
     let mut representative_blocker = None;
     let mut classification_blocker = None;
 
     if let Some(endpoint) = certified_endpoint {
         let sample = match endpoint {
-            CertifiedFragmentEndpoint::Start => segment.start(),
-            CertifiedFragmentEndpoint::End => segment.end(),
+            CertifiedFragmentEndpoint::Start => start,
+            CertifiedFragmentEndpoint::End => end,
         };
         match classify(sample) {
             Classification::Decided(location) => {
@@ -1680,7 +1734,7 @@ where
     }
 
     for fraction in fractions {
-        let sample = match segment.point_at(fraction, policy)? {
+        let sample = match sample_at(fraction)? {
             Classification::Decided(sample) => sample,
             Classification::Uncertain(reason) => {
                 representative_blocker.get_or_insert(reason);

@@ -1353,6 +1353,34 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,795 coverage points and 16,410 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+The compact strict-crossing Boolean path now carries line endpoints, exact
+source range, source index, and shared support directly instead of embedding a
+full mixed `Segment2` in every candidate fragment. Interior classification and
+endpoint chaining consume that representation in place; full line geometry is
+materialized only for fragments retained in the result. Unsplit lines continue
+to clone their authored geometry, while curved or otherwise unsupported inputs
+fall through to the general provenance-rich pipeline.
+
+Against the retained-crossing checkpoint, two-point Callgrind slopes improved
+all six ordinary and prepared star64 region, contour, and loop lanes by
+4.30--4.34%. The 1,000/2,000-operation prepared rectangle control improved by
+1.23%, while the complete sparse-intersection benchmark differed by only 37
+instructions including fixed process startup. Prepared-region DHAT allocation
+fell from 13,132,998 to 11,849,958 bytes (9.77%), peak live heap from 903,634
+to 857,346 bytes (5.12%), reads by 3.76%, and writes by 7.03%; allocation block
+count remained 101,503.
+
+In an 11-sample, 500-iteration release comparison, ordinary star64 intersection
+measured 0.349 ms/iter, versus 0.027 ms for `cavalier_contours`, 0.035 ms for
+`i_overlay`, and 0.036 ms for `geo`. Exact point and event construction remain
+the dominant gap to approximate competitors after fragment materialization was
+moved behind selection.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,803 coverage points and 16,425 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
