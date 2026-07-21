@@ -1265,6 +1265,26 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,544 coverage points and 15,946 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+The strict-crossing winding index now stores each contour's transitions in one
+segment-sorted flat vector instead of allocating an empty vector for every
+source segment and a second allocation for every crossing-bearing segment.
+Exact duplicate-parameter validation remains grouped by source segment, and
+fragment lookup uses the retained segment order without cloning any `Real`.
+The refactor also removes five lines from the implementation.
+
+Against the borrowed-parameter checkpoint, twenty-iteration Callgrind runs
+improved all six ordinary and prepared region, contour, and loop lanes by
+0.426--0.455%. Prepared-lane DHAT allocation fell from 15,208,745 to
+15,114,582 bytes (0.62%), allocation blocks from 104,041 to 101,881 (2.08%),
+and peak live heap from 956,917 to 953,506 bytes (0.36%). The flat construction
+and lookup raised reads by 0.41% and writes by 0.08%, while still reducing
+executed instructions in every measured path.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,552 coverage points and 16,010 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

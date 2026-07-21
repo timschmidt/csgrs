@@ -17,14 +17,15 @@ use crate::{
 
 #[derive(Clone, Debug)]
 struct RegionLineCrossing<'a> {
+    segment_index: usize,
     parameter: &'a Real,
     winding_delta: i32,
 }
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct RegionLineCrossingWindingIndex<'a> {
-    first: Vec<Vec<RegionLineCrossing<'a>>>,
-    second: Vec<Vec<RegionLineCrossing<'a>>>,
+    first: Vec<RegionLineCrossing<'a>>,
+    second: Vec<RegionLineCrossing<'a>>,
 }
 
 impl<'a> RegionLineCrossingWindingIndex<'a> {
@@ -58,9 +59,10 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
 
         let first_contour = first.material_contours()[0];
         let second_contour = second.material_contours()[0];
+        let crossing_capacity = pair.intersections().len();
         let mut index = Self {
-            first: (0..first_contour.len()).map(|_| Vec::new()).collect(),
-            second: (0..second_contour.len()).map(|_| Vec::new()).collect(),
+            first: Vec::with_capacity(crossing_capacity),
+            second: Vec::with_capacity(crossing_capacity),
         };
         let mut crossing_count = 0_usize;
         for event in pair.intersections().events() {
@@ -107,22 +109,23 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
                 }
             };
 
-            if !index.insert_unique(
-                pair.first(),
-                point.a_segment_index,
-                &point.a_param,
-                first_delta,
-                policy,
-            ) || !index.insert_unique(
-                pair.second(),
-                point.b_segment_index,
-                &point.b_param,
-                -first_delta,
-                policy,
-            ) {
-                return None;
-            }
+            index.first.push(RegionLineCrossing {
+                segment_index: point.a_segment_index,
+                parameter: &point.a_param,
+                winding_delta: first_delta,
+            });
+            index.second.push(RegionLineCrossing {
+                segment_index: point.b_segment_index,
+                parameter: &point.b_param,
+                winding_delta: -first_delta,
+            });
             crossing_count += 1;
+        }
+
+        if !sort_and_validate_unique(&mut index.first, policy)
+            || !sort_and_validate_unique(&mut index.second, policy)
+        {
+            return None;
         }
 
         (crossing_count != 0
@@ -133,45 +136,15 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
             .then_some(index)
     }
 
-    fn insert_unique(
-        &mut self,
-        key: RegionContourKey,
-        segment_index: usize,
-        parameter: &'a Real,
-        winding_delta: i32,
-        policy: &CurvePolicy,
-    ) -> bool {
-        let Some(entries) = self.crossings_mut(key, segment_index) else {
-            return false;
-        };
-        if entries.iter().any(|existing| {
-            !matches!(
-                compare_reals(existing.parameter, parameter, policy),
-                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
-            )
-        }) {
-            return false;
-        }
-        if entries.is_empty() {
-            entries.reserve_exact(2);
-        }
-        entries.push(RegionLineCrossing {
-            parameter,
-            winding_delta,
-        });
-        true
-    }
-
     pub(crate) fn crossing_count(&self, key: RegionContourKey) -> usize {
         self.crossings_for_key(key)
-            .map_or(0, |crossings| crossings.iter().map(Vec::len).sum())
+            .map_or(0, <[RegionLineCrossing]>::len)
     }
 
     fn winding_delta_sum(&self, key: RegionContourKey) -> i64 {
         self.crossings_for_key(key).map_or(0, |crossings| {
             crossings
                 .iter()
-                .flatten()
                 .map(|crossing| i64::from(crossing.winding_delta))
                 .sum()
         })
@@ -197,7 +170,7 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         matched.next().is_none().then_some(delta)
     }
 
-    fn crossings_for_key(&self, key: RegionContourKey) -> Option<&[Vec<RegionLineCrossing<'a>>]> {
+    fn crossings_for_key(&self, key: RegionContourKey) -> Option<&[RegionLineCrossing<'a>]> {
         if key.role != RegionContourRole::Material || key.index != 0 {
             return None;
         }
@@ -212,22 +185,44 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         key: RegionContourKey,
         segment_index: usize,
     ) -> Option<&[RegionLineCrossing<'a>]> {
-        self.crossings_for_key(key)?
-            .get(segment_index)
-            .map(Vec::as_slice)
+        let crossings = self.crossings_for_key(key)?;
+        let start = crossings.partition_point(|crossing| crossing.segment_index < segment_index);
+        let mut end = start;
+        while crossings
+            .get(end)
+            .is_some_and(|crossing| crossing.segment_index == segment_index)
+        {
+            end += 1;
+        }
+        Some(&crossings[start..end])
     }
+}
 
-    fn crossings_mut(
-        &mut self,
-        key: RegionContourKey,
-        segment_index: usize,
-    ) -> Option<&mut Vec<RegionLineCrossing<'a>>> {
-        if key.role != RegionContourRole::Material || key.index != 0 {
-            return None;
+fn sort_and_validate_unique(
+    crossings: &mut [RegionLineCrossing<'_>],
+    policy: &CurvePolicy,
+) -> bool {
+    crossings.sort_unstable_by_key(|crossing| crossing.segment_index);
+    let mut group_start = 0;
+    while group_start < crossings.len() {
+        let segment_index = crossings[group_start].segment_index;
+        let group_end = crossings[group_start..]
+            .partition_point(|crossing| crossing.segment_index == segment_index)
+            + group_start;
+        for (offset, crossing) in crossings[group_start..group_end].iter().enumerate() {
+            if crossings[group_start + offset + 1..group_end]
+                .iter()
+                .any(|other| {
+                    !matches!(
+                        compare_reals(crossing.parameter, other.parameter, policy),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
+                    )
+                })
+            {
+                return false;
+            }
         }
-        match key.side {
-            RegionSide::First => self.first.get_mut(segment_index),
-            RegionSide::Second => self.second.get_mut(segment_index),
-        }
+        group_start = group_end;
     }
+    true
 }
