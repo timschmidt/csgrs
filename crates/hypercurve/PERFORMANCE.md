@@ -1285,6 +1285,24 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,552 coverage points and 16,010 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Internal region splitting now counts each event's per-segment marker upper
+bound before materializing markers. Every touched bin reserves that exact bound
+once and installs its source endpoints once, replacing repeated source-segment
+lookups and geometric marker-vector growth. Multiple contour-pair contributions
+retain the same incremental merge and exact duplicate suppression behavior.
+
+Against the flat-crossing-index checkpoint, twenty-iteration Callgrind runs
+improved all six ordinary and prepared region, contour, and loop lanes by
+0.239--0.257%. Prepared-lane DHAT allocation fell from 15,114,582 to
+14,796,630 bytes (2.10%), reads by 0.11%, and writes by 0.08%. Allocation blocks
+remained 101,881 and peak live heap remained 953,506 bytes because the temporary
+per-segment count arrays replace the eliminated marker slack during that phase.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,567 coverage points and 16,090 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

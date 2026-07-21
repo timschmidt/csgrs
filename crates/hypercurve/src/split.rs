@@ -167,29 +167,44 @@ impl ContourSplitMarkers {
         operand: ContourOperand,
         policy: &CurvePolicy,
     ) -> Classification<()> {
+        let mut marker_counts = vec![0_usize; self.segment_markers.len()];
         for event in intersections.events() {
-            if !matches!(event, ContourIntersection::Uncertain(_)) {
-                let Some(segment_index) = event.segment_index(operand) else {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                };
-                let Some(segment) = contour.segments().get(segment_index) else {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                };
-                let markers = &mut self.segment_markers[segment_index];
-                if markers.is_empty() {
-                    markers.reserve(4);
-                    markers.push(SegmentSplitMarker {
-                        segment_index,
-                        param: Real::zero(),
-                        point: segment.start().clone(),
-                    });
-                    markers.push(SegmentSplitMarker {
-                        segment_index,
-                        param: Real::one(),
-                        point: segment.end().clone(),
-                    });
-                }
+            let event_marker_count = match event {
+                ContourIntersection::Point(_) => 1,
+                ContourIntersection::Overlap(_) => 2,
+                ContourIntersection::Uncertain(_) => continue,
+            };
+            let Some(segment_index) = event.segment_index(operand) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            let Some(marker_count) = marker_counts.get_mut(segment_index) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            *marker_count += event_marker_count;
+        }
+        for (segment_index, marker_count) in marker_counts.into_iter().enumerate() {
+            if marker_count == 0 {
+                continue;
             }
+            let Some(segment) = contour.segments().get(segment_index) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            let markers = &mut self.segment_markers[segment_index];
+            markers.reserve_exact(marker_count + 2 * usize::from(markers.is_empty()));
+            if markers.is_empty() {
+                markers.push(SegmentSplitMarker {
+                    segment_index,
+                    param: Real::zero(),
+                    point: segment.start().clone(),
+                });
+                markers.push(SegmentSplitMarker {
+                    segment_index,
+                    param: Real::one(),
+                    point: segment.end().clone(),
+                });
+            }
+        }
+        for event in intersections.events() {
             if let Err(reason) = self.merge_event(event, operand, policy) {
                 return Classification::Uncertain(reason);
             }
