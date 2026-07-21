@@ -11,7 +11,7 @@ use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    ContourFragment, ContourIntersection, CurvePolicy, IntersectionKind, RegionContourKey,
+    ContourIntersection, CurvePolicy, IntersectionKind, ParamRange, RegionContourKey,
     RegionContourRole, RegionIntersectionSet, RegionSide, RegionView2, Segment2, SegmentKind,
 };
 
@@ -153,19 +153,21 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
     pub(crate) fn delta_between_fragments(
         &self,
         key: RegionContourKey,
-        previous: &ContourFragment,
-        current: &ContourFragment,
+        previous_segment_index: usize,
+        previous_range: &ParamRange,
+        current_segment_index: usize,
+        current_range: &ParamRange,
     ) -> Option<i32> {
-        if previous.source_segment_index != current.source_segment_index {
+        if previous_segment_index != current_segment_index {
             return Some(0);
         }
-        if previous.source_range.end() != current.source_range.start() {
+        if previous_range.end() != current_range.start() {
             return None;
         }
-        let crossings = self.crossings(key, previous.source_segment_index)?;
+        let crossings = self.crossings(key, previous_segment_index)?;
         let mut matched = crossings
             .iter()
-            .filter(|crossing| crossing.parameter == previous.source_range.end());
+            .filter(|crossing| crossing.parameter == previous_range.end());
         let delta = matched.next()?.winding_delta;
         matched.next().is_none().then_some(delta)
     }

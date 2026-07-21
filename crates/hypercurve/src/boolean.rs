@@ -10,6 +10,7 @@ use crate::boolean_boundary::{
 };
 use crate::classify::real_sign;
 use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
+use crate::region_fragments::CompactRegionFragmentSet;
 use crate::{
     Classification, CurveError, CurvePolicy, CurveResult, FillRule, ParamRange, Point2,
     RegionContourKey, RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide,
@@ -326,6 +327,180 @@ impl BooleanFragmentSelection {
         ))
     }
 
+    pub(crate) fn endpoint_chain_indices_from_compact_split(
+        &self,
+        fragments: &CompactRegionFragmentSet,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Option<BooleanBoundaryChainIndices>>> {
+        let mut sources = fragments.contours().iter().flat_map(|contour| {
+            let key = contour.key;
+            contour
+                .fragments
+                .iter()
+                .enumerate()
+                .map(move |(index, source)| (key, index, source))
+        });
+        let mut endpoints = Vec::with_capacity(self.emitted_fragment_count());
+        for classification in &self.classifications {
+            let Some((key, fragment_index, source)) = sources.next() else {
+                return Err(CurveError::Topology(
+                    "boolean selection references a fragment outside certified split output".into(),
+                ));
+            };
+            if classification.key != key || classification.fragment_index != fragment_index {
+                return Err(CurveError::Topology(
+                    "boolean selection order differs from certified split order".into(),
+                ));
+            }
+            match classification.action {
+                BooleanFragmentAction::Discard => {}
+                BooleanFragmentAction::BoundaryNeedsResolution => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                BooleanFragmentAction::KeepSourceDirection => {
+                    endpoints.push(BorrowedBooleanBoundaryEdge::new(&source.segment, false));
+                }
+                BooleanFragmentAction::KeepReversed => {
+                    endpoints.push(BorrowedBooleanBoundaryEdge::new(&source.segment, true));
+                }
+            }
+        }
+        if sources.next().is_some() {
+            return Err(CurveError::Topology(
+                "boolean selection omits a supplied source fragment".into(),
+            ));
+        }
+        Ok(match endpoint_chain_indices(&endpoints, policy) {
+            Ok(chain_indices) => Classification::Decided(chain_indices),
+            Err((_, reason)) => Classification::Uncertain(reason),
+        })
+    }
+
+    pub(crate) fn emit_contours_from_owned_compact_split(
+        self,
+        fragments: CompactRegionFragmentSet,
+        chain_indices: BooleanBoundaryChainIndices,
+        fill_rule: FillRule,
+    ) -> CurveResult<Classification<Vec<crate::Contour2>>> {
+        let mut sources = fragments.into_contours().into_iter().flat_map(|contour| {
+            let key = contour.key;
+            contour
+                .fragments
+                .into_iter()
+                .enumerate()
+                .map(move |(index, source)| (key, index, source))
+        });
+        let mut segments = Vec::with_capacity(self.emitted_fragment_count());
+        for classification in self.classifications {
+            let Some((key, fragment_index, source)) = sources.next() else {
+                return Err(CurveError::Topology(
+                    "boolean selection references a fragment outside certified split output".into(),
+                ));
+            };
+            if classification.key != key || classification.fragment_index != fragment_index {
+                return Err(CurveError::Topology(
+                    "boolean selection order differs from certified split order".into(),
+                ));
+            }
+            match classification.action {
+                BooleanFragmentAction::Discard => {}
+                BooleanFragmentAction::BoundaryNeedsResolution => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                BooleanFragmentAction::KeepSourceDirection => segments.push(source.segment),
+                BooleanFragmentAction::KeepReversed => {
+                    segments.push(source.segment.into_reversed());
+                }
+            }
+        }
+        if sources.next().is_some() {
+            return Err(CurveError::Topology(
+                "boolean selection omits a supplied source fragment".into(),
+            ));
+        }
+        Ok(materialize_segment_contours(
+            chain_indices,
+            segments,
+            fill_rule,
+        ))
+    }
+
+    pub(crate) fn emit_boundary_fragments_from_owned_compact_split(
+        self,
+        fragments: CompactRegionFragmentSet,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
+    ) -> CurveResult<BooleanBoundaryFragmentSet> {
+        let directed_fragment_capacity = self.emitted_fragment_count();
+        let mut sources = fragments.into_contours().into_iter().flat_map(|contour| {
+            let key = contour.key;
+            contour
+                .fragments
+                .into_iter()
+                .enumerate()
+                .map(move |(index, source)| (key, index, source))
+        });
+        let mut directed_fragments = Vec::with_capacity(directed_fragment_capacity);
+        let mut unresolved_boundaries = Vec::new();
+
+        for classification in self.classifications {
+            let Some((key, fragment_index, source)) = sources.next() else {
+                return Err(CurveError::Topology(
+                    "boolean selection references a fragment outside certified split output".into(),
+                ));
+            };
+            if classification.key != key || classification.fragment_index != fragment_index {
+                return Err(CurveError::Topology(
+                    "boolean selection order differs from certified split order".into(),
+                ));
+            }
+
+            match classification.action {
+                BooleanFragmentAction::Discard => {}
+                BooleanFragmentAction::BoundaryNeedsResolution => {
+                    unresolved_boundaries.push(classification);
+                }
+                BooleanFragmentAction::KeepSourceDirection
+                | BooleanFragmentAction::KeepReversed => {
+                    let source_segment = source_contour_for_key(first, second, key)?
+                        .segments()
+                        .get(source.source_segment_index)
+                        .ok_or_else(|| {
+                            CurveError::Topology(
+                                "compact boolean fragment references a missing source segment"
+                                    .into(),
+                            )
+                        })?;
+                    let reversed = classification.action == BooleanFragmentAction::KeepReversed;
+                    directed_fragments.push(DirectedBooleanFragment {
+                        key,
+                        fragment_index,
+                        source_segment_index: source.source_segment_index,
+                        source_segment_start_point: source_segment.start().clone(),
+                        source_segment_end_point: source_segment.end().clone(),
+                        source_range: source.source_range,
+                        reversed,
+                        segment: if reversed {
+                            source.segment.into_reversed()
+                        } else {
+                            source.segment
+                        },
+                    });
+                }
+            }
+        }
+        if sources.next().is_some() {
+            return Err(CurveError::Topology(
+                "boolean selection omits a supplied source fragment".into(),
+            ));
+        }
+
+        BooleanBoundaryFragmentSet::from_certified_split_fragments(
+            directed_fragments,
+            unresolved_boundaries,
+        )
+    }
+
     pub(crate) fn resolve_boundary_actions(
         &self,
         resolutions: &[(RegionContourKey, usize, BooleanFragmentAction)],
@@ -560,6 +735,115 @@ impl BooleanFragmentSelection {
             BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries)
         }
         .ok())
+    }
+}
+
+impl CompactRegionFragmentSet {
+    pub(crate) fn classify_for_boolean_with_line_crossing_winding<F>(
+        &self,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+        endpoint_contacts: &crate::region_events::RegionPointEndpointContactIndex,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
+        mut classify_opposite_winding: F,
+    ) -> CurveResult<Option<Classification<BooleanFragmentSelection>>>
+    where
+        F: FnMut(RegionSide, &crate::Point2) -> Classification<i32>,
+    {
+        let source_fragment_count = self.fragment_count();
+        let mut classifications = Vec::with_capacity(source_fragment_count);
+        let interior_sample_fractions = [
+            (Real::one() / Real::from(2_i8))?,
+            (Real::one() / Real::from(3_i8))?,
+            (Real::from(2_i8) / Real::from(3_i8))?,
+        ];
+
+        for contour_fragments in self.contours() {
+            let source_contour = source_contour_for_key(first, second, contour_fragments.key)?;
+            let source_filled_side_is_left = match source_contour_filled_side_is_left(
+                first,
+                second,
+                contour_fragments.key,
+                policy,
+            )? {
+                Classification::Decided(filled_side) => filled_side,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            let opposite_fill_rule = match contour_fragments.key.side {
+                RegionSide::First => second.material_contours()[0].fill_rule(),
+                RegionSide::Second => first.material_contours()[0].fill_rule(),
+            };
+            let Some(first_fragment) = contour_fragments.fragments.first() else {
+                return Ok(None);
+            };
+            let certified_endpoint = certified_fragment_endpoint(
+                endpoint_contacts,
+                contour_fragments.key,
+                source_contour,
+                first_fragment.source_segment_index,
+                &first_fragment.source_range,
+                policy,
+            );
+            let source_side = contour_fragments.key.side;
+            let mut opposite_winding = match classify_fragment_interior(
+                &first_fragment.segment,
+                certified_endpoint,
+                &interior_sample_fractions,
+                policy,
+                |sample| classify_opposite_winding(source_side, sample),
+            )? {
+                FragmentInteriorClassification::Decided(winding) => winding,
+                FragmentInteriorClassification::Blocked { reason, .. } => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+
+            let mut represented_crossings = 0_usize;
+            for (fragment_index, fragment) in contour_fragments.fragments.iter().enumerate() {
+                if fragment_index != 0 {
+                    let previous = &contour_fragments.fragments[fragment_index - 1];
+                    let Some(delta) = crossing_windings.delta_between_fragments(
+                        contour_fragments.key,
+                        previous.source_segment_index,
+                        &previous.source_range,
+                        fragment.source_segment_index,
+                        &fragment.source_range,
+                    ) else {
+                        return Ok(None);
+                    };
+                    represented_crossings +=
+                        usize::from(previous.source_segment_index == fragment.source_segment_index);
+                    opposite_winding = opposite_winding.checked_add(delta).ok_or_else(|| {
+                        CurveError::Topology("boolean contour winding exceeds i32 range".into())
+                    })?;
+                }
+                let opposite_location =
+                    contour_location_from_winding(opposite_winding, opposite_fill_rule);
+                let action =
+                    op.action_for(source_side, source_filled_side_is_left, opposite_location);
+                classifications.push(BooleanFragmentClassification {
+                    key: contour_fragments.key,
+                    fragment_index,
+                    opposite_location,
+                    source_filled_side_is_left,
+                    action,
+                });
+            }
+            if represented_crossings != crossing_windings.crossing_count(contour_fragments.key) {
+                return Ok(None);
+            }
+        }
+
+        Ok(Some(Classification::Decided(
+            BooleanFragmentSelection::from_complete_fragment_traversal(
+                classifications,
+                source_fragment_count,
+            ),
+        )))
     }
 }
 
@@ -1134,7 +1418,8 @@ impl RegionFragmentSet {
                 endpoint_contacts,
                 contour_fragments.key,
                 source_contour,
-                first_fragment,
+                first_fragment.source_segment_index,
+                &first_fragment.source_range,
                 policy,
             );
             let source_side = contour_fragments.key.side;
@@ -1164,8 +1449,10 @@ impl RegionFragmentSet {
                 if fragment_index != 0 {
                     let Some(delta) = crossing_windings.delta_between_fragments(
                         contour_fragments.key,
-                        &fragments[fragment_index - 1],
-                        fragment,
+                        fragments[fragment_index - 1].source_segment_index,
+                        &fragments[fragment_index - 1].source_range,
+                        fragment.source_segment_index,
+                        &fragment.source_range,
                     ) else {
                         return Ok(None);
                     };
@@ -1265,7 +1552,8 @@ impl RegionFragmentSet {
                         contacts,
                         contour_fragments.key,
                         source_contour,
-                        fragment,
+                        fragment.source_segment_index,
+                        &fragment.source_range,
                         policy,
                     )
                 });
@@ -1326,22 +1614,23 @@ fn certified_fragment_endpoint(
     contacts: &crate::region_events::RegionPointEndpointContactIndex,
     key: RegionContourKey,
     source_contour: &crate::Contour2,
-    fragment: &crate::ContourFragment,
+    source_segment_index: usize,
+    source_range: &ParamRange,
     policy: &CurvePolicy,
 ) -> Option<CertifiedFragmentEndpoint> {
     if !contacts.parameter_is_contact(
         key,
-        fragment.source_segment_index,
+        source_segment_index,
         source_contour.len(),
-        fragment.source_range.start(),
+        source_range.start(),
         policy,
     ) {
         Some(CertifiedFragmentEndpoint::Start)
     } else if !contacts.parameter_is_contact(
         key,
-        fragment.source_segment_index,
+        source_segment_index,
         source_contour.len(),
-        fragment.source_range.end(),
+        source_range.end(),
         policy,
     ) {
         Some(CertifiedFragmentEndpoint::End)

@@ -5,6 +5,7 @@
 //! to each keyed contour, matching the split-boundary preparation used before
 //! entry/exit or fill-state classification in polygon clipping traversal.
 
+use crate::fragment::{CompactContourFragment, compact_contour_fragments_from_split_markers};
 use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,
     CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey, RegionContourRole,
@@ -19,6 +20,34 @@ pub struct RegionContourFragments {
     pub key: RegionContourKey,
     /// Source contour split into traversal-order fragments.
     pub fragments: ContourFragmentSet,
+}
+
+#[derive(Debug)]
+pub(crate) struct CompactRegionContourFragments {
+    pub(crate) key: RegionContourKey,
+    pub(crate) fragments: Vec<CompactContourFragment>,
+}
+
+#[derive(Debug)]
+pub(crate) struct CompactRegionFragmentSet {
+    contours: Vec<CompactRegionContourFragments>,
+}
+
+impl CompactRegionFragmentSet {
+    pub(crate) fn contours(&self) -> &[CompactRegionContourFragments] {
+        &self.contours
+    }
+
+    pub(crate) fn into_contours(self) -> Vec<CompactRegionContourFragments> {
+        self.contours
+    }
+
+    pub(crate) fn fragment_count(&self) -> usize {
+        self.contours
+            .iter()
+            .map(|contour| contour.fragments.len())
+            .sum()
+    }
 }
 
 /// Fragment materialization report for one keyed source contour.
@@ -162,6 +191,52 @@ pub(crate) fn split_region_views_at_intersections(
         return Ok(Classification::Uncertain(reason));
     }
     Ok(Classification::Decided(RegionFragmentSet::new(out)?))
+}
+
+pub(crate) fn split_single_material_regions_compact(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    intersections: &RegionIntersectionSet,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<CompactRegionFragmentSet>> {
+    validate_region_intersection_evidence_against_views(first, second, intersections)?;
+    if first.material_contours().len() != 1
+        || second.material_contours().len() != 1
+        || !first.hole_contours().is_empty()
+        || !second.hole_contours().is_empty()
+    {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    }
+
+    let mut contours = Vec::with_capacity(2);
+    for (key, contour) in [
+        (
+            RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
+            first.material_contours()[0],
+        ),
+        (
+            RegionContourKey::new(RegionSide::Second, RegionContourRole::Material, 0),
+            second.material_contours()[0],
+        ),
+    ] {
+        let markers = match split_markers_for_keyed_contour(contour, key, intersections, policy)? {
+            Classification::Decided(markers) => markers,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let fragments =
+            match compact_contour_fragments_from_split_markers(contour, &markers, policy)? {
+                Classification::Decided(fragments) => fragments,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        contours.push(CompactRegionContourFragments { key, fragments });
+    }
+    Ok(Classification::Decided(CompactRegionFragmentSet {
+        contours,
+    }))
 }
 
 pub(crate) fn split_region_views_at_intersections_with_report(
@@ -894,6 +969,19 @@ fn split_keyed_contour(
     intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<ContourFragmentSet>> {
+    let markers = match split_markers_for_keyed_contour(contour, key, intersections, policy)? {
+        Classification::Decided(markers) => markers,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    ContourFragmentSet::from_split_markers(contour, &markers, policy)
+}
+
+fn split_markers_for_keyed_contour(
+    contour: &Contour2,
+    key: RegionContourKey,
+    intersections: &RegionIntersectionSet,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<ContourSplitMarkers>> {
     let mut markers = ContourSplitMarkers::with_implicit_contour_endpoints(contour);
 
     for pair in intersections.pairs_for_contour(key) {
@@ -910,5 +998,5 @@ fn split_keyed_contour(
         }
     }
 
-    ContourFragmentSet::from_split_markers(contour, &markers, policy)
+    Ok(Classification::Decided(markers))
 }

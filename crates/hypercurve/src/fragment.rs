@@ -34,6 +34,13 @@ pub struct ContourFragment {
     pub segment: Segment2,
 }
 
+#[derive(Debug)]
+pub(crate) struct CompactContourFragment {
+    pub(crate) source_segment_index: usize,
+    pub(crate) source_range: ParamRange,
+    pub(crate) segment: Segment2,
+}
+
 /// Ordered fragments from a split contour.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ContourFragmentSet {
@@ -127,6 +134,56 @@ impl ContourFragmentSet {
     pub fn len(&self) -> usize {
         self.fragments.len()
     }
+}
+
+pub(crate) fn compact_contour_fragments_from_split_markers(
+    contour: &Contour2,
+    markers: &ContourSplitMarkers,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Vec<CompactContourFragment>>> {
+    if contour.len() != markers.segment_count() {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    }
+    if !markers.source_incidence_certified() {
+        match validate_split_markers_against_contour(contour, markers, policy)? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    let fragment_capacity = markers
+        .segments()
+        .iter()
+        .map(|markers| markers.len().saturating_sub(1).max(1))
+        .sum();
+    let mut fragments = Vec::with_capacity(fragment_capacity);
+    for (segment_index, source_segment) in contour.segments().iter().enumerate() {
+        let Some(segment_markers) = markers.markers_for_segment(segment_index) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+
+        if segment_markers.is_empty() {
+            fragments.push(CompactContourFragment {
+                source_segment_index: segment_index,
+                source_range: ParamRange::new(Real::zero(), Real::one()),
+                segment: source_segment.clone(),
+            });
+            continue;
+        }
+
+        match append_compact_segment_fragments(
+            &mut fragments,
+            source_segment,
+            segment_index,
+            segment_markers,
+            policy,
+        )? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    Ok(Classification::Decided(fragments))
 }
 
 fn validate_contour_fragments(
@@ -474,6 +531,56 @@ fn append_segment_fragments(
             source_segment_index: segment_index,
             source_segment_start_point: source_segment.start().clone(),
             source_segment_end_point: source_segment.end().clone(),
+            source_range: ParamRange::new(start.param.clone(), end.param.clone()),
+            segment,
+        });
+    }
+
+    Ok(Classification::Decided(()))
+}
+
+fn append_compact_segment_fragments(
+    fragments: &mut Vec<CompactContourFragment>,
+    source_segment: &Segment2,
+    segment_index: usize,
+    markers: &[SegmentSplitMarker],
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<()>> {
+    let ordered_line_markers_are_distinct = matches!(
+        source_segment,
+        Segment2::Line(line) if line.endpoints_decided_distinct()
+    );
+    let unsplit_source_segment = markers.len() == 2;
+    let line_support = match source_segment {
+        Segment2::Line(line) if !unsplit_source_segment => Some(line.fragment_support()),
+        _ => None,
+    };
+    for adjacent in markers.windows(2) {
+        let start = &adjacent[0];
+        let end = &adjacent[1];
+
+        if !ordered_line_markers_are_distinct {
+            let distance = start.point.distance_squared(&end.point);
+            match is_zero(&distance, policy) {
+                Some(true) => continue,
+                Some(false) => {}
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+
+        let segment = match build_fragment_segment(
+            source_segment,
+            start,
+            end,
+            unsplit_source_segment,
+            line_support.as_ref(),
+            policy,
+        )? {
+            Classification::Decided(segment) => segment,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        fragments.push(CompactContourFragment {
+            source_segment_index: segment_index,
             source_range: ParamRange::new(start.param.clone(), end.param.clone()),
             segment,
         });

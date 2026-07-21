@@ -7,6 +7,7 @@
 
 use crate::classify::compare_reals;
 use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
+use crate::region_fragments::split_single_material_regions_compact;
 use crate::{
     Aabb2, BooleanBoundaryChainAssemblyReport2, BooleanBoundaryContourTransferReport2,
     BooleanBoundaryFragmentEmissionReport2, BooleanBoundaryLoopExtractionReport2,
@@ -1881,6 +1882,137 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
         };
     }
 
+    // Successful splitting excludes unresolved segment relations. When the
+    // complete event set also has no positive-dimensional overlap, every
+    // opposite-boundary contact is a retained marker endpoint; strict interior
+    // samples therefore cannot lie on that boundary.
+    let split_interiors_are_off_opposite_boundary =
+        boundary_events.overlap_event_count() == 0 && boundary_events.uncertain_event_count() == 0;
+    if !retain_pipeline_report
+        && split_interiors_are_off_opposite_boundary
+        && RegionLineCrossingWindingIndex::event_set_may_support_propagation(boundary_events)
+        && let Some(crossing_windings) = RegionLineCrossingWindingIndex::from_intersections(
+            first,
+            second,
+            boundary_events,
+            policy,
+        )
+    {
+        let endpoint_contacts =
+            crate::region_events::RegionPointEndpointContactIndex::from_intersections(
+                boundary_events,
+                policy,
+            );
+        let compact_fragments =
+            match split_single_material_regions_compact(first, second, boundary_events, policy)? {
+                Classification::Decided(fragments) => fragments,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let compact_selection = compact_fragments.classify_for_boolean_with_line_crossing_winding(
+            first,
+            second,
+            op,
+            policy,
+            &endpoint_contacts,
+            &crossing_windings,
+            |source_side, sample| match (prepared, source_side) {
+                (Some((_, second_prepared)), RegionSide::First) => {
+                    second_prepared.single_material_winding_assuming_off_boundary(sample, policy)
+                }
+                (Some((first_prepared, _)), RegionSide::Second) => {
+                    first_prepared.single_material_winding_assuming_off_boundary(sample, policy)
+                }
+                (None, RegionSide::First) => {
+                    crate::contour::line_contour_winding_assuming_off_boundary(
+                        second.material_contours()[0],
+                        sample,
+                        policy,
+                    )
+                }
+                (None, RegionSide::Second) => {
+                    crate::contour::line_contour_winding_assuming_off_boundary(
+                        first.material_contours()[0],
+                        sample,
+                        policy,
+                    )
+                }
+            },
+        )?;
+        if let Some(compact_selection) = compact_selection {
+            let selection = match compact_selection {
+                Classification::Decided(selection) => selection,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if output_kind == BooleanBoundaryOutputKind::Contours {
+                match selection
+                    .endpoint_chain_indices_from_compact_split(&compact_fragments, policy)?
+                {
+                    Classification::Decided(Some(chain_indices)) => {
+                        let contours = match selection.emit_contours_from_owned_compact_split(
+                            compact_fragments,
+                            chain_indices,
+                            fill_rule,
+                        )? {
+                            Classification::Decided(contours) => contours,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        return Ok(Classification::Decided((
+                            BooleanBoundaryOutput::Contours(contours),
+                            RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
+                            None,
+                        )));
+                    }
+                    Classification::Decided(None) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            let emitted = selection.emit_boundary_fragments_from_owned_compact_split(
+                compact_fragments,
+                first,
+                second,
+            )?;
+            let output = match output_kind {
+                BooleanBoundaryOutputKind::Loops => {
+                    let chains = match emitted.into_assembled_chains(policy) {
+                        Classification::Decided(chains) => chains,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    match chains.into_closed_loops() {
+                        Classification::Decided(loops) => BooleanBoundaryOutput::Loops(loops),
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                BooleanBoundaryOutputKind::Contours => {
+                    match emitted.into_assembled_contours(fill_rule, policy)? {
+                        Classification::Decided(contours) => {
+                            BooleanBoundaryOutput::Contours(contours)
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+            };
+            return Ok(Classification::Decided((
+                output,
+                RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
+                None,
+            )));
+        }
+    }
+
     let fragment_result = retain_pipeline_report
         .then(|| boundary_events.split_regions_with_report(first, second, policy))
         .transpose()?;
@@ -1909,12 +2041,6 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
             lean_fragments.as_ref().unwrap()
         }
     };
-    // Successful splitting excludes unresolved segment relations. When the
-    // complete event set also has no positive-dimensional overlap, every
-    // opposite-boundary contact is a retained marker endpoint; the strict
-    // interior samples below therefore cannot lie on that boundary.
-    let split_interiors_are_off_opposite_boundary =
-        boundary_events.overlap_event_count() == 0 && boundary_events.uncertain_event_count() == 0;
     let endpoint_contacts = split_interiors_are_off_opposite_boundary.then(|| {
         crate::region_events::RegionPointEndpointContactIndex::from_intersections(
             boundary_events,

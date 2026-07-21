@@ -1303,6 +1303,33 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,567 coverage points and 16,090 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Non-report strict-crossing Booleans now split into a private compact fragment
+carrier that retains only source index, exact parameter range, and native
+segment geometry. The public and report-bearing `ContourFragment` continues to
+carry both source endpoints. Direct contour output moves compact segments into
+the result, while loop output clones original source endpoints only for selected
+fragments. Overlaps, endpoint contacts, curved inputs, incomplete winding
+proofs, and report requests retain the general provenance-rich pipeline.
+
+Against the exact-marker-preallocation checkpoint, twenty-iteration Callgrind
+runs improved all six ordinary and prepared large-star lanes. Region and
+contour outputs fell by 2.006--2.036%; provenance-retaining loop outputs fell by
+1.470--1.478%. Prepared-region DHAT allocation fell from 14,796,630 to
+13,558,086 bytes (8.37%), peak live heap from 953,506 to 907,666 bytes (4.81%),
+reads by 5.78%, and writes by 7.86%. Allocation blocks fell by 27. The prepared
+loop lane reduced allocation from 16,244,460 to 15,005,916 bytes (7.62%), peak
+live heap by 4.81%, reads by 4.53%, and writes by 6.72%.
+
+In an 11-sample, 500-iteration release comparison, ordinary star64 intersection
+measured 0.407 ms/iter, versus 0.028 ms for `cavalier_contours`, 0.035 ms for
+`i_overlay`, and 0.037 ms for `geo`. Exact point construction remains the
+dominant performance boundary despite the smaller Boolean carrier.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,787 coverage points and 16,413 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
