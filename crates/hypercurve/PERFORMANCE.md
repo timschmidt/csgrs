@@ -986,6 +986,29 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,520 coverage points and 16,089 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Contour fragment materialization now reserves the exact adjacent-marker upper
+bound before rebuilding geometry, and Boolean emission reserves the exact
+number of already-selected directed fragments. Both counts come from retained
+work that the corresponding passes must consume anyway; no predicate,
+classification, or output ordering changes. A second experiment that
+pre-counted events for every per-segment marker bin regressed star64 by 3.1%
+and was removed.
+
+Against the preceding checkpoint, a paired 15-sample, 1,000-iteration ordinary
+star64 run fell from 0.537 to 0.511 ms/iter (4.70%). In seven-sample runs, the
+other five ordinary and prepared result-shape lanes improved by 4.88--8.70%.
+The 10,000-iteration rectangle control remained neutral at 12.597 versus
+12.601 us/iter. Across 100 selected ordinary star64 operations plus fixture
+validation, Callgrind instructions fell from 558,453,381 to 553,363,425
+(0.91%). DHAT allocation traffic fell from 123,804,705 bytes to 88,575,169
+bytes (28.46%), heap reads by 10.55%, and writes by 20.68%; block count fell by
+0.38% and peak heap remained neutral within 0.12%.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,524 coverage points and 16,097 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

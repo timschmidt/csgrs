@@ -208,6 +208,13 @@ impl BooleanFragmentSelection {
             .count()
     }
 
+    fn emitted_fragment_count(&self) -> usize {
+        self.classifications
+            .iter()
+            .filter(|classification| classification.action.emits_fragment())
+            .count()
+    }
+
     pub(crate) fn resolve_boundary_actions(
         &self,
         resolutions: &[(RegionContourKey, usize, BooleanFragmentAction)],
@@ -272,6 +279,7 @@ impl BooleanFragmentSelection {
         self,
         fragments: RegionFragmentSet,
     ) -> CurveResult<BooleanBoundaryFragmentSet> {
+        let directed_fragment_capacity = self.emitted_fragment_count();
         let mut sources = fragments.into_contours().into_iter().flat_map(|contour| {
             let key = contour.key;
             contour
@@ -281,7 +289,7 @@ impl BooleanFragmentSelection {
                 .enumerate()
                 .map(move |(index, source)| (key, index, source))
         });
-        let mut directed_fragments = Vec::new();
+        let mut directed_fragments = Vec::with_capacity(directed_fragment_capacity);
         let mut unresolved_boundaries = Vec::new();
 
         for classification in self.classifications {
@@ -399,7 +407,8 @@ impl BooleanFragmentSelection {
     ) -> CurveResult<Option<BooleanBoundaryFragmentSet>> {
         validate_boolean_selection_matches_fragments(&self.classifications, fragments)?;
 
-        let mut directed_fragments = Vec::new();
+        let directed_fragment_capacity = self.emitted_fragment_count();
+        let mut directed_fragments = Vec::with_capacity(directed_fragment_capacity);
         let mut unresolved_boundaries = Vec::new();
 
         for classification in &self.classifications {

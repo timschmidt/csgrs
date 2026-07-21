@@ -65,7 +65,12 @@ impl ContourFragmentSet {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
 
-        let mut fragments = Vec::new();
+        let fragment_capacity = markers
+            .segments()
+            .iter()
+            .map(|markers| markers.len().saturating_sub(1))
+            .sum();
+        let mut fragments = Vec::with_capacity(fragment_capacity);
         for (segment_index, source_segment) in contour.segments().iter().enumerate() {
             let Some(segment_markers) = markers.markers_for_segment(segment_index) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
