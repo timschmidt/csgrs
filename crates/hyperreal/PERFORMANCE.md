@@ -1034,6 +1034,22 @@ inverse from 23.016 us to 21.288 us and the explicit-rational row from about
 heterogeneous binary64 exponents widened its intermediates and regressed the
 public row to 83.3 us.
 
+### Certified dyadic two-factor product sums
+
+Fixed determinant and cofactor rows use signed sums whose terms each contain
+two rational factors. Prepared matrix callers now classify the complete input
+once and route certified binary64-derived rationals directly to the dot
+reducer's exact shift-aligned accumulator. The generic product-sum entry point
+does not probe this specialization, so authored non-dyadic rationals retain the
+word/LCM schedule without repeated failed denominator scans.
+
+Downstream matched Hyperlattice medians moved exact-dyadic mat3 reciprocal from
+5.537 us to 4.146 us and checked inverse from 4.794 us to 4.226 us. Mat4
+reciprocal moved from 21.676 us to 18.257 us and checked inverse from 21.229 us
+to 18.756 us. Explicit-rational controls remained 2.860/3.248 us for mat3 and
+7.432/7.456 us for mat4. The mixed-denominator six-term scalar control improved
+from 476.94 ns to 459.67 ns after removing the exploratory generic probe.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

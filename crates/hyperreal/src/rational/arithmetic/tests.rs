@@ -2470,16 +2470,21 @@ mod tests {
                 Rational::fraction(11, 8).unwrap(),
             ],
         ];
-        let sum = Rational::signed_product_sum(
-            [true, false, true],
-            [
-                [&terms[0][0], &terms[0][1]],
-                [&terms[1][0], &terms[1][1]],
-                [&terms[2][0], &terms[2][1]],
-            ],
-        );
+        let product_terms = [
+            [&terms[0][0], &terms[0][1]],
+            [&terms[1][0], &terms[1][1]],
+            [&terms[2][0], &terms[2][1]],
+        ];
+        let sum = Rational::signed_product_sum([true, false, true], product_terms);
 
         assert!(sum.is_dyadic());
+        assert_eq!(
+            Rational::signed_product_sum_known_dyadic(
+                [true, false, true],
+                product_terms,
+            ),
+            sum
+        );
         assert_eq!(
             sum,
             &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])

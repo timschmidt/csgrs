@@ -1465,9 +1465,26 @@ impl Rational {
     pub(crate) fn matrix4_inverse_components(
         matrix: [[&Self; 4]; 4],
     ) -> Result<[[Self; 4]; 4], crate::Problem> {
+        Self::matrix4_inverse_components_impl::<false>(matrix)
+    }
+
+    /// Invert a fixed 4x4 matrix after the caller classified every component dyadic.
+    pub(crate) fn matrix4_inverse_components_known_dyadic(
+        matrix: [[&Self; 4]; 4],
+    ) -> Result<[[Self; 4]; 4], crate::Problem> {
+        Self::matrix4_inverse_components_impl::<true>(matrix)
+    }
+
+    fn matrix4_inverse_components_impl<const KNOWN_DYADIC: bool>(
+        matrix: [[&Self; 4]; 4],
+    ) -> Result<[[Self; 4]; 4], crate::Problem> {
         let m = matrix;
         let difference = |a: &Self, b: &Self, c: &Self, d: &Self| {
-            Self::signed_product_sum2([true, false], [[a, b], [c, d]])
+            if KNOWN_DYADIC {
+                Self::signed_product_sum_known_dyadic([true, false], [[a, b], [c, d]])
+            } else {
+                Self::signed_product_sum2([true, false], [[a, b], [c, d]])
+            }
         };
         let s = [
             difference(m[0][0], m[1][1], m[1][0], m[0][1]),
@@ -1485,20 +1502,27 @@ impl Rational {
             difference(m[2][1], m[3][3], m[3][1], m[2][3]),
             difference(m[2][2], m[3][3], m[3][2], m[2][3]),
         ];
-        let determinant = Self::signed_product_sum(
-            [true, false, true, true, false, true],
-            [
-                [&s[0], &c[5]],
-                [&s[1], &c[4]],
-                [&s[2], &c[3]],
-                [&s[3], &c[2]],
-                [&s[4], &c[1]],
-                [&s[5], &c[0]],
-            ],
-        );
+        let determinant_terms = [
+            [&s[0], &c[5]],
+            [&s[1], &c[4]],
+            [&s[2], &c[3]],
+            [&s[3], &c[2]],
+            [&s[4], &c[1]],
+            [&s[5], &c[0]],
+        ];
+        let determinant_signs = [true, false, true, true, false, true];
+        let determinant = if KNOWN_DYADIC {
+            Self::signed_product_sum_known_dyadic(determinant_signs, determinant_terms)
+        } else {
+            Self::signed_product_sum(determinant_signs, determinant_terms)
+        };
         let scale = determinant.inverse()?;
         let cofactor = |positive_terms: [bool; 3], terms: [[&Self; 2]; 3]| {
-            let value = Self::signed_product_sum(positive_terms, terms);
+            let value = if KNOWN_DYADIC {
+                Self::signed_product_sum_known_dyadic(positive_terms, terms)
+            } else {
+                Self::signed_product_sum(positive_terms, terms)
+            };
             value * &scale
         };
         crate::trace_dispatch!("rational", "matrix4-inverse", "aggregate-cofactor");
@@ -2022,6 +2046,27 @@ impl Rational {
         }
         crate::trace_dispatch!("rational", "product_sum", "fixed-two-by-two-fallback");
         Self::signed_product_sum(positive_terms, terms)
+    }
+
+    /// Evaluate a signed sum of two-factor dyadic products exactly.
+    ///
+    /// The caller must have already proved that every factor is dyadic. This
+    /// avoids making general exact-rational product sums repeatedly inspect
+    /// denominators just to discover that the dyadic schedule does not apply.
+    pub(crate) fn signed_product_sum_known_dyadic<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        let signs: [Sign; TERMS] = core::array::from_fn(|index| {
+            Self::product_term_sign(positive_terms[index], terms[index])
+        });
+        crate::trace_dispatch!("rational", "product_sum", "known-dyadic-two-factor");
+        Self::dot_products_dyadic(
+            core::array::from_fn(|index| terms[index][0]),
+            core::array::from_fn(|index| terms[index][1]),
+            signs,
+        )
+        .expect("known-dyadic product sum received a non-dyadic factor")
     }
 
     /// Evaluate a fixed-size signed sum of products exactly.

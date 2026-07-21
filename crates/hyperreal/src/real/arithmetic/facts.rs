@@ -235,6 +235,23 @@ impl Real {
         ))
     }
 
+    /// Return a two-factor product sum after the caller has proved every
+    /// factor is an exact dyadic rational.
+    ///
+    /// Prepared matrix kernels use this to enter the shift-aligned scalar
+    /// reducer directly, without repeating denominator classification for
+    /// every minor and cofactor.
+    pub fn exact_rational_signed_product_sum_known_dyadic<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; 2]; TERMS],
+    ) -> Real {
+        let rational_terms = terms.map(|term| term.map(|factor| &factor.rational));
+        Real::new(Rational::signed_product_sum_known_dyadic(
+            positive_terms,
+            rational_terms,
+        ))
+    }
+
     /// Multiply exact-rational complex component pairs after the caller has
     /// proved all four factors exact.
     ///
@@ -297,6 +314,17 @@ impl Real {
         let rationals = matrix.map(|row| row.map(|value| &value.rational));
         let result = Rational::matrix4_inverse_components(rationals)?;
         crate::trace_dispatch!("real", "matrix4-inverse", "exact-rational-aggregate");
+        Ok(result.map(|row| row.map(Real::new)))
+    }
+
+    /// Invert a dense 4x4 matrix after the caller has proved every component
+    /// is an exact dyadic rational.
+    pub fn exact_rational_matrix4_inverse_known_dyadic(
+        matrix: [[&Real; 4]; 4],
+    ) -> Result<[[Real; 4]; 4], crate::Problem> {
+        let rationals = matrix.map(|row| row.map(|value| &value.rational));
+        let result = Rational::matrix4_inverse_components_known_dyadic(rationals)?;
+        crate::trace_dispatch!("real", "matrix4-inverse", "exact-dyadic-aggregate");
         Ok(result.map(|row| row.map(Real::new)))
     }
 
