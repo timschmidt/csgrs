@@ -894,7 +894,7 @@ fn split_keyed_contour(
     intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<ContourFragmentSet>> {
-    let mut markers = ContourSplitMarkers::with_contour_endpoints(contour);
+    let mut markers = ContourSplitMarkers::with_implicit_contour_endpoints(contour);
 
     for pair in intersections.pairs_for_contour(key) {
         let operand = if pair.first == key {
@@ -903,7 +903,8 @@ fn split_keyed_contour(
             ContourOperand::Second
         };
 
-        match markers.merge_intersections(&pair.intersections, operand, policy) {
+        match markers.merge_intersections_for_contour(contour, &pair.intersections, operand, policy)
+        {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }

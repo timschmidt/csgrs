@@ -79,6 +79,13 @@ impl ContourSplitMarkers {
         }
     }
 
+    pub(crate) fn with_implicit_contour_endpoints(contour: &Contour2) -> Self {
+        Self {
+            segment_markers: (0..contour.len()).map(|_| Vec::new()).collect(),
+            source_incidence_certified: true,
+        }
+    }
+
     /// Builds split markers from one contour-pair event set.
     pub fn from_intersections(
         contour: &Contour2,
@@ -150,6 +157,43 @@ impl ContourSplitMarkers {
             }
         }
 
+        Classification::Decided(())
+    }
+
+    pub(crate) fn merge_intersections_for_contour(
+        &mut self,
+        contour: &Contour2,
+        intersections: &ContourIntersectionSet,
+        operand: ContourOperand,
+        policy: &CurvePolicy,
+    ) -> Classification<()> {
+        for event in intersections.events() {
+            if !matches!(event, ContourIntersection::Uncertain(_)) {
+                let Some(segment_index) = event.segment_index(operand) else {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                };
+                let Some(segment) = contour.segments().get(segment_index) else {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                };
+                let markers = &mut self.segment_markers[segment_index];
+                if markers.is_empty() {
+                    markers.reserve(4);
+                    markers.push(SegmentSplitMarker {
+                        segment_index,
+                        param: Real::zero(),
+                        point: segment.start().clone(),
+                    });
+                    markers.push(SegmentSplitMarker {
+                        segment_index,
+                        param: Real::one(),
+                        point: segment.end().clone(),
+                    });
+                }
+            }
+            if let Err(reason) = self.merge_event(event, operand, policy) {
+                return Classification::Uncertain(reason);
+            }
+        }
         Classification::Decided(())
     }
 

@@ -70,13 +70,24 @@ impl ContourFragmentSet {
         let fragment_capacity = markers
             .segments()
             .iter()
-            .map(|markers| markers.len().saturating_sub(1))
+            .map(|markers| markers.len().saturating_sub(1).max(1))
             .sum();
         let mut fragments = Vec::with_capacity(fragment_capacity);
         for (segment_index, source_segment) in contour.segments().iter().enumerate() {
             let Some(segment_markers) = markers.markers_for_segment(segment_index) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
+
+            if segment_markers.is_empty() {
+                fragments.push(ContourFragment {
+                    source_segment_index: segment_index,
+                    source_segment_start_point: source_segment.start().clone(),
+                    source_segment_end_point: source_segment.end().clone(),
+                    source_range: ParamRange::new(Real::zero(), Real::one()),
+                    segment: source_segment.clone(),
+                });
+                continue;
+            }
 
             match append_segment_fragments(
                 &mut fragments,
