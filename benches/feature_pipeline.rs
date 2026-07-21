@@ -16,7 +16,8 @@ use csgrs::parts::{
 use csgrs::{
     Real,
     csg::CSG,
-    mesh::{Mesh, Polygon},
+    mesh::Mesh,
+    polygon_mesh::{Polygon, PolygonMesh},
     sketch::Profile,
     vertex::Vertex,
 };
@@ -28,14 +29,14 @@ use support::{Config, Measurement};
 
 fn mesh_measurement(mesh: &Mesh<()>, work_units: usize) -> Measurement {
     let corners = mesh
-        .polygons
+        .triangles()
         .iter()
         .map(|polygon| polygon.vertices().len())
         .sum::<usize>();
     Measurement::new(
         work_units as u64,
-        mesh.polygons.len() as u64,
-        (mesh.polygons.len() as u64).rotate_left(17) ^ corners as u64,
+        mesh.triangles().len() as u64,
+        (mesh.triangles().len() as u64).rotate_left(17) ^ corners as u64,
     )
 }
 
@@ -79,11 +80,11 @@ fn prepared_boolean_results(
 fn boolean_measurement(results: &[Mesh<()>]) -> Measurement {
     let polygons = results
         .iter()
-        .map(|result| result.polygons.len())
+        .map(|result| result.triangles().len())
         .sum::<usize>();
     let corners = results
         .iter()
-        .flat_map(|result| &result.polygons)
+        .flat_map(Mesh::triangles)
         .map(|polygon| polygon.vertices().len())
         .sum::<usize>();
     Measurement::new(
@@ -215,7 +216,10 @@ fn run() {
                 (),
             ),
         ];
-        let polygons = meshes.iter().map(|mesh| mesh.polygons.len()).sum::<usize>();
+        let polygons = meshes
+            .iter()
+            .map(|mesh| mesh.triangles().len())
+            .sum::<usize>();
         Measurement::new(meshes.len() as u64, polygons as u64, polygons as u64)
     });
 
@@ -476,13 +480,14 @@ fn run() {
                 ],
                 (),
             );
-            let loft = Profile::loft(&[square_section(0, 2), square_section(8, 4)])
-                .expect("valid corresponding loft sections");
-            let polygons = extrusion.polygons.len()
-                + revolution.polygons.len()
-                + twist.polygons.len()
-                + sweep.polygons.len()
-                + loft.polygons.len();
+            let loft = PolygonMesh::loft(&[square_section(0, 2), square_section(8, 4)])
+                .expect("valid corresponding loft sections")
+                .triangulate();
+            let polygons = extrusion.triangles().len()
+                + revolution.triangles().len()
+                + twist.triangles().len()
+                + sweep.triangles().len()
+                + loft.triangles().len();
             Measurement::new(5, polygons as u64, polygons as u64)
         },
     );
@@ -511,10 +516,10 @@ fn run() {
             ]);
             let polygons = outputs
                 .iter()
-                .map(|output| output.polygons.len())
+                .map(|output| output.triangles().len())
                 .sum::<usize>();
             Measurement::new(
-                3 * positioned_mesh.polygons.len() as u64,
+                3 * positioned_mesh.triangles().len() as u64,
                 polygons as u64,
                 polygons as u64,
             )
@@ -531,7 +536,8 @@ fn run() {
         let linear = distribution_source.distribute_linear(4, Vector3::x(), Real::from(3_u8));
         let grid =
             distribution_source.distribute_grid(2, 3, Real::from(3_u8), Real::from(3_u8));
-        let polygons = arc.polygons.len() + linear.polygons.len() + grid.polygons.len();
+        let polygons =
+            arc.triangles().len() + linear.triangles().len() + grid.triangles().len();
         Measurement::new(22, polygons as u64, polygons as u64)
     });
     config.run(
@@ -547,14 +553,14 @@ fn run() {
                 2,
                 false,
             );
-            mesh_measurement(&smoothed, mesh.polygons.len())
+            mesh_measurement(&smoothed, mesh.triangles().len())
         },
     );
     config.run("feature", "mesh_topology", "connectivity_manifold", 4, || {
         let (vertices, adjacency) = black_box(&mesh).build_connectivity();
         let manifold = mesh.is_manifold();
         Measurement::new(
-            mesh.polygons.len() as u64,
+            mesh.triangles().len() as u64,
             adjacency.len() as u64,
             vertices.index_to_position.len() as u64 ^ u64::from(manifold),
         )
@@ -562,7 +568,7 @@ fn run() {
     config.run("feature", "mesh_queries", "graphics_buffers", 8, || {
         let graphics = black_box(&mesh).build_graphics_mesh();
         Measurement::new(
-            mesh.polygons.len() as u64,
+            mesh.triangles().len() as u64,
             graphics.indices.len() as u64,
             ((graphics.vertices.len() as u64) << 32) ^ graphics.indices.len() as u64,
         )
@@ -577,7 +583,7 @@ fn run() {
             .expect("closed sphere has mass properties");
         let graphics = mesh.build_graphics_mesh();
         Measurement::new(
-            mesh.polygons.len() as u64,
+            mesh.triangles().len() as u64,
             graphics.indices.len() as u64,
             hits.len() as u64 ^ mass.mass.to_f64_lossy().unwrap_or_default().to_bits(),
         )
@@ -588,7 +594,7 @@ fn run() {
             &Vector3::x(),
         );
         Measurement::new(
-            mesh.polygons.len() as u64,
+            mesh.triangles().len() as u64,
             hits.len() as u64,
             hits.iter().fold(0_u64, |checksum, (_, distance)| {
                 checksum.rotate_left(7) ^ distance.to_f64_lossy().unwrap_or_default().to_bits()
@@ -600,7 +606,7 @@ fn run() {
             .exact_mass_properties(Real::one())
             .expect("closed sphere has mass properties");
         Measurement::new(
-            mesh.polygons.len() as u64,
+            mesh.triangles().len() as u64,
             10,
             report.mass.to_f64_lossy().unwrap_or_default().to_bits()
                 ^ report.center_of_mass.0[0]
@@ -620,39 +626,39 @@ fn run() {
             let output = slice.wires().len()
                 + slice.curve_paths().len()
                 + flattened.material_contour_count();
-            Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
+            Measurement::new(mesh.triangles().len() as u64, output as u64, output as u64)
         },
     );
     config.run("feature", "mesh_profile_projection", "slice", 1, || {
         let slice = mesh.slice(Plane::from_normal(Vector3::z(), Real::zero()));
         let output =
             slice.wires().len() + slice.curve_paths().len() + slice.material_contour_count();
-        Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
+        Measurement::new(mesh.triangles().len() as u64, output as u64, output as u64)
     });
     config.run("feature", "mesh_profile_projection", "flatten", 1, || {
         let flattened = mesh.flatten();
         let output = flattened.material_contour_count();
-        Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
+        Measurement::new(mesh.triangles().len() as u64, output as u64, output as u64)
     });
     config.run("feature", "hypermesh", "buffers_hull_minkowski", 1, || {
         let buffers = mesh.to_hypermesh_buffers();
         let hull = mesh.convex_hull(());
         let sum = Mesh::cube(Real::from(2_u8), ())
             .minkowski_sum(&Mesh::cube(Real::from(3_u8), ()), ());
-        let output = buffers.indices.len() + hull.polygons.len() + sum.polygons.len();
-        Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
+        let output = buffers.indices.len() + hull.triangles().len() + sum.triangles().len();
+        Measurement::new(mesh.triangles().len() as u64, output as u64, output as u64)
     });
     config.run("feature", "hypermesh", "adapter_buffers", 1, || {
         let buffers = mesh.to_hypermesh_buffers();
         Measurement::new(
-            mesh.polygons.len() as u64,
+            mesh.triangles().len() as u64,
             buffers.indices.len() as u64,
             buffers.positions.len() as u64,
         )
     });
     config.run("feature", "hypermesh", "convex_hull", 1, || {
         let hull = mesh.convex_hull(());
-        mesh_measurement(&hull, mesh.polygons.len())
+        mesh_measurement(&hull, mesh.triangles().len())
     });
     config.run("feature", "hypermesh", "cube_minkowski", 1, || {
         let sum = Mesh::cube(Real::from(2_u8), ())
@@ -784,7 +790,7 @@ fn run() {
     config.run("feature", "implicit", "tpms_catalog", 1, || {
         let gyroid = tpms_bounds.gyroid(18, Real::from(6_u8), Real::zero(), ());
         let schwarz = tpms_bounds.schwarz_p(18, Real::from(6_u8), Real::zero(), ());
-        let polygons = gyroid.polygons.len() + schwarz.polygons.len();
+        let polygons = gyroid.triangles().len() + schwarz.triangles().len();
         Measurement::new(2 * 18 * 18 * 18, polygons as u64, polygons as u64)
     });
 
@@ -815,7 +821,7 @@ fn run() {
     config.run("feature", "adapter", "bevy_mesh", 4, || {
         let output = black_box(&mesh).to_bevy_mesh();
         black_box(output);
-        Measurement::new(mesh.polygons.len() as u64, 1, 1)
+        Measurement::new(mesh.triangles().len() as u64, 1, 1)
     });
 
     let parts = (0..32)
@@ -854,7 +860,7 @@ fn run() {
         let amf = io_mesh.to_amf("benchmark", "millimeter").expect("AMF export");
         let gltf = io_mesh.to_gltf("benchmark").expect("glTF export");
         let size = stl.len() + dxf.len() + obj.len() + ply.len() + amf.len() + gltf.len();
-        Measurement::new(io_mesh.polygons.len() as u64, size as u64, size as u64)
+        Measurement::new(io_mesh.triangles().len() as u64, size as u64, size as u64)
     });
     config.run("feature", "mesh_io", "public_writer_exporters", 1, || {
         let mut obj = Vec::new();
@@ -874,13 +880,13 @@ fn run() {
         let mut gltf = Vec::new();
         csgrs::io::gltf::write_gltf(&io_mesh, &mut gltf, "benchmark").expect("glTF writer");
         let size = obj.len() + ply.len() + amf.len() + colored_amf.len() + gltf.len();
-        Measurement::new(io_mesh.polygons.len() as u64, size as u64, size as u64)
+        Measurement::new(io_mesh.triangles().len() as u64, size as u64, size as u64)
     });
     config.run("feature", "mesh_io", "writer_obj", 1, || {
         let mut output = Vec::new();
         csgrs::io::obj::write_obj(&io_mesh, &mut output, "benchmark").expect("OBJ writer");
         Measurement::new(
-            io_mesh.polygons.len() as u64,
+            io_mesh.triangles().len() as u64,
             output.len() as u64,
             output.len() as u64,
         )
@@ -889,7 +895,7 @@ fn run() {
         let mut output = Vec::new();
         csgrs::io::ply::write_ply(&io_mesh, &mut output, "benchmark").expect("PLY writer");
         Measurement::new(
-            io_mesh.polygons.len() as u64,
+            io_mesh.triangles().len() as u64,
             output.len() as u64,
             output.len() as u64,
         )
@@ -899,7 +905,7 @@ fn run() {
         csgrs::io::amf::write_amf(&io_mesh, &mut output, "benchmark", "millimeter")
             .expect("AMF writer");
         Measurement::new(
-            io_mesh.polygons.len() as u64,
+            io_mesh.triangles().len() as u64,
             output.len() as u64,
             output.len() as u64,
         )
@@ -908,7 +914,7 @@ fn run() {
         let mut output = Vec::new();
         csgrs::io::gltf::write_gltf(&io_mesh, &mut output, "benchmark").expect("glTF writer");
         Measurement::new(
-            io_mesh.polygons.len() as u64,
+            io_mesh.triangles().len() as u64,
             output.len() as u64,
             output.len() as u64,
         )
@@ -918,7 +924,7 @@ fn run() {
     config.run("feature", "mesh_io", "roundtrip_importers", 1, || {
         let from_stl = Mesh::from_stl(&stl, ()).expect("STL import");
         let from_obj = Mesh::from_obj(Cursor::new(obj.as_bytes()), ()).expect("OBJ import");
-        let polygons = from_stl.polygons.len() + from_obj.polygons.len();
+        let polygons = from_stl.triangles().len() + from_obj.triangles().len();
         Measurement::new(
             (stl.len() + obj.len()) as u64,
             polygons as u64,

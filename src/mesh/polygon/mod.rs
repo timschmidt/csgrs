@@ -1676,8 +1676,8 @@ mod triangulation;
 #[cfg(feature = "obj-io")]
 pub(crate) use triangulation::triangulate_indexed_positions_into;
 
-/// A polygon, defined by a list of vertices.
-/// - `M` is the generic metadata type stored directly on the polygon. Use
+/// A triangle face used by [`super::Mesh`].
+/// - `M` is the generic metadata type stored directly on the triangle. Use
 ///   `M = ()` for no metadata, or `M = Option<YourMetadata>` for optional metadata.
 #[derive(Debug, Clone)]
 pub struct Polygon<M: Clone> {
@@ -1770,8 +1770,14 @@ impl<M: Clone + PartialEq> PartialEq for Polygon<M> {
 }
 
 impl<M: Clone + Send + Sync> Polygon<M> {
-    /// Create a polygon from vertices
+    /// Create a triangle from exactly three vertices.
     pub fn new(vertices: Vec<Vertex>, metadata: M) -> Self {
+        assert_eq!(vertices.len(), 3, "triangle requires exactly three vertices");
+        Self::from_planar_vertices(vertices, metadata)
+    }
+
+    /// Create an internal planar face before a `Mesh` conversion boundary.
+    pub(crate) fn from_planar_vertices(vertices: Vec<Vertex>, metadata: M) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
 
         let vertices = PolygonVertices::new(vertices);

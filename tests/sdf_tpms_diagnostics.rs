@@ -20,7 +20,7 @@ fn sdf_boundary_converts_only_at_sampling_boundary() {
         (),
     );
 
-    assert!(!mesh.polygons.is_empty());
+    assert!(!mesh.triangles().is_empty());
 }
 
 #[test]
@@ -28,5 +28,5 @@ fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
     let volume = Mesh::<()>::cube(r(2.0), ());
     let gyroid = volume.gyroid_solid(16, r(2.0), r(0.0), r(0.15), ());
 
-    assert!(!gyroid.polygons.is_empty());
+    assert!(!gyroid.triangles().is_empty());
 }

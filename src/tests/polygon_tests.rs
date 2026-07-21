@@ -9,7 +9,7 @@ fn test_polygon_new() {
         Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly: Polygon<()> = Polygon::new(vertices.clone(), ());
+    let poly: Polygon<()> = Polygon::from_planar_vertices(vertices.clone(), ());
     assert_eq!(poly.vertices.len(), 3);
     assert_eq!(poly.metadata, ());
     // Plane normal should be +Z for the above points
@@ -21,7 +21,7 @@ fn test_polygon_new() {
 
 #[test]
 fn test_polygon_flip() {
-    let mut poly: Polygon<()> = Polygon::new(
+    let mut poly: Polygon<()> = Polygon::from_planar_vertices(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
@@ -54,7 +54,7 @@ fn test_polygon_flip() {
 #[test]
 fn test_polygon_triangulate() {
     // A quad:
-    let poly: Polygon<()> = Polygon::new(
+    let poly: Polygon<()> = Polygon::from_planar_vertices(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
@@ -83,7 +83,7 @@ fn test_polygon_triangulate() {
 #[test]
 fn test_polygon_subdivide_triangles() {
     // A single triangle (level=1 should produce 4 sub-triangles)
-    let poly: Polygon<()> = Polygon::new(
+    let poly: Polygon<()> = Polygon::from_planar_vertices(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
@@ -102,7 +102,7 @@ fn test_polygon_subdivide_triangles() {
 
 #[test]
 fn test_polygon_recalc_plane_and_normals() {
-    let mut poly: Polygon<()> = Polygon::new(
+    let mut poly: Polygon<()> = Polygon::from_planar_vertices(
         vec![
             Vertex::new(Point3::origin(), Vector3::zeros()),
             Vertex::new(p3(1.0, 0.0, 0.0), Vector3::zeros()),
@@ -121,7 +121,7 @@ fn test_polygon_recalc_plane_and_normals() {
 
 #[test]
 fn polygon_newell_normal_and_basis_use_hyperreal_checked_normalization() {
-    let mut poly: Polygon<()> = Polygon::new(
+    let mut poly: Polygon<()> = Polygon::from_planar_vertices(
         vec![
             Vertex::new(p3(0.0, 0.0, 2.0), Vector3::zeros()),
             Vertex::new(p3(3.0, 0.0, 2.0), Vector3::zeros()),
@@ -152,7 +152,7 @@ fn triangulation_preserves_exact_coordinates_beyond_f64_resolution() {
     let one = Real::one();
     let zero = Real::zero();
     let point = |x: Real, y: Real| Point3::new(x, y, zero.clone());
-    let polygon = Polygon::new(
+    let polygon = Polygon::from_planar_vertices(
         vec![
             Vertex::new(point(base.clone(), zero.clone()), Vector3::z()),
             Vertex::new(point(base.clone() + one.clone(), zero.clone()), Vector3::z()),
@@ -167,7 +167,7 @@ fn triangulation_preserves_exact_coordinates_beyond_f64_resolution() {
 
 #[test]
 fn mutable_vertex_access_refreshes_plane_and_bounds() {
-    let mut polygon = Polygon::new(
+    let mut polygon = Polygon::from_planar_vertices(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),

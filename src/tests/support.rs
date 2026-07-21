@@ -4,7 +4,7 @@ pub use crate::csg::CSG;
 pub use crate::errors::ValidationError;
 pub(crate) use crate::hyper_math::hreal_from_f64;
 pub use crate::mesh::Mesh;
-pub use crate::mesh::Polygon;
+pub use crate::mesh::Triangle as Polygon;
 pub use crate::mesh::plane::Plane;
 pub use crate::sketch::Profile;
 pub use crate::vertex::Vertex;
@@ -107,17 +107,20 @@ pub fn hr(value: impl crate::hyper_math::IntoReal) -> Real {
     r(value)
 }
 
-pub fn make_polygon_3d<T>(points: &[[T; 3]]) -> Polygon<()>
+pub fn make_planar_polygon_3d<T>(points: &[[T; 3]]) -> crate::polygon_mesh::Polygon<()>
 where
     T: Clone + crate::hyper_math::IntoReal,
 {
-    let mut verts = Vec::new();
-    for p in points {
-        let pos = p3(p[0].clone(), p[1].clone(), p[2].clone());
-        let normal = Vector3::z();
-        verts.push(Vertex::new(pos, normal));
-    }
-    Polygon::new(verts, ())
+    let vertices = points
+        .iter()
+        .map(|point| {
+            Vertex::new(
+                p3(point[0].clone(), point[1].clone(), point[2].clone()),
+                Vector3::z(),
+            )
+        })
+        .collect();
+    crate::polygon_mesh::Polygon::new(vertices, ())
 }
 
 pub fn polygon_from_xy_points<T>(xy_points: &[[T; 2]]) -> Polygon<()>
@@ -128,5 +131,5 @@ where
         .iter()
         .map(|p| Vertex::new(p3(p[0].clone(), p[1].clone(), r(0.0)), Vector3::z()))
         .collect();
-    Polygon::new(vertices, ())
+    Polygon::from_planar_vertices(vertices, ())
 }

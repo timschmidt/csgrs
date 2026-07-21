@@ -42,8 +42,9 @@ pub mod manifold;
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
 pub mod plane;
-pub mod polygon;
-pub use polygon::Polygon;
+pub(crate) mod polygon;
+pub use polygon::Polygon as Triangle;
+pub(crate) use polygon::Polygon;
 use polygon::{
     CertifiedF64Bounds, LazySubdivisionVertexPool, PreparedExactXAxisTriangle,
     PreparedTriangleQuery, finite_normalized_exact_rational, fresh_plane_id,
@@ -582,7 +583,7 @@ impl<M: Clone> MeshPolygonStorage<M> {
 }
 
 #[derive(Clone, Debug)]
-pub struct MeshPolygons<M: Clone>(Arc<MeshPolygonStorage<M>>);
+pub(crate) struct MeshPolygons<M: Clone>(Arc<MeshPolygonStorage<M>>);
 
 impl<M: Clone> MeshPolygons<M> {
     pub fn new(polygons: Vec<Polygon<M>>) -> Self {
@@ -865,8 +866,8 @@ fn polygon_topology<M: Clone>(polygons: &[Polygon<M>]) -> (usize, usize, bool) {
 
 #[derive(Clone, Debug)]
 pub struct Mesh<M: Clone + Send + Sync + Debug> {
-    /// 3D polygons for volumetric shapes
-    pub polygons: MeshPolygons<M>,
+    /// Triangle-only volumetric surface storage.
+    pub(crate) polygons: MeshPolygons<M>,
 
     /// Lazily calculated AABB that spans `polygons`.
     pub bounding_box: OnceLock<Aabb>,
@@ -2093,7 +2094,8 @@ fn triangulate_mesh_faces<M: Clone + Send + Sync>(
                 .triangulate()
                 .into_iter()
                 .map(|triangle| {
-                    Polygon::new(triangle.to_vec(), metadata.clone()).with_plane_id(plane_id)
+                    Polygon::from_planar_vertices(triangle.to_vec(), metadata.clone())
+                        .with_plane_id(plane_id)
                 })
                 .collect()
         })
@@ -2114,12 +2116,39 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Faces with more than three vertices are triangulated at this explicit
     /// compatibility boundary. New code that needs to retain face boundaries
     /// should construct `PolygonMesh` and call `PolygonMesh::triangulate`.
-    pub fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
+    pub(crate) fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
         let polygons = triangulate_mesh_faces(polygons);
         Mesh {
             polygons: MeshPolygons::new(polygons),
             bounding_box: OnceLock::new(),
         }
+    }
+
+    /// Build a mesh from already-triangulated faces.
+    ///
+    /// Use [`crate::PolygonMesh::triangulate`] when starting from planar faces
+    /// with more than three vertices.
+    pub fn from_triangles(triangles: Vec<Triangle<M>>) -> Result<Self, ValidationError> {
+        if triangles
+            .iter()
+            .any(|triangle| triangle.vertices().len() != 3)
+        {
+            return Err(ValidationError::InvalidArguments);
+        }
+        Ok(Mesh {
+            polygons: MeshPolygons::new(triangles),
+            bounding_box: OnceLock::new(),
+        })
+    }
+
+    /// Borrow the triangle faces backing this mesh.
+    pub fn triangles(&self) -> &[Triangle<M>] {
+        &self.polygons
+    }
+
+    /// Consume this mesh and return its triangle faces.
+    pub fn into_triangles(self) -> Vec<Triangle<M>> {
+        self.polygons.into_vec()
     }
 
     /// Build a mesh from exact indexed triangle rows.
@@ -4424,7 +4453,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .iter()
             .flat_map(|poly| {
                 poly.triangulate().into_iter().map(move |triangle| {
-                    Polygon::new(triangle.to_vec(), poly.metadata.clone())
+                    Polygon::from_planar_vertices(triangle.to_vec(), poly.metadata.clone())
                         .with_plane_id(poly.plane_id)
                 })
             })
@@ -4595,7 +4624,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 let sub_tris = poly.subdivide_triangles(levels);
                 metadata_sources.extend(std::iter::repeat_n(source_index, sub_tris.len()));
                 sub_tris.into_iter().map(move |tri| {
-                    Polygon::new(
+                    Polygon::from_planar_vertices(
                         vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
                         poly.metadata.clone(),
                     )
@@ -4647,7 +4676,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .flat_map(|poly| {
                 let polytri = poly.subdivide_triangles(levels);
                 polytri.into_iter().map(move |tri| {
-                    Polygon::new(tri.to_vec(), poly.metadata.clone())
+                    Polygon::from_planar_vertices(tri.to_vec(), poly.metadata.clone())
                         .with_plane_id(poly.plane_id)
                 })
             })
@@ -4806,7 +4835,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                             ))
                         })
                         .collect::<Option<Vec<_>>>()?;
-                    Some(Polygon::new(vertices, polygon.metadata.clone()))
+                    Some(Polygon::from_planar_vertices(
+                        vertices,
+                        polygon.metadata.clone(),
+                    ))
                 })
                 .collect::<Option<Vec<_>>>()?;
             Self::from_polygons(polygons)
@@ -4818,8 +4850,8 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
     /// **Mathematical Foundation: Dihedral Angle Calculation**
     ///
-    /// Computes the dihedral angle between two polygons sharing an edge.
-    /// The angle is computed as the angle between the normal vectors of the two polygons.
+    /// Computes the dihedral angle between two triangles sharing an edge.
+    /// The angle is computed as the angle between their normal vectors.
     /// Normalization, dot product, clamping, and arccos are delegated to
     /// `hyperlattice`/`hyperreal`, keeping the mesh query on the same exact-
     /// geometric-computation boundary as other normal-angle predicates. See
@@ -4827,7 +4859,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     ///
     /// Returns the angle in radians.
-    pub fn dihedral_angle(p1: &Polygon<M>, p2: &Polygon<M>) -> Real {
+    pub fn dihedral_angle(p1: &Triangle<M>, p2: &Triangle<M>) -> Real {
         if let Some(angle) = LAST_DIHEDRAL_ANGLE.with_borrow(|cached| {
             cached
                 .as_ref()
@@ -7099,7 +7131,8 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             metadata: &M,
         ) -> Option<Polygon<M>> {
             let vertices = ring_to_vertices(ring);
-            (vertices.len() >= 3).then(|| Polygon::new(vertices, metadata.clone()))
+            (vertices.len() >= 3)
+                .then(|| Polygon::from_planar_vertices(vertices, metadata.clone()))
         }
 
         let projection_options = FiniteProjectionOptions::try_new(1e-3)
@@ -7383,7 +7416,7 @@ mod tests {
 
     #[test]
     fn mesh_constructor_converts_planar_faces_to_triangle_storage() {
-        let face = Polygon::new(
+        let face = Polygon::from_planar_vertices(
             vec![
                 Vertex::new(p3(0.0, 0.0, 0.0), Vector3::z()),
                 Vertex::new(p3(2.0, 0.0, 0.0), Vector3::z()),
@@ -7399,6 +7432,24 @@ mod tests {
         assert!(mesh.polygons.iter().all(|triangle| {
             triangle.vertices().len() == 3 && triangle.metadata() == &"face"
         }));
+    }
+
+    #[test]
+    fn public_triangle_constructor_rejects_nontriangular_faces() {
+        let face = Polygon::from_planar_vertices(
+            vec![
+                Vertex::new(p3(0.0, 0.0, 0.0), Vector3::z()),
+                Vertex::new(p3(2.0, 0.0, 0.0), Vector3::z()),
+                Vertex::new(p3(2.0, 2.0, 0.0), Vector3::z()),
+                Vertex::new(p3(0.0, 2.0, 0.0), Vector3::z()),
+            ],
+            (),
+        );
+
+        assert!(matches!(
+            Mesh::from_triangles(vec![face]),
+            Err(ValidationError::InvalidArguments)
+        ));
     }
 
     #[test]
@@ -7568,7 +7619,7 @@ mod tests {
     fn mesh_triangulate_does_not_repair_cross_polygon_t_junctions() {
         let normal = Vector3::z();
         let polygons = vec![
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
                     Vertex::new(p3(2.0, 0.0, 0.0), normal.clone()),
@@ -7577,7 +7628,7 @@ mod tests {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex::new(p3(1.0, 0.0, 0.0), normal.clone()),
                     Vertex::new(p3(1.5, -0.5, 0.0), normal.clone()),

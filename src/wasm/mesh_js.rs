@@ -176,7 +176,7 @@ impl MeshJs {
             {
                 continue;
             }
-            polygons.push(Polygon::new(vec![a, b, c], meta.clone()));
+            polygons.push(Polygon::from_planar_vertices(vec![a, b, c], meta.clone()));
         }
 
         Ok(MeshJs {

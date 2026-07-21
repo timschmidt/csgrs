@@ -180,7 +180,11 @@ fn main() {
     let curved_region = Profile::bezier(&closed_control, 16);
     config.run("profile_curves", "extrusion", "cubic_region", 4, || {
         let mesh = black_box(curved_region.extrude(Real::from(2), ()));
-        Measurement::new(1, mesh.polygons.len() as u64, mesh.polygons.len() as u64)
+        Measurement::new(
+            1,
+            mesh.triangles().len() as u64,
+            mesh.triangles().len() as u64,
+        )
     });
     let disjoint =
         Profile::square(Real::from(2)).translate(Real::from(10), Real::zero(), Real::zero());

@@ -301,7 +301,7 @@ where
                 format: "STL",
                 detail: format!("degenerate imported triangle: {error}"),
             })?;
-        polygons.push(Polygon::new(
+        polygons.push(Polygon::from_planar_vertices(
             points
                 .map(|position| Vertex::new(position, normal.clone()))
                 .to_vec(),

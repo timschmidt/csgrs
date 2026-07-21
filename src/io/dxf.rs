@@ -86,7 +86,7 @@ fn polygon<M: Clone + Send + Sync>(
             format: "DXF",
             detail: format!("entity has a degenerate surface normal: {error}"),
         })?;
-    Ok(Polygon::new(
+    Ok(Polygon::from_planar_vertices(
         points
             .into_iter()
             .map(|point| Vertex::new(point, normal.clone()))

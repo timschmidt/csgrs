@@ -156,7 +156,8 @@ fn render_sketch(name: &str, sketch: &Profile) {
 
 fn render_mesh(name: &str, mesh: &Mesh<()>) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
-    let triangles = mesh.triangulate().polygons;
+    let triangulated = mesh.triangulate();
+    let triangles = triangulated.triangles();
     if triangles.is_empty() {
         save_image(name, &image);
         return;

@@ -2,7 +2,8 @@
 
 use csgrs::{
     csg::CSG,
-    mesh::{Mesh, Polygon},
+    mesh::Mesh,
+    polygon_mesh::{Polygon, PolygonMesh},
     sketch::Profile,
     vertex::Vertex,
 };
@@ -51,7 +52,10 @@ fn main() {
         ],
         (),
     );
-    write_mesh(&Profile::loft(&[bottom, top]).unwrap(), "loft");
+    write_mesh(
+        &PolygonMesh::loft(&[bottom, top]).unwrap().triangulate(),
+        "loft",
+    );
 }
 
 fn r(value: f64) -> Real {

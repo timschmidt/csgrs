@@ -20,7 +20,7 @@ fn oriented_volume_six(mesh: &Mesh<()>) -> Real {
 
 #[test]
 fn test_csg_from_polygons_and_to_polygons() {
-    let poly: Polygon<()> = Polygon::new(
+    let poly: Polygon<()> = Polygon::from_planar_vertices(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
@@ -35,7 +35,7 @@ fn test_csg_from_polygons_and_to_polygons() {
 
 #[test]
 fn rotation_at_exact_degree_landmarks_matches_finite_trigonometry() {
-    let source = Polygon::new(
+    let source = Polygon::from_planar_vertices(
         vec![
             Vertex::new(p3(10.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(p3(11.0, 0.0, 0.0), Vector3::z()),

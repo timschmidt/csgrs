@@ -1011,7 +1011,7 @@ mod tests {
         let one = Real::one();
         let epsilon = (one.clone() / Real::from(1_000_000_000_000_000_u64)).unwrap();
         let normal = Vector3::z();
-        let first = Polygon::new(
+        let first = Polygon::from_planar_vertices(
             vec![
                 Vertex::new(
                     Point3::new(zero.clone(), zero.clone(), zero.clone()),
@@ -1028,7 +1028,7 @@ mod tests {
             ],
             (),
         );
-        let second = Polygon::new(
+        let second = Polygon::from_planar_vertices(
             vec![
                 Vertex::new(
                     Point3::new(epsilon.clone(), zero.clone(), zero.clone()),
