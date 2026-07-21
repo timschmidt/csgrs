@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Contour2, CurveResult, CurveString2, FillRule, LineSeg2, Point2,
-    Real, Region2, Segment2, import_svg_contour_path_data_with_report,
+    BulgeVertex2, CircularArc2, Contour2, CurveResult, CurveString2, FillRule, LineArcRegion2,
+    LineSeg2, Point2, Real, Segment2, import_svg_contour_path_data_with_report,
     import_svg_path_data_with_report, import_svg_region_path_data_with_report,
 };
 
@@ -55,7 +55,7 @@ fn bench_curve_export(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_region_export(iterations: u32) -> CurveResult<()> {
-    let region = Region2::new(
+    let region = LineArcRegion2::new(
         vec![rectangle(0, 0, 40, 40)],
         vec![rectangle(10, 10, 20, 20)],
     );
@@ -151,8 +151,7 @@ fn bench_region_import(iterations: u32) -> CurveResult<()> {
         let region = imported
             .region()
             .expect("nested SVG region import should materialize");
-        total_contours +=
-            black_box(region.material_contours().len() + region.hole_contours().len());
+        total_contours += black_box(region.len());
     }
 
     let elapsed = started.elapsed();

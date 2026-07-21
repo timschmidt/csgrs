@@ -1,7 +1,7 @@
 //! Contour nesting and material/hole role assignment.
 //!
 //! This module turns already-closed boundary contours into the signed contour
-//! bins used by [`crate::Region2`]. It assumes intersections and overlaps have
+//! bins used by [`crate::LineArcRegion2`]. It assumes intersections and overlaps have
 //! already been resolved by earlier topology stages.
 
 use std::{cmp::Ordering, rc::Rc};
@@ -12,9 +12,9 @@ use crate::bbox::{Aabb2, aabbs_decided_disjoint};
 use crate::classify::compare_reals;
 use crate::{
     ArcArcIntersection, CircularArc2, Classification, Contour2, ContourPointLocation, CurveError,
-    CurvePolicy, CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineLineIntersection,
-    LineSeg2, ParamRange, Point2, Region2, RetainedTopologyStatus, Segment2, SegmentIntersection,
-    SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurvePolicy, CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineArcRegion2,
+    LineLineIntersection, LineSeg2, ParamRange, Point2, RetainedTopologyStatus, Segment2,
+    SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Internal retained arrangement request for exact curve topology.
@@ -950,16 +950,16 @@ pub struct ExactCurveArrangementSummary2 {
     output_segment_count: Option<usize>,
 }
 
-/// Retained result of arranging unordered exact boundaries into a [`Region2`].
+/// Retained result of arranging unordered exact boundaries into a [`LineArcRegion2`].
 ///
 /// This is the domain-level arrangement carrier returned by the
-/// [`Region2::arrange_unordered_segments`] family. It retains the certified
+/// [`LineArcRegion2::arrange_unordered_segments`] family. It retains the certified
 /// facts, blocker evidence, derived report, and optional materialized region so
 /// repeated inspection does not rerun topology.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionArrangement2 {
     report: RegionArrangementReport2,
-    region: Option<Region2>,
+    region: Option<LineArcRegion2>,
 }
 
 /// Retained facts and diagnostics for an unordered region arrangement.
@@ -1038,7 +1038,7 @@ pub enum RegionBoundaryContourBuildPredicatePath2 {
 /// Result of report-bearing boundary contour region construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBoundaryContourBuildResult2 {
-    region: Option<Region2>,
+    region: Option<LineArcRegion2>,
     report: RegionBoundaryContourBuildReport2,
 }
 
@@ -1189,7 +1189,7 @@ pub enum RegionLineSegmentRegionBuildStage2 {
 /// Internal staging result for unordered exact segment region construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildResult2 {
-    region: Option<Region2>,
+    region: Option<LineArcRegion2>,
     report: RegionLineSegmentRegionBuildReport2,
 }
 
@@ -1313,7 +1313,7 @@ fn evaluate_unordered_line_segments_region_result(
         contours.push(contour);
     }
 
-    let built = Region2::from_boundary_contours_with_report(contours, policy)?;
+    let built = LineArcRegion2::from_boundary_contours_with_report(contours, policy)?;
     let status = built.status();
     let blocker = built.blocker();
     let output_ring_count = built.output_contour_count();
@@ -1484,7 +1484,7 @@ fn evaluate_unordered_segments_region_result(
         contours.push(Contour2::try_new_with_fill_rule(ring, fill_rule)?);
     }
 
-    let built = Region2::from_boundary_contours_with_report(contours, policy)?;
+    let built = LineArcRegion2::from_boundary_contours_with_report(contours, policy)?;
     let status = built.status();
     let blocker = built.blocker();
     let output_ring_count = built.output_contour_count();
@@ -1579,7 +1579,7 @@ fn evaluate_unordered_segments_region_result(
     })
 }
 
-impl Region2 {
+impl LineArcRegion2 {
     /// Arranges unordered exact line/arc segments into a retained region result.
     pub fn arrange_unordered_segments(
         source_segments: Vec<Segment2>,
@@ -1658,7 +1658,7 @@ impl Region2 {
     ///
     /// This clones the exact contour carriers at the API boundary, then uses
     /// the same exact nesting and role-assignment pipeline as
-    /// [`Region2::from_boundary_contours`].
+    /// [`LineArcRegion2::from_boundary_contours`].
     pub fn from_boundary_contours_borrowed(
         contours: &[Contour2],
         policy: &CurvePolicy,
@@ -1669,7 +1669,7 @@ impl Region2 {
     /// Builds a region by nesting closed boundary contours and retaining role evidence.
     ///
     /// This is the report-bearing counterpart to
-    /// [`Region2::from_boundary_contours`]. Contours at even containment depth
+    /// [`LineArcRegion2::from_boundary_contours`]. Contours at even containment depth
     /// become material and odd-depth contours become holes. If intersections,
     /// touches, or undecided containment predicates prevent role assignment, no
     /// region is materialized and the report carries the blocker.
@@ -1740,7 +1740,7 @@ impl Region2 {
     /// Builds a region from borrowed closed boundary contours and retains role evidence.
     ///
     /// This clones the exact contour carriers at the API boundary, then
-    /// delegates to [`Region2::from_boundary_contours_with_report`] so the
+    /// delegates to [`LineArcRegion2::from_boundary_contours_with_report`] so the
     /// retained nesting, validation, and material/hole role reports are
     /// identical to the owned constructor.
     pub fn from_boundary_contours_borrowed_with_report(
@@ -1755,7 +1755,7 @@ fn assign_boundary_contour_roles(
     contours: Vec<Contour2>,
     nesting: &BoundaryContourNestingDepths,
     retain_reports: bool,
-) -> (Region2, Vec<RegionBoundaryContourRoleReport2>) {
+) -> (LineArcRegion2, Vec<RegionBoundaryContourRoleReport2>) {
     let mut material_contours = Vec::new();
     let mut hole_contours = Vec::new();
     let mut role_reports = Vec::with_capacity(usize::from(retain_reports) * contours.len());
@@ -1788,7 +1788,10 @@ fn assign_boundary_contour_roles(
             });
         }
     }
-    (Region2::new(material_contours, hole_contours), role_reports)
+    (
+        LineArcRegion2::new(material_contours, hole_contours),
+        role_reports,
+    )
 }
 
 impl ExactCurveArrangementRequest2 {
@@ -9066,17 +9069,17 @@ impl RegionArrangement2 {
     }
 
     /// Returns the materialized region, if the arrangement succeeded.
-    pub fn region(&self) -> Option<&Region2> {
+    pub fn region(&self) -> Option<&LineArcRegion2> {
         self.region.as_ref()
     }
 
     /// Returns the materialized region as the canonical convenience classification.
     ///
     /// This is the retained-result replacement for deprecated
-    /// `Region2::from_unordered_*` convenience constructors: callers keep the
+    /// `LineArcRegion2::from_unordered_*` convenience constructors: callers keep the
     /// arrangement evidence and derived report available while still branching
     /// on a decided region or explicit blocker.
-    pub fn region_classification(&self) -> Classification<&Region2> {
+    pub fn region_classification(&self) -> Classification<&LineArcRegion2> {
         match self.region() {
             Some(region) => Classification::Decided(region),
             None => {
@@ -9089,7 +9092,7 @@ impl RegionArrangement2 {
     ///
     /// This preserves the explicit blocker used by the retained evaluation when
     /// no region was materialized.
-    pub fn into_region_classification(self) -> Classification<Region2> {
+    pub fn into_region_classification(self) -> Classification<LineArcRegion2> {
         let blocker = self.blocker().unwrap_or(UncertaintyReason::Unsupported);
         match self.into_region() {
             Some(region) => Classification::Decided(region),
@@ -9100,7 +9103,7 @@ impl RegionArrangement2 {
     /// Consumes this result and returns the materialized region with a derived arrangement report.
     ///
     /// This keeps owned output and its retained diagnostic evidence together.
-    pub fn into_region_with_report(self) -> (Option<Region2>, RegionArrangementReport2) {
+    pub fn into_region_with_report(self) -> (Option<LineArcRegion2>, RegionArrangementReport2) {
         let Self { report, region } = self;
         (region, report)
     }
@@ -9111,7 +9114,7 @@ impl RegionArrangement2 {
     /// the report directly from arrangement facts.
     pub fn into_region_classification_with_report(
         self,
-    ) -> (Classification<Region2>, RegionArrangementReport2) {
+    ) -> (Classification<LineArcRegion2>, RegionArrangementReport2) {
         let Self { report, region } = self;
         let blocker = report
             .summary()
@@ -9125,7 +9128,7 @@ impl RegionArrangement2 {
     }
 
     /// Consumes this result and returns the materialized region, if any.
-    pub fn into_region(self) -> Option<Region2> {
+    pub fn into_region(self) -> Option<LineArcRegion2> {
         self.region
     }
 }
@@ -9276,12 +9279,12 @@ impl RegionBoundaryContourBuildReport2 {
 
 impl RegionBoundaryContourBuildResult2 {
     /// Returns the materialized region, if role assignment succeeded.
-    pub const fn region(&self) -> Option<&Region2> {
+    pub const fn region(&self) -> Option<&LineArcRegion2> {
         self.region.as_ref()
     }
 
     /// Consumes this result and returns the materialized region, if any.
-    pub fn into_region(self) -> Option<Region2> {
+    pub fn into_region(self) -> Option<LineArcRegion2> {
         self.region
     }
 
@@ -9291,7 +9294,7 @@ impl RegionBoundaryContourBuildResult2 {
     }
 
     /// Consumes this result and returns the materialized region with its report.
-    pub fn into_parts(self) -> (Option<Region2>, RegionBoundaryContourBuildReport2) {
+    pub fn into_parts(self) -> (Option<LineArcRegion2>, RegionBoundaryContourBuildReport2) {
         (self.region, self.report)
     }
 
@@ -9301,7 +9304,7 @@ impl RegionBoundaryContourBuildResult2 {
     }
 
     /// Returns the materialized region as a classification while retaining this result.
-    pub fn region_classification(&self) -> Classification<&Region2> {
+    pub fn region_classification(&self) -> Classification<&LineArcRegion2> {
         match self.region() {
             Some(region) => Classification::Decided(region),
             None => {
@@ -9311,7 +9314,7 @@ impl RegionBoundaryContourBuildResult2 {
     }
 
     /// Consumes this result and returns the materialized region as a classification.
-    pub fn into_region_classification(self) -> Classification<Region2> {
+    pub fn into_region_classification(self) -> Classification<LineArcRegion2> {
         let blocker = self.blocker().unwrap_or(UncertaintyReason::Unsupported);
         match self.into_region() {
             Some(region) => Classification::Decided(region),
@@ -11015,7 +11018,7 @@ impl RegionArrangementReport2 {
 
 impl RegionLineSegmentRegionBuildResult2 {
     /// Returns the materialized region, if construction succeeded.
-    pub const fn region(&self) -> Option<&Region2> {
+    pub const fn region(&self) -> Option<&LineArcRegion2> {
         self.region.as_ref()
     }
 
@@ -12718,7 +12721,7 @@ fn arranged_report_segment_kind_counts(
     counts
 }
 
-fn region_segment_kind_counts(region: &Region2) -> SegmentKindCounts {
+fn region_segment_kind_counts(region: &LineArcRegion2) -> SegmentKindCounts {
     let mut counts = SegmentKindCounts::default();
     for segment in region
         .material_contours()

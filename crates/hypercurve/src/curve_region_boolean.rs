@@ -7,11 +7,65 @@ use std::rc::Rc;
 use crate::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveError,
-    CurveFamily2, CurveOperation2, CurvePathBooleanOperand2, CurvePolicy, CurveRegion2,
-    CurveRegionFragmentProvenance2, ExactCurveError, ExactCurveResult, PreparedCurveIntersection2,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RegionPointLocation, UncertaintyReason,
+    CurveFamily2, CurveIntersectionContact2, CurveIntersectionOverlap2,
+    CurveIntersectionPairBlocker2, CurveOperation2, CurvePathBooleanOperand2, CurvePolicy,
+    CurveRegion2, CurveRegionFragmentProvenance2, ExactCurveError, ExactCurveResult, FillRule,
+    PreparedCurveIntersection2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RegionPointLocation, UncertaintyReason,
 };
+
+/// Stable identity and provenance for one retained region-boundary carrier.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveRegionCarrierRef2 {
+    carrier_index: usize,
+    operand: CurvePathBooleanOperand2,
+    loop_index: usize,
+    fragment_index: usize,
+    family: CurveFamily2,
+    provenance: Option<CurveRegionFragmentProvenance2>,
+}
+
+/// One exact contact between retained carriers from two curved regions.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveRegionIntersectionContact2 {
+    first: CurveRegionCarrierRef2,
+    second: CurveRegionCarrierRef2,
+    contact: CurveIntersectionContact2,
+}
+
+/// One certified positive-length shared span between two curved regions.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveRegionIntersectionOverlap2 {
+    first: CurveRegionCarrierRef2,
+    second: CurveRegionCarrierRef2,
+    source: CurveIntersectionOverlap2,
+    first_range: BezierParameterRange2,
+    second_range: BezierParameterRange2,
+    orientation: RationalBezierOverlapOrientation2,
+}
+
+/// One incomplete retained carrier pair in a curved-region intersection report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveRegionIntersectionBlocker2 {
+    first: CurveRegionCarrierRef2,
+    second: CurveRegionCarrierRef2,
+    blocker: CurveIntersectionPairBlocker2,
+}
+
+/// Clone-shared exact contact, overlap, and blocker report for two curved regions.
+#[derive(Clone, Debug)]
+pub struct CurveRegionIntersectionReport2 {
+    data: Rc<CurveRegionIntersectionReportData>,
+}
+
+#[derive(Debug)]
+struct CurveRegionIntersectionReportData {
+    authored_carrier_pair_count: usize,
+    candidate_carrier_pair_count: usize,
+    contacts: Rc<[CurveRegionIntersectionContact2]>,
+    overlaps: Rc<[CurveRegionIntersectionOverlap2]>,
+    blockers: Rc<[CurveRegionIntersectionBlocker2]>,
+}
 
 /// Clone-shared retained preparation for repeated curved-region Booleans.
 #[derive(Clone, Debug)]
@@ -28,6 +82,7 @@ struct PreparedCurveRegionBooleanData {
     first_carrier_count: usize,
     authored_carrier_pair_count: usize,
     pairs: Vec<PreparedRegionCarrierPair>,
+    intersection_report: OnceCell<ExactCurveResult<CurveRegionIntersectionReport2>>,
     results: [OnceCell<ExactCurveResult<CurveRegion2>>; 4],
 }
 
@@ -35,6 +90,7 @@ struct PreparedCurveRegionBooleanData {
 struct RegionCarrier {
     operand: CurvePathBooleanOperand2,
     loop_index: usize,
+    fragment_index: usize,
     family: CurveFamily2,
     curve: BezierSubcurve2,
     start: BezierParameter2,
@@ -80,6 +136,141 @@ enum RegionFragmentAction {
     KeepReversed,
 }
 
+impl CurveRegionCarrierRef2 {
+    /// Returns the flattened carrier index in the prepared pair.
+    pub const fn carrier_index(&self) -> usize {
+        self.carrier_index
+    }
+
+    /// Returns the region operand that owns this carrier.
+    pub const fn operand(&self) -> CurvePathBooleanOperand2 {
+        self.operand
+    }
+
+    /// Returns the retained boundary-loop index in its operand.
+    pub const fn loop_index(&self) -> usize {
+        self.loop_index
+    }
+
+    /// Returns the retained fragment index in its boundary loop.
+    pub const fn fragment_index(&self) -> usize {
+        self.fragment_index
+    }
+
+    /// Returns the exact carrier family used by intersection dispatch.
+    pub const fn family(&self) -> CurveFamily2 {
+        self.family
+    }
+
+    /// Returns authored/arrangement provenance when the source region retained it.
+    pub const fn provenance(&self) -> Option<&CurveRegionFragmentProvenance2> {
+        self.provenance.as_ref()
+    }
+}
+
+impl CurveRegionIntersectionContact2 {
+    /// Returns the first-region carrier identity.
+    pub const fn first(&self) -> &CurveRegionCarrierRef2 {
+        &self.first
+    }
+
+    /// Returns the second-region carrier identity.
+    pub const fn second(&self) -> &CurveRegionCarrierRef2 {
+        &self.second
+    }
+
+    /// Returns exact local/source parameter and point evidence.
+    pub const fn contact(&self) -> &CurveIntersectionContact2 {
+        &self.contact
+    }
+}
+
+impl CurveRegionIntersectionOverlap2 {
+    /// Returns the first-region carrier identity.
+    pub const fn first(&self) -> &CurveRegionCarrierRef2 {
+        &self.first
+    }
+
+    /// Returns the second-region carrier identity.
+    pub const fn second(&self) -> &CurveRegionCarrierRef2 {
+        &self.second
+    }
+
+    /// Returns the source-curve overlap before carrier-range clipping.
+    pub const fn source(&self) -> &CurveIntersectionOverlap2 {
+        &self.source
+    }
+
+    /// Returns the exact overlap range clipped to the first retained carrier.
+    pub const fn first_range(&self) -> &BezierParameterRange2 {
+        &self.first_range
+    }
+
+    /// Returns the exact overlap range clipped to the second retained carrier.
+    pub const fn second_range(&self) -> &BezierParameterRange2 {
+        &self.second_range
+    }
+
+    /// Returns relative source-curve traversal orientation.
+    pub const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+        self.orientation
+    }
+}
+
+impl CurveRegionIntersectionBlocker2 {
+    /// Returns the first-region carrier identity.
+    pub const fn first(&self) -> &CurveRegionCarrierRef2 {
+        &self.first
+    }
+
+    /// Returns the second-region carrier identity.
+    pub const fn second(&self) -> &CurveRegionCarrierRef2 {
+        &self.second
+    }
+
+    /// Returns retained incomplete intersection evidence.
+    pub const fn blocker(&self) -> &CurveIntersectionPairBlocker2 {
+        &self.blocker
+    }
+}
+
+impl CurveRegionIntersectionReport2 {
+    /// Returns the full Cartesian carrier-pair count before broad-phase pruning.
+    pub fn authored_carrier_pair_count(&self) -> usize {
+        self.data.authored_carrier_pair_count
+    }
+
+    /// Returns the carrier-pair count retained after certified broad-phase pruning.
+    pub fn candidate_carrier_pair_count(&self) -> usize {
+        self.data.candidate_carrier_pair_count
+    }
+
+    /// Returns exact contacts clipped to both retained carrier ranges.
+    pub fn contacts(&self) -> &[CurveRegionIntersectionContact2] {
+        &self.data.contacts
+    }
+
+    /// Returns exact positive-length overlaps clipped to both carrier ranges.
+    pub fn overlaps(&self) -> &[CurveRegionIntersectionOverlap2] {
+        &self.data.overlaps
+    }
+
+    /// Returns incomplete carrier pairs with retained exact evidence.
+    pub fn blockers(&self) -> &[CurveRegionIntersectionBlocker2] {
+        &self.data.blockers
+    }
+
+    /// Returns true when every retained carrier pair completed exact replay.
+    pub fn is_complete(&self) -> bool {
+        self.data.blockers.is_empty()
+    }
+
+    /// Returns true when complete replay found no contact or overlap.
+    pub fn is_disjoint(&self) -> bool {
+        self.is_complete() && self.data.contacts.is_empty() && self.data.overlaps.is_empty()
+    }
+}
+
 impl CurveRegion2 {
     /// Prepares a region pair once for repeated exact regularized Booleans.
     pub fn try_prepare_boolean(
@@ -99,6 +290,19 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<Self> {
         self.try_prepare_boolean(other, policy)?
             .boolean_region(operation)
+    }
+
+    /// Collects exact contacts and overlaps against another retained region.
+    ///
+    /// The same prepared carrier pairs used by regularized Booleans are reused,
+    /// including certified broad-phase pruning and algebraic parameter ranges.
+    pub fn intersect_region(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurveRegionIntersectionReport2> {
+        self.try_prepare_boolean(other, policy)?
+            .intersection_report()
     }
 }
 
@@ -152,6 +356,7 @@ impl PreparedCurveRegionBoolean2 {
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
+                intersection_report: OnceCell::new(),
                 results: std::array::from_fn(|_| OnceCell::new()),
             }),
         })
@@ -182,6 +387,28 @@ impl PreparedCurveRegionBoolean2 {
         self.data.pairs.len()
     }
 
+    /// Returns whether the aggregate exact intersection report is cached.
+    pub fn is_intersection_report_cached(&self) -> bool {
+        self.data.intersection_report.get().is_some()
+    }
+
+    /// Returns a clone-shared aggregate exact intersection report.
+    pub fn intersection_report(&self) -> ExactCurveResult<CurveRegionIntersectionReport2> {
+        self.intersection_report_view().cloned()
+    }
+
+    /// Borrows the aggregate exact intersection report without copying records.
+    pub fn intersection_report_view(&self) -> ExactCurveResult<&CurveRegionIntersectionReport2> {
+        match self
+            .data
+            .intersection_report
+            .get_or_init(|| self.build_intersection_report())
+        {
+            Ok(report) => Ok(report),
+            Err(error) => Err(error.clone()),
+        }
+    }
+
     /// Returns whether this operation has already been materialized.
     pub fn is_boolean_region_cached(&self, operation: BooleanOp) -> bool {
         self.data.results[boolean_operation_index(operation)]
@@ -204,12 +431,156 @@ impl PreparedCurveRegionBoolean2 {
         }
     }
 
+    fn build_intersection_report(&self) -> ExactCurveResult<CurveRegionIntersectionReport2> {
+        let mut contacts = Vec::new();
+        let mut overlaps = Vec::new();
+        let mut blockers = Vec::new();
+        for pair in &self.data.pairs {
+            let report = pair.prepared.report_view()?;
+            let first = self.carrier_ref(pair.first_carrier_index);
+            let second = self.carrier_ref(pair.second_carrier_index);
+            blockers.extend(report.blockers().iter().cloned().map(|blocker| {
+                CurveRegionIntersectionBlocker2 {
+                    first: first.clone(),
+                    second: second.clone(),
+                    blocker,
+                }
+            }));
+            for contact in report.contacts() {
+                if parameter_in_carrier(
+                    contact.first().local_parameter(),
+                    &self.data.carriers[pair.first_carrier_index],
+                    &self.data.policy,
+                )? && parameter_in_carrier(
+                    contact.second().local_parameter(),
+                    &self.data.carriers[pair.second_carrier_index],
+                    &self.data.policy,
+                )? {
+                    contacts.push(CurveRegionIntersectionContact2 {
+                        first: first.clone(),
+                        second: second.clone(),
+                        contact: contact.clone(),
+                    });
+                }
+            }
+            for overlap in report.overlaps() {
+                let Some((first_range, second_range)) =
+                    self.clipped_overlap_ranges(pair, overlap)?
+                else {
+                    continue;
+                };
+                overlaps.push(CurveRegionIntersectionOverlap2 {
+                    first: first.clone(),
+                    second: second.clone(),
+                    source: overlap.clone(),
+                    first_range,
+                    second_range,
+                    orientation: overlap.orientation(),
+                });
+            }
+        }
+        Ok(CurveRegionIntersectionReport2 {
+            data: Rc::new(CurveRegionIntersectionReportData {
+                authored_carrier_pair_count: self.data.authored_carrier_pair_count,
+                candidate_carrier_pair_count: self.data.pairs.len(),
+                contacts: contacts.into(),
+                overlaps: overlaps.into(),
+                blockers: blockers.into(),
+            }),
+        })
+    }
+
+    fn carrier_ref(&self, carrier_index: usize) -> CurveRegionCarrierRef2 {
+        let carrier = &self.data.carriers[carrier_index];
+        CurveRegionCarrierRef2 {
+            carrier_index,
+            operand: carrier.operand,
+            loop_index: carrier.loop_index,
+            fragment_index: carrier.fragment_index,
+            family: carrier.family,
+            provenance: carrier.provenance.clone(),
+        }
+    }
+
+    fn clipped_overlap_ranges(
+        &self,
+        pair: &PreparedRegionCarrierPair,
+        overlap: &CurveIntersectionOverlap2,
+    ) -> ExactCurveResult<Option<(BezierParameterRange2, BezierParameterRange2)>> {
+        let first_carrier = &self.data.carriers[pair.first_carrier_index];
+        let second_carrier = &self.data.carriers[pair.second_carrier_index];
+        let first_intersects =
+            ranges_intersect(overlap.first_range(), first_carrier, &self.data.policy)?;
+        let second_intersects =
+            ranges_intersect(overlap.second_range(), second_carrier, &self.data.policy)?;
+        if !first_intersects && !second_intersects {
+            return Ok(None);
+        }
+        if first_intersects == second_intersects
+            && range_inside_carrier(overlap.first_range(), first_carrier, &self.data.policy)?
+            && range_inside_carrier(overlap.second_range(), second_carrier, &self.data.policy)?
+        {
+            return Ok(Some((
+                overlap.first_range().clone(),
+                overlap.second_range().clone(),
+            )));
+        }
+        if let Some(ranges) = clip_identity_parameter_overlap(
+            overlap.first_range(),
+            overlap.second_range(),
+            overlap.orientation(),
+            first_carrier,
+            second_carrier,
+            &self.data.policy,
+        )? {
+            return Ok(Some(ranges));
+        }
+        if identity_parameter_correspondence(
+            overlap.first_range(),
+            overlap.second_range(),
+            overlap.orientation(),
+            first_carrier,
+            second_carrier,
+            &self.data.policy,
+        )? {
+            return Ok(None);
+        }
+        Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported))
+    }
+
     fn build_boolean_region(&self, operation: BooleanOp) -> ExactCurveResult<CurveRegion2> {
         if self.data.first.is_empty() || self.data.second.is_empty() {
             return empty_operand_result(&self.data.first, &self.data.second, operation);
         }
         if self.data.first == self.data.second {
             return identical_operand_result(&self.data.first, operation);
+        }
+
+        // Keep the mature line/arc Boolean kernel as an implementation detail of
+        // the unified carrier. Promotion retains the exact source `LineArcRegion2`, so
+        // this dispatch neither segments curves nor gives ownership back to the
+        // caller. If native topology cannot decide the operation, continue into
+        // the general retained-Bezier pipeline below.
+        if let (Classification::Decided(first), Classification::Decided(second)) = (
+            self.data
+                .first
+                .line_arc_region_fast_path(&self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?,
+            self.data
+                .second
+                .line_arc_region_fast_path(&self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?,
+        ) {
+            match first
+                .boolean_region(second, operation, FillRule::NonZero, &self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?
+            {
+                Classification::Decided(region) => {
+                    return CurveRegion2::try_from_line_arc_region(&region, &self.data.policy)
+                        .map_err(|error| error.with_operation(CurveOperation2::Boolean));
+                }
+                Classification::Uncertain(_) => {}
+            }
         }
 
         let mut events = vec![Vec::new(); self.data.carriers.len()];
@@ -592,7 +963,7 @@ fn build_region_carriers(
     let mut flat_index = 0_usize;
     let mut carriers = Vec::new();
     for (loop_index, boundary_loop) in region.boundary_loops().iter().enumerate() {
-        for fragment in boundary_loop.fragments() {
+        for (fragment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
             let (curve, start, end, reversed) = match fragment {
                 BezierSplitFragment2::Materialized { curve, .. } => (
                     curve.clone(),
@@ -622,6 +993,7 @@ fn build_region_carriers(
             carriers.push(RegionCarrier {
                 operand,
                 loop_index,
+                fragment_index,
                 family: subcurve_family(&curve),
                 curve,
                 start,

@@ -240,6 +240,17 @@ pub enum BezierLineContactKind {
     Tangent,
 }
 
+/// Exact signed-distance transition at a supporting-line crossing.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierLineCrossingDirection {
+    /// The oriented-line predicate changes from negative to positive as the
+    /// curve parameter increases.
+    NegativeToPositive,
+    /// The oriented-line predicate changes from positive to negative as the
+    /// curve parameter increases.
+    PositiveToNegative,
+}
+
 /// Certified exact root of a Bezier/supporting-line predicate.
 ///
 /// The parameter remains represented or algebraically isolated. Contact kind
@@ -254,6 +265,7 @@ pub enum BezierLineContactKind {
 pub struct BezierLineContact {
     parameter: BezierParameter2,
     kind: BezierLineContactKind,
+    crossing_direction: Option<BezierLineCrossingDirection>,
 }
 
 /// Complete supporting-line relation with exact root contact classification.
@@ -279,7 +291,11 @@ impl BezierLineContact {
     /// Constructs an exact Bezier/supporting-line contact.
     pub fn new(parameter: BezierParameter2, kind: BezierLineContactKind) -> CurveResult<Self> {
         match parameter.known_interval(&CurvePolicy::certified()) {
-            Ok(Classification::Decided(_)) => Ok(Self { parameter, kind }),
+            Ok(Classification::Decided(_)) => Ok(Self {
+                parameter,
+                kind,
+                crossing_direction: None,
+            }),
             Ok(Classification::Uncertain(_)) | Err(_) => Err(CurveError::Topology(
                 "Bezier line contact parameter must have a certified unit interval".into(),
             )),
@@ -294,6 +310,30 @@ impl BezierLineContact {
     /// Returns the certified contact kind.
     pub const fn kind(&self) -> BezierLineContactKind {
         self.kind
+    }
+
+    /// Returns the certified signed-distance transition for crossing contacts.
+    ///
+    /// Contacts constructed directly with [`Self::new`] do not claim this
+    /// additional evidence. Contacts emitted by the exact supporting-line
+    /// solver carry it for every crossing.
+    pub const fn crossing_direction(&self) -> Option<BezierLineCrossingDirection> {
+        self.crossing_direction
+    }
+
+    fn with_crossing_direction(
+        parameter: BezierParameter2,
+        kind: BezierLineContactKind,
+        crossing_direction: Option<BezierLineCrossingDirection>,
+    ) -> CurveResult<Self> {
+        if (kind == BezierLineContactKind::Crossing) != crossing_direction.is_some() {
+            return Err(CurveError::Topology(
+                "Bezier line crossing direction must match crossing contact kind".into(),
+            ));
+        }
+        let mut contact = Self::new(parameter, kind)?;
+        contact.crossing_direction = crossing_direction;
+        Ok(contact)
     }
 }
 
@@ -2922,20 +2962,26 @@ pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
     }
     let mut contacts = Vec::with_capacity(parameters.len());
     for parameter in parameters {
-        let changes_sign = match polynomial.changes_sign_at_root(&parameter, policy) {
-            Ok(Classification::Decided(changes_sign)) => changes_sign,
+        let sign_after = match polynomial.sign_after_crossing_root(&parameter, policy) {
+            Ok(Classification::Decided(sign_after)) => sign_after,
             Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
         };
-        let kind = if changes_sign {
+        let kind = if sign_after.is_some() {
             BezierLineContactKind::Crossing
         } else {
             BezierLineContactKind::Tangent
         };
-        let contact = match BezierLineContact::new(parameter, kind) {
-            Ok(contact) => contact,
-            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
-        };
+        let crossing_direction = sign_after.map(|sign| match sign {
+            RealSign::Positive => BezierLineCrossingDirection::NegativeToPositive,
+            RealSign::Negative => BezierLineCrossingDirection::PositiveToNegative,
+            RealSign::Zero => unreachable!("crossing residual sign is nonzero"),
+        });
+        let contact =
+            match BezierLineContact::with_crossing_direction(parameter, kind, crossing_direction) {
+                Ok(contact) => contact,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+            };
         contacts.push(contact);
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })

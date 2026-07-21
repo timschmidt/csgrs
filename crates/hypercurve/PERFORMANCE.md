@@ -75,7 +75,7 @@ runs without changing the benchmark workload.
 | de Berg et al., *Computational Geometry* | Plane-sweep, arrangement, point-location, and robust subdivision principles match the crate's broad-phase filtering and explicit topology stages. The retained conservative x sweep applies the scheduling portion while leaving exact intersection predicates and ownership unchanged. |
 | Boehm, knot insertion | `bspline` performs exact homogeneous Boehm insertion and retains the resulting Bézier spans and source provenance. This is already the appropriate local transformation; no lossy span approximation was introduced. |
 | de Boor, splines | Local B-spline evaluation and knot-domain rules are reflected in exact evaluation, sided behavior at discontinuous knots, refinement, and extraction. Cached decomposition and native topology already avoid repeatedly rebuilding that work. |
-| Farouki and Neff, plane offsets | The curvature/evolute analysis explains cusp and singular-offset hazards. `bezier_offset` detects cusp, inflection, and denominator risks and only constructs a proven line-image offset; unsupported free-form offsets remain explicit unresolved candidates rather than unchecked approximations. |
+| Farouki and Neff, plane offsets | The curvature/evolute analysis supplies the exact distance-dependent cusp equation. `bezier_offset` retains the analytic parallel, isolates source and offset cusps, materializes line-image and Pythagorean-hodograph offsets exactly, and keeps all other products behind conservative certification. |
 | Farouki and Rajan, Bernstein-form algorithms | Bernstein arithmetic, sign variation, subdivision, substitution, and elimination support the rational-Bézier sign tests, monotonicity certificates, resultants, and root isolation. It also reinforces retaining Bernstein/de Casteljau form instead of eagerly converting every operation to expanded power basis. |
 | Farin, CAGD | Bézier/B-spline evaluation, subdivision, rational homogeneous form, derivatives, and variation-diminishing bounds are pervasive throughout the curve carriers. The retained shared-weight change preserves these exact affine identities. |
 | Foster, Hormann, and Popa, degenerate polygon clipping | The key lesson is to classify and label degenerate intersections explicitly instead of perturbing them. Curve arrangements retain contact multiplicity, tangent/crossing status, overlap ranges, vertex identities, and operation-aware ownership before traversal. |
@@ -90,8 +90,53 @@ runs without changing the benchmark workload.
 | Sederberg and Nishita, Bézier clipping | Convex-hull/Bernstein sign exclusion and recursive parameter contraction are used throughout rational-Bézier candidate and root isolation. Exact parameter intervals are retained when a represented scalar cannot yet be recovered; tolerance is not substituted for proof. |
 | Shewchuk, adaptive robust predicates | Adaptive evaluation with exact fallback is supplied through `hyperlimit` and used before topology branches. Hypercurve preserves the separation between a fast certificate and the exact result rather than using epsilon signs. |
 | Tiller and Hanson, profile offsets | Exact line/arc joins, caps, and primitive profile offsets are implemented in `offset`. Free-form Bézier offset fitting remains staged behind exact hazard analysis because trimming and singular joins need separate certificates. |
+| Raph Levien, parallel Béziers and path simplification | Endpoint-tangent cubic fitting with positive arm solving through the exact midpoint is tried before subdivision. It is only a candidate: exact parallel verification controls acceptance, while a deterministic Blend2D lane remains the completion fallback. |
+| Blend2D, simplification and offsetting | Exact same-parameter cubic-to-two-quadratic reduction and the quadratic endpoint-normal construction provide deterministic candidates and radial diagnostics. Hypercurve does not treat Blend2D's radial heuristic as a Hausdorff proof; its independent verifier certifies every emitted span. |
 | Vatti, generic polygon clipping | Scanbeam clipping demonstrates a general event/ownership formulation that handles holes and complex polygons. Hypercurve's region pipeline keeps those roles explicit, and its retained x scheduler supplies the compatible broad-phase benefit. A second polygon-only scanbeam carrier would duplicate rather than optimize the prepared curved-arrangement representation. |
 | Yap, exact geometric computation | The exact-object discipline is the crate-wide rule: structural filters may accelerate a decision, but a topology branch needs certified evidence. Homogeneous carriers, algebraic parameter intervals, retained blockers, and report-bearing prepared objects preserve the information needed for replay. |
+
+## Certified Bézier offset completion and baseline
+
+The retained exact parallel evaluates `P + d J(P') / |P'|` without pretending
+that a general cubic parallel is another finite polynomial Bézier. Exact Sturm
+isolation schedules source singularities and distance-dependent parallel cusps.
+Polynomial Pythagorean hodographs are replayed as exact arbitrary-degree
+rational Béziers. Regular non-PH spans try a Levien-style cubic, then Blend2D
+quadratic construction, and are accepted only by an exact-scalar conservative
+same-parameter bound.
+
+`CurveRegion2::offset_with_certified_bezier_parallel` uses those paths for
+smooth joins, separately chord-certifies the produced path, and regularizes the
+line arrangement. Its report limits the summed bound to the raw
+pre-regularization boundary; branch removal is not mislabeled as a Hausdorff
+certificate for final topology. Corners and unsupported families use the
+existing source-chord fallback, whose weaker guarantee remains explicit.
+
+A release run on the same development machine measured:
+
+| Workload | Result |
+| --- | ---: |
+| Exact cubic parallel point evaluation | 5.98 us/iter |
+| Exact offset-cusp isolation | 122.9 us/iter |
+| Exact cubic PH rational materialization | 15.7 us/iter |
+| Tight certified cubic construction, 3 spans / 32 verifier leaves | 313.2 ms/iter |
+| Smooth four-quadratic `CurveRegion2` certified offset | 4.00 ms/iter |
+| Same region through the older source-chord fallback | 9.91 ms/iter |
+
+The feature-gated cross-suite lane uses an identical open cubic and a `0.05`
+tolerance where applicable. A three-sample, fixed-one-iteration release smoke
+run measured 331.0 ms for Hypercurve's certified construction, 1.28 ms for its
+weaker chord fallback, and 10.6 us for Curvo's floating heuristic. These are
+intentionally labeled by guarantee: the speed difference is not an
+interchangeable-correctness comparison. A focused regression also proves a
+case where the accepted Levien cubic uses one span instead of Blend2D's initial
+two-quadratic reduction.
+
+```bash
+cargo bench --bench offset
+HYPERCURVE_COMPARE_GROUP=bezier_offset/open_cubic \
+  cargo bench --features comparative-benchmarks --bench comparative
+```
 
 ## Retained affine de Casteljau optimization
 
@@ -296,7 +341,7 @@ ms/op across matched 30-sample runs (72.8%); cycloidal gear fell from 0.391 to
 12,839 to 799 dispatch events respectively, with zero approximations,
 refinements, fallbacks, or unknown facts. Signed-zero, adjacent/closing duplicate,
 all-duplicate, and nonfinite regressions protect the adapter semantics; an
-exact `Region2` comparison proves retained point order and coordinates.
+exact unified-region comparison proves retained point order and coordinates.
 The dedicated retained-import target completed 1,000
 AddressSanitizer-instrumented executions (651 coverage points and 1,686 feature
 edges). Its isolated 64-point dispatch sentinel records 128 events and zero

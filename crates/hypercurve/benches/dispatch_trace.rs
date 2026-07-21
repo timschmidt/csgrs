@@ -2,7 +2,7 @@
 use hypercurve::triangulate_finite_rings;
 use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult,
-    CurveString2, FillRule, LineSeg2, NurbsCurve2, Point2, QuadraticBezier2, Real, Region2,
+    CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2, Point2, QuadraticBezier2, Real,
     Segment2, Similarity2,
 };
 
@@ -98,8 +98,8 @@ fn main() {
         Ok(offset)
     });
 
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     trace("region_boolean", || {
         let result = first.boolean_region_with_report(
             &second,

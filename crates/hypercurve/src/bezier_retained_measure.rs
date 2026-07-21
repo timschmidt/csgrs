@@ -27,9 +27,27 @@ use hypersolve::AlgebraicRootRepresentation;
 use crate::classify::compare_reals;
 use crate::{
     Aabb2, Axis2, BezierEndpointPointImage2, BezierParameter2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2, Point2,
-    UncertaintyReason,
+    BezierSubcurve2, Classification, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveResult, Point2, UncertaintyReason,
 };
+
+impl CurveRegion2 {
+    /// Returns a certified exact boundary envelope for the unified region.
+    ///
+    /// Native line/arc topology uses the compact `LineArcRegion2` bounds kernel. All
+    /// other retained carriers use derivative-root and algebraic-source
+    /// evidence without segmentation. Empty regions and carriers lacking
+    /// sufficient exact interior evidence return explicit uncertainty.
+    pub fn bounds(&self, policy: &CurvePolicy) -> CurveResult<Classification<Aabb2>> {
+        match self.line_arc_region_fast_path(policy)? {
+            Classification::Decided(native) => Aabb2::from_region(native, policy),
+            Classification::Uncertain(_) => {
+                Ok(BezierRetainedCurveEnvelope2::from_region(self, policy)
+                    .map(|envelope| envelope.envelope().clone()))
+            }
+        }
+    }
+}
 
 /// Exact curve-interior envelope for retained Bezier/conic carriers.
 ///

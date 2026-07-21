@@ -10,8 +10,8 @@ use std::env;
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Contour2, CubicBezier2, Curve2, CurveFamily2, CurvePath2,
-    CurveRegion2, LineSeg2, Point2, QuadraticBezier2, Rational, RationalBezier2,
-    RationalQuadraticBezier2, Real, Region2, Similarity2,
+    CurveRegion2, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, Rational, RationalBezier2,
+    RationalQuadraticBezier2, Real, Similarity2,
 };
 use num::bigint::{BigInt, BigUint};
 
@@ -233,8 +233,8 @@ pub struct NativeCell {
     pub rotated_path: CurvePath2,
     pub source: CurveRegion2,
     pub rotated: CurveRegion2,
-    pub source_projection: Region2,
-    pub rotated_projection: Region2,
+    pub source_projection: LineArcRegion2,
+    pub rotated_projection: LineArcRegion2,
     pub representations: Vec<RepresentationSample>,
 }
 
@@ -538,7 +538,7 @@ fn flatten_path(path: &CurvePath2) -> Vec<[f64; 2]> {
     points
 }
 
-fn line_region(points: &[[f64; 2]]) -> Region2 {
+fn line_region(points: &[[f64; 2]]) -> LineArcRegion2 {
     let vertices = points
         .iter()
         .map(|point| {
@@ -553,5 +553,5 @@ fn line_region(points: &[[f64; 2]]) -> Region2 {
         .collect::<Vec<_>>();
     let contour = Contour2::from_bulge_vertices(&vertices)
         .expect("flattened pathological contour is a valid closed polyline");
-    Region2::from_material_contours(vec![contour])
+    LineArcRegion2::from_material_contours(vec![contour])
 }

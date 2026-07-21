@@ -9,7 +9,7 @@
 use hypercurve::{
     BooleanBoundaryChainAssemblyStage2, BooleanBoundaryContourTransferStage2,
     BooleanBoundaryFragmentEmissionStage2, BooleanBoundaryLoopExtractionStage2, BooleanOp,
-    BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real, Region2,
+    BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, LineArcRegion2, Point2, Real,
     RegionBooleanBoundaryContourSourcePath2, RegionBooleanBoundaryPredicatePath2,
     RegionBooleanQueryPath2, RegionBooleanStage2, RegionFragmentBuildPredicatePath2,
     RegionFragmentBuildStage2, RegionPointLocation, RegionPreparedCacheFreshness2,
@@ -19,7 +19,7 @@ use hypercurve::{
 type HPoint = Point2;
 type HReal = Real;
 type HContour = Contour2;
-type HRegion = Region2;
+type HRegion = LineArcRegion2;
 type Rect = (f64, f64, f64, f64);
 
 fn s(value: f64) -> HReal {
@@ -49,7 +49,7 @@ fn rectangle((xmin, ymin, xmax, ymax): Rect) -> HContour {
 }
 
 fn region(materials: &[Rect], holes: &[Rect]) -> HRegion {
-    Region2::new(
+    LineArcRegion2::new(
         materials.iter().copied().map(rectangle).collect(),
         holes.iter().copied().map(rectangle).collect(),
     )

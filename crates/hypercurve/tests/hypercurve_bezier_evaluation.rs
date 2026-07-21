@@ -1,4 +1,7 @@
-use hypercurve::{CubicBezier2, Point2, QuadraticBezier2, Real};
+use hypercurve::{
+    BezierFlatteningOptions, Classification, CubicBezier2, Curve2, CurvePolicy, Point2,
+    QuadraticBezier2, RationalBezier2, Real,
+};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -52,6 +55,45 @@ fn optimized_polynomial_evaluation_matches_de_casteljau_exactly() {
         assert_eq!(
             cubic.point_at(parameter.clone()),
             cubic_de_casteljau(&cubic, parameter)
+        );
+    }
+}
+
+#[test]
+fn certified_exact_scalar_segmentation_covers_rational_bezier_and_nurbs() {
+    let policy = CurvePolicy::certified();
+    let options = BezierFlatteningOptions::try_new(q(1, 64), 16, &policy).unwrap();
+    let rational = Curve2::from(
+        RationalBezier2::try_new(
+            vec![p(0, 0), p(1, 3), p(3, -2), p(5, 0)],
+            vec![r(1), r(2), r(3), r(1)],
+        )
+        .unwrap(),
+    );
+    let nurbs = Curve2::try_nurbs(
+        2,
+        vec![p(0, 0), p(2, 4), p(4, 0)],
+        vec![r(1), r(2), r(1)],
+        vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+        None,
+    )
+    .unwrap();
+
+    for curve in [rational, nurbs] {
+        let Classification::Decided(segmented) =
+            curve.segment_certified(&options, &policy).unwrap()
+        else {
+            panic!("same-sign rational carrier should segment with a control-hull certificate");
+        };
+        assert_eq!(segmented.points().first(), Some(curve.start()));
+        assert_eq!(segmented.points().last(), Some(curve.end()));
+        assert!(segmented.certificate().segment_count() > 1);
+        assert!(
+            segmented
+                .points()
+                .iter()
+                .all(|point| point.x().exact_rational_ref().is_some()
+                    && point.y().exact_rational_ref().is_some())
         );
     }
 }

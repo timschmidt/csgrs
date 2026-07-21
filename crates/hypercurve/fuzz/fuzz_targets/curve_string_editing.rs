@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BulgeVertex2, Classification, CurvePolicy, CurveString2, CurveStringEndpoint2,
-    CurveStringTrimPoint2, FillRule, Point2, Real, Region2,
+    CurveStringTrimPoint2, FillRule, Point2, Real, LineArcRegion2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -27,7 +27,7 @@ fn curve_from_points(points: &[Point2]) -> Option<CurveString2> {
     CurveString2::from_bulge_vertices(&vertices).ok()
 }
 
-fn rectangle_region(origin: Point2, width: u8, height: u8) -> Option<Region2> {
+fn rectangle_region(origin: Point2, width: u8, height: u8) -> Option<LineArcRegion2> {
     let width = r((width % 16) as i32 + 1);
     let height = r((height % 16) as i32 + 1);
     let min_x = origin.x().clone();
@@ -50,7 +50,7 @@ fn rectangle_region(origin: Point2, width: u8, height: u8) -> Option<Region2> {
         FillRule::NonZero,
     )
     .ok()
-    .map(|contour| Region2::from_material_contours(vec![contour]))
+    .map(|contour| LineArcRegion2::from_material_contours(vec![contour]))
 }
 
 fn touch_curve(curve: &CurveString2, policy: &CurvePolicy, data: &[u8]) {

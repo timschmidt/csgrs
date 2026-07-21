@@ -11,8 +11,9 @@
 use hyperreal::{Real, RealSign};
 
 use crate::{
-    CircularArc2, Contour2, CurveError, CurveResult, CurveString2, LineSeg2, Point2, Region2,
-    Segment2,
+    CircularArc2, Classification, Contour2, CurveError, CurveFamily2, CurveOperation2,
+    CurveRegion2, CurveResult, CurveString2, ExactCurveError, ExactCurveResult, LineArcRegion2,
+    LineSeg2, Point2, Segment2,
 };
 
 /// A 2D affine transform whose linear part is a nonsingular similarity.
@@ -219,7 +220,7 @@ impl Contour2 {
     }
 }
 
-impl Region2 {
+impl LineArcRegion2 {
     /// Applies a certified planar similarity transform to every material and hole contour.
     pub fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
         let material = self
@@ -233,6 +234,51 @@ impl Region2 {
             .map(|contour| contour.transform_similarity(transform))
             .collect::<CurveResult<Vec<_>>>()?;
         Ok(Self::new(material, holes))
+    }
+}
+
+impl CurveRegion2 {
+    /// Applies a certified planar similarity to every retained exact carrier.
+    ///
+    /// This is the region-level counterpart to [`CurveString2::transform_similarity`].
+    /// It delegates to the general exact affine implementation while preserving
+    /// authoritative roles, fill rules, algebraic endpoint evidence, and any
+    /// regenerated native line/arc fast path.
+    pub fn transform_similarity(
+        &self,
+        transform: &Similarity2,
+        policy: &crate::CurvePolicy,
+    ) -> ExactCurveResult<Self> {
+        if let Classification::Decided(native) =
+            self.line_arc_region_fast_path(policy).map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Transformation,
+                    CurveFamily2::Line,
+                    None,
+                    cause,
+                )
+            })?
+        {
+            let transformed = native.transform_similarity(transform).map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Transformation,
+                    CurveFamily2::Line,
+                    None,
+                    cause,
+                )
+            })?;
+            return Self::try_from_line_arc_region(&transformed, policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Transformation));
+        }
+        self.transform_affine(
+            &transform.a,
+            &transform.b,
+            &transform.d,
+            &transform.e,
+            &transform.xoff,
+            &transform.yoff,
+            policy,
+        )
     }
 }
 

@@ -1,8 +1,8 @@
 #![cfg(feature = "triangulation")]
 
 use hypercurve::{
-    BulgeVertex2, Contour2, CurveError, CurvePolicy, FiniteProjectionOptions, Point2, Real,
-    Region2, triangulate_finite_rings,
+    BulgeVertex2, Contour2, CurveError, CurvePolicy, FiniteProjectionOptions, LineArcRegion2,
+    Point2, Real, triangulate_finite_rings,
 };
 
 fn r(value: i32) -> Real {
@@ -97,7 +97,7 @@ fn triangulate_finite_rings_rejects_nonadjacent_repeated_vertices() {
 
 #[test]
 fn finite_region_profile_triangulates_material_with_owned_hole() {
-    let region = Region2::new(vec![rectangle(0, 0, 6, 6)], vec![rectangle(2, 2, 4, 4)]);
+    let region = LineArcRegion2::new(vec![rectangle(0, 0, 6, 6)], vec![rectangle(2, 2, 4, 4)]);
     let profiles = region
         .project_to_finite_profiles(
             &FiniteProjectionOptions::try_new(1.0e-3).unwrap(),

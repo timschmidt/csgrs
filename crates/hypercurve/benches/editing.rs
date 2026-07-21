@@ -3,8 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult,
-    CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineSeg2, Point2, Real,
-    Region2, RegionBooleanQueryPath2, Segment2,
+    CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineArcRegion2, LineSeg2,
+    Point2, Real, RegionBooleanQueryPath2, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -192,7 +192,7 @@ fn bench_prepared_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
 fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)])?;
     let region =
-        Region2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)]);
+        LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)]);
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_outputs = 0_usize;
@@ -221,7 +221,7 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
 fn bench_prepared_region_trim(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)])?;
     let region =
-        Region2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)]);
+        LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)]);
     let policy = CurvePolicy::certified();
     let prepared_curve = curve.prepare_topology_queries(&policy);
     let prepared_region = region.prepare_topology_queries(&policy);
@@ -572,7 +572,7 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     let mut total_roles = 0_usize;
 
     for _ in 0..iterations {
-        let result = Region2::from_boundary_contours_with_report(
+        let result = LineArcRegion2::from_boundary_contours_with_report(
             vec![material.clone(), hole.clone(), island.clone()],
             &policy,
         )?;
@@ -607,8 +607,11 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let result =
-            Region2::arrange_unordered_line_segments_borrowed(&lines, FillRule::NonZero, &policy)?;
+        let result = LineArcRegion2::arrange_unordered_line_segments_borrowed(
+            &lines,
+            FillRule::NonZero,
+            &policy,
+        )?;
         if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered line segment region build benchmark became non-native");
         }
@@ -662,8 +665,11 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let result =
-            Region2::arrange_unordered_segments_borrowed(&segments, FillRule::NonZero, &policy)?;
+        let result = LineArcRegion2::arrange_unordered_segments_borrowed(
+            &segments,
+            FillRule::NonZero,
+            &policy,
+        )?;
         if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered native segment region build benchmark became non-native");
         }
@@ -708,7 +714,8 @@ fn bench_region_arrangement_report_replay(iterations: u32) -> CurveResult<()> {
         line(0, 10, 0, 0),
     ];
     let policy = CurvePolicy::certified();
-    let result = Region2::arrange_unordered_line_segments(lines, FillRule::NonZero, &policy)?;
+    let result =
+        LineArcRegion2::arrange_unordered_line_segments(lines, FillRule::NonZero, &policy)?;
     let started = Instant::now();
     let mut checksum = 0_usize;
 
@@ -762,8 +769,8 @@ fn bench_contour_line_merge_report(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_region_boolean_report(iterations: u32) -> CurveResult<()> {
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_boundary_contours = 0_usize;
@@ -825,8 +832,8 @@ fn bench_contour_signed_area_cache(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_prepared_region_boolean_report(iterations: u32) -> CurveResult<()> {
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let policy = CurvePolicy::certified();
     let prepared_first = first.prepare_topology_queries(&policy);
     let prepared_second = second.prepare_topology_queries(&policy);

@@ -1,5 +1,5 @@
 use hypercurve::{
-    Classification, CurvePolicy, FillRule, LineSeg2, Point2, Region2, RegionPointLocation,
+    Classification, CurvePolicy, FillRule, LineArcRegion2, LineSeg2, Point2, RegionPointLocation,
 };
 use hyperreal::Real;
 
@@ -20,7 +20,8 @@ fn main() -> hypercurve::CurveResult<()> {
         line(0, 4, 0, 0)?,
     ];
 
-    let result = Region2::arrange_unordered_line_segments(boundary, FillRule::NonZero, &policy)?;
+    let result =
+        LineArcRegion2::arrange_unordered_line_segments(boundary, FillRule::NonZero, &policy)?;
     let region = match result.region_classification() {
         Classification::Decided(region) => region,
         Classification::Uncertain(reason) => {

@@ -31,6 +31,8 @@ pub enum CurveOperation2 {
     Chamfer,
     /// Replace one path vertex with an exact tangent circular fillet.
     Fillet,
+    /// Construct an exact parallel boundary offset.
+    Offset,
     /// Reverse exact traversal while preserving the curve image.
     Reversal,
     /// Apply an exact geometry-preserving transform.
@@ -282,6 +284,8 @@ pub enum CurveError {
     InvalidReconstructionOptions,
     /// Bezier flattening options cannot certify a positive error budget.
     InvalidFlatteningOptions,
+    /// Bezier parallel verification options cannot certify a positive error budget.
+    InvalidBezierOffsetOptions,
     /// Finite projection options contain non-finite or unsupported values.
     InvalidFiniteProjectionOptions,
     /// Retained import record metadata is inconsistent or non-finite.
@@ -374,6 +378,9 @@ impl fmt::Display for CurveError {
                 write!(f, "polyline reconstruction options are invalid")
             }
             Self::InvalidFlatteningOptions => write!(f, "Bezier flattening options are invalid"),
+            Self::InvalidBezierOffsetOptions => {
+                write!(f, "Bezier parallel verification options are invalid")
+            }
             Self::InvalidFiniteProjectionOptions => {
                 write!(f, "finite projection options are invalid")
             }

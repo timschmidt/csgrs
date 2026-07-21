@@ -1995,13 +1995,13 @@ fn add_segment_kind_count(counts: &mut SegmentKindCounts, segment: &Segment2) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Contour2, LineSeg2, PreparedRegionView2, Region2};
+    use crate::{Contour2, LineArcRegion2, LineSeg2, PreparedRegionView2};
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
     }
 
-    fn rectangle(min_x: i8, min_y: i8, max_x: i8, max_y: i8) -> Region2 {
+    fn rectangle(min_x: i8, min_y: i8, max_x: i8, max_y: i8) -> LineArcRegion2 {
         let points = [
             point(min_x, min_y),
             point(max_x, min_y),
@@ -2016,7 +2016,7 @@ mod tests {
                 )
             })
             .collect();
-        Region2::from_material_contours(vec![Contour2::try_new(segments).unwrap()])
+        LineArcRegion2::from_material_contours(vec![Contour2::try_new(segments).unwrap()])
     }
 
     #[test]

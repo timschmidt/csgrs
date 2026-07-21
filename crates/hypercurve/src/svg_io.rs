@@ -10,8 +10,9 @@
 
 use crate::{
     CircularArc2, Classification, Contour2, ContourClosureReport2, CubicBezier2, Curve2,
-    CurveFamily2, CurveGeometry2, CurvePath2, CurvePolicy, CurveResult, CurveSource2, CurveString2,
-    FillRule, LineSeg2, Point2, QuadraticBezier2, Rational, Real, Region2,
+    CurveFamily2, CurveGeometry2, CurveOperation2, CurvePath2, CurvePolicy, CurveRegion2,
+    CurveRegionLoopRole, CurveResult, CurveSource2, CurveString2, ExactCurveError,
+    ExactCurveResult, FillRule, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, Rational, Real,
     RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildReport2,
     RegionBoundaryContourBuildStage2, RetainedImportFormat2, RetainedImportRecord2,
     RetainedSourceTolerance2, RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
@@ -124,6 +125,7 @@ pub struct SvgRegionImportReport2 {
     path_reports: Vec<SvgPathImportReport2>,
     closure_reports: Vec<ContourClosureReport2>,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
+    curve_loop_roles: Option<Vec<CurveRegionLoopRole>>,
     fill_rule: FillRule,
     source_index: u64,
     source_version: u64,
@@ -139,7 +141,7 @@ pub struct SvgRegionImportReport2 {
 /// Result of report-bearing SVG region import.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SvgRegionImportResult2 {
-    region: Option<Region2>,
+    region: Option<CurveRegion2>,
     report: SvgRegionImportReport2,
 }
 
@@ -164,10 +166,21 @@ impl Contour2 {
     }
 }
 
-impl Region2 {
+impl LineArcRegion2 {
     /// Exports material contours followed by hole contours as SVG path data.
     pub fn to_svg_path_data_with_report(&self) -> CurveResult<SvgPathExportResult2> {
         export_region_svg_path(self)
+    }
+}
+
+impl CurveRegion2 {
+    /// Exports every exactly materialized boundary path as SVG path data.
+    ///
+    /// SVG-expressible line, circular-arc, quadratic, and cubic carriers remain
+    /// curves. Rational, spline, and unresolved algebraic fragments return an
+    /// explicit unsupported report instead of being silently segmented.
+    pub fn to_svg_path_data_with_report(&self) -> ExactCurveResult<SvgPathExportResult2> {
+        export_curve_region_svg_path(self)
     }
 }
 
@@ -624,12 +637,12 @@ impl SvgContourImportReport2 {
 
 impl SvgRegionImportResult2 {
     /// Returns the imported region when materialized.
-    pub const fn region(&self) -> Option<&Region2> {
+    pub const fn region(&self) -> Option<&CurveRegion2> {
         self.region.as_ref()
     }
 
     /// Consumes the result and returns the imported region when materialized.
-    pub fn into_region(self) -> Option<Region2> {
+    pub fn into_region(self) -> Option<CurveRegion2> {
         self.region
     }
 
@@ -639,7 +652,7 @@ impl SvgRegionImportResult2 {
     }
 
     /// Consumes this result and returns the imported region with its report.
-    pub fn into_parts(self) -> (Option<Region2>, SvgRegionImportReport2) {
+    pub fn into_parts(self) -> (Option<CurveRegion2>, SvgRegionImportReport2) {
         (self.region, self.report)
     }
 
@@ -649,7 +662,7 @@ impl SvgRegionImportResult2 {
     }
 
     /// Returns the imported region as a convenience classification.
-    pub fn region_classification(&self) -> Classification<&Region2> {
+    pub fn region_classification(&self) -> Classification<&CurveRegion2> {
         match self.region() {
             Some(region) => Classification::Decided(region),
             None => Classification::Uncertain(
@@ -661,7 +674,7 @@ impl SvgRegionImportResult2 {
     }
 
     /// Consumes this result and returns the imported region as a convenience classification.
-    pub fn into_region_classification(self) -> Classification<Region2> {
+    pub fn into_region_classification(self) -> Classification<CurveRegion2> {
         let blocker = self
             .report()
             .blocker()
@@ -687,6 +700,14 @@ impl SvgRegionImportReport2 {
     /// Returns exact boundary-contour nesting/role-assignment evidence.
     pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
         self.boundary_build_report.as_ref()
+    }
+
+    /// Returns exact unified-region loop roles when region construction succeeded.
+    ///
+    /// This evidence is present for higher-order SVG boundaries even when no
+    /// native contour-nesting report exists.
+    pub fn curve_loop_roles(&self) -> Option<&[CurveRegionLoopRole]> {
+        self.curve_loop_roles.as_deref()
     }
 
     /// Returns final boundary-role assignment stage, if reached.
@@ -1020,7 +1041,7 @@ fn export_contour_svg_path(contour: &Contour2) -> CurveResult<SvgPathExportResul
     })
 }
 
-fn export_region_svg_path(region: &Region2) -> CurveResult<SvgPathExportResult2> {
+fn export_region_svg_path(region: &LineArcRegion2) -> CurveResult<SvgPathExportResult2> {
     let mut path_data = String::new();
     let mut segment_count = 0;
     let mut segment_kind_counts = SegmentKindCounts::default();
@@ -1074,6 +1095,142 @@ fn export_region_svg_path(region: &Region2) -> CurveResult<SvgPathExportResult2>
             blocker: None,
         },
     })
+}
+
+fn export_curve_region_svg_path(region: &CurveRegion2) -> ExactCurveResult<SvgPathExportResult2> {
+    let paths = match region.materialized_boundary_paths()? {
+        Classification::Decided(paths) => paths,
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_curve_region_svg_export(region.len(), reason));
+        }
+    };
+    let (family, source) = paths.first().map_or((CurveFamily2::Line, None), |path| {
+        (path.curves()[0].family(), path.curves()[0].source())
+    });
+    let roles = match region
+        .loop_roles(&CurvePolicy::certified())
+        .map_err(|cause| {
+            ExactCurveError::invalid(CurveOperation2::NativeTopology, family, source, cause)
+        })? {
+        Classification::Decided(roles) => roles,
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_curve_region_svg_export(region.len(), reason));
+        }
+    };
+    let expressible = paths.iter().flat_map(|path| path.curves()).all(|curve| {
+        matches!(
+            curve.geometry(),
+            CurveGeometry2::Line(_)
+                | CurveGeometry2::CircularArc(_)
+                | CurveGeometry2::QuadraticBezier(_)
+                | CurveGeometry2::CubicBezier(_)
+        )
+    });
+    if !expressible {
+        return Ok(blocked_curve_region_svg_export(
+            region.len(),
+            UncertaintyReason::Unsupported,
+        ));
+    }
+
+    let mut path_data = String::new();
+    let mut segment_count = 0;
+    let mut segment_kind_counts = SegmentKindCounts::default();
+    let mut segment_reports = Vec::new();
+    let mut curve_reports = Vec::new();
+    for (carrier_index, path) in paths.iter().enumerate() {
+        if !path_data.is_empty() {
+            path_data.push(' ');
+        }
+        append_top_level_curve_path(&mut path_data, path).map_err(|cause| {
+            ExactCurveError::invalid(CurveOperation2::NativeTopology, family, source, cause)
+        })?;
+        path_data.push_str(" Z");
+        for (segment_index, curve) in path.curves().iter().enumerate() {
+            let report_index = curve_reports.len();
+            curve_reports.push(SvgPathExportCurveReport2 {
+                curve_index: report_index,
+                family: curve.family(),
+                source: curve.source(),
+                start_point: curve.start().clone(),
+                end_point: curve.end().clone(),
+                status: RetainedTopologyStatus::DisplayOrExport,
+            });
+            let segment_kind = match curve.geometry() {
+                CurveGeometry2::Line(_) => {
+                    segment_kind_counts.lines += 1;
+                    Some(SegmentKind::Line)
+                }
+                CurveGeometry2::CircularArc(_) => {
+                    segment_kind_counts.arcs += 1;
+                    Some(SegmentKind::Arc)
+                }
+                CurveGeometry2::QuadraticBezier(_) | CurveGeometry2::CubicBezier(_) => None,
+                CurveGeometry2::RationalQuadraticBezier(_)
+                | CurveGeometry2::RationalBezier(_)
+                | CurveGeometry2::PolynomialBSpline(_)
+                | CurveGeometry2::Nurbs(_) => {
+                    unreachable!("unsupported SVG family was rejected before emission")
+                }
+            };
+            if let Some(segment_kind) = segment_kind {
+                segment_reports.push(SvgPathExportSegmentReport2 {
+                    carrier_index,
+                    segment_index,
+                    segment_kind,
+                    start_point: curve.start().clone(),
+                    end_point: curve.end().clone(),
+                    status: RetainedTopologyStatus::DisplayOrExport,
+                });
+            }
+            segment_count += 1;
+        }
+    }
+    let material_contour_count = roles
+        .iter()
+        .filter(|role| **role == CurveRegionLoopRole::Material)
+        .count();
+    let hole_contour_count = roles.len() - material_contour_count;
+    Ok(SvgPathExportResult2 {
+        path_data: Some(path_data),
+        report: SvgPathExportReport2 {
+            target: SvgPathExportTarget2::Region,
+            material_contour_count,
+            hole_contour_count,
+            curve_string_count: paths.len(),
+            segment_count,
+            segment_kind_counts,
+            segment_reports,
+            curve_reports,
+            closed_subpath_count: paths.len(),
+            status: RetainedTopologyStatus::DisplayOrExport,
+            lossy_boundary: false,
+            blocker: None,
+        },
+    })
+}
+
+fn blocked_curve_region_svg_export(
+    boundary_count: usize,
+    reason: UncertaintyReason,
+) -> SvgPathExportResult2 {
+    SvgPathExportResult2 {
+        path_data: None,
+        report: SvgPathExportReport2 {
+            target: SvgPathExportTarget2::Region,
+            material_contour_count: 0,
+            hole_contour_count: 0,
+            curve_string_count: boundary_count,
+            segment_count: 0,
+            segment_kind_counts: SegmentKindCounts::default(),
+            segment_reports: Vec::new(),
+            curve_reports: Vec::new(),
+            closed_subpath_count: 0,
+            status: RetainedTopologyStatus::Unsupported,
+            lossy_boundary: false,
+            blocker: Some(reason),
+        },
+    }
 }
 
 fn append_curve_string_path(
@@ -1359,19 +1516,17 @@ pub fn import_svg_region_path_data_with_report(
     let mut path_reports = Vec::with_capacity(subpaths.len());
     let mut closure_reports = Vec::with_capacity(subpaths.len());
     let mut contours = Vec::with_capacity(subpaths.len());
+    let mut boundary_paths = Vec::with_capacity(subpaths.len());
+    let mut all_native = true;
     for subpath in &subpaths {
-        let imported = import_svg_contour_path_data_with_report(
+        let imported = import_svg_path_data_with_report(
             subpath,
-            fill_rule,
             source_index,
             source_version,
             source_tolerance,
         );
-        path_reports.push(imported.report().path_report().clone());
-        if let Some(closure_report) = imported.report().closure_report() {
-            closure_reports.push(closure_report.clone());
-        }
-        let Some(contour) = imported.into_contour() else {
+        path_reports.push(imported.report().clone());
+        let Some(path) = imported.curve_path().cloned() else {
             return blocked_svg_region_import(
                 path_reports,
                 closure_reports,
@@ -1386,10 +1541,159 @@ pub fn import_svg_region_path_data_with_report(
                 Some(UncertaintyReason::Unsupported),
             );
         };
-        contours.push(contour);
+        if path.start() != path.end() {
+            return blocked_svg_region_import(
+                path_reports,
+                closure_reports,
+                None,
+                fill_rule,
+                source_index,
+                source_version,
+                source_tolerance,
+                path_data.len(),
+                subpaths.len(),
+                RetainedTopologyStatus::Unsupported,
+                Some(UncertaintyReason::Unsupported),
+            );
+        }
+        if let Some(curve_string) = imported.curve_string().cloned() {
+            let Ok(closure) = Contour2::from_curve_string_with_report(curve_string, fill_rule)
+            else {
+                return blocked_svg_region_import(
+                    path_reports,
+                    closure_reports,
+                    None,
+                    fill_rule,
+                    source_index,
+                    source_version,
+                    source_tolerance,
+                    path_data.len(),
+                    subpaths.len(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                );
+            };
+            closure_reports.push(closure.report().clone());
+            let Some(contour) = closure.into_contour() else {
+                return blocked_svg_region_import(
+                    path_reports,
+                    closure_reports,
+                    None,
+                    fill_rule,
+                    source_index,
+                    source_version,
+                    source_tolerance,
+                    path_data.len(),
+                    subpaths.len(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                );
+            };
+            contours.push(contour);
+        } else {
+            all_native = false;
+        }
+        boundary_paths.push(path);
     }
 
-    let Ok(built) = Region2::from_boundary_contours_with_report(contours, policy) else {
+    if !all_native {
+        let preliminary = match CurveRegion2::try_from_boundary_paths(&boundary_paths) {
+            Ok(region) => region,
+            Err(_) => {
+                return blocked_svg_region_import(
+                    path_reports,
+                    closure_reports,
+                    None,
+                    fill_rule,
+                    source_index,
+                    source_version,
+                    source_tolerance,
+                    path_data.len(),
+                    subpaths.len(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                );
+            }
+        };
+        let roles = match preliminary.loop_roles(policy) {
+            Ok(Classification::Decided(roles)) => roles,
+            Ok(Classification::Uncertain(reason)) => {
+                return blocked_svg_region_import(
+                    path_reports,
+                    closure_reports,
+                    None,
+                    fill_rule,
+                    source_index,
+                    source_version,
+                    source_tolerance,
+                    path_data.len(),
+                    subpaths.len(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(reason),
+                );
+            }
+            Err(_) => {
+                return blocked_svg_region_import(
+                    path_reports,
+                    closure_reports,
+                    None,
+                    fill_rule,
+                    source_index,
+                    source_version,
+                    source_tolerance,
+                    path_data.len(),
+                    subpaths.len(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                );
+            }
+        };
+        let fill_rules = vec![fill_rule; boundary_paths.len()];
+        let region = match CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &boundary_paths,
+            &roles,
+            &fill_rules,
+        ) {
+            Ok(region) => region,
+            Err(_) => {
+                return blocked_svg_region_import(
+                    path_reports,
+                    closure_reports,
+                    None,
+                    fill_rule,
+                    source_index,
+                    source_version,
+                    source_tolerance,
+                    path_data.len(),
+                    subpaths.len(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                );
+            }
+        };
+        return SvgRegionImportResult2 {
+            region: Some(region),
+            report: SvgRegionImportReport2 {
+                materialized_contour_count: boundary_paths.len(),
+                path_reports,
+                closure_reports,
+                boundary_build_report: None,
+                curve_loop_roles: Some(roles),
+                fill_rule,
+                source_index,
+                source_version,
+                source_tolerance,
+                input_byte_count: path_data.len(),
+                subpath_count: subpaths.len(),
+                status: RetainedTopologyStatus::ImportedLossy,
+                lossy_boundary: true,
+                blocker: None,
+            },
+        };
+    }
+
+    let Ok(built) = CurveRegion2::try_from_native_boundary_contours_with_report(contours, policy)
+    else {
         return blocked_svg_region_import(
             path_reports,
             closure_reports,
@@ -1422,7 +1726,10 @@ pub fn import_svg_region_path_data_with_report(
             blocker,
         );
     };
-
+    let curve_loop_roles = match region.loop_roles(policy) {
+        Ok(Classification::Decided(roles)) => Some(roles),
+        Ok(Classification::Uncertain(_)) | Err(_) => None,
+    };
     SvgRegionImportResult2 {
         region: Some(region),
         report: SvgRegionImportReport2 {
@@ -1430,6 +1737,7 @@ pub fn import_svg_region_path_data_with_report(
             path_reports,
             closure_reports,
             boundary_build_report: Some(boundary_build_report),
+            curve_loop_roles,
             fill_rule,
             source_index,
             source_version,
@@ -2090,6 +2398,7 @@ fn blocked_svg_region_import(
             path_reports,
             closure_reports,
             boundary_build_report,
+            curve_loop_roles: None,
             fill_rule,
             source_index,
             source_version,

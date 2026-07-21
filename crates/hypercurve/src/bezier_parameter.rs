@@ -332,6 +332,71 @@ impl BezierParameterPolynomial {
             }
         }
     }
+
+    /// Returns the sign immediately after an odd-multiplicity root.
+    ///
+    /// `None` denotes an even-multiplicity non-crossing root. Represented roots
+    /// are divided out exactly; algebraic roots use the certified signs at the
+    /// isolating interval boundaries.
+    pub(crate) fn sign_after_crossing_root(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Option<RealSign>>> {
+        match parameter {
+            BezierParameter2::Exact(root) => {
+                let mut coefficients = self.coefficients.clone();
+                let mut multiplicity = 0_usize;
+                let residual_sign = loop {
+                    match real_sign(&evaluate_coefficients(&coefficients, root), policy) {
+                        Some(RealSign::Zero) if coefficients.len() > 1 => {
+                            multiplicity += 1;
+                            coefficients = divide_by_linear_root(&coefficients, root);
+                        }
+                        Some(sign @ (RealSign::Positive | RealSign::Negative)) => break sign,
+                        Some(RealSign::Zero) => {
+                            return Err(CurveError::InvalidBezierParameter);
+                        }
+                        None => {
+                            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                        }
+                    }
+                };
+                if multiplicity == 0 {
+                    return Err(CurveError::InvalidBezierParameter);
+                }
+                Ok(Classification::Decided(
+                    (!multiplicity.is_multiple_of(2)).then_some(residual_sign),
+                ))
+            }
+            BezierParameter2::Algebraic(parameter) => {
+                let count = match self.root_count_in_interval(parameter.interval(), policy)? {
+                    Classification::Decided(count) => count,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if count != 1 {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                let start = match real_sign(&self.evaluate(parameter.interval().start()), policy) {
+                    Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                    Some(RealSign::Zero) => {
+                        return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    }
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                };
+                let end = match real_sign(&self.evaluate(parameter.interval().end()), policy) {
+                    Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                    Some(RealSign::Zero) => {
+                        return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    }
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                };
+                Ok(Classification::Decided((start != end).then_some(end)))
+            }
+        }
+    }
 }
 
 impl BezierRootIsolationTrace2 {

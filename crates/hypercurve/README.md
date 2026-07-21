@@ -36,10 +36,11 @@ regularized results. Region preparation retains certified loop-junction vertex
 identity, so independently represented algebraic endpoint images are not reclassified
 when a result feeds another operation.
 
-`Region2` remains the native line/circular-arc region type. `RegionView2<'_>` and
-prepared borrowed views serve repeated classification and Boolean queries without
-copying contours. `Contour2` owns a closed line/arc boundary, while `CurveString2`
-owns an open or closed ordered line/arc path.
+`CurveRegion2` is the sole general owned region carrier. Native line/circular-arc
+topology is retained internally as a specialized accelerator; borrowed native
+contour views and prepared views serve repeated classification and Boolean queries
+without copying contours. `Contour2` owns a closed line/arc boundary, while
+`CurveString2` owns an open or closed ordered line/arc path.
 
 `Curve2` is the immutable shared carrier for lines, circular arcs, quadratic and
 cubic Beziers, arbitrary-degree rational Beziers, polynomial B-splines, and NURBS.
@@ -71,10 +72,27 @@ minor, semicircular, major, and full-circle sweeps, and share that promotion
 across top-level curve clones.
 
 Pipeline reports, finite projection, reconstruction, and IO are secondary APIs.
-`Region2::arrange_unordered_segments` and its line-specialized and borrowed
-variants return a retained `RegionArrangement2`; arrangement machinery and
-caches stay behind that domain result so callers do not manage workspaces or
-repeat exact geometric calculations.
+`CurveRegion2::arrange_unordered_segments` and its borrowed variant return a
+retained `CurveRegionArrangement2`; native arrangement machinery and caches stay
+behind that unified result so callers do not manage workspaces or duplicate a
+second owned region representation.
+
+`CurveRegion2::segment_certified` emits a line-only unified region whose vertices
+remain exact `Real` values, with per-loop role, fill-rule, source-span, subdivision,
+and chord-error evidence. `segment_to_finite_profiles` is the explicit `f64`
+mesh/extrusion boundary; `recover_from_finite_profiles_with_report` mirrors that
+boundary by rebuilding exact-scalar line/arc topology while recording that the
+relationship to the original curves is lossy.
+
+Polynomial Bezier parallels retain the exact analytic expression and exact source/
+offset-cusp isolation. Line images and Pythagorean-hodograph curves materialize exact
+native or rational offsets. Other regular spans use Levien-style cubics and Blend2D
+quadratics only as candidates; a conservative exact-scalar verifier certifies each
+accepted span. `CurvePath2::approximate_parallel_blend2d_certified` assembles smooth
+connected paths, while `CurveRegion2::offset_with_certified_bezier_parallel` adds
+output chord certification and exact line-arrangement regularization. Its report
+distinguishes the pre-regularization directed error bound, final-topology guarantees,
+and the weaker source-chord fallback used for corners or unsupported families.
 
 ## WASM Demo
 
@@ -95,8 +113,9 @@ cases remain explicit uncertainty instead of being hidden behind display polylin
 
 ## Main Types
 
-- `CurveRegion2` is the exact mixed-family region type; `Region2` and `RegionView2`
-  are the native line/arc owned and borrowed region types.
+- `CurveRegion2` is the exact mixed-family owned region type. `RegionView2` and
+  native-contour views are borrowed acceleration/interchange adapters for exact
+  line/arc topology.
 - `Curve2`, `CurveView2`, `CurvePath2`, and `CurvePathView2` are the primary
   mixed-family curve and connected-path types.
 - `PreparedCurveIntersection2` dispatches top-level curve pairs through retained
@@ -134,8 +153,9 @@ cases remain explicit uncertainty instead of being hidden behind display polylin
   on the native line/arc carrier because general algebraic point inversion is not
   silently approximated.
 - `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, and their fact,
-  relation, metric, zero-error fitting, staged offset, and flattening APIs represent polynomial and
-  rational curve work.
+  relation, metric, zero-error fitting, exact-parallel/cusp, PH-offset,
+  conservatively verified fitting, staged offset, and flattening APIs represent
+  polynomial and rational curve work.
 - `BezierParameterPolynomial` isolates represented and algebraic roots in `[0, 1]`;
   `BezierRootIsolationResult2` and `BezierRootIsolationTrace2` expose the ordered
   exact carriers and certificate-work counts for profiling root-heavy operations.
@@ -399,11 +419,11 @@ geometry work:
 
 ```rust
 use hypercurve::{
-    Contour2, CurvePolicy, LineSeg2, Point2, QuadraticBezier2, Region2, Segment2,
+    Contour2, CurvePolicy, CurveRegion2, LineSeg2, Point2, QuadraticBezier2, Segment2,
 };
 use hyperreal::Real;
 
-fn main() -> hypercurve::CurveResult<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let p = |x, y| Point2::new(Real::from(x), Real::from(y));
     let bezier = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
     let facts = bezier.structural_facts();
@@ -414,20 +434,21 @@ fn main() -> hypercurve::CurveResult<()> {
     let top = Segment2::Line(LineSeg2::try_new(p(2, 2), p(0, 2))?);
     let left = Segment2::Line(LineSeg2::try_new(p(0, 2), p(0, 0))?);
     let contour = Contour2::try_new(vec![bottom, right, top, left])?;
-    let region = Region2::from_material_contours(vec![contour]);
+    let policy = CurvePolicy::certified();
+    let region = CurveRegion2::try_from_native_material_contours(vec![contour], &policy)?;
 
-    let location = region.classify_point(&p(1, 1), &CurvePolicy::certified());
+    let location = region.classify_point(&p(1, 1), &policy)?;
     assert!(matches!(location, hypercurve::Classification::Decided(_)));
     Ok(())
 }
 ```
 
-For unordered exact line/arc input, arrange through `Region2` and read output and
-blockers from the retained result. The runnable
+For unordered exact line/arc input, arrange through `CurveRegion2` and read output
+and blockers from the retained result. The runnable
 [`arrangement_report`](examples/arrangement_report.rs) example demonstrates the
 arrangement, classification, and reporting workflow.
 
-`RegionArrangement2` retains one canonical evaluation and optional materialized
+`CurveRegionArrangement2` retains one canonical evaluation and optional unified
 region without duplicating report-shaped state.
 
 ## Pathological memory benchmarks
@@ -438,7 +459,7 @@ quadratic/general Bezier, polynomial B-spline, and NURBS carriers; it also
 retains rational, primitive-dyadic, multi-limb, symbolic constant/root/log/trig,
 and opaque-computable `Real` samples. Its mate is copied through an exact
 3-4-5 rotation plus rational translation. The same shard also carries a
-finite-polyline `Region2` projection so all four Boolean operations have a
+finite-polyline `CurveRegion2` projection so all four Boolean operations have a
 decidable stress lane when a higher-order operation correctly reports an
 unsupported or undecidable exact predicate.
 

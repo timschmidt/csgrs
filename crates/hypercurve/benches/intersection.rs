@@ -3,8 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     ArcArcIntersection, BulgeVertex2, CircleCircleRelation, CircularArc2, Classification, Contour2,
-    CurvePolicy, CurveResult, CurveString2, LineCircleRelation, LineSeg2, Point2, Real, Region2,
-    Segment2,
+    CurvePolicy, CurveResult, CurveString2, LineArcRegion2, LineCircleRelation, LineSeg2, Point2,
+    Real, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -276,8 +276,8 @@ fn bench_sparse_region_events(contour_count: i32, iterations: u32) -> CurveResul
         let x = index * 10;
         contours.push(rectangle(x, 0, x + 4, 4));
     }
-    let region = Region2::from_material_contours(contours);
-    let cutter = Region2::from_material_contours(vec![rectangle(12, -1, 18, 5)]);
+    let region = LineArcRegion2::from_material_contours(contours);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(12, -1, 18, 5)]);
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_pairs = 0_usize;
@@ -304,8 +304,8 @@ fn bench_prepared_sparse_region_events(contour_count: i32, iterations: u32) -> C
         let x = index * 10;
         contours.push(rectangle(x, 0, x + 4, 4));
     }
-    let region = Region2::from_material_contours(contours);
-    let cutter = Region2::from_material_contours(vec![rectangle(12, -1, 18, 5)]);
+    let region = LineArcRegion2::from_material_contours(contours);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(12, -1, 18, 5)]);
     let policy = CurvePolicy::certified();
     let prepared_region = region.prepare_topology_queries(&policy);
     let prepared_cutter = cutter.prepare_topology_queries(&policy);

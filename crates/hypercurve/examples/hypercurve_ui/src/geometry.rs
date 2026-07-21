@@ -6,7 +6,7 @@ use hypercurve::{
     BooleanOp as HBooleanOp, BulgeVertex2, Classification, Contour2, ContourFragmentSet,
     ContourIntersection, ContourIntersectionSet, ContourOperand, ContourSplitMarkers, CubicBezier2,
     CurvePolicy, CurveString2, FillRule, OffsetCap, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, Region2, Segment2, Tolerance,
+    RationalQuadraticBezier2, Real, LineArcRegion2, Segment2, Tolerance,
 };
 use serde::{Deserialize, Serialize};
 
@@ -799,7 +799,7 @@ impl Shape {
         Self { materials, holes }
     }
 
-    pub fn from_region(region: &Region2) -> Self {
+    pub fn from_region(region: &LineArcRegion2) -> Self {
         Self {
             materials: region
                 .material_contours()
@@ -834,7 +834,7 @@ impl Shape {
         Ok(())
     }
 
-    pub fn to_region(&self) -> Result<Region2, String> {
+    pub fn to_region(&self) -> Result<LineArcRegion2, String> {
         self.validate_finite()?;
         let materials = self
             .materials
@@ -854,9 +854,9 @@ impl Shape {
             return Ok(region);
         }
 
-        match Region2::from_boundary_contours(contours, &policy()).map_err(|e| e.to_string())? {
+        match LineArcRegion2::from_boundary_contours(contours, &policy()).map_err(|e| e.to_string())? {
             Classification::Decided(region) => Ok(region),
-            Classification::Uncertain(_) => Ok(Region2::new(materials, holes)),
+            Classification::Uncertain(_) => Ok(LineArcRegion2::new(materials, holes)),
         }
     }
 
@@ -1065,11 +1065,11 @@ fn signed_area_of_coords(coords: &[Coord<f64>]) -> f64 {
 fn regularized_region(
     materials: &[HContour],
     holes: &[HContour],
-) -> Result<Option<Region2>, String> {
-    let mut region = Region2::empty();
+) -> Result<Option<LineArcRegion2>, String> {
+    let mut region = LineArcRegion2::empty();
 
     for contour in materials {
-        let next = Region2::from_material_contours(vec![contour.clone()]);
+        let next = LineArcRegion2::from_material_contours(vec![contour.clone()]);
         region = match region
             .boolean_region(&next, HBooleanOp::Union, FillRule::NonZero, &policy())
             .map_err(|e| e.to_string())?
@@ -1080,7 +1080,7 @@ fn regularized_region(
     }
 
     for contour in holes {
-        let next = Region2::from_material_contours(vec![contour.clone()]);
+        let next = LineArcRegion2::from_material_contours(vec![contour.clone()]);
         region = match region
             .boolean_region(&next, HBooleanOp::Difference, FillRule::NonZero, &policy())
             .map_err(|e| e.to_string())?

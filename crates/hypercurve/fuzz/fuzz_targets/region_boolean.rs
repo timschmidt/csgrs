@@ -1,7 +1,7 @@
 #![no_main]
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real, Region2,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real, LineArcRegion2,
     RegionPointLocation,
 };
 use libfuzzer_sys::fuzz_target;
@@ -10,7 +10,7 @@ fn r(value: i32) -> Real {
     value.into()
 }
 
-fn rectangle(x: u8, y: u8, width: u8, height: u8) -> Region2 {
+fn rectangle(x: u8, y: u8, width: u8, height: u8) -> LineArcRegion2 {
     let min_x = r(x as i32 - 128);
     let min_y = r(y as i32 - 128);
     let max_x = &min_x + r((width % 32) as i32 + 1);
@@ -22,7 +22,7 @@ fn rectangle(x: u8, y: u8, width: u8, height: u8) -> Region2 {
         BulgeVertex2::new(Point2::new(min_x, max_y), Real::zero()),
     ])
     .expect("positive rectangle dimensions form a valid contour");
-    Region2::from_material_contours(vec![contour])
+    LineArcRegion2::from_material_contours(vec![contour])
 }
 
 fn boolean_membership(

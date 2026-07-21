@@ -2,8 +2,10 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult, CurveString2,
-    LineSeg2, OffsetCap, Point2, Real, Segment2,
+    BezierFlatteningOptions, BezierParallelVerificationOptions, BulgeVertex2, CircularArc2,
+    Classification, Contour2, CubicBezier2, Curve2, CurvePath2, CurvePolicy, CurveRegion2,
+    CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap, Point2,
+    QuadraticBezier2, Real, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -12,6 +14,10 @@ fn s(value: i32) -> Real {
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
+}
+
+fn q(numerator: i32, denominator: i32) -> Real {
+    (s(numerator) / s(denominator)).expect("nonzero benchmark denominator")
 }
 
 fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
@@ -360,7 +366,156 @@ fn bench_contour_checked_offset_report(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn main() -> CurveResult<()> {
+fn bench_exact_bezier_parallel_evaluation(iterations: u32) -> CurveResult<()> {
+    let source = CubicBezier2::new(p(0, 0), p(1, 2), p(3, -1), p(4, 0));
+    let parallel = source.parallel_left(q(1, 10))?;
+    let policy = CurvePolicy::certified();
+    let parameter = q(7, 13);
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(point) = parallel.point_at(&parameter, &policy)? else {
+            panic!("exact Bezier parallel evaluation became uncertain");
+        };
+        checksum += black_box(point.x().to_f64_lossy().is_some() as usize);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_parallel_exact_eval: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_bezier_parallel_cusp_isolation(iterations: u32) -> CurveResult<()> {
+    let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), s(0)), p(1, 1));
+    let parallel = source.parallel_left(s(1))?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut roots = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(analysis) = parallel.singularity_analysis(&policy)? else {
+            panic!("Bezier parallel cusp isolation became uncertain");
+        };
+        roots += black_box(analysis.parallel_cusps().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_parallel_cusp_isolation: {iterations} iterations in {elapsed:?} ({:?}/iter), roots={roots}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_exact_ph_offset_construction(iterations: u32) -> CurveResult<()> {
+    let source = CubicBezier2::new(
+        p(0, 0),
+        Point2::new(q(1, 3), s(0)),
+        Point2::new(q(2, 3), q(1, 3)),
+        Point2::new(q(2, 3), s(1)),
+    );
+    let parallel = source.parallel_left(q(1, 5))?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut degree = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(Some(offset)) =
+            parallel.exact_pythagorean_hodograph_offset(&policy)?
+        else {
+            panic!("PH benchmark source was not recognized");
+        };
+        degree += black_box(offset.rational_degree());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_parallel_exact_ph: {iterations} iterations in {elapsed:?} ({:?}/iter), degree checksum={degree}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_certified_bezier_parallel_construction(iterations: u32) -> CurveResult<()> {
+    let source = CubicBezier2::new(p(0, 0), p(1, 2), p(2, -1), p(4, 0));
+    let policy = CurvePolicy::certified();
+    let options = BezierParallelVerificationOptions::try_new(q(1, 20), 14, &policy)?;
+    let started = Instant::now();
+    let mut spans = 0_usize;
+    let mut leaves = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(path) =
+            source.approximate_parallel_blend2d_certified(q(1, 10), &options, &policy)?
+        else {
+            panic!("certified Bezier parallel construction became uncertain");
+        };
+        spans += black_box(path.spans().len());
+        leaves += black_box(path.verification_leaf_count());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_parallel_certified_blend2d_levien: {iterations} iterations in {elapsed:?} ({:?}/iter), spans={spans}, verifier leaves={leaves}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_curve_region_bezier_offset_lanes(
+    iterations: u32,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let source_path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(1, 0), p(1, 1), p(0, 1))),
+        Curve2::from(QuadraticBezier2::new(p(0, 1), p(-1, 1), p(-1, 0))),
+        Curve2::from(QuadraticBezier2::new(p(-1, 0), p(-1, -1), p(0, -1))),
+        Curve2::from(QuadraticBezier2::new(p(0, -1), p(1, -1), p(1, 0))),
+    ])?;
+    let source = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[source_path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::EvenOdd],
+    )?;
+    let policy = CurvePolicy::certified();
+    let verification = BezierParallelVerificationOptions::try_new(q(1, 20), 16, &policy)?;
+    let flattening = BezierFlatteningOptions::try_new(q(1, 20), 16, &policy)?;
+
+    let started = Instant::now();
+    let mut certified_loops = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(result) = source.offset_with_certified_bezier_parallel(
+            q(1, 10),
+            &verification,
+            &flattening,
+            &flattening,
+            &policy,
+        )?
+        else {
+            panic!("certified CurveRegion2 Bezier offset became uncertain");
+        };
+        certified_loops += black_box(result.region().boundary_loops().len());
+    }
+    let certified_elapsed = started.elapsed();
+    println!(
+        "curve_region_bezier_parallel_certified: {iterations} iterations in {certified_elapsed:?} ({:?}/iter), loops={certified_loops}",
+        certified_elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut fallback_loops = 0_usize;
+    for _ in 0..iterations {
+        let Classification::Decided(result) =
+            source.offset_with_certified_segmentation(q(1, 10), &flattening, &policy)?
+        else {
+            panic!("segmented CurveRegion2 Bezier offset became uncertain");
+        };
+        fallback_loops += black_box(result.region().boundary_loops().len());
+    }
+    let fallback_elapsed = started.elapsed();
+    println!(
+        "curve_region_bezier_parallel_chord_fallback: {iterations} iterations in {fallback_elapsed:?} ({:?}/iter), loops={fallback_loops}",
+        fallback_elapsed / iterations
+    );
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     bench_line_offset(100_000)?;
 
     let clockwise_arc = Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(-1))?);
@@ -397,6 +552,11 @@ fn main() -> CurveResult<()> {
     bench_contour_joined_offset(100_000)?;
     bench_contour_checked_offset(100_000)?;
     bench_contour_checked_offset_report(100_000)?;
+    bench_exact_bezier_parallel_evaluation(10_000)?;
+    bench_bezier_parallel_cusp_isolation(100)?;
+    bench_exact_ph_offset_construction(1_000)?;
+    bench_certified_bezier_parallel_construction(100)?;
+    bench_curve_region_bezier_offset_lanes(10)?;
 
     Ok(())
 }

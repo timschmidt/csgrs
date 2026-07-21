@@ -36,6 +36,7 @@ mod bspline;
 mod bulge;
 mod classify;
 mod contour;
+mod contour_regularize;
 mod curve;
 mod curve_intersection;
 mod curve_path_intersection;
@@ -104,19 +105,33 @@ pub use bezier_fit::{
 };
 pub use bezier_flatten::{
     BezierFlatteningCertificate, BezierFlatteningOptions, CertifiedBezierPolyline2,
+    CertifiedCurvePolyline2,
 };
 pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
-pub use bezier_offset::{BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk};
+pub use bezier_offset::{
+    BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk, BezierParallel2,
+    BezierParallelApproximationCurve2, BezierParallelSingularityAnalysis2,
+    BezierParallelVerificationOptions, Blend2dCubicQuadraticReduction2,
+    Blend2dQuadraticOffsetCandidate2, CertifiedBezierParallelApproximation2,
+    CertifiedBezierParallelPath2, CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
+    CertifiedPythagoreanHodographOffset2, LevienCubicOffsetCandidate2,
+};
 pub use bezier_parameter::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierParameterRange2, BezierRootIsolationResult2,
     BezierRootIsolationTrace2,
 };
 pub use bezier_region::{
-    BezierBoundaryLoop2, BezierRegion2, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionFragmentProvenance2, CurveRegionFragmentSource2, CurveRegionLineRoleReport2,
-    CurveRegionLoopRole, CurveRegionNestingRoleReport2, CurveRegionSignedAreaRoleReport2,
+    BezierBoundaryLoop2, BezierRegion2, CurveRegion2, CurveRegionArrangement2,
+    CurveRegionBoundaryContourBuildResult2, CurveRegionBoundaryLoop2,
+    CurveRegionCertifiedParallelLoopReport2, CurveRegionCertifiedParallelOffsetReport2,
+    CurveRegionCertifiedParallelOffsetResult2, CurveRegionCertifiedSegmentationReport2,
+    CurveRegionCertifiedSegmentationResult2, CurveRegionFragmentProvenance2,
+    CurveRegionFragmentSource2, CurveRegionLineRoleReport2, CurveRegionLoopRole,
+    CurveRegionNativeContourView2, CurveRegionNestingRoleReport2, CurveRegionProfile2,
+    CurveRegionSegmentationLoopReport2, CurveRegionSegmentedOffsetReport2,
+    CurveRegionSegmentedOffsetResult2, CurveRegionSignedAreaRoleReport2, PreparedCurveRegionView2,
 };
 pub use bezier_retained_measure::{
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
@@ -146,8 +161,9 @@ pub use bezier_tangent_order::{
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
     BezierCuspClassification, BezierGraphContact, BezierInflectionClassification,
-    BezierLineContact, BezierLineContactKind, BezierLineContactRelation, BezierLineRelation,
-    BezierMonotoneGraphContactOrder, BezierMonotoneGraphOrder, BezierMonotoneSpan,
+    BezierLineContact, BezierLineContactKind, BezierLineContactRelation,
+    BezierLineCrossingDirection, BezierLineRelation, BezierMonotoneGraphContactOrder,
+    BezierMonotoneGraphOrder, BezierMonotoneSpan,
 };
 pub use boolean::{
     BooleanBoundaryFragmentEmissionReport2, BooleanBoundaryFragmentEmissionResult2,
@@ -199,7 +215,10 @@ pub use curve_path_intersection::{
     CurvePathIntersectionTopology2, CurvePathOverlapAction2, CurvePathOverlapResolution2,
     CurvePathSplit2, PreparedCurvePathIntersection2,
 };
-pub use curve_region_boolean::PreparedCurveRegionBoolean2;
+pub use curve_region_boolean::{
+    CurveRegionCarrierRef2, CurveRegionIntersectionBlocker2, CurveRegionIntersectionContact2,
+    CurveRegionIntersectionOverlap2, CurveRegionIntersectionReport2, PreparedCurveRegionBoolean2,
+};
 pub use curve_string::{
     ConnectedCurveString2, CurveString2, CurveStringChamferInputPath2,
     CurveStringChamferPredicatePath2, CurveStringChamferReport2, CurveStringChamferResult2,
@@ -287,11 +306,15 @@ pub use rational_bezier_general::{
     RationalBezierPointIncidence2,
 };
 pub use reconstruct::{
-    ContourPolylineReconstructionResult2, CurveStringPolylineReconstructionResult2,
-    FiniteContourImport2, FiniteCurveStringImport2, PolylineReconstructionOptions,
-    PolylineReconstructionReport2, PolylineReconstructionSegmentReport2,
+    ContourPolylineReconstructionResult2, CurveRegionProfileRecoveryReport2,
+    CurveRegionRecoveryReport2, CurveRegionRecoveryResult2,
+    CurveStringPolylineReconstructionResult2, FiniteContourImport2, FiniteCurveStringImport2,
+    PolylineReconstructionOptions, PolylineReconstructionReport2,
+    PolylineReconstructionSegmentReport2,
 };
-pub use region::{Region2, RegionContourProfile, RegionPointLocation, RegionView2};
+#[doc(hidden)]
+pub use region::LineArcRegion2;
+pub use region::{RegionContourProfile, RegionPointLocation, RegionView2};
 pub use region_boolean::{
     RegionBooleanBoundaryContourSourcePath2, RegionBooleanBoundaryPredicatePath2,
     RegionBooleanPipelineReport2, RegionBooleanPreparedCacheReport2, RegionBooleanQueryPath2,
@@ -503,7 +526,7 @@ mod tests {
             BulgeVertex2::new(p(3, 1), s(0)),
         ])
         .unwrap();
-        let region = Region2::new(vec![material], vec![clockwise_hole]);
+        let region = LineArcRegion2::new(vec![material], vec![clockwise_hole]);
 
         assert_eq!(
             region.filled_area(&topology_policy()).unwrap(),

@@ -1,6 +1,6 @@
 use hypercurve::{
     Aabb2, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2,
-    LineSeg2, Point2, Real, Region2, Segment2, UncertaintyReason,
+    LineArcRegion2, LineSeg2, Point2, Real, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -167,7 +167,7 @@ fn region_aabb_unions_material_and_hole_boundaries() {
         BulgeVertex2::new(p(20, 6), s(0)),
     ])
     .unwrap();
-    let region = Region2::new(vec![material], vec![hole]);
+    let region = LineArcRegion2::new(vec![material], vec![hole]);
 
     let Classification::Decided(bbox) = Aabb2::from_region(&region, &policy()).unwrap() else {
         panic!("region bbox should be decided");
@@ -178,7 +178,7 @@ fn region_aabb_unions_material_and_hole_boundaries() {
 #[test]
 fn empty_region_aabb_is_explicitly_unsupported() {
     assert_eq!(
-        Aabb2::from_region(&Region2::empty(), &policy()).unwrap(),
+        Aabb2::from_region(&LineArcRegion2::empty(), &policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }

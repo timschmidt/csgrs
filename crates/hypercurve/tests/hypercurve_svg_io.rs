@@ -3,7 +3,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourClosureStage2,
     ContourPointLocation, Curve2, CurveFamily2, CurveGeometry2, CurvePath2, CurvePolicy,
-    CurveSource2, CurveString2, FillRule, LineSeg2, Point2, RationalBezier2, Real, Region2,
+    CurveSource2, CurveString2, FillRule, LineArcRegion2, LineSeg2, Point2, RationalBezier2, Real,
     RegionBoundaryContourBuildStage2, RetainedImportFormat2, RetainedImportTopology2,
     RetainedTopologyStatus, Segment2, SegmentKind, SvgPathExportTarget2, UncertaintyReason,
     import_svg_contour_path_data_with_report, import_svg_path_data_with_report,
@@ -20,6 +20,13 @@ fn p(x: i32, y: i32) -> Point2 {
 
 fn line(a: (i32, i32), b: (i32, i32)) -> Segment2 {
     Segment2::Line(LineSeg2::try_new(p(a.0, a.1), p(b.0, b.1)).unwrap())
+}
+
+fn region_role_counts(region: &hypercurve::CurveRegion2) -> (usize, usize) {
+    match region.loop_role_counts(&CurvePolicy::certified()).unwrap() {
+        Classification::Decided(counts) => counts,
+        Classification::Uncertain(reason) => panic!("region roles were uncertain: {reason:?}"),
+    }
 }
 
 fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
@@ -143,7 +150,7 @@ fn arc_svg_export_preserves_exact_minor_major_and_full_sweep_images() {
 
 #[test]
 fn region_svg_export_preserves_material_and_hole_counts() {
-    let region = Region2::new(vec![rectangle(0, 0, 4, 4)], vec![rectangle(1, 1, 2, 2)]);
+    let region = LineArcRegion2::new(vec![rectangle(0, 0, 4, 4)], vec![rectangle(1, 1, 2, 2)]);
 
     let exported = region.to_svg_path_data_with_report().unwrap();
 
@@ -398,6 +405,53 @@ fn svg_closed_cubic_path_feeds_exact_top_level_boundary_queries() {
             .unwrap()
             .source_topology(),
         RetainedImportTopology2::ClosedContour
+    );
+}
+
+#[test]
+fn svg_closed_cubic_region_import_and_export_stay_on_curve_region() {
+    let imported = import_svg_region_path_data_with_report(
+        "M 0 0 C 0 2 2 2 2 0 Z",
+        FillRule::NonZero,
+        31,
+        4,
+        None,
+        &CurvePolicy::certified(),
+    );
+    let region = imported
+        .region()
+        .expect("closed cubic SVG boundary should materialize as CurveRegion2");
+
+    assert_eq!(region_role_counts(region), (1, 0));
+    assert_eq!(
+        region
+            .classify_point(&p(1, 1), &CurvePolicy::certified())
+            .unwrap(),
+        Classification::Decided(hypercurve::RegionPointLocation::Inside)
+    );
+    assert!(
+        region
+            .line_arc_region_fast_path(&CurvePolicy::certified())
+            .unwrap()
+            .is_uncertain()
+    );
+    assert_eq!(imported.report().materialized_contour_count(), 1);
+    assert!(imported.report().closure_reports().is_empty());
+    assert!(imported.report().boundary_build_report().is_none());
+    assert_eq!(
+        imported.report().curve_loop_roles(),
+        Some([hypercurve::CurveRegionLoopRole::Material].as_slice())
+    );
+
+    let exported = region.to_svg_path_data_with_report().unwrap();
+    assert_eq!(exported.report().target(), SvgPathExportTarget2::Region);
+    assert_eq!(exported.report().material_contour_count(), 1);
+    assert_eq!(exported.report().hole_contour_count(), 0);
+    assert_eq!(exported.report().closed_subpath_count(), 1);
+    assert_eq!(exported.report().segment_count(), 2);
+    assert_eq!(
+        exported.path_data().map(String::as_str),
+        Some("M 0 0 C 0 2 2 2 2 0 Q 1 0 0 0 Z")
     );
 }
 
@@ -725,8 +779,7 @@ fn svg_region_import_materializes_nested_closed_line_subpaths() {
     let region = imported
         .region()
         .expect("nested closed subpaths should materialize");
-    assert_eq!(region.material_contours().len(), 1);
-    assert_eq!(region.hole_contours().len(), 1);
+    assert_eq!(region_role_counts(region), (1, 1));
     assert_eq!(
         imported.report().status(),
         RetainedTopologyStatus::ImportedLossy
@@ -759,8 +812,7 @@ fn svg_region_import_materializes_nested_closed_line_subpaths() {
     );
     assert!(matches!(
         imported.region_classification(),
-        Classification::Decided(region)
-            if region.material_contours().len() == 1 && region.hole_contours().len() == 1
+        Classification::Decided(region) if region_role_counts(region) == (1, 1)
     ));
     let owned_report = imported.clone().into_report();
     assert_eq!(&owned_report, imported.report());
@@ -769,8 +821,7 @@ fn svg_region_import_materializes_nested_closed_line_subpaths() {
     assert_eq!(&owned_parts_report, imported.report());
     assert!(matches!(
         imported.into_region_classification(),
-        Classification::Decided(region)
-            if region.material_contours().len() == 1 && region.hole_contours().len() == 1
+        Classification::Decided(region) if region_role_counts(&region) == (1, 1)
     ));
 }
 
@@ -788,8 +839,7 @@ fn svg_region_import_accepts_first_relative_move_subpath() {
     let region = imported
         .region()
         .expect("first relative move region should materialize");
-    assert_eq!(region.material_contours().len(), 1);
-    assert_eq!(region.hole_contours().len(), 1);
+    assert_eq!(region_role_counts(region), (1, 1));
     assert_eq!(
         imported.report().status(),
         RetainedTopologyStatus::ImportedLossy

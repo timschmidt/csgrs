@@ -14,7 +14,7 @@ use hypercurve::{
     CurveStringPreparedCacheFreshness2, CurveStringRegionTrimBoundaryPredicatePath2,
     CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
     CurveStringTrimPoint2, CurveStringTrimPredicatePath2, IntersectionKind, LineArcIntersection,
-    LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
+    LineArcOrder, LineArcRegion2, LineSeg2, Point2, Real, RegionContourRole, RegionPointLocation,
     Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
@@ -34,8 +34,8 @@ fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 
     Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
 }
 
-fn rectangle_region(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Region2 {
-    Region2::from_material_contours(vec![
+fn rectangle_region(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> LineArcRegion2 {
+    LineArcRegion2::from_material_contours(vec![
         Contour2::from_bulge_vertices(&[
             BulgeVertex2::new(p(xmin, ymin), s(0)),
             BulgeVertex2::new(p(xmax, ymin), s(0)),
@@ -4438,7 +4438,7 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
     let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)]).unwrap();
     let first = rectangle_region(0, 0, 2, 2);
     let second = rectangle_region(4, 0, 6, 2);
-    let region = Region2::from_material_contours(vec![
+    let region = LineArcRegion2::from_material_contours(vec![
         first.material_contours()[0].clone(),
         second.material_contours()[0].clone(),
     ]);
@@ -4584,7 +4584,7 @@ fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
     let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)]).unwrap();
     let first = rectangle_region(0, 0, 2, 2);
     let second = rectangle_region(4, 0, 6, 2);
-    let region = Region2::from_material_contours(vec![
+    let region = LineArcRegion2::from_material_contours(vec![
         first.material_contours()[0].clone(),
         second.material_contours()[0].clone(),
     ]);
@@ -4641,7 +4641,7 @@ fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
 fn curve_string_trim_inside_region_respects_holes() {
     let material = rectangle_region(0, 0, 10, 4).material_contours()[0].clone();
     let hole = rectangle_region(4, 0, 6, 4).material_contours()[0].clone();
-    let region = Region2::new(vec![material], vec![hole]);
+    let region = LineArcRegion2::new(vec![material], vec![hole]);
     let curve = CurveString2::try_new(vec![line_segment(1, 2, 9, 2)]).unwrap();
 
     let trimmed = curve.trim_inside_region(&region, &policy()).unwrap();

@@ -384,6 +384,10 @@ impl Contour2 {
         )
     }
 
+    pub(crate) fn has_retained_regular_offset_branch(&self) -> bool {
+        self.offset_provenance.is_some()
+    }
+
     /// Converts a connected curve string into a closed contour with a report.
     ///
     /// The closure decision is exact: the first and last points must have a

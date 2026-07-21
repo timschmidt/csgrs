@@ -9,7 +9,7 @@
 use crate::prepared::PreparedRegionView2;
 use crate::{
     BooleanBoundaryLoopSet, BooleanOp, Classification, Contour2, CurvePolicy, CurveResult,
-    FillRule, Region2, RegionBooleanPreparedCacheReport2, RegionBooleanResult2,
+    FillRule, LineArcRegion2, RegionBooleanPreparedCacheReport2, RegionBooleanResult2,
     RegionPreparedCacheAudit2,
 };
 
@@ -76,7 +76,7 @@ pub(crate) fn boolean_region_between_prepared(
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Region2>> {
+) -> CurveResult<Classification<LineArcRegion2>> {
     Ok(
         boolean_region_between_prepared_impl(first, second, op, fill_rule, policy, false)?
             .into_region_classification(),
@@ -187,34 +187,36 @@ fn boolean_region_between_prepared_impl(
         .into_contours()
         .expect("prepared region Boolean requests contour boundary output");
     if !retain_pipeline_report {
-        return Ok(match Region2::from_boundary_contours(contours, policy)? {
-            Classification::Decided(region) => {
-                crate::region_boolean::region_boolean_result_from_role_assigned_shortcut_region(
-                    &first_view,
-                    &second_view,
-                    op,
-                    fill_rule,
-                    crate::RegionBooleanQueryPath2::Prepared,
-                    &boundary_events,
-                    region,
-                    boundary_contour_source_path,
-                    None,
-                )
-            }
-            Classification::Uncertain(reason) => {
-                crate::region_boolean::blocked_region_boolean_result_with_prepared_cache(
-                    &first_view,
-                    &second_view,
-                    op,
-                    fill_rule,
-                    crate::RegionBooleanQueryPath2::Prepared,
-                    &boundary_events,
-                    crate::region_boolean::retained_status_for_boolean_blocker(reason),
-                    reason,
-                    None,
-                )
-            }
-        });
+        return Ok(
+            match LineArcRegion2::from_boundary_contours(contours, policy)? {
+                Classification::Decided(region) => {
+                    crate::region_boolean::region_boolean_result_from_role_assigned_shortcut_region(
+                        &first_view,
+                        &second_view,
+                        op,
+                        fill_rule,
+                        crate::RegionBooleanQueryPath2::Prepared,
+                        &boundary_events,
+                        region,
+                        boundary_contour_source_path,
+                        None,
+                    )
+                }
+                Classification::Uncertain(reason) => {
+                    crate::region_boolean::blocked_region_boolean_result_with_prepared_cache(
+                        &first_view,
+                        &second_view,
+                        op,
+                        fill_rule,
+                        crate::RegionBooleanQueryPath2::Prepared,
+                        &boundary_events,
+                        crate::region_boolean::retained_status_for_boolean_blocker(reason),
+                        reason,
+                        None,
+                    )
+                }
+            },
+        );
     }
     crate::region_boolean::region_boolean_result_from_boundary_contours_with_prepared_cache_and_pipeline_report(
         &first_view,
@@ -261,7 +263,7 @@ fn xor_region_by_prepared_difference_union(
     second: &PreparedRegionView2<'_>,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Region2>> {
+) -> CurveResult<Classification<LineArcRegion2>> {
     let first_only = match boolean_region_between_prepared(
         first,
         second,

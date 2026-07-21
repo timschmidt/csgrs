@@ -1,6 +1,6 @@
 use hypercurve::{
-    Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2,
-    PolylineReconstructionOptions, Real, Region2, Segment2,
+    Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule,
+    LineArcRegion2, Point2, PolylineReconstructionOptions, Real, Segment2,
 };
 use proptest::prelude::*;
 
@@ -9,7 +9,7 @@ struct PolygonCase {
     source_points: Vec<(i32, i32)>,
     material: Contour2,
     holes: Vec<Contour2>,
-    cutter: Region2,
+    cutter: LineArcRegion2,
 }
 
 fn s(value: i32) -> Real {
@@ -85,7 +85,7 @@ fn assert_contour_finite(contour: &Contour2) {
     }
 }
 
-fn assert_region_finite(region: &Region2) {
+fn assert_region_finite(region: &LineArcRegion2) {
     for contour in region
         .material_contours()
         .iter()
@@ -118,7 +118,7 @@ fn exercise_offsets(contour: &Contour2, distance: i32) {
     }
 }
 
-fn exercise_clipping(a: &Region2, b: &Region2) {
+fn exercise_clipping(a: &LineArcRegion2, b: &LineArcRegion2) {
     let policy = policy();
     let prepared_a = a.prepare_topology_queries(&policy);
     let prepared_b = b.prepare_topology_queries(&policy);
@@ -241,7 +241,7 @@ fn polygon_case(kind: u8, width: i32, height: i32, offset: i32, teeth: usize) ->
         (width / 3 + 2).min(width - 2),
         4.min(height - 2),
     );
-    let cutter = Region2::from_material_contours(vec![rectangle(
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(
         width / 4,
         -1,
         width + offset.max(2),
@@ -288,7 +288,7 @@ proptest! {
         teeth in 2_usize..6,
     ) {
         let case = polygon_case(kind, width, height, offset, teeth);
-        let region = Region2::new(vec![case.material], case.holes);
+        let region = LineArcRegion2::new(vec![case.material], case.holes);
         exercise_clipping(&region, &case.cutter);
     }
 
@@ -343,7 +343,7 @@ fn reconstructed_slender_concavity_offset_reports_uncertainty_not_radius_mismatc
 #[test]
 fn polygon_with_hole_cut_through_slender_concavity_stays_structurally_valid() {
     let case = polygon_case(1, 64, 40, 31, 3);
-    let region = Region2::new(vec![case.material.clone()], case.holes.clone());
+    let region = LineArcRegion2::new(vec![case.material.clone()], case.holes.clone());
 
     exercise_offsets(&case.material, 1);
     for hole in &case.holes {

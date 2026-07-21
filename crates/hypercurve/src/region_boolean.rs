@@ -14,7 +14,7 @@ use crate::{
     BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
     BooleanFragmentSelection, BooleanFragmentSelectionReport2, BooleanOp, BulgeVertex2,
     Classification, Contour2, ContourIntersection, CurveError, CurvePolicy, CurveResult, FillRule,
-    IntersectionKind, Point2, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
+    IntersectionKind, LineArcRegion2, Point2, Real, RegionBoundaryContourBuildPredicatePath2,
     RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildStage2,
     RegionBoundaryContourRoleReport2, RegionFragmentBuildReport2, RegionFragmentSet,
     RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, RetainedTopologyStatus,
@@ -178,7 +178,7 @@ pub enum RegionPreparedCacheFreshness2 {
 /// Result of report-bearing closed region boolean materialization.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBooleanResult2 {
-    region: Option<Region2>,
+    region: Option<LineArcRegion2>,
     report: RegionBooleanReport2,
 }
 
@@ -289,14 +289,14 @@ fn rect_from_bounds(min_x: Real, min_y: Real, max_x: Real, max_y: Real) -> Optio
 // Regularizes the degenerate strip case where both input boundaries share a
 // full collinear span. That case is the canonical failure mode highlighted by
 // the degenerate-intersection clipping model, and it must be resolved in the
-// geometry kernel so CAD callers receive ordinary Region2 values rather than
+// geometry kernel so CAD callers receive ordinary LineArcRegion2 values rather than
 // crate-local workarounds.
 pub(crate) fn coextensive_axis_rect_region_boolean(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Option<Region2>>> {
+) -> CurveResult<Classification<Option<LineArcRegion2>>> {
     let first = match AxisRect::from_view(first, policy)? {
         Classification::Decided(Some(rect)) => rect,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
@@ -360,7 +360,7 @@ fn strip_boolean_region(
     horizontal: bool,
     op: BooleanOp,
     policy: &CurvePolicy,
-) -> Classification<Region2> {
+) -> Classification<LineArcRegion2> {
     let overlap_min = real_max(&first_min, &second_min, policy).ok_or(UncertaintyReason::Ordering);
     let Ok(overlap_min) = overlap_min else {
         return Classification::Uncertain(overlap_min.unwrap_err());
@@ -409,7 +409,7 @@ fn strip_boolean_region(
             BooleanOp::Difference => required_strip_region(vec![(
                 first_min, cross_min, first_max, cross_max, horizontal,
             )]),
-            BooleanOp::Intersection => Classification::Decided(Region2::empty()),
+            BooleanOp::Intersection => Classification::Decided(LineArcRegion2::empty()),
         };
     }
 
@@ -471,15 +471,15 @@ fn strip_boolean_region(
             contours
         }
     };
-    Classification::Decided(Region2::from_material_contours(contours))
+    Classification::Decided(LineArcRegion2::from_material_contours(contours))
 }
 
 type StripRectBounds = (Real, Real, Real, Real, bool);
 
-fn required_strip_region(bounds: Vec<StripRectBounds>) -> Classification<Region2> {
+fn required_strip_region(bounds: Vec<StripRectBounds>) -> Classification<LineArcRegion2> {
     match required_strip_rects(bounds) {
         Classification::Decided(contours) => {
-            Classification::Decided(Region2::from_material_contours(contours))
+            Classification::Decided(LineArcRegion2::from_material_contours(contours))
         }
         Classification::Uncertain(reason) => Classification::Uncertain(reason),
     }
@@ -579,7 +579,7 @@ fn oriented_strip_rect(
     }
 }
 
-impl Region2 {
+impl LineArcRegion2 {
     /// Computes closed boolean boundary loops against another owned region.
     ///
     /// This is a convenience wrapper over [`RegionView2::boolean_boundary_loops`].
@@ -683,7 +683,7 @@ impl RegionView2<'_> {
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Region2>> {
+    ) -> CurveResult<Classification<LineArcRegion2>> {
         boolean_region_between(self, other, op, fill_rule, policy)
     }
 
@@ -1392,12 +1392,12 @@ impl RegionPreparedCacheAudit2 {
 
 impl RegionBooleanResult2 {
     /// Returns the materialized boolean region, if construction succeeded.
-    pub const fn region(&self) -> Option<&Region2> {
+    pub const fn region(&self) -> Option<&LineArcRegion2> {
         self.region.as_ref()
     }
 
     /// Consumes this result and returns the materialized boolean region.
-    pub fn into_region(self) -> Option<Region2> {
+    pub fn into_region(self) -> Option<LineArcRegion2> {
         self.region
     }
 
@@ -1407,7 +1407,7 @@ impl RegionBooleanResult2 {
     }
 
     /// Consumes this result and returns the materialized boolean region with its report.
-    pub fn into_parts(self) -> (Option<Region2>, RegionBooleanReport2) {
+    pub fn into_parts(self) -> (Option<LineArcRegion2>, RegionBooleanReport2) {
         (self.region, self.report)
     }
 
@@ -1417,7 +1417,7 @@ impl RegionBooleanResult2 {
     }
 
     /// Returns the materialized boolean region as a classification while retaining this result.
-    pub fn region_classification(&self) -> Classification<&Region2> {
+    pub fn region_classification(&self) -> Classification<&LineArcRegion2> {
         match self.region() {
             Some(region) => Classification::Decided(region),
             None => Classification::Uncertain(
@@ -1429,7 +1429,7 @@ impl RegionBooleanResult2 {
     }
 
     /// Consumes this result and returns the materialized boolean region as a classification.
-    pub fn into_region_classification(self) -> Classification<Region2> {
+    pub fn into_region_classification(self) -> Classification<LineArcRegion2> {
         let blocker = self
             .report()
             .blocker()
@@ -1519,7 +1519,7 @@ pub(crate) fn boolean_region_between(
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Region2>> {
+) -> CurveResult<Classification<LineArcRegion2>> {
     Ok(
         boolean_region_between_impl(first, second, op, fill_rule, policy, false)?
             .into_region_classification(),
@@ -1615,31 +1615,33 @@ fn boolean_region_between_impl(
         .into_contours()
         .expect("region Boolean requests contour boundary output");
     if !retain_pipeline_report {
-        return Ok(match Region2::from_boundary_contours(contours, policy)? {
-            Classification::Decided(region) => {
-                region_boolean_result_from_role_assigned_shortcut_region(
+        return Ok(
+            match LineArcRegion2::from_boundary_contours(contours, policy)? {
+                Classification::Decided(region) => {
+                    region_boolean_result_from_role_assigned_shortcut_region(
+                        first,
+                        second,
+                        op,
+                        fill_rule,
+                        RegionBooleanQueryPath2::Direct,
+                        &boundary_events,
+                        region,
+                        boundary_contour_source_path,
+                        None,
+                    )
+                }
+                Classification::Uncertain(reason) => blocked_region_boolean_result(
                     first,
                     second,
                     op,
                     fill_rule,
                     RegionBooleanQueryPath2::Direct,
                     &boundary_events,
-                    region,
-                    boundary_contour_source_path,
-                    None,
-                )
-            }
-            Classification::Uncertain(reason) => blocked_region_boolean_result(
-                first,
-                second,
-                op,
-                fill_rule,
-                RegionBooleanQueryPath2::Direct,
-                &boundary_events,
-                retained_status_for_boolean_blocker(reason),
-                reason,
-            ),
-        });
+                    retained_status_for_boolean_blocker(reason),
+                    reason,
+                ),
+            },
+        );
     }
     region_boolean_result_from_boundary_contours_with_pipeline_report(
         first,
@@ -1660,7 +1662,7 @@ pub(crate) fn retained_offset_region_boolean(
     second: &RegionView2<'_>,
     op: BooleanOp,
     policy: &CurvePolicy,
-) -> Option<Region2> {
+) -> Option<LineArcRegion2> {
     use crate::contour::RetainedContourOffsetRelation2::{
         FirstContainsSecond, SecondContainsFirst,
     };
@@ -1680,20 +1682,20 @@ pub(crate) fn retained_offset_region_boolean(
         (FirstContainsSecond, BooleanOp::Union) => clone_region_view(first),
         (FirstContainsSecond, BooleanOp::Intersection) => clone_region_view(second),
         (FirstContainsSecond, BooleanOp::Difference | BooleanOp::Xor) => {
-            Region2::new(vec![first_contour.clone()], vec![second_contour.clone()])
+            LineArcRegion2::new(vec![first_contour.clone()], vec![second_contour.clone()])
         }
         (SecondContainsFirst, BooleanOp::Union) => clone_region_view(second),
         (SecondContainsFirst, BooleanOp::Intersection) => clone_region_view(first),
-        (SecondContainsFirst, BooleanOp::Difference) => Region2::empty(),
+        (SecondContainsFirst, BooleanOp::Difference) => LineArcRegion2::empty(),
         (SecondContainsFirst, BooleanOp::Xor) => {
-            Region2::new(vec![second_contour.clone()], vec![first_contour.clone()])
+            LineArcRegion2::new(vec![second_contour.clone()], vec![first_contour.clone()])
         }
         _ => return None,
     })
 }
 
-fn clone_region_view(region: &RegionView2<'_>) -> Region2 {
-    Region2::new(
+fn clone_region_view(region: &RegionView2<'_>) -> LineArcRegion2 {
+    LineArcRegion2::new(
         region
             .material_contours()
             .iter()
@@ -2323,7 +2325,7 @@ pub(crate) fn region_boolean_result_from_role_assigned_shortcut_region(
     fill_rule: FillRule,
     query_path: RegionBooleanQueryPath2,
     boundary_events: &RegionIntersectionSet,
-    region: Region2,
+    region: LineArcRegion2,
     boundary_contour_source_path: RegionBooleanBoundaryContourSourcePath2,
     prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
 ) -> RegionBooleanResult2 {
@@ -2396,7 +2398,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
     let boundary_contour_count = contours.len();
-    let built = Region2::from_boundary_contours_with_report(contours, policy)?;
+    let built = LineArcRegion2::from_boundary_contours_with_report(contours, policy)?;
     let status = built.status();
     let blocker = built.blocker();
     let result_material_contour_count = built.material_contour_count();
@@ -3117,7 +3119,7 @@ pub(crate) fn resolve_shared_boundary_selection_with_report(
         let second_segment = fragment_segment_for_classification(fragments, second_classification)?;
         let first_left = first_classification.source_filled_side_is_left;
         let second_left = second_classification.source_filled_side_is_left;
-        let same_direction = first_segment == second_segment;
+        let same_direction = segment_images_match_directed(first_segment, second_segment);
         let normalized_second_left = if same_direction {
             second_left
         } else {
@@ -3232,7 +3234,22 @@ fn fragment_segment_for_classification<'a>(
 }
 
 fn segment_images_match_undirected(left: &Segment2, right: &Segment2) -> bool {
-    left == right || left == &right.reversed()
+    segment_images_match_directed(left, right)
+        || segment_images_match_directed(left, &right.reversed())
+}
+
+fn segment_images_match_directed(left: &Segment2, right: &Segment2) -> bool {
+    match (left, right) {
+        // Line equality deliberately retains construction support. Boolean
+        // overlap resolution instead needs equality of the finite geometric
+        // image: independently split or offset-derived fragments can have the
+        // same endpoints while carrying different provenance.
+        (Segment2::Line(left), Segment2::Line(right)) => {
+            left.start() == right.start() && left.end() == right.end()
+        }
+        (Segment2::Arc(left), Segment2::Arc(right)) => left == right,
+        _ => false,
+    }
 }
 
 fn xor_region_by_difference_union(
@@ -3240,7 +3257,7 @@ fn xor_region_by_difference_union(
     second: &RegionView2<'_>,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Region2>> {
+) -> CurveResult<Classification<LineArcRegion2>> {
     // Region XOR is the symmetric difference `(A - B) union (B - A)`. Using
     // the set identity lets the region-level API reuse the better-tested difference and
     // union role-assignment paths while the lower boundary graph still grows a
@@ -3262,7 +3279,10 @@ fn xor_region_by_difference_union(
     )))
 }
 
-pub(crate) fn merge_disjoint_region_bins(first: Region2, second: Region2) -> Region2 {
+pub(crate) fn merge_disjoint_region_bins(
+    first: LineArcRegion2,
+    second: LineArcRegion2,
+) -> LineArcRegion2 {
     // The two symmetric-difference halves are interior-disjoint by set
     // definition. Directly merging their signed contour bins preserves
     // boundary-only contacts that a contour-only nesting pass would reject as
@@ -3273,7 +3293,7 @@ pub(crate) fn merge_disjoint_region_bins(first: Region2, second: Region2) -> Reg
     material_contours.extend(second.material_contours().iter().cloned());
     let mut hole_contours = first.hole_contours().to_vec();
     hole_contours.extend(second.hole_contours().iter().cloned());
-    Region2::new(material_contours, hole_contours)
+    LineArcRegion2::new(material_contours, hole_contours)
 }
 
 pub(crate) fn same_region_view(first: &RegionView2<'_>, second: &RegionView2<'_>) -> bool {
@@ -3487,7 +3507,7 @@ mod tests {
 
     #[test]
     fn blocked_region_boolean_report_names_boundary_extraction_stage() {
-        let first = Region2::from_material_contours(vec![
+        let first = LineArcRegion2::from_material_contours(vec![
             Contour2::from_bulge_vertices(&[
                 BulgeVertex2::new(point(0, 0), Real::zero()),
                 BulgeVertex2::new(point(1, 0), Real::zero()),
@@ -3496,7 +3516,7 @@ mod tests {
             ])
             .unwrap(),
         ]);
-        let second = Region2::from_material_contours(vec![
+        let second = LineArcRegion2::from_material_contours(vec![
             Contour2::from_bulge_vertices(&[
                 BulgeVertex2::new(point(2, 0), Real::zero()),
                 BulgeVertex2::new(point(3, 0), Real::zero()),
@@ -3535,7 +3555,7 @@ mod tests {
 
     #[test]
     fn region_boolean_report_retains_boundary_role_blocker_pair() {
-        let first = Region2::from_material_contours(vec![
+        let first = LineArcRegion2::from_material_contours(vec![
             Contour2::from_bulge_vertices(&[
                 BulgeVertex2::new(point(0, 0), Real::zero()),
                 BulgeVertex2::new(point(4, 0), Real::zero()),
@@ -3544,7 +3564,7 @@ mod tests {
             ])
             .unwrap(),
         ]);
-        let second = Region2::from_material_contours(vec![
+        let second = LineArcRegion2::from_material_contours(vec![
             Contour2::from_bulge_vertices(&[
                 BulgeVertex2::new(point(10, 0), Real::zero()),
                 BulgeVertex2::new(point(14, 0), Real::zero()),

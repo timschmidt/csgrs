@@ -12,10 +12,10 @@ use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
 use crate::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy,
-    CurveResult, IntersectionKind, LineArcIntersection, LineArcOrder, LineLineIntersection,
-    LineSeg2, LineSide, ParamRange, Point2, PreparedRegionView2, Region2, RegionContourRole,
-    RegionPointLocation, RetainedTopologyStatus, Segment2, SegmentIntersection, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    CurveResult, IntersectionKind, LineArcIntersection, LineArcOrder, LineArcRegion2,
+    LineLineIntersection, LineSeg2, LineSide, ParamRange, Point2, PreparedRegionView2,
+    RegionContourRole, RegionPointLocation, RetainedTopologyStatus, Segment2, SegmentIntersection,
+    SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -2160,7 +2160,7 @@ impl CurveString2 {
     /// higher-order boundary traversal rather than a local interval decision.
     pub fn trim_inside_region(
         &self,
-        region: &Region2,
+        region: &LineArcRegion2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringRegionTrimResult2> {
         self.trim_inside_region_with_report(region, policy)
@@ -2169,7 +2169,7 @@ impl CurveString2 {
     /// Retains the portions of this open curve string inside a region and retains evidence.
     pub fn trim_inside_region_with_report(
         &self,
-        region: &Region2,
+        region: &LineArcRegion2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringRegionTrimResult2> {
         trim_curve_string_inside_region(self, region, policy)
@@ -5194,7 +5194,7 @@ enum NearestEndpointChoice {
 
 fn trim_curve_string_inside_region(
     curve_string: &CurveString2,
-    region: &Region2,
+    region: &LineArcRegion2,
     policy: &CurvePolicy,
 ) -> CurveResult<CurveStringRegionTrimResult2> {
     let mut boundary_hits = Vec::new();
@@ -5244,7 +5244,7 @@ fn trim_curve_string_inside_region(
     )
 }
 
-fn region_material_segment_count(region: &Region2) -> usize {
+fn region_material_segment_count(region: &LineArcRegion2) -> usize {
     region
         .material_contours()
         .iter()
@@ -5252,7 +5252,7 @@ fn region_material_segment_count(region: &Region2) -> usize {
         .sum()
 }
 
-fn region_hole_segment_count(region: &Region2) -> usize {
+fn region_hole_segment_count(region: &LineArcRegion2) -> usize {
     region
         .hole_contours()
         .iter()
@@ -5645,7 +5645,7 @@ fn trim_curve_string_inside_region_with_hits(
 
 fn collect_region_trim_boundary_hits(
     curve_string: &CurveString2,
-    region: &Region2,
+    region: &LineArcRegion2,
     policy: &CurvePolicy,
     hits: &mut Vec<CurveStringRegionTrimHit2>,
     workload: &mut RegionTrimBoundaryWorkload,

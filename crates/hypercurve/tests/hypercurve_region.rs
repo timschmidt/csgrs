@@ -2,14 +2,14 @@ use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     ExactCurveArrangementArrangedEndpointDegree2, ExactCurveArrangementSourceAabbStatus2,
     ExactCurveArrangementSourceEndpoint2, ExactCurveArrangementSplitCandidateAabbStatus2,
-    ExactCurveArrangementSplitRelationClass2, FillRule, FiniteProjectionOptions, Real, Region2,
-    RegionArrangement2, RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildStage2,
-    RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
-    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
-    RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentSplitPredicatePath2,
-    RegionPointLocation, RegionView2, RetainedTopologyStatus, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
-    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
+    ExactCurveArrangementSplitRelationClass2, FillRule, FiniteProjectionOptions, LineArcRegion2,
+    Real, RegionArrangement2, RegionBoundaryContourBuildPredicatePath2,
+    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
+    RegionLineSegmentArrangedEndpoint2, RegionLineSegmentEndpointGraphPredicatePath2,
+    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
+    RegionLineSegmentSplitPredicatePath2, RegionPointLocation, RegionView2, RetainedTopologyStatus,
+    Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid,
+    finite_ring_signed_area, try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -70,7 +70,7 @@ fn evaluate_unordered_line_segments(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> hypercurve::CurveResult<RegionArrangement2> {
-    Region2::arrange_unordered_line_segments(segments, fill_rule, policy)
+    LineArcRegion2::arrange_unordered_line_segments(segments, fill_rule, policy)
 }
 
 fn evaluate_borrowed_unordered_line_segments(
@@ -78,7 +78,7 @@ fn evaluate_borrowed_unordered_line_segments(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> hypercurve::CurveResult<RegionArrangement2> {
-    Region2::arrange_unordered_line_segments_borrowed(segments, fill_rule, policy)
+    LineArcRegion2::arrange_unordered_line_segments_borrowed(segments, fill_rule, policy)
 }
 
 fn evaluate_unordered_segments(
@@ -86,7 +86,7 @@ fn evaluate_unordered_segments(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> hypercurve::CurveResult<RegionArrangement2> {
-    Region2::arrange_unordered_segments(segments, fill_rule, policy)
+    LineArcRegion2::arrange_unordered_segments(segments, fill_rule, policy)
 }
 
 fn evaluate_borrowed_unordered_segments(
@@ -94,12 +94,12 @@ fn evaluate_borrowed_unordered_segments(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> hypercurve::CurveResult<RegionArrangement2> {
-    Region2::arrange_unordered_segments_borrowed(segments, fill_rule, policy)
+    LineArcRegion2::arrange_unordered_segments_borrowed(segments, fill_rule, policy)
 }
 
 #[test]
 fn empty_region_classifies_everything_outside() {
-    let region = Region2::empty();
+    let region = LineArcRegion2::empty();
 
     assert!(region.is_empty());
     assert_eq!(
@@ -114,7 +114,7 @@ fn empty_region_classifies_everything_outside() {
 
 #[test]
 fn material_contour_classifies_inside_outside_and_boundary() {
-    let region = Region2::from_material_contours(vec![rectangle(0, 0, 10, 10)]);
+    let region = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 10, 10)]);
 
     assert_eq!(
         region.classify_point(&p(1, 1), &policy()),
@@ -132,7 +132,7 @@ fn material_contour_classifies_inside_outside_and_boundary() {
 
 #[test]
 fn region_aabb_miss_has_zero_depth_without_boundary_work() {
-    let region = Region2::new(
+    let region = LineArcRegion2::new(
         vec![rectangle(0, 0, 10, 10), rectangle(20, 20, 30, 30)],
         vec![rectangle(3, 3, 7, 7)],
     );
@@ -149,7 +149,7 @@ fn region_aabb_miss_has_zero_depth_without_boundary_work() {
 
 #[test]
 fn sparse_region_classification_keeps_only_relevant_contour_depth() {
-    let region = Region2::from_material_contours(vec![
+    let region = LineArcRegion2::from_material_contours(vec![
         rectangle(0, 0, 4, 4),
         rectangle(20, 20, 24, 24),
         rectangle(40, 40, 44, 44),
@@ -171,7 +171,7 @@ fn sparse_region_classification_keeps_only_relevant_contour_depth() {
 
 #[test]
 fn hole_bin_subtracts_from_material_depth() {
-    let region = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
+    let region = LineArcRegion2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
 
     assert_eq!(
         region.signed_depth(&p(1, 1), &policy()),
@@ -193,7 +193,7 @@ fn hole_bin_subtracts_from_material_depth() {
 
 #[test]
 fn boundary_contour_nesting_assigns_disjoint_nested_roles() {
-    let region = match Region2::from_boundary_contours(
+    let region = match LineArcRegion2::from_boundary_contours(
         vec![rectangle(0, 0, 10, 10), rectangle(3, 3, 7, 7)],
         &policy(),
     )
@@ -217,7 +217,7 @@ fn boundary_contour_nesting_assigns_disjoint_nested_roles() {
 
 #[test]
 fn boundary_contour_region_report_assigns_material_and_hole_roles() {
-    let built = Region2::from_boundary_contours_with_report(
+    let built = LineArcRegion2::from_boundary_contours_with_report(
         vec![rectangle(0, 0, 10, 10), rectangle(3, 3, 7, 7)],
         &policy(),
     )
@@ -301,7 +301,8 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
 #[test]
 fn borrowed_boundary_contours_build_region_with_report() {
     let contours = vec![rectangle(0, 0, 10, 10), rectangle(3, 3, 7, 7)];
-    let built = Region2::from_boundary_contours_borrowed_with_report(&contours, &policy()).unwrap();
+    let built =
+        LineArcRegion2::from_boundary_contours_borrowed_with_report(&contours, &policy()).unwrap();
 
     assert!(built.status().is_native_exact());
     assert_eq!(
@@ -338,10 +339,11 @@ fn borrowed_boundary_contours_build_region_with_report() {
 #[test]
 fn borrowed_boundary_contours_convenience_returns_decided_region() {
     let contours = vec![rectangle(0, 0, 5, 5), rectangle(1, 1, 3, 3)];
-    let region = match Region2::from_boundary_contours_borrowed(&contours, &policy()).unwrap() {
-        Classification::Decided(region) => region,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    };
+    let region =
+        match LineArcRegion2::from_boundary_contours_borrowed(&contours, &policy()).unwrap() {
+            Classification::Decided(region) => region,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        };
 
     assert_eq!(contours.len(), 2);
     assert_eq!(region.material_contours().len(), 1);
@@ -359,7 +361,7 @@ fn borrowed_boundary_contours_convenience_returns_decided_region() {
 #[test]
 fn boundary_contour_nesting_rejects_crossing_or_touching_loops() {
     assert_eq!(
-        Region2::from_boundary_contours(
+        LineArcRegion2::from_boundary_contours(
             vec![rectangle(0, 0, 4, 4), rectangle(2, -1, 6, 3)],
             &policy(),
         )
@@ -367,7 +369,7 @@ fn boundary_contour_nesting_rejects_crossing_or_touching_loops() {
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
     assert_eq!(
-        Region2::from_boundary_contours(
+        LineArcRegion2::from_boundary_contours(
             vec![rectangle(0, 0, 4, 4), rectangle(4, 0, 8, 4)],
             &policy(),
         )
@@ -378,7 +380,7 @@ fn boundary_contour_nesting_rejects_crossing_or_touching_loops() {
 
 #[test]
 fn boundary_contour_region_report_blocks_crossing_roles() {
-    let built = Region2::from_boundary_contours_with_report(
+    let built = LineArcRegion2::from_boundary_contours_with_report(
         vec![rectangle(0, 0, 4, 4), rectangle(2, -1, 6, 3)],
         &policy(),
     )
@@ -414,7 +416,7 @@ fn boundary_contour_region_report_blocks_crossing_roles() {
 
 #[test]
 fn boundary_contour_region_report_blocks_touching_roles_with_source_pair() {
-    let built = Region2::from_boundary_contours_with_report(
+    let built = LineArcRegion2::from_boundary_contours_with_report(
         vec![rectangle(0, 0, 4, 4), rectangle(4, 0, 8, 4)],
         &policy(),
     )
@@ -1678,9 +1680,12 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         line(0, 4, 4, 4),
         line(0, 0, 0, 4),
     ];
-    let result =
-        Region2::arrange_unordered_line_segments_borrowed(&lines, FillRule::NonZero, &policy())
-            .unwrap();
+    let result = LineArcRegion2::arrange_unordered_line_segments_borrowed(
+        &lines,
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
 
     assert_eq!(result.source_segment_count(), 4);
     assert_eq!(result.source_line_segments(), Some(lines.as_slice()));
@@ -4292,9 +4297,12 @@ fn region_arrangement_retains_output_role_containment() {
         line(7, 7, 3, 7),
         line(3, 7, 3, 3),
     ];
-    let result =
-        Region2::arrange_unordered_line_segments_borrowed(&lines, FillRule::NonZero, &policy())
-            .unwrap();
+    let result = LineArcRegion2::arrange_unordered_line_segments_borrowed(
+        &lines,
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
 
     assert!(result.status().unwrap().is_native_exact());
     assert_eq!(result.output_ring_count(), Some(2));
@@ -4400,9 +4408,12 @@ fn region_arrangement_retains_stage_facts_and_report_without_evaluation_layer() 
         Segment2::Line(line(4, 0, 0, 0)),
         Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
     ];
-    let result =
-        Region2::arrange_unordered_segments_borrowed(&segments, FillRule::NonZero, &policy())
-            .unwrap();
+    let result = LineArcRegion2::arrange_unordered_segments_borrowed(
+        &segments,
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
 
     assert_eq!(result.source_segments(), segments);
     assert_eq!(result.fill_rule(), FillRule::NonZero);
@@ -4452,7 +4463,7 @@ fn region_arrangement_retains_overlap_blocker() {
         Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
     ];
     let result =
-        Region2::arrange_unordered_segments(segments.clone(), FillRule::NonZero, &policy())
+        LineArcRegion2::arrange_unordered_segments(segments.clone(), FillRule::NonZero, &policy())
             .unwrap();
 
     assert!(result.region().is_none());
@@ -5286,7 +5297,7 @@ fn region_arrangement_retains_overlap_blocker() {
 
 #[test]
 fn unordered_native_segments_return_decided_region() {
-    let result = Region2::arrange_unordered_segments(
+    let result = LineArcRegion2::arrange_unordered_segments(
         vec![
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
             Segment2::Line(line(4, 0, 0, 0)),
@@ -5849,7 +5860,7 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
 
 #[test]
 fn hole_boundary_is_explicit() {
-    let region = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
+    let region = LineArcRegion2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
 
     assert_eq!(
         region.signed_depth(&p(3, 5), &policy()),
@@ -5863,7 +5874,7 @@ fn hole_boundary_is_explicit() {
 
 #[test]
 fn material_island_inside_hole_adds_depth_back() {
-    let region = Region2::new(
+    let region = LineArcRegion2::new(
         vec![rectangle(0, 0, 10, 10), rectangle(4, 4, 6, 6)],
         vec![rectangle(2, 2, 8, 8)],
     );
@@ -5900,7 +5911,7 @@ fn contour_profiles_group_holes_with_containing_material() {
     let right = rectangle(20, 0, 30, 10);
     let left_hole = rectangle(2, 2, 4, 4);
     let right_hole = rectangle(22, 2, 24, 4);
-    let region = Region2::new(
+    let region = LineArcRegion2::new(
         vec![left.clone(), right.clone()],
         vec![left_hole.clone(), right_hole.clone()],
     );
@@ -5920,7 +5931,7 @@ fn contour_profiles_group_holes_with_containing_material() {
 
 #[test]
 fn contour_profiles_reject_holes_without_material_owner() {
-    let region = Region2::new(Vec::new(), vec![rectangle(2, 2, 4, 4)]);
+    let region = LineArcRegion2::new(Vec::new(), vec![rectangle(2, 2, 4, 4)]);
 
     assert_eq!(
         region.contour_profiles(&policy()),
@@ -6072,7 +6083,7 @@ fn region_projection_preserves_material_hole_bins() {
     let outer = rectangle(0, 0, 10, 10);
     let island = rectangle(4, 4, 6, 6);
     let hole = rectangle(2, 2, 8, 8);
-    let region = Region2::new(vec![outer.clone(), island.clone()], vec![hole.clone()]);
+    let region = LineArcRegion2::new(vec![outer.clone(), island.clone()], vec![hole.clone()]);
     let options = FiniteProjectionOptions::try_new(0.01).unwrap();
 
     let projection = region.project_to_finite_region(&options).unwrap();
@@ -6100,7 +6111,7 @@ fn finite_profile_projection_preserves_exact_hole_ownership() {
     let right = rectangle(20, 0, 30, 10);
     let left_hole = rectangle(2, 2, 4, 4);
     let right_hole = rectangle(22, 2, 24, 4);
-    let region = Region2::new(vec![left, right], vec![left_hole, right_hole]);
+    let region = LineArcRegion2::new(vec![left, right], vec![left_hole, right_hole]);
     let options = FiniteProjectionOptions::try_new(0.01).unwrap();
 
     let profiles = region
@@ -6124,7 +6135,7 @@ fn finite_profile_projection_preserves_exact_hole_ownership() {
 
 #[test]
 fn finite_profile_projection_keeps_orphan_hole_uncertainty() {
-    let region = Region2::new(Vec::new(), vec![rectangle(2, 2, 4, 4)]);
+    let region = LineArcRegion2::new(Vec::new(), vec![rectangle(2, 2, 4, 4)]);
     let options = FiniteProjectionOptions::try_new(0.01).unwrap();
 
     assert_eq!(
@@ -6189,7 +6200,7 @@ fn similarity_reflection_flips_arc_orientation_and_rejects_shear() {
 fn region_filled_area_uses_roles_instead_of_contour_orientation() {
     let outer = reversed_rectangle(0, 0, 10, 10);
     let hole = rectangle(3, 3, 7, 7);
-    let region = Region2::new(vec![outer.clone()], vec![hole.clone()]);
+    let region = LineArcRegion2::new(vec![outer.clone()], vec![hole.clone()]);
 
     assert_eq!(
         region.filled_area(&policy()).unwrap(),
@@ -6207,7 +6218,7 @@ fn region_filled_area_uses_roles_instead_of_contour_orientation() {
 
 #[test]
 fn region_filled_area_counts_nested_material_back_into_holes() {
-    let region = Region2::new(
+    let region = LineArcRegion2::new(
         vec![rectangle(0, 0, 10, 10), reversed_rectangle(4, 4, 6, 6)],
         vec![reversed_rectangle(2, 2, 8, 8)],
     );
@@ -6223,7 +6234,7 @@ fn region_filled_area_is_exact_for_center_defined_circle() {
     let top = CircularArc2::try_from_center(p(1, 0), p(-1, 0), p(0, 0), false).unwrap();
     let bottom = CircularArc2::try_from_center(p(-1, 0), p(1, 0), p(0, 0), false).unwrap();
     let contour = Contour2::try_new(vec![Segment2::Arc(top), Segment2::Arc(bottom)]).unwrap();
-    let region = Region2::from_material_contours(vec![contour]);
+    let region = LineArcRegion2::from_material_contours(vec![contour]);
 
     assert_eq!(
         region.filled_area(&policy()).unwrap(),
@@ -6239,7 +6250,7 @@ fn borrowed_region_view_matches_owned_region() {
     let material = [outer.clone(), island.clone()];
     let holes = [hole.clone()];
     let view = RegionView2::new(&material, &holes);
-    let owned = Region2::new(vec![outer, island], vec![hole]);
+    let owned = LineArcRegion2::new(vec![outer, island], vec![hole]);
 
     assert_eq!(view.material_contours().len(), 2);
     assert_eq!(view.hole_contours().len(), 1);
@@ -6420,7 +6431,7 @@ proptest! {
     ) {
         let hole_width = hole_width.min(width - 2);
         let hole_height = hole_height.min(height - 2);
-        let region = Region2::new(
+        let region = LineArcRegion2::new(
             vec![reversed_rectangle(0, 0, width, height)],
             vec![reversed_rectangle(1, 1, 1 + hole_width, 1 + hole_height)],
         );
@@ -6436,7 +6447,7 @@ proptest! {
 
 #[test]
 fn prepared_region_classifier_matches_owned_region() {
-    let region = Region2::new(
+    let region = LineArcRegion2::new(
         vec![rectangle(0, 0, 10, 10), rectangle(4, 4, 6, 6)],
         vec![rectangle(2, 2, 8, 8)],
     );

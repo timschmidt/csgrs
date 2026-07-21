@@ -447,8 +447,16 @@ fn main() -> CurveResult<()> {
                     + report.material_loop_indices().len()
                     + report.hole_loop_indices().len(),
             );
-            algebraic_line_role_checksum ^=
-                black_box(format!("{:?}", report.to_region().filled_area(&policy)?).len());
+            algebraic_line_role_checksum ^= black_box(
+                format!(
+                    "{:?}",
+                    report
+                        .try_to_curve_region(&policy)
+                        .expect("line-role report must rebuild a unified region")
+                        .filled_area(&policy)?
+                )
+                .len(),
+            );
         }
     }
     let elapsed = started.elapsed();
@@ -479,7 +487,11 @@ fn main() -> CurveResult<()> {
         overlap_checksum ^= black_box(format!("{:?}", retained.signed_area()?).len());
         if let Classification::Decided(report) = retained.line_image_role_report(&policy)? {
             overlap_checksum ^= black_box(usize::from(
-                report.to_region().filled_area(&policy)?.is_decided(),
+                report
+                    .try_to_curve_region(&policy)
+                    .expect("line-role report must rebuild a unified region")
+                    .filled_area(&policy)?
+                    .is_decided(),
             ));
         }
         if let Classification::Decided(report) = retained.signed_area_role_report(&policy)? {

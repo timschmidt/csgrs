@@ -12,8 +12,8 @@ use hyperreal::Real;
 
 use crate::classify::compare_reals;
 use crate::{
-    CircularArc2, Classification, Contour2, CurvePolicy, CurveResult, CurveString2, LineSeg2,
-    Point2, Region2, RegionView2, Segment2, UncertaintyReason,
+    CircularArc2, Classification, Contour2, CurvePolicy, CurveResult, CurveString2, LineArcRegion2,
+    LineSeg2, Point2, RegionView2, Segment2, UncertaintyReason,
 };
 
 /// An axis-aligned bounding box for two-dimensional curve geometry.
@@ -238,7 +238,7 @@ impl Aabb2 {
     /// a broad-phase envelope for boundary topology, not a filled-area
     /// containment proof.
     pub fn from_region(
-        region: &Region2,
+        region: &LineArcRegion2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         Self::from_region_view(&region.as_view(), policy)

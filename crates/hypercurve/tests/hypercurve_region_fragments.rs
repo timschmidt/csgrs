@@ -1,5 +1,5 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, Real, Region2,
+    BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, LineArcRegion2, Real,
     RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentBuildPredicatePath2,
     RegionFragmentBuildStage2, RegionFragmentSet, RegionSide, SegmentKind, SegmentKindCounts,
 };
@@ -47,8 +47,8 @@ fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
 
 #[test]
 fn region_fragments_split_all_keyed_contours() {
-    let region = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
-    let cutter = Region2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
+    let region = LineArcRegion2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
     let intersections = region.intersect_region(&cutter, &policy()).unwrap();
 
     let built = intersections
@@ -280,8 +280,8 @@ fn region_fragment_set_constructor_validates_unique_contour_keys() {
         fragments: hypercurve::ContourFragmentSet::new(Vec::new()).unwrap(),
     }]));
 
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 2, 2)]);
-    let second = Region2::from_material_contours(vec![rectangle(4, 4, 6, 6)]);
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 2)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(4, 4, 6, 6)]);
     let intersections = first.intersect_region(&second, &policy()).unwrap();
     let Classification::Decided(fragments) = intersections
         .split_regions(&first.as_view(), &second.as_view(), &policy())
@@ -329,8 +329,8 @@ fn region_fragment_set_constructor_validates_unique_contour_keys() {
 
 #[test]
 fn region_fragments_keep_disjoint_contours_unsplit() {
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 2, 2)]);
-    let second = Region2::from_material_contours(vec![rectangle(4, 4, 6, 6)]);
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 2)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(4, 4, 6, 6)]);
     let intersections = first.intersect_region(&second, &policy()).unwrap();
     assert!(intersections.is_empty());
 
@@ -415,9 +415,10 @@ fn region_fragments_keep_disjoint_contours_unsplit() {
 
 #[test]
 fn region_fragments_preserve_same_circle_arc_overlap_events() {
-    let first = Region2::from_material_contours(vec![contour(&[vertex(0, 0, 1), vertex(2, 0, 1)])]);
+    let first =
+        LineArcRegion2::from_material_contours(vec![contour(&[vertex(0, 0, 1), vertex(2, 0, 1)])]);
     let second =
-        Region2::from_material_contours(vec![contour(&[vertex(0, 0, 1), vertex(2, 0, 1)])]);
+        LineArcRegion2::from_material_contours(vec![contour(&[vertex(0, 0, 1), vertex(2, 0, 1)])]);
 
     let intersections = first.intersect_region(&second, &policy()).unwrap();
     let Classification::Decided(fragments) = intersections

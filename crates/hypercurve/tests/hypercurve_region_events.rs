@@ -1,6 +1,6 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourIntersection, ContourIntersectionSet,
-    ContourOperand, ContourSplitMap, CurvePolicy, Real, Region2, RegionContourIntersection,
+    ContourOperand, ContourSplitMap, CurvePolicy, LineArcRegion2, Real, RegionContourIntersection,
     RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionSide, SegmentKindCounts,
 };
 
@@ -43,8 +43,8 @@ fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
 
 #[test]
 fn region_events_keep_material_and_hole_roles() {
-    let region = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
-    let cutter = Region2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
+    let region = LineArcRegion2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
 
     let events = region.intersect_region(&cutter, &policy()).unwrap();
     assert_eq!(events.len(), 2);
@@ -93,8 +93,8 @@ fn region_intersection_set_constructor_validates_pair_ownership() {
     );
     assert!(!empty.has_events());
 
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let events = first.intersect_region(&second, &policy()).unwrap();
     let pair = events.pairs()[0].clone();
     let synthetic = RegionIntersectionSet::new(vec![pair.clone()]).unwrap();
@@ -121,8 +121,8 @@ fn region_intersection_set_constructor_validates_pair_ownership() {
 
 #[test]
 fn region_split_rejects_events_outside_supplied_views() {
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let events = first.intersect_region(&second, &policy()).unwrap();
     let pair = events.pairs()[0].clone();
 
@@ -159,8 +159,8 @@ fn region_split_rejects_events_outside_supplied_views() {
 
 #[test]
 fn region_view_events_match_owned_region_events() {
-    let region = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
-    let cutter = Region2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
+    let region = LineArcRegion2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
 
     let owned_events = region.intersect_region(&cutter, &policy()).unwrap();
     let view_events = region
@@ -173,8 +173,8 @@ fn region_view_events_match_owned_region_events() {
 
 #[test]
 fn region_pair_events_feed_split_maps_for_keyed_contours() {
-    let region = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
-    let cutter = Region2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
+    let region = LineArcRegion2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
 
     let events = region.intersect_region(&cutter, &policy()).unwrap();
     let material_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
@@ -198,11 +198,11 @@ fn region_pair_events_feed_split_maps_for_keyed_contours() {
 
 #[test]
 fn region_event_broad_phase_skips_disjoint_contour_pairs() {
-    let region = Region2::new(
+    let region = LineArcRegion2::new(
         vec![rectangle(0, 0, 4, 4), rectangle(20, 20, 24, 24)],
         vec![rectangle(40, 40, 44, 44)],
     );
-    let cutter = Region2::from_material_contours(vec![rectangle(2, -1, 6, 2)]);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 2)]);
 
     let events = region.intersect_region(&cutter, &policy()).unwrap();
 
@@ -226,8 +226,8 @@ fn region_event_broad_phase_skips_disjoint_contour_pairs() {
 
 #[test]
 fn region_event_broad_phase_keeps_boundary_touching_contours() {
-    let region = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let cutter = Region2::from_material_contours(vec![rectangle(4, 1, 6, 3)]);
+    let region = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(4, 1, 6, 3)]);
 
     let events = region.intersect_region(&cutter, &policy()).unwrap();
 
@@ -237,11 +237,11 @@ fn region_event_broad_phase_keeps_boundary_touching_contours() {
 
 #[test]
 fn prepared_region_events_match_owned_region_events() {
-    let region = Region2::new(
+    let region = LineArcRegion2::new(
         vec![rectangle(0, 0, 10, 10), rectangle(30, 30, 34, 34)],
         vec![rectangle(3, 3, 7, 7)],
     );
-    let cutter = Region2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
     let policy = policy();
     let prepared_region = region.prepare_topology_queries(&policy);
     let prepared_cutter = cutter.prepare_topology_queries(&policy);
@@ -280,8 +280,8 @@ fn prepared_region_events_match_owned_region_events() {
 
 #[test]
 fn prepared_region_events_keep_boundary_touching_contours() {
-    let region = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let cutter = Region2::from_material_contours(vec![rectangle(4, 1, 6, 3)]);
+    let region = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(4, 1, 6, 3)]);
     let policy = policy();
     let prepared_region = region.prepare_topology_queries(&policy);
     let prepared_cutter = cutter.prepare_topology_queries(&policy);

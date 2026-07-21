@@ -28,14 +28,14 @@ pub enum RegionPointLocation {
 /// is outside. This intentionally supports nested islands by putting the inner
 /// island contour back in the material bin.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct Region2 {
+pub struct LineArcRegion2 {
     material_contours: Vec<Contour2>,
     hole_contours: Vec<Contour2>,
 }
 
 /// A material contour and the hole contours owned by it.
 ///
-/// This is a borrowed topology view over [`Region2`] / [`RegionView2`]. It
+/// This is a borrowed topology view over [`LineArcRegion2`] / [`RegionView2`]. It
 /// keeps hole ownership in hypercurve rather than forcing downstream crates to
 /// project contours to sampled rings before grouping them.
 #[derive(Clone, Debug, PartialEq)]
@@ -46,7 +46,7 @@ pub struct RegionContourProfile<'a> {
     pub holes: Vec<&'a Contour2>,
 }
 
-impl Region2 {
+impl LineArcRegion2 {
     /// Constructs an empty region.
     pub const fn empty() -> Self {
         Self {
@@ -260,7 +260,7 @@ impl<'a> RegionView2<'a> {
     /// Returns the exact filled area implied by this borrowed region view.
     ///
     /// Material contours add their certified absolute area and hole contours
-    /// subtract theirs. This mirrors [`Region2::filled_area`] for borrowed
+    /// subtract theirs. This mirrors [`LineArcRegion2::filled_area`] for borrowed
     /// region data without cloning contour bins.
     pub fn filled_area(&self, policy: &CurvePolicy) -> CurveResult<Classification<Option<Real>>> {
         let mut material_area = Real::zero();

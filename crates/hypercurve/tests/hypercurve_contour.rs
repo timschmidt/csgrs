@@ -3,7 +3,7 @@ use hypercurve::{
     ContourClosureStage2, ContourFilletStage2, ContourLineMergePredicatePath2,
     ContourLineMergeStage2, ContourPointLocation, CurveError, CurvePolicy, CurveString2,
     CurveStringChamferInputPath2, CurveStringChamferPredicatePath2, CurveStringFilletInputPath2,
-    CurveStringFilletPredicatePath2, FillRule, Real, Region2, RegionPointLocation, Segment2,
+    CurveStringFilletPredicatePath2, FillRule, LineArcRegion2, Real, RegionPointLocation, Segment2,
     SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
@@ -203,7 +203,8 @@ fn closed_curve_string_contour_feeds_boundary_region_report() {
         .into_contour()
         .unwrap();
 
-    let built = Region2::from_boundary_contours_with_report(vec![contour], &policy()).unwrap();
+    let built =
+        LineArcRegion2::from_boundary_contours_with_report(vec![contour], &policy()).unwrap();
 
     assert!(built.report().status().is_native_exact());
     assert_eq!(built.report().source_contour_count(), 1);

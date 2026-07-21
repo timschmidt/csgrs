@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourPointLocation, CurvePolicy,
-    CurveResult, LineSeg2, LineSide, Point2, Real, Region2, RegionPointLocation,
+    CurveResult, LineArcRegion2, LineSeg2, LineSide, Point2, Real, RegionPointLocation,
 };
 
 fn s(value: i32) -> Real {
@@ -28,13 +28,13 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     .unwrap()
 }
 
-fn sparse_region(contour_count: i32) -> Region2 {
+fn sparse_region(contour_count: i32) -> LineArcRegion2 {
     let mut contours = Vec::with_capacity(contour_count as usize);
     for index in 0..contour_count {
         let x = index * 10;
         contours.push(rectangle(x, 0, x + 4, 4));
     }
-    Region2::from_material_contours(contours)
+    LineArcRegion2::from_material_contours(contours)
 }
 
 fn bench_contour_bbox_miss(iterations: u32) -> CurveResult<()> {

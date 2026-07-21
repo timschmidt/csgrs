@@ -15,9 +15,11 @@ use std::f64::consts::PI;
 use hyperreal::Real;
 
 use crate::{
-    BulgeVertex2, Classification, Contour2, CurveError, CurveResult, CurveString2, FillRule,
-    LineSeg2, Point2, RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2,
-    RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
+    BulgeVertex2, Classification, Contour2, CurveError, CurveFamily2, CurveOperation2, CurvePolicy,
+    CurveRegion2, CurveResult, CurveString2, ExactCurveError, ExactCurveResult, FillRule,
+    FinitePolyline2, FiniteRegionProfile2, LineSeg2, Point2, RetainedImportFormat2,
+    RetainedImportRecord2, RetainedSourceTolerance2, RetainedTopologyStatus, Segment2, SegmentKind,
+    SegmentKindCounts,
 };
 
 const DEFAULT_DISTANCE_TOLERANCE: f64 = 1e-6;
@@ -107,6 +109,29 @@ pub struct CurveStringPolylineReconstructionResult2 {
 pub struct ContourPolylineReconstructionResult2 {
     contour: Contour2,
     report: PolylineReconstructionReport2,
+}
+
+/// Reconstruction evidence for one segmented material profile and its holes.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveRegionProfileRecoveryReport2 {
+    material: PolylineReconstructionReport2,
+    holes: Vec<PolylineReconstructionReport2>,
+}
+
+/// Report for recovering a curved region from segmented finite profiles.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveRegionRecoveryReport2 {
+    profiles: Vec<CurveRegionProfileRecoveryReport2>,
+    material_loop_count: usize,
+    hole_loop_count: usize,
+    lossy_boundary: bool,
+}
+
+/// A recovered exact-scalar curved region and its finite-boundary evidence.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveRegionRecoveryResult2 {
+    region: CurveRegion2,
+    report: CurveRegionRecoveryReport2,
 }
 
 impl PolylineReconstructionOptions {
@@ -378,6 +403,62 @@ impl ContourPolylineReconstructionResult2 {
     /// Consumes this result and returns the reconstructed contour as a convenience classification.
     pub fn into_contour_classification(self) -> Classification<Contour2> {
         Classification::Decided(self.contour)
+    }
+}
+
+impl CurveRegionProfileRecoveryReport2 {
+    /// Returns reconstruction evidence for the material ring.
+    pub const fn material(&self) -> &PolylineReconstructionReport2 {
+        &self.material
+    }
+
+    /// Returns reconstruction evidence for the owned hole rings.
+    pub fn holes(&self) -> &[PolylineReconstructionReport2] {
+        &self.holes
+    }
+}
+
+impl CurveRegionRecoveryReport2 {
+    /// Returns profile-aligned reconstruction evidence.
+    pub fn profiles(&self) -> &[CurveRegionProfileRecoveryReport2] {
+        &self.profiles
+    }
+
+    /// Returns the number of recovered material loops.
+    pub const fn material_loop_count(&self) -> usize {
+        self.material_loop_count
+    }
+
+    /// Returns the number of recovered hole loops.
+    pub const fn hole_loop_count(&self) -> usize {
+        self.hole_loop_count
+    }
+
+    /// Returns true because finite segmentation cannot retain general source curves exactly.
+    pub const fn lossy_boundary(&self) -> bool {
+        self.lossy_boundary
+    }
+}
+
+impl CurveRegionRecoveryResult2 {
+    /// Returns the recovered exact-scalar curved region.
+    pub const fn region(&self) -> &CurveRegion2 {
+        &self.region
+    }
+
+    /// Returns finite-boundary reconstruction evidence.
+    pub const fn report(&self) -> &CurveRegionRecoveryReport2 {
+        &self.report
+    }
+
+    /// Consumes the result and returns the recovered region.
+    pub fn into_region(self) -> CurveRegion2 {
+        self.region
+    }
+
+    /// Consumes the result and returns the recovered region with its report.
+    pub fn into_parts(self) -> (CurveRegion2, CurveRegionRecoveryReport2) {
+        (self.region, self.report)
     }
 }
 
@@ -905,6 +986,99 @@ impl Contour2 {
             FillRule::NonZero,
         )
     }
+}
+
+impl CurveRegion2 {
+    /// Recovers exact-scalar line/arc boundaries from segmented finite profiles.
+    ///
+    /// This mirrors [`CurveRegion2::segment_to_finite_profiles`]. Material and
+    /// hole bins are taken directly from the profile structure rather than
+    /// inferred from sampled winding. General source curves cannot be recovered
+    /// losslessly from chords, so use the report-bearing variant when that
+    /// provenance boundary matters to the caller.
+    pub fn recover_from_finite_profiles(
+        profiles: &[FiniteRegionProfile2],
+        options: PolylineReconstructionOptions,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<Self> {
+        Self::recover_from_finite_profiles_with_report(profiles, options, policy)
+            .map(CurveRegionRecoveryResult2::into_region)
+    }
+
+    /// Recovers exact-scalar line/arc boundaries and retains per-ring evidence.
+    ///
+    /// Every finite coordinate is promoted into [`hyperreal::Real`] before
+    /// native curve construction. The recovered geometry is exact relative to
+    /// those promoted samples, while the report records that the relation to
+    /// the pre-segmentation curve is necessarily lossy.
+    pub fn recover_from_finite_profiles_with_report(
+        profiles: &[FiniteRegionProfile2],
+        options: PolylineReconstructionOptions,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurveRegionRecoveryResult2> {
+        let mut material_contours = Vec::with_capacity(profiles.len());
+        let hole_count = profiles.iter().map(|profile| profile.holes().len()).sum();
+        let mut hole_contours = Vec::with_capacity(hole_count);
+        let mut profile_reports = Vec::with_capacity(profiles.len());
+
+        for profile in profiles {
+            let material = recover_finite_ring(profile.material(), options)?;
+            let (material_contour, material_report) = material.into_parts();
+            material_contours.push(material_contour);
+
+            let mut hole_reports = Vec::with_capacity(profile.holes().len());
+            for hole in profile.holes() {
+                let recovered = recover_finite_ring(hole, options)?;
+                let (hole_contour, hole_report) = recovered.into_parts();
+                hole_contours.push(hole_contour);
+                hole_reports.push(hole_report);
+            }
+            profile_reports.push(CurveRegionProfileRecoveryReport2 {
+                material: material_report,
+                holes: hole_reports,
+            });
+        }
+
+        let recovered = Self::try_from_native_contours(material_contours, hole_contours, policy)?;
+        Ok(CurveRegionRecoveryResult2 {
+            region: recovered,
+            report: CurveRegionRecoveryReport2 {
+                profiles: profile_reports,
+                material_loop_count: profiles.len(),
+                hole_loop_count: hole_count,
+                lossy_boundary: true,
+            },
+        })
+    }
+}
+
+fn recover_finite_ring(
+    ring: &FinitePolyline2,
+    options: PolylineReconstructionOptions,
+) -> ExactCurveResult<ContourPolylineReconstructionResult2> {
+    if !ring.is_closed() {
+        return Err(curve_region_recovery_error(CurveError::Topology(
+            "curve-region recovery requires explicitly closed finite rings".into(),
+        )));
+    }
+    let points = ring
+        .points()
+        .iter()
+        .copied()
+        .map(point_from_finite_xy)
+        .collect::<CurveResult<Vec<_>>>()
+        .map_err(curve_region_recovery_error)?;
+    Contour2::reconstruct_from_closed_polyline_with_report(&points, options)
+        .map_err(curve_region_recovery_error)
+}
+
+fn curve_region_recovery_error(cause: CurveError) -> ExactCurveError {
+    ExactCurveError::invalid(
+        CurveOperation2::Construction,
+        CurveFamily2::Line,
+        None,
+        cause,
+    )
 }
 
 fn finite_ring_points(points: &[[f64; 2]]) -> CurveResult<(Vec<Point2>, usize)> {

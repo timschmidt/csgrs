@@ -25,14 +25,15 @@ HYPERCURVE_COMPARE_ITERS=1 HYPERCURVE_COMPARE_SAMPLES=1 \
 | Rectangle union | `hypercurve`, `cavalier_contours`, `i_overlay`, `geo` | Allocate a Boolean result from the same two four-vertex rings using even-odd fill semantics. |
 | 64-vertex star intersection | `hypercurve`, `cavalier_contours`, `i_overlay`, `geo` | Allocate an intersection result from the same two line-only rings. |
 | Inward capsule offset | `hypercurve`, `cavalier_contours` | Offset the same closed two-line/two-semicircle bulge contour by five units. |
+| Open cubic Bézier offset | `hypercurve` certified parallel, `hypercurve` source-chord fallback, `curvo` heuristic | Offset the same cubic by `0.1`; the two tolerance-driven lanes use `0.05`. Labels preserve their different guarantees. |
 | Rational cubic NURBS evaluation | `hypercurve`, `curvo` | Evaluate the same degree, homogeneous controls, weights, knots, and three cycling parameters. |
 | Pathological rotated-region union/intersection/difference/XOR | `hypercurve`, `cavalier_contours`, `i_overlay`, `geo` | Boolean the same finite projections sampled from all-family native shards and their exact rotated mates. The `100mb`, `500mb`, and `1gb` labels retain the native fixture's cell counts. |
 
 `geo` is a relevant consumer-facing baseline, but its Boolean implementation is backed
 by `i_overlay`; the two rows measure different API and conversion layers rather than
-independent clipping algorithms. `curvo` is compared only on NURBS evaluation because
-that is its directly equivalent curve primitive. It is not inserted into the polygon
-lane by flattening curves, which would time a different operation.
+independent clipping algorithms. `curvo` participates in NURBS evaluation and its
+native floating NURBS offset. It is not inserted into polygon lanes by flattening
+curves, which would time a different operation.
 
 ## Measurement model
 
@@ -61,6 +62,13 @@ For example:
 
 ```sh
 HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS=all HYPERCURVE_COMPARE_ITERS=1 \
+  cargo bench --features comparative-benchmarks --bench comparative
+```
+
+The focused cubic-offset comparison can be selected independently:
+
+```sh
+HYPERCURVE_COMPARE_GROUP=bezier_offset/open_cubic \
   cargo bench --features comparative-benchmarks --bench comparative
 ```
 

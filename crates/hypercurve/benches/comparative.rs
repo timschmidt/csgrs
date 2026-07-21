@@ -8,11 +8,15 @@ use std::time::{Duration, Instant};
 use cavalier_contours::polyline::{
     BooleanOp as CavalierBooleanOp, PlineSource, PlineSourceMut, Polyline,
 };
-use curvo::prelude::NurbsCurve2D as CurvoNurbsCurve2D;
+use curvo::prelude::{
+    CurveOffsetOption as CurvoCurveOffsetOption, NurbsCurve2D as CurvoNurbsCurve2D,
+    Offset as CurvoOffset,
+};
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, NurbsCurve2, Point2,
-    PreparedRegionView2, Real, Region2,
+    BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
+    Classification, Contour2, CubicBezier2, Curve2, CurvePolicy, CurveString2, FillRule,
+    LineArcRegion2, LineSeg2, NurbsCurve2, Point2, PreparedRegionView2, Real, Segment2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -176,8 +180,8 @@ fn hypercurve_contour(points: &[[f64; 2]]) -> Contour2 {
     Contour2::from_bulge_vertices(&vertices).expect("valid hypercurve benchmark contour")
 }
 
-fn hypercurve_region(points: &[[f64; 2]]) -> Region2 {
-    Region2::from_material_contours(vec![hypercurve_contour(points)])
+fn hypercurve_region(points: &[[f64; 2]]) -> LineArcRegion2 {
+    LineArcRegion2::from_material_contours(vec![hypercurve_contour(points)])
 }
 
 fn cavalier_polyline(points: &[[f64; 2]], bulges: Option<&[f64]>) -> Polyline<f64> {
@@ -205,8 +209,8 @@ fn geo_polygon(points: &[[f64; 2]]) -> Polygon<f64> {
 }
 
 fn hypercurve_boolean_result_size(
-    first: &Region2,
-    second: &Region2,
+    first: &LineArcRegion2,
+    second: &LineArcRegion2,
     operation: CommonBooleanOp,
     policy: &CurvePolicy,
 ) -> usize {
@@ -226,8 +230,8 @@ fn hypercurve_boolean_result_size(
 }
 
 fn hypercurve_boundary_contour_result_size(
-    first: &Region2,
-    second: &Region2,
+    first: &LineArcRegion2,
+    second: &LineArcRegion2,
     operation: CommonBooleanOp,
     policy: &CurvePolicy,
 ) -> usize {
@@ -242,8 +246,8 @@ fn hypercurve_boundary_contour_result_size(
 }
 
 fn hypercurve_boundary_loop_result_size(
-    first: &Region2,
-    second: &Region2,
+    first: &LineArcRegion2,
+    second: &LineArcRegion2,
     operation: CommonBooleanOp,
     policy: &CurvePolicy,
 ) -> usize {
@@ -625,6 +629,89 @@ fn benchmark_contour_offset(runner: &Runner) {
     });
 }
 
+fn benchmark_bezier_offset(runner: &Runner) {
+    if !runner.group_enabled("bezier_offset/open_cubic") {
+        return;
+    }
+    let policy = CurvePolicy::certified();
+    let controls = [[0.0, 0.0], [1.0, 2.0], [2.0, -1.0], [4.0, 0.0]];
+    let source = CubicBezier2::new(
+        Point2::new(real(0.0), real(0.0)),
+        Point2::new(real(1.0), real(2.0)),
+        Point2::new(real(2.0), real(-1.0)),
+        Point2::new(real(4.0), real(0.0)),
+    );
+    let source_curve = Curve2::from(source.clone());
+    let verification = BezierParallelVerificationOptions::try_new(real(0.05), 14, &policy)
+        .expect("valid parallel verification options");
+    let flattening = BezierFlatteningOptions::try_new(real(0.05), 14, &policy)
+        .expect("valid source flattening options");
+    let distance = real(0.1);
+    let curvo_curve = CurvoNurbsCurve2D::<f64>::try_new(
+        3,
+        controls
+            .iter()
+            .map(|point| Point3::new(point[0], point[1], 1.0))
+            .collect(),
+        vec![0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+    )
+    .expect("valid curvo cubic fixture");
+    let curvo_options = CurvoCurveOffsetOption::default()
+        .with_distance(-0.1)
+        .with_normal_tolerance(0.05)
+        .with_knot_tolerance(0.05);
+
+    assert!(matches!(
+        source.approximate_parallel_blend2d_certified(distance.clone(), &verification, &policy),
+        Ok(Classification::Decided(_))
+    ));
+    assert!(curvo_curve.offset(curvo_options.clone()).is_ok());
+
+    let name = "bezier_offset/open_cubic";
+    runner.measure(name, "hypercurve_certified", || {
+        let Classification::Decided(path) = source
+            .approximate_parallel_blend2d_certified(distance.clone(), &verification, &policy)
+            .expect("hypercurve certified cubic offset completes")
+        else {
+            panic!("hypercurve certified cubic offset became uncertain");
+        };
+        path.spans().len()
+    });
+    runner.measure(name, "hypercurve_chord_fallback", || {
+        let Classification::Decided(segmented) = source_curve
+            .segment_certified(&flattening, &policy)
+            .expect("hypercurve cubic source segmentation completes")
+        else {
+            panic!("hypercurve cubic source segmentation became uncertain");
+        };
+        let segments = segmented
+            .points()
+            .windows(2)
+            .map(|edge| {
+                LineSeg2::try_new(edge[0].clone(), edge[1].clone())
+                    .map(Segment2::Line)
+                    .expect("certified source chord is nondegenerate")
+            })
+            .collect();
+        let curve = CurveString2::try_new(segments).expect("certified chords stay connected");
+        let Classification::Decided(offset) = curve
+            .offset_left_checked(distance.clone(), &policy)
+            .expect("legacy chord offset completes")
+        else {
+            panic!("legacy chord offset became uncertain");
+        };
+        offset.len()
+    });
+    runner.measure(name, "curvo_heuristic", || {
+        curvo_curve
+            .offset(curvo_options.clone())
+            .expect("curvo cubic offset completes")
+            .iter()
+            .map(|compound| compound.spans().len())
+            .sum()
+    });
+}
+
 fn benchmark_nurbs_evaluation(runner: &Runner) {
     if !runner.group_enabled("nurbs_evaluation/rational_cubic_three_parameters") {
         return;
@@ -806,6 +893,7 @@ fn main() {
     );
     benchmark_polygon_booleans(&runner);
     benchmark_contour_offset(&runner);
+    benchmark_bezier_offset(&runner);
     benchmark_nurbs_evaluation(&runner);
     benchmark_pathological_cross_suite(&runner);
 }

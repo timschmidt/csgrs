@@ -145,7 +145,7 @@ fn prepared_region_facts_preserve_all_line_exact_grid_shape() {
         FillRule::NonZero,
     )
     .unwrap();
-    let region = hypercurve::Region2::from_material_contours(vec![contour]);
+    let region = hypercurve::LineArcRegion2::from_material_contours(vec![contour]);
     let prepared = region.prepare_topology_queries(&policy());
     let facts = prepared.facts();
 

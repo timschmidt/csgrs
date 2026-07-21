@@ -9,14 +9,14 @@
 use geo::{BooleanOps as _, Contains as _, Coord, LineString, MultiPolygon, Point, Polygon};
 use hypercurve::{
     BooleanFragmentAction, BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy,
-    FillRule, IntersectionKind, LineLineIntersection, LineSeg2, Point2, Real, Region2,
+    FillRule, IntersectionKind, LineArcRegion2, LineLineIntersection, LineSeg2, Point2, Real,
     RegionPointLocation,
 };
 
 type HPoint = Point2;
 type HReal = Real;
 type HContour = Contour2;
-type HRegion = Region2;
+type HRegion = LineArcRegion2;
 
 fn s(value: f64) -> HReal {
     HReal::try_from(value).unwrap()
@@ -43,7 +43,7 @@ fn contour(coords: &[(f64, f64)]) -> HContour {
 }
 
 fn region_from_rings(materials: &[&[(f64, f64)]], holes: &[&[(f64, f64)]]) -> HRegion {
-    Region2::new(
+    LineArcRegion2::new(
         materials.iter().map(|ring| contour(ring)).collect(),
         holes.iter().map(|ring| contour(ring)).collect(),
     )

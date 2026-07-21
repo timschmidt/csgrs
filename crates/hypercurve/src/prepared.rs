@@ -26,11 +26,11 @@ use crate::{
     CurveStringCurveTrimQueryPath2, CurveStringCurveTrimResult2, CurveStringIntersection,
     CurveStringIntersectionPreparedCacheReport2, CurveStringIntersectionQueryPath2,
     CurveStringIntersectionReport2, CurveStringIntersectionResult2, CurveStringPreparedCacheAudit2,
-    CurveStringRegionTrimPreparedCacheReport2, CurveStringRegionTrimResult2, FillRule, LineSeg2,
-    LineSeg2Facts, LineSide, Point2, Region2, RegionBooleanResult2, RegionContourIntersection,
-    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionPointLocation, RegionSide,
-    RegionTrimPreparedCacheAudit2, RegionView2, Segment2, SegmentIntersection, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    CurveStringRegionTrimPreparedCacheReport2, CurveStringRegionTrimResult2, FillRule,
+    LineArcRegion2, LineSeg2, LineSeg2Facts, LineSide, Point2, RegionBooleanResult2,
+    RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
+    RegionPointLocation, RegionSide, RegionTrimPreparedCacheAudit2, RegionView2, Segment2,
+    SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -556,7 +556,7 @@ impl<'a> PreparedCurveStringView2<'a> {
     /// Retains portions of this prepared open curve string inside an ordinary region.
     pub fn trim_inside_region(
         &self,
-        region: &Region2,
+        region: &LineArcRegion2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringRegionTrimResult2> {
         let region = PreparedRegionView2::from_region(region, policy);
@@ -866,7 +866,7 @@ pub struct PreparedRegionView2<'a> {
 
 impl<'a> PreparedRegionView2<'a> {
     /// Builds a prepared view from an owned region.
-    pub fn from_region(region: &'a Region2, policy: &CurvePolicy) -> Self {
+    pub fn from_region(region: &'a LineArcRegion2, policy: &CurvePolicy) -> Self {
         Self::from_region_view(&region.as_view(), policy)
     }
 
@@ -1311,7 +1311,7 @@ impl<'a> PreparedRegionView2<'a> {
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Region2>> {
+    ) -> CurveResult<Classification<LineArcRegion2>> {
         crate::prepared_boolean::boolean_region_between_prepared(self, other, op, fill_rule, policy)
     }
 
@@ -1345,7 +1345,7 @@ impl<'a> PreparedRegionView2<'a> {
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Region2>> {
+    ) -> CurveResult<Classification<LineArcRegion2>> {
         let other = PreparedRegionView2::from_region_view(other, policy);
         self.boolean_region(&other, op, fill_rule, policy)
     }
@@ -1377,7 +1377,7 @@ impl Contour2 {
     }
 }
 
-impl Region2 {
+impl LineArcRegion2 {
     /// Builds a prepared borrowed view for repeated point classification.
     pub fn prepare_point_classifier(&self, policy: &CurvePolicy) -> PreparedRegionView2<'_> {
         PreparedRegionView2::from_region(self, policy)
@@ -1462,7 +1462,7 @@ impl<'a> RegionView2<'a> {
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Region2>> {
+    ) -> CurveResult<Classification<LineArcRegion2>> {
         let this = PreparedRegionView2::from_region_view(self, policy);
         this.boolean_region(other, op, fill_rule, policy)
     }

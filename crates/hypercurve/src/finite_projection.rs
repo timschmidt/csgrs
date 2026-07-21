@@ -14,7 +14,7 @@ use std::f64::consts::PI;
 use crate::{
     BezierParameter2, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
     Contour2, CurveError, CurvePath2, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionLoopRole, CurveResult, CurveString2, Point2, Region2, RegionContourProfile,
+    CurveRegionLoopRole, CurveResult, CurveString2, LineArcRegion2, Point2, RegionContourProfile,
     RegionView2, Segment2,
 };
 use hyperreal::{Real, RealSign};
@@ -36,7 +36,7 @@ pub struct FinitePolyline2 {
 /// Finite `f64` projection of a region with material and hole roles retained.
 ///
 /// This is an IO/display object. Exact containment, area, and boolean topology
-/// remain on [`Region2`] / [`RegionView2`].
+/// remain on [`LineArcRegion2`] / [`RegionView2`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct FiniteRegionProjection2 {
     material_rings: Vec<FinitePolyline2>,
@@ -104,7 +104,7 @@ impl FinitePolyline2 {
     ///
     /// This is only a boundary/product measurement of projected vertices. Exact
     /// contour area stays on [`Contour2::signed_area`] and
-    /// [`crate::Region2::filled_area`].
+    /// [`crate::LineArcRegion2::filled_area`].
     pub fn signed_ring_area(&self) -> f64 {
         finite_ring_signed_area(&self.points)
     }
@@ -170,7 +170,7 @@ impl FiniteRegionProfile2 {
     /// Hole ownership has already been decided by native region topology before
     /// this projected profile exists, so this method does not infer roles from
     /// winding. It only measures the finite output rings with the shoelace
-    /// formula. Exact CAD area should use [`Region2::filled_area`]; this helper
+    /// formula. Exact CAD area should use [`LineArcRegion2::filled_area`]; this helper
     /// exists for IO, diagnostics, and tests at the projection boundary.
     pub fn projected_filled_area(&self) -> f64 {
         let material = self.material.signed_ring_area().abs();
@@ -370,11 +370,31 @@ impl CurvePath2 {
 }
 
 impl CurveRegion2 {
+    /// Segments retained region boundaries into finite material/hole profiles.
+    ///
+    /// This is the mesh/extrusion-facing counterpart to
+    /// [`CurveRegion2::recover_from_finite_profiles`]. Exact loop roles and hole
+    /// ownership are decided before sampling. The returned chords are a lossy
+    /// boundary product and must not replace this region for Boolean predicates.
+    /// Native/represented loops use exact [`CurveRegion2::boundary_profiles`];
+    /// retained algebraic endpoints that cannot inhabit [`Point2`] use the
+    /// finite filled-side fallback documented by [`Self::project_to_finite_profiles`].
+    pub fn segment_to_finite_profiles(
+        &self,
+        options: &FiniteProjectionOptions,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<FiniteRegionProfile2>>> {
+        self.project_to_finite_profiles(options, policy)
+    }
+
     /// Projects retained higher-order region loops into material profiles.
     ///
-    /// Loop roles are decided by exact curved topology before any coordinate
-    /// crosses the finite boundary. Hole ownership is then attached within the
-    /// already-decided role partition using the projected rings.
+    /// Representable loop roles and hole ownership are decided by exact curved
+    /// topology before any coordinate crosses the finite boundary. Retained
+    /// algebraic endpoints that cannot be represented as [`Point2`] keep their
+    /// certified filled sides, then derive export-only roles and ownership from
+    /// projected ring orientation and containment. That fallback never feeds
+    /// exact predicates.
     pub fn project_to_finite_profiles(
         &self,
         options: &FiniteProjectionOptions,
@@ -388,30 +408,45 @@ impl CurveRegion2 {
             .iter()
             .map(|boundary| project_curve_region_loop(boundary, options, policy))
             .collect::<CurveResult<Vec<_>>>()?;
-        let roles = match self.loop_roles(policy)? {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(_) => {
-                let filled_sides = match self.filled_side_is_left(policy)? {
-                    Classification::Decided(sides) => sides,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                rings
-                    .iter()
-                    .zip(filled_sides)
-                    .map(|(ring, filled_side_is_left)| {
-                        let interior_is_left = finite_ring_signed_area(ring.points()) > 0.0;
-                        if interior_is_left == *filled_side_is_left {
-                            CurveRegionLoopRole::Material
-                        } else {
-                            CurveRegionLoopRole::Hole
-                        }
+        if let Classification::Decided(exact_profiles) = self.boundary_profiles(policy)? {
+            return Ok(Classification::Decided(
+                exact_profiles
+                    .into_iter()
+                    .map(|profile| {
+                        let material = rings[profile.material_loop_index()].clone();
+                        let holes = profile
+                            .hole_loop_indices()
+                            .iter()
+                            .map(|index| rings[*index].clone())
+                            .collect();
+                        FiniteRegionProfile2::new(material, holes)
                     })
-                    .collect()
+                    .collect(),
+            ));
+        }
+
+        // Retained algebraic loops may have a certified filled side while
+        // exact role/ownership sampling is not representable as Point2. Keep
+        // that limitation at this finite boundary rather than blocking display
+        // and meshing of otherwise decided Boolean output.
+        let filled_sides = match self.filled_side_is_left(policy)? {
+            Classification::Decided(sides) => sides,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
         };
-
+        let roles = rings
+            .iter()
+            .zip(filled_sides)
+            .map(|(ring, filled_side_is_left)| {
+                let interior_is_left = finite_ring_signed_area(ring.points()) > 0.0;
+                if interior_is_left == *filled_side_is_left {
+                    CurveRegionLoopRole::Material
+                } else {
+                    CurveRegionLoopRole::Hole
+                }
+            })
+            .collect::<Vec<_>>();
         let material_indices = roles
             .iter()
             .enumerate()
@@ -465,12 +500,12 @@ impl Contour2 {
     }
 }
 
-impl Region2 {
+impl LineArcRegion2 {
     /// Projects this region to finite material/hole rings for IO and display.
     ///
     /// Region roles are preserved, but the returned rings are boundary
     /// products only. Exact point classification and area should continue to
-    /// use [`Region2::classify_point`] and [`Region2::filled_area`].
+    /// use [`LineArcRegion2::classify_point`] and [`LineArcRegion2::filled_area`].
     pub fn project_to_finite_region(
         &self,
         options: &FiniteProjectionOptions,
@@ -481,12 +516,12 @@ impl Region2 {
     /// Projects exact material/hole ownership profiles to finite rings.
     ///
     /// Ownership is classified before projection with
-    /// [`Region2::contour_profiles`], so this method does not recover holes
+    /// [`LineArcRegion2::contour_profiles`], so this method does not recover holes
     /// from sampled centroids or winding heuristics. The returned rings are
     /// still finite API-boundary products; exact topology remains in the
     /// region. This follows the exact-object/API-boundary split and the
     /// boundary-first point-in-polygon structure used by
-    /// [`Region2::contour_profiles`].
+    /// [`LineArcRegion2::contour_profiles`].
     pub fn project_to_finite_profiles(
         &self,
         options: &FiniteProjectionOptions,

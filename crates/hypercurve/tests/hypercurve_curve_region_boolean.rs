@@ -51,6 +51,35 @@ fn curved_regions_boolean_and_reuse_prepared_pair() {
     assert_eq!(prepared.authored_carrier_pair_count(), 16);
     assert!(prepared.carrier_pair_count() < prepared.authored_carrier_pair_count());
     assert!(!prepared.is_boolean_region_cached(BooleanOp::Union));
+    assert!(!prepared.is_intersection_report_cached());
+
+    let contacts = prepared.intersection_report().unwrap();
+    assert!(prepared.is_intersection_report_cached());
+    assert!(contacts.is_complete());
+    assert!(!contacts.is_disjoint());
+    assert_eq!(
+        contacts.authored_carrier_pair_count(),
+        prepared.authored_carrier_pair_count()
+    );
+    assert_eq!(
+        contacts.candidate_carrier_pair_count(),
+        prepared.carrier_pair_count()
+    );
+    assert!(!contacts.contacts().is_empty());
+    assert!(!contacts.overlaps().is_empty());
+    assert!(contacts.blockers().is_empty());
+    assert!(contacts.contacts().iter().all(|contact| {
+        contact.first().operand() == hypercurve::CurvePathBooleanOperand2::First
+            && contact.second().operand() == hypercurve::CurvePathBooleanOperand2::Second
+            && contact.first().loop_index() == 0
+            && contact.second().loop_index() == 0
+    }));
+
+    let direct_contacts = first
+        .intersect_region(&second, &CurvePolicy::certified())
+        .unwrap();
+    assert_eq!(direct_contacts.contacts().len(), contacts.contacts().len());
+    assert_eq!(direct_contacts.overlaps().len(), contacts.overlaps().len());
 
     let union = prepared.boolean_region(BooleanOp::Union).unwrap();
     assert!(prepared.is_boolean_region_cached(BooleanOp::Union));

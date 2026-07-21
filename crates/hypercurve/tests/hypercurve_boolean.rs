@@ -6,9 +6,10 @@ use hypercurve::{
     BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
     BooleanOp, BulgeVertex2, Classification, Contour2, ContourFragment, ContourFragmentSet,
     ContourOperand, ContourSplitMarkers, CurveError, CurvePolicy, DirectedBooleanFragment,
-    FillRule, LineLineIntersection, LineSeg2, ParamRange, Real, Region2, RegionContourFragments,
-    RegionContourKey, RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide,
-    Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    FillRule, LineArcRegion2, LineLineIntersection, LineSeg2, ParamRange, Real,
+    RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentSet,
+    RegionPointLocation, RegionSide, Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -96,8 +97,8 @@ fn boolean_truth(op: BooleanOp, first: bool, second: bool) -> bool {
 }
 
 fn assert_exact_boolean_matrix(
-    first: &Region2,
-    second: &Region2,
+    first: &LineArcRegion2,
+    second: &LineArcRegion2,
     samples: &[(hypercurve::Point2, bool, bool)],
 ) {
     let policy = policy();
@@ -191,8 +192,8 @@ fn transcendental_point_equality_requires_exact_coordinate_evidence() {
 #[test]
 fn symbolic_regular_polygon_booleans_with_rectangle_are_decided() {
     let circle =
-        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(2_u8), 7)]);
-    let rectangle = Region2::from_material_contours(vec![rectangle(0, -1, 3, 1)]);
+        LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon(Real::from(2_u8), 7)]);
+    let rectangle = LineArcRegion2::from_material_contours(vec![rectangle(0, -1, 3, 1)]);
 
     let intersections = circle.intersect_region(&rectangle, &policy()).unwrap();
     let pair = &intersections.pairs()[0];
@@ -307,8 +308,8 @@ fn concentric_symbolic_polygon_offsets_form_decided_ring() {
     else {
         panic!("inward exact offset was uncertain");
     };
-    let outer = Region2::from_material_contours(vec![outer]);
-    let inner = Region2::from_material_contours(vec![inner]);
+    let outer = LineArcRegion2::from_material_contours(vec![outer]);
+    let inner = LineArcRegion2::from_material_contours(vec![inner]);
 
     let result = outer
         .boolean_region_with_report(&inner, BooleanOp::Difference, FillRule::NonZero, &policy())
@@ -351,8 +352,8 @@ fn retained_offset_containment_stops_at_line_direction_reversal() {
     else {
         panic!("over-inset square was uncertain");
     };
-    let near = Region2::from_material_contours(vec![near]);
-    let beyond_collapse = Region2::from_material_contours(vec![beyond_collapse]);
+    let near = LineArcRegion2::from_material_contours(vec![near]);
+    let beyond_collapse = LineArcRegion2::from_material_contours(vec![beyond_collapse]);
 
     let result = near
         .boolean_region_with_report(
@@ -370,9 +371,11 @@ fn retained_offset_containment_stops_at_line_direction_reversal() {
 
 #[test]
 fn nested_symbolic_regular_polygon_difference_is_decided() {
-    let outer =
-        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(2_u8), 24)]);
-    let inner = Region2::from_material_contours(vec![symbolic_regular_polygon(
+    let outer = LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon(
+        Real::from(2_u8),
+        24,
+    )]);
+    let inner = LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon(
         (Real::from(3_u8) / Real::from(2_u8)).unwrap(),
         24,
     )]);
@@ -388,9 +391,11 @@ fn nested_symbolic_regular_polygon_difference_is_decided() {
 
 #[test]
 fn symbolic_regular_polygon_keyway_difference_is_decided() {
-    let circle =
-        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(3_u8), 24)]);
-    let keyway = Region2::from_material_contours(vec![
+    let circle = LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon(
+        Real::from(3_u8),
+        24,
+    )]);
+    let keyway = LineArcRegion2::from_material_contours(vec![
         Contour2::from_real_ring(&[
             [
                 Real::from(2_u8),
@@ -417,10 +422,12 @@ fn symbolic_regular_polygon_keyway_difference_is_decided() {
 
 #[test]
 fn symbolic_regular_polygon_two_cut_differences_are_decided() {
-    let circle =
-        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(3_u8), 24)]);
-    let top = Region2::from_material_contours(vec![rectangle(-3, 1, 3, 3)]);
-    let bottom = Region2::from_material_contours(vec![rectangle(-3, -3, 3, -1)]);
+    let circle = LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon(
+        Real::from(3_u8),
+        24,
+    )]);
+    let top = LineArcRegion2::from_material_contours(vec![rectangle(-3, 1, 3, 3)]);
+    let bottom = LineArcRegion2::from_material_contours(vec![rectangle(-3, -3, 3, -1)]);
 
     let Classification::Decided(first) = circle
         .boolean_region(&top, BooleanOp::Difference, FillRule::NonZero, &policy())
@@ -452,7 +459,7 @@ fn translated_symbolic_regular_polygon_intersections_are_decided() {
     let regions = centers
         .into_iter()
         .map(|(x, y)| {
-            Region2::from_material_contours(vec![symbolic_regular_polygon_at(
+            LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon_at(
                 Real::from(3_u8),
                 32,
                 x,
@@ -501,9 +508,11 @@ fn translated_symbolic_regular_polygon_intersections_are_decided() {
 #[test]
 fn translated_symbolic_regular_polygon_boolean_matrix_is_decided() {
     let shift_angle = (Real::pi() / Real::from(5_u8)).unwrap();
-    let first =
-        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(2_u8), 12)]);
-    let second = Region2::from_material_contours(vec![symbolic_regular_polygon_at(
+    let first = LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon(
+        Real::from(2_u8),
+        12,
+    )]);
+    let second = LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon_at(
         Real::from(2_u8),
         12,
         shift_angle.clone().sin(),
@@ -528,8 +537,8 @@ fn translated_symbolic_regular_polygon_boolean_matrix_is_decided() {
 
 #[test]
 fn translated_symbolic_circle_rectangle_union_is_decided() {
-    let rectangle = Region2::from_material_contours(vec![rectangle(0, 0, 2, 1)]);
-    let circle = Region2::from_material_contours(vec![symbolic_regular_polygon_at(
+    let rectangle = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 1)]);
+    let circle = LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon_at(
         (Real::from(3_u8) / Real::from(4_u8)).unwrap(),
         32,
         Real::one(),
@@ -610,7 +619,7 @@ fn five_translated_symbolic_regular_polygon_intersections_are_decided() {
     let regions = (0..5)
         .map(|index| {
             let angle = Real::tau() * (Real::from(index as u64) / Real::from(5_u8)).unwrap();
-            Region2::from_material_contours(vec![symbolic_regular_polygon_at(
+            LineArcRegion2::from_material_contours(vec![symbolic_regular_polygon_at(
                 Real::from(3_u8),
                 32,
                 center_radius.clone() * angle.clone().cos(),
@@ -754,9 +763,13 @@ fn unresolved_boundary_classification(fragment_index: usize) -> BooleanFragmentC
     )
 }
 
-fn overlapping_fragments() -> (Region2, Region2, hypercurve::RegionFragmentSet) {
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+fn overlapping_fragments() -> (
+    LineArcRegion2,
+    LineArcRegion2,
+    hypercurve::RegionFragmentSet,
+) {
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let intersections = first.intersect_region(&second, &policy()).unwrap();
     let fragment_result = intersections
         .split_regions_with_report(&first.as_view(), &second.as_view(), &policy())
@@ -1288,8 +1301,8 @@ fn boolean_fragment_selection_emit_rejects_incomplete_or_foreign_inventory() {
 
 #[test]
 fn boolean_boundary_chain_assembly_keeps_disjoint_loops_separate() {
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 2, 2)]);
-    let second = Region2::from_material_contours(vec![rectangle(4, 4, 6, 6)]);
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 2)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(4, 4, 6, 6)]);
     let intersections = first.intersect_region(&second, &policy()).unwrap();
     let Classification::Decided(fragments) = intersections
         .split_regions(&first.as_view(), &second.as_view(), &policy())
@@ -1477,8 +1490,8 @@ fn boolean_fragment_selection_reverses_emitted_second_difference_fragments() {
 
 #[test]
 fn boolean_fragment_selection_defers_shared_boundary_fragments() {
-    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = Region2::from_material_contours(vec![rectangle(2, -2, 6, 0)]);
+    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -2, 6, 0)]);
     let intersections = first.intersect_region(&second, &policy()).unwrap();
     assert_eq!(intersections.event_count(), 3);
     assert_eq!(
@@ -1615,8 +1628,8 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
 
 #[test]
 fn shared_boundary_same_direction_boolean_matrix_is_exact() {
-    let first = Region2::from_material_contours(vec![triangle([(0, 0), (6, 0), (0, 6)])]);
-    let second = Region2::from_material_contours(vec![triangle([(0, 0), (6, 0), (6, 6)])]);
+    let first = LineArcRegion2::from_material_contours(vec![triangle([(0, 0), (6, 0), (0, 6)])]);
+    let second = LineArcRegion2::from_material_contours(vec![triangle([(0, 0), (6, 0), (6, 6)])]);
     let samples = [
         (p(1, 4), true, false),
         (p(5, 4), false, true),
@@ -1626,9 +1639,10 @@ fn shared_boundary_same_direction_boolean_matrix_is_exact() {
 
     assert_exact_boolean_matrix(&first, &second, &samples);
 
-    let clockwise_first = Region2::from_material_contours(vec![triangle([(0, 0), (0, 6), (6, 0)])]);
+    let clockwise_first =
+        LineArcRegion2::from_material_contours(vec![triangle([(0, 0), (0, 6), (6, 0)])]);
     let clockwise_second =
-        Region2::from_material_contours(vec![triangle([(0, 0), (6, 6), (6, 0)])]);
+        LineArcRegion2::from_material_contours(vec![triangle([(0, 0), (6, 6), (6, 0)])]);
     assert_exact_boolean_matrix(&clockwise_first, &clockwise_second, &samples);
 
     let clockwise_union = clockwise_first
@@ -1656,9 +1670,39 @@ fn shared_boundary_same_direction_boolean_matrix_is_exact() {
 }
 
 #[test]
+fn partial_shared_boundary_containment_boolean_matrix_is_exact() {
+    let outer = LineArcRegion2::from_material_contours(vec![rectangle(-3, -3, 13, 13)]);
+    let touching_inset = LineArcRegion2::from_material_contours(vec![rectangle(4, 6, 6, 13)]);
+
+    assert_exact_boolean_matrix(
+        &outer,
+        &touching_inset,
+        &[
+            (p(0, 0), true, false),
+            (p(5, 8), true, true),
+            (p(14, 5), false, false),
+        ],
+    );
+
+    let difference = outer
+        .boolean_region(
+            &touching_inset,
+            BooleanOp::Difference,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap();
+    let Classification::Decided(difference) = difference else {
+        panic!("partial shared-boundary containment difference was unresolved");
+    };
+    assert_eq!(difference.material_contours().len(), 1);
+    assert!(difference.hole_contours().is_empty());
+}
+
+#[test]
 fn shared_boundary_opposite_direction_boolean_matrix_is_exact() {
-    let first = Region2::from_material_contours(vec![triangle([(0, 0), (6, 0), (0, 6)])]);
-    let second = Region2::from_material_contours(vec![triangle([(6, 0), (0, 0), (6, -6)])]);
+    let first = LineArcRegion2::from_material_contours(vec![triangle([(0, 0), (6, 0), (0, 6)])]);
+    let second = LineArcRegion2::from_material_contours(vec![triangle([(6, 0), (0, 0), (6, -6)])]);
 
     assert_exact_boolean_matrix(
         &first,
@@ -1673,11 +1717,11 @@ fn shared_boundary_opposite_direction_boolean_matrix_is_exact() {
 
 #[test]
 fn shared_material_hole_boundary_boolean_matrix_is_exact() {
-    let first = Region2::new(
+    let first = LineArcRegion2::new(
         vec![rectangle(-10, -10, 10, 10)],
         vec![rectangle(0, 0, 6, 6)],
     );
-    let second = Region2::from_material_contours(vec![triangle([(0, 0), (6, 0), (3, 3)])]);
+    let second = LineArcRegion2::from_material_contours(vec![triangle([(0, 0), (6, 0), (3, 3)])]);
 
     assert_exact_boolean_matrix(
         &first,
@@ -1693,7 +1737,7 @@ fn shared_material_hole_boundary_boolean_matrix_is_exact() {
 
 #[test]
 fn center_defined_circle_boolean_matrix_is_orientation_independent() {
-    let rectangle = Region2::from_material_contours(vec![rectangle(0, -2, 6, 2)]);
+    let rectangle = LineArcRegion2::from_material_contours(vec![rectangle(0, -2, 6, 2)]);
     let samples = [
         (p(-3, 0), true, false),
         (p(1, 0), true, true),
@@ -1702,7 +1746,8 @@ fn center_defined_circle_boolean_matrix_is_orientation_independent() {
     ];
 
     for clockwise in [false, true] {
-        let circle = Region2::from_material_contours(vec![center_defined_circle(4, clockwise)]);
+        let circle =
+            LineArcRegion2::from_material_contours(vec![center_defined_circle(4, clockwise)]);
         let intersections = circle.intersect_region(&rectangle, &policy()).unwrap();
         let split = intersections
             .split_regions_with_report(&circle.as_view(), &rectangle.as_view(), &policy())
@@ -1727,8 +1772,8 @@ fn center_defined_circle_boolean_matrix_is_orientation_independent() {
 
 #[test]
 fn major_arc_multiple_hits_split_in_sweep_order_and_boolean_exactly() {
-    let major = Region2::from_material_contours(vec![major_arc_segment_contour(4)]);
-    let strip = Region2::from_material_contours(vec![rectangle(-3, -5, -2, 5)]);
+    let major = LineArcRegion2::from_material_contours(vec![major_arc_segment_contour(4)]);
+    let strip = LineArcRegion2::from_material_contours(vec![rectangle(-3, -5, -2, 5)]);
     let intersections = major.intersect_region(&strip, &policy()).unwrap();
     assert_eq!(intersections.point_event_count(), 4);
 

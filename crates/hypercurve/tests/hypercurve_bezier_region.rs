@@ -513,7 +513,11 @@ fn retained_line_image_role_report_assigns_nested_material_and_hole() {
     assert_eq!(report.material_loop_indices(), vec![0]);
     assert_eq!(report.hole_loop_indices(), vec![1]);
     assert_eq!(
-        report.to_region().filled_area(&policy()).unwrap(),
+        report
+            .try_to_curve_region(&policy())
+            .unwrap()
+            .filled_area(&policy())
+            .unwrap(),
         Classification::Decided(Some(r(32)))
     );
 }
@@ -845,7 +849,11 @@ fn retained_line_image_role_report_accepts_exact_algebraic_endpoint_carriers() {
     assert_eq!(report.material_loop_indices(), vec![0]);
     assert_eq!(report.hole_loop_indices(), vec![1]);
     assert_eq!(
-        report.to_region().filled_area(&policy()).unwrap(),
+        report
+            .try_to_curve_region(&policy())
+            .unwrap()
+            .filled_area(&policy())
+            .unwrap(),
         Classification::Decided(Some(r(32)))
     );
     assert_eq!(
@@ -1036,7 +1044,11 @@ fn retained_line_image_role_report_accepts_certified_nonlinear_line_image_loop()
     assert_eq!(report.algebraic_fragment_count(), 0);
     assert!(!report.has_algebraic_fragments());
     assert_eq!(
-        report.to_region().filled_area(&policy()).unwrap(),
+        report
+            .try_to_curve_region(&policy())
+            .unwrap()
+            .filled_area(&policy())
+            .unwrap(),
         Classification::Decided(Some(r(16)))
     );
 }
