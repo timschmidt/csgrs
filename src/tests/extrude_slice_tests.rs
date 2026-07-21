@@ -61,8 +61,8 @@ fn test_consistent_winding() {
 
     let csg = Profile::loft(&[bottom, top]).unwrap();
 
-    // Expect 1 bottom + 1 top + 8 side triangles = 10 polygons
-    assert_eq!(csg.polygons.len(), 10);
+    // Each retained quad cap converts to two triangles.
+    assert_eq!(csg.polygons.len(), 12);
 
     // Optionally check that each polygon has at least 3 vertices
     for poly in &csg.polygons {
@@ -92,8 +92,7 @@ fn test_inverted_orientation() {
 
     let csg = Profile::loft(&[bottom, top]).unwrap();
 
-    // Expect 1 bottom + 1 top + 8 side triangles = 10 polygons
-    assert_eq!(csg.polygons.len(), 10);
+    assert_eq!(csg.polygons.len(), 12);
 
     // Check bounding box for sanity
     let bbox = csg.bounding_box();

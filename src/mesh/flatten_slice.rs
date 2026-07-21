@@ -6,7 +6,7 @@ use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::sketch::Profile;
 use crate::vertex::Vertex;
 use hypercurve::{BooleanOp, Contour2, CurvePolicy, CurveRegion2, CurveString2};
-use hyperlattice::Real;
+use hyperlattice::{Point3, Real};
 use std::cmp::Ordering;
 use std::fmt::Debug;
 
@@ -127,7 +127,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             slice_polygons_by_plane(&self.polygons, &plane);
 
         // "Knit" those intersection edges into polylines. Each edge is [vA, vB].
-        let polylines_3d = unify_intersection_edges(&intersection_edges);
+        let polylines_3d = unify_intersection_edges(&intersection_edges)
+            .into_iter()
+            .map(simplify_collinear_chain)
+            .collect::<Vec<_>>();
 
         // Convert each polyline of vertices into a Polygon<M>
         let mut result_polygons = Vec::new();
@@ -404,6 +407,65 @@ fn unify_intersection_edges(edges: &[[Vertex; 2]]) -> Vec<Vec<Vertex>> {
     }
 
     chains
+}
+
+fn simplify_collinear_chain(mut chain: Vec<Vertex>) -> Vec<Vertex> {
+    let closed = chain.len() > 3
+        && chain
+            .first()
+            .zip(chain.last())
+            .is_some_and(|(first, last)| first.position == last.position);
+    if closed {
+        chain.pop();
+        loop {
+            let mut removed = false;
+            for index in 0..chain.len() {
+                let previous = (index + chain.len() - 1) % chain.len();
+                let next = (index + 1) % chain.len();
+                if points_are_collinear(
+                    &chain[previous].position,
+                    &chain[index].position,
+                    &chain[next].position,
+                ) {
+                    chain.remove(index);
+                    removed = true;
+                    break;
+                }
+            }
+            if !removed || chain.len() <= 3 {
+                break;
+            }
+        }
+        if let Some(first) = chain.first().cloned() {
+            chain.push(first);
+        }
+        return chain;
+    }
+
+    let mut simplified = Vec::<Vertex>::with_capacity(chain.len());
+    for vertex in chain {
+        while simplified.len() >= 2
+            && points_are_collinear(
+                &simplified[simplified.len() - 2].position,
+                &simplified[simplified.len() - 1].position,
+                &vertex.position,
+            )
+        {
+            simplified.pop();
+        }
+        simplified.push(vertex);
+    }
+    simplified
+}
+
+fn points_are_collinear(a: &Point3, b: &Point3, c: &Point3) -> bool {
+    let cross = (b - a).cross(&(c - b));
+    cross.0.iter().all(|component| {
+        matches!(
+            component.refine_sign_until(-128),
+            Some(hyperreal::RealSign::Zero)
+        )
+    })
 }
 
 /// Extends a chain "forward" by repeatedly finding any unvisited edge that starts

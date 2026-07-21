@@ -1859,7 +1859,7 @@ mod tests {
         let mesh = Profile::loft(&[section(0.0, 0.0), section(1.0, 0.25), section(2.0, 0.0)])
             .expect("loft");
 
-        assert_eq!(mesh.polygons.len(), 18);
+        assert_eq!(mesh.polygons.len(), 20);
         mesh.to_hypermesh_exact()
             .expect("corresponding loft sections must form one closed manifold");
     }

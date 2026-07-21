@@ -77,7 +77,6 @@
 //!   refinement depends on the hyperreal expression
 //! - **Polygon Splitting**: O(n) per polygon, where n is the number of vertices
 //!
-use crate::mesh::Polygon;
 use crate::vertex::Vertex;
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use hyperreal::RealSign;
@@ -338,16 +337,6 @@ impl Plane {
         std::mem::swap(&mut self.point_a, &mut self.point_b);
     }
 
-    /// Classify a polygon with respect to the plane.
-    /// Returns a bitmask of `COPLANAR`, `FRONT`, and `BACK`.
-    pub fn classify_polygon<M: Clone>(&self, polygon: &Polygon<M>) -> i8 {
-        let mut polygon_type: i8 = 0;
-        for vertex in &polygon.vertices {
-            polygon_type |= self.orient_point(&vertex.position);
-        }
-        polygon_type
-    }
-
     fn orient_point_hyperlimit(&self, point: &Point3) -> Option<i8> {
         let a = hlimit_point3(&self.point_a);
         let b = hlimit_point3(&self.point_b);
@@ -360,7 +349,7 @@ impl Plane {
         }
     }
 
-    fn unscaled_hreal_normal(&self) -> Option<Vector3> {
+    pub(crate) fn unscaled_hreal_normal(&self) -> Option<Vector3> {
         let a = self.point_a.to_vector();
         let b = self.point_b.to_vector();
         let c = self.point_c.to_vector();
@@ -371,7 +360,8 @@ impl Plane {
         self.unscaled_hreal_normal()?.normalize_checked().ok()
     }
 
-    fn edge_intersection_parameter(
+    #[cfg(any(feature = "polygon-mesh", feature = "sketch"))]
+    pub(crate) fn edge_intersection_parameter(
         &self,
         start: &Vertex,
         end: &Vertex,
@@ -412,106 +402,6 @@ impl Plane {
         let normal = self.unscaled_hreal_normal()?;
         let parameter = self.edge_intersection_parameter(start, end, Some(&normal))?;
         Some(start.interpolate(end, parameter))
-    }
-
-    /// Splits a polygon by this plane, returning four buckets:
-    /// `(coplanar_front, coplanar_back, front, back)`.
-    #[allow(clippy::type_complexity)]
-    pub fn split_polygon<M: Clone + Send + Sync>(
-        &self,
-        polygon: &Polygon<M>,
-    ) -> (
-        Vec<Polygon<M>>,
-        Vec<Polygon<M>>,
-        Vec<Polygon<M>>,
-        Vec<Polygon<M>>,
-    ) {
-        let mut coplanar_front = Vec::new();
-        let mut coplanar_back = Vec::new();
-        let mut front = Vec::new();
-        let mut back = Vec::new();
-
-        let normal = self.normal();
-        let hnormal = self.unscaled_hreal_normal();
-
-        let types: Vec<i8> = polygon
-            .vertices
-            .iter()
-            .map(|v| self.orient_point(&v.position))
-            .collect();
-        let polygon_type = types.iter().fold(0, |acc, &t| acc | t);
-
-        // -----------------------------------------------------------------
-        // 2.  dispatch the easy cases
-        // -----------------------------------------------------------------
-        match polygon_type {
-            COPLANAR => {
-                if normals_same_direction(&normal, &polygon.plane.normal()) {
-                    coplanar_front.push(polygon.clone());
-                } else {
-                    coplanar_back.push(polygon.clone());
-                }
-            },
-            FRONT => front.push(polygon.clone()),
-            BACK => back.push(polygon.clone()),
-
-            // -------------------------------------------------------------
-            // 3.  true spanning – do the split
-            // -------------------------------------------------------------
-            _ => {
-                let mut split_front = Vec::<Vertex>::new();
-                let mut split_back = Vec::<Vertex>::new();
-
-                for i in 0..polygon.vertices.len() {
-                    // j is the vertex following i, we modulo by len to wrap around to the first vertex after the last
-                    let j = (i + 1) % polygon.vertices.len();
-                    let type_i = types[i];
-                    let type_j = types[j];
-                    let vertex_i = &polygon.vertices[i];
-                    let vertex_j = &polygon.vertices[j];
-
-                    // If current vertex is definitely not behind plane, it goes to split_front
-                    if type_i != BACK {
-                        split_front.push(vertex_i.clone());
-                    }
-                    // If current vertex is definitely not in front, it goes to split_back
-                    if type_i != FRONT {
-                        split_back.push(vertex_i.clone());
-                    }
-
-                    // If the edge between these two vertices crosses the plane,
-                    // compute intersection and add that intersection to both sets
-                    if (type_i | type_j) == SPANNING
-                        && let Some(intersection) = self.edge_intersection_parameter(
-                            vertex_i,
-                            vertex_j,
-                            hnormal.as_ref(),
-                        )
-                    {
-                        let vertex_new = vertex_i.interpolate(vertex_j, intersection);
-                        split_front.push(vertex_new.clone());
-                        split_back.push(vertex_new);
-                    }
-                }
-
-                // Build new polygons from the front/back vertex lists
-                // if they have at least 3 vertices
-                if split_front.len() >= 3 {
-                    front.push(
-                        Polygon::new(split_front, polygon.metadata.clone())
-                            .with_plane_id(polygon.plane_id),
-                    );
-                }
-                if split_back.len() >= 3 {
-                    back.push(
-                        Polygon::new(split_back, polygon.metadata.clone())
-                            .with_plane_id(polygon.plane_id),
-                    );
-                }
-            },
-        }
-
-        (coplanar_front, coplanar_back, front, back)
     }
 
     /// Returns (T, T_inv), where:
@@ -562,7 +452,8 @@ impl Plane {
     }
 }
 
-fn normals_same_direction(lhs: &Vector3, rhs: &Vector3) -> bool {
+#[cfg(feature = "polygon-mesh")]
+pub(crate) fn normals_same_direction(lhs: &Vector3, rhs: &Vector3) -> bool {
     matches!(lhs.dot(rhs).refine_sign_until(-128), Some(RealSign::Positive))
 }
 

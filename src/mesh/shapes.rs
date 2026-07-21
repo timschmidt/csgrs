@@ -50,14 +50,9 @@ pub(super) fn cuboid_transform_layout() -> Arc<TransformLayout> {
     Arc::clone(&CUBOID_TRANSFORM_LAYOUT)
 }
 
-fn retain_cuboid_facts<M: Clone + Debug + Send + Sync>(
-    mesh: &mut Mesh<M>,
-    bounds: Aabb,
-    vertex_pool: Arc<LazySubdivisionVertexPool>,
-) {
+fn retain_cuboid_facts<M: Clone + Debug + Send + Sync>(mesh: &mut Mesh<M>, bounds: Aabb) {
     mesh.bounding_box = std::sync::OnceLock::from(bounds.clone());
     mesh.polygons.retain_axis_aligned_box_fact(bounds);
-    mesh.polygons.retain_cuboid_vertex_pool(vertex_pool);
     mesh.cache_manifold_fact(true);
     mesh.cache_convex_pwn_fact();
 }
@@ -122,7 +117,6 @@ enum ShapeCacheKey {
 struct CachedShape {
     key: ShapeCacheKey,
     polygons: Vec<Polygon<()>>,
-    cuboid_vertex_pool: Option<Arc<LazySubdivisionVertexPool>>,
 }
 
 #[derive(Clone, Debug)]
@@ -170,16 +164,7 @@ fn cached_shape<M: Clone + Debug + Send + Sync>(
                     _ => None,
                 };
                 if let Some(bounds) = cuboid_bounds {
-                    retain_cuboid_facts(
-                        &mut mesh,
-                        bounds,
-                        Arc::clone(
-                            cached
-                                .cuboid_vertex_pool
-                                .as_ref()
-                                .expect("cached cuboids retain their vertex pool"),
-                        ),
-                    );
+                    retain_cuboid_facts(&mut mesh, bounds);
                 }
                 mesh
             })
@@ -212,7 +197,6 @@ fn retain_shape_cache<M: Clone + Debug + Send + Sync>(key: ShapeCacheKey, mesh: 
                 .cloned()
                 .map(|polygon| polygon.with_metadata(()))
                 .collect(),
-            cuboid_vertex_pool: mesh.polygons.cuboid_vertex_pool().cloned(),
         });
     });
 }
@@ -272,12 +256,10 @@ mod retained_topology_tests {
         let translated =
             mesh.translate(Real::from(7_u8), Real::from(-11_i8), Real::from(13_u8));
         assert_eq!(identity_counts(&translated), (8, [2; 3]));
-        assert!(translated.polygons.cuboid_vertex_pool().is_some());
 
         let restored =
             translated.translate(Real::from(-7_i8), Real::from(11_u8), Real::from(-13_i8));
         assert_eq!(identity_counts(&restored), (8, [2; 3]));
-        assert!(restored.polygons.cuboid_vertex_pool().is_some());
         assert_eq!(
             restored
                 .polygons
@@ -294,14 +276,12 @@ mod retained_topology_tests {
 
         let centered = translated.center();
         assert_eq!(identity_counts(&centered), (8, [2; 3]));
-        assert!(centered.polygons.cuboid_vertex_pool().is_some());
 
         let _cache_resolution = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
         let cached = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
         let translated_cached =
             cached.translate(Real::from(7_u8), Real::from(-11_i8), Real::from(13_u8));
         assert_eq!(identity_counts(&translated_cached), (8, [2; 3]));
-        assert!(translated_cached.polygons.cuboid_vertex_pool().is_some());
 
         let cube = Mesh::cube(Real::from(2_u8), ());
         let _cube_cache_resolution = Mesh::cube(Real::from(2_u8), ());
@@ -311,14 +291,19 @@ mod retained_topology_tests {
         let translated_cached_cube =
             cached_cube.translate(Real::from(7_u8), Real::from(-11_i8), Real::from(13_u8));
         assert_eq!(identity_counts(&translated_cached_cube), (8, [2; 3]));
-        assert!(translated_cached_cube.polygons.cuboid_vertex_pool().is_some());
+        assert!(
+            translated_cached_cube
+                .polygons
+                .iter()
+                .all(|triangle| triangle.vertices().len() == 3)
+        );
     }
 
     #[test]
     fn distributed_cuboids_materialize_exact_shared_identities() {
         let cube = Mesh::cube(Real::one(), ());
         let linear = cube.distribute_linear(8, Vector3::x(), Real::from(2_u8));
-        assert_eq!(linear.topology_counts(), (96, 192));
+        assert_eq!(linear.topology_counts(), (96, 288));
         assert_eq!(
             linear.bounding_box(),
             Aabb::new(
@@ -326,7 +311,7 @@ mod retained_topology_tests {
                 Point3::new(Real::from(15_u8), Real::one(), Real::one()),
             )
         );
-        assert_eq!(linear.polygons[6].vertices[0].position.x, Real::from(2_u8));
+        assert_eq!(linear.polygons[12].vertices[0].position.x, Real::from(2_u8));
 
         let position_ids = linear
             .polygons
@@ -1157,26 +1142,32 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         ));
         let first_plane_id = reserve_plane_ids(6);
         let polygons = (0..6)
-            .map(|index| {
-                let first_corner = index * 4;
-                Polygon::from_lazy_indexed_quad(
-                    Arc::clone(&vertex_pool),
-                    index,
-                    [
-                        first_corner,
-                        first_corner + 1,
-                        first_corner + 2,
-                        first_corner + 3,
-                    ],
-                    metadata.clone(),
-                    first_plane_id
-                        + u64::try_from(index).expect("cuboid polygon index fits u64"),
-                )
+            .flat_map(|face| {
+                let first_corner = face * 4;
+                [[0, 1, 2], [0, 2, 3]].into_iter().map({
+                    let vertex_pool = Arc::clone(&vertex_pool);
+                    let metadata = metadata.clone();
+                    move |triangle| {
+                        Polygon::new(
+                            triangle
+                                .into_iter()
+                                .map(|corner| {
+                                    vertex_pool.vertex(first_corner + corner).clone()
+                                })
+                                .collect(),
+                            metadata.clone(),
+                        )
+                        .with_plane_id(
+                            first_plane_id
+                                + u64::try_from(face).expect("cuboid face index fits u64"),
+                        )
+                    }
+                })
             })
             .collect();
-        let mut mesh = Mesh::from_polygons_with_topology(polygons, (12, 24, false));
+        let mut mesh = Mesh::from_polygons_with_topology(polygons, (12, 36, true));
         let bounds = Aabb::new(Point3::origin(), Point3::new(width, length, height));
-        retain_cuboid_facts(&mut mesh, bounds, vertex_pool);
+        retain_cuboid_facts(&mut mesh, bounds);
         if let Some(key) = cache_key_on_completion {
             retain_shape_cache(key, &mesh);
         }
@@ -1725,7 +1716,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let top_cap_start = bottom_cap_start + segments;
         let bottom_side_start = top_cap_start + segments;
         let top_side_start = bottom_side_start + segments;
-        let polygon_count = 3 * segments;
+        let polygon_count = 4 * segments;
         let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_vertical_frustum(
             radius1.clone(),
             radius2.clone(),
@@ -1758,19 +1749,28 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 top_cap_plane_id,
             ));
 
-            let polygon_slot = polygons.len();
-            polygons.push(Polygon::from_lazy_indexed_quad(
-                Arc::clone(&vertex_pool),
-                polygon_slot,
+            let side_plane_id = first_plane_id + 2 + u64::try_from(index).ok()?;
+            for indices in [
                 [
                     bottom_side_start + index,
                     bottom_side_start + next,
                     top_side_start + next,
+                ],
+                [
+                    bottom_side_start + index,
+                    top_side_start + next,
                     top_side_start + index,
                 ],
-                metadata.clone(),
-                first_plane_id + 2 + u64::try_from(index).ok()?,
-            ));
+            ] {
+                let polygon_slot = polygons.len();
+                polygons.push(Polygon::from_lazy_subdivision_triangle(
+                    Arc::clone(&vertex_pool),
+                    polygon_slot,
+                    indices,
+                    metadata.clone(),
+                    side_plane_id,
+                ));
+            }
         }
         let outer_radius = if matches!(real_cmp(&radius1, &radius2), Some(Ordering::Greater)) {
             radius1
@@ -1778,7 +1778,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             radius2
         };
         let mesh =
-            Mesh::from_polygons_with_topology(polygons, (4 * segments, 10 * segments, false));
+            Mesh::from_polygons_with_topology(polygons, (4 * segments, 12 * segments, true));
         mesh.bounding_box
             .set(Aabb::new(
                 Point3::new(-outer_radius.clone(), -outer_radius.clone(), Real::zero()),
@@ -2475,7 +2475,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
         let position_f64 = (position_f64.len() == grid_len).then_some(position_f64);
 
-        let polygon_count = segments_major * segments_minor;
+        let cell_count = segments_major * segments_minor;
+        let polygon_count = 2 * cell_count;
         let exact_major_samples = major_samples.into_iter().map(|(exact, _)| exact).collect();
         let exact_minor_samples = minor_samples.into_iter().map(|(exact, _)| exact).collect();
         let vertex_pool = Arc::new(LazySubdivisionVertexPool::new_torus(
@@ -2488,7 +2489,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         ));
         let first_plane_id = reserve_plane_ids(polygon_count);
         let mut polygons = Vec::with_capacity(polygon_count);
-        let mut corner_position_slots = Vec::with_capacity(4 * polygon_count);
+        let mut corner_position_slots = Vec::with_capacity(3 * polygon_count);
         for major in 0..segments_major {
             let next_major = (major + 1) % segments_major;
             for minor in 0..segments_minor {
@@ -2499,22 +2500,28 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     next_major * segments_minor + next_minor,
                     major * segments_minor + next_minor,
                 ];
-                corner_position_slots.extend(indices);
-                let polygon_index = polygons.len();
-                polygons.push(Polygon::from_lazy_indexed_quad(
-                    Arc::clone(&vertex_pool),
-                    polygon_index,
-                    indices,
-                    metadata.clone(),
-                    first_plane_id
-                        + u64::try_from(polygon_index).expect("torus polygon index fits u64"),
-                ));
+                for triangle in [
+                    [indices[0], indices[1], indices[2]],
+                    [indices[0], indices[2], indices[3]],
+                ] {
+                    corner_position_slots.extend(triangle);
+                    let polygon_index = polygons.len();
+                    polygons.push(Polygon::from_lazy_subdivision_triangle(
+                        Arc::clone(&vertex_pool),
+                        polygon_index,
+                        triangle,
+                        metadata.clone(),
+                        first_plane_id
+                            + u64::try_from(polygon_index)
+                                .expect("torus triangle index fits u64"),
+                    ));
+                }
             }
         }
         let outer = major_r.clone() + minor_r.clone();
         let mesh = Mesh::from_polygons_with_topology(
             polygons,
-            (2 * polygon_count, 4 * polygon_count, false),
+            (polygon_count, 3 * polygon_count, true),
         );
         mesh.bounding_box
             .set(Aabb::new(
@@ -2528,7 +2535,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             grid_len,
             position_f64.map(Arc::new),
             Some(vertex_pool),
-            Some(vec![4; polygon_count]),
+            Some(vec![3; polygon_count]),
             true,
         );
         if let Some(key) = cache_key_on_completion {

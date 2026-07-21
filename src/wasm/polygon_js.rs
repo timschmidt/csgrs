@@ -1,6 +1,6 @@
 //! JavaScript wrapper for polygons.
 
-use crate::mesh::Polygon;
+use crate::polygon_mesh::Polygon;
 use crate::vertex::Vertex;
 use crate::wasm::real_to_js;
 use crate::wasm::{
@@ -60,7 +60,7 @@ impl PolygonJs {
     pub fn vertices(&self) -> JsValue {
         let arr = js_sys::Array::new();
 
-        for v in &self.inner.vertices {
+        for v in self.inner.vertices() {
             let js_vert = VertexJs { inner: v.clone() };
             arr.push(&JsValue::from(js_vert));
         }
@@ -97,7 +97,7 @@ impl PolygonJs {
     /// Get metadata as its original JSON-compatible JavaScript value.
     #[wasm_bindgen(js_name = metadata)]
     pub fn metadata(&self) -> Result<JsValue, JsValue> {
-        metadata_to_js(&self.inner.metadata)
+        metadata_to_js(self.inner.metadata())
     }
 
     /// Set metadata from any JSON-serializable JS value.
@@ -125,9 +125,9 @@ impl PolygonJs {
     /// `[x, y, z, nx, ny, nz, x, y, z, nx, ny, nz, ...]`
     #[wasm_bindgen(js_name = toArray)]
     pub fn to_array(&self) -> Vec<f64> {
-        let mut data = Vec::with_capacity(self.inner.vertices.len() * 6);
+        let mut data = Vec::with_capacity(self.inner.vertices().len() * 6);
 
-        for v in &self.inner.vertices {
+        for v in self.inner.vertices() {
             data.push(real_to_js(&v.position.x));
             data.push(real_to_js(&v.position.y));
             data.push(real_to_js(&v.position.z));
@@ -149,7 +149,7 @@ impl PolygonJs {
 
         for tri in tris {
             let vertices = tri.to_vec();
-            let poly = Polygon::new(vertices, self.inner.metadata.clone());
+            let poly = Polygon::new(vertices, self.inner.metadata().clone());
             out.push(PolygonJs { inner: poly });
         }
 

@@ -6,9 +6,14 @@
 
 use std::fmt::Debug;
 
-use crate::mesh::{Mesh, MeshPolygons, Polygon};
+use crate::mesh::{Mesh, Polygon as MeshFace};
 
+#[cfg(feature = "sketch")]
+mod extrudes;
+mod plane;
+mod polygon;
 mod shapes;
+pub use polygon::{Polygon, PolygonVerticesMut};
 
 /// A 3D surface represented by planar polygon faces.
 ///
@@ -18,27 +23,25 @@ mod shapes;
 #[derive(Clone, Debug)]
 pub struct PolygonMesh<M: Clone + Send + Sync + Debug> {
     /// Planar polygon faces retained without implicit triangulation.
-    pub polygons: MeshPolygons<M>,
+    pub polygons: Vec<Polygon<M>>,
 }
 
 impl<M: Clone + Send + Sync + Debug> PolygonMesh<M> {
     /// Construct an empty polygon mesh.
-    pub fn empty() -> Self {
+    pub const fn empty() -> Self {
         Self {
-            polygons: MeshPolygons::default(),
+            polygons: Vec::new(),
         }
     }
 
     /// Construct a polygon mesh without changing face boundaries.
-    pub fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
-        Self {
-            polygons: MeshPolygons::new(polygons),
-        }
+    pub const fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
+        Self { polygons }
     }
 
     /// Consume this backend and return its retained planar faces.
     pub fn into_polygons(self) -> Vec<Polygon<M>> {
-        self.polygons.into_vec()
+        self.polygons
     }
 
     /// Convert every planar face into exact triangles.
@@ -53,7 +56,7 @@ impl<M: Clone + Send + Sync + Debug> PolygonMesh<M> {
 
 impl PolygonMesh<()> {
     /// Construct an empty polygon mesh without metadata.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self::empty()
     }
 }
@@ -84,20 +87,26 @@ impl<M: Clone + Send + Sync + Debug> From<&PolygonMesh<M>> for Mesh<M> {
 
 impl<M: Clone + Send + Sync + Debug> From<Mesh<M>> for PolygonMesh<M> {
     fn from(mesh: Mesh<M>) -> Self {
-        Self {
-            polygons: mesh.polygons,
-        }
+        Self::from_polygons(
+            mesh.polygons
+                .into_iter()
+                .map(|triangle| {
+                    Polygon::new(triangle.vertices().to_vec(), triangle.metadata().clone())
+                        .with_plane_id(triangle.plane_id)
+                })
+                .collect(),
+        )
     }
 }
 
 fn triangulated_polygons<M: Clone + Send + Sync + Debug>(
     polygons: &[Polygon<M>],
-) -> Vec<Polygon<M>> {
+) -> Vec<MeshFace<M>> {
     polygons
         .iter()
         .flat_map(|polygon| {
             polygon.triangulate().into_iter().map(|triangle| {
-                Polygon::new(triangle.to_vec(), polygon.metadata().clone())
+                MeshFace::new(triangle.to_vec(), polygon.metadata().clone())
                     .with_plane_id(polygon.plane_id)
             })
         })
@@ -143,7 +152,7 @@ mod tests {
 
     #[test]
     fn triangle_mesh_round_trip_is_geometry_and_metadata_preserving() {
-        let mesh = Mesh::from_polygons(vec![Polygon::new(
+        let mesh = Mesh::from_polygons(vec![MeshFace::new(
             vec![
                 Vertex::new(point(0, 0, 0), Vector3::z()),
                 Vertex::new(point(2, 0, 0), Vector3::z()),

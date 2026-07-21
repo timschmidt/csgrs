@@ -5,10 +5,9 @@ use std::fmt::Debug;
 
 use hyperlattice::{Point3, Real, Vector3};
 
-use crate::mesh::Polygon;
 use crate::vertex::Vertex;
 
-use super::PolygonMesh;
+use super::{Polygon, PolygonMesh};
 
 const CUBOID_FACES: [[usize; 4]; 6] = [
     [0, 3, 2, 1],
