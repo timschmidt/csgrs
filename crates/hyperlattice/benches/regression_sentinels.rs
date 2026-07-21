@@ -42,6 +42,29 @@ fn bench_regression_sentinels(c: &mut Criterion) {
         b.iter(|| black_box(&vector).norm_squared())
     });
 
+    c.bench_function("sentinel/vector/magnitude_retained_dyadic", |b| {
+        let vector = cold_self_dot_vector();
+        b.iter(|| black_box(&vector).magnitude().unwrap())
+    });
+
+    c.bench_function("sentinel/vector/inverse_magnitude_retained_dyadic", |b| {
+        let vector = cold_self_dot_vector();
+        b.iter(|| black_box(&vector).magnitude().unwrap().inverse().unwrap())
+    });
+
+    c.bench_function("sentinel/vector/normalize_retained_dyadic", |b| {
+        let vector = cold_self_dot_vector();
+        b.iter(|| black_box(&vector).normalize().unwrap())
+    });
+
+    c.bench_function("sentinel/vector/normalize_cold_dyadic", |b| {
+        b.iter_batched(
+            cold_self_dot_vector,
+            |vector| black_box(vector).normalize().unwrap(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
     c.bench_function("sentinel/vector/self_dot_cold_dyadic", |b| {
         b.iter_batched(
             cold_self_dot_vector,

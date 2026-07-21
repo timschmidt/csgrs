@@ -201,7 +201,7 @@ Matched retained-path medians measured:
 
 | Workload | Before | Current | Change |
 | --- | ---: | ---: | ---: |
-| three-term dyadic self-dot sentinel | 140.66 ns | 55.62 ns | 60.5% faster |
+| three-term dyadic self-dot sentinel | 140.66 ns | 59.50 ns | 57.7% faster |
 | `vec3 magnitude`, exact dyadic | 736.4 ns | 183.15 ns | 75.1% faster |
 | `vec3 magnitude`, explicit rational | 1.757 us | 108.54 ns | 93.8% faster |
 | `vec4 magnitude`, exact dyadic | 734.29 ns | 225.04 ns | 69.4% faster |
@@ -213,8 +213,39 @@ unchanged at 211.16 ns before and 210.75 ns after. Permanent cold, retained,
 and equal-but-distinct sentinels protect the dispatch boundary. Exact outputs
 and the downstream CSGRS benchmark checksums were unchanged; its sparse face
 normal and general dot-product controls remained on their former schedules.
-No Hyperlattice API or arithmetic schedule changed, and Hyperreal adds no new
-cache kind or node-layout growth.
+No Hyperlattice API or arithmetic schedule changed. The initial self-dot route
+added no cache kind or node-layout growth.
+
+## Retained normalization with multiple product partners
+
+Normalization gives each dense coordinate two repeated products: its square in
+the norm and its scale by the shared inverse norm. A single primary product slot
+cannot retain both. Hyperreal now uses an existing polymorphic binary entry only
+after both primary slots are occupied, and records one conflict-admission attempt
+in the existing retained-facts byte. Full boxes fall back after that attempt.
+One-shot normalization therefore keeps its former allocation policy,
+`RationalData` remains 88 bytes, and the retained box stays bounded and
+serialization-invisible.
+
+The inverse-radical path also reuses the exact rational already carried by the
+`Sqrt` class instead of reconstructing an equal integer node. Four-term
+self-dots use a balanced sum, and `1 + 1` returns the canonical small integer;
+together these keep norms containing unit coordinates on stable identities.
+
+Matched public medians measured:
+
+| Workload | Before | Current | Numerica 128 | Current vs before |
+| --- | ---: | ---: | ---: | ---: |
+| `vec3 normalize`, exact dyadic | 978.73 ns | 516.77 ns | 590.64 ns | 47.2% faster |
+| `vec4 normalize`, exact dyadic | 1.1886 us | 585.67 ns | 676.71 ns | 50.7% faster |
+| `vec4 normalize`, explicit rational | 1.224 us | 1.032 us | - | 15.7% faster |
+| wide-dyadic retained normalization sentinel | 1.5685 us | about 0.30 us | - | about 80.9% faster |
+
+The exact-dyadic vec3 and vec4 rows are now 12.5% and 13.5% faster than
+Numerica 128, respectively. Explicit-rational vec3 normalization remained
+effectively neutral at 1.915 us. The cold wide-dyadic sentinel measures 1.50 us
+and never allocates the secondary-product box; the retained self-dot sentinel
+remains near 59.5 ns.
 
 ## Minimal checked-normalization certificate
 
