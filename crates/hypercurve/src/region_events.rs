@@ -126,6 +126,10 @@ impl RegionPointEndpointContactIndex {
                 let ContourIntersection::Point(point) = event else {
                     continue;
                 };
+                // Normalized crossing and tangent kinds certify interior parameters.
+                if point.kind != crate::IntersectionKind::Endpoint {
+                    continue;
+                }
                 index.record(pair.first(), point.a_segment_index, &point.a_param, policy);
                 index.record(pair.second(), point.b_segment_index, &point.b_param, policy);
             }
@@ -561,6 +565,39 @@ fn collect_role_pairs(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn endpoint_contact_index_skips_certified_interior_crossings() {
+        let parameter = (Real::one() / Real::from(2_u8)).unwrap();
+        let intersections = ContourIntersectionSet::new(vec![ContourIntersection::Point(
+            crate::ContourPointIntersection {
+                a_segment_index: 0,
+                b_segment_index: 0,
+                a_segment_kind: SegmentKind::Line,
+                b_segment_kind: SegmentKind::Line,
+                point: crate::Point2::new(parameter.clone(), parameter.clone()),
+                a_param: parameter.clone(),
+                b_param: parameter,
+                kind: crate::IntersectionKind::Crossing,
+            },
+        )])
+        .unwrap();
+        let intersections = RegionIntersectionSet::new(vec![RegionContourIntersection {
+            first: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
+            second: RegionContourKey::new(RegionSide::Second, RegionContourRole::Material, 0),
+            intersections,
+        }])
+        .unwrap();
+
+        assert!(
+            RegionPointEndpointContactIndex::from_intersections(
+                &intersections,
+                &CurvePolicy::certified(),
+            )
+            .vertex_masks
+            .is_empty()
+        );
+    }
 
     #[test]
     fn endpoint_contact_index_checks_both_incident_segments() {

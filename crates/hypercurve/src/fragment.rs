@@ -60,9 +60,11 @@ impl ContourFragmentSet {
         if contour.len() != markers.segment_count() {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
-        match validate_split_markers_against_contour(contour, markers, policy)? {
-            Classification::Decided(()) => {}
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        if !markers.source_incidence_certified() {
+            match validate_split_markers_against_contour(contour, markers, policy)? {
+                Classification::Decided(()) => {}
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
         }
 
         let fragment_capacity = markers
@@ -227,9 +229,6 @@ fn validate_split_markers_against_contour(
                 return Err(CurveError::Topology(
                     "contour split marker references a different source segment".into(),
                 ));
-            }
-            if markers.source_incidence_certified() {
-                continue;
             }
             match split_marker_matches_source_segment(source_segment, marker, policy)? {
                 Classification::Decided(()) => {}

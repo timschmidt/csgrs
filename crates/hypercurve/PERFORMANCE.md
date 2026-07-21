@@ -1009,6 +1009,31 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,524 coverage points and 16,097 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Lean region traversal now consumes two invariants already certified by its
+retained carriers. Internally constructed split markers no longer replay source
+incidence validation, while normalized point-event kinds route only endpoint
+events into the endpoint-contact index and carry strict-interior proof directly
+into line-crossing winding propagation. Proper crossings therefore avoid four
+redundant exact comparisons against zero and one. A marker-bin pre-count and an
+in-place single-chain permutation were also profiled; their extra event walk
+and large-record memory traffic regressed release throughput, so both were
+removed. The retained production diff removes a net three lines before this
+note.
+
+Against the preceding checkpoint, a paired 21-sample, 1,000-iteration ordinary
+star64 run fell from 0.501 to 0.496 ms/iter (1.06%). The other five ordinary and
+prepared result-shape lanes improved by 0.80--1.87% in their stable paired
+runs. A 21-sample, 10,000-iteration rectangle control fell from 12.703 to
+12.239 us/iter (3.65%). Across 100 selected ordinary star64 operations plus
+fixture validation, Callgrind instructions fell from 553,363,425 to 544,236,152
+(1.65%). DHAT allocation bytes, block counts, and peak heap were identical;
+heap reads fell by 2.49% and writes by 0.55%.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,517 coverage points and 16,109 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

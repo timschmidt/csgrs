@@ -67,11 +67,10 @@ impl RegionLineCrossingWindingIndex {
             let ContourIntersection::Point(point) = event else {
                 return None;
             };
+            // The normalized crossing kind already certifies strict interior parameters.
             if point.kind != IntersectionKind::Crossing
                 || point.a_segment_kind != SegmentKind::Line
                 || point.b_segment_kind != SegmentKind::Line
-                || !strict_unit_parameter(&point.a_param, policy)
-                || !strict_unit_parameter(&point.b_param, policy)
             {
                 return None;
             }
@@ -219,9 +218,4 @@ impl RegionLineCrossingWindingIndex {
             RegionSide::Second => self.second.get_mut(segment_index),
         }
     }
-}
-
-fn strict_unit_parameter(parameter: &Real, policy: &CurvePolicy) -> bool {
-    compare_reals(parameter, &Real::zero(), policy) == Some(std::cmp::Ordering::Greater)
-        && compare_reals(parameter, &Real::one(), policy) == Some(std::cmp::Ordering::Less)
 }
