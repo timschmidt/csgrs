@@ -1203,6 +1203,29 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,575 coverage points and 16,103 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Prepared contour intersections now select the same compact, lossless-binary64
+line sweep as ordinary certified contours before falling back to their cached
+general `Aabb2` path. The compact bounds remain operation-local: a rejected
+prototype retained them in every prepared contour, increasing live heap even
+when no intersection query followed preparation.
+
+Against the certified-crossing-reuse checkpoint, twenty-iteration Callgrind
+runs reduced the prepared region, contour, and loop lanes by 5.25--5.28%. The
+three ordinary controls shifted by 0.70--0.71% despite having no changed call
+path. Prepared-lane DHAT reads fell from 46,826,598 to 43,727,644 bytes (6.62%).
+Building the transient bounds per query increased total allocation from
+15,284,369 to 15,609,641 bytes (2.13%), allocation blocks from 101,701 to
+103,987, and peak live heap from 964,789 to 971,829 bytes; unlike the rejected
+retained cache, that storage is released with the query and does not enlarge
+every prepared object. In an 11-sample, 500-iteration release comparison,
+prepared star64 region intersection measured 0.394 ms/iter, versus 0.028 ms for
+`cavalier_contours`, 0.035 ms for `i_overlay`, and 0.036 ms for `geo`.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,543 coverage points and 15,891 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

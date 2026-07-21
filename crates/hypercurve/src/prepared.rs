@@ -715,12 +715,24 @@ impl<'a> PreparedContourView2<'a> {
         &self.facts
     }
 
-    /// Intersects two prepared contours using their cached broad-phase boxes.
+    /// Intersects two prepared contours using compact exact-line or cached general bounds.
     pub fn intersect_prepared_contour(
         &self,
         other: &PreparedContourView2<'_>,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourIntersectionSet> {
+        if let (Some(first), Some(second)) = (
+            self.contour.exact_dyadic_line_aabbs(policy),
+            other.contour.exact_dyadic_line_aabbs(policy),
+        ) {
+            return crate::events::intersect_contours_with_exact_dyadic_line_aabbs(
+                self.contour,
+                other.contour,
+                &first,
+                &second,
+                policy,
+            );
+        }
         crate::events::intersect_contours_with_cached_aabbs(
             self.contour,
             other.contour,
