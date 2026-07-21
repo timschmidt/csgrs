@@ -94,6 +94,13 @@ output chord certification and exact line-arrangement regularization. Its report
 distinguishes the pre-regularization directed error bound, final-topology guarantees,
 and the weaker source-chord fallback used for corners or unsupported families.
 
+`Contour2::straight_skeleton` implements an exact inward wavefront for simple,
+strictly convex line contours. Unit-normal support lines, vertex trajectories,
+edge-collapse times, simultaneous events, terminal ridges, and source-edge
+provenance remain exact `Real` evidence in the returned graph. Concave contours
+return a typed `SplitEventsRequired` blocker until their reflex-vertex split-event
+scheduler is available; they are never substituted with centroid rays.
+
 ## WASM Demo
 
 The deployed WASM app is available at <https://timschmidt.github.io/hypercurve/>.
@@ -360,6 +367,8 @@ Implemented today:
   extraction, boolean-boundary assembly, retained exact unordered line/arc
   arrangement construction with source/split/endpoint/ring/role/output caches,
   and conservative unresolved states.
+- exact convex-polygon straight-skeleton wavefront construction with simultaneous
+  edge-collapse events, terminal ridges, and explicit concave split-event blockers.
 
 Known limits: shared components requiring multivalued implicit branch correspondence,
 source curves with neither certified source lineage nor an injective graph axis, generic

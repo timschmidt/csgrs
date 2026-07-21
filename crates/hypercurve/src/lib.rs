@@ -72,6 +72,7 @@ mod segment;
 mod self_intersect;
 mod spline_periodic;
 mod split;
+mod straight_skeleton;
 #[cfg(feature = "svg")]
 mod svg_io;
 mod transform;
@@ -360,6 +361,11 @@ pub use self_intersect::{
 };
 pub use spline_periodic::SplinePeriodicity2;
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
+pub use straight_skeleton::{
+    StraightSkeleton2, StraightSkeletonArc2, StraightSkeletonArcKind2, StraightSkeletonBlocker2,
+    StraightSkeletonNode2, StraightSkeletonNodeKind2, StraightSkeletonReport2,
+    StraightSkeletonStage2,
+};
 #[cfg(feature = "svg")]
 pub use svg_io::{
     SvgContourImportReport2, SvgContourImportResult2, SvgPathExportCurveReport2,

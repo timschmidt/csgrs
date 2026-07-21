@@ -1,0 +1,863 @@
+//! Exact straight skeletons for convex line contours.
+//!
+//! The implementation is a genuine inward wavefront construction. Every
+//! source edge advances along its exact unit inward normal, adjacent moving
+//! support lines define wavefront-vertex trajectories, and exact edge-collapse
+//! times drive topology changes. Simultaneous collapses are handled as one
+//! event. Concave polygons require split-event scheduling and remain an
+//! explicit report blocker instead of being approximated by centroid rays.
+
+use std::cmp::Ordering;
+use std::collections::{BTreeMap, BTreeSet};
+
+use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
+
+use crate::classify::{compare_reals, real_sign};
+use crate::{Classification, Contour2, CurvePolicy, CurveResult, Point2, Segment2};
+
+/// Furthest stage reached by straight-skeleton construction.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum StraightSkeletonStage2 {
+    /// Source topology and orientation were being checked.
+    InputValidation,
+    /// Exact moving support lines and vertex trajectories were being prepared.
+    WavefrontPreparation,
+    /// Exact wavefront collapse events were being scheduled.
+    EventScheduling,
+    /// The complete supported straight-skeleton graph was materialized.
+    Complete,
+}
+
+/// Explicit reason a straight skeleton was not materialized.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StraightSkeletonBlocker2 {
+    /// The contour contains a non-line segment.
+    UnsupportedSegment { segment_index: usize },
+    /// The source contour has a self-contact or self-intersection.
+    SelfContact,
+    /// Source self-contact classification was indeterminate.
+    UncertainSelfContact,
+    /// Exact signed area was unavailable.
+    UnsupportedSignedArea,
+    /// The contour has zero signed area.
+    DegenerateSignedArea,
+    /// Signed-area orientation could not be decided.
+    UncertainOrientation,
+    /// A vertex is reflex; split-event scheduling is not implemented yet.
+    SplitEventsRequired { vertex_index: usize },
+    /// A source vertex is collinear or otherwise locally degenerate.
+    DegenerateVertex { vertex_index: usize },
+    /// A local turn could not be classified exactly.
+    UncertainVertexTurn { vertex_index: usize },
+    /// Two active wavefront supports became parallel before terminal collapse.
+    ParallelWavefrontSupports {
+        first_source_edge: usize,
+        second_source_edge: usize,
+    },
+    /// A wavefront relation could not be decided exactly.
+    UncertainWavefrontRelation,
+    /// Candidate collapse times could not be totally ordered.
+    UncertainEventOrdering,
+    /// The active wavefront had no future edge event.
+    MissingFutureEvent,
+    /// An event failed to advance beyond the current wavefront time.
+    NonAdvancingEvent,
+}
+
+/// Kind and source evidence retained by one skeleton node.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StraightSkeletonNodeKind2 {
+    /// Source polygon vertex at wavefront time zero.
+    SourceVertex { source_vertex: usize },
+    /// One or more source-edge collapse events at the same point and time.
+    EdgeEvent { collapsed_source_edges: Vec<usize> },
+}
+
+/// Exact straight-skeleton graph node.
+#[derive(Clone, Debug, PartialEq)]
+pub struct StraightSkeletonNode2 {
+    point: Point2,
+    time: Real,
+    kind: StraightSkeletonNodeKind2,
+}
+
+impl StraightSkeletonNode2 {
+    /// Return the exact node point.
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+
+    /// Return the exact inward wavefront time.
+    pub const fn time(&self) -> &Real {
+        &self.time
+    }
+
+    /// Return source/event evidence for this node.
+    pub const fn kind(&self) -> &StraightSkeletonNodeKind2 {
+        &self.kind
+    }
+}
+
+/// Construction family of one straight-skeleton arc.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StraightSkeletonArcKind2 {
+    /// Trace of the vertex between two moving source-edge supports.
+    VertexBisector {
+        left_source_edge: usize,
+        right_source_edge: usize,
+    },
+    /// Terminal ridge left when a convex wavefront collapses to a segment.
+    TerminalRidge,
+}
+
+/// Indexed exact straight-skeleton graph arc.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StraightSkeletonArc2 {
+    start_node: usize,
+    end_node: usize,
+    kind: StraightSkeletonArcKind2,
+}
+
+impl StraightSkeletonArc2 {
+    /// Return the first node index.
+    pub const fn start_node(&self) -> usize {
+        self.start_node
+    }
+
+    /// Return the second node index.
+    pub const fn end_node(&self) -> usize {
+        self.end_node
+    }
+
+    /// Return the wavefront construction family.
+    pub const fn kind(&self) -> &StraightSkeletonArcKind2 {
+        &self.kind
+    }
+}
+
+/// Exact straight-skeleton graph for one supported contour.
+#[derive(Clone, Debug, PartialEq)]
+pub struct StraightSkeleton2 {
+    nodes: Vec<StraightSkeletonNode2>,
+    arcs: Vec<StraightSkeletonArc2>,
+    source_edge_count: usize,
+    maximum_time: Real,
+}
+
+impl StraightSkeleton2 {
+    /// Return graph nodes in deterministic construction order.
+    pub fn nodes(&self) -> &[StraightSkeletonNode2] {
+        &self.nodes
+    }
+
+    /// Return indexed skeleton arcs.
+    pub fn arcs(&self) -> &[StraightSkeletonArc2] {
+        &self.arcs
+    }
+
+    /// Return the source polygon edge count.
+    pub const fn source_edge_count(&self) -> usize {
+        self.source_edge_count
+    }
+
+    /// Return the last exact wavefront event time.
+    pub const fn maximum_time(&self) -> &Real {
+        &self.maximum_time
+    }
+}
+
+/// Report for exact straight-skeleton construction.
+#[derive(Clone, Debug, PartialEq)]
+pub struct StraightSkeletonReport2 {
+    stage: StraightSkeletonStage2,
+    source_edge_count: usize,
+    event_count: usize,
+    simultaneous_event_count: usize,
+    skeleton: Option<StraightSkeleton2>,
+    blocker: Option<StraightSkeletonBlocker2>,
+}
+
+impl StraightSkeletonReport2 {
+    /// Return the furthest completed construction stage.
+    pub const fn stage(&self) -> StraightSkeletonStage2 {
+        self.stage
+    }
+
+    /// Return the number of source edges inspected.
+    pub const fn source_edge_count(&self) -> usize {
+        self.source_edge_count
+    }
+
+    /// Return the number of distinct wavefront times processed.
+    pub const fn event_count(&self) -> usize {
+        self.event_count
+    }
+
+    /// Return the number of processed times containing multiple edge collapses.
+    pub const fn simultaneous_event_count(&self) -> usize {
+        self.simultaneous_event_count
+    }
+
+    /// Return the completed straight skeleton, when supported and decided.
+    pub const fn skeleton(&self) -> Option<&StraightSkeleton2> {
+        self.skeleton.as_ref()
+    }
+
+    /// Return the explicit construction blocker.
+    pub const fn blocker(&self) -> Option<&StraightSkeletonBlocker2> {
+        self.blocker.as_ref()
+    }
+
+    /// Consume the report and return its skeleton.
+    pub fn into_skeleton(self) -> Option<StraightSkeleton2> {
+        self.skeleton
+    }
+}
+
+#[derive(Clone, Debug)]
+struct MovingSupport2 {
+    source_edge: usize,
+    normal_x: Real,
+    normal_y: Real,
+    constant: Real,
+}
+
+#[derive(Clone, Debug)]
+struct VertexTrajectory2 {
+    origin_x: Real,
+    origin_y: Real,
+    velocity_x: Real,
+    velocity_y: Real,
+}
+
+impl VertexTrajectory2 {
+    fn point_at(&self, time: &Real) -> Point2 {
+        Point2::new(
+            &self.origin_x + &self.velocity_x * time,
+            &self.origin_y + &self.velocity_y * time,
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+struct EdgeEventCandidate2 {
+    active_index: usize,
+    time: Real,
+    point: Point2,
+}
+
+impl Contour2 {
+    /// Construct the exact interior straight skeleton when the source is a
+    /// simple, strictly convex line contour.
+    ///
+    /// This is an actual inward wavefront algorithm, not a centroid-ray
+    /// approximation. Concave input returns [`StraightSkeletonBlocker2::SplitEventsRequired`]
+    /// until the split-event scheduler is implemented.
+    pub fn straight_skeleton(&self, policy: &CurvePolicy) -> CurveResult<StraightSkeletonReport2> {
+        let source_edge_count = self.segments().len();
+        let blocked = |stage, blocker| StraightSkeletonReport2 {
+            stage,
+            source_edge_count,
+            event_count: 0,
+            simultaneous_event_count: 0,
+            skeleton: None,
+            blocker: Some(blocker),
+        };
+
+        let mut lines = Vec::with_capacity(source_edge_count);
+        for (segment_index, segment) in self.segments().iter().enumerate() {
+            match segment {
+                Segment2::Line(line) => lines.push(line),
+                _ => {
+                    return Ok(blocked(
+                        StraightSkeletonStage2::InputValidation,
+                        StraightSkeletonBlocker2::UnsupportedSegment { segment_index },
+                    ));
+                }
+            }
+        }
+
+        match self.has_self_contacts(policy)? {
+            Classification::Decided(false) => {}
+            Classification::Decided(true) => {
+                return Ok(blocked(
+                    StraightSkeletonStage2::InputValidation,
+                    StraightSkeletonBlocker2::SelfContact,
+                ));
+            }
+            Classification::Uncertain(_) => {
+                return Ok(blocked(
+                    StraightSkeletonStage2::InputValidation,
+                    StraightSkeletonBlocker2::UncertainSelfContact,
+                ));
+            }
+        }
+
+        let Some(area) = self.signed_area()? else {
+            return Ok(blocked(
+                StraightSkeletonStage2::InputValidation,
+                StraightSkeletonBlocker2::UnsupportedSignedArea,
+            ));
+        };
+        let orientation = match real_sign(&area, policy) {
+            Some(RealSign::Positive) => RealSign::Positive,
+            Some(RealSign::Negative) => RealSign::Negative,
+            Some(RealSign::Zero) => {
+                return Ok(blocked(
+                    StraightSkeletonStage2::InputValidation,
+                    StraightSkeletonBlocker2::DegenerateSignedArea,
+                ));
+            }
+            None => {
+                return Ok(blocked(
+                    StraightSkeletonStage2::InputValidation,
+                    StraightSkeletonBlocker2::UncertainOrientation,
+                ));
+            }
+        };
+
+        for vertex_index in 0..source_edge_count {
+            let incoming = lines[(vertex_index + source_edge_count - 1) % source_edge_count];
+            let outgoing = lines[vertex_index];
+            let (incoming_x, incoming_y) = incoming.delta();
+            let (outgoing_x, outgoing_y) = outgoing.delta();
+            let turn = &incoming_x * &outgoing_y - &incoming_y * &outgoing_x;
+            match real_sign(&turn, policy) {
+                Some(RealSign::Zero) => {
+                    return Ok(blocked(
+                        StraightSkeletonStage2::InputValidation,
+                        StraightSkeletonBlocker2::DegenerateVertex { vertex_index },
+                    ));
+                }
+                Some(sign) if sign == orientation => {}
+                Some(_) => {
+                    return Ok(blocked(
+                        StraightSkeletonStage2::InputValidation,
+                        StraightSkeletonBlocker2::SplitEventsRequired { vertex_index },
+                    ));
+                }
+                None => {
+                    return Ok(blocked(
+                        StraightSkeletonStage2::InputValidation,
+                        StraightSkeletonBlocker2::UncertainVertexTurn { vertex_index },
+                    ));
+                }
+            }
+        }
+
+        let mut supports = Vec::with_capacity(source_edge_count);
+        for (source_edge, line) in lines.iter().enumerate() {
+            let (dx, dy) = line.delta();
+            let length = (&dx * &dx + &dy * &dy).sqrt()?;
+            let (raw_normal_x, raw_normal_y) = match orientation {
+                RealSign::Positive => (-dy, dx),
+                RealSign::Negative => (dy, -dx),
+                RealSign::Zero => unreachable!(),
+            };
+            let normal_x = (raw_normal_x / &length)?;
+            let normal_y = (raw_normal_y / length)?;
+            let constant = &normal_x * line.start().x() + &normal_y * line.start().y();
+            supports.push(MovingSupport2 {
+                source_edge,
+                normal_x,
+                normal_y,
+                constant,
+            });
+        }
+
+        build_convex_straight_skeleton(&supports, &lines, policy).map(|result| match result {
+            Ok((skeleton, event_count, simultaneous_event_count)) => StraightSkeletonReport2 {
+                stage: StraightSkeletonStage2::Complete,
+                source_edge_count,
+                event_count,
+                simultaneous_event_count,
+                skeleton: Some(skeleton),
+                blocker: None,
+            },
+            Err((stage, blocker, event_count, simultaneous_event_count)) => {
+                StraightSkeletonReport2 {
+                    stage,
+                    source_edge_count,
+                    event_count,
+                    simultaneous_event_count,
+                    skeleton: None,
+                    blocker: Some(blocker),
+                }
+            }
+        })
+    }
+}
+
+type SkeletonBuildBlock = (
+    StraightSkeletonStage2,
+    StraightSkeletonBlocker2,
+    usize,
+    usize,
+);
+
+fn build_convex_straight_skeleton(
+    supports: &[MovingSupport2],
+    source_lines: &[&crate::LineSeg2],
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(StraightSkeleton2, usize, usize), SkeletonBuildBlock>> {
+    let source_edge_count = supports.len();
+    let mut nodes = source_lines
+        .iter()
+        .enumerate()
+        .map(|(source_vertex, line)| StraightSkeletonNode2 {
+            point: line.start().clone(),
+            time: Real::zero(),
+            kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+        })
+        .collect::<Vec<_>>();
+    let mut arcs = Vec::new();
+    let mut active = (0..source_edge_count).collect::<Vec<_>>();
+    let mut pair_start = BTreeMap::new();
+    for index in 0..source_edge_count {
+        pair_start.insert(
+            (
+                active[(index + source_edge_count - 1) % source_edge_count],
+                active[index],
+            ),
+            index,
+        );
+    }
+
+    let mut current_time = Real::zero();
+    let mut event_count = 0usize;
+    let mut simultaneous_event_count = 0usize;
+
+    while active.len() >= 3 {
+        let mut candidates = Vec::with_capacity(active.len());
+        for active_index in 0..active.len() {
+            match edge_event_candidate(supports, &active, active_index, &current_time, policy)? {
+                Ok(Some(candidate)) => candidates.push(candidate),
+                Ok(None) => {}
+                Err(blocker) => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::EventScheduling,
+                        blocker,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+            }
+        }
+        let Some(mut minimum_time) = candidates.first().map(|candidate| candidate.time.clone())
+        else {
+            return Ok(Err((
+                StraightSkeletonStage2::EventScheduling,
+                StraightSkeletonBlocker2::MissingFutureEvent,
+                event_count,
+                simultaneous_event_count,
+            )));
+        };
+        for candidate in candidates.iter().skip(1) {
+            match compare_reals(&candidate.time, &minimum_time, policy) {
+                Some(Ordering::Less) => minimum_time = candidate.time.clone(),
+                Some(_) => {}
+                None => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::EventScheduling,
+                        StraightSkeletonBlocker2::UncertainEventOrdering,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+            }
+        }
+
+        let mut collapsing = Vec::new();
+        for candidate in candidates {
+            match compare_reals(&candidate.time, &minimum_time, policy) {
+                Some(Ordering::Equal) => collapsing.push(candidate),
+                Some(_) => {}
+                None => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::EventScheduling,
+                        StraightSkeletonBlocker2::UncertainEventOrdering,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+            }
+        }
+        if collapsing.len() > 1 {
+            simultaneous_event_count += 1;
+        }
+        event_count += 1;
+
+        let old_pair_start = pair_start.clone();
+        let mut removed = BTreeSet::new();
+        let mut event_nodes = Vec::new();
+        for candidate in &collapsing {
+            let index = candidate.active_index;
+            let previous = active[(index + active.len() - 1) % active.len()];
+            let collapsed = active[index];
+            let next = active[(index + 1) % active.len()];
+            removed.insert(collapsed);
+
+            let node = event_node(
+                &mut nodes,
+                &mut event_nodes,
+                candidate.point.clone(),
+                minimum_time.clone(),
+                collapsed,
+            );
+            for pair in [(previous, collapsed), (collapsed, next)] {
+                let Some(start_node) = old_pair_start.get(&pair).copied() else {
+                    continue;
+                };
+                add_arc(
+                    &mut arcs,
+                    start_node,
+                    node,
+                    StraightSkeletonArcKind2::VertexBisector {
+                        left_source_edge: pair.0,
+                        right_source_edge: pair.1,
+                    },
+                );
+            }
+        }
+
+        let next_active = active
+            .iter()
+            .copied()
+            .filter(|support| !removed.contains(support))
+            .collect::<Vec<_>>();
+        current_time = minimum_time;
+
+        if next_active.len() <= 1 {
+            active = next_active;
+            break;
+        }
+        if next_active.len() == 2 {
+            let unique = event_nodes
+                .iter()
+                .copied()
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect::<Vec<_>>();
+            if unique.len() == 2 {
+                add_arc(
+                    &mut arcs,
+                    unique[0],
+                    unique[1],
+                    StraightSkeletonArcKind2::TerminalRidge,
+                );
+            }
+            active = next_active;
+            break;
+        }
+
+        let mut next_pair_start = BTreeMap::new();
+        for index in 0..next_active.len() {
+            let pair = (
+                next_active[(index + next_active.len() - 1) % next_active.len()],
+                next_active[index],
+            );
+            if let Some(node) = old_pair_start.get(&pair).copied() {
+                next_pair_start.insert(pair, node);
+                continue;
+            }
+            let trajectory = match vertex_trajectory(&supports[pair.0], &supports[pair.1], policy)?
+            {
+                Ok(trajectory) => trajectory,
+                Err(blocker) => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::WavefrontPreparation,
+                        blocker,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+            };
+            let point = trajectory.point_at(&current_time);
+            let Some(node) = event_nodes
+                .iter()
+                .copied()
+                .find(|node| nodes[*node].point == point)
+            else {
+                return Ok(Err((
+                    StraightSkeletonStage2::EventScheduling,
+                    StraightSkeletonBlocker2::UncertainWavefrontRelation,
+                    event_count,
+                    simultaneous_event_count,
+                )));
+            };
+            next_pair_start.insert(pair, node);
+        }
+        active = next_active;
+        pair_start = next_pair_start;
+    }
+
+    let _ = active;
+    Ok(Ok((
+        StraightSkeleton2 {
+            nodes,
+            arcs,
+            source_edge_count,
+            maximum_time: current_time,
+        },
+        event_count,
+        simultaneous_event_count,
+    )))
+}
+
+fn vertex_trajectory(
+    first: &MovingSupport2,
+    second: &MovingSupport2,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<VertexTrajectory2, StraightSkeletonBlocker2>> {
+    let determinant = &first.normal_x * &second.normal_y - &first.normal_y * &second.normal_x;
+    match real_sign(&determinant, policy) {
+        Some(RealSign::Positive | RealSign::Negative) => {}
+        Some(RealSign::Zero) => {
+            return Ok(Err(StraightSkeletonBlocker2::ParallelWavefrontSupports {
+                first_source_edge: first.source_edge,
+                second_source_edge: second.source_edge,
+            }));
+        }
+        None => return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)),
+    }
+
+    let origin_x = ((&first.constant * &second.normal_y) - (&first.normal_y * &second.constant))
+        / &determinant;
+    let origin_y = ((&first.normal_x * &second.constant) - (&first.constant * &second.normal_x))
+        / &determinant;
+    let velocity_x = (&second.normal_y - &first.normal_y) / &determinant;
+    let velocity_y = (&first.normal_x - &second.normal_x) / determinant;
+    Ok(Ok(VertexTrajectory2 {
+        origin_x: origin_x?,
+        origin_y: origin_y?,
+        velocity_x: velocity_x?,
+        velocity_y: velocity_y?,
+    }))
+}
+
+fn edge_event_candidate(
+    supports: &[MovingSupport2],
+    active: &[usize],
+    active_index: usize,
+    current_time: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<Option<EdgeEventCandidate2>, StraightSkeletonBlocker2>> {
+    let previous = active[(active_index + active.len() - 1) % active.len()];
+    let edge = active[active_index];
+    let next = active[(active_index + 1) % active.len()];
+    let left = match vertex_trajectory(&supports[previous], &supports[edge], policy)? {
+        Ok(trajectory) => trajectory,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    let right = match vertex_trajectory(&supports[edge], &supports[next], policy)? {
+        Ok(trajectory) => trajectory,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+
+    let delta_origin_x = &left.origin_x - &right.origin_x;
+    let delta_origin_y = &left.origin_y - &right.origin_y;
+    let delta_velocity_x = &left.velocity_x - &right.velocity_x;
+    let delta_velocity_y = &left.velocity_y - &right.velocity_y;
+    let time = match solve_collision_coordinate(&delta_origin_x, &delta_velocity_x, policy)? {
+        CollisionCoordinate::Time(time) => time,
+        CollisionCoordinate::Coincident => {
+            match solve_collision_coordinate(&delta_origin_y, &delta_velocity_y, policy)? {
+                CollisionCoordinate::Time(time) => time,
+                CollisionCoordinate::Coincident => {
+                    return Ok(Err(StraightSkeletonBlocker2::NonAdvancingEvent));
+                }
+                CollisionCoordinate::Never => return Ok(Ok(None)),
+            }
+        }
+        CollisionCoordinate::Never => return Ok(Ok(None)),
+    };
+
+    let residual_x = &delta_origin_x + &delta_velocity_x * &time;
+    let residual_y = &delta_origin_y + &delta_velocity_y * &time;
+    for residual in [&residual_x, &residual_y] {
+        match residual.zero_status() {
+            ZeroStatus::Zero => {}
+            ZeroStatus::NonZero => return Ok(Ok(None)),
+            ZeroStatus::Unknown => {
+                return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+            }
+        }
+    }
+    match compare_reals(&time, current_time, policy) {
+        Some(Ordering::Greater) => Ok(Ok(Some(EdgeEventCandidate2 {
+            active_index,
+            point: left.point_at(&time),
+            time,
+        }))),
+        Some(Ordering::Less) => Ok(Ok(None)),
+        Some(Ordering::Equal) => Ok(Err(StraightSkeletonBlocker2::NonAdvancingEvent)),
+        None => Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+    }
+}
+
+enum CollisionCoordinate {
+    Time(Real),
+    Coincident,
+    Never,
+}
+
+fn solve_collision_coordinate(
+    origin: &Real,
+    velocity: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<CollisionCoordinate> {
+    match real_sign(velocity, policy) {
+        Some(RealSign::Positive | RealSign::Negative) => {
+            Ok(CollisionCoordinate::Time((-origin / velocity)?))
+        }
+        Some(RealSign::Zero) => match real_sign(origin, policy) {
+            Some(RealSign::Zero) => Ok(CollisionCoordinate::Coincident),
+            Some(_) => Ok(CollisionCoordinate::Never),
+            None => Ok(CollisionCoordinate::Never),
+        },
+        None => Ok(CollisionCoordinate::Never),
+    }
+}
+
+fn event_node(
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    event_nodes: &mut Vec<usize>,
+    point: Point2,
+    time: Real,
+    collapsed_source_edge: usize,
+) -> usize {
+    if let Some(index) = event_nodes
+        .iter()
+        .copied()
+        .find(|index| nodes[*index].point == point && nodes[*index].time == time)
+    {
+        if let StraightSkeletonNodeKind2::EdgeEvent {
+            collapsed_source_edges,
+        } = &mut nodes[index].kind
+            && !collapsed_source_edges.contains(&collapsed_source_edge)
+        {
+            collapsed_source_edges.push(collapsed_source_edge);
+            collapsed_source_edges.sort_unstable();
+        }
+        return index;
+    }
+    let index = nodes.len();
+    nodes.push(StraightSkeletonNode2 {
+        point,
+        time,
+        kind: StraightSkeletonNodeKind2::EdgeEvent {
+            collapsed_source_edges: vec![collapsed_source_edge],
+        },
+    });
+    event_nodes.push(index);
+    index
+}
+
+fn add_arc(
+    arcs: &mut Vec<StraightSkeletonArc2>,
+    start_node: usize,
+    end_node: usize,
+    kind: StraightSkeletonArcKind2,
+) {
+    if start_node == end_node {
+        return;
+    }
+    let duplicate = arcs.iter().any(|arc| {
+        ((arc.start_node == start_node && arc.end_node == end_node)
+            || (arc.start_node == end_node && arc.end_node == start_node))
+            && arc.kind == kind
+    });
+    if !duplicate {
+        arcs.push(StraightSkeletonArc2 {
+            start_node,
+            end_node,
+            kind,
+        });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{LineSeg2, Segment2};
+
+    fn r(value: i32) -> Real {
+        Real::from(value)
+    }
+
+    fn contour(points: &[(i32, i32)]) -> Contour2 {
+        let points = points
+            .iter()
+            .map(|(x, y)| Point2::new(r(*x), r(*y)))
+            .collect::<Vec<_>>();
+        let segments = (0..points.len())
+            .map(|index| {
+                Segment2::Line(
+                    LineSeg2::try_new(
+                        points[index].clone(),
+                        points[(index + 1) % points.len()].clone(),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect();
+        Contour2::try_new(segments).unwrap()
+    }
+
+    #[test]
+    fn square_collapses_to_one_exact_center_event() {
+        let report = contour(&[(0, 0), (2, 0), (2, 2), (0, 2)])
+            .straight_skeleton(&CurvePolicy::certified())
+            .unwrap();
+        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(report.event_count(), 1);
+        assert_eq!(report.simultaneous_event_count(), 1);
+        let skeleton = report.skeleton().unwrap();
+        assert_eq!(skeleton.nodes().len(), 5);
+        assert_eq!(skeleton.arcs().len(), 4);
+        let center = skeleton.nodes().last().unwrap();
+        assert_eq!(center.point(), &Point2::new(r(1), r(1)));
+        assert_eq!(center.time(), &r(1));
+    }
+
+    #[test]
+    fn rectangle_retains_the_terminal_ridge() {
+        let report = contour(&[(0, 0), (4, 0), (4, 2), (0, 2)])
+            .straight_skeleton(&CurvePolicy::certified())
+            .unwrap();
+        let skeleton = report.skeleton().unwrap();
+        assert_eq!(skeleton.nodes().len(), 6);
+        assert_eq!(skeleton.arcs().len(), 5);
+        assert!(
+            skeleton
+                .arcs()
+                .iter()
+                .any(|arc| arc.kind() == &StraightSkeletonArcKind2::TerminalRidge)
+        );
+        assert_eq!(skeleton.maximum_time(), &r(1));
+    }
+
+    #[test]
+    fn clockwise_square_has_the_same_exact_collapse() {
+        let report = contour(&[(0, 0), (0, 2), (2, 2), (2, 0)])
+            .straight_skeleton(&CurvePolicy::certified())
+            .unwrap();
+        let skeleton = report.skeleton().unwrap();
+        assert_eq!(
+            skeleton.nodes().last().unwrap().point(),
+            &Point2::new(r(1), r(1))
+        );
+    }
+
+    #[test]
+    fn concave_contour_reports_the_missing_split_event_lane() {
+        let report = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)])
+            .straight_skeleton(&CurvePolicy::certified())
+            .unwrap();
+        assert!(report.skeleton().is_none());
+        assert!(matches!(
+            report.blocker(),
+            Some(StraightSkeletonBlocker2::SplitEventsRequired { .. })
+        ));
+    }
+}
