@@ -892,9 +892,12 @@ fn matrix4_inverse_and_determinant_handle_general_integer_matrix() {
     ]);
 
     assert_eq!(matrix.determinant(), r(-198));
+    let inverse = matrix.clone().inverse().unwrap();
+    assert_eq!(matrix.clone() * inverse.clone(), Matrix4::identity());
+    assert_eq!(matrix.clone().inverse_checked().unwrap(), inverse);
     assert_eq!(
-        matrix.clone() * matrix.inverse().unwrap(),
-        Matrix4::identity()
+        matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
+        inverse
     );
 }
 

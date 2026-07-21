@@ -300,6 +300,31 @@ Identity, diagonal, translated point/direction, dense, projective, symbolic,
 owned/borrowed, batch, and prepared-handle equivalence tests protect the same
 exact dispatch decisions. No approximation or new cache is involved.
 
+## Scalar-owned dense 4x4 inverse
+
+Dense exact-rational 4x4 inversion formerly wrapped each of twelve minors,
+sixteen cofactors, and the determinant as separate `Real` intermediates before
+scaling the result. The exact-rational route now transfers the fixed cofactor
+schedule to Hyperreal once, where those intermediates remain `Rational` values.
+Sparse, affine, triangular, diagonal, identity, and symbolic matrices keep
+their existing lattice-owned schedules.
+
+Fresh matched medians measured:
+
+| Workload | Before | Current | Numerica 128 | Change |
+| --- | ---: | ---: | ---: | ---: |
+| dense `mat4 inverse`, exact dyadic | 23.016 us | 21.288 us | 9.132 us | 7.5% faster |
+| dense `mat4 inverse`, explicit rational | about 7.85 us | 6.877 us | - | 12.4% faster |
+| dense `mat4 inverse checked`, exact dyadic | 24.57 us | 20.987 us | 8.900 us | 14.6% faster |
+| dense `mat4 inverse checked abort`, exact dyadic | about 24.6 us | 21.108 us | - | about 14% faster |
+
+Perf sampling moved `Real::detailed_facts` below 1% self time; arbitrary-
+precision division/GCD and dyadic alignment now dominate. A rejected
+common-denominator prototype regressed the heterogeneous exact-f64 workload to
+83.3 us by widening every entry to the smallest exponent, so no such schedule
+or retained state remains. Exact inverse/product identities and singular-error
+tests cover the scalar aggregate, ordinary, checked, and abort-aware routes.
+
 ## Minimal checked-normalization certificate
 
 Checked vector normalization previously built the complete public structural

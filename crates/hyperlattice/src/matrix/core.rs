@@ -12914,6 +12914,29 @@ fn matrix4_scaled_adjugate_from_factors_dense_exact(
 }
 
 #[inline]
+fn matrix4_dense_exact_rational_inverse(
+    matrix: &[[Real; 4]; 4],
+) -> Option<BlasResult<[[Real; 4]; 4]>> {
+    matrix
+        .iter()
+        .flatten()
+        .all(|value| value.exact_rational_ref().is_some())
+        .then(|| {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "helper",
+                "invert-matrix4-dense-exact-rational-aggregate"
+            );
+            Real::exact_rational_matrix4_inverse_known_exact([
+                [&matrix[0][0], &matrix[0][1], &matrix[0][2], &matrix[0][3]],
+                [&matrix[1][0], &matrix[1][1], &matrix[1][2], &matrix[1][3]],
+                [&matrix[2][0], &matrix[2][1], &matrix[2][2], &matrix[2][3]],
+                [&matrix[3][0], &matrix[3][1], &matrix[3][2], &matrix[3][3]],
+            ])
+        })
+}
+
+#[inline]
 fn invert_matrix4(matrix: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     if matrix4_is_definitely_dense_for_inverse(&matrix) {
         crate::trace_dispatch!(
@@ -12921,6 +12944,9 @@ fn invert_matrix4(matrix: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
             "helper",
             "invert-matrix4-dense-cofactor"
         );
+        if let Some(inverse) = matrix4_dense_exact_rational_inverse(&matrix) {
+            return inverse;
+        }
         let (s, c) = if true {
             matrix4_factors_dense_exact(&matrix)
         } else {
@@ -12990,6 +13016,9 @@ fn invert_matrix4_checked(matrix: [[Real; 4]; 4]) -> CheckedBlasResult<[[Real; 4
             "helper",
             "invert-matrix4-checked-dense-cofactor"
         );
+        if let Some(inverse) = matrix4_dense_exact_rational_inverse(&matrix) {
+            return inverse;
+        }
         let (s, c) = if true {
             matrix4_factors_dense_exact(&matrix)
         } else {
@@ -13072,6 +13101,9 @@ fn invert_matrix4_checked_with_abort(
             "helper",
             "invert-matrix4-checked-with-abort-dense-cofactor"
         );
+        if let Some(inverse) = matrix4_dense_exact_rational_inverse(&matrix) {
+            return inverse;
+        }
         let (s, c) = if true {
             matrix4_factors_dense_exact(&matrix)
         } else {
