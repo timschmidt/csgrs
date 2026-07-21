@@ -3,7 +3,7 @@
 use hyperbrep::{
     BrepFeatureId, BrepPlanarExtrusionConstruction, BrepSourceVersion, BrepVoxelHandoffBlocker,
 };
-use hypercurve::{Contour2, LineSeg2, Region2, Segment2};
+use hypercurve::{Contour2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
 
@@ -19,8 +19,9 @@ fn line(start: hypercurve::Point2, end: hypercurve::Point2) -> Segment2 {
     Segment2::Line(LineSeg2::try_new(start, end).unwrap())
 }
 
-fn rectangle(width: i32, depth: i32) -> Region2 {
-    Region2::from_material_contours(vec![
+fn rectangle(width: i32, depth: i32) -> CurveRegion2 {
+    CurveRegion2::try_from_native_material_contours(
+        vec![
         Contour2::try_new(vec![
             line(uv(0, 0), uv(width, 0)),
             line(uv(width, 0), uv(width, depth)),
@@ -28,7 +29,10 @@ fn rectangle(width: i32, depth: i32) -> Region2 {
             line(uv(0, depth), uv(0, 0)),
         ])
         .unwrap(),
-    ])
+        ],
+        &CurvePolicy::certified(),
+    )
+    .unwrap()
 }
 
 fuzz_target!(|data: (u8, u8, u8, bool)| {

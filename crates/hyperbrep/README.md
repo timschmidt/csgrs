@@ -112,8 +112,8 @@ false; the blocker is part of the API contract, not ancillary logging.
 ## Construction and derived output
 
 `BrepPlanarRegionConstruction::from_region_on_surface` constructs a retained
-planar face from a line-only exact `hypercurve::Region2` and a prepared surface
-frame. `BrepPlanarExtrusionConstruction::vertical_prism_from_region` constructs
+planar face from a line-only exact `hypercurve::CurveRegion2` and a prepared
+surface frame. `BrepPlanarExtrusionConstruction::vertical_prism_from_region` constructs
 a closed vertical prism with analytic side planes. Both return the shell and a
 fresh construction manifest only after their validation gates pass.
 

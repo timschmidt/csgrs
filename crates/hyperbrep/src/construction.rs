@@ -1,7 +1,7 @@
 //! Exact construction helpers for retained BREP objects.
 //!
 //! This module is deliberately narrow. It turns an already exact
-//! `hypercurve::Region2` made of line contours into one retained planar BREP
+//! `hypercurve::CurveRegion2` made of line contours into one retained planar BREP
 //! face on an already retained exact surface frame. It does not sample curves,
 //! infer a plane, heal loops, or tessellate. Those would be separate
 //! topology-changing decisions and must be certified before they can produce
@@ -9,7 +9,7 @@
 
 use std::collections::BTreeSet;
 
-use hypercurve::{Contour2, Region2, Segment2};
+use hypercurve::{Classification, Contour2, CurvePolicy, CurveRegion2, Segment2};
 use hyperlimit::{Plane3, Point2 as LimitPoint2, Point3};
 use hyperreal::Real;
 
@@ -113,21 +113,32 @@ pub struct BrepPlanarExtrusionConstruction {
 }
 
 impl BrepPlanarRegionConstruction {
-    /// Construct a single planar BREP face from a line-only `Region2`.
+    /// Construct a single planar BREP face from a line-only `CurveRegion2`.
     ///
     /// This minimal bridge from `hypercurve` retains the exact curve object
     /// until surface-frame evaluation constructs model-space vertices.
     /// Unsupported segments block construction instead of falling back to a
     /// display polyline.
     pub fn from_region_on_surface(
-        region: &Region2,
+        region: &CurveRegion2,
         surface: BrepSurface,
         feature: BrepFeatureId,
         sources: Vec<BrepSourceVersion>,
     ) -> Self {
         let mut blockers = BTreeSet::new();
-        let material_contour_count = region.material_contours().len();
-        let hole_contour_count = region.hole_contours().len();
+        let native = match region.native_contours_fast_path(&CurvePolicy::certified()) {
+            Ok(Classification::Decided(native)) => Some(native),
+            Ok(Classification::Uncertain(_)) | Err(_) => {
+                blockers.insert(BrepPlanarRegionConstructionBlocker::UnsupportedCurveSegment);
+                None
+            }
+        };
+        let material_contour_count = native
+            .as_ref()
+            .map_or(0, |native| native.material_contours().len());
+        let hole_contour_count = native
+            .as_ref()
+            .map_or(0, |native| native.hole_contours().len());
         if material_contour_count == 0 {
             blockers.insert(BrepPlanarRegionConstructionBlocker::EmptyRegion);
         }
@@ -155,15 +166,17 @@ impl BrepPlanarRegionConstruction {
                 next_loop_id: &mut next_loop_id,
                 blockers: &mut blockers,
             };
-            let outer = region
-                .material_contours()
-                .first()
+            let outer = native
+                .as_ref()
+                .and_then(|native| native.material_contours().first())
                 .and_then(|contour| loop_builder.build(contour));
 
             let mut inner = Vec::new();
-            for contour in region.hole_contours() {
-                if let Some(face_loop) = loop_builder.build(contour) {
-                    inner.push(face_loop);
+            if let Some(native) = &native {
+                for contour in native.hole_contours() {
+                    if let Some(face_loop) = loop_builder.build(contour) {
+                        inner.push(face_loop);
+                    }
                 }
             }
             (outer, inner)
@@ -226,7 +239,7 @@ impl BrepPlanarRegionConstruction {
 }
 
 impl BrepPlanarExtrusionConstruction {
-    /// Construct a closed vertical prism shell from a line-only `Region2`.
+    /// Construct a closed vertical prism shell from a line-only `CurveRegion2`.
     ///
     /// This is the first solid construction bridge from `hypercurve` into
     /// `hyperbrep`. It preserves material and hole contours as BREP edges and
@@ -234,14 +247,23 @@ impl BrepPlanarExtrusionConstruction {
     /// Unsupported source families and unresolved signs block the shell before
     /// downstream physics or voxel handoffs can trust it.
     pub fn vertical_prism_from_region(
-        region: &Region2,
+        region: &CurveRegion2,
         base_z: Real,
         height: Real,
         feature: BrepFeatureId,
         sources: Vec<BrepSourceVersion>,
     ) -> Self {
         let mut blockers = BTreeSet::new();
-        let material_contour_count = region.material_contours().len();
+        let native = match region.native_contours_fast_path(&CurvePolicy::certified()) {
+            Ok(Classification::Decided(native)) => Some(native),
+            Ok(Classification::Uncertain(_)) | Err(_) => {
+                blockers.insert(BrepPlanarExtrusionConstructionBlocker::UnsupportedCurveSegment);
+                None
+            }
+        };
+        let material_contour_count = native
+            .as_ref()
+            .map_or(0, |native| native.material_contours().len());
         if material_contour_count == 0 {
             blockers.insert(BrepPlanarExtrusionConstructionBlocker::EmptyRegion);
         }
@@ -258,9 +280,9 @@ impl BrepPlanarExtrusionConstruction {
             }
         }
 
-        let outer = region
-            .material_contours()
-            .first()
+        let outer = native
+            .as_ref()
+            .and_then(|native| native.material_contours().first())
             .and_then(|contour| collect_line_contour_points(contour, &mut blockers));
         let mut loops = Vec::new();
         if let Some(points) = outer {
@@ -269,14 +291,16 @@ impl BrepPlanarExtrusionConstruction {
                 is_hole: false,
             });
         }
-        for contour in region.hole_contours() {
-            match collect_line_contour_points(contour, &mut blockers) {
-                Some(points) => loops.push(PrismSourceLoop {
-                    points,
-                    is_hole: true,
-                }),
-                None => {
-                    blockers.insert(BrepPlanarExtrusionConstructionBlocker::HoleContourInvalid);
+        if let Some(native) = &native {
+            for contour in native.hole_contours() {
+                match collect_line_contour_points(contour, &mut blockers) {
+                    Some(points) => loops.push(PrismSourceLoop {
+                        points,
+                        is_hole: true,
+                    }),
+                    None => {
+                        blockers.insert(BrepPlanarExtrusionConstructionBlocker::HoleContourInvalid);
+                    }
                 }
             }
         }

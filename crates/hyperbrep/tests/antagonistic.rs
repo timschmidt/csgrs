@@ -14,7 +14,7 @@ use hyperbrep::{
     BrepTrimLoopBlocker, BrepVertex, BrepVertexId, BrepVoxelHandoffBlocker,
     BrepVoxelPackageRequest,
 };
-use hypercurve::{Contour2, LineSeg2, Region2, Segment2};
+use hypercurve::{Contour2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperlimit::{Plane3, PlaneSide, Point2, Point3, classify_point_plane};
 use hyperreal::Real;
 use proptest::prelude::*;
@@ -35,8 +35,12 @@ fn line2(start: hypercurve::Point2, end: hypercurve::Point2) -> Segment2 {
     Segment2::Line(LineSeg2::try_new(start, end).unwrap())
 }
 
-fn rect_region(width: i32, height: i32) -> Region2 {
-    Region2::from_material_contours(vec![rect_contour(0, 0, width, height)])
+fn curve_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
+    CurveRegion2::try_from_native_contours(material, holes, &CurvePolicy::certified()).unwrap()
+}
+
+fn rect_region(width: i32, height: i32) -> CurveRegion2 {
+    curve_region(vec![rect_contour(0, 0, width, height)], Vec::new())
 }
 
 fn rect_contour(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Contour2 {
@@ -522,7 +526,7 @@ proptest! {
     ) {
         let hole_width = hole_width.min(outer_width - 2);
         let hole_depth = hole_depth.min(outer_depth - 2);
-        let region = Region2::new(
+        let region = curve_region(
             vec![rect_contour(0, 0, outer_width, outer_depth)],
             vec![rect_contour(1, 1, 1 + hole_width, 1 + hole_depth)],
         );

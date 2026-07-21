@@ -30,4 +30,7 @@ name = "shell_audit"
 harness = false
 
 [patch.crates-io]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
 hyperreal = { path = "../hyperreal" }
+hypersolve = { path = "../hypersolve" }

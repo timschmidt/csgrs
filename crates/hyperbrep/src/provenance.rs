@@ -8,7 +8,11 @@
 
 use std::collections::BTreeSet;
 
+use hyperlimit::Point3;
+use hyperreal::Real;
+
 use crate::report::BrepTopologyCounts;
+use crate::surface::{BrepSurfaceKind, BrepSurfaceSource};
 use crate::topology::{BrepEdgeId, BrepFaceId, BrepShell, BrepVertexId};
 
 const FNV_OFFSET: u64 = 0xcbf29ce484222325;
@@ -22,9 +26,43 @@ fn fingerprint_bytes(mut state: u64, bytes: &[u8]) -> u64 {
     state
 }
 
-fn fingerprint_debug<T: core::fmt::Debug>(state: u64, label: &str, value: &T) -> u64 {
-    let state = fingerprint_bytes(state, label.as_bytes());
-    fingerprint_bytes(state, format!("{value:?}").as_bytes())
+fn fingerprint_u64(state: u64, value: u64) -> u64 {
+    fingerprint_bytes(state, &value.to_le_bytes())
+}
+
+fn fingerprint_usize(state: u64, value: usize) -> u64 {
+    fingerprint_u64(state, value as u64)
+}
+
+fn fingerprint_real(mut state: u64, value: &Real) -> u64 {
+    // Display is derived only from immutable value representation. Debug is
+    // intentionally avoided because Real's accelerator caches are observable
+    // there and may warm during an unrelated topology audit.
+    state = fingerprint_bytes(state, format!("{value}").as_bytes());
+    let approximation: f64 = value.clone().into();
+    fingerprint_u64(state, approximation.to_bits())
+}
+
+fn fingerprint_point3(mut state: u64, point: &Point3) -> u64 {
+    state = fingerprint_real(state, &point.x);
+    state = fingerprint_real(state, &point.y);
+    fingerprint_real(state, &point.z)
+}
+
+fn fingerprint_loop(mut state: u64, face_loop: &crate::BrepLoop) -> u64 {
+    state = fingerprint_u64(state, face_loop.id.0);
+    state = fingerprint_usize(state, face_loop.coedges.len());
+    for coedge in &face_loop.coedges {
+        state = fingerprint_u64(state, coedge.edge.0);
+        state = fingerprint_bytes(
+            state,
+            &[match coedge.orientation {
+                crate::BrepEdgeOrientation::Forward => 0,
+                crate::BrepEdgeOrientation::Reversed => 1,
+            }],
+        );
+    }
+    state
 }
 
 /// Stable identifier for a construction feature or adapter operation.
@@ -158,11 +196,52 @@ pub struct BrepTopologyFingerprint {
 impl BrepTopologyFingerprint {
     /// Capture a deterministic fingerprint from a retained shell.
     pub fn from_shell(shell: &BrepShell) -> Self {
-        let mut state = fingerprint_bytes(FNV_OFFSET, b"hyperbrep:v1");
-        state = fingerprint_debug(state, "vertices", &shell.vertices);
-        state = fingerprint_debug(state, "edges", &shell.edges);
-        state = fingerprint_debug(state, "surfaces", &shell.surfaces);
-        state = fingerprint_debug(state, "faces", &shell.faces);
+        let mut state = fingerprint_bytes(FNV_OFFSET, b"hyperbrep:v2");
+        state = fingerprint_usize(state, shell.vertices.len());
+        for vertex in &shell.vertices {
+            state = fingerprint_u64(state, vertex.id.0);
+            state = fingerprint_point3(state, &vertex.point);
+        }
+        state = fingerprint_usize(state, shell.edges.len());
+        for edge in &shell.edges {
+            state = fingerprint_u64(state, edge.id.0);
+            state = fingerprint_u64(state, edge.start.0);
+            state = fingerprint_u64(state, edge.end.0);
+        }
+        state = fingerprint_usize(state, shell.surfaces.len());
+        for surface in &shell.surfaces {
+            state = fingerprint_u64(state, surface.id.0);
+            state = fingerprint_bytes(
+                state,
+                &[match surface.source {
+                    BrepSurfaceSource::ExactConstruction => 0,
+                    BrepSurfaceSource::ExactImport => 1,
+                    BrepSurfaceSource::LossyImport => 2,
+                    BrepSurfaceSource::Unknown => 3,
+                }],
+            );
+            match &surface.kind {
+                BrepSurfaceKind::Plane(plane) => {
+                    state = fingerprint_bytes(state, b"plane");
+                    state = fingerprint_point3(state, &plane.normal);
+                    state = fingerprint_real(state, &plane.offset);
+                }
+                BrepSurfaceKind::Unsupported { family } => {
+                    state = fingerprint_bytes(state, b"unsupported");
+                    state = fingerprint_bytes(state, family.as_bytes());
+                }
+            }
+        }
+        state = fingerprint_usize(state, shell.faces.len());
+        for face in &shell.faces {
+            state = fingerprint_u64(state, face.id.0);
+            state = fingerprint_u64(state, face.surface.0);
+            state = fingerprint_loop(state, &face.outer);
+            state = fingerprint_usize(state, face.inner.len());
+            for inner in &face.inner {
+                state = fingerprint_loop(state, inner);
+            }
+        }
         Self { value: state }
     }
 }

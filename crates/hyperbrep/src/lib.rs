@@ -121,7 +121,7 @@ pub use voxel::{BrepVoxelHandoffBlocker, BrepVoxelHandoffReport};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hypercurve::{Contour2, LineSeg2, Region2, Segment2};
+    use hypercurve::{Contour2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
     use hyperlimit::{Plane3, Point3};
     use hyperreal::{Rational, Real};
 
@@ -145,15 +145,25 @@ mod tests {
         Segment2::Line(LineSeg2::try_new(start, end).unwrap())
     }
 
-    fn rectangle_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Region2 {
-        let contour = Contour2::try_new(vec![
+    fn rectangle_contour(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Contour2 {
+        Contour2::try_new(vec![
             line2(uv(min_x, min_y), uv(max_x, min_y)),
             line2(uv(max_x, min_y), uv(max_x, max_y)),
             line2(uv(max_x, max_y), uv(min_x, max_y)),
             line2(uv(min_x, max_y), uv(min_x, min_y)),
         ])
-        .unwrap();
-        Region2::from_material_contours(vec![contour])
+        .unwrap()
+    }
+
+    fn curve_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
+        CurveRegion2::try_from_native_contours(material, holes, &CurvePolicy::certified()).unwrap()
+    }
+
+    fn rectangle_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveRegion2 {
+        curve_region(
+            vec![rectangle_contour(min_x, min_y, max_x, max_y)],
+            Vec::new(),
+        )
     }
 
     fn plane(id: u64, nx: i32, ny: i32, nz: i32, offset: i32) -> BrepSurface {
@@ -845,9 +855,9 @@ mod tests {
 
     #[test]
     fn planar_region_construction_rejects_arcs_and_disconnected_material() {
-        let first = rectangle_region(0, 0, 1, 1).material_contours()[0].clone();
-        let second = rectangle_region(3, 0, 4, 1).material_contours()[0].clone();
-        let disconnected = Region2::from_material_contours(vec![first, second]);
+        let first = rectangle_contour(0, 0, 1, 1);
+        let second = rectangle_contour(3, 0, 4, 1);
+        let disconnected = curve_region(vec![first, second], Vec::new());
         let disconnected_report = BrepPlanarRegionConstruction::from_region_on_surface(
             &disconnected,
             plane(0, 0, 0, 1, 0),
@@ -867,7 +877,7 @@ mod tests {
             hypercurve::BulgeVertex2::new(uv(0, 1), r(0)),
         ])
         .unwrap();
-        let arc_region = Region2::from_material_contours(vec![arc_contour]);
+        let arc_region = curve_region(vec![arc_contour], Vec::new());
         let arc_report = BrepPlanarRegionConstruction::from_region_on_surface(
             &arc_region,
             plane(0, 0, 0, 1, 0),
@@ -939,7 +949,7 @@ mod tests {
             hypercurve::BulgeVertex2::new(uv(0, 1), r(0)),
         ])
         .unwrap();
-        let arc_region = Region2::from_material_contours(vec![arc_contour]);
+        let arc_region = curve_region(vec![arc_contour], Vec::new());
         let arc_report = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
             &arc_region,
             r(0),
@@ -957,9 +967,9 @@ mod tests {
 
     #[test]
     fn planar_extrusion_construction_preserves_hole_volume() {
-        let outer = rectangle_region(0, 0, 4, 4).material_contours()[0].clone();
-        let hole = rectangle_region(1, 1, 2, 2).material_contours()[0].clone();
-        let holed = Region2::new(vec![outer], vec![hole]);
+        let outer = rectangle_contour(0, 0, 4, 4);
+        let hole = rectangle_contour(1, 1, 2, 2);
+        let holed = curve_region(vec![outer], vec![hole]);
         let constructed = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
             &holed,
             r(0),

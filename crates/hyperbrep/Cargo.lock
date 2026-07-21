@@ -326,7 +326,7 @@ version = "0.2.0"
 dependencies = [
  "criterion",
  "hypercurve",
- "hyperlimit 0.4.0",
+ "hyperlimit",
  "hyperphysics",
  "hyperreal",
  "hypertri",
@@ -338,9 +338,9 @@ dependencies = [
 name = "hypercurve"
 version = "0.3.0"
 dependencies = [
- "hyperlimit 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyperlimit",
  "hyperreal",
- "hypersolve 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hypersolve",
  "num",
 ]
 
@@ -352,29 +352,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyperlattice"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b65eff926d97a7fafc3985d1faba167e0e67b7870f90af494fa1269ac64d45a9"
-dependencies = [
- "hyperreal",
-]
-
-[[package]]
 name = "hyperlimit"
 version = "0.4.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperreal",
-]
-
-[[package]]
-name = "hyperlimit"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fdb6de18515d37cdb973dffe5e6ba994b7fd27bfcbef3d4d1b23780946f5bef"
-dependencies = [
- "hyperlattice 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyperlattice",
  "hyperreal",
 ]
 
@@ -382,8 +363,8 @@ dependencies = [
 name = "hypermesh"
 version = "0.1.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperlimit 0.4.0",
+ "hyperlattice",
+ "hyperlimit",
  "hyperreal",
 ]
 
@@ -391,11 +372,11 @@ dependencies = [
 name = "hyperphysics"
 version = "0.3.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperlimit 0.4.0",
+ "hyperlattice",
+ "hyperlimit",
  "hypermesh",
  "hyperreal",
- "hypersolve 0.3.0",
+ "hypersolve",
 ]
 
 [[package]]
@@ -409,19 +390,8 @@ dependencies = [
 name = "hypersolve"
 version = "0.3.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperlimit 0.4.0",
- "hyperreal",
-]
-
-[[package]]
-name = "hypersolve"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "856dd8b8ab0e75bb2619ab0f1fb35c66586c14cdd5f6c592fc16e3a1cc32fa41"
-dependencies = [
- "hyperlattice 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyperlimit 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyperlattice",
+ "hyperlimit",
  "hyperreal",
 ]
 
@@ -429,7 +399,7 @@ dependencies = [
 name = "hypertri"
 version = "0.4.0"
 dependencies = [
- "hyperlimit 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyperlimit",
  "hyperreal",
 ]
 
@@ -437,8 +407,8 @@ dependencies = [
 name = "hypervoxel"
 version = "0.3.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperlimit 0.4.0",
+ "hyperlattice",
+ "hyperlimit",
  "hyperreal",
  "rustc-hash",
 ]

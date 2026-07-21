@@ -9,7 +9,7 @@ use hyperbrep::{
     BrepSourceVersion, BrepSurface, BrepSurfaceId, BrepSurfaceSource, BrepTopologyFingerprint,
     BrepVertex, BrepVertexId,
 };
-use hypercurve::{Contour2, Curve2, CurvePath2, CurvePolicy, LineSeg2, Region2, Segment2};
+use hypercurve::{Contour2, Curve2, CurvePath2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperlimit::{Plane3, Point2, Point3};
 use hyperreal::Real;
 
@@ -29,8 +29,12 @@ fn line2(start: hypercurve::Point2, end: hypercurve::Point2) -> Segment2 {
     Segment2::Line(LineSeg2::try_new(start, end).unwrap())
 }
 
-fn rectangle_region(width: i32, height: i32) -> Region2 {
-    Region2::from_material_contours(vec![rectangle_contour(0, 0, width, height)])
+fn curve_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
+    CurveRegion2::try_from_native_contours(material, holes, &CurvePolicy::certified()).unwrap()
+}
+
+fn rectangle_region(width: i32, height: i32) -> CurveRegion2 {
+    curve_region(vec![rectangle_contour(0, 0, width, height)], Vec::new())
 }
 
 fn rectangle_contour(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Contour2 {
@@ -509,7 +513,7 @@ fn bench_shell_audit(c: &mut Criterion) {
             )
         })
     });
-    let holed_region = Region2::new(
+    let holed_region = curve_region(
         vec![rectangle_contour(0, 0, 64, 32)],
         vec![rectangle_contour(8, 8, 24, 24)],
     );
