@@ -2713,6 +2713,68 @@ mod tests {
     }
 
     #[test]
+    fn exact_rational_matrix4_inverse_uses_shared_exact_aggregate() {
+        let q =
+            |numerator, denominator| Real::new(Rational::fraction(numerator, denominator).unwrap());
+        let matrix = [
+            [q(1, 1), q(2, 1), q(3, 1), q(4, 1)],
+            [q(0, 1), q(1, 1), q(4, 1), q(2, 1)],
+            [q(5, 1), q(6, 1), q(0, 1), q(1, 1)],
+            [q(2, 1), q(7, 1), q(1, 1), q(3, 1)],
+        ];
+        let actual = Real::exact_rational_matrix4_inverse_known_exact([
+            [&matrix[0][0], &matrix[0][1], &matrix[0][2], &matrix[0][3]],
+            [&matrix[1][0], &matrix[1][1], &matrix[1][2], &matrix[1][3]],
+            [&matrix[2][0], &matrix[2][1], &matrix[2][2], &matrix[2][3]],
+            [&matrix[3][0], &matrix[3][1], &matrix[3][2], &matrix[3][3]],
+        ])
+        .unwrap();
+        let expected = [
+            [q(1, 6), q(-1, 18), q(5, 18), q(-5, 18)],
+            [q(-7, 33), q(10, 99), q(-5, 99), q(23, 99)],
+            [q(-1, 6), q(7, 18), q(1, 18), q(-1, 18)],
+            [q(29, 66), q(-65, 198), q(-17, 198), q(-1, 198)],
+        ];
+        assert_eq!(actual, expected);
+
+        let singular = [
+            [Real::from(1), Real::from(2), Real::from(3), Real::from(4)],
+            [Real::from(1), Real::from(2), Real::from(3), Real::from(4)],
+            [Real::from(0), Real::from(1), Real::from(0), Real::from(0)],
+            [Real::from(0), Real::from(0), Real::from(1), Real::from(0)],
+        ];
+        assert_eq!(
+            Real::exact_rational_matrix4_inverse_known_exact([
+                [
+                    &singular[0][0],
+                    &singular[0][1],
+                    &singular[0][2],
+                    &singular[0][3]
+                ],
+                [
+                    &singular[1][0],
+                    &singular[1][1],
+                    &singular[1][2],
+                    &singular[1][3]
+                ],
+                [
+                    &singular[2][0],
+                    &singular[2][1],
+                    &singular[2][2],
+                    &singular[2][3]
+                ],
+                [
+                    &singular[3][0],
+                    &singular[3][1],
+                    &singular[3][2],
+                    &singular[3][3]
+                ],
+            ]),
+            Err(Problem::DivideByZero)
+        );
+    }
+
+    #[test]
     fn exact_rational_normalize_cancels_common_denominator() {
         let values = [
             Real::new(Rational::fraction(3, 2).unwrap()),

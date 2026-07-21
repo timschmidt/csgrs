@@ -1457,6 +1457,79 @@ impl Rational {
         ])
     }
 
+    /// Invert a fixed 4x4 exact-rational matrix as one aggregate operation.
+    ///
+    /// Keeping fixed minors and cofactors in `Rational` avoids wrapping and
+    /// reclassifying every intermediate as a `Real`, while preserving the
+    /// same division-free cofactor polynomial and exact reductions.
+    pub(crate) fn matrix4_inverse_components(
+        matrix: [[&Self; 4]; 4],
+    ) -> Result<[[Self; 4]; 4], crate::Problem> {
+        let m = matrix;
+        let difference = |a: &Self, b: &Self, c: &Self, d: &Self| {
+            Self::signed_product_sum2([true, false], [[a, b], [c, d]])
+        };
+        let s = [
+            difference(m[0][0], m[1][1], m[1][0], m[0][1]),
+            difference(m[0][0], m[1][2], m[1][0], m[0][2]),
+            difference(m[0][0], m[1][3], m[1][0], m[0][3]),
+            difference(m[0][1], m[1][2], m[1][1], m[0][2]),
+            difference(m[0][1], m[1][3], m[1][1], m[0][3]),
+            difference(m[0][2], m[1][3], m[1][2], m[0][3]),
+        ];
+        let c = [
+            difference(m[2][0], m[3][1], m[3][0], m[2][1]),
+            difference(m[2][0], m[3][2], m[3][0], m[2][2]),
+            difference(m[2][0], m[3][3], m[3][0], m[2][3]),
+            difference(m[2][1], m[3][2], m[3][1], m[2][2]),
+            difference(m[2][1], m[3][3], m[3][1], m[2][3]),
+            difference(m[2][2], m[3][3], m[3][2], m[2][3]),
+        ];
+        let determinant = Self::signed_product_sum(
+            [true, false, true, true, false, true],
+            [
+                [&s[0], &c[5]],
+                [&s[1], &c[4]],
+                [&s[2], &c[3]],
+                [&s[3], &c[2]],
+                [&s[4], &c[1]],
+                [&s[5], &c[0]],
+            ],
+        );
+        let scale = determinant.inverse()?;
+        let cofactor = |positive_terms: [bool; 3], terms: [[&Self; 2]; 3]| {
+            let value = Self::signed_product_sum(positive_terms, terms);
+            value * &scale
+        };
+        crate::trace_dispatch!("rational", "matrix4-inverse", "aggregate-cofactor");
+        Ok([
+            [
+                cofactor([true, true, false], [[m[1][1], &c[5]], [m[1][3], &c[3]], [m[1][2], &c[4]]]),
+                cofactor([true, false, false], [[m[0][2], &c[4]], [m[0][1], &c[5]], [m[0][3], &c[3]]]),
+                cofactor([true, true, false], [[m[3][1], &s[5]], [m[3][3], &s[3]], [m[3][2], &s[4]]]),
+                cofactor([true, false, false], [[m[2][2], &s[4]], [m[2][1], &s[5]], [m[2][3], &s[3]]]),
+            ],
+            [
+                cofactor([true, false, false], [[m[1][2], &c[2]], [m[1][0], &c[5]], [m[1][3], &c[1]]]),
+                cofactor([true, true, false], [[m[0][0], &c[5]], [m[0][3], &c[1]], [m[0][2], &c[2]]]),
+                cofactor([true, false, false], [[m[3][2], &s[2]], [m[3][0], &s[5]], [m[3][3], &s[1]]]),
+                cofactor([true, true, false], [[m[2][0], &s[5]], [m[2][3], &s[1]], [m[2][2], &s[2]]]),
+            ],
+            [
+                cofactor([true, true, false], [[m[1][0], &c[4]], [m[1][3], &c[0]], [m[1][1], &c[2]]]),
+                cofactor([true, false, false], [[m[0][1], &c[2]], [m[0][0], &c[4]], [m[0][3], &c[0]]]),
+                cofactor([true, true, false], [[m[3][0], &s[4]], [m[3][3], &s[0]], [m[3][1], &s[2]]]),
+                cofactor([true, false, false], [[m[2][1], &s[2]], [m[2][0], &s[4]], [m[2][3], &s[0]]]),
+            ],
+            [
+                cofactor([true, false, false], [[m[1][1], &c[1]], [m[1][0], &c[3]], [m[1][2], &c[0]]]),
+                cofactor([true, true, false], [[m[0][0], &c[3]], [m[0][2], &c[0]], [m[0][1], &c[1]]]),
+                cofactor([true, false, false], [[m[3][1], &s[1]], [m[3][0], &s[3]], [m[3][2], &s[0]]]),
+                cofactor([true, true, false], [[m[2][0], &s[3]], [m[2][2], &s[0]], [m[2][1], &s[1]]]),
+            ],
+        ])
+    }
+
     fn dot_products_dyadic<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],

@@ -285,6 +285,21 @@ impl Real {
         Ok(result.map(|row| row.map(Real::new)))
     }
 
+    /// Invert a dense 4x4 matrix after the caller has proved every component
+    /// is an exact rational.
+    ///
+    /// The scalar aggregate keeps minors and cofactors in the rational layer
+    /// and wraps only the final result. Division by a singular exact matrix returns
+    /// [`Problem::DivideByZero`](crate::Problem::DivideByZero).
+    pub fn exact_rational_matrix4_inverse_known_exact(
+        matrix: [[&Real; 4]; 4],
+    ) -> Result<[[Real; 4]; 4], crate::Problem> {
+        let rationals = matrix.map(|row| row.map(|value| &value.rational));
+        let result = Rational::matrix4_inverse_components(rationals)?;
+        crate::trace_dispatch!("real", "matrix4-inverse", "exact-rational-aggregate");
+        Ok(result.map(|row| row.map(Real::new)))
+    }
+
     /// Normalize a fixed nonempty exact-rational coordinate set after the
     /// caller has proved every component exact.
     ///

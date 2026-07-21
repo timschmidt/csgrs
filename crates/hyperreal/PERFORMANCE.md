@@ -1018,6 +1018,22 @@ path:
 | `Real::from(4_u8)` | 50.17 ns | 16.65 ns | 66.8% faster |
 | `Real::from(-4_i8)` | 49.92 ns | 17.76 ns | 64.4% faster |
 
+### Aggregate dense 4x4 rational inverse
+
+`Real::exact_rational_matrix4_inverse_known_exact` now gives fixed-matrix
+callers one scalar-owned cofactor operation, analogous to the existing 3x3
+entry point. Twelve minors, the determinant, and sixteen cofactors stay in the
+`Rational` layer and are wrapped only when the final matrix is returned. The
+operation is exact and reports `DivideByZero` for a singular matrix; it adds no
+cache or object storage.
+
+In Hyperlattice's matched comparison this reduced exact-dyadic dense 4x4
+inverse from 23.016 us to 21.288 us and the explicit-rational row from about
+7.85 us to 6.877 us. Checked and abort-aware exact-dyadic inversion now measure
+20.987 us and 21.108 us. A common-integer-scale prototype was rejected after
+heterogeneous binary64 exponents widened its intermediates and regressed the
+public row to 83.3 us.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
