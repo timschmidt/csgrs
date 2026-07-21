@@ -59,7 +59,7 @@ fn test_straight_skeleton_2d_non_empty() {
 
     assert!(
         !skeleton.wires().is_empty(),
-        "Straight skeleton should produce native hypercurve wire geometry for a valid square"
+        "straight skeleton should produce native Hypercurve wavefront geometry for a valid square"
     );
 }
 
