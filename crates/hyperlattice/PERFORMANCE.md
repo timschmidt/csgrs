@@ -325,6 +325,43 @@ common-denominator prototype regressed the heterogeneous exact-f64 workload to
 or retained state remains. Exact inverse/product identities and singular-error
 tests cover the scalar aggregate, ordinary, checked, and abort-aware routes.
 
+## Minimal direct matrix multiplication dispatch
+
+The six owned/borrowed 3x3 and 4x4 multiplication wrappers formerly built two
+complete structural fact reports to read only identity and diagonal flags.
+Dense and sparse arithmetic then independently scanned zero structure for its
+active product schedule. Perf attributed roughly 30% of dense mat4 time to the
+discarded exact-set and scalar fact construction.
+
+One const-generic short-circuit probe now serves those wrappers and the direct
+mat3 transform path. It checks only off-diagonal zeros and, when diagonal, the
+diagonal ones. Removing the older mat3-only probe leaves
+`src/matrix/core.rs` thirteen lines smaller; public structural facts and prepared
+handles are unchanged.
+
+Fresh matched medians measured:
+
+| Workload | Before | Current | Numerica 128 | Current advantage |
+| --- | ---: | ---: | ---: | ---: |
+| owned `mat3 mul mat3`, exact dyadic | 4.746 us | 1.461 us | 2.445 us | 40.2% |
+| owned `mat4 mul mat4`, exact dyadic | 8.395 us | 3.380 us | 5.290 us | 36.1% |
+| borrowed `mat3 mul refs`, exact dyadic | - | 1.303 us | 2.160 us | 39.7% |
+| borrowed `mat4 mul refs`, exact dyadic | - | 3.017 us | 4.992 us | 39.6% |
+| sparse owned mat4 multiply | 4.061 us | 678.14 ns | - | 83.3% faster than before |
+
+Explicit-rational owned mat3/mat4 multiplication measures 1.209/2.545 us.
+Post-change profiling contains no matrix/scalar structural-fact frames above
+1% self time; the exact signed-product reducer is now the dominant work. The
+mat3 transform control remains flat at 724.25 ns.
+
+Matrix fuzzing also exposed that the older `powi` dense shortcut sampled only
+three nonzero lanes. A sparse extreme-f64 matrix could therefore select a
+dense reducer that disagreed with ordinary zero-pruned multiplication. The
+certificate now proves every lane nonzero while replacing, rather than adding
+to, the fallback's full zero scan. The minimized reproducer and a fresh 10,000
+case campaign pass. Dense exact-dyadic mat3/mat4 `powi` remain ahead of
+Numerica 128 at 5.019/7.164 us versus 6.277/14.065 us.
+
 ## Minimal checked-normalization certificate
 
 Checked vector normalization previously built the complete public structural

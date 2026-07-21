@@ -2828,33 +2828,6 @@ fn matrix4_facts(matrix: &[[Real; 4]; 4]) -> Matrix4Facts {
 }
 
 #[derive(Clone, Copy)]
-struct Matrix3TransformDispatchFacts {
-    is_identity: bool,
-    is_diagonal: bool,
-}
-
-#[inline]
-fn matrix3_transform_dispatch_facts<const N: usize>(
-    matrix: &[[Real; N]; N],
-) -> Matrix3TransformDispatchFacts {
-    debug_assert_eq!(N, 3);
-    let is_diagonal = matrix[0][1].definitely_zero()
-        && matrix[0][2].definitely_zero()
-        && matrix[1][0].definitely_zero()
-        && matrix[1][2].definitely_zero()
-        && matrix[2][0].definitely_zero()
-        && matrix[2][1].definitely_zero();
-    let is_identity = is_diagonal
-        && matrix[0][0].definitely_one()
-        && matrix[1][1].definitely_one()
-        && matrix[2][2].definitely_one();
-    Matrix3TransformDispatchFacts {
-        is_identity,
-        is_diagonal,
-    }
-}
-
-#[derive(Clone, Copy)]
 struct Matrix4TransformDispatchFacts {
     is_identity: bool,
     is_diagonal: bool,
@@ -3601,25 +3574,22 @@ fn matrix4_is_definitely_dense_for_inverse(matrix: &[[Real; 4]; 4]) -> bool {
 
 #[inline]
 fn matrix3_has_dense_multiply_certificate(matrix: &[[Real; 3]; 3]) -> bool {
-    // A dense cofactor inverse followed by `powi(-2)` is already known at the
-    // object level to be on the dense route. Reuse the same three nonzero
-    // certificates as the inverse dense guard to select a direct fixed multiply
-    // and avoid a full per-lane zero scan. If any certificate is absent, fall
-    // back to the sparse-aware multiply.
-    matches!(matrix[1][0].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[0][1].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[2][0].zero_status(), ZeroStatus::NonZero)
+    // The direct reducer is valid only for matrices that are actually dense.
+    // Checking every lane here replaces the sparse-aware multiply's identical
+    // zero scan; a few nonzero samples are not enough because exact zeros need
+    // the zero-pruned reducer to remain schedule-independent.
+    matrix
+        .iter()
+        .flatten()
+        .all(|value| matches!(value.zero_status(), ZeroStatus::NonZero))
 }
 
 #[inline]
 fn matrix4_has_dense_multiply_certificate(matrix: &[[Real; 4]; 4]) -> bool {
-    // Same narrow certificate as `matrix4_is_definitely_dense_for_inverse`.
-    // It is intentionally not a proof that every product lane is nonzero; it is
-    // a cheap signal that sparse probing is unlikely to pay for the exact
-    // Real kernel's dense inverse square.
-    matches!(matrix[1][0].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[0][1].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[3][0].zero_status(), ZeroStatus::NonZero)
+    matrix
+        .iter()
+        .flatten()
+        .all(|value| matches!(value.zero_status(), ZeroStatus::NonZero))
 }
 
 #[inline]
@@ -10244,14 +10214,31 @@ fn multiply_arrays4_dense_known_rational_ref(
     ]
 }
 
+#[derive(Clone, Copy)]
+struct MatrixIdentityDiagonalFacts {
+    is_identity: bool,
+    is_diagonal: bool,
+}
+
+#[inline]
+fn matrix_identity_diagonal_facts<const N: usize>(
+    matrix: &[[Real; N]; N],
+) -> MatrixIdentityDiagonalFacts {
+    let is_diagonal = (0..N)
+        .all(|row| (0..N).all(|column| row == column || matrix[row][column].definitely_zero()));
+    let is_identity = is_diagonal && (0..N).all(|index| matrix[index][index].definitely_one());
+    MatrixIdentityDiagonalFacts {
+        is_identity,
+        is_diagonal,
+    }
+}
+
 #[inline]
 fn multiply_arrays3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> [[Real; 3]; 3] {
-    // Compute structural facts once per operand so identity and diagonal
-    // dispatch share the same zero/one probes. This keeps multiply aligned with
-    // inverse/division fact reuse and avoids rechecking off-diagonal zeros in
-    // dense fallback cases.
-    let left_facts = matrix3_facts(&left);
-    let right_facts = matrix3_facts(&right);
+    // One-shot multiplication consumes only identity and diagonal facts. Full
+    // structural reports remain at explicit query/prepared boundaries.
+    let left_facts = matrix_identity_diagonal_facts(&left);
+    let right_facts = matrix_identity_diagonal_facts(&right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -10295,8 +10282,8 @@ fn multiply_arrays3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> [[Real; 3]; 
 
 #[inline]
 fn multiply_arrays4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> [[Real; 4]; 4] {
-    let left_facts = matrix4_facts(&left);
-    let right_facts = matrix4_facts(&right);
+    let left_facts = matrix_identity_diagonal_facts(&left);
+    let right_facts = matrix_identity_diagonal_facts(&right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -10340,8 +10327,8 @@ fn multiply_arrays4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> [[Real; 4]; 
 
 #[inline]
 fn multiply_arrays3_rhs_ref(left: [[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[Real; 3]; 3] {
-    let left_facts = matrix3_facts(&left);
-    let right_facts = matrix3_facts(right);
+    let left_facts = matrix_identity_diagonal_facts(&left);
+    let right_facts = matrix_identity_diagonal_facts(right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -10385,8 +10372,8 @@ fn multiply_arrays3_rhs_ref(left: [[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[R
 
 #[inline]
 fn multiply_arrays4_rhs_ref(left: [[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real; 4]; 4] {
-    let left_facts = matrix4_facts(&left);
-    let right_facts = matrix4_facts(right);
+    let left_facts = matrix_identity_diagonal_facts(&left);
+    let right_facts = matrix_identity_diagonal_facts(right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -10440,8 +10427,8 @@ fn multiply_arrays3_ref(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[Real
         "multiply3-ref-ref-specialized"
     );
 
-    let left_facts = matrix3_facts(left);
-    let right_facts = matrix3_facts(right);
+    let left_facts = matrix_identity_diagonal_facts(left);
+    let right_facts = matrix_identity_diagonal_facts(right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -10490,8 +10477,8 @@ fn multiply_arrays4_ref(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real
         "multiply4-ref-ref-specialized"
     );
 
-    let left_facts = matrix4_facts(left);
-    let right_facts = matrix4_facts(right);
+    let left_facts = matrix_identity_diagonal_facts(left);
+    let right_facts = matrix_identity_diagonal_facts(right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -10658,7 +10645,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
         // building exact-set summaries and masks here made dense transforms pay
         // for metadata they never read.
         // Reference: Golub and Van Loan, *Matrix Computations* (4th ed.).
-        let left_facts = matrix3_transform_dispatch_facts(left);
+        let left_facts = matrix_identity_diagonal_facts(left);
         if left_facts.is_identity {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
