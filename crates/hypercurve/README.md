@@ -101,6 +101,11 @@ provenance remain exact `Real` evidence in the returned graph. Concave contours
 return a typed `SplitEventsRequired` blocker until their reflex-vertex split-event
 scheduler is available; they are never substituted with centroid rays.
 
+`translation_obstacle_convex` constructs the exact closed no-fit region
+`fixed + (-moving)` for simple convex line contours. It normalizes orientation,
+removes exact collinear vertices, and merges ordered edge directions in linear
+output work. Concave inputs return a typed convex-decomposition blocker.
+
 ## WASM Demo
 
 The deployed WASM app is available at <https://timschmidt.github.io/hypercurve/>.

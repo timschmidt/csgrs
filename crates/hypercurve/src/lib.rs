@@ -76,6 +76,7 @@ mod straight_skeleton;
 #[cfg(feature = "svg")]
 mod svg_io;
 mod transform;
+mod translation_obstacle;
 #[cfg(feature = "triangulation")]
 mod triangulation;
 
@@ -375,6 +376,10 @@ pub use svg_io::{
     import_svg_region_path_data_with_report, retained_svg_import_record,
 };
 pub use transform::Similarity2;
+pub use translation_obstacle::{
+    TranslationObstacle2, TranslationObstacleBlocker2, TranslationObstacleOperand2,
+    TranslationObstacleReport2, translation_obstacle_convex,
+};
 #[cfg(feature = "triangulation")]
 pub use triangulation::{FiniteTriangle2, triangulate_finite_rings};
 
