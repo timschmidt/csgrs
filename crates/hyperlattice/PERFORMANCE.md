@@ -325,6 +325,29 @@ common-denominator prototype regressed the heterogeneous exact-f64 workload to
 or retained state remains. Exact inverse/product identities and singular-error
 tests cover the scalar aggregate, ordinary, checked, and abort-aware routes.
 
+## Representation-aware dense matrix inverse
+
+Dense inverse now distinguishes exact dyadic inputs from general exact
+rationals in one retained scan. General rationals retain Hyperreal's aggregate
+cofactor kernel, while binary64-derived dyadics enter a certified shift-aligned
+two-factor reducer. Mat3 uses its Real-level dense cofactor schedule; mat4
+passes the retained representation fact into its scalar aggregate. Generic
+non-dyadic product sums never pay a failed dyadic classification per cofactor.
+
+Fresh matched medians measured:
+
+| Workload | Before | Current | Numerica 128 | Improvement |
+| --- | ---: | ---: | ---: | ---: |
+| exact-dyadic mat3 reciprocal | 5.537 us | 4.146 us | 2.304 us | 25.1% |
+| exact-dyadic mat3 inverse checked | 4.794 us | 4.226 us | 2.283 us | 11.8% |
+| exact-dyadic mat4 reciprocal | 21.676 us | 18.257 us | 8.759 us | 15.8% |
+| exact-dyadic mat4 inverse checked | 21.229 us | 18.756 us | - | 11.6% |
+
+The explicit-rational controls remain 2.860/3.248 us for mat3 reciprocal and
+checked inverse, and 7.432/7.456 us for mat4. A full common-denominator
+integerization prototype was rejected: heterogeneous binary64 exponents widened
+cofactors enough to regress mat3/mat4 reciprocal to 30.7/82.7 us.
+
 ## Minimal direct matrix multiplication dispatch
 
 The six owned/borrowed 3x3 and 4x4 multiplication wrappers formerly built two

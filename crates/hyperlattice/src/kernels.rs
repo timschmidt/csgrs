@@ -85,6 +85,12 @@ pub(crate) trait RealKernelExt: Sized {
         positive_terms: [bool; TERMS],
         terms: [[&Self; 2]; TERMS],
     ) -> Self;
+
+    /// Signed sum whose pairwise factors were already classified exact dyadic rationals.
+    fn active_signed_product_sum2_known_dyadic<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self;
 }
 
 impl RealKernelExt for Real {
@@ -239,5 +245,13 @@ impl RealKernelExt for Real {
         terms: [[&Self; 2]; TERMS],
     ) -> Self {
         Real::exact_rational_signed_product_sum_known_exact(positive_terms, terms)
+    }
+
+    #[inline]
+    fn active_signed_product_sum2_known_dyadic<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        Real::exact_rational_signed_product_sum_known_dyadic(positive_terms, terms)
     }
 }

@@ -1729,7 +1729,10 @@ impl<'a> PreparedRightDivisor3<'a> {
             {
                 matrix3_adjugate_and_determinant_dense_exact_known_rational(&self.divisor.0)
             } else if self.is_definitely_dense_for_inverse {
-                matrix3_adjugate_and_determinant_dense_exact(&self.divisor.0)
+                matrix3_adjugate_and_determinant_dense_exact(
+                    &self.divisor.0,
+                    self.right_exact_rational_kind == ExactRationalKind::ExactDyadicRational,
+                )
             } else {
                 matrix3_adjugate_and_determinant(&self.divisor.0)
             };
@@ -1756,7 +1759,10 @@ impl<'a> PreparedRightDivisor3<'a> {
             {
                 matrix3_adjugate_and_determinant_dense_exact_known_rational(&self.divisor.0)
             } else if self.is_definitely_dense_for_inverse {
-                matrix3_adjugate_and_determinant_dense_exact(&self.divisor.0)
+                matrix3_adjugate_and_determinant_dense_exact(
+                    &self.divisor.0,
+                    self.right_exact_rational_kind == ExactRationalKind::ExactDyadicRational,
+                )
             } else {
                 matrix3_adjugate_and_determinant(&self.divisor.0)
             };
@@ -1787,7 +1793,10 @@ impl<'a> PreparedRightDivisor3<'a> {
             {
                 matrix3_adjugate_and_determinant_dense_exact_known_rational(&self.divisor.0)
             } else if self.is_definitely_dense_for_inverse {
-                matrix3_adjugate_and_determinant_dense_exact(&self.divisor.0)
+                matrix3_adjugate_and_determinant_dense_exact(
+                    &self.divisor.0,
+                    self.right_exact_rational_kind == ExactRationalKind::ExactDyadicRational,
+                )
             } else {
                 matrix3_adjugate_and_determinant(&self.divisor.0)
             };
@@ -11998,6 +12007,24 @@ fn mul_sub_dense_exact_known_rational(
     )
 }
 
+#[inline]
+fn mul_sub_dense_exact_known_dyadic(
+    left_a: &Real,
+    right_a: &Real,
+    left_b: &Real,
+    right_b: &Real,
+) -> Real {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "mul-sub-dense-exact-known-dyadic"
+    );
+    Real::active_signed_product_sum2_known_dyadic(
+        [true, false],
+        [[left_a, right_a], [left_b, right_b]],
+    )
+}
+
 fn mul_add(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real {
     if true {
         // Same structural-zero gate as `mul_sub`: delay exact product
@@ -12261,23 +12288,36 @@ fn matrix3_adjugate_and_determinant(matrix: &[[Real; 3]; 3]) -> ([[Real; 3]; 3],
 }
 
 #[inline(never)]
-fn matrix3_adjugate_and_determinant_dense_exact(matrix: &[[Real; 3]; 3]) -> ([[Real; 3]; 3], Real) {
+fn matrix3_adjugate_and_determinant_dense_exact(
+    matrix: &[[Real; 3]; 3],
+    known_dyadic: bool,
+) -> ([[Real; 3]; 3], Real) {
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
         "matrix3-adjugate-and-determinant-dense-exact"
     );
     let m = &matrix;
-    let c00 = mul_sub_dense_exact(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
-    let c01 = mul_sub_dense_exact(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
-    let c02 = mul_sub_dense_exact(&m[0][1], &m[1][2], &m[0][2], &m[1][1]);
-    let c10 = mul_sub_dense_exact(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
-    let c11 = mul_sub_dense_exact(&m[0][0], &m[2][2], &m[0][2], &m[2][0]);
-    let c12 = mul_sub_dense_exact(&m[0][2], &m[1][0], &m[0][0], &m[1][2]);
-    let c20 = mul_sub_dense_exact(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
-    let c21 = mul_sub_dense_exact(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
-    let c22 = mul_sub_dense_exact(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
-    let det = Real::active_linear_combination3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20]);
+    let difference: fn(&Real, &Real, &Real, &Real) -> Real = if known_dyadic {
+        mul_sub_dense_exact_known_dyadic
+    } else {
+        mul_sub_dense_exact
+    };
+    let c00 = difference(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
+    let c01 = difference(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
+    let c02 = difference(&m[0][1], &m[1][2], &m[0][2], &m[1][1]);
+    let c10 = difference(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
+    let c11 = difference(&m[0][0], &m[2][2], &m[0][2], &m[2][0]);
+    let c12 = difference(&m[0][2], &m[1][0], &m[0][0], &m[1][2]);
+    let c20 = difference(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
+    let c21 = difference(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
+    let c22 = difference(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
+    let determinant_terms = [[&m[0][0], &c00], [&m[0][1], &c10], [&m[0][2], &c20]];
+    let det = if known_dyadic {
+        Real::active_signed_product_sum2_known_dyadic([true; 3], determinant_terms)
+    } else {
+        Real::active_linear_combination3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20])
+    };
     ([[c00, c01, c02], [c10, c11, c12], [c20, c21, c22]], det)
 }
 
@@ -12352,11 +12392,13 @@ fn matrix3_scaled_adjugate_dense_exact(matrix: &[[Real; 3]; 3]) -> BlasResult<[[
         "helper",
         "matrix3-scaled-adjugate-dense-exact"
     );
-    if matrix
-        .iter()
-        .flatten()
-        .all(|value| value.exact_rational_ref().is_some())
-    {
+    let exact_rational_is_dyadic = matrix.iter().flatten().try_fold(true, |all_dyadic, value| {
+        Some(all_dyadic & value.exact_rational_ref()?.is_dyadic())
+    });
+    // Binary64-derived dyadics are faster through the Real-level cofactor
+    // schedule; general rationals retain the scalar aggregate that avoids
+    // wrapping every intermediate cofactor.
+    if matches!(exact_rational_is_dyadic, Some(false)) {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
@@ -12368,17 +12410,28 @@ fn matrix3_scaled_adjugate_dense_exact(matrix: &[[Real; 3]; 3]) -> BlasResult<[[
             [&matrix[2][0], &matrix[2][1], &matrix[2][2]],
         ]);
     }
+    let known_dyadic = matches!(exact_rational_is_dyadic, Some(true));
     let m = &matrix;
-    let c00 = mul_sub_dense_exact(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
-    let c01 = mul_sub_dense_exact(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
-    let c02 = mul_sub_dense_exact(&m[0][1], &m[1][2], &m[0][2], &m[1][1]);
-    let c10 = mul_sub_dense_exact(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
-    let c11 = mul_sub_dense_exact(&m[0][0], &m[2][2], &m[0][2], &m[2][0]);
-    let c12 = mul_sub_dense_exact(&m[0][2], &m[1][0], &m[0][0], &m[1][2]);
-    let c20 = mul_sub_dense_exact(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
-    let c21 = mul_sub_dense_exact(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
-    let c22 = mul_sub_dense_exact(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
-    let det = Real::active_linear_combination3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20]);
+    let difference: fn(&Real, &Real, &Real, &Real) -> Real = if known_dyadic {
+        mul_sub_dense_exact_known_dyadic
+    } else {
+        mul_sub_dense_exact
+    };
+    let c00 = difference(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
+    let c01 = difference(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
+    let c02 = difference(&m[0][1], &m[1][2], &m[0][2], &m[1][1]);
+    let c10 = difference(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
+    let c11 = difference(&m[0][0], &m[2][2], &m[0][2], &m[2][0]);
+    let c12 = difference(&m[0][2], &m[1][0], &m[0][0], &m[1][2]);
+    let c20 = difference(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
+    let c21 = difference(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
+    let c22 = difference(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
+    let determinant_terms = [[&m[0][0], &c00], [&m[0][1], &c10], [&m[0][2], &c20]];
+    let det = if known_dyadic {
+        Real::active_signed_product_sum2_known_dyadic([true; 3], determinant_terms)
+    } else {
+        Real::active_linear_combination3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20])
+    };
     let inv_det = det.inverse()?;
     Ok([
         [
@@ -12461,7 +12514,8 @@ fn invert_matrix3_checked(matrix: [[Real; 3]; 3]) -> CheckedBlasResult<[[Real; 3
             "invert-matrix3-checked-dense-cofactor"
         );
         let (adjugate, det) = if true {
-            matrix3_adjugate_and_determinant_dense_exact(&matrix)
+            let known_dyadic = matrix.iter().flatten().all(Real::is_exact_dyadic_rational);
+            matrix3_adjugate_and_determinant_dense_exact(&matrix, known_dyadic)
         } else {
             matrix3_adjugate_and_determinant(&matrix)
         };
@@ -12535,7 +12589,8 @@ fn invert_matrix3_checked_with_abort(
             "invert-matrix3-checked-with-abort-dense-cofactor"
         );
         let (adjugate, det) = if true {
-            matrix3_adjugate_and_determinant_dense_exact(&matrix)
+            let known_dyadic = matrix.iter().flatten().all(Real::is_exact_dyadic_rational);
+            matrix3_adjugate_and_determinant_dense_exact(&matrix, known_dyadic)
         } else {
             matrix3_adjugate_and_determinant(&matrix)
         };
@@ -12904,23 +12959,25 @@ fn matrix4_scaled_adjugate_from_factors_dense_exact(
 fn matrix4_dense_exact_rational_inverse(
     matrix: &[[Real; 4]; 4],
 ) -> Option<BlasResult<[[Real; 4]; 4]>> {
-    matrix
-        .iter()
-        .flatten()
-        .all(|value| value.exact_rational_ref().is_some())
-        .then(|| {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "invert-matrix4-dense-exact-rational-aggregate"
-            );
-            Real::exact_rational_matrix4_inverse_known_exact([
-                [&matrix[0][0], &matrix[0][1], &matrix[0][2], &matrix[0][3]],
-                [&matrix[1][0], &matrix[1][1], &matrix[1][2], &matrix[1][3]],
-                [&matrix[2][0], &matrix[2][1], &matrix[2][2], &matrix[2][3]],
-                [&matrix[3][0], &matrix[3][1], &matrix[3][2], &matrix[3][3]],
-            ])
-        })
+    let exact_kind = matrix4_exact_rational_kind(matrix);
+    (exact_kind != ExactRationalKind::NonRational).then(|| {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "invert-matrix4-dense-exact-rational-aggregate"
+        );
+        let values = [
+            [&matrix[0][0], &matrix[0][1], &matrix[0][2], &matrix[0][3]],
+            [&matrix[1][0], &matrix[1][1], &matrix[1][2], &matrix[1][3]],
+            [&matrix[2][0], &matrix[2][1], &matrix[2][2], &matrix[2][3]],
+            [&matrix[3][0], &matrix[3][1], &matrix[3][2], &matrix[3][3]],
+        ];
+        if exact_kind == ExactRationalKind::ExactDyadicRational {
+            Real::exact_rational_matrix4_inverse_known_dyadic(values)
+        } else {
+            Real::exact_rational_matrix4_inverse_known_exact(values)
+        }
+    })
 }
 
 #[inline]
