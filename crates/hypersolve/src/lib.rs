@@ -36,6 +36,7 @@ pub mod rank;
 pub mod residual_replay;
 pub mod resultant;
 pub mod root_isolation;
+pub mod simplex_projection;
 pub mod sketch;
 mod sketch_arc_incidence;
 mod sketch_arc_length;
@@ -252,6 +253,10 @@ pub use root_isolation::{
     refine_isolated_univariate_polynomial_interval,
     subdivide_bernstein_univariate_polynomial_interval_expr,
     subdivide_bernstein_univariate_polynomial_interval_roots,
+};
+pub use simplex_projection::{
+    SimplexProjectionConfig, SimplexProjectionError, SimplexProjectionReport,
+    SimplexProjectionStatus, project_origin_onto_simplex, project_origin_onto_simplex_with_config,
 };
 pub use sketch::{
     SketchArcEndpoint, SketchArcLengthSweep, SketchArcOfCircle2, SketchArcPointSweep,

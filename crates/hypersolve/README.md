@@ -47,6 +47,8 @@ than internal truth.
 - `DenseResidualReplayReport`, `DenseResidualReplayError`, and
   `replay_dense_linear_residuals` provide the shared exact dense residual replay helper
   used by crates such as `hypercircuit`.
+- `SimplexProjectionReport` provides exact closest-point, squared-distance, and
+  barycentric evidence for small convex hulls used by collision and geometry crates.
 
 ## Precision Model
 
@@ -110,6 +112,8 @@ Implemented today:
   inverse circular, and inverse hyperbolic residual nodes;
 - reusable exact dense linear residual replay for domain crates that build their own
   small linear systems;
+- exhaustive small-simplex origin projection using exact Gram systems, certified
+  nonnegative barycentric weights, and explicit unknown ordering reports;
 - a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
 - geometry residual helper modules. PCB, routing, and toolpath residual builders now
   live in `hyperpath::solve`, where their domain semantics are owned.
