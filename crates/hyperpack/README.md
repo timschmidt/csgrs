@@ -5,8 +5,9 @@
 
 `hyperpack` provides exact-aware packing models, proposal algorithms, and
 feasibility replay over [`hyperreal::Real`](https://github.com/timschmidt/hyperreal).
-It covers stock cutting, sheet packing, cuboid packing, cardinal orientations,
-multi-bin assignment, constraints, local search, and bounded exact search.
+It covers stock cutting, rectangular and convex-irregular sheet packing, cuboid
+packing, cardinal orientations, multi-bin assignment, constraints, local
+search, and bounded exact search.
 
 The central rule is simple: a heuristic proposes coordinates; replay decides
 whether those coordinates satisfy the modeled constraints. Unsupported or
@@ -98,6 +99,15 @@ state, and exact replay. `PreparedPacking3` caches exact demand classes, grid
 facts, lower bounds, initial free space, and deterministic order for repeated
 search. Prepared data is advisory; replay remains authoritative.
 
+`PreparedIrregularPacking2` owns a stable item inventory and caches one exact
+Hypercurve no-fit region per unordered convex-item pair. Cache blockers are
+retained as data, and `verify_irregular_packing_2d` replays sheet containment,
+pair contact/overlap, and accounting without introducing an epsilon. Boundary
+contact is feasible; an unavailable no-fit region produces `Unknown`.
+`bottom_left_irregular_2d` deterministically proposes translations from the
+sheet corner and cached no-fit boundary vertices, then attaches authoritative
+replay to the proposal report.
+
 The bounded solver returns `Unknown` when its item or node limit prevents an
 exhaustive result. A feasible replay proves feasibility, while objective values,
 lower bounds, and heuristic rankings do not by themselves prove global
@@ -115,6 +125,8 @@ Exact replay currently covers:
 
 - 1D, fixed-orientation 2D, cardinally oriented 2D, fixed-orientation 3D, and
   six-permutation oriented 3D geometry;
+- translation-only convex line-contour sheet geometry through exact no-fit
+  regions;
 - one-placement-per-item accounting and multi-bin assignment;
 - exact used space, waste, height, cost, and lexicographic objective comparison;
 - capacity and pair-incompatibility necessary bounds;
@@ -130,6 +142,9 @@ pairwise axis-separation disjunctions for solver adapters.
 ## Limitations
 
 - Orientations are cardinal dimension permutations, not arbitrary rotations.
+- Irregular no-fit caching currently accepts simple convex line contours;
+  concave shapes explicitly report that convex decomposition is required, and
+  native curves remain unsupported by this cache surface.
 - `CenterOfMassProjection` checks the geometric footprint center, not a mass
   distribution supplied by a physics model.
 - Support and direct-load reports do not model friction, deformation, dynamics,

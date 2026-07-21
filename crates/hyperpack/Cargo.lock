@@ -166,9 +166,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hypercurve"
+version = "0.3.0"
+dependencies = [
+ "hyperlimit",
+ "hyperreal",
+ "hypersolve",
+ "num",
+]
+
+[[package]]
+name = "hyperlattice"
+version = "0.6.0"
+dependencies = [
+ "hyperreal",
+]
+
+[[package]]
+name = "hyperlimit"
+version = "0.4.0"
+dependencies = [
+ "hyperlattice",
+ "hyperreal",
+]
+
+[[package]]
 name = "hyperpack"
 version = "0.3.0"
 dependencies = [
+ "hypercurve",
  "hyperreal",
  "proptest",
 ]
@@ -181,6 +207,15 @@ dependencies = [
  "num",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "hypersolve"
+version = "0.3.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
 ]
 
 [[package]]
@@ -748,3 +783,7 @@ name = "zmij"
 version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa"
+
+[[patch.unused]]
+name = "hypertri"
+version = "0.4.0"
