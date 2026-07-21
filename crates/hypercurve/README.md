@@ -94,12 +94,14 @@ output chord certification and exact line-arrangement regularization. Its report
 distinguishes the pre-regularization directed error bound, final-topology guarantees,
 and the weaker source-chord fallback used for corners or unsupported families.
 
-`Contour2::straight_skeleton` implements an exact inward wavefront for simple,
-strictly convex line contours. Unit-normal support lines, vertex trajectories,
-edge-collapse times, simultaneous events, terminal ridges, and source-edge
-provenance remain exact `Real` evidence in the returned graph. Concave contours
-return a typed `SplitEventsRequired` blocker until their reflex-vertex split-event
-scheduler is available; they are never substituted with centroid rays.
+`Contour2::straight_skeleton` implements an exact inward wavefront for simple line
+contours. Unit-normal support lines, vertex trajectories, edge-collapse times,
+generic reflex split events, live-edge validation, simultaneous edge events,
+terminal ridges, and source-edge provenance remain exact `Real` evidence in the
+returned graph. Non-general-position clusters that require vertex/multi-split
+resolution remain typed blockers; they are never substituted with centroid rays.
+Circular-arc contours remain explicit `UnsupportedSegment` results until their
+shape-preserving conic wavefront trajectories and additional contact events land.
 
 `translation_obstacle_convex` constructs the exact closed no-fit region
 `fixed + (-moving)` for simple convex line contours. It normalizes orientation,
@@ -372,8 +374,9 @@ Implemented today:
   extraction, boolean-boundary assembly, retained exact unordered line/arc
   arrangement construction with source/split/endpoint/ring/role/output caches,
   and conservative unresolved states.
-- exact convex-polygon straight-skeleton wavefront construction with simultaneous
-  edge-collapse events, terminal ridges, and explicit concave split-event blockers.
+- exact simple-polygon straight-skeleton wavefront construction with generic reflex
+  split events, simultaneous edge collapses, terminal ridges, and explicit blockers
+  for unresolved non-general-position event clusters.
 
 Known limits: shared components requiring multivalued implicit branch correspondence,
 source curves with neither certified source lineage nor an injective graph axis, generic
@@ -524,8 +527,16 @@ cargo check --manifest-path examples/hypercurve_ui/Cargo.toml --target wasm32-un
 
 ## References
 
+Aichholzer, Oswin, Franz Aurenhammer, David Alberts, and Bernd Gärtner. "A
+Novel Type of Skeleton for Polygons." *Journal of Universal Computer Science*,
+vol. 1, no. 12, 1995, pp. 752-761.
+https://doi.org/10.3217/jucs-001-12-0752.
+
 CGAL Project. "2D Regularized Boolean Set Operations" and
 "2D Arrangements" user manuals. https://doc.cgal.org/latest/.
+
+CGAL Project. "2D Straight Skeleton and Polygon Offsetting" user manual.
+https://doc.cgal.org/latest/Straight_skeleton_2/index.html.
 
 Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
 Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
@@ -607,6 +618,10 @@ https://doi.org/10.1109/MCG.1984.275995.
 Vatti, Bala R. "A Generic Solution to Polygon Clipping." *Communications of the
 ACM*, vol. 35, no. 7, 1992, pp. 56-63.
 https://doi.org/10.1145/129902.129906.
+
+Weiß, Martin, Bert Jüttler, and Franz Aurenhammer. "Mitered Offsets and
+Skeletons for Circular Arc Polygons." *Mathematics of Computation*, 2021.
+https://www.ag.jku.at/pubs/2021wj.pdf.
 
 Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
 vol. 7, nos. 1-2, 1997, pp. 3-23.
