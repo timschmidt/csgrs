@@ -2013,18 +2013,28 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
         let emitted = selection.emit_boundary_fragments_from_owned_certified_split(
             lean_fragments.expect("lean Boolean traversal owns its split fragments"),
         )?;
-        let chains = match emitted.into_assembled_chains(policy) {
-            Classification::Decided(chains) => chains,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let loops = match chains.into_closed_loops() {
-            Classification::Decided(loops) => loops,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
         let output = match output_kind {
-            BooleanBoundaryOutputKind::Loops => BooleanBoundaryOutput::Loops(loops),
+            BooleanBoundaryOutputKind::Loops => {
+                let chains = match emitted.into_assembled_chains(policy) {
+                    Classification::Decided(chains) => chains,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                match chains.into_closed_loops() {
+                    Classification::Decided(loops) => BooleanBoundaryOutput::Loops(loops),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
             BooleanBoundaryOutputKind::Contours => {
-                BooleanBoundaryOutput::Contours(loops.into_contours(fill_rule)?)
+                match emitted.into_assembled_contours(fill_rule, policy)? {
+                    Classification::Decided(contours) => BooleanBoundaryOutput::Contours(contours),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
             }
         };
         return Ok(Classification::Decided((

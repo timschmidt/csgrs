@@ -293,6 +293,59 @@ impl BooleanBoundaryFragmentSet {
         }))
     }
 
+    pub(crate) fn into_assembled_contours(
+        self,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<Contour2>>> {
+        if !self.unresolved_boundaries.is_empty() {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        let chain_indices = match endpoint_chain_indices(&self.directed_fragments, policy) {
+            Ok(Some(chain_indices)) => chain_indices,
+            Ok(None) => {
+                let chains = match self.into_assembled_chains(policy) {
+                    Classification::Decided(chains) => chains,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let loops = match chains.into_closed_loops() {
+                    Classification::Decided(loops) => loops,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                return loops.into_contours(fill_rule).map(Classification::Decided);
+            }
+            Err((_, reason)) => return Ok(Classification::Uncertain(reason)),
+        };
+        let mut fragments = self
+            .directed_fragments
+            .into_iter()
+            .map(Some)
+            .collect::<Vec<_>>();
+        let mut contours = Vec::with_capacity(chain_indices.len());
+        for (indices, closed) in chain_indices {
+            if !closed {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            contours.push(Contour2::from_validated_closed_segments(
+                indices
+                    .into_iter()
+                    .map(|index| {
+                        fragments[index]
+                            .take()
+                            .expect("each assembled fragment index is visited once")
+                            .segment
+                    })
+                    .collect(),
+                fill_rule,
+            ));
+        }
+        Ok(Classification::Decided(contours))
+    }
+
     /// Assembles directed boundary fragments and retains traversal evidence.
     pub fn assemble_chains_with_report(
         &self,

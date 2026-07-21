@@ -1057,6 +1057,26 @@ differential fuzzer completed 1,000 runs at 4,728 coverage points and 8,665
 feature edges without a failure; LeakSanitizer alone remained disabled under
 ptrace.
 
+Lean contour and region results now consume endpoint-chain indices directly
+into their final `Segment2` contour vectors. The previous shared path first
+materialized a 776-byte `DirectedBooleanFragment` for every ordered chain
+position, only to discard its provenance fields while converting the chain to
+the requested contour. Loop-returning APIs retain that full carrier, and the
+ambiguous tangent-order fallback retains the established chain traversal.
+
+Against the compact-event checkpoint, the 100-operation ordinary star64
+Callgrind lane fell from 540,965,420 to 539,699,496 instructions (0.23%). DHAT
+allocation traffic fell from 82,949,537 to 71,190,377 bytes (14.18%), reads by
+8.15%, and writes by 14.85%; allocation blocks fell by 210 and peak live heap
+was unchanged. The four ordinary/prepared contour and region lanes improved by
+0.22--0.24% in focused Callgrind runs, while the two loop lanes stayed neutral
+within 0.03%. A 1,000-iteration rectangle-union control improved by 1.58%.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,145 coverage points and 12,378 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
