@@ -670,6 +670,30 @@ proptest! {
     }
 
     #[test]
+    fn generated_general_plane_frame_and_differentials_replay_exactly(a in 1_i32..=8, b in -8_i32..=8, c in -8_i32..=8, d in -16_i32..=16, u in -8_i32..=8, v in -8_i32..=8) {
+        let plane = Plane3::new(p(a, b, c), r(d));
+        let surface = BrepSurface::plane(
+            BrepSurfaceId(502),
+            plane.clone(),
+            BrepSurfaceSource::ExactConstruction,
+        );
+        let uv = Point2::new(r(u), r(v));
+        let eval = surface.evaluate_frame_uv(uv.clone());
+        prop_assert!(eval.exact_evaluation_ready);
+        let point = eval.point.expect("ready graph frame evaluates a point");
+        prop_assert_eq!(classify_point_plane(&point, &plane).value(), Some(PlaneSide::On));
+        let projection = surface.project_frame_point(point);
+        prop_assert_eq!(projection.uv, Some(uv.clone()));
+
+        let differential = surface.interrogate_uv(uv);
+        prop_assert!(differential.exact_differential_ready);
+        prop_assert_eq!(differential.gaussian_curvature, Some(Real::zero()));
+        prop_assert_eq!(differential.mean_curvature, Some(Real::zero()));
+        prop_assert!(differential.first_fundamental_form.is_some());
+        prop_assert!(differential.oriented_unit_normal.is_some());
+    }
+
+    #[test]
     fn generated_trim_loop_report_tracks_oriented_vertex_chain(edge_count in 3_usize..=32, reverse_one in proptest::bool::ANY) {
         let vertices = (0..edge_count)
             .map(|i| BrepVertex::new(BrepVertexId(i as u64), p(i as i32, (i % 5) as i32, 0)))

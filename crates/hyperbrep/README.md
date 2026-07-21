@@ -83,7 +83,11 @@ assert!(!closure.closed);
   `BrepShell` are the retained topological records. Stable typed identifiers
   connect them without implicit geometric matching.
 - `BrepSurface` retains source provenance and analytic geometry. Exact planes
-  are the supported surface family; unsupported or lossy imports remain named.
+  are the supported surface family; their graph frames support arbitrary
+  certifiably nonzero normals. Unsupported or lossy imports remain named.
+- `BrepSurfaceDifferentialReport` interrogates an exact plane at UV, retaining
+  its model point, parameter tangents, oriented unit normal, first and second
+  fundamental forms, orientation alignment, and exact zero curvature.
 - `BrepCurve3` owns exact model-space line, rational Bezier, and finite-domain
   NURBS curves. Rational evaluation stays homogeneous until final projection.
 - `BrepPcurve`, `BrepPlanarTrimLoop`, and `BrepPlanarFaceRegion` bind exact
@@ -141,7 +145,7 @@ not shared cross-thread mutation.
 The measured reference audit, retained evidence-reuse changes, and benchmark
 protocol are recorded in [PERFORMANCE.md](PERFORMANCE.md).
 
-Current limitations are explicit: general analytic surfaces and frames,
+Current limitations are explicit: nonplanar analytic surfaces and their frames,
 geometric equality across differently partitioned pcurves, curved trim-edge
 reconstruction, BREP booleans and sewing, periodic NURBS, and full STEP/IGES
 exchange are not yet implemented as exact report-bearing operations.

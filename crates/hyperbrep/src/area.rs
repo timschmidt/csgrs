@@ -35,7 +35,7 @@ pub enum BrepFaceAreaBlocker {
     MissingSurface,
     /// Face surface is not an exact planar surface.
     UnsupportedSurface,
-    /// Plane normal is not structurally known to be one-hot.
+    /// No plane-normal component could be selected for exact projection.
     NonAxisAlignedPlane,
     /// The nonzero normal component's sign could not be certified.
     UnknownNormalDirection,
@@ -83,7 +83,7 @@ pub struct BrepFaceAreaReport {
 }
 
 impl BrepFaceAreaReport {
-    /// Derive exact projected twice-area for an axis-aligned planar face.
+    /// Derive exact projected twice-area for a planar face.
     ///
     /// For each ordered loop, the selected component of
     /// `sum(p_i × p_{i+1})` gives twice the projected signed area. The sum is
@@ -130,7 +130,7 @@ impl BrepFaceAreaReport {
                     BrepSurfaceSource::ExactConstruction | BrepSurfaceSource::ExactImport
                 ) =>
             {
-                let Some(axis_index) = plane.structural_facts().normal.known_axis_index else {
+                let Some(axis_index) = select_projection_axis(plane) else {
                     blockers.push(BrepFaceAreaBlocker::NonAxisAlignedPlane);
                     return Self::blocked(face, true, blockers, Vec::new());
                 };
@@ -260,6 +260,27 @@ impl BrepFaceAreaReport {
             exact_area_ready: false,
         }
     }
+}
+
+fn select_projection_axis(plane: &hyperlimit::Plane3) -> Option<usize> {
+    let facts = plane.structural_facts().normal;
+    if let Some(index) = facts.known_axis_index {
+        return Some(index);
+    }
+    for index in 0..3 {
+        if facts.known_nonzero_mask & (1 << index) != 0 {
+            return Some(index);
+        }
+    }
+    let zero = Real::zero();
+    [&plane.normal.x, &plane.normal.y, &plane.normal.z]
+        .into_iter()
+        .position(|coordinate| {
+            matches!(
+                coordinate.partial_cmp(&zero),
+                Some(Ordering::Less | Ordering::Greater)
+            )
+        })
 }
 
 impl BrepShell {

@@ -1,19 +1,19 @@
 //! Exact surface parameter-frame reports.
 //!
-//! The first frame family is intentionally narrow: one-hot planar surfaces get
-//! exact axis projection and evaluation. General plane bases, periodic analytic
-//! frames, seams, and poles remain explicit future work.
+//! Planar surfaces receive an exact graph frame by selecting one certifiably
+//! nonzero normal coordinate as the solved axis. Periodic analytic frames,
+//! seams, and poles remain explicit future work.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{Plane3, Point2, Point3};
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 
 use crate::surface::{BrepSurface, BrepSurfaceBlocker, BrepSurfaceId, BrepSurfaceKind};
 use crate::topology::{BrepEdge, BrepEdgeOrientation, BrepFaceId, BrepShell, BrepVertexId};
 
-/// Axis used as the retained plane normal for a simple planar UV frame.
+/// Plane coordinate solved from the other two retained UV coordinates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum BrepPlaneFrameAxis {
     /// Normal is structurally supported on x; UV coordinates are `(y, z)`.
@@ -31,8 +31,11 @@ pub enum BrepSurfaceFrameBlocker {
     SurfaceNotReady,
     /// Surface is not a supported plane.
     UnsupportedSurface,
-    /// Plane normal is not structurally known to have exactly one nonzero axis.
+    /// Legacy blocker retained for report compatibility. General planes now use
+    /// an exact solved-axis frame.
     NonAxisAlignedPlane,
+    /// No normal coordinate could be certified nonzero for the solved axis.
+    UnknownNormalPivot,
     /// Exact scalar division needed to evaluate the frame coordinate failed.
     AxisCoordinateDivisionFailed,
 }
@@ -131,7 +134,7 @@ pub struct BrepFaceUvBoundsReport {
 }
 
 impl BrepSurfaceFrameReport {
-    /// Prepare an exact axis planar frame for a retained surface.
+    /// Prepare an exact graph frame for a retained planar surface.
     ///
     /// The frame is accepted only when retained object facts certify a simple
     /// algebraic map. Otherwise the uncertainty is reported instead of
@@ -145,17 +148,10 @@ impl BrepSurfaceFrameReport {
         }
 
         let axis = match &surface.kind {
-            BrepSurfaceKind::Plane(plane) => {
-                let facts = plane.structural_facts();
-                facts
-                    .normal
-                    .known_axis_index
-                    .map(axis_from_index)
-                    .or_else(|| {
-                        blockers.push(BrepSurfaceFrameBlocker::NonAxisAlignedPlane);
-                        None
-                    })
-            }
+            BrepSurfaceKind::Plane(plane) => select_plane_pivot(plane).or_else(|| {
+                blockers.push(BrepSurfaceFrameBlocker::UnknownNormalPivot);
+                None
+            }),
             BrepSurfaceKind::Unsupported { .. } => {
                 blockers.push(BrepSurfaceFrameBlocker::UnsupportedSurface);
                 None
@@ -429,7 +425,7 @@ fn axis_from_index(index: usize) -> BrepPlaneFrameAxis {
 }
 
 fn evaluate_axis_plane(plane: &Plane3, axis: BrepPlaneFrameAxis, uv: &Point2) -> Option<Point3> {
-    let coordinate = solve_plane_axis_coordinate(plane, axis)?;
+    let coordinate = solve_plane_axis_coordinate(plane, axis, uv)?;
     Some(match axis {
         BrepPlaneFrameAxis::X => Point3::new(coordinate, uv.x.clone(), uv.y.clone()),
         BrepPlaneFrameAxis::Y => Point3::new(uv.y.clone(), coordinate, uv.x.clone()),
@@ -445,12 +441,56 @@ fn project_axis_point(axis: BrepPlaneFrameAxis, point: &Point3) -> Point2 {
     }
 }
 
-fn solve_plane_axis_coordinate(plane: &Plane3, axis: BrepPlaneFrameAxis) -> Option<Real> {
-    let zero = Real::from(0);
-    let numerator = &zero - &plane.offset;
-    match axis {
-        BrepPlaneFrameAxis::X => (&numerator / &plane.normal.x).ok(),
-        BrepPlaneFrameAxis::Y => (&numerator / &plane.normal.y).ok(),
-        BrepPlaneFrameAxis::Z => (&numerator / &plane.normal.z).ok(),
+fn solve_plane_axis_coordinate(
+    plane: &Plane3,
+    axis: BrepPlaneFrameAxis,
+    uv: &Point2,
+) -> Option<Real> {
+    let numerator = match axis {
+        BrepPlaneFrameAxis::X => {
+            -plane.offset.clone()
+                - plane.normal.y.clone() * uv.x.clone()
+                - plane.normal.z.clone() * uv.y.clone()
+        }
+        BrepPlaneFrameAxis::Y => {
+            -plane.offset.clone()
+                - plane.normal.z.clone() * uv.x.clone()
+                - plane.normal.x.clone() * uv.y.clone()
+        }
+        BrepPlaneFrameAxis::Z => {
+            -plane.offset.clone()
+                - plane.normal.x.clone() * uv.x.clone()
+                - plane.normal.y.clone() * uv.y.clone()
+        }
+    };
+    let denominator = match axis {
+        BrepPlaneFrameAxis::X => &plane.normal.x,
+        BrepPlaneFrameAxis::Y => &plane.normal.y,
+        BrepPlaneFrameAxis::Z => &plane.normal.z,
+    };
+    (numerator / denominator).ok()
+}
+
+fn select_plane_pivot(plane: &Plane3) -> Option<BrepPlaneFrameAxis> {
+    let facts = plane.structural_facts();
+    if let Some(index) = facts.normal.known_axis_index {
+        return Some(axis_from_index(index));
     }
+    for index in 0..3 {
+        if facts.normal.known_nonzero_mask & (1 << index) != 0 {
+            return Some(axis_from_index(index));
+        }
+    }
+    for (index, coordinate) in [&plane.normal.x, &plane.normal.y, &plane.normal.z]
+        .into_iter()
+        .enumerate()
+    {
+        if matches!(
+            coordinate.refine_sign_until(-64),
+            Some(RealSign::Negative | RealSign::Positive)
+        ) {
+            return Some(axis_from_index(index));
+        }
+    }
+    None
 }

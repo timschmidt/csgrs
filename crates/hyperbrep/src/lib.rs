@@ -15,6 +15,7 @@ mod export;
 mod frame;
 mod handoff;
 mod import;
+mod interrogation;
 mod package;
 mod pcurve;
 mod physics;
@@ -65,6 +66,10 @@ pub use handoff::{
 pub use import::{
     BrepImportedSurfaceFamily, BrepLossyFloatImportReport, BrepLossyImportBlocker,
     BrepPrimitiveFloatPrecision, BrepUnsupportedSurfaceRecord,
+};
+pub use interrogation::{
+    BrepSurfaceDifferentialReport, BrepSurfaceFirstFundamentalForm,
+    BrepSurfaceInterrogationBlocker, BrepSurfaceSecondFundamentalForm,
 };
 pub use package::{
     BrepHandoffPackageBlocker, BrepHandoffPackageManifest, BrepHandoffPackageReport,
@@ -1727,22 +1732,19 @@ mod tests {
     }
 
     #[test]
-    fn planar_surface_frame_blocks_unsupported_or_non_axis_frames() {
+    fn planar_surface_frame_supports_general_planes_and_blocks_unsupported_families() {
         let diagonal = BrepSurface::plane(
             BrepSurfaceId(23),
             Plane3::new(p(1, 1, 0), r(0)),
             BrepSurfaceSource::ExactConstruction,
         );
         let report = diagonal.frame_report();
-        assert!(!report.exact_frame_ready);
-        assert!(
-            report
-                .blockers
-                .contains(&BrepSurfaceFrameBlocker::NonAxisAlignedPlane)
-        );
+        assert!(report.exact_frame_ready);
+        assert_eq!(report.axis, Some(BrepPlaneFrameAxis::X));
+        assert!(report.blockers.is_empty());
         let eval = diagonal.evaluate_frame_uv(hyperlimit::Point2::new(r(0), r(0)));
-        assert!(!eval.exact_evaluation_ready);
-        assert!(eval.point.is_none());
+        assert!(eval.exact_evaluation_ready);
+        assert_eq!(eval.point, Some(p(0, 0, 0)));
 
         let unsupported =
             BrepSurface::unsupported(BrepSurfaceId(24), "nurbs", BrepSurfaceSource::ExactImport);
@@ -1809,20 +1811,12 @@ mod tests {
             BrepSurfaceSource::ExactConstruction,
         );
         let diagonal_report = diagonal.face_uv_bounds_report(BrepFaceId(0));
-        assert!(!diagonal_report.exact_uv_bounds_ready);
-        assert!(
-            diagonal_report
-                .blockers
-                .contains(&BrepFaceUvBoundsBlocker::FrameNotReady)
+        assert!(diagonal_report.exact_uv_bounds_ready);
+        assert_eq!(
+            diagonal_report.frame.as_ref().unwrap().axis,
+            Some(BrepPlaneFrameAxis::X)
         );
-        assert!(
-            diagonal_report
-                .frame
-                .as_ref()
-                .unwrap()
-                .blockers
-                .contains(&BrepSurfaceFrameBlocker::NonAxisAlignedPlane)
-        );
+        assert!(diagonal_report.blockers.is_empty());
     }
 
     #[test]
