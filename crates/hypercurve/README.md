@@ -97,9 +97,10 @@ and the weaker source-chord fallback used for corners or unsupported families.
 `Contour2::straight_skeleton` implements an exact inward wavefront for simple line
 contours. Unit-normal support lines, vertex trajectories, edge-collapse times,
 generic reflex split events, live-edge validation, simultaneous edge events,
-terminal ridges, and source-edge provenance remain exact `Real` evidence in the
-returned graph. Non-general-position clusters that require vertex/multi-split
-resolution remain typed blockers; they are never substituted with centroid rays.
+commuting same-time events at distinct points, terminal vertex/multi-split
+clusters, terminal ridges, and source-edge provenance remain exact `Real`
+evidence in the returned graph. Non-terminal same-point multi-split clusters
+remain typed blockers; they are never substituted with centroid rays.
 Circular-arc contours remain explicit `UnsupportedSegment` results until their
 shape-preserving conic wavefront trajectories and additional contact events land.
 
@@ -375,8 +376,9 @@ Implemented today:
   arrangement construction with source/split/endpoint/ring/role/output caches,
   and conservative unresolved states.
 - exact simple-polygon straight-skeleton wavefront construction with generic reflex
-  split events, simultaneous edge collapses, terminal ridges, and explicit blockers
-  for unresolved non-general-position event clusters.
+  split events, independently commuting simultaneous events, terminal vertex events,
+  one-dimensional terminal wavefronts, and explicit blockers for unresolved
+  non-terminal same-point multi-split clusters.
 
 Known limits: shared components requiring multivalued implicit branch correspondence,
 source curves with neither certified source lineage nor an injective graph axis, generic
