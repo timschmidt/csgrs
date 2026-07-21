@@ -964,6 +964,28 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,429 coverage points and 15,904 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Ranked and indexed AABB traversal now compares wide exact dyadic coordinates
+through Hyperreal's lossless binary64 view before falling back to arbitrary-
+precision rational ordering. This is a certified representation fast path, not
+an approximation: only exactly representable dyadics commit an ordering. The
+dispatch stays inside the large-contour broad phase and keeps small native-word
+rationals on their cheaper existing comparator.
+
+Against the preceding checkpoint, a paired 11-sample, 1,000-iteration ordinary
+star64 run fell from 0.532 to 0.513 ms/iter (3.67%). In seven-sample runs,
+ordinary contours, prepared regions, prepared contours, and prepared loops
+improved by 3.73--4.84%; the ordinary loop median was neutral within 0.17%.
+The 10,000-iteration rectangle control remained neutral at 12.922 versus 12.902
+us/iter. Across 100 selected ordinary star64 operations plus fixture
+validation, Callgrind instructions fell from 568,715,069 to 558,453,381
+(1.81%). DHAT allocation bytes, block counts, and peak heap were identical;
+heap reads fell by 6.46% while writes differed by 0.17%.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,520 coverage points and 16,089 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

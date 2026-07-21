@@ -582,7 +582,7 @@ impl SegmentAabbXIndex {
     ) {
         if start == end
             || matches!(
-                compare_reals(
+                compare_box(
                     boxes[self.ordered[start]].as_ref().unwrap().min_x(),
                     query.max_x(),
                     policy,
@@ -594,7 +594,7 @@ impl SegmentAabbXIndex {
         }
         let middle = start + (end - start) / 2;
         if matches!(
-            compare_reals(
+            compare_box(
                 boxes[self.ordered[self.subtree_maxima[middle]]]
                     .as_ref()
                     .unwrap()
@@ -616,6 +616,30 @@ impl SegmentAabbXIndex {
 }
 
 type BoxCoordinate = for<'a> fn(&'a Aabb2) -> &'a Real;
+
+fn compare_box(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Ordering> {
+    if std::ptr::eq(left, right) {
+        return Some(Ordering::Equal);
+    }
+    if let (Some(left_rational), Some(right_rational)) =
+        (left.exact_rational_ref(), right.exact_rational_ref())
+    {
+        // Lossless binary64 views preserve exact order. Use them only after
+        // native-word comparison stops being the cheaper broad-phase filter.
+        let wide = left_rational.numerator().bits() > 32
+            || left_rational.denominator().bits() > 32
+            || right_rational.numerator().bits() > 32
+            || right_rational.denominator().bits() > 32;
+        if wide
+            && let (Some(left), Some(right)) =
+                (left.to_f64_exact_dyadic(), right.to_f64_exact_dyadic())
+        {
+            return left.partial_cmp(&right);
+        }
+        return left_rational.partial_cmp(right_rational);
+    }
+    compare_reals(left, right, policy)
+}
 
 fn sort_segment_indices_by_certified_box_coordinate(
     ordered: &mut [usize],
@@ -662,7 +686,7 @@ fn sort_segment_indices_by_exact_box_coordinate(
     coordinate: BoxCoordinate,
 ) {
     ordered.sort_unstable_by(|left, right| {
-        compare_reals(
+        compare_box(
             coordinate(boxes[*left].as_ref().unwrap()),
             coordinate(boxes[*right].as_ref().unwrap()),
             policy,
@@ -680,7 +704,7 @@ fn segment_box_coordinate_order_is_certified(
 ) -> bool {
     !ordered.windows(2).any(|window| {
         !matches!(
-            compare_reals(
+            compare_box(
                 coordinate(boxes[window[0]].as_ref().unwrap()),
                 coordinate(boxes[window[1]].as_ref().unwrap()),
                 policy,
@@ -775,7 +799,7 @@ fn sorted_box_coordinate_partition(
     while start < end {
         let middle = start + (end - start) / 2;
         let bbox = boxes[ordered[middle]].as_ref()?;
-        match compare_reals(coordinate(bbox), query, policy)? {
+        match compare_box(coordinate(bbox), query, policy)? {
             Ordering::Less => start = middle + 1,
             Ordering::Equal if include_equal_in_lower_partition => start = middle + 1,
             Ordering::Equal | Ordering::Greater => end = middle,
@@ -865,18 +889,18 @@ where
             } else {
                 for &candidate_index in &second_index.ordered {
                     let second_box = second_boxes[candidate_index].as_ref().unwrap();
-                    match compare_reals(second_box.min_x(), first_box.max_x(), policy) {
+                    match compare_box(second_box.min_x(), first_box.max_x(), policy) {
                         Some(Ordering::Greater) => break,
                         Some(Ordering::Less | Ordering::Equal) | None => {}
                     }
                     if matches!(
-                        compare_reals(second_box.max_x(), first_box.min_x(), policy),
+                        compare_box(second_box.max_x(), first_box.min_x(), policy),
                         Some(Ordering::Less)
                     ) || matches!(
-                        compare_reals(first_box.max_y(), second_box.min_y(), policy),
+                        compare_box(first_box.max_y(), second_box.min_y(), policy),
                         Some(Ordering::Less)
                     ) || matches!(
-                        compare_reals(second_box.max_y(), first_box.min_y(), policy),
+                        compare_box(second_box.max_y(), first_box.min_y(), policy),
                         Some(Ordering::Less)
                     ) {
                         continue;
@@ -934,10 +958,10 @@ fn sampled_x_overlap_is_dense(
                 .unwrap();
             overlaps += usize::from(
                 !matches!(
-                    compare_reals(first.max_x(), second.min_x(), policy),
+                    compare_box(first.max_x(), second.min_x(), policy),
                     Some(Ordering::Less)
                 ) && !matches!(
-                    compare_reals(second.max_x(), first.min_x(), policy),
+                    compare_box(second.max_x(), first.min_x(), policy),
                     Some(Ordering::Less)
                 ),
             );
@@ -967,7 +991,7 @@ fn build_x_interval_index(
     {
         let candidate = candidate?;
         if matches!(
-            compare_reals(
+            compare_box(
                 boxes[ordered[maximum]].as_ref().unwrap().max_x(),
                 boxes[ordered[candidate]].as_ref().unwrap().max_x(),
                 policy,
