@@ -1117,6 +1117,24 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,366 coverage points and 14,475 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Both Boolean classifiers now reserve their already-computed exact source
+fragment count. This replaces geometric growth with one classification-vector
+allocation while leaving classification order, evidence, and fallback behavior
+unchanged.
+
+Against the borrowed-endpoint checkpoint, the 100-operation ordinary star64
+Callgrind lane fell from 524,245,052 to 523,766,373 instructions (0.09%). DHAT
+allocation traffic fell from 63,111,657 to 62,125,545 bytes (1.56%), allocation
+blocks from 403,837 to 403,195, reads by 0.41%, writes by 1.01%, and peak live
+heap by 1,152 bytes. Twenty-iteration Callgrind controls improved all six
+ordinary/prepared region, contour, and loop lanes by 0.06--0.12%; a 1,000-
+iteration rectangle-union control improved by 0.72%.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,412 coverage points and 15,070 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

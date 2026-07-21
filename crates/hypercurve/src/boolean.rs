@@ -1085,9 +1085,9 @@ impl RegionFragmentSet {
             return Ok(None);
         }
 
-        let mut classifications = Vec::new();
         let source_contour_count = self.len();
         let source_fragment_count = region_fragment_count(self);
+        let mut classifications = Vec::with_capacity(source_fragment_count);
         let source_fragment_kind_counts = region_fragment_kind_counts(self);
         let interior_sample_fractions = [
             (Real::one() / Real::from(2_i8))?,
@@ -1214,9 +1214,9 @@ impl RegionFragmentSet {
     where
         F: FnMut(RegionSide, &crate::Point2) -> Classification<RegionPointLocation>,
     {
-        let mut classifications = Vec::new();
         let source_contour_count = self.len();
         let source_fragment_count = region_fragment_count(self);
+        let mut classifications = Vec::with_capacity(source_fragment_count);
         let source_fragment_kind_counts = region_fragment_kind_counts(self);
         let interior_sample_fractions = [
             (Real::one() / Real::from(2_i8))?,
