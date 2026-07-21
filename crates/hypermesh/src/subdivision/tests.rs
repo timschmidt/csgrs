@@ -477,6 +477,7 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
     let first_intersections = pairwise_intersections_by_polygon(&first_polygons).unwrap();
     let first = cached_bsp_leaf_certification_with(
         &cache,
+        true,
         &host,
         &host.edges,
         &first_polygons,
@@ -490,6 +491,7 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
     let second_intersections = pairwise_intersections_by_polygon(&second_polygons).unwrap();
     let second = cached_bsp_leaf_certification_with(
         &cache,
+        true,
         &host,
         &host.edges,
         &second_polygons,
@@ -502,6 +504,21 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
     assert_eq!(first, second);
     assert!(Arc::ptr_eq(&first, &second));
     assert_eq!(cache.borrow().len(), 1);
+
+    let one_shot_cache = RefCell::new(Vec::new());
+    let one_shot = cached_bsp_leaf_certification_with(
+        &one_shot_cache,
+        false,
+        &host,
+        &host.edges,
+        &first_polygons,
+        &first_intersections[0],
+        false,
+        None,
+    )
+    .unwrap();
+    assert_eq!(one_shot, first);
+    assert!(one_shot_cache.borrow().is_empty());
 }
 
 #[test]
@@ -535,19 +552,41 @@ fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
 
     let first_polygons = vec![host.clone(), cutter.clone()];
     let first_intersections = pairwise_intersections_by_polygon(&first_polygons).unwrap();
-    let first =
-        cached_host_bsp_leaves_with(&cache, &host, &first_polygons, &first_intersections[0])
-            .unwrap();
+    let first = cached_host_bsp_leaves_with(
+        &cache,
+        true,
+        &host,
+        &first_polygons,
+        &first_intersections[0],
+    )
+    .unwrap();
 
     let second_polygons = vec![cutter, host.clone()];
     let second_intersections = pairwise_intersections_by_polygon(&second_polygons).unwrap();
-    let second =
-        cached_host_bsp_leaves_with(&cache, &host, &second_polygons, &second_intersections[1])
-            .unwrap();
+    let second = cached_host_bsp_leaves_with(
+        &cache,
+        true,
+        &host,
+        &second_polygons,
+        &second_intersections[1],
+    )
+    .unwrap();
 
     assert_eq!(first, second);
     assert!(Arc::ptr_eq(&first, &second));
     assert_eq!(cache.borrow().len(), 1);
+
+    let one_shot_cache = RefCell::new(Vec::new());
+    let one_shot = cached_host_bsp_leaves_with(
+        &one_shot_cache,
+        false,
+        &host,
+        &first_polygons,
+        &first_intersections[0],
+    )
+    .unwrap();
+    assert_eq!(one_shot, first);
+    assert!(one_shot_cache.borrow().is_empty());
 }
 
 #[test]

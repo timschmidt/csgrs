@@ -423,8 +423,6 @@ fn process_leaf_into_inner_with_pairwise_cache(
     });
     let leaf_classification_lookup_len = leaf_classification_cache.borrow().len();
     let leaf_point_classification_lookup_len = leaf_point_classification_cache.borrow().len();
-    let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
-
     let intersections = pairwise_query(polygons)?;
     let direct_polygon_components = direct_leaf_polygon_components(polygons, &intersections)?;
     let mut direct_component_winding: Vec<Option<WindingNumberVector>> = vec![None; polygons.len()];
@@ -444,6 +442,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                     &mut output_buckets,
                 )?
             } else {
+                let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
                 let (emitted, w_front) = emit_one_direct(
                     polygon,
                     bounds,
@@ -556,7 +555,6 @@ fn process_leaf_into_inner_with_pairwise_cache(
                         &mut leaf_point_classification_cache.borrow_mut(),
                         leaf_point_classification_lookup_len,
                         Some(&leaf_cache_context),
-                        &mut leaf_probe_query_caches,
                         certified_convex_host_mesh,
                         certified_convex_inputs,
                     )
@@ -2086,6 +2084,10 @@ fn process_leaf_task_into_with_caches(
     leaf_point_classification_cache: &RefCell<Vec<LeafPointClassificationCacheEntry>>,
     certified_embedded_inputs: &[bool],
 ) -> HypermeshResult<LeafProcessingStats> {
+    // A completed root leaf returns immediately, so its per-host results can
+    // never be queried again. Recursive tasks can revisit equivalent split
+    // states and keep the existing caches.
+    let retain_leaf_cache_misses = task.depth != 0;
     let pairwise_query = |polygons: &[ConvexPolygon]| {
         cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
             pairwise_cache,
@@ -2096,7 +2098,13 @@ fn process_leaf_task_into_with_caches(
     let bsp_leaves_query = |polygon: &ConvexPolygon,
                             polygons: &[ConvexPolygon],
                             intersections: &[PairwiseIntersection]| {
-        cached_host_bsp_leaves_with(host_bsp_cache, polygon, polygons, intersections)
+        cached_host_bsp_leaves_with(
+            host_bsp_cache,
+            retain_leaf_cache_misses,
+            polygon,
+            polygons,
+            intersections,
+        )
     };
     let bsp_leaf_query = |polygon: &ConvexPolygon,
                           leaf_edges: &[crate::geometry::Plane],
@@ -2106,6 +2114,7 @@ fn process_leaf_task_into_with_caches(
                           interior_point: Option<&Point3>| {
         cached_bsp_leaf_certification_with(
             bsp_leaf_cache,
+            retain_leaf_cache_misses,
             polygon,
             leaf_edges,
             polygons,
@@ -2382,11 +2391,11 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
     point_cache: &mut Vec<LeafPointClassificationCacheEntry>,
     point_cache_lookup_len: usize,
     context: Option<&Arc<LeafClassificationCacheContextKey>>,
-    probe_query_caches: &mut LeafProbeQueryCaches,
     certified_convex_host_mesh: Option<usize>,
     certified_convex_inputs: &[bool],
 ) -> HypermeshResult<WindingNumberVector> {
     let mut saw_unknown = false;
+    let mut probe_query_caches = LeafProbeQueryCaches::default();
 
     for point in ordered_interior_points_for_probe_search_with_support(interior_points, support)? {
         let state = cached_leaf_point_classification_with_lookup_limit(
@@ -2407,7 +2416,7 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
                     polygons,
                     bounds,
                     host_delta_w,
-                    probe_query_caches,
+                    &mut probe_query_caches,
                     &mut local_unknown,
                     certified_convex_host_mesh,
                     certified_convex_inputs,
@@ -2455,10 +2464,15 @@ pub(crate) fn build_host_bsp_leaves(
 
 fn cached_host_bsp_leaves_with(
     cache: &RefCell<Vec<HostBspLeavesCacheEntry>>,
+    retain_cache_miss: bool,
     polygon: &ConvexPolygon,
     polygons: &[ConvexPolygon],
     intersections: &[PairwiseIntersection],
 ) -> HypermeshResult<Arc<Vec<BspLeaf>>> {
+    if !retain_cache_miss {
+        crate::trace_dispatch!("host-bsp-cache", "one-shot-bypass");
+        return build_host_bsp_leaves(polygon, polygons, intersections).map(Arc::new);
+    }
     let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.host == *polygon
@@ -2480,6 +2494,7 @@ fn cached_host_bsp_leaves_with(
 
 fn cached_bsp_leaf_certification_with(
     cache: &RefCell<Vec<BspLeafCertificationCacheEntry>>,
+    retain_cache_miss: bool,
     host: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
@@ -2487,6 +2502,18 @@ fn cached_bsp_leaf_certification_with(
     single_convex_interior_point: bool,
     interior_point: Option<&Point3>,
 ) -> HypermeshResult<Arc<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>> {
+    if !retain_cache_miss {
+        crate::trace_dispatch!("bsp-leaf-certification-cache", "one-shot-bypass");
+        return certify_bsp_leaf_and_delta_w_with_host_intersections(
+            host,
+            leaf_edges,
+            polygons,
+            Some(intersections),
+            single_convex_interior_point,
+            interior_point,
+        )
+        .map(Arc::new);
+    }
     let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.host == *host

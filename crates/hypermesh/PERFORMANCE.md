@@ -997,6 +997,37 @@ A 20-second ASAN `boolean_pipeline` campaign completed 373 executions without
 failure (LeakSanitizer remained disabled because the runner uses ptrace). The
 downstream CSGRS all-feature suite passed all 373 library tests.
 
+## 2026-07-21: bound one-shot root leaf caches
+
+Status: **kept**
+
+Large certified root leaves populated the host-BSP and BSP-leaf-certification
+caches even though a completed root attempt returns immediately and can never
+query those entries. Each entry retained a clone of the complete polygon
+family. On the 1,140-facet YeahRight convex-hull/box arrangement, the dispatch
+trace reported one subdivision task and Heaptrack attributed 480 full-family
+clones (323.94 MiB) to BSP certification plus 160 clones (107.98 MiB) to host
+BSP leaves. The root path now computes those values once without retaining
+them; recursive tasks keep the existing caches because split retries can reuse
+their results. Probe-query caches are likewise scoped to one classification so
+unrelated exact probes do not retain one another's search state.
+
+Five fresh-process runs produced a 944.8 ms median with 81.6--82.5 MiB peak
+RSS, versus the 1.341 s and 569,956 KiB baseline: 29.5% lower latency and 85.5%
+lower peak RSS. Heaptrack fell from 6,589,299 to 5,020,891 allocations and from
+534.04 MiB to 67.74 MiB peak heap. Output remained 5,152 polygons with checksum
+675,298,388. The refreshed native comparison measured 930.7 ms cold and 941.9
+ms warm for CSGRS, 1.66x faster than OpenCascade; CGAL EPECK remains the target
+to close at 9.0 ms cold.
+
+Validation passed the complete 970-test all-target/all-feature unit suite and
+all integration, regression, and benchmark targets, the no-default-feature
+build, warning-denied Clippy, rustdoc, and every fuzz-target build. A 20-second
+ASAN `boolean_pipeline` campaign completed 380 executions without failure. All
+nine downstream CSGRS exact Hypermesh adapter and differential tests passed.
+The concurrent CSGRS sketch conversion edit left the broader downstream run at
+389/390; its sole curved-region failure is outside this subdivision change.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:
