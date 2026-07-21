@@ -183,6 +183,14 @@ impl BooleanFragmentSelection {
         Ok(Self { classifications })
     }
 
+    fn from_complete_fragment_traversal(
+        classifications: Vec<BooleanFragmentClassification>,
+        source_fragment_count: usize,
+    ) -> Self {
+        debug_assert_eq!(classifications.len(), source_fragment_count);
+        Self { classifications }
+    }
+
     /// Returns all fragment classifications in region-fragment order.
     pub fn classifications(&self) -> &[BooleanFragmentClassification] {
         &self.classifications
@@ -1186,7 +1194,10 @@ impl RegionFragmentSet {
             }
         }
 
-        let selection = BooleanFragmentSelection::new(classifications)?;
+        let selection = BooleanFragmentSelection::from_complete_fragment_traversal(
+            classifications,
+            source_fragment_count,
+        );
         Ok(Some(BooleanFragmentSelectionResult2 {
             report: boolean_fragment_selection_report_from_classifications(
                 op,
@@ -1291,7 +1302,10 @@ impl RegionFragmentSet {
             }
         }
 
-        let selection = BooleanFragmentSelection::new(classifications)?;
+        let selection = BooleanFragmentSelection::from_complete_fragment_traversal(
+            classifications,
+            source_fragment_count,
+        );
         Ok(BooleanFragmentSelectionResult2 {
             report: boolean_fragment_selection_report_from_classifications(
                 op,
