@@ -3,6 +3,8 @@
 //! Hyper geometry crates. `Mesh` routes topology and booleans through
 //! `hypermesh` and `Profile` is backed by `hypercurve`, keeping primitive
 //! floats at audited API and IO boundaries.
+//! The optional [`PolygonMesh`] backend retains planar polygon faces and
+//! converts them explicitly to triangle-only [`mesh::Mesh`] geometry.
 //!
 //! ![Example CSG output][Example CSG output]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]
@@ -47,6 +49,10 @@ pub(crate) mod hyper_math;
 pub mod io;
 pub mod mesh;
 pub mod parts;
+#[cfg(feature = "polygon-mesh")]
+pub mod polygon_mesh;
+#[cfg(feature = "polygon-mesh")]
+pub use polygon_mesh::PolygonMesh;
 #[cfg(feature = "sketch")]
 pub mod sketch;
 #[cfg(feature = "sketch")]
