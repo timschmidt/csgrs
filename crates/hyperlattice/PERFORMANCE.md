@@ -265,11 +265,40 @@ Matched public medians measured:
 | `mat4 transform vec4`, exact dyadic | 7.49 us | 3.47 us | 1.66 us | - |
 
 The vec3/vec4 dot construction rows improve by 49.9%/45.3%. Matrix transforms
-also benefit without changing their structural-fact dispatch, although direct
-unprepared transforms remain slower than Numerica. The sparse vec4 dot control
+also benefit without changing their arithmetic dispatch; the follow-up below
+removes their remaining structural-fact overhead. The sparse vec4 dot control
 remains 51.45 ns. A wide-denominator regression exercises the word result with
 a denominator beyond `u128`, while an over-wide numerator proves exact fallback
 to the arbitrary-precision reducer.
+
+## Minimal direct transform dispatch
+
+Direct matrix-vector multiplication formerly built the complete public matrix
+fact report before reading only identity, diagonal, affine, and translation
+flags. That report scans exact-set structure, masks, symbolic dependencies,
+uniform scales, triangularity, and signed permutations; those facts remain
+appropriate for explicit `structural_facts` queries and reusable prepared
+handles, but were dead work for a one-shot transform.
+
+The const-generic direct transform bridge now short-circuits over only the facts
+its branches consume. Six bridge-only mask/dependency/uniform-scale helpers were
+removed with the duplicated full-report construction, reducing
+`src/matrix/core.rs` by 204 net lines without changing public types or stored
+state.
+
+Matched medians measured:
+
+| Workload | Before | Current | Numerica 128 | Current advantage |
+| --- | ---: | ---: | ---: | ---: |
+| owned `mat3 transform vec3` | 2.01 us | 728.52 ns | 906.03 ns | 19.6% |
+| owned `mat4 transform vec4` | 3.47 us | 1.123 us | 1.66 us | 32.3% |
+| borrowed mat3 transform | 2.081 us | 603.61 ns | - | 71.0% faster than before |
+| borrowed mat4 transform | 3.213 us | 869.60 ns | - | 72.9% faster than before |
+
+Prepared mat3 arithmetic remains about 400 ns after its facts are retained.
+Identity, diagonal, translated point/direction, dense, projective, symbolic,
+owned/borrowed, batch, and prepared-handle equivalence tests protect the same
+exact dispatch decisions. No approximation or new cache is involved.
 
 ## Minimal checked-normalization certificate
 

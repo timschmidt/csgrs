@@ -232,40 +232,6 @@ fn matrix_one_mask<const N: usize>(matrix: &[[Real; N]; N]) -> u16 {
 }
 
 #[inline]
-fn matrix_zero_masks_assuming_size<const N: usize, const M: usize>(
-    matrix: &[[Real; N]; N],
-) -> (u16, [u8; M], [u8; M]) {
-    debug_assert_eq!(N, M);
-    let mut entry_mask = 0_u16;
-    let mut row_masks = [0_u8; M];
-    let mut column_masks = [0_u8; M];
-    for (row, values) in matrix.iter().take(M).enumerate() {
-        for (column, value) in values.iter().take(M).enumerate() {
-            if value.definitely_zero() {
-                entry_mask |= matrix_entry_bit::<M>(row, column);
-                row_masks[row] |= 1_u8 << column;
-                column_masks[column] |= 1_u8 << row;
-            }
-        }
-    }
-    (entry_mask, row_masks, column_masks)
-}
-
-#[inline]
-fn matrix_one_mask_assuming_size<const N: usize, const M: usize>(matrix: &[[Real; N]; N]) -> u16 {
-    debug_assert_eq!(N, M);
-    let mut mask = 0_u16;
-    for (row, values) in matrix.iter().take(M).enumerate() {
-        for (column, value) in values.iter().take(M).enumerate() {
-            if value.definitely_one() {
-                mask |= matrix_entry_bit::<M>(row, column);
-            }
-        }
-    }
-    mask
-}
-
-#[inline]
 fn matrix_symbolic_dependency_mask<const N: usize>(
     matrix: &[[Real; N]; N],
 ) -> RealSymbolicDependencyMask {
@@ -275,20 +241,6 @@ fn matrix_symbolic_dependency_mask<const N: usize>(
         .fold(RealSymbolicDependencyMask::NONE, |mask, value| {
             mask.union(value.detailed_facts().symbolic.dependencies)
         })
-}
-
-#[inline]
-fn matrix_symbolic_dependency_mask_assuming_size<const N: usize, const M: usize>(
-    matrix: &[[Real; N]; N],
-) -> RealSymbolicDependencyMask {
-    debug_assert_eq!(N, M);
-    let mut mask = RealSymbolicDependencyMask::NONE;
-    for values in matrix.iter().take(M) {
-        for value in values.iter().take(M) {
-            mask = mask.union(value.detailed_facts().symbolic.dependencies);
-        }
-    }
-    mask
 }
 
 #[inline]
@@ -316,28 +268,6 @@ fn matrix4_signed_permutation_rows(matrix: &[[Real; 4]; 4]) -> Option<[SignedAxi
 }
 
 #[inline]
-fn matrix4_signed_permutation_rows_assuming_size<const N: usize>(
-    matrix: &[[Real; N]; N],
-) -> Option<[SignedAxis4; 4]> {
-    debug_assert_eq!(N, 4);
-    let rows = [
-        matrix4_signed_axis_row_refs([&matrix[0][0], &matrix[0][1], &matrix[0][2], &matrix[0][3]])?,
-        matrix4_signed_axis_row_refs([&matrix[1][0], &matrix[1][1], &matrix[1][2], &matrix[1][3]])?,
-        matrix4_signed_axis_row_refs([&matrix[2][0], &matrix[2][1], &matrix[2][2], &matrix[2][3]])?,
-        matrix4_signed_axis_row_refs([&matrix[3][0], &matrix[3][1], &matrix[3][2], &matrix[3][3]])?,
-    ];
-    let mut used_columns = 0_u8;
-    for axis in rows {
-        let bit = 1_u8 << axis.index();
-        if used_columns & bit != 0 {
-            return None;
-        }
-        used_columns |= bit;
-    }
-    (used_columns == 0b1111).then_some(rows)
-}
-
-#[inline]
 fn matrix3_exact_rational_uniform_scale(matrix: &[[Real; 3]; 3], is_diagonal: bool) -> bool {
     if !is_diagonal {
         return false;
@@ -347,35 +277,6 @@ fn matrix3_exact_rational_uniform_scale(matrix: &[[Real; 3]; 3], is_diagonal: bo
 
 #[inline]
 fn matrix4_exact_rational_uniform_scale(matrix: &[[Real; 4]; 4], is_diagonal: bool) -> bool {
-    if !is_diagonal {
-        return false;
-    }
-    exact_rational_diagonal_entries_equal([
-        &matrix[0][0],
-        &matrix[1][1],
-        &matrix[2][2],
-        &matrix[3][3],
-    ])
-}
-
-#[inline]
-fn matrix3_exact_rational_uniform_scale_assuming_size<const N: usize>(
-    matrix: &[[Real; N]; N],
-    is_diagonal: bool,
-) -> bool {
-    debug_assert_eq!(N, 3);
-    if !is_diagonal {
-        return false;
-    }
-    exact_rational_diagonal_entries_equal([&matrix[0][0], &matrix[1][1], &matrix[2][2]])
-}
-
-#[inline]
-fn matrix4_exact_rational_uniform_scale_assuming_size<const N: usize>(
-    matrix: &[[Real; N]; N],
-    is_diagonal: bool,
-) -> bool {
-    debug_assert_eq!(N, 4);
     if !is_diagonal {
         return false;
     }
@@ -2926,180 +2827,77 @@ fn matrix4_facts(matrix: &[[Real; 4]; 4]) -> Matrix4Facts {
     }
 }
 
-#[inline]
-fn matrix3_facts_assuming_const3<const N: usize>(matrix: &[[Real; N]; N]) -> Matrix3Facts {
-    // `transform_vector_rhs_ref` is const-generic, so Rust cannot narrow `N`
-    // from the surrounding `N == 3` branch enough to call `matrix3_facts`.
-    // Keep this bridge local to that wrapper and mirror the fixed-size fact
-    // scan without adding an allocation or a temporary matrix copy.
-    debug_assert_eq!(N, 3);
-    let m00_one = matrix[0][0].definitely_one();
-    let m01_zero = matrix[0][1].definitely_zero();
-    let m02_zero = matrix[0][2].definitely_zero();
-    let m10_zero = matrix[1][0].definitely_zero();
-    let m11_one = matrix[1][1].definitely_one();
-    let m12_zero = matrix[1][2].definitely_zero();
-    let m20_zero = matrix[2][0].definitely_zero();
-    let m21_zero = matrix[2][1].definitely_zero();
-    let m22_one = matrix[2][2].definitely_one();
-
-    let linear_is_diagonal = m01_zero && m10_zero;
-    let is_diagonal = m01_zero && m02_zero && m10_zero && m12_zero && m20_zero && m21_zero;
-    let is_identity = is_diagonal && m00_one && m11_one && m22_one;
-    let is_affine = m20_zero && m21_zero && m22_one;
-    let is_upper_triangular = m10_zero && m20_zero && m21_zero;
-    let is_lower_triangular = m01_zero && m02_zero && m12_zero;
-    let is_affine_translation = is_affine && m00_one && m11_one && linear_is_diagonal;
-    let exact = crate::kernels::exact_real_set_facts(
-        (0..3).flat_map(|row| (0..3).map(move |col| &matrix[row][col])),
-    );
-    let (zero_mask, row_zero_masks, column_zero_masks) =
-        matrix_zero_masks_assuming_size::<N, 3>(matrix);
-    let one_mask = matrix_one_mask_assuming_size::<N, 3>(matrix);
-    let transform_kind = matrix3_transform_kind(
-        is_identity,
-        is_affine,
-        is_affine_translation,
-        linear_is_diagonal,
-    );
-    let public = Matrix3StructuralFacts {
-        exact,
-        symbolic_dependencies: matrix_symbolic_dependency_mask_assuming_size::<N, 3>(matrix),
-        zero_mask,
-        one_mask,
-        row_zero_masks,
-        column_zero_masks,
-        is_identity,
-        is_diagonal,
-        is_exact_rational_uniform_scale: matrix3_exact_rational_uniform_scale_assuming_size(
-            matrix,
-            is_diagonal,
-        ),
-        is_upper_triangular,
-        is_lower_triangular,
-        is_affine,
-        is_affine_translation,
-        transform_kind,
-    };
-
-    Matrix3Facts {
-        public,
-        exact,
-        is_identity,
-        is_diagonal,
-        is_upper_triangular,
-        is_lower_triangular,
-        linear_is_diagonal,
-        is_affine,
-        is_affine_translation,
-    }
+#[derive(Clone, Copy)]
+struct Matrix3TransformDispatchFacts {
+    is_identity: bool,
+    is_diagonal: bool,
 }
 
 #[inline]
-fn matrix4_facts_assuming_const4<const N: usize>(matrix: &[[Real; N]; N]) -> Matrix4Facts {
-    // Same const-generic bridge as the 3x3 version. It preserves the one-scan
-    // transform dispatch shape without forcing a heap allocation or copying
-    // into a fixed-size temporary just to satisfy the type checker.
+fn matrix3_transform_dispatch_facts<const N: usize>(
+    matrix: &[[Real; N]; N],
+) -> Matrix3TransformDispatchFacts {
+    debug_assert_eq!(N, 3);
+    let is_diagonal = matrix[0][1].definitely_zero()
+        && matrix[0][2].definitely_zero()
+        && matrix[1][0].definitely_zero()
+        && matrix[1][2].definitely_zero()
+        && matrix[2][0].definitely_zero()
+        && matrix[2][1].definitely_zero();
+    let is_identity = is_diagonal
+        && matrix[0][0].definitely_one()
+        && matrix[1][1].definitely_one()
+        && matrix[2][2].definitely_one();
+    Matrix3TransformDispatchFacts {
+        is_identity,
+        is_diagonal,
+    }
+}
+
+#[derive(Clone, Copy)]
+struct Matrix4TransformDispatchFacts {
+    is_identity: bool,
+    is_diagonal: bool,
+    is_affine: bool,
+    linear_is_diagonal: bool,
+    direction_linear_is_diagonal: bool,
+    translation_xyz_zero: [bool; 3],
+}
+
+#[inline]
+fn matrix4_transform_dispatch_facts<const N: usize>(
+    matrix: &[[Real; N]; N],
+) -> Matrix4TransformDispatchFacts {
     debug_assert_eq!(N, 4);
-    let m00_one = matrix[0][0].definitely_one();
-    let m01_zero = matrix[0][1].definitely_zero();
-    let m02_zero = matrix[0][2].definitely_zero();
-    let m03_zero = matrix[0][3].definitely_zero();
-    let m10_zero = matrix[1][0].definitely_zero();
-    let m11_one = matrix[1][1].definitely_one();
-    let m12_zero = matrix[1][2].definitely_zero();
-    let m13_zero = matrix[1][3].definitely_zero();
-    let m20_zero = matrix[2][0].definitely_zero();
-    let m21_zero = matrix[2][1].definitely_zero();
-    let m22_one = matrix[2][2].definitely_one();
-    let m23_zero = matrix[2][3].definitely_zero();
-    let m30_zero = matrix[3][0].definitely_zero();
-    let m31_zero = matrix[3][1].definitely_zero();
-    let m32_zero = matrix[3][2].definitely_zero();
-    let m33_one = matrix[3][3].definitely_one();
-    let is_definitely_dense_for_inverse = matches!(matrix[1][0].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[0][1].zero_status(), ZeroStatus::NonZero)
-        && matches!(matrix[3][0].zero_status(), ZeroStatus::NonZero);
-
-    let linear_is_diagonal = m01_zero && m02_zero && m10_zero && m12_zero && m20_zero && m21_zero;
-    let direction_linear_is_diagonal = linear_is_diagonal && m30_zero && m31_zero && m32_zero;
-    let is_diagonal = m01_zero
-        && m02_zero
-        && m03_zero
-        && m10_zero
-        && m12_zero
-        && m13_zero
-        && m20_zero
-        && m21_zero
-        && m23_zero
-        && m30_zero
-        && m31_zero
-        && m32_zero;
-    let is_upper_triangular = m10_zero && m20_zero && m30_zero && m21_zero && m31_zero && m32_zero;
-    let is_lower_triangular = m01_zero && m02_zero && m03_zero && m12_zero && m13_zero && m23_zero;
-    let is_identity = is_diagonal && m00_one && m11_one && m22_one && m33_one;
-    let is_affine = m30_zero && m31_zero && m32_zero && m33_one;
-    let is_affine_translation = is_affine && m00_one && m11_one && m22_one && linear_is_diagonal;
-    let affine_linear_diagonal_is_definitely_nonzero = if true {
-        matches!(matrix[0][0].zero_status(), ZeroStatus::NonZero)
-            && matches!(matrix[1][1].zero_status(), ZeroStatus::NonZero)
-            && matches!(matrix[2][2].zero_status(), ZeroStatus::NonZero)
-    } else {
-        false
-    };
-    let exact = crate::kernels::exact_real_set_facts(
-        (0..4).flat_map(|row| (0..4).map(move |col| &matrix[row][col])),
-    );
-    let (zero_mask, row_zero_masks, column_zero_masks) =
-        matrix_zero_masks_assuming_size::<N, 4>(matrix);
-    let one_mask = matrix_one_mask_assuming_size::<N, 4>(matrix);
-    let translation_xyz_zero = [m03_zero, m13_zero, m23_zero];
-    let signed_permutation_rows = matrix4_signed_permutation_rows_assuming_size(matrix);
-    let transform_kind = matrix4_transform_kind(
-        is_identity,
-        is_affine,
-        is_affine_translation,
-        linear_is_diagonal,
-        signed_permutation_rows,
-    );
-    let public = Matrix4StructuralFacts {
-        exact,
-        symbolic_dependencies: matrix_symbolic_dependency_mask_assuming_size::<N, 4>(matrix),
-        zero_mask,
-        one_mask,
-        row_zero_masks,
-        column_zero_masks,
+    let linear_is_diagonal = matrix[0][1].definitely_zero()
+        && matrix[0][2].definitely_zero()
+        && matrix[1][0].definitely_zero()
+        && matrix[1][2].definitely_zero()
+        && matrix[2][0].definitely_zero()
+        && matrix[2][1].definitely_zero();
+    let bottom_xyz_zero = matrix[3][0].definitely_zero()
+        && matrix[3][1].definitely_zero()
+        && matrix[3][2].definitely_zero();
+    let translation_xyz_zero = [
+        matrix[0][3].definitely_zero(),
+        matrix[1][3].definitely_zero(),
+        matrix[2][3].definitely_zero(),
+    ];
+    let is_diagonal =
+        linear_is_diagonal && bottom_xyz_zero && translation_xyz_zero.iter().all(|zero| *zero);
+    let is_identity = is_diagonal
+        && matrix[0][0].definitely_one()
+        && matrix[1][1].definitely_one()
+        && matrix[2][2].definitely_one()
+        && matrix[3][3].definitely_one();
+    let is_affine = bottom_xyz_zero && matrix[3][3].definitely_one();
+    Matrix4TransformDispatchFacts {
         is_identity,
         is_diagonal,
-        is_exact_rational_uniform_scale: matrix4_exact_rational_uniform_scale_assuming_size(
-            matrix,
-            is_diagonal,
-        ),
-        is_upper_triangular,
-        is_lower_triangular,
         is_affine,
-        is_affine_translation,
         linear_is_diagonal,
-        direction_linear_is_diagonal,
-        signed_permutation_rows,
+        direction_linear_is_diagonal: linear_is_diagonal && bottom_xyz_zero,
         translation_xyz_zero,
-        transform_kind,
-    };
-
-    Matrix4Facts {
-        public,
-        exact,
-        is_identity,
-        is_diagonal,
-        is_upper_triangular,
-        is_lower_triangular,
-        linear_is_diagonal,
-        direction_linear_is_diagonal,
-        is_definitely_dense_for_inverse,
-        translation_xyz_zero,
-        is_affine,
-        is_affine_translation,
-        affine_linear_diagonal_is_definitely_nonzero,
     }
 }
 
@@ -10732,11 +10530,10 @@ fn multiply_arrays4_ref(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real
 
 fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real; N]) -> [Real; N] {
     if N == 4 {
-        // For the N==4 case, reuse one structural scan for identity, diagonal,
-        // and direction-fast-path predicates. This keeps 4x4 transform kernels
-        // on the same fact-on-demand policy used by division/inverse dispatch.
-        // Reuse object facts before entering scalar arithmetic.
-        let left_facts = matrix4_facts_assuming_const4(left);
+        // Probe only the identity, diagonal, affine, and translation facts read
+        // below. Full public matrix reports are intentionally left to explicit
+        // `structural_facts` and prepared-handle boundaries.
+        let left_facts = matrix4_transform_dispatch_facts(left);
         if left_facts.is_identity {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
@@ -10804,7 +10601,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
                     });
                 }
                 // Reuse translation-column zero facts collected by
-                // `matrix4_facts_assuming_const4`; only m33 is not part of the
+                // `matrix4_transform_dispatch_facts`; only m33 is not part of the
                 // retained xyz translation facts. This avoids re-querying the
                 // top three translation entries on point paths.
                 let translation_is_zero: [bool; N] = from_fn(|row| {
@@ -10856,13 +10653,12 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
             }
         })
     } else {
-        // Reuse the retained 3×3 structural facts for the smaller transform
-        // branch as well; this keeps the probe count aligned with other fixed-size
-        // kernels and avoids duplicated definite-zero checks in this hot path.
-        // As with 4×4 transforms, we prioritize fact-on-demand structural
-        // classification before arithmetic.
+        // Probe only the identity/diagonal facts used by this transform. Full
+        // public matrix facts remain available through `structural_facts`, but
+        // building exact-set summaries and masks here made dense transforms pay
+        // for metadata they never read.
         // Reference: Golub and Van Loan, *Matrix Computations* (4th ed.).
-        let left_facts = matrix3_facts_assuming_const3(left);
+        let left_facts = matrix3_transform_dispatch_facts(left);
         if left_facts.is_identity {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
