@@ -1460,26 +1460,116 @@ impl Rational {
     pub(crate) fn matrix4_inverse_components(
         matrix: [[&Self; 4]; 4],
     ) -> Result<[[Self; 4]; 4], crate::Problem> {
-        Self::matrix4_inverse_components_impl::<false>(matrix)
+        Self::matrix4_inverse_components_impl(matrix)
     }
 
     /// Invert a fixed 4x4 matrix after the caller classified every component dyadic.
     pub(crate) fn matrix4_inverse_components_known_dyadic(
         matrix: [[&Self; 4]; 4],
     ) -> Result<[[Self; 4]; 4], crate::Problem> {
-        Self::matrix4_inverse_components_impl::<true>(matrix)
+        // Lift each row onto its smallest integer grid. If B = D A for the
+        // diagonal power-of-two scale D, then A^-1 = B^-1 D. This keeps every
+        // minor fraction-free and avoids allocating cache-bearing Rational
+        // nodes until the sixteen final adjugate/determinant quotients.
+        let row_shifts: [u64; 4] = matrix.map(|row| {
+            row.into_iter()
+                .map(|value| {
+                    value
+                        .dyadic_denominator_shift()
+                        .expect("known-dyadic matrix received a non-dyadic component")
+                })
+                .max()
+                .expect("matrix rows are nonempty")
+        });
+        let m: [[BigInt; 4]; 4] = core::array::from_fn(|row| {
+            core::array::from_fn(|column| {
+                let value = matrix[row][column];
+                let denominator_shift = value
+                    .dyadic_denominator_shift()
+                    .expect("known-dyadic matrix received a non-dyadic component");
+                let lift = usize::try_from(row_shifts[row] - denominator_shift)
+                    .expect("dyadic matrix row shift fits usize");
+                BigInt::from_biguint(value.sign, value.numerator.clone()) << lift
+            })
+        });
+        let difference = |a: &BigInt, b: &BigInt, c: &BigInt, d: &BigInt| a * b - c * d;
+        let s = [
+            difference(&m[0][0], &m[1][1], &m[1][0], &m[0][1]),
+            difference(&m[0][0], &m[1][2], &m[1][0], &m[0][2]),
+            difference(&m[0][0], &m[1][3], &m[1][0], &m[0][3]),
+            difference(&m[0][1], &m[1][2], &m[1][1], &m[0][2]),
+            difference(&m[0][1], &m[1][3], &m[1][1], &m[0][3]),
+            difference(&m[0][2], &m[1][3], &m[1][2], &m[0][3]),
+        ];
+        let c = [
+            difference(&m[2][0], &m[3][1], &m[3][0], &m[2][1]),
+            difference(&m[2][0], &m[3][2], &m[3][0], &m[2][2]),
+            difference(&m[2][0], &m[3][3], &m[3][0], &m[2][3]),
+            difference(&m[2][1], &m[3][2], &m[3][1], &m[2][2]),
+            difference(&m[2][1], &m[3][3], &m[3][1], &m[2][3]),
+            difference(&m[2][2], &m[3][3], &m[3][2], &m[2][3]),
+        ];
+        let determinant = &s[0] * &c[5] - &s[1] * &c[4]
+            + &s[2] * &c[3]
+            + &s[3] * &c[2]
+            - &s[4] * &c[1]
+            + &s[5] * &c[0];
+        let (determinant_sign, determinant) = determinant.into_parts();
+        if determinant_sign == NoSign {
+            return Err(crate::Problem::DivideByZero);
+        }
+        let cofactor = |positive_terms: [bool; 3], terms: [[&BigInt; 2]; 3], column: usize| {
+            let mut value = BigInt::ZERO;
+            for index in 0..3 {
+                let term = terms[index][0] * terms[index][1];
+                if positive_terms[index] {
+                    value += term;
+                } else {
+                    value -= term;
+                }
+            }
+            if determinant_sign == Minus {
+                value = -value;
+            }
+            value <<= usize::try_from(row_shifts[column]).expect("dyadic row shift fits usize");
+            Self::from_bigint_fraction(value, determinant.clone())
+                .expect("matrix determinant is nonzero")
+        };
+        crate::trace_dispatch!("rational", "matrix4-inverse", "row-scaled-dyadic-integer");
+        Ok([
+            [
+                cofactor([true, true, false], [[&m[1][1], &c[5]], [&m[1][3], &c[3]], [&m[1][2], &c[4]]], 0),
+                cofactor([true, false, false], [[&m[0][2], &c[4]], [&m[0][1], &c[5]], [&m[0][3], &c[3]]], 1),
+                cofactor([true, true, false], [[&m[3][1], &s[5]], [&m[3][3], &s[3]], [&m[3][2], &s[4]]], 2),
+                cofactor([true, false, false], [[&m[2][2], &s[4]], [&m[2][1], &s[5]], [&m[2][3], &s[3]]], 3),
+            ],
+            [
+                cofactor([true, false, false], [[&m[1][2], &c[2]], [&m[1][0], &c[5]], [&m[1][3], &c[1]]], 0),
+                cofactor([true, true, false], [[&m[0][0], &c[5]], [&m[0][3], &c[1]], [&m[0][2], &c[2]]], 1),
+                cofactor([true, false, false], [[&m[3][2], &s[2]], [&m[3][0], &s[5]], [&m[3][3], &s[1]]], 2),
+                cofactor([true, true, false], [[&m[2][0], &s[5]], [&m[2][3], &s[1]], [&m[2][2], &s[2]]], 3),
+            ],
+            [
+                cofactor([true, true, false], [[&m[1][0], &c[4]], [&m[1][3], &c[0]], [&m[1][1], &c[2]]], 0),
+                cofactor([true, false, false], [[&m[0][1], &c[2]], [&m[0][0], &c[4]], [&m[0][3], &c[0]]], 1),
+                cofactor([true, true, false], [[&m[3][0], &s[4]], [&m[3][3], &s[0]], [&m[3][1], &s[2]]], 2),
+                cofactor([true, false, false], [[&m[2][1], &s[2]], [&m[2][0], &s[4]], [&m[2][3], &s[0]]], 3),
+            ],
+            [
+                cofactor([true, false, false], [[&m[1][1], &c[1]], [&m[1][0], &c[3]], [&m[1][2], &c[0]]], 0),
+                cofactor([true, true, false], [[&m[0][0], &c[3]], [&m[0][2], &c[0]], [&m[0][1], &c[1]]], 1),
+                cofactor([true, false, false], [[&m[3][1], &s[1]], [&m[3][0], &s[3]], [&m[3][2], &s[0]]], 2),
+                cofactor([true, true, false], [[&m[2][0], &s[3]], [&m[2][2], &s[0]], [&m[2][1], &s[1]]], 3),
+            ],
+        ])
     }
 
-    fn matrix4_inverse_components_impl<const KNOWN_DYADIC: bool>(
+    fn matrix4_inverse_components_impl(
         matrix: [[&Self; 4]; 4],
     ) -> Result<[[Self; 4]; 4], crate::Problem> {
         let m = matrix;
         let difference = |a: &Self, b: &Self, c: &Self, d: &Self| {
-            if KNOWN_DYADIC {
-                Self::signed_product_sum_known_dyadic([true, false], [[a, b], [c, d]])
-            } else {
-                Self::signed_product_sum2([true, false], [[a, b], [c, d]])
-            }
+            Self::signed_product_sum2([true, false], [[a, b], [c, d]])
         };
         let s = [
             difference(m[0][0], m[1][1], m[1][0], m[0][1]),
@@ -1506,18 +1596,10 @@ impl Rational {
             [&s[5], &c[0]],
         ];
         let determinant_signs = [true, false, true, true, false, true];
-        let determinant = if KNOWN_DYADIC {
-            Self::signed_product_sum_known_dyadic(determinant_signs, determinant_terms)
-        } else {
-            Self::signed_product_sum(determinant_signs, determinant_terms)
-        };
+        let determinant = Self::signed_product_sum(determinant_signs, determinant_terms);
         let scale = determinant.inverse()?;
         let cofactor = |positive_terms: [bool; 3], terms: [[&Self; 2]; 3]| {
-            let value = if KNOWN_DYADIC {
-                Self::signed_product_sum_known_dyadic(positive_terms, terms)
-            } else {
-                Self::signed_product_sum(positive_terms, terms)
-            };
+            let value = Self::signed_product_sum(positive_terms, terms);
             value * &scale
         };
         crate::trace_dispatch!("rational", "matrix4-inverse", "aggregate-cofactor");

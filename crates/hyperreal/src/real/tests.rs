@@ -2736,6 +2736,13 @@ mod tests {
             [&matrix[3][0], &matrix[3][1], &matrix[3][2], &matrix[3][3]],
         ])
         .unwrap();
+        let actual_dyadic = Real::exact_rational_matrix4_inverse_known_dyadic([
+            [&matrix[0][0], &matrix[0][1], &matrix[0][2], &matrix[0][3]],
+            [&matrix[1][0], &matrix[1][1], &matrix[1][2], &matrix[1][3]],
+            [&matrix[2][0], &matrix[2][1], &matrix[2][2], &matrix[2][3]],
+            [&matrix[3][0], &matrix[3][1], &matrix[3][2], &matrix[3][3]],
+        ])
+        .unwrap();
         let expected = [
             [q(1, 6), q(-1, 18), q(5, 18), q(-5, 18)],
             [q(-7, 33), q(10, 99), q(-5, 99), q(23, 99)],
@@ -2743,6 +2750,50 @@ mod tests {
             [q(29, 66), q(-65, 198), q(-17, 198), q(-1, 198)],
         ];
         assert_eq!(actual, expected);
+        assert_eq!(actual_dyadic, expected);
+
+        let scaled_upper = [
+            [q(1, 2), q(1, 1), q(0, 1), q(0, 1)],
+            [q(0, 1), q(1, 4), q(1, 1), q(0, 1)],
+            [q(0, 1), q(0, 1), q(1, 8), q(1, 1)],
+            [q(0, 1), q(0, 1), q(0, 1), q(1, 16)],
+        ];
+        let scaled_actual = Real::exact_rational_matrix4_inverse_known_dyadic([
+            [
+                &scaled_upper[0][0],
+                &scaled_upper[0][1],
+                &scaled_upper[0][2],
+                &scaled_upper[0][3],
+            ],
+            [
+                &scaled_upper[1][0],
+                &scaled_upper[1][1],
+                &scaled_upper[1][2],
+                &scaled_upper[1][3],
+            ],
+            [
+                &scaled_upper[2][0],
+                &scaled_upper[2][1],
+                &scaled_upper[2][2],
+                &scaled_upper[2][3],
+            ],
+            [
+                &scaled_upper[3][0],
+                &scaled_upper[3][1],
+                &scaled_upper[3][2],
+                &scaled_upper[3][3],
+            ],
+        ])
+        .unwrap();
+        assert_eq!(
+            scaled_actual,
+            [
+                [q(2, 1), q(-8, 1), q(64, 1), q(-1024, 1)],
+                [q(0, 1), q(4, 1), q(-32, 1), q(512, 1)],
+                [q(0, 1), q(0, 1), q(8, 1), q(-128, 1)],
+                [q(0, 1), q(0, 1), q(0, 1), q(16, 1)],
+            ]
+        );
 
         let singular = [
             [Real::from(1), Real::from(2), Real::from(3), Real::from(4)],
@@ -2779,6 +2830,62 @@ mod tests {
             ]),
             Err(Problem::DivideByZero)
         );
+        assert_eq!(
+            Real::exact_rational_matrix4_inverse_known_dyadic([
+                [
+                    &singular[0][0],
+                    &singular[0][1],
+                    &singular[0][2],
+                    &singular[0][3]
+                ],
+                [
+                    &singular[1][0],
+                    &singular[1][1],
+                    &singular[1][2],
+                    &singular[1][3]
+                ],
+                [
+                    &singular[2][0],
+                    &singular[2][1],
+                    &singular[2][2],
+                    &singular[2][3]
+                ],
+                [
+                    &singular[3][0],
+                    &singular[3][1],
+                    &singular[3][2],
+                    &singular[3][3]
+                ],
+            ]),
+            Err(Problem::DivideByZero)
+        );
+    }
+
+    #[test]
+    fn row_scaled_dyadic_matrix4_inverse_matches_general_exact_kernel() {
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        for _ in 0..128 {
+            let matrix: [[Real; 4]; 4] = core::array::from_fn(|_| {
+                core::array::from_fn(|_| {
+                    state = state
+                        .wrapping_mul(6_364_136_223_846_793_005)
+                        .wrapping_add(1_442_695_040_888_963_407);
+                    let numerator = i64::try_from(state % 17).unwrap() - 8;
+                    let denominator = 1_u64 << u32::try_from((state >> 32) % 7).unwrap();
+                    Real::new(Rational::fraction(numerator, denominator).unwrap())
+                })
+            });
+            let refs = [
+                [&matrix[0][0], &matrix[0][1], &matrix[0][2], &matrix[0][3]],
+                [&matrix[1][0], &matrix[1][1], &matrix[1][2], &matrix[1][3]],
+                [&matrix[2][0], &matrix[2][1], &matrix[2][2], &matrix[2][3]],
+                [&matrix[3][0], &matrix[3][1], &matrix[3][2], &matrix[3][3]],
+            ];
+            assert_eq!(
+                Real::exact_rational_matrix4_inverse_known_dyadic(refs),
+                Real::exact_rational_matrix4_inverse_known_exact(refs)
+            );
+        }
     }
 
     #[test]
