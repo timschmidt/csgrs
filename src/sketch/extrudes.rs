@@ -444,7 +444,7 @@ impl Profile {
             } else {
                 // Finite projection data is not Profile's CAD source of truth.
                 // Linear extrusion emits nothing when native
-                // `Region2`/`CurveString2` topology is absent.
+                // `CurveRegion2`/`CurveString2` topology is absent.
                 Mesh::empty()
             };
         if cache_on_completion && !mesh.polygons.is_empty() {
@@ -466,7 +466,7 @@ impl Profile {
     /// Extrude native hypercurve topology without routing through a separate 2D
     /// backend type.
     ///
-    /// Filled `Region2` contours receive caps and side walls; open
+    /// Filled `CurveRegion2` contours receive caps and side walls; open
     /// `CurveString2` wires are independent ruled side surfaces. Hypercurve
     /// contours are approximated only at the mesh boundary, while cap
     /// triangulation is delegated to `hypercurve::triangulate_finite_rings`,
@@ -1197,7 +1197,7 @@ impl Profile {
     /// stitches side walls, and caps open ends.
     ///
     /// Closed area profiles are read from Profile's native hypercurve
-    /// [`Region2`](hypercurve::Region2) boundary rings and capped when the path
+    /// [`CurveRegion2`](hypercurve::CurveRegion2) boundary rings and capped when the path
     /// is open. Native [`CurveString2`](hypercurve::CurveString2) wires are
     /// swept as independent open profile curves without caps. The path frames
     /// and mesh vertices are finite output, while the swept profile topology

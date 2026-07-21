@@ -7031,7 +7031,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Convert a Profile into a Mesh.
     ///
     /// Closed area sketches are consumed only from hypercurve-owned finite
-    /// [`hypercurve::FiniteRegionProfile2`] projections. `Region2` and
+    /// [`hypercurve::FiniteRegionProfile2`] projections. `CurveRegion2` and
     /// `CurveString2` are the CAD source of truth. The grouping follows the
     /// point-in-polygon ownership structure surveyed by Hormann and Agathos,
     /// "The point in polygon problem for arbitrary polygons," *Computational

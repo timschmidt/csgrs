@@ -3,7 +3,7 @@
 use crate::hyper_math::{Real, hreal_from_f64, hreal_gt_f64, hreal_sign};
 use crate::sketch::Profile;
 use hashbrown::HashMap;
-use hypercurve::{Contour2, Point2, Region2};
+use hypercurve::{Contour2, CurvePolicy, CurveRegion2, Point2};
 use hyperlimit::{real_max, real_min};
 use hyperreal::RealSign;
 
@@ -34,7 +34,7 @@ impl Profile {
     /// values and influence distances are evaluated with hyperreal squared
     /// point distance before exporting finite samples to the marching-squares
     /// boundary. Closed contour loops are promoted directly into
-    /// `hypercurve::Region2`, so CAD topology is carried by hyper geometry
+    /// `hypercurve::CurveRegion2`, so CAD topology is carried by hyper geometry
     /// instead of by a temporary finite polygon. See Wyvill, McPheeters, and
     /// Wyvill, "Data structure for soft objects", *The Visual Computer* 2(4),
     /// 1986, DOI: 10.1007/BF01900346; Lorensen and Cline, "Marching Cubes: A
@@ -221,7 +221,7 @@ impl Profile {
             }
         }
 
-        // 4) Stitch line segments and promote closed loops directly to Region2.
+        // 4) Stitch line segments and promote closed loops directly to CurveRegion2.
         let stitched = stitch(&contours);
         let material = stitched
             .iter()
@@ -239,7 +239,12 @@ impl Profile {
             return Profile::empty();
         }
 
-        Profile::from_region(Region2::from_material_contours(material))
+        let region = CurveRegion2::try_from_native_material_contours(
+            material,
+            &CurvePolicy::certified(),
+        )
+        .unwrap_or_else(|_| CurveRegion2::empty());
+        Profile::from_curve_region(region)
     }
 }
 

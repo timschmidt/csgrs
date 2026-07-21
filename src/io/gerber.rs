@@ -17,8 +17,8 @@ use gerber_types::{
     Rectangular, Rotation, Scaling, StepAndRepeat, Unit, ZeroOmission,
 };
 use hypercurve::{
-    Classification, Contour2, CurveString2, FiniteProjectionOptions, FiniteRegionProfile2,
-    Point2, Segment2,
+    Classification, Contour2, CurvePolicy, CurveRegion2, CurveString2,
+    FiniteProjectionOptions, FiniteRegionProfile2, Point2, Segment2,
 };
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -31,7 +31,7 @@ use super::IoError;
 /// Finite XY coordinate used only while reading or writing Gerber records.
 ///
 /// This is deliberately a local file-format boundary type, not CAD topology.
-/// Imported coordinates are promoted into `hypercurve::Region2` and
+/// Imported coordinates are promoted into `hypercurve::CurveRegion2` and
 /// `CurveString2` as soon as enough structure is known; exported coordinates
 /// are lossy projections from hypercurve objects. Keeping primitive numbers at
 /// the format boundary follows Yap, "Towards Exact Geometric Computation,"
@@ -188,7 +188,7 @@ impl ToGerber for Profile {
         ];
 
         // Closed-region export consumes the native hypercurve boundary directly.
-        // Supported boundary input is promoted into Region2/CurveString2 when
+        // Supported boundary input is promoted into CurveRegion2/CurveString2 when
         // sketches are constructed. Gerber coordinates are serialization output,
         // while geometric classification stays with hyper geometry; that split
         // follows Yap, "Towards Exact Geometric Computation," Computational
@@ -724,9 +724,9 @@ impl RegionBuilder {
                 })
             })
             .collect::<Result<Vec<_>, _>>()?;
-        let region = match hypercurve::Region2::from_boundary_contours(
+        let region = match CurveRegion2::try_from_native_boundary_contours(
             contours,
-            &hypercurve::CurvePolicy::certified(),
+            &CurvePolicy::certified(),
         )
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
@@ -740,14 +740,14 @@ impl RegionBuilder {
                 });
             },
         };
-        Ok(Profile::from_region(region))
+        Ok(Profile::from_curve_region(region))
     }
 }
 
 /// Emit native hypercurve region profiles as Gerber regions grouped by
 /// material-contour ownership.
 ///
-/// Gerber regions are finite serialization records; `Region2` remains the
+/// Gerber regions are finite serialization records; `CurveRegion2` remains the
 /// source of topology. Grouping holes by their containing material contour
 /// follows the point-in-polygon classification family surveyed by Hormann and
 /// Agathos, "The point in polygon problem for arbitrary polygons,"
@@ -1194,12 +1194,7 @@ fn flash_to_sketch(
 }
 
 fn add_aperture_hole(outer: Profile, hole: Profile) -> Profile {
-    let mut holes = outer.as_region().hole_contours().to_vec();
-    holes.extend(hole.as_region().material_contours().iter().cloned());
-    Profile::from_region(hypercurve::Region2::new(
-        outer.as_region().material_contours().to_vec(),
-        holes,
-    ))
+    outer.difference(&hole)
 }
 
 impl ApertureTransform {
@@ -1961,7 +1956,7 @@ mod tests {
 
         let parsed = Profile::from_gerber(gerber).unwrap();
         assert_eq!(parsed.material_contour_count(), 1);
-        assert!(!parsed.as_region().is_empty());
+        assert!(!parsed.as_curve_region().is_empty());
 
         assert_bounds_close(&parsed, r(0.0), r(0.0), r(4.0), r(3.0), r(1.0e-9));
     }
@@ -2009,8 +2004,8 @@ mod tests {
         let gerber = b"G04 full circle*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X1000000Y0I-1000000J0D01*\nM02*\n";
 
         let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_eq!(parsed.as_region().material_contours().len(), 1);
-        assert_eq!(parsed.as_region().hole_contours().len(), 1);
+        assert_eq!(parsed.material_contour_count(), 1);
+        assert_eq!(parsed.hole_contour_count(), 1);
         assert_bounds_close(&parsed, r(-1.1), r(-1.1), r(1.1), r(1.1), r(0.01));
     }
 
@@ -2078,8 +2073,8 @@ mod tests {
         let gerber = b"G04 aperture hole*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,4X2*%\nD10*\nX0Y0D03*\nM02*\n";
 
         let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_eq!(parsed.as_region().material_contours().len(), 1);
-        assert_eq!(parsed.as_region().hole_contours().len(), 1);
+        assert_eq!(parsed.material_contour_count(), 1);
+        assert_eq!(parsed.hole_contour_count(), 1);
         let area = native_region_area(&parsed);
         assert!(
             (area.clone() - (pi() * r(3.0))).abs() < r(0.05),

@@ -1,7 +1,7 @@
 //! Native hypercurve Profile tests.
 //!
 //! These tests intentionally avoid the removed finite compatibility cache.
-//! `Profile` should compose CAD from `hypercurve::Region2` and
+//! `Profile` should compose CAD from `hypercurve::CurveRegion2` and
 //! `hypercurve::CurveString2`, with primitive `f64` coordinates appearing only
 //! at API and file-format boundaries.
 
@@ -11,11 +11,11 @@ use crate::io::gerber::ToGerber;
 #[cfg(feature = "svg-io")]
 use crate::io::svg::ToSVG;
 #[cfg(feature = "offset")]
-use hypercurve::{BooleanOp, CurvePolicy, FillRule};
+use hypercurve::{BezierFlatteningOptions, BooleanOp};
 use hypercurve::{
-    Classification, Contour2, CubicBezier2, Curve2, CurveFamily2, CurvePath2, CurveRegion2,
-    CurveString2, FiniteProjectionOptions, LineSeg2, NurbsCurve2, Point2, RationalBezier2,
-    RationalQuadraticBezier2, Region2, finite_ring_signed_area,
+    Classification, Contour2, CubicBezier2, Curve2, CurveFamily2, CurvePath2, CurvePolicy,
+    CurveRegion2, CurveString2, FiniteProjectionOptions, LineSeg2, NurbsCurve2, Point2,
+    RationalBezier2, RationalQuadraticBezier2, finite_ring_signed_area,
 };
 
 #[cfg(feature = "offset")]
@@ -35,10 +35,11 @@ fn profile_area_sum(sketch: &Profile) -> Real {
 
 #[test]
 fn sketch_owns_region_and_wires_as_hypercurve_types() {
-    let region = Profile::rectangle(r(2.0), r(1.0)).as_region().clone();
+    let region = Profile::rectangle(r(2.0), r(1.0)).as_curve_region().clone();
     let wire = CurveString2::from_finite_line_string(&[[3.0, 0.0], [4.0, 1.0]]).unwrap();
-    let sketch = Profile::from_region_and_wires(region, vec![wire]);
+    let sketch = Profile::from_curve_region_and_wires(region, vec![wire]);
 
+    assert_eq!(sketch.region_geometry(), sketch.as_curve_region());
     assert_eq!(sketch.material_contour_count(), 1);
     assert_eq!(sketch.wires().len(), 1);
     assert!(sketch.contains_xy(hr(1.0), hr(0.5)).unwrap());
@@ -79,22 +80,18 @@ fn profile_preserves_higher_order_region_and_path_carriers() {
     .unwrap();
     let profile = Profile::from_curve_region_and_paths(region, vec![open_path]);
 
-    assert!(matches!(
-        profile.region_geometry(),
-        crate::sketch::ProfileRegionRef::Curved(_)
-    ));
-    assert!(profile.as_curve_region().is_some());
+    assert_eq!(profile.region_geometry(), profile.as_curve_region());
     assert_eq!(profile.curve_paths().len(), 1);
     assert_eq!(profile.contains_xy(Real::from(2), Real::from(2)), Some(true));
     assert_eq!(profile.region_profiles().len(), 1);
     assert!(!profile.triangulate().is_empty());
     assert!(!profile.extrude(Real::one(), ()).polygons.is_empty());
     let moved = profile.translate(Real::from(2), Real::from(3), Real::zero());
-    assert!(moved.as_curve_region().is_some());
+    assert!(!moved.as_curve_region().is_empty());
     assert_eq!(moved.contains_xy(Real::from(4), Real::from(5)), Some(true));
     assert_eq!(moved.curve_paths().len(), 1);
     let scaled = profile.scale(Real::from(2), Real::from(3), Real::one());
-    assert!(scaled.as_curve_region().is_some());
+    assert!(!scaled.as_curve_region().is_empty());
     assert_eq!(scaled.contains_xy(Real::from(4), Real::from(6)), Some(true));
     assert_eq!(scaled.curve_paths().len(), 1);
     let reflected = profile.scale(Real::from(-1), Real::one(), Real::one());
@@ -105,7 +102,6 @@ fn profile_preserves_higher_order_region_and_path_carriers() {
     assert!(
         profile
             .as_curve_region()
-            .unwrap()
             .fragment_provenance()
             .unwrap()
             .iter()
@@ -237,7 +233,7 @@ fn mixed_boolean_promotes_line_arc_region_without_demoting_curves() {
 
     let union = curved.try_union(&square).unwrap();
 
-    assert!(union.as_curve_region().is_some());
+    assert!(!union.as_curve_region().is_empty());
     assert_eq!(union.contains_xy(Real::from(2), Real::from(2)), Some(true));
     assert_eq!(union.contains_xy(Real::from(11), Real::from(1)), Some(true));
 }
@@ -270,16 +266,11 @@ fn overlapping_curved_boolean_survives_projection_extrusion_and_affine_transform
 
     let difference = curved.try_difference(&cutter).unwrap();
 
-    assert!(
-        difference
-            .as_curve_region()
-            .unwrap()
-            .has_algebraic_fragments()
-    );
+    assert!(difference.as_curve_region().has_algebraic_fragments());
     assert!(!difference.region_profiles().is_empty());
     assert!(!difference.extrude(Real::one(), ()).polygons.is_empty());
     let scaled = difference.scale(Real::from(2), Real::from(3), Real::one());
-    assert!(scaled.as_curve_region().is_some());
+    assert!(!scaled.as_curve_region().is_empty());
     assert_eq!(scaled.contains_xy(Real::zero(), Real::from(3)), Some(true));
 }
 
@@ -289,9 +280,9 @@ fn primitive_profile_constructors_promote_scalars_through_hyperreal() {
     let circle = Profile::circle(r(Real::from(1)), 16);
     let triangle = Profile::right_triangle(r(2), Real::from(1));
 
-    assert!(!rectangle.as_region().is_empty());
-    assert!(!circle.as_region().is_empty());
-    assert!(!triangle.as_region().is_empty());
+    assert!(!rectangle.as_curve_region().is_empty());
+    assert!(!circle.as_curve_region().is_empty());
+    assert!(!triangle.as_curve_region().is_empty());
 }
 
 #[test]
@@ -330,10 +321,12 @@ fn region_profiles_are_hypercurve_projection_products() {
 #[test]
 fn region_area_rejects_only_exact_zero_area() {
     let tiny = Profile::rectangle(r(tolerance() * 0.25), r(tolerance() * 0.25));
-    assert!(Profile::region_has_nonzero_area(tiny.as_region()));
+    assert!(Profile::region_has_nonzero_area(tiny.as_curve_region()));
 
     let degenerate = Profile::polygon(&[[r(0.0), r(0.0)], [r(1.0), r(0.0)], [r(2.0), r(0.0)]]);
-    assert!(!Profile::region_has_nonzero_area(degenerate.as_region()));
+    assert!(!Profile::region_has_nonzero_area(
+        degenerate.as_curve_region()
+    ));
 }
 
 #[test]
@@ -346,7 +339,7 @@ fn closed_rings_become_region_topology_not_sidecar_wires() {
         [0.0, 0.0],
     ])
     .unwrap();
-    let sketch = Profile::from_region(Region2::from_material_contours(vec![contour]));
+    let sketch = Profile::from_contour(contour);
 
     assert_eq!(sketch.material_contour_count(), 1);
     assert!(sketch.wires().is_empty());
@@ -359,7 +352,7 @@ fn wire_projection_uses_curve_string_directly() {
         CurveString2::from_finite_line_string(&[[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]]).unwrap();
     let sketch = Profile::from_wires(vec![wire]);
 
-    assert!(sketch.as_region().is_empty());
+    assert!(sketch.as_curve_region().is_empty());
     assert_eq!(sketch.wires().len(), 1);
     let polylines = sketch.wire_polylines();
     assert_eq!(polylines.len(), 1);
@@ -369,8 +362,8 @@ fn wire_projection_uses_curve_string_directly() {
 #[test]
 fn transform_preserves_native_region_and_wire_topology() {
     let wire = CurveString2::from_finite_point_iter([[3.0, 0.0], [4.0, 0.0]]).unwrap();
-    let sketch = Profile::from_region_and_wires(
-        Profile::square(r(2.0)).as_region().clone(),
+    let sketch = Profile::from_curve_region_and_wires(
+        Profile::square(r(2.0)).as_curve_region().clone(),
         vec![wire],
     );
     let moved = sketch.translate(r(5.0), r(-2.0), r(0.0));
@@ -386,7 +379,7 @@ fn transform_preserves_native_region_and_wire_topology() {
     let exactly_moved =
         Profile::square(Real::one()).translate(third.clone(), Real::zero(), Real::zero());
     assert_eq!(
-        exactly_moved.as_region().material_contours()[0]
+        exactly_moved.native_contours().material_contours()[0]
             .curve_string()
             .segments()[0]
             .start()
@@ -404,6 +397,12 @@ fn booleans_regularize_overlapping_rectangles_with_hypercurve_regions() {
     let intersection = left.intersection(&right);
     let difference = left.difference(&right);
     let xor = left.xor(&right);
+
+    assert!(!union.as_curve_region().is_empty());
+    assert!(!intersection.as_curve_region().is_empty());
+    assert!(!difference.as_curve_region().is_empty());
+    assert!(!xor.as_curve_region().is_empty());
+    assert!(!union.as_curve_region().is_empty());
 
     let union_bounds = union.bounding_box();
     assert_eq!(union_bounds.mins.x, r(0.0));
@@ -438,7 +437,14 @@ fn disjoint_boolean_preserves_native_hole_roles() {
         [1.0, 1.0],
     ])
     .unwrap();
-    let holed = Profile::from_region(Region2::new(vec![outer], vec![hole]));
+    let holed = Profile::from_curve_region(
+        CurveRegion2::try_from_native_contours(
+            vec![outer],
+            vec![hole],
+            &CurvePolicy::certified(),
+        )
+        .unwrap(),
+    );
     let island = Profile::square(r(1.0)).translate(r(10.0), r(0.0), r(0.0));
 
     let union = holed.union(&island);
@@ -454,7 +460,8 @@ fn disjoint_boolean_preserves_native_hole_roles() {
 fn booleans_preserve_open_wires_without_cache_fallback() {
     let area = Profile::square(r(2.0));
     let wire = CurveString2::from_finite_point_iter([[10.0, 0.0], [11.0, 1.0]]).unwrap();
-    let mixed = Profile::from_region_and_wires(area.as_region().clone(), vec![wire]);
+    let mixed =
+        Profile::from_curve_region_and_wires(area.as_curve_region().clone(), vec![wire]);
     let other = Profile::square(r(1.0)).translate(r(0.5), r(0.5), r(0.0));
 
     let union = mixed.union(&other);
@@ -493,13 +500,13 @@ fn zero_offset_preserves_higher_order_region_and_wires() {
 
     let identity = profile.offset(Real::zero());
 
-    assert!(identity.as_curve_region().is_some());
+    assert!(!identity.as_curve_region().is_empty());
     assert_eq!(identity.curve_paths().len(), 1);
 }
 
 #[test]
 #[cfg(feature = "offset")]
-fn nonzero_higher_order_offset_is_an_explicit_error() {
+fn nonzero_higher_order_offset_requires_an_explicit_segmentation_budget() {
     let profile = Profile::from_curve_region(
         CurveRegion2::try_from_boundary_paths(&[cubic_cap_path(0)]).unwrap(),
     );
@@ -512,6 +519,40 @@ fn nonzero_higher_order_offset_is_an_explicit_error() {
         profile.try_offset_rounded(Real::one()),
         Err(crate::errors::ProfileOffsetError::HigherOrderCurves)
     ));
+
+    let options = BezierFlatteningOptions::try_new(
+        (Real::one() / Real::from(32)).unwrap(),
+        12,
+        &CurvePolicy::certified(),
+    )
+    .unwrap();
+    let segmented = profile
+        .try_offset_with_certified_segmentation(Real::one(), &options)
+        .unwrap();
+    assert!(!segmented.as_curve_region().is_empty());
+    assert!(matches!(
+        segmented
+            .as_curve_region()
+            .native_contours_fast_path(&CurvePolicy::certified())
+            .unwrap(),
+        Classification::Decided(_)
+    ));
+}
+
+#[test]
+#[cfg(feature = "offset")]
+fn promoted_curve_region_uses_its_certified_offset_fast_path() {
+    let native = Profile::square(r(2.0));
+    let promoted = native.as_curve_region().clone();
+    let profile = Profile::from_curve_region(promoted);
+
+    let grown = profile.try_offset(r(0.25)).unwrap();
+    let shrunk = profile.try_offset_rounded(r(-0.25)).unwrap();
+
+    assert!(!grown.as_curve_region().is_empty());
+    assert!(!shrunk.as_curve_region().is_empty());
+    assert!(first_profile_area(&grown) > first_profile_area(&profile));
+    assert!(first_profile_area(&shrunk) < first_profile_area(&profile));
 }
 
 #[test]
@@ -520,18 +561,15 @@ fn concentric_exact_circle_offsets_form_an_outline() {
     let circle = Profile::circle(r(15.0), 40);
     let outer = circle.offset_rounded(r(1.0));
     let inner = circle.offset_rounded(r(-1.0));
-    let result = outer.as_region().boolean_region_with_report(
-        inner.as_region(),
+    let result = outer.as_curve_region().boolean_region(
+        inner.as_curve_region(),
         BooleanOp::Difference,
-        FillRule::NonZero,
         &CurvePolicy::certified(),
     );
 
-    let result = result.unwrap();
     assert!(
-        result.region().is_some(),
-        "concentric offset difference was blocked: {:?}",
-        result.report()
+        result.is_ok(),
+        "concentric offset difference was blocked: {result:?}"
     );
 }
 
@@ -542,7 +580,7 @@ fn wire_offsets_build_filled_hypercurve_outlines() {
     let sketch = Profile::from_wires(vec![wire]);
     let outline = sketch.offset_rounded(r(0.5));
 
-    assert!(!outline.as_region().is_empty());
+    assert!(!outline.as_curve_region().is_empty());
     assert!(outline.wires().is_empty());
     assert!(profile_area_sum(&outline) > 0.0);
 }
@@ -555,7 +593,7 @@ fn wire_offsets_admit_any_exactly_positive_width() {
     let outline = sketch.offset(r(1.0e-12));
 
     assert!(
-        !outline.as_region().is_empty(),
+        !outline.as_curve_region().is_empty(),
         "Any exactly positive offset width should reach hypercurve"
     );
     assert!(outline.wires().is_empty());
@@ -566,7 +604,7 @@ fn wire_offsets_admit_any_exactly_positive_width() {
 fn straight_skeleton_result_is_native_wire_topology() {
     let skeleton = Profile::square(r(2.0)).straight_skeleton(true);
 
-    assert!(skeleton.as_region().is_empty());
+    assert!(skeleton.as_curve_region().is_empty());
     assert!(!skeleton.wires().is_empty());
     assert!(skeleton.wire_polylines().iter().all(|wire| wire.len() == 2));
 }

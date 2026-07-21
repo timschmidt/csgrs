@@ -38,7 +38,7 @@ fn public_profile_boolean_emits_correlated_dispatch_trace() {
     assert!(
         !result
             .expect("overlapping profile union remains certified")
-            .as_region()
+            .as_curve_region()
             .is_empty()
     );
     assert_recorded("csgrs profile boolean");
