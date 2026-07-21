@@ -2317,6 +2317,25 @@ mod tests {
     }
 
     #[test]
+    fn self_dot_admits_after_observation_and_reuses_result() {
+        let values = [
+            Rational::fraction(123_456_789_012_345_i64, 1_u64 << 50).unwrap(),
+            Rational::fraction(-234_567_890_123_457_i64, 1_u64 << 49).unwrap(),
+            Rational::fraction(345_678_901_234_569_i64, 1_u64 << 48).unwrap(),
+        ];
+        let refs = [&values[0], &values[1], &values[2]];
+
+        assert!(Rational::self_dot_if_reused(refs).is_none());
+        let second = Rational::self_dot_if_reused(refs).unwrap();
+        let third = Rational::self_dot_if_reused(refs).unwrap();
+        assert_eq!(second, Rational::dot_products(refs, refs));
+        assert!(std::ptr::eq(&*second, &*third));
+
+        let zero = Rational::zero();
+        assert!(Rational::self_dot_if_reused([&values[0], &values[1], &zero]).is_none());
+    }
+
+    #[test]
     fn dot_products_handle_equal_non_dyadic_denominators() {
         let left = [
             Rational::fraction(7, 10).unwrap(),

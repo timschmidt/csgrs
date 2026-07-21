@@ -1822,6 +1822,14 @@ impl Real {
             right[1].exact_rational_ref(),
             right[2].exact_rational_ref(),
         ) {
+            if std::ptr::eq(left[0], right[0])
+                && std::ptr::eq(left[1], right[1])
+                && std::ptr::eq(left[2], right[2])
+                && let Some(result) = Rational::self_dot_if_reused([l0, l1, l2])
+            {
+                crate::trace_dispatch!("real", "dot_product", "dot3-retained-self");
+                return Real::new(result);
+            }
             crate::trace_dispatch!("real", "dot_product", "dot3-exact-rational-shared-denom");
             return Real::new(Rational::dot_products([l0, l1, l2], [r0, r1, r2]));
         }
@@ -1984,6 +1992,15 @@ impl Real {
             right[2].exact_rational_ref(),
             right[3].exact_rational_ref(),
         ) {
+            if std::ptr::eq(left[0], right[0])
+                && std::ptr::eq(left[1], right[1])
+                && std::ptr::eq(left[2], right[2])
+                && std::ptr::eq(left[3], right[3])
+                && let Some(result) = Rational::self_dot_if_reused([l0, l1, l2, l3])
+            {
+                crate::trace_dispatch!("real", "dot_product", "dot4-retained-self");
+                return Real::new(result);
+            }
             crate::trace_dispatch!("real", "dot_product", "dot4-exact-rational-shared-denom");
             return Real::new(Rational::dot_products([l0, l1, l2, l3], [r0, r1, r2, r3]));
         }

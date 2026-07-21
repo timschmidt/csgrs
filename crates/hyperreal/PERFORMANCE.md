@@ -128,7 +128,7 @@ Relevant path notes:
   observation, the second result is admitted, and later calls reuse it. This keeps
   one-shot operands allocation-light while making retained outer carriers visible
   without cloning their scalar fields. The hint fits existing `RationalData` padding,
-  keeping that allocation at 96 bytes. The lazily allocated arithmetic cache holds
+  keeping that allocation at 88 bytes. The lazily allocated arithmetic cache holds
   two weak-keyed linear results and, for shared values, one reciprocal and one
   opposite-sign result. Unary owners retain their result strongly while reverse
   edges are weak, so repeated division and negation reuse stable identities without
@@ -142,6 +142,13 @@ Relevant path notes:
   sentinels measured 87.78 ns; cold owned inversion measured 21.13 ns and retained
   inversion 7.45 ns; unique owned negation measured 7.12 ns and retained negation
   6.14 ns.
+- Dense exact self-dots reuse those existing bounded product and linear entries
+  only after the leading coordinate has already shown borrowed-arithmetic reuse.
+  The first evaluation, vectors containing zero coordinates, and equal-but-distinct
+  operands retain the aggregate zero-pruned reducer. On Hyperlattice's three-term
+  regression sentinel this adaptive route reduced a retained self-dot from
+  140.66 ns to 55.62 ns (60.5%) while the cold row remained effectively unchanged
+  at 211.16 ns versus 210.75 ns. It adds no result-cache kind or node-layout growth.
 - Exact-rational `Real += &Real`, `Real -= &Real`, and `Real *= &Real` replace
   only the rational scale and invalidate the lossy approximation accelerator,
   preserving the existing exact class payload in place. Every build caches a
@@ -549,7 +556,7 @@ residual on the second observation. Later calls clone those two
 canonical results. The lazy pair is bounded, ignored by serialization, and
 cannot point back to its source, while reciprocal, negation, and both linear
 cache identities remain independently available. The added observation byte
-fits existing padding, so `RationalData` remains 96 bytes.
+fits existing padding, so `RationalData` remains 88 bytes.
 
 Fresh 50-sample direct medians measured 165.32 ns for a fresh uniquely owned
 `sqrt(90)` and 78.79 ns for its retained shared-input route, a 52.3% reduction.
@@ -633,7 +640,7 @@ later calls use an explicitly ordered repeated-squaring chain whose edges are
 already covered by bounded exact-product retention. Commutative multiplication
 also checks the right operand's retained edge when the left slot is occupied.
 No power-result cache is added, and the extra atomic fits existing padding so
-`RationalData` remains 96 bytes.
+`RationalData` remains 88 bytes.
 
 The cold unique fifth-power sentinel is 234.46 ns, while its retained shared-base
 counterpart is 59.16 ns. On the matched four-case Hyperlattice facade, exact-dyadic

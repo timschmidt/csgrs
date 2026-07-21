@@ -2287,4 +2287,26 @@ impl Rational {
         Self::from_signed_magnitude_difference(positive, negative, common_denominator)
     }
 
+    /// Reuse the ordinary bounded product and linear caches after a dense
+    /// self-dot's leading coordinate has already been observed by borrowed
+    /// arithmetic. Sparse rows keep the cheaper aggregate zero-pruned path.
+    #[inline(never)]
+    pub(crate) fn self_dot_if_reused<const N: usize>(values: [&Self; N]) -> Option<Self> {
+        if values.iter().any(|value| value.sign == NoSign) {
+            return None;
+        }
+        if !values.first()?.has_arithmetic_reuse_evidence() {
+            return None;
+        }
+
+        let products = values.map(|value| value * value);
+        let mut products = products.into_iter();
+        let mut sum = products.next()?;
+        for product in products {
+            sum = &sum + &product;
+        }
+        crate::trace_dispatch!("rational", "dot_product", "retained-self-dot");
+        Some(sum)
+    }
+
 }

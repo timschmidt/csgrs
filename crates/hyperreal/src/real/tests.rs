@@ -2589,6 +2589,25 @@ mod tests {
     }
 
     #[test]
+    fn dense_self_dot_reuses_exact_result_after_observation() {
+        let values = [
+            Real::new(Rational::fraction(456_789_012_345_671_i64, 1_u64 << 50).unwrap()),
+            Real::new(Rational::fraction(-567_890_123_456_781_i64, 1_u64 << 49).unwrap()),
+            Real::new(Rational::fraction(678_901_234_567_893_i64, 1_u64 << 48).unwrap()),
+        ];
+        let refs = [&values[0], &values[1], &values[2]];
+        let expected = Real::dot3_refs(refs, refs);
+        let second = Real::dot3_refs(refs, refs);
+        let third = Real::dot3_refs(refs, refs);
+
+        assert_eq!(second, expected);
+        assert_eq!(third, expected);
+        let second = second.exact_rational_ref().unwrap();
+        let third = third.exact_rational_ref().unwrap();
+        assert!(std::ptr::eq(&**second, &**third));
+    }
+
+    #[test]
     fn exact_rational_signed_product_sum_matches_generic_arithmetic() {
         let terms = [
             [
