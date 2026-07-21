@@ -9,10 +9,10 @@ use hyperbrep::{
     BrepPhysicsMassBlocker, BrepPlanarExtrusionConstruction,
     BrepPlanarExtrusionConstructionBlocker, BrepPlanarRegionConstruction,
     BrepPlanarRegionConstructionBlocker, BrepShell, BrepShellBlocker, BrepShellTessellationReport,
-    BrepShellVolumeBlocker, BrepSourceVersion, BrepSurface, BrepSurfaceId, BrepSurfaceSource,
-    BrepTessellationBlocker, BrepTopologyValidationBlocker, BrepTriangleMeshBlocker,
-    BrepTrimLoopBlocker, BrepVertex, BrepVertexId, BrepVoxelHandoffBlocker,
-    BrepVoxelPackageRequest,
+    BrepShellVolumeBlocker, BrepSourceVersion, BrepSurface, BrepSurfaceId,
+    BrepSurfaceIntersectionRelation, BrepSurfaceSource, BrepTessellationBlocker,
+    BrepTopologyValidationBlocker, BrepTriangleMeshBlocker, BrepTrimLoopBlocker, BrepVertex,
+    BrepVertexId, BrepVoxelHandoffBlocker, BrepVoxelPackageRequest,
 };
 use hypercurve::{Contour2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperlimit::{Plane3, PlaneSide, Point2, Point3, classify_point_plane};
@@ -691,6 +691,42 @@ proptest! {
         prop_assert_eq!(differential.mean_curvature, Some(Real::zero()));
         prop_assert!(differential.first_fundamental_form.is_some());
         prop_assert!(differential.oriented_unit_normal.is_some());
+    }
+
+    #[test]
+    fn generated_parallel_plane_relations_and_stationary_distances_are_exact(a in 1_i32..=8, b in -8_i32..=8, c in -8_i32..=8, d in -8_i32..=8, scale in 1_i32..=5, shift in 1_i32..=5) {
+        let first = BrepSurface::plane(
+            BrepSurfaceId(503),
+            Plane3::new(p(a, b, c), r(d)),
+            BrepSurfaceSource::ExactConstruction,
+        );
+        let coincident = BrepSurface::plane(
+            BrepSurfaceId(504),
+            Plane3::new(p(a * scale, b * scale, c * scale), r(d * scale)),
+            BrepSurfaceSource::ExactConstruction,
+        );
+        prop_assert_eq!(
+            first.intersect_surface(&coincident).relation,
+            BrepSurfaceIntersectionRelation::Coincident
+        );
+
+        let separated = BrepSurface::plane(
+            BrepSurfaceId(505),
+            Plane3::new(
+                p(a * scale, b * scale, c * scale),
+                r(d * scale + shift),
+            ),
+            BrepSurfaceSource::ExactConstruction,
+        );
+        let stationary = first.stationary_distance_to_surface(&separated);
+        prop_assert_eq!(
+            stationary.intersection.relation,
+            BrepSurfaceIntersectionRelation::Disjoint
+        );
+        prop_assert!(stationary.exact_distance_ready);
+        prop_assert!(stationary.squared_distance.is_some());
+        prop_assert!(stationary.first_witness.is_some());
+        prop_assert!(stationary.second_witness.is_some());
     }
 
     #[test]

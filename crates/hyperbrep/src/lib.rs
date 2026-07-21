@@ -24,6 +24,7 @@ mod query;
 mod report;
 mod solid;
 mod surface;
+mod surface_intersection;
 mod tessellation;
 mod topology;
 mod triangle;
@@ -103,6 +104,12 @@ pub use solid::{BrepSolidReadinessBlocker, BrepSolidReadinessReport};
 pub use surface::{
     BrepSurface, BrepSurfaceBlocker, BrepSurfaceFacts, BrepSurfaceId, BrepSurfaceKind,
     BrepSurfacePointReport, BrepSurfaceSource, PreparedBrepSurface,
+};
+pub use surface_intersection::{
+    BrepCurveSurfaceBlocker, BrepCurveSurfaceIntersectionRelation,
+    BrepCurveSurfaceIntersectionReport, BrepSurfaceIntersectionBlocker,
+    BrepSurfaceIntersectionRelation, BrepSurfaceIntersectionReport, BrepSurfaceIntersectionStage,
+    BrepSurfaceStationaryDistanceReport,
 };
 pub use tessellation::{
     BrepFaceTessellationManifest, BrepFaceTessellationReport, BrepMeshHandoffReport,

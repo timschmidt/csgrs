@@ -88,6 +88,10 @@ assert!(!closure.closed);
 - `BrepSurfaceDifferentialReport` interrogates an exact plane at UV, retaining
   its model point, parameter tangents, oriented unit normal, first and second
   fundamental forms, orientation alignment, and exact zero curvature.
+- staged curve/surface and surface/surface reports exactly classify finite
+  line/plane and plane/plane relations, retain constructed point or Pluecker
+  line evidence, and provide exact stationary/minimum-distance witnesses for
+  separated line segments and parallel planes.
 - `BrepCurve3` owns exact model-space line, rational Bezier, and finite-domain
   NURBS curves. Rational evaluation stays homogeneous until final projection.
 - `BrepPcurve`, `BrepPlanarTrimLoop`, and `BrepPlanarFaceRegion` bind exact
@@ -146,6 +150,7 @@ The measured reference audit, retained evidence-reuse changes, and benchmark
 protocol are recorded in [PERFORMANCE.md](PERFORMANCE.md).
 
 Current limitations are explicit: nonplanar analytic surfaces and their frames,
+nonlinear curve/surface root isolation,
 geometric equality across differently partitioned pcurves, curved trim-edge
 reconstruction, BREP booleans and sewing, periodic NURBS, and full STEP/IGES
 exchange are not yet implemented as exact report-bearing operations.
