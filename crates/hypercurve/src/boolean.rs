@@ -1079,7 +1079,7 @@ impl RegionFragmentSet {
         op: BooleanOp,
         policy: &CurvePolicy,
         endpoint_contacts: &crate::region_events::RegionPointEndpointContactIndex,
-        crossing_windings: &RegionLineCrossingWindingIndex,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
         mut classify_opposite_winding: F,
     ) -> CurveResult<Option<BooleanFragmentSelectionResult2>>
     where

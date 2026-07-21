@@ -16,18 +16,18 @@ use crate::{
 };
 
 #[derive(Clone, Debug)]
-struct RegionLineCrossing {
-    parameter: Real,
+struct RegionLineCrossing<'a> {
+    parameter: &'a Real,
     winding_delta: i32,
 }
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct RegionLineCrossingWindingIndex {
-    first: Vec<Vec<RegionLineCrossing>>,
-    second: Vec<Vec<RegionLineCrossing>>,
+pub(crate) struct RegionLineCrossingWindingIndex<'a> {
+    first: Vec<Vec<RegionLineCrossing<'a>>>,
+    second: Vec<Vec<RegionLineCrossing<'a>>>,
 }
 
-impl RegionLineCrossingWindingIndex {
+impl<'a> RegionLineCrossingWindingIndex<'a> {
     pub(crate) fn event_set_may_support_propagation(intersections: &RegionIntersectionSet) -> bool {
         intersections.point_event_count() != 0
     }
@@ -35,7 +35,7 @@ impl RegionLineCrossingWindingIndex {
     pub(crate) fn from_intersections(
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
-        intersections: &RegionIntersectionSet,
+        intersections: &'a RegionIntersectionSet,
         policy: &CurvePolicy,
     ) -> Option<Self> {
         if first.material_contours().len() != 1
@@ -110,13 +110,13 @@ impl RegionLineCrossingWindingIndex {
             if !index.insert_unique(
                 pair.first(),
                 point.a_segment_index,
-                point.a_param.clone(),
+                &point.a_param,
                 first_delta,
                 policy,
             ) || !index.insert_unique(
                 pair.second(),
                 point.b_segment_index,
-                point.b_param.clone(),
+                &point.b_param,
                 -first_delta,
                 policy,
             ) {
@@ -137,7 +137,7 @@ impl RegionLineCrossingWindingIndex {
         &mut self,
         key: RegionContourKey,
         segment_index: usize,
-        parameter: Real,
+        parameter: &'a Real,
         winding_delta: i32,
         policy: &CurvePolicy,
     ) -> bool {
@@ -146,11 +146,14 @@ impl RegionLineCrossingWindingIndex {
         };
         if entries.iter().any(|existing| {
             !matches!(
-                compare_reals(&existing.parameter, &parameter, policy),
+                compare_reals(existing.parameter, parameter, policy),
                 Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
             )
         }) {
             return false;
+        }
+        if entries.is_empty() {
+            entries.reserve_exact(2);
         }
         entries.push(RegionLineCrossing {
             parameter,
@@ -189,12 +192,12 @@ impl RegionLineCrossingWindingIndex {
         let crossings = self.crossings(key, previous.source_segment_index)?;
         let mut matched = crossings
             .iter()
-            .filter(|crossing| &crossing.parameter == previous.source_range.end());
+            .filter(|crossing| crossing.parameter == previous.source_range.end());
         let delta = matched.next()?.winding_delta;
         matched.next().is_none().then_some(delta)
     }
 
-    fn crossings_for_key(&self, key: RegionContourKey) -> Option<&[Vec<RegionLineCrossing>]> {
+    fn crossings_for_key(&self, key: RegionContourKey) -> Option<&[Vec<RegionLineCrossing<'a>>]> {
         if key.role != RegionContourRole::Material || key.index != 0 {
             return None;
         }
@@ -208,7 +211,7 @@ impl RegionLineCrossingWindingIndex {
         &self,
         key: RegionContourKey,
         segment_index: usize,
-    ) -> Option<&[RegionLineCrossing]> {
+    ) -> Option<&[RegionLineCrossing<'a>]> {
         self.crossings_for_key(key)?
             .get(segment_index)
             .map(Vec::as_slice)
@@ -218,7 +221,7 @@ impl RegionLineCrossingWindingIndex {
         &mut self,
         key: RegionContourKey,
         segment_index: usize,
-    ) -> Option<&mut Vec<RegionLineCrossing>> {
+    ) -> Option<&mut Vec<RegionLineCrossing<'a>>> {
         if key.role != RegionContourRole::Material || key.index != 0 {
             return None;
         }

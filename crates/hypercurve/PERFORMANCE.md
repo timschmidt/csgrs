@@ -1246,6 +1246,25 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,553 coverage points and 15,950 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+The strict-crossing winding index now borrows exact parameters from its
+retained region event set instead of cloning a `Real` into every transition.
+Its lifetime makes that dependency explicit. Per-segment bins reserve the two
+records that cover the common case before retaining geometric growth for denser
+crossing distributions, cutting unused first-allocation capacity in half.
+
+Against the narrow-crossing-predicate checkpoint, twenty-iteration Callgrind
+runs improved all six ordinary and prepared result lanes by 0.19--0.23%.
+Prepared-lane DHAT allocation fell from 15,609,641 to 15,208,745 bytes (2.57%),
+peak live heap from 971,829 to 956,917 bytes (1.53%), reads by 0.32%, and writes
+by 0.71%. The smaller initial bins added 54 growth blocks across twenty
+operations (0.05%) where a few star edges exceeded two crossings, without an
+instruction regression.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,544 coverage points and 15,946 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
