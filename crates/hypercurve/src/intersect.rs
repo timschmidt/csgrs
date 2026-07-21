@@ -509,7 +509,10 @@ impl LineSeg2 {
         } else {
             certified_line_segment_support_relation(self, other)
         };
-        if certified_support_relation == CertifiedLineSegmentSupportRelation::Separated {
+        if matches!(
+            certified_support_relation,
+            CertifiedLineSegmentSupportRelation::Separated
+        ) {
             return Ok(LineLineIntersection::None);
         }
         if let Some(relation) = self.retained_offset_relation(other, policy) {
@@ -536,8 +539,10 @@ impl LineSeg2 {
             .map_or((&sx, &sy), |(x, y)| (x, y));
 
         let denominator = cross(support_rx, support_ry, support_sx, support_sy);
-        let proper_crossing_certified =
-            certified_support_relation == CertifiedLineSegmentSupportRelation::ProperCrossing;
+        let proper_crossing_certified = matches!(
+            certified_support_relation,
+            CertifiedLineSegmentSupportRelation::ProperCrossing(_)
+        );
         if proper_crossing_certified {
             let fragment_denominator = (!self.has_retained_support()
                 && !other.has_retained_support())
@@ -702,13 +707,23 @@ impl LineSeg2 {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum CertifiedLineSegmentSupportRelation {
+pub(crate) enum CertifiedLineSegmentSupportRelation {
     Separated,
-    ProperCrossing,
+    ProperCrossing(RealSign),
     Unknown,
 }
 
-fn certified_line_segment_support_relation(
+impl CertifiedLineSegmentSupportRelation {
+    pub(crate) const fn crossing_winding_delta(self) -> Option<i32> {
+        match self {
+            Self::ProperCrossing(RealSign::Positive) => Some(1),
+            Self::ProperCrossing(RealSign::Negative) => Some(-1),
+            Self::Separated | Self::ProperCrossing(RealSign::Zero) | Self::Unknown => None,
+        }
+    }
+}
+
+pub(crate) fn certified_line_segment_support_relation(
     first: &LineSeg2,
     second: &LineSeg2,
 ) -> CertifiedLineSegmentSupportRelation {
@@ -768,7 +783,9 @@ fn certified_line_segment_support_relation(
     if strictly_opposite_sides(second_start, second_end)
         && strictly_opposite_sides(first_start, first_end)
     {
-        CertifiedLineSegmentSupportRelation::ProperCrossing
+        CertifiedLineSegmentSupportRelation::ProperCrossing(
+            second_start.expect("strict opposite sides have decided signs"),
+        )
     } else {
         CertifiedLineSegmentSupportRelation::Unknown
     }
@@ -1830,7 +1847,12 @@ mod tests {
         );
         assert_eq!(
             certified_line_segment_support_relation(&diagonal, &crossing),
-            CertifiedLineSegmentSupportRelation::ProperCrossing,
+            CertifiedLineSegmentSupportRelation::ProperCrossing(RealSign::Positive),
+        );
+        assert_eq!(
+            certified_line_segment_support_relation(&diagonal, &crossing.reversed())
+                .crossing_winding_delta(),
+            Some(-1),
         );
         assert_eq!(
             certified_line_segment_support_relation(&diagonal, &line((1, 1), (5, 5))),
@@ -1850,7 +1872,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             certified_line_segment_support_relation(&rational_diagonal, &rational_crossing),
-            CertifiedLineSegmentSupportRelation::ProperCrossing,
+            CertifiedLineSegmentSupportRelation::ProperCrossing(RealSign::Positive),
         );
     }
 

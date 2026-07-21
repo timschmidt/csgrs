@@ -247,6 +247,7 @@ impl ContourSplitMarkers {
                         point: point.point.clone(),
                     },
                     policy,
+                    point.kind != crate::IntersectionKind::Endpoint,
                 )
             }
             ContourIntersection::Overlap(overlap) => {
@@ -269,6 +270,7 @@ impl ContourSplitMarkers {
                         point: overlap.segment.start().clone(),
                     },
                     policy,
+                    false,
                 )?;
                 self.insert_marker(
                     SegmentSplitMarker {
@@ -277,6 +279,7 @@ impl ContourSplitMarkers {
                         point: overlap.segment.end().clone(),
                     },
                     policy,
+                    false,
                 )
             }
             ContourIntersection::Uncertain(uncertain) => Err(uncertain.reason),
@@ -287,12 +290,18 @@ impl ContourSplitMarkers {
         &mut self,
         marker: SegmentSplitMarker,
         policy: &CurvePolicy,
+        strictly_interior: bool,
     ) -> Result<(), UncertaintyReason> {
         let Some(markers) = self.segment_markers.get_mut(marker.segment_index) else {
             return Err(UncertaintyReason::Unsupported);
         };
 
-        insert_unique_sorted_marker(markers, marker, policy)
+        let range = if strictly_interior {
+            1..markers.len() - 1
+        } else {
+            0..markers.len()
+        };
+        insert_unique_sorted_marker(markers, marker, policy, range)
     }
 }
 
@@ -461,8 +470,10 @@ fn insert_unique_sorted_marker(
     markers: &mut Vec<SegmentSplitMarker>,
     marker: SegmentSplitMarker,
     policy: &CurvePolicy,
+    range: std::ops::Range<usize>,
 ) -> Result<(), UncertaintyReason> {
-    for index in 0..markers.len() {
+    let insert_at_end = range.end;
+    for index in range {
         match compare_reals_for_split_ordering(&marker.param, &markers[index].param, policy) {
             Some(Ordering::Equal) => {
                 let distance = marker.point.distance_squared(&markers[index].point);
@@ -485,7 +496,7 @@ fn insert_unique_sorted_marker(
         }
     }
 
-    markers.push(marker);
+    markers.insert(insert_at_end, marker);
     Ok(())
 }
 

@@ -85,17 +85,28 @@ impl RegionLineCrossingWindingIndex {
             else {
                 return None;
             };
-            let (first_dx, first_dy) = first_line.delta();
-            let (second_dx, second_dy) = second_line.delta();
             // As a point follows the first contour, crossing from the right of
             // the oriented second edge to its left raises the second contour's
             // winding by one; the reverse crossing lowers it. Swapping source
             // and opposite traversal negates the same determinant.
-            let determinant = Real::diff_of_products(&second_dx, &first_dy, &second_dy, &first_dx);
-            let first_delta = match real_sign(&determinant, policy) {
-                Some(RealSign::Positive) => 1,
-                Some(RealSign::Negative) => -1,
-                Some(RealSign::Zero) | None => return None,
+            let first_delta = match crate::intersect::certified_line_segment_support_relation(
+                first_line,
+                second_line,
+            )
+            .crossing_winding_delta()
+            {
+                Some(delta) => delta,
+                None => {
+                    let (first_dx, first_dy) = first_line.delta();
+                    let (second_dx, second_dy) = second_line.delta();
+                    let determinant =
+                        Real::diff_of_products(&second_dx, &first_dy, &second_dy, &first_dx);
+                    match real_sign(&determinant, policy) {
+                        Some(RealSign::Positive) => 1,
+                        Some(RealSign::Negative) => -1,
+                        Some(RealSign::Zero) | None => return None,
+                    }
+                }
             };
 
             if !index.insert_unique(

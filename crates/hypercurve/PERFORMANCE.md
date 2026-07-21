@@ -1181,6 +1181,28 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,512 coverage points and 15,911 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Strict line crossings now reuse the sign carried by their certified support
+relation when building the winding-propagation index. The fallback still forms
+the exact determinant for symbolic or inconclusive inputs, while the common
+lossless-binary64 path avoids reconstructing and normalizing that determinant.
+Validated crossing and tangent events also insert split markers only among the
+strictly interior slots that their event kind certifies, omitting impossible
+comparisons against parameters zero and one.
+
+Against the compact exact-dyadic sweep checkpoint, paired twenty-iteration
+Callgrind runs improved all six ordinary and prepared region, contour, and loop
+lanes by 2.89--3.07%. DHAT allocation traffic fell from 58,966,409 to
+58,029,945 bytes (1.59%), allocation blocks from 402,464 to 383,739 (4.65%),
+reads by 3.75%, and writes by 1.62%; peak live heap remained 964,780 bytes. In
+an 11-sample, 500-iteration release comparison, ordinary star64 intersection
+measured 0.393 ms/iter, versus 0.027 ms for `cavalier_contours`, 0.034 ms for
+`i_overlay`, and 0.036 ms for `geo`.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,575 coverage points and 16,103 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
