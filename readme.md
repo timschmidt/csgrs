@@ -87,14 +87,15 @@ wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
 ### Profile Structure
 
 - **`Profile`** stores planar CAD geometry as native Hypercurve topology:
-  - a `hypercurve::Region2` for filled material and hole contours,
-  - `hypercurve::CurveString2` values for open wires, and
+  - one `hypercurve::CurveRegion2` for exact filled material and hole contours,
+  - `hypercurve::CurvePath2` values for open or higher-order wires, and
   - finite projections used only at IO and display boundaries.
 
-Use `Profile::from_region`, `Profile::from_wires`, or
-`Profile::from_region_and_wires` to construct profiles without flattening their
-topology. Profiles carry geometry only; callers provide face metadata when
-creating a mesh. Hypertri triangulates profiles for mesh conversion and export.
+Use `Profile::from_curve_region`, `Profile::from_wires`,
+`Profile::from_curve_region_and_wires`, or `Profile::from_curve_topology` to
+construct profiles without flattening their topology. Profiles carry geometry
+only; callers provide face metadata when creating a mesh. Hypertri triangulates
+profiles for mesh conversion and export.
 
 ### 2D Shapes in Profile
 
