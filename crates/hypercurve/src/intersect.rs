@@ -713,16 +713,6 @@ pub(crate) enum CertifiedLineSegmentSupportRelation {
     Unknown,
 }
 
-impl CertifiedLineSegmentSupportRelation {
-    pub(crate) const fn crossing_winding_delta(self) -> Option<i32> {
-        match self {
-            Self::ProperCrossing(RealSign::Positive) => Some(1),
-            Self::ProperCrossing(RealSign::Negative) => Some(-1),
-            Self::Separated | Self::ProperCrossing(RealSign::Zero) | Self::Unknown => None,
-        }
-    }
-}
-
 pub(crate) fn certified_line_segment_support_relation(
     first: &LineSeg2,
     second: &LineSeg2,
@@ -788,6 +778,26 @@ pub(crate) fn certified_line_segment_support_relation(
         )
     } else {
         CertifiedLineSegmentSupportRelation::Unknown
+    }
+}
+
+pub(crate) fn certified_line_crossing_winding_delta(
+    first: &LineSeg2,
+    second: &LineSeg2,
+) -> Option<i32> {
+    let start = [first.start().x(), first.start().y()];
+    let end = [first.end().x(), first.end().y()];
+    let second_start = [second.start().x(), second.start().y()];
+    let sign = Real::prepare_affine_det2_filter(start, end)
+        .and_then(|filter| filter.sign(second_start))
+        .or_else(|| {
+            Real::prepare_affine_det2_exact_word_filter(start, end)
+                .and_then(|filter| filter.sign(second_start))
+        })?;
+    match sign {
+        RealSign::Positive => Some(1),
+        RealSign::Negative => Some(-1),
+        RealSign::Zero => None,
     }
 }
 
@@ -1850,8 +1860,11 @@ mod tests {
             CertifiedLineSegmentSupportRelation::ProperCrossing(RealSign::Positive),
         );
         assert_eq!(
-            certified_line_segment_support_relation(&diagonal, &crossing.reversed())
-                .crossing_winding_delta(),
+            certified_line_crossing_winding_delta(&diagonal, &crossing),
+            Some(1),
+        );
+        assert_eq!(
+            certified_line_crossing_winding_delta(&diagonal, &crossing.reversed()),
             Some(-1),
         );
         assert_eq!(

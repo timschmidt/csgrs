@@ -89,12 +89,10 @@ impl RegionLineCrossingWindingIndex {
             // the oriented second edge to its left raises the second contour's
             // winding by one; the reverse crossing lowers it. Swapping source
             // and opposite traversal negates the same determinant.
-            let first_delta = match crate::intersect::certified_line_segment_support_relation(
+            let first_delta = match crate::intersect::certified_line_crossing_winding_delta(
                 first_line,
                 second_line,
-            )
-            .crossing_winding_delta()
-            {
+            ) {
                 Some(delta) => delta,
                 None => {
                     let (first_dx, first_dy) = first_line.delta();
