@@ -12,6 +12,14 @@ fn frac(numerator: i64, denominator: u64) -> Real {
         .into()
 }
 
+fn cold_self_dot_vector() -> Vector3 {
+    Vector3::new([
+        frac(123_456_789_012_345, 1_u64 << 50),
+        frac(-234_567_890_123_457, 1_u64 << 49),
+        frac(345_678_901_234_569, 1_u64 << 48),
+    ])
+}
+
 fn bench_regression_sentinels(c: &mut Criterion) {
     c.bench_function("sentinel/scalar/cancellation_zero_status", |b| {
         let value: Real = ((Real::pi() * Real::e()) / Real::e()).unwrap() - Real::pi();
@@ -27,6 +35,27 @@ fn bench_regression_sentinels(c: &mut Criterion) {
         let left = Vector3::new([Real::pi(), r(0), sqrt(r(2)).unwrap()]);
         let right = Vector3::new([frac(2, 3), Real::e(), r(0)]);
         b.iter(|| left.dot(&right))
+    });
+
+    c.bench_function("sentinel/vector/self_dot_retained_dyadic", |b| {
+        let vector = cold_self_dot_vector();
+        b.iter(|| black_box(&vector).norm_squared())
+    });
+
+    c.bench_function("sentinel/vector/self_dot_cold_dyadic", |b| {
+        b.iter_batched(
+            cold_self_dot_vector,
+            |vector| black_box(vector).norm_squared(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    c.bench_function("sentinel/vector/dot_equal_distinct_cold_dyadic", |b| {
+        b.iter_batched(
+            || (cold_self_dot_vector(), cold_self_dot_vector()),
+            |(left, right)| black_box(left).dot(black_box(&right)),
+            criterion::BatchSize::SmallInput,
+        )
     });
 
     c.bench_function(

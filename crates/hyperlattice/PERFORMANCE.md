@@ -188,6 +188,34 @@ The dependency microbenchmark for one coordinate scale fell from 558.37 ns to
 239.73 ns (57.1%). A shared batch-scaling prototype did not improve vec3 and
 was removed, leaving the direct borrowed component schedule in place.
 
+## Adaptive retained dense self-dots
+
+Repeated magnitude and normalization calls were rebuilding the same exact
+three- or four-term sum of squares. Hyperreal now admits that self-dot to its
+existing bounded product and linear caches after borrowed-arithmetic reuse is
+observed. Admission requires identical `Real` references and a dense row. The
+first call, sparse vectors, and equal-but-distinct vectors therefore retain the
+aggregate zero-pruned reducer and its allocation behavior.
+
+Matched retained-path medians measured:
+
+| Workload | Before | Current | Change |
+| --- | ---: | ---: | ---: |
+| three-term dyadic self-dot sentinel | 140.66 ns | 55.62 ns | 60.5% faster |
+| `vec3 magnitude`, exact dyadic | 736.4 ns | 183.15 ns | 75.1% faster |
+| `vec3 magnitude`, explicit rational | 1.757 us | 108.54 ns | 93.8% faster |
+| `vec4 magnitude`, exact dyadic | 734.29 ns | 225.04 ns | 69.4% faster |
+| `vec4 magnitude`, explicit rational | 636.05 ns | 228.93 ns | 64.0% faster |
+
+The exact-dyadic vec3 magnitude now beats the matched Numerica 128 row at
+361.11 ns by 1.97 times. The cold three-term sentinel remained effectively
+unchanged at 211.16 ns before and 210.75 ns after. Permanent cold, retained,
+and equal-but-distinct sentinels protect the dispatch boundary. Exact outputs
+and the downstream CSGRS benchmark checksums were unchanged; its sparse face
+normal and general dot-product controls remained on their former schedules.
+No Hyperlattice API or arithmetic schedule changed, and Hyperreal adds no new
+cache kind or node-layout growth.
+
 ## Minimal checked-normalization certificate
 
 Checked vector normalization previously built the complete public structural
@@ -326,7 +354,7 @@ reuse hint without allocating, the second admits the bounded result, and later
 operations reuse it. Sum and directed-difference results can use opposite
 operand slots. Weak keys keep identity exact, serialization ignores the
 accelerator, occupied slots avoid speculative allocation, and `RationalData`
-remains 96 bytes. Direct cold sentinels measured 87.78 ns for both operations;
+remains 88 bytes. Direct cold sentinels measured 87.78 ns for both operations;
 retained rational operations measured 8.47 ns and 9.05 ns.
 
 Matched facade medians fell from 55.58 ns to 29.68 ns for addition and from
