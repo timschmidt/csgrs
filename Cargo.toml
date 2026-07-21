@@ -18,6 +18,7 @@ categories = ["game-development", "graphics", "mathematics", "simulation", "wasm
 no-default-features = true
 features = [
   "mesh",
+  "polygon-mesh",
   "sketch",
   "stl-io",
   "dxf-io",
@@ -154,7 +155,7 @@ hypertri = { path = "../hypertri" }
 hypersolve = { path = "../hypersolve" }
 
 [features]
-default = ["mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
+default = ["mesh", "polygon-mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
 dispatch-trace = [
   "hypercurve/dispatch-trace",
   "hypermesh/dispatch-trace",
@@ -165,6 +166,7 @@ parallel = [
   "hashbrown/rayon"
 ]
 mesh = [] # Compatibility feature; Mesh is the always-available core carrier.
+polygon-mesh = [] # Planar polygon 3D backend; converts explicitly to triangle Mesh geometry.
 # Legacy BSP transition features removed after full hypermesh migration.
 sketch = [
   # hypercurve backed Profile datatype
