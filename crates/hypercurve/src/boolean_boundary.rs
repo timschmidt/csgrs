@@ -269,6 +269,30 @@ impl BooleanBoundaryFragmentSet {
         }
     }
 
+    pub(crate) fn into_assembled_chains(
+        self,
+        policy: &CurvePolicy,
+    ) -> Classification<BooleanBoundaryChainSet> {
+        if !self.unresolved_boundaries.is_empty() {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        let chain_indices = match endpoint_chain_indices(&self.directed_fragments, policy) {
+            Ok(Some(chain_indices)) => chain_indices,
+            Ok(None) => return tangent_ordered_chains(&self.directed_fragments, policy),
+            Err((_, reason)) => return Classification::Uncertain(reason),
+        };
+        let mut fragments = self
+            .directed_fragments
+            .into_iter()
+            .map(Some)
+            .collect::<Vec<_>>();
+        Classification::Decided(materialize_chain_indices(chain_indices, |index| {
+            fragments[index]
+                .take()
+                .expect("each assembled fragment index is visited once")
+        }))
+    }
+
     /// Assembles directed boundary fragments and retains traversal evidence.
     pub fn assemble_chains_with_report(
         &self,
@@ -294,11 +318,7 @@ impl BooleanBoundaryFragmentSet {
             ));
         }
 
-        let adjacency = endpoint_adjacency(&self.directed_fragments, policy);
-        if matches!(
-            adjacency,
-            Classification::Uncertain(UncertaintyReason::Unsupported)
-        ) {
+        let Some(chain_indices) = endpoint_chain_indices(&self.directed_fragments, policy)? else {
             return match tangent_ordered_chains(&self.directed_fragments, policy) {
                 Classification::Decided(chains) => Ok(chains),
                 Classification::Uncertain(reason) => Err((
@@ -306,53 +326,10 @@ impl BooleanBoundaryFragmentSet {
                     reason,
                 )),
             };
-        }
-        let Classification::Decided((successors, predecessors)) = adjacency else {
-            let Classification::Uncertain(reason) = adjacency else {
-                unreachable!()
-            };
-            return Err((
-                BooleanBoundaryChainAssemblyStage2::EndpointAdjacency,
-                reason,
-            ));
         };
-
-        let mut used = vec![false; self.directed_fragments.len()];
-        let mut chains = Vec::new();
-
-        for index in 0..self.directed_fragments.len() {
-            if predecessors[index].is_none() && !used[index] {
-                let chain =
-                    match follow_chain(index, &self.directed_fragments, &successors, &mut used) {
-                        Classification::Decided(chain) => chain,
-                        Classification::Uncertain(reason) => {
-                            return Err((
-                                BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
-                                reason,
-                            ));
-                        }
-                    };
-                chains.push(chain);
-            }
-        }
-
-        for index in 0..self.directed_fragments.len() {
-            if !used[index] {
-                let chain =
-                    match follow_chain(index, &self.directed_fragments, &successors, &mut used) {
-                        Classification::Decided(chain) => chain,
-                        Classification::Uncertain(reason) => {
-                            return Err((
-                                BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
-                                reason,
-                            ));
-                        }
-                    };
-                chains.push(chain);
-            }
-        }
-
-        Ok(BooleanBoundaryChainSet::from_assembled(chains))
+        Ok(materialize_chain_indices(chain_indices, |index| {
+            self.directed_fragments[index].clone()
+        }))
     }
 }
 
@@ -2276,23 +2253,74 @@ fn boundary_dot(left: &BoundaryTangent, right: &BoundaryTangent) -> Real {
     (&left.dx * &right.dx) + (&left.dy * &right.dy)
 }
 
-fn follow_chain(
-    start: usize,
+fn endpoint_chain_indices(
     fragments: &[DirectedBooleanFragment],
+    policy: &CurvePolicy,
+) -> Result<Option<Vec<(Vec<usize>, bool)>>, (BooleanBoundaryChainAssemblyStage2, UncertaintyReason)>
+{
+    let (successors, predecessors) = match endpoint_adjacency(fragments, policy) {
+        Classification::Decided(adjacency) => adjacency,
+        Classification::Uncertain(UncertaintyReason::Unsupported) => return Ok(None),
+        Classification::Uncertain(reason) => {
+            return Err((
+                BooleanBoundaryChainAssemblyStage2::EndpointAdjacency,
+                reason,
+            ));
+        }
+    };
+
+    let mut used = vec![false; fragments.len()];
+    let mut chains = Vec::new();
+    for index in (0..fragments.len())
+        .filter(|index| predecessors[*index].is_none())
+        .chain(0..fragments.len())
+    {
+        if !used[index] {
+            chains.push(follow_chain_indices(index, &successors, &mut used).ok_or((
+                BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
+                UncertaintyReason::Unsupported,
+            ))?);
+        }
+    }
+    Ok(Some(chains))
+}
+
+fn materialize_chain_indices<F>(
+    chains: Vec<(Vec<usize>, bool)>,
+    mut take_fragment: F,
+) -> BooleanBoundaryChainSet
+where
+    F: FnMut(usize) -> DirectedBooleanFragment,
+{
+    BooleanBoundaryChainSet::from_assembled(
+        chains
+            .into_iter()
+            .map(|(indices, closed)| {
+                BooleanBoundaryChain::from_assembled(
+                    indices.into_iter().map(&mut take_fragment).collect(),
+                    closed,
+                )
+            })
+            .collect(),
+    )
+}
+
+fn follow_chain_indices(
+    start: usize,
     successors: &[Option<usize>],
     used: &mut [bool],
-) -> Classification<BooleanBoundaryChain> {
+) -> Option<(Vec<usize>, bool)> {
     let mut chain = Vec::new();
     let mut current = start;
     let mut closed = false;
 
     loop {
         if used[current] {
-            return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
+            return None;
         }
 
         used[current] = true;
-        chain.push(fragments[current].clone());
+        chain.push(current);
 
         let Some(next) = successors[current] else {
             break;
@@ -2303,13 +2331,13 @@ fn follow_chain(
             break;
         }
         if used[next] {
-            return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
+            return None;
         }
 
         current = next;
     }
 
-    decided_boolean_boundary_chain(chain, closed)
+    Some((chain, closed))
 }
 
 fn points_match(

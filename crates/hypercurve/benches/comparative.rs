@@ -49,6 +49,7 @@ struct Runner {
     sample_target: Duration,
     fixed_iterations: Option<u64>,
     group_filter: Option<String>,
+    implementation_filter: Option<String>,
 }
 
 impl Runner {
@@ -58,6 +59,7 @@ impl Runner {
             parse_env("HYPERCURVE_COMPARE_SAMPLE_MS").unwrap_or(DEFAULT_SAMPLE_MILLIS);
         let fixed_iterations = parse_env("HYPERCURVE_COMPARE_ITERS");
         let group_filter = env::var("HYPERCURVE_COMPARE_GROUP").ok();
+        let implementation_filter = env::var("HYPERCURVE_COMPARE_IMPL").ok();
         assert!(samples > 0, "HYPERCURVE_COMPARE_SAMPLES must be nonzero");
         assert!(
             fixed_iterations != Some(0),
@@ -68,6 +70,7 @@ impl Runner {
             sample_target: Duration::from_millis(sample_millis),
             fixed_iterations,
             group_filter,
+            implementation_filter,
         }
     }
 
@@ -81,6 +84,13 @@ impl Runner {
     where
         F: FnMut() -> usize,
     {
+        if self
+            .implementation_filter
+            .as_ref()
+            .is_some_and(|filter| implementation != filter)
+        {
+            return;
+        }
         if !self.group_enabled(group) {
             return;
         }
@@ -784,8 +794,12 @@ fn benchmark_pathological_cross_suite(runner: &Runner) {
 fn main() {
     let runner = Runner::from_environment();
     println!(
-        "hypercurve comparative benchmarks: samples={}, target/sample={:?}, fixed iterations={:?}, group filter={:?}",
-        runner.samples, runner.sample_target, runner.fixed_iterations, runner.group_filter,
+        "hypercurve comparative benchmarks: samples={}, target/sample={:?}, fixed iterations={:?}, group filter={:?}, implementation filter={:?}",
+        runner.samples,
+        runner.sample_target,
+        runner.fixed_iterations,
+        runner.group_filter,
+        runner.implementation_filter,
     );
     println!(
         "timed operations exclude fixture construction; results use each crate's native numeric and topology model"

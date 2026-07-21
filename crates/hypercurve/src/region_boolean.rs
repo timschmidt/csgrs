@@ -1884,7 +1884,7 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
     let fragment_result = retain_pipeline_report
         .then(|| boundary_events.split_regions_with_report(first, second, policy))
         .transpose()?;
-    let lean_fragments;
+    let mut lean_fragments = None;
     let fragments = match fragment_result.as_ref() {
         Some(fragment_result) => match fragment_result.fragments() {
             Some(fragments) => fragments,
@@ -1898,13 +1898,15 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
             }
         },
         None => {
-            lean_fragments = match boundary_events.split_regions(first, second, policy)? {
-                Classification::Decided(fragments) => fragments,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            &lean_fragments
+            lean_fragments = Some(
+                match boundary_events.split_regions(first, second, policy)? {
+                    Classification::Decided(fragments) => fragments,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+            );
+            lean_fragments.as_ref().unwrap()
         }
     };
     // Successful splitting excludes unresolved segment relations. When the
@@ -2008,8 +2010,10 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
             Classification::Decided(selection) => selection,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let emitted = selection.emit_boundary_fragments_from_certified_split(fragments)?;
-        let chains = match emitted.assemble_chains(policy) {
+        let emitted = selection.emit_boundary_fragments_from_owned_certified_split(
+            lean_fragments.expect("lean Boolean traversal owns its split fragments"),
+        )?;
+        let chains = match emitted.into_assembled_chains(policy) {
             Classification::Decided(chains) => chains,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };

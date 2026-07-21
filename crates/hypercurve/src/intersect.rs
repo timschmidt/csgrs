@@ -41,6 +41,13 @@ impl ParamRange {
     pub const fn end(&self) -> &Real {
         &self.end
     }
+
+    pub(crate) fn into_reversed(self) -> Self {
+        Self {
+            start: self.end,
+            end: self.start,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

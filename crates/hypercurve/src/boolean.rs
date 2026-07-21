@@ -268,16 +268,69 @@ impl BooleanFragmentSelection {
             })
     }
 
-    pub(crate) fn emit_boundary_fragments_from_certified_split(
-        &self,
-        fragments: &RegionFragmentSet,
+    pub(crate) fn emit_boundary_fragments_from_owned_certified_split(
+        self,
+        fragments: RegionFragmentSet,
     ) -> CurveResult<BooleanBoundaryFragmentSet> {
-        self.emit_boundary_fragments_impl(fragments, true)?
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "boolean boundary fragment emission did not materialize".into(),
-                )
-            })
+        let mut sources = fragments.into_contours().into_iter().flat_map(|contour| {
+            let key = contour.key;
+            contour
+                .fragments
+                .into_fragments()
+                .into_iter()
+                .enumerate()
+                .map(move |(index, source)| (key, index, source))
+        });
+        let mut directed_fragments = Vec::new();
+        let mut unresolved_boundaries = Vec::new();
+
+        for classification in self.classifications {
+            let Some((key, fragment_index, source)) = sources.next() else {
+                return Err(CurveError::Topology(
+                    "boolean selection references a fragment outside certified split output".into(),
+                ));
+            };
+            if classification.key != key || classification.fragment_index != fragment_index {
+                return Err(CurveError::Topology(
+                    "boolean selection order differs from certified split order".into(),
+                ));
+            }
+
+            match classification.action {
+                BooleanFragmentAction::Discard => {}
+                BooleanFragmentAction::BoundaryNeedsResolution => {
+                    unresolved_boundaries.push(classification);
+                }
+                BooleanFragmentAction::KeepSourceDirection
+                | BooleanFragmentAction::KeepReversed => {
+                    let reversed = classification.action == BooleanFragmentAction::KeepReversed;
+                    directed_fragments.push(DirectedBooleanFragment {
+                        key,
+                        fragment_index,
+                        source_segment_index: source.source_segment_index,
+                        source_segment_start_point: source.source_segment_start_point,
+                        source_segment_end_point: source.source_segment_end_point,
+                        source_range: source.source_range,
+                        reversed,
+                        segment: if reversed {
+                            source.segment.into_reversed()
+                        } else {
+                            source.segment
+                        },
+                    });
+                }
+            }
+        }
+        if sources.next().is_some() {
+            return Err(CurveError::Topology(
+                "boolean selection omits a supplied source fragment".into(),
+            ));
+        }
+
+        BooleanBoundaryFragmentSet::from_certified_split_fragments(
+            directed_fragments,
+            unresolved_boundaries,
+        )
     }
 
     /// Converts selected classifications into boundary fragments and retains evidence.

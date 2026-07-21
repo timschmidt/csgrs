@@ -939,6 +939,31 @@ passed. The AddressSanitizer Boolean differential fuzzer completed 1,000 runs
 at 5,307 coverage points and 15,628 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Lean Boolean boundary materialization now consumes its certified split output,
+selection, emitted fragments, and assembled chains. Provenance, source ranges,
+segments, and reversed segments therefore move through the once-visiting path
+instead of being cloned at each representation boundary. Report-bearing and
+public borrowed APIs retain their previous evidence-preserving behavior, while
+both assembly modes share one endpoint-index traversal. The comparative runner
+also accepts `HYPERCURVE_COMPARE_IMPL` so individual implementations can be
+profiled without timing the other validated lanes.
+
+Against the preceding checkpoint, paired five-sample, 500-iteration star64
+release medians improved across all six Hypercurve result shapes: ordinary
+regions by 13.88%, contours by 12.15%, loops by 12.59%, prepared regions by
+9.25%, prepared contours by 13.66%, and prepared loops by 11.51%. A paired
+seven-sample, 10,000-iteration rectangle control improved from 16.116 to 13.466
+us/iter (16.44%), with unchanged checksums. Across 100 selected ordinary
+star64 operations plus fixture validation, Callgrind instructions fell from
+587,900,022 to 568,715,069 (3.26%). DHAT allocation traffic fell from
+139,890,257 to 123,804,705 bytes (11.50%), peak live heap from 1,144,344 to
+991,924 bytes (13.32%), reads by 4.02%, and writes by 11.06%.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,429 coverage points and 15,904 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

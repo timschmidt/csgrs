@@ -327,6 +327,15 @@ impl LineSeg2 {
         }
     }
 
+    pub(crate) fn into_reversed(mut self) -> Self {
+        if self.offset_provenance.is_some() {
+            return self.reversed();
+        }
+        std::mem::swap(&mut self.start, &mut self.end);
+        self.support_range = self.support_range.map(ParamRange::into_reversed);
+        self
+    }
+
     /// Classifies a point relative to this oriented line segment's supporting line.
     pub fn classify_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<LineSide> {
         let support_start = self.support_start();
@@ -1052,6 +1061,14 @@ impl CircularArc2 {
             retained_facts: Rc::new(CircularArcRetainedFacts2::default()),
         }
     }
+
+    pub(crate) fn into_reversed(mut self) -> Self {
+        std::mem::swap(&mut self.start, &mut self.end);
+        self.clockwise = !self.clockwise;
+        self.bulge = self.bulge.map(std::ops::Neg::neg);
+        self.retained_facts = Rc::new(CircularArcRetainedFacts2::default());
+        self
+    }
 }
 
 /// A native line or circular-arc segment.
@@ -1157,6 +1174,13 @@ impl Segment2 {
         match self {
             Self::Line(line) => Self::Line(line.reversed()),
             Self::Arc(arc) => Self::Arc(arc.reversed()),
+        }
+    }
+
+    pub(crate) fn into_reversed(self) -> Self {
+        match self {
+            Self::Line(line) => Self::Line(line.into_reversed()),
+            Self::Arc(arc) => Self::Arc(arc.into_reversed()),
         }
     }
 }
