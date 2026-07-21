@@ -95,7 +95,7 @@ fn boolean_measurement(results: &[Mesh<()>]) -> Measurement {
 
 fn profile_measurement(profile: &Profile, work_units: usize) -> Measurement {
     let contours = profile.material_contour_count() + profile.hole_contour_count();
-    let wires = profile.wires().len();
+    let wires = profile.wires().len() + profile.curve_paths().len();
     Measurement::new(
         work_units as u64,
         (contours + wires) as u64,
@@ -309,7 +309,7 @@ fn run() {
             .sum::<usize>();
         let wires = profiles
             .iter()
-            .map(|profile| profile.wires().len())
+            .map(|profile| profile.wires().len() + profile.curve_paths().len())
             .sum::<usize>();
         Measurement::new(
             profiles.len() as u64,
@@ -397,7 +397,7 @@ fn run() {
             .sum::<usize>();
         let wires = outputs
             .iter()
-            .map(|profile| profile.wires().len())
+            .map(|profile| profile.wires().len() + profile.curve_paths().len())
             .sum::<usize>();
         Measurement::new(
             8,
@@ -437,7 +437,7 @@ fn run() {
                 .sum::<usize>();
             let wires = outputs
                 .iter()
-                .map(|profile| profile.wires().len())
+                .map(|profile| profile.wires().len() + profile.curve_paths().len())
                 .sum::<usize>();
             Measurement::new(
                 14,
@@ -617,13 +617,16 @@ fn run() {
         || {
             let slice = mesh.slice(Plane::from_normal(Vector3::z(), Real::zero()));
             let flattened = mesh.flatten();
-            let output = slice.wires().len() + flattened.material_contour_count();
+            let output = slice.wires().len()
+                + slice.curve_paths().len()
+                + flattened.material_contour_count();
             Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
         },
     );
     config.run("feature", "mesh_profile_projection", "slice", 1, || {
         let slice = mesh.slice(Plane::from_normal(Vector3::z(), Real::zero()));
-        let output = slice.wires().len() + slice.material_contour_count();
+        let output =
+            slice.wires().len() + slice.curve_paths().len() + slice.material_contour_count();
         Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
     });
     config.run("feature", "mesh_profile_projection", "flatten", 1, || {

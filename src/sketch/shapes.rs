@@ -3,10 +3,14 @@
 use crate::csg::CSG;
 use crate::hyper_math::{
     IntoReal, Real, hreal_abs, hreal_affine, hreal_div, hreal_f64s_exactly_equal,
-    hreal_from_f64, hreal_mul, hreal_sub, hreal_sum, hreal_try_cmp, hxy_lerp,
+    hreal_from_f64, hreal_mul, hreal_sub, hreal_sum, hreal_try_cmp,
 };
 use crate::sketch::Profile;
-use hypercurve::{Contour2, CurveString2, FillRule, LineSeg2, Point2, Region2, Segment2};
+use hypercurve::{
+    Contour2, CubicBezier2, Curve2, CurvePath2, CurveRegion2, CurveString2, FillRule,
+    LineSeg2, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, Region2,
+    Segment2,
+};
 use hyperlattice::Vector3;
 use std::cmp::Ordering;
 
@@ -2033,15 +2037,14 @@ impl Profile {
         tessellation_profile(&points)
     }
 
-    /// Sample an arbitrary-degree Bezier curve with de Casteljau evaluation.
-    /// Returns a poly-line, or a hypercurve-backed filled region when the
-    /// tessellated boundary is closed.
+    /// Construct an exact arbitrary-degree Bezier curve.
+    /// Returns a higher-order path, or a filled curved region when closed.
     ///
     /// The recursive evaluation is the de Casteljau algorithm developed at
     /// Citroen in 1959; see Farin, *Curves and Surfaces for CAGD*, 5th ed.,
-    /// 2002, Chapter 4. Closed output is promoted immediately to a
-    /// `hypercurve::Region2` so downstream topology uses exact predicates
-    /// rather than the finite tessellation cache.
+    /// 2002, Chapter 4. The authored curve remains in Hypercurve; `segments`
+    /// is retained for source compatibility and only validates the caller's
+    /// requested display resolution.
     ///
     /// * `control`: list of 2-D control points
     /// * `segments`: number of straight-line segments used for the tessellation
@@ -2050,62 +2053,48 @@ impl Profile {
             return Profile::empty();
         }
 
-        /// Evaluates a Bézier curve using de Casteljau interpolation in hyperreal space.
-        fn de_casteljau(control: &[[Real; 2]], t: Real) -> Option<(Real, Real)> {
-            let mut points = control.to_vec();
-            let n = points.len();
-
-            for k in 1..n {
-                for i in 0..(n - k) {
-                    let next = hxy_lerp(
-                        (points[i][0].clone(), points[i][1].clone()),
-                        (points[i + 1][0].clone(), points[i + 1][1].clone()),
-                        t.clone(),
-                    )?;
-                    points[i] = [next.0, next.1];
-                }
-            }
-            Some((points[0][0].clone(), points[0][1].clone()))
-        }
-
-        let mut pts = Vec::with_capacity(segments + 1);
-        for i in 0..=segments {
-            let Some(t) = hreal_div(i, segments) else {
-                return Profile::empty();
-            };
-            let Some((x, y)) = de_casteljau(control, t) else {
-                return Profile::empty();
-            };
-            pts.push([x, y]);
-        }
-
-        let is_closed = {
-            let first = &pts[0];
-            let last = &pts[segments];
-            let first = hyperlimit::Point2::new(first[0].clone(), first[1].clone());
-            let last = hyperlimit::Point2::new(last[0].clone(), last[1].clone());
-            matches!(hyperlimit::point2_equal(&first, &last).value(), Some(true))
+        let points = control
+            .iter()
+            .map(|point| Point2::new(point[0].clone(), point[1].clone()))
+            .collect::<Vec<_>>();
+        let curve = match points.as_slice() {
+            [start, end] => LineSeg2::try_new(start.clone(), end.clone()).map(Curve2::from),
+            [start, control, end] => Ok(Curve2::from(QuadraticBezier2::new(
+                start.clone(),
+                control.clone(),
+                end.clone(),
+            ))),
+            [start, control1, control2, end] => Ok(Curve2::from(CubicBezier2::new(
+                start.clone(),
+                control1.clone(),
+                control2.clone(),
+                end.clone(),
+            ))),
+            _ => RationalBezier2::try_new(points, vec![Real::one(); control.len()])
+                .map(Curve2::from),
         };
-
-        if is_closed {
-            return Self::polygonal_region(pts);
+        let Ok(curve) = curve else {
+            return Profile::empty();
+        };
+        let Ok(path) = CurvePath2::try_new(vec![curve]) else {
+            return Profile::empty();
+        };
+        if path.start() == path.end() {
+            return CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path))
+                .map(Profile::from_curve_region)
+                .unwrap_or_else(|_| Profile::empty());
         }
-
-        CurveString2::from_real_point_iter(pts)
-            .map(Profile::from_wire)
-            .unwrap_or_else(|_| Profile::empty())
+        Profile::from_curve_path(path)
     }
 
-    /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
-    /// Cox-de Boor recursion. Returns a poly-line, or a hypercurve-backed
-    /// filled region when the sampled spline closes.
+    /// Construct an exact open-uniform polynomial B-spline of degree `p`.
     ///
     /// The basis evaluation follows de Boor, "On calculating with B-splines",
     /// *Journal of Approximation Theory* 6(1), 1972,
     /// DOI: 10.1016/0021-9045(72)90080-9. Closed output is converted to
-    /// `hypercurve::Region2` at the API boundary; open output becomes native
-    /// `hypercurve::CurveString2` wires and is projected to finite line strings
-    /// only for compatibility/export boundaries.
+    /// a full [`CurvePath2`]. `segments_per_span` is retained for API
+    /// compatibility; finite projection now chooses its own error-controlled
+    /// subdivision.
     ///
     /// * `control`: control points  
     /// * `p`:       spline degree (e.g. 3 for a cubic)  
@@ -2116,7 +2105,7 @@ impl Profile {
         }
 
         let n = control.len() - 1;
-        let m = n + p + 1; // highest knot index
+        let m = n + p + 1;
         let span_count = n - p + 1;
         // open-uniform knot vector: 0,0,…,0,1,2,…,n-p-1,(n-p),…,(n-p)
         let mut knot = Vec::<Real>::with_capacity(m + 1);
@@ -2130,80 +2119,22 @@ impl Profile {
             }
         }
 
-        // Iterative de Boor evaluation avoids the exponential expression graph
-        // produced by recursively evaluating every Cox-de Boor basis function.
-        fn de_boor(
-            control: &[[Real; 2]],
-            knot: &[Real],
-            degree: usize,
-            span: usize,
-            u: &Real,
-        ) -> Option<[Real; 2]> {
-            let k = degree + span;
-            let mut points = control[k - degree..=k].to_vec();
-            for level in 1..=degree {
-                for j in (level..=degree).rev() {
-                    let i = k - degree + j;
-                    let denominator = hreal_sub(&knot[i + degree - level + 1], &knot[i])?;
-                    if hreal_f64s_exactly_equal(&denominator, 0.0) {
-                        continue;
-                    }
-                    let alpha = hreal_div(hreal_sub(u, &knot[i])?, denominator)?;
-                    let x = hreal_affine(
-                        &points[j - 1][0],
-                        &alpha,
-                        hreal_sub(&points[j][0], &points[j - 1][0])?,
-                    )?;
-                    let y = hreal_affine(
-                        &points[j - 1][1],
-                        &alpha,
-                        hreal_sub(&points[j][1], &points[j - 1][1])?,
-                    )?;
-                    points[j] = [x, y];
-                }
-            }
-            points.pop()
-        }
-
-        let Some(dt) = hreal_div(1.0, segments_per_span) else {
+        let points = control
+            .iter()
+            .map(|point| Point2::new(point[0].clone(), point[1].clone()))
+            .collect::<Vec<_>>();
+        let Ok(spline) = PolynomialSplineCurve2::try_new(p, points, knot) else {
             return Profile::empty();
         };
-
-        let mut pts = Vec::<[Real; 2]>::new();
-        for span in 0..span_count {
-            for s in 0..=segments_per_span {
-                if span > 0 && s == 0 {
-                    continue;
-                }
-                if span + 1 == span_count && s == segments_per_span {
-                    // The clamped endpoint is appended exactly below.
-                    continue;
-                }
-                let Some(u) = hreal_affine(span, s, dt.clone()) else {
-                    return Profile::empty();
-                };
-                let Some(point) = de_boor(control, &knot, p, span, &u) else {
-                    return Profile::empty();
-                };
-                pts.push(point);
-            }
-        }
-        if let Some(last) = control.last() {
-            pts.push(last.clone());
-        }
-
-        let first = pts.first().unwrap();
-        let last = pts.last().unwrap();
-        let first = hyperlimit::Point2::new(first[0].clone(), first[1].clone());
-        let last = hyperlimit::Point2::new(last[0].clone(), last[1].clone());
-        let closed = matches!(hyperlimit::point2_equal(&first, &last).value(), Some(true));
-        if !closed {
-            return CurveString2::from_real_point_iter(pts)
-                .map(Profile::from_wire)
+        let Ok(path) = CurvePath2::try_new(vec![Curve2::from(spline)]) else {
+            return Profile::empty();
+        };
+        if path.start() == path.end() {
+            return CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path))
+                .map(Profile::from_curve_region)
                 .unwrap_or_else(|_| Profile::empty());
         }
-
-        Self::polygonal_region(pts)
+        Profile::from_curve_path(path)
     }
 
     /// 2-D heart outline (closed polygon) sized to `width` × `height`.
@@ -3972,7 +3903,7 @@ mod tests {
             8,
         );
         assert_eq!(nearly_closed.material_contour_count(), 0);
-        assert_eq!(nearly_closed.wires().len(), 1);
+        assert_eq!(nearly_closed.curve_paths().len(), 1);
 
         let exactly_closed = Profile::bezier(
             &[
@@ -3984,7 +3915,7 @@ mod tests {
             8,
         );
         assert_eq!(exactly_closed.material_contour_count(), 1);
-        assert!(exactly_closed.wires().is_empty());
+        assert!(exactly_closed.curve_paths().is_empty());
     }
 
     #[test]
@@ -4000,7 +3931,7 @@ mod tests {
             8,
         );
 
-        assert_eq!(spline.wires().len(), 1);
+        assert_eq!(spline.curve_paths().len(), 1);
         let polylines = spline.wire_polylines();
         let points = &polylines[0];
         assert_eq!(points.first(), Some(&[r(0.0), r(0.0)]));

@@ -717,6 +717,17 @@ impl ToSVG for Profile {
             append_open(&mut body, polyline.points());
             body.push_str("\"/>\n");
         }
+        for path in self.curve_paths() {
+            let polyline = path
+                .project_to_finite_polyline(&projection)
+                .map_err(|error| IoError::Geometry {
+                    format: "SVG",
+                    detail: error.to_string(),
+                })?;
+            body.push_str("<path fill=\"none\" stroke=\"black\" d=\"");
+            append_open(&mut body, polyline.points());
+            body.push_str("\"/>\n");
+        }
         Ok(format!(
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{:.17} {:.17} {:.17} {:.17}\">\n{body}</svg>",
             bounds[0],

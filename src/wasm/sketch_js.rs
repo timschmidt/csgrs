@@ -158,8 +158,9 @@ impl SketchJs {
 
     /// Project native hypercurve wires to JS polylines.
     ///
-    /// The result is `[[[x, y], ...], ...]`, sampled from `CurveString2` via
-    /// hypercurve's finite projection machinery. Keeping path ownership in
+    /// The result is `[[[x, y], ...], ...]`, projected from `CurveString2` and
+    /// higher-order `CurvePath2` values via hypercurve's finite projection
+    /// machinery. Keeping path ownership in
     /// hypercurve and projecting only at the wasm edge follows Yap, "Towards
     /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
@@ -186,8 +187,9 @@ impl SketchJs {
     /// The returned object is `{ positions, indices }`, where `positions` is a
     /// flat `Float64Array` of XYZ points and `indices` is a `Uint32Array` of
     /// line segment endpoints. It is a finite wasm/rendering boundary over
-    /// [`hypercurve::CurveString2`] ownership, not a compatibility geometry
-    /// cache. That keeps path topology in hyperreal-backed hypercurve objects
+    /// [`hypercurve::CurveString2`] and `hypercurve::CurvePath2` ownership, not
+    /// a compatibility geometry cache. That keeps path topology in
+    /// hyperreal-backed hypercurve objects
     /// until the JS edge, following Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Hobby,
@@ -606,18 +608,25 @@ impl SketchJs {
     // Offset Operations (if offset feature is enabled)
     #[cfg(feature = "offset")]
     #[wasm_bindgen(js_name = offset)]
-    pub fn offset(&self, distance: f64) -> Self {
-        Self {
-            inner: self.inner.offset(real_from_js_or_zero(distance)),
-        }
+    pub fn offset(&self, distance: f64) -> Result<Self, JsValue> {
+        let distance = real_from_js(distance)
+            .ok_or_else(|| JsValue::from_str("Offset distance must be finite"))?;
+        let inner = self
+            .inner
+            .try_offset(distance)
+            .map_err(|error| JsValue::from_str(&format!("Profile offset failed: {error}")))?;
+        Ok(Self { inner })
     }
 
     #[cfg(feature = "offset")]
     #[wasm_bindgen(js_name = offsetRounded)]
-    pub fn offset_rounded(&self, distance: f64) -> Self {
-        Self {
-            inner: self.inner.offset_rounded(real_from_js_or_zero(distance)),
-        }
+    pub fn offset_rounded(&self, distance: f64) -> Result<Self, JsValue> {
+        let distance = real_from_js(distance)
+            .ok_or_else(|| JsValue::from_str("Offset distance must be finite"))?;
+        let inner = self.inner.try_offset_rounded(distance).map_err(|error| {
+            JsValue::from_str(&format!("Rounded profile offset failed: {error}"))
+        })?;
+        Ok(Self { inner })
     }
 
     #[cfg(feature = "offset")]

@@ -12,9 +12,12 @@ use crate::csg::CSG;
 use crate::errors::ProfileBooleanError;
 use crate::vertex::Vertex;
 use hypercurve::{
-    Aabb2 as HyperAabb2, BooleanOp, Classification, Contour2, CurvePolicy, CurveResult,
-    CurveString2, FillRule, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
-    LineSeg2, Point2, Region2, RegionPointLocation, Segment2, Similarity2,
+    Aabb2 as HyperAabb2, BezierRetainedCurveEnvelope2, BezierSubcurve2, BooleanOp,
+    Classification, Contour2, CubicBezier2, Curve2, CurveGeometry2, CurvePath2, CurvePolicy,
+    CurveRegion2, CurveResult, CurveString2, FillRule, FinitePolyline2,
+    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, NurbsCurve2, Point2,
+    PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    Region2, RegionPointLocation, Segment2, Similarity2,
 };
 use hyperlattice::{Matrix4, Point3, Vector3};
 use hyperreal::RealSign;
@@ -96,12 +99,23 @@ pub struct Profile {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub(crate) region: Region2,
 
+    /// Higher-order filled topology when this profile cannot be represented by
+    /// the line/circular-arc-only [`Region2`] carrier.
+    ///
+    /// Exactly one of `region` and `curve_region` is nonempty. Keeping the
+    /// carriers alternative rather than mirrored avoids both lossy demotion and
+    /// permanent duplicate storage for the common line/arc case.
+    pub(crate) curve_region: Option<CurveRegion2>,
+
     /// Native open hypercurve wires for line/path sketches.
     ///
     /// Closed areas belong in [`Profile::region`]. Open paths are represented as
     /// `CurveString2`, so text strokes, SVG paths, and Hilbert infill compose
     /// with hypercurve directly.
     pub(crate) wires: Vec<CurveString2>,
+
+    /// Open higher-order paths that cannot be represented by [`CurveString2`].
+    pub(crate) curve_wires: Vec<CurvePath2>,
 
     /// Lazily calculated AABB that spans the finite boundary projection.
     pub(crate) bounding_box: OnceLock<Aabb>,
@@ -112,6 +126,15 @@ pub struct Profile {
     pub(crate) origin_transform: OriginTransform,
 }
 
+/// Borrowed authoritative filled topology carried by a [`Profile`].
+#[derive(Clone, Copy, Debug)]
+pub enum ProfileRegionRef<'a> {
+    /// A line/circular-arc region using the compact native carrier.
+    LineArc(&'a Region2),
+    /// A higher-order exact curved region.
+    Curved(&'a CurveRegion2),
+}
+
 impl Profile {
     /// Return a new empty sketch.
     pub fn empty() -> Self {
@@ -120,7 +143,9 @@ impl Profile {
             convex_tessellation: None,
             convex_edge_normals: None,
             region: Region2::empty(),
+            curve_region: None,
             wires: Vec::new(),
+            curve_wires: Vec::new(),
             bounding_box: OnceLock::new(),
             origin: Vertex::default(),
             origin_transform: Self::prepare_origin_transform(Vertex::default()),
@@ -177,8 +202,14 @@ impl Profile {
         &self,
         options: &FiniteProjectionOptions,
     ) -> CurveResult<Classification<Vec<FiniteRegionProfile2>>> {
-        self.region
-            .project_to_finite_profiles(options, &CurvePolicy::certified())
+        match &self.curve_region {
+            Some(region) => {
+                region.project_to_finite_profiles(options, &CurvePolicy::certified())
+            },
+            None => self
+                .region
+                .project_to_finite_profiles(options, &CurvePolicy::certified()),
+        }
     }
 
     /// Decided hypercurve-region containment for a hyperreal XY point.
@@ -192,11 +223,17 @@ impl Profile {
     /// Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn contains_xy(&self, x: Real, y: Real) -> Option<bool> {
-        if self.region.is_empty() {
+        if self.filled_is_empty() {
             return None;
         }
         let point = Point2::new(x, y);
-        match self.region.classify_point(&point, &CurvePolicy::certified()) {
+        let classification = match &self.curve_region {
+            Some(region) => region
+                .classify_point(&point, &CurvePolicy::certified())
+                .ok()?,
+            None => self.region.classify_point(&point, &CurvePolicy::certified()),
+        };
+        match classification {
             Classification::Decided(RegionPointLocation::Inside) => Some(true),
             Classification::Decided(RegionPointLocation::Outside) => Some(false),
             Classification::Decided(RegionPointLocation::Boundary)
@@ -218,13 +255,16 @@ impl Profile {
     /// C-28(9), 1979.
     pub(crate) fn native_xy_bounds(&self) -> Option<(Real, Real, Real, Real)> {
         let policy = CurvePolicy::certified();
-        let mut native_box = if self.region.is_empty() {
-            None
-        } else {
-            match HyperAabb2::from_region(&self.region, &policy) {
+        let mut native_box = match &self.curve_region {
+            Some(region) => match BezierRetainedCurveEnvelope2::from_region(region, &policy) {
+                Classification::Decided(envelope) => Some(envelope.envelope().clone()),
+                Classification::Uncertain(_) => return None,
+            },
+            None if self.region.is_empty() => None,
+            None => match HyperAabb2::from_region(&self.region, &policy) {
                 Ok(Classification::Decided(bbox)) => Some(bbox),
                 Ok(Classification::Uncertain(_)) | Err(_) => return None,
-            }
+            },
         };
 
         for wire in &self.wires {
@@ -238,6 +278,17 @@ impl Profile {
                     Classification::Uncertain(_) => return None,
                 },
                 None => Some(wire_box),
+            };
+        }
+
+        for path in &self.curve_wires {
+            let path_box = path.bounds().ok()?.clone();
+            native_box = match native_box {
+                Some(current) => match current.union(&path_box, &policy) {
+                    Classification::Decided(merged) => Some(merged),
+                    Classification::Uncertain(_) => return None,
+                },
+                None => Some(path_box),
             };
         }
 
@@ -293,7 +344,7 @@ impl Profile {
     /// closed without a finite projection fallback, following Yap's
     /// "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub(crate) fn region_has_nonzero_area(region: &Region2) -> bool {
+    pub fn region_has_nonzero_area(region: &Region2) -> bool {
         match region.filled_area(&CurvePolicy::certified()) {
             Ok(Classification::Decided(Some(area))) => {
                 if matches!(hreal_sign(&area), Some(RealSign::Zero)) {
@@ -357,16 +408,71 @@ impl Profile {
         origin: Vertex,
         origin_transform: OriginTransform,
     ) -> Profile {
+        Self::from_topology_with_origin(
+            region,
+            None,
+            wires,
+            Vec::new(),
+            origin,
+            origin_transform,
+        )
+    }
+
+    fn from_topology_with_origin(
+        region: Region2,
+        curve_region: Option<CurveRegion2>,
+        wires: Vec<CurveString2>,
+        curve_wires: Vec<CurvePath2>,
+        origin: Vertex,
+        origin_transform: OriginTransform,
+    ) -> Profile {
+        debug_assert!(curve_region.is_none() || region.is_empty());
         Profile {
             identity: fresh_profile_id(),
             convex_tessellation: None,
             convex_edge_normals: None,
             region,
+            curve_region,
             wires,
+            curve_wires,
             bounding_box: OnceLock::new(),
             origin,
             origin_transform,
         }
+    }
+
+    /// Create a Profile from a full higher-order Hypercurve region.
+    pub fn from_curve_region(region: CurveRegion2) -> Profile {
+        Self::from_curve_region_and_paths(region, Vec::new())
+    }
+
+    /// Create a Profile from higher-order filled topology and open paths.
+    pub fn from_curve_region_and_paths(
+        region: CurveRegion2,
+        paths: Vec<CurvePath2>,
+    ) -> Profile {
+        Self::from_curve_topology_with_origin(
+            region,
+            paths,
+            Vertex::default(),
+            Self::prepare_origin_transform(Vertex::default()),
+        )
+    }
+
+    pub(crate) fn from_curve_topology_with_origin(
+        region: CurveRegion2,
+        paths: Vec<CurvePath2>,
+        origin: Vertex,
+        origin_transform: OriginTransform,
+    ) -> Profile {
+        Self::from_topology_with_origin(
+            Region2::empty(),
+            (!region.is_empty()).then_some(region),
+            Vec::new(),
+            paths,
+            origin,
+            origin_transform,
+        )
     }
 
     /// Append native open wires and invalidate cached finite bounds.
@@ -407,14 +513,50 @@ impl Profile {
         Self::from_wires(vec![wire])
     }
 
-    /// Borrow the native hypercurve region that now carries Profile topology.
-    pub const fn as_region(&self) -> &Region2 {
+    /// Create an open-path Profile from full higher-order Hypercurve paths.
+    pub fn from_curve_paths(paths: Vec<CurvePath2>) -> Profile {
+        Self::from_curve_region_and_paths(CurveRegion2::default(), paths)
+    }
+
+    /// Create an open-path Profile from one full higher-order path.
+    pub fn from_curve_path(path: CurvePath2) -> Profile {
+        Self::from_curve_paths(vec![path])
+    }
+
+    /// Borrow the line/circular-arc region carried by this Profile.
+    ///
+    /// Higher-order profiles must use [`Self::region_geometry`] or
+    /// [`Self::as_curve_region`]; this compatibility accessor panics instead of
+    /// silently returning an unrelated empty region.
+    pub fn as_region(&self) -> &Region2 {
+        assert!(
+            self.curve_region.is_none(),
+            "higher-order Profile topology is not representable as Region2"
+        );
         &self.region
+    }
+
+    /// Borrow the authoritative filled topology without demoting curves.
+    pub const fn region_geometry(&self) -> ProfileRegionRef<'_> {
+        match &self.curve_region {
+            Some(region) => ProfileRegionRef::Curved(region),
+            None => ProfileRegionRef::LineArc(&self.region),
+        }
+    }
+
+    /// Borrow the higher-order region, when this Profile requires one.
+    pub const fn as_curve_region(&self) -> Option<&CurveRegion2> {
+        self.curve_region.as_ref()
     }
 
     /// Borrow native open hypercurve wires carried by this sketch.
     pub fn wires(&self) -> &[CurveString2] {
         &self.wires
+    }
+
+    /// Borrow open higher-order paths carried by this sketch.
+    pub fn curve_paths(&self) -> &[CurvePath2] {
+        &self.curve_wires
     }
 
     pub(crate) const fn storage_identity(&self) -> u64 {
@@ -442,7 +584,24 @@ impl Profile {
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn into_region_and_wires(self) -> (Region2, Vec<CurveString2>) {
+        assert!(
+            self.curve_region.is_none() && self.curve_wires.is_empty(),
+            "higher-order Profile topology requires into_curve_topology()"
+        );
         (self.region, self.wires)
+    }
+
+    /// Consume this profile without losing its authoritative curve carrier.
+    pub fn into_curve_topology(
+        self,
+    ) -> (
+        Option<Region2>,
+        Option<CurveRegion2>,
+        Vec<CurveString2>,
+        Vec<CurvePath2>,
+    ) {
+        let line_arc = self.curve_region.is_none().then_some(self.region);
+        (line_arc, self.curve_region, self.wires, self.curve_wires)
     }
 
     /// Project native open wires into finite XY polylines.
@@ -485,22 +644,55 @@ impl Profile {
         self.wires
             .iter()
             .filter_map(|wire| wire.project_to_finite_polyline(options).ok())
+            .chain(
+                self.curve_wires
+                    .iter()
+                    .filter_map(|path| path.project_to_finite_polyline(options).ok()),
+            )
             .filter(|polyline| polyline.points().len() >= 2)
             .collect()
     }
 
     /// Number of filled/material contours in the native hypercurve region.
     pub fn material_contour_count(&self) -> usize {
-        self.region.material_contours().len()
+        match &self.curve_region {
+            Some(region) => match region.loop_roles(&CurvePolicy::certified()) {
+                Ok(Classification::Decided(roles)) => roles
+                    .iter()
+                    .filter(|role| **role == hypercurve::CurveRegionLoopRole::Material)
+                    .count(),
+                Ok(Classification::Uncertain(_)) | Err(_) => {
+                    projected_curve_region_counts(region).0
+                },
+            },
+            None => self.region.material_contours().len(),
+        }
     }
 
     /// Number of subtractive/hole contours in the native hypercurve region.
     pub fn hole_contour_count(&self) -> usize {
-        self.region.hole_contours().len()
+        match &self.curve_region {
+            Some(region) => match region.loop_roles(&CurvePolicy::certified()) {
+                Ok(Classification::Decided(roles)) => roles
+                    .iter()
+                    .filter(|role| **role == hypercurve::CurveRegionLoopRole::Hole)
+                    .count(),
+                Ok(Classification::Uncertain(_)) | Err(_) => {
+                    projected_curve_region_counts(region).1
+                },
+            },
+            None => self.region.hole_contours().len(),
+        }
     }
 
     pub(crate) fn has_native_topology(&self) -> bool {
-        !self.region.is_empty() || !self.wires.is_empty()
+        !self.filled_is_empty() || !self.wires.is_empty() || !self.curve_wires.is_empty()
+    }
+
+    pub(crate) fn filled_is_empty(&self) -> bool {
+        self.curve_region
+            .as_ref()
+            .map_or_else(|| self.region.is_empty(), CurveRegion2::is_empty)
     }
 
     fn can_use_region_boolean_with(&self, other: &Self) -> bool {
@@ -515,6 +707,24 @@ impl Profile {
                 wires
             },
             BooleanOp::Difference => self.wires.clone(),
+        }
+    }
+
+    fn boolean_curve_wires_with(&self, other: &Self, op: BooleanOp) -> Vec<CurvePath2> {
+        match op {
+            BooleanOp::Union | BooleanOp::Intersection | BooleanOp::Xor => {
+                let mut wires = self.curve_wires.clone();
+                wires.extend(other.curve_wires.iter().cloned());
+                wires
+            },
+            BooleanOp::Difference => self.curve_wires.clone(),
+        }
+    }
+
+    fn promoted_curve_region(&self) -> Result<CurveRegion2, hypercurve::ExactCurveError> {
+        match &self.curve_region {
+            Some(region) => Ok(region.clone()),
+            None => curve_region_from_line_arc_region(&self.region),
         }
     }
 
@@ -607,6 +817,21 @@ impl Profile {
             ));
         }
         let policy = CurvePolicy::certified();
+        if self.curve_region.is_some() || other.curve_region.is_some() {
+            let first = self.promoted_curve_region()?;
+            let second = other.promoted_curve_region()?;
+            let region = first.boolean_region(&second, op, &policy)?;
+            let mut sketch = Self::from_topology_with_origin(
+                Region2::empty(),
+                (!region.is_empty()).then_some(region),
+                self.boolean_wires_with(other, op),
+                self.boolean_curve_wires_with(other, op),
+                self.origin.clone(),
+                self.origin_transform.clone(),
+            );
+            sketch.origin = self.origin.clone();
+            return Ok(sketch);
+        }
         let region = if let Some(region) = self.empty_region_boolean_with(other, op) {
             region
         } else if let Some(region) = self.disjoint_region_boolean_with(other, op, &policy) {
@@ -628,7 +853,14 @@ impl Profile {
         // matches Yap's exact-object
         // boundary by avoiding a finite detour solely to retain wires.
         let wires = self.boolean_wires_with(other, op);
-        let mut sketch = Self::from_region_and_wires(region, wires);
+        let mut sketch = Self::from_topology_with_origin(
+            region,
+            None,
+            wires,
+            self.boolean_curve_wires_with(other, op),
+            Vertex::default(),
+            Self::prepare_origin_transform(Vertex::default()),
+        );
         sketch.origin = self.origin.clone();
         sketch.origin_transform = self.origin_transform.clone();
         Ok(sketch)
@@ -664,6 +896,24 @@ impl Profile {
                 .collect();
         }
         Vec::new()
+    }
+
+    fn transformed_curve_topology_with_matrix(
+        &self,
+        mat: &Matrix4,
+    ) -> hypercurve::ExactCurveResult<(Option<CurveRegion2>, Vec<CurvePath2>)> {
+        let region = self
+            .curve_region
+            .as_ref()
+            .map(|region| transform_materialized_curve_region(region, mat))
+            .transpose()?
+            .flatten();
+        let paths = self
+            .curve_wires
+            .iter()
+            .map(|path| transform_curve_path_with_matrix(path, mat))
+            .collect::<hypercurve::ExactCurveResult<Vec<_>>>()?;
+        Ok((region, paths))
     }
 
     /// Set the origin used when rendering or lifting this sketch into 3D.
@@ -731,7 +981,7 @@ impl Profile {
     pub fn build_graphic_line_strings(&self) -> GraphicLineStrings {
         let mut graphic_line_strings = Vec::new();
 
-        if !self.region.is_empty() || !self.wires.is_empty() {
+        if self.has_native_topology() {
             let options = FiniteProjectionOptions::try_new(1e-3)
                 .expect("positive finite projection tolerance is valid");
             let profiles = match self.project_region_profiles(&options) {
@@ -847,14 +1097,15 @@ impl Profile {
     /// Computational Geometry 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn renormalize(&self) -> Profile {
-        if !self.wires.is_empty()
-            || (!self.region.is_empty() && Self::region_has_nonzero_area(&self.region))
-        {
-            let mut sketch =
-                Self::from_region_and_wires(self.region.clone(), self.wires.clone());
-            sketch.origin = self.origin.clone();
-            sketch.origin_transform = self.origin_transform.clone();
-            return sketch;
+        if self.has_native_topology() {
+            return Self::from_topology_with_origin(
+                self.region.clone(),
+                self.curve_region.clone(),
+                self.wires.clone(),
+                self.curve_wires.clone(),
+                self.origin.clone(),
+                self.origin_transform.clone(),
+            );
         }
 
         Self::from_region_and_wires_with_origin(
@@ -864,6 +1115,237 @@ impl Profile {
             self.origin_transform.clone(),
         )
     }
+}
+
+fn projected_curve_region_counts(region: &CurveRegion2) -> (usize, usize) {
+    let Ok(options) = FiniteProjectionOptions::try_new(1.0e-3) else {
+        return (0, 0);
+    };
+    match region.project_to_finite_profiles(&options, &CurvePolicy::certified()) {
+        Ok(Classification::Decided(profiles)) => {
+            let holes = profiles.iter().map(|profile| profile.holes().len()).sum();
+            (profiles.len(), holes)
+        },
+        Ok(Classification::Uncertain(_)) | Err(_) => (0, 0),
+    }
+}
+
+fn transform_materialized_curve_region(
+    region: &CurveRegion2,
+    mat: &Matrix4,
+) -> hypercurve::ExactCurveResult<Option<CurveRegion2>> {
+    if region.is_empty() {
+        return Ok(None);
+    }
+    region
+        .transform_affine(
+            &mat[0][0],
+            &mat[0][1],
+            &mat[1][0],
+            &mat[1][1],
+            &mat[0][3],
+            &mat[1][3],
+            &CurvePolicy::certified(),
+        )
+        .map(Some)
+}
+
+fn transform_curve_path_with_matrix(
+    path: &CurvePath2,
+    mat: &Matrix4,
+) -> hypercurve::ExactCurveResult<CurvePath2> {
+    let mut transformed = Vec::new();
+    for curve in path.curves() {
+        transformed.extend(transform_curve_with_matrix(curve, mat)?);
+    }
+    CurvePath2::try_new(transformed)
+}
+
+fn transform_curve_with_matrix(
+    curve: &Curve2,
+    mat: &Matrix4,
+) -> hypercurve::ExactCurveResult<Vec<Curve2>> {
+    let invalid = |cause| {
+        hypercurve::ExactCurveError::invalid(
+            hypercurve::CurveOperation2::Transformation,
+            curve.family(),
+            curve.source(),
+            cause,
+        )
+    };
+    let transformed = match curve.geometry() {
+        CurveGeometry2::Line(line) => vec![Curve2::from(
+            LineSeg2::try_new(
+                transform_point2(line.start(), mat).ok_or_else(|| {
+                    invalid(hypercurve::CurveError::InvalidSimilarityTransform)
+                })?,
+                transform_point2(line.end(), mat).ok_or_else(|| {
+                    invalid(hypercurve::CurveError::InvalidSimilarityTransform)
+                })?,
+            )
+            .map_err(invalid)?,
+        )],
+        CurveGeometry2::CircularArc(_) => {
+            if let Some(transform) = planar_similarity_from_matrix(mat) {
+                return curve
+                    .transform_similarity(&transform)
+                    .map(|curve| vec![curve]);
+            }
+            curve
+                .native_bezier_fragments()?
+                .iter()
+                .map(|fragment| {
+                    transform_bezier_subcurve_with_matrix(fragment.curve(), mat)
+                        .map(Curve2::from)
+                })
+                .collect::<hypercurve::ExactCurveResult<Vec<_>>>()?
+        },
+        CurveGeometry2::QuadraticBezier(curve) => vec![Curve2::from(QuadraticBezier2::new(
+            transformed_point(curve.start(), mat, &invalid)?,
+            transformed_point(curve.control(), mat, &invalid)?,
+            transformed_point(curve.end(), mat, &invalid)?,
+        ))],
+        CurveGeometry2::CubicBezier(curve) => vec![Curve2::from(CubicBezier2::new(
+            transformed_point(curve.start(), mat, &invalid)?,
+            transformed_point(curve.control1(), mat, &invalid)?,
+            transformed_point(curve.control2(), mat, &invalid)?,
+            transformed_point(curve.end(), mat, &invalid)?,
+        ))],
+        CurveGeometry2::RationalQuadraticBezier(curve) => vec![Curve2::from(
+            RationalQuadraticBezier2::try_new(
+                transformed_point(curve.start(), mat, &invalid)?,
+                transformed_point(curve.control(), mat, &invalid)?,
+                transformed_point(curve.end(), mat, &invalid)?,
+                curve.start_weight().clone(),
+                curve.control_weight().clone(),
+                curve.end_weight().clone(),
+            )
+            .map_err(invalid)?,
+        )],
+        CurveGeometry2::RationalBezier(curve) => vec![Curve2::from(
+            RationalBezier2::try_new(
+                curve
+                    .control_points()
+                    .iter()
+                    .map(|point| transformed_point(point, mat, &invalid))
+                    .collect::<hypercurve::ExactCurveResult<Vec<_>>>()?,
+                curve.weights().to_vec(),
+            )
+            .map_err(invalid)?,
+        )],
+        CurveGeometry2::PolynomialBSpline(curve) => {
+            vec![Curve2::from(PolynomialSplineCurve2::try_new(
+                curve.degree(),
+                curve
+                    .control_points()
+                    .iter()
+                    .map(|point| transformed_point(point, mat, &invalid))
+                    .collect::<hypercurve::ExactCurveResult<Vec<_>>>()?,
+                curve.knots().to_vec(),
+            )?)]
+        },
+        CurveGeometry2::Nurbs(curve) => vec![Curve2::from(NurbsCurve2::try_new(
+            curve.degree(),
+            curve
+                .control_points()
+                .iter()
+                .map(|point| transformed_point(point, mat, &invalid))
+                .collect::<hypercurve::ExactCurveResult<Vec<_>>>()?,
+            curve.weights().to_vec(),
+            curve.knots().to_vec(),
+        )?)],
+    };
+    Ok(transformed)
+}
+
+fn transform_bezier_subcurve_with_matrix(
+    curve: &BezierSubcurve2,
+    mat: &Matrix4,
+) -> hypercurve::ExactCurveResult<BezierSubcurve2> {
+    let family = Curve2::from(curve.clone()).family();
+    let invalid = |cause| {
+        hypercurve::ExactCurveError::invalid(
+            hypercurve::CurveOperation2::Transformation,
+            family,
+            None,
+            cause,
+        )
+    };
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => {
+            Ok(BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                transformed_point(curve.start(), mat, &invalid)?,
+                transformed_point(curve.control(), mat, &invalid)?,
+                transformed_point(curve.end(), mat, &invalid)?,
+            )))
+        },
+        BezierSubcurve2::Cubic(curve) => Ok(BezierSubcurve2::Cubic(CubicBezier2::new(
+            transformed_point(curve.start(), mat, &invalid)?,
+            transformed_point(curve.control1(), mat, &invalid)?,
+            transformed_point(curve.control2(), mat, &invalid)?,
+            transformed_point(curve.end(), mat, &invalid)?,
+        ))),
+        BezierSubcurve2::RationalQuadratic(curve) => Ok(BezierSubcurve2::RationalQuadratic(
+            RationalQuadraticBezier2::try_new(
+                transformed_point(curve.start(), mat, &invalid)?,
+                transformed_point(curve.control(), mat, &invalid)?,
+                transformed_point(curve.end(), mat, &invalid)?,
+                curve.start_weight().clone(),
+                curve.control_weight().clone(),
+                curve.end_weight().clone(),
+            )
+            .map_err(invalid)?,
+        )),
+        BezierSubcurve2::Rational(curve) => Ok(BezierSubcurve2::Rational(
+            RationalBezier2::try_new(
+                curve
+                    .control_points()
+                    .iter()
+                    .map(|point| transformed_point(point, mat, &invalid))
+                    .collect::<hypercurve::ExactCurveResult<Vec<_>>>()?,
+                curve.weights().to_vec(),
+            )
+            .map_err(invalid)?,
+        )),
+    }
+}
+
+fn transformed_point(
+    point: &Point2,
+    mat: &Matrix4,
+    invalid: &impl Fn(hypercurve::CurveError) -> hypercurve::ExactCurveError,
+) -> hypercurve::ExactCurveResult<Point2> {
+    transform_point2(point, mat)
+        .ok_or_else(|| invalid(hypercurve::CurveError::InvalidSimilarityTransform))
+}
+
+fn curve_path_from_curve_string(
+    curve: &CurveString2,
+) -> hypercurve::ExactCurveResult<CurvePath2> {
+    let curves = curve
+        .segments()
+        .iter()
+        .map(|segment| match segment {
+            Segment2::Line(line) => Curve2::from(line.clone()),
+            Segment2::Arc(arc) => Curve2::from(arc.clone()),
+        })
+        .collect();
+    CurvePath2::try_new(curves)
+}
+
+fn curve_region_from_line_arc_region(
+    region: &Region2,
+) -> hypercurve::ExactCurveResult<CurveRegion2> {
+    if region.is_empty() {
+        return Ok(CurveRegion2::default());
+    }
+    let paths = region
+        .material_contours()
+        .iter()
+        .chain(region.hole_contours())
+        .map(|contour| curve_path_from_curve_string(contour.curve_string()))
+        .collect::<hypercurve::ExactCurveResult<Vec<_>>>()?;
+    CurveRegion2::try_from_boundary_paths(&paths)
 }
 
 fn transform_line_region(region: &Region2, mat: &Matrix4) -> Option<Region2> {
@@ -1058,6 +1540,25 @@ impl CSG for Profile {
     /// is the ordinary homogeneous-coordinate convention described by Foley et
     /// al., *Computer Graphics: Principles and Practice*, 2nd ed., 1990.
     fn transform(&self, mat: &Matrix4) -> Profile {
+        if self.curve_region.is_some() || !self.curve_wires.is_empty() {
+            let (curve_region, curve_wires) = self
+                .transformed_curve_topology_with_matrix(mat)
+                .unwrap_or_else(|error| panic!("profile curve transform failed: {error}"));
+            let line_region = if self.curve_region.is_none() {
+                self.transformed_region_with_matrix(mat)
+                    .unwrap_or_else(Region2::empty)
+            } else {
+                Region2::empty()
+            };
+            return Self::from_topology_with_origin(
+                line_region,
+                curve_region,
+                self.transformed_wires_with_matrix(mat),
+                curve_wires,
+                self.origin.clone(),
+                self.origin_transform.clone(),
+            );
+        }
         if let Some(region) = self.transformed_region_with_matrix(mat) {
             // Open wires follow the same finite projection boundary as region
             // rings, but rebuild directly as `CurveString2` instead of routing
@@ -1150,12 +1651,12 @@ impl CSG for Profile {
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     fn inverse(&self) -> Profile {
-        if !self.wires.is_empty()
-            || (!self.region.is_empty() && Self::region_has_nonzero_area(&self.region))
-        {
-            return Self::from_region_and_wires_with_origin(
+        if self.has_native_topology() {
+            return Self::from_topology_with_origin(
                 self.region.clone(),
+                self.curve_region.clone(),
                 self.wires.clone(),
+                self.curve_wires.clone(),
                 self.origin.clone(),
                 self.origin_transform.clone(),
             );
