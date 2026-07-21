@@ -6,7 +6,7 @@ impl Rational {
             numerator,
             denominator,
             product_cache: OnceLock::new(),
-            linear_cache: OnceLock::new(),
+            linear_cache: CompactOnceBox::new(),
             retained_facts: std::sync::atomic::AtomicU8::new(0),
         }))
     }
@@ -24,7 +24,7 @@ impl Rational {
             numerator: shared.numerator.clone(),
             denominator: shared.denominator.clone(),
             product_cache: OnceLock::new(),
-            linear_cache: OnceLock::new(),
+            linear_cache: CompactOnceBox::new(),
             retained_facts: std::sync::atomic::AtomicU8::new(0),
         });
         (sign, numerator, denominator)

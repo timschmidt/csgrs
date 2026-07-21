@@ -6,10 +6,35 @@ mod tests {
     #[test]
     fn rational_data_layout_stays_bounded() {
         assert!(
-            size_of::<RationalData>() <= 96,
+            size_of::<RationalData>() <= 88,
             "RationalData grew to {} bytes",
             size_of::<RationalData>()
         );
+    }
+
+    #[test]
+    fn compact_once_box_publishes_one_value_and_drops_every_candidate() {
+        struct Counted(usize, Arc<std::sync::atomic::AtomicUsize>);
+
+        impl Drop for Counted {
+            fn drop(&mut self) {
+                self.1
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            }
+        }
+
+        let drops = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let cell = Arc::new(CompactOnceBox::new());
+        std::thread::scope(|scope| {
+            for value in 0..8 {
+                let cell = Arc::clone(&cell);
+                let drops = Arc::clone(&drops);
+                scope.spawn(move || drop(cell.set(Box::new(Counted(value, drops)))));
+            }
+        });
+        assert!(cell.get().is_some_and(|value| value.0 < 8));
+        drop(cell);
+        assert_eq!(drops.load(std::sync::atomic::Ordering::Relaxed), 8);
     }
 
     fn magnitude_with_backend_limbs(limbs: usize) -> BigUint {

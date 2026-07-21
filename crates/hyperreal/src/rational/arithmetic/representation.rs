@@ -41,6 +41,73 @@
 /// ```
 pub struct Rational(Arc<RationalData>);
 
+// The null pointer is the initialization state, avoiding `OnceLock`'s
+// separate state word for a value that is already heap allocated.
+struct CompactOnceBox<T>(
+    std::sync::atomic::AtomicPtr<T>,
+    std::marker::PhantomData<Option<Box<T>>>,
+);
+
+impl<T> CompactOnceBox<T> {
+    const fn new() -> Self {
+        Self(
+            std::sync::atomic::AtomicPtr::new(std::ptr::null_mut()),
+            std::marker::PhantomData,
+        )
+    }
+
+    #[inline(always)]
+    fn get(&self) -> Option<&T> {
+        let pointer = self.0.load(std::sync::atomic::Ordering::Acquire);
+        if pointer.is_null() {
+            None
+        } else {
+            // SAFETY: a successful `set` owns this allocation until `self` is
+            // exclusively cleared or dropped, so a shared borrow keeps it live.
+            Some(unsafe { &*pointer })
+        }
+    }
+
+    fn set(&self, value: Box<T>) -> Result<(), Box<T>> {
+        let pointer = Box::into_raw(value);
+        if self
+            .0
+            .compare_exchange(
+                std::ptr::null_mut(),
+                pointer,
+                std::sync::atomic::Ordering::Release,
+                std::sync::atomic::Ordering::Acquire,
+            )
+            .is_ok()
+        {
+            Ok(())
+        } else {
+            // SAFETY: the failed exchange never transferred ownership.
+            Err(unsafe { Box::from_raw(pointer) })
+        }
+    }
+
+    fn clear(&mut self) {
+        let pointer = std::mem::replace(self.0.get_mut(), std::ptr::null_mut());
+        if !pointer.is_null() {
+            // SAFETY: exclusive access prevents readers and the cell owns the
+            // allocation installed by the successful exchange.
+            drop(unsafe { Box::from_raw(pointer) });
+        }
+    }
+}
+
+impl<T> Drop for CompactOnceBox<T> {
+    fn drop(&mut self) {
+        self.clear();
+    }
+}
+
+// SAFETY: publication uses release/acquire ordering; shared references require
+// `T: Sync`, and the owning allocation may be dropped on another thread only
+// when `T: Send`.
+unsafe impl<T: Send + Sync> Sync for CompactOnceBox<T> {}
+
 struct CachedRationalProduct {
     other: std::sync::Weak<RationalData>,
     result: Rational,
@@ -127,7 +194,7 @@ pub struct RationalData {
     numerator: BigUint,
     denominator: BigUint,
     product_cache: OnceLock<CachedRationalProduct>,
-    linear_cache: OnceLock<Box<CachedRationalArithmetic>>,
+    linear_cache: CompactOnceBox<CachedRationalArithmetic>,
     /// Monotonic representation and reuse evidence retained by this immutable
     /// rational. Packing these facts keeps the node layout bounded while
     /// leaving room for additional benchmark-proven dispatch certificates.

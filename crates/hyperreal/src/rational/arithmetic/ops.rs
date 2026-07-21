@@ -882,7 +882,7 @@ impl Neg for Rational {
             // A unique owner can reuse the BigUint allocation, but any locally
             // retained arithmetic results describe the old sign and must go.
             data.product_cache.take();
-            data.linear_cache.take();
+            data.linear_cache.clear();
             data.retained_facts.fetch_and(
                 !RETAINED_REUSE_MASK,
                 std::sync::atomic::Ordering::Relaxed,
