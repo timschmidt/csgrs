@@ -82,6 +82,9 @@ Implemented today:
 - exact material IDs, density validation, property graphs, and elastic derivation;
 - exact bodies, fixtures, closed meshes, AABBs, planes, rays, segments, support maps,
   and point/query reports;
+- support-map-generic GJK intersection and separation-distance queries with exact
+  Minkowski witnesses, Hypersolve barycentric projection evidence, bounded
+  iteration, and explicit unknown termination;
 - exact uniform-density mass properties for closed triangle meshes;
 - contact material validation and AABB contact classification;
 - force accumulation, explicit step replay, momentum, and kinetic-energy diagnostics;
@@ -89,9 +92,10 @@ Implemented today:
 - thermal, optical, electromagnetic, photochemical, reaction-diffusion, and fluid
   handoff/report carriers.
 
-Known limits: broad contact generation, impulse solving, continuous collision, richer
-mesh validation, and full field/fluid/thermal evolution are future certified solver or
-adapter work.
+Known limits: GJK currently has a built-in support-map implementation for AABBs while
+other convex shapes implement `ExactSupportMap3`; penetration depth/contact manifold
+generation, impulse solving, continuous collision, richer mesh validation, and full
+field/fluid/thermal evolution remain future certified solver or adapter work.
 
 ## Installation
 

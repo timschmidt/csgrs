@@ -15,6 +15,7 @@ pub mod contact;
 pub mod em;
 pub mod error;
 pub mod fluid;
+pub mod gjk;
 pub mod integration;
 pub mod mass;
 pub mod material;
@@ -36,6 +37,10 @@ pub use error::{PhysicsError, PhysicsResult};
 pub use fluid::{
     FluidBoundary3, FluidBoundaryKind, FluidConservationReport3, FluidFixture3, FluidMaterial,
     FluidParticle3, FluidPolicy, FluidReportStatus,
+};
+pub use gjk::{
+    ExactSupportMap3, GjkClassification3, GjkConfig3, GjkQueryReport3, GjkSupportPoint3,
+    GjkTermination3, gjk_query_3d, gjk_query_3d_with_config,
 };
 pub use hyperlattice::Vector3;
 pub use hyperreal::Real;
