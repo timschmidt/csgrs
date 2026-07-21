@@ -1330,6 +1330,29 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,787 coverage points and 16,413 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Medium dense exact-line contour pairs now retain their certified proper-
+crossing candidates before constructing exact points. The retained pair list
+provides the exact final event capacity, and its orientation certificate goes
+straight to the nonparallel line kernel instead of repeating the support test.
+Any inconclusive, collinear, endpoint, or otherwise non-point relation falls
+back to the original exact sweep. The schedule is limited to 256--16,384 raw
+segment pairs so its compact scratch carrier stays bounded and large sparse or
+degenerate contours retain the one-pass path.
+
+Against the compact-fragment checkpoint, two-point Callgrind slopes improved
+all six ordinary and prepared star64 region, contour, and loop lanes by
+8.20--8.36%. The 1,000/2,000-operation prepared rectangle control increased by
+0.44%; the complete sparse-intersection benchmark shifted by 0.08%, including
+fixed process startup. Prepared-region DHAT allocation fell from 13,558,086 to
+13,132,998 bytes (3.14%), allocation blocks from 101,854 to 101,503 (0.34%),
+peak live heap from 907,666 to 903,634 bytes (0.44%), reads by 8.85%, and writes
+by 7.15%.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,795 coverage points and 16,410 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -486,6 +486,57 @@ impl LineSeg2 {
         self.intersect_line_impl(other, policy, false)
     }
 
+    pub(crate) fn intersect_line_with_certified_proper_crossing(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<LineLineIntersection> {
+        debug_assert!(matches!(
+            certified_line_segment_support_relation(self, other),
+            CertifiedLineSegmentSupportRelation::ProperCrossing(_)
+        ));
+        if self.retained_support_ranges_decided_disjoint(other, policy) == Some(true) {
+            return Ok(LineLineIntersection::None);
+        }
+        if let Some(relation) = self.retained_offset_relation(other, policy) {
+            return match relation {
+                RetainedLineRelation2::Coincident => intersect_collinear(self, other, policy),
+                RetainedLineRelation2::ParallelDistinct => Ok(LineLineIntersection::None),
+                RetainedLineRelation2::Uncertain => Ok(LineLineIntersection::Uncertain {
+                    reason: UncertaintyReason::RealSign,
+                }),
+            };
+        }
+        let (rx, ry) = self.delta();
+        let (sx, sy) = other.delta();
+        let first_retained_support_delta =
+            self.has_retained_support().then(|| self.support_delta());
+        let second_retained_support_delta =
+            other.has_retained_support().then(|| other.support_delta());
+        let (support_rx, support_ry) = first_retained_support_delta
+            .as_ref()
+            .map_or((&rx, &ry), |(x, y)| (x, y));
+        let (support_sx, support_sy) = second_retained_support_delta
+            .as_ref()
+            .map_or((&sx, &sy), |(x, y)| (x, y));
+        let denominator = cross(support_rx, support_ry, support_sx, support_sy);
+        let fragment_denominator =
+            (!self.has_retained_support() && !other.has_retained_support()).then_some(denominator);
+        intersect_non_parallel(
+            self,
+            other,
+            policy,
+            &rx,
+            &ry,
+            &sx,
+            &sy,
+            other.start().delta_from(self.start()),
+            fragment_denominator,
+            true,
+        )
+    }
+
+    #[inline(always)]
     fn intersect_line_impl(
         &self,
         other: &Self,

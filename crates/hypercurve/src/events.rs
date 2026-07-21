@@ -16,6 +16,9 @@ use crate::classify::{
     at_unit_interval_endpoint, compare_reals, compare_reals_for_split_ordering,
     in_closed_unit_interval, is_zero, min_real,
 };
+use crate::intersect::{
+    CertifiedLineSegmentSupportRelation, certified_line_segment_support_relation,
+};
 use crate::{
     ArcArcIntersection, Classification, Contour2, CurveError, CurvePolicy, CurveResult,
     IntersectionKind, LineArcIntersection, LineArcOrder, LineLineIntersection, ParamRange, Point2,
@@ -406,7 +409,27 @@ pub(crate) fn intersect_contours(
     )
 }
 
+#[inline(always)]
 pub(crate) fn intersect_contours_with_exact_dyadic_line_aabbs(
+    a: &Contour2,
+    b: &Contour2,
+    a_boxes: &crate::contour::ExactDyadicLineAabbs,
+    b_boxes: &crate::contour::ExactDyadicLineAabbs,
+    policy: &CurvePolicy,
+) -> CurveResult<ContourIntersectionSet> {
+    const MIN_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 256;
+    const MAX_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 16_384;
+    let pair_count = a.len().saturating_mul(b.len());
+    if (MIN_RETAINED_CERTIFICATE_PAIR_COUNT..=MAX_RETAINED_CERTIFICATE_PAIR_COUNT)
+        .contains(&pair_count)
+    {
+        intersect_contours_with_retained_line_candidates(a, b, a_boxes, b_boxes, policy)
+    } else {
+        intersect_contours_with_unreserved_exact_dyadic_line_aabbs(a, b, a_boxes, b_boxes, policy)
+    }
+}
+
+fn intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
     a: &Contour2,
     b: &Contour2,
     a_boxes: &crate::contour::ExactDyadicLineAabbs,
@@ -457,6 +480,94 @@ pub(crate) fn intersect_contours_with_exact_dyadic_line_aabbs(
                 policy,
             )?;
         }
+    }
+    Ok(ContourIntersectionSet::from_normalized_events(events))
+}
+
+fn intersect_contours_with_retained_line_candidates(
+    a: &Contour2,
+    b: &Contour2,
+    a_boxes: &crate::contour::ExactDyadicLineAabbs,
+    b_boxes: &crate::contour::ExactDyadicLineAabbs,
+    policy: &CurvePolicy,
+) -> CurveResult<ContourIntersectionSet> {
+    if matches!(
+        a.retained_offset_relation(b, policy),
+        Some(
+            crate::contour::RetainedContourOffsetRelation2::FirstContainsSecond
+                | crate::contour::RetainedContourOffsetRelation2::SecondContainsFirst
+        )
+    ) || a_boxes.contour.is_disjoint(b_boxes.contour)
+    {
+        return Ok(ContourIntersectionSet::default());
+    }
+    debug_assert_eq!(a_boxes.segments.len(), a.len());
+    debug_assert_eq!(b_boxes.segments.len(), b.len());
+
+    let mut b_order = (0..b.len()).collect::<Vec<_>>();
+    b_order.sort_unstable_by(|left, right| {
+        b_boxes.segments[*left]
+            .min_x
+            .total_cmp(&b_boxes.segments[*right].min_x)
+            .then_with(|| left.cmp(right))
+    });
+    let mut candidates = Vec::new();
+    for (a_segment_index, a_box) in a_boxes.segments.iter().copied().enumerate() {
+        for &b_segment_index in &b_order {
+            let b_box = b_boxes.segments[b_segment_index];
+            if b_box.min_x > a_box.max_x {
+                break;
+            }
+            if a_box.is_disjoint(b_box) {
+                continue;
+            }
+            let a_segment = &a.segments()[a_segment_index];
+            let b_segment = &b.segments()[b_segment_index];
+            let (Segment2::Line(a_line), Segment2::Line(b_line)) = (a_segment, b_segment) else {
+                unreachable!("exact dyadic line bounds contain only line segments");
+            };
+            let relation = certified_line_segment_support_relation(a_line, b_line);
+            match relation {
+                CertifiedLineSegmentSupportRelation::Separated => {}
+                CertifiedLineSegmentSupportRelation::ProperCrossing(_) => {
+                    candidates.push((a_segment_index, b_segment_index));
+                }
+                CertifiedLineSegmentSupportRelation::Unknown => {
+                    return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
+                        a, b, a_boxes, b_boxes, policy,
+                    );
+                }
+            }
+        }
+    }
+    let mut events = Vec::with_capacity(candidates.len());
+    for (a_segment_index, b_segment_index) in candidates {
+        let a_segment = &a.segments()[a_segment_index];
+        let b_segment = &b.segments()[b_segment_index];
+        let (Segment2::Line(a_line), Segment2::Line(b_line)) = (a_segment, b_segment) else {
+            unreachable!("exact dyadic line bounds contain only line segments");
+        };
+        let LineLineIntersection::Point {
+            point,
+            a_param,
+            b_param,
+            kind,
+        } = a_line.intersect_line_with_certified_proper_crossing(b_line, policy)?
+        else {
+            return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
+                a, b, a_boxes, b_boxes, policy,
+            );
+        };
+        events.push(ContourIntersection::Point(ContourPointIntersection {
+            a_segment_index,
+            b_segment_index,
+            a_segment_kind: SegmentKind::Line,
+            b_segment_kind: SegmentKind::Line,
+            point,
+            a_param,
+            b_param,
+            kind,
+        }));
     }
     Ok(ContourIntersectionSet::from_normalized_events(events))
 }
@@ -1496,6 +1607,32 @@ mod tests {
         .unwrap()
     }
 
+    fn star(vertex_count: usize, center: (f64, f64), radii: (f64, f64), rotation: f64) -> Contour2 {
+        let points = (0..vertex_count)
+            .map(|index| {
+                let angle = rotation + std::f64::consts::TAU * index as f64 / vertex_count as f64;
+                let radius = if index % 2 == 0 { radii.0 } else { radii.1 };
+                Point2::new(
+                    Real::try_from(center.0 + radius * angle.cos()).unwrap(),
+                    Real::try_from(center.1 + radius * angle.sin()).unwrap(),
+                )
+            })
+            .collect::<Vec<_>>();
+        Contour2::try_new(
+            (0..points.len())
+                .map(|index| {
+                    crate::LineSeg2::try_new(
+                        points[index].clone(),
+                        points[(index + 1) % points.len()].clone(),
+                    )
+                    .map(Segment2::Line)
+                })
+                .collect::<CurveResult<Vec<_>>>()
+                .unwrap(),
+        )
+        .unwrap()
+    }
+
     #[test]
     fn exact_dyadic_line_sweep_matches_exact_box_sweep() {
         let policy = CurvePolicy::certified();
@@ -1527,6 +1664,34 @@ mod tests {
         let dyadic_events = intersect_contours(&first, &second, &policy).unwrap();
 
         assert_eq!(dyadic_events, exact_box_events);
+    }
+
+    #[test]
+    fn retained_line_candidates_match_unreserved_dense_sweep() {
+        let policy = CurvePolicy::certified();
+        let first = star(64, (0.0, 0.0), (100.0, 72.0), 0.0);
+        let second = star(64, (18.0, 7.0), (96.0, 68.0), std::f64::consts::PI / 64.0);
+        let first_boxes = first.exact_dyadic_line_aabbs(&policy).unwrap();
+        let second_boxes = second.exact_dyadic_line_aabbs(&policy).unwrap();
+
+        let retained = intersect_contours_with_retained_line_candidates(
+            &first,
+            &second,
+            &first_boxes,
+            &second_boxes,
+            &policy,
+        )
+        .unwrap();
+        let unreserved = intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
+            &first,
+            &second,
+            &first_boxes,
+            &second_boxes,
+            &policy,
+        )
+        .unwrap();
+
+        assert_eq!(retained, unreserved);
     }
 
     fn flat_candidates(
