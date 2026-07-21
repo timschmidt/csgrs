@@ -765,6 +765,53 @@ mod tests {
     }
 
     #[test]
+    fn fixed_256_gcd_matches_biguint_reference() {
+        let mut state = [
+            0x243f_6a88_85a3_08d3_u64,
+            0x1319_8a2e_0370_7344_u64,
+            0xa409_3822_299f_31d0_u64,
+            0x082e_fa98_ec4e_6c89_u64,
+        ];
+        let next = |state: &mut [u64; 4]| {
+            let result = state[0].wrapping_add(state[3]);
+            let temporary = state[1] << 17;
+            state[2] ^= state[0];
+            state[3] ^= state[1];
+            state[1] ^= state[2];
+            state[0] ^= state[3];
+            state[2] ^= temporary;
+            state[3] = state[3].rotate_left(45);
+            result
+        };
+        for index in 0..20_000_u32 {
+            let mut left_words = [0_u32; 8];
+            let mut right_words = [0_u32; 8];
+            for word in &mut left_words[..6] {
+                *word = next(&mut state) as u32;
+            }
+            for word in &mut right_words[..6] {
+                *word = next(&mut state) as u32;
+            }
+            left_words[4] |= 1;
+            right_words[4] |= 1;
+            let common_shift = index % 64;
+            let left = BigUint::from_slice(&left_words) << common_shift;
+            let right = BigUint::from_slice(&right_words) << common_shift;
+            assert_eq!(
+                Rational::gcd_fixed_256(&left, &right),
+                Some(num::Integer::gcd(&left, &right))
+            );
+        }
+        assert_eq!(
+            Rational::gcd_fixed_256(
+                &((BigUint::one() << 256_usize) + BigUint::one()),
+                &((BigUint::one() << 255_usize) + BigUint::one()),
+            ),
+            None
+        );
+    }
+
+    #[test]
     fn wide_magnitude_gcd_handles_balanced_and_wide_word_operands() {
         let common = (BigUint::one() << 192_usize) + BigUint::one();
         assert_eq!(
@@ -849,6 +896,12 @@ mod tests {
         );
 
         let other = ((BigUint::one() << 259_usize) + BigUint::from(7_u8)) * 21_u8;
+        let fixed_left = ((BigUint::one() << 190_usize) + BigUint::from(13_u8)) * 15_u8;
+        let fixed_right = ((BigUint::one() << 189_usize) + BigUint::from(11_u8)) * 21_u8;
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&fixed_left, &fixed_right),
+            num::Integer::gcd(&fixed_left, &fixed_right)
+        );
         assert_eq!(
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &other),
             num::Integer::gcd(&wide, &other)
@@ -862,6 +915,8 @@ mod tests {
         let wide = ((BigUint::one() << 260_usize) + BigUint::from(2_u8)) * &word;
         let power = BigUint::one() << 300_usize;
         let other = ((BigUint::one() << 259_usize) + BigUint::from(7_u8)) * 21_u8;
+        let fixed_left = ((BigUint::one() << 190_usize) + BigUint::from(13_u8)) * 15_u8;
+        let fixed_right = ((BigUint::one() << 189_usize) + BigUint::from(11_u8)) * 21_u8;
 
         crate::dispatch_trace::reset();
         crate::dispatch_trace::with_recording(|| {
@@ -870,6 +925,7 @@ mod tests {
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&power, &wide);
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &wide);
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&word, &wide);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&fixed_left, &fixed_right);
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &other);
         });
         let trace = crate::dispatch_trace::take_trace();
@@ -879,6 +935,7 @@ mod tests {
             "power-of-two-wide",
             "equal-wide",
             "euclidean-wide-word",
+            "binary-fixed-256",
             "backend-binary",
         ] {
             assert_eq!(trace.path_count("rational_algorithm", "gcd", path), 1);

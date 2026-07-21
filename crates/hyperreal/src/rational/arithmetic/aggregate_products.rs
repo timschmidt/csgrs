@@ -178,6 +178,10 @@ impl Rational {
                         );
                     return BigUint::one() << common_shift;
                 }
+                if let Some(divisor) = Self::gcd_fixed_256(left, right) {
+                    crate::trace_dispatch!("rational_algorithm", "gcd", "binary-fixed-256");
+                    return divisor;
+                }
                 crate::trace_dispatch!("rational_algorithm", "gcd", "backend-binary");
                 num::Integer::gcd(left, right)
             }
@@ -226,6 +230,96 @@ impl Rational {
         }
     }
 
+    fn gcd_fixed_256(left: &BigUint, right: &BigUint) -> Option<BigUint> {
+        const WORDS: usize = 4;
+        let fixed = |value: &BigUint| {
+            if value.bits() > 256 {
+                return None;
+            }
+            let mut words = [0_u64; WORDS];
+            for (index, word) in value.iter_u64_digits().enumerate() {
+                words[index] = word;
+            }
+            Some(words)
+        };
+        let mut left = fixed(left)?;
+        let mut right = fixed(right)?;
+        let trailing_zeros = |words: &[u64; WORDS]| {
+            words
+                .iter()
+                .enumerate()
+                .find_map(|(index, word)| {
+                    (*word != 0).then_some(index as u32 * 64 + word.trailing_zeros())
+                })
+                .expect("wide gcd operands are nonzero")
+        };
+        let shift_right = |words: &mut [u64; WORDS], shift: u32| {
+            let word_shift = usize::try_from(shift / 64).expect("word shift fits usize");
+            let bit_shift = shift % 64;
+            for index in 0..WORDS {
+                let source = index + word_shift;
+                words[index] = if source >= WORDS {
+                    0
+                } else if bit_shift == 0 {
+                    words[source]
+                } else {
+                    (words[source] >> bit_shift)
+                        | words.get(source + 1).copied().unwrap_or(0) << (64 - bit_shift)
+                };
+            }
+        };
+        let common_shift = trailing_zeros(&left).min(trailing_zeros(&right));
+        let left_shift = trailing_zeros(&left);
+        shift_right(&mut left, left_shift);
+        loop {
+            let right_shift = trailing_zeros(&right);
+            shift_right(&mut right, right_shift);
+            if left[2..] == [0, 0] && right[2..] == [0, 0] {
+                let left = u128::from(left[0]) | u128::from(left[1]) << 64;
+                let right = u128::from(right[0]) | u128::from(right[1]) << 64;
+                return Some(BigUint::from(Self::gcd_word(left, right)) << common_shift);
+            }
+            if left.iter().rev().cmp(right.iter().rev()).is_gt() {
+                core::mem::swap(&mut left, &mut right);
+            }
+            let mut borrow = false;
+            for index in 0..WORDS {
+                let (difference, first_borrow) = right[index].overflowing_sub(left[index]);
+                let (difference, second_borrow) = difference.overflowing_sub(u64::from(borrow));
+                right[index] = difference;
+                borrow = first_borrow || second_borrow;
+            }
+            debug_assert!(!borrow);
+            if right == [0; WORDS] {
+                break;
+            }
+        }
+
+        if common_shift != 0 {
+            let word_shift = usize::try_from(common_shift / 64).expect("word shift fits usize");
+            let bit_shift = common_shift % 64;
+            for index in (0..WORDS).rev() {
+                left[index] = if index < word_shift {
+                    0
+                } else if bit_shift == 0 {
+                    left[index - word_shift]
+                } else {
+                    (left[index - word_shift] << bit_shift)
+                        | index
+                            .checked_sub(word_shift + 1)
+                            .map(|source| left[source] >> (64 - bit_shift))
+                            .unwrap_or(0)
+                };
+            }
+        }
+        let mut digits = [0_u32; WORDS * 2];
+        for (index, word) in left.into_iter().enumerate() {
+            digits[index * 2] = word as u32;
+            digits[index * 2 + 1] = (word >> 32) as u32;
+        }
+        Some(BigUint::from_slice(&digits))
+    }
+
     fn gcd_word(left: u128, right: u128) -> u128 {
         if left == 0 {
             return right;
@@ -251,24 +345,23 @@ impl Rational {
             return u128::from(Self::gcd_u64(right, (left % u128::from(right)) as u64));
         }
 
-        // u128 remainder is a compiler-rt software call on common 64-bit
-        // targets. One call is still worthwhile when it reduces the remainder
-        // to u64, as handled above; balanced two-limb inputs instead use Stein's
-        // binary GCD with only trailing-zero counts, shifts, comparisons, and
-        // subtraction.
+        // Balanced two-limb inputs reach a machine word after only a few
+        // Euclidean steps. Stop there: u128 remainder is a compiler-rt call on
+        // common 64-bit targets, while the remaining binary GCD stays entirely
+        // in hardware-width arithmetic.
         let common_shift = left.trailing_zeros().min(right.trailing_zeros());
-        let mut left = left >> left.trailing_zeros();
-        let mut right = right;
-        loop {
-            right >>= right.trailing_zeros();
-            if left > right {
-                std::mem::swap(&mut left, &mut right);
-            }
-            right -= left;
-            if right == 0 {
-                return left << common_shift;
-            }
+        let mut left = left >> common_shift;
+        let mut right = right >> common_shift;
+        while right > u128::from(u64::MAX) {
+            let remainder = left % right;
+            left = right;
+            right = remainder;
         }
+        if right == 0 {
+            return left << common_shift;
+        }
+        let remainder = (left % right) as u64;
+        u128::from(Self::gcd_u64(right as u64, remainder)) << common_shift
     }
 
     /// Compute an arbitrary-precision GCD without entering `BigUint`'s

@@ -247,7 +247,11 @@ impl Rational {
         // exact magnitude type and avoids a temporary signed BigInt.
         let numerator = BigUint::from(n.unsigned_abs());
         let denominator = BigUint::from(d);
-        Ok(Self::from_fraction_parts(sign, numerator, denominator).reduce())
+        Ok(Self::from_fraction_parts_reduced(
+            sign,
+            numerator,
+            denominator,
+        ))
     }
 
     /// The Rational corresponding to the provided [`BigInt`]
@@ -257,8 +261,11 @@ impl Rational {
             return Err(Problem::DivideByZero);
         }
         let (sign, numerator) = n.into_parts();
-        let answer = Self::from_fraction_parts(sign, numerator, denominator);
-        Ok(answer.reduce())
+        Ok(Self::from_fraction_parts_reduced(
+            sign,
+            numerator,
+            denominator,
+        ))
     }
 
     pub(crate) fn from_integer_magnitude(sign: Sign, numerator: BigUint) -> Self {
@@ -300,6 +307,52 @@ impl Rational {
     fn from_fraction_parts(sign: Sign, numerator: BigUint, denominator: BigUint) -> Self {
         if sign == NoSign || numerator.is_zero() {
             return Self::zero();
+        }
+        trace_rational_temporary!();
+        Self::from_parts_raw(sign, numerator, denominator)
+    }
+
+    fn from_fraction_parts_reduced(
+        sign: Sign,
+        mut numerator: BigUint,
+        mut denominator: BigUint,
+    ) -> Self {
+        if sign == NoSign || numerator.is_zero() {
+            return Self::zero();
+        }
+        if denominator != *ONE.deref() {
+            trace_rational_reduction!(&numerator, &denominator);
+            if let Some(denominator_shift) = Self::biguint_power_of_two_shift(&denominator) {
+                let common_shift = numerator
+                    .trailing_zeros()
+                    .expect("nonzero numerator has trailing zeros")
+                    .min(denominator_shift);
+                if common_shift != 0 {
+                    let shift = usize::try_from(common_shift)
+                        .expect("dyadic reduction shift fits usize");
+                    numerator >>= shift;
+                    denominator >>= shift;
+                }
+                trace_rational_power_of_two_common_factor!(common_shift);
+            } else {
+                let divisor =
+                    Self::gcd_magnitudes_with_mixed_width_fast_path(&numerator, &denominator);
+                trace_rational_gcd!(&numerator, &denominator, &divisor);
+                if divisor != *ONE.deref() {
+                    trace_rational_division_algorithm!(
+                        "reduction-numerator",
+                        &numerator,
+                        &divisor
+                    );
+                    trace_rational_division_algorithm!(
+                        "reduction-denominator",
+                        &denominator,
+                        &divisor
+                    );
+                    numerator /= &divisor;
+                    denominator /= divisor;
+                }
+            }
         }
         trace_rational_temporary!();
         Self::from_parts_raw(sign, numerator, denominator)
@@ -600,33 +653,14 @@ impl Rational {
     fn from_signed_magnitude_difference(
         positive: BigUint,
         negative: BigUint,
-        mut denominator: BigUint,
+        denominator: BigUint,
     ) -> Self {
-        let (sign, mut numerator) = match positive.cmp(&negative) {
+        let (sign, numerator) = match positive.cmp(&negative) {
             Ordering::Greater => (Plus, positive - negative),
             Ordering::Less => (Minus, negative - positive),
             Ordering::Equal => return Self::zero(),
         };
-        if let Some(denominator_shift) =
-            Self::biguint_power_of_two_shift(&denominator)
-        {
-            let numerator_shift = numerator
-                .trailing_zeros()
-                .expect("non-zero numerator has trailing zeros");
-            let common_shift = numerator_shift.min(denominator_shift);
-            if common_shift != 0 {
-                let shift = usize::try_from(common_shift)
-                    .expect("dyadic reduction shift fits usize");
-                numerator >>= shift;
-                denominator >>= shift;
-            }
-            trace_rational_power_of_two_common_factor!(common_shift);
-            trace_rational_temporary!();
-            return Self::from_parts_raw(sign, numerator, denominator);
-        }
-        trace_rational_temporary!();
-        Self::from_parts_raw(sign, numerator, denominator)
-        .maybe_reduce()
+        Self::from_fraction_parts_reduced(sign, numerator, denominator)
     }
 
 }
