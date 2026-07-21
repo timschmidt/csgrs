@@ -232,6 +232,7 @@ bevymesh = [
 ]
 wasm = [
   "mesh",
+  "polygon-mesh",
   "sketch",
   "svg-io",
   "stl-io",

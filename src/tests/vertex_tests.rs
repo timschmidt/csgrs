@@ -1,6 +1,7 @@
 //! Tests for vertex interpolation and export helpers.
 
 use super::support::*;
+use crate::polygon_mesh::Polygon as PlanarPolygon;
 
 #[test]
 fn test_vertex_flip() {
@@ -22,11 +23,11 @@ fn test_polygon_construction() {
     let v2 = Vertex::new(p3(1.0, 0.0, 1.0), Vector3::y());
     let v3 = Vertex::new(p3(1.0, 0.0, -1.0), Vector3::y());
 
-    let poly: Polygon<()> = Polygon::new(vec![v1, v2, v3], ());
-    assert_eq!(poly.vertices.len(), 3);
+    let poly: PlanarPolygon<()> = PlanarPolygon::new(vec![v1, v2, v3], ());
+    assert_eq!(poly.vertices().len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
-        approx_eq(poly.plane.normal().dot(&Vector3::y()).abs(), 1.0, 1e-8),
+        approx_eq(poly.plane().normal().dot(&Vector3::y()).abs(), 1.0, 1e-8),
         "Expected plane normal to match ±Y"
     );
 }
@@ -63,7 +64,7 @@ fn test_degenerate_polygon_after_clipping() {
         Vertex::new(p3(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices.clone(), ());
+    let polygon: PlanarPolygon<()> = PlanarPolygon::new(vertices.clone(), ());
     let plane = Plane::from_normal(v3(0.0, 0.0, 1.0), r(0.0));
 
     eprintln!("Original polygon: {:?}", polygon);
@@ -86,7 +87,7 @@ fn test_valid_polygon_clipping() {
         Vertex::new(p3(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices, ());
+    let polygon: PlanarPolygon<()> = PlanarPolygon::new(vertices, ());
 
     let plane = Plane::from_normal(-Vector3::y(), r(-0.5));
 

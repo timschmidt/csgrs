@@ -3,6 +3,7 @@
 use crate::csg::CSG;
 use crate::hyper_math::Real;
 use crate::mesh::{Mesh, plane::Plane};
+use crate::polygon_mesh::{Polygon as PlanarPolygon, PolygonMesh};
 use crate::wasm::{
     finite_matrix4, js_metadata, matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js,
     polygon_js::PolygonJs, sketch_js::SketchJs, vector_js::Vector3Js,
@@ -45,7 +46,7 @@ impl MeshJs {
     #[wasm_bindgen(js_name=fromPolygons)]
     pub fn from_polygons(polygons: Vec<PolygonJs>) -> MeshJs {
         let poly_vec: Vec<_> = polygons.iter().map(|p| p.inner.clone()).collect();
-        let mesh = Mesh::from_polygons(poly_vec);
+        let mesh = PolygonMesh::from_polygons(poly_vec).into();
         MeshJs { inner: mesh }
     }
 
@@ -208,10 +209,9 @@ impl MeshJs {
     }
 
     pub fn polygons(&self) -> Vec<PolygonJs> {
-        self.inner
-            .polygons
-            .iter()
-            .cloned()
+        PolygonMesh::from(self.inner.clone())
+            .into_polygons()
+            .into_iter()
             .map(|inner| PolygonJs { inner })
             .collect()
     }
@@ -533,8 +533,11 @@ impl MeshJs {
         let mut back_polys = Vec::new();
 
         for polygon in &self.inner.polygons {
+            let polygon =
+                PlanarPolygon::new(polygon.vertices().to_vec(), polygon.metadata().clone())
+                    .with_plane_id(polygon.plane_id);
             let (coplanar_front, coplanar_back, mut front, mut back) =
-                plane.split_polygon(polygon);
+                plane.split_polygon(&polygon);
             front_polys.extend(coplanar_front);
             back_polys.extend(coplanar_back);
             front_polys.append(&mut front);
@@ -543,10 +546,10 @@ impl MeshJs {
 
         vec![
             MeshJs {
-                inner: Mesh::from_polygons(front_polys),
+                inner: PolygonMesh::from_polygons(front_polys).into(),
             },
             MeshJs {
-                inner: Mesh::from_polygons(back_polys),
+                inner: PolygonMesh::from_polygons(back_polys).into(),
             },
         ]
     }

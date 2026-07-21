@@ -223,8 +223,9 @@ fn test_csg_inverse() {
 fn test_csg_cube() {
     let c: Mesh<()> = Mesh::cube(r(2.0), ());
     // By default, corner at (0,0,0)
-    // We expect 6 faces, each 4 vertices = 6 polygons
-    assert_eq!(c.polygons.len(), 6);
+    // Hypermesh stores two triangles for each of the six geometric faces.
+    assert_eq!(c.polygons.len(), 12);
+    assert!(c.polygons.iter().all(|triangle| triangle.vertices.len() == 3));
     // Check bounding box
     let bb = c.bounding_box();
     assert!(approx_eq(&bb.mins.x, 0.0, tolerance()));
@@ -302,8 +303,8 @@ fn test_csg_cylinder() {
     assert!(approx_eq(&bb[4], 1.0, 1e-8), "max Y");
     assert!(approx_eq(&bb[5], 2.0, 1e-8), "max Z");
 
-    // We have slices = 16, plus 16*2 polygons for the end caps
-    assert_eq!(cylinder.polygons.len(), 48);
+    // Two cap triangles and two side triangles are emitted per slice.
+    assert_eq!(cylinder.polygons.len(), 64);
 }
 
 #[test]
@@ -375,7 +376,15 @@ fn tapered_frustum_side_normals_include_axial_slope() {
     let mesh = Mesh::<()>::frustum(r(2.0), r(1.0), r(2.0), 16, ());
     assert!(!mesh.polygons.is_empty());
 
-    for side in mesh.polygons.iter().skip(2).step_by(3) {
+    let sides = mesh.polygons.iter().filter(|triangle| {
+        triangle.vertices.iter().all(|vertex| {
+            vertex.normal.0[2] > Real::zero()
+                && (vertex.normal.0[0] != Real::zero() || vertex.normal.0[1] != Real::zero())
+        })
+    });
+    let mut side_count = 0;
+    for side in sides {
+        side_count += 1;
         for vertex in &side.vertices {
             assert!(
                 vertex.normal.0[2] > Real::zero(),
@@ -395,6 +404,7 @@ fn tapered_frustum_side_normals_include_axial_slope() {
             assert!((squared_length - 1.0).abs() < 1.0e-9);
         }
     }
+    assert_eq!(side_count, 32);
 }
 
 #[test]
@@ -491,17 +501,36 @@ fn helical_gear_twist_is_derived_from_helix_angle() {
         4,
         (),
     );
-    let side = mesh
-        .polygons
-        .iter()
-        .find(|polygon| polygon.vertices.len() == 4)
-        .expect("helical gear must have connected side faces");
     let angle = |vertex: &Vertex| {
         let x = vertex.position.x.to_f64_lossy().expect("finite x");
         let y = vertex.position.y.to_f64_lossy().expect("finite y");
         y.atan2(x)
     };
-    let mut measured = angle(&side.vertices[3]) - angle(&side.vertices[0]);
+    let (lower, upper) = mesh
+        .polygons
+        .iter()
+        .find_map(|triangle| {
+            [[0, 1], [1, 2], [2, 0]].into_iter().find_map(|[a, b]| {
+                let a = &triangle.vertices[a];
+                let b = &triangle.vertices[b];
+                let az = a.position.z.to_f64_lossy()?;
+                let bz = b.position.z.to_f64_lossy()?;
+                if (az - bz).abs() < 1.0e-12 {
+                    return None;
+                }
+                let radius = |vertex: &Vertex| {
+                    let x = vertex.position.x.to_f64_lossy()?;
+                    let y = vertex.position.y.to_f64_lossy()?;
+                    Some(x.hypot(y))
+                };
+                if (radius(a)? - radius(b)?).abs() > 1.0e-9 {
+                    return None;
+                }
+                Some(if az < bz { (a, b) } else { (b, a) })
+            })
+        })
+        .expect("helical gear triangles must retain axial side edges");
+    let mut measured = angle(upper) - angle(lower);
     if measured > std::f64::consts::PI {
         measured -= std::f64::consts::TAU;
     } else if measured < -std::f64::consts::PI {
@@ -801,8 +830,9 @@ fn test_csg_extrude() {
     //   bottom polygon: 2 (square triangulated)
     //   top polygon 2 (square triangulated)
     //   side polygons: 4 for a square (one per edge)
-    // => total 8 polygons
-    assert_eq!(extruded.polygons.len(), 8);
+    // Each of the four side quads converts to two Hypermesh triangles.
+    // => total 12 triangles
+    assert_eq!(extruded.polygons.len(), 12);
     // Check bounding box
     let bb = extruded.bounding_box();
     assert!(approx_eq(&bb.mins.z, 0.0, tolerance()));
@@ -839,8 +869,8 @@ fn test_csg_bounding_box() {
 fn test_csg_vertices() {
     let cube: Mesh<()> = Mesh::cube(r(2.0), ());
     let verts = cube.vertices();
-    // 6 faces x 4 vertices each = 24
-    assert_eq!(verts.len(), 24);
+    // 12 triangles x 3 vertices each = 36
+    assert_eq!(verts.len(), 36);
 }
 
 #[test]

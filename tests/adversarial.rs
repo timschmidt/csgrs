@@ -1,4 +1,6 @@
-use csgrs::{csg::CSG, mesh::Mesh, mesh::plane::Plane, sketch::Profile};
+use csgrs::{
+    csg::CSG, mesh::Mesh, mesh::plane::Plane, polygon_mesh::Polygon, sketch::Profile,
+};
 use hyperlattice::{Point3, Real, Vector3};
 
 fn r(value: f64) -> Real {
@@ -55,7 +57,8 @@ fn translated_union_does_not_emit_origin_fallback_vertices() {
 #[test]
 fn plane_split_uses_exact_hyperreal_side_classification() {
     let mut mesh = Mesh::<()>::cube(r(2.0), ());
-    let polygon = mesh.polygons.remove(0);
+    let triangle = mesh.polygons.remove(0);
+    let polygon = Polygon::new(triangle.vertices().to_vec(), ());
     let plane = Plane::from_normal(Vector3::x(), r(1.0e-12));
     let (_cf, _cb, front, back) = plane.split_polygon(&polygon);
 

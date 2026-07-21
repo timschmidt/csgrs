@@ -1,6 +1,7 @@
 //! Tests for plane classification and splitting.
 
 use super::support::*;
+use crate::polygon_mesh::Polygon as PlanarPolygon;
 
 #[test]
 fn test_plane_flip() {
@@ -16,7 +17,7 @@ fn test_plane_split_polygon() {
     let plane = Plane::from_normal(v3(0.0, 1.0, 0.0), r(0.0));
 
     // A polygon that crosses y=0 line: a square from ( -1, -1 ) to (1, 1 )
-    let poly: Polygon<()> = Polygon::new(
+    let poly: PlanarPolygon<()> = PlanarPolygon::new(
         vec![
             Vertex::new(p3(-1.0, -1.0, 0.0), Vector3::z()),
             Vertex::new(p3(1.0, -1.0, 0.0), Vector3::z()),
@@ -39,15 +40,15 @@ fn test_plane_split_polygon() {
     let back_poly = &b[0];
     assert_eq!(front_poly.plane_id, poly.plane_id);
     assert_eq!(back_poly.plane_id, poly.plane_id);
-    assert!(front_poly.vertices.len() >= 3);
-    assert!(back_poly.vertices.len() >= 3);
+    assert!(front_poly.vertices().len() >= 3);
+    assert!(back_poly.vertices().len() >= 3);
 
     // Quick check: all front vertices should have y >= 0.
-    for v in &front_poly.vertices {
+    for v in front_poly.vertices() {
         assert!(v.position.y >= r(0.0));
     }
     // All back vertices should have y <= 0.
-    for v in &back_poly.vertices {
+    for v in back_poly.vertices() {
         assert!(v.position.y <= r(0.0));
     }
 }

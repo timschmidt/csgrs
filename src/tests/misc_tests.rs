@@ -6,12 +6,12 @@ use super::support::*;
 fn test_cube_basics() {
     let cube: Mesh<()> = Mesh::cube(r(2.0), ());
 
-    // A cube should have 6 faces
-    assert_eq!(cube.polygons.len(), 6);
+    // A triangle mesh stores two triangles per geometric cube face.
+    assert_eq!(cube.polygons.len(), 12);
 
-    // Each face should have 4 vertices
+    // Every stored face is a triangle.
     for poly in &cube.polygons {
-        assert_eq!(poly.vertices.len(), 4);
+        assert_eq!(poly.vertices.len(), 3);
     }
 
     // Check bounding box dimensions (cube should be 2x2x2)

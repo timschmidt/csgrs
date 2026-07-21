@@ -2078,6 +2078,28 @@ impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
     }
 }
 
+fn triangulate_mesh_faces<M: Clone + Send + Sync>(
+    polygons: Vec<Polygon<M>>,
+) -> Vec<Polygon<M>> {
+    polygons
+        .into_iter()
+        .flat_map(|polygon| {
+            if polygon.vertices().len() == 3 {
+                return vec![polygon];
+            }
+            let metadata = polygon.metadata().clone();
+            let plane_id = polygon.plane_id;
+            polygon
+                .triangulate()
+                .into_iter()
+                .map(|triangle| {
+                    Polygon::new(triangle.to_vec(), metadata.clone()).with_plane_id(plane_id)
+                })
+                .collect()
+        })
+        .collect()
+}
+
 impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new empty mesh.
     pub fn empty() -> Self {
@@ -2087,8 +2109,13 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
     }
 
-    /// Build a Mesh from an existing polygon list
+    /// Build a triangle mesh from planar faces.
+    ///
+    /// Faces with more than three vertices are triangulated at this explicit
+    /// compatibility boundary. New code that needs to retain face boundaries
+    /// should construct `PolygonMesh` and call `PolygonMesh::triangulate`.
     pub fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
+        let polygons = triangulate_mesh_faces(polygons);
         Mesh {
             polygons: MeshPolygons::new(polygons),
             bounding_box: OnceLock::new(),
@@ -2313,6 +2340,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         polygons: Vec<Polygon<M>>,
         topology: (usize, usize, bool),
     ) -> Self {
+        if !topology.2 || polygons.iter().any(|polygon| polygon.vertices().len() != 3) {
+            return Self::from_polygons(polygons);
+        }
         Mesh {
             polygons: MeshPolygons::new_with_topology(polygons, topology),
             bounding_box: OnceLock::new(),
@@ -7182,11 +7212,11 @@ mod tests {
             &right.bounding_box()
         ));
         let union = left.try_union(&right).unwrap();
-        assert_eq!(union.polygons.len(), 12);
-        assert_eq!(union.topology_counts(), (24, 48));
-        assert_eq!(left.try_difference(&right).unwrap().polygons.len(), 6);
+        assert_eq!(union.polygons.len(), 24);
+        assert_eq!(union.topology_counts(), (24, 72));
+        assert_eq!(left.try_difference(&right).unwrap().polygons.len(), 12);
         assert!(left.try_intersection(&right).unwrap().polygons.is_empty());
-        assert_eq!(left.try_xor(&right).unwrap().polygons.len(), 12);
+        assert_eq!(left.try_xor(&right).unwrap().polygons.len(), 24);
 
         let touching = Mesh::cube(r(2.0), ()).translate(r(2.0), Real::zero(), Real::zero());
         assert!(!aabbs_decided_disjoint(
@@ -7201,7 +7231,7 @@ mod tests {
         let right = Mesh::cube(r(2.0), "right");
         let result = left.try_difference(&right).unwrap();
 
-        assert_eq!(result.polygons.len(), 9);
+        assert_eq!(result.polygons.len(), 24);
         assert_eq!(result.topology_counts().0, 24);
         assert_eq!(result.bounding_box(), left.bounding_box());
         assert!(
@@ -7349,6 +7379,26 @@ mod tests {
         let triangulated = mesh.triangulate();
 
         assert!(Arc::ptr_eq(&mesh.polygons.0, &triangulated.polygons.0));
+    }
+
+    #[test]
+    fn mesh_constructor_converts_planar_faces_to_triangle_storage() {
+        let face = Polygon::new(
+            vec![
+                Vertex::new(p3(0.0, 0.0, 0.0), Vector3::z()),
+                Vertex::new(p3(2.0, 0.0, 0.0), Vector3::z()),
+                Vertex::new(p3(2.0, 2.0, 0.0), Vector3::z()),
+                Vertex::new(p3(0.0, 2.0, 0.0), Vector3::z()),
+            ],
+            "face",
+        );
+
+        let mesh = Mesh::from_polygons(vec![face]);
+
+        assert_eq!(mesh.polygons.len(), 2);
+        assert!(mesh.polygons.iter().all(|triangle| {
+            triangle.vertices().len() == 3 && triangle.metadata() == &"face"
+        }));
     }
 
     #[test]
