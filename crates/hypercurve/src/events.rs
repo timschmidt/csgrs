@@ -373,6 +373,12 @@ pub(crate) fn intersect_contours(
     b: &Contour2,
     policy: &CurvePolicy,
 ) -> CurveResult<ContourIntersectionSet> {
+    if let (Some(a_boxes), Some(b_boxes)) = (
+        a.exact_dyadic_line_aabbs(policy),
+        b.exact_dyadic_line_aabbs(policy),
+    ) {
+        return intersect_contours_with_exact_dyadic_line_aabbs(a, b, &a_boxes, &b_boxes, policy);
+    }
     // The bounding-box broad phase is only a candidate filter. This crate keeps
     // the simple pair scan but skips pairs whose boxes are decidably disjoint.
     let a_box = decided_contour_aabb(a, policy);
@@ -398,6 +404,61 @@ pub(crate) fn intersect_contours(
         None,
         policy,
     )
+}
+
+pub(crate) fn intersect_contours_with_exact_dyadic_line_aabbs(
+    a: &Contour2,
+    b: &Contour2,
+    a_boxes: &crate::contour::ExactDyadicLineAabbs,
+    b_boxes: &crate::contour::ExactDyadicLineAabbs,
+    policy: &CurvePolicy,
+) -> CurveResult<ContourIntersectionSet> {
+    if matches!(
+        a.retained_offset_relation(b, policy),
+        Some(
+            crate::contour::RetainedContourOffsetRelation2::FirstContainsSecond
+                | crate::contour::RetainedContourOffsetRelation2::SecondContainsFirst
+        )
+    ) || a_boxes.contour.is_disjoint(b_boxes.contour)
+    {
+        return Ok(ContourIntersectionSet::default());
+    }
+    debug_assert_eq!(a_boxes.segments.len(), a.len());
+    debug_assert_eq!(b_boxes.segments.len(), b.len());
+
+    let mut b_order = (0..b.len()).collect::<Vec<_>>();
+    b_order.sort_unstable_by(|left, right| {
+        b_boxes.segments[*left]
+            .min_x
+            .total_cmp(&b_boxes.segments[*right].min_x)
+            .then_with(|| left.cmp(right))
+    });
+    let mut events = Vec::new();
+    for (a_segment_index, a_box) in a_boxes.segments.iter().copied().enumerate() {
+        for &b_segment_index in &b_order {
+            let b_box = b_boxes.segments[b_segment_index];
+            if b_box.min_x > a_box.max_x {
+                break;
+            }
+            if a_box.is_disjoint(b_box) {
+                continue;
+            }
+            let a_segment = &a.segments()[a_segment_index];
+            let b_segment = &b.segments()[b_segment_index];
+            let relation =
+                a_segment.intersect_segment_with_certified_aabb_overlap(b_segment, policy)?;
+            append_segment_relation_events(
+                &mut events,
+                a_segment_index,
+                b_segment_index,
+                a_segment,
+                b_segment,
+                relation,
+                policy,
+            )?;
+        }
+    }
+    Ok(ContourIntersectionSet::from_normalized_events(events))
 }
 
 pub(crate) fn intersect_contour_self(
@@ -1411,6 +1472,61 @@ mod tests {
             Point2::new(Real::from(min_x), Real::from(min_y)),
             Point2::new(Real::from(max_x), Real::from(max_y)),
         )
+    }
+
+    fn rectangle(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Contour2 {
+        let points = [
+            Point2::new(min_x.into(), min_y.into()),
+            Point2::new(max_x.into(), min_y.into()),
+            Point2::new(max_x.into(), max_y.into()),
+            Point2::new(min_x.into(), max_y.into()),
+        ];
+        Contour2::try_new(
+            (0..points.len())
+                .map(|index| {
+                    crate::LineSeg2::try_new(
+                        points[index].clone(),
+                        points[(index + 1) % points.len()].clone(),
+                    )
+                    .map(Segment2::Line)
+                })
+                .collect::<CurveResult<Vec<_>>>()
+                .unwrap(),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn exact_dyadic_line_sweep_matches_exact_box_sweep() {
+        let policy = CurvePolicy::certified();
+        let first = rectangle(0, 0, 8, 6);
+        let second = rectangle(3, -2, 11, 4);
+        let first_box = decided_contour_aabb(&first, &policy);
+        let second_box = decided_contour_aabb(&second, &policy);
+        let first_boxes = first
+            .segments()
+            .iter()
+            .map(|segment| decided_segment_aabb(segment, &policy))
+            .collect::<Vec<_>>();
+        let second_boxes = second
+            .segments()
+            .iter()
+            .map(|segment| decided_segment_aabb(segment, &policy))
+            .collect::<Vec<_>>();
+        let exact_box_events = intersect_contours_with_cached_aabbs(
+            &first,
+            &second,
+            first_box.as_ref(),
+            second_box.as_ref(),
+            &first_boxes,
+            &second_boxes,
+            None,
+            &policy,
+        )
+        .unwrap();
+        let dyadic_events = intersect_contours(&first, &second, &policy).unwrap();
+
+        assert_eq!(dyadic_events, exact_box_events);
     }
 
     fn flat_candidates(

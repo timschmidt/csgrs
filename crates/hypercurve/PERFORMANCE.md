@@ -1154,6 +1154,33 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,391 coverage points and 15,235 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Certified all-line contours whose endpoint coordinates have lossless binary64
+views now use transient 32-byte boxes for their contour-pair sweep. Binary64 is
+used only to order and reject candidates after exact representability has been
+proved; every retained pair still reaches the exact line relation kernel.
+Arcs, non-representable coordinates, preview mode, and exact-symbolic mode keep
+the general exact-box path. Keeping the compact boxes operation-local avoids
+increasing retained or peak heap as source complexity grows.
+
+Against the certified-traversal checkpoint, the 100-operation ordinary star64
+Callgrind lane fell from 522,336,104 to 454,215,855 instructions (13.04%). DHAT
+allocation traffic fell from 61,560,585 to 58,966,409 bytes (4.21%), reads by
+21.05%, and writes by 7.61%; allocation blocks fell by 624 and peak live heap
+was unchanged. Twenty-iteration Callgrind controls improved the three ordinary
+region, contour, and loop lanes by 11.28--11.35% and the three prepared lanes
+by 1.50--1.53%. A 1,000-iteration rectangle-union control improved by 10.47%.
+
+In an 11-sample, 500-iteration release comparison, ordinary star64 intersection
+measured 0.401 ms/iter, versus 0.028 ms for `cavalier_contours`, 0.035 ms for
+`i_overlay`, and 0.036 ms for `geo`. The exact Hypercurve path therefore remains
+behind approximate competitors, but has fallen from the previously recorded
+0.496 ms/iter before the four latest memory and traversal checkpoints.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,512 coverage points and 15,911 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -431,8 +431,35 @@ pub(crate) fn intersect_region_views(
 }
 
 struct ContourIntersectionAabbs {
+    exact: Option<crate::contour::ExactDyadicLineAabbs>,
     contour: Option<Aabb2>,
     segments: OnceCell<Vec<Option<Aabb2>>>,
+}
+
+impl ContourIntersectionAabbs {
+    fn is_disjoint(&self, other: &Self, policy: &CurvePolicy) -> bool {
+        match (self.exact.as_ref(), other.exact.as_ref()) {
+            (Some(first), Some(second)) => first.contour.is_disjoint(second.contour),
+            _ => match (self.contour.as_ref(), other.contour.as_ref()) {
+                (Some(first), Some(second)) => aabbs_decided_disjoint(first, second, policy),
+                _ => false,
+            },
+        }
+    }
+
+    fn segments<'a>(
+        &'a self,
+        contour: &crate::Contour2,
+        policy: &CurvePolicy,
+    ) -> &'a [Option<Aabb2>] {
+        self.segments.get_or_init(|| {
+            contour
+                .segments()
+                .iter()
+                .map(|segment| decided_segment_aabb(segment, policy))
+                .collect()
+        })
+    }
 }
 
 fn contour_intersection_aabbs(
@@ -441,9 +468,16 @@ fn contour_intersection_aabbs(
 ) -> Vec<ContourIntersectionAabbs> {
     contours
         .iter()
-        .map(|contour| ContourIntersectionAabbs {
-            contour: decided_contour_aabb(contour, policy),
-            segments: OnceCell::new(),
+        .map(|contour| {
+            let exact = contour.exact_dyadic_line_aabbs(policy);
+            ContourIntersectionAabbs {
+                contour: exact
+                    .is_none()
+                    .then(|| decided_contour_aabb(contour, policy))
+                    .flatten(),
+                exact,
+                segments: OnceCell::new(),
+            }
         })
         .collect()
 }
@@ -513,40 +547,42 @@ fn collect_role_pairs(
             // Region event collection is still contour-pair based. Bounding
             // intervals are only candidate filters: decided disjoint boxes skip
             // the pair, while uncertain boxes fall through to exact events.
-            if let (Some(first_box), Some(second_box)) = (
-                &first_boxes[first_index].contour,
-                &second_boxes[second_index].contour,
-            ) && aabbs_decided_disjoint(first_box, second_box, policy)
-            {
+            if first_boxes[first_index].is_disjoint(&second_boxes[second_index], policy) {
                 workload.skipped_aabb_pair_count += 1;
                 continue;
             }
 
             workload.tested_pair_count += 1;
-            let first_segment_boxes = first_boxes[first_index].segments.get_or_init(|| {
-                first_contour
-                    .segments()
-                    .iter()
-                    .map(|segment| decided_segment_aabb(segment, policy))
-                    .collect()
-            });
-            let second_segment_boxes = second_boxes[second_index].segments.get_or_init(|| {
-                second_contour
-                    .segments()
-                    .iter()
-                    .map(|segment| decided_segment_aabb(segment, policy))
-                    .collect()
-            });
-            let intersections = crate::events::intersect_contours_with_cached_aabbs(
-                first_contour,
-                second_contour,
-                first_boxes[first_index].contour.as_ref(),
-                second_boxes[second_index].contour.as_ref(),
-                first_segment_boxes,
-                second_segment_boxes,
-                None,
-                policy,
-            )?;
+            let intersections = match (
+                first_boxes[first_index].exact.as_ref(),
+                second_boxes[second_index].exact.as_ref(),
+            ) {
+                (Some(first), Some(second)) => {
+                    crate::events::intersect_contours_with_exact_dyadic_line_aabbs(
+                        first_contour,
+                        second_contour,
+                        first,
+                        second,
+                        policy,
+                    )?
+                }
+                _ => {
+                    let first_segment_boxes =
+                        first_boxes[first_index].segments(first_contour, policy);
+                    let second_segment_boxes =
+                        second_boxes[second_index].segments(second_contour, policy);
+                    crate::events::intersect_contours_with_cached_aabbs(
+                        first_contour,
+                        second_contour,
+                        first_boxes[first_index].contour.as_ref(),
+                        second_boxes[second_index].contour.as_ref(),
+                        first_segment_boxes,
+                        second_segment_boxes,
+                        None,
+                        policy,
+                    )?
+                }
+            };
             if intersections.is_empty() {
                 continue;
             }

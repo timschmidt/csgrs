@@ -202,6 +202,33 @@ pub struct Contour2 {
     signed_area_cache: Rc<OnceCell<CurveResult<Option<Real>>>>,
 }
 
+/// Compact line bounds whose binary64 coordinates are lossless exact dyadics.
+///
+/// These bounds may reject candidates, but never replace exact segment predicates.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ExactF64Aabb {
+    pub(crate) min_x: f64,
+    pub(crate) min_y: f64,
+    pub(crate) max_x: f64,
+    pub(crate) max_y: f64,
+}
+
+impl ExactF64Aabb {
+    pub(crate) fn is_disjoint(self, other: Self) -> bool {
+        self.max_x < other.min_x
+            || other.max_x < self.min_x
+            || self.max_y < other.min_y
+            || other.max_y < self.min_y
+    }
+}
+
+/// Transient certified bounds for an all-line contour.
+#[derive(Debug)]
+pub(crate) struct ExactDyadicLineAabbs {
+    pub(crate) contour: ExactF64Aabb,
+    pub(crate) segments: Vec<ExactF64Aabb>,
+}
+
 #[derive(Debug, PartialEq)]
 struct ContourOffsetSource2 {
     curve: CurveString2,
@@ -980,6 +1007,16 @@ impl Contour2 {
 
     pub(crate) fn cached_signed_area(&self) -> Option<&Real> {
         self.signed_area_cache.get()?.as_ref().ok()?.as_ref()
+    }
+
+    pub(crate) fn exact_dyadic_line_aabbs(
+        &self,
+        policy: &CurvePolicy,
+    ) -> Option<ExactDyadicLineAabbs> {
+        if policy != &CurvePolicy::certified() {
+            return None;
+        }
+        exact_dyadic_line_aabbs(self.segments())
     }
 
     /// Returns the segment count.
@@ -1889,6 +1926,42 @@ fn decided_segment_boxes(segments: &[Segment2], policy: &CurvePolicy) -> Vec<Opt
         .collect()
 }
 
+fn exact_dyadic_line_aabbs(segments: &[Segment2]) -> Option<ExactDyadicLineAabbs> {
+    let segments = segments
+        .iter()
+        .map(|segment| {
+            let Segment2::Line(line) = segment else {
+                return None;
+            };
+            let start_x = line.start().x().to_f64_exact_dyadic()?;
+            let start_y = line.start().y().to_f64_exact_dyadic()?;
+            let end_x = line.end().x().to_f64_exact_dyadic()?;
+            let end_y = line.end().y().to_f64_exact_dyadic()?;
+            if ![start_x, start_y, end_x, end_y]
+                .into_iter()
+                .all(f64::is_finite)
+            {
+                return None;
+            }
+            Some(ExactF64Aabb {
+                min_x: start_x.min(end_x),
+                min_y: start_y.min(end_y),
+                max_x: start_x.max(end_x),
+                max_y: start_y.max(end_y),
+            })
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let mut boxes = segments.iter().copied();
+    let first = boxes.next()?;
+    let contour = boxes.fold(first, |bounds, segment| ExactF64Aabb {
+        min_x: bounds.min_x.min(segment.min_x),
+        min_y: bounds.min_y.min(segment.min_y),
+        max_x: bounds.max_x.max(segment.max_x),
+        max_y: bounds.max_y.max(segment.max_y),
+    });
+    Some(ExactDyadicLineAabbs { contour, segments })
+}
+
 fn line_signed_area_contribution(start: &Point2, end: &Point2) -> CurveResult<Real> {
     (line_doubled_signed_area_contribution(start, end) / Real::from(2_i8)).map_err(CurveError::from)
 }
@@ -2426,6 +2499,32 @@ mod tests {
         assert_eq!(contour.signed_area().unwrap(), Some(Real::from(4)));
         assert_eq!(clone.signed_area().unwrap(), Some(Real::from(4)));
         assert!(clone.signed_area_cache.get().is_some());
+    }
+
+    #[test]
+    fn exact_dyadic_line_bounds_use_compact_lossless_coordinates() {
+        let contour = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(point(-2, 0), Real::zero()),
+            BulgeVertex2::new(point(3, 0), Real::zero()),
+            BulgeVertex2::new(point(3, 4), Real::zero()),
+            BulgeVertex2::new(point(-2, 4), Real::zero()),
+        ])
+        .unwrap();
+        let bounds = contour
+            .exact_dyadic_line_aabbs(&CurvePolicy::certified())
+            .unwrap();
+
+        assert_eq!(size_of::<ExactF64Aabb>(), 32);
+        assert_eq!(bounds.segments.len(), contour.len());
+        assert_eq!(bounds.contour.min_x, -2.0);
+        assert_eq!(bounds.contour.min_y, 0.0);
+        assert_eq!(bounds.contour.max_x, 3.0);
+        assert_eq!(bounds.contour.max_y, 4.0);
+        assert!(
+            contour
+                .exact_dyadic_line_aabbs(&CurvePolicy::exact_symbolic())
+                .is_none()
+        );
     }
 
     #[test]
