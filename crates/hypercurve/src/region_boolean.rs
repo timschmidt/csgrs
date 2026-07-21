@@ -2010,6 +2010,33 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
             Classification::Decided(selection) => selection,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        if output_kind == BooleanBoundaryOutputKind::Contours {
+            match selection.endpoint_chain_indices_from_certified_split(fragments, policy)? {
+                Classification::Decided(Some(chain_indices)) => {
+                    let contours = match selection.emit_contours_from_owned_certified_split(
+                        lean_fragments
+                            .take()
+                            .expect("lean Boolean traversal owns its split fragments"),
+                        chain_indices,
+                        fill_rule,
+                    )? {
+                        Classification::Decided(contours) => contours,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    return Ok(Classification::Decided((
+                        BooleanBoundaryOutput::Contours(contours),
+                        RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
+                        None,
+                    )));
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
         let emitted = selection.emit_boundary_fragments_from_owned_certified_split(
             lean_fragments.expect("lean Boolean traversal owns its split fragments"),
         )?;

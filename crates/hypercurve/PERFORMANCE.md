@@ -1097,6 +1097,26 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,269 coverage points and 13,981 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Lean contour output now builds its endpoint schedule from borrowed selected
+fragments before consuming the certified split. When endpoint adjacency is
+unambiguous, it moves only the oriented `Segment2` values into the final
+contours instead of first allocating the 776-byte directed provenance carrier.
+Loop-returning APIs retain the full carrier, and duplicate starts or other
+branch topology still fall through to the existing tangent-ordered traversal.
+
+Against the implicit-marker checkpoint, the 100-operation ordinary star64
+Callgrind lane fell from 528,231,186 to 524,245,052 instructions (0.75%). DHAT
+allocation traffic fell from 66,807,657 to 63,111,657 bytes (5.53%), reads by
+4.05%, and writes by 4.15%; allocation blocks were unchanged and peak live heap
+fell by eight bytes. Focused Callgrind controls improved ordinary/prepared
+region and contour lanes by 0.69--0.78%, the two loop lanes by 0.07--0.13%, and
+a 1,000-iteration rectangle-union control by 2.66%.
+
+Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
+rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
+1,000 runs at 5,366 coverage points and 14,475 feature edges without a failure;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

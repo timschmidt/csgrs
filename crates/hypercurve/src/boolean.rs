@@ -4,7 +4,10 @@
 //! loop assembly. It deliberately does not resolve shared-boundary fragments:
 //! those need overlap-aware traversal, not a midpoint guess.
 
-use crate::boolean_boundary::{BooleanBoundaryFragmentSet, DirectedBooleanFragment};
+use crate::boolean_boundary::{
+    BooleanBoundaryChainIndices, BooleanBoundaryFragmentSet, BorrowedBooleanBoundaryEdge,
+    DirectedBooleanFragment, endpoint_chain_indices, materialize_segment_contours,
+};
 use crate::classify::real_sign;
 use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
 use crate::{
@@ -213,6 +216,106 @@ impl BooleanFragmentSelection {
             .iter()
             .filter(|classification| classification.action.emits_fragment())
             .count()
+    }
+
+    pub(crate) fn endpoint_chain_indices_from_certified_split(
+        &self,
+        fragments: &RegionFragmentSet,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Option<BooleanBoundaryChainIndices>>> {
+        let mut sources = fragments.contours().iter().flat_map(|contour| {
+            let key = contour.key;
+            contour
+                .fragments
+                .fragments()
+                .iter()
+                .enumerate()
+                .map(move |(index, source)| (key, index, source))
+        });
+        let mut endpoints = Vec::with_capacity(self.emitted_fragment_count());
+        for classification in &self.classifications {
+            let Some((key, fragment_index, source)) = sources.next() else {
+                return Err(CurveError::Topology(
+                    "boolean selection references a fragment outside certified split output".into(),
+                ));
+            };
+            if classification.key != key || classification.fragment_index != fragment_index {
+                return Err(CurveError::Topology(
+                    "boolean selection order differs from certified split order".into(),
+                ));
+            }
+            match classification.action {
+                BooleanFragmentAction::Discard => {}
+                BooleanFragmentAction::BoundaryNeedsResolution => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                BooleanFragmentAction::KeepSourceDirection => {
+                    endpoints.push(BorrowedBooleanBoundaryEdge::new(&source.segment, false));
+                }
+                BooleanFragmentAction::KeepReversed => {
+                    endpoints.push(BorrowedBooleanBoundaryEdge::new(&source.segment, true));
+                }
+            }
+        }
+        if sources.next().is_some() {
+            return Err(CurveError::Topology(
+                "boolean selection omits a supplied source fragment".into(),
+            ));
+        }
+        Ok(match endpoint_chain_indices(&endpoints, policy) {
+            Ok(chain_indices) => Classification::Decided(chain_indices),
+            Err((_, reason)) => Classification::Uncertain(reason),
+        })
+    }
+
+    pub(crate) fn emit_contours_from_owned_certified_split(
+        self,
+        fragments: RegionFragmentSet,
+        chain_indices: BooleanBoundaryChainIndices,
+        fill_rule: FillRule,
+    ) -> CurveResult<Classification<Vec<crate::Contour2>>> {
+        let mut sources = fragments.into_contours().into_iter().flat_map(|contour| {
+            let key = contour.key;
+            contour
+                .fragments
+                .into_fragments()
+                .into_iter()
+                .enumerate()
+                .map(move |(index, source)| (key, index, source))
+        });
+        let mut segments = Vec::with_capacity(self.emitted_fragment_count());
+        for classification in self.classifications {
+            let Some((key, fragment_index, source)) = sources.next() else {
+                return Err(CurveError::Topology(
+                    "boolean selection references a fragment outside certified split output".into(),
+                ));
+            };
+            if classification.key != key || classification.fragment_index != fragment_index {
+                return Err(CurveError::Topology(
+                    "boolean selection order differs from certified split order".into(),
+                ));
+            }
+            match classification.action {
+                BooleanFragmentAction::Discard => {}
+                BooleanFragmentAction::BoundaryNeedsResolution => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                BooleanFragmentAction::KeepSourceDirection => segments.push(source.segment),
+                BooleanFragmentAction::KeepReversed => {
+                    segments.push(source.segment.into_reversed());
+                }
+            }
+        }
+        if sources.next().is_some() {
+            return Err(CurveError::Topology(
+                "boolean selection omits a supplied source fragment".into(),
+            ));
+        }
+        Ok(materialize_segment_contours(
+            chain_indices,
+            segments,
+            fill_rule,
+        ))
     }
 
     pub(crate) fn resolve_boundary_actions(

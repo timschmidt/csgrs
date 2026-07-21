@@ -320,30 +320,16 @@ impl BooleanBoundaryFragmentSet {
             }
             Err((_, reason)) => return Ok(Classification::Uncertain(reason)),
         };
-        let mut fragments = self
+        let segments = self
             .directed_fragments
             .into_iter()
-            .map(Some)
+            .map(|fragment| fragment.segment)
             .collect::<Vec<_>>();
-        let mut contours = Vec::with_capacity(chain_indices.len());
-        for (indices, closed) in chain_indices {
-            if !closed {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            contours.push(Contour2::from_validated_closed_segments(
-                indices
-                    .into_iter()
-                    .map(|index| {
-                        fragments[index]
-                            .take()
-                            .expect("each assembled fragment index is visited once")
-                            .segment
-                    })
-                    .collect(),
-                fill_rule,
-            ));
-        }
-        Ok(Classification::Decided(contours))
+        Ok(materialize_segment_contours(
+            chain_indices,
+            segments,
+            fill_rule,
+        ))
     }
 
     /// Assembles directed boundary fragments and retains traversal evidence.
@@ -1351,7 +1337,55 @@ impl BooleanBoundaryContourTransferResult2 {
     }
 }
 
+pub(crate) type BooleanBoundaryChainIndices = Vec<(Vec<usize>, bool)>;
+
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
+
+pub(crate) trait BooleanBoundaryEdge {
+    fn boundary_start(&self) -> &Point2;
+    fn boundary_end(&self) -> &Point2;
+}
+
+impl BooleanBoundaryEdge for DirectedBooleanFragment {
+    fn boundary_start(&self) -> &Point2 {
+        self.segment.start()
+    }
+
+    fn boundary_end(&self) -> &Point2 {
+        self.segment.end()
+    }
+}
+
+pub(crate) struct BorrowedBooleanBoundaryEdge<'a> {
+    start: &'a Point2,
+    end: &'a Point2,
+}
+
+impl<'a> BorrowedBooleanBoundaryEdge<'a> {
+    pub(crate) fn new(segment: &'a Segment2, reversed: bool) -> Self {
+        if reversed {
+            Self {
+                start: segment.end(),
+                end: segment.start(),
+            }
+        } else {
+            Self {
+                start: segment.start(),
+                end: segment.end(),
+            }
+        }
+    }
+}
+
+impl BooleanBoundaryEdge for BorrowedBooleanBoundaryEdge<'_> {
+    fn boundary_start(&self) -> &Point2 {
+        self.start
+    }
+
+    fn boundary_end(&self) -> &Point2 {
+        self.end
+    }
+}
 
 fn directed_boolean_fragment_owner(
     fragment: &DirectedBooleanFragment,
@@ -1983,7 +2017,7 @@ fn add_segment_kind_count(counts: &mut SegmentKindCounts, segment: &Segment2) {
 }
 
 fn endpoint_adjacency(
-    fragments: &[DirectedBooleanFragment],
+    fragments: &[impl BooleanBoundaryEdge],
     policy: &CurvePolicy,
 ) -> Classification<EndpointAdjacency> {
     let mut successors = vec![None; fragments.len()];
@@ -1992,7 +2026,7 @@ fn endpoint_adjacency(
 
     for (index, fragment) in fragments.iter().enumerate() {
         if starts_by_identity
-            .insert(fragment.segment.start().identity(), index)
+            .insert(fragment.boundary_start().identity(), index)
             .is_some()
         {
             return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
@@ -2001,7 +2035,7 @@ fn endpoint_adjacency(
 
     let mut unmatched_ends = Vec::new();
     for (left_index, left) in fragments.iter().enumerate() {
-        let Some(&right_index) = starts_by_identity.get(&left.segment.end().identity()) else {
+        let Some(&right_index) = starts_by_identity.get(&left.boundary_end().identity()) else {
             unmatched_ends.push(left_index);
             continue;
         };
@@ -2022,7 +2056,7 @@ fn endpoint_adjacency(
                 continue;
             }
 
-            let matches = match points_match(left.segment.end(), right.segment.start(), policy) {
+            let matches = match points_match(left.boundary_end(), right.boundary_start(), policy) {
                 Classification::Decided(matches) => matches,
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             };
@@ -2306,11 +2340,13 @@ fn boundary_dot(left: &BoundaryTangent, right: &BoundaryTangent) -> Real {
     (&left.dx * &right.dx) + (&left.dy * &right.dy)
 }
 
-fn endpoint_chain_indices(
-    fragments: &[DirectedBooleanFragment],
+pub(crate) fn endpoint_chain_indices(
+    fragments: &[impl BooleanBoundaryEdge],
     policy: &CurvePolicy,
-) -> Result<Option<Vec<(Vec<usize>, bool)>>, (BooleanBoundaryChainAssemblyStage2, UncertaintyReason)>
-{
+) -> Result<
+    Option<BooleanBoundaryChainIndices>,
+    (BooleanBoundaryChainAssemblyStage2, UncertaintyReason),
+> {
     let (successors, predecessors) = match endpoint_adjacency(fragments, policy) {
         Classification::Decided(adjacency) => adjacency,
         Classification::Uncertain(UncertaintyReason::Unsupported) => return Ok(None),
@@ -2356,6 +2392,32 @@ where
             })
             .collect(),
     )
+}
+
+pub(crate) fn materialize_segment_contours(
+    chains: BooleanBoundaryChainIndices,
+    segments: Vec<Segment2>,
+    fill_rule: FillRule,
+) -> Classification<Vec<Contour2>> {
+    let mut segments = segments.into_iter().map(Some).collect::<Vec<_>>();
+    let mut contours = Vec::with_capacity(chains.len());
+    for (indices, closed) in chains {
+        if !closed {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        }
+        contours.push(Contour2::from_validated_closed_segments(
+            indices
+                .into_iter()
+                .map(|index| {
+                    segments[index]
+                        .take()
+                        .expect("each assembled segment index is visited once")
+                })
+                .collect(),
+            fill_rule,
+        ));
+    }
+    Classification::Decided(contours)
 }
 
 fn follow_chain_indices(
