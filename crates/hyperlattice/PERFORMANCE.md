@@ -247,6 +247,30 @@ effectively neutral at 1.915 us. The cold wide-dyadic sentinel measures 1.50 us
 and never allocates the secondary-product box; the retained self-dot sentinel
 remains near 59.5 ns.
 
+## Word-accumulated exact dyadic dots
+
+The exact-rational shared-denominator reducer previously allocated one
+`BigUint` product per dense dyadic lane, even when the aligned signed total fit
+in `u128`. Hyperreal now tries a checked word accumulator first, reduces its
+power-of-two denominator by shifts, and falls through unchanged when a product,
+alignment, or total overflows. This adds no cache or object storage.
+
+Matched public medians measured:
+
+| Workload | Before | Current | Numerica 128 | Current advantage |
+| --- | ---: | ---: | ---: | ---: |
+| `vec3 dot`, exact dyadic | 453.02 ns | 227.11 ns | 257.12 ns | 11.7% |
+| `vec4 dot`, exact dyadic | 408.77 ns | 223.75 ns | 326.88 ns | 31.5% |
+| `mat3 transform vec3`, exact dyadic | 2.77 us | 2.01 us | 906.03 ns | - |
+| `mat4 transform vec4`, exact dyadic | 7.49 us | 3.47 us | 1.66 us | - |
+
+The vec3/vec4 dot construction rows improve by 49.9%/45.3%. Matrix transforms
+also benefit without changing their structural-fact dispatch, although direct
+unprepared transforms remain slower than Numerica. The sparse vec4 dot control
+remains 51.45 ns. A wide-denominator regression exercises the word result with
+a denominator beyond `u128`, while an over-wide numerator proves exact fallback
+to the arbitrary-precision reducer.
+
 ## Minimal checked-normalization certificate
 
 Checked vector normalization previously built the complete public structural
