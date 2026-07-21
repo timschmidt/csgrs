@@ -12461,6 +12461,9 @@ fn invert_matrix3(matrix: [[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
             "helper",
             "invert-matrix3-dense-cofactor"
         );
+        if let Some(inverse) = matrix3_dense_exact_rational_inverse(&matrix) {
+            return inverse;
+        }
         if true {
             return matrix3_scaled_adjugate_dense_exact(&matrix);
         }
@@ -12513,6 +12516,9 @@ fn invert_matrix3_checked(matrix: [[Real; 3]; 3]) -> CheckedBlasResult<[[Real; 3
             "helper",
             "invert-matrix3-checked-dense-cofactor"
         );
+        if let Some(inverse) = matrix3_dense_exact_rational_inverse(&matrix) {
+            return inverse;
+        }
         let (adjugate, det) = if true {
             let known_dyadic = matrix.iter().flatten().all(Real::is_exact_dyadic_rational);
             matrix3_adjugate_and_determinant_dense_exact(&matrix, known_dyadic)
@@ -12953,6 +12959,30 @@ fn matrix4_scaled_adjugate_from_factors_dense_exact(
             ),
         ],
     ]
+}
+
+#[inline]
+fn matrix3_dense_exact_rational_inverse(
+    matrix: &[[Real; 3]; 3],
+) -> Option<BlasResult<[[Real; 3]; 3]>> {
+    let exact_kind = matrix3_exact_rational_kind(matrix);
+    (exact_kind != ExactRationalKind::NonRational).then(|| {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "invert-matrix3-dense-exact-rational-aggregate"
+        );
+        let values = [
+            [&matrix[0][0], &matrix[0][1], &matrix[0][2]],
+            [&matrix[1][0], &matrix[1][1], &matrix[1][2]],
+            [&matrix[2][0], &matrix[2][1], &matrix[2][2]],
+        ];
+        if exact_kind == ExactRationalKind::ExactDyadicRational {
+            Real::exact_rational_matrix3_inverse_known_dyadic(values)
+        } else {
+            Real::exact_rational_matrix3_inverse_known_exact(values)
+        }
+    })
 }
 
 #[inline]
