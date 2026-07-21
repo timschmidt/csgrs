@@ -203,7 +203,7 @@ mesh and profile trace integration is additionally enforced by
 | 2D→3D | extrusion, revolution, twist, sweep, loft | `hypercurve`, csgrs mesh lowering |
 | Implicit geometry | retained SDF, 2D/3D metaballs, TPMS catalog | `hypersdf`, `fast-surface-nets` |
 | Projection | slice and flatten | `hypercurve`, `hyperlimit` |
-| Raster/text | image contours, TrueType outlines, Hershey strokes | `image`, `contour_tracing`, `ttf-parser`, `hershey` |
+| Raster/text | direct integer-grid image contours, TrueType outlines, Hershey strokes | `image`, `hypercurve`, `ttf-parser`, `hershey` |
 | Mesh I/O | STL, DXF, OBJ, PLY, AMF, glTF; STL/OBJ import, including exact scientific-notation OBJ coordinates | format crates, `serde_json`, `base64` |
 | Profile I/O | SVG and Gerber round trips | `svg`, `svgtypes`, `gerber-types`, `gerber_parser` |
 | Adapters/parts | Bevy conversion, AABB blueprint extraction | `bevy_mesh`, csgrs parts |

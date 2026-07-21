@@ -1,6 +1,6 @@
 //! Shared error types used by geometry validation and file conversion APIs.
 
-use hypercurve::{CurveError, ExactCurveError, UncertaintyReason};
+use hypercurve::{CurveError, ExactCurveError, StraightSkeletonBlocker2, UncertaintyReason};
 use hyperlattice::{Point3, Real};
 
 /// Coordinate validation failure for a single point.
@@ -43,6 +43,23 @@ pub enum ProfileOffsetError {
     /// contour or open-wire offset construction.
     #[error("the profile topology is not supported by the native {join_style} offset path")]
     UnsupportedTopology { join_style: &'static str },
+}
+
+/// Failure to construct an exact profile straight skeleton.
+#[derive(Clone, Debug, thiserror::Error, PartialEq)]
+pub enum ProfileStraightSkeletonError {
+    /// Hypercurve rejected exact source or skeleton geometry.
+    #[error(transparent)]
+    Curve(#[from] CurveError),
+    /// The profile cannot be represented by the current single-contour kernel.
+    #[error("profile straight skeleton requires {requirement}")]
+    UnsupportedTopology { requirement: &'static str },
+    /// The unified curve-region fast path was indeterminate.
+    #[error("profile straight-skeleton source is uncertain: {0:?}")]
+    Uncertain(UncertaintyReason),
+    /// Hypercurve reached a typed straight-skeleton construction blocker.
+    #[error("profile straight-skeleton construction is blocked: {0:?}")]
+    Blocked(StraightSkeletonBlocker2),
 }
 
 /// All the possible validation issues we might encounter,

@@ -28,12 +28,12 @@
 //! geometry model.
 
 use crate::csg::CSG;
-use crate::errors::ProfileOffsetError;
+use crate::errors::{ProfileOffsetError, ProfileStraightSkeletonError};
 use crate::hyper_math::{Real, hreal_abs, hreal_try_cmp};
 use crate::sketch::Profile;
 use hypercurve::{
     BezierFlatteningOptions, Classification, CurvePolicy, CurveRegion2, CurveString2,
-    FiniteRegionProfile2, OffsetCap,
+    FiniteRegionProfile2, LineSeg2, OffsetCap, Segment2, StraightSkeletonReport2,
 };
 
 impl Profile {
@@ -293,15 +293,14 @@ impl Profile {
         })
     }
 
-    /// Return native inward skeleton-facing linework for finite profile views.
+    /// Return native inward diagnostic rays for finite profile views.
     ///
     /// The returned wires are [`CurveString2`] values constructed from the
     /// finite boundary projection of the native region. They are diagnostic
     /// rays from each material vertex toward a profile centroid, not a complete
-    /// straight-skeleton algorithm. This keeps the API hyper-only while leaving
-    /// the true Aichholzer et al. (1995) wavefront algorithm to be completed in
-    /// hypercurve.
-    pub fn straight_skeleton(&self, orientation: bool) -> Profile {
+    /// straight-skeleton algorithm. This accurately named operation remains
+    /// available for visualization and debugging only.
+    pub fn inward_vertex_rays(&self, orientation: bool) -> Profile {
         let wires = if orientation {
             inward_profile_rays(&self.region_profiles())
         } else {
@@ -317,6 +316,77 @@ impl Profile {
         );
         self.preserve_offset_wires(&mut sketch);
         sketch
+    }
+
+    /// Return Hypercurve's report for the exact interior straight skeleton.
+    ///
+    /// The current exact kernel accepts one simple, convex, line-only material
+    /// contour without holes or open wires. Concave inputs retain Hypercurve's
+    /// typed split-event blocker instead of falling back to diagnostic rays.
+    pub fn straight_skeleton_report(
+        &self,
+    ) -> Result<StraightSkeletonReport2, ProfileStraightSkeletonError> {
+        if !self.wires().is_empty() || !self.curve_paths().is_empty() {
+            return Err(ProfileStraightSkeletonError::UnsupportedTopology {
+                requirement: "one filled contour without open wires",
+            });
+        }
+        let policy = CurvePolicy::certified();
+        let native = match self.region.native_contours_fast_path(&policy)? {
+            Classification::Decided(native) => native,
+            Classification::Uncertain(reason) => {
+                return Err(ProfileStraightSkeletonError::Uncertain(reason));
+            },
+        };
+        if native.material_contours().len() != 1 || !native.hole_contours().is_empty() {
+            return Err(ProfileStraightSkeletonError::UnsupportedTopology {
+                requirement: "exactly one material contour and no holes",
+            });
+        }
+        native.material_contours()[0]
+            .straight_skeleton(&policy)
+            .map_err(ProfileStraightSkeletonError::from)
+    }
+
+    /// Construct exact straight-skeleton arcs as native Hypercurve wires.
+    pub fn try_straight_skeleton(&self) -> Result<Profile, ProfileStraightSkeletonError> {
+        let report = self.straight_skeleton_report()?;
+        if let Some(blocker) = report.blocker().cloned() {
+            return Err(ProfileStraightSkeletonError::Blocked(blocker));
+        }
+        let skeleton = report
+            .skeleton()
+            .expect("a blocker-free complete straight-skeleton report has a graph");
+        let mut wires = Vec::with_capacity(skeleton.arcs().len());
+        for arc in skeleton.arcs() {
+            let start = skeleton.nodes()[arc.start_node()].point().clone();
+            let end = skeleton.nodes()[arc.end_node()].point().clone();
+            let line = LineSeg2::try_new(start, end)?;
+            wires.push(CurveString2::try_new(vec![Segment2::Line(line)])?);
+        }
+        Ok(Profile::from_topology_with_origin(
+            CurveRegion2::empty(),
+            wires,
+            Vec::new(),
+            self.origin.clone(),
+            self.origin_transform.clone(),
+        ))
+    }
+
+    /// Construct the exact interior straight skeleton for supported profiles.
+    ///
+    /// `orientation` is retained for source compatibility. `false` returns an
+    /// empty profile; `true` executes the genuine Hypercurve wavefront kernel.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the source needs unsupported split events or topology.
+    pub fn straight_skeleton(&self, orientation: bool) -> Profile {
+        if !orientation {
+            return Profile::empty();
+        }
+        self.try_straight_skeleton()
+            .unwrap_or_else(|error| panic!("profile straight skeleton failed: {error}"))
     }
 }
 

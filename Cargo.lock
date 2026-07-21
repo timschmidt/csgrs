@@ -938,12 +938,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "contour_tracing"
-version = "1.0.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9efef72b4f4049ebc4b690ae8ac98cfb7d3cb50407592745ad2c83106625936"
-
-[[package]]
 name = "convert_case"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1039,7 +1033,6 @@ dependencies = [
  "bevy_asset",
  "bevy_mesh",
  "chrono",
- "contour_tracing",
  "doc-image-embed",
  "dxf",
  "either",

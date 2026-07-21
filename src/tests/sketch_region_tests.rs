@@ -601,7 +601,7 @@ fn wire_offsets_admit_any_exactly_positive_width() {
 
 #[test]
 #[cfg(feature = "offset")]
-fn straight_skeleton_result_is_native_wire_topology() {
+fn straight_skeleton_result_is_native_wavefront_topology() {
     let skeleton = Profile::square(r(2.0)).straight_skeleton(true);
 
     assert!(skeleton.as_curve_region().is_empty());

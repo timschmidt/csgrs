@@ -121,7 +121,7 @@ profiles for mesh conversion and export.
 - <img src="docs/circle_with_keyway.png" width="128" alt="top down view of a circle with a notch taken out of it"/> **`Profile::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real)`**
 - <img src="docs/d.png" width="128" alt="top down view of a circle with a flat edge"/> **`Profile::circle_with_flat(radius: Real, segments: usize, flat_dist: Real)`**
 - <img src="docs/double_flat.png" width="128" alt="top down view of a circle with two flat edges"/> **`Profile::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real)`**
-- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Profile::from_image(img: &GrayImage, threshold: u8, closepaths: bool)`** - Builds a new CSG from the “on” pixels of a grayscale image
+- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Profile::try_from_image(img: &GrayImage, threshold: u8)`** - Traces “on” pixels directly into exact integer-grid Hypercurve loops and returns boundary-work evidence; `from_image` remains the compatibility wrapper.
 - <img src="docs/truetype.png" width="128" alt="top down view of the text 'HELLO'"/> **`Profile::text(text: &str, font_data: &[u8], size: Real)`** - generate 2D text geometry in the XY plane from TTF fonts
 - <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Profile::metaballs(balls: &[(hyperlattice::Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real)`**
 - <img src="docs/airfoil.png" width="128" alt="a side view of an airfoil"/> **`Profile::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
@@ -172,7 +172,7 @@ let revolve_shape = square.revolve(Real::from(360), 16, ())?;
 
 - **`Profile::offset(distance)`** - certified sharp offset through Hypercurve; remaining regularized cases require the optional `offset` feature.
 - **`Profile::offset_rounded(distance)`** - rounded offset behind the optional `offset` feature.
-- **`Profile::straight_skeleton(orientation)`** - inside or outside skeleton behind the optional `offset` feature.
+- **`Profile::try_straight_skeleton()`** - exact inward wavefront skeleton for one simple convex line contour, with event/source evidence available through `straight_skeleton_report`; concave split-event requirements remain explicit blockers behind the optional `offset` feature.
 - **`Profile::bounding_box()`** - computes the bounding box of the shape.
 - **`Profile::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
 - **`Profile::triangulate()`** - subdivides the Profile into triangles

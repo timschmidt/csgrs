@@ -111,7 +111,6 @@ rayon = { version = "1.10", optional = true }
 thiserror = "2.0"
 hashbrown = { version = "0.15" }
 fast-surface-nets = { version = "0.2.1", optional = true }
-contour_tracing = { version = "1.0.12", features = ["array"], optional = true }
 either = "1.15"
 base64 = { version = "0.22", optional = true }
 # doc
@@ -212,8 +211,7 @@ hershey-text = [
 ]
 image-io = [
   "image",
-  "contour_tracing",
-  "svg-io",
+  "sketch",
 ]
 metaballs = [
   "fast-surface-nets",
