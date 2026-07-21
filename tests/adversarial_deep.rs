@@ -20,7 +20,7 @@ fn repeated_boolean_and_transform_sequence_stays_nonempty() {
         acc = acc.union(&part);
     }
 
-    assert!(!acc.polygons.is_empty());
+    assert!(!acc.triangles().is_empty());
     assert!(acc.bounding_box().maxs.x > acc.bounding_box().mins.x);
 }
 
@@ -31,5 +31,5 @@ fn curve_boolean_outputs_can_be_extruded() {
     let sketch = left.union(&right);
     let mesh = sketch.extrude(r(0.4), ());
 
-    assert!(!mesh.polygons.is_empty());
+    assert!(!mesh.triangles().is_empty());
 }

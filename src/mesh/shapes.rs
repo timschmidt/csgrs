@@ -952,7 +952,7 @@ fn assembled_arrow<M: Clone + Debug + Send + Sync>(
         } else {
             vec![inner0, inner1, outer1, outer0]
         };
-        polygons.push(Polygon::new(vertices, metadata.clone()));
+        polygons.push(Polygon::from_planar_vertices(vertices, metadata.clone()));
     }
     Mesh::from_polygons(polygons)
 }
@@ -1035,7 +1035,7 @@ fn twisted_profile_extrusion<M: Clone + Debug + Send + Sync>(
         let [Some(t0), Some(t1), Some(t2)] = top else {
             return Mesh::empty();
         };
-        polygons.push(Polygon::new(
+        polygons.push(Polygon::from_planar_vertices(
             vec![
                 Vertex::new(b2, -Vector3::z()),
                 Vertex::new(b1, -Vector3::z()),
@@ -1043,7 +1043,7 @@ fn twisted_profile_extrusion<M: Clone + Debug + Send + Sync>(
             ],
             metadata.clone(),
         ));
-        polygons.push(Polygon::new(
+        polygons.push(Polygon::from_planar_vertices(
             vec![
                 Vertex::new(t0, Vector3::z()),
                 Vertex::new(t1, Vector3::z()),
@@ -1055,7 +1055,7 @@ fn twisted_profile_extrusion<M: Clone + Debug + Send + Sync>(
     for level in 0..slices {
         for index in 0..exterior.len() {
             let next = (index + 1) % exterior.len();
-            let mut side = Polygon::new(
+            let mut side = Polygon::from_planar_vertices(
                 vec![
                     Vertex::new(rings[level][index].clone(), Vector3::zeros()),
                     Vertex::new(rings[level][next].clone(), Vector3::zeros()),
@@ -1148,7 +1148,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     let vertex_pool = Arc::clone(&vertex_pool);
                     let metadata = metadata.clone();
                     move |triangle| {
-                        Polygon::new(
+                        Polygon::from_planar_vertices(
                             triangle
                                 .into_iter()
                                 .map(|corner| {
@@ -1583,7 +1583,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
             if !bottom_degenerate {
                 polygons.push(
-                    Polygon::new(
+                    Polygon::from_planar_vertices(
                         vec![
                             start_v.clone().exclude_from_hull(),
                             bottom_ring[next].clone().with_normal(-axis_z.clone()),
@@ -1596,7 +1596,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
             if !top_degenerate {
                 polygons.push(
-                    Polygon::new(
+                    Polygon::from_planar_vertices(
                         vec![
                             end_v.clone().exclude_from_hull(),
                             top_ring[i].clone().with_normal(axis_z.clone()),
@@ -1609,12 +1609,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
 
             if bottom_degenerate {
-                polygons.push(Polygon::new(
+                polygons.push(Polygon::from_planar_vertices(
                     vec![start_v.clone(), top_ring[next].clone(), top_ring[i].clone()],
                     metadata.clone(),
                 ));
             } else if top_degenerate {
-                polygons.push(Polygon::new(
+                polygons.push(Polygon::from_planar_vertices(
                     vec![
                         bottom_ring[i].clone(),
                         bottom_ring[next].clone(),
@@ -1623,7 +1623,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     metadata.clone(),
                 ));
             } else {
-                polygons.push(Polygon::new(
+                polygons.push(Polygon::from_planar_vertices(
                     vec![
                         bottom_ring[i].clone(),
                         bottom_ring[next].clone(),
@@ -1917,7 +1917,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 }
             }
 
-            let mut poly = Polygon::new(face_vertices, metadata.clone());
+            let mut poly = Polygon::from_planar_vertices(face_vertices, metadata.clone());
             poly.set_new_normal();
             polygons.push(poly);
         }

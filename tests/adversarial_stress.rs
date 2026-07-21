@@ -13,7 +13,7 @@ fn many_small_hyperreal_transforms_remain_composable() {
         .reduce(|a, b| a.union(&b))
         .expect("nonempty input");
 
-    assert!(!combined.polygons.is_empty());
+    assert!(!combined.triangles().is_empty());
 }
 
 #[test]
@@ -25,6 +25,6 @@ fn sketch_catalog_subset_extrudes_with_hyperreal_scalars() {
     ];
 
     for sketch in sketches {
-        assert!(!sketch.extrude(r(0.2), ()).polygons.is_empty());
+        assert!(!sketch.extrude(r(0.2), ()).triangles().is_empty());
     }
 }

@@ -97,12 +97,12 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         triangles
     }
 
-    /// Uniformly subdivide this face into triangular polygons.
-    pub fn subdivide_to_polygons(&self, subdivisions: NonZeroU32) -> Vec<Polygon<M>> {
+    /// Uniformly subdivide this triangle into smaller triangles.
+    pub fn subdivide_to_triangles(&self, subdivisions: NonZeroU32) -> Vec<Polygon<M>> {
         self.subdivide_triangles(subdivisions)
             .into_iter()
             .map(|triangle| {
-                Polygon::new(triangle.to_vec(), self.metadata.clone())
+                Polygon::from_planar_vertices(triangle.to_vec(), self.metadata.clone())
                     .with_plane_id(self.plane_id)
             })
             .collect()

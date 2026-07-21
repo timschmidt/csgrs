@@ -56,7 +56,7 @@ fn mesh_from_hull<M: Clone + Debug + Send + Sync>(
             let p1 = positions.get(b)?;
             let p2 = positions.get(c)?;
             let normal = triangle_unit_normal(&p0.position, &p1.position, &p2.position)?;
-            Some(Polygon::new(
+            Some(Polygon::from_planar_vertices(
                 vec![
                     p0.clone().with_normal(normal.clone()),
                     p1.clone().with_normal(normal.clone()),

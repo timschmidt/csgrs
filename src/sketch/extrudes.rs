@@ -99,7 +99,7 @@ fn push_clean_face<M: Clone + Send + Sync>(
     if reverse {
         points.reverse();
     }
-    output.push(Polygon::new(
+    output.push(Polygon::from_planar_vertices(
         points
             .into_iter()
             .map(|point| Vertex::new(point, Vector3::zeros()))
@@ -515,7 +515,7 @@ impl Profile {
                 } else {
                     (tri[2].clone(), tri[1].clone(), tri[0].clone())
                 };
-                polygons.push(Polygon::new(
+                polygons.push(Polygon::from_planar_vertices(
                     vec![
                         Self::apply_origin_transform_vertex(
                             Vertex::new(a, bottom_normal.clone()),
@@ -539,7 +539,7 @@ impl Profile {
                 let p1 = tri[1].clone() + &direction;
                 let p2 = tri[2].clone() + &direction;
                 let (a, b, c) = if flip { (p2, p1, p0) } else { (p0, p1, p2) };
-                polygons.push(Polygon::new(
+                polygons.push(Polygon::from_planar_vertices(
                     vec![
                         Self::apply_origin_transform_vertex(
                             Vertex::new(a, top_normal.clone()),
@@ -664,86 +664,18 @@ impl Profile {
                 )
             })
             .collect::<Vec<_>>();
-            polygons.push(Polygon::new(vertices, metadata.clone()));
+            polygons.push(Polygon::from_planar_vertices(vertices, metadata.clone()));
         }
     }
 
-    /// Loft a closed mesh through two or more corresponding polygon sections.
-    ///
-    /// Every section must have at least three vertices and the same vertex
-    /// count in matching cyclic order. Cap and side winding are derived from
-    /// the first section's exact plane orientation relative to the aggregate
-    /// travel direction. Side patches are triangulated because corresponding
-    /// edges in arbitrary sections do not generally form planar quads.
+    /// Loft corresponding planar [`crate::polygon_mesh::Polygon`] sections and
+    /// convert the result explicitly into triangle storage.
+    #[cfg(feature = "polygon-mesh")]
     pub fn loft<M: Clone + Debug + Send + Sync>(
-        sections: &[Polygon<M>],
+        sections: &[crate::polygon_mesh::Polygon<M>],
     ) -> Result<Mesh<M>, ValidationError> {
-        if sections.len() < 2 {
-            return Err(ValidationError::FieldLessThan {
-                name: "sections",
-                min: 2,
-            });
-        }
-        let vertex_count = sections[0].vertices.len();
-        if vertex_count < 3 {
-            return Err(ValidationError::InvalidArguments);
-        }
-        for section in &sections[1..] {
-            if section.vertices.len() != vertex_count {
-                return Err(ValidationError::MismatchedVertexCount {
-                    left: vertex_count,
-                    right: section.vertices.len(),
-                });
-            }
-        }
-
-        let sum_positions = |section: &Polygon<M>| {
-            section.vertices.iter().fold(Vector3::zeros(), |sum, vertex| {
-                sum + vertex.position.to_vector()
-            })
-        };
-        let travel = sum_positions(sections.last().unwrap()) - sum_positions(&sections[0]);
-        let Some(orientation) = hreal_sign(&sections[0].plane.normal().dot(&travel)) else {
-            return Err(ValidationError::InvalidArguments);
-        };
-        if orientation == RealSign::Zero {
-            return Err(ValidationError::InvalidArguments);
-        }
-        let forward_winding = orientation == RealSign::Positive;
-
-        let mut bottom = sections[0].clone();
-        if forward_winding {
-            bottom.flip();
-        }
-        let mut top = sections.last().unwrap().clone();
-        if !forward_winding {
-            top.flip();
-        }
-        let mut polygons = vec![bottom, top];
-
-        for pair in sections.windows(2) {
-            for index in 0..vertex_count {
-                let next = (index + 1) % vertex_count;
-                let mut first = vec![
-                    pair[0].vertices[index].clone(),
-                    pair[0].vertices[next].clone(),
-                    pair[1].vertices[next].clone(),
-                ];
-                let mut second = vec![
-                    pair[0].vertices[index].clone(),
-                    pair[1].vertices[next].clone(),
-                    pair[1].vertices[index].clone(),
-                ];
-                if !forward_winding {
-                    first.reverse();
-                    second.reverse();
-                }
-                polygons.push(Polygon::new(first, pair[0].metadata.clone()));
-                polygons.push(Polygon::new(second, pair[0].metadata.clone()));
-            }
-        }
-
-        Ok(Mesh::from_polygons(polygons))
+        crate::polygon_mesh::PolygonMesh::loft(sections)
+            .map(|polygon_mesh| polygon_mesh.triangulate())
     }
 
     /// Extrude along +Z while linearly varying rotation and XY scale.
@@ -1421,7 +1353,7 @@ impl Profile {
                     let v3 = slice_j[k].clone();
 
                     // triangle 1  (v0-v1-v2)
-                    out_polys.push(Polygon::new(
+                    out_polys.push(Polygon::from_planar_vertices(
                         vec![
                             Vertex::new(v0.clone(), Vector3::zeros()),
                             Vertex::new(v1.clone(), Vector3::zeros()),
@@ -1430,7 +1362,7 @@ impl Profile {
                         metadata.clone(),
                     ));
                     // triangle 2  (v0-v2-v3)
-                    out_polys.push(Polygon::new(
+                    out_polys.push(Polygon::from_planar_vertices(
                         vec![
                             Vertex::new(v0.clone(), Vector3::zeros()),
                             Vertex::new(v2.clone(), Vector3::zeros()),
@@ -1472,7 +1404,7 @@ impl Profile {
                     else {
                         continue;
                     };
-                    out_polys.push(Polygon::new(
+                    out_polys.push(Polygon::from_planar_vertices(
                         vec![
                             Vertex::new(p2, Vector3::zeros()),
                             Vertex::new(p1, Vector3::zeros()),
@@ -1499,7 +1431,7 @@ impl Profile {
                     else {
                         continue;
                     };
-                    out_polys.push(Polygon::new(
+                    out_polys.push(Polygon::from_planar_vertices(
                         vec![
                             Vertex::new(p0, Vector3::zeros()),
                             Vertex::new(p1, Vector3::zeros()),
@@ -1843,7 +1775,7 @@ mod tests {
     #[test]
     fn multi_section_loft_derives_caps_and_triangulates_side_patches() {
         let section = |z: f64, inset: f64| {
-            Polygon::new(
+            crate::polygon_mesh::Polygon::new(
                 vec![
                     Vertex::new(Point3::new(r(inset), r(inset), r(z)), Vector3::z()),
                     Vertex::new(Point3::new(r(2.0 - inset), r(inset), r(z)), Vector3::z()),

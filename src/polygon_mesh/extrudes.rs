@@ -1131,7 +1131,7 @@ mod tests {
 
         assert!(
             profile
-                .sweep_polygon_mesh(&[point.clone()], ())
+                .sweep_polygon_mesh(std::slice::from_ref(&point), ())
                 .polygons
                 .is_empty()
         );

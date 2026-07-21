@@ -81,7 +81,7 @@ fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
 
 #[test]
 fn slice_open_intersection_chain_is_native_hypercurve_wire() {
-    let polygon = Polygon::new(
+    let polygon = Polygon::from_planar_vertices(
         vec![
             Vertex::new(p3(-1.0, 0.0, -1.0), Vector3::z()),
             Vertex::new(p3(1.0, 0.0, 1.0), Vector3::z()),
@@ -165,7 +165,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
 fn test_flatten_and_union_near_xy_plane() {
     let normal = Vector3::z();
     // Slightly "tilted" or with z=1e-6
-    let poly1 = Polygon::<()>::new(
+    let poly1 = Polygon::<()>::from_planar_vertices(
         vec![
             Vertex::new(p3(0.0, 0.0, 1e-6), normal.clone()),
             Vertex::new(p3(1.0, 0.0, 1e-6), normal.clone()),

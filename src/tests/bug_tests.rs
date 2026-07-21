@@ -48,7 +48,7 @@ fn test_contains_vertex() {
 fn test_union_crash() {
     let items: [Mesh<()>; 2] = [
         Mesh::from_polygons(vec![
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(640.0, 0.0, 640.0),
@@ -101,7 +101,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(1024.0, 256.0, 640.0),
@@ -154,7 +154,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(640.0, 0.0, 640.0),
@@ -207,7 +207,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(768.0, 0.0, 128.0),
@@ -260,7 +260,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(1280.0, 0.0, 256.0),
@@ -313,7 +313,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(1024.0, 0.0, 640.0),
@@ -368,7 +368,7 @@ fn test_union_crash() {
             ),
         ]),
         Mesh::from_polygons(vec![
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(896.0, 0.0, 768.0),
@@ -421,7 +421,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(1280.0, 256.0, 640.0),
@@ -474,7 +474,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(896.0, 0.0, 768.0),
@@ -527,7 +527,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(768.0, 0.0, 512.0),
@@ -580,7 +580,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(1280.0, 0.0, 384.0),
@@ -633,7 +633,7 @@ fn test_union_crash() {
                 ],
                 (),
             ),
-            Polygon::new(
+            Polygon::from_planar_vertices(
                 vec![
                     Vertex {
                         position: p3(1280.0, 0.0, 640.0),

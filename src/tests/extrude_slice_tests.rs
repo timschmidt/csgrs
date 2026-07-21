@@ -5,9 +5,9 @@ use super::support::*;
 #[test]
 fn test_same_number_of_vertices() {
     // "Bottom" is a triangle in 3D
-    let bottom = make_polygon_3d(&[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.5, 0.5, 0.0]]);
+    let bottom = make_planar_polygon_3d(&[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.5, 0.5, 0.0]]);
     // "Top" is the same triangle, shifted up in Z
-    let top = make_polygon_3d(&[[0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [0.5, 0.5, 1.0]]);
+    let top = make_planar_polygon_3d(&[[0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [0.5, 0.5, 1.0]]);
 
     // This should succeed with no panic:
     let csg = Profile::loft(&[bottom, top]).unwrap();
@@ -25,9 +25,9 @@ fn test_same_number_of_vertices() {
 #[test]
 fn test_different_number_of_vertices_panics() {
     // Bottom has 3 vertices
-    let bottom = make_polygon_3d(&[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [1.0, 1.0, 0.0]]);
+    let bottom = make_planar_polygon_3d(&[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [1.0, 1.0, 0.0]]);
     // Top has 4 vertices
-    let top = make_polygon_3d(&[
+    let top = make_planar_polygon_3d(&[
         [0.0, 0.0, 2.0],
         [2.0, 0.0, 2.0],
         [2.0, 2.0, 2.0],
@@ -45,14 +45,14 @@ fn test_different_number_of_vertices_panics() {
 #[test]
 fn test_consistent_winding() {
     // Make a square in the XY plane (bottom)
-    let bottom = make_polygon_3d(&[
+    let bottom = make_planar_polygon_3d(&[
         [0.0, 0.0, 0.0],
         [1.0, 0.0, 0.0],
         [1.0, 1.0, 0.0],
         [0.0, 1.0, 0.0],
     ]);
     // Make the same square, shifted up in Z, with the same winding direction
-    let top = make_polygon_3d(&[
+    let top = make_planar_polygon_3d(&[
         [0.0, 0.0, 1.0],
         [1.0, 0.0, 1.0],
         [1.0, 1.0, 1.0],
@@ -73,14 +73,14 @@ fn test_consistent_winding() {
 #[test]
 fn test_inverted_orientation() {
     // Bottom square
-    let bottom = make_polygon_3d(&[
+    let bottom = make_planar_polygon_3d(&[
         [0.0, 0.0, 0.0],
         [1.0, 0.0, 0.0],
         [1.0, 1.0, 0.0],
         [0.0, 1.0, 0.0],
     ]);
     // Top square, but with vertices in opposite order => "flipped" winding
-    let mut top = make_polygon_3d(&[
+    let mut top = make_planar_polygon_3d(&[
         [0.0, 1.0, 1.0],
         [1.0, 1.0, 1.0],
         [1.0, 0.0, 1.0],
@@ -107,18 +107,18 @@ fn test_union_of_extruded_shapes() {
     // We'll extrude two shapes that partially overlap, then union them.
 
     // First shape: triangle
-    let bottom1 = make_polygon_3d(&[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [1.0, 1.0, 0.0]]);
-    let top1 = make_polygon_3d(&[[0.0, 0.0, 1.0], [2.0, 0.0, 1.0], [1.0, 1.0, 1.0]]);
+    let bottom1 = make_planar_polygon_3d(&[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [1.0, 1.0, 0.0]]);
+    let top1 = make_planar_polygon_3d(&[[0.0, 0.0, 1.0], [2.0, 0.0, 1.0], [1.0, 1.0, 1.0]]);
     let csg1 = Profile::loft(&[bottom1, top1]).unwrap();
 
     // Second shape: small shifted square
-    let bottom2 = make_polygon_3d(&[
+    let bottom2 = make_planar_polygon_3d(&[
         [1.0, -0.2, 0.5],
         [2.0, -0.2, 0.5],
         [2.0, 0.8, 0.5],
         [1.0, 0.8, 0.5],
     ]);
-    let top2 = make_polygon_3d(&[
+    let top2 = make_planar_polygon_3d(&[
         [1.0, -0.2, 1.5],
         [2.0, -0.2, 1.5],
         [2.0, 0.8, 1.5],

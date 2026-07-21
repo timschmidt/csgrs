@@ -1,5 +1,8 @@
 use csgrs::{
-    csg::CSG, mesh::Mesh, mesh::plane::Plane, polygon_mesh::Polygon, sketch::Profile,
+    csg::CSG,
+    mesh::{Mesh, Triangle, plane::Plane},
+    polygon_mesh::Polygon,
+    sketch::Profile,
 };
 use hyperlattice::{Point3, Real, Vector3};
 
@@ -20,13 +23,29 @@ fn exact_near_vertices_are_not_tolerance_merged() {
 }
 
 #[test]
+fn public_mesh_construction_accepts_only_explicit_triangles() {
+    let triangle = Triangle::new(
+        vec![
+            csgrs::vertex::Vertex::new(p3(0.0, 0.0, 0.0), Vector3::z()),
+            csgrs::vertex::Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            csgrs::vertex::Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
+        ],
+        (),
+    );
+    let mesh = Mesh::from_triangles(vec![triangle]).expect("one explicit triangle");
+
+    assert_eq!(mesh.triangles().len(), 1);
+    assert_eq!(mesh.triangles()[0].vertices().len(), 3);
+}
+
+#[test]
 fn boolean_pipeline_accepts_hyperreal_transforms() {
     let a = Mesh::<()>::cube(r(2.0), ()).center();
     let b = Mesh::<()>::cube(r(1.1), ()).translate(r(0.4), r(0.2), r(0.1));
 
     let result = a.difference(&b).union(&b.intersection(&a));
 
-    assert!(!result.polygons.is_empty());
+    assert!(!result.triangles().is_empty());
     assert!(result.bounding_box().maxs.x > result.bounding_box().mins.x);
 }
 
@@ -37,8 +56,8 @@ fn translated_union_does_not_emit_origin_fallback_vertices() {
 
     let result = left.union(&right);
 
-    assert!(!result.polygons.is_empty());
-    for polygon in &result.polygons {
+    assert!(!result.triangles().is_empty());
+    for polygon in result.triangles() {
         for vertex in polygon.vertices() {
             let x = vertex
                 .position
@@ -56,8 +75,8 @@ fn translated_union_does_not_emit_origin_fallback_vertices() {
 
 #[test]
 fn plane_split_uses_exact_hyperreal_side_classification() {
-    let mut mesh = Mesh::<()>::cube(r(2.0), ());
-    let triangle = mesh.polygons.remove(0);
+    let mesh = Mesh::<()>::cube(r(2.0), ());
+    let triangle = mesh.triangles()[0].clone();
     let polygon = Polygon::new(triangle.vertices().to_vec(), ());
     let plane = Plane::from_normal(Vector3::x(), r(1.0e-12));
     let (_cf, _cb, front, back) = plane.split_polygon(&polygon);
@@ -72,6 +91,6 @@ fn profile_offset_and_extrude_keep_hyperreal_scalars() {
     let profile = profile.offset(r(0.125));
     let mesh = profile.extrude(r(0.75), ());
 
-    assert!(!mesh.polygons.is_empty());
+    assert!(!mesh.triangles().is_empty());
     assert!(mesh.bounding_box().maxs.z >= r(0.75));
 }

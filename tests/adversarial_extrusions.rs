@@ -1,4 +1,9 @@
-use csgrs::{csg::CSG, mesh::Polygon, sketch::Profile, vertex::Vertex};
+use csgrs::{
+    csg::CSG,
+    polygon_mesh::{Polygon, PolygonMesh},
+    sketch::Profile,
+    vertex::Vertex,
+};
 use hyperlattice::{Point3, Real, Vector3};
 
 fn r(value: f64) -> Real {
@@ -15,11 +20,11 @@ fn loft_revolve_and_sweep_accept_hyperreal_geometry() {
     let revolved = square
         .translate(r(1.0), r(0.0), r(0.0))
         .revolve(r(270.0), 24, ());
-    assert!(!revolved.expect("revolve").polygons.is_empty());
+    assert!(!revolved.expect("revolve").triangles().is_empty());
 
     let path = vec![p3(0.0, 0.0, 0.0), p3(0.0, 0.0, 0.9)];
     let swept = Profile::square(r(0.08)).sweep(&path, ());
-    assert!(!swept.polygons.is_empty());
+    assert!(!swept.triangles().is_empty());
 
     let bottom = Polygon::new(
         vec![
@@ -38,7 +43,7 @@ fn loft_revolve_and_sweep_accept_hyperreal_geometry() {
         (),
     );
     assert!(
-        !Profile::loft(&[bottom, top])
+        !PolygonMesh::loft(&[bottom, top])
             .expect("loft")
             .polygons
             .is_empty()

@@ -486,7 +486,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                                 Vertex::new(vertices[position].clone(), Vector3::z())
                             })
                             .collect();
-                        let mut face = Polygon::new(face_vertices, metadata.clone());
+                        let mut face =
+                            Polygon::from_planar_vertices(face_vertices, metadata.clone());
                         face.set_new_normal();
                         let normal = face.vertices[0].normal.clone();
                         let normal_index = normals.len();

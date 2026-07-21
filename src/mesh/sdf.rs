@@ -560,7 +560,10 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
         }
 
         // Note: reverse v1, v2 if you need to fix winding
-        let poly = Polygon::new(vec![v0.clone(), v1.clone(), v2.clone()], metadata.clone());
+        let poly = Polygon::from_planar_vertices(
+            vec![v0.clone(), v1.clone(), v2.clone()],
+            metadata.clone(),
+        );
         triangles.push(poly);
         diagnostics.emitted_triangle_count += 1;
     }

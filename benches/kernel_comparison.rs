@@ -48,7 +48,7 @@ fn geometry_measurement(mesh: &Mesh<()>, input_facets: usize) -> Measurement {
     let facets = facet_count(mesh);
     let mut corners = 0_usize;
     let mut checksum = facets as u64;
-    for polygon in &mesh.polygons {
+    for polygon in mesh.triangles() {
         for (polygon_corner, position_f64) in polygon.position_f64_iter().enumerate() {
             corners += 1;
             if let Some(position) = position_f64 {
@@ -132,7 +132,7 @@ fn orient_closed_triangle_mesh(source: &Mesh<()>) -> Mesh<()> {
 
     let mut indexed = source.indexed_triangles();
     assert_eq!(
-        source.polygons.len(),
+        source.triangles().len(),
         indexed.faces.len(),
         "oriented OBJ source must already be triangulated"
     );
@@ -502,7 +502,7 @@ fn run() {
         let mesh = black_box(&sliver_left)
             .try_intersection(black_box(&sliver_right))
             .expect("exact rational sliver intersection must remain valid");
-        assert!(!mesh.polygons.is_empty(), "sliver intersection was lost");
+        assert!(!mesh.triangles().is_empty(), "sliver intersection was lost");
         let bounds = mesh.bounding_box();
         assert_eq!(
             bounds.maxs.x.clone() - bounds.mins.x.clone(),
@@ -659,9 +659,9 @@ fn run() {
     );
     config.run("kernel", "dihedral_angle", "box_adjacent_faces", 32, || {
         let box_mesh = Mesh::cube(Real::from(2_u8), ());
-        let first = &box_mesh.polygons[0];
+        let first = &box_mesh.triangles()[0];
         let second = box_mesh
-            .polygons
+            .triangles()
             .iter()
             .find(|polygon| {
                 first.plane().normal().dot(&polygon.plane().normal()) == Real::zero()
@@ -779,7 +779,7 @@ fn run() {
                 .expect("YeahRight box xor must remain valid"),
         ];
         assert!(
-            !outputs[2].polygons.is_empty(),
+            !outputs[2].triangles().is_empty(),
             "YeahRight proxy must intersect the clipping box"
         );
         outputs.iter().fold(Measurement::default(), |total, output| {
@@ -829,7 +829,7 @@ fn run() {
                 .try_intersection(black_box(&yeahright_copy))
                 .expect("YeahRight intersection must remain valid");
             assert!(
-                !output.polygons.is_empty(),
+                !output.triangles().is_empty(),
                 "YeahRight stress operands must overlap"
             );
             measurement(&output, yeahright_boolean_input)

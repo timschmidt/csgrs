@@ -23,7 +23,7 @@ fn test_polygon_metadata_string() {
         Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let mut poly = Polygon::new(verts, "triangle".to_string());
+    let mut poly = Polygon::from_planar_vertices(verts, "triangle".to_string());
 
     assert_eq!(poly.metadata(), &"triangle".to_string());
 
@@ -41,7 +41,7 @@ fn test_polygon_metadata_integer() {
         Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, 42u32);
+    let poly = Polygon::from_planar_vertices(verts, 42u32);
 
     assert_eq!(poly.metadata(), &42);
 }
@@ -57,14 +57,14 @@ fn test_polygon_metadata_custom_struct() {
         Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly = Polygon::new(verts, my_data.clone());
+    let poly = Polygon::from_planar_vertices(verts, my_data.clone());
 
     assert_eq!(poly.metadata(), &my_data);
 }
 
 #[test]
 fn test_csg_construction_with_metadata() {
-    let poly_a = Polygon::new(
+    let poly_a = Polygon::from_planar_vertices(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
@@ -72,7 +72,7 @@ fn test_csg_construction_with_metadata() {
         ],
         "PolyA".to_string(),
     );
-    let poly_b = Polygon::new(
+    let poly_b = Polygon::from_planar_vertices(
         vec![
             Vertex::new(p3(2.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(p3(3.0, 0.0, 0.0), Vector3::z()),
@@ -179,7 +179,7 @@ fn test_flip_invert_metadata() {
 
 #[test]
 fn test_subdivide_metadata() {
-    let poly = Polygon::new(
+    let poly = Polygon::from_planar_vertices(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(p3(2.0, 0.0, 0.0), Vector3::z()),
@@ -199,7 +199,7 @@ fn test_subdivide_metadata() {
 
 #[test]
 fn test_transform_metadata() {
-    let poly = Polygon::new(
+    let poly = Polygon::from_planar_vertices(
         vec![
             Vertex::new(Point3::origin(), Vector3::z()),
             Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),

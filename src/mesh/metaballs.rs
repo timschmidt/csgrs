@@ -362,7 +362,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let v2 = Vertex::new(p2_real, n2v);
 
             // Each tri is turned into a Polygon with 3 vertices
-            let poly = Polygon::new(vec![v0, v2, v1], metadata.clone());
+            let poly = Polygon::from_planar_vertices(vec![v0, v2, v1], metadata.clone());
             triangles.push(poly);
             diagnostics.emitted_triangle_count += 1;
         }

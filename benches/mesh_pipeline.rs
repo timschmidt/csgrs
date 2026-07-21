@@ -18,7 +18,7 @@ fn main() {
     let mut constructed_polygons = 0_usize;
     for _ in 0..construction_iterations {
         let mesh = Mesh::sphere(Real::from(10), 24, 12, ());
-        constructed_polygons += mesh.polygons.len();
+        constructed_polygons += mesh.triangles().len();
         black_box(mesh);
     }
     println!(
@@ -53,7 +53,7 @@ fn main() {
         let output = black_box(&left)
             .try_union(black_box(&right))
             .expect("benchmark Boolean remains certified");
-        polygons += output.polygons.len();
+        polygons += output.triangles().len();
         black_box(output);
     }
     println!(
@@ -67,7 +67,7 @@ fn main() {
     let mut hull_polygons = 0_usize;
     for _ in 0..hull_iterations {
         let hull = black_box(&hull_source).convex_hull(());
-        hull_polygons += hull.polygons.len();
+        hull_polygons += hull.triangles().len();
         black_box(hull);
     }
     println!(
@@ -76,7 +76,7 @@ fn main() {
     );
 
     let raw_hull_points = hull_source
-        .polygons
+        .triangles()
         .iter()
         .flat_map(|polygon| polygon.vertices().iter())
         .map(|vertex| vertex.position.clone())
@@ -102,7 +102,7 @@ fn main() {
     let mut minkowski_polygons = 0_usize;
     for _ in 0..minkowski_iterations {
         let sum = black_box(&minkowski_left).minkowski_sum(black_box(&minkowski_right), ());
-        minkowski_polygons += sum.polygons.len();
+        minkowski_polygons += sum.triangles().len();
         black_box(sum);
     }
     println!(

@@ -452,13 +452,13 @@ floating-point tolerance setter.
 
 ## Working with Metadata
 
-`Mesh<M>` is generic over polygon metadata `M: Clone`; `Profile` is not generic
-and carries no metadata. Each polygon owns one `M`. Use `M = ()` for no metadata
+`Mesh<M>` is generic over triangle metadata `M: Clone`; `Profile` is not generic
+and carries no metadata. Each triangle owns one `M`. Use `M = ()` for no metadata
 or `M = Option<YourMetadata>` for optional face metadata. Mesh-level metadata is
 deliberately absent, giving Boolean provenance one unambiguous ownership model.
 
 ```rust
-use csgrs::mesh::Polygon;
+use csgrs::mesh::Triangle;
 use csgrs::vertex::Vertex;
 use hyperlattice::{Point3, Vector3};
 
@@ -470,8 +470,8 @@ struct MyMetadata {
 
 type Mesh = csgrs::mesh::Mesh<Option<MyMetadata>>;
 
-// For a single polygon:
-let mut poly = Polygon::new(
+// For a single triangle:
+let mut poly = Triangle::new(
     vec![
         Vertex::new(Point3::origin(), Vector3::z()),
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
@@ -485,7 +485,7 @@ let mut poly = Polygon::new(
 
 // Retrieve metadata
 if let Some(data) = poly.metadata() {
-    println!("This polygon is labeled {}", data.label);
+    println!("This triangle is labeled {}", data.label);
 }
 
 // Mutate metadata
