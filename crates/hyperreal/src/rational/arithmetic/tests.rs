@@ -1879,6 +1879,22 @@ mod tests {
     }
 
     #[test]
+    fn secondary_product_retention_handles_two_occupied_primary_slots() {
+        let left = Rational::fraction(123_456_789_012_345_i64, 1_u64 << 50).unwrap();
+        let right = Rational::fraction(234_567_890_123_457_i64, 1_u64 << 49).unwrap();
+        let left_blocker = Rational::fraction(345_678_901_234_569_i64, 1_u64 << 48).unwrap();
+        let right_blocker = Rational::fraction(456_789_012_345_671_i64, 1_u64 << 47).unwrap();
+        let _ = &left * &left_blocker;
+        let _ = &right * &right_blocker;
+
+        let product = &left * &right;
+        let retained = &left * &right;
+        let reversed = &right * &left;
+        assert!(Arc::ptr_eq(&product.0, &retained.0));
+        assert!(Arc::ptr_eq(&product.0, &reversed.0));
+    }
+
+    #[test]
     fn linear_operations_retain_exact_results_without_competing_for_one_slot() {
         let left = Rational::new(1_000_000_000);
         let right = Rational::try_from(1.0e-9_f64).unwrap();
@@ -2333,6 +2349,20 @@ mod tests {
 
         let zero = Rational::zero();
         assert!(Rational::self_dot_if_reused([&values[0], &values[1], &zero]).is_none());
+
+        let conflicted = [
+            Rational::fraction(456_789_012_345_671_i64, 1_u64 << 50).unwrap(),
+            Rational::fraction(-567_890_123_456_781_i64, 1_u64 << 49).unwrap(),
+            Rational::fraction(678_901_234_567_893_i64, 1_u64 << 48).unwrap(),
+        ];
+        let scale = Rational::fraction(789_012_345_678_905_i64, 1_u64 << 47).unwrap();
+        for value in &conflicted {
+            let _ = value * &scale;
+        }
+        let refs = [&conflicted[0], &conflicted[1], &conflicted[2]];
+        let admitted = Rational::self_dot_if_reused(refs).unwrap();
+        let retained = Rational::self_dot_if_reused(refs).unwrap();
+        assert!(Arc::ptr_eq(&admitted.0, &retained.0));
     }
 
     #[test]

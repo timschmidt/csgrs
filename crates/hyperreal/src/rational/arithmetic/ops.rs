@@ -485,21 +485,93 @@ impl Rational {
     #[inline]
     fn retained_product(&self, other: &Self) -> Option<Self> {
         let cached = self.product_cache.get()?;
-        std::ptr::eq(cached.other.as_ptr(), Arc::as_ptr(&other.0)).then(|| {
+        if std::ptr::eq(cached.other.as_ptr(), Arc::as_ptr(&other.0)) {
             crate::trace_dispatch!("rational", "mul", "retained-product");
-            cached.result.clone()
-        })
+            return Some(cached.result.clone());
+        }
+        self.retained_secondary_product(other)
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn retained_secondary_product(&self, other: &Self) -> Option<Self> {
+        let cached = self.linear_cache.get()?;
+        let other_ptr = Arc::as_ptr(&other.0);
+        let matches = |entry: &CachedRationalLinearEntry| {
+            entry.kind == CachedRationalLinearKind::Product
+                && std::ptr::eq(entry.other.as_ptr(), other_ptr)
+        };
+        let entry = if matches(&cached.primary) {
+            Some(&cached.primary)
+        } else if cached.secondary.get().is_some_and(matches) {
+            cached.secondary.get()
+        } else {
+            cached.tertiary.get().filter(|entry| matches(entry))
+        }?;
+        crate::trace_dispatch!("rational", "mul", "retained-secondary-product");
+        Some(entry.result.clone())
+    }
+
+    #[inline]
+    pub(crate) fn retained_primary_self_product_state(&self) -> Option<bool> {
+        if self.is_one() || self.is_minus_one() {
+            return Some(true);
+        }
+        let primary = self.product_cache.get()?;
+        Some(std::ptr::eq(
+            primary.other.as_ptr(),
+            Arc::as_ptr(&self.0),
+        ))
+    }
+
+    #[inline]
+    pub(crate) fn has_retained_self_product(&self) -> bool {
+        if self.is_one() || self.is_minus_one() {
+            return true;
+        }
+        let Some(primary) = self.product_cache.get() else {
+            return false;
+        };
+        let self_ptr = Arc::as_ptr(&self.0);
+        if std::ptr::eq(primary.other.as_ptr(), self_ptr) {
+            return true;
+        }
+        let Some(cached) = self.linear_cache.get() else {
+            return false;
+        };
+        let matches = |entry: &CachedRationalLinearEntry| {
+            entry.kind == CachedRationalLinearKind::Product
+                && std::ptr::eq(entry.other.as_ptr(), self_ptr)
+        };
+        matches(&cached.primary)
+            || cached.secondary.get().is_some_and(matches)
+            || cached.tertiary.get().is_some_and(matches)
+    }
+
+    #[inline]
+    pub(crate) fn admit_conflicted_self_dot_once(&self) -> bool {
+        !self.observe_retained_fact(RETAINED_SELF_DOT_CONFLICT_ATTEMPTED)
     }
 
     fn retain_product_pair(&self, other: &Self, result: &Self) {
-        let _ = self.product_cache.set(CachedRationalProduct {
+        let retained_by_self = self.product_cache.set(CachedRationalProduct {
             other: Arc::downgrade(&other.0),
             result: result.clone(),
-        });
-        let _ = other.product_cache.set(CachedRationalProduct {
+        }).is_ok();
+        let retained_by_other = other.product_cache.set(CachedRationalProduct {
             other: Arc::downgrade(&self.0),
             result: result.clone(),
-        });
+        }).is_ok();
+        if !retained_by_self && !retained_by_other
+            && !Self::retain_linear(self, other, CachedRationalLinearKind::Product, result)
+        {
+            let _ = Self::retain_linear(
+                other,
+                self,
+                CachedRationalLinearKind::Product,
+                result,
+            );
+        }
     }
 
     #[inline]
@@ -679,6 +751,9 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
             return self.clone();
         }
         if self.is_one() {
+            if other.is_one() {
+                return Self::Output::new(2);
+            }
             return other.add_one();
         }
         if other.is_one() {

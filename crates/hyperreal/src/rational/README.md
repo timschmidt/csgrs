@@ -67,10 +67,12 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
 - adaptive linear-result retention reuses repeated exact translations and differences;
   unshared first-use operands only record a one-byte hint, the second observation
   admits a bounded result, and later calls reuse it; the lazy arithmetic box has room
-  for two weak-keyed linear results while `RationalData` remains 88 bytes
+  for up to three weak-keyed sums, differences, or secondary products while `RationalData`
+  remains 88 bytes
 - dense identity-equal three- and four-term self-dots reuse those bounded product
-  and linear entries after observation; cold, sparse, and distinct-operand rows keep
-  the aggregate zero-pruned reducer
+  and linear entries after observation; one conflict-attempt bit admits a square when
+  the primary product belongs to a shared inverse norm, while cold, sparse,
+  distinct-operand, and full-cache rows keep the aggregate zero-pruned reducer
 - repeated square-root reductions use the same adaptive schedule, retaining the exact
   square factor and residual only after reuse is observed; the dedicated
   lazy slot remains cycle-free and does not displace either linear result or unary pair

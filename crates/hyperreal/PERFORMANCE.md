@@ -129,11 +129,12 @@ Relevant path notes:
   one-shot operands allocation-light while making retained outer carriers visible
   without cloning their scalar fields. The hint fits existing `RationalData` padding,
   keeping that allocation at 88 bytes. The lazily allocated arithmetic cache holds
-  two weak-keyed linear results and, for shared values, one reciprocal and one
+  up to three weak-keyed binary results (sums, directed differences, or secondary
+  products) and, for shared values, one reciprocal and one
   opposite-sign result. Unary owners retain their result strongly while reverse
   edges are weak, so repeated division and negation reuse stable identities without
-  ownership cycles. Five polymorphic entries leave room for both unary pairs and two
-  linear results regardless of which operation initializes the box. A dedicated lazy
+  ownership cycles. Five polymorphic entries leave room for both unary pairs and at
+  least two binary results regardless of which operation initializes the box. A dedicated lazy
   slot retains an exact square factor and residual only after repeated
   square extraction is observed, without displacing those arithmetic entries. Sum and
   directed-difference entries can also
@@ -147,8 +148,21 @@ Relevant path notes:
   The first evaluation, vectors containing zero coordinates, and equal-but-distinct
   operands retain the aggregate zero-pruned reducer. On Hyperlattice's three-term
   regression sentinel this adaptive route reduced a retained self-dot from
-  140.66 ns to 55.62 ns (60.5%) while the cold row remained effectively unchanged
-  at 211.16 ns versus 210.75 ns. It adds no result-cache kind or node-layout growth.
+  140.66 ns to 59.50 ns (57.7%) while the cold row remained effectively unchanged
+  at 211.16 ns versus 210.75 ns.
+- Repeated normalization can give one coordinate two stable product partners: itself
+  in the norm and the shared inverse norm in the output. If both operands' primary
+  product slots are occupied, one existing polymorphic binary entry now retains the
+  secondary product. A single bit in the existing retained-facts byte limits a
+  conflicted self-dot to one admission attempt; full boxes then fall back instead of
+  repeatedly rebuilding an uncacheable schedule. `RationalData` remains 88 bytes,
+  one-shot normalization does not allocate this secondary box, and serialization
+  still ignores every accelerator. Integer-radical inversion also reuses the exact
+  `Sqrt` class radicand instead of reconstructing an equal rational node, while the
+  four-term self-dot uses a balanced sum and canonicalizes the `1 + 1` identity.
+  Hyperlattice's retained wide-dyadic normalization sentinel fell from 1.5685 us to
+  roughly 0.30 us; public exact-dyadic vec3/vec4 normalization now measures
+  516.77 ns/585.67 ns versus Numerica 128 at 590.64 ns/676.71 ns.
 - Exact-rational `Real += &Real`, `Real -= &Real`, and `Real *= &Real` replace
   only the rational scale and invalidate the lossy approximation accelerator,
   preserving the existing exact class payload in place. Every build caches a

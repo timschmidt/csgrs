@@ -115,6 +115,7 @@ struct CachedRationalProduct {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CachedRationalLinearKind {
+    Product,
     Sum,
     OwnerMinusOther,
     OtherMinusOwner,
@@ -184,9 +185,11 @@ const RETAINED_SQUARE_REUSE_SEEN: u8 = 1 << 2;
 const RETAINED_EXACT_F64_VIEW: u8 = 1 << 3;
 const RETAINED_DYADIC_KNOWN: u8 = 1 << 4;
 const RETAINED_DYADIC_VALUE: u8 = 1 << 5;
+const RETAINED_SELF_DOT_CONFLICT_ATTEMPTED: u8 = 1 << 6;
 const RETAINED_REUSE_MASK: u8 = RETAINED_LINEAR_REUSE_SEEN
     | RETAINED_POWER_REUSE_SEEN
-    | RETAINED_SQUARE_REUSE_SEEN;
+    | RETAINED_SQUARE_REUSE_SEEN
+    | RETAINED_SELF_DOT_CONFLICT_ATTEMPTED;
 
 #[doc(hidden)]
 pub struct RationalData {

@@ -67,6 +67,11 @@ mod tests {
             quotient * Real::new(Rational::new(3)),
             Real::new(Rational::new(6)).sqrt().unwrap()
         );
+
+        let magnitude = Real::new(Rational::new(293)).sqrt().unwrap();
+        let first = magnitude.clone().inverse().unwrap();
+        let second = magnitude.inverse().unwrap();
+        assert!(std::ptr::eq(&*first.rational, &*second.rational));
     }
 
     #[test]
@@ -2602,6 +2607,20 @@ mod tests {
 
         assert_eq!(second, expected);
         assert_eq!(third, expected);
+        let second = second.exact_rational_ref().unwrap();
+        let third = third.exact_rational_ref().unwrap();
+        assert!(std::ptr::eq(&**second, &**third));
+
+        let values = [
+            Real::from(1_000_000_000_i64),
+            Real::from(-1_000_000_000_i64),
+            Real::one(),
+            -Real::one(),
+        ];
+        let refs = [&values[0], &values[1], &values[2], &values[3]];
+        let _ = Real::dot4_refs(refs, refs);
+        let second = Real::dot4_refs(refs, refs);
+        let third = Real::dot4_refs(refs, refs);
         let second = second.exact_rational_ref().unwrap();
         let third = third.exact_rational_ref().unwrap();
         assert!(std::ptr::eq(&**second, &**third));

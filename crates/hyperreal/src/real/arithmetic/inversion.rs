@@ -275,25 +275,22 @@ impl Real {
                     });
                 }
                 Sqrt(sqrt) => {
-                    if let Some(sqrt) = sqrt.integer_magnitude() {
-                        crate::trace_dispatch!(
-                            "real",
-                            "inverse",
-                            "prechecked-sqrt-rational-radical"
-                        );
-                        let rational = if self.rational.is_one() {
-                            Rational::from_unsigned_integer(sqrt.clone()).inverse()?
-                        } else {
-                            (self.rational * Rational::from_unsigned_integer(sqrt.clone()))
-                                .inverse()?
-                        };
-                        return Ok(Self {
-                            rational,
-                            class: self.class,
-                            computable: self.computable,
-                            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
-                        });
-                    }
+                    crate::trace_dispatch!(
+                        "real",
+                        "inverse",
+                        "prechecked-sqrt-rational-radical"
+                    );
+                    let rational = if self.rational.is_one() {
+                        sqrt.clone().inverse()?
+                    } else {
+                        (self.rational * sqrt).inverse()?
+                    };
+                    return Ok(Self {
+                        rational,
+                        class: self.class,
+                        computable: self.computable,
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    });
                 }
                 ConstProductSqrt(product) => {
                     crate::trace_dispatch!("real", "inverse", "prechecked-const-product-sqrt");
@@ -489,25 +486,22 @@ impl Real {
                     });
                 }
                 Sqrt(sqrt) => {
-                    if let Some(sqrt) = sqrt.integer_magnitude() {
-                        crate::trace_dispatch!(
-                            "real",
-                            "inverse_ref",
-                            "prechecked-sqrt-rational-radical"
-                        );
-                        let rational = if self.rational.is_one() {
-                            Rational::from_unsigned_integer(sqrt.clone()).inverse()?
-                        } else {
-                            (&self.rational * Rational::from_unsigned_integer(sqrt.clone()))
-                                .inverse()?
-                        };
-                        return Ok(Self {
-                            rational,
-                            class: self.class.clone(),
-                            computable: self.computable.clone(),
-                            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
-                        });
-                    }
+                    crate::trace_dispatch!(
+                        "real",
+                        "inverse_ref",
+                        "prechecked-sqrt-rational-radical"
+                    );
+                    let rational = if self.rational.is_one() {
+                        sqrt.clone().inverse()?
+                    } else {
+                        (&self.rational * sqrt).inverse()?
+                    };
+                    return Ok(Self {
+                        rational,
+                        class: self.class.clone(),
+                        computable: self.computable.clone(),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    });
                 }
                 ConstProductSqrt(product) => {
                     crate::trace_dispatch!("real", "inverse_ref", "prechecked-const-product-sqrt");

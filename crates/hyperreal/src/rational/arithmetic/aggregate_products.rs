@@ -2295,18 +2295,46 @@ impl Rational {
         if values.iter().any(|value| value.sign == NoSign) {
             return None;
         }
-        if !values.first()?.has_arithmetic_reuse_evidence() {
+        let (any_product, all_self_products) = values.iter().fold(
+            (false, true),
+            |(any_product, all_self_products), value| {
+                let state = value.retained_primary_self_product_state();
+                (any_product || state.is_some(), all_self_products && state == Some(true))
+            },
+        );
+        if any_product {
+            if !all_self_products && !Self::conflicted_self_dot_is_reusable(values) {
+                return None;
+            }
+        } else if !values.first()?.has_arithmetic_reuse_evidence() {
             return None;
         }
 
         let products = values.map(|value| value * value);
-        let mut products = products.into_iter();
-        let mut sum = products.next()?;
-        for product in products {
-            sum = &sum + &product;
-        }
+        let sum = if N == 4 {
+            let left = &products[0] + &products[1];
+            let right = &products[2] + &products[3];
+            &left + &right
+        } else {
+            let mut products = products.into_iter();
+            let mut sum = products.next()?;
+            for product in products {
+                sum = &sum + &product;
+            }
+            sum
+        };
         crate::trace_dispatch!("rational", "dot_product", "retained-self-dot");
         Some(sum)
+    }
+
+    #[inline(never)]
+    fn conflicted_self_dot_is_reusable<const N: usize>(values: [&Self; N]) -> bool {
+        values
+            .iter()
+            .all(|value| value.has_retained_self_product())
+            || values
+                .first()
+                .is_some_and(|value| value.admit_conflicted_self_dot_once())
     }
 
 }
