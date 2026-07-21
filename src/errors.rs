@@ -1,6 +1,6 @@
 //! Shared error types used by geometry validation and file conversion APIs.
 
-use hypercurve::{CurveError, UncertaintyReason};
+use hypercurve::{CurveError, ExactCurveError, UncertaintyReason};
 use hyperlattice::{Point3, Real};
 
 /// Coordinate validation failure for a single point.
@@ -18,9 +18,25 @@ pub enum ProfileBooleanError {
     /// Hypercurve rejected the topology operation.
     #[error(transparent)]
     Curve(#[from] CurveError),
+    /// A higher-order exact curve operation failed with retained context.
+    #[error(transparent)]
+    ExactCurve(#[from] ExactCurveError),
     /// Hypercurve could not certify a required topology decision.
     #[error("profile boolean is uncertain: {0:?}")]
     Uncertain(UncertaintyReason),
+}
+
+/// Failure to construct a native 2D profile offset.
+#[derive(Clone, Debug, thiserror::Error, PartialEq, Eq)]
+pub enum ProfileOffsetError {
+    /// Hypercurve does not yet provide exact offsets for the retained curve
+    /// families carried by `CurveRegion2` and `CurvePath2`.
+    #[error("nonzero offsets of higher-order curve profiles are not yet supported")]
+    HigherOrderCurves,
+    /// The requested line/arc topology could not be certified by the native
+    /// contour or open-wire offset construction.
+    #[error("the profile topology is not supported by the native {join_style} offset path")]
+    UnsupportedTopology { join_style: &'static str },
 }
 
 /// All the possible validation issues we might encounter,

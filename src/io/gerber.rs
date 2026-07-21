@@ -197,14 +197,8 @@ impl ToGerber for Profile {
         // boundary described by Hobby, "Practical Segment Intersection with
         // Finite Precision Output," Computational Geometry 13(4), 1999
         // (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
-        if !self.as_region().is_empty() && !Self::region_has_nonzero_area(self.as_region()) {
-            return Err(IoError::Geometry {
-                format: "Gerber",
-                detail: "native region has no certifiable non-zero area".into(),
-            });
-        }
-        let has_native_region = !self.as_region().is_empty();
-        let has_native_wires = !self.wires().is_empty();
+        let has_native_region = !self.filled_is_empty();
+        let has_native_wires = !self.wires().is_empty() || !self.curve_paths().is_empty();
         if !has_native_region && !has_native_wires {
             return Err(IoError::Geometry {
                 format: "Gerber",
@@ -234,6 +228,15 @@ impl ToGerber for Profile {
                 },
             }
             emit_native_wires(self.wires(), &mut commands, options)?;
+            for path in self.curve_paths() {
+                let polyline =
+                    path.project_to_finite_polyline(&projection_options)
+                        .map_err(|error| IoError::Geometry {
+                            format: "Gerber",
+                            detail: format!("higher-order wire projection failed: {error}"),
+                        })?;
+                emit_finite_wire(polyline.points(), &mut commands, options)?;
+            }
         }
 
         commands.push(FunctionCode::MCode(MCode::EndOfFile).into());
@@ -903,6 +906,47 @@ fn emit_native_wire(
         }
     }
 
+    Ok(())
+}
+
+fn emit_finite_wire(
+    points: &[[f64; 2]],
+    commands: &mut Vec<Command>,
+    options: GerberExportOptions,
+) -> Result<(), IoError> {
+    let Some(first) = points.first() else {
+        return Err(IoError::Geometry {
+            format: "Gerber",
+            detail: "projected higher-order wire contains no points".into(),
+        });
+    };
+    commands
+        .push(FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear)).into());
+    commands.push(
+        FunctionCode::DCode(DCode::Operation(Operation::Move(Some(gerber_coordinates(
+            Coord {
+                x: first[0],
+                y: first[1],
+            },
+            options,
+        )?))))
+        .into(),
+    );
+    for point in &points[1..] {
+        commands.push(
+            FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
+                Some(gerber_coordinates(
+                    Coord {
+                        x: point[0],
+                        y: point[1],
+                    },
+                    options,
+                )?),
+                None,
+            )))
+            .into(),
+        );
+    }
     Ok(())
 }
 

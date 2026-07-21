@@ -437,11 +437,9 @@ impl Profile {
         let mesh =
             if let Some(mesh) = self.extrude_retained_convex_vertical(&direction, &metadata) {
                 mesh
-            } else if !self.region.material_contours().is_empty()
-                || !self.region.hole_contours().is_empty()
-            {
+            } else if !self.filled_is_empty() {
                 self.extrude_region_vector(direction, &metadata)
-            } else if !self.wires().is_empty() {
+            } else if !self.wires().is_empty() || !self.curve_paths().is_empty() {
                 self.extrude_wires_vector(direction, &metadata)
             } else {
                 // Finite projection data is not Profile's CAD source of truth.

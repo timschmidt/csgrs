@@ -27,6 +27,8 @@
 //! simple finite profile projections rather than importing a separate skeleton
 //! geometry model.
 
+use crate::csg::CSG;
+use crate::errors::ProfileOffsetError;
 use crate::hyper_math::{Real, hreal_abs, hreal_sign, hreal_try_cmp};
 use crate::sketch::Profile;
 use hypercurve::{
@@ -40,15 +42,10 @@ impl Profile {
         if !self.wires().is_empty() {
             sketch.append_native_wires(self.wires().iter().cloned());
         }
-    }
-
-    fn empty_offset_result(&self) -> Profile {
-        Profile::from_region_and_wires_with_origin(
-            Region2::empty(),
-            Vec::new(),
-            self.origin.clone(),
-            self.origin_transform.clone(),
-        )
+        if !self.curve_paths().is_empty() {
+            sketch.curve_wires.extend(self.curve_paths().iter().cloned());
+            sketch.invalidate_bounding_box();
+        }
     }
 
     /// Return native hypercurve topology unchanged for an exact zero offset.
@@ -60,9 +57,11 @@ impl Profile {
     /// Farouki and Neff (1990).
     fn native_zero_offset(&self, distance: Real) -> Option<Profile> {
         matches!(hreal_try_cmp(&distance, 0.0), Some(std::cmp::Ordering::Equal)).then(|| {
-            Profile::from_region_and_wires_with_origin(
+            Profile::from_topology_with_origin(
                 self.region.clone(),
+                self.curve_region.clone(),
                 self.wires.clone(),
+                self.curve_wires.clone(),
                 self.origin.clone(),
                 self.origin_transform.clone(),
             )
@@ -78,6 +77,7 @@ impl Profile {
     fn native_wire_outline_offset(&self, distance: Real, cap: OffsetCap) -> Option<Profile> {
         if !self.region.is_empty()
             || self.wires.is_empty()
+            || !self.curve_wires.is_empty()
             || !matches!(
                 hreal_try_cmp(&distance, 0.0),
                 Some(std::cmp::Ordering::Greater)
@@ -118,7 +118,9 @@ impl Profile {
     /// for negative distances.
     fn native_sharp_offset(&self, distance: Real) -> Option<Profile> {
         if self.region.is_empty()
+            || self.curve_region.is_some()
             || !self.wires.is_empty()
+            || !self.curve_wires.is_empty()
             || !Self::region_has_nonzero_area(&self.region)
         {
             return None;
@@ -156,39 +158,86 @@ impl Profile {
     ///
     /// A zero offset is identity. Wire-only input becomes a filled native
     /// outline. Filled regions use checked Hypercurve contour offsets.
-    /// Unsupported cases return an empty native sketch.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the native kernel cannot construct the requested offset.
+    /// Use [`Profile::try_offset`] when unsupported topology should be handled
+    /// without panicking.
     pub fn offset(&self, distance: Real) -> Profile {
+        self.try_offset(distance)
+            .unwrap_or_else(|error| panic!("profile offset failed: {error}"))
+    }
+
+    /// Try to offset native Profile topology with sharp joins.
+    ///
+    /// A zero offset preserves every exact curve family without projection.
+    /// Nonzero offsets currently accept Hypercurve's certified line/arc region
+    /// and `CurveString2` paths; higher-order curves return an explicit error
+    /// instead of being discarded.
+    pub fn try_offset(&self, distance: Real) -> Result<Profile, ProfileOffsetError> {
         if let Some(sketch) = self.native_zero_offset(distance.clone()) {
-            return sketch;
+            return Ok(sketch);
+        }
+        if self.is_empty() {
+            return Ok(self.clone());
+        }
+        if self.curve_region.is_some() || !self.curve_wires.is_empty() {
+            return Err(ProfileOffsetError::HigherOrderCurves);
         }
         if let Some(sketch) =
             self.native_wire_outline_offset(distance.clone(), OffsetCap::Square)
         {
-            return sketch;
+            return Ok(sketch);
         }
         if let Some(sketch) = self.native_sharp_offset(distance) {
-            return sketch;
+            return Ok(sketch);
         }
-        self.empty_offset_result()
+        Err(ProfileOffsetError::UnsupportedTopology {
+            join_style: "sharp-join",
+        })
     }
 
     /// Offset native Profile topology with rounded caps for wire-only input.
     ///
     /// Filled-region rounded joins are not yet native in hypercurve, so filled
     /// regions use the same checked sharp-contour path as [`Profile::offset`].
+    ///
+    /// # Panics
+    ///
+    /// Panics when the native kernel cannot construct the requested offset.
+    /// Use [`Profile::try_offset_rounded`] when unsupported topology should be
+    /// handled without panicking.
     pub fn offset_rounded(&self, distance: Real) -> Profile {
+        self.try_offset_rounded(distance)
+            .unwrap_or_else(|error| panic!("rounded profile offset failed: {error}"))
+    }
+
+    /// Try to offset native Profile topology with rounded open-wire caps.
+    ///
+    /// Filled line/arc regions currently follow the checked sharp-contour path.
+    /// Higher-order curves return an explicit error for nonzero distances.
+    pub fn try_offset_rounded(&self, distance: Real) -> Result<Profile, ProfileOffsetError> {
         if let Some(sketch) = self.native_zero_offset(distance.clone()) {
-            return sketch;
+            return Ok(sketch);
+        }
+        if self.is_empty() {
+            return Ok(self.clone());
+        }
+        if self.curve_region.is_some() || !self.curve_wires.is_empty() {
+            return Err(ProfileOffsetError::HigherOrderCurves);
         }
         if let Some(sketch) =
             self.native_wire_outline_offset(distance.clone(), OffsetCap::Round)
         {
-            return sketch;
+            return Ok(sketch);
         }
         if let Some(sketch) = self.native_sharp_offset(distance) {
-            return sketch;
+            return Ok(sketch);
         }
-        self.empty_offset_result()
+        Err(ProfileOffsetError::UnsupportedTopology {
+            join_style: "rounded-cap",
+        })
     }
 
     /// Return native inward skeleton-facing linework for finite profile views.

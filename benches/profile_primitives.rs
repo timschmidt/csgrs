@@ -4,7 +4,7 @@ mod support;
 
 use std::hint::black_box;
 
-use csgrs::{Real, sketch::Profile};
+use csgrs::{Real, csg::CSG, sketch::Profile};
 use hypercurve::Point2;
 use support::{Config, Measurement, print_header};
 
@@ -17,7 +17,7 @@ fn run_profile(
     config.run("profile_primitives", "constructor", case, iterations, || {
         let profile = black_box(build());
         let contours = profile.material_contour_count() + profile.hole_contour_count();
-        let wires = profile.wires().len();
+        let wires = profile.wires().len() + profile.curve_paths().len();
         Measurement::new(
             1,
             (contours + wires) as u64,
@@ -158,4 +158,46 @@ fn main() {
     run_profile(&config, "hilbert_curve", 8, || {
         Profile::square(Real::from(8)).hilbert_curve(3, Real::from(1))
     });
+
+    let cubic_wire = Profile::bezier(&bezier_control, 16);
+    config.run(
+        "profile_curves",
+        "finite_projection",
+        "cubic_bezier",
+        8,
+        || {
+            let polylines = black_box(cubic_wire.wire_polylines());
+            let points = polylines.iter().map(Vec::len).sum::<usize>();
+            Measurement::new(1, points as u64, points as u64)
+        },
+    );
+    let closed_control = [
+        [Real::from(0), Real::from(0)],
+        [Real::from(4), Real::from(0)],
+        [Real::from(4), Real::from(4)],
+        [Real::from(0), Real::from(0)],
+    ];
+    let curved_region = Profile::bezier(&closed_control, 16);
+    config.run("profile_curves", "extrusion", "cubic_region", 4, || {
+        let mesh = black_box(curved_region.extrude(Real::from(2), ()));
+        Measurement::new(1, mesh.polygons.len() as u64, mesh.polygons.len() as u64)
+    });
+    let disjoint =
+        Profile::square(Real::from(2)).translate(Real::from(10), Real::zero(), Real::zero());
+    config.run(
+        "profile_curves",
+        "boolean",
+        "curved_line_arc_union",
+        4,
+        || {
+            let result = black_box(curved_region.try_union(&disjoint).unwrap());
+            Measurement::new(
+                1,
+                result.material_contour_count() as u64,
+                result
+                    .as_curve_region()
+                    .map_or(0, hypercurve::CurveRegion2::len) as u64,
+            )
+        },
+    );
 }
