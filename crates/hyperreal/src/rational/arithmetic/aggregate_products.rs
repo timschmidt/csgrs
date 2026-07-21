@@ -1391,51 +1391,46 @@ impl Rational {
     pub(crate) fn matrix3_inverse_components(
         matrix: [[&Self; 3]; 3],
     ) -> Result<[[Self; 3]; 3], crate::Problem> {
+        Self::matrix3_inverse_components_impl::<false>(matrix)
+    }
+
+    /// Invert a fixed 3x3 matrix after the caller classified every component dyadic.
+    pub(crate) fn matrix3_inverse_components_known_dyadic(
+        matrix: [[&Self; 3]; 3],
+    ) -> Result<[[Self; 3]; 3], crate::Problem> {
+        Self::matrix3_inverse_components_impl::<true>(matrix)
+    }
+
+    fn matrix3_inverse_components_impl<const KNOWN_DYADIC: bool>(
+        matrix: [[&Self; 3]; 3],
+    ) -> Result<[[Self; 3]; 3], crate::Problem> {
         let m = matrix;
-        let c00 = Self::signed_product_sum2(
-            [true, false],
-            [[m[1][1], m[2][2]], [m[1][2], m[2][1]]],
-        );
-        let c01 = Self::signed_product_sum2(
-            [true, false],
-            [[m[0][2], m[2][1]], [m[0][1], m[2][2]]],
-        );
-        let c02 = Self::signed_product_sum2(
-            [true, false],
-            [[m[0][1], m[1][2]], [m[0][2], m[1][1]]],
-        );
-        let c10 = Self::signed_product_sum2(
-            [true, false],
-            [[m[1][2], m[2][0]], [m[1][0], m[2][2]]],
-        );
-        let c11 = Self::signed_product_sum2(
-            [true, false],
-            [[m[0][0], m[2][2]], [m[0][2], m[2][0]]],
-        );
-        let c12 = Self::signed_product_sum2(
-            [true, false],
-            [[m[0][2], m[1][0]], [m[0][0], m[1][2]]],
-        );
-        let c20 = Self::signed_product_sum2(
-            [true, false],
-            [[m[1][0], m[2][1]], [m[1][1], m[2][0]]],
-        );
-        let c21 = Self::signed_product_sum2(
-            [true, false],
-            [[m[0][1], m[2][0]], [m[0][0], m[2][1]]],
-        );
-        let c22 = Self::signed_product_sum2(
-            [true, false],
-            [[m[0][0], m[1][1]], [m[0][1], m[1][0]]],
-        );
-        let determinant = Self::signed_product_sum(
-            [true, true, true],
-            [
-                [m[0][0], &c00],
-                [m[0][1], &c10],
-                [m[0][2], &c20],
-            ],
-        );
+        let difference = |terms| {
+            if KNOWN_DYADIC {
+                Self::signed_product_sum_known_dyadic([true, false], terms)
+            } else {
+                Self::signed_product_sum2([true, false], terms)
+            }
+        };
+        let c00 = difference([[m[1][1], m[2][2]], [m[1][2], m[2][1]]]);
+        let c01 = difference([[m[0][2], m[2][1]], [m[0][1], m[2][2]]]);
+        let c02 = difference([[m[0][1], m[1][2]], [m[0][2], m[1][1]]]);
+        let c10 = difference([[m[1][2], m[2][0]], [m[1][0], m[2][2]]]);
+        let c11 = difference([[m[0][0], m[2][2]], [m[0][2], m[2][0]]]);
+        let c12 = difference([[m[0][2], m[1][0]], [m[0][0], m[1][2]]]);
+        let c20 = difference([[m[1][0], m[2][1]], [m[1][1], m[2][0]]]);
+        let c21 = difference([[m[0][1], m[2][0]], [m[0][0], m[2][1]]]);
+        let c22 = difference([[m[0][0], m[1][1]], [m[0][1], m[1][0]]]);
+        let determinant_terms = [
+            [m[0][0], &c00],
+            [m[0][1], &c10],
+            [m[0][2], &c20],
+        ];
+        let determinant = if KNOWN_DYADIC {
+            Self::signed_product_sum_known_dyadic([true, true, true], determinant_terms)
+        } else {
+            Self::signed_product_sum([true, true, true], determinant_terms)
+        };
         let inverse_determinant = determinant.inverse()?;
         crate::trace_dispatch!("rational", "matrix3-inverse", "aggregate-cofactor");
         Ok([

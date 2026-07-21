@@ -2690,12 +2690,19 @@ mod tests {
             [&matrix[2][0], &matrix[2][1], &matrix[2][2]],
         ])
         .unwrap();
+        let actual_dyadic = Real::exact_rational_matrix3_inverse_known_dyadic([
+            [&matrix[0][0], &matrix[0][1], &matrix[0][2]],
+            [&matrix[1][0], &matrix[1][1], &matrix[1][2]],
+            [&matrix[2][0], &matrix[2][1], &matrix[2][2]],
+        ])
+        .unwrap();
         let expected = [
             [Real::from(-48), Real::from(72), Real::from(40)],
             [Real::from(40), Real::from(-60), Real::from(-32)],
             [Real::from(-10), Real::from(16), Real::from(8)],
         ];
         assert_eq!(actual, expected);
+        assert_eq!(actual_dyadic, expected);
 
         let singular = [
             [Real::from(1), Real::from(2), Real::from(3)],

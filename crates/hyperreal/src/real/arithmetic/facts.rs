@@ -302,6 +302,17 @@ impl Real {
         Ok(result.map(|row| row.map(Real::new)))
     }
 
+    /// Invert a dense 3x3 matrix after the caller has proved every component
+    /// is an exact dyadic rational.
+    pub fn exact_rational_matrix3_inverse_known_dyadic(
+        matrix: [[&Real; 3]; 3],
+    ) -> Result<[[Real; 3]; 3], crate::Problem> {
+        let rationals = matrix.map(|row| row.map(|value| &value.rational));
+        let result = Rational::matrix3_inverse_components_known_dyadic(rationals)?;
+        crate::trace_dispatch!("real", "matrix3-inverse", "exact-dyadic-aggregate");
+        Ok(result.map(|row| row.map(Real::new)))
+    }
+
     /// Invert a dense 4x4 matrix after the caller has proved every component
     /// is an exact rational.
     ///

@@ -40,6 +40,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "exact_rational_complex_product_known_exact",
     "exact_rational_complex_quotient_known_exact",
     "exact_rational_matrix3_inverse_known_exact",
+    "exact_rational_matrix3_inverse_known_dyadic",
     "exact_rational_matrix4_inverse_known_exact",
     "exact_rational_matrix4_inverse_known_dyadic",
     "exact_rational_normalize_known_exact",
