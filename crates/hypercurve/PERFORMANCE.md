@@ -1034,6 +1034,29 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,517 coverage points and 16,109 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
+Contour intersection storage now boxes the uncommon overlap payload instead of
+inflating every event to the size of its largest variant. On the measured
+64-bit target this reduces `ContourIntersection` from 648 to 224 bytes, the
+size of its common point payload. Exact overlap geometry, parameter ranges, and
+source evidence are unchanged; only the enum representation differs.
+
+Across 100 selected ordinary star64 operations plus fixture validation,
+Callgrind instructions fell from 543,939,023 to 540,965,420 (0.55%). DHAT
+allocation traffic fell from 88,575,169 to 82,949,537 bytes (6.35%), peak live
+heap from 993,076 to 965,940 bytes (2.73%), reads by 1.11%, and writes by 4.20%,
+with the same block count. Twenty-iteration Callgrind controls improved all six
+ordinary/prepared region, contour, and loop lanes by 0.19--0.59%; a 1,000-
+iteration rectangle-union control improved by 0.68%.
+
+Focused line- and arc-overlap tests preserve their exact event evidence. The
+single line-overlap control added 516 instructions and 512 total allocated
+bytes, while the arc-overlap control added 1,002 instructions but allocated
+21,558 fewer bytes. Both complete feature-mode test matrices, format,
+warnings-as-errors Clippy and rustdoc passed. The AddressSanitizer Boolean
+differential fuzzer completed 1,000 runs at 4,728 coverage points and 8,665
+feature edges without a failure; LeakSanitizer alone remained disabled under
+ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

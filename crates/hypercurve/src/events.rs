@@ -247,8 +247,8 @@ fn validate_overlap_event_geometry(segment: &Segment2, policy: &CurvePolicy) -> 
 pub enum ContourIntersection {
     /// A single point event.
     Point(ContourPointIntersection),
-    /// A finite overlap event.
-    Overlap(ContourOverlapIntersection),
+    /// A finite overlap event, boxed to keep point-event arrays compact.
+    Overlap(Box<ContourOverlapIntersection>),
     /// Segment-pair classification could not be completed.
     Uncertain(ContourUncertainIntersection),
 }
@@ -1084,15 +1084,17 @@ fn append_segment_relation_events(
             segment,
             a_range,
             b_range,
-        }) => events.push(ContourIntersection::Overlap(ContourOverlapIntersection {
-            a_segment_index,
-            b_segment_index,
-            a_segment_kind: a_segment.kind(),
-            b_segment_kind: b_segment.kind(),
-            segment: Segment2::Line(segment),
-            a_range,
-            b_range,
-        })),
+        }) => events.push(ContourIntersection::Overlap(Box::new(
+            ContourOverlapIntersection {
+                a_segment_index,
+                b_segment_index,
+                a_segment_kind: a_segment.kind(),
+                b_segment_kind: b_segment.kind(),
+                segment: Segment2::Line(segment),
+                a_range,
+                b_range,
+            },
+        ))),
         SegmentIntersection::LineLine(LineLineIntersection::Uncertain { reason }) => {
             append_uncertain(
                 events,
@@ -1160,15 +1162,17 @@ fn append_segment_relation_events(
             segment,
             a_range,
             b_range,
-        }) => events.push(ContourIntersection::Overlap(ContourOverlapIntersection {
-            a_segment_index,
-            b_segment_index,
-            a_segment_kind: a_segment.kind(),
-            b_segment_kind: b_segment.kind(),
-            segment: Segment2::Arc(segment),
-            a_range,
-            b_range,
-        })),
+        }) => events.push(ContourIntersection::Overlap(Box::new(
+            ContourOverlapIntersection {
+                a_segment_index,
+                b_segment_index,
+                a_segment_kind: a_segment.kind(),
+                b_segment_kind: b_segment.kind(),
+                segment: Segment2::Arc(segment),
+                a_range,
+                b_range,
+            },
+        ))),
         SegmentIntersection::ArcArc(ArcArcIntersection::Uncertain { reason }) => {
             append_uncertain(
                 events,

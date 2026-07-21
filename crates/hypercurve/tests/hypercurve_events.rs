@@ -53,6 +53,14 @@ fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
 }
 
 #[test]
+fn point_event_storage_does_not_inline_overlap_geometry() {
+    assert!(
+        std::mem::size_of::<ContourIntersection>()
+            < std::mem::size_of::<ContourOverlapIntersection>()
+    );
+}
+
+#[test]
 fn contour_events_sort_points_by_first_segment_parameter() {
     let a = rectangle(0, 0, 4, 4);
     let b = contour(&[
@@ -141,7 +149,7 @@ fn contour_intersection_set_constructor_validates_event_parameters() {
     assert_topology_error(ContourIntersectionSet::new(vec![overlap_kind]));
 
     let overlap_segment = Segment2::Line(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap());
-    let overlap = ContourIntersection::Overlap(ContourOverlapIntersection {
+    let overlap = ContourIntersection::Overlap(Box::new(ContourOverlapIntersection {
         a_segment_index: 0,
         b_segment_index: 1,
         a_segment_kind: SegmentKind::Line,
@@ -149,7 +157,7 @@ fn contour_intersection_set_constructor_validates_event_parameters() {
         segment: overlap_segment,
         a_range: ParamRange::new(s(0), s(1)),
         b_range: ParamRange::new(s(1), s(0)),
-    });
+    }));
     ContourIntersectionSet::new(vec![overlap.clone()]).unwrap();
 
     let mut zero_overlap = overlap.clone();
