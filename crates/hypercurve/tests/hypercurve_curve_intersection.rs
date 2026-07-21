@@ -1285,6 +1285,33 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
                 .iter()
                 .any(|source| source.reversed())
         );
+
+        let transformed = region
+            .transform_affine(
+                &r(-2),
+                &r(0),
+                &r(0),
+                &r(3),
+                &r(7),
+                &r(-1),
+                &CurvePolicy::certified(),
+            )
+            .unwrap_or_else(|error| panic!("{operation:?} affine transform: {error:?}"));
+        assert!(transformed.has_algebraic_fragments());
+        assert!(transformed.fragment_provenance().is_some());
+        for (point, expected) in [
+            (p(7, 2), RegionPointLocation::Inside),
+            (p(7, 8), RegionPointLocation::Outside),
+            (p(7, -1), RegionPointLocation::Boundary),
+        ] {
+            assert_eq!(
+                transformed
+                    .classify_point(&point, &CurvePolicy::certified())
+                    .unwrap(),
+                Classification::Decided(expected),
+                "{operation:?} transformed algebraic classification"
+            );
+        }
     }
 }
 

@@ -24,14 +24,15 @@ use hypersolve::AlgebraicRootRepresentation;
 use crate::bezier_arrangement::represented_roots_equal;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
-    Aabb2, BezierArrangementGraph2, BezierArrangementTraversal2, BezierEndpointPointImage2,
-    BezierLineContactKind, BezierLineContactRelation, BezierLineImageFitRelation, BezierParameter2,
-    BezierRetainedLinearOverlapTraversal2, BezierRetainedRationalOverlapTraversal2,
-    BezierSplitFragment2, BezierSubcurve2, Classification, Contour2, ContourPointLocation,
-    CurveError, CurveFamily2, CurveOperation2, CurvePath2, CurvePathBooleanOperand2, CurvePolicy,
-    CurveResult, CurveSpanProvenance2, ExactCurveError, ExactCurveResult, LineSeg2, Point2,
-    RationalBezier2, RationalBezierPointIncidence2, Region2, RegionPointLocation, Segment2,
-    UncertaintyReason,
+    Aabb2, BezierAlgebraicEndpointImage2, BezierArrangementGraph2, BezierArrangementTraversal2,
+    BezierEndpointPointImage2, BezierLineContactKind, BezierLineContactRelation,
+    BezierLineImageFitRelation, BezierParameter2, BezierRetainedLinearOverlapTraversal2,
+    BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    Contour2, ContourPointLocation, CubicBezier2, CurveError, CurveFamily2, CurveOperation2,
+    CurvePath2, CurvePathBooleanOperand2, CurvePolicy, CurveResult, CurveSpanProvenance2,
+    ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierPointIncidence2, RationalQuadraticBezier2, Region2, RegionPointLocation,
+    Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -1384,6 +1385,86 @@ impl CurveRegion2 {
             })
     }
 
+    /// Applies a nonsingular exact planar affine transform to every retained
+    /// carrier while preserving certified arrangement connectivity.
+    #[allow(clippy::too_many_arguments)]
+    pub fn transform_affine(
+        &self,
+        m00: &Real,
+        m01: &Real,
+        m10: &Real,
+        m11: &Real,
+        tx: &Real,
+        ty: &Real,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<Self> {
+        let determinant = m00 * m11 - m01 * m10;
+        let orientation_reversing = match real_sign(&determinant, policy) {
+            Some(RealSign::Positive) => false,
+            Some(RealSign::Negative) => true,
+            Some(RealSign::Zero) => {
+                return Err(ExactCurveError::invalid(
+                    CurveOperation2::Transformation,
+                    CurveFamily2::RationalBezier,
+                    None,
+                    CurveError::InvalidAffineTransform,
+                ));
+            }
+            None => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Transformation,
+                    CurveFamily2::RationalBezier,
+                    None,
+                    UncertaintyReason::RealSign,
+                ));
+            }
+        };
+
+        let mut loops = Vec::with_capacity(self.boundary_loops.len());
+        for boundary in &self.boundary_loops {
+            let fragments = boundary
+                .fragments()
+                .iter()
+                .map(|fragment| {
+                    transform_retained_region_fragment(fragment, m00, m01, m10, m11, tx, ty, policy)
+                })
+                .collect::<ExactCurveResult<Vec<_>>>()?;
+            let boundary = match boundary.arrangement_sources() {
+                Some(sources) => {
+                    CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
+                        fragments,
+                        sources.to_vec(),
+                    )
+                }
+                None => CurveRegionBoundaryLoop2::new(fragments),
+            }
+            .map_err(affine_region_error)?;
+            loops.push(boundary);
+        }
+        let mut transformed = Self::new(loops).map_err(affine_region_error)?;
+        transformed.fragment_provenance = self.fragment_provenance.clone();
+        let sides = match self
+            .filled_side_is_left(policy)
+            .map_err(affine_region_error)?
+        {
+            Classification::Decided(sides) => sides
+                .iter()
+                .map(|side| if orientation_reversing { !side } else { *side })
+                .collect(),
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Transformation,
+                    CurveFamily2::RationalBezier,
+                    None,
+                    reason,
+                ));
+            }
+        };
+        transformed
+            .with_certified_filled_side_is_left(sides)
+            .map_err(affine_region_error)
+    }
+
     /// Constructs an exact curved region from already materialized boundary loops.
     pub fn new(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> CurveResult<Self> {
         validate_retained_region_loops(&boundary_loops)?;
@@ -1424,7 +1505,7 @@ impl CurveRegion2 {
         Ok(self)
     }
 
-    pub(crate) fn filled_side_is_left(
+    pub fn filled_side_is_left(
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<&[bool]>> {
@@ -1729,6 +1810,31 @@ impl CurveRegion2 {
         Ok(Classification::Decided(report))
     }
 
+    /// Returns one exact material/hole role per retained loop.
+    ///
+    /// The strongest curved nesting classifier is preferred. Exact signed-area
+    /// orientation and line-image nesting are retained fallbacks for carrier
+    /// subsets that do not support the full curved report.
+    pub fn loop_roles(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<CurveRegionLoopRole>>> {
+        match self.curved_nesting_role_report(policy)? {
+            Classification::Decided(report) => {
+                return Ok(Classification::Decided(report.roles().to_vec()));
+            }
+            Classification::Uncertain(_) => {}
+        }
+        match self.signed_area_role_report(policy)? {
+            Classification::Decided(report) => {
+                return Ok(Classification::Decided(report.roles().to_vec()));
+            }
+            Classification::Uncertain(_) => {}
+        }
+        self.line_image_role_report(policy)
+            .map(|roles| roles.map(|report| report.roles().to_vec()))
+    }
+
     /// Returns whether native boundary conversion has already been retained.
     pub fn is_native_boundary_cache_cached(&self) -> bool {
         self.native_boundary_loops.get().is_some()
@@ -1932,6 +2038,138 @@ impl CurveRegion2 {
                 .expect("decided native boundary bounds were retained"),
         )
     }
+}
+
+fn affine_region_error(cause: CurveError) -> ExactCurveError {
+    ExactCurveError::invalid(
+        CurveOperation2::Transformation,
+        CurveFamily2::RationalBezier,
+        None,
+        cause,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn transform_retained_region_fragment(
+    fragment: &BezierSplitFragment2,
+    m00: &Real,
+    m01: &Real,
+    m10: &Real,
+    m11: &Real,
+    tx: &Real,
+    ty: &Real,
+    policy: &CurvePolicy,
+) -> ExactCurveResult<BezierSplitFragment2> {
+    match fragment {
+        BezierSplitFragment2::Materialized { start, end, curve } => {
+            Ok(BezierSplitFragment2::Materialized {
+                start: start.clone(),
+                end: end.clone(),
+                curve: transform_region_subcurve(curve, m00, m01, m10, m11, tx, ty)?,
+            })
+        }
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            reversed,
+            start,
+            end,
+            source_curve: Some(source),
+            ..
+        } => {
+            let source = transform_region_subcurve(source, m00, m01, m10, m11, tx, ty)?;
+            Ok(BezierSplitFragment2::AlgebraicEndpointImages {
+                reversed: *reversed,
+                start: start.clone(),
+                end: end.clone(),
+                start_image: transform_region_endpoint_image(start, &source, policy)?,
+                end_image: transform_region_endpoint_image(end, &source, policy)?,
+                source_curve: Some(source),
+            })
+        }
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            source_curve: None, ..
+        }
+        | BezierSplitFragment2::Unresolved { .. } => Err(ExactCurveError::blocked(
+            CurveOperation2::Transformation,
+            CurveFamily2::RationalBezier,
+            None,
+            UncertaintyReason::Unsupported,
+        )),
+    }
+}
+
+fn transform_region_endpoint_image(
+    parameter: &BezierParameter2,
+    source: &BezierSubcurve2,
+    policy: &CurvePolicy,
+) -> ExactCurveResult<Option<BezierAlgebraicEndpointImage2>> {
+    match parameter {
+        BezierParameter2::Exact(_) => Ok(None),
+        BezierParameter2::Algebraic(parameter) => {
+            BezierAlgebraicEndpointImage2::from_source_curve(source, parameter, policy)
+                .map(Some)
+                .map_err(affine_region_error)
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn transform_region_subcurve(
+    curve: &BezierSubcurve2,
+    m00: &Real,
+    m01: &Real,
+    m10: &Real,
+    m11: &Real,
+    tx: &Real,
+    ty: &Real,
+) -> ExactCurveResult<BezierSubcurve2> {
+    let point = |point: &Point2| affine_region_point(point, m00, m01, m10, m11, tx, ty);
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => Ok(BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            point(curve.start()),
+            point(curve.control()),
+            point(curve.end()),
+        ))),
+        BezierSubcurve2::Cubic(curve) => Ok(BezierSubcurve2::Cubic(CubicBezier2::new(
+            point(curve.start()),
+            point(curve.control1()),
+            point(curve.control2()),
+            point(curve.end()),
+        ))),
+        BezierSubcurve2::RationalQuadratic(curve) => Ok(BezierSubcurve2::RationalQuadratic(
+            RationalQuadraticBezier2::try_new(
+                point(curve.start()),
+                point(curve.control()),
+                point(curve.end()),
+                curve.start_weight().clone(),
+                curve.control_weight().clone(),
+                curve.end_weight().clone(),
+            )
+            .map_err(affine_region_error)?,
+        )),
+        BezierSubcurve2::Rational(curve) => Ok(BezierSubcurve2::Rational(
+            RationalBezier2::try_new(
+                curve.control_points().iter().map(point).collect(),
+                curve.weights().to_vec(),
+            )
+            .map_err(affine_region_error)?,
+        )),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn affine_region_point(
+    point: &Point2,
+    m00: &Real,
+    m01: &Real,
+    m10: &Real,
+    m11: &Real,
+    tx: &Real,
+    ty: &Real,
+) -> Point2 {
+    Point2::new(
+        m00 * point.x() + m01 * point.y() + tx,
+        m10 * point.x() + m11 * point.y() + ty,
+    )
 }
 
 struct RetainedLineLoopContour {

@@ -12,9 +12,12 @@
 use std::f64::consts::PI;
 
 use crate::{
-    CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveResult, CurveString2,
-    Point2, Region2, RegionContourProfile, RegionView2, Segment2,
+    BezierParameter2, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
+    Contour2, CurveError, CurvePath2, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionLoopRole, CurveResult, CurveString2, Point2, Region2, RegionContourProfile,
+    RegionView2, Segment2,
 };
+use hyperreal::{Real, RealSign};
 
 /// Options for projecting native curves to finite `f64` polylines.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -337,6 +340,117 @@ impl CurveString2 {
     }
 }
 
+impl CurvePath2 {
+    /// Projects a full higher-order path to a finite polyline.
+    ///
+    /// Authored curve families remain authoritative. Polynomial and rational
+    /// Bezier spans are subdivided in their native representation and only the
+    /// resulting boundary product is converted to `f64`.
+    pub fn project_to_finite_polyline(
+        &self,
+        options: &FiniteProjectionOptions,
+    ) -> CurveResult<FinitePolyline2> {
+        let fragments = self
+            .native_bezier_fragments()
+            .map_err(|error| CurveError::Topology(error.to_string()))?;
+        let mut points = Vec::new();
+        for fragment in fragments {
+            append_bezier_subcurve_samples(&mut points, fragment.curve(), options, 0)?;
+        }
+        let closed = self.start() == self.end();
+        if closed {
+            close_ring(&mut points);
+        }
+        Ok(FinitePolyline2::new(
+            points,
+            options.arc_chord_error,
+            closed,
+        ))
+    }
+}
+
+impl CurveRegion2 {
+    /// Projects retained higher-order region loops into material profiles.
+    ///
+    /// Loop roles are decided by exact curved topology before any coordinate
+    /// crosses the finite boundary. Hole ownership is then attached within the
+    /// already-decided role partition using the projected rings.
+    pub fn project_to_finite_profiles(
+        &self,
+        options: &FiniteProjectionOptions,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<FiniteRegionProfile2>>> {
+        if self.is_empty() {
+            return Ok(Classification::Decided(Vec::new()));
+        }
+        let rings = self
+            .boundary_loops()
+            .iter()
+            .map(|boundary| project_curve_region_loop(boundary, options, policy))
+            .collect::<CurveResult<Vec<_>>>()?;
+        let roles = match self.loop_roles(policy)? {
+            Classification::Decided(roles) => roles,
+            Classification::Uncertain(_) => {
+                let filled_sides = match self.filled_side_is_left(policy)? {
+                    Classification::Decided(sides) => sides,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                rings
+                    .iter()
+                    .zip(filled_sides)
+                    .map(|(ring, filled_side_is_left)| {
+                        let interior_is_left = finite_ring_signed_area(ring.points()) > 0.0;
+                        if interior_is_left == *filled_side_is_left {
+                            CurveRegionLoopRole::Material
+                        } else {
+                            CurveRegionLoopRole::Hole
+                        }
+                    })
+                    .collect()
+            }
+        };
+
+        let material_indices = roles
+            .iter()
+            .enumerate()
+            .filter_map(|(index, role)| (*role == CurveRegionLoopRole::Material).then_some(index))
+            .collect::<Vec<_>>();
+        let mut profiles = material_indices
+            .iter()
+            .map(|index| FiniteRegionProfile2::new(rings[*index].clone(), Vec::new()))
+            .collect::<Vec<_>>();
+        for (hole_index, role) in roles.iter().enumerate() {
+            if *role != CurveRegionLoopRole::Hole {
+                continue;
+            }
+            let Some(sample) = finite_polyline_vertex_centroid(rings[hole_index].points()) else {
+                return Err(CurveError::NonFiniteProjectionPoint);
+            };
+            let owner = material_indices
+                .iter()
+                .enumerate()
+                .filter(|(_, material_index)| {
+                    finite_ring_contains_point(rings[**material_index].points(), sample)
+                })
+                .min_by(|(_, left), (_, right)| {
+                    finite_ring_signed_area(rings[**left].points())
+                        .abs()
+                        .total_cmp(&finite_ring_signed_area(rings[**right].points()).abs())
+                })
+                .map(|(profile_index, _)| profile_index)
+                .ok_or_else(|| {
+                    CurveError::Topology(
+                        "projected curved-region hole has no material owner".into(),
+                    )
+                })?;
+            profiles[owner].holes.push(rings[hole_index].clone());
+        }
+        Ok(Classification::Decided(profiles))
+    }
+}
+
 impl Contour2 {
     /// Projects this closed contour to a finite closed ring for IO and display.
     ///
@@ -463,6 +577,202 @@ fn project_curve_string(
     Ok(FinitePolyline2::new(points, options.arc_chord_error, close))
 }
 
+fn project_curve_region_loop(
+    boundary: &CurveRegionBoundaryLoop2,
+    options: &FiniteProjectionOptions,
+    policy: &CurvePolicy,
+) -> CurveResult<FinitePolyline2> {
+    let mut points = Vec::new();
+    for fragment in boundary.fragments() {
+        match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => {
+                append_bezier_subcurve_samples(&mut points, curve, options, 0)?;
+            }
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                reversed,
+                start,
+                end,
+                source_curve: Some(source),
+                ..
+            } => {
+                let start = finite_parameter_representative(start)?;
+                let end = finite_parameter_representative(end)?;
+                let subcurve = match source.subcurve_between_exact(&start, &end, policy)? {
+                    Classification::Decided(curve) => curve,
+                    Classification::Uncertain(reason) => {
+                        return Err(CurveError::Topology(format!(
+                            "finite projection could not materialize retained algebraic fragment: {reason:?}"
+                        )));
+                    }
+                };
+                let subcurve = if *reversed {
+                    subcurve.reversed()
+                } else {
+                    subcurve
+                };
+                append_bezier_subcurve_samples(&mut points, &subcurve, options, 0)?;
+            }
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                source_curve: None, ..
+            }
+            | BezierSplitFragment2::Unresolved { .. } => {
+                return Err(CurveError::Topology(
+                    "finite projection requires a retained source curve for algebraic fragments"
+                        .into(),
+                ));
+            }
+        }
+    }
+    close_ring(&mut points);
+    Ok(FinitePolyline2::new(points, options.arc_chord_error, true))
+}
+
+fn finite_parameter_representative(parameter: &BezierParameter2) -> CurveResult<Real> {
+    if let Some(exact) = parameter.as_exact() {
+        return Ok(exact.clone());
+    }
+    let interval = match parameter.known_interval(&CurvePolicy::certified())? {
+        Classification::Decided(interval) => interval,
+        Classification::Uncertain(reason) => {
+            return Err(CurveError::Topology(format!(
+                "finite projection could not isolate algebraic parameter: {reason:?}"
+            )));
+        }
+    };
+    Ok(((&interval.start().clone() + interval.end()) / Real::from(2_u8))?)
+}
+
+fn append_bezier_subcurve_samples(
+    points: &mut Vec<[f64; 2]>,
+    curve: &BezierSubcurve2,
+    options: &FiniteProjectionOptions,
+    depth: usize,
+) -> CurveResult<()> {
+    const MAX_DEPTH: usize = 32;
+    let controls = finite_subcurve_controls(curve)?;
+    let common_weight_sign = subcurve_has_common_weight_sign(curve);
+    let flat =
+        common_weight_sign && control_polygon_chord_error(&controls) <= options.arc_chord_error;
+    if flat {
+        push_if_new(points, controls[0]);
+        push_if_new(
+            points,
+            *controls.last().expect("Bezier controls are nonempty"),
+        );
+        return Ok(());
+    }
+    if depth >= MAX_DEPTH {
+        return Err(CurveError::Topology(
+            "finite higher-order projection exceeded its subdivision depth".into(),
+        ));
+    }
+
+    let half = (Real::one() / Real::from(2_u8))?;
+    let left =
+        match curve.subcurve_between_exact(&Real::zero(), &half, &CurvePolicy::certified())? {
+            Classification::Decided(curve) => curve,
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "finite projection could not split higher-order curve: {reason:?}"
+                )));
+            }
+        };
+    let right =
+        match curve.subcurve_between_exact(&half, &Real::one(), &CurvePolicy::certified())? {
+            Classification::Decided(curve) => curve,
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "finite projection could not split higher-order curve: {reason:?}"
+                )));
+            }
+        };
+    append_bezier_subcurve_samples(points, &left, options, depth + 1)?;
+    append_bezier_subcurve_samples(points, &right, options, depth + 1)
+}
+
+fn finite_subcurve_controls(curve: &BezierSubcurve2) -> CurveResult<Vec<[f64; 2]>> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => curve
+            .control_points()
+            .into_iter()
+            .map(finite_point)
+            .collect(),
+        BezierSubcurve2::Cubic(curve) => curve
+            .control_points()
+            .into_iter()
+            .map(finite_point)
+            .collect(),
+        BezierSubcurve2::RationalQuadratic(curve) => curve
+            .control_points()
+            .into_iter()
+            .map(finite_point)
+            .collect(),
+        BezierSubcurve2::Rational(curve) => {
+            curve.control_points().iter().map(finite_point).collect()
+        }
+    }
+}
+
+fn subcurve_has_common_weight_sign(curve: &BezierSubcurve2) -> bool {
+    let weights: Vec<&Real> = match curve {
+        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => return true,
+        BezierSubcurve2::RationalQuadratic(curve) => curve.weights().into_iter().collect(),
+        BezierSubcurve2::Rational(curve) => curve.weights().iter().collect(),
+    };
+    let mut sign = None;
+    for weight in weights {
+        let current = weight
+            .refine_sign_until(-128)
+            .filter(|value| *value != RealSign::Zero);
+        match (sign, current) {
+            (None, Some(current)) => sign = Some(current),
+            (Some(expected), Some(current)) if expected == current => {}
+            _ => return false,
+        }
+    }
+    sign.is_some()
+}
+
+fn control_polygon_chord_error(controls: &[[f64; 2]]) -> f64 {
+    let start = controls[0];
+    let end = *controls.last().expect("Bezier controls are nonempty");
+    controls
+        .iter()
+        .copied()
+        .map(|point| point_segment_distance(point, start, end))
+        .fold(0.0, f64::max)
+}
+
+fn point_segment_distance(point: [f64; 2], start: [f64; 2], end: [f64; 2]) -> f64 {
+    let dx = end[0] - start[0];
+    let dy = end[1] - start[1];
+    let length_squared = dx * dx + dy * dy;
+    if length_squared <= f64::EPSILON {
+        return ((point[0] - start[0]).powi(2) + (point[1] - start[1]).powi(2)).sqrt();
+    }
+    let t = (((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / length_squared)
+        .clamp(0.0, 1.0);
+    let projection = [start[0] + t * dx, start[1] + t * dy];
+    ((point[0] - projection[0]).powi(2) + (point[1] - projection[1]).powi(2)).sqrt()
+}
+
+fn finite_ring_contains_point(ring: &[[f64; 2]], point: [f64; 2]) -> bool {
+    if ring.len() < 3 {
+        return false;
+    }
+    let mut inside = false;
+    for edge in ring.windows(2) {
+        let [first, second] = [edge[0], edge[1]];
+        if (first[1] > point[1]) != (second[1] > point[1])
+            && point[0]
+                < (second[0] - first[0]) * (point[1] - first[1]) / (second[1] - first[1]) + first[0]
+        {
+            inside = !inside;
+        }
+    }
+    inside
+}
+
 fn finite_point(point: &Point2) -> CurveResult<[f64; 2]> {
     let x = point
         .x()
@@ -529,5 +839,63 @@ fn close_ring(points: &mut Vec<[f64; 2]>) {
 fn push_if_new(points: &mut Vec<[f64; 2]>, point: [f64; 2]) {
     if points.last().is_none_or(|last| *last != point) {
         points.push(point);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{CubicBezier2, Curve2, LineSeg2};
+
+    fn point(x: i64, y: i64) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn cubic_cap() -> CurvePath2 {
+        CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(point(0, 0), point(4, 0)).unwrap()),
+            Curve2::from(LineSeg2::try_new(point(4, 0), point(4, 4)).unwrap()),
+            Curve2::from(CubicBezier2::new(
+                point(4, 4),
+                point(3, 5),
+                point(1, 5),
+                point(0, 4),
+            )),
+            Curve2::from(LineSeg2::try_new(point(0, 4), point(0, 0)).unwrap()),
+        ])
+        .unwrap()
+    }
+
+    #[test]
+    fn projects_higher_order_path_without_demoting_source() {
+        let path = cubic_cap();
+        let projection = path
+            .project_to_finite_polyline(&FiniteProjectionOptions::try_new(1.0e-3).unwrap())
+            .unwrap();
+
+        assert!(projection.is_closed());
+        assert!(projection.points().len() > path.curves().len() + 1);
+        assert!(matches!(
+            path.curves()[2].geometry(),
+            crate::CurveGeometry2::CubicBezier(_)
+        ));
+    }
+
+    #[test]
+    fn projects_higher_order_region_after_exact_role_assignment() {
+        let region = CurveRegion2::try_from_boundary_paths(&[cubic_cap()]).unwrap();
+        let profiles = region
+            .project_to_finite_profiles(
+                &FiniteProjectionOptions::try_new(1.0e-3).unwrap(),
+                &CurvePolicy::certified(),
+            )
+            .unwrap();
+        let Classification::Decided(profiles) = profiles else {
+            panic!("cubic region roles should be decided");
+        };
+
+        assert_eq!(profiles.len(), 1);
+        assert!(profiles[0].material().points().len() > 5);
+        assert!(profiles[0].holes().is_empty());
     }
 }

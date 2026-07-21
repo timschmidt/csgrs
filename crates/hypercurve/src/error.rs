@@ -288,6 +288,8 @@ pub enum CurveError {
     InvalidImportRecord,
     /// A finite affine transform is not a nonsingular planar similarity.
     InvalidSimilarityTransform,
+    /// A planar affine transform has a singular or undecidable linear part.
+    InvalidAffineTransform,
     /// A Bezier parameter is certified outside the closed unit interval.
     InvalidBezierParameter,
     /// A Bezier segment range is outside the stored path facts.
@@ -379,6 +381,7 @@ impl fmt::Display for CurveError {
             Self::InvalidSimilarityTransform => {
                 write!(f, "affine transform is not a planar similarity")
             }
+            Self::InvalidAffineTransform => write!(f, "invalid planar affine transform"),
             Self::InvalidBezierParameter => {
                 write!(f, "Bezier parameter is outside the closed unit interval")
             }
