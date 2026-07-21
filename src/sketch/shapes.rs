@@ -8,11 +8,20 @@ use crate::hyper_math::{
 use crate::sketch::Profile;
 use hypercurve::{
     Contour2, CubicBezier2, Curve2, CurvePath2, CurveRegion2, CurveString2, FillRule,
-    LineSeg2, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, Region2,
-    Segment2,
+    LineSeg2, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, Segment2,
 };
 use hyperlattice::Vector3;
 use std::cmp::Ordering;
+
+fn profile_from_native_contours(material: Vec<Contour2>, holes: Vec<Contour2>) -> Profile {
+    let region = CurveRegion2::try_from_native_contours(
+        material,
+        holes,
+        &hypercurve::CurvePolicy::certified(),
+    )
+    .unwrap_or_else(|_| CurveRegion2::empty());
+    Profile::from_curve_region(region)
+}
 
 fn sampled_sin_cos(
     index: usize,
@@ -1787,10 +1796,10 @@ impl Profile {
         // simple, consistently wound regular polygon. Since
         // `outer_radius > inner_radius`, the inner polygon is a strict positive
         // homothety inside the outer polygon, certifying its hole role.
-        Profile::from_region(Region2::new(
+        profile_from_native_contours(
             vec![certified_tessellation_contour(&outer_points)],
             vec![certified_tessellation_contour(&inner_points)],
-        ))
+        )
     }
 
     /// Create a 2D "pie slice" (wedge) in the XY plane.
@@ -2263,10 +2272,7 @@ impl Profile {
             ) else {
                 return Profile::empty();
             };
-            return Profile::from_region(Region2::new(
-                vec![outer_contour],
-                vec![inner_contour],
-            ));
+            return profile_from_native_contours(vec![outer_contour], vec![inner_contour]);
         }
         let radius_sum = outer_r.clone() + inner_r.clone();
         if matches!(
@@ -2541,7 +2547,7 @@ impl Profile {
     /// and Pinkerton, "The characteristics of 78 related airfoil sections from
     /// tests in the variable-density wind tunnel", NACA Report 460, 1933.
     /// The analytic boundary is evaluated at the finite tessellation boundary
-    /// and promoted to exact dyadic `hypercurve::Region2` topology.
+    /// and promoted to exact dyadic `hypercurve::CurveRegion2` topology.
     pub fn airfoil_naca4(
         max_camber: Real,
         camber_position: Real,
@@ -3371,13 +3377,13 @@ mod tests {
             );
             assert_eq!(direct.hole_contour_count(), oracle.hole_contour_count());
 
-            let direct_area = direct.region.material_contours()[0]
+            let direct_area = direct.native_contours().material_contours()[0]
                 .signed_area()
                 .unwrap()
                 .unwrap()
                 .to_f64_lossy()
                 .unwrap();
-            let oracle_area = oracle.region.material_contours()[0]
+            let oracle_area = oracle.native_contours().material_contours()[0]
                 .signed_area()
                 .unwrap()
                 .unwrap()
@@ -3421,11 +3427,24 @@ mod tests {
     }
 
     #[test]
-    fn uncertain_keyhole_boolean_fails_closed_instead_of_panicking() {
+    fn partial_shared_keyhole_boolean_is_decided_without_panicking() {
         let profile =
             Profile::keyhole(Real::from(1_000), Real::from(1_000), Real::from(1_000), 3);
 
-        assert!(profile.is_empty());
+        assert_eq!(profile.material_contour_count(), 1);
+        assert_eq!(profile.hole_contour_count(), 0);
+        assert_eq!(
+            profile.contains_xy(Real::from(0), Real::from(500)),
+            Some(true)
+        );
+        assert_eq!(
+            profile.contains_xy(Real::from(750), Real::from(0)),
+            Some(true)
+        );
+        assert_eq!(
+            profile.contains_xy(Real::from(-750), Real::from(0)),
+            Some(false)
+        );
     }
 
     fn legacy_crescent(
@@ -3477,13 +3496,13 @@ mod tests {
             );
             assert_eq!(direct.hole_contour_count(), oracle.hole_contour_count());
 
-            let direct_area = direct.region.material_contours()[0]
+            let direct_area = direct.native_contours().material_contours()[0]
                 .signed_area()
                 .unwrap()
                 .unwrap()
                 .to_f64_lossy()
                 .unwrap();
-            let oracle_area = oracle.region.material_contours()[0]
+            let oracle_area = oracle.native_contours().material_contours()[0]
                 .signed_area()
                 .unwrap()
                 .unwrap()
@@ -3581,13 +3600,13 @@ mod tests {
             );
             assert_eq!(direct.hole_contour_count(), oracle.hole_contour_count());
 
-            let direct_area = direct.region.material_contours()[0]
+            let direct_area = direct.native_contours().material_contours()[0]
                 .signed_area()
                 .unwrap()
                 .unwrap()
                 .to_f64_lossy()
                 .unwrap();
-            let oracle_area = oracle.region.material_contours()[0]
+            let oracle_area = oracle.native_contours().material_contours()[0]
                 .signed_area()
                 .unwrap()
                 .unwrap()
@@ -3818,10 +3837,14 @@ mod tests {
             let outer_radius = hreal_affine(&inner_radius, 1.0, thickness.clone()).unwrap();
             let outer_points = hcircle_samples(segments, outer_radius).unwrap();
             let inner_points = hcircle_samples(segments, inner_radius).unwrap();
-            let oracle = Profile::from_region(Region2::new(
-                vec![Contour2::from_real_ring(&outer_points).unwrap()],
-                vec![Contour2::from_real_ring(&inner_points).unwrap()],
-            ));
+            let oracle = Profile::from_curve_region(
+                CurveRegion2::try_from_native_contours(
+                    vec![Contour2::from_real_ring(&outer_points).unwrap()],
+                    vec![Contour2::from_real_ring(&inner_points).unwrap()],
+                    &hypercurve::CurvePolicy::certified(),
+                )
+                .unwrap(),
+            );
             let actual = Profile::ring(id, thickness, segments);
 
             assert_eq!(actual.region, oracle.region);
@@ -4002,7 +4025,7 @@ mod tests {
     fn heart_keeps_sampling_exact_while_matching_legacy_finite_coordinates() {
         for segments in [8, 9, 10, 15, 31, 32, 63] {
             let heart = Profile::heart(Real::from(8), Real::from(6), segments);
-            let contour = &heart.region.material_contours()[0];
+            let contour = &heart.native_contours().material_contours()[0];
             let actual = contour
                 .segments()
                 .iter()
@@ -4056,7 +4079,7 @@ mod tests {
         let mut saw_non_rational_coordinate = false;
         for segments in [3_usize, 4, 5, 7, 24, 31, 64] {
             let egg = Profile::egg(Real::from(6), Real::from(10), segments);
-            let contour = &egg.region.material_contours()[0];
+            let contour = &egg.native_contours().material_contours()[0];
             let actual = contour
                 .segments()
                 .iter()
@@ -4125,7 +4148,7 @@ mod tests {
                 finite[0], finite[1], finite[2], finite[3], finite[4], finite[5], segments,
             );
             let profile = Profile::supershape(a, b, m, n1, n2, n3, segments);
-            let contour = &profile.region.material_contours()[0];
+            let contour = &profile.native_contours().material_contours()[0];
 
             assert_eq!(contour.segments().len(), expected.len());
             for (segment, expected) in contour.segments().iter().zip(expected) {
@@ -4177,7 +4200,8 @@ mod tests {
                 Real::try_from(backlash).unwrap(),
                 segments,
             );
-            let boundary_segments = profile.region.material_contours()[0].segments();
+            let boundary_segments =
+                profile.native_contours().material_contours()[0].segments();
             assert!(boundary_segments.iter().any(|segment| {
                 let point = segment.start();
                 point.x().exact_rational_ref().is_none()
@@ -4244,8 +4268,10 @@ mod tests {
         );
         assert!(!exact.is_empty());
         assert!(!rounded.is_empty());
-        let exact_x = exact.region.material_contours()[0].segments()[0].start().x();
-        let rounded_x = rounded.region.material_contours()[0].segments()[0]
+        let exact_x = exact.native_contours().material_contours()[0].segments()[0]
+            .start()
+            .x();
+        let rounded_x = rounded.native_contours().material_contours()[0].segments()[0]
             .start()
             .x();
         assert_ne!(hreal_try_cmp(exact_x, rounded_x), Some(Ordering::Equal));
@@ -4270,8 +4296,10 @@ mod tests {
         );
         assert!(!exact.is_empty());
         assert!(!rounded.is_empty());
-        let exact_x = exact.region.material_contours()[0].segments()[0].start().x();
-        let rounded_x = rounded.region.material_contours()[0].segments()[0]
+        let exact_x = exact.native_contours().material_contours()[0].segments()[0]
+            .start()
+            .x();
+        let rounded_x = rounded.native_contours().material_contours()[0].segments()[0]
             .start()
             .x();
         assert_ne!(hreal_try_cmp(exact_x, rounded_x), Some(Ordering::Equal));
@@ -4311,7 +4339,7 @@ mod tests {
             Real::from(clearance),
             segments,
         );
-        let boundary_segments = profile.region.material_contours()[0].segments();
+        let boundary_segments = profile.native_contours().material_contours()[0].segments();
         assert!(boundary_segments.iter().any(|segment| {
             let point = segment.start();
             point.x().exact_rational_ref().is_none()
@@ -4423,8 +4451,8 @@ mod tests {
     fn aligned_reuleaux_arc_assembly_matches_general_boolean_exactly() {
         let direct = Profile::reuleaux(3, Real::from(6), 24);
         let oracle = legacy_reuleaux(3, Real::from(6), 24);
-        let direct_contours = direct.region.material_contours();
-        let oracle_contours = oracle.region.material_contours();
+        let direct_contours = direct.native_contours().material_contours();
+        let oracle_contours = oracle.native_contours().material_contours();
 
         assert_eq!(direct_contours.len(), 1);
         assert_eq!(oracle_contours.len(), 1);
@@ -4435,7 +4463,7 @@ mod tests {
     #[test]
     fn aligned_reuleaux_pentagon_builds_one_exact_source_arc_ring() {
         let profile = Profile::reuleaux(5, Real::from(3), 20);
-        let contours = profile.region.material_contours();
+        let contours = profile.native_contours().material_contours();
 
         assert_eq!(contours.len(), 1);
         assert_eq!(contours[0].segments().len(), 10);

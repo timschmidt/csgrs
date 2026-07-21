@@ -2,7 +2,7 @@
 
 use crate::hyper_math::{Real, hreal_to_f64};
 use crate::sketch::Profile;
-use hypercurve::{Contour2, CurveString2, Region2};
+use hypercurve::{Contour2, CurvePolicy, CurveRegion2, CurveString2};
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
 
@@ -12,7 +12,7 @@ const CURVE_STEPS: usize = 8;
 impl Profile {
     /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
     ///
-    /// Each glyph's closed contours become native `hypercurve::Region2`
+    /// Each glyph's closed contours become unified `hypercurve::CurveRegion2`
     /// contours, and any open contours become native `hypercurve::CurveString2`
     /// wires. The finite outline flattening is an API-edge tessellation of the
     /// font's quadratic/cubic curves; storage is immediately promoted into
@@ -148,9 +148,16 @@ impl Profile {
             }
         }
 
-        Profile::from_region_and_wires_with_origin(
-            Region2::new(material_contours, hole_contours),
+        let region = CurveRegion2::try_from_native_contours(
+            material_contours,
+            hole_contours,
+            &CurvePolicy::certified(),
+        )
+        .unwrap_or_else(|_| CurveRegion2::empty());
+        Profile::from_topology_with_origin(
+            region,
             wires,
+            Vec::new(),
             crate::vertex::Vertex::default(),
             Profile::prepare_origin_transform(crate::vertex::Vertex::default()),
         )

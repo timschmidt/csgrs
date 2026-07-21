@@ -5,9 +5,7 @@ use crate::mesh::Mesh;
 use crate::mesh::plane::{BACK, COPLANAR, FRONT, Plane, SPANNING};
 use crate::sketch::Profile;
 use crate::vertex::Vertex;
-use hypercurve::{
-    BooleanOp, Classification, Contour2, CurvePolicy, CurveString2, FillRule, Region2,
-};
+use hypercurve::{BooleanOp, Contour2, CurvePolicy, CurveRegion2, CurveString2};
 use hyperlattice::Real;
 use std::cmp::Ordering;
 use std::fmt::Debug;
@@ -18,7 +16,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// 2D Profile.
     ///
     /// - All `polygons` in the Mesh are tessellated, projected into XY, promoted
-    ///   to hypercurve contours, and unioned as `Region2` topology.
+    ///   to hypercurve contours, and unioned as `CurveRegion2` topology.
     /// - The XY coordinates are still finite mesh-boundary samples, but the
     ///   planar set operations stay in hypercurve. This follows Yap, "Towards Exact Geometric
     ///   Computation," *Computational Geometry* 7(1-2), 1997
@@ -31,14 +29,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if self.is_certified_convex_triangle_surface()
             && let Some(flattened_region) = convex_projected_region(self)
         {
-            return Profile::from_region_and_wires_with_origin(
-                flattened_region,
-                Vec::new(),
-                Vertex::default(),
-                Profile::prepare_origin_transform(Vertex::default()),
-            );
+            return Profile::from_curve_topology(flattened_region, Vec::new(), Vec::new());
         }
-        let mut flattened_region = Region2::empty();
+        let mut flattened_region = CurveRegion2::empty();
         let mut material_contours = Vec::new();
 
         for poly in &self.polygons {
@@ -67,33 +60,33 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 let Ok(contour) = Contour2::from_real_ring(&ring) else {
                     continue;
                 };
-                let triangle_region = Region2::from_material_contours(vec![contour.clone()]);
+                let Ok(triangle_region) = CurveRegion2::try_from_native_material_contours(
+                    vec![contour.clone()],
+                    &policy,
+                ) else {
+                    continue;
+                };
+                material_contours.push(contour);
                 flattened_region = if flattened_region.is_empty() {
                     triangle_region
                 } else {
                     match flattened_region.boolean_region(
                         &triangle_region,
                         BooleanOp::Union,
-                        FillRule::NonZero,
                         &policy,
                     ) {
-                        Ok(Classification::Decided(region)) => region,
-                        Ok(Classification::Uncertain(_)) | Err(_) => {
-                            material_contours.push(contour);
-                            Region2::from_material_contours(material_contours.clone())
-                        },
+                        Ok(region) => region,
+                        Err(_) => CurveRegion2::try_from_native_material_contours(
+                            material_contours.clone(),
+                            &policy,
+                        )
+                        .unwrap_or_else(|_| CurveRegion2::empty()),
                     }
                 };
-                material_contours = flattened_region.material_contours().to_vec();
             }
         }
 
-        Profile::from_region_and_wires_with_origin(
-            flattened_region,
-            Vec::new(),
-            Vertex::default(),
-            Profile::prepare_origin_transform(Vertex::default()),
-        )
+        Profile::from_curve_topology(flattened_region, Vec::new(), Vec::new())
     }
 
     /// Slice this solid by a given `plane`, returning a new `Profile` whose polygons
@@ -196,22 +189,19 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
-        let region = if material_contours.is_empty() {
-            Region2::empty()
-        } else {
-            Region2::from_material_contours(material_contours)
-        };
-
-        Profile::from_region_and_wires_with_origin(
-            region,
-            open_wires,
-            Vertex::default(),
-            Profile::prepare_origin_transform(Vertex::default()),
+        let region = CurveRegion2::try_from_native_material_contours(
+            material_contours,
+            &CurvePolicy::certified(),
         )
+        .unwrap_or_else(|_| CurveRegion2::empty());
+
+        Profile::from_curve_topology(region, open_wires, Vec::new())
     }
 }
 
-fn convex_projected_region<M: Clone + Debug + Send + Sync>(mesh: &Mesh<M>) -> Option<Region2> {
+fn convex_projected_region<M: Clone + Debug + Send + Sync>(
+    mesh: &Mesh<M>,
+) -> Option<CurveRegion2> {
     let mut points = mesh
         .polygons
         .iter()
@@ -264,7 +254,8 @@ fn convex_projected_region<M: Clone + Debug + Send + Sync>(mesh: &Mesh<M>) -> Op
     }
     lower.push(lower[0].clone());
     let contour = Contour2::from_real_ring(&lower).ok()?;
-    Some(Region2::from_material_contours(vec![contour]))
+    CurveRegion2::try_from_native_material_contours(vec![contour], &CurvePolicy::certified())
+        .ok()
 }
 
 fn exact_point_order(left: &[Real; 2], right: &[Real; 2]) -> Option<Ordering> {

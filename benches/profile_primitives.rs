@@ -194,9 +194,7 @@ fn main() {
             Measurement::new(
                 1,
                 result.material_contour_count() as u64,
-                result
-                    .as_curve_region()
-                    .map_or(0, hypercurve::CurveRegion2::len) as u64,
+                result.as_curve_region().len() as u64,
             )
         },
     );

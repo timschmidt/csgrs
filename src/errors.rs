@@ -29,9 +29,15 @@ pub enum ProfileBooleanError {
 /// Failure to construct a native 2D profile offset.
 #[derive(Clone, Debug, thiserror::Error, PartialEq, Eq)]
 pub enum ProfileOffsetError {
-    /// Hypercurve does not yet provide exact offsets for the retained curve
-    /// families carried by `CurveRegion2` and `CurvePath2`.
-    #[error("nonzero offsets of higher-order curve profiles are not yet supported")]
+    /// Hypercurve rejected an exact curve-region offset operation.
+    #[error(transparent)]
+    ExactCurve(#[from] ExactCurveError),
+    /// Hypercurve could not certify a required offset topology decision.
+    #[error("profile offset is uncertain: {0:?}")]
+    Uncertain(UncertaintyReason),
+    /// The lossless offset entry point cannot represent the retained higher-order family.
+    /// Callers may opt into an explicit certified segmentation budget instead.
+    #[error("nonzero higher-order offsets require try_offset_with_certified_segmentation")]
     HigherOrderCurves,
     /// The requested line/arc topology could not be certified by the native
     /// contour or open-wire offset construction.

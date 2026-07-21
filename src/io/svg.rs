@@ -9,8 +9,9 @@ use crate::csg::CSG;
 use crate::io::{IoError, finite_f64};
 use crate::sketch::Profile;
 use hypercurve::{
-    Classification, CurvePolicy, CurveString2, FillRule, FiniteProjectionOptions, Region2,
-    import_svg_path_data_with_report, import_svg_region_path_data_with_report,
+    Classification, CurvePolicy, CurveRegion2, CurveString2, FillRule,
+    FiniteProjectionOptions, import_svg_path_data_with_report,
+    import_svg_region_path_data_with_report,
 };
 use hyperlattice::{Matrix4, Real};
 use std::fmt::Debug;
@@ -356,7 +357,7 @@ fn imported_path(
     context: StyleContext,
     source_index: u64,
 ) -> Result<Profile, IoError> {
-    let mut region = Region2::empty();
+    let mut region = CurveRegion2::empty();
     let mut wires = Vec::new();
     if context.fills() {
         let result = import_svg_region_path_data_with_report(
@@ -381,33 +382,30 @@ fn imported_path(
             detail: format!("stroked path was not retained: {blocker:?}"),
         })?);
     }
-    Ok(Profile::from_region_and_wires(region, wires))
+    Ok(Profile::from_curve_region_and_wires(region, wires))
 }
 
 fn styled_shape(shape: Profile, context: StyleContext) -> Profile {
-    if context.fills() && context.strokes() {
-        let wires = shape
-            .as_region()
-            .material_contours()
-            .iter()
-            .chain(shape.as_region().hole_contours())
-            .map(|contour| contour.curve_string().clone())
-            .collect();
-        Profile::from_region_and_wires(shape.as_region().clone(), wires)
-    } else if context.strokes() {
-        let wires = shape
-            .as_region()
-            .material_contours()
-            .iter()
-            .chain(shape.as_region().hole_contours())
-            .map(|contour| contour.curve_string().clone())
-            .collect();
-        Profile::from_wires(wires)
-    } else if context.fills() {
-        shape
-    } else {
-        Profile::empty()
+    if context.fills() && !context.strokes() {
+        return shape;
     }
+    if !context.fills() && !context.strokes() {
+        return Profile::empty();
+    }
+
+    let (region, wires, mut paths) = shape.into_curve_topology();
+    if let Ok(Classification::Decided(boundaries)) = region.materialized_boundary_paths() {
+        paths.extend(boundaries);
+    }
+    Profile::from_curve_topology(
+        if context.fills() {
+            region
+        } else {
+            CurveRegion2::empty()
+        },
+        wires,
+        paths,
+    )
 }
 
 pub trait FromSVG: Sized {
@@ -559,16 +557,16 @@ impl FromSVG for Profile {
                             detail: error.to_string(),
                         })?;
                     let region = if context.fills() {
-                        Profile::polygon(&polyline_points).as_region().clone()
+                        Profile::polygon(&polyline_points).as_curve_region().clone()
                     } else {
-                        Region2::empty()
+                        CurveRegion2::empty()
                     };
                     let wires = if context.strokes() {
                         vec![wire]
                     } else {
                         Vec::new()
                     };
-                    Profile::from_region_and_wires(region, wires)
+                    Profile::from_curve_region_and_wires(region, wires)
                 },
                 other => {
                     return Err(IoError::Unsupported {
@@ -772,10 +770,38 @@ mod tests {
     }
 
     #[test]
+    fn imports_cubic_fill_without_demoting_curve_region() {
+        let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><path d="M 0 0 C 0 2 2 2 2 0 Z"/></svg>"#;
+        let profile = Profile::from_svg(document).unwrap();
+
+        assert_eq!(
+            profile
+                .as_curve_region()
+                .loop_role_counts(&CurvePolicy::certified())
+                .unwrap(),
+            Classification::Decided((1, 0))
+        );
+        assert!(
+            profile
+                .as_curve_region()
+                .line_arc_region_fast_path(&CurvePolicy::certified())
+                .unwrap()
+                .is_uncertain()
+        );
+        assert_eq!(profile.contains_xy(Real::one(), Real::one()), Some(true));
+    }
+
+    #[test]
     fn polyline_fill_closes_but_stroke_remains_open() {
         let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><polyline points="0,0 2,0 1,1" stroke="black"/></svg>"#;
         let profile = Profile::from_svg(document).unwrap();
-        assert_eq!(profile.as_region().material_contours().len(), 1);
+        assert_eq!(
+            profile
+                .as_curve_region()
+                .loop_role_counts(&CurvePolicy::certified())
+                .unwrap(),
+            Classification::Decided((1, 0))
+        );
         assert_eq!(profile.wires().len(), 1);
         assert_ne!(profile.wires()[0].start(), profile.wires()[0].end());
     }
@@ -813,7 +839,13 @@ mod tests {
             </g>
         </svg>"#;
         let profile = Profile::from_svg(document).unwrap();
-        assert_eq!(profile.as_region().material_contours().len(), 1);
+        assert_eq!(
+            profile
+                .as_curve_region()
+                .loop_role_counts(&CurvePolicy::certified())
+                .unwrap(),
+            Classification::Decided((1, 0))
+        );
         assert_eq!(profile.wires().len(), 1);
         let bounds = profile.bounding_box();
         for (actual, expected) in [
@@ -856,6 +888,11 @@ mod tests {
         }
 
         let transparent = r#"<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" opacity="0%"/></svg>"#;
-        assert!(Profile::from_svg(transparent).unwrap().as_region().is_empty());
+        assert!(
+            Profile::from_svg(transparent)
+                .unwrap()
+                .as_curve_region()
+                .is_empty()
+        );
     }
 }

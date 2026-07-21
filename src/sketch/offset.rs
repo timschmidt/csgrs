@@ -11,7 +11,7 @@
 //! (<https://doi.org/10.1016/0167-8396(90)90023-K>).
 //!
 //! `Profile` does not own a second finite polygon datatype. Supported offsets
-//! stay in [`hypercurve::Region2`], [`hypercurve::Contour2`], and
+//! stay in [`hypercurve::CurveRegion2`], [`hypercurve::Contour2`], and
 //! [`hypercurve::CurveString2`]. Cases that require global trimming or
 //! component merging are kept visible at the native hypercurve boundary instead
 //! of being routed through a finite compatibility cache. That exact-object
@@ -29,13 +29,12 @@
 
 use crate::csg::CSG;
 use crate::errors::ProfileOffsetError;
-use crate::hyper_math::{Real, hreal_abs, hreal_sign, hreal_try_cmp};
+use crate::hyper_math::{Real, hreal_abs, hreal_try_cmp};
 use crate::sketch::Profile;
 use hypercurve::{
-    Classification, Contour2, CurvePolicy, CurveString2, FiniteRegionProfile2, OffsetCap,
-    Region2,
+    BezierFlatteningOptions, Classification, CurvePolicy, CurveRegion2, CurveString2,
+    FiniteRegionProfile2, OffsetCap,
 };
-use hyperreal::RealSign;
 
 impl Profile {
     fn preserve_offset_wires(&self, sketch: &mut Profile) {
@@ -59,7 +58,6 @@ impl Profile {
         matches!(hreal_try_cmp(&distance, 0.0), Some(std::cmp::Ordering::Equal)).then(|| {
             Profile::from_topology_with_origin(
                 self.region.clone(),
-                self.curve_region.clone(),
                 self.wires.clone(),
                 self.curve_wires.clone(),
                 self.origin.clone(),
@@ -72,7 +70,7 @@ impl Profile {
     ///
     /// Hypercurve owns open-profile offset/cap construction through
     /// [`CurveString2::offset_outline`], so wire-only offsets compose directly
-    /// into filled [`Region2`] topology. This is the native counterpart to the
+    /// into filled [`CurveRegion2`] topology. This is the native counterpart to the
     /// cap-and-join decomposition of Tiller and Hanson (1984).
     fn native_wire_outline_offset(&self, distance: Real, cap: OffsetCap) -> Option<Profile> {
         if !self.region.is_empty()
@@ -97,60 +95,51 @@ impl Profile {
             contours.push(contour);
         }
 
-        let region = match Region2::from_boundary_contours(contours.clone(), &policy).ok()? {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(_) => Region2::from_material_contours(contours),
-        };
-        Some(Profile::from_region_and_wires_with_origin(
+        let region =
+            match CurveRegion2::try_from_native_boundary_contours(contours.clone(), &policy)
+                .ok()?
+            {
+                Classification::Decided(region) => region,
+                Classification::Uncertain(_) => {
+                    CurveRegion2::try_from_native_material_contours(contours, &policy).ok()?
+                },
+            };
+        Some(Profile::from_topology_with_origin(
             region,
+            Vec::new(),
             Vec::new(),
             self.origin.clone(),
             self.origin_transform.clone(),
         ))
     }
 
-    /// Try a native hypercurve sharp offset.
-    ///
-    /// This covers the conservative contour-wise case where every material and
-    /// hole boundary can be offset independently and checked for self-contact by
-    /// hypercurve. Material contours move outward relative to the filled region;
-    /// hole contours move into the void for positive distances and away from it
-    /// for negative distances.
-    fn native_sharp_offset(&self, distance: Real) -> Option<Profile> {
-        if self.region.is_empty()
-            || self.curve_region.is_some()
-            || !self.wires.is_empty()
-            || !self.curve_wires.is_empty()
-            || !Self::region_has_nonzero_area(&self.region)
-        {
-            return None;
+    /// Ask the unified curve-region carrier to offset any certified native
+    /// line/arc image it owns, and retain the result as `CurveRegion2`.
+    fn native_curve_region_offset(
+        &self,
+        distance: Real,
+    ) -> Result<Option<Profile>, ProfileOffsetError> {
+        if self.region.is_empty() {
+            return Ok(None);
         }
+        debug_assert!(self.wires.is_empty() && self.curve_wires.is_empty());
 
-        let policy = CurvePolicy::certified();
-        let mut material = Vec::with_capacity(self.region.material_contours().len());
-        for contour in self.region.material_contours() {
-            material.push(native_role_offset_contour(
-                contour,
-                distance.clone(),
-                false,
-                &policy,
-            )?);
-        }
-
-        let mut holes = Vec::with_capacity(self.region.hole_contours().len());
-        for contour in self.region.hole_contours() {
-            holes.push(native_role_offset_contour(
-                contour,
-                distance.clone(),
-                true,
-                &policy,
-            )?);
-        }
-
-        let mut sketch = Profile::from_region(Region2::new(material, holes));
-        sketch.origin = self.origin.clone();
-        sketch.origin_transform = self.origin_transform.clone();
-        Some(sketch)
+        let offset = self.region.offset(distance, &CurvePolicy::certified())?;
+        let region = match offset {
+            Classification::Decided(region) => region,
+            Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported) => {
+                return Err(ProfileOffsetError::HigherOrderCurves);
+            },
+            Classification::Uncertain(reason) => {
+                return Err(ProfileOffsetError::Uncertain(reason));
+            },
+        };
+        Ok(Some(Profile::from_curve_topology_with_origin(
+            region,
+            Vec::new(),
+            self.origin.clone(),
+            self.origin_transform.clone(),
+        )))
     }
 
     /// Offset native Profile topology with sharp joins where hypercurve can
@@ -182,20 +171,79 @@ impl Profile {
         if self.is_empty() {
             return Ok(self.clone());
         }
-        if self.curve_region.is_some() || !self.curve_wires.is_empty() {
+        if !self.curve_wires.is_empty() {
             return Err(ProfileOffsetError::HigherOrderCurves);
+        }
+        if !self.region.is_empty() && !self.wires.is_empty() {
+            return Err(ProfileOffsetError::UnsupportedTopology {
+                join_style: "sharp-join",
+            });
+        }
+        if let Some(sketch) = self.native_curve_region_offset(distance.clone())? {
+            return Ok(sketch);
         }
         if let Some(sketch) =
             self.native_wire_outline_offset(distance.clone(), OffsetCap::Square)
         {
             return Ok(sketch);
         }
-        if let Some(sketch) = self.native_sharp_offset(distance) {
-            return Ok(sketch);
-        }
         Err(ProfileOffsetError::UnsupportedTopology {
             join_style: "sharp-join",
         })
+    }
+
+    /// Offset filled higher-order topology through certified exact-scalar segmentation.
+    ///
+    /// Native line/arc regions remain lossless. Other materialized curve
+    /// families are subdivided with the caller's explicit chord-error budget,
+    /// then offset by Hypercurve's exact line topology engine. No `f64`
+    /// coordinate conversion occurs, but the segmented source boundary is an
+    /// explicitly lossy approximation.
+    pub fn try_offset_with_certified_segmentation(
+        &self,
+        distance: Real,
+        options: &BezierFlatteningOptions,
+    ) -> Result<Profile, ProfileOffsetError> {
+        if let Some(sketch) = self.native_zero_offset(distance.clone()) {
+            return Ok(sketch);
+        }
+        if self.is_empty() {
+            return Ok(self.clone());
+        }
+        if !self.wires.is_empty() || !self.curve_wires.is_empty() {
+            return Err(ProfileOffsetError::UnsupportedTopology {
+                join_style: "certified-segmented",
+            });
+        }
+        let offset = self.region.offset_with_certified_segmentation(
+            distance,
+            options,
+            &CurvePolicy::certified(),
+        )?;
+        let result = match offset {
+            Classification::Decided(result) => result,
+            Classification::Uncertain(reason) => {
+                return Err(ProfileOffsetError::Uncertain(reason));
+            },
+        };
+        Ok(Profile::from_curve_topology_with_origin(
+            result.into_region(),
+            Vec::new(),
+            self.origin.clone(),
+            self.origin_transform.clone(),
+        ))
+    }
+
+    /// Panicking convenience wrapper for [`Self::try_offset_with_certified_segmentation`].
+    pub fn offset_with_certified_segmentation(
+        &self,
+        distance: Real,
+        options: &BezierFlatteningOptions,
+    ) -> Profile {
+        self.try_offset_with_certified_segmentation(distance, options)
+            .unwrap_or_else(|error| {
+                panic!("certified segmented profile offset failed: {error}")
+            })
     }
 
     /// Offset native Profile topology with rounded caps for wire-only input.
@@ -224,15 +272,20 @@ impl Profile {
         if self.is_empty() {
             return Ok(self.clone());
         }
-        if self.curve_region.is_some() || !self.curve_wires.is_empty() {
+        if !self.curve_wires.is_empty() {
             return Err(ProfileOffsetError::HigherOrderCurves);
+        }
+        if !self.region.is_empty() && !self.wires.is_empty() {
+            return Err(ProfileOffsetError::UnsupportedTopology {
+                join_style: "rounded-cap",
+            });
+        }
+        if let Some(sketch) = self.native_curve_region_offset(distance.clone())? {
+            return Ok(sketch);
         }
         if let Some(sketch) =
             self.native_wire_outline_offset(distance.clone(), OffsetCap::Round)
         {
-            return Ok(sketch);
-        }
-        if let Some(sketch) = self.native_sharp_offset(distance) {
             return Ok(sketch);
         }
         Err(ProfileOffsetError::UnsupportedTopology {
@@ -255,37 +308,15 @@ impl Profile {
             Vec::new()
         };
 
-        let mut sketch = Profile::from_region_and_wires_with_origin(
-            Region2::empty(),
+        let mut sketch = Profile::from_topology_with_origin(
+            CurveRegion2::empty(),
             wires,
+            Vec::new(),
             self.origin.clone(),
             self.origin_transform.clone(),
         );
         self.preserve_offset_wires(&mut sketch);
         sketch
-    }
-}
-
-fn native_role_offset_contour(
-    contour: &Contour2,
-    distance: Real,
-    is_hole: bool,
-    policy: &CurvePolicy,
-) -> Option<Contour2> {
-    let signed_area = contour.signed_area().ok()??;
-    let sign = hreal_sign(&signed_area)?;
-    if sign == RealSign::Zero {
-        return None;
-    }
-
-    let signed_distance = match (is_hole, sign) {
-        (false, RealSign::Positive) | (true, RealSign::Negative) => -distance,
-        (false, RealSign::Negative) | (true, RealSign::Positive) => distance,
-        (_, RealSign::Zero) => return None,
-    };
-    match contour.offset_left_checked(signed_distance, policy).ok()? {
-        Classification::Decided(offset) => Some(offset),
-        Classification::Uncertain(_) => None,
     }
 }
 

@@ -9,7 +9,7 @@ use crate::wasm::{
     vector_js::Vector3Js,
 };
 use crate::wasm::{real_from_js, real_from_js_or_zero, real_to_js};
-use hypercurve::{Contour2, CurveString2};
+use hypercurve::{Contour2, CurvePolicy, CurveRegion2, CurveString2};
 use hyperlattice::{Point3, Vector3};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use serde::{Deserialize, Serialize};
@@ -255,7 +255,8 @@ impl SketchJs {
     ///
     /// Input shape is `[{ material: [[x, y], ...], holes: [[[x, y], ...], ...] }]`.
     /// Each finite ring is immediately promoted to a `hypercurve::Contour2`, and
-    /// the Profile is backed by `hypercurve::Region2` rather than a GeoJSON cache.
+    /// the Profile is backed directly by `hypercurve::CurveRegion2` rather than
+    /// a GeoJSON cache or a second native-region owner.
     /// This keeps ordinary `f64` values at the wasm boundary while internal CAD
     /// topology is owned by hyper geometry, following Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
@@ -279,8 +280,13 @@ impl SketchJs {
                 holes.push(contour);
             }
         }
+        let region =
+            CurveRegion2::try_from_native_contours(material, holes, &CurvePolicy::certified())
+                .map_err(|error| {
+                    JsValue::from_str(&format!("Invalid region topology: {error}"))
+                })?;
         Ok(Self {
-            inner: Profile::from_region(hypercurve::Region2::new(material, holes)),
+            inner: Profile::from_curve_region(region),
         })
     }
 
