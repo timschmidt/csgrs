@@ -131,9 +131,13 @@ branches and the live signed radius of each circular support, so roots from the
 opposite cone sheet or beyond a radius collapse are not scheduled.
 `Contour2::straight_skeleton_splice_events` likewise predicts the exact first
 future incident-support tangency at every reflex vertex, retaining its source
-vertex, source-edge pair, event time, and point. Splice topology and the general
-multi-component concave arc-polygon event queue remain the next integration
-boundary.
+vertex, source-edge pair, event time, and point. Each accepted candidate now
+also passes the actual topology insertion: the old incident pair is replaced
+by two vertices around an expanding semicircular support whose signed radius is
+zero at the splice time. `StraightSkeletonSupportProvenance2`, `SpliceEvent`,
+and `GeneratedVertexBisector` retain the resulting non-source provenance.
+Scheduling subsequent events on the mutated cycle and the general
+multi-component concave arc-polygon queue remain the next integration boundary.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every

@@ -368,7 +368,8 @@ pub use straight_skeleton::{
     StraightSkeletonBlocker2, StraightSkeletonCurveFamilySupport2, StraightSkeletonImplicitConic2,
     StraightSkeletonLocalArcEvent2, StraightSkeletonLocalArcEventKind2, StraightSkeletonNode2,
     StraightSkeletonNodeKind2, StraightSkeletonReport2, StraightSkeletonSpliceEvent2,
-    StraightSkeletonStage2, StraightSkeletonTrajectoryGeometry2, StraightSkeletonTrajectoryKind2,
+    StraightSkeletonStage2, StraightSkeletonSupportProvenance2,
+    StraightSkeletonTrajectoryGeometry2, StraightSkeletonTrajectoryKind2,
     StraightSkeletonVertexTrajectory2,
 };
 #[cfg(feature = "svg")]

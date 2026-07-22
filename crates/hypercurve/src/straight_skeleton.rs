@@ -329,6 +329,12 @@ pub enum StraightSkeletonNodeKind2 {
     EdgeEvent { collapsed_source_edges: Vec<usize> },
     /// A shrinking circular edge closed into a detached full circle.
     BubbleEvent { source_edge: usize },
+    /// A reflex vertex was replaced by a generated expanding semicircle.
+    SpliceEvent {
+        source_vertex: usize,
+        left_source_edge: usize,
+        right_source_edge: usize,
+    },
     /// A reflex vertex contacted the live interior of a nonincident edge.
     SplitEvent {
         left_source_edge: usize,
@@ -339,6 +345,19 @@ pub enum StraightSkeletonNodeKind2 {
     VertexEvent {
         incident_source_edges: Vec<usize>,
         collapsed_source_edges: Vec<usize>,
+    },
+}
+
+/// Provenance of a source or event-generated wavefront support.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StraightSkeletonSupportProvenance2 {
+    /// Support translated from one authored contour edge.
+    SourceEdge { source_edge: usize },
+    /// Expanding semicircular support inserted by a splice event.
+    SpliceArc {
+        splice_node: usize,
+        left_source_edge: usize,
+        right_source_edge: usize,
     },
 }
 
@@ -374,6 +393,11 @@ pub enum StraightSkeletonArcKind2 {
     VertexBisector {
         left_source_edge: usize,
         right_source_edge: usize,
+    },
+    /// Trace of a vertex incident to at least one event-generated support.
+    GeneratedVertexBisector {
+        left: StraightSkeletonSupportProvenance2,
+        right: StraightSkeletonSupportProvenance2,
     },
     /// Terminal ridge left when a convex wavefront collapses to a segment.
     TerminalRidge,
@@ -557,6 +581,70 @@ enum ShapePreservingSupport2 {
         center: Point2,
         signed_radius: Real,
     },
+}
+
+#[derive(Clone, Debug)]
+struct ShapePreservingSupportRecord2 {
+    geometry: ShapePreservingSupport2,
+    provenance: StraightSkeletonSupportProvenance2,
+}
+
+#[derive(Clone, Debug)]
+struct ActiveShapePreservingCycle2 {
+    supports: Vec<usize>,
+    pair_start: BTreeMap<(usize, usize), usize>,
+}
+
+fn apply_splice_topology_transition(
+    support_records: &mut Vec<ShapePreservingSupportRecord2>,
+    active: &mut ActiveShapePreservingCycle2,
+    event: &StraightSkeletonSpliceEvent2,
+    event_node: usize,
+    orientation: RealSign,
+) -> Result<usize, StraightSkeletonBlocker2> {
+    let Some(right_position) = active
+        .supports
+        .iter()
+        .position(|support| *support == event.right_source_edge)
+    else {
+        return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
+    };
+    let left_position = (right_position + active.supports.len() - 1) % active.supports.len();
+    if active.supports[left_position] != event.left_source_edge
+        || !active
+            .pair_start
+            .contains_key(&(event.left_source_edge, event.right_source_edge))
+    {
+        return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
+    }
+    let orientation = match orientation {
+        RealSign::Positive => Real::one(),
+        RealSign::Negative => -Real::one(),
+        RealSign::Zero => unreachable!(),
+    };
+    let generated_support = support_records.len();
+    support_records.push(ShapePreservingSupportRecord2 {
+        geometry: ShapePreservingSupport2::Circle {
+            center: event.point.clone(),
+            signed_radius: &orientation * &event.time,
+        },
+        provenance: StraightSkeletonSupportProvenance2::SpliceArc {
+            splice_node: event_node,
+            left_source_edge: event.left_source_edge,
+            right_source_edge: event.right_source_edge,
+        },
+    });
+    active
+        .pair_start
+        .remove(&(event.left_source_edge, event.right_source_edge));
+    active
+        .pair_start
+        .insert((event.left_source_edge, generated_support), event_node);
+    active
+        .pair_start
+        .insert((generated_support, event.right_source_edge), event_node);
+    active.supports.insert(right_position, generated_support);
+    Ok(generated_support)
 }
 
 #[derive(Clone, Debug)]
@@ -803,6 +891,21 @@ impl Contour2 {
             .map(|segment| shape_preserving_support(segment, orientation))
             .collect::<CurveResult<Vec<_>>>()?;
         let count = supports.len();
+        let support_records = supports
+            .iter()
+            .cloned()
+            .enumerate()
+            .map(|(source_edge, geometry)| ShapePreservingSupportRecord2 {
+                geometry,
+                provenance: StraightSkeletonSupportProvenance2::SourceEdge { source_edge },
+            })
+            .collect::<Vec<_>>();
+        let active_template = ActiveShapePreservingCycle2 {
+            supports: (0..count).collect(),
+            pair_start: (0..count)
+                .map(|right| (((right + count - 1) % count, right), right))
+                .collect(),
+        };
         let mut events = Vec::new();
         for source_vertex in 0..count {
             let incoming =
@@ -836,13 +939,59 @@ impl Contour2 {
                 }
             };
             if let Some((time, point)) = tangencies.into_iter().next() {
-                events.push(StraightSkeletonSpliceEvent2 {
+                let event = StraightSkeletonSpliceEvent2 {
                     source_vertex,
                     left_source_edge,
                     right_source_edge,
                     time,
                     point,
-                });
+                };
+                let mut transitioned_records = support_records.clone();
+                let mut transitioned_cycle = active_template.clone();
+                let generated = match apply_splice_topology_transition(
+                    &mut transitioned_records,
+                    &mut transitioned_cycle,
+                    &event,
+                    count,
+                    orientation,
+                ) {
+                    Ok(generated) => generated,
+                    Err(_) => {
+                        return Ok(Classification::Uncertain(
+                            crate::UncertaintyReason::Predicate,
+                        ));
+                    }
+                };
+                let generated_record = &transitioned_records[generated];
+                let ShapePreservingSupport2::Circle {
+                    center,
+                    signed_radius,
+                } = &generated_record.geometry
+                else {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::Predicate,
+                    ));
+                };
+                let expected_provenance = StraightSkeletonSupportProvenance2::SpliceArc {
+                    splice_node: count,
+                    left_source_edge,
+                    right_source_edge,
+                };
+                let orientation_scalar = match orientation {
+                    RealSign::Positive => Real::one(),
+                    RealSign::Negative => -Real::one(),
+                    RealSign::Zero => unreachable!(),
+                };
+                let expected_radius = &orientation_scalar * event.time();
+                if center != event.point()
+                    || signed_radius != &expected_radius
+                    || generated_record.provenance != expected_provenance
+                {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::Predicate,
+                    ));
+                }
+                events.push(event);
             }
         }
         if !sort_splice_events(&mut events, policy) {
@@ -5801,6 +5950,65 @@ mod tests {
             panic!("branch validation must be decided");
         };
         assert!(events.is_empty());
+    }
+
+    #[test]
+    fn splice_topology_inserts_an_exact_expanding_semicircle_support() {
+        for orientation in [RealSign::Positive, RealSign::Negative] {
+            let mut records = (0..4)
+                .map(|source_edge| ShapePreservingSupportRecord2 {
+                    geometry: ShapePreservingSupport2::Line {
+                        normal_x: r(1),
+                        normal_y: r(0),
+                        constant: r(source_edge as i32),
+                    },
+                    provenance: StraightSkeletonSupportProvenance2::SourceEdge { source_edge },
+                })
+                .collect::<Vec<_>>();
+            let mut active = ActiveShapePreservingCycle2 {
+                supports: vec![0, 1, 2, 3],
+                pair_start: BTreeMap::from([((3, 0), 0), ((0, 1), 1), ((1, 2), 2), ((2, 3), 3)]),
+            };
+            let event = StraightSkeletonSpliceEvent2 {
+                source_vertex: 0,
+                left_source_edge: 3,
+                right_source_edge: 0,
+                time: r(2),
+                point: Point2::new(r(5), r(6)),
+            };
+            let generated =
+                apply_splice_topology_transition(&mut records, &mut active, &event, 4, orientation)
+                    .unwrap();
+            assert_eq!(generated, 4);
+            assert_eq!(active.supports, vec![4, 0, 1, 2, 3]);
+            assert!(!active.pair_start.contains_key(&(3, 0)));
+            assert_eq!(active.pair_start[&(3, 4)], 4);
+            assert_eq!(active.pair_start[&(4, 0)], 4);
+            assert_eq!(
+                records[generated].provenance,
+                StraightSkeletonSupportProvenance2::SpliceArc {
+                    splice_node: 4,
+                    left_source_edge: 3,
+                    right_source_edge: 0,
+                }
+            );
+            let ShapePreservingSupport2::Circle {
+                center,
+                signed_radius,
+            } = &records[generated].geometry
+            else {
+                panic!("splice support must be circular");
+            };
+            assert_eq!(center, event.point());
+            let orientation_scalar = if orientation == RealSign::Positive {
+                r(1)
+            } else {
+                r(-1)
+            };
+            assert_eq!(signed_radius - &orientation_scalar * event.time(), r(0));
+            let later_radius = signed_radius - &orientation_scalar * r(3);
+            assert_eq!(later_radius, -orientation_scalar);
+        }
     }
 
     #[test]
