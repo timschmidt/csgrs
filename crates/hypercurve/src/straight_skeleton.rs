@@ -3126,6 +3126,14 @@ fn advance_shape_preserving_cycle_to_next_edge_event(
 ) -> CurveResult<Result<ShapePreservingEdgeAdvance2, StraightSkeletonBlocker2>> {
     let mut candidates = Vec::new();
     for active_index in 0..active.supports.len() {
+        if matches!(
+            support_records[active.supports[active_index]].provenance,
+            StraightSkeletonSupportProvenance2::SpliceArc { .. }
+        ) {
+            // The inserted semicircle is born at radius zero and expands; it
+            // can terminate adjacent edges but is not itself a vanish edge.
+            continue;
+        }
         match shape_preserving_edge_event_candidate(
             active,
             support_records,
@@ -6487,6 +6495,54 @@ mod tests {
             panic!("branch validation must be decided");
         };
         assert!(events.is_empty());
+    }
+
+    #[test]
+    fn reflex_line_arc_fixture_has_an_exact_first_splice() {
+        let p = Point2::new(r(3), r(0));
+        let a = Point2::new(r(1), r(0));
+        let b = Point2::new(r(0), r(1));
+        let q = Point2::new(r(-4), r(0));
+        let lower_left = Point2::new(r(-4), r(-3));
+        let lower_right = Point2::new(r(3), r(-3));
+        let source = Contour2::try_new(vec![
+            Segment2::Line(LineSeg2::try_new(p.clone(), a.clone()).unwrap()),
+            Segment2::Arc(
+                CircularArc2::try_from_center(a, b.clone(), Point2::new(r(0), r(0)), false)
+                    .unwrap(),
+            ),
+            Segment2::Line(LineSeg2::try_new(b, q.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(q, lower_left.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(lower_left, lower_right.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(lower_right, p).unwrap()),
+        ])
+        .unwrap();
+        assert_eq!(
+            real_sign(
+                &source.signed_area().unwrap().unwrap(),
+                &CurvePolicy::certified()
+            ),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(
+            source.has_self_contacts(&CurvePolicy::certified()).unwrap(),
+            Classification::Decided(false)
+        );
+        let Classification::Decided(splices) = source
+            .straight_skeleton_splice_events(&CurvePolicy::certified())
+            .unwrap()
+        else {
+            panic!("splice fixture must be decided");
+        };
+        assert_eq!(splices.len(), 1, "{splices:?}");
+        assert_eq!(splices[0].source_vertex(), 1);
+        assert_eq!(splices[0].left_source_edge(), 0);
+        assert_eq!(splices[0].right_source_edge(), 1);
+        assert_eq!(splices[0].time(), &(r(1) / r(2)).unwrap());
+        assert_eq!(
+            splices[0].point(),
+            &Point2::new(r(0), -(r(1) / r(2)).unwrap())
+        );
     }
 
     #[test]
