@@ -118,8 +118,9 @@ unextended shape-preserving skeleton.
 Certified single-bubble contours now apply the local topology transition when
 the bubble removes the only circular edge, leaves a strictly convex line
 cycle, and no splice or nonincident carrier contact can precede it. Both
-incoming conic branches terminate at the bubble node, while the detached full
-circle remains represented in the event count and maximum wavefront time.
+incoming conic branches terminate at an explicit `BubbleEvent` node, while the
+detached full circle remains represented in the event count and maximum
+wavefront time.
 Other concave arc-polygon contacts, squeeze events, and splice propagation
 remain explicit `UnsupportedSegment` results until those transitions land.
 `Contour2::straight_skeleton_local_arc_events` nevertheless exposes the exact

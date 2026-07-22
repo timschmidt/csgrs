@@ -327,6 +327,8 @@ pub enum StraightSkeletonNodeKind2 {
     SourceVertex { source_vertex: usize },
     /// One or more source-edge collapse events at the same point and time.
     EdgeEvent { collapsed_source_edges: Vec<usize> },
+    /// A shrinking circular edge closed into a detached full circle.
+    BubbleEvent { source_edge: usize },
     /// A reflex vertex contacted the live interior of a nonincident edge.
     SplitEvent {
         left_source_edge: usize,
@@ -1402,7 +1404,7 @@ impl Contour2 {
             .iter()
             .map(|segment| segment.start().clone())
             .collect::<Vec<_>>();
-        let detached_circle_collapse = if reflex_vertices.is_empty() {
+        let bubble_reduction = if reflex_vertices.is_empty() {
             None
         } else {
             match certified_single_bubble_reduction(
@@ -1412,7 +1414,7 @@ impl Contour2 {
                 &reflex_vertices,
                 policy,
             )? {
-                Ok(Some(collapse)) => Some(collapse),
+                Ok(Some(reduction)) => Some(reduction),
                 Ok(None) => return Ok(None),
                 Err(blocker) => {
                     return Ok(Some(blocked_shape_preserving_report(
@@ -1431,7 +1433,32 @@ impl Contour2 {
         )?;
         Ok(Some(match result {
             Ok((mut skeleton, mut event_count, mut simultaneous_event_count)) => {
-                if let Some(collapse) = detached_circle_collapse {
+                if let Some(reduction) = bubble_reduction {
+                    let matching_nodes = skeleton
+                        .nodes
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(index, node)| {
+                            (node.point == reduction.point
+                                && node.time == reduction.time
+                                && node.kind
+                                    == (StraightSkeletonNodeKind2::EdgeEvent {
+                                        collapsed_source_edges: vec![reduction.source_edge],
+                                    }))
+                            .then_some(index)
+                        })
+                        .collect::<Vec<_>>();
+                    let [bubble_node] = matching_nodes.as_slice() else {
+                        return Ok(Some(blocked_shape_preserving_report(
+                            self.segments().len(),
+                            StraightSkeletonStage2::WavefrontPreparation,
+                            StraightSkeletonBlocker2::InvalidSplitTopology,
+                        )));
+                    };
+                    skeleton.nodes[*bubble_node].kind = StraightSkeletonNodeKind2::BubbleEvent {
+                        source_edge: reduction.source_edge,
+                    };
+                    let collapse = reduction.collapse_time;
                     let mut shares_active_event = false;
                     for node in skeleton.nodes.iter().filter(|node| {
                         !matches!(node.kind, StraightSkeletonNodeKind2::SourceVertex { .. })
@@ -1839,13 +1866,21 @@ fn blocked_shape_preserving_report(
     }
 }
 
+#[derive(Clone, Debug)]
+struct CertifiedBubbleReduction2 {
+    source_edge: usize,
+    time: Real,
+    point: Point2,
+    collapse_time: Real,
+}
+
 fn certified_single_bubble_reduction(
     contour: &Contour2,
     supports: &[ShapePreservingSupport2],
     orientation: RealSign,
     reflex_vertices: &[usize],
     policy: &CurvePolicy,
-) -> CurveResult<Result<Option<Real>, StraightSkeletonBlocker2>> {
+) -> CurveResult<Result<Option<CertifiedBubbleReduction2>, StraightSkeletonBlocker2>> {
     let arc_indices = contour
         .segments()
         .iter()
@@ -1983,7 +2018,12 @@ fn certified_single_bubble_reduction(
         RealSign::Negative => -Real::one(),
         RealSign::Zero => unreachable!(),
     };
-    Ok(Ok(Some((signed_radius / orientation)?)))
+    Ok(Ok(Some(CertifiedBubbleReduction2 {
+        source_edge: *arc_index,
+        time: bubble.time.clone(),
+        point: bubble.point.clone(),
+        collapse_time: (signed_radius / orientation)?,
+    })))
 }
 
 fn segment_start_tangent(segment: &Segment2) -> (Real, Real) {
@@ -5700,10 +5740,7 @@ mod tests {
             .nodes()
             .iter()
             .position(|node| {
-                node.kind()
-                    == &StraightSkeletonNodeKind2::EdgeEvent {
-                        collapsed_source_edges: vec![1],
-                    }
+                node.kind() == &StraightSkeletonNodeKind2::BubbleEvent { source_edge: 1 }
             })
             .expect("bubble must materialize its local edge event");
         assert_eq!(
@@ -5737,10 +5774,7 @@ mod tests {
             "{report:?}"
         );
         assert!(report.skeleton().unwrap().nodes().iter().any(|node| {
-            node.kind()
-                == &StraightSkeletonNodeKind2::EdgeEvent {
-                    collapsed_source_edges: vec![3],
-                }
+            node.kind() == &StraightSkeletonNodeKind2::BubbleEvent { source_edge: 3 }
         }));
     }
 
