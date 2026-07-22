@@ -2242,6 +2242,51 @@ impl Rational {
         .expect("known-dyadic product sum received a non-dyadic factor")
     }
 
+    pub(crate) fn quotient_known_dyadic(
+        numerator: &Self,
+        denominator: &Self,
+    ) -> Result<Self, crate::Problem> {
+        if denominator.sign == NoSign {
+            return Err(crate::Problem::DivideByZero);
+        }
+        if numerator.sign == NoSign {
+            return Ok(Self::zero());
+        }
+        let numerator_shift = numerator
+            .dyadic_denominator_shift()
+            .expect("known-dyadic numerator has a power-of-two denominator");
+        let denominator_shift = denominator
+            .dyadic_denominator_shift()
+            .expect("known-dyadic denominator has a power-of-two denominator");
+        let divisor = Self::gcd_magnitudes_with_mixed_width_fast_path(
+            &numerator.numerator,
+            &denominator.numerator,
+        );
+        trace_rational_gcd!(&numerator.numerator, &denominator.numerator, &divisor);
+        let (mut magnitude, mut scale) = if divisor.is_one() {
+            (numerator.numerator.clone(), denominator.numerator.clone())
+        } else {
+            (
+                &numerator.numerator / &divisor,
+                &denominator.numerator / &divisor,
+            )
+        };
+        if denominator_shift > numerator_shift {
+            magnitude <<= usize::try_from(denominator_shift - numerator_shift)
+                .expect("dyadic quotient shift fits usize");
+        } else if numerator_shift > denominator_shift {
+            scale <<= usize::try_from(numerator_shift - denominator_shift)
+                .expect("dyadic quotient shift fits usize");
+        }
+        crate::trace_dispatch!("rational", "div", "known-dyadic-cross-cancel");
+        trace_rational_temporary!();
+        Ok(Self::from_parts_raw(
+            numerator.sign * denominator.sign,
+            magnitude,
+            scale,
+        ))
+    }
+
     /// Evaluate a fixed-size signed sum of products exactly.
     ///
     /// This general entry point accepts any fixed product shape. Two products

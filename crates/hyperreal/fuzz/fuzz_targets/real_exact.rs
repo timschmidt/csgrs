@@ -21,6 +21,16 @@ impl RawRational {
     fn real(self) -> Real {
         Real::new(self.rational())
     }
+
+    fn dyadic_real(self) -> Real {
+        Real::new(
+            Rational::fraction(
+                i64::from(self.numerator),
+                1_u64 << u32::from(self.denominator % 16),
+            )
+            .expect("the generated dyadic denominator is positive"),
+        )
+    }
 }
 
 #[derive(Debug, Arbitrary)]
@@ -78,6 +88,30 @@ fuzz_target!(|input: Input| {
             quotient_im,
             (((b * c) - (a * &values[3])) / denominator).expect("nonzero exact imaginary quotient")
         );
+    }
+
+    let dyadic = input.values.map(RawRational::dyadic_real);
+    if !dyadic[3].definitely_zero() {
+        let parameter = (&dyadic[2] / &dyadic[3]).expect("nonzero dyadic quotient");
+        assert_eq!(
+            Real::exact_rational_quotient_known_dyadic(&dyadic[2], &dyadic[3])
+                .expect("nonzero known-dyadic quotient"),
+            parameter
+        );
+        let expected_point = [
+            Real::affine(&dyadic[0], &parameter, &dyadic[4]),
+            Real::affine(&dyadic[1], &parameter, &dyadic[5]),
+        ];
+        let (aggregate_parameter, point) =
+            Real::exact_rational_parameterized_point2_known_dyadic(
+                [&dyadic[0], &dyadic[1]],
+                [&dyadic[4], &dyadic[5]],
+                &dyadic[2],
+                &dyadic[3],
+            )
+            .expect("nonzero known-dyadic parameterized point");
+        assert_eq!(aggregate_parameter, parameter);
+        assert_eq!(point, expected_point);
     }
 
     let determinant =

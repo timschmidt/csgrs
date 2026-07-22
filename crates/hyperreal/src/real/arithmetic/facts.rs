@@ -252,6 +252,60 @@ impl Real {
         ))
     }
 
+    /// Construct an exact 2D point and its parameter from a dyadic quotient.
+    ///
+    /// Given `t = numerator / denominator`, this returns `t` and
+    /// `origin + t * delta`. The caller must have proved every input is an
+    /// exact dyadic rational. Keeping the two affine numerators in the scalar
+    /// layer avoids canonicalizing `t * delta` before adding the origin.
+    pub fn exact_rational_parameterized_point2_known_dyadic(
+        origin: [&Real; 2],
+        delta: [&Real; 2],
+        numerator: &Real,
+        denominator: &Real,
+    ) -> Result<(Real, [Real; 2]), crate::Problem> {
+        if denominator.has_zero_scale() {
+            return Err(crate::Problem::DivideByZero);
+        }
+        let numerator = &numerator.rational;
+        let denominator = &denominator.rational;
+        let coordinates = std::array::from_fn(|index| {
+            let affine_numerator = Rational::signed_product_sum_known_dyadic(
+                [true, true],
+                [
+                    [&origin[index].rational, denominator],
+                    [numerator, &delta[index].rational],
+                ],
+            );
+            Rational::quotient_known_dyadic(&affine_numerator, denominator).map(Real::new)
+        });
+        crate::trace_dispatch!(
+            "real",
+            "parameterized-point2",
+            "exact-dyadic-quotient"
+        );
+        let [x, y] = coordinates;
+        Ok((
+            Real::new(Rational::quotient_known_dyadic(
+                numerator,
+                denominator,
+            )?),
+            [x?, y?],
+        ))
+    }
+
+    /// Divide two exact dyadic rationals after the caller has classified them.
+    ///
+    /// Cross-cancellation happens before applying their power-of-two scales,
+    /// avoiding the expanded numerator and denominator built by general exact
+    /// rational division.
+    pub fn exact_rational_quotient_known_dyadic(
+        numerator: &Real,
+        denominator: &Real,
+    ) -> Result<Real, crate::Problem> {
+        Rational::quotient_known_dyadic(&numerator.rational, &denominator.rational).map(Real::new)
+    }
+
     /// Multiply exact-rational complex component pairs after the caller has
     /// proved all four factors exact.
     ///

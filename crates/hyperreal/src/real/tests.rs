@@ -2676,6 +2676,63 @@ mod tests {
     }
 
     #[test]
+    fn exact_dyadic_parameterized_point_matches_expanded_arithmetic() {
+        let q =
+            |numerator, denominator| Real::new(Rational::fraction(numerator, denominator).unwrap());
+        let origin = [q(3, 8), q(-5, 4)];
+        let delta = [q(7, 16), q(9, 8)];
+        let numerator = q(5, 32);
+        let denominator = q(11, 64);
+        let expected_parameter = (&numerator / &denominator).unwrap();
+        let expected_point = [
+            Real::affine(&origin[0], &expected_parameter, &delta[0]),
+            Real::affine(&origin[1], &expected_parameter, &delta[1]),
+        ];
+
+        let (parameter, point) = Real::exact_rational_parameterized_point2_known_dyadic(
+            [&origin[0], &origin[1]],
+            [&delta[0], &delta[1]],
+            &numerator,
+            &denominator,
+        )
+        .unwrap();
+        assert_eq!(parameter, expected_parameter);
+        assert_eq!(point, expected_point);
+        assert_eq!(
+            Real::exact_rational_parameterized_point2_known_dyadic(
+                [&origin[0], &origin[1]],
+                [&delta[0], &delta[1]],
+                &numerator,
+                &Real::zero(),
+            ),
+            Err(Problem::DivideByZero)
+        );
+    }
+
+    #[test]
+    fn exact_dyadic_quotient_matches_general_division_across_scales() {
+        for numerator in -12_i64..=12 {
+            for denominator in (-12_i64..=12).filter(|value| *value != 0) {
+                for numerator_shift in 0..=7 {
+                    for denominator_shift in 0..=7 {
+                        let numerator = Real::new(
+                            Rational::fraction(numerator, 1_u64 << numerator_shift).unwrap(),
+                        );
+                        let denominator = Real::new(
+                            Rational::fraction(denominator, 1_u64 << denominator_shift).unwrap(),
+                        );
+                        assert_eq!(
+                            Real::exact_rational_quotient_known_dyadic(&numerator, &denominator)
+                                .unwrap(),
+                            (&numerator / &denominator).unwrap()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn exact_rational_matrix3_inverse_uses_shared_exact_aggregate() {
         let q =
             |numerator, denominator| Real::new(Rational::fraction(numerator, denominator).unwrap());

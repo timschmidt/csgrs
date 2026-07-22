@@ -28,6 +28,8 @@ serde_json = { version = "1.0.149", optional = true }
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.7.0"
+# Competitive GMP/MPFR benchmarks and test oracles only. Hyperreal's release
+# graph and arithmetic implementation must remain independent of GMP.
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
 
 [[bin]]

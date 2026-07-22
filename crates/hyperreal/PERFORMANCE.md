@@ -1077,6 +1077,36 @@ The retained 128-bit crossover sentinel measures the selected native path at
 Euclidean reference. The wider 192-, 512-, 1,024-, and 4,096-bit sentinels remain
 separate, so a future word-tail change cannot hide behind a Lehmer improvement.
 
+### Certified dyadic quotients and parameterized points
+
+Callers that have already classified both operands as exact dyadics can now divide
+without first expanding their power-of-two denominators. The scalar kernel
+cross-cancels the two stored magnitudes, applies only the net binary shift, and
+constructs the canonical rational directly. The related 2D aggregate returns a
+parameter and `origin + parameter * delta` by forming two dyadic affine numerators
+before quotient construction. This removes the two canonical general-rational
+products and additions that a line intersection otherwise creates for its point.
+
+On small cached operands, the standalone exact quotient measured 82.02 ns versus
+58.74 ns for the benchmark's 128-bit MPFR approximation. The parameter-plus-point
+aggregate measured 366.75 ns versus 150.93 ns for MPFR. Those rows compare dispatch
+overhead, not identical semantics: Hyperreal returns canonical unbounded exact
+rationals, while the MPFR row rounds at 128 bits.
+
+GMP/MPFR remains a competitive benchmark and test-oracle dependency through the
+development-only `rug` entry. It is absent from Hyperreal's normal release graph;
+the retained quotient and aggregate are implemented entirely by Hyperreal's native
+rational and magnitude kernels.
+
+In downstream Hypercurve star64 intersection, the combined dyadic determinant,
+quotient, and point schedule reduced a twenty-operation Callgrind run from
+99,745,892 to 81,698,829 instructions (18.09%). Prepared-region DHAT allocation
+fell from 11,640,961 bytes in 100,732 blocks to 10,608,905 bytes in 83,760 blocks
+(8.87% fewer bytes and 16.85% fewer blocks); peak live heap fell 9.87%. The trace
+contains no expanded division-cross numerator or denominator events, and final
+rational reductions fell to 284. Exhaustive signed dyadic scales are compared with
+general division, and the `real_exact` fuzzer differentially checks both new APIs.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

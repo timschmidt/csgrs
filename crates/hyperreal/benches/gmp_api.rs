@@ -1422,6 +1422,67 @@ fn bench_real_collection_and_conversion_api(c: &mut Criterion) {
         b.iter(|| black_box(g_origin.clone() + g_t.clone() * &g_delta))
     });
 
+    let point_origin = [real(1.25), real(-2.5)];
+    let point_delta = [real(-3.5), real(4.25)];
+    let parameter_numerator = real(0.75);
+    let parameter_denominator = real(1.25);
+    let g_point_origin = [gmp(1.25), gmp(-2.5)];
+    let g_point_delta = [gmp(-3.5), gmp(4.25)];
+    let g_parameter_numerator = gmp(0.75);
+    let g_parameter_denominator = gmp(1.25);
+    group.bench_function(
+        BenchmarkId::new("hyperreal", "exact_rational_quotient_known_dyadic"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    Real::exact_rational_quotient_known_dyadic(
+                        &parameter_numerator,
+                        &parameter_denominator,
+                    )
+                    .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(
+        BenchmarkId::new("gmp_mpfr128", "exact_rational_quotient_known_dyadic"),
+        |b| b.iter(|| black_box(g_parameter_numerator.clone() / &g_parameter_denominator)),
+    );
+    group.bench_function(
+        BenchmarkId::new(
+            "hyperreal",
+            "exact_rational_parameterized_point2_known_dyadic",
+        ),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    Real::exact_rational_parameterized_point2_known_dyadic(
+                        [&point_origin[0], &point_origin[1]],
+                        [&point_delta[0], &point_delta[1]],
+                        &parameter_numerator,
+                        &parameter_denominator,
+                    )
+                    .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(
+        BenchmarkId::new(
+            "gmp_mpfr128",
+            "exact_rational_parameterized_point2_known_dyadic",
+        ),
+        |b| {
+            b.iter(|| {
+                let parameter = g_parameter_numerator.clone() / &g_parameter_denominator;
+                black_box([
+                    g_point_origin[0].clone() + &parameter * &g_point_delta[0],
+                    g_point_origin[1].clone() + parameter * &g_point_delta[1],
+                ])
+            })
+        },
+    );
+
     let value = real(0.75);
     let g_value = gmp(0.75);
     group.bench_function(BenchmarkId::new("hyperreal", "to_f64_lossy"), |b| {
