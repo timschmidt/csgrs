@@ -676,6 +676,35 @@ mod tests {
     }
 
     #[test]
+    fn known_dyadic_quotient_trace_distinguishes_word_and_wide_results() {
+        use crate::Rational;
+
+        let numerator = Rational::fraction(5, 32).unwrap();
+        let denominator = Rational::fraction(11, 64).unwrap();
+        let large_scale_denominator = Rational::from_bigint_fraction(
+            num::BigInt::from(3_u8),
+            num::BigUint::from(1_u8) << 200,
+        )
+        .unwrap();
+
+        reset();
+        with_recording(|| {
+            Rational::quotient_known_dyadic(&numerator, &denominator).unwrap();
+            Rational::quotient_known_dyadic(&Rational::one(), &large_scale_denominator).unwrap();
+        });
+
+        let snapshot = take_trace();
+        assert_eq!(
+            snapshot.path_count("rational", "div", "known-dyadic-word-cross-cancel"),
+            1
+        );
+        assert_eq!(
+            snapshot.path_count("rational", "div", "known-dyadic-cross-cancel"),
+            1
+        );
+    }
+
+    #[test]
     fn unified_trace_snapshot_groups_cross_stack_counts() {
         reset();
         with_recording(|| {

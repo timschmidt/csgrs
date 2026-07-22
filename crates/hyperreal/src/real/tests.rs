@@ -2730,6 +2730,29 @@ mod tests {
                 }
             }
         }
+
+        // Word-sized magnitudes can still need an arbitrary-precision result
+        // after applying the net dyadic scale. Keep that overflow on the
+        // general fallback, alongside inputs whose magnitude already exceeds
+        // the native reducer.
+        let large_scale_denominator = Real::new(
+            Rational::from_bigint_fraction(
+                num::BigInt::from(3_u8),
+                num::BigUint::from(1_u8) << 200,
+            )
+            .unwrap(),
+        );
+        let wide_numerator: Real = "680564733841876926926749214863536422913".parse().unwrap();
+        let three_eighths: Real = "3/8".parse().unwrap();
+        for (numerator, denominator) in [
+            (Real::one(), large_scale_denominator),
+            (wide_numerator, three_eighths),
+        ] {
+            assert_eq!(
+                Real::exact_rational_quotient_known_dyadic(&numerator, &denominator).unwrap(),
+                (&numerator / &denominator).unwrap()
+            );
+        }
     }
 
     #[test]

@@ -2298,6 +2298,19 @@ impl Rational {
         let denominator_shift = denominator
             .dyadic_denominator_shift()
             .expect("known-dyadic denominator has a power-of-two denominator");
+        if let (Some(numerator_word), Some(denominator_word), Ok(scale_shift)) = (
+            numerator.numerator.to_u128(),
+            denominator.numerator.to_u128(),
+            i32::try_from(i128::from(denominator_shift) - i128::from(numerator_shift)),
+        ) && let Some(result) = Self::from_scaled_dyadic_quotient_component(
+            numerator.sign * denominator.sign,
+            numerator_word,
+            denominator_word,
+            scale_shift,
+        ) {
+            crate::trace_dispatch!("rational", "div", "known-dyadic-word-cross-cancel");
+            return Ok(result);
+        }
         let divisor = Self::gcd_magnitudes_with_mixed_width_fast_path(
             &numerator.numerator,
             &denominator.numerator,

@@ -1107,6 +1107,25 @@ contains no expanded division-cross numerator or denominator events, and final
 rational reductions fell to 284. Exhaustive signed dyadic scales are compared with
 general division, and the `real_exact` fuzzer differentially checks both new APIs.
 
+### Native-word dyadic quotient results
+
+When both stored dyadic magnitudes fit `u128`, the certified quotient kernel now
+keeps cross-cancellation and the net power-of-two scale in native words. It enters
+the existing reduced-word result constructor only after the final numerator and
+denominator are known. A checked shift retains the arbitrary-precision path for a
+word-sized input whose scaled result no longer fits `u128`; an already-wide input
+takes the same fallback. Tests compare both routes with general exact division, and
+the dispatch trace locks one native and one wide-result selection.
+
+In the downstream twenty-operation Hypercurve star64 workload, stripped Callgrind
+fell from 75,700,486 to 74,297,181 instructions (1.85%). Prepared-region DHAT
+allocation fell from 83,735 to 81,575 blocks (2.58%); reads fell 1.39% and writes
+0.52%, while allocated bytes were effectively flat. A matched 31-sample,
+500-iteration run measured ordinary exact region output at 223.696 us/iter versus
+29.410 us for the fastest approximate competitor. Hyperreal implements the branch
+with its own `u128` and `BigUint` kernels; GMP/MPFR remains development-only
+benchmark/oracle tooling and is absent from the normal release graph.
+
 ### Small-quotient two-limb GCD steps
 
 The balanced `u128` Euclidean tail resolves quotients one through four with native
