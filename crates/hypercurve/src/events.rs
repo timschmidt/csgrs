@@ -503,17 +503,16 @@ fn intersect_contours_with_retained_line_candidates(
     }
     debug_assert_eq!(a_boxes.segments.len(), a.len());
     debug_assert_eq!(b_boxes.segments.len(), b.len());
+    let Some(b_order) = &b_boxes.min_x_order else {
+        return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
+            a, b, a_boxes, b_boxes, policy,
+        );
+    };
 
-    let mut b_order = (0..b.len()).collect::<Vec<_>>();
-    b_order.sort_unstable_by(|left, right| {
-        b_boxes.segments[*left]
-            .min_x
-            .total_cmp(&b_boxes.segments[*right].min_x)
-            .then_with(|| left.cmp(right))
-    });
     let mut candidates = Vec::new();
     for (a_segment_index, a_box) in a_boxes.segments.iter().copied().enumerate() {
-        for &b_segment_index in &b_order {
+        for &b_segment_index in b_order {
+            let b_segment_index = b_segment_index as usize;
             let b_box = b_boxes.segments[b_segment_index];
             if b_box.min_x > a_box.max_x {
                 break;

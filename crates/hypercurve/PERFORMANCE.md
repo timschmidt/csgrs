@@ -1574,6 +1574,24 @@ measured 222.742, 228.006, and 271.049 us/iter. `cavalier_contours`, `i_overlay`
 faster than the preceding median and remains 8.04 times slower than the fastest
 approximate competitor.
 
+The shared exact-dyadic contour-box cache now also retains its minimum-x segment
+order. Repeated Boolean calls previously allocated and sorted the identical index
+vector before every dense candidate scan. The cached order uses four-byte indices;
+contours beyond that representable range retain their exact boxes and take the
+unreserved exact fallback. Against the paired-filter checkpoint, the ordinary
+twenty-operation star64 Callgrind lane fell from 76,081,746 to 75,700,486
+instructions (0.50%). Prepared-region DHAT allocation fell from 9,608,905 bytes in
+83,760 blocks to 9,595,641 bytes in 83,735 blocks. Reads fell 1.94% and writes 1.17%;
+retaining the two fixture orders raised peak live heap by 560 bytes (0.07%).
+
+The corresponding 31-sample, 500-iteration run measured ordinary region, contour,
+and loop output at 227.693, 226.728, and 289.004 us/iter. Prepared variants measured
+224.163, 220.254, and 271.473 us/iter. `cavalier_contours`, `i_overlay`, and `geo`
+measured 28.230, 36.503, and 37.340 us/iter. The mixed wall-clock movement remains
+within the recent run-to-run range; the deterministic instruction and allocation
+reductions justify retaining the shared order. The ordinary exact path remains 8.07
+times slower than the fastest approximate competitor.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

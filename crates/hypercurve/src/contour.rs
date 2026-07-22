@@ -223,11 +223,14 @@ impl ExactF64Aabb {
     }
 }
 
-/// Transient certified bounds for an all-line contour.
+/// Shared certified bounds and sweep order for an all-line contour.
 #[derive(Debug)]
 pub(crate) struct ExactDyadicLineAabbs {
     pub(crate) contour: ExactF64Aabb,
     pub(crate) segments: Vec<ExactF64Aabb>,
+    /// Segment indices ordered by exact dyadic minimum x. Contours exceeding
+    /// the compact index range retain their bounds and use the exact fallback.
+    pub(crate) min_x_order: Option<Vec<u32>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -1969,7 +1972,21 @@ fn exact_dyadic_line_aabbs(segments: &[Segment2]) -> Option<ExactDyadicLineAabbs
         max_x: bounds.max_x.max(segment.max_x),
         max_y: bounds.max_y.max(segment.max_y),
     });
-    Some(ExactDyadicLineAabbs { contour, segments })
+    let min_x_order = u32::try_from(segments.len()).ok().map(|length| {
+        let mut order = (0..length).collect::<Vec<_>>();
+        order.sort_unstable_by(|left, right| {
+            segments[*left as usize]
+                .min_x
+                .total_cmp(&segments[*right as usize].min_x)
+                .then_with(|| left.cmp(right))
+        });
+        order
+    });
+    Some(ExactDyadicLineAabbs {
+        contour,
+        segments,
+        min_x_order,
+    })
 }
 
 fn line_signed_area_contribution(start: &Point2, end: &Point2) -> CurveResult<Real> {
@@ -2530,6 +2547,7 @@ mod tests {
         assert_eq!(bounds.contour.min_y, 0.0);
         assert_eq!(bounds.contour.max_x, 3.0);
         assert_eq!(bounds.contour.max_y, 4.0);
+        assert_eq!(bounds.min_x_order.as_deref(), Some(&[0, 2, 3, 1][..]));
         let clone = contour.clone();
         let replay = clone
             .exact_dyadic_line_aabbs(&CurvePolicy::certified())
