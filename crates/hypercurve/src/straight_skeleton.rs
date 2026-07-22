@@ -196,6 +196,13 @@ pub enum StraightSkeletonBlocker2 {
     MissingFutureEvent,
     /// An event failed to advance beyond the current wavefront time.
     NonAdvancingEvent,
+    /// A circular support reached zero radius before the next local vanish event.
+    CircularRadiusCollapseRequired { source_edge: usize },
+    /// Two curved supports survived and require a dedicated terminal transition.
+    CurvedTerminalPairRequired {
+        first_source_edge: usize,
+        second_source_edge: usize,
+    },
 }
 
 /// Kind and source evidence retained by one skeleton node.
@@ -531,7 +538,7 @@ impl Contour2 {
             if let Some(report) = self.two_edge_line_arc_straight_skeleton(policy)? {
                 return Ok(report);
             }
-            if let Some(report) = self.three_edge_convex_arc_straight_skeleton(policy)? {
+            if let Some(report) = self.convex_arc_straight_skeleton(policy)? {
                 return Ok(report);
             }
         }
@@ -954,11 +961,11 @@ impl Contour2 {
         }))
     }
 
-    fn three_edge_convex_arc_straight_skeleton(
+    fn convex_arc_straight_skeleton(
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Option<StraightSkeletonReport2>> {
-        if self.segments().len() != 3
+        if self.segments().len() < 3
             || !self
                 .segments()
                 .iter()
@@ -970,14 +977,14 @@ impl Contour2 {
             Classification::Decided(false) => {}
             Classification::Decided(true) => {
                 return Ok(Some(blocked_shape_preserving_report(
-                    3,
+                    self.segments().len(),
                     StraightSkeletonStage2::InputValidation,
                     StraightSkeletonBlocker2::SelfContact,
                 )));
             }
             Classification::Uncertain(_) => {
                 return Ok(Some(blocked_shape_preserving_report(
-                    3,
+                    self.segments().len(),
                     StraightSkeletonStage2::InputValidation,
                     StraightSkeletonBlocker2::UncertainSelfContact,
                 )));
@@ -985,7 +992,7 @@ impl Contour2 {
         }
         let Some(area) = self.signed_area()? else {
             return Ok(Some(blocked_shape_preserving_report(
-                3,
+                self.segments().len(),
                 StraightSkeletonStage2::InputValidation,
                 StraightSkeletonBlocker2::UnsupportedSignedArea,
             )));
@@ -995,21 +1002,24 @@ impl Contour2 {
             Some(RealSign::Negative) => RealSign::Negative,
             Some(RealSign::Zero) => {
                 return Ok(Some(blocked_shape_preserving_report(
-                    3,
+                    self.segments().len(),
                     StraightSkeletonStage2::InputValidation,
                     StraightSkeletonBlocker2::DegenerateSignedArea,
                 )));
             }
             None => {
                 return Ok(Some(blocked_shape_preserving_report(
-                    3,
+                    self.segments().len(),
                     StraightSkeletonStage2::InputValidation,
                     StraightSkeletonBlocker2::UncertainOrientation,
                 )));
             }
         };
-        for vertex_index in 0..3 {
-            let incoming = segment_end_tangent(&self.segments()[(vertex_index + 2) % 3]);
+        for vertex_index in 0..self.segments().len() {
+            let incoming = segment_end_tangent(
+                &self.segments()
+                    [(vertex_index + self.segments().len() - 1) % self.segments().len()],
+            );
             let outgoing = segment_start_tangent(&self.segments()[vertex_index]);
             let turn = &incoming.0 * &outgoing.1 - &incoming.1 * &outgoing.0;
             match real_sign(&turn, policy) {
@@ -1017,7 +1027,7 @@ impl Contour2 {
                 Some(_) => return Ok(None),
                 None => {
                     return Ok(Some(blocked_shape_preserving_report(
-                        3,
+                        self.segments().len(),
                         StraightSkeletonStage2::InputValidation,
                         StraightSkeletonBlocker2::UncertainVertexTurn { vertex_index },
                     )));
@@ -1040,72 +1050,40 @@ impl Contour2 {
             .iter()
             .map(|segment| shape_preserving_support(segment, orientation))
             .collect::<CurveResult<Vec<_>>>()?;
-        let (event_time, event_point) = match three_support_event(&supports, orientation, policy)? {
-            Ok(Some(event)) => event,
-            Ok(None) => return Ok(None),
-            Err(blocker) => {
-                return Ok(Some(blocked_shape_preserving_report(
-                    3,
-                    StraightSkeletonStage2::EventScheduling,
-                    blocker,
-                )));
-            }
-        };
-        let trajectories = match self.straight_skeleton_vertex_trajectories(policy)? {
-            Classification::Decided(trajectories) => trajectories,
-            Classification::Uncertain(_) => {
-                return Ok(Some(blocked_shape_preserving_report(
-                    3,
-                    StraightSkeletonStage2::WavefrontPreparation,
-                    StraightSkeletonBlocker2::UncertainWavefrontRelation,
-                )));
-            }
-        };
-        let mut nodes = self
+        let source_points = self
             .segments()
             .iter()
-            .enumerate()
-            .map(|(source_vertex, segment)| StraightSkeletonNode2 {
-                point: segment.start().clone(),
-                time: Real::zero(),
-                kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
-            })
+            .map(|segment| segment.start().clone())
             .collect::<Vec<_>>();
-        let event_node = nodes.len();
-        nodes.push(StraightSkeletonNode2 {
-            point: event_point,
-            time: event_time.clone(),
-            kind: StraightSkeletonNodeKind2::EdgeEvent {
-                collapsed_source_edges: vec![0, 1, 2],
+        let result = build_convex_shape_preserving_straight_skeleton(
+            &supports,
+            &source_points,
+            orientation,
+            policy,
+        )?;
+        Ok(Some(match result {
+            Ok((skeleton, event_count, simultaneous_event_count)) => StraightSkeletonReport2 {
+                stage: StraightSkeletonStage2::Complete,
+                source_edge_count: self.segments().len(),
+                event_count,
+                simultaneous_event_count,
+                split_event_count: 0,
+                vertex_event_count: 0,
+                skeleton: Some(skeleton),
+                blocker: None,
             },
-        });
-        let arcs = trajectories
-            .into_iter()
-            .enumerate()
-            .map(|(source_vertex, trajectory)| StraightSkeletonArc2 {
-                start_node: source_vertex,
-                end_node: event_node,
-                kind: StraightSkeletonArcKind2::VertexBisector {
-                    left_source_edge: trajectory.left_source_edge,
-                    right_source_edge: trajectory.right_source_edge,
-                },
-                geometry: arc_geometry_from_trajectory(trajectory),
-            })
-            .collect();
-        Ok(Some(StraightSkeletonReport2 {
-            stage: StraightSkeletonStage2::Complete,
-            source_edge_count: 3,
-            event_count: 1,
-            simultaneous_event_count: 1,
-            split_event_count: 0,
-            vertex_event_count: 0,
-            skeleton: Some(StraightSkeleton2 {
-                nodes,
-                arcs,
-                source_edge_count: 3,
-                maximum_time: event_time,
-            }),
-            blocker: None,
+            Err((stage, blocker, event_count, simultaneous_event_count)) => {
+                StraightSkeletonReport2 {
+                    stage,
+                    source_edge_count: self.segments().len(),
+                    event_count,
+                    simultaneous_event_count,
+                    split_event_count: 0,
+                    vertex_event_count: 0,
+                    skeleton: None,
+                    blocker: Some(blocker),
+                }
+            }
         }))
     }
 }
@@ -1150,9 +1128,350 @@ fn arc_tangent(point: &Point2, center: &Point2, clockwise: bool) -> (Real, Real)
     }
 }
 
+fn build_convex_shape_preserving_straight_skeleton(
+    supports: &[ShapePreservingSupport2],
+    source_points: &[Point2],
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(StraightSkeleton2, usize, usize), SkeletonBuildBlock>> {
+    let source_edge_count = supports.len();
+    let mut nodes = source_points
+        .iter()
+        .enumerate()
+        .map(|(source_vertex, point)| StraightSkeletonNode2 {
+            point: point.clone(),
+            time: Real::zero(),
+            kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+        })
+        .collect::<Vec<_>>();
+    let mut arcs = Vec::new();
+    let mut active = (0..source_edge_count).collect::<Vec<_>>();
+    let mut pair_start = BTreeMap::new();
+    for index in 0..source_edge_count {
+        pair_start.insert(
+            (
+                active[(index + source_edge_count - 1) % source_edge_count],
+                active[index],
+            ),
+            index,
+        );
+    }
+    let mut current_time = Real::zero();
+    let mut event_count = 0usize;
+    let mut simultaneous_event_count = 0usize;
+    while active.len() >= 3 {
+        let mut candidates = Vec::new();
+        if active.len() == 3 {
+            let triple = active
+                .iter()
+                .map(|index| supports[*index].clone())
+                .collect::<Vec<_>>();
+            let event = match three_support_event(&triple, orientation, &current_time, policy)? {
+                Ok(Some(event)) => event,
+                Ok(None) => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::EventScheduling,
+                        StraightSkeletonBlocker2::MissingFutureEvent,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+                Err(blocker) => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::EventScheduling,
+                        blocker,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+            };
+            for active_index in 0..3 {
+                candidates.push(EdgeEventCandidate2 {
+                    active_index,
+                    time: event.0.clone(),
+                    point: event.1.clone(),
+                });
+            }
+        } else {
+            for active_index in 0..active.len() {
+                let previous = active[(active_index + active.len() - 1) % active.len()];
+                let current = active[active_index];
+                let next = active[(active_index + 1) % active.len()];
+                let triple = vec![
+                    supports[previous].clone(),
+                    supports[current].clone(),
+                    supports[next].clone(),
+                ];
+                match three_support_event(&triple, orientation, &current_time, policy)? {
+                    Ok(Some((time, point))) => candidates.push(EdgeEventCandidate2 {
+                        active_index,
+                        time,
+                        point,
+                    }),
+                    Ok(None) => {}
+                    Err(blocker) => {
+                        return Ok(Err((
+                            StraightSkeletonStage2::EventScheduling,
+                            blocker,
+                            event_count,
+                            simultaneous_event_count,
+                        )));
+                    }
+                }
+            }
+        }
+        let Some(mut minimum_time) = candidates.first().map(|candidate| candidate.time.clone())
+        else {
+            return Ok(Err((
+                StraightSkeletonStage2::EventScheduling,
+                StraightSkeletonBlocker2::MissingFutureEvent,
+                event_count,
+                simultaneous_event_count,
+            )));
+        };
+        for candidate in candidates.iter().skip(1) {
+            match compare_reals(&candidate.time, &minimum_time, policy) {
+                Some(Ordering::Less) => minimum_time = candidate.time.clone(),
+                Some(Ordering::Equal | Ordering::Greater) => {}
+                None => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::EventScheduling,
+                        StraightSkeletonBlocker2::UncertainEventOrdering,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+            }
+        }
+        for source_edge in active.iter().copied() {
+            let ShapePreservingSupport2::Circle { signed_radius, .. } = &supports[source_edge]
+            else {
+                continue;
+            };
+            let orientation_scalar = match orientation {
+                RealSign::Positive => Real::one(),
+                RealSign::Negative => -Real::one(),
+                RealSign::Zero => unreachable!(),
+            };
+            let collapse_time = (signed_radius / orientation_scalar)?;
+            match (
+                compare_reals(&collapse_time, &current_time, policy),
+                compare_reals(&collapse_time, &minimum_time, policy),
+            ) {
+                (Some(Ordering::Greater), Some(Ordering::Less | Ordering::Equal)) => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::EventScheduling,
+                        StraightSkeletonBlocker2::CircularRadiusCollapseRequired { source_edge },
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+                (Some(_), Some(_)) => {}
+                _ => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::EventScheduling,
+                        StraightSkeletonBlocker2::UncertainEventOrdering,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+            }
+        }
+        let mut collapsing = Vec::new();
+        for candidate in candidates {
+            match compare_reals(&candidate.time, &minimum_time, policy) {
+                Some(Ordering::Equal) => collapsing.push(candidate),
+                Some(Ordering::Less | Ordering::Greater) => {}
+                None => {
+                    return Ok(Err((
+                        StraightSkeletonStage2::EventScheduling,
+                        StraightSkeletonBlocker2::UncertainEventOrdering,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+            }
+        }
+        if collapsing.len() > 1 {
+            simultaneous_event_count += 1;
+        }
+        event_count += 1;
+        let old_pair_start = pair_start.clone();
+        let mut removed = BTreeSet::new();
+        let mut event_nodes = Vec::new();
+        let mut event_node_by_support = BTreeMap::new();
+        for candidate in &collapsing {
+            let index = candidate.active_index;
+            let previous = active[(index + active.len() - 1) % active.len()];
+            let collapsed = active[index];
+            let next = active[(index + 1) % active.len()];
+            removed.insert(collapsed);
+            let node = event_node(
+                &mut nodes,
+                &mut event_nodes,
+                candidate.point.clone(),
+                minimum_time.clone(),
+                collapsed,
+            );
+            event_node_by_support.insert(collapsed, node);
+            for pair in [(previous, collapsed), (collapsed, next)] {
+                let Some(start_node) = old_pair_start.get(&pair).copied() else {
+                    continue;
+                };
+                if let Err(blocker) = add_shape_preserving_arc(
+                    &mut arcs,
+                    &nodes,
+                    start_node,
+                    node,
+                    pair,
+                    supports,
+                    orientation,
+                    policy,
+                )? {
+                    return Ok(Err((
+                        StraightSkeletonStage2::WavefrontPreparation,
+                        blocker,
+                        event_count,
+                        simultaneous_event_count,
+                    )));
+                }
+            }
+        }
+        let next_active = active
+            .iter()
+            .copied()
+            .filter(|support| !removed.contains(support))
+            .collect::<Vec<_>>();
+        current_time = minimum_time;
+        if next_active.len() <= 1 {
+            active = next_active;
+            break;
+        }
+        if next_active.len() == 2 {
+            return Ok(Err((
+                StraightSkeletonStage2::EventScheduling,
+                StraightSkeletonBlocker2::CurvedTerminalPairRequired {
+                    first_source_edge: next_active[0],
+                    second_source_edge: next_active[1],
+                },
+                event_count,
+                simultaneous_event_count,
+            )));
+        }
+        let mut next_pair_start = BTreeMap::new();
+        for index in 0..next_active.len() {
+            let pair = (
+                next_active[(index + next_active.len() - 1) % next_active.len()],
+                next_active[index],
+            );
+            if let Some(node) = old_pair_start.get(&pair).copied() {
+                next_pair_start.insert(pair, node);
+                continue;
+            }
+            let previous_position = active
+                .iter()
+                .position(|support| *support == pair.0)
+                .expect("surviving support belongs to prior cycle");
+            let mut cursor = (previous_position + 1) % active.len();
+            let mut bridge_node = None;
+            while active[cursor] != pair.1 {
+                if let Some(node) = event_node_by_support.get(&active[cursor]).copied() {
+                    match bridge_node {
+                        Some(existing) if existing != node => {
+                            return Ok(Err((
+                                StraightSkeletonStage2::EventScheduling,
+                                StraightSkeletonBlocker2::DegenerateSimultaneousEvents,
+                                event_count,
+                                simultaneous_event_count,
+                            )));
+                        }
+                        Some(_) => {}
+                        None => bridge_node = Some(node),
+                    }
+                }
+                cursor = (cursor + 1) % active.len();
+            }
+            let Some(node) = bridge_node else {
+                return Ok(Err((
+                    StraightSkeletonStage2::EventScheduling,
+                    StraightSkeletonBlocker2::UncertainWavefrontRelation,
+                    event_count,
+                    simultaneous_event_count,
+                )));
+            };
+            next_pair_start.insert(pair, node);
+        }
+        active = next_active;
+        pair_start = next_pair_start;
+    }
+    let _ = active;
+    Ok(Ok((
+        StraightSkeleton2 {
+            nodes,
+            arcs,
+            source_edge_count,
+            maximum_time: current_time,
+        },
+        event_count,
+        simultaneous_event_count,
+    )))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn add_shape_preserving_arc(
+    arcs: &mut Vec<StraightSkeletonArc2>,
+    nodes: &[StraightSkeletonNode2],
+    start_node: usize,
+    end_node: usize,
+    pair: (usize, usize),
+    supports: &[ShapePreservingSupport2],
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
+    if start_node == end_node
+        || arcs.iter().any(|arc| {
+            ((arc.start_node == start_node && arc.end_node == end_node)
+                || (arc.start_node == end_node && arc.end_node == start_node))
+                && arc.kind
+                    == (StraightSkeletonArcKind2::VertexBisector {
+                        left_source_edge: pair.0,
+                        right_source_edge: pair.1,
+                    })
+        })
+    {
+        return Ok(Ok(()));
+    }
+    let trajectory = match shape_preserving_vertex_trajectory(
+        start_node,
+        pair.0,
+        pair.1,
+        nodes[start_node].point.clone(),
+        &supports[pair.0],
+        &supports[pair.1],
+        orientation,
+        policy,
+    )? {
+        Classification::Decided(trajectory) => trajectory,
+        Classification::Uncertain(_) => {
+            return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+        }
+    };
+    arcs.push(StraightSkeletonArc2 {
+        start_node,
+        end_node,
+        kind: StraightSkeletonArcKind2::VertexBisector {
+            left_source_edge: pair.0,
+            right_source_edge: pair.1,
+        },
+        geometry: arc_geometry_from_trajectory(trajectory),
+    });
+    Ok(Ok(()))
+}
+
 fn three_support_event(
     supports: &[ShapePreservingSupport2],
     orientation: RealSign,
+    current_time: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Result<Option<(Real, Point2)>, StraightSkeletonBlocker2>> {
     debug_assert_eq!(supports.len(), 3);
@@ -1218,6 +1537,29 @@ fn three_support_event(
     let velocity_y = ((-&first.x * &second.time) + (&first.time * &second.x)) / determinant;
     let (origin_x, velocity_x, origin_y, velocity_y) =
         (origin_x?, velocity_x?, origin_y?, velocity_y?);
+    if circles.is_empty() {
+        let third = &lines[2];
+        let coefficient = &third.x * &velocity_x + &third.y * &velocity_y + &third.time;
+        let numerator = &third.constant - &third.x * &origin_x - &third.y * &origin_y;
+        let time = match real_sign(&coefficient, policy) {
+            Some(RealSign::Positive | RealSign::Negative) => (numerator / coefficient)?,
+            Some(RealSign::Zero) => {
+                return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
+            }
+            None => return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)),
+        };
+        return Ok(match compare_reals(&time, current_time, policy) {
+            Some(Ordering::Greater) => Ok(Some((
+                time.clone(),
+                Point2::new(
+                    &origin_x + &velocity_x * &time,
+                    &origin_y + &velocity_y * time,
+                ),
+            ))),
+            Some(Ordering::Equal | Ordering::Less) => Ok(None),
+            None => Err(StraightSkeletonBlocker2::UncertainEventOrdering),
+        });
+    }
     let (circle_center, circle_radius) = circles[0];
     let offset_x = &origin_x - circle_center.x();
     let offset_y = &origin_y - circle_center.y();
@@ -1231,26 +1573,10 @@ fn three_support_event(
     };
     let mut future = Vec::new();
     for time in candidates {
-        match real_sign(&time, policy) {
-            Some(RealSign::Positive) => {}
-            Some(RealSign::Negative | RealSign::Zero) => continue,
+        match compare_reals(&time, current_time, policy) {
+            Some(Ordering::Greater) => future.push(time),
+            Some(Ordering::Equal | Ordering::Less) => {}
             None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
-        }
-        let mut before_radius_collapse = true;
-        for &(_, signed_radius) in &circles {
-            let collapse = (signed_radius / &orientation)?;
-            if real_sign(&collapse, policy) == Some(RealSign::Positive) {
-                match compare_reals(&time, &collapse, policy) {
-                    Some(Ordering::Less) => {}
-                    Some(Ordering::Equal | Ordering::Greater) => before_radius_collapse = false,
-                    None => {
-                        return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering));
-                    }
-                }
-            }
-        }
-        if before_radius_collapse {
-            future.push(time);
         }
     }
     let Some(mut time) = future.pop() else {
@@ -3648,6 +3974,58 @@ mod tests {
     }
 
     #[test]
+    fn convex_mixed_wavefront_processes_successive_native_vanish_events() {
+        for clockwise in [false, true] {
+            let right = Point2::new(r(2), r(0));
+            let top = Point2::new(r(0), r(2));
+            let left = Point2::new(r(-1), r(0));
+            let bottom = Point2::new(r(0), r(-1));
+            let points = if clockwise {
+                vec![top.clone(), right.clone(), bottom, left, top.clone()]
+            } else {
+                vec![right.clone(), top.clone(), left, bottom, right.clone()]
+            };
+            let mut segments = vec![Segment2::Arc(
+                CircularArc2::try_from_center(
+                    points[0].clone(),
+                    points[1].clone(),
+                    Point2::new(r(0), r(0)),
+                    clockwise,
+                )
+                .unwrap(),
+            )];
+            segments.extend((1..4).map(|index| {
+                Segment2::Line(
+                    LineSeg2::try_new(points[index].clone(), points[index + 1].clone()).unwrap(),
+                )
+            }));
+            let source = Contour2::try_new(segments).unwrap();
+            let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            assert_eq!(
+                report.stage(),
+                StraightSkeletonStage2::Complete,
+                "{report:?}"
+            );
+            assert_eq!(report.event_count(), 2);
+            let skeleton = report.skeleton().unwrap();
+            assert_eq!(skeleton.source_edge_count(), 4);
+            assert_eq!(skeleton.nodes().len(), 6);
+            assert_eq!(skeleton.arcs().len(), 5);
+            assert!(
+                skeleton
+                    .arcs()
+                    .iter()
+                    .filter(|arc| matches!(
+                        arc.geometry(),
+                        StraightSkeletonArcGeometry2::ConicBranch { .. }
+                    ))
+                    .count()
+                    >= 2
+            );
+        }
+    }
+
+    #[test]
     fn cocircular_smooth_contour_has_exact_empty_shape_preserving_skeleton() {
         for clockwise in [false, true] {
             let right = Point2::new(r(1), r(0));
@@ -3797,7 +4175,7 @@ mod tests {
             vec![first_circle, second_circle, third_circle],
         ] {
             let Ok(Some((time, point))) =
-                three_support_event(&supports, RealSign::Positive, &policy).unwrap()
+                three_support_event(&supports, RealSign::Positive, &Real::zero(), &policy).unwrap()
             else {
                 panic!("support triple must have one certified future event");
             };

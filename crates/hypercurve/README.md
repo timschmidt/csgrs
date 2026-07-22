@@ -106,11 +106,13 @@ remain typed blockers; they are never substituted with centroid rays.
 linear, elliptic, hyperbolic, and parabolic paths for every line/arc vertex from
 the circular-support cone model. Two-edge circular segments (one arc and its
 chord) now schedule their exact terminal tangency and retain both finite
-parabolic branches in the graph. Strictly convex three-edge line/arc contours
-schedule their native three-support vanish event by solving the exact quadratic
-cone section; line/line/circle, line/circle/circle, and three-circle support
-triples share that solver. Smooth co-circular contours also complete with their
-exact collapse time and an empty unextended shape-preserving skeleton.
+parabolic branches in the graph. Generic-position strictly convex line/arc
+contours schedule successive native three-support vanish events by solving exact
+quadratic cone sections; line/line/line, line/line/circle,
+line/circle/circle, and three-circle support triples share that event queue.
+Premature circular-radius and unresolved curved terminal-pair transitions are
+typed blockers. Smooth co-circular contours also complete with their exact
+collapse time and an empty unextended shape-preserving skeleton.
 General arc-polygon vanish, contact, bubble, squeeze, and splice propagation
 remains an explicit `UnsupportedSegment` result until those event transitions land.
 
