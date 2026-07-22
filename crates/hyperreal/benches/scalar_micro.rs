@@ -570,6 +570,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Exercises the backend's zero-quotient magnitude division exit on wide operands.",
             },
             BenchDoc {
+                name: "gcd_selected_128_bits",
+                description: "Runs selected magnitude GCD on an ascending balanced two-limb pair.",
+            },
+            BenchDoc {
+                name: "gcd_euclidean_128_bits",
+                description: "Runs the full-width Euclidean baseline on the same 128-bit pair.",
+            },
+            BenchDoc {
                 name: "gcd_selected_192_bits",
                 description: "Runs selected magnitude GCD at the retained three-limb Lehmer crossover.",
             },
@@ -1798,6 +1806,7 @@ fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
     });
 
     for (bits, selected_name, euclidean_name) in [
+        (128, "gcd_selected_128_bits", "gcd_euclidean_128_bits"),
         (192, "gcd_selected_192_bits", "gcd_euclidean_192_bits"),
         (512, "gcd_selected_512_bits", "gcd_euclidean_512_bits"),
         (1024, "gcd_selected_1024_bits", "gcd_euclidean_1024_bits"),
@@ -1805,6 +1814,11 @@ fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
     ] {
         let left = benchmark_magnitude(bits, 0x243f_6a88_85a3_08d3);
         let right = benchmark_magnitude(bits, 0xa409_3822_299f_31d0);
+        let (left, right) = if bits == 128 && left > right {
+            (right, left)
+        } else {
+            (left, right)
+        };
         assert_eq!(
             Rational::gcd_magnitudes(&left, &right),
             euclidean_magnitude_gcd(&left, &right)

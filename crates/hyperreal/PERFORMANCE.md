@@ -1050,6 +1050,33 @@ to 18.756 us. Explicit-rational controls remained 2.860/3.248 us for mat3 and
 7.432/7.456 us for mat4. The mixed-denominator six-term scalar control improved
 from 476.94 ns to 459.67 ns after removing the exploratory generic probe.
 
+### GCD operand trace and ordered two-limb tail
+
+`RationalTraceStats` now groups exact GCD operands into both-`u64`, mixed
+`u64`/`u128`, both-`u128`, and arbitrary-precision buckets. This preserves the
+existing aggregate and peak-bit counters while making cross-crate traces useful
+for choosing a native or wide algorithm from measured operand distributions.
+Hypercurve's exact star64 Boolean reports 465 GCDs: 80 mixed native-width, 80
+balanced two-limb, and 305 arbitrary-precision calls, with a 359-bit peak.
+
+The balanced `u128` Euclidean tail now orders its odd inputs before taking the
+first remainder. Previously an ascending pair paid for a compiler-runtime
+`u128` remainder whose result was necessarily the smaller input, only to swap on
+the next iteration. The change removes that call and leaves the tuned remainder-
+to-`u64` plus binary-GCD schedule and canonical result unchanged. In the same
+downstream twenty-operation Callgrind workload, the complete exact Boolean path
+fell from 102,991,860 to 99,745,892 instructions after this scalar fix, certified
+dyadic determinant dispatch, and retained broad-phase boxes. A randomized 20,000-
+pair word-GCD oracle, the complete 542-test all-feature suite, the 471-test
+no-default suite, GMP API coverage, and all downstream crate suites passed. A
+1,000-run nightly AddressSanitizer rational-arithmetic campaign reached 1,735
+coverage points and 4,317 feature edges without failure.
+
+The retained 128-bit crossover sentinel measures the selected native path at
+458.54 ns versus 5.333 us for the otherwise identical allocation-heavy BigUint
+Euclidean reference. The wider 192-, 512-, 1,024-, and 4,096-bit sentinels remain
+separate, so a future word-tail change cannot hide behind a Lehmer improvement.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

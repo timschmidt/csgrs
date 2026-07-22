@@ -347,6 +347,8 @@ Cold backend algorithm families and retained rational fact dispatch selected fro
 | `rational_algorithm_dispatch_speed/reduce_backend_large_knuth_cold` | 105.608 us | 105.035 us - 106.261 us | Reduces a fresh 129-limb numerator by a 65-limb exact divisor through normalized Knuth division. |
 | `rational_algorithm_dispatch_speed/exact_remainder_large_knuth` | 5.156 us | 5.124 us - 5.195 us | Computes a wide rational fractional remainder through the traced normalized Knuth backend. |
 | `rational_algorithm_dispatch_speed/division_trivial_small_quotient` | 60.58 ns | 59.92 ns - 61.28 ns | Exercises the backend's zero-quotient magnitude division exit on wide operands. |
+| `rational_algorithm_dispatch_speed/gcd_selected_128_bits` | 458.71 ns | 458.05 ns - 459.41 ns | Runs selected magnitude GCD on an ascending balanced two-limb pair. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_128_bits` | 5.333 us | 5.291 us - 5.381 us | Runs the full-width Euclidean baseline on the same 128-bit pair. |
 | `rational_algorithm_dispatch_speed/gcd_selected_192_bits` | 5.209 us | 5.196 us - 5.224 us | Runs selected magnitude GCD at the retained three-limb Lehmer crossover. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_192_bits` | 8.229 us | 8.195 us - 8.268 us | Runs the full-width Euclidean baseline on the same 192-bit pair. |
 | `rational_algorithm_dispatch_speed/gcd_selected_512_bits` | 11.237 us | 11.201 us - 11.281 us | Runs selected magnitude GCD above the Lehmer crossover. |

@@ -352,6 +352,9 @@ impl Rational {
         let common_shift = left.trailing_zeros().min(right.trailing_zeros());
         let mut left = left >> common_shift;
         let mut right = right >> common_shift;
+        if left < right {
+            core::mem::swap(&mut left, &mut right);
+        }
         while right > u128::from(u64::MAX) {
             let remainder = left % right;
             left = right;

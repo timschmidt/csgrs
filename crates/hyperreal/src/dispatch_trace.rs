@@ -398,12 +398,27 @@ pub struct CommonFactorBuckets {
     pub large: u64,
 }
 
+/// Operand-width distribution for exact rational GCD calls.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct GcdOperandWidthBuckets {
+    /// Both operands fit in 64 bits.
+    pub both_u64: u64,
+    /// Exactly one operand needs 65 through 128 bits.
+    pub mixed_u64_u128: u64,
+    /// Both operands need 65 through 128 bits.
+    pub both_u128: u64,
+    /// At least one operand exceeds 128 bits.
+    pub arbitrary_precision: u64,
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct RationalTraceStats {
     pub temporary_rationals: u64,
     pub reductions: u64,
     pub gcds: u64,
     pub common_factors: CommonFactorBuckets,
+    /// GCD calls grouped by the smallest native storage that holds their operands.
+    pub gcd_operand_widths: GcdOperandWidthBuckets,
     pub peak_operand_bits: u64,
 }
 
@@ -511,6 +526,19 @@ pub fn record_rational_gcd(left: &BigUint, right: &BigUint, divisor: &BigUint) {
     RATIONAL_STATS.with(|stats| {
         let mut stats = stats.borrow_mut();
         stats.gcds += 1;
+        let left_bits = left.bits();
+        let right_bits = right.bits();
+        let widest = left_bits.max(right_bits);
+        let narrowest = left_bits.min(right_bits);
+        if widest <= 64 {
+            stats.gcd_operand_widths.both_u64 += 1;
+        } else if widest <= 128 && narrowest <= 64 {
+            stats.gcd_operand_widths.mixed_u64_u128 += 1;
+        } else if widest <= 128 {
+            stats.gcd_operand_widths.both_u128 += 1;
+        } else {
+            stats.gcd_operand_widths.arbitrary_precision += 1;
+        }
         update_peak(&mut stats, left);
         update_peak(&mut stats, right);
         update_peak(&mut stats, divisor);
@@ -637,6 +665,13 @@ mod tests {
         assert!(stats.temporary_rationals > 0);
         assert!(stats.reductions > 0);
         assert!(stats.gcds > 0);
+        assert_eq!(
+            stats.gcds,
+            stats.gcd_operand_widths.both_u64
+                + stats.gcd_operand_widths.mixed_u64_u128
+                + stats.gcd_operand_widths.both_u128
+                + stats.gcd_operand_widths.arbitrary_precision
+        );
         assert!(stats.peak_operand_bits > 0);
     }
 
