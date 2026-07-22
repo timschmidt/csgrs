@@ -156,6 +156,10 @@ both contacting supports across the two squeeze cycles and retain an explicit
 `SqueezeEvent`. Iterating those new components in the public construction loop is
 the remaining integration boundary. The additive public event interface is version
 2.
+The staged multi-component completion kernel can already carry a certified split
+fixture through all subsequent local collapses in one shared exact graph. It also
+distinguishes a valid circular-edge apex vanish—both tracked endpoints meet the
+circle center exactly—from an unsupported radius-sheet crossing.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every
