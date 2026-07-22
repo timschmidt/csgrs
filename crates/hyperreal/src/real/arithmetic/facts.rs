@@ -270,14 +270,13 @@ impl Real {
         let numerator = &numerator.rational;
         let denominator = &denominator.rational;
         let coordinates = std::array::from_fn(|index| {
-            let affine_numerator = Rational::signed_product_sum_known_dyadic(
-                [true, true],
-                [
-                    [&origin[index].rational, denominator],
-                    [numerator, &delta[index].rational],
-                ],
-            );
-            Rational::quotient_known_dyadic(&affine_numerator, denominator).map(Real::new)
+            Rational::affine_quotient_known_dyadic(
+                &origin[index].rational,
+                &delta[index].rational,
+                numerator,
+                denominator,
+            )
+            .map(Real::new)
         });
         crate::trace_dispatch!(
             "real",

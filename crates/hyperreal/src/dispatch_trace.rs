@@ -686,11 +686,22 @@ mod tests {
             num::BigUint::from(1_u8) << 200,
         )
         .unwrap();
+        let wide_origin = Rational::from_bigint(num::BigInt::from(1_u8) << 220_usize);
+        let delta = Rational::fraction(35, 64).unwrap();
+        let affine_numerator = Rational::fraction(55, 32).unwrap();
+        let affine_denominator = Rational::new(45);
 
         reset();
         with_recording(|| {
             Rational::quotient_known_dyadic(&numerator, &denominator).unwrap();
             Rational::quotient_known_dyadic(&Rational::one(), &large_scale_denominator).unwrap();
+            Rational::affine_quotient_known_dyadic(
+                &wide_origin,
+                &delta,
+                &affine_numerator,
+                &affine_denominator,
+            )
+            .unwrap();
         });
 
         let snapshot = take_trace();
@@ -700,6 +711,10 @@ mod tests {
         );
         assert_eq!(
             snapshot.path_count("rational", "div", "known-dyadic-cross-cancel"),
+            1
+        );
+        assert_eq!(
+            snapshot.path_count("rational", "div", "known-dyadic-affine-factor-cross-cancel"),
             1
         );
     }

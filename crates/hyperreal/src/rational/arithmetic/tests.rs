@@ -2567,6 +2567,23 @@ mod tests {
     }
 
     #[test]
+    fn signed_product_sum_falls_back_when_dyadic_alignment_exceeds_a_word() {
+        let wide_word = Rational::from_bigint(BigInt::from(1_u8) << 100_usize);
+        let one = Rational::one();
+        let tiny = Rational::from_bigint_fraction(
+            BigInt::one(),
+            BigUint::one() << 100_usize,
+        )
+        .unwrap();
+        let actual = Rational::signed_product_sum_known_dyadic(
+            [true, true],
+            [[&wide_word, &one], [&tiny, &one]],
+        );
+
+        assert_eq!(actual, &wide_word + &tiny);
+    }
+
+    #[test]
     fn signed_product_sum_handles_equal_non_dyadic_denominators() {
         let terms = [
             [

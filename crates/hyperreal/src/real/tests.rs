@@ -2710,6 +2710,60 @@ mod tests {
     }
 
     #[test]
+    fn exact_dyadic_parameterized_point_reduces_wide_affine_numerators_exactly() {
+        let dyadic = |sign: i8, odd: u64, shift: usize| {
+            let magnitude = num::BigInt::from(odd) << 220_usize;
+            let magnitude = if sign < 0 { -magnitude } else { magnitude };
+            Real::new(
+                Rational::from_bigint_fraction(magnitude, num::BigUint::from(1_u8) << shift)
+                    .unwrap(),
+            )
+        };
+        for origin_sign in [-1_i8, 1] {
+            for delta_sign in [-1_i8, 1] {
+                for parameter_sign in [-1_i8, 1] {
+                    for denominator_shift in [0_usize, 7, 129] {
+                        let origin = [dyadic(origin_sign, 9, 5), dyadic(-origin_sign, 15, 11)];
+                        let delta = [
+                            Real::new(Rational::fraction(i64::from(delta_sign) * 35, 64).unwrap()),
+                            Real::new(Rational::fraction(i64::from(delta_sign) * 77, 16).unwrap()),
+                        ];
+                        let numerator = Real::new(
+                            Rational::fraction(i64::from(parameter_sign) * 55, 32).unwrap(),
+                        );
+                        let denominator = Real::new(
+                            Rational::from_bigint_fraction(
+                                num::BigInt::from(45),
+                                num::BigUint::from(1_u8) << denominator_shift,
+                            )
+                            .unwrap(),
+                        );
+                        let parameter = (&numerator / &denominator).unwrap();
+                        let expected = [
+                            Real::affine(&origin[0], &parameter, &delta[0]),
+                            Real::affine(&origin[1], &parameter, &delta[1]),
+                        ];
+
+                        let (actual_parameter, actual) =
+                            Real::exact_rational_parameterized_point2_known_dyadic(
+                                [&origin[0], &origin[1]],
+                                [&delta[0], &delta[1]],
+                                &numerator,
+                                &denominator,
+                            )
+                            .unwrap();
+                        assert_eq!(actual_parameter, parameter);
+                        assert_eq!(
+                            actual, expected,
+                            "origin_sign={origin_sign}, delta_sign={delta_sign}, parameter_sign={parameter_sign}, denominator_shift={denominator_shift}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn exact_dyadic_quotient_matches_general_division_across_scales() {
         for numerator in -12_i64..=12 {
             for denominator in (-12_i64..=12).filter(|value| *value != 0) {
@@ -2742,10 +2796,29 @@ mod tests {
             )
             .unwrap(),
         );
+        let moderate_scale_denominator = Real::new(
+            Rational::from_bigint_fraction(
+                num::BigInt::from(3_u8),
+                num::BigUint::from(1_u8) << 100,
+            )
+            .unwrap(),
+        );
+        let wide_word_integer = Real::new(Rational::from_bigint(
+            (num::BigInt::from(1_u8) << 100_usize) + 1,
+        ));
+        let three_over_moderate_scale = Real::new(
+            Rational::from_bigint_fraction(
+                num::BigInt::from(3_u8),
+                num::BigUint::from(1_u8) << 100,
+            )
+            .unwrap(),
+        );
         let wide_numerator: Real = "680564733841876926926749214863536422913".parse().unwrap();
         let three_eighths: Real = "3/8".parse().unwrap();
         for (numerator, denominator) in [
             (Real::one(), large_scale_denominator),
+            (wide_word_integer.clone(), moderate_scale_denominator),
+            (three_over_moderate_scale, wide_word_integer),
             (wide_numerator, three_eighths),
         ] {
             assert_eq!(
