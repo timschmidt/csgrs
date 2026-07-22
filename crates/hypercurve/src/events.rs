@@ -8,6 +8,8 @@
 //! candidate goes through the exact segment kernels.
 
 use std::cmp::Ordering;
+use std::fmt;
+use std::num::NonZeroU64;
 
 use hyperreal::Real;
 
@@ -35,22 +37,66 @@ pub enum ContourOperand {
 }
 
 /// A normalized set of contour-pair topology events.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Default)]
 pub struct ContourIntersectionSet {
     events: Vec<ContourIntersection>,
+    // Bits 0..62 retain positive winding deltas. Bit 63 is always set so the
+    // `Option<NonZeroU64>` occupies one word; larger event sets use the exact
+    // fallback instead of allocating a sidecar.
+    certified_positive_line_crossings: Option<NonZeroU64>,
+}
+
+impl fmt::Debug for ContourIntersectionSet {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("ContourIntersectionSet")
+            .field("events", &self.events)
+            .finish()
+    }
+}
+
+impl PartialEq for ContourIntersectionSet {
+    fn eq(&self, other: &Self) -> bool {
+        self.events == other.events
+    }
 }
 
 impl ContourIntersectionSet {
     /// Constructs an event set from already-normalized events.
     pub fn new(events: Vec<ContourIntersection>) -> CurveResult<Self> {
         validate_contour_intersection_events(&events, &CurvePolicy::certified())?;
-        Ok(Self { events })
+        Ok(Self {
+            events,
+            certified_positive_line_crossings: None,
+        })
     }
 
     fn from_normalized_events(events: Vec<ContourIntersection>) -> Self {
         // Module-private collectors normalize each relation as it is appended;
         // public or forged event vectors still go through `new` above.
-        Self { events }
+        Self {
+            events,
+            certified_positive_line_crossings: None,
+        }
+    }
+
+    fn from_certified_line_crossings(
+        events: Vec<ContourIntersection>,
+        positive_crossings: Option<NonZeroU64>,
+    ) -> Self {
+        Self {
+            events,
+            certified_positive_line_crossings: positive_crossings,
+        }
+    }
+
+    pub(crate) fn certified_line_crossing_delta(&self, event_index: usize) -> Option<i32> {
+        let crossings = self.certified_positive_line_crossings?.get();
+        (event_index < 63).then_some(if crossings & (1 << event_index) == 0 {
+            -1
+        } else {
+            1
+        })
     }
 
     /// Returns all events in segment-pair scan order.
@@ -509,6 +555,13 @@ fn intersect_contours_with_retained_line_candidates(
         );
     };
 
+    #[derive(Clone, Copy)]
+    struct Candidate {
+        a_segment_index: u16,
+        b_segment_index: u16,
+        positive_crossing: bool,
+    }
+
     let mut candidates = Vec::new();
     for (a_segment_index, a_box) in a_boxes.segments.iter().copied().enumerate() {
         for &b_segment_index in b_order {
@@ -528,8 +581,20 @@ fn intersect_contours_with_retained_line_candidates(
             let relation = certified_line_segment_support_relation(a_line, b_line);
             match relation {
                 CertifiedLineSegmentSupportRelation::Separated => {}
-                CertifiedLineSegmentSupportRelation::ProperCrossing(_) => {
-                    candidates.push((a_segment_index, b_segment_index));
+                CertifiedLineSegmentSupportRelation::ProperCrossing(sign) => {
+                    // The dispatcher caps nonempty Cartesian products at
+                    // 16,384 pairs, so every participating index fits `u16`.
+                    candidates.push(Candidate {
+                        a_segment_index: a_segment_index as u16,
+                        b_segment_index: b_segment_index as u16,
+                        positive_crossing: match sign {
+                            hyperreal::RealSign::Positive => true,
+                            hyperreal::RealSign::Negative => false,
+                            hyperreal::RealSign::Zero => {
+                                unreachable!("a certified proper crossing has nonzero orientation")
+                            }
+                        },
+                    });
                 }
                 CertifiedLineSegmentSupportRelation::Unknown => {
                     return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
@@ -540,7 +605,11 @@ fn intersect_contours_with_retained_line_candidates(
         }
     }
     let mut events = Vec::with_capacity(candidates.len());
-    for (a_segment_index, b_segment_index) in candidates {
+    let retain_crossing_signs = candidates.len() < 64;
+    let mut positive_crossings = 1_u64 << 63;
+    for (event_index, candidate) in candidates.into_iter().enumerate() {
+        let a_segment_index = usize::from(candidate.a_segment_index);
+        let b_segment_index = usize::from(candidate.b_segment_index);
         let a_segment = &a.segments()[a_segment_index];
         let b_segment = &b.segments()[b_segment_index];
         let (Segment2::Line(a_line), Segment2::Line(b_line)) = (a_segment, b_segment) else {
@@ -567,8 +636,16 @@ fn intersect_contours_with_retained_line_candidates(
             b_param,
             kind,
         }));
+        if retain_crossing_signs && candidate.positive_crossing {
+            positive_crossings |= 1 << event_index;
+        }
     }
-    Ok(ContourIntersectionSet::from_normalized_events(events))
+    Ok(ContourIntersectionSet::from_certified_line_crossings(
+        events,
+        retain_crossing_signs.then(|| {
+            NonZeroU64::new(positive_crossings).expect("the retained marker bit is nonzero")
+        }),
+    ))
 }
 
 pub(crate) fn intersect_contour_self(
@@ -1690,6 +1767,22 @@ mod tests {
         )
         .unwrap();
 
+        assert!(retained.len() < 64);
+        for (event_index, event) in retained.events().iter().enumerate() {
+            let ContourIntersection::Point(point) = event else {
+                panic!("the certified candidate path emits only point crossings");
+            };
+            let Segment2::Line(first_line) = &first.segments()[point.a_segment_index] else {
+                unreachable!();
+            };
+            let Segment2::Line(second_line) = &second.segments()[point.b_segment_index] else {
+                unreachable!();
+            };
+            assert_eq!(
+                retained.certified_line_crossing_delta(event_index),
+                crate::intersect::certified_line_crossing_winding_delta(first_line, second_line),
+            );
+        }
         assert_eq!(retained, unreserved);
     }
 

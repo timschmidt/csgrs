@@ -65,7 +65,7 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
             second: Vec::with_capacity(crossing_capacity),
         };
         let mut crossing_count = 0_usize;
-        for event in pair.intersections().events() {
+        for (event_index, event) in pair.intersections().events().iter().enumerate() {
             let ContourIntersection::Point(point) = event else {
                 return None;
             };
@@ -77,34 +77,41 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
                 return None;
             }
 
-            let Some(Segment2::Line(first_line)) =
-                first_contour.segments().get(point.a_segment_index)
-            else {
-                return None;
-            };
-            let Some(Segment2::Line(second_line)) =
-                second_contour.segments().get(point.b_segment_index)
-            else {
-                return None;
-            };
             // As a point follows the first contour, crossing from the right of
             // the oriented second edge to its left raises the second contour's
             // winding by one; the reverse crossing lowers it. Swapping source
             // and opposite traversal negates the same determinant.
-            let first_delta = match crate::intersect::certified_line_crossing_winding_delta(
-                first_line,
-                second_line,
-            ) {
+            let first_delta = match pair
+                .intersections()
+                .certified_line_crossing_delta(event_index)
+            {
                 Some(delta) => delta,
                 None => {
-                    let (first_dx, first_dy) = first_line.delta();
-                    let (second_dx, second_dy) = second_line.delta();
-                    let determinant =
-                        Real::diff_of_products(&second_dx, &first_dy, &second_dy, &first_dx);
-                    match real_sign(&determinant, policy) {
-                        Some(RealSign::Positive) => 1,
-                        Some(RealSign::Negative) => -1,
-                        Some(RealSign::Zero) | None => return None,
+                    let Some(Segment2::Line(first_line)) =
+                        first_contour.segments().get(point.a_segment_index)
+                    else {
+                        return None;
+                    };
+                    let Some(Segment2::Line(second_line)) =
+                        second_contour.segments().get(point.b_segment_index)
+                    else {
+                        return None;
+                    };
+                    if let Some(delta) = crate::intersect::certified_line_crossing_winding_delta(
+                        first_line,
+                        second_line,
+                    ) {
+                        delta
+                    } else {
+                        let (first_dx, first_dy) = first_line.delta();
+                        let (second_dx, second_dy) = second_line.delta();
+                        let determinant =
+                            Real::diff_of_products(&second_dx, &first_dy, &second_dy, &first_dx);
+                        match real_sign(&determinant, policy) {
+                            Some(RealSign::Positive) => 1,
+                            Some(RealSign::Negative) => -1,
+                            Some(RealSign::Zero) | None => return None,
+                        }
                     }
                 }
             };

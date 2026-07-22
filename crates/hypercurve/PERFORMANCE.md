@@ -1630,6 +1630,23 @@ also now avoids an inflection at its randomized tessellation probe, eliminating 
 nondeterministic too-few-control-points failure without changing either library's
 timed implementation.
 
+The retained exact-line candidate scan now carries each already-certified crossing
+orientation into region winding propagation instead of recomputing the determinant
+after event materialization. Up to 63 signs occupy one optional nonzero machine word
+inside the otherwise opaque event set; larger sets take the unchanged exact fallback
+without allocating a sidecar. Candidate indices also use the scan's existing
+16,384-pair bound, shrinking each temporary record from two machine words to six
+bytes. Event equality, debug output, public construction, and exact fallback behavior
+remain unchanged.
+
+Against the fused-crossing checkpoint, the symbolized twenty-operation star64
+Callgrind lane fell from 58,145,388 to 57,721,161 instructions (0.73%). DHAT allocation
+fell from 7,958,405 to 7,925,789 bytes with the same 39,275 blocks; peak live heap
+fell slightly to 779,825 bytes. Two order-reversed, CPU-pinned 41-sample runs measured
+the new path at 160.047 and 160.254 us/iter versus 161.534 and 163.055 us/iter for the
+committed baseline, a 0.9--1.7% wall-time improvement. The exact path remains roughly
+5.7 times slower than the latest matched `cavalier_contours` checkpoint.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
