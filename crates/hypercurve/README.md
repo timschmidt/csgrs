@@ -104,7 +104,9 @@ returned graph. Coincident multi-split clusters that also pierce edge interiors
 remain typed blockers; they are never substituted with centroid rays.
 `Contour2::straight_skeleton_vertex_trajectories` already derives exact native
 linear, elliptic, hyperbolic, and parabolic paths for every line/arc vertex from
-the circular-support cone model. Smooth co-circular contours also complete with
+the circular-support cone model. Two-edge circular segments (one arc and its
+chord) now schedule their exact terminal tangency and retain both finite
+parabolic branches in the graph. Smooth co-circular contours also complete with
 their exact collapse time and an empty unextended shape-preserving skeleton.
 General arc-polygon vanish, contact, bubble, squeeze, and splice propagation
 remains an explicit `UnsupportedSegment` result until those event transitions land.

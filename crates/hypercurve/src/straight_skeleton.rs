@@ -255,12 +255,26 @@ pub enum StraightSkeletonArcKind2 {
     TerminalRidge,
 }
 
+/// Exact finite geometry retained by one straight-skeleton graph arc.
+#[derive(Clone, Debug, PartialEq)]
+pub enum StraightSkeletonArcGeometry2 {
+    /// A closed line segment whose endpoints are the referenced graph nodes.
+    LineSegment,
+    /// A finite conic branch selected by its endpoint nodes and time coordinate.
+    ConicBranch {
+        kind: StraightSkeletonTrajectoryKind2,
+        equation: StraightSkeletonImplicitConic2,
+        affine_time: Option<StraightSkeletonAffineTime2>,
+    },
+}
+
 /// Indexed exact straight-skeleton graph arc.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StraightSkeletonArc2 {
     start_node: usize,
     end_node: usize,
     kind: StraightSkeletonArcKind2,
+    geometry: StraightSkeletonArcGeometry2,
 }
 
 impl StraightSkeletonArc2 {
@@ -277,6 +291,11 @@ impl StraightSkeletonArc2 {
     /// Return the wavefront construction family.
     pub const fn kind(&self) -> &StraightSkeletonArcKind2 {
         &self.kind
+    }
+
+    /// Return the exact finite geometry of this graph arc.
+    pub const fn geometry(&self) -> &StraightSkeletonArcGeometry2 {
+        &self.geometry
     }
 }
 
@@ -474,7 +493,7 @@ impl Contour2 {
         Ok(Classification::Decided(trajectories))
     }
 
-    /// Construct the exact interior straight skeleton of a simple line contour.
+    /// Construct the exact interior straight skeleton of a supported contour.
     ///
     /// This is an actual inward wavefront algorithm, not a centroid-ray
     /// approximation. Generic concave input uses exact reflex split events;
@@ -497,9 +516,13 @@ impl Contour2 {
             .segments()
             .iter()
             .any(|segment| matches!(segment, Segment2::Arc(_)))
-            && let Some(report) = self.co_circular_shape_preserving_skeleton(policy)?
         {
-            return Ok(report);
+            if let Some(report) = self.co_circular_shape_preserving_skeleton(policy)? {
+                return Ok(report);
+            }
+            if let Some(report) = self.two_edge_line_arc_straight_skeleton(policy)? {
+                return Ok(report);
+            }
         }
 
         let mut lines = Vec::with_capacity(source_edge_count);
@@ -737,6 +760,204 @@ impl Contour2 {
             }),
             blocker: None,
         }))
+    }
+
+    fn two_edge_line_arc_straight_skeleton(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Option<StraightSkeletonReport2>> {
+        if self.segments().len() != 2 {
+            return Ok(None);
+        }
+        let (line_index, circle_index) = match (&self.segments()[0], &self.segments()[1]) {
+            (Segment2::Line(_), Segment2::Arc(_)) => (0, 1),
+            (Segment2::Arc(_), Segment2::Line(_)) => (1, 0),
+            _ => return Ok(None),
+        };
+        let blocked = |blocker| {
+            Some(StraightSkeletonReport2 {
+                stage: StraightSkeletonStage2::InputValidation,
+                source_edge_count: 2,
+                event_count: 0,
+                simultaneous_event_count: 0,
+                split_event_count: 0,
+                vertex_event_count: 0,
+                skeleton: None,
+                blocker: Some(blocker),
+            })
+        };
+        // Contour construction already certifies the two distinct shared
+        // endpoints. A nondegenerate circle and its chord line have no third
+        // intersection, so this family is simple without asking the generic
+        // contact classifier to distinguish its two adjacency contacts.
+        let Some(area) = self.signed_area()? else {
+            return Ok(blocked(StraightSkeletonBlocker2::UnsupportedSignedArea));
+        };
+        let orientation = match real_sign(&area, policy) {
+            Some(RealSign::Positive) => RealSign::Positive,
+            Some(RealSign::Negative) => RealSign::Negative,
+            Some(RealSign::Zero) => {
+                return Ok(blocked(StraightSkeletonBlocker2::DegenerateSignedArea));
+            }
+            None => return Ok(blocked(StraightSkeletonBlocker2::UncertainOrientation)),
+        };
+        let supports = self
+            .segments()
+            .iter()
+            .map(|segment| shape_preserving_support(segment, orientation))
+            .collect::<CurveResult<Vec<_>>>()?;
+        let ShapePreservingSupport2::Line {
+            normal_x,
+            normal_y,
+            constant,
+        } = &supports[line_index]
+        else {
+            unreachable!();
+        };
+        let ShapePreservingSupport2::Circle {
+            center,
+            signed_radius,
+        } = &supports[circle_index]
+        else {
+            unreachable!();
+        };
+        let orientation_scalar = match orientation {
+            RealSign::Positive => Real::one(),
+            RealSign::Negative => -Real::one(),
+            RealSign::Zero => unreachable!(),
+        };
+        let center_support = normal_x * center.x() + normal_y * center.y();
+        let delta = center_support - constant;
+        let denominator = if orientation == RealSign::Positive {
+            Real::one() + &orientation_scalar
+        } else {
+            &orientation_scalar - Real::one()
+        };
+        let numerator = if orientation == RealSign::Positive {
+            &delta + signed_radius
+        } else {
+            signed_radius - &delta
+        };
+        let event_time = (numerator / denominator)?;
+        match real_sign(&event_time, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Negative | RealSign::Zero) => return Ok(None),
+            None => {
+                return Ok(Some(StraightSkeletonReport2 {
+                    stage: StraightSkeletonStage2::EventScheduling,
+                    source_edge_count: 2,
+                    event_count: 0,
+                    simultaneous_event_count: 0,
+                    split_event_count: 0,
+                    vertex_event_count: 0,
+                    skeleton: None,
+                    blocker: Some(StraightSkeletonBlocker2::UncertainEventOrdering),
+                }));
+            }
+        }
+        let radius_collapse_time = (signed_radius / &orientation_scalar)?;
+        if real_sign(&radius_collapse_time, policy) == Some(RealSign::Positive) {
+            match compare_reals(&radius_collapse_time, &event_time, policy) {
+                Some(Ordering::Less) => return Ok(None),
+                Some(Ordering::Equal | Ordering::Greater) => {}
+                None => {
+                    return Ok(Some(StraightSkeletonReport2 {
+                        stage: StraightSkeletonStage2::EventScheduling,
+                        source_edge_count: 2,
+                        event_count: 0,
+                        simultaneous_event_count: 0,
+                        split_event_count: 0,
+                        vertex_event_count: 0,
+                        skeleton: None,
+                        blocker: Some(StraightSkeletonBlocker2::UncertainEventOrdering),
+                    }));
+                }
+            }
+        }
+        let moved_constant = constant + &event_time;
+        let signed_distance = normal_x * center.x() + normal_y * center.y() - moved_constant;
+        let event_point = Point2::new(
+            center.x() - normal_x * &signed_distance,
+            center.y() - normal_y * signed_distance,
+        );
+        let trajectories = match self.straight_skeleton_vertex_trajectories(policy)? {
+            Classification::Decided(trajectories) => trajectories,
+            Classification::Uncertain(_) => {
+                return Ok(Some(StraightSkeletonReport2 {
+                    stage: StraightSkeletonStage2::WavefrontPreparation,
+                    source_edge_count: 2,
+                    event_count: 0,
+                    simultaneous_event_count: 0,
+                    split_event_count: 0,
+                    vertex_event_count: 0,
+                    skeleton: None,
+                    blocker: Some(StraightSkeletonBlocker2::UncertainWavefrontRelation),
+                }));
+            }
+        };
+        let mut nodes = self
+            .segments()
+            .iter()
+            .enumerate()
+            .map(|(source_vertex, segment)| StraightSkeletonNode2 {
+                point: segment.start().clone(),
+                time: Real::zero(),
+                kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+            })
+            .collect::<Vec<_>>();
+        let event_node = nodes.len();
+        nodes.push(StraightSkeletonNode2 {
+            point: event_point,
+            time: event_time.clone(),
+            kind: StraightSkeletonNodeKind2::EdgeEvent {
+                collapsed_source_edges: vec![0, 1],
+            },
+        });
+        let arcs = trajectories
+            .into_iter()
+            .enumerate()
+            .map(|(source_vertex, trajectory)| StraightSkeletonArc2 {
+                start_node: source_vertex,
+                end_node: event_node,
+                kind: StraightSkeletonArcKind2::VertexBisector {
+                    left_source_edge: trajectory.left_source_edge,
+                    right_source_edge: trajectory.right_source_edge,
+                },
+                geometry: arc_geometry_from_trajectory(trajectory),
+            })
+            .collect();
+        Ok(Some(StraightSkeletonReport2 {
+            stage: StraightSkeletonStage2::Complete,
+            source_edge_count: 2,
+            event_count: 1,
+            simultaneous_event_count: 1,
+            split_event_count: 0,
+            vertex_event_count: 0,
+            skeleton: Some(StraightSkeleton2 {
+                nodes,
+                arcs,
+                source_edge_count: 2,
+                maximum_time: event_time,
+            }),
+            blocker: None,
+        }))
+    }
+}
+
+fn arc_geometry_from_trajectory(
+    trajectory: StraightSkeletonVertexTrajectory2,
+) -> StraightSkeletonArcGeometry2 {
+    match trajectory.geometry {
+        StraightSkeletonTrajectoryGeometry2::Line { .. } => {
+            StraightSkeletonArcGeometry2::LineSegment
+        }
+        StraightSkeletonTrajectoryGeometry2::Conic(equation) => {
+            StraightSkeletonArcGeometry2::ConicBranch {
+                kind: trajectory.kind,
+                equation,
+                affine_time: trajectory.affine_time,
+            }
+        }
     }
 }
 
@@ -2810,6 +3031,7 @@ fn add_arc(
             start_node,
             end_node,
             kind,
+            geometry: StraightSkeletonArcGeometry2::LineSegment,
         });
     }
 }
@@ -2888,6 +3110,83 @@ mod tests {
                     .evaluate(trajectory.start()),
                 r(0)
             );
+        }
+    }
+
+    #[test]
+    fn circular_segment_materializes_exact_parabolic_terminal_branches() {
+        for clockwise in [false, true] {
+            let left = Point2::new(r(-1), r(0));
+            let right = Point2::new(r(1), r(0));
+            let (arc_start, arc_end) = if clockwise {
+                (right.clone(), left.clone())
+            } else {
+                (left.clone(), right.clone())
+            };
+            let source = Contour2::try_new(vec![
+                Segment2::Arc(
+                    CircularArc2::try_from_center(
+                        arc_start,
+                        arc_end,
+                        Point2::new(r(0), r(0)),
+                        clockwise,
+                    )
+                    .unwrap(),
+                ),
+                Segment2::Line(
+                    LineSeg2::try_new(
+                        if clockwise {
+                            left.clone()
+                        } else {
+                            right.clone()
+                        },
+                        if clockwise { right } else { left },
+                    )
+                    .unwrap(),
+                ),
+            ])
+            .unwrap();
+            let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            assert_eq!(
+                report.stage(),
+                StraightSkeletonStage2::Complete,
+                "{report:?}"
+            );
+            assert_eq!(report.event_count(), 1);
+            assert_eq!(report.simultaneous_event_count(), 1);
+            let skeleton = report.skeleton().unwrap();
+            let half = (r(1) / r(2)).unwrap();
+            assert_eq!(skeleton.maximum_time(), &half);
+            assert_eq!(skeleton.nodes().len(), 3);
+            assert_eq!(skeleton.arcs().len(), 2);
+            let terminal = &skeleton.nodes()[2];
+            assert_eq!(terminal.point(), &Point2::new(r(0), -half.clone()));
+            assert_eq!(terminal.time(), &half);
+            assert!(matches!(
+                terminal.kind(),
+                StraightSkeletonNodeKind2::EdgeEvent {
+                    collapsed_source_edges
+                } if collapsed_source_edges == &[0, 1]
+            ));
+            for arc in skeleton.arcs() {
+                let StraightSkeletonArcGeometry2::ConicBranch {
+                    kind,
+                    equation,
+                    affine_time: Some(affine_time),
+                } = arc.geometry()
+                else {
+                    panic!("circular-segment skeleton branch must retain its timed conic");
+                };
+                assert_eq!(*kind, StraightSkeletonTrajectoryKind2::Parabolic);
+                assert_eq!(
+                    real_sign(
+                        &equation.evaluate(terminal.point()),
+                        &CurvePolicy::certified()
+                    ),
+                    Some(RealSign::Zero)
+                );
+                assert_eq!(affine_time.evaluate(terminal.point()), half);
+            }
         }
     }
 
