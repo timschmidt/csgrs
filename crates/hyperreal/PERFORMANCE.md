@@ -1109,19 +1109,22 @@ general division, and the `real_exact` fuzzer differentially checks both new API
 
 ### Small-quotient two-limb GCD steps
 
-The balanced `u128` Euclidean tail now resolves quotients one through four with
-native subtraction before falling back to full-width remainder. On supported
-64-bit targets, a `u128` remainder enters a compiler-runtime helper; the star64
-trace showed thousands of those calls even though consecutive Euclidean operands
-usually had a small quotient. Quotients five and above retain the exact remainder
-path, and deterministic random pairs plus explicit wide quotient-one through
-quotient-five cases are checked against the Euclidean reference.
+The balanced `u128` Euclidean tail resolves quotients one through four with native
+subtraction. For larger quotients it divides the high dividend limb by a strict
+upper bound on the divisor, producing a quotient that cannot overshoot, then
+corrects the residual once or retains the exact full-width remainder fallback. On
+supported 64-bit targets, a `u128` remainder enters a compiler-runtime helper; the
+star64 trace showed thousands of those calls even though the high-limb estimate is
+usually exact or one low. Deterministic random pairs and adversarial quotient,
+low-high-limb, and near-overflow cases are checked against the Euclidean reference.
 
-The selected 128-bit GCD sentinel fell from 458.54 ns to 169.64 ns (63.0%). In the
-downstream exact star64 region workload, this change combines with once-visiting
-output materialization to reduce the twenty-operation Callgrind total from
-81,698,829 to 77,709,243 instructions. The implementation remains wholly native;
-GMP/MPFR is still confined to competitive benchmarks and test oracles.
+The selected 128-bit GCD sentinel first fell from 458.54 ns to 169.64 ns with the
+small-quotient steps, then to 138.75 ns with the bounded high-limb estimate (another
+18.2%, or 69.7% overall). In the downstream exact star64 region workload, the latter
+change reduces the twenty-operation Callgrind total from 77,709,243 to 76,985,290
+instructions (0.93%). Prepared-region allocation remains exactly 9,608,934 bytes in
+83,760 blocks. The implementation remains wholly native; GMP/MPFR is still confined
+to competitive benchmarks and test oracles and is absent from the release graph.
 
 ### Architecture and measurement triggers
 

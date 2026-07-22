@@ -375,7 +375,24 @@ impl Rational {
                         if fourth_difference < right {
                             fourth_difference
                         } else {
-                            left % right
+                            // Dividing the high limbs by a strict upper bound
+                            // for the divisor yields a quotient that cannot
+                            // overshoot. It usually leaves the exact remainder
+                            // (or one divisor too much) without a compiler-rt
+                            // 128-bit remainder call.
+                            let high_quotient = ((left >> 64) as u64)
+                                / (((right >> 64) as u64) + 1);
+                            let approximate = left - right * u128::from(high_quotient);
+                            if approximate < right {
+                                approximate
+                            } else {
+                                let corrected = approximate - right;
+                                if corrected < right {
+                                    corrected
+                                } else {
+                                    corrected % right
+                                }
+                            }
                         }
                     }
                 }

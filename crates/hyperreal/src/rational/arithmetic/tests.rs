@@ -736,6 +736,8 @@ mod tests {
         }
 
         let wide_divisor = (1_u128 << 100) + 151;
+        let low_high_limb_divisor = (1_u128 << 64) + u128::from(u64::MAX);
+        let near_quotient_five_limit = u128::MAX / 5 - 151;
         let edge_cases = [
             (0, 0),
             (0, 1),
@@ -752,6 +754,15 @@ mod tests {
             (3 * wide_divisor + 77, wide_divisor),
             (4 * wide_divisor + 77, wide_divisor),
             (5 * wide_divisor + 77, wide_divisor),
+            (6 * wide_divisor + 77, wide_divisor),
+            (8 * wide_divisor + 77, wide_divisor),
+            (17 * wide_divisor + 77, wide_divisor),
+            (5 * low_high_limb_divisor + 77, low_high_limb_divisor),
+            (9 * low_high_limb_divisor + 77, low_high_limb_divisor),
+            (
+                5 * near_quotient_five_limit + 77,
+                near_quotient_five_limit,
+            ),
         ];
         for (left, right) in edge_cases {
             assert_eq!(Rational::gcd_word(left, right), reference(left, right));
