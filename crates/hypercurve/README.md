@@ -121,8 +121,8 @@ cycle, and no splice or nonincident carrier contact can precede it. Both
 incoming conic branches terminate at an explicit `BubbleEvent` node, while the
 detached full circle remains represented in the event count and maximum
 wavefront time.
-Other concave arc-polygon contacts, squeeze events, and splice propagation
-remain explicit `UnsupportedSegment` results until those transitions land.
+Other concave arc-polygon topology transitions and splice propagation remain
+explicit `UnsupportedSegment` results until those transitions land.
 `Contour2::straight_skeleton_local_arc_events` nevertheless exposes the exact
 three-cone local event queue today, including source-edge evidence and the
 paper's endpoint-convexity distinction between vanish and bubble candidates.
@@ -145,6 +145,12 @@ and emits the exact incident conic branch. `SupportEvent` keeps event-generated
 collapse provenance when no source-edge-only label would be truthful. Selecting
 and iterating those transitions in the public multi-component concave
 arc-polygon queue remains the next integration boundary.
+`Contour2::straight_skeleton_global_contact_events` now supplies the global side
+of that queue. It intersects the exact support cones only inside the safe window
+ending at the next local event, replays each vertex branch, and rejects carrier
+contacts outside the strict interior of the finite evolved line or directed
+circular edge. Exact mixed line/arc split and squeeze fixtures cover both global
+event classes. The additive public event interface is version 2.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every

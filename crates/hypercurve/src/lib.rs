@@ -365,12 +365,13 @@ pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, Segmen
 pub use straight_skeleton::{
     STRAIGHT_SKELETON_INTERFACE_VERSION, StraightSkeleton2, StraightSkeletonAffineTime2,
     StraightSkeletonArc2, StraightSkeletonArcGeometry2, StraightSkeletonArcKind2,
-    StraightSkeletonBlocker2, StraightSkeletonCurveFamilySupport2, StraightSkeletonImplicitConic2,
-    StraightSkeletonLocalArcEvent2, StraightSkeletonLocalArcEventKind2, StraightSkeletonNode2,
-    StraightSkeletonNodeKind2, StraightSkeletonReport2, StraightSkeletonSpliceEvent2,
-    StraightSkeletonStage2, StraightSkeletonSupportProvenance2,
-    StraightSkeletonTrajectoryGeometry2, StraightSkeletonTrajectoryKind2,
-    StraightSkeletonVertexTrajectory2,
+    StraightSkeletonBlocker2, StraightSkeletonCurveFamilySupport2,
+    StraightSkeletonGlobalContactEvent2, StraightSkeletonGlobalContactKind2,
+    StraightSkeletonImplicitConic2, StraightSkeletonLocalArcEvent2,
+    StraightSkeletonLocalArcEventKind2, StraightSkeletonNode2, StraightSkeletonNodeKind2,
+    StraightSkeletonReport2, StraightSkeletonSpliceEvent2, StraightSkeletonStage2,
+    StraightSkeletonSupportProvenance2, StraightSkeletonTrajectoryGeometry2,
+    StraightSkeletonTrajectoryKind2, StraightSkeletonVertexTrajectory2,
 };
 #[cfg(feature = "svg")]
 pub use svg_io::{
