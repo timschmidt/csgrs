@@ -1107,6 +1107,22 @@ contains no expanded division-cross numerator or denominator events, and final
 rational reductions fell to 284. Exhaustive signed dyadic scales are compared with
 general division, and the `real_exact` fuzzer differentially checks both new APIs.
 
+### Small-quotient two-limb GCD steps
+
+The balanced `u128` Euclidean tail now resolves quotients one through four with
+native subtraction before falling back to full-width remainder. On supported
+64-bit targets, a `u128` remainder enters a compiler-runtime helper; the star64
+trace showed thousands of those calls even though consecutive Euclidean operands
+usually had a small quotient. Quotients five and above retain the exact remainder
+path, and deterministic random pairs plus explicit wide quotient-one through
+quotient-five cases are checked against the Euclidean reference.
+
+The selected 128-bit GCD sentinel fell from 458.54 ns to 169.64 ns (63.0%). In the
+downstream exact star64 region workload, this change combines with once-visiting
+output materialization to reduce the twenty-operation Callgrind total from
+81,698,829 to 77,709,243 instructions. The implementation remains wholly native;
+GMP/MPFR is still confined to competitive benchmarks and test oracles.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

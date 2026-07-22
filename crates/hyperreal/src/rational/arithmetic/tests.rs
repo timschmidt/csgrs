@@ -735,6 +735,7 @@ mod tests {
             left
         }
 
+        let wide_divisor = (1_u128 << 100) + 151;
         let edge_cases = [
             (0, 0),
             (0, 1),
@@ -746,6 +747,11 @@ mod tests {
             (u128::from(u64::MAX - 58), u128::MAX),
             (1_u128 << 127, 1_u128 << 126),
             ((1_u128 << 127) + (1_u128 << 63), 1_u128 << 64),
+            (wide_divisor + 77, wide_divisor),
+            (2 * wide_divisor + 77, wide_divisor),
+            (3 * wide_divisor + 77, wide_divisor),
+            (4 * wide_divisor + 77, wide_divisor),
+            (5 * wide_divisor + 77, wide_divisor),
         ];
         for (left, right) in edge_cases {
             assert_eq!(Rational::gcd_word(left, right), reference(left, right));

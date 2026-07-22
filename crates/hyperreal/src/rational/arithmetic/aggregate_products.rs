@@ -356,7 +356,30 @@ impl Rational {
             core::mem::swap(&mut left, &mut right);
         }
         while right > u128::from(u64::MAX) {
-            let remainder = left % right;
+            // Consecutive Euclidean operands frequently have a small quotient.
+            // Resolve the first four cases with subtraction: 128-bit remainder
+            // is a compiler-runtime call on the 64-bit release targets we support.
+            let difference = left - right;
+            let remainder = if difference < right {
+                difference
+            } else {
+                let second_difference = difference - right;
+                if second_difference < right {
+                    second_difference
+                } else {
+                    let third_difference = second_difference - right;
+                    if third_difference < right {
+                        third_difference
+                    } else {
+                        let fourth_difference = third_difference - right;
+                        if fourth_difference < right {
+                            fourth_difference
+                        } else {
+                            left % right
+                        }
+                    }
+                }
+            };
             left = right;
             right = remainder;
         }
