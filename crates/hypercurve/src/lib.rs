@@ -363,11 +363,12 @@ pub use self_intersect::{
 pub use spline_periodic::SplinePeriodicity2;
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
 pub use straight_skeleton::{
-    StraightSkeleton2, StraightSkeletonAffineTime2, StraightSkeletonArc2,
-    StraightSkeletonArcGeometry2, StraightSkeletonArcKind2, StraightSkeletonBlocker2,
-    StraightSkeletonImplicitConic2, StraightSkeletonNode2, StraightSkeletonNodeKind2,
-    StraightSkeletonReport2, StraightSkeletonStage2, StraightSkeletonTrajectoryGeometry2,
-    StraightSkeletonTrajectoryKind2, StraightSkeletonVertexTrajectory2,
+    STRAIGHT_SKELETON_INTERFACE_VERSION, StraightSkeleton2, StraightSkeletonAffineTime2,
+    StraightSkeletonArc2, StraightSkeletonArcGeometry2, StraightSkeletonArcKind2,
+    StraightSkeletonBlocker2, StraightSkeletonCurveFamilySupport2, StraightSkeletonImplicitConic2,
+    StraightSkeletonNode2, StraightSkeletonNodeKind2, StraightSkeletonReport2,
+    StraightSkeletonStage2, StraightSkeletonTrajectoryGeometry2, StraightSkeletonTrajectoryKind2,
+    StraightSkeletonVertexTrajectory2,
 };
 #[cfg(feature = "svg")]
 pub use svg_io::{

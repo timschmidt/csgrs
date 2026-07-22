@@ -21,7 +21,37 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
 use crate::classify::{compare_reals, real_sign};
-use crate::{Classification, Contour2, CurvePolicy, CurveResult, Point2, Segment2};
+use crate::{
+    Classification, Contour2, CurveFamily2, CurveGeometry2, CurvePath2, CurvePolicy, CurveResult,
+    Point2, Segment2,
+};
+
+/// Version of the public straight-skeleton capability and report interface.
+pub const STRAIGHT_SKELETON_INTERFACE_VERSION: u32 = 1;
+
+/// Native straight-skeleton support advertised for one exact curve family.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum StraightSkeletonCurveFamilySupport2 {
+    /// Exact shape-preserving wavefront support is implemented.
+    NativeExact,
+    /// The family has no exact shape-preserving wavefront implementation yet.
+    Unsupported,
+}
+
+impl CurveFamily2 {
+    /// Return straight-skeleton support in the current interface version.
+    pub const fn straight_skeleton_support(self) -> StraightSkeletonCurveFamilySupport2 {
+        match self {
+            Self::Line | Self::CircularArc => StraightSkeletonCurveFamilySupport2::NativeExact,
+            Self::QuadraticBezier
+            | Self::CubicBezier
+            | Self::RationalQuadraticBezier
+            | Self::RationalBezier
+            | Self::PolynomialBSpline
+            | Self::Nurbs => StraightSkeletonCurveFamilySupport2::Unsupported,
+        }
+    }
+}
 
 /// Furthest stage reached by straight-skeleton construction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -160,6 +190,11 @@ impl StraightSkeletonVertexTrajectory2 {
 pub enum StraightSkeletonBlocker2 {
     /// The contour contains a non-line segment.
     UnsupportedSegment { segment_index: usize },
+    /// A top-level curve family has no native exact wavefront implementation.
+    UnsupportedCurveFamily {
+        curve_index: usize,
+        family: CurveFamily2,
+    },
     /// The source contour has a self-contact or self-intersection.
     SelfContact,
     /// Source self-contact classification was indeterminate.
@@ -1085,6 +1120,35 @@ impl Contour2 {
                 }
             }
         }))
+    }
+}
+
+impl CurvePath2 {
+    /// Construct a straight skeleton through the native family dispatcher.
+    ///
+    /// Line and circular-arc carriers preserve their exact source geometry.
+    /// Every other family returns a typed capability blocker with its curve
+    /// index; no flattening or tolerance substitution is performed.
+    pub fn straight_skeleton(&self, policy: &CurvePolicy) -> CurveResult<StraightSkeletonReport2> {
+        let source_edge_count = self.curves().len();
+        let mut segments = Vec::with_capacity(source_edge_count);
+        for (curve_index, curve) in self.curves().iter().enumerate() {
+            match curve.geometry() {
+                CurveGeometry2::Line(line) => segments.push(Segment2::Line(line.clone())),
+                CurveGeometry2::CircularArc(arc) => segments.push(Segment2::Arc(arc.clone())),
+                geometry => {
+                    return Ok(blocked_shape_preserving_report(
+                        source_edge_count,
+                        StraightSkeletonStage2::InputValidation,
+                        StraightSkeletonBlocker2::UnsupportedCurveFamily {
+                            curve_index,
+                            family: geometry.family(),
+                        },
+                    ));
+                }
+            }
+        }
+        Contour2::try_new(segments)?.straight_skeleton(policy)
     }
 }
 
@@ -3967,7 +4031,7 @@ fn add_arc(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CircularArc2, LineSeg2, Segment2};
+    use crate::{CircularArc2, Curve2, LineSeg2, QuadraticBezier2, Segment2};
 
     fn r(value: i32) -> Real {
         Real::from(value)
@@ -3990,6 +4054,63 @@ mod tests {
             })
             .collect();
         Contour2::try_new(segments).unwrap()
+    }
+
+    #[test]
+    fn curve_path_dispatch_preserves_native_families_and_reports_capabilities() {
+        assert_eq!(STRAIGHT_SKELETON_INTERFACE_VERSION, 1);
+        for family in [CurveFamily2::Line, CurveFamily2::CircularArc] {
+            assert_eq!(
+                family.straight_skeleton_support(),
+                StraightSkeletonCurveFamilySupport2::NativeExact
+            );
+        }
+        for family in [
+            CurveFamily2::QuadraticBezier,
+            CurveFamily2::CubicBezier,
+            CurveFamily2::RationalQuadraticBezier,
+            CurveFamily2::RationalBezier,
+            CurveFamily2::PolynomialBSpline,
+            CurveFamily2::Nurbs,
+        ] {
+            assert_eq!(
+                family.straight_skeleton_support(),
+                StraightSkeletonCurveFamilySupport2::Unsupported
+            );
+        }
+
+        let square = contour(&[(0, 0), (4, 0), (4, 4), (0, 4)]);
+        let path = CurvePath2::try_new(
+            square
+                .segments()
+                .iter()
+                .map(|segment| match segment {
+                    Segment2::Line(line) => Curve2::from(line.clone()),
+                    Segment2::Arc(arc) => Curve2::from(arc.clone()),
+                })
+                .collect(),
+        )
+        .unwrap();
+        let report = path.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+
+        let point = Point2::new(r(0), r(0));
+        let unsupported = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
+            point.clone(),
+            Point2::new(r(1), r(1)),
+            point,
+        ))])
+        .unwrap();
+        let report = unsupported
+            .straight_skeleton(&CurvePolicy::certified())
+            .unwrap();
+        assert_eq!(
+            report.blocker(),
+            Some(&StraightSkeletonBlocker2::UnsupportedCurveFamily {
+                curve_index: 0,
+                family: CurveFamily2::QuadraticBezier,
+            })
+        );
     }
 
     #[test]
