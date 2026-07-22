@@ -31,7 +31,7 @@ use crate::{
     BezierSplitMaterialization2, Classification, CurveDerivative2, CurveError, CurveFamily2,
     CurveOperation2, CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2,
     LineSide, ParamRange, Point2, RationalBezierAlgebraicPointImage2,
-    RationalBezierAlgebraicTangentImage2, UncertaintyReason,
+    RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2, UncertaintyReason,
 };
 
 /// Exact planar rational Bezier curve with an arbitrary positive degree.
@@ -585,6 +585,9 @@ impl RationalBezier2 {
         }
         if target_degree == source_degree {
             return Ok(self.clone());
+        }
+        if source_degree == 2 {
+            self.retain_quadratic_conic_parameter_frame(&CurvePolicy::certified());
         }
         let elevation_count = target_degree.checked_sub(source_degree).ok_or_else(|| {
             ExactCurveError::invalid(
@@ -2596,6 +2599,51 @@ impl RationalBezier2 {
             ]
         };
         let _ = root.quadratic_conic_parameter_frame.set(Rc::new(frame));
+    }
+
+    pub(crate) fn retained_quadratic_representative(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Option<RationalQuadraticBezier2>>> {
+        if self.degree() == 2 {
+            self.retain_quadratic_conic_parameter_frame(policy);
+        }
+        let Some(frame) = self.data.lineage.root.quadratic_conic_parameter_frame.get() else {
+            return Ok(Classification::Decided(None));
+        };
+        let range = self.source_parameter_range();
+        let forward = compare_reals(range.start(), &Real::zero(), policy)
+            == Some(std::cmp::Ordering::Equal)
+            && compare_reals(range.end(), &Real::one(), policy) == Some(std::cmp::Ordering::Equal);
+        let reversed = compare_reals(range.start(), &Real::one(), policy)
+            == Some(std::cmp::Ordering::Equal)
+            && compare_reals(range.end(), &Real::zero(), policy) == Some(std::cmp::Ordering::Equal);
+        let ordered = if forward {
+            [&frame[0], &frame[1], &frame[2]]
+        } else if reversed {
+            [&frame[2], &frame[1], &frame[0]]
+        } else {
+            return Ok(Classification::Decided(None));
+        };
+        let mut controls = Vec::with_capacity(3);
+        for point in ordered {
+            match project_homogeneous(point, policy) {
+                Classification::Decided(point) => controls.push(point),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(Some(
+            RationalQuadraticBezier2::try_new(
+                controls[0].clone(),
+                controls[1].clone(),
+                controls[2].clone(),
+                ordered[0].weight.clone(),
+                ordered[1].weight.clone(),
+                ordered[2].weight.clone(),
+            )?,
+        )))
     }
 
     fn polynomial_graph(

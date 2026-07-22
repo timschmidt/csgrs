@@ -172,7 +172,7 @@ circular-edge apex vanish—both tracked endpoints meet the circle center
 exactly—from an unsupported radius-sheet crossing. Reflex vertices incident to
 generated supports, repeated generated splices, and same-time mixed topology
 clusters remain explicit integration boundaries. The additive public event
-interface is version 3.
+interface is version 4.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every
@@ -181,8 +181,11 @@ when their existing zero-error certificate proves an exact endpoint-line image;
 polynomial spline and same-sign-weight NURBS carriers use an exact control-net
 certificate for the same reduction. Rational quadratics additionally undergo
 exact projective conic recovery and circular-conic spans enter the native arc
-wavefront. Other nonlinear inputs return their exact curve index and family as
-a typed blocker.
+wavefront. General rational Beziers preserve that support when their homogeneous
+control net is a certified quadratic, including exact degree elevations that
+retain their source lineage. A single-span quadratic NURBS receives the same
+exact circular-conic reduction. Other nonlinear inputs return their exact curve
+index and family as a typed blocker.
 
 `translation_obstacle_convex` constructs the exact closed no-fit region
 `fixed + (-moving)` for simple convex line contours. It normalizes orientation,
