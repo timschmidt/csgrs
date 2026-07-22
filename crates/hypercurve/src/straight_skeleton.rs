@@ -698,16 +698,26 @@ impl Contour2 {
                 supports[source_edge].clone(),
                 supports[next].clone(),
             ];
-            let (time, point) =
-                match three_support_event(&triple, orientation, &Real::zero(), policy)? {
-                    Ok(Some(event)) => event,
-                    Ok(None) => continue,
-                    Err(_) => {
-                        return Ok(Classification::Uncertain(
-                            crate::UncertaintyReason::Predicate,
-                        ));
-                    }
-                };
+            let start_time = Real::zero();
+            let pair_starts = [
+                (self.segments()[source_edge].start(), &start_time),
+                (self.segments()[source_edge].end(), &start_time),
+            ];
+            let (time, point) = match tracked_three_support_event(
+                &triple,
+                &pair_starts,
+                orientation,
+                &start_time,
+                policy,
+            )? {
+                Ok(Some(event)) => event,
+                Ok(None) => continue,
+                Err(_) => {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::Predicate,
+                    ));
+                }
+            };
             let ShapePreservingSupport2::Circle { signed_radius, .. } = &supports[source_edge]
             else {
                 unreachable!();
@@ -1829,7 +1839,21 @@ fn build_convex_shape_preserving_straight_skeleton(
                 .iter()
                 .map(|index| supports[*index].clone())
                 .collect::<Vec<_>>();
-            let event = match three_support_event(&triple, orientation, &current_time, policy)? {
+            let first_start = pair_start[&(active[0], active[1])];
+            let second_start = pair_start[&(active[1], active[2])];
+            let third_start = pair_start[&(active[2], active[0])];
+            let pair_starts = [
+                (&nodes[first_start].point, &nodes[first_start].time),
+                (&nodes[second_start].point, &nodes[second_start].time),
+                (&nodes[third_start].point, &nodes[third_start].time),
+            ];
+            let event = match tracked_three_support_event(
+                &triple,
+                &pair_starts,
+                orientation,
+                &current_time,
+                policy,
+            )? {
                 Ok(Some(event)) => event,
                 Ok(None) => {
                     return Ok(Err((
@@ -1865,7 +1889,19 @@ fn build_convex_shape_preserving_straight_skeleton(
                     supports[current].clone(),
                     supports[next].clone(),
                 ];
-                match three_support_event(&triple, orientation, &current_time, policy)? {
+                let left_start = pair_start[&(previous, current)];
+                let right_start = pair_start[&(current, next)];
+                let pair_starts = [
+                    (&nodes[left_start].point, &nodes[left_start].time),
+                    (&nodes[right_start].point, &nodes[right_start].time),
+                ];
+                match tracked_three_support_event(
+                    &triple,
+                    &pair_starts,
+                    orientation,
+                    &current_time,
+                    policy,
+                )? {
                     Ok(Some((time, point))) => candidates.push(EdgeEventCandidate2 {
                         active_index,
                         time,
@@ -2577,12 +2613,153 @@ fn sort_splice_events(events: &mut [StraightSkeletonSpliceEvent2], policy: &Curv
     true
 }
 
-fn three_support_event(
+fn tracked_three_support_event(
     supports: &[ShapePreservingSupport2],
+    pair_starts: &[(&Point2, &Real)],
     orientation: RealSign,
     current_time: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Result<Option<(Real, Point2)>, StraightSkeletonBlocker2>> {
+    debug_assert_eq!(supports.len(), 3);
+    debug_assert!(matches!(pair_starts.len(), 2 | 3));
+    let candidates = match three_support_events(supports, orientation, current_time, policy)? {
+        Ok(candidates) => candidates,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    for (time, point) in candidates {
+        let live = match three_support_candidate_is_live(supports, orientation, &time, policy)? {
+            Ok(live) => live,
+            Err(blocker) => return Ok(Err(blocker)),
+        };
+        if !live {
+            continue;
+        }
+        let mut all_match = true;
+        for (pair_index, (start, start_time)) in pair_starts.iter().enumerate() {
+            let right_index = if pair_starts.len() == supports.len() {
+                (pair_index + 1) % supports.len()
+            } else {
+                pair_index + 1
+            };
+            let matches = match tracked_support_pair_branch_matches(
+                &supports[pair_index],
+                &supports[right_index],
+                start,
+                start_time,
+                &point,
+                &time,
+                policy,
+            ) {
+                Ok(matches) => matches,
+                Err(blocker) => return Ok(Err(blocker)),
+            };
+            if !matches {
+                all_match = false;
+                break;
+            }
+        }
+        if all_match {
+            return Ok(Ok(Some((time, point))));
+        }
+    }
+    Ok(Ok(None))
+}
+
+fn three_support_candidate_is_live(
+    supports: &[ShapePreservingSupport2],
+    orientation: RealSign,
+    time: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
+    let orientation = match orientation {
+        RealSign::Positive => Real::one(),
+        RealSign::Negative => -Real::one(),
+        RealSign::Zero => unreachable!(),
+    };
+    for support in supports {
+        let ShapePreservingSupport2::Circle { signed_radius, .. } = support else {
+            continue;
+        };
+        let initial_sign = match real_sign(signed_radius, policy) {
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Some(RealSign::Zero) | None => {
+                return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+            }
+        };
+        let moved_radius = signed_radius - &orientation * time;
+        match real_sign(&moved_radius, policy) {
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) if sign == initial_sign => {}
+            Some(_) => return Ok(Ok(false)),
+            None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+        }
+    }
+    Ok(Ok(true))
+}
+
+fn tracked_support_pair_branch_matches(
+    first: &ShapePreservingSupport2,
+    second: &ShapePreservingSupport2,
+    start: &Point2,
+    start_time: &Real,
+    candidate: &Point2,
+    candidate_time: &Real,
+    policy: &CurvePolicy,
+) -> Result<bool, StraightSkeletonBlocker2> {
+    match compare_reals(candidate_time, start_time, policy) {
+        Some(Ordering::Greater) => {}
+        Some(Ordering::Equal | Ordering::Less) => return Ok(false),
+        None => return Err(StraightSkeletonBlocker2::UncertainEventOrdering),
+    }
+    let branch_measure = |point: &Point2| match (first, second) {
+        (ShapePreservingSupport2::Line { .. }, ShapePreservingSupport2::Line { .. }) => None,
+        (
+            ShapePreservingSupport2::Line {
+                normal_x, normal_y, ..
+            },
+            ShapePreservingSupport2::Circle { center, .. },
+        )
+        | (
+            ShapePreservingSupport2::Circle { center, .. },
+            ShapePreservingSupport2::Line {
+                normal_x, normal_y, ..
+            },
+        ) => Some(-normal_y * (point.x() - center.x()) + normal_x * (point.y() - center.y())),
+        (
+            ShapePreservingSupport2::Circle {
+                center: first_center,
+                ..
+            },
+            ShapePreservingSupport2::Circle {
+                center: second_center,
+                ..
+            },
+        ) => {
+            let (center_x, center_y) = second_center.delta_from(first_center);
+            let (point_x, point_y) = point.delta_from(first_center);
+            Some(&center_x * point_y - &center_y * point_x)
+        }
+    };
+    let Some(start_measure) = branch_measure(start) else {
+        return Ok(true);
+    };
+    let candidate_measure = branch_measure(candidate).expect("curved pair has a branch measure");
+    let start_sign = real_sign(&start_measure, policy)
+        .ok_or(StraightSkeletonBlocker2::UncertainWavefrontRelation)?;
+    let candidate_sign = real_sign(&candidate_measure, policy)
+        .ok_or(StraightSkeletonBlocker2::UncertainWavefrontRelation)?;
+    Ok(match (start_sign, candidate_sign) {
+        (_, RealSign::Zero) => true,
+        (RealSign::Zero, _) => false,
+        (left, right) => left == right,
+    })
+}
+
+fn three_support_events(
+    supports: &[ShapePreservingSupport2],
+    orientation: RealSign,
+    current_time: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<Vec<(Real, Point2)>, StraightSkeletonBlocker2>> {
     debug_assert_eq!(supports.len(), 3);
     let orientation = match orientation {
         RealSign::Positive => Real::one(),
@@ -2658,14 +2835,14 @@ fn three_support_event(
             None => return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)),
         };
         return Ok(match compare_reals(&time, current_time, policy) {
-            Some(Ordering::Greater) => Ok(Some((
+            Some(Ordering::Greater) => Ok(vec![(
                 time.clone(),
                 Point2::new(
                     &origin_x + &velocity_x * &time,
                     &origin_y + &velocity_y * time,
                 ),
-            ))),
-            Some(Ordering::Equal | Ordering::Less) => Ok(None),
+            )]),
+            Some(Ordering::Equal | Ordering::Less) => Ok(Vec::new()),
             None => Err(StraightSkeletonBlocker2::UncertainEventOrdering),
         });
     }
@@ -2688,21 +2865,28 @@ fn three_support_event(
             None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
         }
     }
-    let Some(mut time) = future.pop() else {
-        return Ok(Ok(None));
-    };
-    for candidate in future {
-        match compare_reals(&candidate, &time, policy) {
-            Some(Ordering::Less) => time = candidate,
-            Some(Ordering::Equal | Ordering::Greater) => {}
-            None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+    for index in 1..future.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            match compare_reals(&future[cursor], &future[cursor - 1], policy) {
+                Some(Ordering::Less) => future.swap(cursor, cursor - 1),
+                Some(Ordering::Equal | Ordering::Greater) => break,
+                None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+            }
+            cursor -= 1;
         }
     }
-    let point = Point2::new(
-        &origin_x + &velocity_x * &time,
-        &origin_y + &velocity_y * &time,
-    );
-    Ok(Ok(Some((time, point))))
+    future.dedup();
+    Ok(Ok(future
+        .into_iter()
+        .map(|time| {
+            let point = Point2::new(
+                &origin_x + &velocity_x * &time,
+                &origin_y + &velocity_y * &time,
+            );
+            (time, point)
+        })
+        .collect()))
 }
 
 fn circle_difference_equation(
@@ -5257,8 +5441,8 @@ mod tests {
 
         let left = Point2::new(r(-1), r(0));
         let right = Point2::new(r(1), r(0));
-        let upper_left = Point2::new(r(-3), r(1));
-        let upper_right = Point2::new(r(3), r(2));
+        let upper_left = Point2::new(r(-6), r(1));
+        let upper_right = Point2::new(r(6), r(1));
         let bubble_source = Contour2::try_new(vec![
             Segment2::Line(LineSeg2::try_new(upper_left.clone(), left.clone()).unwrap()),
             Segment2::Arc(
@@ -5289,6 +5473,31 @@ mod tests {
                 .iter()
                 .all(|event| [1, 2].contains(&event.source_vertex()))
         );
+    }
+
+    #[test]
+    fn local_arc_queue_rejects_an_extraneous_cone_sheet_root() {
+        let left = Point2::new(r(-1), r(0));
+        let right = Point2::new(r(1), r(0));
+        let upper_left = Point2::new(r(-3), r(1));
+        let upper_right = Point2::new(r(3), r(2));
+        let contour = Contour2::try_new(vec![
+            Segment2::Line(LineSeg2::try_new(upper_left.clone(), left.clone()).unwrap()),
+            Segment2::Arc(
+                CircularArc2::try_from_center(left, right.clone(), Point2::new(r(0), r(0)), false)
+                    .unwrap(),
+            ),
+            Segment2::Line(LineSeg2::try_new(right, upper_right.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(upper_right, upper_left).unwrap()),
+        ])
+        .unwrap();
+        let Classification::Decided(events) = contour
+            .straight_skeleton_local_arc_events(&CurvePolicy::certified())
+            .unwrap()
+        else {
+            panic!("branch validation must be decided");
+        };
+        assert!(events.is_empty());
     }
 
     #[test]
@@ -5492,13 +5701,14 @@ mod tests {
             vec![first_circle.clone(), second_circle.clone(), line],
             vec![first_circle, second_circle, third_circle],
         ] {
-            let Ok(Some((time, point))) =
-                three_support_event(&supports, RealSign::Positive, &Real::zero(), &policy).unwrap()
+            let Ok(events) =
+                three_support_events(&supports, RealSign::Positive, &Real::zero(), &policy)
+                    .unwrap()
             else {
                 panic!("support triple must have one certified future event");
             };
-            assert_eq!(time, r(1));
-            assert_eq!(point, Point2::new(r(0), r(0)));
+            assert!(!events.is_empty());
+            assert_eq!(events[0], (r(1), Point2::new(r(0), r(0))));
         }
     }
 

@@ -120,6 +120,9 @@ explicit `UnsupportedSegment` result until those event transitions land.
 `Contour2::straight_skeleton_local_arc_events` nevertheless exposes the exact
 three-cone local event queue today, including source-edge evidence and the
 paper's endpoint-convexity distinction between vanish and bubble candidates.
+Every algebraic cone root is checked against the continuously tracked endpoint
+branches and the live signed radius of each circular support, so roots from the
+opposite cone sheet or beyond a radius collapse are not scheduled.
 `Contour2::straight_skeleton_splice_events` likewise predicts the exact first
 future incident-support tangency at every reflex vertex, retaining its source
 vertex, source-edge pair, event time, and point. These per-class predictors do
