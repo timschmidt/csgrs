@@ -111,18 +111,20 @@ contours schedule successive native three-support vanish events by solving exact
 quadratic cone sections; line/line/line, line/line/circle,
 line/circle/circle, and three-circle support triples share that event queue.
 Surviving line/circle and circle/circle pairs finish at exact tangency, while
-line pairs retain their terminal ridge. Premature circular-radius and
-non-general-position terminal transitions remain typed blockers. Smooth
-co-circular contours also complete with their exact collapse time and an empty
-unextended shape-preserving skeleton.
+line pairs retain their terminal ridge. Three-support terminal components use
+one canonical carrier solution for every collapsing edge, avoiding artificial
+ordering uncertainty between algebraically equivalent roots. Circular-radius
+crossings that are not certified apex events and mixed topology classes at one
+exact time remain typed blockers. Smooth co-circular contours also complete
+with their exact collapse time and an empty unextended shape-preserving
+skeleton.
 Certified single-bubble contours now apply the local topology transition when
 the bubble removes the only circular edge, leaves a strictly convex line
-cycle, and no splice or nonincident carrier contact can precede it. Both
+cycle, and no splice, reflex-target contact, or finite edge-interior squeeze
+can precede it. Both
 incoming conic branches terminate at an explicit `BubbleEvent` node, while the
 detached full circle remains represented in the event count and maximum
 wavefront time.
-Other concave arc-polygon topology transitions and splice propagation remain
-explicit `UnsupportedSegment` results until those transitions land.
 `Contour2::straight_skeleton_local_arc_events` nevertheless exposes the exact
 three-cone local event queue today, including source-edge evidence and the
 paper's endpoint-convexity distinction between vanish and bubble candidates.
@@ -140,11 +142,9 @@ transition terminates the original reflex bisector at the splice node, and the
 shared recorded-support emitter materializes both subsequent parabolic
 generated-support branches without assigning them false source-edge indices.
 The recorded-support event kernel also tracks the expanding side of a generated
-circle through a later three-support edge collapse, updates the mutated cycle,
+circle through later three-support edge collapses, updates every mutated cycle,
 and emits the exact incident conic branch. `SupportEvent` keeps event-generated
-collapse provenance when no source-edge-only label would be truthful. Selecting
-and iterating those transitions in the public multi-component concave
-arc-polygon queue remains the next integration boundary.
+collapse provenance when no source-edge-only label would be truthful.
 `Contour2::straight_skeleton_global_contact_events` now supplies the global side
 of that queue. It intersects the exact support cones only inside the safe window
 ending at the next local event, replays each vertex branch, and rejects carrier
@@ -160,14 +160,19 @@ solver also handles the fixed-time section formed by two spatially parallel movi
 lines and a circle. A generated splice support can now be the target of a later
 source-reflex split or either side of a squeeze; `SupportSplitEvent` and the existing
 provenance-bearing `SqueezeEvent` retain that event history without false source-edge
-labels. Reflex vertices incident to generated supports, repeated generated splices,
-same-time mixed topology clusters, and the general public multi-component
-construction loop remain explicit integration boundaries. The additive public event
+labels. Squeeze children retain an explicit branch sign for each new tangent-born
+support pair, so their two components continue on the correct side after the
+zero-angle contact. The public multi-component construction loop now repeatedly
+selects and applies source and generated-support topology events, including
+expanding-arc squeezes, generated-support collapse, exact two- and three-support
+terminal events, and finite coincident anti-parallel line overlap trimming with a
+terminal ridge. It can carry split and squeeze fixtures through all subsequent
+local collapses in one shared exact graph. It also distinguishes a valid
+circular-edge apex vanish—both tracked endpoints meet the circle center
+exactly—from an unsupported radius-sheet crossing. Reflex vertices incident to
+generated supports, repeated generated splices, and same-time mixed topology
+clusters remain explicit integration boundaries. The additive public event
 interface is version 3.
-The staged multi-component completion kernel can already carry a certified split
-fixture through all subsequent local collapses in one shared exact graph. It also
-distinguishes a valid circular-edge apex vanish—both tracked endpoints meet the
-circle center exactly—from an unsupported radius-sheet crossing.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every
