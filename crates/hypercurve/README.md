@@ -172,8 +172,11 @@ circular-edge apex vanish—both tracked endpoints meet the circle center
 exactly—from an unsupported radius-sheet crossing. Reflex vertices incident to
 generated supports can schedule later split and splice events; repeated splices
 retain recursive support provenance, and post-splice circle tangencies select the
-currently live signed-radius sheet. Same-time mixed topology clusters remain an
-explicit integration boundary. The additive public event interface is version 5.
+currently live signed-radius sheet. Exact-time split, squeeze, splice, and local
+collapse candidates are collected before mutation; events at distinct points with
+disjoint support neighborhoods commute through stable support identity. Coincident
+or support-sharing mixed topology clusters remain an explicit integration boundary.
+The additive public event interface is version 5.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every
