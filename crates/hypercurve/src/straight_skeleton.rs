@@ -162,6 +162,42 @@ pub struct StraightSkeletonVertexTrajectory2 {
     affine_time: Option<StraightSkeletonAffineTime2>,
 }
 
+/// Local three-support event class for a circular-arc wavefront edge.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum StraightSkeletonLocalArcEventKind2 {
+    /// Both endpoints meet and the intervening edge disappears.
+    Vanish,
+    /// A shrinking circular edge closes into a full circle instead of disappearing.
+    Bubble,
+}
+
+/// Exact candidate obtained from three consecutive support cones.
+#[derive(Clone, Debug, PartialEq)]
+pub struct StraightSkeletonLocalArcEvent2 {
+    source_edge: usize,
+    time: Real,
+    point: Point2,
+    kind: StraightSkeletonLocalArcEventKind2,
+}
+
+impl StraightSkeletonLocalArcEvent2 {
+    pub const fn source_edge(&self) -> usize {
+        self.source_edge
+    }
+
+    pub const fn time(&self) -> &Real {
+        &self.time
+    }
+
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+
+    pub const fn kind(&self) -> StraightSkeletonLocalArcEventKind2 {
+        self.kind
+    }
+}
+
 impl StraightSkeletonVertexTrajectory2 {
     pub const fn source_vertex(&self) -> usize {
         self.source_vertex
@@ -553,6 +589,139 @@ impl Contour2 {
             trajectories.push(trajectory);
         }
         Ok(Classification::Decided(trajectories))
+    }
+
+    /// Predict exact local vanish and bubble candidates for circular edges.
+    ///
+    /// Each candidate is the future intersection of the three consecutive
+    /// right-cone supports around that edge. Bubble classification follows the
+    /// arc-polygon rule: the shrinking circular edge has two nonconvex
+    /// endpoints, but they are not both smooth. Global split and squeeze
+    /// validity is intentionally separate from this local queue.
+    pub fn straight_skeleton_local_arc_events(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<StraightSkeletonLocalArcEvent2>>> {
+        let Some(area) = self.signed_area()? else {
+            return Ok(Classification::Uncertain(
+                crate::UncertaintyReason::Unsupported,
+            ));
+        };
+        let orientation = match real_sign(&area, policy) {
+            Some(RealSign::Positive) => RealSign::Positive,
+            Some(RealSign::Negative) => RealSign::Negative,
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::Boundary,
+                ));
+            }
+            None => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::RealSign,
+                ));
+            }
+        };
+        let count = self.segments().len();
+        let mut nonconvex = Vec::with_capacity(count);
+        let mut smooth = Vec::with_capacity(count);
+        for vertex in 0..count {
+            let incoming = segment_end_tangent(&self.segments()[(vertex + count - 1) % count]);
+            let outgoing = segment_start_tangent(&self.segments()[vertex]);
+            let turn = &incoming.0 * &outgoing.1 - &incoming.1 * &outgoing.0;
+            match real_sign(&turn, policy) {
+                Some(RealSign::Zero) => {
+                    nonconvex.push(true);
+                    smooth.push(true);
+                }
+                Some(sign) => {
+                    nonconvex.push(sign != orientation);
+                    smooth.push(false);
+                }
+                None => {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            }
+        }
+        let supports = self
+            .segments()
+            .iter()
+            .map(|segment| shape_preserving_support(segment, orientation))
+            .collect::<CurveResult<Vec<_>>>()?;
+        let orientation_scalar = match orientation {
+            RealSign::Positive => Real::one(),
+            RealSign::Negative => -Real::one(),
+            RealSign::Zero => unreachable!(),
+        };
+        let mut events = Vec::new();
+        for source_edge in 0..count {
+            let Segment2::Arc(_) = &self.segments()[source_edge] else {
+                continue;
+            };
+            let previous = (source_edge + count - 1) % count;
+            let next = (source_edge + 1) % count;
+            let triple = vec![
+                supports[previous].clone(),
+                supports[source_edge].clone(),
+                supports[next].clone(),
+            ];
+            let (time, point) =
+                match three_support_event(&triple, orientation, &Real::zero(), policy)? {
+                    Ok(Some(event)) => event,
+                    Ok(None) => continue,
+                    Err(_) => {
+                        return Ok(Classification::Uncertain(
+                            crate::UncertaintyReason::Predicate,
+                        ));
+                    }
+                };
+            let ShapePreservingSupport2::Circle { signed_radius, .. } = &supports[source_edge]
+            else {
+                unreachable!();
+            };
+            let shrinking = match real_sign(&(&orientation_scalar * signed_radius), policy) {
+                Some(RealSign::Positive) => true,
+                Some(RealSign::Negative | RealSign::Zero) => false,
+                None => {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            };
+            let start_vertex = source_edge;
+            let end_vertex = (source_edge + 1) % count;
+            let bubble = shrinking
+                && nonconvex[start_vertex]
+                && nonconvex[end_vertex]
+                && !(smooth[start_vertex] && smooth[end_vertex]);
+            events.push(StraightSkeletonLocalArcEvent2 {
+                source_edge,
+                time,
+                point,
+                kind: if bubble {
+                    StraightSkeletonLocalArcEventKind2::Bubble
+                } else {
+                    StraightSkeletonLocalArcEventKind2::Vanish
+                },
+            });
+        }
+        for index in 1..events.len() {
+            let mut cursor = index;
+            while cursor > 0 {
+                match compare_reals(&events[cursor].time, &events[cursor - 1].time, policy) {
+                    Some(Ordering::Less) => events.swap(cursor, cursor - 1),
+                    Some(Ordering::Equal | Ordering::Greater) => break,
+                    None => {
+                        return Ok(Classification::Uncertain(
+                            crate::UncertaintyReason::RealSign,
+                        ));
+                    }
+                }
+                cursor -= 1;
+            }
+        }
+        Ok(Classification::Decided(events))
     }
 
     /// Construct the exact interior straight skeleton of a supported contour.
@@ -4718,6 +4887,53 @@ mod tests {
             assert_eq!(line_count, 1);
             assert_eq!(conic_count, 2);
         }
+    }
+
+    #[test]
+    fn local_arc_queue_distinguishes_vanish_and_bubble_candidates() {
+        let origin = Point2::new(r(0), r(0));
+        let right = Point2::new(r(1), r(0));
+        let top = Point2::new(r(0), r(1));
+        let sector = Contour2::try_new(vec![
+            Segment2::Arc(
+                CircularArc2::try_from_center(right.clone(), top.clone(), origin.clone(), false)
+                    .unwrap(),
+            ),
+            Segment2::Line(LineSeg2::try_new(top, origin.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(origin, right).unwrap()),
+        ])
+        .unwrap();
+        let Classification::Decided(events) = sector
+            .straight_skeleton_local_arc_events(&CurvePolicy::certified())
+            .unwrap()
+        else {
+            panic!("sector local event must be decided");
+        };
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].kind(), StraightSkeletonLocalArcEventKind2::Vanish);
+
+        let left = Point2::new(r(-1), r(0));
+        let right = Point2::new(r(1), r(0));
+        let upper_left = Point2::new(r(-3), r(1));
+        let upper_right = Point2::new(r(3), r(2));
+        let bubble_source = Contour2::try_new(vec![
+            Segment2::Line(LineSeg2::try_new(upper_left.clone(), left.clone()).unwrap()),
+            Segment2::Arc(
+                CircularArc2::try_from_center(left, right.clone(), Point2::new(r(0), r(0)), false)
+                    .unwrap(),
+            ),
+            Segment2::Line(LineSeg2::try_new(right, upper_right.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(upper_right, upper_left).unwrap()),
+        ])
+        .unwrap();
+        let bubble_events = bubble_source
+            .straight_skeleton_local_arc_events(&CurvePolicy::certified())
+            .unwrap();
+        let Classification::Decided(events) = bubble_events else {
+            panic!("bubble local event must be decided: {bubble_events:?}");
+        };
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].kind(), StraightSkeletonLocalArcEventKind2::Bubble);
     }
 
     #[test]

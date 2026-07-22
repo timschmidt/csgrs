@@ -117,6 +117,9 @@ co-circular contours also complete with their exact collapse time and an empty
 unextended shape-preserving skeleton.
 Concave arc-polygon contact, bubble, squeeze, and splice propagation remains an
 explicit `UnsupportedSegment` result until those event transitions land.
+`Contour2::straight_skeleton_local_arc_events` nevertheless exposes the exact
+three-cone local event queue today, including source-edge evidence and the
+paper's endpoint-convexity distinction between vanish and bubble candidates.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every
