@@ -170,9 +170,10 @@ terminal ridge. It can carry split and squeeze fixtures through all subsequent
 local collapses in one shared exact graph. It also distinguishes a valid
 circular-edge apex vanish—both tracked endpoints meet the circle center
 exactly—from an unsupported radius-sheet crossing. Reflex vertices incident to
-generated supports, repeated generated splices, and same-time mixed topology
-clusters remain explicit integration boundaries. The additive public event
-interface is version 4.
+generated supports can schedule later split and splice events; repeated splices
+retain recursive support provenance, and post-splice circle tangencies select the
+currently live signed-radius sheet. Same-time mixed topology clusters remain an
+explicit integration boundary. The additive public event interface is version 5.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every
