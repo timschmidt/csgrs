@@ -150,7 +150,12 @@ of that queue. It intersects the exact support cones only inside the safe window
 ending at the next local event, replays each vertex branch, and rejects carrier
 contacts outside the strict interior of the finite evolved line or directed
 circular edge. Exact mixed line/arc split and squeeze fixtures cover both global
-event classes. The additive public event interface is version 2.
+event classes. Their topology kernels now materialize the split node and incoming
+reflex branch, duplicate the hit support across the two split cycles, or duplicate
+both contacting supports across the two squeeze cycles and retain an explicit
+`SqueezeEvent`. Iterating those new components in the public construction loop is
+the remaining integration boundary. The additive public event interface is version
+2.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every

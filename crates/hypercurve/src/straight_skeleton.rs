@@ -382,6 +382,11 @@ pub enum StraightSkeletonNodeKind2 {
     SupportEvent {
         collapsed_supports: Vec<StraightSkeletonSupportProvenance2>,
     },
+    /// Two nonadjacent finite wavefront edges touched in their interiors.
+    SqueezeEvent {
+        first: StraightSkeletonSupportProvenance2,
+        second: StraightSkeletonSupportProvenance2,
+    },
     /// A reflex vertex contacted the live interior of a nonincident edge.
     SplitEvent {
         left_source_edge: usize,
@@ -3165,6 +3170,201 @@ fn materialize_splice_topology_transition(
         Err(blocker) => return Ok(Err(blocker)),
     };
     Ok(Ok((event_node, generated)))
+}
+
+fn cyclic_support_range(supports: &[usize], start: usize, end: usize) -> Vec<usize> {
+    let mut range = vec![supports[start]];
+    let mut cursor = start;
+    while cursor != end {
+        cursor = (cursor + 1) % supports.len();
+        range.push(supports[cursor]);
+    }
+    range
+}
+
+fn shape_preserving_cycle_after_global_contact(
+    supports: Vec<usize>,
+    old_pair_start: &BTreeMap<(usize, usize), usize>,
+    new_pair: (usize, usize),
+    event_node: usize,
+) -> Result<ActiveShapePreservingCycle2, StraightSkeletonBlocker2> {
+    if supports.len() < 2 {
+        return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
+    }
+    let mut pair_start = BTreeMap::new();
+    for index in 0..supports.len() {
+        let pair = (
+            supports[(index + supports.len() - 1) % supports.len()],
+            supports[index],
+        );
+        let start = if pair == new_pair {
+            event_node
+        } else {
+            old_pair_start
+                .get(&pair)
+                .copied()
+                .ok_or(StraightSkeletonBlocker2::InvalidSplitTopology)?
+        };
+        pair_start.insert(pair, start);
+    }
+    Ok(ActiveShapePreservingCycle2 {
+        supports,
+        pair_start,
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(not(test), allow(dead_code))]
+fn materialize_shape_preserving_split_transition(
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    arcs: &mut Vec<StraightSkeletonArc2>,
+    support_records: &[ShapePreservingSupportRecord2],
+    active: &ActiveShapePreservingCycle2,
+    event: &StraightSkeletonGlobalContactEvent2,
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(usize, [ActiveShapePreservingCycle2; 2]), StraightSkeletonBlocker2>> {
+    let StraightSkeletonGlobalContactKind2::Split {
+        source_vertex,
+        left_source_edge,
+        right_source_edge,
+        hit_source_edge,
+    } = event.kind
+    else {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    };
+    let Some(right_position) = active
+        .supports
+        .iter()
+        .position(|support| *support == right_source_edge)
+    else {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    };
+    let left_position = (right_position + active.supports.len() - 1) % active.supports.len();
+    let Some(hit_position) = active
+        .supports
+        .iter()
+        .position(|support| *support == hit_source_edge)
+    else {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    };
+    if active.supports[left_position] != left_source_edge
+        || hit_position == left_position
+        || hit_position == right_position
+    {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    }
+    let Some(start_node) = active
+        .pair_start
+        .get(&(left_source_edge, right_source_edge))
+        .copied()
+    else {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    };
+    let event_node = nodes.len();
+    nodes.push(StraightSkeletonNode2 {
+        point: event.point.clone(),
+        time: event.time.clone(),
+        kind: StraightSkeletonNodeKind2::SplitEvent {
+            left_source_edge,
+            right_source_edge,
+            hit_source_edge,
+        },
+    });
+    if let Err(blocker) = add_recorded_shape_preserving_arc(
+        arcs,
+        nodes,
+        start_node,
+        event_node,
+        (left_source_edge, right_source_edge),
+        support_records,
+        orientation,
+        policy,
+    )? {
+        return Ok(Err(blocker));
+    }
+    let first_supports = cyclic_support_range(&active.supports, right_position, hit_position);
+    let second_supports = cyclic_support_range(&active.supports, hit_position, left_position);
+    let first = match shape_preserving_cycle_after_global_contact(
+        first_supports,
+        &active.pair_start,
+        (hit_source_edge, right_source_edge),
+        event_node,
+    ) {
+        Ok(cycle) => cycle,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    let second = match shape_preserving_cycle_after_global_contact(
+        second_supports,
+        &active.pair_start,
+        (left_source_edge, hit_source_edge),
+        event_node,
+    ) {
+        Ok(cycle) => cycle,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    let _ = source_vertex;
+    Ok(Ok((event_node, [first, second])))
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn materialize_shape_preserving_squeeze_transition(
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    support_records: &[ShapePreservingSupportRecord2],
+    active: &ActiveShapePreservingCycle2,
+    event: &StraightSkeletonGlobalContactEvent2,
+) -> Result<(usize, [ActiveShapePreservingCycle2; 2]), StraightSkeletonBlocker2> {
+    let StraightSkeletonGlobalContactKind2::Squeeze {
+        first_source_edge,
+        second_source_edge,
+    } = event.kind
+    else {
+        return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
+    };
+    let Some(first_position) = active
+        .supports
+        .iter()
+        .position(|support| *support == first_source_edge)
+    else {
+        return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
+    };
+    let Some(second_position) = active
+        .supports
+        .iter()
+        .position(|support| *support == second_source_edge)
+    else {
+        return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
+    };
+    if first_position == second_position
+        || (first_position + 1) % active.supports.len() == second_position
+        || (second_position + 1) % active.supports.len() == first_position
+    {
+        return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
+    }
+    let event_node = nodes.len();
+    nodes.push(StraightSkeletonNode2 {
+        point: event.point.clone(),
+        time: event.time.clone(),
+        kind: StraightSkeletonNodeKind2::SqueezeEvent {
+            first: support_records[first_source_edge].provenance.clone(),
+            second: support_records[second_source_edge].provenance.clone(),
+        },
+    });
+    let first_supports = cyclic_support_range(&active.supports, first_position, second_position);
+    let second_supports = cyclic_support_range(&active.supports, second_position, first_position);
+    let first = shape_preserving_cycle_after_global_contact(
+        first_supports,
+        &active.pair_start,
+        (second_source_edge, first_source_edge),
+        event_node,
+    )?;
+    let second = shape_preserving_cycle_after_global_contact(
+        second_supports,
+        &active.pair_start,
+        (first_source_edge, second_source_edge),
+        event_node,
+    )?;
+    Ok((event_node, [first, second]))
 }
 
 fn recorded_three_support_candidate_is_live(
@@ -6843,6 +7043,43 @@ mod tests {
         Contour2::try_new(segments).unwrap()
     }
 
+    fn initial_shape_preserving_state(
+        contour: &Contour2,
+        orientation: RealSign,
+    ) -> (
+        Vec<ShapePreservingSupportRecord2>,
+        Vec<StraightSkeletonNode2>,
+        ActiveShapePreservingCycle2,
+    ) {
+        let records = contour
+            .segments()
+            .iter()
+            .enumerate()
+            .map(|(source_edge, segment)| ShapePreservingSupportRecord2 {
+                geometry: shape_preserving_support(segment, orientation).unwrap(),
+                provenance: StraightSkeletonSupportProvenance2::SourceEdge { source_edge },
+            })
+            .collect::<Vec<_>>();
+        let nodes = contour
+            .segments()
+            .iter()
+            .enumerate()
+            .map(|(source_vertex, segment)| StraightSkeletonNode2 {
+                point: segment.start().clone(),
+                time: Real::zero(),
+                kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+            })
+            .collect::<Vec<_>>();
+        let count = records.len();
+        let active = ActiveShapePreservingCycle2 {
+            supports: (0..count).collect(),
+            pair_start: (0..count)
+                .map(|right| (((right + count - 1) % count, right), right))
+                .collect(),
+        };
+        (records, nodes, active)
+    }
+
     #[test]
     fn curve_path_dispatch_preserves_native_families_and_reports_capabilities() {
         assert_eq!(STRAIGHT_SKELETON_INTERFACE_VERSION, 2);
@@ -8409,6 +8646,28 @@ mod tests {
             split.point(),
             &Point2::new((r(87) / r(4)).unwrap(), (r(7) / r(4)).unwrap())
         );
+        let (records, mut nodes, active) =
+            initial_shape_preserving_state(&source, RealSign::Positive);
+        let mut arcs = Vec::new();
+        let (event_node, cycles) = materialize_shape_preserving_split_transition(
+            &mut nodes,
+            &mut arcs,
+            &records,
+            &active,
+            split,
+            RealSign::Positive,
+            &CurvePolicy::certified(),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(event_node, 9);
+        assert_eq!(cycles[0].supports, vec![4, 5, 6, 7, 8, 0]);
+        assert_eq!(cycles[1].supports, vec![0, 1, 2, 3]);
+        assert_eq!(cycles[0].pair_start[&(0, 4)], event_node);
+        assert_eq!(cycles[1].pair_start[&(3, 0)], event_node);
+        assert_eq!(arcs.len(), 1);
+        assert_eq!(arcs[0].start_node(), 4);
+        assert_eq!(arcs[0].end_node(), event_node);
     }
 
     #[test]
@@ -8458,6 +8717,23 @@ mod tests {
             .expect("bottom line and expanding notch must squeeze");
         assert_eq!(squeeze.time(), &(r(9) / r(2)).unwrap());
         assert_eq!(squeeze.point(), &Point2::new(r(15), (r(9) / r(2)).unwrap()));
+        let (records, mut nodes, active) =
+            initial_shape_preserving_state(&source, RealSign::Positive);
+        let (event_node, cycles) =
+            materialize_shape_preserving_squeeze_transition(&mut nodes, &records, &active, squeeze)
+                .unwrap();
+        assert_eq!(event_node, 6);
+        assert_eq!(cycles[0].supports, vec![0, 1, 2, 3]);
+        assert_eq!(cycles[1].supports, vec![3, 4, 5, 0]);
+        assert_eq!(cycles[0].pair_start[&(3, 0)], event_node);
+        assert_eq!(cycles[1].pair_start[&(0, 3)], event_node);
+        assert_eq!(
+            nodes[event_node].kind(),
+            &StraightSkeletonNodeKind2::SqueezeEvent {
+                first: StraightSkeletonSupportProvenance2::SourceEdge { source_edge: 0 },
+                second: StraightSkeletonSupportProvenance2::SourceEdge { source_edge: 3 },
+            }
+        );
     }
 
     #[test]
