@@ -98,8 +98,9 @@ and the weaker source-chord fallback used for corners or unsupported families.
 contours. Unit-normal support lines, vertex trajectories, edge-collapse times,
 generic reflex split events, live-edge validation, simultaneous edge events,
 commuting same-time events at distinct points, terminal vertex/multi-split
-clusters, terminal ridges, and source-edge provenance remain exact `Real`
-evidence in the returned graph. Non-terminal same-point multi-split clusters
+clusters, non-terminal reflex-vertex clusters, collinear support normalization,
+terminal ridges, and source-edge provenance remain exact `Real` evidence in the
+returned graph. Coincident multi-split clusters that also pierce edge interiors
 remain typed blockers; they are never substituted with centroid rays.
 Circular-arc contours remain explicit `UnsupportedSegment` results until their
 shape-preserving conic wavefront trajectories and additional contact events land.
@@ -377,8 +378,8 @@ Implemented today:
   and conservative unresolved states.
 - exact simple-polygon straight-skeleton wavefront construction with generic reflex
   split events, independently commuting simultaneous events, terminal vertex events,
-  one-dimensional terminal wavefronts, and explicit blockers for unresolved
-  non-terminal same-point multi-split clusters.
+  non-terminal multi-vertex events, one-dimensional terminal wavefronts, and
+  explicit blockers for unresolved coincident edge-interior multi-split clusters.
 
 Known limits: shared components requiring multivalued implicit branch correspondence,
 source curves with neither certified source lineage nor an injective graph axis, generic

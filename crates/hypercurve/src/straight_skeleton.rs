@@ -353,6 +353,7 @@ impl Contour2 {
         };
 
         let mut has_reflex_vertex = false;
+        let mut has_flat_vertex = false;
         for vertex_index in 0..source_edge_count {
             let incoming = lines[(vertex_index + source_edge_count - 1) % source_edge_count];
             let outgoing = lines[vertex_index];
@@ -361,10 +362,22 @@ impl Contour2 {
             let turn = &incoming_x * &outgoing_y - &incoming_y * &outgoing_x;
             match real_sign(&turn, policy) {
                 Some(RealSign::Zero) => {
-                    return Ok(blocked(
-                        StraightSkeletonStage2::InputValidation,
-                        StraightSkeletonBlocker2::DegenerateVertex { vertex_index },
-                    ));
+                    let direction_dot = &incoming_x * &outgoing_x + &incoming_y * &outgoing_y;
+                    match real_sign(&direction_dot, policy) {
+                        Some(RealSign::Positive) => has_flat_vertex = true,
+                        Some(RealSign::Negative | RealSign::Zero) => {
+                            return Ok(blocked(
+                                StraightSkeletonStage2::InputValidation,
+                                StraightSkeletonBlocker2::DegenerateVertex { vertex_index },
+                            ));
+                        }
+                        None => {
+                            return Ok(blocked(
+                                StraightSkeletonStage2::InputValidation,
+                                StraightSkeletonBlocker2::UncertainVertexTurn { vertex_index },
+                            ));
+                        }
+                    }
                 }
                 Some(sign) if sign == orientation => {}
                 Some(_) => {
@@ -399,7 +412,7 @@ impl Contour2 {
             });
         }
 
-        let result = if has_reflex_vertex {
+        let result = if has_reflex_vertex || has_flat_vertex {
             build_general_line_straight_skeleton(&supports, &lines, orientation, policy)
         } else {
             build_convex_straight_skeleton(&supports, &lines, policy)
@@ -454,12 +467,22 @@ struct SplitCandidate2 {
 }
 
 #[derive(Clone, Debug)]
+struct VertexCandidate2 {
+    cycle: usize,
+    first_vertex: usize,
+    second_vertex: usize,
+    time: Real,
+    point: Point2,
+}
+
+#[derive(Clone, Debug)]
 enum GeneralLineEvent2 {
     Edge {
         cycle: usize,
         candidate: EdgeEventCandidate2,
     },
     Split(SplitCandidate2),
+    Vertex(VertexCandidate2),
 }
 
 impl GeneralLineEvent2 {
@@ -467,6 +490,7 @@ impl GeneralLineEvent2 {
         match self {
             Self::Edge { candidate, .. } => &candidate.time,
             Self::Split(candidate) => &candidate.time,
+            Self::Vertex(candidate) => &candidate.time,
         }
     }
 }
@@ -494,20 +518,31 @@ fn build_general_line_straight_skeleton(
     policy: &CurvePolicy,
 ) -> CurveResult<Result<(StraightSkeleton2, usize, usize), SkeletonBuildBlock>> {
     let source_edge_count = supports.len();
-    let mut nodes = source_lines
+    let mut initial_cycle = ActiveWavefrontCycle2 {
+        source_edges: (0..source_edge_count).collect(),
+        vertex_start_nodes: (0..source_edge_count).collect(),
+    };
+    if merge_codirected_coincident_edges(&mut initial_cycle, supports, policy).is_none() {
+        return Ok(Err((
+            StraightSkeletonStage2::WavefrontPreparation,
+            StraightSkeletonBlocker2::UncertainWavefrontRelation,
+            0,
+            0,
+        )));
+    }
+    let mut nodes = initial_cycle
+        .vertex_start_nodes
         .iter()
-        .enumerate()
-        .map(|(source_vertex, line)| StraightSkeletonNode2 {
-            point: line.start().clone(),
+        .copied()
+        .map(|source_vertex| StraightSkeletonNode2 {
+            point: source_lines[source_vertex].start().clone(),
             time: Real::zero(),
             kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
         })
         .collect::<Vec<_>>();
+    initial_cycle.vertex_start_nodes = (0..initial_cycle.source_edges.len()).collect();
     let mut arcs = Vec::new();
-    let mut cycles = vec![ActiveWavefrontCycle2 {
-        source_edges: (0..source_edge_count).collect(),
-        vertex_start_nodes: (0..source_edge_count).collect(),
-    }];
+    let mut cycles = vec![initial_cycle];
     let mut current_time = Real::zero();
     let mut event_count = 0usize;
     let mut simultaneous_event_count = 0usize;
@@ -581,6 +616,49 @@ fn build_general_line_straight_skeleton(
                     }
                 }
             }
+            for first_vertex in 0..cycle.source_edges.len() {
+                if active_vertex_is_reflex(cycle, source_lines, first_vertex, orientation, policy)
+                    != Some(true)
+                {
+                    continue;
+                }
+                for second_vertex in (first_vertex + 1)..cycle.source_edges.len() {
+                    if second_vertex == first_vertex + 1
+                        || (first_vertex == 0 && second_vertex + 1 == cycle.source_edges.len())
+                        || active_vertex_is_reflex(
+                            cycle,
+                            source_lines,
+                            second_vertex,
+                            orientation,
+                            policy,
+                        ) != Some(true)
+                    {
+                        continue;
+                    }
+                    match vertex_collision_candidate(
+                        supports,
+                        cycle,
+                        cycle_index,
+                        first_vertex,
+                        second_vertex,
+                        &current_time,
+                        policy,
+                    )? {
+                        Ok(Some(candidate)) => {
+                            candidates.push(GeneralLineEvent2::Vertex(candidate));
+                        }
+                        Ok(None) => {}
+                        Err(blocker) => {
+                            return Ok(Err((
+                                StraightSkeletonStage2::EventScheduling,
+                                blocker,
+                                event_count,
+                                simultaneous_event_count,
+                            )));
+                        }
+                    }
+                }
+            }
         }
 
         let Some(mut minimum_time) = candidates.first().map(|event| event.time().clone()) else {
@@ -629,9 +707,13 @@ fn build_general_line_straight_skeleton(
             .iter()
             .filter(|event| matches!(event, GeneralLineEvent2::Split(_)))
             .count();
-        if split_count != 0 {
-            if split_count != 1 || simultaneous.len() != 1 {
-                match split_cycles_are_terminal_after_edge_collapses(
+        let vertex_count = simultaneous
+            .iter()
+            .filter(|event| matches!(event, GeneralLineEvent2::Vertex(_)))
+            .count();
+        if split_count + vertex_count != 0 {
+            if split_count != 1 || vertex_count != 0 || simultaneous.len() != 1 {
+                match topological_event_cycles_are_terminal_after_edge_collapses(
                     &cycles,
                     &simultaneous,
                     supports,
@@ -748,21 +830,22 @@ fn build_general_line_straight_skeleton(
     )))
 }
 
-fn split_cycles_are_terminal_after_edge_collapses(
+fn topological_event_cycles_are_terminal_after_edge_collapses(
     cycles: &[ActiveWavefrontCycle2],
     events: &[GeneralLineEvent2],
     supports: &[MovingSupport2],
     time: &Real,
     policy: &CurvePolicy,
 ) -> Option<bool> {
-    let split_cycles = events
+    let event_cycles = events
         .iter()
         .filter_map(|event| match event {
             GeneralLineEvent2::Split(candidate) => Some(candidate.cycle),
+            GeneralLineEvent2::Vertex(candidate) => Some(candidate.cycle),
             GeneralLineEvent2::Edge { .. } => None,
         })
         .collect::<BTreeSet<_>>();
-    for cycle_index in split_cycles {
+    for cycle_index in event_cycles {
         let cycle = cycles.get(cycle_index)?;
         let removed = events
             .iter()
@@ -854,6 +937,13 @@ struct StableEdgeEvent2 {
     point: Point2,
 }
 
+#[derive(Clone, Debug)]
+struct StableVertexCluster2 {
+    source_pairs: Vec<(usize, usize)>,
+    time: Real,
+    point: Point2,
+}
+
 /// Apply simultaneous events at distinct exact points through stable source
 /// evidence. Earlier transitions can renumber or split active cycles, so every
 /// later transition is relocated by its incident source supports before use.
@@ -866,6 +956,7 @@ fn apply_independent_simultaneous_events(
     policy: &CurvePolicy,
 ) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
     let mut splits = Vec::new();
+    let mut vertices = Vec::new();
     let mut edges = Vec::new();
     for event in events {
         match event {
@@ -892,17 +983,68 @@ fn apply_independent_simultaneous_events(
                     point: candidate.point.clone(),
                 });
             }
+            GeneralLineEvent2::Vertex(candidate) => {
+                let Some(cycle) = cycles.get(candidate.cycle) else {
+                    return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+                };
+                let count = cycle.source_edges.len();
+                let pairs = [
+                    (
+                        cycle.source_edges[(candidate.first_vertex + count - 1) % count],
+                        cycle.source_edges[candidate.first_vertex],
+                    ),
+                    (
+                        cycle.source_edges[(candidate.second_vertex + count - 1) % count],
+                        cycle.source_edges[candidate.second_vertex],
+                    ),
+                ];
+                if let Some(cluster) =
+                    vertices
+                        .iter_mut()
+                        .find(|cluster: &&mut StableVertexCluster2| {
+                            cluster.point == candidate.point && cluster.time == candidate.time
+                        })
+                {
+                    cluster.source_pairs.extend(pairs);
+                    cluster.source_pairs.sort_unstable();
+                    cluster.source_pairs.dedup();
+                } else {
+                    vertices.push(StableVertexCluster2 {
+                        source_pairs: pairs.into_iter().collect(),
+                        time: candidate.time.clone(),
+                        point: candidate.point.clone(),
+                    });
+                }
+            }
         }
     }
 
-    for (index, split) in splits.iter().enumerate() {
-        if splits
+    let topological_points = splits
+        .iter()
+        .map(|split| &split.point)
+        .chain(vertices.iter().map(|vertex| &vertex.point))
+        .collect::<Vec<_>>();
+    for (index, point) in topological_points.iter().enumerate() {
+        if topological_points
             .iter()
             .skip(index + 1)
-            .any(|other| other.point == split.point)
-            || edges.iter().any(|edge| edge.point == split.point)
+            .any(|other| *other == *point)
+            || edges.iter().any(|edge| &edge.point == *point)
         {
             return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
+        }
+    }
+
+    vertices.sort_by(|first, second| first.source_pairs.cmp(&second.source_pairs));
+    for stable in vertices {
+        let vertex = match relocate_vertex_cluster(cycles, &stable) {
+            Some(candidate) => candidate,
+            None => return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology)),
+        };
+        if let Err(blocker) =
+            apply_general_vertex_cluster(cycles, nodes, arcs, &vertex, supports, policy)?
+        {
+            return Ok(Err(blocker));
         }
     }
 
@@ -1011,6 +1153,47 @@ fn relocate_split_candidate(
     found
 }
 
+#[derive(Clone, Debug)]
+struct VertexClusterCandidate2 {
+    cycle: usize,
+    vertices: Vec<usize>,
+    time: Real,
+    point: Point2,
+}
+
+fn relocate_vertex_cluster(
+    cycles: &[ActiveWavefrontCycle2],
+    stable: &StableVertexCluster2,
+) -> Option<VertexClusterCandidate2> {
+    let mut found = None;
+    for (cycle_index, cycle) in cycles.iter().enumerate() {
+        let count = cycle.source_edges.len();
+        let mut vertices = Vec::new();
+        for vertex in 0..count {
+            let pair = (
+                cycle.source_edges[(vertex + count - 1) % count],
+                cycle.source_edges[vertex],
+            );
+            if stable.source_pairs.contains(&pair) {
+                vertices.push(vertex);
+            }
+        }
+        if vertices.len() != stable.source_pairs.len() {
+            continue;
+        }
+        if found.is_some() {
+            return None;
+        }
+        found = Some(VertexClusterCandidate2 {
+            cycle: cycle_index,
+            vertices,
+            time: stable.time.clone(),
+            point: stable.point.clone(),
+        });
+    }
+    found
+}
+
 fn active_vertex_is_reflex(
     cycle: &ActiveWavefrontCycle2,
     source_lines: &[&crate::LineSeg2],
@@ -1095,6 +1278,69 @@ fn general_split_candidate(
     }
 }
 
+fn vertex_collision_candidate(
+    supports: &[MovingSupport2],
+    cycle: &ActiveWavefrontCycle2,
+    cycle_index: usize,
+    first_vertex: usize,
+    second_vertex: usize,
+    current_time: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<Option<VertexCandidate2>, StraightSkeletonBlocker2>> {
+    let count = cycle.source_edges.len();
+    let trajectory = |vertex: usize| {
+        vertex_trajectory(
+            &supports[cycle.source_edges[(vertex + count - 1) % count]],
+            &supports[cycle.source_edges[vertex]],
+            policy,
+        )
+    };
+    let first = match trajectory(first_vertex)? {
+        Ok(trajectory) => trajectory,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    let second = match trajectory(second_vertex)? {
+        Ok(trajectory) => trajectory,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    let delta_origin_x = &first.origin_x - &second.origin_x;
+    let delta_origin_y = &first.origin_y - &second.origin_y;
+    let delta_velocity_x = &first.velocity_x - &second.velocity_x;
+    let delta_velocity_y = &first.velocity_y - &second.velocity_y;
+    let time = match solve_collision_coordinate(&delta_origin_x, &delta_velocity_x, policy)? {
+        CollisionCoordinate::Time(time) => time,
+        CollisionCoordinate::Coincident => {
+            match solve_collision_coordinate(&delta_origin_y, &delta_velocity_y, policy)? {
+                CollisionCoordinate::Time(time) => time,
+                CollisionCoordinate::Coincident | CollisionCoordinate::Never => {
+                    return Ok(Ok(None));
+                }
+            }
+        }
+        CollisionCoordinate::Never => return Ok(Ok(None)),
+    };
+    let residual_x = &delta_origin_x + &delta_velocity_x * &time;
+    let residual_y = &delta_origin_y + &delta_velocity_y * &time;
+    for residual in [&residual_x, &residual_y] {
+        match real_sign(residual, policy) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Positive | RealSign::Negative) => return Ok(Ok(None)),
+            None => return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)),
+        }
+    }
+    match compare_reals(&time, current_time, policy) {
+        Some(Ordering::Greater) => Ok(Ok(Some(VertexCandidate2 {
+            cycle: cycle_index,
+            first_vertex,
+            second_vertex,
+            point: first.point_at(&time),
+            time,
+        }))),
+        Some(Ordering::Less | Ordering::Equal) => Ok(Ok(None)),
+        None => Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+    }
+}
+
 fn active_vertex_point(
     supports: &[MovingSupport2],
     cycle: &ActiveWavefrontCycle2,
@@ -1109,6 +1355,151 @@ fn active_vertex_point(
         vertex_trajectory(&supports[previous], &supports[current], policy)?
             .map(|trajectory| trajectory.point_at(time)),
     )
+}
+
+fn apply_general_vertex_cluster(
+    cycles: &mut Vec<ActiveWavefrontCycle2>,
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    arcs: &mut Vec<StraightSkeletonArc2>,
+    candidate: &VertexClusterCandidate2,
+    supports: &[MovingSupport2],
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
+    let cycle = cycles.remove(candidate.cycle);
+    let count = cycle.source_edges.len();
+    if candidate.vertices.len() < 2 {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    }
+    let mut vertices = candidate.vertices.clone();
+    vertices.sort_unstable();
+    vertices.dedup();
+    let mut incident_source_edges = Vec::with_capacity(vertices.len() * 2);
+    for vertex in vertices.iter().copied() {
+        incident_source_edges.push(cycle.source_edges[(vertex + count - 1) % count]);
+        incident_source_edges.push(cycle.source_edges[vertex]);
+    }
+    incident_source_edges.sort_unstable();
+    incident_source_edges.dedup();
+    let node = nodes.len();
+    nodes.push(StraightSkeletonNode2 {
+        point: candidate.point.clone(),
+        time: candidate.time.clone(),
+        kind: StraightSkeletonNodeKind2::VertexEvent {
+            incident_source_edges,
+            collapsed_source_edges: Vec::new(),
+        },
+    });
+    for vertex in vertices.iter().copied() {
+        let pair = (
+            cycle.source_edges[(vertex + count - 1) % count],
+            cycle.source_edges[vertex],
+        );
+        add_arc(
+            arcs,
+            cycle.vertex_start_nodes[vertex],
+            node,
+            StraightSkeletonArcKind2::VertexBisector {
+                left_source_edge: pair.0,
+                right_source_edge: pair.1,
+            },
+        );
+    }
+
+    let mut outputs = Vec::with_capacity(vertices.len());
+    for (index, vertex) in vertices.iter().copied().enumerate() {
+        let next_vertex = vertices[(index + 1) % vertices.len()];
+        let end = (next_vertex + count - 1) % count;
+        outputs.push(split_active_cycle(
+            &cycle,
+            &cyclic_index_range(vertex, end, count),
+            node,
+        ));
+    }
+    for output in &mut outputs {
+        if merge_codirected_coincident_edges(output, supports, policy).is_none() {
+            return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+        }
+    }
+    for output in outputs.into_iter().rev() {
+        match output.source_edges.len() {
+            0 | 1 => {}
+            2 => {
+                if supports_are_opposed_and_coincident(
+                    &supports[output.source_edges[0]],
+                    &supports[output.source_edges[1]],
+                    &candidate.time,
+                    policy,
+                ) != Some(true)
+                {
+                    return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+                }
+                add_arc(
+                    arcs,
+                    output.vertex_start_nodes[0],
+                    output.vertex_start_nodes[1],
+                    StraightSkeletonArcKind2::TerminalRidge,
+                );
+            }
+            _ => cycles.insert(candidate.cycle, output),
+        }
+    }
+    Ok(Ok(()))
+}
+
+fn merge_codirected_coincident_edges(
+    cycle: &mut ActiveWavefrontCycle2,
+    supports: &[MovingSupport2],
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    let mut changed = false;
+    loop {
+        let count = cycle.source_edges.len();
+        if count <= 1 {
+            return Some(changed);
+        }
+        let mut merged = None;
+        for vertex in 0..count {
+            let previous = cycle.source_edges[(vertex + count - 1) % count];
+            let current = cycle.source_edges[vertex];
+            match supports_are_codirected_and_coincident(
+                &supports[previous],
+                &supports[current],
+                policy,
+            ) {
+                Some(true) => {
+                    merged = Some(vertex);
+                    break;
+                }
+                Some(false) => {}
+                None => return None,
+            }
+        }
+        let Some(vertex) = merged else {
+            return Some(changed);
+        };
+        cycle.source_edges.remove(vertex);
+        cycle.vertex_start_nodes.remove(vertex);
+        changed = true;
+    }
+}
+
+fn supports_are_codirected_and_coincident(
+    first: &MovingSupport2,
+    second: &MovingSupport2,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    let normal_x_difference = &first.normal_x - &second.normal_x;
+    let normal_y_difference = &first.normal_y - &second.normal_y;
+    let constant_difference = &first.constant - &second.constant;
+    match (
+        real_sign(&normal_x_difference, policy),
+        real_sign(&normal_y_difference, policy),
+        real_sign(&constant_difference, policy),
+    ) {
+        (Some(RealSign::Zero), Some(RealSign::Zero), Some(RealSign::Zero)) => Some(true),
+        (Some(_), Some(_), Some(_)) => Some(false),
+        _ => None,
+    }
 }
 
 fn apply_general_split_event(
@@ -1930,6 +2321,21 @@ mod tests {
     }
 
     #[test]
+    fn codirected_collinear_source_edges_are_normalized_exactly() {
+        for points in [
+            &[(0, 0), (1, 0), (2, 0), (2, 2), (0, 2)][..],
+            &[(0, 2), (2, 2), (2, 0), (1, 0), (0, 0)][..],
+        ] {
+            let report = contour(points)
+                .straight_skeleton(&CurvePolicy::certified())
+                .unwrap();
+            assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+            assert_eq!(report.source_edge_count(), 5);
+            assert_eq!(report.skeleton().unwrap().nodes().len(), 5);
+        }
+    }
+
+    #[test]
     fn non_general_position_l_shape_materializes_terminal_vertex_event() {
         let report = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)])
             .straight_skeleton(&CurvePolicy::certified())
@@ -2091,5 +2497,109 @@ mod tests {
                     && arc.start_node() != arc.end_node()
             }));
         }
+    }
+
+    #[test]
+    fn nonterminal_bridge_collapse_splits_into_two_live_cycles() {
+        let report = contour(&[
+            (0, 0),
+            (4, 0),
+            (4, 1),
+            (8, 1),
+            (8, 0),
+            (12, 0),
+            (12, 4),
+            (8, 4),
+            (8, 3),
+            (4, 3),
+            (4, 4),
+            (0, 4),
+        ])
+        .straight_skeleton(&CurvePolicy::certified())
+        .unwrap();
+        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(report.vertex_event_count(), 2);
+        assert_eq!(report.event_count(), 2);
+        let skeleton = report.skeleton().unwrap();
+        assert!(skeleton.arcs().iter().any(|arc| {
+            arc.kind() == &StraightSkeletonArcKind2::TerminalRidge
+                && skeleton.nodes()[arc.start_node()].time() == &r(1)
+                && skeleton.nodes()[arc.end_node()].time() == &r(1)
+        }));
+    }
+
+    #[test]
+    fn clockwise_nonterminal_bridge_collapse_completes() {
+        let report = contour(&[
+            (0, 4),
+            (4, 4),
+            (4, 3),
+            (8, 3),
+            (8, 4),
+            (12, 4),
+            (12, 0),
+            (8, 0),
+            (8, 1),
+            (4, 1),
+            (4, 0),
+            (0, 0),
+        ])
+        .straight_skeleton(&CurvePolicy::certified())
+        .unwrap();
+        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(report.vertex_event_count(), 2);
+    }
+
+    #[test]
+    fn same_point_nonterminal_multi_vertex_event_splits_four_live_cycles() {
+        let report = contour(&[
+            (4, 0),
+            (8, 0),
+            (8, 4),
+            (7, 4),
+            (7, 6),
+            (9, 6),
+            (9, 5),
+            (13, 5),
+            (13, 9),
+            (9, 9),
+            (9, 8),
+            (7, 8),
+            (7, 10),
+            (8, 10),
+            (8, 14),
+            (4, 14),
+            (4, 10),
+            (5, 10),
+            (5, 8),
+            (3, 8),
+            (3, 9),
+            (-1, 9),
+            (-1, 5),
+            (3, 5),
+            (3, 6),
+            (5, 6),
+            (5, 4),
+            (4, 4),
+        ])
+        .straight_skeleton(&CurvePolicy::certified())
+        .unwrap();
+        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(report.vertex_event_count(), 5);
+        assert_eq!(report.event_count(), 2);
+        let center = report
+            .skeleton()
+            .unwrap()
+            .nodes()
+            .iter()
+            .find(|node| node.point() == &Point2::new(r(6), r(7)) && node.time() == &r(1))
+            .unwrap();
+        assert!(matches!(
+            center.kind(),
+            StraightSkeletonNodeKind2::VertexEvent {
+                incident_source_edges,
+                ..
+            } if incident_source_edges.len() == 8
+        ));
     }
 }
