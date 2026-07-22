@@ -27,7 +27,7 @@ use crate::{
 };
 
 /// Version of the public straight-skeleton capability and report interface.
-pub const STRAIGHT_SKELETON_INTERFACE_VERSION: u32 = 2;
+pub const STRAIGHT_SKELETON_INTERFACE_VERSION: u32 = 3;
 
 /// Native straight-skeleton support advertised for one exact curve family.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -392,6 +392,13 @@ pub enum StraightSkeletonNodeKind2 {
         left_source_edge: usize,
         right_source_edge: usize,
         hit_source_edge: usize,
+    },
+    /// A reflex vertex contacted a nonincident edge after generated geometry
+    /// entered at least one side of the event.
+    SupportSplitEvent {
+        left: StraightSkeletonSupportProvenance2,
+        right: StraightSkeletonSupportProvenance2,
+        hit: StraightSkeletonSupportProvenance2,
     },
     /// Several wavefront vertices met at one non-general-position event.
     VertexEvent {
@@ -3446,18 +3453,57 @@ fn materialize_shape_preserving_split_transition(
     policy: &CurvePolicy,
 ) -> CurveResult<Result<(usize, [ActiveShapePreservingCycle2; 2]), StraightSkeletonBlocker2>> {
     let StraightSkeletonGlobalContactKind2::Split {
-        source_vertex,
         left_source_edge,
         right_source_edge,
         hit_source_edge,
+        ..
     } = event.kind
     else {
         return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
     };
+    let source_index = |source_edge| {
+        support_records.iter().position(|record| {
+            record.provenance == StraightSkeletonSupportProvenance2::SourceEdge { source_edge }
+        })
+    };
+    let (Some(left_support), Some(right_support), Some(hit_support)) = (
+        source_index(left_source_edge),
+        source_index(right_source_edge),
+        source_index(hit_source_edge),
+    ) else {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    };
+    materialize_recorded_shape_preserving_split_transition(
+        nodes,
+        arcs,
+        support_records,
+        active,
+        &RecordedSplitEvent2 {
+            left_support,
+            right_support,
+            hit_support,
+            time: event.time.clone(),
+            point: event.point.clone(),
+        },
+        orientation,
+        policy,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn materialize_recorded_shape_preserving_split_transition(
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    arcs: &mut Vec<StraightSkeletonArc2>,
+    support_records: &[ShapePreservingSupportRecord2],
+    active: &ActiveShapePreservingCycle2,
+    event: &RecordedSplitEvent2,
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(usize, [ActiveShapePreservingCycle2; 2]), StraightSkeletonBlocker2>> {
     let Some(right_position) = active
         .supports
         .iter()
-        .position(|support| *support == right_source_edge)
+        .position(|support| *support == event.right_support)
     else {
         return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
     };
@@ -3465,11 +3511,11 @@ fn materialize_shape_preserving_split_transition(
     let Some(hit_position) = active
         .supports
         .iter()
-        .position(|support| *support == hit_source_edge)
+        .position(|support| *support == event.hit_support)
     else {
         return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
     };
-    if active.supports[left_position] != left_source_edge
+    if active.supports[left_position] != event.left_support
         || hit_position == left_position
         || hit_position == right_position
     {
@@ -3477,7 +3523,7 @@ fn materialize_shape_preserving_split_transition(
     }
     let Some(start_node) = active
         .pair_start
-        .get(&(left_source_edge, right_source_edge))
+        .get(&(event.left_support, event.right_support))
         .copied()
     else {
         return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
@@ -3486,10 +3532,31 @@ fn materialize_shape_preserving_split_transition(
     nodes.push(StraightSkeletonNode2 {
         point: event.point.clone(),
         time: event.time.clone(),
-        kind: StraightSkeletonNodeKind2::SplitEvent {
-            left_source_edge,
-            right_source_edge,
-            hit_source_edge,
+        kind: match (
+            &support_records[event.left_support].provenance,
+            &support_records[event.right_support].provenance,
+            &support_records[event.hit_support].provenance,
+        ) {
+            (
+                StraightSkeletonSupportProvenance2::SourceEdge {
+                    source_edge: left_source_edge,
+                },
+                StraightSkeletonSupportProvenance2::SourceEdge {
+                    source_edge: right_source_edge,
+                },
+                StraightSkeletonSupportProvenance2::SourceEdge {
+                    source_edge: hit_source_edge,
+                },
+            ) => StraightSkeletonNodeKind2::SplitEvent {
+                left_source_edge: *left_source_edge,
+                right_source_edge: *right_source_edge,
+                hit_source_edge: *hit_source_edge,
+            },
+            (left, right, hit) => StraightSkeletonNodeKind2::SupportSplitEvent {
+                left: left.clone(),
+                right: right.clone(),
+                hit: hit.clone(),
+            },
         },
     });
     if let Err(blocker) = add_recorded_shape_preserving_arc(
@@ -3497,7 +3564,7 @@ fn materialize_shape_preserving_split_transition(
         nodes,
         start_node,
         event_node,
-        (left_source_edge, right_source_edge),
+        (event.left_support, event.right_support),
         support_records,
         orientation,
         policy,
@@ -3509,7 +3576,7 @@ fn materialize_shape_preserving_split_transition(
     let first = match shape_preserving_cycle_after_global_contact(
         first_supports,
         &active.pair_start,
-        (hit_source_edge, right_source_edge),
+        (event.hit_support, event.right_support),
         event_node,
     ) {
         Ok(cycle) => cycle,
@@ -3518,13 +3585,12 @@ fn materialize_shape_preserving_split_transition(
     let second = match shape_preserving_cycle_after_global_contact(
         second_supports,
         &active.pair_start,
-        (left_source_edge, hit_source_edge),
+        (event.left_support, event.hit_support),
         event_node,
     ) {
         Ok(cycle) => cycle,
         Err(blocker) => return Ok(Err(blocker)),
     };
-    let _ = source_vertex;
     Ok(Ok((event_node, [first, second])))
 }
 
@@ -3542,17 +3608,47 @@ fn materialize_shape_preserving_squeeze_transition(
     else {
         return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
     };
+    let source_index = |source_edge| {
+        support_records.iter().position(|record| {
+            record.provenance == StraightSkeletonSupportProvenance2::SourceEdge { source_edge }
+        })
+    };
+    let (Some(first_support), Some(second_support)) = (
+        source_index(first_source_edge),
+        source_index(second_source_edge),
+    ) else {
+        return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
+    };
+    materialize_recorded_shape_preserving_squeeze_transition(
+        nodes,
+        support_records,
+        active,
+        &RecordedSqueezeEvent2 {
+            first_support,
+            second_support,
+            time: event.time.clone(),
+            point: event.point.clone(),
+        },
+    )
+}
+
+fn materialize_recorded_shape_preserving_squeeze_transition(
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    support_records: &[ShapePreservingSupportRecord2],
+    active: &ActiveShapePreservingCycle2,
+    event: &RecordedSqueezeEvent2,
+) -> Result<(usize, [ActiveShapePreservingCycle2; 2]), StraightSkeletonBlocker2> {
     let Some(first_position) = active
         .supports
         .iter()
-        .position(|support| *support == first_source_edge)
+        .position(|support| *support == event.first_support)
     else {
         return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
     };
     let Some(second_position) = active
         .supports
         .iter()
-        .position(|support| *support == second_source_edge)
+        .position(|support| *support == event.second_support)
     else {
         return Err(StraightSkeletonBlocker2::InvalidSplitTopology);
     };
@@ -3567,8 +3663,8 @@ fn materialize_shape_preserving_squeeze_transition(
         point: event.point.clone(),
         time: event.time.clone(),
         kind: StraightSkeletonNodeKind2::SqueezeEvent {
-            first: support_records[first_source_edge].provenance.clone(),
-            second: support_records[second_source_edge].provenance.clone(),
+            first: support_records[event.first_support].provenance.clone(),
+            second: support_records[event.second_support].provenance.clone(),
         },
     });
     let first_supports = cyclic_support_range(&active.supports, first_position, second_position);
@@ -3576,13 +3672,13 @@ fn materialize_shape_preserving_squeeze_transition(
     let first = shape_preserving_cycle_after_global_contact(
         first_supports,
         &active.pair_start,
-        (second_source_edge, first_source_edge),
+        (event.second_support, event.first_support),
         event_node,
     )?;
     let second = shape_preserving_cycle_after_global_contact(
         second_supports,
         &active.pair_start,
-        (first_source_edge, second_source_edge),
+        (event.first_support, event.second_support),
         event_node,
     )?;
     Ok((event_node, [first, second]))
@@ -4204,91 +4300,30 @@ fn complete_shape_preserving_edge_cycles(
                 let event_time = topology.time().clone();
                 match topology {
                     RecordedTopologyEvent2::Split(split) => {
-                        let left_source_edge = match support_records[split.left_support].provenance
-                        {
-                            StraightSkeletonSupportProvenance2::SourceEdge { source_edge } => {
-                                source_edge
-                            }
-                            StraightSkeletonSupportProvenance2::SpliceArc { .. } => {
-                                return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
-                            }
-                        };
-                        let right_source_edge =
-                            match support_records[split.right_support].provenance {
-                                StraightSkeletonSupportProvenance2::SourceEdge { source_edge } => {
-                                    source_edge
-                                }
-                                StraightSkeletonSupportProvenance2::SpliceArc { .. } => {
-                                    return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
-                                }
+                        let (_, split_cycles) =
+                            match materialize_recorded_shape_preserving_split_transition(
+                                nodes,
+                                arcs,
+                                support_records,
+                                &cycle,
+                                &split,
+                                orientation,
+                                policy,
+                            )? {
+                                Ok(transition) => transition,
+                                Err(blocker) => return Ok(Err(blocker)),
                             };
-                        let hit_source_edge = match support_records[split.hit_support].provenance {
-                            StraightSkeletonSupportProvenance2::SourceEdge { source_edge } => {
-                                source_edge
-                            }
-                            StraightSkeletonSupportProvenance2::SpliceArc { .. } => {
-                                return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
-                            }
-                        };
-                        let event = StraightSkeletonGlobalContactEvent2 {
-                            kind: StraightSkeletonGlobalContactKind2::Split {
-                                source_vertex: right_source_edge,
-                                left_source_edge,
-                                right_source_edge,
-                                hit_source_edge,
-                            },
-                            time: split.time,
-                            point: split.point,
-                        };
-                        let (_, split_cycles) = match materialize_shape_preserving_split_transition(
-                            nodes,
-                            arcs,
-                            support_records,
-                            &cycle,
-                            &event,
-                            orientation,
-                            policy,
-                        )? {
-                            Ok(transition) => transition,
-                            Err(blocker) => return Ok(Err(blocker)),
-                        };
                         let [first_cycle, second_cycle] = split_cycles;
                         work.push((second_cycle, event_time.clone()));
                         work.push((first_cycle, event_time.clone()));
                     }
                     RecordedTopologyEvent2::Squeeze(squeeze) => {
-                        let first_source_edge =
-                            match support_records[squeeze.first_support].provenance {
-                                StraightSkeletonSupportProvenance2::SourceEdge { source_edge } => {
-                                    source_edge
-                                }
-                                StraightSkeletonSupportProvenance2::SpliceArc { .. } => {
-                                    return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
-                                }
-                            };
-                        let second_source_edge =
-                            match support_records[squeeze.second_support].provenance {
-                                StraightSkeletonSupportProvenance2::SourceEdge { source_edge } => {
-                                    source_edge
-                                }
-                                StraightSkeletonSupportProvenance2::SpliceArc { .. } => {
-                                    return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
-                                }
-                            };
-                        let event = StraightSkeletonGlobalContactEvent2 {
-                            kind: StraightSkeletonGlobalContactKind2::Squeeze {
-                                first_source_edge,
-                                second_source_edge,
-                            },
-                            time: squeeze.time,
-                            point: squeeze.point,
-                        };
                         let (_, split_cycles) =
-                            match materialize_shape_preserving_squeeze_transition(
+                            match materialize_recorded_shape_preserving_squeeze_transition(
                                 nodes,
                                 support_records,
                                 &cycle,
-                                &event,
+                                &squeeze,
                             ) {
                                 Ok(transition) => transition,
                                 Err(blocker) => return Ok(Err(blocker)),
@@ -5357,7 +5392,7 @@ fn active_shape_preserving_edge_strictly_contains_point_at_time(
     Ok(Ok(true))
 }
 
-fn source_support_tangent_at_point(
+fn shape_preserving_support_tangent_at_point(
     support: &ShapePreservingSupport2,
     point: &Point2,
     time: &Real,
@@ -5400,7 +5435,7 @@ fn source_support_tangent_at_point(
     }
 }
 
-fn active_source_vertex_is_reflex(
+fn active_shape_preserving_vertex_is_reflex(
     active: &ActiveShapePreservingCycle2,
     support_records: &[ShapePreservingSupportRecord2],
     nodes: &[StraightSkeletonNode2],
@@ -5412,18 +5447,25 @@ fn active_source_vertex_is_reflex(
     let count = active.supports.len();
     let left = active.supports[(right_position + count - 1) % count];
     let right = active.supports[right_position];
-    if !matches!(
-        support_records[left].provenance,
-        StraightSkeletonSupportProvenance2::SourceEdge { .. }
-    ) || !matches!(
-        support_records[right].provenance,
-        StraightSkeletonSupportProvenance2::SourceEdge { .. }
-    ) {
-        return Ok(Ok(false));
-    }
     let Some(start_node) = active.pair_start.get(&(left, right)).copied() else {
         return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
     };
+    if compare_reals(current_time, &nodes[start_node].time, policy) == Some(Ordering::Equal)
+        && [&support_records[left], &support_records[right]]
+            .iter()
+            .any(|record| {
+                matches!(
+                    record.provenance,
+                    StraightSkeletonSupportProvenance2::SpliceArc { splice_node, .. }
+                        if splice_node == start_node
+                )
+            })
+    {
+        // A splice circle is born tangent to both incident supports. Its two
+        // new endpoints are smooth at that exact instant; their limiting
+        // tangents become ordinary nonzero circle tangents immediately after.
+        return Ok(Ok(false));
+    }
     let point = match compare_reals(current_time, &nodes[start_node].time, policy) {
         Some(Ordering::Equal) => nodes[start_node].point.clone(),
         Some(Ordering::Greater) => {
@@ -5444,7 +5486,7 @@ fn active_source_vertex_is_reflex(
         Some(Ordering::Less) => return Ok(Err(StraightSkeletonBlocker2::NonAdvancingEvent)),
         None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
     };
-    let incoming = match source_support_tangent_at_point(
+    let incoming = match shape_preserving_support_tangent_at_point(
         &support_records[left].geometry,
         &point,
         current_time,
@@ -5454,7 +5496,7 @@ fn active_source_vertex_is_reflex(
         Ok(tangent) => tangent,
         Err(blocker) => return Ok(Err(blocker)),
     };
-    let outgoing = match source_support_tangent_at_point(
+    let outgoing = match shape_preserving_support_tangent_at_point(
         &support_records[right].geometry,
         &point,
         current_time,
@@ -5485,7 +5527,7 @@ fn next_shape_preserving_cycle_split_before_or_at(
     let count = active.supports.len();
     let mut earliest: Option<RecordedSplitEvent2> = None;
     for right_position in 0..count {
-        match active_source_vertex_is_reflex(
+        match active_shape_preserving_vertex_is_reflex(
             active,
             support_records,
             nodes,
@@ -5585,7 +5627,18 @@ fn next_shape_preserving_cycle_splice_before_or_at(
     let count = active.supports.len();
     let mut earliest: Option<RecordedSpliceEvent2> = None;
     for right_position in 0..count {
-        match active_source_vertex_is_reflex(
+        let left = active.supports[(right_position + count - 1) % count];
+        let right = active.supports[right_position];
+        if !matches!(
+            support_records[left].provenance,
+            StraightSkeletonSupportProvenance2::SourceEdge { .. }
+        ) || !matches!(
+            support_records[right].provenance,
+            StraightSkeletonSupportProvenance2::SourceEdge { .. }
+        ) {
+            continue;
+        }
+        match active_shape_preserving_vertex_is_reflex(
             active,
             support_records,
             nodes,
@@ -5598,8 +5651,6 @@ fn next_shape_preserving_cycle_splice_before_or_at(
             Ok(false) => continue,
             Err(blocker) => return Ok(Err(blocker)),
         }
-        let left = active.supports[(right_position + count - 1) % count];
-        let right = active.supports[right_position];
         let Some(start_node) = active.pair_start.get(&(left, right)).copied() else {
             return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
         };
@@ -8225,7 +8276,7 @@ mod tests {
 
     #[test]
     fn curve_path_dispatch_preserves_native_families_and_reports_capabilities() {
-        assert_eq!(STRAIGHT_SKELETON_INTERFACE_VERSION, 2);
+        assert_eq!(STRAIGHT_SKELETON_INTERFACE_VERSION, 3);
         for family in [CurveFamily2::Line, CurveFamily2::CircularArc] {
             assert_eq!(
                 family.straight_skeleton_support(),
@@ -8954,6 +9005,144 @@ mod tests {
                 StraightSkeletonArcKind2::GeneratedVertexBisector { .. }
             )));
         }
+    }
+
+    #[test]
+    fn generated_support_global_topology_retains_exact_provenance() {
+        let geometries = [
+            ShapePreservingSupport2::Line {
+                normal_x: r(0),
+                normal_y: r(1),
+                constant: r(0),
+            },
+            ShapePreservingSupport2::Line {
+                normal_x: r(-1),
+                normal_y: r(0),
+                constant: r(-2),
+            },
+            ShapePreservingSupport2::Line {
+                normal_x: r(0),
+                normal_y: r(-1),
+                constant: r(-2),
+            },
+            ShapePreservingSupport2::Line {
+                normal_x: r(1),
+                normal_y: r(0),
+                constant: r(0),
+            },
+        ];
+        let mut records = geometries
+            .into_iter()
+            .enumerate()
+            .map(|(source_edge, geometry)| ShapePreservingSupportRecord2 {
+                geometry,
+                provenance: StraightSkeletonSupportProvenance2::SourceEdge { source_edge },
+            })
+            .collect::<Vec<_>>();
+        let mut active = ActiveShapePreservingCycle2 {
+            supports: vec![0, 1, 2, 3],
+            pair_start: BTreeMap::from([((3, 0), 0), ((0, 1), 1), ((1, 2), 2), ((2, 3), 3)]),
+        };
+        let mut nodes = [
+            Point2::new(r(0), r(0)),
+            Point2::new(r(2), r(0)),
+            Point2::new(r(2), r(2)),
+            Point2::new(r(0), r(2)),
+        ]
+        .into_iter()
+        .enumerate()
+        .map(|(source_vertex, point)| StraightSkeletonNode2 {
+            point,
+            time: Real::zero(),
+            kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+        })
+        .collect::<Vec<_>>();
+        let mut arcs = Vec::new();
+        let splice = StraightSkeletonSpliceEvent2 {
+            source_vertex: 0,
+            left_source_edge: 3,
+            right_source_edge: 0,
+            time: r(2),
+            point: Point2::new(r(2), r(2)),
+        };
+        let (splice_node, generated) = materialize_splice_topology_transition(
+            &mut nodes,
+            &mut arcs,
+            &mut records,
+            &mut active,
+            &splice,
+            RealSign::Positive,
+            &CurvePolicy::certified(),
+        )
+        .unwrap()
+        .unwrap();
+        let generated_provenance = StraightSkeletonSupportProvenance2::SpliceArc {
+            splice_node,
+            left_source_edge: 3,
+            right_source_edge: 0,
+        };
+
+        let mut split_nodes = nodes.clone();
+        let mut split_arcs = arcs.clone();
+        let split = RecordedSplitEvent2 {
+            left_support: 0,
+            right_support: 1,
+            hit_support: generated,
+            time: r(3),
+            point: Point2::new(r(1), r(1)),
+        };
+        let (split_node, split_cycles) = materialize_recorded_shape_preserving_split_transition(
+            &mut split_nodes,
+            &mut split_arcs,
+            &records,
+            &active,
+            &split,
+            RealSign::Positive,
+            &CurvePolicy::certified(),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(
+            split_nodes[split_node].kind(),
+            &StraightSkeletonNodeKind2::SupportSplitEvent {
+                left: StraightSkeletonSupportProvenance2::SourceEdge { source_edge: 0 },
+                right: StraightSkeletonSupportProvenance2::SourceEdge { source_edge: 1 },
+                hit: generated_provenance.clone(),
+            }
+        );
+        assert!(
+            split_cycles
+                .iter()
+                .all(|cycle| cycle.supports.contains(&generated))
+        );
+
+        let mut squeeze_nodes = nodes;
+        let squeeze = RecordedSqueezeEvent2 {
+            first_support: generated,
+            second_support: 2,
+            time: r(3),
+            point: Point2::new(r(1), r(1)),
+        };
+        let (squeeze_node, squeeze_cycles) =
+            materialize_recorded_shape_preserving_squeeze_transition(
+                &mut squeeze_nodes,
+                &records,
+                &active,
+                &squeeze,
+            )
+            .unwrap();
+        assert_eq!(
+            squeeze_nodes[squeeze_node].kind(),
+            &StraightSkeletonNodeKind2::SqueezeEvent {
+                first: generated_provenance,
+                second: StraightSkeletonSupportProvenance2::SourceEdge { source_edge: 2 },
+            }
+        );
+        assert!(
+            squeeze_cycles
+                .iter()
+                .all(|cycle| cycle.supports.contains(&generated))
+        );
     }
 
     #[test]

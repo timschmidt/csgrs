@@ -157,10 +157,13 @@ both contacting supports across the two squeeze cycles and retain an explicit
 split, squeeze, and splice candidates against its next local edge event, applies the
 earliest topology transition, and requeues every resulting cycle. Its three-support
 solver also handles the fixed-time section formed by two spatially parallel moving
-lines and a circle. Global contacts involving generated splice supports, same-time
-mixed topology clusters, and the general public multi-component construction loop
-remain explicit integration boundaries. The additive public event interface is
-version 2.
+lines and a circle. A generated splice support can now be the target of a later
+source-reflex split or either side of a squeeze; `SupportSplitEvent` and the existing
+provenance-bearing `SqueezeEvent` retain that event history without false source-edge
+labels. Reflex vertices incident to generated supports, repeated generated splices,
+same-time mixed topology clusters, and the general public multi-component
+construction loop remain explicit integration boundaries. The additive public event
+interface is version 3.
 The staged multi-component completion kernel can already carry a certified split
 fixture through all subsequent local collapses in one shared exact graph. It also
 distinguishes a valid circular-edge apex vanish—both tracked endpoints meet the
