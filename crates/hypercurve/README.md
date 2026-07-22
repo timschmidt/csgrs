@@ -115,8 +115,13 @@ line pairs retain their terminal ridge. Premature circular-radius and
 non-general-position terminal transitions remain typed blockers. Smooth
 co-circular contours also complete with their exact collapse time and an empty
 unextended shape-preserving skeleton.
-Concave arc-polygon contact, bubble, squeeze, and splice propagation remains an
-explicit `UnsupportedSegment` result until those event transitions land.
+Certified single-bubble contours now apply the local topology transition when
+the bubble removes the only circular edge, leaves a strictly convex line
+cycle, and no splice or nonincident carrier contact can precede it. Both
+incoming conic branches terminate at the bubble node, while the detached full
+circle remains represented in the event count and maximum wavefront time.
+Other concave arc-polygon contacts, squeeze events, and splice propagation
+remain explicit `UnsupportedSegment` results until those transitions land.
 `Contour2::straight_skeleton_local_arc_events` nevertheless exposes the exact
 three-cone local event queue today, including source-edge evidence and the
 paper's endpoint-convexity distinction between vanish and bubble candidates.
@@ -125,9 +130,9 @@ branches and the live signed radius of each circular support, so roots from the
 opposite cone sheet or beyond a radius collapse are not scheduled.
 `Contour2::straight_skeleton_splice_events` likewise predicts the exact first
 future incident-support tangency at every reflex vertex, retaining its source
-vertex, source-edge pair, event time, and point. These per-class predictors do
-not yet apply bubble or splice topology; the combined concave arc-polygon event
-queue remains the next integration boundary.
+vertex, source-edge pair, event time, and point. Splice topology and the general
+multi-component concave arc-polygon event queue remain the next integration
+boundary.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every

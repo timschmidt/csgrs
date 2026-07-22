@@ -881,7 +881,7 @@ impl Contour2 {
             if let Some(report) = self.two_edge_line_arc_straight_skeleton(policy)? {
                 return Ok(report);
             }
-            if let Some(report) = self.convex_arc_straight_skeleton(policy)? {
+            if let Some(report) = self.shape_preserving_arc_straight_skeleton(policy)? {
                 return Ok(report);
             }
         }
@@ -1304,7 +1304,7 @@ impl Contour2 {
         }))
     }
 
-    fn convex_arc_straight_skeleton(
+    fn shape_preserving_arc_straight_skeleton(
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Option<StraightSkeletonReport2>> {
@@ -1358,6 +1358,7 @@ impl Contour2 {
                 )));
             }
         };
+        let mut reflex_vertices = Vec::new();
         for vertex_index in 0..self.segments().len() {
             let incoming = segment_end_tangent(
                 &self.segments()
@@ -1367,7 +1368,10 @@ impl Contour2 {
             let turn = &incoming.0 * &outgoing.1 - &incoming.1 * &outgoing.0;
             match real_sign(&turn, policy) {
                 Some(sign) if sign == orientation => {}
-                Some(_) => return Ok(None),
+                Some(RealSign::Positive | RealSign::Negative) => {
+                    reflex_vertices.push(vertex_index);
+                }
+                Some(RealSign::Zero) => return Ok(None),
                 None => {
                     return Ok(Some(blocked_shape_preserving_report(
                         self.segments().len(),
@@ -1398,6 +1402,27 @@ impl Contour2 {
             .iter()
             .map(|segment| segment.start().clone())
             .collect::<Vec<_>>();
+        let detached_circle_collapse = if reflex_vertices.is_empty() {
+            None
+        } else {
+            match certified_single_bubble_reduction(
+                self,
+                &supports,
+                orientation,
+                &reflex_vertices,
+                policy,
+            )? {
+                Ok(Some(collapse)) => Some(collapse),
+                Ok(None) => return Ok(None),
+                Err(blocker) => {
+                    return Ok(Some(blocked_shape_preserving_report(
+                        self.segments().len(),
+                        StraightSkeletonStage2::EventScheduling,
+                        blocker,
+                    )));
+                }
+            }
+        };
         let result = build_convex_shape_preserving_straight_skeleton(
             &supports,
             &source_points,
@@ -1405,16 +1430,52 @@ impl Contour2 {
             policy,
         )?;
         Ok(Some(match result {
-            Ok((skeleton, event_count, simultaneous_event_count)) => StraightSkeletonReport2 {
-                stage: StraightSkeletonStage2::Complete,
-                source_edge_count: self.segments().len(),
-                event_count,
-                simultaneous_event_count,
-                split_event_count: 0,
-                vertex_event_count: 0,
-                skeleton: Some(skeleton),
-                blocker: None,
-            },
+            Ok((mut skeleton, mut event_count, mut simultaneous_event_count)) => {
+                if let Some(collapse) = detached_circle_collapse {
+                    let mut shares_active_event = false;
+                    for node in skeleton.nodes.iter().filter(|node| {
+                        !matches!(node.kind, StraightSkeletonNodeKind2::SourceVertex { .. })
+                    }) {
+                        match compare_reals(&collapse, &node.time, policy) {
+                            Some(Ordering::Equal) => shares_active_event = true,
+                            Some(Ordering::Less | Ordering::Greater) => {}
+                            None => {
+                                return Ok(Some(blocked_shape_preserving_report(
+                                    self.segments().len(),
+                                    StraightSkeletonStage2::EventScheduling,
+                                    StraightSkeletonBlocker2::UncertainEventOrdering,
+                                )));
+                            }
+                        }
+                    }
+                    if shares_active_event {
+                        simultaneous_event_count += 1;
+                    } else {
+                        event_count += 1;
+                    }
+                    match compare_reals(&collapse, &skeleton.maximum_time, policy) {
+                        Some(Ordering::Greater) => skeleton.maximum_time = collapse,
+                        Some(Ordering::Equal | Ordering::Less) => {}
+                        None => {
+                            return Ok(Some(blocked_shape_preserving_report(
+                                self.segments().len(),
+                                StraightSkeletonStage2::EventScheduling,
+                                StraightSkeletonBlocker2::UncertainEventOrdering,
+                            )));
+                        }
+                    }
+                }
+                StraightSkeletonReport2 {
+                    stage: StraightSkeletonStage2::Complete,
+                    source_edge_count: self.segments().len(),
+                    event_count,
+                    simultaneous_event_count,
+                    split_event_count: 0,
+                    vertex_event_count: 0,
+                    skeleton: Some(skeleton),
+                    blocker: None,
+                }
+            }
             Err((stage, blocker, event_count, simultaneous_event_count)) => {
                 StraightSkeletonReport2 {
                     stage,
@@ -1776,6 +1837,153 @@ fn blocked_shape_preserving_report(
         skeleton: None,
         blocker: Some(blocker),
     }
+}
+
+fn certified_single_bubble_reduction(
+    contour: &Contour2,
+    supports: &[ShapePreservingSupport2],
+    orientation: RealSign,
+    reflex_vertices: &[usize],
+    policy: &CurvePolicy,
+) -> CurveResult<Result<Option<Real>, StraightSkeletonBlocker2>> {
+    let arc_indices = contour
+        .segments()
+        .iter()
+        .enumerate()
+        .filter_map(|(index, segment)| matches!(segment, Segment2::Arc(_)).then_some(index))
+        .collect::<Vec<_>>();
+    let [arc_index] = arc_indices.as_slice() else {
+        return Ok(Ok(None));
+    };
+    let arc_end_vertex = (*arc_index + 1) % contour.segments().len();
+    if reflex_vertices.len() != 2
+        || !reflex_vertices.contains(arc_index)
+        || !reflex_vertices.contains(&arc_end_vertex)
+    {
+        return Ok(Ok(None));
+    }
+    let local_events = match contour.straight_skeleton_local_arc_events(policy)? {
+        Classification::Decided(events) => events,
+        Classification::Uncertain(_) => {
+            return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+        }
+    };
+    let [bubble] = local_events.as_slice() else {
+        return Ok(Ok(None));
+    };
+    if bubble.source_edge != *arc_index || bubble.kind != StraightSkeletonLocalArcEventKind2::Bubble
+    {
+        return Ok(Ok(None));
+    }
+
+    let residual = (0..supports.len())
+        .filter(|index| *index != *arc_index)
+        .collect::<Vec<_>>();
+    if residual.len() < 3
+        || residual
+            .iter()
+            .any(|index| !matches!(supports[*index], ShapePreservingSupport2::Line { .. }))
+    {
+        return Ok(Ok(None));
+    }
+    for index in 0..residual.len() {
+        let previous = residual[(index + residual.len() - 1) % residual.len()];
+        let current = residual[index];
+        let (previous_x, previous_y) = match &contour.segments()[previous] {
+            Segment2::Line(line) => line.delta(),
+            Segment2::Arc(_) => unreachable!(),
+        };
+        let (current_x, current_y) = match &contour.segments()[current] {
+            Segment2::Line(line) => line.delta(),
+            Segment2::Arc(_) => unreachable!(),
+        };
+        let turn = &previous_x * &current_y - &previous_y * &current_x;
+        match real_sign(&turn, policy) {
+            Some(sign) if sign == orientation => {}
+            Some(_) => return Ok(Ok(None)),
+            None => return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)),
+        }
+    }
+
+    let splices = match contour.straight_skeleton_splice_events(policy)? {
+        Classification::Decided(events) => events,
+        Classification::Uncertain(_) => {
+            return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+        }
+    };
+    for splice in splices {
+        match compare_reals(&splice.time, &bubble.time, policy) {
+            Some(Ordering::Less) => return Ok(Ok(None)),
+            Some(Ordering::Equal) => {
+                return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
+            }
+            Some(Ordering::Greater) => {}
+            None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+        }
+    }
+
+    let zero = Real::zero();
+    for source_vertex in reflex_vertices {
+        let left = (*source_vertex + supports.len() - 1) % supports.len();
+        let right = *source_vertex;
+        for target in 0..supports.len() {
+            if target == left || target == right {
+                continue;
+            }
+            let triple = vec![
+                supports[left].clone(),
+                supports[right].clone(),
+                supports[target].clone(),
+            ];
+            let candidates = match three_support_events(&triple, orientation, &zero, policy)? {
+                Ok(candidates) => candidates,
+                Err(blocker) => return Ok(Err(blocker)),
+            };
+            for (time, point) in candidates {
+                let live =
+                    match three_support_candidate_is_live(&triple, orientation, &time, policy)? {
+                        Ok(live) => live,
+                        Err(blocker) => return Ok(Err(blocker)),
+                    };
+                let branch_matches = match tracked_support_pair_branch_matches(
+                    &supports[left],
+                    &supports[right],
+                    contour.segments()[*source_vertex].start(),
+                    &zero,
+                    &point,
+                    &time,
+                    policy,
+                ) {
+                    Ok(matches) => matches,
+                    Err(blocker) => return Ok(Err(blocker)),
+                };
+                if !live || !branch_matches {
+                    continue;
+                }
+                match compare_reals(&time, &bubble.time, policy) {
+                    Some(Ordering::Less) => return Ok(Ok(None)),
+                    Some(Ordering::Equal) => {
+                        if point == bubble.point {
+                            continue;
+                        }
+                        return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
+                    }
+                    Some(Ordering::Greater) => {}
+                    None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+                }
+            }
+        }
+    }
+
+    let ShapePreservingSupport2::Circle { signed_radius, .. } = &supports[*arc_index] else {
+        unreachable!();
+    };
+    let orientation = match orientation {
+        RealSign::Positive => Real::one(),
+        RealSign::Negative => -Real::one(),
+        RealSign::Zero => unreachable!(),
+    };
+    Ok(Ok(Some((signed_radius / orientation)?)))
 }
 
 fn segment_start_tangent(segment: &Segment2) -> (Real, Real) {
@@ -5441,8 +5649,8 @@ mod tests {
 
         let left = Point2::new(r(-1), r(0));
         let right = Point2::new(r(1), r(0));
-        let upper_left = Point2::new(r(-6), r(1));
-        let upper_right = Point2::new(r(6), r(1));
+        let upper_left = Point2::new(r(-20), r(2));
+        let upper_right = Point2::new(r(20), r(2));
         let bubble_source = Contour2::try_new(vec![
             Segment2::Line(LineSeg2::try_new(upper_left.clone(), left.clone()).unwrap()),
             Segment2::Arc(
@@ -5473,6 +5681,67 @@ mod tests {
                 .iter()
                 .all(|event| [1, 2].contains(&event.source_vertex()))
         );
+        let report = bubble_source
+            .straight_skeleton(&CurvePolicy::certified())
+            .unwrap();
+        assert_eq!(
+            report.stage(),
+            StraightSkeletonStage2::Complete,
+            "{report:?}"
+        );
+        assert!(report.event_count() >= 3);
+        let skeleton = report.skeleton().unwrap();
+        assert!(skeleton.nodes().len() > bubble_source.segments().len());
+        assert!(matches!(
+            compare_reals(skeleton.maximum_time(), &r(1), &CurvePolicy::certified()),
+            Some(Ordering::Equal | Ordering::Greater)
+        ));
+        let bubble_node = skeleton
+            .nodes()
+            .iter()
+            .position(|node| {
+                node.kind()
+                    == &StraightSkeletonNodeKind2::EdgeEvent {
+                        collapsed_source_edges: vec![1],
+                    }
+            })
+            .expect("bubble must materialize its local edge event");
+        assert_eq!(
+            skeleton
+                .arcs()
+                .iter()
+                .filter(|arc| arc.end_node() == bubble_node)
+                .count(),
+            2
+        );
+
+        let left = Point2::new(r(-1), r(0));
+        let right = Point2::new(r(1), r(0));
+        let upper_left = Point2::new(r(-20), r(2));
+        let upper_right = Point2::new(r(20), r(2));
+        let clockwise = Contour2::try_new(vec![
+            Segment2::Line(LineSeg2::try_new(left.clone(), upper_left.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(upper_left, upper_right.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(upper_right, right.clone()).unwrap()),
+            Segment2::Arc(
+                CircularArc2::try_from_center(right, left, Point2::new(r(0), r(0)), true).unwrap(),
+            ),
+        ])
+        .unwrap();
+        let report = clockwise
+            .straight_skeleton(&CurvePolicy::certified())
+            .unwrap();
+        assert_eq!(
+            report.stage(),
+            StraightSkeletonStage2::Complete,
+            "{report:?}"
+        );
+        assert!(report.skeleton().unwrap().nodes().iter().any(|node| {
+            node.kind()
+                == &StraightSkeletonNodeKind2::EdgeEvent {
+                    collapsed_source_edges: vec![3],
+                }
+        }));
     }
 
     #[test]
