@@ -1126,6 +1126,19 @@ instructions (0.93%). Prepared-region allocation remains exactly 9,608,934 bytes
 83,760 blocks. The implementation remains wholly native; GMP/MPFR is still confined
 to competitive benchmarks and test oracles and is absent from the release graph.
 
+### Paired affine determinant filter
+
+The paired 2D affine filter converts four segment endpoints to certified exact-dyadic
+`f64` views once, then exposes the two orientation directions independently so callers
+retain a same-side early exit. Every returned sign uses the existing conservative
+roundoff bound; an inconclusive determinant remains `None` for the homogeneous word
+filter or arbitrary-precision exact fallback. Hypercurve's twenty-operation star64
+trace reduced calls to the cached scalar conversion from 62,990 to 47,222 (25.0%) and
+reduced the complete stripped Callgrind lane from 76,985,290 to 76,081,746 instructions
+(1.17%). Prepared-region allocation blocks were unchanged, while DHAT reads fell 1.00%.
+This filter and every fallback are implemented by Hyperreal; the development-only
+GMP/MPFR oracle remains absent from the release dependency graph.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

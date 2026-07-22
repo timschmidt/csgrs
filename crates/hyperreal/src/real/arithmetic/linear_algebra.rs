@@ -11,6 +11,18 @@ pub struct PreparedAffineDet2Filter {
     b: [f64; 2],
 }
 
+/// Certified floating filters for both orientations of a segment pair.
+///
+/// All four endpoints are converted to exact dyadic `f64` views once. The two
+/// direction-specific queries remain lazy, so a caller can retain an early
+/// separation exit without reloading the same scalar views.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedAffineDet2PairFilter {
+    first: [[f64; 2]; 2],
+    second: [[f64; 2]; 2],
+}
+
 /// Exact word-sized filter for repeated affine 2D determinant signs.
 ///
 /// The fixed points are compiled into homogeneous integer line coefficients.
@@ -46,6 +58,26 @@ impl PreparedAffineDet2Filter {
     pub fn sign(&self, c: [&Real; 2]) -> Option<RealSign> {
         let [cx, cy] = Real::exact_dyadic_f64(c)?;
         Real::certified_affine_det2_sign_f64(self.a, self.b, [cx, cy])
+    }
+}
+
+impl PreparedAffineDet2PairFilter {
+    /// Orient both endpoints of the second pair against the first pair.
+    #[inline]
+    pub fn first_signs(&self) -> (Option<RealSign>, Option<RealSign>) {
+        (
+            Real::certified_affine_det2_sign_f64(self.first[0], self.first[1], self.second[0]),
+            Real::certified_affine_det2_sign_f64(self.first[0], self.first[1], self.second[1]),
+        )
+    }
+
+    /// Orient both endpoints of the first pair against the second pair.
+    #[inline]
+    pub fn second_signs(&self) -> (Option<RealSign>, Option<RealSign>) {
+        (
+            Real::certified_affine_det2_sign_f64(self.second[0], self.second[1], self.first[0]),
+            Real::certified_affine_det2_sign_f64(self.second[0], self.second[1], self.first[1]),
+        )
     }
 }
 
@@ -554,6 +586,35 @@ impl Real {
         Some(PreparedAffineDet2Filter {
             a: [ax, ay],
             b: [bx, by],
+        })
+    }
+
+    /// Prepare both affine determinant directions for a segment pair.
+    ///
+    /// Construction succeeds only when all four endpoints have lossless
+    /// dyadic `f64` views. Each returned sign remains independently certified;
+    /// an inconclusive determinant is `None` for the caller's exact fallback.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_affine_det2_pair_filter(
+        first_start: [&Real; 2],
+        first_end: [&Real; 2],
+        second_start: [&Real; 2],
+        second_end: [&Real; 2],
+    ) -> Option<PreparedAffineDet2PairFilter> {
+        let [fax, fay, fbx, fby, sax, say, sbx, sby] = Self::exact_dyadic_f64([
+            first_start[0],
+            first_start[1],
+            first_end[0],
+            first_end[1],
+            second_start[0],
+            second_start[1],
+            second_end[0],
+            second_end[1],
+        ])?;
+        Some(PreparedAffineDet2PairFilter {
+            first: [[fax, fay], [fbx, fby]],
+            second: [[sax, say], [sbx, sby]],
         })
     }
 

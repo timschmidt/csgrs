@@ -832,6 +832,77 @@ mod tests {
     }
 
     #[test]
+    fn prepared_affine_det2_pair_filter_matches_one_shot_directions() {
+        fn point(value: &[Real; 2]) -> [&Real; 2] {
+            [&value[0], &value[1]]
+        }
+
+        let first = [
+            [Real::try_from(-2.0_f64).unwrap(), Real::try_from(-1.0_f64).unwrap()],
+            [Real::try_from(3.0_f64).unwrap(), Real::try_from(2.0_f64).unwrap()],
+        ];
+        for second in [
+            [
+                [Real::try_from(-1.0_f64).unwrap(), Real::try_from(2.0_f64).unwrap()],
+                [Real::try_from(2.0_f64).unwrap(), Real::try_from(-2.0_f64).unwrap()],
+            ],
+            [
+                [Real::try_from(-2.0_f64).unwrap(), Real::try_from(3.0_f64).unwrap()],
+                [Real::try_from(3.0_f64).unwrap(), Real::try_from(6.0_f64).unwrap()],
+            ],
+        ] {
+            let prepared = Real::prepare_affine_det2_pair_filter(
+                point(&first[0]),
+                point(&first[1]),
+                point(&second[0]),
+                point(&second[1]),
+            )
+            .expect("dyadic segment endpoints should prepare");
+            assert_eq!(
+                prepared.first_signs(),
+                (
+                    Real::certified_affine_det2_sign(
+                        point(&first[0]),
+                        point(&first[1]),
+                        point(&second[0]),
+                    ),
+                    Real::certified_affine_det2_sign(
+                        point(&first[0]),
+                        point(&first[1]),
+                        point(&second[1]),
+                    ),
+                ),
+            );
+            assert_eq!(
+                prepared.second_signs(),
+                (
+                    Real::certified_affine_det2_sign(
+                        point(&second[0]),
+                        point(&second[1]),
+                        point(&first[0]),
+                    ),
+                    Real::certified_affine_det2_sign(
+                        point(&second[0]),
+                        point(&second[1]),
+                        point(&first[1]),
+                    ),
+                ),
+            );
+        }
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert!(
+            Real::prepare_affine_det2_pair_filter(
+                [&third, &first[0][1]],
+                [&first[1][0], &first[1][1]],
+                [&first[0][0], &first[0][1]],
+                [&first[1][0], &first[1][1]],
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
     fn prepared_affine_det2_exact_word_filter_handles_unrelated_denominators() {
         let a = [
             Real::new(Rational::fraction(1, 3).unwrap()),
