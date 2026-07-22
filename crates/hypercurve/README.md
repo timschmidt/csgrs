@@ -135,7 +135,10 @@ vertex, source-edge pair, event time, and point. Each accepted candidate now
 also passes the actual topology insertion: the old incident pair is replaced
 by two vertices around an expanding semicircular support whose signed radius is
 zero at the splice time. `StraightSkeletonSupportProvenance2`, `SpliceEvent`,
-and `GeneratedVertexBisector` retain the resulting non-source provenance.
+and `GeneratedVertexBisector` retain the resulting non-source provenance. The
+transition terminates the original reflex bisector at the splice node, and the
+shared recorded-support emitter materializes both subsequent parabolic
+generated-support branches without assigning them false source-edge indices.
 Scheduling subsequent events on the mutated cycle and the general
 multi-component concave arc-polygon queue remain the next integration boundary.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without

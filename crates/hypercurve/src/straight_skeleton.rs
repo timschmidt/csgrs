@@ -906,6 +906,16 @@ impl Contour2 {
                 .map(|right| (((right + count - 1) % count, right), right))
                 .collect(),
         };
+        let node_template = self
+            .segments()
+            .iter()
+            .enumerate()
+            .map(|(source_vertex, segment)| StraightSkeletonNode2 {
+                point: segment.start().clone(),
+                time: Real::zero(),
+                kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+            })
+            .collect::<Vec<_>>();
         let mut events = Vec::new();
         for source_vertex in 0..count {
             let incoming =
@@ -948,14 +958,18 @@ impl Contour2 {
                 };
                 let mut transitioned_records = support_records.clone();
                 let mut transitioned_cycle = active_template.clone();
-                let generated = match apply_splice_topology_transition(
+                let mut transitioned_nodes = node_template.clone();
+                let mut transitioned_arcs = Vec::new();
+                let (splice_node, generated) = match materialize_splice_topology_transition(
+                    &mut transitioned_nodes,
+                    &mut transitioned_arcs,
                     &mut transitioned_records,
                     &mut transitioned_cycle,
                     &event,
-                    count,
                     orientation,
-                ) {
-                    Ok(generated) => generated,
+                    policy,
+                )? {
+                    Ok(transition) => transition,
                     Err(_) => {
                         return Ok(Classification::Uncertain(
                             crate::UncertaintyReason::Predicate,
@@ -973,7 +987,7 @@ impl Contour2 {
                     ));
                 };
                 let expected_provenance = StraightSkeletonSupportProvenance2::SpliceArc {
-                    splice_node: count,
+                    splice_node,
                     left_source_edge,
                     right_source_edge,
                 };
@@ -986,6 +1000,7 @@ impl Contour2 {
                 if center != event.point()
                     || signed_radius != &expected_radius
                     || generated_record.provenance != expected_provenance
+                    || transitioned_arcs.len() != 1
                 {
                     return Ok(Classification::Uncertain(
                         crate::UncertaintyReason::Predicate,
@@ -2664,6 +2679,118 @@ fn add_shape_preserving_arc(
         geometry: arc_geometry_from_trajectory(trajectory),
     });
     Ok(Ok(()))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn add_recorded_shape_preserving_arc(
+    arcs: &mut Vec<StraightSkeletonArc2>,
+    nodes: &[StraightSkeletonNode2],
+    start_node: usize,
+    end_node: usize,
+    pair: (usize, usize),
+    supports: &[ShapePreservingSupportRecord2],
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(), StraightSkeletonBlocker2>> {
+    let left = &supports[pair.0];
+    let right = &supports[pair.1];
+    let kind = match (&left.provenance, &right.provenance) {
+        (
+            StraightSkeletonSupportProvenance2::SourceEdge {
+                source_edge: left_source_edge,
+            },
+            StraightSkeletonSupportProvenance2::SourceEdge {
+                source_edge: right_source_edge,
+            },
+        ) => StraightSkeletonArcKind2::VertexBisector {
+            left_source_edge: *left_source_edge,
+            right_source_edge: *right_source_edge,
+        },
+        _ => StraightSkeletonArcKind2::GeneratedVertexBisector {
+            left: left.provenance.clone(),
+            right: right.provenance.clone(),
+        },
+    };
+    if start_node == end_node
+        || arcs.iter().any(|arc| {
+            ((arc.start_node == start_node && arc.end_node == end_node)
+                || (arc.start_node == end_node && arc.end_node == start_node))
+                && arc.kind == kind
+        })
+    {
+        return Ok(Ok(()));
+    }
+    let trajectory = match shape_preserving_vertex_trajectory(
+        start_node,
+        pair.0,
+        pair.1,
+        nodes[start_node].point.clone(),
+        &left.geometry,
+        &right.geometry,
+        orientation,
+        policy,
+    )? {
+        Classification::Decided(trajectory) => trajectory,
+        Classification::Uncertain(_) => {
+            return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+        }
+    };
+    arcs.push(StraightSkeletonArc2 {
+        start_node,
+        end_node,
+        kind,
+        geometry: arc_geometry_from_trajectory(trajectory),
+    });
+    Ok(Ok(()))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn materialize_splice_topology_transition(
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    arcs: &mut Vec<StraightSkeletonArc2>,
+    support_records: &mut Vec<ShapePreservingSupportRecord2>,
+    active: &mut ActiveShapePreservingCycle2,
+    event: &StraightSkeletonSpliceEvent2,
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(usize, usize), StraightSkeletonBlocker2>> {
+    let pair = (event.left_source_edge, event.right_source_edge);
+    let Some(start_node) = active.pair_start.get(&pair).copied() else {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    };
+    let event_node = nodes.len();
+    nodes.push(StraightSkeletonNode2 {
+        point: event.point.clone(),
+        time: event.time.clone(),
+        kind: StraightSkeletonNodeKind2::SpliceEvent {
+            source_vertex: event.source_vertex,
+            left_source_edge: event.left_source_edge,
+            right_source_edge: event.right_source_edge,
+        },
+    });
+    if let Err(blocker) = add_recorded_shape_preserving_arc(
+        arcs,
+        nodes,
+        start_node,
+        event_node,
+        pair,
+        support_records,
+        orientation,
+        policy,
+    )? {
+        return Ok(Err(blocker));
+    }
+    let generated = match apply_splice_topology_transition(
+        support_records,
+        active,
+        event,
+        event_node,
+        orientation,
+    ) {
+        Ok(generated) => generated,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    Ok(Ok((event_node, generated)))
 }
 
 fn shape_preserving_pair_terminal_event(
@@ -5955,13 +6082,33 @@ mod tests {
     #[test]
     fn splice_topology_inserts_an_exact_expanding_semicircle_support() {
         for orientation in [RealSign::Positive, RealSign::Negative] {
-            let mut records = (0..4)
-                .map(|source_edge| ShapePreservingSupportRecord2 {
-                    geometry: ShapePreservingSupport2::Line {
-                        normal_x: r(1),
-                        normal_y: r(0),
-                        constant: r(source_edge as i32),
-                    },
+            let geometries = [
+                ShapePreservingSupport2::Line {
+                    normal_x: r(0),
+                    normal_y: r(1),
+                    constant: r(0),
+                },
+                ShapePreservingSupport2::Line {
+                    normal_x: r(-1),
+                    normal_y: r(0),
+                    constant: r(-2),
+                },
+                ShapePreservingSupport2::Line {
+                    normal_x: r(0),
+                    normal_y: r(-1),
+                    constant: r(-2),
+                },
+                ShapePreservingSupport2::Line {
+                    normal_x: r(1),
+                    normal_y: r(0),
+                    constant: r(0),
+                },
+            ];
+            let mut records = geometries
+                .into_iter()
+                .enumerate()
+                .map(|(source_edge, geometry)| ShapePreservingSupportRecord2 {
+                    geometry,
                     provenance: StraightSkeletonSupportProvenance2::SourceEdge { source_edge },
                 })
                 .collect::<Vec<_>>();
@@ -5969,16 +6116,40 @@ mod tests {
                 supports: vec![0, 1, 2, 3],
                 pair_start: BTreeMap::from([((3, 0), 0), ((0, 1), 1), ((1, 2), 2), ((2, 3), 3)]),
             };
+            let mut nodes = [
+                Point2::new(r(0), r(0)),
+                Point2::new(r(2), r(0)),
+                Point2::new(r(2), r(2)),
+                Point2::new(r(0), r(2)),
+            ]
+            .into_iter()
+            .enumerate()
+            .map(|(source_vertex, point)| StraightSkeletonNode2 {
+                point,
+                time: Real::zero(),
+                kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+            })
+            .collect::<Vec<_>>();
+            let mut arcs = Vec::new();
             let event = StraightSkeletonSpliceEvent2 {
                 source_vertex: 0,
                 left_source_edge: 3,
                 right_source_edge: 0,
                 time: r(2),
-                point: Point2::new(r(5), r(6)),
+                point: Point2::new(r(2), r(2)),
             };
-            let generated =
-                apply_splice_topology_transition(&mut records, &mut active, &event, 4, orientation)
-                    .unwrap();
+            let (splice_node, generated) = materialize_splice_topology_transition(
+                &mut nodes,
+                &mut arcs,
+                &mut records,
+                &mut active,
+                &event,
+                orientation,
+                &CurvePolicy::certified(),
+            )
+            .unwrap()
+            .unwrap();
+            assert_eq!(splice_node, 4);
             assert_eq!(generated, 4);
             assert_eq!(active.supports, vec![4, 0, 1, 2, 3]);
             assert!(!active.pair_start.contains_key(&(3, 0)));
@@ -6008,6 +6179,68 @@ mod tests {
             assert_eq!(signed_radius - &orientation_scalar * event.time(), r(0));
             let later_radius = signed_radius - &orientation_scalar * r(3);
             assert_eq!(later_radius, -orientation_scalar);
+            assert_eq!(
+                nodes[splice_node].kind(),
+                &StraightSkeletonNodeKind2::SpliceEvent {
+                    source_vertex: 0,
+                    left_source_edge: 3,
+                    right_source_edge: 0,
+                }
+            );
+            assert_eq!(arcs.len(), 1);
+            assert_eq!(
+                arcs[0].kind(),
+                &StraightSkeletonArcKind2::VertexBisector {
+                    left_source_edge: 3,
+                    right_source_edge: 0,
+                }
+            );
+
+            let left_end = nodes.len();
+            nodes.push(StraightSkeletonNode2 {
+                point: Point2::new(r(3), r(2)),
+                time: r(3),
+                kind: StraightSkeletonNodeKind2::EdgeEvent {
+                    collapsed_source_edges: vec![3],
+                },
+            });
+            add_recorded_shape_preserving_arc(
+                &mut arcs,
+                &nodes,
+                splice_node,
+                left_end,
+                (3, generated),
+                &records,
+                orientation,
+                &CurvePolicy::certified(),
+            )
+            .unwrap()
+            .unwrap();
+            let right_end = nodes.len();
+            nodes.push(StraightSkeletonNode2 {
+                point: Point2::new(r(2), r(3)),
+                time: r(3),
+                kind: StraightSkeletonNodeKind2::EdgeEvent {
+                    collapsed_source_edges: vec![0],
+                },
+            });
+            add_recorded_shape_preserving_arc(
+                &mut arcs,
+                &nodes,
+                splice_node,
+                right_end,
+                (generated, 0),
+                &records,
+                orientation,
+                &CurvePolicy::certified(),
+            )
+            .unwrap()
+            .unwrap();
+            assert_eq!(arcs.len(), 3);
+            assert!(arcs[1..].iter().all(|arc| matches!(
+                arc.kind(),
+                StraightSkeletonArcKind2::GeneratedVertexBisector { .. }
+            )));
         }
     }
 
