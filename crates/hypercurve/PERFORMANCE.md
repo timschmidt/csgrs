@@ -1557,6 +1557,23 @@ measured 224.789, 224.390, and 271.700 us/iter. `cavalier_contours`, `i_overlay`
 production arithmetic are implemented by Hyperreal itself; GMP remains limited to
 development-only competitive benchmarks and test oracles.
 
+Line-pair support classification now prepares the four endpoints' certified dyadic
+views once and evaluates the reverse orientation only after the first same-side exit
+fails. Each inconclusive floating determinant retains the same homogeneous word filter
+and arbitrary-precision fallback. In a symbolized twenty-operation star64 trace, calls
+to Hyperreal's cached exact-dyadic conversion fell from 62,990 to 47,222 (25.0%). The
+matching stripped Callgrind lane fell from 76,985,290 to 76,081,746 instructions
+(1.17%). Prepared-region DHAT allocation remained at 83,760 blocks; allocation traffic
+was effectively unchanged at 9,608,905 bytes, while reads fell from 28,207,882 to
+27,925,250 bytes (1.00%) and writes remained effectively flat.
+
+The matched 31-sample, 500-iteration release comparison measured ordinary region,
+contour, and loop output at 225.848, 221.581, and 272.583 us/iter. Prepared variants
+measured 222.742, 228.006, and 271.049 us/iter. `cavalier_contours`, `i_overlay`, and
+`geo` measured 28.092, 36.044, and 36.004 us/iter. The ordinary exact path is 2.37%
+faster than the preceding median and remains 8.04 times slower than the fastest
+approximate competitor.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

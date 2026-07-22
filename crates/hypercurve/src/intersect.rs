@@ -890,22 +890,19 @@ pub(crate) fn certified_line_segment_support_relation(
         line: &LineSeg2,
         first: &Point2,
         second: &Point2,
+        mut signs: (Option<RealSign>, Option<RealSign>),
     ) -> (Option<RealSign>, Option<RealSign>) {
         let start = [line.start().x(), line.start().y()];
         let end = [line.end().x(), line.end().y()];
         let first = [first.x(), first.y()];
         let second = [second.x(), second.y()];
-        // A certified dyadic floating sign is cheapest. Inconclusive rational
-        // inputs get the checked homogeneous i128 filter; overflow or symbolic
-        // coordinates retain `None` for the arbitrary-precision fallback.
-        let floating = Real::prepare_affine_det2_filter(start, end);
-        let mut signs = floating.map_or((None, None), |filter| {
-            (filter.sign(first), filter.sign(second))
-        });
         if signs.0.is_some() && signs.1.is_some() {
             return signs;
         }
 
+        // Inconclusive rational inputs get the checked homogeneous i128
+        // filter; overflow or symbolic coordinates retain `None` for the
+        // arbitrary-precision fallback.
         if let Some(exact) = Real::prepare_affine_det2_exact_word_filter(start, end) {
             signs.0 = signs.0.or_else(|| exact.sign(first));
             signs.1 = signs.1.or_else(|| exact.sign(second));
@@ -929,12 +926,28 @@ pub(crate) fn certified_line_segment_support_relation(
         )
     }
 
-    let (second_start, second_end) = orientations(first, second.start(), second.end());
+    let floating = Real::prepare_affine_det2_pair_filter(
+        [first.start().x(), first.start().y()],
+        [first.end().x(), first.end().y()],
+        [second.start().x(), second.start().y()],
+        [second.end().x(), second.end().y()],
+    );
+    let (second_start, second_end) = orientations(
+        first,
+        second.start(),
+        second.end(),
+        floating.map_or((None, None), |filter| filter.first_signs()),
+    );
     if strictly_same_side(second_start, second_end) {
         return CertifiedLineSegmentSupportRelation::Separated;
     }
 
-    let (first_start, first_end) = orientations(second, first.start(), first.end());
+    let (first_start, first_end) = orientations(
+        second,
+        first.start(),
+        first.end(),
+        floating.map_or((None, None), |filter| filter.second_signs()),
+    );
     if strictly_same_side(first_start, first_end) {
         return CertifiedLineSegmentSupportRelation::Separated;
     }
