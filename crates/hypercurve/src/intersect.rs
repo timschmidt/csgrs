@@ -1147,8 +1147,22 @@ fn intersect_non_parallel(
     if u_exact_location == Some(ExactUnitIntervalLocation::Outside) {
         return Ok(LineLineIntersection::None);
     }
-    let t = (t_numerator / &denominator)?;
-    let u = (u_numerator / &denominator)?;
+    let (t, exact_dyadic_point) = if exact_dyadic_fragments {
+        let (parameter, [x, y]) = Real::exact_rational_parameterized_point2_known_dyadic(
+            [a.start().x(), a.start().y()],
+            [rx, ry],
+            &t_numerator,
+            &denominator,
+        )?;
+        (parameter, Some(Point2::new(x, y)))
+    } else {
+        ((t_numerator / &denominator)?, None)
+    };
+    let u = if exact_dyadic_fragments {
+        Real::exact_rational_quotient_known_dyadic(&u_numerator, &denominator)?
+    } else {
+        (u_numerator / &denominator)?
+    };
 
     let t_in_range = match t_exact_location {
         Some(ExactUnitIntervalLocation::Interior | ExactUnitIntervalLocation::Endpoint) => true,
@@ -1200,7 +1214,10 @@ fn intersect_non_parallel(
     } else {
         IntersectionKind::Crossing
     };
-    let point = if t_endpoint {
+    let point = if let Some(point) = exact_dyadic_point {
+        debug_assert!(!t_endpoint && !u_endpoint);
+        point
+    } else if t_endpoint {
         line_point_at_unit_endpoint(a, &t, policy)
             .unwrap_or_else(|| line_intersection_point_at(a, &t, rx, ry))
     } else if u_endpoint {

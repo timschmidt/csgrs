@@ -1497,6 +1497,30 @@ completed 1,000 region-Boolean runs at 5,886 coverage points and 16,891 feature
 edges and 1,000 straight-skeleton runs at 3,252 coverage points and 9,172 feature
 edges without failure; LeakSanitizer alone remained disabled under ptrace.
 
+Retained exact-dyadic proper crossings now construct both parameters and the point
+without expanding a general affine expression. Hyperreal first cross-cancels the
+stored magnitudes of each dyadic quotient and applies the net power-of-two shift. For
+the point, two fused dyadic numerators represent
+`origin * denominator + parameter_numerator * delta`; dividing those directly by
+the original determinant avoids canonicalizing `parameter * delta` before adding
+the origin. The public and fallback paths still return identical canonical `Real`
+parameters and coordinates, as checked against the unreserved dense sweep.
+
+Against the retained-box and ordered-GCD checkpoint, twenty-operation Callgrind
+fell from 99,745,892 to 81,698,829 instructions (18.09%). Prepared-region DHAT
+allocation fell from 11,640,961 to 10,608,905 bytes (8.87%), allocation blocks from
+100,732 to 83,760 (16.85%), peak live heap from 861,653 to 776,589 bytes (9.87%),
+reads by 13.25%, and writes by 13.02%. The exact trace eliminated all 104 expanded
+cross-numerator and cross-denominator division events seen in the first aggregate
+prototype.
+
+A 31-sample, 500-iteration release comparison measured ordinary, contour, and loop
+star64 outputs at 256.917, 255.464, and 297.433 us/iter. Prepared variants measured
+253.557, 254.123, and 298.960 us/iter. The same run measured 27.695 us for
+`cavalier_contours`, 38.628 us for `i_overlay`, and 35.682 us for `geo`. The exact
+region path is 21.6% faster than the previous 327.611 us checkpoint, but remains
+9.28 times slower than the fastest approximate competitor.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
