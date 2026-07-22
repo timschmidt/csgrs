@@ -1592,6 +1592,24 @@ within the recent run-to-run range; the deterministic instruction and allocation
 reductions justify retaining the shared order. The ordinary exact path remains 8.07
 times slower than the fastest approximate competitor.
 
+Hyperreal's certified dyadic quotient now keeps word-sized cross-cancellation and
+net binary scaling in its native `u128` reducer, falling back before any overflowing
+shift or for an already-wide magnitude. The ordinary twenty-operation star64
+Callgrind lane fell from 75,700,486 to 74,297,181 instructions (1.85%). Prepared-
+region DHAT allocation fell from 83,735 to 81,575 blocks (2.58%); reads fell 1.39%
+and writes 0.52%, with effectively flat allocated bytes. Peak live heap rose by a
+bounded 2,560 bytes as more small quotient results entered Hyperreal's canonical
+storage cache.
+
+The matched 31-sample, 500-iteration run measured ordinary region, contour, and loop
+output at 223.696, 217.832, and 272.180 us/iter. Prepared variants measured 217.497,
+216.799, and 267.500 us/iter. `cavalier_contours`, `i_overlay`, and `geo` measured
+29.410, 36.466, and 35.752 us/iter. Ordinary exact region output is 1.76% faster than
+the preceding median and remains 7.61 times slower than the fastest approximate
+competitor in this run. The production quotient branch is implemented entirely by
+Hyperreal; GMP/MPFR remains confined to development-only competitive benchmarks and
+test oracles and is absent from release dependencies.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
