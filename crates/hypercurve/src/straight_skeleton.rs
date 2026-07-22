@@ -1923,7 +1923,7 @@ impl Contour2 {
                 Some(RealSign::Positive | RealSign::Negative) => {
                     reflex_vertices.push(vertex_index);
                 }
-                Some(RealSign::Zero) => return Ok(None),
+                Some(RealSign::Zero) => {}
                 None => {
                     return Ok(Some(blocked_shape_preserving_report(
                         self.segments().len(),
@@ -1965,6 +1965,35 @@ impl Contour2 {
                 policy,
             )? {
                 Ok(Some(reduction)) => Some(reduction),
+                Ok(None) if reflex_vertices.len() == 1 => {
+                    match certified_single_global_split_skeleton(
+                        self,
+                        &supports,
+                        orientation,
+                        policy,
+                    )? {
+                        Ok(Some((skeleton, event_count, simultaneous_event_count))) => {
+                            return Ok(Some(StraightSkeletonReport2 {
+                                stage: StraightSkeletonStage2::Complete,
+                                source_edge_count: self.segments().len(),
+                                event_count,
+                                simultaneous_event_count,
+                                split_event_count: skeleton_split_event_count(&skeleton),
+                                vertex_event_count: skeleton_vertex_event_count(&skeleton),
+                                skeleton: Some(skeleton),
+                                blocker: None,
+                            }));
+                        }
+                        Ok(None) => return Ok(None),
+                        Err(blocker) => {
+                            return Ok(Some(blocked_shape_preserving_report(
+                                self.segments().len(),
+                                StraightSkeletonStage2::EventScheduling,
+                                blocker,
+                            )));
+                        }
+                    }
+                }
                 Ok(None) => return Ok(None),
                 Err(blocker) => {
                     return Ok(Some(blocked_shape_preserving_report(
@@ -2414,6 +2443,148 @@ fn blocked_shape_preserving_report(
         skeleton: None,
         blocker: Some(blocker),
     }
+}
+
+fn summarize_shape_preserving_event_times(
+    mut events: Vec<(Real, usize)>,
+    policy: &CurvePolicy,
+) -> Result<(usize, usize), StraightSkeletonBlocker2> {
+    for index in 1..events.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            match compare_reals(&events[cursor].0, &events[cursor - 1].0, policy) {
+                Some(Ordering::Less) => events.swap(cursor, cursor - 1),
+                Some(Ordering::Equal | Ordering::Greater) => break,
+                None => return Err(StraightSkeletonBlocker2::UncertainEventOrdering),
+            }
+            cursor -= 1;
+        }
+    }
+    let mut event_count = 0;
+    let mut simultaneous_event_count = 0;
+    let mut index = 0;
+    while index < events.len() {
+        event_count += 1;
+        let mut multiplicity = events[index].1;
+        let mut cursor = index + 1;
+        while cursor < events.len() {
+            match compare_reals(&events[cursor].0, &events[index].0, policy) {
+                Some(Ordering::Equal) => multiplicity += events[cursor].1,
+                Some(Ordering::Greater) => break,
+                Some(Ordering::Less) => unreachable!(),
+                None => return Err(StraightSkeletonBlocker2::UncertainEventOrdering),
+            }
+            cursor += 1;
+        }
+        if multiplicity > 1 {
+            simultaneous_event_count += 1;
+        }
+        index = cursor;
+    }
+    Ok((event_count, simultaneous_event_count))
+}
+
+fn certified_single_global_split_skeleton(
+    contour: &Contour2,
+    supports: &[ShapePreservingSupport2],
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<Option<(StraightSkeleton2, usize, usize)>, StraightSkeletonBlocker2>> {
+    let contacts = match contour.straight_skeleton_global_contact_events(policy)? {
+        Classification::Decided(contacts) => contacts,
+        Classification::Uncertain(_) => {
+            return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+        }
+    };
+    let Some(first) = contacts.first() else {
+        return Ok(Ok(None));
+    };
+    if !matches!(first.kind, StraightSkeletonGlobalContactKind2::Split { .. }) {
+        return Ok(Ok(None));
+    }
+    if let Some(contact) = contacts.get(1) {
+        match compare_reals(contact.time(), first.time(), policy) {
+            Some(Ordering::Equal) => {
+                return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
+            }
+            Some(Ordering::Greater) => {}
+            Some(Ordering::Less) => unreachable!(),
+            None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+        }
+    }
+    let source_edge_count = supports.len();
+    let support_records = supports
+        .iter()
+        .cloned()
+        .enumerate()
+        .map(|(source_edge, geometry)| ShapePreservingSupportRecord2 {
+            geometry,
+            provenance: StraightSkeletonSupportProvenance2::SourceEdge { source_edge },
+        })
+        .collect::<Vec<_>>();
+    let mut nodes = contour
+        .segments()
+        .iter()
+        .enumerate()
+        .map(|(source_vertex, segment)| StraightSkeletonNode2 {
+            point: segment.start().clone(),
+            time: Real::zero(),
+            kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+        })
+        .collect::<Vec<_>>();
+    let active = ActiveShapePreservingCycle2 {
+        supports: (0..source_edge_count).collect(),
+        pair_start: (0..source_edge_count)
+            .map(|right| {
+                (
+                    ((right + source_edge_count - 1) % source_edge_count, right),
+                    right,
+                )
+            })
+            .collect(),
+    };
+    let mut arcs = Vec::new();
+    let (_, mut cycles) = match materialize_shape_preserving_split_transition(
+        &mut nodes,
+        &mut arcs,
+        &support_records,
+        &active,
+        first,
+        orientation,
+        policy,
+    )? {
+        Ok(transition) => transition,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    let completion = match complete_shape_preserving_edge_cycles(
+        &mut nodes,
+        &mut arcs,
+        &support_records,
+        &mut cycles,
+        first.time(),
+        orientation,
+        policy,
+    )? {
+        Ok(completion) => completion,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    let mut event_times = vec![(first.time().clone(), 1)];
+    event_times.extend(completion.events);
+    let (event_count, simultaneous_event_count) =
+        match summarize_shape_preserving_event_times(event_times, policy) {
+            Ok(summary) => summary,
+            Err(blocker) => return Ok(Err(blocker)),
+        };
+    Ok(Ok(Some((
+        StraightSkeleton2 {
+            nodes,
+            arcs,
+            source_edge_count,
+            maximum_time: completion.maximum_time,
+        },
+        event_count,
+        simultaneous_event_count,
+    ))))
 }
 
 #[derive(Clone, Debug)]
@@ -3881,11 +4052,14 @@ fn complete_shape_preserving_edge_cycles(
     for cycle in cycles {
         let mut cycle_time = current_time.clone();
         while cycle.supports.len() >= 3 {
+            let mut next_nodes = nodes.clone();
+            let mut next_arcs = arcs.clone();
+            let mut next_cycle = cycle.clone();
             let advance = match advance_shape_preserving_cycle_to_next_edge_event(
-                nodes,
-                arcs,
+                &mut next_nodes,
+                &mut next_arcs,
                 support_records,
-                cycle,
+                &mut next_cycle,
                 &cycle_time,
                 orientation,
                 policy,
@@ -3893,6 +4067,24 @@ fn complete_shape_preserving_edge_cycles(
                 Ok(advance) => advance,
                 Err(blocker) => return Ok(Err(blocker)),
             };
+            match shape_preserving_cycle_has_squeeze_before_or_at(
+                cycle,
+                support_records,
+                nodes,
+                &cycle_time,
+                &advance.time,
+                orientation,
+                policy,
+            )? {
+                Ok(false) => {}
+                Ok(true) => {
+                    return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+                }
+                Err(blocker) => return Ok(Err(blocker)),
+            }
+            *nodes = next_nodes;
+            *arcs = next_arcs;
+            *cycle = next_cycle;
             cycle_time = advance.time.clone();
             events.push((advance.time, advance.collapsed_supports.len()));
         }
@@ -4895,6 +5087,70 @@ fn active_shape_preserving_edge_strictly_contains_point_at_time(
         }
     }
     Ok(Ok(true))
+}
+
+fn shape_preserving_cycle_has_squeeze_before_or_at(
+    active: &ActiveShapePreservingCycle2,
+    support_records: &[ShapePreservingSupportRecord2],
+    nodes: &[StraightSkeletonNode2],
+    current_time: &Real,
+    upper_time: &Real,
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
+    let count = active.supports.len();
+    for first_position in 0..count {
+        for second_position in (first_position + 1)..count {
+            if second_position == first_position + 1
+                || (first_position == 0 && second_position + 1 == count)
+            {
+                continue;
+            }
+            let first = active.supports[first_position];
+            let second = active.supports[second_position];
+            let tangencies = match support_pair_future_tangencies(
+                &support_records[first].geometry,
+                &support_records[second].geometry,
+                orientation,
+                current_time,
+                policy,
+            )? {
+                Ok(tangencies) => tangencies,
+                Err(blocker) => return Ok(Err(blocker)),
+            };
+            for (time, point) in tangencies {
+                match compare_reals(&time, upper_time, policy) {
+                    Some(Ordering::Greater) => continue,
+                    Some(Ordering::Equal | Ordering::Less) => {}
+                    None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+                }
+                let mut strict = true;
+                for position in [first_position, second_position] {
+                    match active_shape_preserving_edge_strictly_contains_point_at_time(
+                        active,
+                        support_records,
+                        nodes,
+                        position,
+                        &point,
+                        &time,
+                        orientation,
+                        policy,
+                    )? {
+                        Ok(true) => {}
+                        Ok(false) => {
+                            strict = false;
+                            break;
+                        }
+                        Err(blocker) => return Ok(Err(blocker)),
+                    }
+                }
+                if strict {
+                    return Ok(Ok(true));
+                }
+            }
+        }
+    }
+    Ok(Ok(false))
 }
 
 fn tracked_vertex_target_events(
@@ -8855,6 +9111,15 @@ mod tests {
         let Classification::Decided(contacts) = contacts else {
             panic!("mixed split queue must be decided: {contacts:?}");
         };
+        assert!(
+            matches!(
+                contacts
+                    .first()
+                    .map(StraightSkeletonGlobalContactEvent2::kind),
+                Some(StraightSkeletonGlobalContactKind2::Split { .. })
+            ),
+            "{contacts:?}"
+        );
         let split = contacts
             .iter()
             .find(|event| {
