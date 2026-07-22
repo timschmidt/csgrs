@@ -21,6 +21,10 @@ use crate::{
     kicad, sarif, svg_overlay, waiver,
 };
 
+#[cfg(test)]
+pub(crate) static COMPLEX_PROJECT_GEOMETRY_TEST_LOCK: std::sync::Mutex<()> =
+    std::sync::Mutex::new(());
+
 #[derive(Clone, Debug)]
 struct Layer {
     path: PathBuf,
@@ -699,6 +703,16 @@ fn run_checks(
     package_inputs: &PackageInputs,
 ) -> Result<Vec<Violation>> {
     let mut violations = Vec::new();
+    let board_copper_layers = std::cell::OnceCell::<Vec<Vec<(String, PcbSketch)>>>::new();
+
+    let cached_board_copper_layers = || {
+        board_copper_layers.get_or_init(|| {
+            boards
+                .iter()
+                .map(|board| board.copper_layers(kicad_copper_layers))
+                .collect()
+        })
+    };
 
     for check in selected_checks {
         let check_name = check_slug(*check);
@@ -1304,8 +1318,8 @@ fn run_checks(
                         ));
                     }
                     let mut item_index = gerber_copper_layer_count;
-                    for board in boards {
-                        for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
+                    for (board, copper_layers) in boards.iter().zip(cached_board_copper_layers()) {
+                        for (layer_name, copper) in copper_layers {
                             let name = format!("{}:{layer_name}", board.source);
                             progress_check_item(
                                 check_name,
@@ -1317,7 +1331,7 @@ fn run_checks(
                             item_index += 1;
                             violations.extend(checks::min_copper_neck_width(
                                 &name,
-                                &copper,
+                                copper,
                                 &rules.min_width,
                                 &rules.min_area,
                             ));
@@ -1333,11 +1347,11 @@ fn run_checks(
                             &rules.acid_trap_angle,
                         ));
                     }
-                    for board in boards {
-                        for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
+                    for (board, copper_layers) in boards.iter().zip(cached_board_copper_layers()) {
+                        for (layer_name, copper) in copper_layers {
                             violations.extend(checks::acid_trap_candidates(
                                 &format!("{}:{layer_name}", board.source),
-                                &copper,
+                                copper,
                                 &rules.acid_trap_angle,
                             ));
                         }
@@ -1379,46 +1393,45 @@ fn run_checks(
                     }
                     let explicit_layers = layers
                         .iter()
-                        .map(|layer| (layer_name(layer), layer.sketch.clone()))
+                        .map(|layer| (layer_name(layer), &layer.sketch))
                         .collect::<Vec<_>>();
                     violations.extend(checks::duplicate_layer_geometry_readiness(
                         &explicit_layers,
                         &rules.min_area,
                     ));
-                    for board in boards {
-                        for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
+                    for (board, kicad_layers) in boards.iter().zip(cached_board_copper_layers()) {
+                        for (layer_name, copper) in kicad_layers {
                             let name = format!("{}:{layer_name}", board.source);
                             violations.extend(checks::layer_sanity(
                                 &name,
-                                &copper,
+                                copper,
                                 rules.max_layer_area.as_ref(),
                             ));
                             violations.extend(checks::tiny_layer_feature_readiness(
                                 &name,
-                                &copper,
+                                copper,
                                 &rules.min_area,
                             ));
                             violations.extend(checks::skinny_layer_feature_readiness(
                                 &name,
-                                &copper,
+                                copper,
                                 &rules.min_width,
                                 &rules.min_area,
                             ));
                             violations.extend(checks::duplicate_layer_island_readiness(
                                 &name,
-                                &copper,
+                                copper,
                                 &rules.min_area,
                             ));
                         }
-                        let kicad_layers = board
-                            .copper_layers(kicad_copper_layers)
-                            .into_iter()
+                        let named_kicad_layers = kicad_layers
+                            .iter()
                             .map(|(layer_name, copper)| {
                                 (format!("{}:{layer_name}", board.source), copper)
                             })
                             .collect::<Vec<_>>();
                         violations.extend(checks::duplicate_layer_geometry_readiness(
-                            &kicad_layers,
+                            &named_kicad_layers,
                             &rules.min_area,
                         ));
                     }
@@ -8489,7 +8502,7 @@ fn print_violation(index: usize, violation: &Violation) {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::path::{Path, PathBuf};
     use std::time::{Duration, Instant};
     use std::{fs, process};
@@ -8504,6 +8517,7 @@ mod tests {
         discover_package_sidecars, is_gerber_path,
     };
     use crate::kicad;
+    use crate::test_support::PerformanceTimer;
 
     use super::{
         Layer, PackageInputs, cli_with_inferred_layer_roles, explicit_layer_pairs,
@@ -8816,13 +8830,15 @@ mod tests {
         assert!(error.contains("provide at least one"));
     }
 
-    #[test]
-    fn complex_project_zip_kicad_board_completes_smoke_check_suite() {
+    pub(crate) fn complex_project_zip_kicad_board_completes_smoke_check_suite() {
+        let _geometry_guard = super::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let root = complex_zip_temp_root("kicad-smoke-suite");
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(&root).unwrap();
 
-        let started = Instant::now();
+        let started = PerformanceTimer::now();
         for fixture in COMPLEX_PROJECT_FIXTURES {
             let Some(package_dir) =
                 extract_complex_project_zip(&root, fixture.label, fixture.zip_path)
@@ -8863,15 +8879,17 @@ mod tests {
         }
 
         let _ = fs::remove_dir_all(&root);
+        let elapsed = started.elapsed();
         assert!(
-            started.elapsed() < Duration::from_secs(120),
-            "complex project KiCad smoke suite took {:?}",
-            started.elapsed()
+            elapsed < Duration::from_secs(120),
+            "complex project KiCad smoke suite took {elapsed:?} of worker time"
         );
     }
 
-    #[test]
-    fn complex_project_gerber_package_completes_smoke_check_suite() {
+    pub(crate) fn complex_project_gerber_package_completes_smoke_check_suite() {
+        let _geometry_guard = super::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let root = complex_zip_temp_root("gerber-smoke-suite");
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(&root).unwrap();

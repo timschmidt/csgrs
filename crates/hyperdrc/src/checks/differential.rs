@@ -797,7 +797,7 @@ fn ordered_pair_names(left: &str, right: &str) -> (String, String) {
 fn estimated_segment_length(feature: &CopperFeature) -> Scalar {
     feature
         .sketch
-        .as_region()
+        .native_contours()
         .material_contours()
         .iter()
         .flat_map(|contour| contour.segments())

@@ -1870,7 +1870,7 @@ fn native_sketch_bounds_scalar(sketch: &crate::PcbSketch) -> Option<ScalarBounds
         });
     }
     let mut bounds = None;
-    let region = sketch.as_region();
+    let region = sketch.native_contours();
     for contour in region
         .material_contours()
         .iter()
@@ -2011,7 +2011,7 @@ fn estimated_feature_length(feature: &CopperFeature) -> Scalar {
 
 fn maximum_exterior_edge_length(sketch: &crate::PcbSketch) -> Scalar {
     sketch
-        .as_region()
+        .native_contours()
         .material_contours()
         .iter()
         .flat_map(|contour| contour.segments())

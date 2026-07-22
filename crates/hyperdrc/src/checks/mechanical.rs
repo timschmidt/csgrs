@@ -1179,6 +1179,7 @@ mod tests {
     use crate::geometry::{circle_polygon, polygons_to_profile};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
     use crate::scalar::scalar;
+    use crate::test_support::PerformanceTimer;
 
     use super::{
         castellation_pitch_readiness, edge_plating_intent_readiness,
@@ -1226,7 +1227,7 @@ mod tests {
             .collect::<Vec<_>>();
         let board = board_with(copper, vec![npth([-10.0, -10.0], 3.2)]);
 
-        let started = std::time::Instant::now();
+        let started = PerformanceTimer::now();
         let violations = mounting_hole_grounding_readiness(&board, &[], &scalar("1.0"));
 
         assert_eq!(violations.len(), 1);
@@ -1301,7 +1302,7 @@ mod tests {
         copper_features.push(copper("SIG_NEAR", CopperKind::Pad, [-8.8, -10.0], 0.2));
         let board = board_with(copper_features, vec![npth([-10.0, -10.0], 2.0)]);
 
-        let started = std::time::Instant::now();
+        let started = PerformanceTimer::now();
         let violations = mounting_hole_copper_keepout_readiness(
             &board,
             &[],
@@ -1373,7 +1374,7 @@ mod tests {
         let mut board = board_with(vec![], drills);
         board.board_outline = Some(outline());
 
-        let started = std::time::Instant::now();
+        let started = PerformanceTimer::now();
         let violations =
             mounting_hole_edge_clearance_readiness(&board, &scalar("0.5"), &scalar("1.0e-9"));
 
@@ -1427,7 +1428,7 @@ mod tests {
             .collect::<Vec<_>>();
         let board = board_with(copper, vec![pth([-10.0, -10.0], 3.2, Some("MOUNT"))]);
 
-        let started = std::time::Instant::now();
+        let started = PerformanceTimer::now();
         let violations = mounting_hole_plating_intent_readiness(&board, &[], &scalar("1.0"));
 
         assert_eq!(violations.len(), 1);
@@ -1490,7 +1491,7 @@ mod tests {
             .collect::<Vec<_>>();
         let board = board_with(vec![], drills);
 
-        let started = std::time::Instant::now();
+        let started = PerformanceTimer::now();
         let violations = mounting_hole_distribution_readiness(&board, &scalar("8.0"));
 
         assert_eq!(violations.len(), 1);
@@ -1537,7 +1538,7 @@ mod tests {
         drills.push(pth([3.4, 0.0], 3.0, Some("GND")));
         let board = board_with(vec![], drills);
 
-        let started = std::time::Instant::now();
+        let started = PerformanceTimer::now();
         let violations = mounting_hole_spacing_readiness(&board, &scalar("0.5"));
 
         assert_eq!(violations.len(), 1);
@@ -1625,7 +1626,7 @@ mod tests {
             }),
         ));
 
-        let started = std::time::Instant::now();
+        let started = PerformanceTimer::now();
         let violations = panel_feature_outline_readiness(&board, &scalar("0.5"), &scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
@@ -1719,7 +1720,7 @@ mod tests {
         let mut board = board_with(copper_features, vec![]);
         board.board_outline = Some(outline());
 
-        let started = std::time::Instant::now();
+        let started = PerformanceTimer::now();
         let violations =
             edge_plating_intent_readiness(&board, &[], &scalar("0.5"), &scalar("1.0e-9"));
 
@@ -1782,7 +1783,7 @@ mod tests {
             }),
         ));
 
-        let started = std::time::Instant::now();
+        let started = PerformanceTimer::now();
         let violations = castellation_pitch_readiness(&board, &scalar("0.5"));
 
         assert_eq!(violations.len(), 1);

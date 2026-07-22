@@ -5,7 +5,7 @@
 
 use csgrs::sketch::Profile;
 use geo::{Area, LineString, Polygon};
-use hypercurve::{Contour2, Region2};
+use hypercurve::{Contour2, CurvePolicy, CurveRegion2};
 
 use crate::{LayerMetadata, PcbSketch};
 
@@ -41,8 +41,10 @@ pub fn polygons_to_profile(
             had_non_finite_input,
         );
     }
+    let region = CurveRegion2::try_from_native_contours(material, holes, &CurvePolicy::certified())
+        .unwrap_or_else(|_| CurveRegion2::empty());
     PcbSketch::new_with_exact_bounds(
-        Profile::from_region(Region2::new(material, holes)),
+        Profile::from_curve_region(region),
         metadata,
         exact_bounds,
         had_non_finite_input,

@@ -1049,7 +1049,22 @@ pub fn silkscreen_min_width(
             .is_some_and(|dimension| dimension > Scalar::zero() && &dimension < min_width);
         let area_above_gate = polygon_area_scalar(&polygon).is_some_and(|area| &area > min_area);
         let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
-        let reconstructed = island.offset(-radius.clone()).offset(radius.clone());
+        let reconstructed = match island
+            .try_offset(-radius.clone())
+            .and_then(|eroded| eroded.try_offset(radius.clone()))
+        {
+            Ok(reconstructed) => reconstructed,
+            Err(error) => {
+                log::warn!(
+                    "silkscreen-min-width retained an island after uncertified morphology: {error}"
+                );
+                shapes.extend(multipolygon_to_shapes_scalar(
+                    &island.to_multipolygon(),
+                    min_area,
+                ));
+                continue;
+            }
+        };
         let thin_features = island.difference(&reconstructed);
         let mut island_shapes =
             multipolygon_to_shapes_scalar(&thin_features.to_multipolygon(), min_area);
@@ -1230,7 +1245,20 @@ pub fn min_copper_neck_width(
             continue;
         }
         let island = polygon_to_profile(polygon.clone(), Some(metadata(copper_name)));
-        let reconstructed = island.offset(-radius.clone()).offset(radius.clone());
+        let reconstructed = match island
+            .try_offset(-radius.clone())
+            .and_then(|eroded| eroded.try_offset(radius.clone()))
+        {
+            Ok(reconstructed) => reconstructed,
+            Err(error) => {
+                log::warn!(
+                    "min-copper-neck retained island {island_index} on layer {copper_name} after uncertified morphology: {error}"
+                );
+                uncertain_difference_count += 1;
+                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
+                continue;
+            }
+        };
         let thin = match island.try_difference(&reconstructed) {
             Ok(thin_features) => thin_features.to_multipolygon(),
             Err(error) => {
@@ -1330,7 +1358,23 @@ pub fn solder_mask_sliver(
     // Same opening operation as the copper neck-width check, applied to residual
     // mask geometry. The result is the geometry that is too thin to survive the
     // configured web width.
-    let reconstructed = mask.offset(-radius.clone()).offset(radius);
+    let reconstructed = match mask
+        .try_offset(-radius.clone())
+        .and_then(|eroded| eroded.try_offset(radius))
+    {
+        Ok(reconstructed) => reconstructed,
+        Err(error) => {
+            log::warn!("solder-mask-sliver retained mask after uncertified morphology: {error}");
+            return shapes_violation_scalar(
+                "solder-mask-sliver",
+                Severity::Warning,
+                vec![mask_name.to_string()],
+                mask.clone(),
+                min_area,
+                format!("solder mask geometry may be removed by opening with width {min_width}"),
+            );
+        }
+    };
     let slivers = mask.difference(&reconstructed);
     let mut violations = shapes_violation_scalar(
         "solder-mask-sliver",
@@ -2167,13 +2211,17 @@ fn quantize_layer_signature_value(value: f64) -> i64 {
 /// `layer-sanity` as a warning and should be reviewed against the fabrication
 /// file manifest. The overlap test remains intentionally conservative for CAM
 /// handoff use.
-pub fn duplicate_layer_geometry_readiness(
-    layers: &[(String, PcbSketch)],
+pub fn duplicate_layer_geometry_readiness<T>(
+    layers: &[(String, T)],
     min_area: &Scalar,
-) -> Vec<Violation> {
+) -> Vec<Violation>
+where
+    T: std::borrow::Borrow<PcbSketch>,
+{
     let prepared = layers
         .iter()
         .filter_map(|(name, sketch)| {
+            let sketch = sketch.borrow();
             let multipolygon = sketch.to_multipolygon();
             let area = multipolygon_area_scalar(&multipolygon)?;
             let bounds = multipolygon_bounds_scalar(&multipolygon)?;
@@ -3692,7 +3740,7 @@ fn metadata(layer_name: &str) -> LayerMetadata {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::path::Path;
     use std::process::Command;
     use std::time::{Duration, Instant};
@@ -4652,11 +4700,14 @@ mod tests {
         ("docs/HVP109A.zip", "HVP109A.kicad_pcb"),
     ];
 
-    #[test]
-    fn min_copper_neck_width_completes_on_complex_project_copper_layers() {
-        let started = Instant::now();
+    pub(crate) fn min_copper_neck_width_completes_on_complex_project_copper_layers() {
+        let _geometry_guard = crate::app::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut check_elapsed = Duration::ZERO;
         let min_width = crate::scalar::scalar("0.0762");
         let min_area = crate::scalar::scalar("1.0e-9");
+        let selected_layers = ["F.Cu".to_string(), "B.Cu".to_string()];
 
         for (zip_path, board_entry) in COMPLEX_PROJECT_FIXTURES {
             let Some(board_bytes) = unzip_fixture_entry(zip_path, board_entry) else {
@@ -4665,19 +4716,19 @@ mod tests {
             let board_path = write_temp_fixture(board_entry, &board_bytes);
             let board =
                 load_kicad_pcb(&board_path).expect("complex project KiCad fixture should parse");
-            for (layer_name, copper) in board.copper_layers(&[]) {
-                if layer_name != "F.Cu" && layer_name != "B.Cu" {
-                    continue;
-                }
+            let copper_layers = board.copper_layers(&selected_layers);
+            let check_started = Instant::now();
+            for (layer_name, copper) in copper_layers {
                 let _ = min_copper_neck_width(&layer_name, &copper, &min_width, &min_area);
             }
+            check_elapsed += check_started.elapsed();
             let _ = std::fs::remove_file(board_path);
         }
 
         assert!(
-            started.elapsed() < Duration::from_secs(60),
+            check_elapsed < Duration::from_secs(60),
             "complex project copper neck regression fixture took {:?}",
-            started.elapsed()
+            check_elapsed
         );
     }
 

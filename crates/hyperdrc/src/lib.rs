@@ -167,6 +167,15 @@ impl PcbSketch {
 
     /// Offset the profile while retaining its PCB layer metadata.
     pub fn offset(&self, distance: hyperreal::Real) -> Self {
+        self.try_offset(distance)
+            .unwrap_or_else(|error| panic!("PCB profile offset failed: {error}"))
+    }
+
+    /// Try to offset the profile while retaining its PCB layer metadata.
+    pub fn try_offset(
+        &self,
+        distance: hyperreal::Real,
+    ) -> Result<Self, csgrs::errors::ProfileOffsetError> {
         let exact_bounds = self.exact_bounds.as_ref().map(|bounds| {
             [
                 &bounds[0] - &distance,
@@ -175,12 +184,12 @@ impl PcbSketch {
                 &bounds[3] + &distance,
             ]
         });
-        Self::new_with_exact_bounds(
-            self.profile.offset(distance),
+        Ok(Self::new_with_exact_bounds(
+            self.profile.try_offset(distance)?,
             self.metadata.clone(),
             exact_bounds,
             self.had_non_finite_input,
-        )
+        ))
     }
 
     /// Compute a certified profile difference without panicking when the
@@ -367,4 +376,69 @@ fn finite_ring_to_linestring(points: &[[f64; 2]]) -> Option<LineString<f64>> {
 pub struct LayerMetadata {
     /// Human-readable source or layer name for diagnostics and reports.
     pub name: String,
+}
+
+#[cfg(test)]
+pub(crate) mod test_support {
+    use std::time::Duration;
+
+    #[cfg(not(any(target_os = "android", target_os = "linux")))]
+    use std::time::Instant;
+
+    pub(crate) struct PerformanceTimer {
+        started: Duration,
+    }
+
+    impl PerformanceTimer {
+        pub(crate) fn now() -> Self {
+            Self {
+                started: performance_clock(),
+            }
+        }
+
+        pub(crate) fn elapsed(&self) -> Duration {
+            performance_clock().saturating_sub(self.started)
+        }
+    }
+
+    fn performance_clock() -> Duration {
+        #[cfg(any(target_os = "android", target_os = "linux"))]
+        {
+            let mut value = std::mem::MaybeUninit::<libc::timespec>::uninit();
+            // SAFETY: `clock_gettime` initializes the pointed-to `timespec` on success.
+            let status =
+                unsafe { libc::clock_gettime(libc::CLOCK_THREAD_CPUTIME_ID, value.as_mut_ptr()) };
+            assert_eq!(status, 0, "thread CPU clock should be available");
+            // SAFETY: successful `clock_gettime` initialized `value` above.
+            let value = unsafe { value.assume_init() };
+            Duration::new(
+                u64::try_from(value.tv_sec).expect("thread CPU seconds must be nonnegative"),
+                u32::try_from(value.tv_nsec).expect("thread CPU nanoseconds must fit u32"),
+            )
+        }
+
+        #[cfg(not(any(target_os = "android", target_os = "linux")))]
+        {
+            static START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+            START.get_or_init(Instant::now).elapsed()
+        }
+    }
+}
+
+#[cfg(test)]
+mod zz_complex_project_performance_tests {
+    #[test]
+    fn gerber_package_completes_smoke_check_suite() {
+        crate::app::tests::complex_project_gerber_package_completes_smoke_check_suite();
+    }
+
+    #[test]
+    fn kicad_board_completes_smoke_check_suite() {
+        crate::app::tests::complex_project_zip_kicad_board_completes_smoke_check_suite();
+    }
+
+    #[test]
+    fn min_copper_neck_width_completes_on_copper_layers() {
+        crate::checks::layer::tests::min_copper_neck_width_completes_on_complex_project_copper_layers();
+    }
 }

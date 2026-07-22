@@ -700,7 +700,7 @@ fn copper_features_touch_scalar(
     !left
         .sketch
         .intersection(&right.sketch)
-        .as_region()
+        .native_contours()
         .material_contours()
         .is_empty()
         || polygon_boundary_distance_scalar(
