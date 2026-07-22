@@ -2722,7 +2722,9 @@ mod tests {
         for origin_sign in [-1_i8, 1] {
             for delta_sign in [-1_i8, 1] {
                 for parameter_sign in [-1_i8, 1] {
-                    for denominator_shift in [0_usize, 7, 129] {
+                    for (denominator_magnitude, denominator_shift) in
+                        [(12_u8, 0_usize), (45, 0), (45, 7), (45, 129)]
+                    {
                         let origin = [dyadic(origin_sign, 9, 5), dyadic(-origin_sign, 15, 11)];
                         let delta = [
                             Real::new(Rational::fraction(i64::from(delta_sign) * 35, 64).unwrap()),
@@ -2733,7 +2735,7 @@ mod tests {
                         );
                         let denominator = Real::new(
                             Rational::from_bigint_fraction(
-                                num::BigInt::from(45),
+                                num::BigInt::from(denominator_magnitude),
                                 num::BigUint::from(1_u8) << denominator_shift,
                             )
                             .unwrap(),
@@ -2755,7 +2757,7 @@ mod tests {
                         assert_eq!(actual_parameter, parameter);
                         assert_eq!(
                             actual, expected,
-                            "origin_sign={origin_sign}, delta_sign={delta_sign}, parameter_sign={parameter_sign}, denominator_shift={denominator_shift}"
+                            "origin_sign={origin_sign}, delta_sign={delta_sign}, parameter_sign={parameter_sign}, denominator_magnitude={denominator_magnitude}, denominator_shift={denominator_shift}"
                         );
                     }
                 }

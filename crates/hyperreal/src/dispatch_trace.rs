@@ -695,9 +695,9 @@ mod tests {
         with_recording(|| {
             Rational::quotient_known_dyadic(&numerator, &denominator).unwrap();
             Rational::quotient_known_dyadic(&Rational::one(), &large_scale_denominator).unwrap();
-            Rational::affine_quotient_known_dyadic(
-                &wide_origin,
-                &delta,
+            Rational::parameterized_point2_known_dyadic(
+                [&wide_origin, &wide_origin],
+                [&delta, &delta],
                 &affine_numerator,
                 &affine_denominator,
             )
@@ -707,7 +707,7 @@ mod tests {
         let snapshot = take_trace();
         assert_eq!(
             snapshot.path_count("rational", "div", "known-dyadic-word-cross-cancel"),
-            1
+            2
         );
         assert_eq!(
             snapshot.path_count("rational", "div", "known-dyadic-cross-cancel"),
@@ -715,7 +715,7 @@ mod tests {
         );
         assert_eq!(
             snapshot.path_count("rational", "div", "known-dyadic-affine-factor-cross-cancel"),
-            1
+            2
         );
     }
 

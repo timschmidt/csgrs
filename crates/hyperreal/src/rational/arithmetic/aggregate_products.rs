@@ -1226,8 +1226,8 @@ impl Rational {
 
     fn from_scaled_dyadic_quotient_component(
         sign: Sign,
-        mut magnitude: u128,
-        mut denominator: u128,
+        magnitude: u128,
+        denominator: u128,
         scale_shift: i32,
     ) -> Option<Self> {
         if sign == NoSign || magnitude == 0 {
@@ -1235,6 +1235,28 @@ impl Rational {
         }
 
         let divisor = Self::gcd_word(magnitude, denominator);
+        Self::from_scaled_dyadic_quotient_component_with_divisor(
+            sign,
+            magnitude,
+            denominator,
+            scale_shift,
+            divisor,
+        )
+    }
+
+    fn from_scaled_dyadic_quotient_component_with_divisor(
+        sign: Sign,
+        mut magnitude: u128,
+        mut denominator: u128,
+        scale_shift: i32,
+        divisor: u128,
+    ) -> Option<Self> {
+        if sign == NoSign || magnitude == 0 {
+            return Some(Self::zero());
+        }
+        debug_assert_ne!(divisor, 0);
+        debug_assert_eq!(magnitude % divisor, 0);
+        debug_assert_eq!(denominator % divisor, 0);
         magnitude /= divisor;
         denominator /= divisor;
         if scale_shift >= 0 {
@@ -2350,83 +2372,160 @@ impl Rational {
         ))
     }
 
-    /// Evaluate `origin + (numerator / denominator) * delta` after the caller
-    /// has proved that all four inputs are dyadic.
-    ///
-    /// If the affine numerator grows beyond a native word while the quotient
-    /// denominator remains an odd native word, derive their common factor
-    /// from `numerator * delta`. The `origin * denominator` term vanishes
-    /// modulo that denominator, and removing powers of two while canonicalizing
-    /// the dyadic affine numerator cannot change a GCD with an odd value.
-    pub(crate) fn affine_quotient_known_dyadic(
-        origin: &Self,
-        delta: &Self,
+    fn quotient_known_dyadic_with_word_divisor(
         numerator: &Self,
         denominator: &Self,
-    ) -> Result<Self, crate::Problem> {
+        numerator_shift: u64,
+        denominator_shift: u64,
+        denominator_word: u128,
+        divisor: u128,
+    ) -> (Self, bool) {
+        if let (Some(numerator_word), Ok(scale_shift)) = (
+            numerator.numerator.to_u128(),
+            i32::try_from(i128::from(denominator_shift) - i128::from(numerator_shift)),
+        ) && let Some(result) = Self::from_scaled_dyadic_quotient_component_with_divisor(
+            numerator.sign * denominator.sign,
+            numerator_word,
+            denominator_word,
+            scale_shift,
+            divisor,
+        ) {
+            return (result, true);
+        }
+
+        let mut magnitude = if divisor == 1 {
+            numerator.numerator.clone()
+        } else {
+            &numerator.numerator / divisor
+        };
+        let mut scale = BigUint::from(denominator_word / divisor);
+        if denominator_shift > numerator_shift {
+            magnitude <<= usize::try_from(denominator_shift - numerator_shift)
+                .expect("dyadic quotient shift fits usize");
+        } else if numerator_shift > denominator_shift {
+            scale <<= usize::try_from(numerator_shift - denominator_shift)
+                .expect("dyadic quotient shift fits usize");
+        }
+        trace_rational_temporary!();
+        (
+            Self::from_parts_raw(numerator.sign * denominator.sign, magnitude, scale),
+            false,
+        )
+    }
+
+    /// Construct `t = numerator / denominator` and both coordinates of
+    /// `origin + t * delta` after the caller has proved every input dyadic.
+    /// One native cancellation of the shared quotient is reused by all three
+    /// results. For an odd quotient denominator, each affine cancellation is
+    /// then completed from its coordinate delta: `origin * denominator`
+    /// vanishes modulo the denominator, and dyadic normalization removes only
+    /// invertible powers of two.
+    pub(crate) fn parameterized_point2_known_dyadic(
+        origin: [&Self; 2],
+        delta: [&Self; 2],
+        numerator: &Self,
+        denominator: &Self,
+    ) -> Result<(Self, [Self; 2]), crate::Problem> {
         if denominator.sign == NoSign {
             return Err(crate::Problem::DivideByZero);
         }
-        let affine_numerator = Self::signed_product_sum_known_dyadic(
-            [true, true],
-            [[origin, denominator], [numerator, delta]],
-        );
-        if affine_numerator.sign == NoSign {
-            return Ok(Self::zero());
-        }
+        let denominator_shift = denominator
+            .dyadic_denominator_shift()
+            .expect("known-dyadic denominator has a power-of-two denominator");
+        let numerator_shift = numerator
+            .dyadic_denominator_shift()
+            .expect("known-dyadic numerator has a power-of-two denominator");
+        let affine_numerators: [Self; 2] = std::array::from_fn(|index| {
+            Self::signed_product_sum_known_dyadic(
+                [true, true],
+                [[origin[index], denominator], [numerator, delta[index]]],
+            )
+        });
+        let word_plan = numerator
+            .numerator
+            .to_u128()
+            .zip(denominator.numerator.to_u128())
+            .map(|(numerator_word, denominator_word)| {
+                (
+                    denominator_word,
+                    Self::gcd_word(numerator_word, denominator_word),
+                )
+            });
 
-        if affine_numerator.numerator.to_u128().is_none()
-            && let Some(denominator_word) = denominator.numerator.to_u128()
-            && denominator_word > 1
-            && denominator_word % 2 == 1
-            && let (Some(numerator_word), Some(delta_word)) =
-                (numerator.numerator.to_u128(), delta.numerator.to_u128())
-        {
-            let first_divisor = Self::gcd_word(numerator_word, denominator_word);
-            let remaining_denominator = denominator_word / first_divisor;
-            let second_divisor = Self::gcd_word(delta_word, remaining_denominator);
-            let divisor = first_divisor * second_divisor;
-            let numerator_shift = affine_numerator
-                .dyadic_denominator_shift()
-                .expect("known-dyadic affine numerator has a power-of-two denominator");
-            let denominator_shift = denominator
-                .dyadic_denominator_shift()
-                .expect("known-dyadic denominator has a power-of-two denominator");
+        let parameter = if let Some((denominator_word, first_divisor)) = word_plan {
             #[cfg(feature = "dispatch-trace")]
-            let divisor_trace = BigUint::from(divisor);
+            let divisor_trace = BigUint::from(first_divisor);
             trace_rational_gcd!(
-                &affine_numerator.numerator,
+                &numerator.numerator,
                 &denominator.numerator,
                 &divisor_trace
             );
-
-            let mut magnitude = if divisor == 1 {
-                affine_numerator.numerator.clone()
-            } else {
-                &affine_numerator.numerator / divisor
-            };
-            let mut scale = BigUint::from(denominator_word / divisor);
-            if denominator_shift > numerator_shift {
-                magnitude <<= usize::try_from(denominator_shift - numerator_shift)
-                    .expect("dyadic affine quotient shift fits usize");
-            } else if numerator_shift > denominator_shift {
-                scale <<= usize::try_from(numerator_shift - denominator_shift)
-                    .expect("dyadic affine quotient shift fits usize");
-            }
+            let (result, _word_result) = Self::quotient_known_dyadic_with_word_divisor(
+                numerator,
+                denominator,
+                numerator_shift,
+                denominator_shift,
+                denominator_word,
+                first_divisor,
+            );
             crate::trace_dispatch!(
                 "rational",
                 "div",
-                "known-dyadic-affine-factor-cross-cancel"
+                if _word_result {
+                    "known-dyadic-word-cross-cancel"
+                } else {
+                    "known-dyadic-cross-cancel"
+                }
             );
-            trace_rational_temporary!();
-            return Ok(Self::from_parts_raw(
-                affine_numerator.sign * denominator.sign,
-                magnitude,
-                scale,
-            ));
-        }
+            result
+        } else {
+            Self::quotient_known_dyadic(numerator, denominator)?
+        };
 
-        Self::quotient_known_dyadic(&affine_numerator, denominator)
+        let coordinates = std::array::from_fn(|index| {
+            let affine_numerator = &affine_numerators[index];
+            if affine_numerator.sign == NoSign {
+                return Ok(Self::zero());
+            }
+            if let Some((denominator_word, first_divisor)) = word_plan
+                && denominator_word > 1
+                && denominator_word % 2 == 1
+                && let Some(delta_word) = delta[index].numerator.to_u128()
+            {
+                let remaining_denominator = denominator_word / first_divisor;
+                let second_divisor = Self::gcd_word(delta_word, remaining_denominator);
+                let divisor = first_divisor * second_divisor;
+                let affine_shift = affine_numerator
+                    .dyadic_denominator_shift()
+                    .expect("known-dyadic affine numerator has a power-of-two denominator");
+                #[cfg(feature = "dispatch-trace")]
+                let divisor_trace = BigUint::from(divisor);
+                trace_rational_gcd!(
+                    &affine_numerator.numerator,
+                    &denominator.numerator,
+                    &divisor_trace
+                );
+                let (result, _) = Self::quotient_known_dyadic_with_word_divisor(
+                    affine_numerator,
+                    denominator,
+                    affine_shift,
+                    denominator_shift,
+                    denominator_word,
+                    divisor,
+                );
+                crate::trace_dispatch!(
+                    "rational",
+                    "div",
+                    "known-dyadic-affine-factor-cross-cancel"
+                );
+                Ok(result)
+            } else {
+                Self::quotient_known_dyadic(affine_numerator, denominator)
+            }
+        });
+        let [x, y] = coordinates;
+
+        Ok((parameter, [x?, y?]))
     }
 
     /// Evaluate a fixed-size signed sum of products exactly.

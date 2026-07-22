@@ -264,33 +264,18 @@ impl Real {
         numerator: &Real,
         denominator: &Real,
     ) -> Result<(Real, [Real; 2]), crate::Problem> {
-        if denominator.has_zero_scale() {
-            return Err(crate::Problem::DivideByZero);
-        }
-        let numerator = &numerator.rational;
-        let denominator = &denominator.rational;
-        let coordinates = std::array::from_fn(|index| {
-            Rational::affine_quotient_known_dyadic(
-                &origin[index].rational,
-                &delta[index].rational,
-                numerator,
-                denominator,
-            )
-            .map(Real::new)
-        });
+        let (parameter, coordinates) = Rational::parameterized_point2_known_dyadic(
+            origin.map(|value| &value.rational),
+            delta.map(|value| &value.rational),
+            &numerator.rational,
+            &denominator.rational,
+        )?;
         crate::trace_dispatch!(
             "real",
             "parameterized-point2",
             "exact-dyadic-quotient"
         );
-        let [x, y] = coordinates;
-        Ok((
-            Real::new(Rational::quotient_known_dyadic(
-                numerator,
-                denominator,
-            )?),
-            [x?, y?],
-        ))
+        Ok((Real::new(parameter), coordinates.map(Real::new)))
     }
 
     /// Divide two exact dyadic rationals after the caller has classified them.
