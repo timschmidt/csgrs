@@ -102,8 +102,12 @@ clusters, non-terminal reflex-vertex clusters, collinear support normalization,
 terminal ridges, and source-edge provenance remain exact `Real` evidence in the
 returned graph. Coincident multi-split clusters that also pierce edge interiors
 remain typed blockers; they are never substituted with centroid rays.
-Circular-arc contours remain explicit `UnsupportedSegment` results until their
-shape-preserving conic wavefront trajectories and additional contact events land.
+`Contour2::straight_skeleton_vertex_trajectories` already derives exact native
+linear, elliptic, hyperbolic, and parabolic paths for every line/arc vertex from
+the circular-support cone model. Smooth co-circular contours also complete with
+their exact collapse time and an empty unextended shape-preserving skeleton.
+General arc-polygon vanish, contact, bubble, squeeze, and splice propagation
+remains an explicit `UnsupportedSegment` result until those event transitions land.
 
 `translation_obstacle_convex` constructs the exact closed no-fit region
 `fixed + (-moving)` for simple convex line contours. It normalizes orientation,
