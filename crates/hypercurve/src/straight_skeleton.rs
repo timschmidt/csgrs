@@ -198,6 +198,38 @@ impl StraightSkeletonLocalArcEvent2 {
     }
 }
 
+/// Exact splice candidate for one reflex wavefront vertex.
+#[derive(Clone, Debug, PartialEq)]
+pub struct StraightSkeletonSpliceEvent2 {
+    source_vertex: usize,
+    left_source_edge: usize,
+    right_source_edge: usize,
+    time: Real,
+    point: Point2,
+}
+
+impl StraightSkeletonSpliceEvent2 {
+    pub const fn source_vertex(&self) -> usize {
+        self.source_vertex
+    }
+
+    pub const fn left_source_edge(&self) -> usize {
+        self.left_source_edge
+    }
+
+    pub const fn right_source_edge(&self) -> usize {
+        self.right_source_edge
+    }
+
+    pub const fn time(&self) -> &Real {
+        &self.time
+    }
+
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+}
+
 impl StraightSkeletonVertexTrajectory2 {
     pub const fn source_vertex(&self) -> usize {
         self.source_vertex
@@ -720,6 +752,91 @@ impl Contour2 {
                 }
                 cursor -= 1;
             }
+        }
+        Ok(Classification::Decided(events))
+    }
+
+    /// Predict exact splice candidates for all reflex vertices.
+    ///
+    /// A candidate is the first future tangency of the vertex's two incident
+    /// supports while every circular radius remains positive. Event validity
+    /// against earlier local or global contacts is decided by the combined
+    /// event queue, not by this per-class predictor.
+    pub fn straight_skeleton_splice_events(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<StraightSkeletonSpliceEvent2>>> {
+        let Some(area) = self.signed_area()? else {
+            return Ok(Classification::Uncertain(
+                crate::UncertaintyReason::Unsupported,
+            ));
+        };
+        let orientation = match real_sign(&area, policy) {
+            Some(RealSign::Positive) => RealSign::Positive,
+            Some(RealSign::Negative) => RealSign::Negative,
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::Boundary,
+                ));
+            }
+            None => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::RealSign,
+                ));
+            }
+        };
+        let supports = self
+            .segments()
+            .iter()
+            .map(|segment| shape_preserving_support(segment, orientation))
+            .collect::<CurveResult<Vec<_>>>()?;
+        let count = supports.len();
+        let mut events = Vec::new();
+        for source_vertex in 0..count {
+            let incoming =
+                segment_end_tangent(&self.segments()[(source_vertex + count - 1) % count]);
+            let outgoing = segment_start_tangent(&self.segments()[source_vertex]);
+            let turn = &incoming.0 * &outgoing.1 - &incoming.1 * &outgoing.0;
+            match real_sign(&turn, policy) {
+                Some(RealSign::Zero) => continue,
+                Some(sign) if sign == orientation => continue,
+                Some(_) => {}
+                None => {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            }
+            let left_source_edge = (source_vertex + count - 1) % count;
+            let right_source_edge = source_vertex;
+            let tangencies = match support_pair_future_tangencies(
+                &supports[left_source_edge],
+                &supports[right_source_edge],
+                orientation,
+                &Real::zero(),
+                policy,
+            )? {
+                Ok(tangencies) => tangencies,
+                Err(_) => {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::Predicate,
+                    ));
+                }
+            };
+            if let Some((time, point)) = tangencies.into_iter().next() {
+                events.push(StraightSkeletonSpliceEvent2 {
+                    source_vertex,
+                    left_source_edge,
+                    right_source_edge,
+                    time,
+                    point,
+                });
+            }
+        }
+        if !sort_splice_events(&mut events, policy) {
+            return Ok(Classification::Uncertain(
+                crate::UncertaintyReason::RealSign,
+            ));
         }
         Ok(Classification::Decided(events))
     }
@@ -2232,6 +2349,232 @@ fn shape_preserving_pair_terminal_event(
         }
     }
     Ok(Ok(Some((time, point))))
+}
+
+fn support_pair_future_tangencies(
+    first: &ShapePreservingSupport2,
+    second: &ShapePreservingSupport2,
+    orientation: RealSign,
+    current_time: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<Vec<(Real, Point2)>, StraightSkeletonBlocker2>> {
+    let orientation_scalar = match orientation {
+        RealSign::Positive => Real::one(),
+        RealSign::Negative => -Real::one(),
+        RealSign::Zero => unreachable!(),
+    };
+    let mut candidates = Vec::new();
+    match (first, second) {
+        (ShapePreservingSupport2::Line { .. }, ShapePreservingSupport2::Line { .. }) => {}
+        (
+            ShapePreservingSupport2::Line {
+                normal_x,
+                normal_y,
+                constant,
+            },
+            ShapePreservingSupport2::Circle {
+                center,
+                signed_radius,
+            },
+        )
+        | (
+            ShapePreservingSupport2::Circle {
+                center,
+                signed_radius,
+            },
+            ShapePreservingSupport2::Line {
+                normal_x,
+                normal_y,
+                constant,
+            },
+        ) => {
+            let delta = normal_x * center.x() + normal_y * center.y() - constant;
+            let denominator = if orientation == RealSign::Positive {
+                Real::from(2_i8)
+            } else {
+                Real::from(-2_i8)
+            };
+            let numerator = if orientation == RealSign::Positive {
+                &delta + signed_radius
+            } else {
+                signed_radius - &delta
+            };
+            let time = (numerator / denominator)?;
+            let live = tangency_time_is_live(
+                &time,
+                current_time,
+                &[(signed_radius, &orientation_scalar)],
+                policy,
+            )?;
+            let live = match live {
+                Ok(live) => live,
+                Err(blocker) => return Ok(Err(blocker)),
+            };
+            if live {
+                let moved_constant = constant + &time;
+                let distance = normal_x * center.x() + normal_y * center.y() - moved_constant;
+                candidates.push((
+                    time,
+                    Point2::new(
+                        center.x() - normal_x * &distance,
+                        center.y() - normal_y * distance,
+                    ),
+                ));
+            }
+        }
+        (
+            ShapePreservingSupport2::Circle {
+                center: first_center,
+                signed_radius: first_signed_radius,
+            },
+            ShapePreservingSupport2::Circle {
+                center: second_center,
+                signed_radius: second_signed_radius,
+            },
+        ) => {
+            let first_sign = match real_sign(first_signed_radius, policy) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => {
+                    return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+                }
+                None => return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)),
+            };
+            let second_sign = match real_sign(second_signed_radius, policy) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => {
+                    return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+                }
+                None => return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)),
+            };
+            let sign_scalar = |sign| match sign {
+                RealSign::Positive => Real::one(),
+                RealSign::Negative => -Real::one(),
+                RealSign::Zero => unreachable!(),
+            };
+            let first_sign_scalar = sign_scalar(first_sign);
+            let second_sign_scalar = sign_scalar(second_sign);
+            let first_origin = &first_sign_scalar * first_signed_radius;
+            let second_origin = &second_sign_scalar * second_signed_radius;
+            let first_velocity = -(&first_sign_scalar * &orientation_scalar);
+            let second_velocity = -(&second_sign_scalar * &orientation_scalar);
+            let (center_dx, center_dy) = second_center.delta_from(first_center);
+            let distance = (&center_dx * &center_dx + &center_dy * &center_dy).sqrt()?;
+            if real_sign(&distance, policy) != Some(RealSign::Positive) {
+                return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
+            }
+            let equations = [
+                (
+                    &distance - &first_origin - &second_origin,
+                    &first_velocity + &second_velocity,
+                    Real::one(),
+                ),
+                (
+                    &distance - &first_origin + &second_origin,
+                    &first_velocity - &second_velocity,
+                    Real::one(),
+                ),
+                (
+                    -&distance - &first_origin + &second_origin,
+                    &first_velocity - &second_velocity,
+                    -Real::one(),
+                ),
+            ];
+            for (numerator, denominator, direction) in equations {
+                let denominator_sign = real_sign(&denominator, policy);
+                let time = match denominator_sign {
+                    Some(RealSign::Positive | RealSign::Negative) => (numerator / denominator)?,
+                    Some(RealSign::Zero) => continue,
+                    None => {
+                        return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
+                    }
+                };
+                let live = tangency_time_is_live(
+                    &time,
+                    current_time,
+                    &[
+                        (first_signed_radius, &orientation_scalar),
+                        (second_signed_radius, &orientation_scalar),
+                    ],
+                    policy,
+                )?;
+                let live = match live {
+                    Ok(live) => live,
+                    Err(blocker) => return Ok(Err(blocker)),
+                };
+                if !live {
+                    continue;
+                }
+                let first_radius = &first_origin + &first_velocity * &time;
+                let scale = ((direction * first_radius) / &distance)?;
+                candidates.push((
+                    time,
+                    Point2::new(
+                        first_center.x() + &center_dx * &scale,
+                        first_center.y() + &center_dy * scale,
+                    ),
+                ));
+            }
+        }
+    }
+    for index in 1..candidates.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            match compare_reals(&candidates[cursor].0, &candidates[cursor - 1].0, policy) {
+                Some(Ordering::Less) => candidates.swap(cursor, cursor - 1),
+                Some(Ordering::Equal | Ordering::Greater) => break,
+                None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+            }
+            cursor -= 1;
+        }
+    }
+    candidates.dedup_by(|left, right| left.0 == right.0 && left.1 == right.1);
+    Ok(Ok(candidates))
+}
+
+fn tangency_time_is_live(
+    time: &Real,
+    current_time: &Real,
+    circular_lifetimes: &[(&Real, &Real)],
+    policy: &CurvePolicy,
+) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
+    match compare_reals(time, current_time, policy) {
+        Some(Ordering::Greater) => {}
+        Some(Ordering::Equal | Ordering::Less) => return Ok(Ok(false)),
+        None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+    }
+    for (signed_radius, orientation) in circular_lifetimes {
+        let collapse = ((*signed_radius) / (*orientation))?;
+        match compare_reals(&collapse, current_time, policy) {
+            Some(Ordering::Greater) => {}
+            Some(Ordering::Equal | Ordering::Less) => continue,
+            None => {
+                return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering));
+            }
+        }
+        match compare_reals(time, &collapse, policy) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal | Ordering::Greater) => return Ok(Ok(false)),
+            None => {
+                return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering));
+            }
+        }
+    }
+    Ok(Ok(true))
+}
+
+fn sort_splice_events(events: &mut [StraightSkeletonSpliceEvent2], policy: &CurvePolicy) -> bool {
+    for index in 1..events.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            match compare_reals(&events[cursor].time, &events[cursor - 1].time, policy) {
+                Some(Ordering::Less) => events.swap(cursor, cursor - 1),
+                Some(Ordering::Equal | Ordering::Greater) => break,
+                None => return false,
+            }
+            cursor -= 1;
+        }
+    }
+    true
 }
 
 fn three_support_event(
@@ -4934,6 +5277,18 @@ mod tests {
         };
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].kind(), StraightSkeletonLocalArcEventKind2::Bubble);
+        let Classification::Decided(splices) = bubble_source
+            .straight_skeleton_splice_events(&CurvePolicy::certified())
+            .unwrap()
+        else {
+            panic!("bubble fixture splice candidates must be decided");
+        };
+        assert_eq!(splices.len(), 2);
+        assert!(
+            splices
+                .iter()
+                .all(|event| [1, 2].contains(&event.source_vertex()))
+        );
     }
 
     #[test]
@@ -5203,6 +5558,16 @@ mod tests {
             };
             assert_eq!(time, r(1));
             assert_eq!(point, Point2::new(r(0), r(0)));
+            let tangencies = support_pair_future_tangencies(
+                &first,
+                &second,
+                orientation,
+                &Real::zero(),
+                &policy,
+            )
+            .unwrap()
+            .unwrap();
+            assert_eq!(tangencies, vec![(r(1), Point2::new(r(0), r(0)))]);
         }
     }
 

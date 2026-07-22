@@ -120,6 +120,11 @@ explicit `UnsupportedSegment` result until those event transitions land.
 `Contour2::straight_skeleton_local_arc_events` nevertheless exposes the exact
 three-cone local event queue today, including source-edge evidence and the
 paper's endpoint-convexity distinction between vanish and bubble candidates.
+`Contour2::straight_skeleton_splice_events` likewise predicts the exact first
+future incident-support tangency at every reflex vertex, retaining its source
+vertex, source-edge pair, event time, and point. These per-class predictors do
+not yet apply bubble or splice topology; the combined concave arc-polygon event
+queue remains the next integration boundary.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every
