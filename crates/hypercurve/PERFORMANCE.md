@@ -1521,6 +1521,27 @@ star64 outputs at 256.917, 255.464, and 297.433 us/iter. Prepared variants measu
 region path is 21.6% faster than the previous 327.611 us checkpoint, but remains
 9.28 times slower than the fastest approximate competitor.
 
+Compact exact-line Boolean output now retains lightweight selected-fragment
+references through chain assembly and materializes each `Segment2` directly into
+its final contour order. The former schedule first allocated every selected segment
+in source order, then allocated the same large geometry again while following chain
+indices. The once-visiting schedule preserves the same exact endpoints, source
+ranges, retained supports, direction, and validated closed-contour constructor.
+
+The accompanying native Hyperreal two-limb GCD tail handles Euclidean quotients one
+through four by subtraction before invoking full-width remainder. Together, the
+ordinary twenty-operation star64 Callgrind lane fell from 81,698,829 to 77,709,243
+instructions (4.88%). Prepared-region DHAT allocation fell from 10,608,905 to
+9,608,934 bytes (9.43%); reads fell 6.24% and writes 7.34%, with the same 83,760
+blocks and effectively unchanged peak live heap.
+
+A matched 31-sample, 500-iteration comparison measured ordinary region, contour,
+and loop outputs at 232.400, 227.763, and 281.681 us/iter. Prepared variants measured
+230.817, 225.869, and 276.898 us/iter. `cavalier_contours`, `i_overlay`, and `geo`
+measured 28.345, 37.839, and 36.074 us/iter. Ordinary exact region output is 9.54%
+faster than the preceding checkpoint and remains 8.20 times slower than the fastest
+approximate competitor.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

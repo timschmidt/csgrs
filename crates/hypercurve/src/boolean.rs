@@ -392,15 +392,15 @@ impl BooleanFragmentSelection {
         chain_indices: BooleanBoundaryChainIndices,
         fill_rule: FillRule,
     ) -> CurveResult<Classification<Vec<crate::Contour2>>> {
-        let mut sources = fragments.into_contours().into_iter().flat_map(|contour| {
+        let mut sources = fragments.contours().iter().flat_map(|contour| {
             let key = contour.key;
             contour
                 .fragments
-                .into_iter()
+                .iter()
                 .enumerate()
                 .map(move |(index, source)| (key, index, source))
         });
-        let mut segments = Vec::with_capacity(self.emitted_fragment_count());
+        let mut selected = Vec::with_capacity(self.emitted_fragment_count());
         for classification in self.classifications {
             let Some((key, fragment_index, source)) = sources.next() else {
                 return Err(CurveError::Topology(
@@ -419,21 +419,11 @@ impl BooleanFragmentSelection {
                 }
                 BooleanFragmentAction::KeepSourceDirection
                 | BooleanFragmentAction::KeepReversed => {
-                    let source_segment = source_contour_for_key(first, second, key)?
-                        .segments()
-                        .get(source.source_segment_index)
-                        .ok_or_else(|| {
-                            CurveError::Topology(
-                                "compact boolean fragment references a missing source segment"
-                                    .into(),
-                            )
-                        })?;
-                    let segment = source.materialize(source_segment)?;
-                    if classification.action == BooleanFragmentAction::KeepReversed {
-                        segments.push(segment.into_reversed());
-                    } else {
-                        segments.push(segment);
-                    }
+                    selected.push((
+                        key,
+                        source,
+                        classification.action == BooleanFragmentAction::KeepReversed,
+                    ));
                 }
             }
         }
@@ -442,11 +432,38 @@ impl BooleanFragmentSelection {
                 "boolean selection omits a supplied source fragment".into(),
             ));
         }
-        Ok(materialize_segment_contours(
-            chain_indices,
-            segments,
-            fill_rule,
-        ))
+        let mut contours = Vec::with_capacity(chain_indices.len());
+        for (indices, closed) in chain_indices {
+            if !closed {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            let mut segments = Vec::with_capacity(indices.len());
+            for index in indices {
+                let Some(&(key, source, reversed)) = selected.get(index) else {
+                    return Err(CurveError::Topology(
+                        "compact boolean chain references a missing selected fragment".into(),
+                    ));
+                };
+                let source_segment = source_contour_for_key(first, second, key)?
+                    .segments()
+                    .get(source.source_segment_index)
+                    .ok_or_else(|| {
+                        CurveError::Topology(
+                            "compact boolean fragment references a missing source segment".into(),
+                        )
+                    })?;
+                let segment = source.materialize(source_segment)?;
+                segments.push(if reversed {
+                    segment.into_reversed()
+                } else {
+                    segment
+                });
+            }
+            contours.push(crate::Contour2::from_validated_closed_segments(
+                segments, fill_rule,
+            ));
+        }
+        Ok(Classification::Decided(contours))
     }
 
     pub(crate) fn emit_boundary_fragments_from_owned_compact_split(
