@@ -26,9 +26,6 @@ use crate::{
     CurvePolicy, CurveResult, Point2, Segment2,
 };
 
-/// Version of the public straight-skeleton capability and report interface.
-pub const STRAIGHT_SKELETON_INTERFACE_VERSION: u32 = 6;
-
 /// Native straight-skeleton support advertised for one exact curve family.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum StraightSkeletonCurveFamilySupport2 {
@@ -43,7 +40,7 @@ pub enum StraightSkeletonCurveFamilySupport2 {
 }
 
 impl CurveFamily2 {
-    /// Return straight-skeleton support in the current interface version.
+    /// Return the available straight-skeleton support for this curve family.
     pub const fn straight_skeleton_support(self) -> StraightSkeletonCurveFamilySupport2 {
         match self {
             Self::Line | Self::CircularArc => StraightSkeletonCurveFamilySupport2::NativeExact,
@@ -9858,7 +9855,6 @@ mod tests {
 
     #[test]
     fn curve_path_dispatch_preserves_native_families_and_reports_capabilities() {
-        assert_eq!(STRAIGHT_SKELETON_INTERFACE_VERSION, 6);
         for family in [CurveFamily2::Line, CurveFamily2::CircularArc] {
             assert_eq!(
                 family.straight_skeleton_support(),

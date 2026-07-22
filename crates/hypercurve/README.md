@@ -177,11 +177,9 @@ collapse candidates are collected before mutation; events at distinct points wit
 uniquely relocatable support neighborhoods commute through stable support identity,
 including events that share a surviving support. Coincident independent transitions
 reuse one explicit `EventCluster` graph node. Interacting or relocation-ambiguous
-mixed topology clusters remain an explicit integration boundary. The additive public
-event interface is version 6.
+mixed topology clusters remain an explicit integration boundary.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
-flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
-`CurveFamily2::straight_skeleton_support` provide feature discovery for every
+flattening. `CurveFamily2::straight_skeleton_support` provides capability discovery for every
 top-level curve family. Polynomial and rational Bezier carriers participate
 when their existing zero-error certificate proves an exact endpoint-line image;
 polynomial spline and same-sign-weight NURBS carriers use an exact control-net
