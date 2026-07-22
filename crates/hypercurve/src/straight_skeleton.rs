@@ -36,6 +36,8 @@ pub enum StraightSkeletonCurveFamilySupport2 {
     NativeExact,
     /// Exact support is available when zero-error line-image fitting certifies it.
     CertifiedLineImage,
+    /// Exact support is available for certified line images or circular conics.
+    CertifiedLineOrCircularArc,
     /// The family has no exact shape-preserving wavefront implementation yet.
     Unsupported,
 }
@@ -45,12 +47,14 @@ impl CurveFamily2 {
     pub const fn straight_skeleton_support(self) -> StraightSkeletonCurveFamilySupport2 {
         match self {
             Self::Line | Self::CircularArc => StraightSkeletonCurveFamilySupport2::NativeExact,
-            Self::QuadraticBezier
-            | Self::CubicBezier
-            | Self::RationalQuadraticBezier
-            | Self::RationalBezier => StraightSkeletonCurveFamilySupport2::CertifiedLineImage,
+            Self::QuadraticBezier | Self::CubicBezier | Self::RationalBezier => {
+                StraightSkeletonCurveFamilySupport2::CertifiedLineImage
+            }
+            Self::RationalQuadraticBezier => {
+                StraightSkeletonCurveFamilySupport2::CertifiedLineOrCircularArc
+            }
             Self::PolynomialBSpline | Self::Nurbs => {
-                StraightSkeletonCurveFamilySupport2::Unsupported
+                StraightSkeletonCurveFamilySupport2::CertifiedLineImage
             }
         }
     }
@@ -1190,11 +1194,25 @@ impl CurvePath2 {
                             segments.push(Segment2::Line(fit.line().clone()));
                         }
                         Classification::Decided(BezierLineImageFitRelation::NotLine) => {
-                            return Ok(unsupported_curve_family_report(
-                                source_edge_count,
-                                curve_index,
-                                CurveFamily2::RationalQuadraticBezier,
-                            ));
+                            match rational_quadratic_circular_arc(curve, policy)? {
+                                Classification::Decided(Some(arc)) => {
+                                    segments.push(Segment2::Arc(arc));
+                                }
+                                Classification::Decided(None) => {
+                                    return Ok(unsupported_curve_family_report(
+                                        source_edge_count,
+                                        curve_index,
+                                        CurveFamily2::RationalQuadraticBezier,
+                                    ));
+                                }
+                                Classification::Uncertain(_) => {
+                                    return Ok(uncertain_curve_family_report(
+                                        source_edge_count,
+                                        curve_index,
+                                        CurveFamily2::RationalQuadraticBezier,
+                                    ));
+                                }
+                            }
                         }
                         Classification::Uncertain(_) => {
                             return Ok(uncertain_curve_family_report(
@@ -1226,17 +1244,195 @@ impl CurvePath2 {
                         }
                     }
                 }
-                geometry => {
-                    return Ok(unsupported_curve_family_report(
-                        source_edge_count,
-                        curve_index,
-                        geometry.family(),
-                    ));
+                CurveGeometry2::PolynomialBSpline(spline) => {
+                    match control_net_line_image(
+                        curve.start(),
+                        curve.end(),
+                        spline.control_points(),
+                        None,
+                        policy,
+                    )? {
+                        Classification::Decided(Some(line)) => {
+                            segments.push(Segment2::Line(line));
+                        }
+                        Classification::Decided(None) => {
+                            return Ok(unsupported_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::PolynomialBSpline,
+                            ));
+                        }
+                        Classification::Uncertain(_) => {
+                            return Ok(uncertain_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::PolynomialBSpline,
+                            ));
+                        }
+                    }
+                }
+                CurveGeometry2::Nurbs(spline) => {
+                    match control_net_line_image(
+                        curve.start(),
+                        curve.end(),
+                        spline.control_points(),
+                        Some(spline.weights()),
+                        policy,
+                    )? {
+                        Classification::Decided(Some(line)) => {
+                            segments.push(Segment2::Line(line));
+                        }
+                        Classification::Decided(None) => {
+                            return Ok(unsupported_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::Nurbs,
+                            ));
+                        }
+                        Classification::Uncertain(_) => {
+                            return Ok(uncertain_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::Nurbs,
+                            ));
+                        }
+                    }
                 }
             }
         }
         Contour2::try_new(segments)?.straight_skeleton(policy)
     }
+}
+
+fn rational_quadratic_circular_arc(
+    curve: &crate::RationalQuadraticBezier2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<crate::CircularArc2>>> {
+    if curve.common_nonzero_weight_sign(policy).is_none() {
+        return Ok(Classification::Uncertain(
+            crate::UncertaintyReason::RealSign,
+        ));
+    }
+    let homogeneous =
+        |point: &Point2, weight: &Real| [weight * point.x(), weight * point.y(), weight.clone()];
+    let first = homogeneous(curve.start(), curve.start_weight());
+    let control = homogeneous(curve.control(), curve.control_weight());
+    let last = homogeneous(curve.end(), curve.end_weight());
+    let cross = |left: &[Real; 3], right: &[Real; 3]| {
+        [
+            &left[1] * &right[2] - &left[2] * &right[1],
+            &left[2] * &right[0] - &left[0] * &right[2],
+            &left[0] * &right[1] - &left[1] * &right[0],
+        ]
+    };
+    let lambda0 = cross(&control, &last);
+    let lambda1 = cross(&last, &first);
+    let lambda2 = cross(&first, &control);
+    let four = Real::from(4_i8);
+    let two = Real::from(2_i8);
+    let xx = &lambda1[0] * &lambda1[0] - &four * &lambda0[0] * &lambda2[0];
+    let xy = &two * &lambda1[0] * &lambda1[1]
+        - &four * (&lambda0[0] * &lambda2[1] + &lambda0[1] * &lambda2[0]);
+    let yy = &lambda1[1] * &lambda1[1] - &four * &lambda0[1] * &lambda2[1];
+    let x = &two * &lambda1[0] * &lambda1[2]
+        - &four * (&lambda0[0] * &lambda2[2] + &lambda0[2] * &lambda2[0]);
+    let y = &two * &lambda1[1] * &lambda1[2]
+        - &four * (&lambda0[1] * &lambda2[2] + &lambda0[2] * &lambda2[1]);
+    let constant = &lambda1[2] * &lambda1[2] - &four * &lambda0[2] * &lambda2[2];
+    match (
+        real_sign(&xx, policy),
+        real_sign(&(&xx - &yy), policy),
+        real_sign(&xy, policy),
+    ) {
+        (
+            Some(RealSign::Positive | RealSign::Negative),
+            Some(RealSign::Zero),
+            Some(RealSign::Zero),
+        ) => {}
+        (Some(_), Some(_), Some(_)) => return Ok(Classification::Decided(None)),
+        _ => {
+            return Ok(Classification::Uncertain(
+                crate::UncertaintyReason::RealSign,
+            ));
+        }
+    }
+    let denominator = &two * &xx;
+    let center = Point2::new(((-x) / &denominator)?, ((-y) / denominator)?);
+    let radius_squared = curve.start().distance_squared(&center);
+    let implicit_radius_squared =
+        center.x() * center.x() + center.y() * center.y() - ((constant / &xx)?);
+    match real_sign(&(radius_squared - implicit_radius_squared), policy) {
+        Some(RealSign::Zero) => {}
+        Some(RealSign::Positive | RealSign::Negative) => {
+            return Ok(Classification::Decided(None));
+        }
+        None => {
+            return Ok(Classification::Uncertain(
+                crate::UncertaintyReason::RealSign,
+            ));
+        }
+    }
+    let (radial_x, radial_y) = curve.start().delta_from(&center);
+    let (tangent_x, tangent_y) = curve.control().delta_from(curve.start());
+    let tangent_cross = &radial_x * tangent_y - &radial_y * tangent_x;
+    let clockwise = match real_sign(&tangent_cross, policy) {
+        Some(RealSign::Positive) => false,
+        Some(RealSign::Negative) => true,
+        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+        None => {
+            return Ok(Classification::Uncertain(
+                crate::UncertaintyReason::RealSign,
+            ));
+        }
+    };
+    Ok(Classification::Decided(Some(
+        crate::CircularArc2::try_from_center(
+            curve.start().clone(),
+            curve.end().clone(),
+            center,
+            clockwise,
+        )?,
+    )))
+}
+
+fn control_net_line_image(
+    start: &Point2,
+    end: &Point2,
+    controls: &[Point2],
+    weights: Option<&[Real]>,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<crate::LineSeg2>>> {
+    if let Some(weights) = weights {
+        let mut common_sign = None;
+        for weight in weights {
+            let sign = match real_sign(weight, policy) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+                None => {
+                    return Ok(Classification::Uncertain(
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            };
+            match common_sign {
+                Some(common) if common != sign => return Ok(Classification::Decided(None)),
+                Some(_) => {}
+                None => common_sign = Some(sign),
+            }
+        }
+    }
+    let line = match crate::LineSeg2::try_new(start.clone(), end.clone()) {
+        Ok(line) => line,
+        Err(_) => return Ok(Classification::Decided(None)),
+    };
+    for control in controls {
+        match line.contains_point(control, policy) {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+    Ok(Classification::Decided(Some(line)))
 }
 
 fn unsupported_curve_family_report(
@@ -4185,21 +4381,19 @@ mod tests {
         for family in [
             CurveFamily2::QuadraticBezier,
             CurveFamily2::CubicBezier,
-            CurveFamily2::RationalQuadraticBezier,
             CurveFamily2::RationalBezier,
+            CurveFamily2::PolynomialBSpline,
+            CurveFamily2::Nurbs,
         ] {
             assert_eq!(
                 family.straight_skeleton_support(),
                 StraightSkeletonCurveFamilySupport2::CertifiedLineImage
             );
         }
-        for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
-            assert_eq!(
-                family.straight_skeleton_support(),
-                StraightSkeletonCurveFamilySupport2::Unsupported
-            );
-        }
-
+        assert_eq!(
+            CurveFamily2::RationalQuadraticBezier.straight_skeleton_support(),
+            StraightSkeletonCurveFamilySupport2::CertifiedLineOrCircularArc
+        );
         let square = contour(&[(0, 0), (4, 0), (4, 4), (0, 4)]);
         let path = CurvePath2::try_new(
             square
@@ -4236,6 +4430,67 @@ mod tests {
             .straight_skeleton(&CurvePolicy::certified())
             .unwrap();
         assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+
+        let knots = vec![r(0), r(0), r(1), r(1)];
+        for spline_edge in [
+            Curve2::try_polynomial_bspline(
+                1,
+                vec![Point2::new(r(0), r(0)), Point2::new(r(4), r(0))],
+                knots.clone(),
+                None,
+            )
+            .unwrap(),
+            Curve2::try_nurbs(
+                1,
+                vec![Point2::new(r(0), r(0)), Point2::new(r(4), r(0))],
+                vec![r(1), r(1)],
+                knots,
+                None,
+            )
+            .unwrap(),
+        ] {
+            let path = CurvePath2::try_new(vec![
+                spline_edge,
+                Curve2::from(
+                    LineSeg2::try_new(Point2::new(r(4), r(0)), Point2::new(r(4), r(4))).unwrap(),
+                ),
+                Curve2::from(
+                    LineSeg2::try_new(Point2::new(r(4), r(4)), Point2::new(r(0), r(4))).unwrap(),
+                ),
+                Curve2::from(
+                    LineSeg2::try_new(Point2::new(r(0), r(4)), Point2::new(r(0), r(0))).unwrap(),
+                ),
+            ])
+            .unwrap();
+            assert_eq!(
+                path.straight_skeleton(&CurvePolicy::certified())
+                    .unwrap()
+                    .stage(),
+                StraightSkeletonStage2::Complete
+            );
+        }
+
+        let right = Point2::new(r(1), r(0));
+        let top = Point2::new(r(0), r(1));
+        let center = Point2::new(r(0), r(0));
+        let arc = CircularArc2::try_from_center(right.clone(), top.clone(), center.clone(), false)
+            .unwrap();
+        let rational_arc = arc.rational_bezier_decomposition().unwrap().spans()[0]
+            .curve()
+            .clone();
+        let rational_sector = CurvePath2::try_new(vec![
+            Curve2::from(rational_arc),
+            Curve2::from(LineSeg2::try_new(top, center.clone()).unwrap()),
+            Curve2::from(LineSeg2::try_new(center, right).unwrap()),
+        ])
+        .unwrap();
+        assert_eq!(
+            rational_sector
+                .straight_skeleton(&CurvePolicy::certified())
+                .unwrap()
+                .stage(),
+            StraightSkeletonStage2::Complete
+        );
 
         let first = Point2::new(r(0), r(0));
         let second = Point2::new(r(2), r(0));

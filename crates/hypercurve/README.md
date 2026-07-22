@@ -122,8 +122,11 @@ flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every
 top-level curve family. Polynomial and rational Bezier carriers participate
 when their existing zero-error certificate proves an exact endpoint-line image;
-nonlinear or unsupported spline/NURBS inputs return their exact curve index and
-family as a typed blocker.
+polynomial spline and same-sign-weight NURBS carriers use an exact control-net
+certificate for the same reduction. Rational quadratics additionally undergo
+exact projective conic recovery and circular-conic spans enter the native arc
+wavefront. Other nonlinear inputs return their exact curve index and family as
+a typed blocker.
 
 `translation_obstacle_convex` constructs the exact closed no-fit region
 `fixed + (-moving)` for simple convex line contours. It normalizes orientation,
