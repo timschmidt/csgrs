@@ -1542,6 +1542,21 @@ measured 28.345, 37.839, and 36.074 us/iter. Ordinary exact region output is 9.5
 faster than the preceding checkpoint and remains 8.20 times slower than the fastest
 approximate competitor.
 
+Hyperreal's native two-limb tail now replaces most remaining quotient-five-and-up
+compiler-runtime remainders with a non-overshooting high-limb quotient estimate and
+an exact residual correction. The twenty-operation ordinary star64 Callgrind lane
+fell from 77,709,243 to 76,985,290 instructions (0.93%). Prepared-region DHAT stayed
+at 9,608,934 bytes in 83,760 blocks with a 776,618-byte peak; reads fell slightly
+from 28,209,578 to 28,207,882 bytes and writes remained 12,912,843 bytes.
+
+In a matched 31-sample, 500-iteration release comparison, ordinary region, contour,
+and loop outputs measured 231.336, 224.095, and 272.283 us/iter. Prepared variants
+measured 224.789, 224.390, and 271.700 us/iter. `cavalier_contours`, `i_overlay`, and
+`geo` measured 28.282, 36.484, and 37.278 us/iter. The ordinary exact path remains
+8.18 times slower than the fastest approximate competitor. The optimization and all
+production arithmetic are implemented by Hyperreal itself; GMP remains limited to
+development-only competitive benchmarks and test oracles.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
