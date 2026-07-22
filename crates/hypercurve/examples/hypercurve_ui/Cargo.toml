@@ -44,4 +44,9 @@ web-sys = { version = "0.3.81", features = [
 proptest = "1"
 
 [patch.crates-io]
+# Cargo patches do not propagate through the local Hypercurve dependency, so
+# mirror the exact-stack siblings needed by the checked-out Hypercurve source.
 hyperreal = { path = "../../../hyperreal" }
+hyperlattice = { path = "../../../hyperlattice" }
+hyperlimit = { path = "../../../hyperlimit" }
+hypersolve = { path = "../../../hypersolve" }
