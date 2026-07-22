@@ -508,9 +508,13 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_exact() {
     );
 
     let collapse_distance = Real::from(4) - Real::from(2) * root_two;
+    #[cfg(feature = "predicates")]
+    let collapse_reason = hypercurve::UncertaintyReason::Predicate;
+    #[cfg(not(feature = "predicates"))]
+    let collapse_reason = hypercurve::UncertaintyReason::RealSign;
     assert_eq!(
         source.offset(-collapse_distance, &policy).unwrap(),
-        Classification::Uncertain(hypercurve::UncertaintyReason::Predicate),
+        Classification::Uncertain(collapse_reason),
         "hyperreal currently cannot certify the composed radical equality at the exact inradius"
     );
     assert!(decided(source.offset(Real::from(-2), &policy).unwrap()).is_empty());

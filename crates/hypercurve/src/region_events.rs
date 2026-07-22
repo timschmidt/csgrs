@@ -431,7 +431,7 @@ pub(crate) fn intersect_region_views(
 }
 
 struct ContourIntersectionAabbs {
-    exact: Option<crate::contour::ExactDyadicLineAabbs>,
+    exact: Option<std::rc::Rc<crate::contour::ExactDyadicLineAabbs>>,
     contour: Option<Aabb2>,
     segments: OnceCell<Vec<Option<Aabb2>>>,
 }

@@ -200,6 +200,7 @@ pub struct Contour2 {
     fill_rule: FillRule,
     offset_provenance: Option<Rc<ContourOffsetProvenance2>>,
     signed_area_cache: Rc<OnceCell<CurveResult<Option<Real>>>>,
+    exact_dyadic_line_aabbs_cache: Rc<OnceCell<Option<Rc<ExactDyadicLineAabbs>>>>,
 }
 
 /// Compact line bounds whose binary64 coordinates are lossless exact dyadics.
@@ -274,6 +275,7 @@ impl Contour2 {
             fill_rule,
             offset_provenance: None,
             signed_area_cache: Rc::new(OnceCell::new()),
+            exact_dyadic_line_aabbs_cache: Rc::new(OnceCell::new()),
         })
     }
 
@@ -284,6 +286,7 @@ impl Contour2 {
             fill_rule,
             offset_provenance: None,
             signed_area_cache: Rc::new(OnceCell::new()),
+            exact_dyadic_line_aabbs_cache: Rc::new(OnceCell::new()),
         }
     }
 
@@ -411,6 +414,7 @@ impl Contour2 {
                     fill_rule,
                     offset_provenance: None,
                     signed_area_cache: Rc::new(OnceCell::new()),
+                    exact_dyadic_line_aabbs_cache: Rc::new(OnceCell::new()),
                 }),
                 report: ContourClosureReport2 {
                     stage: ContourClosureStage2::ContourMaterialization,
@@ -1016,11 +1020,13 @@ impl Contour2 {
     pub(crate) fn exact_dyadic_line_aabbs(
         &self,
         policy: &CurvePolicy,
-    ) -> Option<ExactDyadicLineAabbs> {
+    ) -> Option<Rc<ExactDyadicLineAabbs>> {
         if policy != &CurvePolicy::certified() {
             return None;
         }
-        exact_dyadic_line_aabbs(self.segments())
+        self.exact_dyadic_line_aabbs_cache
+            .get_or_init(|| exact_dyadic_line_aabbs(self.segments()).map(Rc::new))
+            .clone()
     }
 
     /// Returns the segment count.
@@ -2524,6 +2530,11 @@ mod tests {
         assert_eq!(bounds.contour.min_y, 0.0);
         assert_eq!(bounds.contour.max_x, 3.0);
         assert_eq!(bounds.contour.max_y, 4.0);
+        let clone = contour.clone();
+        let replay = clone
+            .exact_dyadic_line_aabbs(&CurvePolicy::certified())
+            .unwrap();
+        assert!(Rc::ptr_eq(&bounds, &replay));
         assert!(
             contour
                 .exact_dyadic_line_aabbs(&CurvePolicy::exact_symbolic())

@@ -81,6 +81,13 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "straight_skeleton"
+path = "fuzz_targets/straight_skeleton.rs"
+test = false
+doc = false
+bench = false
+
 [patch.crates-io]
 hyperreal = { path = "../../hyperreal" }
 hyperlattice = { path = "../../hyperlattice" }

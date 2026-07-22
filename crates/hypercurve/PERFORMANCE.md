@@ -23,6 +23,7 @@ no exact-dispatch requirement.
 | --- | --- | --- | --- |
 | Line, arc, bounds, transforms, and primitive evaluation | `hypercurve_arc_bezier`, `hypercurve_bbox`, `hypercurve_curve`, `hypercurve_bezier_evaluation` | `arc`, `bezier_evaluation`, `api_surface` | line/line, arc/arc, quadratic evaluation, similarity transform |
 | Curve intersections and curve paths | `hypercurve_curve_intersection`, `hypercurve_curve_string`, `hypercurve_self_contacts` | `intersection`, `intersection_sweep`, `curve_path` | line/line and arc/arc intersections |
+| Exact straight-skeleton trajectories, event predictors, construction, and native-family dispatch | straight-skeleton unit fixtures plus `hypercurve_dispatch_trace` and the `straight_skeleton` fuzzer | `straight_skeleton` | general-position concave construction |
 | Polynomial/rational Bezier algebra, splitting, arrangement, and retained evidence | the `hypercurve_bezier_*` tests and `hypercurve_rational_bezier` | the `bezier_*` benches and `rational_bezier` | quadratic evaluation and region Boolean |
 | B-spline, polynomial spline, and NURBS construction/evaluation | `hypercurve_bspline`, `hypercurve_polynomial_spline`, `hypercurve_nurbs`, `hypercurve_nurbs_interpolation` | `bspline`, `rational_bezier`, `api_surface` | global NURBS interpolation |
 | Editing, offsets, fitting, and reconstruction | `hypercurve_contour`, `hypercurve_offset`, `hypercurve_bezier_fit_offset`, `hypercurve_reconstruct` | `editing`, `offset`, `reconstruction` | checked curve-string offset |
@@ -58,6 +59,20 @@ including finite-only rows that correctly emit no exact-arithmetic events.
 
 ```bash
 cargo bench --features triangulation,dispatch-trace --bench api_surface
+```
+
+The `straight_skeleton` benchmark isolates public trajectory and event predictors,
+full contour construction, native-family dispatch, and exact convex scaling. Its
+fuzzer applies topology-preserving orientation, scale, and translation changes to
+complete convex, split, and non-general-position fixtures, then compares contour and
+curve-path dispatch while validating every emitted graph index.
+
+```bash
+cargo bench --bench straight_skeleton
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run straight_skeleton -- -runs=1000
+# Isolate one workload and iteration count under a profiler.
+HYPERCURVE_STRAIGHT_SKELETON_GROUP=concave/contour \
+HYPERCURVE_STRAIGHT_SKELETON_ITERATIONS=1 cargo bench --bench straight_skeleton
 ```
 
 The retained-overlap arrangement sentinel defaults to 100 repetitions because
@@ -1425,6 +1440,62 @@ Both complete feature-mode test matrices, format, warnings-as-errors Clippy and
 rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,803 coverage points and 16,425 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
+
+The public straight-skeleton surface now has a dedicated release/scaling benchmark,
+an exact-dispatch trace, and an AddressSanitizer differential fuzzer covering the
+trajectory and event predictors, contour construction, native `CurvePath2` dispatch,
+orientation reversal, and topology-preserving scale and translation. The first
+1,000-run post-change fuzz pass reached 3,243 coverage points and 9,054 feature edges
+without a failure; LeakSanitizer remains disabled under ptrace.
+
+General line-event scheduling now retains only the current exact minimum-time group
+while visiting candidates, instead of materializing every edge, split, and vertex
+candidate and scanning the collection twice. Output nodes and arcs reserve their
+known linear topology allowance. Uncommon conic geometry and generated-support
+provenance moved behind separately named payloads, so ordinary line/source-bisector
+arcs do not carry their maximum enum storage. On the benchmark target,
+`StraightSkeletonArc2` fell from 520 to 48 bytes (90.8%), its geometry carrier from
+440 to 8 bytes, and its kind carrier from 64 to 24 bytes. Two-point DHAT slopes for
+the completed eight-edge concave construction fell from 71,776 bytes in 579 blocks
+to 44,960 bytes in 570 blocks per operation: 37.4% less allocation traffic and 1.6%
+fewer blocks. The isolated Callgrind lane fell from 1,956,957 to 1,938,966
+instructions (0.92%), and a 1,000-iteration release run measured 93.906 us/iter.
+
+The dense exact-dyadic line path now carries its existing input certificate into
+the three determinant constructions needed for each retained proper crossing.
+Those determinants enter Hyperreal's shift-aligned dyadic reducer directly instead
+of repeating generic denominator-shape discovery. Immutable contour clones also
+share one lazy compact binary64 AABB array, so ordinary and prepared repeated
+queries stop rescanning the same exact coordinates and reallocating identical
+broad-phase storage. The cached array remains only a rejection filter; all
+topology and output coordinates remain exact.
+
+The end-to-end dispatch harness now includes the actual star64 intersection and
+prints rational operand-width statistics. One traced operation reported 465 GCDs:
+80 mixed 64/128-bit calls, 80 balanced 128-bit calls, and 305 calls with an
+operand wider than 128 bits, peaking at 359 bits. That evidence exposed an
+unconditional no-op remainder when balanced two-limb inputs reached Hyperreal in
+ascending order; ordering them before the Euclidean tail removes it without
+changing the algorithm or canonical result.
+
+Across identical twenty-iteration Callgrind runs, the ordinary star64 region path
+fell from 102,991,860 to 99,745,892 instructions (3.15%). Prepared-region DHAT
+allocation fell from the preceding 11,849,958 bytes in 101,503 blocks to
+11,640,961 bytes in 100,732 blocks (1.76% fewer bytes and 0.76% fewer blocks).
+Retaining both 64-segment box arrays raised peak live heap from 857,346 to 861,653
+bytes (0.50%); this bounded 4.3 KiB cost replaces repeated allocation and scanning.
+A 31-sample, 500-iteration comparison measured ordinary star64 intersection at
+327.611 us/iter and prepared boundary-contour output at 318.558 us/iter. The same
+run measured 27.959 us for `cavalier_contours`, 36.093 us for `i_overlay`, and
+35.929 us for `geo`, so the exact path remains about 11.7 times slower than the
+fastest approximate competitor.
+
+The complete all-feature and no-default Hypercurve suites, warnings-as-errors
+Clippy, and the all-feature test suites of CSGRS, Hypermesh, Hyperlattice,
+Hyperlimit, Hypersolve, and Hyperreal passed. Nightly AddressSanitizer campaigns
+completed 1,000 region-Boolean runs at 5,886 coverage points and 16,891 feature
+edges and 1,000 straight-skeleton runs at 3,252 coverage points and 9,172 feature
+edges without failure; LeakSanitizer alone remained disabled under ptrace.
 
 ## Optimization boundary
 

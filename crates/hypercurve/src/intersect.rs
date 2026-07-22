@@ -486,7 +486,7 @@ impl LineSeg2 {
         self.intersect_line_impl(other, policy, false)
     }
 
-    pub(crate) fn intersect_line_with_certified_proper_crossing(
+    pub(crate) fn intersect_line_with_certified_exact_dyadic_proper_crossing(
         &self,
         other: &Self,
         policy: &CurvePolicy,
@@ -519,7 +519,17 @@ impl LineSeg2 {
         let (support_sx, support_sy) = second_retained_support_delta
             .as_ref()
             .map_or((&sx, &sy), |(x, y)| (x, y));
-        let denominator = cross(support_rx, support_ry, support_sx, support_sy);
+        debug_assert!(
+            [self.start(), self.end(), other.start(), other.end()]
+                .into_iter()
+                .flat_map(|point| [point.x(), point.y()])
+                .all(|coordinate| coordinate.to_f64_exact_dyadic().is_some())
+        );
+        let denominator = if self.has_retained_support() || other.has_retained_support() {
+            cross(support_rx, support_ry, support_sx, support_sy)
+        } else {
+            cross_exact_dyadic(support_rx, support_ry, support_sx, support_sy)
+        };
         let fragment_denominator =
             (!self.has_retained_support() && !other.has_retained_support()).then_some(denominator);
         intersect_non_parallel(
@@ -532,6 +542,7 @@ impl LineSeg2 {
             &sy,
             other.start().delta_from(self.start()),
             fragment_denominator,
+            true,
             true,
         )
     }
@@ -609,6 +620,7 @@ impl LineSeg2 {
                 other.start().delta_from(self.start()),
                 fragment_denominator,
                 true,
+                false,
             );
         }
         match is_zero(&denominator, policy) {
@@ -628,6 +640,7 @@ impl LineSeg2 {
                     &sy,
                     other.start().delta_from(self.start()),
                     fragment_denominator,
+                    false,
                     false,
                 )
             }
@@ -663,6 +676,12 @@ impl LineSeg2 {
         arc: &CircularArc2,
         policy: &CurvePolicy,
     ) -> CurveResult<LineArcIntersection> {
+        if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+            && let Some(result) = intersect_line_arc_edge_preview(self, arc, policy)?
+        {
+            return Ok(result);
+        }
+
         match self.supporting_line_circle_relation(arc, policy)? {
             LineCircleRelation::Disjoint => Ok(LineArcIntersection::None),
             LineCircleRelation::Tangent { line_param, .. } => {
@@ -755,6 +774,105 @@ impl LineSeg2 {
             }),
         }
     }
+}
+
+fn intersect_line_arc_edge_preview(
+    line: &LineSeg2,
+    arc: &CircularArc2,
+    policy: &CurvePolicy,
+) -> CurveResult<Option<LineArcIntersection>> {
+    let data = [
+        line.start().x().to_f64_lossy(),
+        line.start().y().to_f64_lossy(),
+        line.end().x().to_f64_lossy(),
+        line.end().y().to_f64_lossy(),
+        arc.center().x().to_f64_lossy(),
+        arc.center().y().to_f64_lossy(),
+        arc.radius_squared().to_f64_lossy(),
+    ];
+    let [
+        Some(x0),
+        Some(y0),
+        Some(x1),
+        Some(y1),
+        Some(cx),
+        Some(cy),
+        Some(radius_squared),
+    ] = data
+    else {
+        return Ok(None);
+    };
+    let values = [x0, y0, x1, y1, cx, cy, radius_squared];
+    if !values.iter().all(|value| value.is_finite()) || radius_squared < 0.0 {
+        return Ok(None);
+    }
+
+    let dx = x1 - x0;
+    let dy = y1 - y0;
+    let from_center_x = x0 - cx;
+    let from_center_y = y0 - cy;
+    let a = dx.mul_add(dx, dy * dy);
+    if !a.is_finite() || a == 0.0 {
+        return Ok(None);
+    }
+    let half_b = from_center_x.mul_add(dx, from_center_y * dy);
+    let c = from_center_x.mul_add(from_center_x, from_center_y * from_center_y) - radius_squared;
+    let discriminant = half_b.mul_add(half_b, -(a * c));
+    if !discriminant.is_finite() {
+        return Ok(None);
+    }
+
+    // The preview path deliberately works at the finite-output boundary. Use
+    // a scale-aware discriminant band only to merge numerically tangent roots;
+    // certified topology continues through `supporting_line_circle_relation`.
+    let length_scale = [x0, y0, x1, y1, cx, cy, radius_squared.sqrt()]
+        .into_iter()
+        .map(f64::abs)
+        .fold(1.0_f64, f64::max);
+    let epsilon = policy
+        .tolerance
+        .map(|tolerance| tolerance.relative.max(tolerance.absolute / length_scale))
+        .unwrap_or(1e-12);
+    let discriminant_tolerance = epsilon * half_b.mul_add(half_b, (a * c).abs()).abs().max(1.0);
+
+    if discriminant < -discriminant_tolerance {
+        return Ok(Some(LineArcIntersection::None));
+    }
+    if discriminant.abs() <= discriminant_tolerance {
+        let line_param = Real::try_from(-half_b / a)?;
+        return Ok(Some(
+            match line_arc_hit_candidate(line, arc, line_param, IntersectionKind::Tangent, policy)?
+            {
+                LineArcCandidate::Hit(hit) => LineArcIntersection::Point(hit),
+                LineArcCandidate::Miss => LineArcIntersection::None,
+                LineArcCandidate::Uncertain(reason) => LineArcIntersection::Uncertain { reason },
+            },
+        ));
+    }
+
+    let sqrt_discriminant = discriminant.sqrt();
+    let q = -half_b - half_b.signum() * sqrt_discriminant;
+    let (first, second) = if q == 0.0 {
+        (
+            (-half_b - sqrt_discriminant) / a,
+            (-half_b + sqrt_discriminant) / a,
+        )
+    } else {
+        (q / a, c / q)
+    };
+    let (first, second) = if first <= second {
+        (first, second)
+    } else {
+        (second, first)
+    };
+    line_arc_two_candidates(
+        line,
+        arc,
+        Real::try_from(first)?,
+        Real::try_from(second)?,
+        policy,
+    )
+    .map(Some)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -975,6 +1093,7 @@ fn intersect_non_parallel(
     qmp: (Real, Real),
     known_denominator: Option<Real>,
     proper_crossing_certified: bool,
+    exact_dyadic_fragments: bool,
 ) -> CurveResult<LineLineIntersection> {
     // Exact-rational parameters make endpoint incidence decidable from the
     // parametric solution. Symbolic/mixed lines keep the endpoint-first path:
@@ -999,7 +1118,11 @@ fn intersect_non_parallel(
         }
         denominator
     };
-    let t_numerator = cross(&qmp.0, &qmp.1, sx, sy);
+    let t_numerator = if exact_dyadic_fragments {
+        cross_exact_dyadic(&qmp.0, &qmp.1, sx, sy)
+    } else {
+        cross(&qmp.0, &qmp.1, sx, sy)
+    };
     // A rational quotient is in [0, 1] exactly when its numerator lies between
     // zero and its denominator in denominator-sign order. Prove misses and
     // endpoint incidence on borrowed carriers before allocating the quotient.
@@ -1011,7 +1134,11 @@ fn intersect_non_parallel(
     if t_exact_location == Some(ExactUnitIntervalLocation::Outside) {
         return Ok(LineLineIntersection::None);
     }
-    let u_numerator = cross(&qmp.0, &qmp.1, rx, ry);
+    let u_numerator = if exact_dyadic_fragments {
+        cross_exact_dyadic(&qmp.0, &qmp.1, rx, ry)
+    } else {
+        cross(&qmp.0, &qmp.1, rx, ry)
+    };
     let u_exact_location = if proper_crossing_certified {
         Some(ExactUnitIntervalLocation::Interior)
     } else {
@@ -1283,6 +1410,10 @@ fn parameter_on_line(line: &LineSeg2, point: &Point2, policy: &CurvePolicy) -> C
 
 fn cross(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
     Real::diff_of_products(ax, by, ay, bx)
+}
+
+fn cross_exact_dyadic(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
+    Real::exact_rational_signed_product_sum_known_dyadic([true, false], [[ax, by], [ay, bx]])
 }
 
 fn dot(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {

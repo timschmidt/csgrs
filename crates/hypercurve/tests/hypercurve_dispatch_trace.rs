@@ -1,6 +1,8 @@
 #![cfg(feature = "dispatch-trace")]
 
-use hypercurve::{Contour2, CurvePolicy, LineSeg2, Point2, Real};
+use hypercurve::{
+    BulgeVertex2, Contour2, CurvePolicy, LineSeg2, Point2, Real, StraightSkeletonStage2,
+};
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -40,4 +42,34 @@ fn public_finite_ring_import_emits_correlated_exact_path_trace() {
     let snapshot = hyperreal::dispatch_trace::take_trace();
     let summary = snapshot.correlation_summary();
     assert!(summary.dispatch_events > 0 || summary.rational_temporaries > 0);
+}
+
+#[test]
+fn public_straight_skeleton_emits_correlated_exact_path_trace() {
+    let contour = Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(p(0, 0), Real::zero()),
+        BulgeVertex2::new(p(30, 0), Real::zero()),
+        BulgeVertex2::new(p(30, 24), Real::zero()),
+        BulgeVertex2::new(p(20, 24), Real::zero()),
+        BulgeVertex2::new(p(20, 7), Real::zero()),
+        BulgeVertex2::new(p(17, 11), Real::zero()),
+        BulgeVertex2::new(p(17, 24), Real::zero()),
+        BulgeVertex2::new(p(0, 24), Real::zero()),
+    ])
+    .unwrap();
+
+    hyperreal::dispatch_trace::reset();
+    let report = hyperreal::dispatch_trace::with_recording(|| {
+        contour.straight_skeleton(&CurvePolicy::certified())
+    })
+    .unwrap();
+    assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+
+    let summary = hyperreal::dispatch_trace::take_trace().correlation_summary();
+    assert!(summary.dispatch_events > 0 || summary.rational_temporaries > 0);
+    assert!(
+        summary.predicate_events > 0
+            || summary.sign_or_zero_query_events > 0
+            || summary.exact_reducer_events > 0
+    );
 }

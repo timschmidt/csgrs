@@ -1,7 +1,9 @@
 use hypercurve::{
-    BooleanOp, Classification, Curve2, CurveBoundaryInteriorSide2, CurvePath2, CurvePolicy,
-    CurveRegion2, LineSeg2, Point2, QuadraticBezier2, Real, RegionPointLocation,
+    BooleanOp, Classification, Curve2, CurvePath2, CurvePolicy, CurveRegion2, LineSeg2, Point2,
+    Real, RegionPointLocation,
 };
+#[cfg(feature = "predicates")]
+use hypercurve::{CurveBoundaryInteriorSide2, QuadraticBezier2};
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))

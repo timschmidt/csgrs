@@ -104,6 +104,10 @@ name = "curve_path"
 harness = false
 
 [[bench]]
+name = "straight_skeleton"
+harness = false
+
+[[bench]]
 name = "offset"
 harness = false
 

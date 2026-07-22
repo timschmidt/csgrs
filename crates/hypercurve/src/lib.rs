@@ -365,7 +365,8 @@ pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, Segmen
 pub use straight_skeleton::{
     StraightSkeleton2, StraightSkeletonAffineTime2, StraightSkeletonArc2,
     StraightSkeletonArcGeometry2, StraightSkeletonArcKind2, StraightSkeletonBlocker2,
-    StraightSkeletonCurveFamilySupport2, StraightSkeletonGlobalContactEvent2,
+    StraightSkeletonConicBranch2, StraightSkeletonCurveFamilySupport2,
+    StraightSkeletonGeneratedBisector2, StraightSkeletonGlobalContactEvent2,
     StraightSkeletonGlobalContactKind2, StraightSkeletonImplicitConic2,
     StraightSkeletonLocalArcEvent2, StraightSkeletonLocalArcEventKind2, StraightSkeletonNode2,
     StraightSkeletonNodeKind2, StraightSkeletonReport2, StraightSkeletonSpliceEvent2,

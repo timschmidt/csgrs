@@ -641,6 +641,25 @@ fn recorded_shape_preserving_event_node(
     Ok(index)
 }
 
+/// Provenance payload for a bisector incident to event-generated support.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StraightSkeletonGeneratedBisector2 {
+    left: StraightSkeletonSupportProvenance2,
+    right: StraightSkeletonSupportProvenance2,
+}
+
+impl StraightSkeletonGeneratedBisector2 {
+    /// Return the left moving-support provenance.
+    pub const fn left(&self) -> &StraightSkeletonSupportProvenance2 {
+        &self.left
+    }
+
+    /// Return the right moving-support provenance.
+    pub const fn right(&self) -> &StraightSkeletonSupportProvenance2 {
+        &self.right
+    }
+}
+
 /// Construction family of one straight-skeleton arc.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StraightSkeletonArcKind2 {
@@ -650,12 +669,34 @@ pub enum StraightSkeletonArcKind2 {
         right_source_edge: usize,
     },
     /// Trace of a vertex incident to at least one event-generated support.
-    GeneratedVertexBisector {
-        left: StraightSkeletonSupportProvenance2,
-        right: StraightSkeletonSupportProvenance2,
-    },
+    GeneratedVertexBisector(Box<StraightSkeletonGeneratedBisector2>),
     /// Terminal ridge left when a convex wavefront collapses to a segment.
     TerminalRidge,
+}
+
+/// Exact conic payload kept out of the common line-segment arc carrier.
+#[derive(Clone, Debug, PartialEq)]
+pub struct StraightSkeletonConicBranch2 {
+    kind: StraightSkeletonTrajectoryKind2,
+    equation: StraightSkeletonImplicitConic2,
+    affine_time: Option<StraightSkeletonAffineTime2>,
+}
+
+impl StraightSkeletonConicBranch2 {
+    /// Return the conic family traced by this branch.
+    pub const fn kind(&self) -> StraightSkeletonTrajectoryKind2 {
+        self.kind
+    }
+
+    /// Return the exact implicit conic equation.
+    pub const fn equation(&self) -> &StraightSkeletonImplicitConic2 {
+        &self.equation
+    }
+
+    /// Return the affine time coordinate when one exists.
+    pub const fn affine_time(&self) -> Option<&StraightSkeletonAffineTime2> {
+        self.affine_time.as_ref()
+    }
 }
 
 /// Exact finite geometry retained by one straight-skeleton graph arc.
@@ -664,11 +705,7 @@ pub enum StraightSkeletonArcGeometry2 {
     /// A closed line segment whose endpoints are the referenced graph nodes.
     LineSegment,
     /// A finite conic branch selected by its endpoint nodes and time coordinate.
-    ConicBranch {
-        kind: StraightSkeletonTrajectoryKind2,
-        equation: StraightSkeletonImplicitConic2,
-        affine_time: Option<StraightSkeletonAffineTime2>,
-    },
+    ConicBranch(Box<StraightSkeletonConicBranch2>),
 }
 
 /// Indexed exact straight-skeleton graph arc.
@@ -3857,10 +3894,12 @@ fn add_recorded_shape_preserving_arc(
             left_source_edge: *left_source_edge,
             right_source_edge: *right_source_edge,
         },
-        _ => StraightSkeletonArcKind2::GeneratedVertexBisector {
-            left: left.provenance.clone(),
-            right: right.provenance.clone(),
-        },
+        _ => StraightSkeletonArcKind2::GeneratedVertexBisector(Box::new(
+            StraightSkeletonGeneratedBisector2 {
+                left: left.provenance.clone(),
+                right: right.provenance.clone(),
+            },
+        )),
     };
     if start_node == end_node
         || arcs.iter().any(|arc| {
@@ -7693,11 +7732,11 @@ fn arc_geometry_from_trajectory(
             StraightSkeletonArcGeometry2::LineSegment
         }
         StraightSkeletonTrajectoryGeometry2::Conic(equation) => {
-            StraightSkeletonArcGeometry2::ConicBranch {
+            StraightSkeletonArcGeometry2::ConicBranch(Box::new(StraightSkeletonConicBranch2 {
                 kind: trajectory.kind,
                 equation,
                 affine_time: trajectory.affine_time,
-            }
+            }))
         }
     }
 }
@@ -8024,6 +8063,32 @@ impl GeneralLineEvent2 {
     }
 }
 
+fn retain_earliest_general_line_event(
+    minimum_time: &mut Option<Real>,
+    events: &mut Vec<GeneralLineEvent2>,
+    candidate: GeneralLineEvent2,
+    policy: &CurvePolicy,
+) -> Result<(), StraightSkeletonBlocker2> {
+    match minimum_time
+        .as_ref()
+        .map(|minimum| compare_reals(candidate.time(), minimum, policy))
+    {
+        None => {
+            *minimum_time = Some(candidate.time().clone());
+            events.push(candidate);
+        }
+        Some(Some(Ordering::Less)) => {
+            *minimum_time = Some(candidate.time().clone());
+            events.clear();
+            events.push(candidate);
+        }
+        Some(Some(Ordering::Equal)) => events.push(candidate),
+        Some(Some(Ordering::Greater)) => {}
+        Some(None) => return Err(StraightSkeletonBlocker2::UncertainEventOrdering),
+    }
+    Ok(())
+}
+
 fn skeleton_split_event_count(skeleton: &StraightSkeleton2) -> usize {
     fn count(kind: &StraightSkeletonNodeKind2) -> usize {
         match kind {
@@ -8066,18 +8131,20 @@ fn build_general_line_straight_skeleton(
             0,
         )));
     }
-    let mut nodes = initial_cycle
-        .vertex_start_nodes
-        .iter()
-        .copied()
-        .map(|source_vertex| StraightSkeletonNode2 {
-            point: source_lines[source_vertex].start().clone(),
-            time: Real::zero(),
-            kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
-        })
-        .collect::<Vec<_>>();
+    let mut nodes = Vec::with_capacity(source_edge_count.saturating_mul(2));
+    nodes.extend(
+        initial_cycle
+            .vertex_start_nodes
+            .iter()
+            .copied()
+            .map(|source_vertex| StraightSkeletonNode2 {
+                point: source_lines[source_vertex].start().clone(),
+                time: Real::zero(),
+                kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+            }),
+    );
     initial_cycle.vertex_start_nodes = (0..initial_cycle.source_edges.len()).collect();
-    let mut arcs = Vec::new();
+    let mut arcs = Vec::with_capacity(source_edge_count.saturating_mul(2));
     let mut cycles = vec![initial_cycle];
     let mut current_time = Real::zero();
     let mut event_count = 0usize;
@@ -8085,7 +8152,8 @@ fn build_general_line_straight_skeleton(
 
     while cycles.iter().any(|cycle| cycle.source_edges.len() >= 3) {
         cycles.retain(|cycle| cycle.source_edges.len() >= 3);
-        let mut candidates = Vec::new();
+        let mut minimum_time = None;
+        let mut simultaneous = Vec::with_capacity(1);
         for (cycle_index, cycle) in cycles.iter().enumerate() {
             for active_index in 0..cycle.source_edges.len() {
                 match edge_event_candidate(
@@ -8095,10 +8163,24 @@ fn build_general_line_straight_skeleton(
                     &current_time,
                     policy,
                 )? {
-                    Ok(Some(candidate)) => candidates.push(GeneralLineEvent2::Edge {
-                        cycle: cycle_index,
-                        candidate,
-                    }),
+                    Ok(Some(candidate)) => {
+                        if let Err(blocker) = retain_earliest_general_line_event(
+                            &mut minimum_time,
+                            &mut simultaneous,
+                            GeneralLineEvent2::Edge {
+                                cycle: cycle_index,
+                                candidate,
+                            },
+                            policy,
+                        ) {
+                            return Ok(Err((
+                                StraightSkeletonStage2::EventScheduling,
+                                blocker,
+                                event_count,
+                                simultaneous_event_count,
+                            )));
+                        }
+                    }
                     Ok(None) => {}
                     Err(blocker) => {
                         return Ok(Err((
@@ -8139,7 +8221,21 @@ fn build_general_line_straight_skeleton(
                         &current_time,
                         policy,
                     )? {
-                        Ok(Some(candidate)) => candidates.push(GeneralLineEvent2::Split(candidate)),
+                        Ok(Some(candidate)) => {
+                            if let Err(blocker) = retain_earliest_general_line_event(
+                                &mut minimum_time,
+                                &mut simultaneous,
+                                GeneralLineEvent2::Split(candidate),
+                                policy,
+                            ) {
+                                return Ok(Err((
+                                    StraightSkeletonStage2::EventScheduling,
+                                    blocker,
+                                    event_count,
+                                    simultaneous_event_count,
+                                )));
+                            }
+                        }
                         Ok(None) => {}
                         Err(blocker) => {
                             return Ok(Err((
@@ -8181,7 +8277,19 @@ fn build_general_line_straight_skeleton(
                         policy,
                     )? {
                         Ok(Some(candidate)) => {
-                            candidates.push(GeneralLineEvent2::Vertex(candidate));
+                            if let Err(blocker) = retain_earliest_general_line_event(
+                                &mut minimum_time,
+                                &mut simultaneous,
+                                GeneralLineEvent2::Vertex(candidate),
+                                policy,
+                            ) {
+                                return Ok(Err((
+                                    StraightSkeletonStage2::EventScheduling,
+                                    blocker,
+                                    event_count,
+                                    simultaneous_event_count,
+                                )));
+                            }
                         }
                         Ok(None) => {}
                         Err(blocker) => {
@@ -8197,7 +8305,7 @@ fn build_general_line_straight_skeleton(
             }
         }
 
-        let Some(mut minimum_time) = candidates.first().map(|event| event.time().clone()) else {
+        let Some(minimum_time) = minimum_time else {
             return Ok(Err((
                 StraightSkeletonStage2::EventScheduling,
                 StraightSkeletonBlocker2::MissingFutureEvent,
@@ -8205,35 +8313,6 @@ fn build_general_line_straight_skeleton(
                 simultaneous_event_count,
             )));
         };
-        for candidate in candidates.iter().skip(1) {
-            match compare_reals(candidate.time(), &minimum_time, policy) {
-                Some(Ordering::Less) => minimum_time = candidate.time().clone(),
-                Some(Ordering::Equal | Ordering::Greater) => {}
-                None => {
-                    return Ok(Err((
-                        StraightSkeletonStage2::EventScheduling,
-                        StraightSkeletonBlocker2::UncertainEventOrdering,
-                        event_count,
-                        simultaneous_event_count,
-                    )));
-                }
-            }
-        }
-        let mut simultaneous = Vec::new();
-        for candidate in candidates {
-            match compare_reals(candidate.time(), &minimum_time, policy) {
-                Some(Ordering::Equal) => simultaneous.push(candidate),
-                Some(Ordering::Less | Ordering::Greater) => {}
-                None => {
-                    return Ok(Err((
-                        StraightSkeletonStage2::EventScheduling,
-                        StraightSkeletonBlocker2::UncertainEventOrdering,
-                        event_count,
-                        simultaneous_event_count,
-                    )));
-                }
-            }
-        }
         event_count += 1;
         if simultaneous.len() > 1 {
             simultaneous_event_count += 1;
@@ -10180,18 +10259,16 @@ mod tests {
                 } if collapsed_source_edges == &[0, 1]
             ));
             for arc in skeleton.arcs() {
-                let StraightSkeletonArcGeometry2::ConicBranch {
-                    kind,
-                    equation,
-                    affine_time: Some(affine_time),
-                } = arc.geometry()
-                else {
+                let StraightSkeletonArcGeometry2::ConicBranch(branch) = arc.geometry() else {
                     panic!("circular-segment skeleton branch must retain its timed conic");
                 };
-                assert_eq!(*kind, StraightSkeletonTrajectoryKind2::Parabolic);
+                let affine_time = branch
+                    .affine_time()
+                    .expect("circular-segment branch must retain affine time");
+                assert_eq!(branch.kind(), StraightSkeletonTrajectoryKind2::Parabolic);
                 assert_eq!(
                     real_sign(
-                        &equation.evaluate(terminal.point()),
+                        &branch.equation().evaluate(terminal.point()),
                         &CurvePolicy::certified()
                     ),
                     Some(RealSign::Zero)
@@ -10248,17 +10325,16 @@ mod tests {
             for arc in skeleton.arcs() {
                 match arc.geometry() {
                     StraightSkeletonArcGeometry2::LineSegment => line_count += 1,
-                    StraightSkeletonArcGeometry2::ConicBranch {
-                        kind,
-                        equation,
-                        affine_time: Some(affine_time),
-                    } => {
+                    StraightSkeletonArcGeometry2::ConicBranch(branch) => {
+                        let affine_time = branch
+                            .affine_time()
+                            .expect("sector parabola must retain its affine time coordinate");
                         conic_count += 1;
-                        assert_eq!(*kind, StraightSkeletonTrajectoryKind2::Parabolic);
+                        assert_eq!(branch.kind(), StraightSkeletonTrajectoryKind2::Parabolic);
                         let source_node = &skeleton.nodes()[arc.start_node()];
                         assert_eq!(
                             real_sign(
-                                &equation.evaluate(source_node.point()),
+                                &branch.equation().evaluate(source_node.point()),
                                 &CurvePolicy::certified()
                             ),
                             Some(RealSign::Zero)
@@ -10266,9 +10342,6 @@ mod tests {
                         assert_eq!(affine_time.evaluate(source_node.point()), r(0));
                         assert_eq!(affine_time.evaluate(terminal.point()), event_time);
                     }
-                    StraightSkeletonArcGeometry2::ConicBranch {
-                        affine_time: None, ..
-                    } => panic!("sector parabola must retain its affine time coordinate"),
                 }
             }
             assert_eq!(line_count, 1);
@@ -10692,7 +10765,7 @@ mod tests {
             assert_eq!(arcs.len(), 3);
             assert!(arcs[1..].iter().all(|arc| matches!(
                 arc.kind(),
-                StraightSkeletonArcKind2::GeneratedVertexBisector { .. }
+                StraightSkeletonArcKind2::GeneratedVertexBisector(_)
             )));
         }
     }
@@ -10800,7 +10873,7 @@ mod tests {
         assert_eq!(arcs.len(), 1);
         assert!(matches!(
             arcs[0].kind(),
-            StraightSkeletonArcKind2::GeneratedVertexBisector { .. }
+            StraightSkeletonArcKind2::GeneratedVertexBisector(_)
         ));
     }
 
@@ -11310,7 +11383,7 @@ mod tests {
                 && arc.end_node() == event_node
                 && matches!(
                     arc.kind(),
-                    StraightSkeletonArcKind2::GeneratedVertexBisector { .. }
+                    StraightSkeletonArcKind2::GeneratedVertexBisector(_)
                 )
         }));
         assert!(matches!(
@@ -11318,10 +11391,8 @@ mod tests {
                 .find(|arc| arc.start_node() == splice_node && arc.end_node() == event_node)
                 .unwrap()
                 .geometry(),
-            StraightSkeletonArcGeometry2::ConicBranch {
-                kind: StraightSkeletonTrajectoryKind2::Parabolic,
-                ..
-            }
+            StraightSkeletonArcGeometry2::ConicBranch(branch)
+                if branch.kind() == StraightSkeletonTrajectoryKind2::Parabolic
         ));
     }
 
@@ -11487,7 +11558,7 @@ mod tests {
                     .iter()
                     .filter(|arc| matches!(
                         arc.geometry(),
-                        StraightSkeletonArcGeometry2::ConicBranch { .. }
+                        StraightSkeletonArcGeometry2::ConicBranch(_)
                     ))
                     .count()
                     >= 2

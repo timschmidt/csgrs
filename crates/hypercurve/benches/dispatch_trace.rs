@@ -3,7 +3,7 @@ use hypercurve::triangulate_finite_rings;
 use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult,
     CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2, Point2, QuadraticBezier2, Real,
-    Segment2, Similarity2,
+    Segment2, Similarity2, StraightSkeletonStage2,
 };
 
 fn r(value: i32) -> Real {
@@ -24,6 +24,21 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     .expect("trace rectangle is valid")
 }
 
+fn star(vertex_count: usize, center: (f64, f64), radii: (f64, f64), rotation: f64) -> Contour2 {
+    let vertices = (0..vertex_count)
+        .map(|index| {
+            let angle = rotation + std::f64::consts::TAU * index as f64 / vertex_count as f64;
+            let radius = if index % 2 == 0 { radii.0 } else { radii.1 };
+            let point = Point2::new(
+                Real::try_from(center.0 + radius * angle.cos()).expect("finite star x"),
+                Real::try_from(center.1 + radius * angle.sin()).expect("finite star y"),
+            );
+            BulgeVertex2::new(point, Real::zero())
+        })
+        .collect::<Vec<_>>();
+    Contour2::from_bulge_vertices(&vertices).expect("trace star is valid")
+}
+
 fn trace<T>(name: &str, workload: impl FnOnce() -> CurveResult<T>) {
     hyperreal::dispatch_trace::reset();
     let result = hyperreal::dispatch_trace::with_recording(workload)
@@ -35,7 +50,10 @@ fn trace<T>(name: &str, workload: impl FnOnce() -> CurveResult<T>) {
         correlation.dispatch_events > 0 || correlation.rational_temporaries > 0,
         "{name} did not emit an exact-computation path trace"
     );
-    println!("{name}: correlation={correlation:?}");
+    println!(
+        "{name}: correlation={correlation:?}, rational={:?}",
+        snapshot.rational
+    );
     for summary in snapshot.operation_summaries() {
         println!(
             "  {}/{}/{}",
@@ -98,6 +116,23 @@ fn main() {
         Ok(offset)
     });
 
+    let concave = Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(p(0, 0), r(0)),
+        BulgeVertex2::new(p(30, 0), r(0)),
+        BulgeVertex2::new(p(30, 24), r(0)),
+        BulgeVertex2::new(p(20, 24), r(0)),
+        BulgeVertex2::new(p(20, 7), r(0)),
+        BulgeVertex2::new(p(17, 11), r(0)),
+        BulgeVertex2::new(p(17, 24), r(0)),
+        BulgeVertex2::new(p(0, 24), r(0)),
+    ])
+    .expect("trace concave contour is valid");
+    trace("straight_skeleton", || {
+        let report = concave.straight_skeleton(&policy)?;
+        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+        Ok(report)
+    });
+
     let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     trace("region_boolean", || {
@@ -105,6 +140,25 @@ fn main() {
             &second,
             BooleanOp::Union,
             FillRule::NonZero,
+            &policy,
+        )?;
+        assert!(result.region().is_some());
+        Ok(result)
+    });
+
+    let first_star =
+        LineArcRegion2::from_material_contours(vec![star(64, (0.0, 0.0), (100.0, 72.0), 0.0)]);
+    let second_star = LineArcRegion2::from_material_contours(vec![star(
+        64,
+        (18.0, 7.0),
+        (96.0, 68.0),
+        std::f64::consts::PI / 64.0,
+    )]);
+    trace("star64_region_boolean", || {
+        let result = first_star.boolean_region_with_report(
+            &second_star,
+            BooleanOp::Intersection,
+            FillRule::EvenOdd,
             &policy,
         )?;
         assert!(result.region().is_some());

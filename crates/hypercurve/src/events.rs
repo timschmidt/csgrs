@@ -552,7 +552,7 @@ fn intersect_contours_with_retained_line_candidates(
             a_param,
             b_param,
             kind,
-        } = a_line.intersect_line_with_certified_proper_crossing(b_line, policy)?
+        } = a_line.intersect_line_with_certified_exact_dyadic_proper_crossing(b_line, policy)?
         else {
             return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
                 a, b, a_boxes, b_boxes, policy,
