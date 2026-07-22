@@ -109,6 +109,13 @@ const DYADIC_STACK_LIMBS: usize = 6;
 #[derive(Clone, Copy, Default)]
 struct DyadicStackAccumulator([u64; DYADIC_STACK_LIMBS]);
 
+#[derive(Clone, Copy)]
+struct DyadicStackSum {
+    sign: Sign,
+    magnitude: DyadicStackAccumulator,
+    denominator_shift: u64,
+}
+
 impl DyadicStackAccumulator {
     fn add_product(&mut self, left: u128, right: u128, shift: u64) -> Option<()> {
         let left = [left as u64, (left >> 64) as u64];
@@ -1938,14 +1945,13 @@ impl Rational {
         ])
     }
 
-    fn dot_products_dyadic<const N: usize>(
+    fn dyadic_product_alignment<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
         signs: [Sign; N],
-    ) -> Option<Self> {
+    ) -> Option<([u64; N], u64)> {
         let mut max_shift = 0_u64;
         let mut denominator_shifts = [0_u64; N];
-        let mut any_nonzero = false;
         for i in 0..N {
             if signs[i] == NoSign {
                 continue;
@@ -1954,11 +1960,17 @@ impl Rational {
                 left[i].dyadic_denominator_shift()? + right[i].dyadic_denominator_shift()?;
             denominator_shifts[i] = shift;
             max_shift = max_shift.max(shift);
-            any_nonzero = true;
         }
-        if !any_nonzero {
-            return Some(Self::zero());
-        }
+        Some((denominator_shifts, max_shift))
+    }
+
+    fn dot_products_dyadic<const N: usize>(
+        left: [&Self; N],
+        right: [&Self; N],
+        signs: [Sign; N],
+    ) -> Option<Self> {
+        let (denominator_shifts, max_shift) =
+            Self::dyadic_product_alignment(left, right, signs)?;
 
         if let Some(result) =
             Self::dot_products_dyadic_words(left, right, signs, denominator_shifts, max_shift)
@@ -2010,6 +2022,39 @@ impl Rational {
         denominator_shifts: [u64; N],
         max_shift: u64,
     ) -> Option<Self> {
+        Self::dot_products_dyadic_stack_sum(
+            left,
+            right,
+            signs,
+            denominator_shifts,
+            max_shift,
+        )
+        .map(Self::materialize_dyadic_stack_sum)
+    }
+
+    fn dot_products_known_dyadic_stack_sum<const N: usize>(
+        left: [&Self; N],
+        right: [&Self; N],
+        signs: [Sign; N],
+    ) -> Option<DyadicStackSum> {
+        let (denominator_shifts, max_shift) =
+            Self::dyadic_product_alignment(left, right, signs)?;
+        Self::dot_products_dyadic_stack_sum(
+            left,
+            right,
+            signs,
+            denominator_shifts,
+            max_shift,
+        )
+    }
+
+    fn dot_products_dyadic_stack_sum<const N: usize>(
+        left: [&Self; N],
+        right: [&Self; N],
+        signs: [Sign; N],
+        denominator_shifts: [u64; N],
+        max_shift: u64,
+    ) -> Option<DyadicStackSum> {
         let mut positive = DyadicStackAccumulator::default();
         let mut negative = DyadicStackAccumulator::default();
         for i in 0..N {
@@ -2028,29 +2073,43 @@ impl Rational {
         let Some((sign, mut magnitude)) =
             DyadicStackAccumulator::difference(positive, negative)
         else {
-            return Some(Self::zero());
+            return Some(DyadicStackSum {
+                sign: NoSign,
+                magnitude: DyadicStackAccumulator::default(),
+                denominator_shift: 0,
+            });
         };
         let common_shift = magnitude.trailing_zeros().min(max_shift);
         magnitude.shift_right(common_shift);
-        let denominator_shift = max_shift - common_shift;
-        if denominator_shift < 128
-            && let Some(magnitude) = magnitude.to_u128()
+        Some(DyadicStackSum {
+            sign,
+            magnitude,
+            denominator_shift: max_shift - common_shift,
+        })
+    }
+
+    fn materialize_dyadic_stack_sum(sum: DyadicStackSum) -> Self {
+        if sum.sign == NoSign {
+            return Self::zero();
+        }
+        if sum.denominator_shift < 128
+            && let Some(magnitude) = sum.magnitude.to_u128()
         {
-            return Some(Self::from_reduced_word_parts(
-                sign,
+            return Self::from_reduced_word_parts(
+                sum.sign,
                 magnitude,
-                1_u128 << denominator_shift,
-            ));
+                1_u128 << sum.denominator_shift,
+            );
         }
 
         let denominator = BigUint::one()
-            << usize::try_from(denominator_shift).expect("dyadic shift fits usize");
+            << usize::try_from(sum.denominator_shift).expect("dyadic shift fits usize");
         trace_rational_temporary!();
-        Some(Self::from_parts_raw(
-            sign,
-            magnitude.into_biguint(),
+        Self::from_parts_raw(
+            sum.sign,
+            sum.magnitude.into_biguint(),
             denominator,
-        ))
+        )
     }
 
     fn dot_products_dyadic_words<const N: usize>(
@@ -2609,6 +2668,46 @@ impl Rational {
         )
     }
 
+    fn quotient_dyadic_stack_sum_with_word_divisor(
+        numerator: DyadicStackSum,
+        denominator: &Self,
+        denominator_shift: u64,
+        denominator_word: u128,
+        divisor: u128,
+    ) -> Self {
+        debug_assert_ne!(numerator.sign, NoSign);
+        if let (Some(numerator_word), Ok(scale_shift)) = (
+            numerator.magnitude.to_u128(),
+            i32::try_from(
+                i128::from(denominator_shift) - i128::from(numerator.denominator_shift),
+            ),
+        ) && let Some(result) = Self::from_scaled_dyadic_quotient_component_with_divisor(
+            numerator.sign * denominator.sign,
+            numerator_word,
+            denominator_word,
+            scale_shift,
+            divisor,
+        ) {
+            return result;
+        }
+
+        let mut magnitude = numerator.magnitude.into_biguint();
+        if divisor != 1 {
+            debug_assert_eq!((&magnitude % divisor).to_u128(), Some(0));
+            magnitude /= divisor;
+        }
+        let mut scale = BigUint::from(denominator_word / divisor);
+        if denominator_shift > numerator.denominator_shift {
+            magnitude <<= usize::try_from(denominator_shift - numerator.denominator_shift)
+                .expect("dyadic quotient shift fits usize");
+        } else if numerator.denominator_shift > denominator_shift {
+            scale <<= usize::try_from(numerator.denominator_shift - denominator_shift)
+                .expect("dyadic quotient shift fits usize");
+        }
+        trace_rational_temporary!();
+        Self::from_parts_raw(numerator.sign * denominator.sign, magnitude, scale)
+    }
+
     /// Construct `t = numerator / denominator` and both coordinates of
     /// `origin + t * delta` after the caller has proved every input dyadic.
     /// One native cancellation of the shared quotient is reused by all three
@@ -2631,12 +2730,6 @@ impl Rational {
         let numerator_shift = numerator
             .dyadic_denominator_shift()
             .expect("known-dyadic numerator has a power-of-two denominator");
-        let affine_numerators: [Self; 2] = std::array::from_fn(|index| {
-            Self::signed_product_sum_known_dyadic(
-                [true, true],
-                [[origin[index], denominator], [numerator, delta[index]]],
-            )
-        });
         let word_plan = numerator
             .numerator
             .to_u128()
@@ -2679,7 +2772,58 @@ impl Rational {
         };
 
         let coordinates = std::array::from_fn(|index| {
-            let affine_numerator = &affine_numerators[index];
+            let terms = [[origin[index], denominator], [numerator, delta[index]]];
+            let signs = [
+                Self::product_term_sign(true, terms[0]),
+                Self::product_term_sign(true, terms[1]),
+            ];
+            let stack_sum = Self::dot_products_known_dyadic_stack_sum(
+                [terms[0][0], terms[1][0]],
+                [terms[0][1], terms[1][1]],
+                signs,
+            );
+            if stack_sum.is_some() {
+                crate::trace_dispatch!("rational", "product_sum", "known-dyadic-two-factor");
+                crate::trace_dispatch!("rational", "dot_product", "dyadic-stack-accumulator");
+            }
+            if let Some(stack_sum) = stack_sum
+                && stack_sum.sign != NoSign
+                && let Some((denominator_word, first_divisor)) = word_plan
+                && denominator_word > 1
+                && denominator_word % 2 == 1
+                && let Some(delta_word) = delta[index].numerator.to_u128()
+            {
+                let remaining_denominator = denominator_word / first_divisor;
+                let second_divisor = Self::gcd_word(delta_word, remaining_denominator);
+                let divisor = first_divisor * second_divisor;
+                #[cfg(feature = "dispatch-trace")]
+                let numerator_trace = stack_sum.magnitude.into_biguint();
+                #[cfg(feature = "dispatch-trace")]
+                let divisor_trace = BigUint::from(divisor);
+                trace_rational_gcd!(
+                    &numerator_trace,
+                    &denominator.numerator,
+                    &divisor_trace
+                );
+                let result = Self::quotient_dyadic_stack_sum_with_word_divisor(
+                    stack_sum,
+                    denominator,
+                    denominator_shift,
+                    denominator_word,
+                    divisor,
+                );
+                crate::trace_dispatch!(
+                    "rational",
+                    "div",
+                    "known-dyadic-affine-factor-cross-cancel"
+                );
+                return Ok(result);
+            }
+
+            let affine_numerator = stack_sum.map_or_else(
+                || Self::signed_product_sum_known_dyadic([true, true], terms),
+                Self::materialize_dyadic_stack_sum,
+            );
             if affine_numerator.sign == NoSign {
                 return Ok(Self::zero());
             }
@@ -2702,7 +2846,7 @@ impl Rational {
                     &divisor_trace
                 );
                 let (result, _) = Self::quotient_known_dyadic_with_word_divisor(
-                    affine_numerator,
+                    &affine_numerator,
                     denominator,
                     affine_shift,
                     denominator_shift,
@@ -2716,7 +2860,7 @@ impl Rational {
                 );
                 Ok(result)
             } else {
-                Self::quotient_known_dyadic(affine_numerator, denominator)
+                Self::quotient_known_dyadic(&affine_numerator, denominator)
             }
         });
         let [x, y] = coordinates;
