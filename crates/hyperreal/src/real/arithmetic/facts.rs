@@ -278,6 +278,30 @@ impl Real {
         Ok((Real::new(parameter), coordinates.map(Real::new)))
     }
 
+    /// Solve a certified proper crossing between exact dyadic endpoints while
+    /// retaining intermediate differences and determinants in native scalar
+    /// accumulators. Wider inputs return `None` for the general exact path.
+    #[doc(hidden)]
+    pub fn exact_rational_line_intersection2_known_dyadic(
+        first_start: [&Real; 2],
+        first_end: [&Real; 2],
+        second_start: [&Real; 2],
+        second_end: [&Real; 2],
+    ) -> Option<(Real, Real, [Real; 2])> {
+        let (first_parameter, second_parameter, point) =
+            Rational::line_intersection2_known_dyadic(
+                first_start.map(|value| &value.rational),
+                first_end.map(|value| &value.rational),
+                second_start.map(|value| &value.rational),
+                second_end.map(|value| &value.rational),
+            )?;
+        Some((
+            Real::new(first_parameter),
+            Real::new(second_parameter),
+            point.map(Real::new),
+        ))
+    }
+
     /// Divide two exact dyadic rationals after the caller has classified them.
     ///
     /// Cross-cancellation happens before applying their power-of-two scales,

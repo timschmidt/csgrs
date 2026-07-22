@@ -2766,6 +2766,106 @@ mod tests {
     }
 
     #[test]
+    fn fused_dyadic_line_intersection_matches_expanded_exact_arithmetic() {
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut fused_cases = 0;
+        for _ in 0..512 {
+            let points: [[Real; 2]; 4] = core::array::from_fn(|_| {
+                core::array::from_fn(|_| {
+                    state = state
+                        .wrapping_mul(6_364_136_223_846_793_005)
+                        .wrapping_add(1_442_695_040_888_963_407);
+                    let numerator = i64::try_from(state % 257).unwrap() - 128;
+                    let denominator = 1_u64 << u32::try_from((state >> 32) % 8).unwrap();
+                    Real::new(Rational::fraction(numerator, denominator).unwrap())
+                })
+            });
+            let [first_start, first_end, second_start, second_end] = &points;
+            let first_delta = [
+                &first_end[0] - &first_start[0],
+                &first_end[1] - &first_start[1],
+            ];
+            let second_delta = [
+                &second_end[0] - &second_start[0],
+                &second_end[1] - &second_start[1],
+            ];
+            let start_delta = [
+                &second_start[0] - &first_start[0],
+                &second_start[1] - &first_start[1],
+            ];
+            let denominator = Real::diff_of_products(
+                &first_delta[0],
+                &second_delta[1],
+                &first_delta[1],
+                &second_delta[0],
+            );
+            if denominator == Real::zero() {
+                continue;
+            }
+            let Some((first_parameter, second_parameter, point)) =
+                Real::exact_rational_line_intersection2_known_dyadic(
+                    [&first_start[0], &first_start[1]],
+                    [&first_end[0], &first_end[1]],
+                    [&second_start[0], &second_start[1]],
+                    [&second_end[0], &second_end[1]],
+                )
+            else {
+                continue;
+            };
+            fused_cases += 1;
+            let first_numerator = Real::diff_of_products(
+                &start_delta[0],
+                &second_delta[1],
+                &start_delta[1],
+                &second_delta[0],
+            );
+            let second_numerator = Real::diff_of_products(
+                &start_delta[0],
+                &first_delta[1],
+                &start_delta[1],
+                &first_delta[0],
+            );
+            let expected_first = (&first_numerator / &denominator).unwrap();
+            let expected_second = (&second_numerator / &denominator).unwrap();
+            assert_eq!(first_parameter, expected_first);
+            assert_eq!(second_parameter, expected_second);
+            assert_eq!(
+                point,
+                [
+                    Real::affine(&first_start[0], &expected_first, &first_delta[0]),
+                    Real::affine(&first_start[1], &expected_first, &first_delta[1]),
+                ]
+            );
+        }
+        assert!(
+            fused_cases > 400,
+            "only {fused_cases} cases used the fused path"
+        );
+    }
+
+    #[test]
+    fn fused_dyadic_line_intersection_defers_wide_inputs() {
+        let wide = Real::new(
+            Rational::from_bigint_fraction(
+                num::BigInt::from(1_u8) << 192_usize,
+                num::BigUint::from(1_u8),
+            )
+            .unwrap(),
+        );
+        let zero = Real::zero();
+        let one = Real::one();
+        assert_eq!(
+            Real::exact_rational_line_intersection2_known_dyadic(
+                [&wide, &zero],
+                [&one, &one],
+                [&zero, &one],
+                [&one, &zero],
+            ),
+            None
+        );
+    }
+
+    #[test]
     fn exact_dyadic_quotient_matches_general_division_across_scales() {
         for numerator in -12_i64..=12 {
             for denominator in (-12_i64..=12).filter(|value| *value != 0) {

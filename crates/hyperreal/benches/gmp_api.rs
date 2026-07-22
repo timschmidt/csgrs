@@ -1483,6 +1483,61 @@ fn bench_real_collection_and_conversion_api(c: &mut Criterion) {
         },
     );
 
+    let first_start = [real(-7.25), real(-2.5)];
+    let first_end = [real(9.5), real(6.75)];
+    let second_start = [real(-3.0), real(8.125)];
+    let second_end = [real(8.75), real(-5.5)];
+    let g_first_start = [gmp(-7.25), gmp(-2.5)];
+    let g_first_end = [gmp(9.5), gmp(6.75)];
+    let g_second_start = [gmp(-3.0), gmp(8.125)];
+    let g_second_end = [gmp(8.75), gmp(-5.5)];
+    group.bench_function(
+        BenchmarkId::new(
+            "hyperreal",
+            "exact_rational_line_intersection2_known_dyadic",
+        ),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    Real::exact_rational_line_intersection2_known_dyadic(
+                        [&first_start[0], &first_start[1]],
+                        [&first_end[0], &first_end[1]],
+                        [&second_start[0], &second_start[1]],
+                        [&second_end[0], &second_end[1]],
+                    )
+                    .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(
+        BenchmarkId::new(
+            "gmp_mpfr128",
+            "exact_rational_line_intersection2_known_dyadic",
+        ),
+        |b| {
+            b.iter(|| {
+                let rx = g_first_end[0].clone() - &g_first_start[0];
+                let ry = g_first_end[1].clone() - &g_first_start[1];
+                let sx = g_second_end[0].clone() - &g_second_start[0];
+                let sy = g_second_end[1].clone() - &g_second_start[1];
+                let qx = g_second_start[0].clone() - &g_first_start[0];
+                let qy = g_second_start[1].clone() - &g_first_start[1];
+                let denominator = rx.clone() * &sy - ry.clone() * &sx;
+                let first_parameter = (qx.clone() * &sy - qy.clone() * &sx) / &denominator;
+                let second_parameter = (qx * &ry - qy * &rx) / denominator;
+                black_box((
+                    first_parameter.clone(),
+                    second_parameter,
+                    [
+                        g_first_start[0].clone() + &first_parameter * rx,
+                        g_first_start[1].clone() + first_parameter * ry,
+                    ],
+                ))
+            })
+        },
+    );
+
     let value = real(0.75);
     let g_value = gmp(0.75);
     group.bench_function(BenchmarkId::new("hyperreal", "to_f64_lossy"), |b| {
