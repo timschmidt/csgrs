@@ -110,9 +110,11 @@ parabolic branches in the graph. Generic-position strictly convex line/arc
 contours schedule successive native three-support vanish events by solving exact
 quadratic cone sections; line/line/line, line/line/circle,
 line/circle/circle, and three-circle support triples share that event queue.
-Premature circular-radius and unresolved curved terminal-pair transitions are
-typed blockers. Smooth co-circular contours also complete with their exact
-collapse time and an empty unextended shape-preserving skeleton.
+Surviving line/circle and circle/circle pairs finish at exact tangency, while
+line pairs retain their terminal ridge. Premature circular-radius and
+non-general-position terminal transitions remain typed blockers. Smooth
+co-circular contours also complete with their exact collapse time and an empty
+unextended shape-preserving skeleton.
 General arc-polygon vanish, contact, bubble, squeeze, and splice propagation
 remains an explicit `UnsupportedSegment` result until those event transitions land.
 
