@@ -139,8 +139,12 @@ and `GeneratedVertexBisector` retain the resulting non-source provenance. The
 transition terminates the original reflex bisector at the splice node, and the
 shared recorded-support emitter materializes both subsequent parabolic
 generated-support branches without assigning them false source-edge indices.
-Scheduling subsequent events on the mutated cycle and the general
-multi-component concave arc-polygon queue remain the next integration boundary.
+The recorded-support event kernel also tracks the expanding side of a generated
+circle through a later three-support edge collapse, updates the mutated cycle,
+and emits the exact incident conic branch. `SupportEvent` keeps event-generated
+collapse provenance when no source-edge-only label would be truthful. Selecting
+and iterating those transitions in the public multi-component concave
+arc-polygon queue remains the next integration boundary.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every

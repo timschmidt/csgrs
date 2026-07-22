@@ -335,6 +335,11 @@ pub enum StraightSkeletonNodeKind2 {
         left_source_edge: usize,
         right_source_edge: usize,
     },
+    /// One or more wavefront supports collapsed after event-generated geometry
+    /// entered the active cycle.
+    SupportEvent {
+        collapsed_supports: Vec<StraightSkeletonSupportProvenance2>,
+    },
     /// A reflex vertex contacted the live interior of a nonincident edge.
     SplitEvent {
         left_source_edge: usize,
@@ -593,6 +598,14 @@ struct ShapePreservingSupportRecord2 {
 struct ActiveShapePreservingCycle2 {
     supports: Vec<usize>,
     pair_start: BTreeMap<(usize, usize), usize>,
+}
+
+#[derive(Clone, Debug)]
+#[cfg_attr(not(test), allow(dead_code))]
+struct ShapePreservingEdgeAdvance2 {
+    time: Real,
+    collapsed_supports: Vec<usize>,
+    event_nodes: Vec<usize>,
 }
 
 fn apply_splice_topology_transition(
@@ -2791,6 +2804,403 @@ fn materialize_splice_topology_transition(
         Err(blocker) => return Ok(Err(blocker)),
     };
     Ok(Ok((event_node, generated)))
+}
+
+fn recorded_three_support_candidate_is_live(
+    supports: &[&ShapePreservingSupportRecord2],
+    orientation: RealSign,
+    time: &Real,
+    policy: &CurvePolicy,
+) -> Result<bool, StraightSkeletonBlocker2> {
+    let (orientation_scalar, generated_live_sign) = match orientation {
+        RealSign::Positive => (Real::one(), RealSign::Negative),
+        RealSign::Negative => (-Real::one(), RealSign::Positive),
+        RealSign::Zero => unreachable!(),
+    };
+    for support in supports {
+        let ShapePreservingSupport2::Circle { signed_radius, .. } = &support.geometry else {
+            continue;
+        };
+        let expected_sign = match &support.provenance {
+            StraightSkeletonSupportProvenance2::SourceEdge { .. } => {
+                real_sign(signed_radius, policy)
+                    .filter(|sign| *sign != RealSign::Zero)
+                    .ok_or(StraightSkeletonBlocker2::UncertainWavefrontRelation)?
+            }
+            StraightSkeletonSupportProvenance2::SpliceArc { .. } => generated_live_sign,
+        };
+        let moved_radius = signed_radius - &orientation_scalar * time;
+        match real_sign(&moved_radius, policy) {
+            Some(sign) if sign == expected_sign => {}
+            Some(_) => return Ok(false),
+            None => return Err(StraightSkeletonBlocker2::UncertainEventOrdering),
+        }
+    }
+    Ok(true)
+}
+
+fn tracked_recorded_three_support_event(
+    supports: [&ShapePreservingSupportRecord2; 3],
+    pair_starts: &[(&Point2, &Real)],
+    orientation: RealSign,
+    current_time: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<Option<(Real, Point2)>, StraightSkeletonBlocker2>> {
+    debug_assert!(matches!(pair_starts.len(), 2 | 3));
+    let geometries = supports
+        .iter()
+        .map(|support| support.geometry.clone())
+        .collect::<Vec<_>>();
+    let candidates = match three_support_events(&geometries, orientation, current_time, policy)? {
+        Ok(candidates) => candidates,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    for (time, point) in candidates {
+        match recorded_three_support_candidate_is_live(&supports, orientation, &time, policy) {
+            Ok(true) => {}
+            Ok(false) => continue,
+            Err(blocker) => return Ok(Err(blocker)),
+        }
+        let mut all_match = true;
+        for (pair_index, (start, start_time)) in pair_starts.iter().enumerate() {
+            let right_index = if pair_starts.len() == supports.len() {
+                (pair_index + 1) % supports.len()
+            } else {
+                pair_index + 1
+            };
+            match tracked_support_pair_branch_matches(
+                &supports[pair_index].geometry,
+                &supports[right_index].geometry,
+                start,
+                start_time,
+                &point,
+                &time,
+                policy,
+            ) {
+                Ok(true) => {}
+                Ok(false) => {
+                    all_match = false;
+                    break;
+                }
+                Err(blocker) => return Ok(Err(blocker)),
+            }
+        }
+        if all_match {
+            return Ok(Ok(Some((time, point))));
+        }
+    }
+    Ok(Ok(None))
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn shape_preserving_edge_event_candidate(
+    active: &ActiveShapePreservingCycle2,
+    support_records: &[ShapePreservingSupportRecord2],
+    nodes: &[StraightSkeletonNode2],
+    active_index: usize,
+    current_time: &Real,
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<Option<EdgeEventCandidate2>, StraightSkeletonBlocker2>> {
+    if active.supports.len() < 3 || active_index >= active.supports.len() {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    }
+    let count = active.supports.len();
+    let previous = active.supports[(active_index + count - 1) % count];
+    let current = active.supports[active_index];
+    let next = active.supports[(active_index + 1) % count];
+    let Some(left_start) = active.pair_start.get(&(previous, current)).copied() else {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    };
+    let Some(right_start) = active.pair_start.get(&(current, next)).copied() else {
+        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+    };
+    let mut pair_starts = vec![
+        (&nodes[left_start].point, &nodes[left_start].time),
+        (&nodes[right_start].point, &nodes[right_start].time),
+    ];
+    if count == 3 {
+        let Some(closing_start) = active.pair_start.get(&(next, previous)).copied() else {
+            return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+        };
+        pair_starts.push((&nodes[closing_start].point, &nodes[closing_start].time));
+    }
+    let event = match tracked_recorded_three_support_event(
+        [
+            &support_records[previous],
+            &support_records[current],
+            &support_records[next],
+        ],
+        &pair_starts,
+        orientation,
+        current_time,
+        policy,
+    )? {
+        Ok(event) => event,
+        Err(blocker) => return Ok(Err(blocker)),
+    };
+    Ok(Ok(event.map(|(time, point)| EdgeEventCandidate2 {
+        active_index,
+        time,
+        point,
+    })))
+}
+
+fn recorded_support_event_node(
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    event_nodes: &mut Vec<usize>,
+    point: Point2,
+    time: Real,
+    collapsed_support: usize,
+    support_records: &[ShapePreservingSupportRecord2],
+) -> Result<usize, StraightSkeletonBlocker2> {
+    let provenance = support_records[collapsed_support].provenance.clone();
+    if let Some(index) = event_nodes
+        .iter()
+        .copied()
+        .find(|index| nodes[*index].point == point && nodes[*index].time == time)
+    {
+        match (&mut nodes[index].kind, provenance) {
+            (
+                StraightSkeletonNodeKind2::EdgeEvent {
+                    collapsed_source_edges,
+                },
+                StraightSkeletonSupportProvenance2::SourceEdge { source_edge },
+            ) => {
+                if !collapsed_source_edges.contains(&source_edge) {
+                    collapsed_source_edges.push(source_edge);
+                    collapsed_source_edges.sort_unstable();
+                }
+            }
+            (kind @ StraightSkeletonNodeKind2::EdgeEvent { .. }, generated) => {
+                let StraightSkeletonNodeKind2::EdgeEvent {
+                    collapsed_source_edges,
+                } = kind
+                else {
+                    unreachable!();
+                };
+                let mut collapsed_supports = collapsed_source_edges
+                    .iter()
+                    .copied()
+                    .map(
+                        |source_edge| StraightSkeletonSupportProvenance2::SourceEdge {
+                            source_edge,
+                        },
+                    )
+                    .collect::<Vec<_>>();
+                collapsed_supports.push(generated);
+                *kind = StraightSkeletonNodeKind2::SupportEvent { collapsed_supports };
+            }
+            (StraightSkeletonNodeKind2::SupportEvent { collapsed_supports }, provenance) => {
+                if !collapsed_supports.contains(&provenance) {
+                    collapsed_supports.push(provenance);
+                }
+            }
+            _ => return Err(StraightSkeletonBlocker2::InvalidSplitTopology),
+        }
+        return Ok(index);
+    }
+    let kind = match provenance {
+        StraightSkeletonSupportProvenance2::SourceEdge { source_edge } => {
+            StraightSkeletonNodeKind2::EdgeEvent {
+                collapsed_source_edges: vec![source_edge],
+            }
+        }
+        provenance => StraightSkeletonNodeKind2::SupportEvent {
+            collapsed_supports: vec![provenance],
+        },
+    };
+    let index = nodes.len();
+    nodes.push(StraightSkeletonNode2 { point, time, kind });
+    event_nodes.push(index);
+    Ok(index)
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(not(test), allow(dead_code))]
+fn apply_shape_preserving_edge_collapses(
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    arcs: &mut Vec<StraightSkeletonArc2>,
+    support_records: &[ShapePreservingSupportRecord2],
+    active: &mut ActiveShapePreservingCycle2,
+    collapsing: &[EdgeEventCandidate2],
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<ShapePreservingEdgeAdvance2, StraightSkeletonBlocker2>> {
+    let Some(first) = collapsing.first() else {
+        return Ok(Err(StraightSkeletonBlocker2::MissingFutureEvent));
+    };
+    let old_active = active.clone();
+    let mut removed = BTreeSet::new();
+    let mut event_nodes = Vec::new();
+    let mut event_node_by_support = BTreeMap::new();
+    for candidate in collapsing {
+        if compare_reals(&candidate.time, &first.time, policy) != Some(Ordering::Equal)
+            || candidate.active_index >= old_active.supports.len()
+        {
+            return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
+        }
+        let count = old_active.supports.len();
+        let previous = old_active.supports[(candidate.active_index + count - 1) % count];
+        let collapsed = old_active.supports[candidate.active_index];
+        let next = old_active.supports[(candidate.active_index + 1) % count];
+        removed.insert(collapsed);
+        let node = match recorded_support_event_node(
+            nodes,
+            &mut event_nodes,
+            candidate.point.clone(),
+            candidate.time.clone(),
+            collapsed,
+            support_records,
+        ) {
+            Ok(node) => node,
+            Err(blocker) => return Ok(Err(blocker)),
+        };
+        event_node_by_support.insert(collapsed, node);
+        for pair in [(previous, collapsed), (collapsed, next)] {
+            let Some(start_node) = old_active.pair_start.get(&pair).copied() else {
+                return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+            };
+            if let Err(blocker) = add_recorded_shape_preserving_arc(
+                arcs,
+                nodes,
+                start_node,
+                node,
+                pair,
+                support_records,
+                orientation,
+                policy,
+            )? {
+                return Ok(Err(blocker));
+            }
+        }
+    }
+    let next_supports = old_active
+        .supports
+        .iter()
+        .copied()
+        .filter(|support| !removed.contains(support))
+        .collect::<Vec<_>>();
+    let mut next_pair_start = BTreeMap::new();
+    if next_supports.len() >= 2 {
+        for index in 0..next_supports.len() {
+            let pair = (
+                next_supports[(index + next_supports.len() - 1) % next_supports.len()],
+                next_supports[index],
+            );
+            let start_node = if let Some(node) = old_active.pair_start.get(&pair).copied() {
+                node
+            } else {
+                match propagated_pair_start_node(
+                    &old_active.supports,
+                    pair,
+                    &old_active.pair_start,
+                    &event_node_by_support,
+                ) {
+                    Ok(node) => node,
+                    Err(blocker) => return Ok(Err(blocker)),
+                }
+            };
+            next_pair_start.insert(pair, start_node);
+        }
+    }
+    active.supports = next_supports;
+    active.pair_start = next_pair_start;
+    Ok(Ok(ShapePreservingEdgeAdvance2 {
+        time: first.time.clone(),
+        collapsed_supports: removed.into_iter().collect(),
+        event_nodes,
+    }))
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(not(test), allow(dead_code))]
+fn advance_shape_preserving_cycle_to_next_edge_event(
+    nodes: &mut Vec<StraightSkeletonNode2>,
+    arcs: &mut Vec<StraightSkeletonArc2>,
+    support_records: &[ShapePreservingSupportRecord2],
+    active: &mut ActiveShapePreservingCycle2,
+    current_time: &Real,
+    orientation: RealSign,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<ShapePreservingEdgeAdvance2, StraightSkeletonBlocker2>> {
+    let mut candidates = Vec::new();
+    for active_index in 0..active.supports.len() {
+        match shape_preserving_edge_event_candidate(
+            active,
+            support_records,
+            nodes,
+            active_index,
+            current_time,
+            orientation,
+            policy,
+        )? {
+            Ok(Some(candidate)) => candidates.push(candidate),
+            Ok(None) => {}
+            Err(blocker) => return Ok(Err(blocker)),
+        }
+    }
+    let Some(mut minimum_time) = candidates.first().map(|candidate| candidate.time.clone()) else {
+        return Ok(Err(StraightSkeletonBlocker2::MissingFutureEvent));
+    };
+    for candidate in candidates.iter().skip(1) {
+        match compare_reals(&candidate.time, &minimum_time, policy) {
+            Some(Ordering::Less) => minimum_time = candidate.time.clone(),
+            Some(Ordering::Equal | Ordering::Greater) => {}
+            None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+        }
+    }
+    let orientation_scalar = match orientation {
+        RealSign::Positive => Real::one(),
+        RealSign::Negative => -Real::one(),
+        RealSign::Zero => unreachable!(),
+    };
+    for support in active.supports.iter().copied() {
+        let record = &support_records[support];
+        if !matches!(
+            record.provenance,
+            StraightSkeletonSupportProvenance2::SourceEdge { .. }
+        ) {
+            continue;
+        }
+        let ShapePreservingSupport2::Circle { signed_radius, .. } = &record.geometry else {
+            continue;
+        };
+        let collapse_time = (signed_radius / &orientation_scalar)?;
+        match (
+            compare_reals(&collapse_time, current_time, policy),
+            compare_reals(&collapse_time, &minimum_time, policy),
+        ) {
+            (Some(Ordering::Greater), Some(Ordering::Less | Ordering::Equal)) => {
+                let source_edge = match record.provenance {
+                    StraightSkeletonSupportProvenance2::SourceEdge { source_edge } => source_edge,
+                    StraightSkeletonSupportProvenance2::SpliceArc { .. } => unreachable!(),
+                };
+                return Ok(Err(
+                    StraightSkeletonBlocker2::CircularRadiusCollapseRequired { source_edge },
+                ));
+            }
+            (Some(_), Some(_)) => {}
+            _ => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+        }
+    }
+    let mut collapsing = Vec::new();
+    for candidate in candidates {
+        match compare_reals(&candidate.time, &minimum_time, policy) {
+            Some(Ordering::Equal) => collapsing.push(candidate),
+            Some(Ordering::Less | Ordering::Greater) => {}
+            None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+        }
+    }
+    apply_shape_preserving_edge_collapses(
+        nodes,
+        arcs,
+        support_records,
+        active,
+        &collapsing,
+        orientation,
+        policy,
+    )
 }
 
 fn shape_preserving_pair_terminal_event(
@@ -6242,6 +6652,214 @@ mod tests {
                 StraightSkeletonArcKind2::GeneratedVertexBisector { .. }
             )));
         }
+    }
+
+    #[test]
+    fn generated_splice_support_survives_and_materializes_a_later_edge_collapse() {
+        let geometries = [
+            ShapePreservingSupport2::Line {
+                normal_x: r(0),
+                normal_y: r(1),
+                constant: r(0),
+            },
+            ShapePreservingSupport2::Line {
+                normal_x: r(-1),
+                normal_y: r(0),
+                constant: r(-6),
+            },
+            ShapePreservingSupport2::Line {
+                normal_x: r(0),
+                normal_y: r(-1),
+                constant: r(-10),
+            },
+            ShapePreservingSupport2::Line {
+                normal_x: r(1),
+                normal_y: r(0),
+                constant: r(0),
+            },
+        ];
+        let mut records = geometries
+            .into_iter()
+            .enumerate()
+            .map(|(source_edge, geometry)| ShapePreservingSupportRecord2 {
+                geometry,
+                provenance: StraightSkeletonSupportProvenance2::SourceEdge { source_edge },
+            })
+            .collect::<Vec<_>>();
+        let source_points = [
+            Point2::new(r(0), r(0)),
+            Point2::new(r(6), r(0)),
+            Point2::new(r(6), r(10)),
+            Point2::new(r(0), r(10)),
+        ];
+        let mut nodes = source_points
+            .into_iter()
+            .enumerate()
+            .map(|(source_vertex, point)| StraightSkeletonNode2 {
+                point,
+                time: Real::zero(),
+                kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+            })
+            .collect::<Vec<_>>();
+        let mut arcs = Vec::new();
+        let mut active = ActiveShapePreservingCycle2 {
+            supports: vec![0, 1, 2, 3],
+            pair_start: BTreeMap::from([((3, 0), 0), ((0, 1), 1), ((1, 2), 2), ((2, 3), 3)]),
+        };
+        let splice = StraightSkeletonSpliceEvent2 {
+            source_vertex: 0,
+            left_source_edge: 3,
+            right_source_edge: 0,
+            time: r(2),
+            point: Point2::new(r(2), r(2)),
+        };
+        let (splice_node, generated) = materialize_splice_topology_transition(
+            &mut nodes,
+            &mut arcs,
+            &mut records,
+            &mut active,
+            &splice,
+            RealSign::Positive,
+            &CurvePolicy::certified(),
+        )
+        .unwrap()
+        .unwrap();
+        let bottom_position = active
+            .supports
+            .iter()
+            .position(|support| *support == 0)
+            .unwrap();
+        let candidate = shape_preserving_edge_event_candidate(
+            &active,
+            &records,
+            &nodes,
+            bottom_position,
+            splice.time(),
+            RealSign::Positive,
+            &CurvePolicy::certified(),
+        )
+        .unwrap()
+        .unwrap()
+        .unwrap();
+        assert_eq!(candidate.time, r(4));
+        assert_eq!(candidate.point, Point2::new(r(2), r(4)));
+
+        let advance = apply_shape_preserving_edge_collapses(
+            &mut nodes,
+            &mut arcs,
+            &records,
+            &mut active,
+            &[candidate],
+            RealSign::Positive,
+            &CurvePolicy::certified(),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(advance.time, r(4));
+        assert_eq!(advance.collapsed_supports, vec![0]);
+        assert_eq!(advance.event_nodes.len(), 1);
+        let event_node = advance.event_nodes[0];
+        assert_eq!(
+            nodes[event_node].kind(),
+            &StraightSkeletonNodeKind2::EdgeEvent {
+                collapsed_source_edges: vec![0],
+            }
+        );
+        assert_eq!(active.supports, vec![generated, 1, 2, 3]);
+        assert_eq!(active.pair_start[&(generated, 1)], event_node);
+        assert_eq!(arcs.len(), 3);
+        assert!(arcs.iter().any(|arc| {
+            arc.start_node() == splice_node
+                && arc.end_node() == event_node
+                && matches!(
+                    arc.kind(),
+                    StraightSkeletonArcKind2::GeneratedVertexBisector { .. }
+                )
+        }));
+        assert!(matches!(
+            arcs.iter()
+                .find(|arc| arc.start_node() == splice_node && arc.end_node() == event_node)
+                .unwrap()
+                .geometry(),
+            StraightSkeletonArcGeometry2::ConicBranch {
+                kind: StraightSkeletonTrajectoryKind2::Parabolic,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn recorded_support_scheduler_groups_the_exact_next_event() {
+        let geometries = [
+            ShapePreservingSupport2::Line {
+                normal_x: r(0),
+                normal_y: r(1),
+                constant: r(0),
+            },
+            ShapePreservingSupport2::Line {
+                normal_x: r(-1),
+                normal_y: r(0),
+                constant: r(-2),
+            },
+            ShapePreservingSupport2::Line {
+                normal_x: r(0),
+                normal_y: r(-1),
+                constant: r(-2),
+            },
+            ShapePreservingSupport2::Line {
+                normal_x: r(1),
+                normal_y: r(0),
+                constant: r(0),
+            },
+        ];
+        let records = geometries
+            .into_iter()
+            .enumerate()
+            .map(|(source_edge, geometry)| ShapePreservingSupportRecord2 {
+                geometry,
+                provenance: StraightSkeletonSupportProvenance2::SourceEdge { source_edge },
+            })
+            .collect::<Vec<_>>();
+        let mut nodes = [
+            Point2::new(r(0), r(0)),
+            Point2::new(r(2), r(0)),
+            Point2::new(r(2), r(2)),
+            Point2::new(r(0), r(2)),
+        ]
+        .into_iter()
+        .enumerate()
+        .map(|(source_vertex, point)| StraightSkeletonNode2 {
+            point,
+            time: Real::zero(),
+            kind: StraightSkeletonNodeKind2::SourceVertex { source_vertex },
+        })
+        .collect::<Vec<_>>();
+        let mut arcs = Vec::new();
+        let mut active = ActiveShapePreservingCycle2 {
+            supports: vec![0, 1, 2, 3],
+            pair_start: BTreeMap::from([((3, 0), 0), ((0, 1), 1), ((1, 2), 2), ((2, 3), 3)]),
+        };
+        let advance = advance_shape_preserving_cycle_to_next_edge_event(
+            &mut nodes,
+            &mut arcs,
+            &records,
+            &mut active,
+            &Real::zero(),
+            RealSign::Positive,
+            &CurvePolicy::certified(),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(advance.time, r(1));
+        assert_eq!(advance.collapsed_supports, vec![0, 1, 2, 3]);
+        assert_eq!(advance.event_nodes.len(), 1);
+        assert!(active.supports.is_empty());
+        assert!(active.pair_start.is_empty());
+        assert_eq!(
+            nodes[advance.event_nodes[0]].point(),
+            &Point2::new(r(1), r(1))
+        );
+        assert_eq!(arcs.len(), 4);
     }
 
     #[test]
