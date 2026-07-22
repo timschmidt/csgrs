@@ -662,6 +662,14 @@ struct ShapePreservingCompletion2 {
     events: Vec<(Real, usize)>,
 }
 
+#[derive(Clone, Debug)]
+struct RecordedSqueezeEvent2 {
+    first_support: usize,
+    second_support: usize,
+    time: Real,
+    point: Point2,
+}
+
 fn apply_splice_topology_transition(
     support_records: &mut Vec<ShapePreservingSupportRecord2>,
     active: &mut ActiveShapePreservingCycle2,
@@ -2544,7 +2552,7 @@ fn certified_single_global_split_skeleton(
             .collect(),
     };
     let mut arcs = Vec::new();
-    let (_, mut cycles) = match materialize_shape_preserving_split_transition(
+    let (_, split_cycles) = match materialize_shape_preserving_split_transition(
         &mut nodes,
         &mut arcs,
         &support_records,
@@ -2556,6 +2564,7 @@ fn certified_single_global_split_skeleton(
         Ok(transition) => transition,
         Err(blocker) => return Ok(Err(blocker)),
     };
+    let mut cycles = Vec::from(split_cycles);
     let completion = match complete_shape_preserving_edge_cycles(
         &mut nodes,
         &mut arcs,
@@ -4042,15 +4051,19 @@ fn complete_shape_preserving_edge_cycles(
     nodes: &mut Vec<StraightSkeletonNode2>,
     arcs: &mut Vec<StraightSkeletonArc2>,
     support_records: &[ShapePreservingSupportRecord2],
-    cycles: &mut [ActiveShapePreservingCycle2],
+    cycles: &mut Vec<ActiveShapePreservingCycle2>,
     current_time: &Real,
     orientation: RealSign,
     policy: &CurvePolicy,
 ) -> CurveResult<Result<ShapePreservingCompletion2, StraightSkeletonBlocker2>> {
     let mut maximum_time = current_time.clone();
     let mut events = Vec::new();
-    for cycle in cycles {
-        let mut cycle_time = current_time.clone();
+    let mut work = std::mem::take(cycles)
+        .into_iter()
+        .rev()
+        .map(|cycle| (cycle, current_time.clone()))
+        .collect::<Vec<_>>();
+    'components: while let Some((mut cycle, mut cycle_time)) = work.pop() {
         while cycle.supports.len() >= 3 {
             let mut next_nodes = nodes.clone();
             let mut next_arcs = arcs.clone();
@@ -4067,8 +4080,8 @@ fn complete_shape_preserving_edge_cycles(
                 Ok(advance) => advance,
                 Err(blocker) => return Ok(Err(blocker)),
             };
-            match shape_preserving_cycle_has_squeeze_before_or_at(
-                cycle,
+            let squeeze = match next_shape_preserving_cycle_squeeze_before_or_at(
+                &cycle,
                 support_records,
                 nodes,
                 &cycle_time,
@@ -4076,15 +4089,65 @@ fn complete_shape_preserving_edge_cycles(
                 orientation,
                 policy,
             )? {
-                Ok(false) => {}
-                Ok(true) => {
-                    return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
-                }
+                Ok(squeeze) => squeeze,
                 Err(blocker) => return Ok(Err(blocker)),
+            };
+            if let Some(squeeze) = squeeze {
+                match compare_reals(&squeeze.time, &advance.time, policy) {
+                    Some(Ordering::Less) => {}
+                    Some(Ordering::Equal) => {
+                        return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
+                    }
+                    Some(Ordering::Greater) => unreachable!(),
+                    None => {
+                        return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering));
+                    }
+                }
+                let first_source_edge = match support_records[squeeze.first_support].provenance {
+                    StraightSkeletonSupportProvenance2::SourceEdge { source_edge } => source_edge,
+                    StraightSkeletonSupportProvenance2::SpliceArc { .. } => {
+                        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+                    }
+                };
+                let second_source_edge = match support_records[squeeze.second_support].provenance {
+                    StraightSkeletonSupportProvenance2::SourceEdge { source_edge } => source_edge,
+                    StraightSkeletonSupportProvenance2::SpliceArc { .. } => {
+                        return Ok(Err(StraightSkeletonBlocker2::InvalidSplitTopology));
+                    }
+                };
+                let event = StraightSkeletonGlobalContactEvent2 {
+                    kind: StraightSkeletonGlobalContactKind2::Squeeze {
+                        first_source_edge,
+                        second_source_edge,
+                    },
+                    time: squeeze.time.clone(),
+                    point: squeeze.point,
+                };
+                let (_, split_cycles) = match materialize_shape_preserving_squeeze_transition(
+                    nodes,
+                    support_records,
+                    &cycle,
+                    &event,
+                ) {
+                    Ok(transition) => transition,
+                    Err(blocker) => return Ok(Err(blocker)),
+                };
+                match compare_reals(&event.time, &maximum_time, policy) {
+                    Some(Ordering::Greater) => maximum_time = event.time.clone(),
+                    Some(Ordering::Equal | Ordering::Less) => {}
+                    None => {
+                        return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering));
+                    }
+                }
+                events.push((event.time.clone(), 1));
+                let [first_cycle, second_cycle] = split_cycles;
+                work.push((second_cycle, event.time.clone()));
+                work.push((first_cycle, event.time));
+                continue 'components;
             }
             *nodes = next_nodes;
             *arcs = next_arcs;
-            *cycle = next_cycle;
+            cycle = next_cycle;
             cycle_time = advance.time.clone();
             events.push((advance.time, advance.collapsed_supports.len()));
         }
@@ -4183,6 +4246,7 @@ fn complete_shape_preserving_edge_cycles(
             Some(Ordering::Equal | Ordering::Less) => {}
             None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
         }
+        cycles.push(cycle);
     }
     Ok(Ok(ShapePreservingCompletion2 {
         maximum_time,
@@ -5089,7 +5153,7 @@ fn active_shape_preserving_edge_strictly_contains_point_at_time(
     Ok(Ok(true))
 }
 
-fn shape_preserving_cycle_has_squeeze_before_or_at(
+fn next_shape_preserving_cycle_squeeze_before_or_at(
     active: &ActiveShapePreservingCycle2,
     support_records: &[ShapePreservingSupportRecord2],
     nodes: &[StraightSkeletonNode2],
@@ -5097,8 +5161,9 @@ fn shape_preserving_cycle_has_squeeze_before_or_at(
     upper_time: &Real,
     orientation: RealSign,
     policy: &CurvePolicy,
-) -> CurveResult<Result<bool, StraightSkeletonBlocker2>> {
+) -> CurveResult<Result<Option<RecordedSqueezeEvent2>, StraightSkeletonBlocker2>> {
     let count = active.supports.len();
+    let mut earliest: Option<RecordedSqueezeEvent2> = None;
     for first_position in 0..count {
         for second_position in (first_position + 1)..count {
             if second_position == first_position + 1
@@ -5145,12 +5210,34 @@ fn shape_preserving_cycle_has_squeeze_before_or_at(
                     }
                 }
                 if strict {
-                    return Ok(Ok(true));
+                    let candidate = RecordedSqueezeEvent2 {
+                        first_support: first,
+                        second_support: second,
+                        time,
+                        point,
+                    };
+                    let replace = match &earliest {
+                        None => true,
+                        Some(existing) => {
+                            match compare_reals(&candidate.time, &existing.time, policy) {
+                                Some(Ordering::Less) => true,
+                                Some(Ordering::Equal | Ordering::Greater) => false,
+                                None => {
+                                    return Ok(Err(
+                                        StraightSkeletonBlocker2::UncertainEventOrdering,
+                                    ));
+                                }
+                            }
+                        }
+                    };
+                    if replace {
+                        earliest = Some(candidate);
+                    }
                 }
             }
         }
     }
-    Ok(Ok(false))
+    Ok(Ok(earliest))
 }
 
 fn tracked_vertex_target_events(
@@ -9140,7 +9227,7 @@ mod tests {
         let (records, mut nodes, active) =
             initial_shape_preserving_state(&source, RealSign::Positive);
         let mut arcs = Vec::new();
-        let (event_node, mut cycles) = materialize_shape_preserving_split_transition(
+        let (event_node, cycles) = materialize_shape_preserving_split_transition(
             &mut nodes,
             &mut arcs,
             &records,
@@ -9159,6 +9246,7 @@ mod tests {
         assert_eq!(arcs.len(), 1);
         assert_eq!(arcs[0].start_node(), 4);
         assert_eq!(arcs[0].end_node(), event_node);
+        let mut cycles = Vec::from(cycles);
         let completion = complete_shape_preserving_edge_cycles(
             &mut nodes,
             &mut arcs,
@@ -9238,6 +9326,29 @@ mod tests {
                 first: StraightSkeletonSupportProvenance2::SourceEdge { source_edge: 0 },
                 second: StraightSkeletonSupportProvenance2::SourceEdge { source_edge: 3 },
             }
+        );
+        let (records, mut scheduled_nodes, active) =
+            initial_shape_preserving_state(&source, RealSign::Positive);
+        let mut scheduled_arcs = Vec::new();
+        let mut scheduled_cycles = vec![active];
+        let scheduled = complete_shape_preserving_edge_cycles(
+            &mut scheduled_nodes,
+            &mut scheduled_arcs,
+            &records,
+            &mut scheduled_cycles,
+            &Real::zero(),
+            RealSign::Positive,
+            &CurvePolicy::certified(),
+        )
+        .unwrap();
+        assert_eq!(
+            scheduled.unwrap_err(),
+            StraightSkeletonBlocker2::DegenerateSimultaneousEvents
+        );
+        assert!(
+            scheduled_nodes
+                .iter()
+                .any(|node| matches!(node.kind(), StraightSkeletonNodeKind2::SqueezeEvent { .. }))
         );
     }
 

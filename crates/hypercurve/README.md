@@ -153,9 +153,12 @@ circular edge. Exact mixed line/arc split and squeeze fixtures cover both global
 event classes. Their topology kernels now materialize the split node and incoming
 reflex branch, duplicate the hit support across the two split cycles, or duplicate
 both contacting supports across the two squeeze cycles and retain an explicit
-`SqueezeEvent`. Iterating those new components in the public construction loop is
-the remaining integration boundary. The additive public event interface is version
-2.
+`SqueezeEvent`. The staged component worklist now selects a source-support squeeze
+that strictly precedes its next local edge event, applies the topology transition,
+and requeues both resulting cycles. Squeezes involving generated splice supports,
+repeated splits and splices, and the general public multi-component construction
+loop remain explicit integration boundaries. The additive public event interface
+is version 2.
 The staged multi-component completion kernel can already carry a certified split
 fixture through all subsequent local collapses in one shared exact graph. It also
 distinguishes a valid circular-edge apex vanish—both tracked endpoints meet the
