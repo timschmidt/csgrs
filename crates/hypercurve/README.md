@@ -120,8 +120,10 @@ explicit `UnsupportedSegment` result until those event transitions land.
 `CurvePath2::straight_skeleton` dispatches native line/arc carriers without
 flattening. `STRAIGHT_SKELETON_INTERFACE_VERSION` and
 `CurveFamily2::straight_skeleton_support` provide feature discovery for every
-top-level curve family; unsupported Bezier, rational, spline, and NURBS inputs
-return their exact curve index and family as a typed blocker.
+top-level curve family. Polynomial and rational Bezier carriers participate
+when their existing zero-error certificate proves an exact endpoint-line image;
+nonlinear or unsupported spline/NURBS inputs return their exact curve index and
+family as a typed blocker.
 
 `translation_obstacle_convex` constructs the exact closed no-fit region
 `fixed + (-moving)` for simple convex line contours. It normalizes orientation,

@@ -22,8 +22,8 @@ use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    Classification, Contour2, CurveFamily2, CurveGeometry2, CurvePath2, CurvePolicy, CurveResult,
-    Point2, Segment2,
+    BezierLineImageFitRelation, Classification, Contour2, CurveFamily2, CurveGeometry2, CurvePath2,
+    CurvePolicy, CurveResult, Point2, Segment2,
 };
 
 /// Version of the public straight-skeleton capability and report interface.
@@ -34,6 +34,8 @@ pub const STRAIGHT_SKELETON_INTERFACE_VERSION: u32 = 1;
 pub enum StraightSkeletonCurveFamilySupport2 {
     /// Exact shape-preserving wavefront support is implemented.
     NativeExact,
+    /// Exact support is available when zero-error line-image fitting certifies it.
+    CertifiedLineImage,
     /// The family has no exact shape-preserving wavefront implementation yet.
     Unsupported,
 }
@@ -46,9 +48,10 @@ impl CurveFamily2 {
             Self::QuadraticBezier
             | Self::CubicBezier
             | Self::RationalQuadraticBezier
-            | Self::RationalBezier
-            | Self::PolynomialBSpline
-            | Self::Nurbs => StraightSkeletonCurveFamilySupport2::Unsupported,
+            | Self::RationalBezier => StraightSkeletonCurveFamilySupport2::CertifiedLineImage,
+            Self::PolynomialBSpline | Self::Nurbs => {
+                StraightSkeletonCurveFamilySupport2::Unsupported
+            }
         }
     }
 }
@@ -192,6 +195,11 @@ pub enum StraightSkeletonBlocker2 {
     UnsupportedSegment { segment_index: usize },
     /// A top-level curve family has no native exact wavefront implementation.
     UnsupportedCurveFamily {
+        curve_index: usize,
+        family: CurveFamily2,
+    },
+    /// Exact reduction of a conditionally supported family was indeterminate.
+    UncertainCurveFamilyReduction {
         curve_index: usize,
         family: CurveFamily2,
     },
@@ -1136,20 +1144,129 @@ impl CurvePath2 {
             match curve.geometry() {
                 CurveGeometry2::Line(line) => segments.push(Segment2::Line(line.clone())),
                 CurveGeometry2::CircularArc(arc) => segments.push(Segment2::Arc(arc.clone())),
-                geometry => {
-                    return Ok(blocked_shape_preserving_report(
-                        source_edge_count,
-                        StraightSkeletonStage2::InputValidation,
-                        StraightSkeletonBlocker2::UnsupportedCurveFamily {
+                CurveGeometry2::QuadraticBezier(curve) => {
+                    match curve.fit_exact_line_image(policy)? {
+                        Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
+                            segments.push(Segment2::Line(fit.line().clone()));
+                        }
+                        Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                            return Ok(unsupported_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::QuadraticBezier,
+                            ));
+                        }
+                        Classification::Uncertain(_) => {
+                            return Ok(uncertain_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::QuadraticBezier,
+                            ));
+                        }
+                    }
+                }
+                CurveGeometry2::CubicBezier(curve) => match curve.fit_exact_line_image(policy)? {
+                    Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
+                        segments.push(Segment2::Line(fit.line().clone()));
+                    }
+                    Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                        return Ok(unsupported_curve_family_report(
+                            source_edge_count,
                             curve_index,
-                            family: geometry.family(),
-                        },
+                            CurveFamily2::CubicBezier,
+                        ));
+                    }
+                    Classification::Uncertain(_) => {
+                        return Ok(uncertain_curve_family_report(
+                            source_edge_count,
+                            curve_index,
+                            CurveFamily2::CubicBezier,
+                        ));
+                    }
+                },
+                CurveGeometry2::RationalQuadraticBezier(curve) => {
+                    match curve.fit_exact_line_image(policy)? {
+                        Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
+                            segments.push(Segment2::Line(fit.line().clone()));
+                        }
+                        Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                            return Ok(unsupported_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::RationalQuadraticBezier,
+                            ));
+                        }
+                        Classification::Uncertain(_) => {
+                            return Ok(uncertain_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::RationalQuadraticBezier,
+                            ));
+                        }
+                    }
+                }
+                CurveGeometry2::RationalBezier(curve) => {
+                    match curve.fit_exact_line_image(policy)? {
+                        Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
+                            segments.push(Segment2::Line(fit.line().clone()));
+                        }
+                        Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                            return Ok(unsupported_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::RationalBezier,
+                            ));
+                        }
+                        Classification::Uncertain(_) => {
+                            return Ok(uncertain_curve_family_report(
+                                source_edge_count,
+                                curve_index,
+                                CurveFamily2::RationalBezier,
+                            ));
+                        }
+                    }
+                }
+                geometry => {
+                    return Ok(unsupported_curve_family_report(
+                        source_edge_count,
+                        curve_index,
+                        geometry.family(),
                     ));
                 }
             }
         }
         Contour2::try_new(segments)?.straight_skeleton(policy)
     }
+}
+
+fn unsupported_curve_family_report(
+    source_edge_count: usize,
+    curve_index: usize,
+    family: CurveFamily2,
+) -> StraightSkeletonReport2 {
+    blocked_shape_preserving_report(
+        source_edge_count,
+        StraightSkeletonStage2::InputValidation,
+        StraightSkeletonBlocker2::UnsupportedCurveFamily {
+            curve_index,
+            family,
+        },
+    )
+}
+
+fn uncertain_curve_family_report(
+    source_edge_count: usize,
+    curve_index: usize,
+    family: CurveFamily2,
+) -> StraightSkeletonReport2 {
+    blocked_shape_preserving_report(
+        source_edge_count,
+        StraightSkeletonStage2::InputValidation,
+        StraightSkeletonBlocker2::UncertainCurveFamilyReduction {
+            curve_index,
+            family,
+        },
+    )
 }
 
 fn blocked_shape_preserving_report(
@@ -4070,9 +4187,13 @@ mod tests {
             CurveFamily2::CubicBezier,
             CurveFamily2::RationalQuadraticBezier,
             CurveFamily2::RationalBezier,
-            CurveFamily2::PolynomialBSpline,
-            CurveFamily2::Nurbs,
         ] {
+            assert_eq!(
+                family.straight_skeleton_support(),
+                StraightSkeletonCurveFamilySupport2::CertifiedLineImage
+            );
+        }
+        for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
             assert_eq!(
                 family.straight_skeleton_support(),
                 StraightSkeletonCurveFamilySupport2::Unsupported
@@ -4094,12 +4215,42 @@ mod tests {
         let report = path.straight_skeleton(&CurvePolicy::certified()).unwrap();
         assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
 
-        let point = Point2::new(r(0), r(0));
-        let unsupported = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
-            point.clone(),
-            Point2::new(r(1), r(1)),
-            point,
-        ))])
+        let line_image_path = CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(
+                Point2::new(r(0), r(0)),
+                Point2::new(r(2), r(0)),
+                Point2::new(r(4), r(0)),
+            )),
+            Curve2::from(
+                LineSeg2::try_new(Point2::new(r(4), r(0)), Point2::new(r(4), r(4))).unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(Point2::new(r(4), r(4)), Point2::new(r(0), r(4))).unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(Point2::new(r(0), r(4)), Point2::new(r(0), r(0))).unwrap(),
+            ),
+        ])
+        .unwrap();
+        let report = line_image_path
+            .straight_skeleton(&CurvePolicy::certified())
+            .unwrap();
+        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+
+        let first = Point2::new(r(0), r(0));
+        let second = Point2::new(r(2), r(0));
+        let unsupported = CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(
+                first.clone(),
+                Point2::new(r(1), r(1)),
+                second.clone(),
+            )),
+            Curve2::from(QuadraticBezier2::new(
+                second,
+                Point2::new(r(1), r(-1)),
+                first,
+            )),
+        ])
         .unwrap();
         let report = unsupported
             .straight_skeleton(&CurvePolicy::certified())
