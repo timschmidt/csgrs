@@ -2438,6 +2438,71 @@ mod tests {
     }
 
     #[test]
+    fn dyadic_dot_stack_accumulator_handles_wide_products_alignment_and_borrow() {
+        let largest = Rational::from_unsigned_integer(BigUint::from(u128::MAX));
+        let nearby = Rational::from_unsigned_integer(BigUint::from(u128::MAX - 2));
+        let difference = Rational::dot_products_dyadic_stack(
+            [&largest, &nearby],
+            [&largest, &nearby],
+            [Plus, Minus],
+            [0, 0],
+            0,
+        )
+        .unwrap();
+        assert_eq!(
+            difference,
+            &largest * &largest - &nearby * &nearby
+        );
+
+        let wide_left = Rational::from_unsigned_integer(BigUint::from((1_u128 << 119) + 1));
+        let wide_right = Rational::from_unsigned_integer(BigUint::from((1_u128 << 117) + 3));
+        let tiny_left = Rational::from_bigint_fraction(
+            BigInt::from(3_u8),
+            BigUint::one() << 60_usize,
+        )
+        .unwrap();
+        let tiny_right = Rational::from_bigint_fraction(
+            BigInt::from(5_u8),
+            BigUint::one() << 60_usize,
+        )
+        .unwrap();
+        let aligned = Rational::dot_products_dyadic_stack(
+            [&wide_left, &tiny_left],
+            [&wide_right, &tiny_right],
+            [Plus, Plus],
+            [0, 120],
+            120,
+        )
+        .unwrap();
+        assert_eq!(
+            aligned,
+            &wide_left * &wide_right + &tiny_left * &tiny_right
+        );
+        assert!(aligned.numerator().bits() >= 350);
+    }
+
+    #[test]
+    fn dyadic_dot_stack_accumulator_preserves_arbitrary_precision_fallback() {
+        let largest = Rational::from_unsigned_integer(BigUint::from(u128::MAX));
+        let tiny = Rational::from_reduced_dyadic_word(Plus, 3, 400);
+        let one = Rational::one();
+        assert!(
+            Rational::dot_products_dyadic_stack(
+                [&largest, &tiny],
+                [&largest, &one],
+                [Plus, Plus],
+                [0, 400],
+                400,
+            )
+            .is_none()
+        );
+        assert_eq!(
+            Rational::dot_products([&largest, &tiny], [&largest, &one]),
+            &largest * &largest + &tiny
+        );
+    }
+
+    #[test]
     fn self_dot_admits_after_observation_and_reuses_result() {
         let values = [
             Rational::fraction(123_456_789_012_345_i64, 1_u64 << 50).unwrap(),

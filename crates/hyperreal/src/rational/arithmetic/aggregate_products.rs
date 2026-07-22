@@ -101,6 +101,145 @@ struct DyadicProductSumPlan<const TERMS: usize> {
     prefer_wide: bool,
 }
 
+const DYADIC_STACK_LIMBS: usize = 6;
+
+// Keep the common geometry envelope allocation-free through 384 bits. Every
+// operation is checked; operands, alignment, or carries outside this bound
+// return to the arbitrary-precision reducer without changing the result.
+#[derive(Clone, Copy, Default)]
+struct DyadicStackAccumulator([u64; DYADIC_STACK_LIMBS]);
+
+impl DyadicStackAccumulator {
+    fn add_product(&mut self, left: u128, right: u128, shift: u64) -> Option<()> {
+        let left = [left as u64, (left >> 64) as u64];
+        let right = [right as u64, (right >> 64) as u64];
+        let mut product = [0_u64; 4];
+        for (left_index, left_limb) in left.into_iter().enumerate() {
+            let mut carry = 0_u128;
+            for (right_index, right_limb) in right.into_iter().enumerate() {
+                let index = left_index + right_index;
+                let total = u128::from(product[index])
+                    + u128::from(left_limb) * u128::from(right_limb)
+                    + carry;
+                product[index] = total as u64;
+                carry = total >> 64;
+            }
+            let index = left_index + 2;
+            let total = u128::from(product[index]) + carry;
+            product[index] = total as u64;
+            debug_assert_eq!(total >> 64, 0);
+        }
+
+        let word_shift = usize::try_from(shift / 64).ok()?;
+        let bit_shift = u32::try_from(shift % 64).expect("limb bit shift fits u32");
+        let mut aligned = Self::default();
+        for (index, limb) in product.into_iter().enumerate() {
+            if limb == 0 {
+                continue;
+            }
+            let target = word_shift.checked_add(index)?;
+            if target >= DYADIC_STACK_LIMBS {
+                return None;
+            }
+            aligned.0[target] |= limb << bit_shift;
+            if bit_shift != 0 {
+                let high = limb >> (64 - bit_shift);
+                if high != 0 {
+                    let target = target.checked_add(1)?;
+                    if target >= DYADIC_STACK_LIMBS {
+                        return None;
+                    }
+                    aligned.0[target] |= high;
+                }
+            }
+        }
+
+        let mut carry = false;
+        for (value, addend) in self.0.iter_mut().zip(aligned.0) {
+            let (sum, first_carry) = value.overflowing_add(addend);
+            let (sum, second_carry) = sum.overflowing_add(u64::from(carry));
+            *value = sum;
+            carry = first_carry || second_carry;
+        }
+        (!carry).then_some(())
+    }
+
+    fn difference(positive: Self, negative: Self) -> Option<(Sign, Self)> {
+        let ordering = positive
+            .0
+            .iter()
+            .rev()
+            .cmp(negative.0.iter().rev());
+        let (sign, larger, smaller) = match ordering {
+            Ordering::Greater => (Plus, positive, negative),
+            Ordering::Less => (Minus, negative, positive),
+            Ordering::Equal => return None,
+        };
+        let mut result = Self::default();
+        let mut borrow = false;
+        for index in 0..DYADIC_STACK_LIMBS {
+            let (value, first_borrow) = larger.0[index].overflowing_sub(smaller.0[index]);
+            let (value, second_borrow) = value.overflowing_sub(u64::from(borrow));
+            result.0[index] = value;
+            borrow = first_borrow || second_borrow;
+        }
+        debug_assert!(!borrow);
+        Some((sign, result))
+    }
+
+    fn trailing_zeros(&self) -> u64 {
+        let (index, value) = self
+            .0
+            .iter()
+            .copied()
+            .enumerate()
+            .find(|(_, value)| *value != 0)
+            .expect("nonzero accumulator has a nonzero limb");
+        u64::try_from(index * 64).expect("fixed accumulator width fits u64")
+            + u64::from(value.trailing_zeros())
+    }
+
+    fn shift_right(&mut self, shift: u64) {
+        let word_shift = usize::try_from(shift / 64).expect("bounded shift fits usize");
+        let bit_shift = u32::try_from(shift % 64).expect("limb bit shift fits u32");
+        if word_shift != 0 {
+            self.0.copy_within(word_shift.., 0);
+            self.0[DYADIC_STACK_LIMBS - word_shift..].fill(0);
+        }
+        if bit_shift != 0 {
+            for index in 0..DYADIC_STACK_LIMBS {
+                let high = self.0.get(index + 1).copied().unwrap_or(0);
+                self.0[index] =
+                    (self.0[index] >> bit_shift) | (high << (64 - bit_shift));
+            }
+        }
+    }
+
+    fn to_u128(self) -> Option<u128> {
+        self.0[2..]
+            .iter()
+            .all(|value| *value == 0)
+            .then(|| u128::from(self.0[0]) | (u128::from(self.0[1]) << 64))
+    }
+
+    fn into_biguint(self) -> BigUint {
+        let last = self
+            .0
+            .iter()
+            .rposition(|value| *value != 0)
+            .expect("nonzero accumulator has a nonzero limb");
+        let mut digits = Vec::with_capacity((last + 1) * 2);
+        for limb in &self.0[..=last] {
+            digits.push(*limb as u32);
+            digits.push((*limb >> 32) as u32);
+        }
+        while digits.last() == Some(&0) {
+            digits.pop();
+        }
+        BigUint::new(digits)
+    }
+}
+
 impl Rational {
     /// Use one full-width remainder when exactly one operand fits a native word.
     ///
@@ -1828,6 +1967,13 @@ impl Rational {
             return Some(result);
         }
 
+        if let Some(result) =
+            Self::dot_products_dyadic_stack(left, right, signs, denominator_shifts, max_shift)
+        {
+            crate::trace_dispatch!("rational", "dot_product", "dyadic-stack-accumulator");
+            return Some(result);
+        }
+
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..N {
@@ -1853,6 +1999,56 @@ impl Rational {
         Some(Self::from_signed_magnitude_difference(
             positive,
             negative,
+            denominator,
+        ))
+    }
+
+    fn dot_products_dyadic_stack<const N: usize>(
+        left: [&Self; N],
+        right: [&Self; N],
+        signs: [Sign; N],
+        denominator_shifts: [u64; N],
+        max_shift: u64,
+    ) -> Option<Self> {
+        let mut positive = DyadicStackAccumulator::default();
+        let mut negative = DyadicStackAccumulator::default();
+        for i in 0..N {
+            let accumulator = match signs[i] {
+                Plus => &mut positive,
+                Minus => &mut negative,
+                NoSign => continue,
+            };
+            accumulator.add_product(
+                left[i].numerator.to_u128()?,
+                right[i].numerator.to_u128()?,
+                max_shift - denominator_shifts[i],
+            )?;
+        }
+
+        let Some((sign, mut magnitude)) =
+            DyadicStackAccumulator::difference(positive, negative)
+        else {
+            return Some(Self::zero());
+        };
+        let common_shift = magnitude.trailing_zeros().min(max_shift);
+        magnitude.shift_right(common_shift);
+        let denominator_shift = max_shift - common_shift;
+        if denominator_shift < 128
+            && let Some(magnitude) = magnitude.to_u128()
+        {
+            return Some(Self::from_reduced_word_parts(
+                sign,
+                magnitude,
+                1_u128 << denominator_shift,
+            ));
+        }
+
+        let denominator = BigUint::one()
+            << usize::try_from(denominator_shift).expect("dyadic shift fits usize");
+        trace_rational_temporary!();
+        Some(Self::from_parts_raw(
+            sign,
+            magnitude.into_biguint(),
             denominator,
         ))
     }
