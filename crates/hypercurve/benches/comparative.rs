@@ -634,11 +634,11 @@ fn benchmark_bezier_offset(runner: &Runner) {
         return;
     }
     let policy = CurvePolicy::certified();
-    let controls = [[0.0, 0.0], [1.0, 2.0], [2.0, -1.0], [4.0, 0.0]];
+    let controls = [[0.0, 0.0], [1.0, 2.0], [2.0, 1.0], [4.0, 0.0]];
     let source = CubicBezier2::new(
         Point2::new(real(0.0), real(0.0)),
         Point2::new(real(1.0), real(2.0)),
-        Point2::new(real(2.0), real(-1.0)),
+        Point2::new(real(2.0), real(1.0)),
         Point2::new(real(4.0), real(0.0)),
     );
     let source_curve = Curve2::from(source.clone());

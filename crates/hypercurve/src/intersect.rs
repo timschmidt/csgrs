@@ -507,6 +507,23 @@ impl LineSeg2 {
                 }),
             };
         }
+        if !self.has_retained_support()
+            && !other.has_retained_support()
+            && let Some((a_param, b_param, [x, y])) =
+                Real::exact_rational_line_intersection2_known_dyadic(
+                    [self.start().x(), self.start().y()],
+                    [self.end().x(), self.end().y()],
+                    [other.start().x(), other.start().y()],
+                    [other.end().x(), other.end().y()],
+                )
+        {
+            return Ok(LineLineIntersection::Point {
+                point: Point2::new(x, y),
+                a_param,
+                b_param,
+                kind: IntersectionKind::Crossing,
+            });
+        }
         let (rx, ry) = self.delta();
         let (sx, sy) = other.delta();
         let first_retained_support_delta =
@@ -2128,6 +2145,33 @@ mod tests {
             assert_eq!(
                 first.intersect_segment_with_certified_aabb_overlap(&second, &policy),
                 first.intersect_segment(&second, &policy),
+            );
+        }
+    }
+
+    #[test]
+    fn fused_proper_crossing_kernel_matches_public_exact_intersection() {
+        let point =
+            |x: f64, y: f64| Point2::new(Real::try_from(x).unwrap(), Real::try_from(y).unwrap());
+        let line = |start, end| LineSeg2::try_new(start, end).unwrap();
+        let policy = CurvePolicy::certified();
+        for (first, second) in [
+            (
+                line(point(-7.25, -2.5), point(9.5, 6.75)),
+                line(point(-3.0, 8.125), point(8.75, -5.5)),
+            ),
+            (
+                line(point(-100.0, 0.125), point(72.0, 31.5)),
+                line(point(-12.25, 68.0), point(18.0, -96.0)),
+            ),
+        ] {
+            assert!(matches!(
+                certified_line_segment_support_relation(&first, &second),
+                CertifiedLineSegmentSupportRelation::ProperCrossing(_)
+            ));
+            assert_eq!(
+                first.intersect_line_with_certified_exact_dyadic_proper_crossing(&second, &policy),
+                first.intersect_line(&second, &policy),
             );
         }
     }

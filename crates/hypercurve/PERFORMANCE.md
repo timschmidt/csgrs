@@ -1610,6 +1610,26 @@ competitor in this run. The production quotient branch is implemented entirely b
 Hyperreal; GMP/MPFR remains confined to development-only competitive benchmarks and
 test oracles and is absent from release dependencies.
 
+Certified proper line crossings now pass their four exact dyadic endpoints to one
+bounded Hyperreal kernel. It retains coordinate differences and all three
+determinants as signed native words or fixed stack accumulators until constructing
+the final two parameters and point. Inputs outside those bounds fall through to the
+unchanged arbitrary-precision construction. Against the preceding fused-affine
+checkpoint, the twenty-operation star64 Callgrind lane fell from 63,819,545 to
+58,160,378 instructions (8.87%). DHAT allocation fell from 8,852,333 bytes in
+55,238 blocks to 7,958,405 bytes in 39,275 blocks; reads and writes fell 13.91% and
+9.01%, while peak live heap remained effectively flat.
+
+The corresponding 31-sample, 500-iteration release run measured ordinary region,
+contour, and loop output at 160.947, 158.426, and 205.317 us/iter. Prepared variants
+measured 159.871, 155.453, and 200.508 us/iter. `cavalier_contours`, `i_overlay`, and
+`geo` measured 28.084, 36.449, and 37.192 us/iter. Ordinary exact region output is
+10.67% faster than the preceding 180.17 us checkpoint and remains 5.73 times slower
+than the fastest approximate competitor. The Curvo cubic-offset comparison fixture
+also now avoids an inflection at its randomized tessellation probe, eliminating a
+nondeterministic too-few-control-points failure without changing either library's
+timed implementation.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
