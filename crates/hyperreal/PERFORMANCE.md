@@ -57,7 +57,7 @@ The standalone `fuzz` workspace covers four runtime-bearing public families:
 | Target | Exactness and API boundary |
 | --- | --- |
 | `rational_arithmetic` | Rational construction, every core arithmetic ownership path, inverse/powers, truncation/fraction decomposition, and exact dyadic conversion |
-| `real_exact` | Exact Real arithmetic, fused dot/product-sum kernels, prepared determinant filters, certified facts/comparisons, exact conversion, and serde round trips |
+| `real_exact` | Exact Real arithmetic, fused dot/product-sum and dyadic line-intersection kernels, lazy-coordinate canonical boundaries, prepared determinant filters, certified facts/comparisons, exact conversion, and serde round trips |
 | `real_elementary` | Domain-bearing roots, logarithms, powers, trigonometric, inverse/hyperbolic, normal, error, and gamma-family construction with forced lazy evaluation |
 | `computable_approximation` | Direct Computable graph construction, transcendental dispatch, repeatable multi-precision approximation, structural facts, and bounded sign refinement |
 
@@ -110,6 +110,23 @@ Relevant path notes:
 
 - Integer identity constructors avoid BigInt conversion and reduction.
 - Dyadic denominators use shift-only reduction instead of full gcd.
+- The fused exact-dyadic line-intersection kernel still canonicalizes both
+  segment parameters for ordering, but its two point coordinates retain the
+  exact affine numerator and shared determinant internally. A public
+  numerator/denominator view, exact `Real` extraction, formatting, hashing,
+  serialization, integer/dyadic query, root, aggregate dyadic specialization,
+  or lossy IO view computes one canonical value in the node's existing primary
+  cache slot. Sign and exact cross-product comparison need no reduction. The
+  `RationalData` allocation remains 88 bytes.
+- On Hypercurve's matched 21-sample, 50-iteration star1024 exact-contour row,
+  this boundary measured 12.761 ms/operation versus the 13.517 ms clean
+  checkpoint (5.6% faster). Three standalone one-operation runs used
+  31,288--31,504 KiB peak RSS (31,416 KiB median), effectively flat against
+  the 31,336 KiB clean anchor. The star64 dispatch trace recorded 40 fused
+  intersections and no coordinate canonicalization during Boolean assembly.
+  A 30-second AddressSanitizer `real_exact` campaign completed 85,423 inputs
+  without failure after adding fused-intersection equivalence, canonical
+  numerator/denominator, and serialization checks.
 - Dense exact-dyadic dots align lane products in checked `u128` totals before
   allocating arbitrary-precision magnitudes. Wide aligned sums and shifts fall
   through to the former `BigUint` reducer. Hyperlattice's public vec3 dot fell

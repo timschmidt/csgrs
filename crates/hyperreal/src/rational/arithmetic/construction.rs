@@ -11,6 +11,51 @@ impl Rational {
         }))
     }
 
+    #[inline]
+    pub(crate) fn from_parts_raw_unreduced(
+        sign: Sign,
+        numerator: BigUint,
+        denominator: BigUint,
+    ) -> Self {
+        Self(Arc::new(RationalData {
+            sign,
+            numerator,
+            denominator,
+            product_cache: OnceLock::new(),
+            linear_cache: CompactOnceBox::new(),
+            retained_facts: std::sync::atomic::AtomicU8::new(RETAINED_UNREDUCED_INTERNAL),
+        }))
+    }
+
+    #[inline]
+    pub(crate) fn is_internally_unreduced(&self) -> bool {
+        self.retained_fact(RETAINED_UNREDUCED_INTERNAL)
+    }
+
+    pub(crate) fn canonicalized_ref(&self) -> &Self {
+        if !self.is_internally_unreduced() {
+            return self;
+        }
+        let cached = self.product_cache.get_or_init(|| {
+            crate::trace_dispatch!(
+                "rational",
+                "canonicalization",
+                "lazy-internal-coordinate"
+            );
+            let divisor = Self::gcd_magnitudes(&self.numerator, &self.denominator);
+            CachedRationalProduct {
+                other: None,
+                result: Self::from_parts_raw(
+                    self.sign,
+                    &self.numerator / &divisor,
+                    &self.denominator / divisor,
+                ),
+            }
+        });
+        debug_assert!(cached.other.is_none());
+        &cached.result
+    }
+
     fn into_parts(self) -> (Sign, BigUint, BigUint) {
         let RationalData {
             sign,
@@ -555,6 +600,9 @@ impl Rational {
     /// assert_eq!(a_fifth.clone().inverse().unwrap(), five);
     /// ```
     pub fn inverse(self) -> Result<Self, Problem> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().clone().inverse();
+        }
         if let Some(inverse) = self.retained_inverse() {
             crate::trace_dispatch!("rational", "inverse", "retained");
             return Ok(inverse);
@@ -592,7 +640,7 @@ impl Rational {
     /// assert!(!Rational::fraction(5, 4).unwrap().is_integer());
     /// ```
     pub fn is_integer(&self) -> bool {
-        self.denominator == *ONE.deref()
+        self.canonicalized_ref().denominator == *ONE.deref()
     }
 
     /// Returns true when this rational has a power-of-two denominator.
@@ -601,6 +649,9 @@ impl Rational {
     /// kernels to decide whether extra multiplication will stay on dyadic
     /// shift-only reductions or will likely trigger full BigInt gcd work.
     pub fn is_dyadic(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_dyadic();
+        }
         if self.retained_fact(RETAINED_DYADIC_KNOWN) {
             crate::trace_dispatch!("rational", "retained-facts", "dyadic-hit");
             return self.retained_fact(RETAINED_DYADIC_VALUE);
@@ -628,10 +679,13 @@ impl Rational {
     /// structure before scalar expansion.
     #[inline]
     pub fn same_denominator(&self, other: &Self) -> bool {
-        self.denominator == other.denominator
+        self.canonicalized_ref().denominator == other.canonicalized_ref().denominator
     }
 
     pub(crate) fn dyadic_denominator_shift(&self) -> Option<u64> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().dyadic_denominator_shift();
+        }
         if self.retained_fact(RETAINED_DYADIC_KNOWN)
             && !self.retained_fact(RETAINED_DYADIC_VALUE)
         {

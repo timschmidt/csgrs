@@ -33,11 +33,17 @@ impl Rational {
     /// `Rational::one()` in hot paths.
     #[inline(always)]
     pub fn is_one(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_one();
+        }
         self.sign == Plus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
     }
 
     #[inline]
     pub(crate) fn is_two(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_two();
+        }
         self.sign == Plus
             && self.numerator.bits() == 2
             && self.numerator == *TWO.deref()
@@ -46,6 +52,9 @@ impl Rational {
 
     #[inline]
     pub(crate) fn is_one_half(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_one_half();
+        }
         self.sign == Plus
             && self.numerator.bits() == 1
             && self.denominator.bits() == 2
@@ -55,6 +64,9 @@ impl Rational {
 
     #[inline]
     pub(crate) fn is_minus_one(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_minus_one();
+        }
         self.sign == Minus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
     }
 
@@ -94,6 +106,9 @@ impl Rational {
     /// assert_eq!(int, 19);
     /// ```
     pub fn trunc(&self) -> Self {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().trunc();
+        }
         if self.is_integer() {
             return self.clone();
         }
@@ -124,6 +139,9 @@ impl Rational {
     /// assert_eq!(backward.fract(), fract);
     /// ```
     pub fn fract(&self) -> Self {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().fract();
+        }
         if self.is_integer() {
             return Self::zero();
         }
@@ -140,17 +158,20 @@ impl Rational {
     /// Together with [`Rational::numerator`] and [`Rational::sign`], this
     /// exposes the canonical exact-rational representation without cloning it.
     pub fn denominator(&self) -> &BigUint {
-        &self.denominator
+        &self.canonicalized_ref().denominator
     }
 
     /// Returns the reduced unsigned numerator magnitude.
     ///
     /// The sign is available separately through [`Rational::sign`].
     pub fn numerator(&self) -> &BigUint {
-        &self.numerator
+        &self.canonicalized_ref().numerator
     }
 
     pub(crate) fn factor_two_powers(&self) -> (i32, Self) {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().factor_two_powers();
+        }
         // Split a rational into 2^shift * odd_part.  Computable multiplication consumes
         // the shift as an Offset node, which is cheaper than a generic exact scale.
         let numerator_shift = self.numerator.trailing_zeros().unwrap_or(0);
@@ -195,6 +216,9 @@ impl Rational {
 
     #[inline]
     pub(crate) fn power_of_two_shift(&self) -> Option<(i32, Sign)> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().power_of_two_shift();
+        }
         // Identify exact +/-2^k scales. Computable multiplication consumes these as
         // binary Offset nodes, which are cheaper than generic rational products.
         if self.sign == NoSign {
@@ -277,6 +301,9 @@ impl Rational {
     }
 
     pub(crate) fn to_f64_lossy(&self) -> Option<f64> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().to_f64_lossy();
+        }
         // Fast borrowed approximate conversion for modest rationals. If either
         // side cannot fit through num-traits' f64 conversion, callers fall back
         // to the general Computable approximation path.
@@ -367,6 +394,9 @@ impl Rational {
     /// total for arbitrary rationals.
     #[inline]
     pub fn dyadic_to_f64_exact(&self) -> Option<f64> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().dyadic_to_f64_exact();
+        }
         if !self.is_dyadic() {
             return None;
         }
@@ -407,6 +437,9 @@ impl Rational {
 
     #[inline]
     pub(crate) fn denominator_could_be_dyadic(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().denominator_could_be_dyadic();
+        }
         if self.retained_fact(RETAINED_DYADIC_KNOWN) {
             crate::trace_dispatch!("rational", "retained-facts", "dyadic-prefilter-hit");
             return self.retained_fact(RETAINED_DYADIC_VALUE);
@@ -431,6 +464,9 @@ impl Rational {
     /// assert!(third.prefer_fraction());
     /// ```
     pub fn prefer_fraction(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().prefer_fraction();
+        }
         let mut rem = self.denominator.clone();
         while (&rem % &*TEN).is_zero() {
             rem /= &*TEN;
@@ -503,6 +539,9 @@ impl Rational {
 
     #[inline]
     pub(crate) fn detailed_rational_facts(&self) -> RationalFacts {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().detailed_rational_facts();
+        }
         let denominator_is_one = self.denominator == *ONE.deref();
         let numerator_bits = self.numerator.bits();
         let denominator_bits = self.denominator.bits();
@@ -538,7 +577,8 @@ impl Rational {
     pub(crate) fn integer_magnitude(&self) -> Option<&BigUint> {
         // Integer-only callers usually need the non-negative magnitude. Return
         // the borrowed BigUint so they can avoid constructing a signed BigInt.
-        (self.denominator == *ONE.deref()).then_some(&self.numerator)
+        let canonical = self.canonicalized_ref();
+        (canonical.denominator == *ONE.deref()).then_some(&canonical.numerator)
     }
 
     pub(crate) fn to_integer_i64(&self) -> Option<i64> {

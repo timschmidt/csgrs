@@ -2,6 +2,10 @@ use core::fmt;
 
 impl fmt::Display for Rational {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let canonical = self.canonicalized_ref();
+        if !std::sync::Arc::ptr_eq(&self.0, &canonical.0) {
+            return fmt::Display::fmt(canonical, f);
+        }
         if self.denominator == *ONE.deref() {
             crate::trace_dispatch!("rational_algorithm", "binary-to-radix", "integer");
             trace_rational_radix_output_algorithm!(&self.numerator);

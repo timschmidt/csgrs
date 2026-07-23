@@ -5,6 +5,7 @@
 use arbitrary::Arbitrary;
 use hyperreal::{Rational, Real, RealSign, ZeroKnowledge};
 use libfuzzer_sys::fuzz_target;
+use num::Integer;
 
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct RawRational {
@@ -102,16 +103,69 @@ fuzz_target!(|input: Input| {
             Real::affine(&dyadic[0], &parameter, &dyadic[4]),
             Real::affine(&dyadic[1], &parameter, &dyadic[5]),
         ];
-        let (aggregate_parameter, point) =
-            Real::exact_rational_parameterized_point2_known_dyadic(
-                [&dyadic[0], &dyadic[1]],
-                [&dyadic[4], &dyadic[5]],
-                &dyadic[2],
-                &dyadic[3],
-            )
-            .expect("nonzero known-dyadic parameterized point");
+        let (aggregate_parameter, point) = Real::exact_rational_parameterized_point2_known_dyadic(
+            [&dyadic[0], &dyadic[1]],
+            [&dyadic[4], &dyadic[5]],
+            &dyadic[2],
+            &dyadic[3],
+        )
+        .expect("nonzero known-dyadic parameterized point");
         assert_eq!(aggregate_parameter, parameter);
         assert_eq!(point, expected_point);
+    }
+
+    let first_delta = [&dyadic[2] - &dyadic[0], &dyadic[3] - &dyadic[1]];
+    let second_delta = [&dyadic[6] - &dyadic[4], &dyadic[7] - &dyadic[5]];
+    let start_delta = [&dyadic[4] - &dyadic[0], &dyadic[5] - &dyadic[1]];
+    let line_denominator = Real::diff_of_products(
+        &first_delta[0],
+        &second_delta[1],
+        &first_delta[1],
+        &second_delta[0],
+    );
+    if !line_denominator.definitely_zero()
+        && let Some((first_parameter, second_parameter, intersection)) =
+            Real::exact_rational_line_intersection2_known_dyadic(
+                [&dyadic[0], &dyadic[1]],
+                [&dyadic[2], &dyadic[3]],
+                [&dyadic[4], &dyadic[5]],
+                [&dyadic[6], &dyadic[7]],
+            )
+    {
+        let first_numerator = Real::diff_of_products(
+            &start_delta[0],
+            &second_delta[1],
+            &start_delta[1],
+            &second_delta[0],
+        );
+        let second_numerator = Real::diff_of_products(
+            &start_delta[0],
+            &first_delta[1],
+            &start_delta[1],
+            &first_delta[0],
+        );
+        let expected_first =
+            (&first_numerator / &line_denominator).expect("nonzero line denominator");
+        let expected_second =
+            (&second_numerator / &line_denominator).expect("nonzero line denominator");
+        let expected_intersection = [
+            Real::affine(&dyadic[0], &expected_first, &first_delta[0]),
+            Real::affine(&dyadic[1], &expected_first, &first_delta[1]),
+        ];
+        assert_eq!(first_parameter, expected_first);
+        assert_eq!(second_parameter, expected_second);
+        assert_eq!(intersection, expected_intersection);
+        for coordinate in intersection {
+            let exact = coordinate.exact_rational().expect("exact intersection");
+            assert_eq!(
+                exact.numerator().gcd(exact.denominator()),
+                num::BigUint::from(1_u8),
+            );
+            assert_eq!(
+                Real::from_json(&coordinate.to_json()).expect("intersection JSON roundtrip"),
+                coordinate
+            );
+        }
     }
 
     let determinant =

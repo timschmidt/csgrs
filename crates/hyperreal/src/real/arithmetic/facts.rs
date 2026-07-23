@@ -53,7 +53,7 @@ impl Real {
     #[inline]
     pub fn exact_rational(&self) -> Option<Rational> {
         match self.class {
-            One => Some(self.rational.clone()),
+            One => Some(self.rational.canonicalized_ref().clone()),
             _ => None,
         }
     }
@@ -67,7 +67,7 @@ impl Real {
     #[inline]
     pub fn exact_rational_ref(&self) -> Option<&Rational> {
         match self.class {
-            One => Some(&self.rational),
+            One => Some(self.rational.canonicalized_ref()),
             _ => None,
         }
     }

@@ -359,6 +359,9 @@ impl Rational {
     }
 
     fn mul_wide_with_dyadic_denominator(&self, other: &Self) -> Option<Self> {
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return None;
+        }
         let left_dyadic = self.is_dyadic();
         let right_dyadic = other.is_dyadic();
         if !left_dyadic && !right_dyadic {
@@ -448,6 +451,9 @@ impl Rational {
     }
 
     fn mul_wide_dyadic_with_word_numerators(&self, other: &Self) -> Option<Self> {
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return None;
+        }
         let mut denominator_shift = self
             .dyadic_denominator_shift()?
             .checked_add(other.dyadic_denominator_shift()?)?;
@@ -484,8 +490,11 @@ impl Rational {
 
     #[inline]
     fn retained_product(&self, other: &Self) -> Option<Self> {
-        let cached = self.product_cache.get()?;
-        if std::ptr::eq(cached.other.as_ptr(), Arc::as_ptr(&other.0)) {
+        if let Some(cached) = self.product_cache.get()
+            && cached.other.as_ref().is_some_and(|cached_other| {
+                std::ptr::eq(cached_other.as_ptr(), Arc::as_ptr(&other.0))
+            })
+        {
             crate::trace_dispatch!("rational", "mul", "retained-product");
             return Some(cached.result.clone());
         }
@@ -518,10 +527,9 @@ impl Rational {
             return Some(true);
         }
         let primary = self.product_cache.get()?;
-        Some(std::ptr::eq(
-            primary.other.as_ptr(),
-            Arc::as_ptr(&self.0),
-        ))
+        Some(primary.other.as_ref().is_some_and(|other| {
+            std::ptr::eq(other.as_ptr(), Arc::as_ptr(&self.0))
+        }))
     }
 
     #[inline]
@@ -533,7 +541,11 @@ impl Rational {
             return false;
         };
         let self_ptr = Arc::as_ptr(&self.0);
-        if std::ptr::eq(primary.other.as_ptr(), self_ptr) {
+        if primary
+            .other
+            .as_ref()
+            .is_some_and(|other| std::ptr::eq(other.as_ptr(), self_ptr))
+        {
             return true;
         }
         let Some(cached) = self.linear_cache.get() else {
@@ -554,14 +566,27 @@ impl Rational {
     }
 
     fn retain_product_pair(&self, other: &Self, result: &Self) {
-        let retained_by_self = self.product_cache.set(CachedRationalProduct {
-            other: Arc::downgrade(&other.0),
-            result: result.clone(),
-        }).is_ok();
-        let retained_by_other = other.product_cache.set(CachedRationalProduct {
-            other: Arc::downgrade(&self.0),
-            result: result.clone(),
-        }).is_ok();
+        let retained_by_self = if self.is_internally_unreduced() {
+            false
+        } else {
+            self.product_cache
+                .set(CachedRationalProduct {
+                    other: Some(Arc::downgrade(&other.0)),
+                    result: result.clone(),
+                })
+                .is_ok()
+        };
+        let retained_by_other = if other.is_internally_unreduced() {
+            false
+        } else {
+            other
+                .product_cache
+                .set(CachedRationalProduct {
+                    other: Some(Arc::downgrade(&self.0)),
+                    result: result.clone(),
+                })
+                .is_ok()
+        };
         if !retained_by_self && !retained_by_other
             && !Self::retain_linear(self, other, CachedRationalLinearKind::Product, result)
         {
@@ -912,6 +937,13 @@ impl Neg for &Rational {
         if self.sign == NoSign {
             return self.clone();
         }
+        if self.is_internally_unreduced() {
+            return Self::Output::from_parts_raw_unreduced(
+                -self.sign,
+                self.numerator.clone(),
+                self.denominator.clone(),
+            );
+        }
         if self.is_one() {
             return Self::Output::minus_one();
         }
@@ -1145,7 +1177,7 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
         }
         if self.numerator == other.denominator && self.denominator == other.numerator {
             trace_rational_temporary!();
-            return Self::Output::from_parts_raw(
+            return Self::Output::maybe_reduce(Self::Output::from_parts_raw(
                 sign,
                 Rational::multiply_magnitudes(
                     "division-reciprocal-numerator",
@@ -1157,7 +1189,7 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
                     &self.denominator,
                     &self.denominator,
                 ),
-            );
+            ));
         }
         let numerator = Rational::multiply_magnitudes(
             "division-cross-numerator",

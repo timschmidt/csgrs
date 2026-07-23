@@ -12,6 +12,14 @@
 
 Zero is canonicalized as `NoSign`, numerator `0`, denominator `1`. Non-zero
 values are reduced when constructors or operations require canonical form.
+One internal exception serves fused exact-geometry kernels: a result may retain
+an exact numerator/denominator pair whose remaining common factor has not yet
+been divided out. The stored ratio is still the exact value. Public numerator
+and denominator access, exact extraction, hashing, formatting, debugging,
+serialization, integer/dyadic classification, roots, and lossy IO views all
+observe a canonical reduction. Exact sign and cross-product comparisons can use
+the unreduced ratio directly. The first canonical observation is computed once
+and shared safely by every clone and thread.
 
 ## Module map
 
@@ -48,6 +56,10 @@ the needed facts:
 - exact dot products and signed product sums build shared denominators and
   reduce once at the end; dyadic dots first align checked `u128` products and
   fall through to `BigUint` unchanged on overflow
+- fused exact-dyadic line intersections reduce their two ordering parameters
+  eagerly but retain the two point coordinates as exact internal quotients;
+  output assembly can compare and clone those coordinates without paying two
+  otherwise-unused odd GCDs per proper crossing
 - product-sum signs are computed once and reused across reducer stages
 - all-zero and single-term sums exit before denominator construction
 
@@ -59,6 +71,9 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
 `Rational` is the first line of defense against exact-value growth:
 
 - canonical zero and separate sign storage keep common identities small
+- lazy internal intersection quotients reuse the existing primary cache slot
+  for their canonical value; this adds no field to the 88-byte rational node,
+  and public or dyadic-specialized consumers cross that boundary explicitly
 - finite float imports become exact dyadics, preserving shift-only denominator
   reduction where possible
 - bounded product retention reuses repeated coefficients without changing canonical

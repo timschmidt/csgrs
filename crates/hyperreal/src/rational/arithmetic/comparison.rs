@@ -25,11 +25,10 @@ impl Eq for Rational {}
 
 impl std::hash::Hash for Rational {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        // Rational construction maintains a reduced canonical numerator and
-        // denominator, so value equality implies identical stored fields.
-        self.sign.hash(state);
-        self.numerator.hash(state);
-        self.denominator.hash(state);
+        let value = self.canonicalized_ref();
+        value.sign.hash(state);
+        value.numerator.hash(state);
+        value.denominator.hash(state);
     }
 }
 

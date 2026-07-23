@@ -192,6 +192,9 @@ impl Rational {
     /// Where b is zero, a is the exact square root of n
     /// Otherwise, b is a residual for which no exact rational square root exists.
     pub fn extract_square_reduced(self) -> (Self, Self) {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().clone().extract_square_reduced();
+        }
         if self.sign == NoSign {
             return (Self::zero(), Self::zero());
         }
@@ -268,6 +271,9 @@ impl Rational {
     /// Return the exact nth root when both numerator and denominator are
     /// perfect nth powers. Negative values are supported for odd `n`.
     pub fn perfect_nth_root(&self, n: u32) -> Option<Self> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().perfect_nth_root(n);
+        }
         if n == 0 {
             return None;
         }
@@ -358,6 +364,9 @@ impl Rational {
     /// Zero, one, and negative one are perfect powers. Negative values are
     /// tested only at odd prime exponents, matching the integer definition.
     pub fn is_perfect_power(&self) -> bool {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().is_perfect_power();
+        }
         if self.sign == NoSign || (self.numerator.is_one() && self.denominator.is_one()) {
             crate::trace_dispatch!("rational_algorithm", "perfect-power", "unit");
             return true;
@@ -558,6 +567,9 @@ impl Rational {
 
     #[inline]
     pub(crate) fn powi_i64(self, exp: i64) -> Result<Self, Problem> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().clone().powi_i64(exp);
+        }
         if exp == 0 {
             return Ok(Self::one());
         }
@@ -585,6 +597,9 @@ impl Rational {
 
     /// Integer exponentiation. Raise this Rational to an integer exponent.
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().clone().powi(exp);
+        }
         const TOO_MANY_BITS: u64 = 1000;
         if exp == BigInt::ZERO {
             return Ok(Self::one());

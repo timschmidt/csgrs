@@ -2865,6 +2865,51 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn fused_dyadic_line_intersection_canonicalizes_coordinates_only_on_observation() {
+        let point = |x: i32, y: i32| [Real::from(x), Real::from(y)];
+        let first_start = point(0, 1);
+        let first_end = point(3, 1);
+        let second_start = point(2, 0);
+        let second_end = point(2, 3);
+
+        crate::dispatch_trace::reset();
+        let (_, _, intersection) = crate::dispatch_trace::with_recording(|| {
+            Real::exact_rational_line_intersection2_known_dyadic(
+                [&first_start[0], &first_start[1]],
+                [&first_end[0], &first_end[1]],
+                [&second_start[0], &second_start[1]],
+                [&second_end[0], &second_end[1]],
+            )
+            .unwrap()
+        });
+        let construction_trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            construction_trace.path_count(
+                "rational",
+                "canonicalization",
+                "lazy-internal-coordinate"
+            ),
+            0
+        );
+
+        crate::dispatch_trace::reset();
+        let coordinates = crate::dispatch_trace::with_recording(|| {
+            intersection.map(|coordinate| coordinate.exact_rational().unwrap())
+        });
+        let observation_trace = crate::dispatch_trace::take_trace();
+        assert_eq!(coordinates, [Rational::new(2), Rational::new(1)]);
+        assert_eq!(
+            observation_trace.path_count(
+                "rational",
+                "canonicalization",
+                "lazy-internal-coordinate"
+            ),
+            2
+        );
+    }
+
     #[test]
     fn exact_dyadic_quotient_matches_general_division_across_scales() {
         for numerator in -12_i64..=12 {

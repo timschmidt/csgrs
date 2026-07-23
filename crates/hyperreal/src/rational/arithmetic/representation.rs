@@ -109,7 +109,9 @@ impl<T> Drop for CompactOnceBox<T> {
 unsafe impl<T: Send + Sync> Sync for CompactOnceBox<T> {}
 
 struct CachedRationalProduct {
-    other: std::sync::Weak<RationalData>,
+    // `None` reserves the primary cache for the canonical value of an
+    // internally unreduced rational.
+    other: Option<std::sync::Weak<RationalData>>,
     result: Rational,
 }
 
@@ -186,6 +188,7 @@ const RETAINED_EXACT_F64_VIEW: u8 = 1 << 3;
 const RETAINED_DYADIC_KNOWN: u8 = 1 << 4;
 const RETAINED_DYADIC_VALUE: u8 = 1 << 5;
 const RETAINED_SELF_DOT_CONFLICT_ATTEMPTED: u8 = 1 << 6;
+const RETAINED_UNREDUCED_INTERNAL: u8 = 1 << 7;
 const RETAINED_REUSE_MASK: u8 = RETAINED_LINEAR_REUSE_SEEN
     | RETAINED_POWER_REUSE_SEEN
     | RETAINED_SQUARE_REUSE_SEEN
@@ -206,11 +209,12 @@ pub struct RationalData {
 
 impl std::fmt::Debug for Rational {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = self.canonicalized_ref();
         formatter
             .debug_struct("Rational")
-            .field("sign", &self.sign)
-            .field("numerator", &self.numerator)
-            .field("denominator", &self.denominator)
+            .field("sign", &value.sign)
+            .field("numerator", &value.numerator)
+            .field("denominator", &value.denominator)
             .finish()
     }
 }
@@ -239,10 +243,11 @@ impl Serialize for Rational {
     {
         use serde::ser::SerializeStruct;
 
+        let value = self.canonicalized_ref();
         let mut state = serializer.serialize_struct("Rational", 3)?;
-        state.serialize_field("sign", &self.sign)?;
-        state.serialize_field("numerator", &self.numerator)?;
-        state.serialize_field("denominator", &self.denominator)?;
+        state.serialize_field("sign", &value.sign)?;
+        state.serialize_field("numerator", &value.numerator)?;
+        state.serialize_field("denominator", &value.denominator)?;
         state.end()
     }
 }

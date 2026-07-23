@@ -116,7 +116,10 @@ control. `hyperreal` uses several small performance strategies together:
   numerators, denominators, or expression graphs.
 - Normalize at useful boundaries. Dyadic denominators reduce by shifts, product sums can
   share denominators, and matrix/vector callers can delay full rational canonicalization
-  until accumulated terms have had a chance to combine.
+  until accumulated terms have had a chance to combine. Fused exact line intersections
+  likewise retain point-coordinate quotients internally and canonicalize them only when
+  an observable API or a representation-sensitive specialized kernel needs the reduced
+  numerator and denominator.
 - Remove trivial work early. Canonical zeros, ones, identity constructors, all-zero sums,
   exact endpoints, and known domain facts avoid constructing larger expressions.
 - Prefer structural facts before scalar probing. Many hot branches need sign, zero,

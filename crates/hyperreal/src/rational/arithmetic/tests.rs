@@ -2956,6 +2956,128 @@ mod tests {
     }
 
     #[test]
+    fn lazy_internal_fraction_is_canonical_at_observable_boundaries() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let lazy = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(4_u8),
+        );
+        let canonical = Rational::fraction(3, 2).unwrap();
+        assert!(lazy.is_internally_unreduced());
+        assert_eq!(lazy, canonical);
+        assert_eq!(lazy.partial_cmp(&canonical), Some(Ordering::Equal));
+        assert_eq!(lazy.numerator(), canonical.numerator());
+        assert_eq!(lazy.denominator(), canonical.denominator());
+        assert_eq!(lazy.to_string(), canonical.to_string());
+        assert_eq!(format!("{lazy:?}"), format!("{canonical:?}"));
+        assert!(lazy.is_dyadic());
+        assert!(lazy.same_denominator(&Rational::fraction(1, 2).unwrap()));
+        assert!(!lazy.is_integer());
+        assert_eq!(lazy.trunc(), Rational::one());
+        assert_eq!(lazy.fract(), Rational::fraction(1, 2).unwrap());
+        assert!(!lazy.prefer_fraction());
+        assert_eq!(lazy.shifted_big_integer(1), BigInt::from(3_u8));
+        assert_eq!(lazy.to_f64_lossy(), Some(1.5));
+        assert_eq!(lazy.dyadic_to_f64_exact(), Some(1.5));
+
+        let mut lazy_hash = DefaultHasher::new();
+        lazy.hash(&mut lazy_hash);
+        let mut canonical_hash = DefaultHasher::new();
+        canonical.hash(&mut canonical_hash);
+        assert_eq!(lazy_hash.finish(), canonical_hash.finish());
+
+        assert_eq!(&lazy + Rational::fraction(1, 2).unwrap(), Rational::new(2));
+        assert_eq!(&lazy * Rational::new(2), Rational::new(3));
+        assert_eq!(&lazy / Rational::new(3), Rational::fraction(1, 2).unwrap());
+        assert_eq!(-&lazy, Rational::fraction(-3, 2).unwrap());
+        assert_eq!(
+            lazy.clone().inverse().unwrap(),
+            Rational::fraction(2, 3).unwrap()
+        );
+        assert_eq!(
+            lazy.clone().powi_i64(2).unwrap(),
+            Rational::fraction(9, 4).unwrap()
+        );
+        let two = Rational::new(2);
+        let half = Rational::fraction(1, 2).unwrap();
+        assert_eq!(Rational::dot_products([&lazy], [&two]), Rational::new(3));
+        assert_eq!(
+            Rational::signed_product_sum_known_dyadic([true], [[&lazy, &two]]),
+            Rational::new(3)
+        );
+        assert_eq!(
+            Rational::mean_refs(&[&lazy, &half]),
+            Some(Rational::one())
+        );
+        assert_eq!(
+            Rational::quotient_known_dyadic(&lazy, &half).unwrap(),
+            Rational::new(3)
+        );
+
+        let integer = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(12_u8),
+            BigUint::from(4_u8),
+        );
+        assert!(integer.is_integer());
+        assert!(integer.is_perfect_power() == Rational::new(3).is_perfect_power());
+        assert_eq!(integer.to_big_integer(), Some(BigInt::from(3_u8)));
+
+        let square = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(16_u8),
+            BigUint::from(36_u8),
+        );
+        assert_eq!(
+            square.perfect_nth_root(2),
+            Some(Rational::fraction(2, 3).unwrap())
+        );
+        let (root, rest) = square.extract_square_reduced();
+        assert_eq!(root, Rational::fraction(2, 3).unwrap());
+        assert_eq!(rest, Rational::one());
+    }
+
+    #[test]
+    fn lazy_internal_canonicalization_is_shared_across_threads() {
+        let lazy = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(4_u8),
+        );
+        let identities = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..8)
+                .map(|_| {
+                    let lazy = lazy.clone();
+                    scope.spawn(move || lazy.canonicalized_ref().storage_identity())
+                })
+                .collect();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().unwrap())
+                .collect::<Vec<_>>()
+        });
+        assert!(identities.iter().all(|identity| *identity == identities[0]));
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn lazy_internal_fraction_serializes_canonically() {
+        let lazy = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(4_u8),
+        );
+        let encoded = serde_json::to_string(&lazy).unwrap();
+        let decoded: Rational = serde_json::from_str(&encoded).unwrap();
+        assert_eq!(decoded, Rational::fraction(3, 2).unwrap());
+        assert_eq!(decoded.numerator(), &BigUint::from(3_u8));
+        assert_eq!(decoded.denominator(), &BigUint::from(2_u8));
+    }
+
+    #[test]
     fn word_comparison_falls_back_exactly_when_cross_products_overflow() {
         use std::cmp::Ordering;
 

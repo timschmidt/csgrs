@@ -1430,6 +1430,33 @@ impl Rational {
         ))
     }
 
+    fn from_scaled_dyadic_quotient_component_unreduced(
+        sign: Sign,
+        mut magnitude: u128,
+        mut denominator: u128,
+        scale_shift: i32,
+    ) -> Option<Self> {
+        if sign == NoSign || magnitude == 0 {
+            return Some(Self::zero());
+        }
+        if scale_shift >= 0 {
+            let shift = scale_shift as u32;
+            let cancel = shift.min(denominator.trailing_zeros());
+            denominator >>= cancel;
+            magnitude = Self::checked_word_shift_left(magnitude, shift - cancel)?;
+        } else {
+            let shift = scale_shift.unsigned_abs();
+            let cancel = shift.min(magnitude.trailing_zeros());
+            magnitude >>= cancel;
+            denominator = Self::checked_word_shift_left(denominator, shift - cancel)?;
+        }
+        Some(Self::from_parts_raw_unreduced(
+            sign,
+            BigUint::from(magnitude),
+            BigUint::from(denominator),
+        ))
+    }
+
     fn quotient_dyadic_words(
         numerator: DyadicWord,
         denominator: DyadicWord,
@@ -1825,6 +1852,7 @@ impl Rational {
         let row_shifts: [u64; 4] = matrix.map(|row| {
             row.into_iter()
                 .map(|value| {
+                    let value = value.canonicalized_ref();
                     value
                         .dyadic_denominator_shift()
                         .expect("known-dyadic matrix received a non-dyadic component")
@@ -1834,7 +1862,7 @@ impl Rational {
         });
         let m: [[BigInt; 4]; 4] = core::array::from_fn(|row| {
             core::array::from_fn(|column| {
-                let value = matrix[row][column];
+                let value = matrix[row][column].canonicalized_ref();
                 let denominator_shift = value
                     .dyadic_denominator_shift()
                     .expect("known-dyadic matrix received a non-dyadic component");
@@ -1983,6 +2011,7 @@ impl Rational {
     }
 
     fn known_dyadic_word(value: &Self) -> Option<DyadicWord> {
+        let value = value.canonicalized_ref();
         Some(DyadicWord {
             sign: value.sign,
             magnitude: value.numerator.to_u128()?,
@@ -2099,6 +2128,9 @@ impl Rational {
         for i in 0..N {
             if signs[i] == NoSign {
                 continue;
+            }
+            if left[i].is_internally_unreduced() || right[i].is_internally_unreduced() {
+                return None;
             }
             let shift =
                 left[i].dyadic_denominator_shift()? + right[i].dyadic_denominator_shift()?;
@@ -2379,6 +2411,9 @@ impl Rational {
             live_terms += 1;
             let mut shift = 0_u64;
             for factor in terms[i] {
+                if factor.is_internally_unreduced() {
+                    return None;
+                }
                 shift = shift.checked_add(factor.dyadic_denominator_shift()?)?;
                 numerator_bits[i] = numerator_bits[i].saturating_add(factor.numerator.bits());
             }
@@ -2555,6 +2590,7 @@ impl Rational {
         let mut shared_denominator = None::<&BigUint>;
         let mut equal_denominator = true;
         for &value in values {
+            let value = value.canonicalized_ref();
             if value.sign == NoSign {
                 continue;
             }
@@ -2578,6 +2614,7 @@ impl Rational {
             let mut positive = BigUint::ZERO;
             let mut negative = BigUint::ZERO;
             for &value in values {
+                let value = value.canonicalized_ref();
                 if value.sign == NoSign {
                     continue;
                 }
@@ -2601,6 +2638,7 @@ impl Rational {
             let mut positive = BigUint::ZERO;
             let mut negative = BigUint::ZERO;
             for &value in values {
+                let value = value.canonicalized_ref();
                 match value.sign {
                     Plus => positive += &value.numerator,
                     Minus => negative += &value.numerator,
@@ -2617,6 +2655,7 @@ impl Rational {
 
         let mut common_denominator = BigUint::one();
         for &value in values {
+            let value = value.canonicalized_ref();
             if value.sign == NoSign {
                 continue;
             }
@@ -2633,6 +2672,7 @@ impl Rational {
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for &value in values {
+            let value = value.canonicalized_ref();
             if value.sign == NoSign {
                 continue;
             }
@@ -2688,6 +2728,7 @@ impl Rational {
         positive_terms: [bool; TERMS],
         terms: [[&Self; 2]; TERMS],
     ) -> Self {
+        let terms = terms.map(|term| term.map(Self::canonicalized_ref));
         let signs: [Sign; TERMS] = core::array::from_fn(|index| {
             Self::product_term_sign(positive_terms[index], terms[index])
         });
@@ -2704,6 +2745,8 @@ impl Rational {
         numerator: &Self,
         denominator: &Self,
     ) -> Result<Self, crate::Problem> {
+        let numerator = numerator.canonicalized_ref();
+        let denominator = denominator.canonicalized_ref();
         if denominator.sign == NoSign {
             return Err(crate::Problem::DivideByZero);
         }
@@ -2839,6 +2882,44 @@ impl Rational {
         Self::from_parts_raw(numerator.sign * denominator_sign, magnitude, scale)
     }
 
+    fn quotient_dyadic_stack_sum_unreduced(
+        numerator: DyadicStackSum,
+        denominator_sign: Sign,
+        denominator_shift: u64,
+        denominator_word: u128,
+    ) -> Self {
+        debug_assert_ne!(numerator.sign, NoSign);
+        if let (Some(numerator_word), Ok(scale_shift)) = (
+            numerator.magnitude.to_u128(),
+            i32::try_from(
+                i128::from(denominator_shift) - i128::from(numerator.denominator_shift),
+            ),
+        ) && let Some(result) = Self::from_scaled_dyadic_quotient_component_unreduced(
+            numerator.sign * denominator_sign,
+            numerator_word,
+            denominator_word,
+            scale_shift,
+        ) {
+            return result;
+        }
+
+        let mut magnitude = numerator.magnitude.into_biguint();
+        let mut scale = BigUint::from(denominator_word);
+        if denominator_shift > numerator.denominator_shift {
+            magnitude <<= usize::try_from(denominator_shift - numerator.denominator_shift)
+                .expect("dyadic quotient shift fits usize");
+        } else if numerator.denominator_shift > denominator_shift {
+            scale <<= usize::try_from(numerator.denominator_shift - denominator_shift)
+                .expect("dyadic quotient shift fits usize");
+        }
+        trace_rational_temporary!();
+        Self::from_parts_raw_unreduced(
+            numerator.sign * denominator_sign,
+            magnitude,
+            scale,
+        )
+    }
+
     /// Solve a proper crossing between four exact dyadic points without
     /// materializing coordinate deltas or determinant rationals. Returns
     /// `None` when a word or fixed-stack bound is exceeded so the caller can
@@ -2885,8 +2966,7 @@ impl Rational {
             start_delta,
             first_delta,
         )?)?;
-        let (first_parameter, first_divisor) =
-            Self::quotient_dyadic_words(first_numerator, denominator)?;
+        let (first_parameter, _) = Self::quotient_dyadic_words(first_numerator, denominator)?;
         let (second_parameter, _) =
             Self::quotient_dyadic_words(second_numerator, denominator)?;
 
@@ -2899,23 +2979,11 @@ impl Rational {
             if affine.sign == NoSign {
                 return Some(Self::zero());
             }
-            let remaining_denominator = denominator.magnitude / first_divisor;
-            let second_divisor =
-                Self::gcd_word(first_delta[index].magnitude, remaining_denominator);
-            let divisor = first_divisor * second_divisor;
-            #[cfg(feature = "dispatch-trace")]
-            let affine_trace = affine.magnitude.into_biguint();
-            #[cfg(feature = "dispatch-trace")]
-            let denominator_trace = BigUint::from(denominator.magnitude);
-            #[cfg(feature = "dispatch-trace")]
-            let divisor_trace = BigUint::from(divisor);
-            trace_rational_gcd!(&affine_trace, &denominator_trace, &divisor_trace);
-            Some(Self::quotient_dyadic_stack_sum_with_word_divisor(
+            Some(Self::quotient_dyadic_stack_sum_unreduced(
                 affine,
                 denominator.sign,
                 denominator.denominator_shift,
                 denominator.magnitude,
-                divisor,
             ))
         };
         let point = [coordinate(0)?, coordinate(1)?];
@@ -2936,6 +3004,10 @@ impl Rational {
         numerator: &Self,
         denominator: &Self,
     ) -> Result<(Self, [Self; 2]), crate::Problem> {
+        let origin = origin.map(Self::canonicalized_ref);
+        let delta = delta.map(Self::canonicalized_ref);
+        let numerator = numerator.canonicalized_ref();
+        let denominator = denominator.canonicalized_ref();
         if denominator.sign == NoSign {
             return Err(crate::Problem::DivideByZero);
         }
