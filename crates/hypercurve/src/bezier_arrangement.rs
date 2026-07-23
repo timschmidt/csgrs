@@ -8,7 +8,7 @@
 //! vertices by exact tangent angle order. A retained traversal variant also
 //! consumes algebraic endpoint-image fragments whose represented point and
 //! tangent evidence is present, while still refusing unresolved fragments,
-//! overlaps, coincident tangents, zero tangents, and mixed unsupported evidence.
+//! overlaps, coincident tangents, and zero tangents.
 //!
 //! That boundary is exact-computation discipline: topology code may retain unresolved exact objects, but it must
 //! not invent a floating successor. The branch-free chain walk mirrors the
@@ -1347,35 +1347,45 @@ fn compare_retained_turn_from_base(
             RetainedTangentVector::Native(first),
             RetainedTangentVector::Native(second),
         ) => compare_turn_from_base(base, first, second, policy),
-        (
-            RetainedTangentVector::Algebraic(base),
-            RetainedTangentVector::Algebraic(first),
-            RetainedTangentVector::Algebraic(second),
-        ) => match compare_algebraic_tangent_turn_from_base(base, first, second, policy) {
-            Classification::Decided(report) => match report.status {
-                BezierAlgebraicTangentOrderStatus::Ordered => match report.ordering {
-                    Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
-                        Classification::Decided(TurnOrdering::FirstBeforeSecond)
+        _ => {
+            let base = retained_tangent_as_algebraic(base);
+            let first = retained_tangent_as_algebraic(first);
+            let second = retained_tangent_as_algebraic(second);
+            match compare_algebraic_tangent_turn_from_base(&base, &first, &second, policy) {
+                Classification::Decided(report) => match report.status {
+                    BezierAlgebraicTangentOrderStatus::Ordered => match report.ordering {
+                        Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
+                            Classification::Decided(TurnOrdering::FirstBeforeSecond)
+                        }
+                        Some(BezierTangentTurnOrdering2::SecondBeforeFirst) => {
+                            Classification::Decided(TurnOrdering::SecondBeforeFirst)
+                        }
+                        None => Classification::Uncertain(UncertaintyReason::Boundary),
+                    },
+                    BezierAlgebraicTangentOrderStatus::SameDirection => {
+                        Classification::Decided(TurnOrdering::SameDirection)
                     }
-                    Some(BezierTangentTurnOrdering2::SecondBeforeFirst) => {
-                        Classification::Decided(TurnOrdering::SecondBeforeFirst)
+                    BezierAlgebraicTangentOrderStatus::ZeroTangent
+                    | BezierAlgebraicTangentOrderStatus::SignUndecided => {
+                        Classification::Uncertain(UncertaintyReason::RealSign)
                     }
-                    None => Classification::Uncertain(UncertaintyReason::Boundary),
+                    BezierAlgebraicTangentOrderStatus::ArithmeticFailed => {
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    }
                 },
-                BezierAlgebraicTangentOrderStatus::SameDirection => {
-                    Classification::Decided(TurnOrdering::SameDirection)
-                }
-                BezierAlgebraicTangentOrderStatus::ZeroTangent
-                | BezierAlgebraicTangentOrderStatus::SignUndecided => {
-                    Classification::Uncertain(UncertaintyReason::RealSign)
-                }
-                BezierAlgebraicTangentOrderStatus::ArithmeticFailed => {
-                    Classification::Uncertain(UncertaintyReason::Unsupported)
-                }
-            },
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
-        _ => Classification::Uncertain(UncertaintyReason::Unsupported),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            }
+        }
+    }
+}
+
+fn retained_tangent_as_algebraic(tangent: &RetainedTangentVector) -> BezierAlgebraicTangentVector2 {
+    match tangent {
+        RetainedTangentVector::Native(tangent) => BezierAlgebraicTangentVector2::new(
+            exact_value_representation(&tangent.dx),
+            exact_value_representation(&tangent.dy),
+        ),
+        RetainedTangentVector::Algebraic(tangent) => tangent.as_ref().clone(),
     }
 }
 

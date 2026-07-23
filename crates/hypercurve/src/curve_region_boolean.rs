@@ -805,7 +805,27 @@ impl PreparedCurveRegionBoolean2 {
             .map_err(|cause| self.invalid(carrier_index, cause))?
         {
             Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Err(self.blocked(carrier_index, reason)),
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                let (start, end) = fragment_range(fragment);
+                let parameter = match start
+                    .strict_rational_between(end, &self.data.policy)
+                    .map_err(|cause| self.invalid(carrier_index, cause))?
+                {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Err(self.blocked(carrier_index, reason));
+                    }
+                };
+                match carrier.curve.point_at(&parameter, &self.data.policy) {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Err(self.blocked(carrier_index, reason));
+                    }
+                }
+            }
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(carrier_index, reason));
+            }
         };
         let other = match carrier.operand {
             CurvePathBooleanOperand2::First => &self.data.second,
@@ -816,7 +836,9 @@ impl PreparedCurveRegionBoolean2 {
             .map_err(|cause| self.invalid(carrier_index, cause))?
         {
             Classification::Decided(location) => location,
-            Classification::Uncertain(reason) => return Err(self.blocked(carrier_index, reason)),
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(carrier_index, reason));
+            }
         };
         match location {
             RegionPointLocation::Inside => Ok(action_for_sides(
@@ -967,7 +989,12 @@ fn split_carrier(
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
     let mut parameters = events
         .iter()
-        .map(|event| event.parameter.clone())
+        .map(|event| {
+            event
+                .parameter
+                .clone()
+                .refined_isolating_interval(8, policy)
+        })
         .collect::<Vec<_>>();
     parameters.push(carrier.start.clone());
     parameters.push(carrier.end.clone());
@@ -1406,7 +1433,45 @@ fn same_contact_point(
             RationalBezierIntersectionPointEvidence2::Exact(first),
             RationalBezierIntersectionPointEvidence2::Exact(second),
         ) => crate::classify::is_zero(&first.distance_squared(second), policy) == Some(true),
-        _ => first == second,
+        (
+            RationalBezierIntersectionPointEvidence2::Algebraic(first),
+            RationalBezierIntersectionPointEvidence2::Algebraic(second),
+        ) => {
+            let (Some(first_x), Some(first_y), Some(second_x), Some(second_y)) = (
+                first.x().and_then(|image| image.representation()),
+                first.y().and_then(|image| image.representation()),
+                second.x().and_then(|image| image.representation()),
+                second.y().and_then(|image| image.representation()),
+            ) else {
+                return first == second;
+            };
+            crate::bezier_arrangement::represented_roots_equal(first_x, second_x, policy)
+                == Some(true)
+                && crate::bezier_arrangement::represented_roots_equal(first_y, second_y, policy)
+                    == Some(true)
+        }
+        (
+            RationalBezierIntersectionPointEvidence2::Exact(exact),
+            RationalBezierIntersectionPointEvidence2::Algebraic(algebraic),
+        )
+        | (
+            RationalBezierIntersectionPointEvidence2::Algebraic(algebraic),
+            RationalBezierIntersectionPointEvidence2::Exact(exact),
+        ) => {
+            let (Some(x), Some(y)) = (
+                algebraic.x().and_then(|image| image.representation()),
+                algebraic.y().and_then(|image| image.representation()),
+            ) else {
+                return false;
+            };
+            let exact_x =
+                crate::bezier_algebraic_image::exact_real_algebraic_representation(exact.x());
+            let exact_y =
+                crate::bezier_algebraic_image::exact_real_algebraic_representation(exact.y());
+            crate::bezier_arrangement::represented_roots_equal(x, &exact_x, policy) == Some(true)
+                && crate::bezier_arrangement::represented_roots_equal(y, &exact_y, policy)
+                    == Some(true)
+        }
     }
 }
 

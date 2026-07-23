@@ -49,7 +49,18 @@ fn sqrt_half_parameter() -> BezierAlgebraicParameter2 {
     decided(
         BezierAlgebraicParameter2::try_isolate(
             polynomial(vec![r(-1), r(0), r(2)]),
-            interval(q(1, 2), r(1)),
+            interval(q(7, 10), q(18, 25)),
+            &policy(),
+        )
+        .unwrap(),
+    )
+}
+
+fn sqrt_three_quarters_parameter() -> BezierAlgebraicParameter2 {
+    decided(
+        BezierAlgebraicParameter2::try_isolate(
+            polynomial(vec![r(-3), r(0), r(4)]),
+            interval(q(17, 20), q(7, 8)),
             &policy(),
         )
         .unwrap(),
@@ -68,9 +79,15 @@ fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
 }
 
 fn tangent_vector(curve: &QuadraticBezier2) -> BezierAlgebraicTangentVector2 {
-    let parameter = sqrt_half_parameter();
+    tangent_vector_at(curve, &sqrt_half_parameter())
+}
+
+fn tangent_vector_at(
+    curve: &QuadraticBezier2,
+    parameter: &BezierAlgebraicParameter2,
+) -> BezierAlgebraicTangentVector2 {
     let tangent = curve
-        .tangent_at_algebraic_parameter(&parameter, &policy())
+        .tangent_at_algebraic_parameter(parameter, &policy())
         .unwrap();
     let BezierAlgebraicTangentVectorReport { status, vector, .. } =
         BezierAlgebraicTangentVector2::from_endpoint_image(
@@ -78,6 +95,10 @@ fn tangent_vector(curve: &QuadraticBezier2) -> BezierAlgebraicTangentVector2 {
         );
     assert_eq!(status, BezierAlgebraicTangentVectorStatus::Extracted);
     vector.unwrap()
+}
+
+fn rising() -> QuadraticBezier2 {
+    QuadraticBezier2::new(pi(0, 0), p(q(1, 2), r(0)), p(r(1), q(1, 2)))
 }
 
 fn rational_endpoint_vectors(
@@ -176,6 +197,33 @@ fn algebraic_tangent_order_uses_represented_cross_product_for_same_half() {
     );
     let cross = report.first_second_cross.unwrap();
     assert!(cross.scalar.unwrap().is_valid());
+    assert!(cross.sign.unwrap().is_lt());
+}
+
+#[test]
+fn algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures() {
+    let base = tangent_vector(&horizontal());
+    let curve = rising();
+    let first_source = tangent_vector_at(&curve, &sqrt_half_parameter());
+    let second_source = tangent_vector_at(&curve, &sqrt_three_quarters_parameter());
+    let first =
+        BezierAlgebraicTangentVector2::new(first_source.dy().clone(), first_source.dx().clone());
+    let second =
+        BezierAlgebraicTangentVector2::new(second_source.dx().clone(), second_source.dy().clone());
+
+    let report = decided(compare_algebraic_tangent_turn_from_base(
+        &base,
+        &first,
+        &second,
+        &policy(),
+    ));
+
+    assert_eq!(report.status, BezierAlgebraicTangentOrderStatus::Ordered);
+    assert_eq!(
+        report.ordering,
+        Some(BezierTangentTurnOrdering2::SecondBeforeFirst)
+    );
+    let cross = report.first_second_cross.unwrap();
     assert!(cross.sign.unwrap().is_lt());
 }
 

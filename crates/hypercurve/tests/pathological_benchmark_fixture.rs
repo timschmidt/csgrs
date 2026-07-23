@@ -81,6 +81,13 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
         .expect("all-family pair reaches curved Boolean preparation");
     assert!(prepared.authored_carrier_pair_count() > 0);
     assert!(prepared.carrier_pair_count() > 0);
+    #[cfg(feature = "predicates")]
+    {
+        let report = prepared
+            .intersection_report()
+            .expect("all-family intersections are reportable");
+        assert!(report.blockers().is_empty());
+    }
 
     for operation in [
         BooleanOp::Union,
@@ -88,6 +95,10 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
+        #[cfg(feature = "predicates")]
+        prepared
+            .boolean_region(operation)
+            .expect("all-family curved Boolean is decided");
         assert!(matches!(
             cell.source_projection.boolean_region(
                 &cell.rotated_projection,

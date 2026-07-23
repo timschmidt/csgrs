@@ -22,6 +22,7 @@ use hyperreal::{Real, RealSign};
 use hypersolve::AlgebraicRootRepresentation;
 
 use crate::bezier_arrangement::represented_roots_equal;
+use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     Aabb2, Axis2, BezierAlgebraicEndpointImage2, BezierArrangementGraph2,
@@ -5471,12 +5472,12 @@ fn retained_fragment_contains_point(
 fn classify_point_with_retained_ray(
     boundary_loop: &CurveRegionBoundaryLoop2,
     point: &Point2,
-    ray: &LineSeg2,
+    ray: &BezierRay2,
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<ContourPointLocation>> {
-    let direction_x = ray.end().x() - ray.start().x();
-    let direction_y = ray.end().y() - ray.start().y();
+    let direction_x = &ray.direction_x;
+    let direction_y = &ray.direction_y;
     let mut winding = 0_i32;
     for fragment in boundary_loop.fragments() {
         let (curve, range) = match fragment {
@@ -5495,10 +5496,17 @@ fn classify_point_with_retained_ray(
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
         };
-        if !subcurve_control_hull_may_be_ahead(curve, point, &direction_x, &direction_y, policy) {
+        if !subcurve_control_hull_may_be_ahead(curve, point, direction_x, direction_y, policy) {
             continue;
         }
-        let relation = match subcurve_relation_to_line_with_contacts(curve, ray, policy) {
+        let control_hull_order =
+            subcurve_control_hull_strict_order(curve, point, direction_x, direction_y, policy);
+        let relation = match subcurve_relation_to_line_with_contacts(
+            curve,
+            &ray.line,
+            Some((direction_x, direction_y)),
+            policy,
+        ) {
             Classification::Decided(relation) => relation,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -5538,26 +5546,32 @@ fn classify_point_with_retained_ray(
                     }
                     let ahead = match contact.parameter() {
                         BezierParameter2::Exact(parameter) => {
-                            let contact_point =
-                                match subcurve_point_at(curve, parameter.clone(), policy) {
-                                    Classification::Decided(point) => point,
-                                    Classification::Uncertain(reason) => {
-                                        return Ok(Classification::Uncertain(reason));
-                                    }
-                                };
-                            let projection = (contact_point.x() - point.x()) * &direction_x
-                                + (contact_point.y() - point.y()) * &direction_y;
-                            compare_reals(&projection, &Real::zero(), policy)
-                                .map(Classification::Decided)
-                                .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign))
+                            if let Some(order) = control_hull_order {
+                                Classification::Decided(order)
+                            } else {
+                                let contact_point =
+                                    match subcurve_point_at(curve, parameter.clone(), policy) {
+                                        Classification::Decided(point) => point,
+                                        Classification::Uncertain(reason) => {
+                                            return Ok(Classification::Uncertain(reason));
+                                        }
+                                    };
+                                let projection = (contact_point.x() - point.x()) * direction_x
+                                    + (contact_point.y() - point.y()) * direction_y;
+                                compare_reals(&projection, &Real::zero(), policy)
+                                    .map(Classification::Decided)
+                                    .unwrap_or(Classification::Uncertain(
+                                        UncertaintyReason::RealSign,
+                                    ))
+                            }
                         }
                         BezierParameter2::Algebraic(parameter) => {
                             algebraic_contact_order_along_ray(
                                 curve,
                                 parameter,
                                 point,
-                                &direction_x,
-                                &direction_y,
+                                direction_x,
+                                direction_y,
                                 policy,
                             )?
                         }
@@ -5661,21 +5675,29 @@ fn native_loop_bounds(
 fn classify_point_with_ray(
     boundary_loop: &BezierBoundaryLoop2,
     point: &Point2,
-    ray: &LineSeg2,
+    ray: &BezierRay2,
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<ContourPointLocation>> {
-    let direction_x = ray.end().x() - ray.start().x();
-    let direction_y = ray.end().y() - ray.start().y();
+    let direction_x = &ray.direction_x;
+    let direction_y = &ray.direction_y;
     let mut winding = 0_i32;
     for fragment in boundary_loop.fragments() {
-        if !subcurve_control_hull_may_be_ahead(fragment, point, &direction_x, &direction_y, policy)
-        {
+        if !subcurve_control_hull_may_be_ahead(fragment, point, direction_x, direction_y, policy) {
             continue;
         }
-        let relation = match subcurve_relation_to_line_with_contacts(fragment, ray, policy) {
+        let control_hull_order =
+            subcurve_control_hull_strict_order(fragment, point, direction_x, direction_y, policy);
+        let relation = match subcurve_relation_to_line_with_contacts(
+            fragment,
+            &ray.line,
+            Some((direction_x, direction_y)),
+            policy,
+        ) {
             Classification::Decided(relation) => relation,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         match relation {
             BezierLineContactRelation::ControlHullDisjoint { .. }
@@ -5695,26 +5717,32 @@ fn classify_point_with_ray(
                     }
                     let ahead = match contact.parameter() {
                         BezierParameter2::Exact(parameter) => {
-                            let contact_point =
-                                match subcurve_point_at(fragment, parameter.clone(), policy) {
-                                    Classification::Decided(point) => point,
-                                    Classification::Uncertain(reason) => {
-                                        return Ok(Classification::Uncertain(reason));
-                                    }
-                                };
-                            let projection = (contact_point.x() - point.x()) * &direction_x
-                                + (contact_point.y() - point.y()) * &direction_y;
-                            compare_reals(&projection, &Real::zero(), policy)
-                                .map(Classification::Decided)
-                                .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign))
+                            if let Some(order) = control_hull_order {
+                                Classification::Decided(order)
+                            } else {
+                                let contact_point =
+                                    match subcurve_point_at(fragment, parameter.clone(), policy) {
+                                        Classification::Decided(point) => point,
+                                        Classification::Uncertain(reason) => {
+                                            return Ok(Classification::Uncertain(reason));
+                                        }
+                                    };
+                                let projection = (contact_point.x() - point.x()) * direction_x
+                                    + (contact_point.y() - point.y()) * direction_y;
+                                compare_reals(&projection, &Real::zero(), policy)
+                                    .map(Classification::Decided)
+                                    .unwrap_or(Classification::Uncertain(
+                                        UncertaintyReason::RealSign,
+                                    ))
+                            }
                         }
                         BezierParameter2::Algebraic(parameter) => {
                             algebraic_contact_order_along_ray(
                                 fragment,
                                 parameter,
                                 point,
-                                &direction_x,
-                                &direction_y,
+                                direction_x,
+                                direction_y,
                                 policy,
                             )?
                         }
@@ -5764,6 +5792,31 @@ fn control_points_may_be_ahead<'a>(
     })
 }
 
+fn control_points_strict_order<'a>(
+    controls: impl IntoIterator<Item = &'a Point2>,
+    origin: &Point2,
+    direction_x: &Real,
+    direction_y: &Real,
+    policy: &CurvePolicy,
+) -> Option<std::cmp::Ordering> {
+    let mut order = None;
+    for control in controls {
+        let delta_x = control.x() - origin.x();
+        let delta_y = control.y() - origin.y();
+        let projection = Real::dot2_refs([&delta_x, &delta_y], [direction_x, direction_y]);
+        let current = match real_sign(&projection, policy)? {
+            RealSign::Negative => std::cmp::Ordering::Less,
+            RealSign::Zero => return None,
+            RealSign::Positive => std::cmp::Ordering::Greater,
+        };
+        if order.is_some_and(|order| order != current) {
+            return None;
+        }
+        order = Some(current);
+    }
+    order
+}
+
 fn subcurve_control_hull_may_be_ahead(
     curve: &BezierSubcurve2,
     origin: &Point2,
@@ -5797,6 +5850,43 @@ fn subcurve_control_hull_may_be_ahead(
                 )
         }
         BezierSubcurve2::Rational(_) => true,
+    }
+}
+
+fn subcurve_control_hull_strict_order(
+    curve: &BezierSubcurve2,
+    origin: &Point2,
+    direction_x: &Real,
+    direction_y: &Real,
+    policy: &CurvePolicy,
+) -> Option<std::cmp::Ordering> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => control_points_strict_order(
+            curve.control_points(),
+            origin,
+            direction_x,
+            direction_y,
+            policy,
+        ),
+        BezierSubcurve2::Cubic(curve) => control_points_strict_order(
+            curve.control_points(),
+            origin,
+            direction_x,
+            direction_y,
+            policy,
+        ),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.common_nonzero_weight_sign(policy).and_then(|_| {
+                control_points_strict_order(
+                    curve.control_points(),
+                    origin,
+                    direction_x,
+                    direction_y,
+                    policy,
+                )
+            })
+        }
+        BezierSubcurve2::Rational(_) => None,
     }
 }
 
@@ -5900,24 +5990,37 @@ fn rational_image_coordinate_order(
     )
 }
 
-fn ray_candidates(point: &Point2) -> Vec<LineSeg2> {
+struct BezierRay2 {
+    line: LineSeg2,
+    direction_x: Real,
+    direction_y: Real,
+}
+
+fn ray_candidates(point: &Point2) -> Vec<BezierRay2> {
     let one = Real::one();
     let two = Real::from(2_i8);
-    let endpoints = [
-        Point2::new(point.x() - &one, point.y().clone()),
-        Point2::new(point.x().clone(), point.y() - &one),
-        Point2::new(point.x() - &one, point.y() - &two),
-        Point2::new(point.x() - &two, point.y() - &one),
-        Point2::new(point.x() + &one, point.y().clone()),
-        Point2::new(point.x().clone(), point.y() + &one),
-        Point2::new(point.x() + &one, point.y() + &two),
-        Point2::new(point.x() + &two, point.y() + &one),
+    let directions = [
+        (-one.clone(), Real::zero()),
+        (Real::zero(), -one.clone()),
+        (-one.clone(), -two.clone()),
+        (-two.clone(), -one.clone()),
+        (-one.clone(), one.clone()),
+        (one.clone(), Real::zero()),
+        (Real::zero(), one.clone()),
+        (one.clone(), two.clone()),
+        (two, one.clone()),
+        (one.clone(), -one),
     ];
-    endpoints
+    directions
         .into_iter()
-        .map(|endpoint| {
-            LineSeg2::try_new(point.clone(), endpoint)
-                .expect("fixed exact ray directions are nonzero")
+        .map(|(direction_x, direction_y)| {
+            let endpoint = Point2::new(point.x() + &direction_x, point.y() + &direction_y);
+            BezierRay2 {
+                line: LineSeg2::try_new(point.clone(), endpoint)
+                    .expect("fixed exact ray directions are nonzero"),
+                direction_x,
+                direction_y,
+            }
         })
         .collect()
 }
@@ -5967,11 +6070,46 @@ fn subcurve_contains_point(
 fn subcurve_relation_to_line_with_contacts(
     curve: &BezierSubcurve2,
     line: &LineSeg2,
+    direction: Option<(&Real, &Real)>,
     policy: &CurvePolicy,
 ) -> Classification<BezierLineContactRelation> {
     match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.relation_to_line_with_contacts(line, policy),
-        BezierSubcurve2::Cubic(curve) => curve.relation_to_line_with_contacts(line, policy),
+        BezierSubcurve2::Quadratic(curve) => direction.map_or_else(
+            || curve.relation_to_line_with_contacts(line, policy),
+            |(direction_x, direction_y)| {
+                let original = curve.relation_to_line_with_contacts(line, policy);
+                match original {
+                    Classification::Decided(_) => original,
+                    Classification::Uncertain(_) => {
+                        exact_polynomial_line_contact_relation_from_direction(
+                            &curve.control_points(),
+                            line.start(),
+                            direction_x,
+                            direction_y,
+                            policy,
+                        )
+                    }
+                }
+            },
+        ),
+        BezierSubcurve2::Cubic(curve) => direction.map_or_else(
+            || curve.relation_to_line_with_contacts(line, policy),
+            |(direction_x, direction_y)| {
+                let original = curve.relation_to_line_with_contacts(line, policy);
+                match original {
+                    Classification::Decided(_) => original,
+                    Classification::Uncertain(_) => {
+                        exact_polynomial_line_contact_relation_from_direction(
+                            &curve.control_points(),
+                            line.start(),
+                            direction_x,
+                            direction_y,
+                            policy,
+                        )
+                    }
+                }
+            },
+        ),
         BezierSubcurve2::RationalQuadratic(curve) => {
             curve.relation_to_line_with_contacts(line, policy)
         }

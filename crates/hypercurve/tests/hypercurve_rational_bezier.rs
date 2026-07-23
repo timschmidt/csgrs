@@ -514,6 +514,56 @@ fn general_rational_contacts_reject_disjoint_control_hulls() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
+fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
+    let policy = CurvePolicy::certified();
+    let conic =
+        RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
+    let cubic_line = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(3, 5), r(-1)),
+            Point2::new(q(3, 5), r(0)),
+            Point2::new(q(3, 5), r(1)),
+            Point2::new(q(3, 5), r(2)),
+        ],
+        vec![r(1); 4],
+    )
+    .unwrap();
+
+    let prepared = conic
+        .try_prepare_intersection(&cubic_line, &policy)
+        .unwrap();
+    assert!(prepared.is_contact_replay_cached());
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = prepared.try_contacts().unwrap()
+    else {
+        panic!("implicit conic route did not retain its exact contact");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert_eq!(contacts[0].first_parameter().as_exact(), Some(&q(1, 2)));
+    assert_eq!(contacts[0].second_parameter().as_exact(), Some(&q(3, 5)));
+    assert!(matches!(
+        contacts[0].point(),
+        RationalBezierIntersectionPointEvidence2::Exact(point)
+            if point == &Point2::new(q(3, 5), q(4, 5))
+    ));
+
+    let RationalBezierIntersectionContacts2::Contacts(reversed) =
+        cubic_line.intersection_contacts(&conic, &policy).unwrap()
+    else {
+        panic!("reversed implicit conic route did not retain its exact contact");
+    };
+    assert_eq!(reversed.len(), 1);
+    assert_eq!(
+        reversed[0].first_parameter(),
+        contacts[0].second_parameter()
+    );
+    assert_eq!(
+        reversed[0].second_parameter(),
+        contacts[0].first_parameter()
+    );
+}
+
+#[test]
 fn rational_contacts_preserve_a_typed_sign_blocker_after_bound_fallthrough() {
     let first = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![unresolved_positive(), r(1)])
         .unwrap();

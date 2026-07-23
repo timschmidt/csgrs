@@ -724,7 +724,16 @@ fn cross_sign(
         left_y_right_x.result_representation.as_ref(),
         left_y_right_x.exact_result.as_ref(),
     );
-    scalar_sign_report(vec![left_x_right_y, left_y_right_x, scalar], policy)
+    let mut report = scalar_sign_report(vec![left_x_right_y, left_y_right_x, scalar], policy);
+    if report.sign.is_none() {
+        report.sign =
+            interval_bilinear_sign(left.dx(), right.dy(), left.dy(), right.dx(), false, policy);
+        if report.sign.is_some() {
+            report.message =
+                Some("cross-product sign certified from rational root enclosures".to_owned());
+        }
+    }
+    report
 }
 
 fn dot_sign(
@@ -740,7 +749,16 @@ fn dot_sign(
         left_y_right_y.result_representation.as_ref(),
         left_y_right_y.exact_result.as_ref(),
     );
-    scalar_sign_report(vec![left_x_right_x, left_y_right_y, scalar], policy)
+    let mut report = scalar_sign_report(vec![left_x_right_x, left_y_right_y, scalar], policy);
+    if report.sign.is_none() {
+        report.sign =
+            interval_bilinear_sign(left.dx(), right.dx(), left.dy(), right.dy(), true, policy);
+        if report.sign.is_some() {
+            report.message =
+                Some("dot-product sign certified from rational root enclosures".to_owned());
+        }
+    }
+    report
 }
 
 fn norm_squared_sign(
@@ -755,7 +773,84 @@ fn norm_squared_sign(
         dy_squared.result_representation.as_ref(),
         dy_squared.exact_result.as_ref(),
     );
-    scalar_sign_report(vec![dx_squared, dy_squared, scalar], policy)
+    let mut report = scalar_sign_report(vec![dx_squared, dy_squared, scalar], policy);
+    if report.sign.is_none() {
+        report.sign = interval_bilinear_sign(
+            vector.dx(),
+            vector.dx(),
+            vector.dy(),
+            vector.dy(),
+            true,
+            policy,
+        );
+        if report.sign.is_some() {
+            report.message =
+                Some("squared-norm sign certified from rational root enclosures".to_owned());
+        }
+    }
+    report
+}
+
+fn interval_bilinear_sign(
+    first_left: &AlgebraicRootRepresentation,
+    first_right: &AlgebraicRootRepresentation,
+    second_left: &AlgebraicRootRepresentation,
+    second_right: &AlgebraicRootRepresentation,
+    add_products: bool,
+    policy: &CurvePolicy,
+) -> Option<Ordering> {
+    if [first_left, first_right, second_left, second_right]
+        .iter()
+        .any(|representation| !representation.is_valid())
+    {
+        return None;
+    }
+    let first = interval_product(first_left, first_right, policy)?;
+    let second = interval_product(second_left, second_right, policy)?;
+    let interval = if add_products {
+        (&first.0 + &second.0, &first.1 + &second.1)
+    } else {
+        (&first.0 - &second.1, &first.1 - &second.0)
+    };
+    interval_sign(&interval.0, &interval.1, policy)
+}
+
+fn interval_product(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: &CurvePolicy,
+) -> Option<(Real, Real)> {
+    let products = [
+        &left.interval.lower * &right.interval.lower,
+        &left.interval.lower * &right.interval.upper,
+        &left.interval.upper * &right.interval.lower,
+        &left.interval.upper * &right.interval.upper,
+    ];
+    let mut lower = products[0].clone();
+    let mut upper = products[0].clone();
+    for product in &products[1..] {
+        if compare_reals(product, &lower, policy)? == Ordering::Less {
+            lower = product.clone();
+        }
+        if compare_reals(product, &upper, policy)? == Ordering::Greater {
+            upper = product.clone();
+        }
+    }
+    Some((lower, upper))
+}
+
+fn interval_sign(lower: &Real, upper: &Real, policy: &CurvePolicy) -> Option<Ordering> {
+    let lower_sign = compare_reals(lower, &Real::zero(), policy)?;
+    let upper_sign = compare_reals(upper, &Real::zero(), policy)?;
+    if lower_sign == Ordering::Greater {
+        Some(Ordering::Greater)
+    } else if upper_sign == Ordering::Less {
+        Some(Ordering::Less)
+    } else if lower_sign == Ordering::Equal && upper_sign == Ordering::Equal {
+        Some(Ordering::Equal)
+    } else {
+        None
+    }
 }
 
 fn compare_algebraic_same_side_curvature_magnitude(
@@ -1164,13 +1259,11 @@ fn refined_represented_sign(
 }
 
 fn sign_status(report: &BezierAlgebraicScalarSignReport) -> ScalarSignStatus {
-    if report.scalar.is_none() {
-        return ScalarSignStatus::ArithmeticFailed;
-    }
     match report.sign {
         Some(Ordering::Greater) => ScalarSignStatus::Positive,
         Some(Ordering::Less) => ScalarSignStatus::Negative,
         Some(Ordering::Equal) => ScalarSignStatus::Zero,
+        None if report.scalar.is_none() => ScalarSignStatus::ArithmeticFailed,
         None => ScalarSignStatus::Undecided,
     }
 }

@@ -22,6 +22,11 @@
 use std::cmp::Ordering;
 
 use hyperreal::{Rational as HyperRational, Real, RealSign};
+#[cfg(feature = "predicates")]
+use hypersolve::{
+    AlgebraicRootRepresentation, IsolatedRootInterval, RootIsolationConfig,
+    refine_isolated_univariate_polynomial_interval,
+};
 use num::{BigInt, BigRational, BigUint, Integer, One, ToPrimitive, Zero};
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
@@ -506,7 +511,7 @@ impl BezierAlgebraicParameter2 {
         }))
     }
 
-    fn from_certified_singleton(
+    pub(crate) fn from_certified_singleton(
         polynomial: BezierParameterPolynomial,
         interval: BezierParameterInterval,
     ) -> Self {
@@ -784,6 +789,91 @@ impl BezierParameter2 {
                 Ok(Classification::Uncertain(UncertaintyReason::Ordering))
             }
         }
+    }
+
+    #[cfg(feature = "predicates")]
+    pub(crate) fn from_algebraic_root_representation(
+        representation: &AlgebraicRootRepresentation,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        if !representation.is_valid() || representation.interval.distinct_root_count != 1 {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+        if let Some(exact) = representation.exact_rational_witness() {
+            return Self::exact(exact.clone(), policy);
+        }
+        let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+            representation.polynomial_coefficients.clone(),
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let interval = match BezierParameterInterval::try_new(
+            representation.interval.lower.clone(),
+            representation.interval.upper.clone(),
+            policy,
+        )? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(Self::Algebraic(
+            BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval),
+        )))
+    }
+
+    #[cfg(feature = "predicates")]
+    pub(crate) fn refined_isolating_interval(
+        self,
+        max_refinement_steps: usize,
+        policy: &CurvePolicy,
+    ) -> Self {
+        let Self::Algebraic(algebraic) = self else {
+            return self;
+        };
+        let interval = algebraic.interval();
+        let refinement = refine_isolated_univariate_polynomial_interval(
+            algebraic.polynomial().coefficients(),
+            &IsolatedRootInterval {
+                lower: interval.start().clone(),
+                upper: interval.end().clone(),
+                exact_root: None,
+                distinct_root_count: algebraic.root_count(),
+            },
+            RootIsolationConfig {
+                policy: policy.predicate_policy,
+                max_interval_width: None,
+                max_refinement_steps,
+            },
+        );
+        let Some(refined) = refinement.refined_interval else {
+            return Self::Algebraic(algebraic);
+        };
+        if let Some(exact) = refined.exact_root {
+            return Self::Exact(exact);
+        }
+        let interval = match BezierParameterInterval::try_new(refined.lower, refined.upper, policy)
+        {
+            Ok(Classification::Decided(interval)) => interval,
+            Ok(Classification::Uncertain(_)) | Err(_) => return Self::Algebraic(algebraic),
+        };
+        Self::Algebraic(BezierAlgebraicParameter2::from_certified_singleton(
+            algebraic.polynomial().clone(),
+            interval,
+        ))
+    }
+
+    #[cfg(not(feature = "predicates"))]
+    pub(crate) fn refined_isolating_interval(
+        self,
+        _max_refinement_steps: usize,
+        _policy: &CurvePolicy,
+    ) -> Self {
+        self
     }
 
     /// Compares parameters when exact values or nonoverlapping isolating intervals prove the order.

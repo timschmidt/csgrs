@@ -950,7 +950,7 @@ fn evaluate_power_polynomial(coefficients: &[Real], parameter: &Real) -> Real {
         })
 }
 
-fn parameter_representation(
+pub(crate) fn parameter_representation(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurvePolicy,
 ) -> AlgebraicRootRepresentation {

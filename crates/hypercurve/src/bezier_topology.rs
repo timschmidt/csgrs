@@ -9,6 +9,7 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign};
 
+use crate::bezier_parameter::bernstein_to_power_coefficients;
 use crate::classify::{
     classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2d_real_expr,
     real_sign,
@@ -2968,9 +2969,73 @@ pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
+    exact_line_contact_relation_from_polynomial(polynomial, policy)
+}
+
+pub(crate) fn exact_polynomial_line_contact_relation_from_direction(
+    controls: &[&Point2],
+    origin: &Point2,
+    direction_x: &Real,
+    direction_y: &Real,
+    policy: &CurvePolicy,
+) -> Classification<BezierLineContactRelation> {
+    let origin_projection = oriented_projection(direction_x, direction_y, origin);
+    let projections = controls
+        .iter()
+        .map(|point| oriented_projection(direction_x, direction_y, point))
+        .collect::<Vec<_>>();
+    if let [p0, p1, p2] = projections.as_slice() {
+        let distances = [
+            p0 - &origin_projection,
+            p1 - &origin_projection,
+            p2 - &origin_projection,
+        ];
+        if let Classification::Decided(relation) = exact_quadratic_line_contact_relation(
+            [&distances[0], &distances[1], &distances[2]],
+            policy,
+        ) {
+            return Classification::Decided(relation);
+        }
+    }
+    let mut coefficients = match bernstein_to_power_coefficients(projections) {
+        Ok(coefficients) => coefficients,
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    coefficients[0] = &coefficients[0] - &origin_projection;
+    exact_line_contact_relation_from_power_coefficients(coefficients, policy)
+}
+
+fn oriented_projection(direction_x: &Real, direction_y: &Real, point: &Point2) -> Real {
+    let negative_x = -point.x().clone();
+    Real::dot2_refs([direction_x, direction_y], [point.y(), &negative_x])
+}
+
+fn exact_line_contact_relation_from_power_coefficients(
+    coefficients: Vec<Real>,
+    policy: &CurvePolicy,
+) -> Classification<BezierLineContactRelation> {
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy) {
+        Ok(Classification::Decided(polynomial)) => polynomial,
+        Ok(Classification::Uncertain(reason)) => {
+            return Classification::Uncertain(reason);
+        }
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    if polynomial.degree() <= 2 {
+        return exact_low_degree_power_line_contact_relation(polynomial.coefficients(), policy);
+    }
+    exact_line_contact_relation_from_polynomial(polynomial, policy)
+}
+
+fn exact_line_contact_relation_from_polynomial(
+    polynomial: BezierParameterPolynomial,
+    policy: &CurvePolicy,
+) -> Classification<BezierLineContactRelation> {
     let parameters = match polynomial.isolate_unit_interval_roots(policy) {
         Ok(Classification::Decided(parameters)) => parameters,
-        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Ok(Classification::Uncertain(reason)) => {
+            return Classification::Uncertain(reason);
+        }
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
     if parameters.is_empty() {
@@ -2980,7 +3045,9 @@ pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
     for parameter in parameters {
         let sign_after = match polynomial.sign_after_crossing_root(&parameter, policy) {
             Ok(Classification::Decided(sign_after)) => sign_after,
-            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Ok(Classification::Uncertain(reason)) => {
+                return Classification::Uncertain(reason);
+            }
             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
         };
         let kind = if sign_after.is_some() {
@@ -2998,6 +3065,52 @@ pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
                 Ok(contact) => contact,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
             };
+        contacts.push(contact);
+    }
+    Classification::Decided(BezierLineContactRelation::Contacts { contacts })
+}
+
+fn exact_low_degree_power_line_contact_relation(
+    coefficients: &[Real],
+    policy: &CurvePolicy,
+) -> Classification<BezierLineContactRelation> {
+    if coefficients.len() == 1 {
+        return Classification::Decided(BezierLineContactRelation::NoContact);
+    }
+    let c0 = coefficients[0].clone();
+    let c1 = coefficients[1].clone();
+    let c2 = coefficients.get(2).cloned().unwrap_or_else(Real::zero);
+    let parameters = match polynomial_roots_in_unit_interval(c0, c1.clone(), c2.clone(), policy) {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    if parameters.is_empty() {
+        return Classification::Decided(BezierLineContactRelation::NoContact);
+    }
+    let two = Real::from(2_i8);
+    let mut contacts = Vec::with_capacity(parameters.len());
+    for parameter in parameters {
+        let derivative = &c1 + &two * &c2 * &parameter;
+        let (kind, crossing_direction) = match real_sign(&derivative, policy) {
+            Some(RealSign::Negative) => (
+                BezierLineContactKind::Crossing,
+                Some(BezierLineCrossingDirection::PositiveToNegative),
+            ),
+            Some(RealSign::Positive) => (
+                BezierLineContactKind::Crossing,
+                Some(BezierLineCrossingDirection::NegativeToPositive),
+            ),
+            Some(RealSign::Zero) => (BezierLineContactKind::Tangent, None),
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        };
+        let contact = match BezierLineContact::with_crossing_direction(
+            BezierParameter2::Exact(parameter),
+            kind,
+            crossing_direction,
+        ) {
+            Ok(contact) => contact,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
         contacts.push(contact);
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })

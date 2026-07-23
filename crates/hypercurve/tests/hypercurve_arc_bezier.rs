@@ -34,10 +34,7 @@ fn quarter_arc_decomposes_to_one_exact_conic() {
     );
     assert_eq!(span.parameter_range(), (&r(0), &r(1)));
     assert_eq!(span.curve().control(), &p(1, 1));
-    assert_eq!(
-        span.curve().control_weight() * span.curve().control_weight(),
-        half()
-    );
+    assert_eq!(span.curve().weights(), [&r(1), &r(1), &r(2)]);
     let third = (r(1) / r(3)).unwrap();
     let point = decomposition.point_at(&third).unwrap();
     assert_eq!(point.x().partial_cmp(point.y()), Some(Ordering::Greater));

@@ -126,6 +126,12 @@ pub(crate) fn evaluate_decomposition(
         let upper = crate::classify::compare_reals(parameter, &span.parameter_end, &policy);
         match (lower, upper) {
             (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less | Ordering::Equal)) => {
+                if lower == Some(Ordering::Equal) {
+                    return Ok(span.curve.start().clone());
+                }
+                if upper == Some(Ordering::Equal) {
+                    return Ok(span.curve.end().clone());
+                }
                 let width = &span.parameter_end - &span.parameter_start;
                 let local = ((parameter - &span.parameter_start) / width)
                     .map_err(|cause| arc_error(CurveOperation2::Evaluation, cause.into()))?;
@@ -307,40 +313,21 @@ fn rational_minor_arc_span(
     let start = endpoints[0].delta_from(center);
     let end = endpoints[1].delta_from(center);
     let dot = (&start.0 * &end.0) + (&start.1 * &end.1);
-    let two_radius_squared = Real::from(2_i8) * radius_squared;
-    let weight_squared = ((radius_squared + dot) / two_radius_squared)
+    let cross = (&start.0 * &end.1) - (&start.1 * &end.0);
+    let tangent_half = (cross / (radius_squared + dot))
         .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
-    match crate::classify::compare_reals(&weight_squared, &Real::zero(), &CurvePolicy::certified())
-    {
-        Some(Ordering::Greater) => {}
-        Some(_) => {
-            return Err(arc_error(
-                CurveOperation2::BezierDecomposition,
-                CurveError::InvalidArcSweep,
-            ));
-        }
-        None => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::BezierDecomposition,
-                CurveFamily2::CircularArc,
-                UncertaintyReason::RealSign,
-            ));
-        }
-    }
-    let weight = weight_squared
-        .clone()
-        .sqrt()
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
-    let control_denominator = Real::from(2_i8) * weight_squared;
-    let control_x = ((&start.0 + &end.0) / &control_denominator)
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
-    let control_y = ((&start.1 + &end.1) / control_denominator)
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
-    RationalQuadraticBezier2::try_unit_end_weights(
+    let control = Point2::new(
+        center.x() + &start.0 - &tangent_half * &start.1,
+        center.y() + &start.1 + &tangent_half * &start.0,
+    );
+    let end_weight = Real::one() + &tangent_half * &tangent_half;
+    RationalQuadraticBezier2::try_new(
         endpoints[0].clone(),
-        Point2::new(center.x() + control_x, center.y() + control_y),
+        control,
         endpoints[1].clone(),
-        weight,
+        Real::one(),
+        Real::one(),
+        end_weight,
     )
     .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause))
 }
