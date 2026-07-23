@@ -130,7 +130,7 @@ impl CertifiedLineCrossingEvent {
         }
     }
 
-    pub(crate) fn compare_parameter(
+    fn compare_parameter_impl<const NORMALIZED_COMPACT_PRODUCT: bool>(
         &self,
         other: &Self,
         operand: ContourOperand,
@@ -141,6 +141,12 @@ impl CertifiedLineCrossingEvent {
                 CertifiedLineCrossingParameters::ExactDyadic(left),
                 CertifiedLineCrossingParameters::ExactDyadic(right),
             ) => Some(match operand {
+                ContourOperand::First if NORMALIZED_COMPACT_PRODUCT => {
+                    left.compare_first_parameter_normalized(right)
+                }
+                ContourOperand::Second if NORMALIZED_COMPACT_PRODUCT => {
+                    left.compare_second_parameter_normalized(right)
+                }
                 ContourOperand::First => left.compare_first_parameter(right),
                 ContourOperand::Second => left.compare_second_parameter(right),
             }),
@@ -182,6 +188,26 @@ impl CertifiedLineCrossingEvent {
                 compare_reals(&left, &right, policy)
             }
         }
+    }
+
+    pub(crate) fn compare_parameter(
+        &self,
+        other: &Self,
+        operand: ContourOperand,
+        policy: &CurvePolicy,
+    ) -> Option<Ordering> {
+        self.compare_parameter_impl::<false>(other, operand, policy)
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn compare_parameter_normalized(
+        &self,
+        other: &Self,
+        operand: ContourOperand,
+        policy: &CurvePolicy,
+    ) -> Option<Ordering> {
+        self.compare_parameter_impl::<true>(other, operand, policy)
     }
 
     fn materialize_parameter(&self, operand: ContourOperand) -> Real {

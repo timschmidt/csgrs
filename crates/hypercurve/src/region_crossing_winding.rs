@@ -177,9 +177,30 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
             }
         }
 
-        if !sort_and_validate_unique(&mut index.first, index.certified_line_crossings, policy)
-            || !sort_and_validate_unique(&mut index.second, index.certified_line_crossings, policy)
+        // The fixed-product comparator wins once sorting dominates, while the
+        // smaller ordinary comparator preserves instruction locality below here.
+        const MIN_NORMALIZED_PRODUCT_CROSSINGS: usize = 1_024;
+        let sorted = if index.certified_line_crossings.is_some()
+            && crossing_count >= MIN_NORMALIZED_PRODUCT_CROSSINGS
         {
+            sort_and_validate_unique_normalized(
+                &mut index.first,
+                index.certified_line_crossings,
+                policy,
+            ) && sort_and_validate_unique_normalized(
+                &mut index.second,
+                index.certified_line_crossings,
+                policy,
+            )
+        } else {
+            sort_and_validate_unique(&mut index.first, index.certified_line_crossings, policy)
+                && sort_and_validate_unique(
+                    &mut index.second,
+                    index.certified_line_crossings,
+                    policy,
+                )
+        };
+        if !sorted {
             return None;
         }
         index.first_segment_offsets = segment_crossing_offsets(&index.first, first_contour.len())?;
@@ -352,6 +373,28 @@ fn sort_and_validate_unique(
     order_decided && crossing_order_is_certified(crossings, certified, policy)
 }
 
+#[cold]
+#[inline(never)]
+fn sort_and_validate_unique_normalized(
+    crossings: &mut [RegionLineCrossing<'_>],
+    certified: Option<&[CertifiedLineCrossingEvent]>,
+    policy: &CurvePolicy,
+) -> bool {
+    let mut order_decided = true;
+    crossings.sort_unstable_by(|left, right| {
+        left.segment_index.cmp(&right.segment_index).then_with(|| {
+            match compare_crossing_parameters_normalized(left, right, certified, policy) {
+                Some(ordering) => ordering,
+                None => {
+                    order_decided = false;
+                    std::cmp::Ordering::Equal
+                }
+            }
+        })
+    });
+    order_decided && crossing_order_is_certified_normalized(crossings, certified, policy)
+}
+
 fn compare_crossing_parameters(
     left: &RegionLineCrossing<'_>,
     right: &RegionLineCrossing<'_>,
@@ -380,6 +423,30 @@ fn compare_crossing_parameters(
     }
 }
 
+fn compare_crossing_parameters_normalized(
+    left: &RegionLineCrossing<'_>,
+    right: &RegionLineCrossing<'_>,
+    certified: Option<&[CertifiedLineCrossingEvent]>,
+    policy: &CurvePolicy,
+) -> Option<std::cmp::Ordering> {
+    match (&left.parameter, &right.parameter) {
+        (
+            RegionLineCrossingParameter::Certified {
+                event_index: left,
+                operand: left_operand,
+            },
+            RegionLineCrossingParameter::Certified {
+                event_index: right,
+                operand: right_operand,
+            },
+        ) if left_operand == right_operand => {
+            let crossings = certified?;
+            crossings[*left].compare_parameter_normalized(&crossings[*right], *left_operand, policy)
+        }
+        _ => compare_crossing_parameters(left, right, certified, policy),
+    }
+}
+
 fn crossing_order_is_certified(
     crossings: &[RegionLineCrossing<'_>],
     certified: Option<&[CertifiedLineCrossingEvent]>,
@@ -389,6 +456,19 @@ fn crossing_order_is_certified(
         window[0].segment_index < window[1].segment_index
             || window[0].segment_index == window[1].segment_index
                 && compare_crossing_parameters(&window[0], &window[1], certified, policy)
+                    == Some(std::cmp::Ordering::Less)
+    })
+}
+
+fn crossing_order_is_certified_normalized(
+    crossings: &[RegionLineCrossing<'_>],
+    certified: Option<&[CertifiedLineCrossingEvent]>,
+    policy: &CurvePolicy,
+) -> bool {
+    crossings.windows(2).all(|window| {
+        window[0].segment_index < window[1].segment_index
+            || window[0].segment_index == window[1].segment_index
+                && compare_crossing_parameters_normalized(&window[0], &window[1], certified, policy)
                     == Some(std::cmp::Ordering::Less)
     })
 }

@@ -2206,6 +2206,47 @@ all-feature suite and Hypercurve's complete all-feature suite, strict Clippy,
 warning-denied rustdoc, and a 10,000-run AddressSanitizer region-Boolean
 campaign (5,902 coverage points and 18,712 feature edges) pass.
 
+The next exact-ordering checkpoint specializes retained compact line parameters.
+Each quotient comparison now multiplies its two `u128` magnitudes into four
+fixed limbs, compares the product bit lengths plus their dyadic exponents, and
+only when those totals tie compares lazily normalized limbs from most to least
+significant. This is the exact cross-product order: it neither converts through
+binary64 nor materializes a `BigUint`. Wide and mixed events retain their
+existing arbitrary-precision paths.
+
+Applying the larger comparator to every sort improved star1024 but regressed
+star64 by 1--3% through instruction-layout pressure. The crossing index
+therefore selects it only for certified sets containing at least 1,024 events;
+smaller inputs keep the preceding compact accumulator. Two alternating paired
+41/31/21-sample contour runs left star64 and star256 neutral and moved star1024
+to 6.765--6.948 ms from 7.219--7.316 ms, a 5--6% gain. In the final full
+matrix, exact contour output measured 52.727 us at star64, 446.860 us at
+star256, and 6.932 ms at star1024. The corresponding finite competitor rows
+were 27.603/34.323/36.519 us, 485.112/511.131/519.842 us, and
+20.359/10.193/10.312 ms for Cavalier, `i_overlay`, and `geo`. Exact Hypercurve
+therefore extends its star256 and star1024 lead; the star64 crossover remains
+open. Dedicated reruns also found ordinary/prepared full-region output faster
+and provenance-bearing loop output neutral within run noise.
+
+The 500-operation star1024 profile moves exact accumulator self-time from
+12.60% to 6.07%; the new fixed-product comparator accounts for 6.63%, and the
+remaining accumulator work constructs final exact points. Heaptrack remains
+exactly 59,096 allocations with 697.48 KiB peak heap for 100 selected star64
+contour operations. Eleven paired star1024 processes measured 24,024 KiB median
+RSS versus 23,912 KiB for the preceding binary, within normal layout variance
+and with no retained allocation added.
+
+Three broader variants were removed. A product-bit-bound prefilter made star64
+about 3% slower and did not improve larger cases. Eagerly normalizing two
+`u128` halves reduced generated code but made star1024 about 1--2% slower
+because most comparisons decide after the first lazy `u64` limb. Selecting the
+fixed-product path at all sizes preserved the large gain but paid its
+instruction-locality cost on small contours. A 20,000-case `BigUint` oracle
+covers both parameter coordinates, signs, and shifts through 2,047. Both
+complete all-feature suites, warnings-as-errors Clippy and rustdoc, and the
+10,000-run AddressSanitizer differential Boolean campaign pass; the fuzzer
+finished at 5,906 coverage points and 18,772 feature edges.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
