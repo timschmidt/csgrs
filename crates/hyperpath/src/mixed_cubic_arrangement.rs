@@ -32,7 +32,6 @@ use crate::bezier_arrangement::{
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_cubic_cell_graph,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::{Axis, LinePathSegment};
 
 /// Errors that prevent a trusted line/cubic-Bezier split schedule.
@@ -616,8 +615,6 @@ pub struct LineCubicBezierArrangementFacts {
     pub input_exact: RealExactSetFacts,
     /// Exact-set facts across emitted line and cubic fragment controls.
     pub fragment_exact: RealExactSetFacts,
-    /// Source provenance for the arrangement schedule.
-    pub provenance: PathProvenance,
 }
 
 /// Retained mixed line/cubic-Bezier arrangement schedule and cell graph.
@@ -691,21 +688,6 @@ pub fn arrange_line_segments_with_cubic_beziers(
     lines: &[LinePathSegment],
     curves: &[CubicBezier],
     policy: PredicatePolicy,
-) -> Result<LineCubicBezierArrangementReport, LineCubicBezierArrangementError> {
-    arrange_line_segments_with_cubic_beziers_and_provenance(
-        lines,
-        curves,
-        policy,
-        PathProvenance::native(),
-    )
-}
-
-/// Arrange retained line segments against retained cubic Beziers with provenance.
-pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
-    lines: &[LinePathSegment],
-    curves: &[CubicBezier],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
 ) -> Result<LineCubicBezierArrangementReport, LineCubicBezierArrangementError> {
     reject_degenerate_lines(lines, policy)?;
     let mut line_breakpoints = seed_line_breakpoints(lines);
@@ -823,7 +805,6 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
     let facts = LineCubicBezierArrangementFacts {
         input_exact: input_exact_facts(lines, curves),
         fragment_exact: fragment_exact_facts(&line_fragments, &cubic_fragments),
-        provenance,
     };
 
     Ok(LineCubicBezierArrangementReport {
@@ -2588,13 +2569,7 @@ fn cubic_subcurve_real(curve: &CubicBezier, start: &Real, end: &Real) -> CubicBe
             - (delta.clone() * end_derivative.x / third.clone()).expect("nonzero three"),
         end_point.y.clone() - (delta * end_derivative.y / third).expect("nonzero three"),
     );
-    CubicBezier::with_provenance(
-        start_point,
-        control0,
-        control1,
-        end_point,
-        curve.provenance(),
-    )
+    CubicBezier::new(start_point, control0, control1, end_point)
 }
 
 fn eval_cubic_real(curve: &CubicBezier, parameter: &Real) -> Point2 {

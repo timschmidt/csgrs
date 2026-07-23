@@ -29,8 +29,6 @@ before downstream crates accept the path as ready.
 
 - `LinePathSegment`, `CircularArc`, `ExplicitCircularArc`, Bezier types, and swept-line
   carriers describe path primitives and retained facts.
-- `PathProvenance`, `SourceGrid`, `ConstructionStamp`, and source-format/unit enums
-  preserve import and construction evidence.
 - Offset candidate types cover axis-aligned segments, cardinal arcs, explicit arcs, and
   sampled Bezier offsets.
 - CAM types describe rectangular pocket, bead, infill, support, and rectangular-region
@@ -48,11 +46,10 @@ before downstream crates accept the path as ready.
 
 ## Precision Model
 
-Path coordinates, widths, distances, offsets, and timing values use `Real`. `SourceGrid`
-converts fixed-grid source tokens directly to rationals, so KiCad, Gerber, Excellon,
-Specctra, and G-code imports do not pass through primitive floats just to become exact
-again. Explicit decimal tokens can be lifted with
-`PathProvenance::real_from_decimal_token` under the same rule. Clearance, tangency,
+Path coordinates, widths, distances, offsets, and timing values use `Real`. Import
+adapters should convert fixed-grid and decimal source tokens directly to rationals so
+KiCad, Gerber, Excellon, Specctra, and G-code inputs do not pass through primitive
+floats just to become exact again. Clearance, tangency,
 length, skew, area, and containment reports return certified
 status or explicit failure/unknown rather than manufacturing a tolerance decision.
 
@@ -116,15 +113,14 @@ Keep imported geometry, candidate construction, and certification reports separa
 ```rust,ignore
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    LinePathSegment, NetId, OffsetSide, PcbTrace, SourceGrid, SourceLengthUnit,
-    SweptLineSegment, TraceLayer, offset_axis_aligned_segment,
+    LinePathSegment, NetId, OffsetSide, PcbTrace, SweptLineSegment, TraceLayer,
+    offset_axis_aligned_segment,
 };
 use hyperreal::Real;
 
-let grid = SourceGrid::with_unit(1_000_000, SourceLengthUnit::Millimeter).unwrap();
 let centerline = LinePathSegment::new(
-    Point2::new(grid.real_from_units(0).unwrap(), grid.real_from_units(0).unwrap()),
-    Point2::new(grid.real_from_units(10_000_000).unwrap(), grid.real_from_units(0).unwrap()),
+    Point2::new(Real::from(0), Real::from(0)),
+    Point2::new(Real::from(10), Real::from(0)),
 );
 let offset = offset_axis_aligned_segment(
     &centerline,

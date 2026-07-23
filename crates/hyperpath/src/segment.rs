@@ -15,8 +15,6 @@ use hyperlimit::{
 };
 use hyperreal::{Real, RealExactSetFacts, RealSign, SymbolicDependencyMask};
 
-use crate::provenance::PathProvenance;
-
 /// Coordinate axis used by an axis-aligned path segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Axis {
@@ -63,18 +61,12 @@ pub struct LinePathSegment {
     end: Point2,
     bounds_min: Point2,
     bounds_max: Point2,
-    provenance: PathProvenance,
     facts: LinePathSegmentFacts,
 }
 
 impl LinePathSegment {
     /// Construct a segment and cache endpoint facts.
     pub fn new(start: Point2, end: Point2) -> Self {
-        Self::with_provenance(start, end, PathProvenance::native())
-    }
-
-    /// Construct a segment with source provenance.
-    pub fn with_provenance(start: Point2, end: Point2, provenance: PathProvenance) -> Self {
         let (bounds_min, bounds_max) = bounds_for_points(&start, &end);
         let facts = line_segment_facts(&start, &end);
         Self {
@@ -82,7 +74,6 @@ impl LinePathSegment {
             end,
             bounds_min,
             bounds_max,
-            provenance,
             facts,
         }
     }
@@ -100,11 +91,6 @@ impl LinePathSegment {
     /// Return cached structural facts.
     pub const fn facts(&self) -> &LinePathSegmentFacts {
         &self.facts
-    }
-
-    /// Return path source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.provenance
     }
 
     /// Return the exact minimum corner of the segment bounds.

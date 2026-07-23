@@ -13,7 +13,6 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperreal::{Rational, Real, RealExactSetFacts, RealSign};
 
-use crate::provenance::PathProvenance;
 use crate::segment::{Axis, LinePathSegment};
 
 /// Direction of traversal for a circular arc.
@@ -310,8 +309,6 @@ pub struct CircularArcFacts {
     pub radius_squared: Real,
     /// Number of quarter turns in the directed arc.
     pub quarter_turns: u8,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Cached facts for an explicit-endpoint circular arc.
@@ -331,8 +328,6 @@ pub struct ExplicitCircularArcFacts {
     pub sweep_class: ExplicitArcSweepClass,
     /// Whether start and end are structurally the same point.
     pub known_full_circle: bool,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact cardinal circular arc.
@@ -377,7 +372,7 @@ pub enum CircularArcError {
 }
 
 impl CircularArc {
-    /// Construct a cardinal circular arc with native provenance.
+    /// Construct a cardinal circular arc.
     pub fn cardinal(
         center: Point2,
         radius: Real,
@@ -385,29 +380,8 @@ impl CircularArc {
         end: CardinalPoint,
         direction: ArcDirection,
     ) -> Result<Self, CircularArcError> {
-        Self::cardinal_with_provenance(
-            center,
-            radius,
-            start,
-            end,
-            direction,
-            PathProvenance::native(),
-        )
-    }
-
-    /// Construct a cardinal circular arc with source provenance.
-    ///
-    /// Equal start and end cardinal points represent a full circle in the
-    /// chosen direction. This keeps full-circle drill/routing and contour arcs
-    /// expressible without inventing an approximate angle representation.
-    pub fn cardinal_with_provenance(
-        center: Point2,
-        radius: Real,
-        start_cardinal: CardinalPoint,
-        end_cardinal: CardinalPoint,
-        direction: ArcDirection,
-        provenance: PathProvenance,
-    ) -> Result<Self, CircularArcError> {
+        let start_cardinal = start;
+        let end_cardinal = end;
         match radius.structural_facts().sign {
             Some(RealSign::Negative) => return Err(CircularArcError::NegativeRadius),
             Some(RealSign::Zero) => return Err(CircularArcError::DegenerateRadius),
@@ -417,7 +391,6 @@ impl CircularArc {
             exact: Real::exact_set_facts([&center.x, &center.y, &radius]),
             radius_squared: radius.clone() * radius.clone(),
             quarter_turns: quarter_turns(start_cardinal, end_cardinal, direction),
-            provenance,
         };
         Ok(Self {
             center,
@@ -457,11 +430,6 @@ impl CircularArc {
     /// Return cached facts.
     pub const fn facts(&self) -> &CircularArcFacts {
         &self.facts
-    }
-
-    /// Return path source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 
     /// Return exact start point.
@@ -520,37 +488,13 @@ impl CircularArc {
 }
 
 impl ExplicitCircularArc {
-    /// Construct an explicit circular arc with native provenance.
+    /// Construct an explicit circular arc.
     pub fn new(
         center: Point2,
         radius: Real,
         start: Point2,
         end: Point2,
         direction: ArcDirection,
-    ) -> Result<Self, CircularArcError> {
-        Self::with_provenance(
-            center,
-            radius,
-            start,
-            end,
-            direction,
-            PathProvenance::native(),
-        )
-    }
-
-    /// Construct an explicit circular arc with source provenance.
-    ///
-    /// Both endpoints must satisfy the exact circle equation
-    /// `(x - cx)^2 + (y - cy)^2 = radius^2`. The constructor rejects off-circle
-    /// endpoints instead of projecting them, because projection would be a
-    /// numeric repair step outside Yap's object construction boundary.
-    pub fn with_provenance(
-        center: Point2,
-        radius: Real,
-        start: Point2,
-        end: Point2,
-        direction: ArcDirection,
-        provenance: PathProvenance,
     ) -> Result<Self, CircularArcError> {
         match radius.structural_facts().sign {
             Some(RealSign::Negative) => return Err(CircularArcError::NegativeRadius),
@@ -578,7 +522,6 @@ impl ExplicitCircularArc {
             radial_cross,
             sweep_class,
             known_full_circle,
-            provenance,
         };
         Ok(Self {
             center,
@@ -618,11 +561,6 @@ impl ExplicitCircularArc {
     /// Return cached facts.
     pub const fn facts(&self) -> &ExplicitCircularArcFacts {
         &self.facts
-    }
-
-    /// Return path source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 
     /// Return exact chord length squared.

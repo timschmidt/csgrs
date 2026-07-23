@@ -1,23 +1,14 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    LinePathSegment, NetId, OffsetSide, PcbTrace, SourceGrid, SourceLengthUnit, SweptLineSegment,
-    TraceLayer, offset_axis_aligned_segment,
+    LinePathSegment, NetId, OffsetSide, PcbTrace, SweptLineSegment, TraceLayer,
+    offset_axis_aligned_segment,
 };
 use hyperreal::Real;
 
 fn main() -> Result<(), String> {
-    let grid = SourceGrid::with_unit(1_000_000, SourceLengthUnit::Millimeter)
-        .ok_or("invalid source grid")?;
     let centerline = LinePathSegment::new(
-        Point2::new(
-            grid.real_from_units(0).ok_or("invalid x coordinate")?,
-            grid.real_from_units(0).ok_or("invalid y coordinate")?,
-        ),
-        Point2::new(
-            grid.real_from_units(10_000_000)
-                .ok_or("invalid x coordinate")?,
-            grid.real_from_units(0).ok_or("invalid y coordinate")?,
-        ),
+        Point2::new(Real::from(0), Real::from(0)),
+        Point2::new(Real::from(10), Real::from(0)),
     );
     let offset = offset_axis_aligned_segment(
         &centerline,

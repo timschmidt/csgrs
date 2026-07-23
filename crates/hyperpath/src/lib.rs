@@ -25,7 +25,6 @@ pub mod pcb_oriented;
 pub mod pcb_orthogonal_pad;
 pub mod ph;
 pub mod ph_smoothing;
-pub mod provenance;
 pub mod routing;
 pub mod segment;
 pub mod solve;
@@ -50,10 +49,8 @@ pub use arrangement::{
     LineArrangementCellEdge, LineArrangementCellFace, LineArrangementCellFaceClass,
     LineArrangementCellGraph, LineArrangementCellVertex, LineArrangementError,
     LineArrangementEvent, LineArrangementEventClass, LineArrangementFacts, LineArrangementFragment,
-    LineArrangementHalfEdge, LineArrangementReport, arrange_explicit_arcs,
-    arrange_explicit_arcs_with_provenance, arrange_line_segments,
+    LineArrangementHalfEdge, LineArrangementReport, arrange_explicit_arcs, arrange_line_segments,
     arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_explicit_arcs_and_provenance, arrange_line_segments_with_provenance,
 };
 pub use bezier::{
     BezierParameter, BezierParameterError, CubicBezier, CubicBezierFacts, HigherOrderBezier,
@@ -77,10 +74,8 @@ pub use bezier_arrangement::{
     LineRationalQuadraticBezierSupportOverlap,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, QuadraticBezierArrangementFragment,
     QuadraticBezierArrangementReport, RationalQuadraticBezierArrangementFragment,
-    RationalQuadraticBezierArrangementReport, arrange_cubic_beziers,
-    arrange_cubic_beziers_with_provenance, arrange_quadratic_beziers,
-    arrange_quadratic_beziers_with_provenance, arrange_rational_quadratic_beziers,
-    arrange_rational_quadratic_beziers_with_provenance, intersect_axis_aligned_line_cubic_bezier,
+    RationalQuadraticBezierArrangementReport, arrange_cubic_beziers, arrange_quadratic_beziers,
+    arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_cubic_bezier,
     intersect_line_quadratic_bezier, intersect_line_rational_quadratic_bezier,
@@ -109,7 +104,6 @@ pub use mixed_bezier_arrangement::{
     LineQuadraticBezierArrangementFacts, LineQuadraticBezierArrangementReport,
     MixedLineArrangementBreakpoint, MixedLineArrangementFragment, QuadraticBezierRealBreakpoint,
     QuadraticBezierRealFragment, arrange_line_segments_with_quadratic_beziers,
-    arrange_line_segments_with_quadratic_beziers_and_provenance,
 };
 pub use mixed_conic_arrangement::{
     LineRationalQuadraticBezierAlgebraicBreakpoint,
@@ -129,7 +123,6 @@ pub use mixed_conic_arrangement::{
     LineRationalQuadraticBezierSupportOverlapCandidate, MixedConicLineArrangementBreakpoint,
     MixedConicLineArrangementFragment, RationalQuadraticBezierRealBreakpoint,
     RationalQuadraticBezierRealFragment, arrange_line_segments_with_rational_quadratic_beziers,
-    arrange_line_segments_with_rational_quadratic_beziers_and_provenance,
 };
 pub use mixed_cubic_arrangement::{
     CubicBezierRealBreakpoint, CubicBezierRealFragment, LineCubicBezierAlgebraicBreakpoint,
@@ -153,7 +146,6 @@ pub use mixed_cubic_arrangement::{
     LineCubicBezierExactAlgebraicOverlapBreakpointPromotion,
     LineCubicBezierSupportOverlapCandidate, MixedCubicLineArrangementBreakpoint,
     MixedCubicLineArrangementFragment, arrange_line_segments_with_cubic_beziers,
-    arrange_line_segments_with_cubic_beziers_and_provenance,
 };
 pub use mixed_curve_arrangement::{
     LineMixedBezierArrangementError, LineMixedBezierArrangementFacts,
@@ -161,10 +153,7 @@ pub use mixed_curve_arrangement::{
     LineMixedRationalQuadraticAlgebraicEvidence, MixedCurveEndpointTangentClass,
     MixedCurveFragmentEndpoint, MixedCurveFragmentRef, MixedCurveFragmentSeparation,
     MixedCurveFragmentSeparationClass, MixedCurveSourceRef,
-    arrange_line_segments_with_mixed_beziers,
-    arrange_line_segments_with_mixed_beziers_and_provenance,
-    arrange_line_segments_with_mixed_curves,
-    arrange_line_segments_with_mixed_curves_and_provenance,
+    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
 };
 pub use offset::{
     ArcOffsetCandidate, ArcOffsetError, BezierOffsetError, BezierOffsetSampleCandidate,
@@ -222,9 +211,6 @@ pub use ph::{
 pub use ph_smoothing::{
     QuinticPhG1SmoothingReport, certify_quintic_ph_g1_smoothing,
     certify_quintic_ph_g1_smoothing_between,
-};
-pub use provenance::{
-    ConstructionStamp, PathProvenance, PathSourceFormat, SourceGrid, SourceLengthUnit,
 };
 pub use routing::{
     AccelerationLimitedFeedProfileClass, AccelerationLimitedFeedTimeReport, ConstantFeedTimeReport,

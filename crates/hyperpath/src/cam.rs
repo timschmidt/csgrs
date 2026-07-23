@@ -14,8 +14,6 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperreal::{Real, RealExactSetFacts, RealSign};
 
-use crate::provenance::PathProvenance;
-
 mod pocket_link;
 mod rest;
 
@@ -33,7 +31,6 @@ pub use rest::{
 pub struct RectangularPocket {
     min: Point2,
     max: Point2,
-    provenance: PathProvenance,
     exact: RealExactSetFacts,
 }
 
@@ -273,7 +270,7 @@ pub struct RectangularRegionIntersection {
 /// for axis-aligned rectangular inputs. The pieces are intentionally emitted as
 /// a planning carrier rather than simplified into an arbitrary polygon; later
 /// arrangement/linking stages can consume the pieces with their exact
-/// provenance and relation status intact.
+/// relation status intact.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RectangularRegionDifference {
     /// Region being cut.
@@ -298,27 +295,13 @@ pub enum RegionBooleanError {
 }
 
 impl RectangularPocket {
-    /// Construct an exact rectangular pocket with native provenance.
+    /// Construct an exact rectangular pocket.
     pub fn new(min: Point2, max: Point2) -> Result<Self, PocketPlanError> {
-        Self::with_provenance(min, max, PathProvenance::native())
-    }
-
-    /// Construct an exact rectangular pocket with source provenance.
-    pub fn with_provenance(
-        min: Point2,
-        max: Point2,
-        provenance: PathProvenance,
-    ) -> Result<Self, PocketPlanError> {
         if !ordered_closed(&min.x, &max.x) || !ordered_closed(&min.y, &max.y) {
             return Err(PocketPlanError::UnorderedBounds);
         }
         let exact = Real::exact_set_facts([&min.x, &min.y, &max.x, &max.y]);
-        Ok(Self {
-            min,
-            max,
-            provenance,
-            exact,
-        })
+        Ok(Self { min, max, exact })
     }
 
     /// Return exact minimum corner.
@@ -329,11 +312,6 @@ impl RectangularPocket {
     /// Return exact maximum corner.
     pub const fn max(&self) -> &Point2 {
         &self.max
-    }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.provenance
     }
 
     /// Return exact-set facts for pocket coordinates.
@@ -466,15 +444,13 @@ pub fn build_rectangular_bead_plan(
         }
 
         let segment = match axis {
-            BeadFillAxis::Horizontal => crate::segment::LinePathSegment::with_provenance(
+            BeadFillAxis::Horizontal => crate::segment::LinePathSegment::new(
                 Point2::new(region.min.x.clone(), pitch_position.clone()),
                 Point2::new(region.max.x.clone(), pitch_position.clone()),
-                region.provenance,
             ),
-            BeadFillAxis::Vertical => crate::segment::LinePathSegment::with_provenance(
+            BeadFillAxis::Vertical => crate::segment::LinePathSegment::new(
                 Point2::new(pitch_position.clone(), region.min.y.clone()),
                 Point2::new(pitch_position.clone(), region.max.y.clone()),
-                region.provenance,
             ),
         };
         beads.push(AdditiveBeadLine {
@@ -518,10 +494,9 @@ pub fn build_rectangular_serpentine_infill_graph(
             if index % 2 == 0 {
                 bead.segment.clone()
             } else {
-                crate::segment::LinePathSegment::with_provenance(
+                crate::segment::LinePathSegment::new(
                     bead.segment.end().clone(),
                     bead.segment.start().clone(),
-                    bead.segment.provenance(),
                 )
             }
         })
@@ -531,11 +506,8 @@ pub fn build_rectangular_serpentine_infill_graph(
     for (index, pair) in deposition_segments.windows(2).enumerate() {
         let current = &pair[0];
         let next = &pair[1];
-        let connector = crate::segment::LinePathSegment::with_provenance(
-            current.end().clone(),
-            next.start().clone(),
-            plan.region.provenance,
-        );
+        let connector =
+            crate::segment::LinePathSegment::new(current.end().clone(), next.start().clone());
         if !points_equal(current.end(), connector.start(), policy)
             || !points_equal(next.start(), connector.end(), policy)
         {
@@ -581,9 +553,8 @@ pub fn build_rectangular_support_plan(
         overhang.max.x.clone() + xy_margin.clone(),
         overhang.max.y.clone() + xy_margin.clone(),
     );
-    let footprint =
-        RectangularPocket::with_provenance(footprint_min, footprint_max, overhang.provenance)
-            .map_err(|_| SupportPlanError::InvalidFootprint)?;
+    let footprint = RectangularPocket::new(footprint_min, footprint_max)
+        .map_err(|_| SupportPlanError::InvalidFootprint)?;
     let status = classify_rect_containment(&footprint, &base, policy);
 
     Ok(RectangularSupportPlan {
@@ -620,13 +591,13 @@ pub fn intersect_rectangular_regions(
             (None, RectangularRegionRelation::Disjoint)
         }
         (Ordering::Equal, _) | (_, Ordering::Equal) => {
-            let intersection = RectangularPocket::with_provenance(min, max, first.provenance)
-                .map_err(|_| RegionBooleanError::InvalidRegion)?;
+            let intersection =
+                RectangularPocket::new(min, max).map_err(|_| RegionBooleanError::InvalidRegion)?;
             (Some(intersection), RectangularRegionRelation::Touching)
         }
         (Ordering::Less, Ordering::Less) => {
-            let intersection = RectangularPocket::with_provenance(min, max, first.provenance)
-                .map_err(|_| RegionBooleanError::InvalidRegion)?;
+            let intersection =
+                RectangularPocket::new(min, max).map_err(|_| RegionBooleanError::InvalidRegion)?;
             (Some(intersection), RectangularRegionRelation::AreaOverlap)
         }
     };
@@ -670,28 +641,24 @@ pub fn subtract_rectangular_region(
         &mut remainder,
         Point2::new(subject.min.x.clone(), subject.min.y.clone()),
         Point2::new(intersection.min.x.clone(), subject.max.y.clone()),
-        subject.provenance,
         policy,
     )?;
     push_positive_rect(
         &mut remainder,
         Point2::new(intersection.max.x.clone(), subject.min.y.clone()),
         Point2::new(subject.max.x.clone(), subject.max.y.clone()),
-        subject.provenance,
         policy,
     )?;
     push_positive_rect(
         &mut remainder,
         Point2::new(intersection.min.x.clone(), subject.min.y.clone()),
         Point2::new(intersection.max.x.clone(), intersection.min.y.clone()),
-        subject.provenance,
         policy,
     )?;
     push_positive_rect(
         &mut remainder,
         Point2::new(intersection.min.x.clone(), intersection.max.y.clone()),
         Point2::new(intersection.max.x.clone(), subject.max.y.clone()),
-        subject.provenance,
         policy,
     )?;
 
@@ -757,14 +724,11 @@ fn push_positive_rect(
     output: &mut Vec<RectangularPocket>,
     min: Point2,
     max: Point2,
-    provenance: PathProvenance,
     policy: PredicatePolicy,
 ) -> Result<(), RegionBooleanError> {
     if positive_extent(&min.x, &max.x, policy)? && positive_extent(&min.y, &max.y, policy)? {
-        output.push(
-            RectangularPocket::with_provenance(min, max, provenance)
-                .map_err(|_| RegionBooleanError::InvalidRegion)?,
-        );
+        output
+            .push(RectangularPocket::new(min, max).map_err(|_| RegionBooleanError::InvalidRegion)?);
     }
     Ok(())
 }

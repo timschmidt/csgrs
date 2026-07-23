@@ -2,15 +2,14 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
-    ConstructionStamp, CubicBezier, CubicPythagoreanHodograph, ExplicitCircularArc,
-    FeedPathElement, HigherOrderBezier, JerkRampPhaseProposal, JerkRampSpanProposal,
-    LinePathSegment, LookaheadFeedSchedule, MeanderKeepout, MeanderObstacle,
-    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
-    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    CubicBezier, CubicPythagoreanHodograph, ExplicitCircularArc, FeedPathElement,
+    HigherOrderBezier, JerkRampPhaseProposal, JerkRampSpanProposal, LinePathSegment,
+    LookaheadFeedSchedule, MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId,
+    OffsetSide, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, QuadraticBezier, QuinticPythagoreanHodograph, RationalQuadraticBezier,
-    RectangularPocket, SourceLengthUnit, SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord,
+    RectangularPocket, SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord,
     SpecctraGridKeepoutShape, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
     SpecctraNetAlias, SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent,
     ViaFabricationPolicy, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
@@ -89,20 +88,6 @@ fn trace(net: u32, start: Point2, end: Point2) -> PcbTrace {
 }
 
 fn path_predicates(c: &mut Criterion) {
-    let provenance = PathProvenance::fixed_grid_with_unit(
-        PathSourceFormat::Gerber,
-        1_000_000,
-        SourceLengthUnit::Millimeter,
-    )
-    .unwrap();
-    c.bench_function("source_grid_token_exact_lift", |b| {
-        b.iter(|| provenance.real_from_units(123_456))
-    });
-    let stamp = ConstructionStamp::new(17, 29);
-    let stamped = provenance.with_construction(stamp);
-    c.bench_function("construction_freshness_check", |b| {
-        b.iter(|| stamped.is_fresh_for(stamp))
-    });
     let tangent_segment = LinePathSegment::new(p(0, 0), p(1000, 250));
     c.bench_function("line_segment_exact_tangent", |b| {
         b.iter(|| tangent_segment.start_tangent())

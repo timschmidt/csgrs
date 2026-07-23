@@ -24,7 +24,7 @@ use hyperreal::{Real, RealExactSetFacts};
 use crate::arc::{ExplicitArcPointClassification, ExplicitCircularArc};
 use crate::arrangement::{
     ExplicitArcArrangementFragment, LineArcArrangementEvent, LineArrangementBreakpoint,
-    LineArrangementError, arrange_line_segments_with_explicit_arcs_and_provenance,
+    LineArrangementError, arrange_line_segments_with_explicit_arcs,
 };
 use crate::bezier::{BezierParameter, CubicBezier, QuadraticBezier, RationalQuadraticBezier};
 use crate::curve_cell::{
@@ -33,7 +33,7 @@ use crate::curve_cell::{
 use crate::mixed_bezier_arrangement::{
     LineQuadraticBezierArrangementError, LineQuadraticBezierArrangementEvent,
     MixedLineArrangementBreakpoint, MixedLineArrangementFragment, QuadraticBezierRealFragment,
-    arrange_line_segments_with_quadratic_beziers_and_provenance,
+    arrange_line_segments_with_quadratic_beziers,
 };
 use crate::mixed_conic_arrangement::{
     LineRationalQuadraticBezierAlgebraicBreakpoint,
@@ -44,8 +44,7 @@ use crate::mixed_conic_arrangement::{
     LineRationalQuadraticBezierArrangementEvent,
     LineRationalQuadraticBezierExactAlgebraicBreakpointPromotion,
     LineRationalQuadraticBezierSupportOverlapCandidate, MixedConicLineArrangementBreakpoint,
-    RationalQuadraticBezierRealFragment,
-    arrange_line_segments_with_rational_quadratic_beziers_and_provenance,
+    RationalQuadraticBezierRealFragment, arrange_line_segments_with_rational_quadratic_beziers,
 };
 use crate::mixed_cubic_arrangement::{
     CubicBezierRealFragment, LineCubicBezierAlgebraicBreakpoint,
@@ -58,9 +57,8 @@ use crate::mixed_cubic_arrangement::{
     LineCubicBezierArrangementEvent, LineCubicBezierExactAlgebraicBreakpointPromotion,
     LineCubicBezierExactAlgebraicOverlapBreakpointPromotion,
     LineCubicBezierSupportOverlapCandidate, MixedCubicLineArrangementBreakpoint,
-    arrange_line_segments_with_cubic_beziers_and_provenance,
+    arrange_line_segments_with_cubic_beziers,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
 /// Errors that prevent the bounded mixed-family scheduler from certifying topology.
@@ -227,8 +225,6 @@ pub struct LineMixedBezierArrangementFacts {
     pub input_exact: RealExactSetFacts,
     /// Exact-set facts across emitted line and curve fragment controls.
     pub fragment_exact: RealExactSetFacts,
-    /// Source provenance for this schedule.
-    pub provenance: PathProvenance,
 }
 
 /// Retained algebraic evidence copied from the line/cubic sub-scheduler.
@@ -370,34 +366,13 @@ pub fn arrange_line_segments_with_mixed_beziers(
     rational_quadratic_curves: &[RationalQuadraticBezier],
     policy: PredicatePolicy,
 ) -> Result<LineMixedBezierArrangementReport, LineMixedBezierArrangementError> {
-    arrange_line_segments_with_mixed_curves_and_provenance(
+    arrange_line_segments_with_mixed_curves(
         lines,
         &[],
         quadratic_curves,
         cubic_curves,
         rational_quadratic_curves,
         policy,
-        PathProvenance::native(),
-    )
-}
-
-/// Arrange retained line segments against separated quadratic/cubic/conic families with provenance.
-pub fn arrange_line_segments_with_mixed_beziers_and_provenance(
-    lines: &[LinePathSegment],
-    quadratic_curves: &[QuadraticBezier],
-    cubic_curves: &[CubicBezier],
-    rational_quadratic_curves: &[RationalQuadraticBezier],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
-) -> Result<LineMixedBezierArrangementReport, LineMixedBezierArrangementError> {
-    arrange_line_segments_with_mixed_curves_and_provenance(
-        lines,
-        &[],
-        quadratic_curves,
-        cubic_curves,
-        rational_quadratic_curves,
-        policy,
-        provenance,
     )
 }
 
@@ -410,52 +385,19 @@ pub fn arrange_line_segments_with_mixed_curves(
     rational_quadratic_curves: &[RationalQuadraticBezier],
     policy: PredicatePolicy,
 ) -> Result<LineMixedBezierArrangementReport, LineMixedBezierArrangementError> {
-    arrange_line_segments_with_mixed_curves_and_provenance(
+    let arc_report = arrange_line_segments_with_explicit_arcs(lines, arcs, policy)
+        .map_err(LineMixedBezierArrangementError::Arc)?;
+    let quadratic_report =
+        arrange_line_segments_with_quadratic_beziers(lines, quadratic_curves, policy)
+            .map_err(LineMixedBezierArrangementError::Quadratic)?;
+    let cubic_report = arrange_line_segments_with_cubic_beziers(lines, cubic_curves, policy)
+        .map_err(LineMixedBezierArrangementError::Cubic)?;
+    let rational_quadratic_report = arrange_line_segments_with_rational_quadratic_beziers(
         lines,
-        arcs,
-        quadratic_curves,
-        cubic_curves,
         rational_quadratic_curves,
         policy,
-        PathProvenance::native(),
     )
-}
-
-/// Arrange retained line segments against separated explicit arcs and Bezier/conic families with provenance.
-pub fn arrange_line_segments_with_mixed_curves_and_provenance(
-    lines: &[LinePathSegment],
-    arcs: &[ExplicitCircularArc],
-    quadratic_curves: &[QuadraticBezier],
-    cubic_curves: &[CubicBezier],
-    rational_quadratic_curves: &[RationalQuadraticBezier],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
-) -> Result<LineMixedBezierArrangementReport, LineMixedBezierArrangementError> {
-    let arc_report =
-        arrange_line_segments_with_explicit_arcs_and_provenance(lines, arcs, policy, provenance)
-            .map_err(LineMixedBezierArrangementError::Arc)?;
-    let quadratic_report = arrange_line_segments_with_quadratic_beziers_and_provenance(
-        lines,
-        quadratic_curves,
-        policy,
-        provenance,
-    )
-    .map_err(LineMixedBezierArrangementError::Quadratic)?;
-    let cubic_report = arrange_line_segments_with_cubic_beziers_and_provenance(
-        lines,
-        cubic_curves,
-        policy,
-        provenance,
-    )
-    .map_err(LineMixedBezierArrangementError::Cubic)?;
-    let rational_quadratic_report =
-        arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
-            lines,
-            rational_quadratic_curves,
-            policy,
-            provenance,
-        )
-        .map_err(LineMixedBezierArrangementError::RationalQuadratic)?;
+    .map_err(LineMixedBezierArrangementError::RationalQuadratic)?;
 
     let mut line_breakpoints = seed_line_breakpoints(lines);
     merge_arc_line_breakpoints(&mut line_breakpoints, &arc_report.line_breakpoints, policy)?;
@@ -513,7 +455,6 @@ pub fn arrange_line_segments_with_mixed_curves_and_provenance(
             &cubic_report.cubic_fragments,
             &rational_quadratic_report.conic_fragments,
         ),
-        provenance,
     };
 
     Ok(LineMixedBezierArrangementReport {

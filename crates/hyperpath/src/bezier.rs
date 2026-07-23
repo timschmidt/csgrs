@@ -13,8 +13,6 @@
 use hyperlimit::Point2;
 use hyperreal::{Rational, Real, RealExactSetFacts, RealSign};
 
-use crate::provenance::PathProvenance;
-
 /// Exact rational Bezier parameter in the closed interval `[0, 1]`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BezierParameter {
@@ -66,8 +64,6 @@ pub struct QuadraticBezierFacts {
     pub chord_length_squared: Real,
     /// Whether all three control points are exactly equal.
     pub known_degenerate: bool,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact quadratic Bezier path segment.
@@ -86,8 +82,6 @@ pub struct RationalQuadraticBezierFacts {
     pub exact: RealExactSetFacts,
     /// Squared chord length from start to end.
     pub chord_length_squared: Real,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact rational quadratic Bezier segment.
@@ -116,8 +110,6 @@ pub struct CubicBezierFacts {
     pub chord_length_squared: Real,
     /// Whether all four control points are exactly equal.
     pub known_degenerate: bool,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact cubic Bezier path segment.
@@ -147,8 +139,6 @@ pub struct HigherOrderBezierFacts {
     pub chord_length_squared: Real,
     /// Whether all control points are exactly equal.
     pub known_degenerate: bool,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact quartic/quintic Bezier path segment.
@@ -184,20 +174,9 @@ pub enum RationalQuadraticBezierError {
 }
 
 impl CubicBezier {
-    /// Construct a cubic Bezier with native provenance.
+    /// Construct a cubic Bezier.
     pub fn new(start: Point2, control0: Point2, control1: Point2, end: Point2) -> Self {
-        Self::with_provenance(start, control0, control1, end, PathProvenance::native())
-    }
-
-    /// Construct a cubic Bezier with source provenance.
-    pub fn with_provenance(
-        start: Point2,
-        control0: Point2,
-        control1: Point2,
-        end: Point2,
-        provenance: PathProvenance,
-    ) -> Self {
-        let facts = cubic_bezier_facts(&start, &control0, &control1, &end, provenance);
+        let facts = cubic_bezier_facts(&start, &control0, &control1, &end);
         Self {
             start,
             control0,
@@ -230,11 +209,6 @@ impl CubicBezier {
     /// Return cached facts.
     pub const fn facts(&self) -> &CubicBezierFacts {
         &self.facts
-    }
-
-    /// Return path source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 
     /// Evaluate the cubic Bezier at an exact rational parameter.
@@ -309,19 +283,9 @@ impl CubicBezier {
 }
 
 impl QuadraticBezier {
-    /// Construct a quadratic Bezier with native provenance.
+    /// Construct a quadratic Bezier.
     pub fn new(start: Point2, control: Point2, end: Point2) -> Self {
-        Self::with_provenance(start, control, end, PathProvenance::native())
-    }
-
-    /// Construct a quadratic Bezier with source provenance.
-    pub fn with_provenance(
-        start: Point2,
-        control: Point2,
-        end: Point2,
-        provenance: PathProvenance,
-    ) -> Self {
-        let facts = quadratic_bezier_facts(&start, &control, &end, provenance);
+        let facts = quadratic_bezier_facts(&start, &control, &end);
         Self {
             start,
             control,
@@ -348,11 +312,6 @@ impl QuadraticBezier {
     /// Return cached facts.
     pub const fn facts(&self) -> &QuadraticBezierFacts {
         &self.facts
-    }
-
-    /// Return path source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 
     /// Evaluate the Bezier at an exact rational parameter.
@@ -411,7 +370,7 @@ impl QuadraticBezier {
 }
 
 impl HigherOrderBezier {
-    /// Construct an exact quartic Bezier with native provenance.
+    /// Construct an exact quartic Bezier.
     pub fn quartic(
         start: Point2,
         control0: Point2,
@@ -419,14 +378,11 @@ impl HigherOrderBezier {
         control2: Point2,
         end: Point2,
     ) -> Self {
-        Self::with_provenance(
-            vec![start, control0, control1, control2, end],
-            PathProvenance::native(),
-        )
-        .expect("quartic constructor supplies five control points")
+        Self::try_new(vec![start, control0, control1, control2, end])
+            .expect("quartic constructor supplies five control points")
     }
 
-    /// Construct an exact quintic Bezier with native provenance.
+    /// Construct an exact quintic Bezier.
     pub fn quintic(
         start: Point2,
         control0: Point2,
@@ -435,18 +391,12 @@ impl HigherOrderBezier {
         control3: Point2,
         end: Point2,
     ) -> Self {
-        Self::with_provenance(
-            vec![start, control0, control1, control2, control3, end],
-            PathProvenance::native(),
-        )
-        .expect("quintic constructor supplies six control points")
+        Self::try_new(vec![start, control0, control1, control2, control3, end])
+            .expect("quintic constructor supplies six control points")
     }
 
     /// Construct a quartic or quintic Bezier from exact control points.
-    pub fn with_provenance(
-        control_points: Vec<Point2>,
-        provenance: PathProvenance,
-    ) -> Result<Self, HigherOrderBezierError> {
+    pub fn try_new(control_points: Vec<Point2>) -> Result<Self, HigherOrderBezierError> {
         let degree = control_points
             .len()
             .checked_sub(1)
@@ -454,7 +404,7 @@ impl HigherOrderBezier {
         if degree != 4 && degree != 5 {
             return Err(HigherOrderBezierError::UnsupportedDegree);
         }
-        let facts = higher_order_bezier_facts(&control_points, provenance);
+        let facts = higher_order_bezier_facts(&control_points);
         Ok(Self {
             control_points,
             facts,
@@ -479,11 +429,6 @@ impl HigherOrderBezier {
     /// Return cached facts.
     pub const fn facts(&self) -> &HigherOrderBezierFacts {
         &self.facts
-    }
-
-    /// Return path source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 
     /// Evaluate the curve at an exact rational parameter.
@@ -532,35 +477,17 @@ impl HigherOrderBezier {
 }
 
 impl RationalQuadraticBezier {
-    /// Construct a rational quadratic Bezier with native provenance.
+    /// Construct a rational quadratic Bezier.
     pub fn new(
         start: Point2,
         control: Point2,
         end: Point2,
         control_weight: Real,
     ) -> Result<Self, RationalQuadraticBezierError> {
-        Self::with_provenance(
-            start,
-            control,
-            end,
-            control_weight,
-            PathProvenance::native(),
-        )
-    }
-
-    /// Construct a rational quadratic Bezier with source provenance.
-    pub fn with_provenance(
-        start: Point2,
-        control: Point2,
-        end: Point2,
-        control_weight: Real,
-        provenance: PathProvenance,
-    ) -> Result<Self, RationalQuadraticBezierError> {
         if control_weight.structural_facts().sign == Some(RealSign::Negative) {
             return Err(RationalQuadraticBezierError::NegativeWeight);
         }
-        let facts =
-            rational_quadratic_bezier_facts(&start, &control, &end, &control_weight, provenance);
+        let facts = rational_quadratic_bezier_facts(&start, &control, &end, &control_weight);
         Ok(Self {
             start,
             control,
@@ -593,11 +520,6 @@ impl RationalQuadraticBezier {
     /// Return cached facts.
     pub const fn facts(&self) -> &RationalQuadraticBezierFacts {
         &self.facts
-    }
-
-    /// Return path source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 
     /// Evaluate the rational quadratic at an exact rational parameter.
@@ -684,12 +606,7 @@ impl RationalQuadraticBezier {
     }
 }
 
-fn quadratic_bezier_facts(
-    start: &Point2,
-    control: &Point2,
-    end: &Point2,
-    provenance: PathProvenance,
-) -> QuadraticBezierFacts {
+fn quadratic_bezier_facts(start: &Point2, control: &Point2, end: &Point2) -> QuadraticBezierFacts {
     let dx = end.x.clone() - start.x.clone();
     let dy = end.y.clone() - start.y.clone();
     QuadraticBezierFacts {
@@ -698,7 +615,6 @@ fn quadratic_bezier_facts(
         ]),
         chord_length_squared: Real::signed_product_sum([true, true], [[&dx, &dx], [&dy, &dy]]),
         known_degenerate: start == control && control == end,
-        provenance,
     }
 }
 
@@ -707,7 +623,6 @@ fn cubic_bezier_facts(
     control0: &Point2,
     control1: &Point2,
     end: &Point2,
-    provenance: PathProvenance,
 ) -> CubicBezierFacts {
     let dx = end.x.clone() - start.x.clone();
     let dy = end.y.clone() - start.y.clone();
@@ -724,14 +639,10 @@ fn cubic_bezier_facts(
         ]),
         chord_length_squared: Real::signed_product_sum([true, true], [[&dx, &dx], [&dy, &dy]]),
         known_degenerate: start == control0 && control0 == control1 && control1 == end,
-        provenance,
     }
 }
 
-fn higher_order_bezier_facts(
-    control_points: &[Point2],
-    provenance: PathProvenance,
-) -> HigherOrderBezierFacts {
+fn higher_order_bezier_facts(control_points: &[Point2]) -> HigherOrderBezierFacts {
     let start = &control_points[0];
     let end = &control_points[control_points.len() - 1];
     let dx = end.x.clone() - start.x.clone();
@@ -745,7 +656,6 @@ fn higher_order_bezier_facts(
         degree: control_points.len() - 1,
         chord_length_squared: Real::signed_product_sum([true, true], [[&dx, &dx], [&dy, &dy]]),
         known_degenerate: control_points.windows(2).all(|pair| pair[0] == pair[1]),
-        provenance,
     }
 }
 
@@ -754,7 +664,6 @@ fn rational_quadratic_bezier_facts(
     control: &Point2,
     end: &Point2,
     control_weight: &Real,
-    provenance: PathProvenance,
 ) -> RationalQuadraticBezierFacts {
     let dx = end.x.clone() - start.x.clone();
     let dy = end.y.clone() - start.y.clone();
@@ -769,7 +678,6 @@ fn rational_quadratic_bezier_facts(
             control_weight,
         ]),
         chord_length_squared: Real::signed_product_sum([true, true], [[&dx, &dx], [&dy, &dy]]),
-        provenance,
     }
 }
 

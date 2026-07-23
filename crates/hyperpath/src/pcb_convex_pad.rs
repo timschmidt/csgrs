@@ -17,7 +17,6 @@ use crate::pcb::{
     BoardContourError, BoardContourOrientation, ClearanceStatus, PadBoardClearanceReport,
     PcbBoardOutline, PcbTrace, TraceClearanceReport,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
 /// Cached facts for an exact convex polygon PCB pad.
@@ -27,8 +26,6 @@ pub struct PcbConvexPadFacts {
     pub exact: RealExactSetFacts,
     /// Certified winding orientation.
     pub orientation: BoardContourOrientation,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact strictly convex polygonal PCB pad.
@@ -58,16 +55,6 @@ impl PcbConvexPad {
         layer: crate::pcb::TraceLayer,
         vertices: Vec<Point2>,
     ) -> Result<Self, BoardContourError> {
-        Self::with_provenance(net, layer, vertices, PathProvenance::native())
-    }
-
-    /// Construct a convex polygon pad with source provenance.
-    pub fn with_provenance(
-        net: crate::pcb::NetId,
-        layer: crate::pcb::TraceLayer,
-        vertices: Vec<Point2>,
-        provenance: PathProvenance,
-    ) -> Result<Self, BoardContourError> {
         if vertices.len() < 3 {
             return Err(BoardContourError::TooFewVertices);
         }
@@ -89,7 +76,6 @@ impl PcbConvexPad {
         let facts = PcbConvexPadFacts {
             exact: Real::exact_set_facts(refs),
             orientation,
-            provenance,
         };
         Ok(Self {
             net,
@@ -122,11 +108,6 @@ impl PcbConvexPad {
     /// Return cached exact facts.
     pub const fn facts(&self) -> &PcbConvexPadFacts {
         &self.facts
-    }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 }
 

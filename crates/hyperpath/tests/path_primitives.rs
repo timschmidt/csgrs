@@ -3,17 +3,16 @@ use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, ArcOffsetError, Axis, BeadFillAxis,
     BeadPlanError, BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
     BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
-    ClearanceStatus, ConstructionStamp, CornerLookaheadJoinClass, CubicBezier,
-    CubicPythagoreanHodograph, CurveArrangementCellEdgeKind, CurveArrangementCellFaceClass,
-    CurveArrangementLoopRoleBlocker, CurveArrangementLoopRoleClass, DrillBoardClearanceReport,
-    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
-    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
-    ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
-    HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal,
-    JerkRampSpanProposal, LineArcArrangementEventClass, LineArrangementCellFaceClass,
-    LineArrangementError, LineArrangementEventClass, LineCubicAlgebraicPointDomain,
-    LineCubicAlgebraicRootDomain, LineCubicBezierAlgebraicBreakpointDomain,
-    LineCubicBezierAlgebraicBreakpointOrderClass,
+    ClearanceStatus, CornerLookaheadJoinClass, CubicBezier, CubicPythagoreanHodograph,
+    CurveArrangementCellEdgeKind, CurveArrangementCellFaceClass, CurveArrangementLoopRoleBlocker,
+    CurveArrangementLoopRoleClass, DrillBoardClearanceReport, ExplicitArcArrangementClass,
+    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
+    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
+    ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
+    InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
+    LineArcArrangementEventClass, LineArrangementCellFaceClass, LineArrangementError,
+    LineArrangementEventClass, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
+    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicBreakpointSequenceSource,
@@ -36,26 +35,26 @@ use hyperpath::{
     LineRationalQuadraticBezierSupportOverlapMonotonicity, LookaheadFeedSchedule, MeanderError,
     MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, MixedCurveEndpointTangentClass,
     MixedCurveFragmentEndpoint, MixedCurveFragmentRef, MixedCurveFragmentSeparationClass,
-    MixedCurveSourceRef, NetId, OffsetSide, PathProvenance, PathSourceFormat, PcbBoardOutline,
-    PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad, PcbConvexBoardOutline,
-    PcbConvexPad, PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad,
-    PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
-    PcbViaStack, PhCurveError, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason,
-    PocketRingSide, QuadraticBezier, QuinticPythagoreanHodograph, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
-    RectangularRestMaterialError, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
-    SpecctraGridRouteRuleRecord, SpecctraGridTraceRecord, SpecctraGridViaRecord,
-    SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError,
-    SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind, SpecctraRouteRuleScopeClass,
-    SpecctraRouteRuleTraceClearanceStatus, SpecctraRouteRuleWidthStatus, SpecctraTraceRecord,
-    SupportFootprintStatus, SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass,
-    TangentJoinReport, TangentSpan, TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport,
-    ViaDrillIntent, ViaDrillPolicyClass, ViaFabricationAcceptance, ViaFabricationError,
-    ViaFabricationPolicy, ViaLayerSpanRelation, ViaLayerTransitionClass, arrange_cubic_beziers,
-    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_cubic_beziers,
-    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_mixed_beziers,
-    arrange_line_segments_with_mixed_curves, arrange_line_segments_with_quadratic_beziers,
+    MixedCurveSourceRef, NetId, OffsetSide, PcbBoardOutline, PcbCardinalRectPad,
+    PcbCircularBoardOutline, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad,
+    PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad, PcbOrthogonalBoardOutline,
+    PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack, PhCurveError,
+    PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide, QuadraticBezier,
+    QuinticPythagoreanHodograph, RationalQuadraticBezier, RationalQuadraticBezierError,
+    RectangularPocket, RectangularRegionRelation, RectangularRestMaterialError,
+    RouteCertificationError, SegmentParameterOrder, SpecctraGridArcWireRecord,
+    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridRouteRuleRecord,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind,
+    SpecctraRouteRuleScopeClass, SpecctraRouteRuleTraceClearanceStatus,
+    SpecctraRouteRuleWidthStatus, SpecctraTraceRecord, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy, ViaLayerSpanRelation,
+    ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
+    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
+    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, audit_specctra_route_rule_widths,
     audit_specctra_trace_rule_clearances, build_alternating_detour_meander, build_g1_join_problem,
@@ -166,89 +165,16 @@ fn line_segment_caches_axis_and_exact_length_facts() {
 }
 
 #[test]
-fn line_segment_retains_source_grid_provenance_and_prepared_bounds() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::Gerber, 1_000_000).unwrap();
-    let segment = LinePathSegment::with_provenance(p(9, -2), p(3, 4), provenance);
+fn line_segment_prepares_bounds() {
+    let segment = LinePathSegment::new(p(9, -2), p(3, 4));
     let bounds = segment.prepared_bounds();
 
-    assert_eq!(segment.provenance(), provenance);
     assert_eq!(segment.bounds_min(), &p(3, -2));
     assert_eq!(segment.bounds_max(), &p(9, 4));
     assert_eq!(bounds.min(), segment.bounds_min());
     assert_eq!(bounds.max(), segment.bounds_max());
     assert!(bounds.contains_point(&p(6, 0)).value().unwrap());
     assert!(!bounds.contains_point(&p(10, 0)).value().unwrap());
-}
-
-#[test]
-fn provenance_lifts_fixed_grid_tokens_exactly_and_tracks_units() {
-    let millimeter = PathProvenance::fixed_grid_with_unit(
-        PathSourceFormat::Gerber,
-        1_000,
-        SourceLengthUnit::Millimeter,
-    )
-    .unwrap();
-    let inch = PathProvenance::fixed_grid_with_unit(
-        PathSourceFormat::Gerber,
-        1_000,
-        SourceLengthUnit::Inch,
-    )
-    .unwrap();
-    let unspecified = PathProvenance::fixed_grid(PathSourceFormat::Gerber, 1_000).unwrap();
-
-    assert_eq!(
-        millimeter.real_from_units(125),
-        Some(Real::new(Rational::fraction(1, 8).unwrap()))
-    );
-    assert!(PathProvenance::native().real_from_units(1).is_none());
-    assert!(millimeter.shares_grid_with(millimeter));
-    assert!(!millimeter.shares_grid_with(inch));
-    assert!(!millimeter.shares_grid_with(unspecified));
-}
-
-#[test]
-fn provenance_lifts_decimal_source_tokens_without_float_round_trip() {
-    let provenance = PathProvenance::fixed_grid_with_unit(
-        PathSourceFormat::KiCad,
-        1_000_000,
-        SourceLengthUnit::Millimeter,
-    )
-    .unwrap();
-
-    assert_eq!(
-        provenance.real_from_decimal_token("12.345"),
-        Some(rq(2469, 200))
-    );
-    assert_eq!(
-        provenance.real_from_decimal_token("-0.000001"),
-        Some(rq(-1, 1_000_000))
-    );
-    assert_eq!(provenance.real_from_decimal_token("not-a-coordinate"), None);
-}
-
-#[test]
-fn provenance_construction_stamps_detect_stale_path_facts() {
-    let stamp = ConstructionStamp::new(42, 7);
-    let fresh = PathProvenance::fixed_grid(PathSourceFormat::KiCad, 1_000_000)
-        .unwrap()
-        .with_construction(stamp);
-    let stale = fresh.with_construction(stamp.next_revision());
-    let segment = LinePathSegment::with_provenance(p(0, 0), p(1, 0), fresh);
-    let arc = CircularArc::cardinal_with_provenance(
-        p(0, 0),
-        r(5),
-        CardinalPoint::East,
-        CardinalPoint::North,
-        ArcDirection::Ccw,
-        fresh,
-    )
-    .unwrap();
-
-    assert!(fresh.is_fresh_for(stamp));
-    assert!(!fresh.is_fresh_for(stamp.next_revision()));
-    assert!(!fresh.shares_construction_with(stale));
-    assert_eq!(segment.provenance(), fresh);
-    assert_eq!(arc.provenance(), fresh);
 }
 
 #[test]
@@ -4230,8 +4156,7 @@ fn tangent_span_constructors_retain_primitive_endpoint_hodographs() {
 
 #[test]
 fn quadratic_bezier_evaluates_exact_rational_parameters() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::GCode, 1_000).unwrap();
-    let curve = QuadraticBezier::with_provenance(p(0, 0), p(2, 4), p(4, 0), provenance);
+    let curve = QuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0));
 
     assert_eq!(curve.eval(BezierParameter::new(0, 1).unwrap()), p(0, 0));
     assert_eq!(curve.eval(BezierParameter::new(1, 1).unwrap()), p(4, 0));
@@ -4239,7 +4164,6 @@ fn quadratic_bezier_evaluates_exact_rational_parameters() {
     assert_eq!(curve.facts().chord_length_squared, r(16));
     assert!(curve.facts().control_exact.all_exact_rational);
     assert!(!curve.facts().known_degenerate);
-    assert_eq!(curve.provenance(), provenance);
 }
 
 #[test]
@@ -4285,10 +4209,7 @@ fn quadratic_bezier_rejects_invalid_parameters_and_detects_degenerate_curve() {
 
 #[test]
 fn rational_quadratic_bezier_evaluates_exact_conic_parameters() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::GCode, 1_000).unwrap();
-    let curve =
-        RationalQuadraticBezier::with_provenance(p(0, 0), p(2, 4), p(4, 0), r(2), provenance)
-            .unwrap();
+    let curve = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(2)).unwrap();
 
     assert_eq!(
         curve.eval(BezierParameter::new(0, 1).unwrap()).unwrap(),
@@ -4304,7 +4225,6 @@ fn rational_quadratic_bezier_evaluates_exact_conic_parameters() {
     );
     assert_eq!(curve.facts().chord_length_squared, r(16));
     assert!(curve.facts().exact.all_exact_rational);
-    assert_eq!(curve.provenance(), provenance);
 }
 
 #[test]
@@ -4347,8 +4267,7 @@ fn rational_quadratic_bezier_rejects_negative_weight() {
 
 #[test]
 fn cubic_bezier_evaluates_exact_rational_parameters() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::GCode, 1_000).unwrap();
-    let curve = CubicBezier::with_provenance(p(0, 0), p(3, 6), p(6, 6), p(9, 0), provenance);
+    let curve = CubicBezier::new(p(0, 0), p(3, 6), p(6, 6), p(9, 0));
 
     assert_eq!(curve.eval(BezierParameter::new(0, 1).unwrap()), p(0, 0));
     assert_eq!(curve.eval(BezierParameter::new(1, 1).unwrap()), p(9, 0));
@@ -4362,7 +4281,6 @@ fn cubic_bezier_evaluates_exact_rational_parameters() {
     assert_eq!(curve.facts().chord_length_squared, r(81));
     assert!(curve.facts().control_exact.all_exact_rational);
     assert!(!curve.facts().known_degenerate);
-    assert_eq!(curve.provenance(), provenance);
 }
 
 #[test]
@@ -4619,11 +4537,7 @@ fn mixed_path_feed_replay_accepts_native_quintic_ph_length() {
 #[test]
 fn higher_order_bezier_rejects_unsupported_degrees_and_detects_degenerate_curve() {
     assert_eq!(
-        HigherOrderBezier::with_provenance(
-            vec![p(0, 0), p(1, 1), p(2, 0)],
-            PathProvenance::native()
-        )
-        .unwrap_err(),
+        HigherOrderBezier::try_new(vec![p(0, 0), p(1, 1), p(2, 0)]).unwrap_err(),
         HigherOrderBezierError::UnsupportedDegree
     );
     let degenerate = HigherOrderBezier::quartic(p(1, 1), p(1, 1), p(1, 1), p(1, 1), p(1, 1));
@@ -4698,16 +4612,8 @@ fn cardinal_arc_rejects_invalid_radius() {
 
 #[test]
 fn explicit_circular_arc_preserves_non_cardinal_endpoints_exactly() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::GCode, 1_000).unwrap();
-    let arc = ExplicitCircularArc::with_provenance(
-        p(0, 0),
-        r(5),
-        p(3, 4),
-        p(-3, 4),
-        ArcDirection::Ccw,
-        provenance,
-    )
-    .unwrap();
+    let arc =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();
 
     assert_eq!(arc.center(), &p(0, 0));
     assert_eq!(arc.radius(), &r(5));
@@ -4724,7 +4630,6 @@ fn explicit_circular_arc_preserves_non_cardinal_endpoints_exactly() {
     );
     assert!(!arc.facts().known_full_circle);
     assert!(arc.facts().exact.all_exact_rational);
-    assert_eq!(arc.provenance(), provenance);
     assert_eq!(arc.start_tangent(), p(-4, 3));
     assert_eq!(arc.end_tangent(), p(-4, -3));
 }
@@ -5166,14 +5071,12 @@ fn explicit_circular_arc_rejects_off_circle_endpoints_and_marks_full_circle() {
 
 #[test]
 fn cardinal_arc_offset_updates_radius_exactly() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::GCode, 1_000).unwrap();
-    let arc = CircularArc::cardinal_with_provenance(
+    let arc = CircularArc::cardinal(
         p(0, 0),
         r(10),
         CardinalPoint::East,
         CardinalPoint::North,
         ArcDirection::Ccw,
-        provenance,
     )
     .unwrap();
 
@@ -5184,21 +5087,12 @@ fn cardinal_arc_offset_updates_radius_exactly() {
     assert_eq!(outward.arc.start(), p(13, 0));
     assert_eq!(inward.arc.radius(), &r(7));
     assert_eq!(inward.arc.end(), p(0, 7));
-    assert_eq!(outward.arc.provenance(), provenance);
 }
 
 #[test]
 fn explicit_circular_arc_offset_scales_endpoints_exactly() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::GCode, 1_000).unwrap();
-    let arc = ExplicitCircularArc::with_provenance(
-        p(0, 0),
-        r(5),
-        p(3, 4),
-        p(-3, 4),
-        ArcDirection::Ccw,
-        provenance,
-    )
-    .unwrap();
+    let arc =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();
 
     let outward = offset_explicit_arc(&arc, r(5), OffsetSide::Left, PredicatePolicy).unwrap();
     let inward = offset_explicit_arc(&arc, r(2), OffsetSide::Right, PredicatePolicy).unwrap();
@@ -5207,7 +5101,6 @@ fn explicit_circular_arc_offset_scales_endpoints_exactly() {
     assert_eq!(outward.arc.start(), &p(6, 8));
     assert_eq!(outward.arc.end(), &p(-6, 8));
     assert_eq!(outward.arc.facts().radius_squared, r(100));
-    assert_eq!(outward.arc.provenance(), provenance);
     assert_eq!(inward.arc.radius(), &r(3));
     assert_eq!(
         inward.arc.start(),
@@ -6009,22 +5902,19 @@ fn pcb_rect_pad_rejects_negative_extent() {
 
 #[test]
 fn pcb_cardinal_rect_pad_swaps_effective_extents_exactly() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::KiCad, 1_000_000).unwrap();
-    let pad = PcbCardinalRectPad::with_provenance(
+    let pad = PcbCardinalRectPad::new(
         NetId(2),
         TraceLayer(0),
         p(5, 6),
         r(8),
         r(2),
         CardinalRotation::Deg90,
-        provenance,
     )
     .unwrap();
     let effective = pad.effective_rect().unwrap();
 
     assert_eq!(effective.width(), &r(2));
     assert_eq!(effective.height(), &r(8));
-    assert_eq!(effective.provenance(), provenance);
     assert_eq!(pad.rotation(), CardinalRotation::Deg90);
 }
 
@@ -6181,13 +6071,11 @@ fn pcb_trace_oriented_rect_pad_clearance_reports_rotated_overlap() {
 }
 
 #[test]
-fn pcb_board_outline_rejects_reversed_bounds_and_retains_provenance() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::KiCad, 1_000_000).unwrap();
-    let board = PcbBoardOutline::with_provenance(p(0, 0), p(20, 10), provenance).unwrap();
+fn pcb_board_outline_rejects_reversed_bounds() {
+    let board = PcbBoardOutline::new(p(0, 0), p(20, 10)).unwrap();
 
     assert_eq!(board.min(), &p(0, 0));
     assert_eq!(board.max(), &p(20, 10));
-    assert_eq!(board.provenance(), provenance);
     assert!(board.exact_facts().all_exact_rational);
     assert_eq!(
         PcbBoardOutline::new(p(10, 0), p(0, 10)).unwrap_err(),
@@ -6201,19 +6089,13 @@ fn pcb_board_outline_rejects_reversed_bounds_and_retains_provenance() {
 
 #[test]
 fn pcb_convex_board_outline_validates_orientation_and_convexity() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::KiCad, 1_000_000).unwrap();
-    let board = PcbConvexBoardOutline::with_provenance(
-        vec![p(0, 0), p(20, 0), p(25, 10), p(0, 10)],
-        provenance,
-    )
-    .unwrap();
+    let board = PcbConvexBoardOutline::new(vec![p(0, 0), p(20, 0), p(25, 10), p(0, 10)]).unwrap();
 
     assert_eq!(board.vertices().len(), 4);
     assert_eq!(
         board.orientation(),
         BoardContourOrientation::CounterClockwise
     );
-    assert_eq!(board.provenance(), provenance);
     assert!(board.exact_facts().all_exact_rational);
     assert_eq!(
         PcbConvexBoardOutline::new(vec![p(0, 0), p(1, 0)]).unwrap_err(),
@@ -6231,20 +6113,16 @@ fn pcb_convex_board_outline_validates_orientation_and_convexity() {
 
 #[test]
 fn pcb_orthogonal_board_outline_validates_nonconvex_simple_contours() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::KiCad, 1_000_000).unwrap();
-    let board = PcbOrthogonalBoardOutline::with_provenance(
-        vec![
-            p(0, 0),
-            p(20, 0),
-            p(20, 10),
-            p(12, 10),
-            p(12, 4),
-            p(8, 4),
-            p(8, 10),
-            p(0, 10),
-        ],
-        provenance,
-    )
+    let board = PcbOrthogonalBoardOutline::new(vec![
+        p(0, 0),
+        p(20, 0),
+        p(20, 10),
+        p(12, 10),
+        p(12, 4),
+        p(8, 4),
+        p(8, 10),
+        p(0, 10),
+    ])
     .unwrap();
 
     assert_eq!(board.vertices().len(), 8);
@@ -6252,7 +6130,6 @@ fn pcb_orthogonal_board_outline_validates_nonconvex_simple_contours() {
         board.orientation(),
         BoardContourOrientation::CounterClockwise
     );
-    assert_eq!(board.provenance(), provenance);
     assert!(board.exact_facts().all_exact_rational);
     assert_eq!(
         PcbOrthogonalBoardOutline::new(vec![p(0, 0), p(2, 0), p(3, 1), p(0, 1)]).unwrap_err(),
@@ -6699,9 +6576,8 @@ fn swept_segment_rejects_negative_width() {
 }
 
 #[test]
-fn axis_aligned_line_offset_preserves_exact_distance_and_provenance() {
-    let provenance = PathProvenance::fixed_grid(PathSourceFormat::GCode, 1_000).unwrap();
-    let segment = LinePathSegment::with_provenance(p(0, 0), p(10, 0), provenance);
+fn axis_aligned_line_offset_preserves_exact_distance() {
+    let segment = LinePathSegment::new(p(0, 0), p(10, 0));
 
     let left =
         offset_axis_aligned_segment(&segment, r(3), OffsetSide::Left, PredicatePolicy).unwrap();
@@ -6712,7 +6588,6 @@ fn axis_aligned_line_offset_preserves_exact_distance_and_provenance() {
     assert_eq!(left.segment.end(), &p(10, 3));
     assert_eq!(right.segment.start(), &p(0, -3));
     assert_eq!(right.segment.end(), &p(10, -3));
-    assert_eq!(left.segment.provenance(), provenance);
     assert_eq!(left.distance, r(3));
 }
 
@@ -8976,10 +8851,6 @@ fn specctra_grid_trace_import_preserves_exact_source_grid() {
 
     assert_eq!(trace.net(), NetId(7));
     assert_eq!(trace.layer(), TraceLayer(3));
-    assert_eq!(
-        trace.provenance(),
-        PathProvenance::fixed_grid(PathSourceFormat::Specctra, 10).unwrap()
-    );
     assert_eq!(exported, record);
     assert_eq!(trace.swept().centerline().start(), &Point2::new(r(0), r(1)));
     assert_eq!(trace.swept().centerline().end(), &Point2::new(r(5), r(1)));
@@ -9298,7 +9169,6 @@ fn specctra_grid_route_text_round_trips_retained_keepouts() {
     let exact_circle = specctra_grid_keepout_record(circle.clone()).unwrap();
     let exact_polygon = specctra_grid_keepout_record(polygon.clone()).unwrap();
     assert_eq!(exact_rect.layer, Some(TraceLayer(2)));
-    assert_eq!(exact_rect.provenance, exact_circle.provenance);
     assert_eq!(
         exact_rect.keepout,
         MeanderKeepout::Rectangular(MeanderObstacle {
@@ -9541,7 +9411,6 @@ fn specctra_route_rule_audit_reports_width_violations_unruled_items_and_bad_inpu
         layer: None,
         clearance: r(0),
         width: r(-1),
-        provenance: PathProvenance::native(),
     };
     assert_eq!(
         audit_specctra_route_rule_widths(&[trace], &[], &[bad_rule], PredicatePolicy).unwrap_err(),
@@ -9733,7 +9602,6 @@ fn specctra_trace_rule_clearance_audit_reports_unruled_same_net_and_bad_inputs()
         start: p(0, 0),
         end: p(1, 0),
         width: r(-1),
-        provenance: PathProvenance::native(),
     };
     assert_eq!(
         audit_specctra_trace_rule_clearances(
@@ -10649,36 +10517,6 @@ proptest! {
             report.all_clearances_certified(),
             expected_status == SpecctraRouteRuleTraceClearanceStatus::CertifiedClear
         );
-    }
-
-    #[test]
-    fn source_grid_lifts_generated_integer_tokens_exactly(
-        units in -10_000_i16..=10_000,
-        denominator in 1_u64..=10_000,
-    ) {
-        let provenance = PathProvenance::fixed_grid_with_unit(
-            PathSourceFormat::Other,
-            denominator,
-            SourceLengthUnit::BoardUnit,
-        ).unwrap();
-
-        prop_assert_eq!(
-            provenance.real_from_units(i64::from(units)),
-            Some(Real::new(Rational::fraction(i64::from(units), denominator).unwrap()))
-        );
-    }
-
-    #[test]
-    fn generated_construction_stamps_detect_exact_revision_freshness(
-        id in 0_u64..=1_000,
-        revision in 0_u64..=1_000,
-    ) {
-        let stamp = ConstructionStamp::new(id, revision);
-        let provenance = PathProvenance::native().with_construction(stamp);
-
-        prop_assert!(provenance.is_fresh_for(stamp));
-        prop_assert!(!provenance.is_fresh_for(stamp.next_revision()));
-        prop_assert!(provenance.shares_construction_with(PathProvenance::native().with_construction(stamp)));
     }
 
     #[test]

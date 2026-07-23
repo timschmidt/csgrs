@@ -22,7 +22,6 @@ use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_cubic_cell_graph,
     build_quadratic_cell_graph, build_rational_quadratic_cell_graph,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::{Axis, LinePathSegment};
 
 /// Errors while building retained Bezier arrangement fragments.
@@ -517,12 +516,10 @@ pub struct QuadraticBezierArrangementReport {
     /// Retained polynomial-Bezier topology graph over exact fragments.
     ///
     /// Vertices are de-duplicated by exact endpoint equality, edges retain
-    /// fragment provenance, half-edges are sorted by exact endpoint
+    /// fragment identity, half-edges are sorted by exact endpoint
     /// hodographs, and nonzero faces replay polynomial Green-integral area.
     /// Split Bezier objects enter topology only after exact predicate replay.
     pub cell_graph: CurveArrangementCellGraph,
-    /// Source provenance for the schedule.
-    pub provenance: PathProvenance,
 }
 
 /// Exact split report for a set of cubic Beziers.
@@ -545,8 +542,6 @@ pub struct CubicBezierArrangementReport {
     /// Geometric Computation" (1997), with the polynomial hodograph machinery
     /// described by Farouki, *Pythagorean Hodograph Curves* (2008).
     pub cell_graph: CurveArrangementCellGraph,
-    /// Source provenance for the schedule.
-    pub provenance: PathProvenance,
 }
 
 /// Exact homogeneous split report for a set of rational quadratic Beziers.
@@ -570,14 +565,12 @@ pub struct RationalQuadraticBezierArrangementReport {
     /// Retained conic-only topology graph over homogeneous fragments.
     ///
     /// Vertices are recovered by certified homogeneous affine division, edges
-    /// retain fragment provenance, half-edges are sorted by exact homogeneous
+    /// retain fragment identity, half-edges are sorted by exact homogeneous
     /// endpoint tangents, and nonzero faces replay the same rational conic
     /// Green-integral evidence used by mixed line/conic cell scheduling.
     /// Topology and exact predicates remain retained evidence rather than
     /// flattening conics into sampled polylines.
     pub cell_graph: CurveArrangementCellGraph,
-    /// Source provenance for the schedule.
-    pub provenance: PathProvenance,
 }
 
 /// Arrange quadratic Beziers at exact rational event parameters.
@@ -585,16 +578,6 @@ pub fn arrange_quadratic_beziers(
     curves: &[QuadraticBezier],
     events: &[Vec<BezierParameter>],
     policy: PredicatePolicy,
-) -> Result<QuadraticBezierArrangementReport, BezierArrangementError> {
-    arrange_quadratic_beziers_with_provenance(curves, events, policy, PathProvenance::native())
-}
-
-/// Arrange quadratic Beziers at exact rational parameters with provenance.
-pub fn arrange_quadratic_beziers_with_provenance(
-    curves: &[QuadraticBezier],
-    events: &[Vec<BezierParameter>],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
 ) -> Result<QuadraticBezierArrangementReport, BezierArrangementError> {
     validate_inputs(curves.len(), events.len())?;
     let breakpoints = sorted_breakpoints(events, policy)?;
@@ -608,7 +591,6 @@ pub fn arrange_quadratic_beziers_with_provenance(
         fragments,
         fragment_exact,
         cell_graph,
-        provenance,
     })
 }
 
@@ -617,16 +599,6 @@ pub fn arrange_cubic_beziers(
     curves: &[CubicBezier],
     events: &[Vec<BezierParameter>],
     policy: PredicatePolicy,
-) -> Result<CubicBezierArrangementReport, BezierArrangementError> {
-    arrange_cubic_beziers_with_provenance(curves, events, policy, PathProvenance::native())
-}
-
-/// Arrange cubic Beziers at exact rational parameters with provenance.
-pub fn arrange_cubic_beziers_with_provenance(
-    curves: &[CubicBezier],
-    events: &[Vec<BezierParameter>],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
 ) -> Result<CubicBezierArrangementReport, BezierArrangementError> {
     validate_inputs(curves.len(), events.len())?;
     let breakpoints = sorted_breakpoints(events, policy)?;
@@ -640,7 +612,6 @@ pub fn arrange_cubic_beziers_with_provenance(
         fragments,
         fragment_exact,
         cell_graph,
-        provenance,
     })
 }
 
@@ -649,21 +620,6 @@ pub fn arrange_rational_quadratic_beziers(
     curves: &[RationalQuadraticBezier],
     events: &[Vec<BezierParameter>],
     policy: PredicatePolicy,
-) -> Result<RationalQuadraticBezierArrangementReport, BezierArrangementError> {
-    arrange_rational_quadratic_beziers_with_provenance(
-        curves,
-        events,
-        policy,
-        PathProvenance::native(),
-    )
-}
-
-/// Arrange rational quadratic Beziers at exact rational parameters with provenance.
-pub fn arrange_rational_quadratic_beziers_with_provenance(
-    curves: &[RationalQuadraticBezier],
-    events: &[Vec<BezierParameter>],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
 ) -> Result<RationalQuadraticBezierArrangementReport, BezierArrangementError> {
     validate_inputs(curves.len(), events.len())?;
     let breakpoints = sorted_breakpoints(events, policy)?;
@@ -677,7 +633,6 @@ pub fn arrange_rational_quadratic_beziers_with_provenance(
         fragments,
         fragment_exact,
         cell_graph,
-        provenance,
     })
 }
 
@@ -1297,12 +1252,7 @@ fn quadratic_subcurve(
         start_point.x.clone() + half_dx,
         start_point.y.clone() + half_dy,
     );
-    Ok(QuadraticBezier::with_provenance(
-        start_point,
-        control,
-        end_point,
-        curve.provenance(),
-    ))
+    Ok(QuadraticBezier::new(start_point, control, end_point))
 }
 
 fn cubic_subcurve(
@@ -1327,13 +1277,7 @@ fn cubic_subcurve(
         end_point.x.clone() - third_end_dx,
         end_point.y.clone() - third_end_dy,
     );
-    Ok(CubicBezier::with_provenance(
-        start_point,
-        control0,
-        control1,
-        end_point,
-        curve.provenance(),
-    ))
+    Ok(CubicBezier::new(start_point, control0, control1, end_point))
 }
 
 fn rational_quadratic_subcurve(

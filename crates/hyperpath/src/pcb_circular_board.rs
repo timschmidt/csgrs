@@ -15,7 +15,6 @@ use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbCircularPad, PcbTrace, TraceClearanceReport,
     TraceWidthClass,
 };
-use crate::provenance::PathProvenance;
 
 /// Cached facts for an exact circular PCB board outline.
 #[derive(Clone, Debug, PartialEq)]
@@ -24,8 +23,6 @@ pub struct PcbCircularBoardOutlineFacts {
     pub exact: RealExactSetFacts,
     /// Radius sign class.
     pub radius_class: TraceWidthClass,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact circular PCB board outline.
@@ -45,21 +42,8 @@ pub struct PcbCircularBoardOutline {
 }
 
 impl PcbCircularBoardOutline {
-    /// Construct a circular board outline with native provenance.
+    /// Construct a circular board outline.
     pub fn new(center: Point2, radius: Real) -> Result<Self, &'static str> {
-        Self::with_provenance(center, radius, PathProvenance::native())
-    }
-
-    /// Construct a circular board outline with source provenance.
-    ///
-    /// Negative radii are rejected instead of coerced. A zero-radius outline is
-    /// retained because it is a valid exact degenerate object for antagonistic
-    /// import tests and must simply fail positive clearance predicates.
-    pub fn with_provenance(
-        center: Point2,
-        radius: Real,
-        provenance: PathProvenance,
-    ) -> Result<Self, &'static str> {
         let radius_class = match radius.structural_facts().sign {
             Some(RealSign::Negative) => return Err("circular board radius must be nonnegative"),
             Some(RealSign::Zero) => TraceWidthClass::Zero,
@@ -69,7 +53,6 @@ impl PcbCircularBoardOutline {
         let facts = PcbCircularBoardOutlineFacts {
             exact: Real::exact_set_facts([&center.x, &center.y, &radius]),
             radius_class,
-            provenance,
         };
         Ok(Self {
             center,
@@ -91,11 +74,6 @@ impl PcbCircularBoardOutline {
     /// Return cached exact facts.
     pub const fn facts(&self) -> &PcbCircularBoardOutlineFacts {
         &self.facts
-    }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 }
 

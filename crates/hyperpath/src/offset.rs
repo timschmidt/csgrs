@@ -152,7 +152,7 @@ pub fn offset_axis_aligned_segment(
     Ok(LineOffsetCandidate {
         side,
         distance,
-        segment: LinePathSegment::with_provenance(start, end, segment.provenance()),
+        segment: LinePathSegment::new(start, end),
     })
 }
 
@@ -186,13 +186,12 @@ pub fn offset_cardinal_arc(
         }
         candidate
     };
-    let offset_arc = CircularArc::cardinal_with_provenance(
+    let offset_arc = CircularArc::cardinal(
         arc.center().clone(),
         radius,
         arc.start_cardinal(),
         arc.end_cardinal(),
         arc.direction(),
-        arc.provenance(),
     )
     .map_err(ArcOffsetError::InvalidArc)?;
     Ok(ArcOffsetCandidate {
@@ -237,15 +236,9 @@ pub fn offset_explicit_arc(
         (radius.clone() / arc.radius().clone()).map_err(|_| ArcOffsetError::EndpointScaleFailed)?;
     let start = scaled_radial_point(arc.center(), arc.start(), &scale);
     let end = scaled_radial_point(arc.center(), arc.end(), &scale);
-    let offset_arc = ExplicitCircularArc::with_provenance(
-        arc.center().clone(),
-        radius,
-        start,
-        end,
-        arc.direction(),
-        arc.provenance(),
-    )
-    .map_err(ArcOffsetError::InvalidArc)?;
+    let offset_arc =
+        ExplicitCircularArc::new(arc.center().clone(), radius, start, end, arc.direction())
+            .map_err(ArcOffsetError::InvalidArc)?;
     Ok(ExplicitArcOffsetCandidate {
         side,
         distance,

@@ -24,7 +24,6 @@ use crate::pcb::{
     BoardContourError, BoardContourOrientation, ClearanceStatus, PadBoardClearanceReport,
     PcbBoardOutline, PcbTrace, TraceClearanceReport,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
 /// Cached facts for an exact orthogonal polygon PCB pad.
@@ -34,8 +33,6 @@ pub struct PcbOrthogonalPadFacts {
     pub exact: RealExactSetFacts,
     /// Certified winding orientation.
     pub orientation: BoardContourOrientation,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact simple orthogonal PCB pad.
@@ -59,16 +56,6 @@ impl PcbOrthogonalPad {
         layer: crate::pcb::TraceLayer,
         vertices: Vec<Point2>,
     ) -> Result<Self, BoardContourError> {
-        Self::with_provenance(net, layer, vertices, PathProvenance::native())
-    }
-
-    /// Construct an orthogonal polygon pad with source provenance.
-    pub fn with_provenance(
-        net: crate::pcb::NetId,
-        layer: crate::pcb::TraceLayer,
-        vertices: Vec<Point2>,
-        provenance: PathProvenance,
-    ) -> Result<Self, BoardContourError> {
         if vertices.len() < 4 {
             return Err(BoardContourError::TooFewVertices);
         }
@@ -91,7 +78,6 @@ impl PcbOrthogonalPad {
         let facts = PcbOrthogonalPadFacts {
             exact: Real::exact_set_facts(refs),
             orientation,
-            provenance,
         };
         Ok(Self {
             net,
@@ -124,11 +110,6 @@ impl PcbOrthogonalPad {
     /// Return cached exact facts.
     pub const fn facts(&self) -> &PcbOrthogonalPadFacts {
         &self.facts
-    }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 }
 

@@ -17,7 +17,6 @@ use hyperlimit::{
 };
 use hyperreal::{Real, RealExactSetFacts};
 
-use crate::provenance::PathProvenance;
 use crate::segment::{Axis, LinePathSegment, real_sign};
 use crate::swept::SweptLineSegment;
 
@@ -180,8 +179,6 @@ pub struct PcbTraceFacts {
     pub width_class: TraceWidthClass,
     /// Whether this trace is axis-aligned.
     pub axis_aligned: Option<Axis>,
-    /// Source provenance inherited from the swept geometry.
-    pub provenance: PathProvenance,
 }
 
 /// Straight swept PCB trace segment.
@@ -205,7 +202,6 @@ pub struct PcbTrace {
 pub struct PcbBoardOutline {
     min: Point2,
     max: Point2,
-    provenance: PathProvenance,
     exact: RealExactSetFacts,
 }
 
@@ -250,7 +246,6 @@ pub enum BoardContourError {
 pub struct PcbConvexBoardOutline {
     vertices: Vec<Point2>,
     orientation: BoardContourOrientation,
-    provenance: PathProvenance,
     exact: RealExactSetFacts,
 }
 
@@ -268,7 +263,6 @@ pub struct PcbConvexBoardOutline {
 pub struct PcbOrthogonalBoardOutline {
     vertices: Vec<Point2>,
     orientation: BoardContourOrientation,
-    provenance: PathProvenance,
     exact: RealExactSetFacts,
 }
 
@@ -279,8 +273,6 @@ pub struct PcbPadFacts {
     pub exact: RealExactSetFacts,
     /// Diameter class.
     pub diameter_class: TraceWidthClass,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Cached facts for an exact rounded rectangular pad.
@@ -290,8 +282,6 @@ pub struct PcbRoundedRectPadFacts {
     pub exact: RealExactSetFacts,
     /// Corner-radius sign class.
     pub corner_radius_class: TraceWidthClass,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact circular pad/via approximation for first routing predicates.
@@ -312,7 +302,6 @@ pub struct PcbRectPad {
     center: Point2,
     width: Real,
     height: Real,
-    provenance: PathProvenance,
 }
 
 /// Exact axis-aligned rounded rectangular pad.
@@ -364,26 +353,11 @@ pub struct PcbCardinalRectPad {
     width: Real,
     height: Real,
     rotation: CardinalRotation,
-    provenance: PathProvenance,
 }
 
 impl PcbBoardOutline {
-    /// Construct an axis-aligned board outline with native provenance.
+    /// Construct an axis-aligned board outline.
     pub fn new(min: Point2, max: Point2) -> Result<Self, &'static str> {
-        Self::with_provenance(min, max, PathProvenance::native())
-    }
-
-    /// Construct an axis-aligned board outline with source provenance.
-    ///
-    /// Both axes must be ordered when the comparison can be decided exactly.
-    /// Unknown symbolic order is rejected for now because board-edge clearance
-    /// needs a certified inside/outside orientation before routing predicates
-    /// can make manufacturing decisions.
-    pub fn with_provenance(
-        min: Point2,
-        max: Point2,
-        provenance: PathProvenance,
-    ) -> Result<Self, &'static str> {
         if !matches!(
             compare_reals_with_policy(&min.x, &max.x, PredicatePolicy).value(),
             Some(Ordering::Less | Ordering::Equal)
@@ -397,12 +371,7 @@ impl PcbBoardOutline {
             return Err("board outline y bounds must be ordered");
         }
         let exact = Real::exact_set_facts([&min.x, &min.y, &max.x, &max.y]);
-        Ok(Self {
-            min,
-            max,
-            provenance,
-            exact,
-        })
+        Ok(Self { min, max, exact })
     }
 
     /// Return the exact minimum board corner.
@@ -415,11 +384,6 @@ impl PcbBoardOutline {
         &self.max
     }
 
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.provenance
-    }
-
     /// Return exact-set facts for the outline coordinates.
     pub const fn exact_facts(&self) -> &RealExactSetFacts {
         &self.exact
@@ -427,16 +391,8 @@ impl PcbBoardOutline {
 }
 
 impl PcbConvexBoardOutline {
-    /// Construct a strictly convex board outline with native provenance.
+    /// Construct a strictly convex board outline.
     pub fn new(vertices: Vec<Point2>) -> Result<Self, BoardContourError> {
-        Self::with_provenance(vertices, PathProvenance::native())
-    }
-
-    /// Construct a strictly convex board outline with source provenance.
-    pub fn with_provenance(
-        vertices: Vec<Point2>,
-        provenance: PathProvenance,
-    ) -> Result<Self, BoardContourError> {
         if vertices.len() < 3 {
             return Err(BoardContourError::TooFewVertices);
         }
@@ -459,7 +415,6 @@ impl PcbConvexBoardOutline {
         Ok(Self {
             vertices,
             orientation,
-            provenance,
             exact,
         })
     }
@@ -474,11 +429,6 @@ impl PcbConvexBoardOutline {
         self.orientation
     }
 
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.provenance
-    }
-
     /// Return exact-set facts for vertex coordinates.
     pub const fn exact_facts(&self) -> &RealExactSetFacts {
         &self.exact
@@ -486,23 +436,8 @@ impl PcbConvexBoardOutline {
 }
 
 impl PcbOrthogonalBoardOutline {
-    /// Construct a simple orthogonal board outline with native provenance.
+    /// Construct a simple orthogonal board outline.
     pub fn new(vertices: Vec<Point2>) -> Result<Self, BoardContourError> {
-        Self::with_provenance(vertices, PathProvenance::native())
-    }
-
-    /// Construct a simple orthogonal board outline with source provenance.
-    ///
-    /// The constructor validates the exact object shape up front: there must be
-    /// at least three vertices, nonzero signed area, horizontal or vertical
-    /// nondegenerate edges, and no non-adjacent edge intersections. General
-    /// arbitrary-angle and curved board outlines remain arrangement-kernel
-    /// work; this carrier intentionally covers the high-value rectilinear
-    /// nonconvex subset without tolerance geometry.
-    pub fn with_provenance(
-        vertices: Vec<Point2>,
-        provenance: PathProvenance,
-    ) -> Result<Self, BoardContourError> {
         if vertices.len() < 3 {
             return Err(BoardContourError::TooFewVertices);
         }
@@ -526,7 +461,6 @@ impl PcbOrthogonalBoardOutline {
         Ok(Self {
             vertices,
             orientation,
-            provenance,
             exact,
         })
     }
@@ -539,11 +473,6 @@ impl PcbOrthogonalBoardOutline {
     /// Return certified contour orientation.
     pub const fn orientation(&self) -> BoardContourOrientation {
         self.orientation
-    }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.provenance
     }
 
     /// Return exact-set facts for vertex coordinates.
@@ -561,23 +490,6 @@ impl PcbRectPad {
         width: Real,
         height: Real,
     ) -> Result<Self, &'static str> {
-        Self::with_provenance(net, layer, center, width, height, PathProvenance::native())
-    }
-
-    /// Construct an axis-aligned rectangular pad with source provenance.
-    ///
-    /// This is the sharp-corner rectangular carrier. Cardinal rotations and
-    /// rounded rectangles are represented by neighboring exact pad carriers;
-    /// arbitrary-angle pads still belong in a later polygon/arc arrangement
-    /// layer.
-    pub fn with_provenance(
-        net: NetId,
-        layer: TraceLayer,
-        center: Point2,
-        width: Real,
-        height: Real,
-        provenance: PathProvenance,
-    ) -> Result<Self, &'static str> {
         if real_sign(&width) == Some(hyperreal::RealSign::Negative) {
             return Err("rect pad width must be nonnegative");
         }
@@ -590,7 +502,6 @@ impl PcbRectPad {
             center,
             width,
             height,
-            provenance,
         })
     }
 
@@ -618,11 +529,6 @@ impl PcbRectPad {
     pub const fn height(&self) -> &Real {
         &self.height
     }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.provenance
-    }
 }
 
 impl PcbRoundedRectPad {
@@ -634,33 +540,6 @@ impl PcbRoundedRectPad {
         width: Real,
         height: Real,
         corner_radius: Real,
-    ) -> Result<Self, &'static str> {
-        Self::with_provenance(
-            net,
-            layer,
-            center,
-            width,
-            height,
-            corner_radius,
-            PathProvenance::native(),
-        )
-    }
-
-    /// Construct an axis-aligned rounded rectangular pad with source provenance.
-    ///
-    /// The shape is accepted only when `0 <= corner_radius <= min(width,
-    /// height) / 2` can be certified exactly. That validation is intentionally
-    /// stricter than a display/import tolerance: under Yap's exact-computation
-    /// discipline, ambiguous object construction must not become trusted input
-    /// to later clearance predicates.
-    pub fn with_provenance(
-        net: NetId,
-        layer: TraceLayer,
-        center: Point2,
-        width: Real,
-        height: Real,
-        corner_radius: Real,
-        provenance: PathProvenance,
     ) -> Result<Self, &'static str> {
         if real_sign(&width) == Some(hyperreal::RealSign::Negative) {
             return Err("rounded rect pad width must be nonnegative");
@@ -689,7 +568,6 @@ impl PcbRoundedRectPad {
         let facts = PcbRoundedRectPadFacts {
             exact: Real::exact_set_facts([&center.x, &center.y, &width, &height, &corner_radius]),
             corner_radius_class,
-            provenance,
         };
         Ok(Self {
             net,
@@ -736,11 +614,6 @@ impl PcbRoundedRectPad {
     pub const fn facts(&self) -> &PcbRoundedRectPadFacts {
         &self.facts
     }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
-    }
 }
 
 impl PcbCardinalRectPad {
@@ -752,32 +625,6 @@ impl PcbCardinalRectPad {
         width: Real,
         height: Real,
         rotation: CardinalRotation,
-    ) -> Result<Self, &'static str> {
-        Self::with_provenance(
-            net,
-            layer,
-            center,
-            width,
-            height,
-            rotation,
-            PathProvenance::native(),
-        )
-    }
-
-    /// Construct a cardinally rotated rectangular pad with source provenance.
-    ///
-    /// The exact transformation is intentionally limited to cardinal
-    /// rotations. This keeps footprint import and routing predicates on Yap's
-    /// object layer: no trigonometric approximation is required to know the
-    /// effective rectangle used by this specialized predicate.
-    pub fn with_provenance(
-        net: NetId,
-        layer: TraceLayer,
-        center: Point2,
-        width: Real,
-        height: Real,
-        rotation: CardinalRotation,
-        provenance: PathProvenance,
     ) -> Result<Self, &'static str> {
         if real_sign(&width) == Some(hyperreal::RealSign::Negative) {
             return Err("cardinal rect pad width must be nonnegative");
@@ -792,7 +639,6 @@ impl PcbCardinalRectPad {
             width,
             height,
             rotation,
-            provenance,
         })
     }
 
@@ -826,29 +672,22 @@ impl PcbCardinalRectPad {
         self.rotation
     }
 
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.provenance
-    }
-
     /// Return the exact axis-aligned rectangle equivalent for this rotation.
     pub fn effective_rect(&self) -> Result<PcbRectPad, &'static str> {
         match self.rotation {
-            CardinalRotation::Deg0 | CardinalRotation::Deg180 => PcbRectPad::with_provenance(
+            CardinalRotation::Deg0 | CardinalRotation::Deg180 => PcbRectPad::new(
                 self.net,
                 self.layer,
                 self.center.clone(),
                 self.width.clone(),
                 self.height.clone(),
-                self.provenance,
             ),
-            CardinalRotation::Deg90 | CardinalRotation::Deg270 => PcbRectPad::with_provenance(
+            CardinalRotation::Deg90 | CardinalRotation::Deg270 => PcbRectPad::new(
                 self.net,
                 self.layer,
                 self.center.clone(),
                 self.height.clone(),
                 self.width.clone(),
-                self.provenance,
             ),
         }
     }
@@ -1149,27 +988,12 @@ pub enum ViaAnnularRingReport {
 }
 
 impl PcbCircularPad {
-    /// Construct a circular pad or via land with native provenance.
+    /// Construct a circular pad or via land.
     pub fn new(
         net: NetId,
         layer: TraceLayer,
         center: Point2,
         diameter: Real,
-    ) -> Result<Self, &'static str> {
-        Self::with_provenance(net, layer, center, diameter, PathProvenance::native())
-    }
-
-    /// Construct a circular pad or via land with source provenance.
-    ///
-    /// This stores the exact center and diameter. More specific pad shapes
-    /// should add exact polygon/arc carriers later; this circular carrier is
-    /// enough for first via and round-pad clearance predicates.
-    pub fn with_provenance(
-        net: NetId,
-        layer: TraceLayer,
-        center: Point2,
-        diameter: Real,
-        provenance: PathProvenance,
     ) -> Result<Self, &'static str> {
         let diameter_class = match real_sign(&diameter) {
             Some(hyperreal::RealSign::Negative) => {
@@ -1182,7 +1006,6 @@ impl PcbCircularPad {
         let facts = PcbPadFacts {
             exact: Real::exact_set_facts([&center.x, &center.y, &diameter]),
             diameter_class,
-            provenance,
         };
         Ok(Self {
             net,
@@ -1231,7 +1054,6 @@ impl PcbTrace {
             exact: swept.facts().exact,
             width_class,
             axis_aligned: swept.centerline().facts().axis_aligned,
-            provenance: swept.provenance(),
         };
         Self {
             net,
@@ -1259,11 +1081,6 @@ impl PcbTrace {
     /// Return cached facts.
     pub const fn facts(&self) -> &PcbTraceFacts {
         &self.facts
-    }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 }
 

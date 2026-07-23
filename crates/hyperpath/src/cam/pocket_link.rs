@@ -130,17 +130,12 @@ pub fn build_rectangular_pocket_link_graph(
 
     let mut ring_segments = Vec::with_capacity(plan.rings.len() * 4);
     for ring in &plan.rings {
-        ring_segments.extend(ring_boundary_segments(ring, plan.pocket.provenance()));
+        ring_segments.extend(ring_boundary_segments(ring));
     }
 
     let mut links = Vec::new();
     for pair in plan.rings.windows(2) {
-        links.extend(lower_left_dogleg(
-            &pair[0],
-            &pair[1],
-            plan.pocket.provenance(),
-            policy,
-        )?);
+        links.extend(lower_left_dogleg(&pair[0], &pair[1], policy)?);
     }
 
     Ok(RectangularPocketLinkGraph {
@@ -150,10 +145,7 @@ pub fn build_rectangular_pocket_link_graph(
     })
 }
 
-fn ring_boundary_segments(
-    ring: &PocketOffsetRing,
-    provenance: crate::provenance::PathProvenance,
-) -> [PocketRingSegment; 4] {
+fn ring_boundary_segments(ring: &PocketOffsetRing) -> [PocketRingSegment; 4] {
     let min_min = ring.min.clone();
     let max_min = Point2::new(ring.max.x.clone(), ring.min.y.clone());
     let max_max = ring.max.clone();
@@ -162,22 +154,22 @@ fn ring_boundary_segments(
         PocketRingSegment {
             ring_index: ring.index,
             side: PocketRingSide::MinY,
-            segment: LinePathSegment::with_provenance(min_min.clone(), max_min.clone(), provenance),
+            segment: LinePathSegment::new(min_min.clone(), max_min.clone()),
         },
         PocketRingSegment {
             ring_index: ring.index,
             side: PocketRingSide::MaxX,
-            segment: LinePathSegment::with_provenance(max_min, max_max.clone(), provenance),
+            segment: LinePathSegment::new(max_min, max_max.clone()),
         },
         PocketRingSegment {
             ring_index: ring.index,
             side: PocketRingSide::MaxY,
-            segment: LinePathSegment::with_provenance(max_max, min_max.clone(), provenance),
+            segment: LinePathSegment::new(max_max, min_max.clone()),
         },
         PocketRingSegment {
             ring_index: ring.index,
             side: PocketRingSide::MinX,
-            segment: LinePathSegment::with_provenance(min_max, min_min, provenance),
+            segment: LinePathSegment::new(min_max, min_min),
         },
     ]
 }
@@ -185,7 +177,6 @@ fn ring_boundary_segments(
 fn lower_left_dogleg(
     outer: &PocketOffsetRing,
     inner: &PocketOffsetRing,
-    provenance: crate::provenance::PathProvenance,
     policy: PredicatePolicy,
 ) -> Result<Vec<PocketLinkSegment>, PocketLinkGraphError> {
     let bend = Point2::new(inner.min.x.clone(), outer.min.y.clone());
@@ -197,7 +188,6 @@ fn lower_left_dogleg(
         0,
         outer.min.clone(),
         bend.clone(),
-        provenance,
         policy,
     )?;
     push_link_leg(
@@ -207,7 +197,6 @@ fn lower_left_dogleg(
         1,
         bend,
         inner.min.clone(),
-        provenance,
         policy,
     )?;
     if !links.is_empty()
@@ -227,7 +216,6 @@ fn push_link_leg(
     leg_index: usize,
     start: Point2,
     end: Point2,
-    provenance: crate::provenance::PathProvenance,
     policy: PredicatePolicy,
 ) -> Result<(), PocketLinkGraphError> {
     if points_equal(&start, &end, policy) {
@@ -236,7 +224,7 @@ fn push_link_leg(
     if !same_axis(&start, &end, policy)? {
         return Err(PocketLinkGraphError::InvalidConnectorEndpoint);
     }
-    let segment = LinePathSegment::with_provenance(start.clone(), end.clone(), provenance);
+    let segment = LinePathSegment::new(start.clone(), end.clone());
     if !points_equal(segment.start(), &start, policy) || !points_equal(segment.end(), &end, policy)
     {
         return Err(PocketLinkGraphError::InvalidConnectorEndpoint);

@@ -17,7 +17,6 @@ use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbBoardOutline, PcbTrace, TraceClearanceReport,
     TraceWidthClass,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
 /// Cached facts for an exact oriented rectangular pad.
@@ -31,8 +30,6 @@ pub struct PcbOrientedRectPadFacts {
     pub height_class: TraceWidthClass,
     /// Exact unit-length certificate value for the retained local X axis.
     pub local_x_length_squared: Real,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact arbitrary-angle rectangular PCB pad with a retained unit local axis.
@@ -58,7 +55,7 @@ pub struct PcbOrientedRectPad {
 }
 
 impl PcbOrientedRectPad {
-    /// Construct an oriented rectangular pad with native provenance.
+    /// Construct an oriented rectangular pad.
     pub fn new(
         net: crate::pcb::NetId,
         layer: crate::pcb::TraceLayer,
@@ -67,35 +64,6 @@ impl PcbOrientedRectPad {
         height: Real,
         local_x: Point2,
         policy: PredicatePolicy,
-    ) -> Result<Self, &'static str> {
-        Self::with_provenance(
-            net,
-            layer,
-            center,
-            width,
-            height,
-            local_x,
-            policy,
-            PathProvenance::native(),
-        )
-    }
-
-    /// Construct an oriented rectangular pad with source provenance.
-    ///
-    /// `local_x` must already be an exact unit vector. This is intentionally a
-    /// construction precondition rather than an automatic normalization step:
-    /// square-root normalization would manufacture a new object whose exactness
-    /// and branch provenance are not present in typical footprint input.
-    #[allow(clippy::too_many_arguments)]
-    pub fn with_provenance(
-        net: crate::pcb::NetId,
-        layer: crate::pcb::TraceLayer,
-        center: Point2,
-        width: Real,
-        height: Real,
-        local_x: Point2,
-        policy: PredicatePolicy,
-        provenance: PathProvenance,
     ) -> Result<Self, &'static str> {
         let width_class = classify_nonnegative_extent(&width, "oriented rect pad width")?;
         let height_class = classify_nonnegative_extent(&height, "oriented rect pad height")?;
@@ -113,7 +81,6 @@ impl PcbOrientedRectPad {
             width_class,
             height_class,
             local_x_length_squared,
-            provenance,
         };
         Ok(Self {
             net,
@@ -164,11 +131,6 @@ impl PcbOrientedRectPad {
     /// Return cached exact facts.
     pub const fn facts(&self) -> &PcbOrientedRectPadFacts {
         &self.facts
-    }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 }
 

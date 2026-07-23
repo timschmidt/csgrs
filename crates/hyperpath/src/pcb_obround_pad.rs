@@ -17,7 +17,6 @@ use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbBoardOutline, PcbTrace, TraceClearanceReport,
     TraceWidthClass,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
 /// Cached facts for an exact obround PCB pad.
@@ -29,8 +28,6 @@ pub struct PcbObroundPadFacts {
     pub diameter_class: TraceWidthClass,
     /// Whether the retained spine endpoints are structurally identical.
     pub degenerate_spine: Option<bool>,
-    /// Source provenance.
-    pub provenance: PathProvenance,
 }
 
 /// Exact obround/capsule PCB pad.
@@ -53,27 +50,12 @@ pub struct PcbObroundPad {
 }
 
 impl PcbObroundPad {
-    /// Construct an obround pad with native provenance.
+    /// Construct an obround pad.
     pub fn new(
         net: crate::pcb::NetId,
         layer: crate::pcb::TraceLayer,
         spine: LinePathSegment,
         diameter: Real,
-    ) -> Result<Self, &'static str> {
-        Self::with_provenance(net, layer, spine, diameter, PathProvenance::native())
-    }
-
-    /// Construct an obround pad with source provenance.
-    ///
-    /// The spine is retained exactly. No direction normalization is performed;
-    /// the point/segment distance predicate below handles degenerate and
-    /// non-axis-aligned spines without introducing square roots.
-    pub fn with_provenance(
-        net: crate::pcb::NetId,
-        layer: crate::pcb::TraceLayer,
-        spine: LinePathSegment,
-        diameter: Real,
-        provenance: PathProvenance,
     ) -> Result<Self, &'static str> {
         let diameter_class = match diameter.structural_facts().sign {
             Some(RealSign::Negative) => return Err("obround pad diameter must be nonnegative"),
@@ -91,7 +73,6 @@ impl PcbObroundPad {
             ]),
             diameter_class,
             degenerate_spine: spine.facts().known_degenerate,
-            provenance,
         };
         Ok(Self {
             net,
@@ -125,11 +106,6 @@ impl PcbObroundPad {
     /// Return cached exact facts.
     pub const fn facts(&self) -> &PcbObroundPadFacts {
         &self.facts
-    }
-
-    /// Return source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 }
 

@@ -9,7 +9,6 @@
 use hyperlimit::PredicatePolicy;
 use hyperreal::{Real, RealExactSetFacts};
 
-use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
 /// Cached facts for a swept line segment.
@@ -76,10 +75,5 @@ impl SweptLineSegment {
     /// Return an exact centerline axis length if the segment is axis-aligned.
     pub fn axis_centerline_length(&self, policy: PredicatePolicy) -> Option<Real> {
         self.centerline.axis_length(policy)
-    }
-
-    /// Return provenance inherited from the centerline segment.
-    pub fn provenance(&self) -> PathProvenance {
-        self.centerline.provenance()
     }
 }

@@ -21,7 +21,6 @@ use hypersolve::{
 };
 
 use crate::bezier::BezierParameter;
-use crate::provenance::PathProvenance;
 
 /// Cached exact facts for a cubic PH span.
 #[derive(Clone, Debug, PartialEq)]
@@ -32,8 +31,6 @@ pub struct CubicPhFacts {
     pub end: Point2,
     /// Exact polynomial arc length over `[0, 1]`.
     pub exact_length: Real,
-    /// Source provenance for this retained path object.
-    pub provenance: PathProvenance,
 }
 
 /// Cached exact facts for a quintic PH span.
@@ -45,8 +42,6 @@ pub struct QuinticPhFacts {
     pub end: Point2,
     /// Exact polynomial arc length over `[0, 1]`.
     pub exact_length: Real,
-    /// Source provenance for this retained path object.
-    pub provenance: PathProvenance,
 }
 
 /// Retained cubic Pythagorean-hodograph curve.
@@ -126,7 +121,7 @@ pub enum PhCurveError {
 }
 
 impl CubicPythagoreanHodograph {
-    /// Construct a cubic PH span with native provenance.
+    /// Construct a cubic PH span.
     pub fn new(
         start: Point2,
         u0: Real,
@@ -134,26 +129,7 @@ impl CubicPythagoreanHodograph {
         u1: Real,
         v1: Real,
     ) -> Result<Self, PhCurveError> {
-        Self::with_provenance(start, u0, v0, u1, v1, PathProvenance::native())
-    }
-
-    /// Construct a cubic PH span with retained source provenance.
-    ///
-    /// The endpoint and exact length are integrated immediately as retained
-    /// facts. For a linear hodograph, the exact total length is
-    /// `(u0^2 + u0*u1 + u1^2 + v0^2 + v0*v1 + v1^2) / 3`; endpoint
-    /// displacement uses the corresponding integrals of `u^2 - v^2` and
-    /// `2uv`. These are the polynomial PH length identities described by
-    /// Farouki and Sakkalis (1990), kept exact for Yap-style certification.
-    pub fn with_provenance(
-        start: Point2,
-        u0: Real,
-        v0: Real,
-        u1: Real,
-        v1: Real,
-        provenance: PathProvenance,
-    ) -> Result<Self, PhCurveError> {
-        let facts = cubic_ph_facts(&start, &u0, &v0, &u1, &v1, provenance)?;
+        let facts = cubic_ph_facts(&start, &u0, &v0, &u1, &v1)?;
         if facts.exact_length.structural_facts().sign == Some(RealSign::Zero) {
             return Err(PhCurveError::DegenerateHodograph);
         }
@@ -180,11 +156,6 @@ impl CubicPythagoreanHodograph {
     /// Return cached exact PH facts.
     pub const fn facts(&self) -> &CubicPhFacts {
         &self.facts
-    }
-
-    /// Return path source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 
     /// Return exact total PH arc length over `[0, 1]`.
@@ -220,7 +191,7 @@ impl CubicPythagoreanHodograph {
 }
 
 impl QuinticPythagoreanHodograph {
-    /// Construct a quintic PH span with native provenance.
+    /// Construct a quintic PH span.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         start: Point2,
@@ -231,29 +202,7 @@ impl QuinticPythagoreanHodograph {
         v1: Real,
         v2: Real,
     ) -> Result<Self, PhCurveError> {
-        Self::with_provenance(start, u0, u1, u2, v0, v1, v2, PathProvenance::native())
-    }
-
-    /// Construct a quintic PH span with retained source provenance.
-    ///
-    /// The complex quadratic hodograph is stored in power basis to keep
-    /// inverse-length replay direct: speed coefficients are the exact
-    /// convolution of `u(t)^2 + v(t)^2`. Farouki and Sakkalis' PH identity
-    /// makes the resulting arc length a fifth-degree polynomial, and Yap's
-    /// exact object/predicate split is preserved by retaining the polynomial
-    /// rather than sampling the curve.
-    #[allow(clippy::too_many_arguments)]
-    pub fn with_provenance(
-        start: Point2,
-        u0: Real,
-        u1: Real,
-        u2: Real,
-        v0: Real,
-        v1: Real,
-        v2: Real,
-        provenance: PathProvenance,
-    ) -> Result<Self, PhCurveError> {
-        let facts = quintic_ph_facts(&start, &u0, &u1, &u2, &v0, &v1, &v2, provenance)?;
+        let facts = quintic_ph_facts(&start, &u0, &u1, &u2, &v0, &v1, &v2)?;
         if facts.exact_length.structural_facts().sign == Some(RealSign::Zero) {
             return Err(PhCurveError::DegenerateHodograph);
         }
@@ -282,11 +231,6 @@ impl QuinticPythagoreanHodograph {
     /// Return cached exact PH facts.
     pub const fn facts(&self) -> &QuinticPhFacts {
         &self.facts
-    }
-
-    /// Return path source provenance.
-    pub const fn provenance(&self) -> PathProvenance {
-        self.facts.provenance
     }
 
     /// Return exact total PH arc length over `[0, 1]`.
@@ -425,7 +369,6 @@ fn cubic_ph_facts(
     v0: &Real,
     u1: &Real,
     v1: &Real,
-    provenance: PathProvenance,
 ) -> Result<CubicPhFacts, PhCurveError> {
     let u_integral = quadratic_endpoint_integral(u0, u1);
     let v_integral = quadratic_endpoint_integral(v0, v1);
@@ -453,7 +396,6 @@ fn cubic_ph_facts(
         ]),
         end,
         exact_length,
-        provenance,
     })
 }
 
@@ -466,7 +408,6 @@ fn quintic_ph_facts(
     v0: &Real,
     v1: &Real,
     v2: &Real,
-    provenance: PathProvenance,
 ) -> Result<QuinticPhFacts, PhCurveError> {
     let speed = quadratic_square_sum_coefficients(u0, u1, u2, v0, v1, v2);
     let exact_length = integrate_quartic_unit(&speed)?;
@@ -506,7 +447,6 @@ fn quintic_ph_facts(
         ]),
         end,
         exact_length,
-        provenance,
     })
 }
 

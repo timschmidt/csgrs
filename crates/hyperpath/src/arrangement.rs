@@ -27,7 +27,6 @@ use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_explicit_arc_cell_graph,
     build_line_arc_cell_graph,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
 /// Topological event class for a pair of retained line segments.
@@ -109,8 +108,6 @@ pub struct LineArrangementFacts {
     pub endpoint_exact: RealExactSetFacts,
     /// Exact-set facts across all emitted fragment endpoint coordinates.
     pub fragment_exact: RealExactSetFacts,
-    /// Source provenance for the arrangement schedule.
-    pub provenance: PathProvenance,
 }
 
 /// Exact parameter and point witness on one input segment.
@@ -392,8 +389,6 @@ pub struct ExplicitArcSetArrangementReport {
     pub cell_graph: CurveArrangementCellGraph,
     /// Exact-set facts across all emitted fragment endpoints.
     pub fragment_exact: RealExactSetFacts,
-    /// Source provenance for the arrangement schedule.
-    pub provenance: PathProvenance,
 }
 
 /// Arrange a retained set of line segments into exact pair events and fragments.
@@ -406,15 +401,6 @@ pub struct ExplicitArcSetArrangementReport {
 pub fn arrange_line_segments(
     segments: &[LinePathSegment],
     policy: PredicatePolicy,
-) -> Result<LineArrangementReport, LineArrangementError> {
-    arrange_line_segments_with_provenance(segments, policy, PathProvenance::native())
-}
-
-/// Arrange a retained set of line segments with explicit source provenance.
-pub fn arrange_line_segments_with_provenance(
-    segments: &[LinePathSegment],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
 ) -> Result<LineArrangementReport, LineArrangementError> {
     for (index, segment) in segments.iter().enumerate() {
         if segment.facts().known_degenerate == Some(true) {
@@ -467,7 +453,6 @@ pub fn arrange_line_segments_with_provenance(
     let facts = LineArrangementFacts {
         endpoint_exact: Real::exact_set_facts(endpoint_refs),
         fragment_exact: Real::exact_set_facts(fragment_refs),
-        provenance,
     };
     Ok(LineArrangementReport {
         segments: segments.to_vec(),
@@ -489,21 +474,6 @@ pub fn arrange_line_segments_with_explicit_arcs(
     lines: &[LinePathSegment],
     arcs: &[ExplicitCircularArc],
     policy: PredicatePolicy,
-) -> Result<LineArcArrangementReport, LineArrangementError> {
-    arrange_line_segments_with_explicit_arcs_and_provenance(
-        lines,
-        arcs,
-        policy,
-        PathProvenance::native(),
-    )
-}
-
-/// Arrange retained line segments against explicit arcs with source provenance.
-pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
-    lines: &[LinePathSegment],
-    arcs: &[ExplicitCircularArc],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
 ) -> Result<LineArcArrangementReport, LineArrangementError> {
     for (index, line) in lines.iter().enumerate() {
         if line.facts().known_degenerate == Some(true) {
@@ -577,7 +547,6 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
     let facts = LineArrangementFacts {
         endpoint_exact: Real::exact_set_facts(endpoint_refs),
         fragment_exact: Real::exact_set_facts(fragment_refs),
-        provenance,
     };
     Ok(LineArcArrangementReport {
         lines: lines.to_vec(),
@@ -600,15 +569,6 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
 pub fn arrange_explicit_arcs(
     arcs: &[ExplicitCircularArc],
     policy: PredicatePolicy,
-) -> Result<ExplicitArcSetArrangementReport, ExplicitArcArrangementError> {
-    arrange_explicit_arcs_with_provenance(arcs, policy, PathProvenance::native())
-}
-
-/// Arrange retained explicit arcs with source provenance.
-pub fn arrange_explicit_arcs_with_provenance(
-    arcs: &[ExplicitCircularArc],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
 ) -> Result<ExplicitArcSetArrangementReport, ExplicitArcArrangementError> {
     let mut breakpoints = seed_arc_endpoint_breakpoints(arcs, policy)?;
     let mut events = Vec::new();
@@ -648,7 +608,6 @@ pub fn arrange_explicit_arcs_with_provenance(
         fragments,
         cell_graph,
         fragment_exact,
-        provenance,
     })
 }
 
@@ -1047,13 +1006,12 @@ fn compare_arc_breakpoints(
     {
         return Ok(Ordering::Greater);
     }
-    let prefix = ExplicitCircularArc::with_provenance(
+    let prefix = ExplicitCircularArc::new(
         arc.center().clone(),
         arc.radius().clone(),
         arc.start().clone(),
         right.point.clone(),
         arc.direction(),
-        arc.provenance(),
     )
     .map_err(|_| ExplicitArcArrangementError::FragmentConstruction)?;
     match prefix.classify_point(&left.point, policy) {
@@ -1155,13 +1113,12 @@ fn build_arc_fragments(
                 continue;
             }
             let source = &arcs[window[0].arc];
-            let fragment = ExplicitCircularArc::with_provenance(
+            let fragment = ExplicitCircularArc::new(
                 source.center().clone(),
                 source.radius().clone(),
                 window[0].point.clone(),
                 window[1].point.clone(),
                 source.direction(),
-                source.provenance(),
             )
             .map_err(|_| ExplicitArcArrangementError::FragmentConstruction)?;
             fragments.push(ExplicitArcArrangementFragment {
@@ -1175,13 +1132,12 @@ fn build_arc_fragments(
             let first = points.first().expect("len checked");
             let last = points.last().expect("len checked");
             let source = &arcs[first.arc];
-            let fragment = ExplicitCircularArc::with_provenance(
+            let fragment = ExplicitCircularArc::new(
                 source.center().clone(),
                 source.radius().clone(),
                 last.point.clone(),
                 first.point.clone(),
                 source.direction(),
-                source.provenance(),
             )
             .map_err(|_| ExplicitArcArrangementError::FragmentConstruction)?;
             fragments.push(ExplicitArcArrangementFragment {

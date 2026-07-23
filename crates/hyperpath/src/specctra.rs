@@ -17,7 +17,6 @@ use std::fmt::Write;
 
 use crate::arc::{ArcDirection, ExplicitCircularArc};
 use crate::pcb::{NetId, PcbTrace, PcbViaStack, TraceLayer, ViaDrillIntent};
-use crate::provenance::{PathProvenance, PathSourceFormat};
 use crate::routing::{MeanderError, MeanderKeepout, MeanderObstacle, validate_meander_keepouts};
 use crate::segment::LinePathSegment;
 use crate::specctra_syntax::{is_bare_atom, tokenize, write_atom};
@@ -77,8 +76,6 @@ pub struct SpecctraTraceRecord {
     pub end: Point2,
     /// Exact trace width.
     pub width: Real,
-    /// Source provenance for the route token.
-    pub provenance: PathProvenance,
 }
 
 /// Raw fixed-grid trace token lowered from a DSN/SES route file.
@@ -118,8 +115,6 @@ pub struct SpecctraArcWireRecord {
     pub arc: ExplicitCircularArc,
     /// Exact route width.
     pub width: Real,
-    /// Source provenance for the route token.
-    pub provenance: PathProvenance,
 }
 
 /// Raw fixed-grid circular-arc route token lowered from a DSN/SES route file.
@@ -168,8 +163,6 @@ pub struct SpecctraViaRecord {
     pub drill_diameter: Real,
     /// Retained drill plating intent from the route interchange boundary.
     pub drill_intent: ViaDrillIntent,
-    /// Source provenance for the route token.
-    pub provenance: PathProvenance,
 }
 
 /// Raw fixed-grid via token lowered from a DSN/SES route file.
@@ -260,8 +253,6 @@ pub struct SpecctraRouteRuleRecord {
     pub clearance: Real,
     /// Exact minimum route width.
     pub width: Real,
-    /// Source provenance for the rule token.
-    pub provenance: PathProvenance,
 }
 
 /// Raw fixed-grid route-rule token lowered from a DSN/SES route file.
@@ -286,8 +277,6 @@ pub struct SpecctraKeepoutRecord {
     pub layer: Option<TraceLayer>,
     /// Exact keepout used by route placement predicates.
     pub keepout: MeanderKeepout,
-    /// Source provenance for the keepout token.
-    pub provenance: PathProvenance,
 }
 
 /// Imported exact circular-arc route segment.
@@ -301,8 +290,6 @@ pub struct SpecctraRouteArc {
     pub arc: ExplicitCircularArc,
     /// Exact route width.
     pub width: Real,
-    /// Source provenance for the route token.
-    pub provenance: PathProvenance,
 }
 
 /// Exact route made of validated trace, via, and retained arc records.
@@ -475,9 +462,7 @@ impl From<SpecctraImportError> for SpecctraParseError {
 pub fn specctra_grid_trace_record(
     record: SpecctraGridTraceRecord,
 ) -> Result<SpecctraTraceRecord, SpecctraImportError> {
-    let provenance =
-        PathProvenance::fixed_grid(PathSourceFormat::Specctra, record.grid_denominator)
-            .ok_or(SpecctraImportError::InvalidGrid)?;
+    validate_grid(record.grid_denominator)?;
     Ok(SpecctraTraceRecord {
         net: record.net,
         layer: record.layer,
@@ -490,7 +475,6 @@ pub fn specctra_grid_trace_record(
             grid_real(record.end_y, record.grid_denominator)?,
         ),
         width: grid_real(record.width, record.grid_denominator)?,
-        provenance,
     })
 }
 
@@ -505,9 +489,7 @@ pub fn specctra_grid_trace_record(
 pub fn specctra_grid_via_record(
     record: SpecctraGridViaRecord,
 ) -> Result<SpecctraViaRecord, SpecctraImportError> {
-    let provenance =
-        PathProvenance::fixed_grid(PathSourceFormat::Specctra, record.grid_denominator)
-            .ok_or(SpecctraImportError::InvalidGrid)?;
+    validate_grid(record.grid_denominator)?;
     Ok(SpecctraViaRecord {
         net: record.net,
         start_layer: record.start_layer,
@@ -519,7 +501,6 @@ pub fn specctra_grid_via_record(
         land_diameter: grid_real(record.land_diameter, record.grid_denominator)?,
         drill_diameter: grid_real(record.drill_diameter, record.grid_denominator)?,
         drill_intent: record.drill_intent,
-        provenance,
     })
 }
 
@@ -535,14 +516,12 @@ pub fn specctra_grid_via_record(
 pub fn specctra_grid_arc_wire_record(
     record: SpecctraGridArcWireRecord,
 ) -> Result<SpecctraArcWireRecord, SpecctraImportError> {
-    let provenance =
-        PathProvenance::fixed_grid(PathSourceFormat::Specctra, record.grid_denominator)
-            .ok_or(SpecctraImportError::InvalidGrid)?;
+    validate_grid(record.grid_denominator)?;
     let radius = grid_real(record.radius, record.grid_denominator)?;
     if record.radius < 0 {
         return Err(SpecctraImportError::NegativeRadius);
     }
-    let arc = ExplicitCircularArc::with_provenance(
+    let arc = ExplicitCircularArc::new(
         Point2::new(
             grid_real(record.center_x, record.grid_denominator)?,
             grid_real(record.center_y, record.grid_denominator)?,
@@ -557,7 +536,6 @@ pub fn specctra_grid_arc_wire_record(
             grid_real(record.end_y, record.grid_denominator)?,
         ),
         record.direction,
-        provenance,
     )
     .map_err(|_| SpecctraImportError::InvalidArcGeometry)?;
     Ok(SpecctraArcWireRecord {
@@ -565,7 +543,6 @@ pub fn specctra_grid_arc_wire_record(
         layer: record.layer,
         arc,
         width: grid_real(record.width, record.grid_denominator)?,
-        provenance,
     })
 }
 
@@ -578,9 +555,7 @@ pub fn specctra_grid_arc_wire_record(
 pub fn specctra_grid_keepout_record(
     record: SpecctraGridKeepoutRecord,
 ) -> Result<SpecctraKeepoutRecord, SpecctraImportError> {
-    let provenance =
-        PathProvenance::fixed_grid(PathSourceFormat::Specctra, record.grid_denominator)
-            .ok_or(SpecctraImportError::InvalidGrid)?;
+    validate_grid(record.grid_denominator)?;
     let keepout = match record.shape {
         SpecctraGridKeepoutShape::Rect {
             min_x,
@@ -632,7 +607,6 @@ pub fn specctra_grid_keepout_record(
     Ok(SpecctraKeepoutRecord {
         layer: record.layer,
         keepout,
-        provenance,
     })
 }
 
@@ -642,22 +616,19 @@ pub fn specctra_grid_keepout_record(
 /// applied to traces during parse/import because that would hide a design-rule
 /// decision inside syntax handling. Exact route checks can later select rules
 /// by net/layer scope and replay clearance/width predicates without losing the
-/// source grid that produced the values.
+/// changing their exact values.
 pub fn specctra_grid_route_rule_record(
     record: SpecctraGridRouteRuleRecord,
 ) -> Result<SpecctraRouteRuleRecord, SpecctraImportError> {
     if record.clearance < 0 || record.width < 0 {
         return Err(SpecctraImportError::NegativeRuleValue);
     }
-    let provenance =
-        PathProvenance::fixed_grid(PathSourceFormat::Specctra, record.grid_denominator)
-            .ok_or(SpecctraImportError::InvalidGrid)?;
+    validate_grid(record.grid_denominator)?;
     Ok(SpecctraRouteRuleRecord {
         net: record.net,
         layer: record.layer,
         clearance: grid_real(record.clearance, record.grid_denominator)?,
         width: grid_real(record.width, record.grid_denominator)?,
-        provenance,
     })
 }
 
@@ -665,11 +636,7 @@ pub fn specctra_grid_route_rule_record(
 pub fn import_specctra_trace_record(
     record: &SpecctraTraceRecord,
 ) -> Result<PcbTrace, SpecctraImportError> {
-    let centerline = LinePathSegment::with_provenance(
-        record.start.clone(),
-        record.end.clone(),
-        record.provenance,
-    );
+    let centerline = LinePathSegment::new(record.start.clone(), record.end.clone());
     let swept = SweptLineSegment::new(centerline, record.width.clone())
         .map_err(|_| SpecctraImportError::NegativeWidth)?;
     Ok(PcbTrace::new(record.net, record.layer, swept))
@@ -709,7 +676,6 @@ pub fn import_specctra_arc_wire_record(
         layer: record.layer,
         arc: record.arc.clone(),
         width: record.width.clone(),
-        provenance: record.provenance,
     })
 }
 
@@ -721,7 +687,6 @@ pub fn export_specctra_trace_record(trace: &PcbTrace) -> SpecctraTraceRecord {
         start: trace.swept().centerline().start().clone(),
         end: trace.swept().centerline().end().clone(),
         width: trace.swept().width().clone(),
-        provenance: trace.provenance(),
     }
 }
 
@@ -735,7 +700,6 @@ pub fn export_specctra_via_record(via: &PcbViaStack) -> Option<SpecctraViaRecord
         land_diameter: via.land_diameter().clone(),
         drill_diameter: via.drill_diameter()?.clone(),
         drill_intent: via.drill_intent(),
-        provenance: PathProvenance::native(),
     })
 }
 
@@ -988,6 +952,14 @@ fn grid_real(value: i64, denominator: u64) -> Result<Real, SpecctraImportError> 
     Rational::fraction(value, denominator)
         .map(Real::new)
         .map_err(|_| SpecctraImportError::InvalidGrid)
+}
+
+fn validate_grid(denominator: u64) -> Result<(), SpecctraImportError> {
+    if denominator == 0 {
+        Err(SpecctraImportError::InvalidGrid)
+    } else {
+        Ok(())
+    }
 }
 
 fn write_net_alias(output: &mut String, alias: &SpecctraNetAlias) {

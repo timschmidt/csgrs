@@ -555,16 +555,8 @@ pub fn build_single_detour_meander(
         (extra_length.clone() / Real::from(2)).map_err(|_| MeanderError::UnsupportedDivision)?;
     let offset = offset_axis_aligned_segment(source, amplitude.clone(), side, policy)
         .map_err(MeanderError::Offset)?;
-    let first = LinePathSegment::with_provenance(
-        source.start().clone(),
-        offset.segment.start().clone(),
-        source.provenance(),
-    );
-    let last = LinePathSegment::with_provenance(
-        offset.segment.end().clone(),
-        source.end().clone(),
-        source.provenance(),
-    );
+    let first = LinePathSegment::new(source.start().clone(), offset.segment.start().clone());
+    let last = LinePathSegment::new(offset.segment.end().clone(), source.end().clone());
     Ok(SingleDetourMeander {
         source: source.clone(),
         extra_length,
@@ -1163,30 +1155,24 @@ fn build_nonuniform_detour_meander_with_side(
             let index = u64::try_from(index).map_err(|_| MeanderError::BumpCountTooLarge)?;
             let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
             let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-            segments.push(LinePathSegment::with_provenance(
-                start,
-                end,
-                source.provenance(),
-            ));
+            segments.push(LinePathSegment::new(start, end));
             continue;
         }
         let index = u64::try_from(index).map_err(|_| MeanderError::BumpCountTooLarge)?;
         let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
         let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-        let base = LinePathSegment::with_provenance(start, end, source.provenance());
+        let base = LinePathSegment::new(start, end);
         let offset =
             offset_axis_aligned_segment(&base, amplitude.clone(), side_for_index(index), policy)
                 .map_err(MeanderError::Offset)?;
-        segments.push(LinePathSegment::with_provenance(
+        segments.push(LinePathSegment::new(
             base.start().clone(),
             offset.segment.start().clone(),
-            source.provenance(),
         ));
         segments.push(offset.segment.clone());
-        segments.push(LinePathSegment::with_provenance(
+        segments.push(LinePathSegment::new(
             offset.segment.end().clone(),
             base.end().clone(),
-            source.provenance(),
         ));
     }
 
@@ -1249,20 +1235,18 @@ fn build_multi_detour_meander_with_side(
     for index in 0..bump_count {
         let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
         let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-        let base = LinePathSegment::with_provenance(start, end, source.provenance());
+        let base = LinePathSegment::new(start, end);
         let offset =
             offset_axis_aligned_segment(&base, amplitude.clone(), side_for_index(index), policy)
                 .map_err(MeanderError::Offset)?;
-        segments.push(LinePathSegment::with_provenance(
+        segments.push(LinePathSegment::new(
             base.start().clone(),
             offset.segment.start().clone(),
-            source.provenance(),
         ));
         segments.push(offset.segment.clone());
-        segments.push(LinePathSegment::with_provenance(
+        segments.push(LinePathSegment::new(
             offset.segment.end().clone(),
             base.end().clone(),
-            source.provenance(),
         ));
     }
 
@@ -1297,7 +1281,7 @@ fn classify_meander_placement_slots_with_step(
     for index in 0..bump_count {
         let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
         let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-        let base = LinePathSegment::with_provenance(start, end, source.provenance());
+        let base = LinePathSegment::new(start, end);
         candidates.push(MeanderPlacementCandidate {
             base,
             amplitude: amplitude.clone(),
@@ -1327,7 +1311,7 @@ fn classify_meander_placement_slots_with_keepout_step(
     for index in 0..bump_count {
         let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
         let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
-        let base = LinePathSegment::with_provenance(start, end, source.provenance());
+        let base = LinePathSegment::new(start, end);
         candidates.push(MeanderPlacementCandidate {
             base,
             amplitude: amplitude.clone(),
@@ -1421,17 +1405,9 @@ fn candidate_bump_blocked(
         .map_err(MeanderError::Offset)?;
     let offset_segment = offset.segment;
     let candidate_segments = [
-        LinePathSegment::with_provenance(
-            base.start().clone(),
-            offset_segment.start().clone(),
-            base.provenance(),
-        ),
+        LinePathSegment::new(base.start().clone(), offset_segment.start().clone()),
         offset_segment.clone(),
-        LinePathSegment::with_provenance(
-            offset_segment.end().clone(),
-            base.end().clone(),
-            base.provenance(),
-        ),
+        LinePathSegment::new(offset_segment.end().clone(), base.end().clone()),
     ];
     candidate_segments
         .iter()

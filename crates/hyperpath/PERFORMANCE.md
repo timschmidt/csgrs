@@ -76,19 +76,16 @@ schedule baseline is about 30.5 microseconds.
 
 ### Ucamco, *Gerber Layer Format Specification*
 
-`PathSourceFormat::Gerber`, explicit inch/millimeter units, and `SourceGrid`
-preserve Gerber's integer coordinate/format semantics as exact rationals before
-geometry construction. HyperPath does not yet claim a complete Gerber aperture,
+Import adapters should preserve Gerber's integer coordinate/format semantics as exact
+rationals before geometry construction. HyperPath does not yet claim a complete Gerber aperture,
 region, attribute, or image parser; those belong in an import adapter that
 emits these exact path carriers.
 
 ### KiCad Project, *KiCad PCB File Format*
 
 KiCad's board format uses S-expressions and textual coordinates for tracks,
-vias, arcs, layers, nets, and stack-up data. The new
-`PathProvenance::real_from_decimal_token` converts decimal coordinate text
-directly through HyperReal's exact parser, avoiding an `f64` boundary. Tests
-cover positive and negative finite decimals and malformed input. A complete
+vias, arcs, layers, nets, and stack-up data. Import adapters should convert decimal
+coordinate text directly through HyperReal's exact parser, avoiding an `f64` boundary. A complete
 `.kicad_pcb` parser is still outside this crate's current claim.
 
 ### Cadence, *SPECCTRA Design Language Reference*

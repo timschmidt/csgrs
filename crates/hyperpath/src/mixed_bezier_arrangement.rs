@@ -22,7 +22,6 @@ use crate::bezier_arrangement::{
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_quadratic_cell_graph,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
 /// Errors that prevent a trusted line/quadratic-Bezier split schedule.
@@ -112,8 +111,6 @@ pub struct LineQuadraticBezierArrangementFacts {
     pub input_exact: RealExactSetFacts,
     /// Exact-set facts across emitted line and Bezier fragment controls.
     pub fragment_exact: RealExactSetFacts,
-    /// Source provenance for the arrangement schedule.
-    pub provenance: PathProvenance,
 }
 
 /// Retained mixed line/quadratic-Bezier arrangement schedule and cell graph.
@@ -160,21 +157,6 @@ pub fn arrange_line_segments_with_quadratic_beziers(
     lines: &[LinePathSegment],
     curves: &[QuadraticBezier],
     policy: PredicatePolicy,
-) -> Result<LineQuadraticBezierArrangementReport, LineQuadraticBezierArrangementError> {
-    arrange_line_segments_with_quadratic_beziers_and_provenance(
-        lines,
-        curves,
-        policy,
-        PathProvenance::native(),
-    )
-}
-
-/// Arrange retained line segments against retained quadratic Beziers with provenance.
-pub fn arrange_line_segments_with_quadratic_beziers_and_provenance(
-    lines: &[LinePathSegment],
-    curves: &[QuadraticBezier],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
 ) -> Result<LineQuadraticBezierArrangementReport, LineQuadraticBezierArrangementError> {
     reject_degenerate_lines(lines, policy)?;
     let mut line_breakpoints = seed_line_breakpoints(lines);
@@ -278,7 +260,6 @@ pub fn arrange_line_segments_with_quadratic_beziers_and_provenance(
     let facts = LineQuadraticBezierArrangementFacts {
         input_exact: input_exact_facts(lines, curves),
         fragment_exact: fragment_exact_facts(&line_fragments, &bezier_fragments),
-        provenance,
     };
 
     Ok(LineQuadraticBezierArrangementReport {
@@ -593,7 +574,7 @@ fn quadratic_subcurve_real(curve: &QuadraticBezier, start: &Real, end: &Real) ->
         start_point.x.clone() + (delta.clone() * derivative.x / half.clone()).expect("nonzero two"),
         start_point.y.clone() + (delta * derivative.y / half).expect("nonzero two"),
     );
-    QuadraticBezier::with_provenance(start_point, control, end_point, curve.provenance())
+    QuadraticBezier::new(start_point, control, end_point)
 }
 
 fn eval_quadratic_real(curve: &QuadraticBezier, parameter: &Real) -> Point2 {

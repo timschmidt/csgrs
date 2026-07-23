@@ -23,7 +23,6 @@ use crate::bezier_arrangement::{
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_rational_quadratic_cell_graph,
 };
-use crate::provenance::PathProvenance;
 use crate::segment::{Axis, LinePathSegment};
 
 /// Errors that prevent a trusted line/rational-quadratic split schedule.
@@ -377,8 +376,6 @@ pub struct LineRationalQuadraticBezierArrangementFacts {
     pub input_exact: RealExactSetFacts,
     /// Exact-set facts across emitted line and homogeneous conic fragment controls.
     pub fragment_exact: RealExactSetFacts,
-    /// Source provenance for the arrangement schedule.
-    pub provenance: PathProvenance,
 }
 
 /// Retained mixed line/rational-quadratic arrangement schedule.
@@ -415,7 +412,7 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     pub conic_fragments: Vec<RationalQuadraticBezierRealFragment>,
     /// Retained topology graph over line and homogeneous conic fragments.
     ///
-    /// Vertices are exact endpoints, edges retain source fragment provenance,
+    /// Vertices are exact endpoints, edges retain source fragment identity,
     /// and half-edges are sorted by exact line tangents or homogeneous conic
     /// endpoint derivatives. This follows Yap, "Towards Exact Geometric
     /// Computation" (1997), by reporting certified topology without sampling.
@@ -432,22 +429,6 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers(
     lines: &[LinePathSegment],
     curves: &[RationalQuadraticBezier],
     policy: PredicatePolicy,
-) -> Result<LineRationalQuadraticBezierArrangementReport, LineRationalQuadraticBezierArrangementError>
-{
-    arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
-        lines,
-        curves,
-        policy,
-        PathProvenance::native(),
-    )
-}
-
-/// Arrange retained line segments against retained rational quadratics with provenance.
-pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
-    lines: &[LinePathSegment],
-    curves: &[RationalQuadraticBezier],
-    policy: PredicatePolicy,
-    provenance: PathProvenance,
 ) -> Result<LineRationalQuadraticBezierArrangementReport, LineRationalQuadraticBezierArrangementError>
 {
     reject_degenerate_lines(lines, policy)?;
@@ -529,7 +510,6 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
     let facts = LineRationalQuadraticBezierArrangementFacts {
         input_exact: input_exact_facts(lines, curves),
         fragment_exact: fragment_exact_facts(&line_fragments, &conic_fragments),
-        provenance,
     };
 
     Ok(LineRationalQuadraticBezierArrangementReport {
