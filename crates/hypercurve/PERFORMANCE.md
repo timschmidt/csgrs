@@ -1732,6 +1732,39 @@ AddressSanitizer region-Boolean differential fuzz pass completed 1,295 execution
 5,626 coverage points and 16,867 feature edges without a failure; LeakSanitizer alone
 remained disabled under ptrace.
 
+Strict line-crossing Boolean assembly now orders each contour's retained crossings
+once and consumes that order throughout the compact pipeline. A finite binary64
+parameter preview supplies an inexpensive candidate order, but exact adjacent
+comparisons certify every same-segment relation; rounded ties, nonfinite previews,
+and ambiguous preview orders fall back to the all-exact sort, while an undecidable
+exact order rejects the narrow proof. The previous uniqueness check compared every
+crossing pair on a source segment. Fragment classification now advances through the
+certified crossing deltas ordinally instead of searching the same segment by exact
+parameter for every adjacent fragment. Finally, compact
+splitting borrows the already-ordered parameters and points from that crossing
+index, avoiding a second marker insertion and sort. These shortcuts remain confined
+to the complete, unique, proper all-line crossing proof; all other event sets retain
+the general exact pipeline.
+
+In the clean seven-sample release comparison, exact star64 contour output measured
+136.070 us/iter, down from 149.8 us at the preceding checkpoint. Star256 region and
+contour output measured 1.240 and 1.018 ms/iter, down from 1.435 and 1.216 ms.
+Star1024 exact region, contour, and loop output measured 22.754, 13.615, and 14.162
+ms/iter, down from 31.582, 22.219, and 23.059 ms. Prepared region and contour output
+measured 22.491 and 13.613 ms. `cavalier_contours`, `i_overlay`, and `geo` measured
+19.189, 10.013, and 10.123 ms. Exact star1024 boundary contours are therefore 38.7%
+faster than the preceding exact checkpoint and now complete 1.41 times faster than
+Cavalier; role assignment remains the next scaling target for complete region
+output. A standalone one-operation star1024 region run peaked at 31,200 KiB process
+RSS, slightly below the preceding 31,388 KiB checkpoint.
+
+Both default and all-feature test matrices, all-target/all-feature warnings-as-errors
+Clippy, and warnings-as-errors rustdoc passed. A rounded-preview-tie regression
+directly exercises exact order recovery and duplicate rejection. The final
+AddressSanitizer region-Boolean differential fuzz pass completed 1,299 executions at
+5,638 coverage points and 16,904 feature edges without a failure; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

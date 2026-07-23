@@ -1713,16 +1713,15 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
     // samples therefore cannot lie on that boundary.
     let split_interiors_are_off_opposite_boundary =
         boundary_events.overlap_event_count() == 0 && boundary_events.uncertain_event_count() == 0;
-    if !retain_pipeline_report
+    let crossing_windings = if !retain_pipeline_report
         && split_interiors_are_off_opposite_boundary
         && RegionLineCrossingWindingIndex::event_set_may_support_propagation(boundary_events)
-        && let Some(crossing_windings) = RegionLineCrossingWindingIndex::from_intersections(
-            first,
-            second,
-            boundary_events,
-            policy,
-        )
     {
+        RegionLineCrossingWindingIndex::from_intersections(first, second, boundary_events, policy)
+    } else {
+        None
+    };
+    if let Some(crossing_windings) = crossing_windings {
         let endpoint_contacts =
             crate::region_events::RegionPointEndpointContactIndex::from_intersections(
                 boundary_events,
@@ -1733,6 +1732,7 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                 first,
                 second,
                 boundary_events,
+                &crossing_windings,
                 policy,
             )? {
                 Classification::Decided(fragments) => fragments,

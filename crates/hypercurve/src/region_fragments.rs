@@ -8,6 +8,7 @@
 use crate::fragment::{
     CompactLineContourFragment, compact_line_contour_fragments_from_split_markers,
 };
+use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
 use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,
     CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey, RegionContourRole,
@@ -199,6 +200,7 @@ pub(crate) fn split_single_material_line_regions_compact(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     intersections: &RegionIntersectionSet,
+    crossing_windings: &RegionLineCrossingWindingIndex<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<CompactLineRegionFragmentSet>> {
     validate_region_intersection_evidence_against_views(first, second, intersections)?;
@@ -221,11 +223,8 @@ pub(crate) fn split_single_material_line_regions_compact(
             second.material_contours()[0],
         ),
     ] {
-        let markers = match split_markers_for_keyed_contour(contour, key, intersections, policy)? {
-            Classification::Decided(markers) => markers,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+        let Some(markers) = crossing_windings.split_markers(key, contour) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let fragments =
             match compact_line_contour_fragments_from_split_markers(contour, markers, policy)? {

@@ -86,6 +86,18 @@ impl ContourSplitMarkers {
         }
     }
 
+    pub(crate) fn from_certified_sorted_source_markers(
+        segment_markers: Vec<Vec<SegmentSplitMarker>>,
+    ) -> Self {
+        // This bypasses the public constructor's incidence and ordering checks.
+        // Callers must derive every marker from the same certified event set as
+        // the source contour and supply strict source-parameter order.
+        Self {
+            segment_markers,
+            source_incidence_certified: true,
+        }
+    }
+
     /// Builds split markers from one contour-pair event set.
     pub fn from_intersections(
         contour: &Contour2,

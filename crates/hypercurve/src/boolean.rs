@@ -854,17 +854,15 @@ impl CompactLineRegionFragmentSet {
             };
 
             let mut represented_crossings = 0_usize;
+            let mut segment_transition_index = 0_usize;
             for (fragment_index, fragment) in contour_fragments.fragments.iter().enumerate() {
                 if fragment_index != 0 {
                     let previous = &contour_fragments.fragments[fragment_index - 1];
-                    let (_, previous_end) = previous.source_parameters(&full_start, &full_end);
-                    let (fragment_start, _) = fragment.source_parameters(&full_start, &full_end);
-                    let Some(delta) = crossing_windings.delta_between_fragments(
+                    let Some(delta) = crossing_windings.delta_for_next_fragment(
                         contour_fragments.key,
                         previous.source_segment_index,
-                        previous_end,
                         fragment.source_segment_index,
-                        fragment_start,
+                        &mut segment_transition_index,
                     ) else {
                         return Ok(None);
                     };
@@ -1499,14 +1497,14 @@ impl RegionFragmentSet {
             };
 
             let mut represented_crossings = 0_usize;
+            let mut segment_transition_index = 0_usize;
             for (fragment_index, fragment) in fragments.iter().enumerate() {
                 if fragment_index != 0 {
-                    let Some(delta) = crossing_windings.delta_between_fragments(
+                    let Some(delta) = crossing_windings.delta_for_next_fragment(
                         contour_fragments.key,
                         fragments[fragment_index - 1].source_segment_index,
-                        fragments[fragment_index - 1].source_range.end(),
                         fragment.source_segment_index,
-                        fragment.source_range.start(),
+                        &mut segment_transition_index,
                     ) else {
                         return Ok(None);
                     };

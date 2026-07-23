@@ -11,14 +11,16 @@ use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    ContourIntersection, CurvePolicy, IntersectionKind, RegionContourKey, RegionContourRole,
-    RegionIntersectionSet, RegionSide, RegionView2, Segment2, SegmentKind,
+    Contour2, ContourIntersection, ContourSplitMarkers, CurvePolicy, IntersectionKind, Point2,
+    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionSide, RegionView2, Segment2,
+    SegmentKind, SegmentSplitMarker,
 };
 
 #[derive(Clone, Debug)]
 struct RegionLineCrossing<'a> {
     segment_index: usize,
     parameter: &'a Real,
+    point: &'a Point2,
     winding_delta: i32,
 }
 
@@ -123,11 +125,13 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
             index.first.push(RegionLineCrossing {
                 segment_index: point.a_segment_index,
                 parameter: &point.a_param,
+                point: &point.point,
                 winding_delta: first_delta,
             });
             index.second.push(RegionLineCrossing {
                 segment_index: point.b_segment_index,
                 parameter: &point.b_param,
+                point: &point.point,
                 winding_delta: -first_delta,
             });
             crossing_count += 1;
@@ -155,6 +159,55 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
             .map_or(0, <[RegionLineCrossing]>::len)
     }
 
+    pub(crate) fn split_markers(
+        &self,
+        key: RegionContourKey,
+        contour: &Contour2,
+    ) -> Option<ContourSplitMarkers> {
+        // `from_intersections` has already certified unique proper crossings
+        // in strict source-parameter order. Reusing that order avoids rebuilding
+        // and sorting the same marker set.
+        let crossings = self.crossings_for_key(key)?;
+        let offsets = match key.side {
+            RegionSide::First => &self.first_segment_offsets,
+            RegionSide::Second => &self.second_segment_offsets,
+        };
+        if offsets.len() != contour.len() + 1 {
+            return None;
+        }
+
+        let zero = Real::zero();
+        let one = Real::one();
+        let mut segment_markers = Vec::with_capacity(contour.len());
+        for (segment_index, segment) in contour.segments().iter().enumerate() {
+            let segment_crossings = &crossings[offsets[segment_index]..offsets[segment_index + 1]];
+            if segment_crossings.is_empty() {
+                segment_markers.push(Vec::new());
+                continue;
+            }
+            let mut markers = Vec::with_capacity(segment_crossings.len() + 2);
+            markers.push(SegmentSplitMarker {
+                segment_index,
+                param: zero.clone(),
+                point: segment.start().clone(),
+            });
+            markers.extend(segment_crossings.iter().map(|crossing| SegmentSplitMarker {
+                segment_index,
+                param: crossing.parameter.clone(),
+                point: crossing.point.clone(),
+            }));
+            markers.push(SegmentSplitMarker {
+                segment_index,
+                param: one.clone(),
+                point: segment.end().clone(),
+            });
+            segment_markers.push(markers);
+        }
+        Some(ContourSplitMarkers::from_certified_sorted_source_markers(
+            segment_markers,
+        ))
+    }
+
     fn winding_delta_sum(&self, key: RegionContourKey) -> i64 {
         self.crossings_for_key(key).map_or(0, |crossings| {
             crossings
@@ -164,29 +217,24 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         })
     }
 
-    pub(crate) fn delta_between_fragments(
+    pub(crate) fn delta_for_next_fragment(
         &self,
         key: RegionContourKey,
         previous_segment_index: usize,
-        previous_end: &Real,
         current_segment_index: usize,
-        current_start: &Real,
+        segment_transition_index: &mut usize,
     ) -> Option<i32> {
         if previous_segment_index != current_segment_index {
+            *segment_transition_index = 0;
             return Some(0);
         }
-        if !std::ptr::eq(previous_end, current_start) && previous_end != current_start {
-            return None;
-        }
-        let crossings = self.crossings(key, previous_segment_index)?;
-        if let [crossing] = crossings {
-            return Some(crossing.winding_delta);
-        }
-        let mut matched = crossings
-            .iter()
-            .filter(|crossing| crossing.parameter == previous_end);
-        let delta = matched.next()?.winding_delta;
-        matched.next().is_none().then_some(delta)
+        // Compact fragments retain source order, and every same-segment
+        // boundary corresponds one-to-one with the next certified crossing.
+        let crossing = self
+            .crossings(key, previous_segment_index)?
+            .get(*segment_transition_index)?;
+        *segment_transition_index += 1;
+        Some(crossing.winding_delta)
     }
 
     fn crossings_for_key(&self, key: RegionContourKey) -> Option<&[RegionLineCrossing<'a>]> {
@@ -238,27 +286,93 @@ fn sort_and_validate_unique(
     crossings: &mut [RegionLineCrossing<'_>],
     policy: &CurvePolicy,
 ) -> bool {
-    crossings.sort_unstable_by_key(|crossing| crossing.segment_index);
-    let mut group_start = 0;
-    while group_start < crossings.len() {
-        let segment_index = crossings[group_start].segment_index;
-        let group_end = crossings[group_start..]
-            .partition_point(|crossing| crossing.segment_index == segment_index)
-            + group_start;
-        for (offset, crossing) in crossings[group_start..group_end].iter().enumerate() {
-            if crossings[group_start + offset + 1..group_end]
-                .iter()
-                .any(|other| {
-                    !matches!(
-                        compare_reals(crossing.parameter, other.parameter, policy),
-                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
-                    )
-                })
-            {
-                return false;
-            }
+    // A lossy preview is only an ordering hint. The exact adjacent check below
+    // certifies the candidate order; ambiguity falls back to an all-exact sort.
+    let preview = crossings
+        .iter()
+        .map(|crossing| {
+            crossing
+                .parameter
+                .to_f64_lossy()
+                .filter(|value| value.is_finite())
+                .map(|parameter| (crossing.clone(), parameter))
+        })
+        .collect::<Option<Vec<_>>>();
+    if let Some(mut preview) = preview {
+        preview.sort_unstable_by(|(left, left_parameter), (right, right_parameter)| {
+            left.segment_index
+                .cmp(&right.segment_index)
+                .then_with(|| left_parameter.total_cmp(right_parameter))
+        });
+        for (crossing, (ordered, _)) in crossings.iter_mut().zip(preview) {
+            *crossing = ordered;
         }
-        group_start = group_end;
+        if crossing_order_is_certified(crossings, policy) {
+            return true;
+        }
     }
-    true
+
+    let mut order_decided = true;
+    crossings.sort_unstable_by(|left, right| {
+        left.segment_index.cmp(&right.segment_index).then_with(|| {
+            match compare_reals(left.parameter, right.parameter, policy) {
+                Some(ordering) => ordering,
+                None => {
+                    order_decided = false;
+                    std::cmp::Ordering::Equal
+                }
+            }
+        })
+    });
+    order_decided && crossing_order_is_certified(crossings, policy)
+}
+
+fn crossing_order_is_certified(crossings: &[RegionLineCrossing<'_>], policy: &CurvePolicy) -> bool {
+    crossings.windows(2).all(|window| {
+        window[0].segment_index < window[1].segment_index
+            || window[0].segment_index == window[1].segment_index
+                && compare_reals(window[0].parameter, window[1].parameter, policy)
+                    == Some(std::cmp::Ordering::Less)
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn crossing<'a>(
+        segment_index: usize,
+        parameter: &'a Real,
+        point: &'a Point2,
+    ) -> RegionLineCrossing<'a> {
+        RegionLineCrossing {
+            segment_index,
+            parameter,
+            point,
+            winding_delta: 1,
+        }
+    }
+
+    #[test]
+    fn lossy_crossing_order_is_exactly_certified_and_rejects_duplicates() {
+        let policy = CurvePolicy::certified();
+        let point = Point2::new(Real::zero(), Real::zero());
+        let large = 1_i128 << 100;
+        let lower = Real::from(large);
+        let upper = Real::from(large + 1);
+        assert_eq!(lower.to_f64_lossy(), upper.to_f64_lossy());
+
+        let mut crossings = vec![
+            crossing(1, &upper, &point),
+            crossing(0, &upper, &point),
+            crossing(1, &lower, &point),
+        ];
+        assert!(sort_and_validate_unique(&mut crossings, &policy));
+        assert_eq!(crossings[0].segment_index, 0);
+        assert_eq!(crossings[1].parameter, &lower);
+        assert_eq!(crossings[2].parameter, &upper);
+
+        let mut duplicates = vec![crossing(0, &lower, &point), crossing(0, &lower, &point)];
+        assert!(!sort_and_validate_unique(&mut duplicates, &policy));
+    }
 }
