@@ -698,7 +698,7 @@ fn affine_family_curve(family: CurveFamily2, start: Point2, end: Point2) -> Resu
             .map_err(string_error)?,
         ),
         CurveFamily2::PolynomialBSpline => {
-            Curve2::try_polynomial_bspline(1, vec![start, end], linear_spline_knots(), None)
+            Curve2::try_polynomial_bspline(1, vec![start, end], linear_spline_knots())
                 .map_err(string_error)?
         }
         CurveFamily2::Nurbs => Curve2::try_nurbs(
@@ -706,7 +706,6 @@ fn affine_family_curve(family: CurveFamily2, start: Point2, end: Point2) -> Resu
             vec![start, end],
             vec![Real::one(), Real::one()],
             linear_spline_knots(),
-            None,
         )
         .map_err(string_error)?,
         CurveFamily2::CircularArc => {
@@ -797,24 +796,10 @@ mod tests {
     #[test]
     fn corner_region_has_an_irregular_outer_loop_and_four_unique_holes() {
         let scene = CornerScene::new(CornerOperation::Fillet, 1.0);
-        let provenance = scene
-            .source_region()
-            .fragment_provenance()
-            .expect("direct CurveRegion2 construction retains provenance");
 
         assert_eq!(scene.source_region().len(), HOLE_COUNT + 1);
         assert_eq!(scene.source_display.materials.len(), 1);
         assert_eq!(scene.source_display.holes.len(), HOLE_COUNT);
-        for family in ALL_FAMILIES {
-            assert_eq!(
-                provenance
-                    .iter()
-                    .filter(|fragment| fragment.family() == family)
-                    .count(),
-                HOLE_COUNT + 2,
-                "{family:?} should appear twice outside and once in every hole"
-            );
-        }
 
         let paths = curve_region_paths().unwrap();
         let outer = &paths[0];
