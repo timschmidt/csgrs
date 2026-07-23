@@ -72,14 +72,6 @@ impl<'a> PreparedHalfspaceSystem3<'a> {
     ) -> PredicateOutcome<HalfspaceFeasibilityReport> {
         classify_halfspace_feasibility3_with_policy(self.planes, policy)
     }
-
-    /// Replay a feasibility report against this prepared system.
-    pub(crate) fn validate_report(
-        &self,
-        report: &HalfspaceFeasibilityReport,
-    ) -> PredicateOutcome<bool> {
-        report.validate_against_planes(self.planes)
-    }
 }
 
 /// Feasibility report for a closed 3D halfspace system.

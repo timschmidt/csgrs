@@ -10,87 +10,31 @@ use core::cmp::Ordering;
 
 use hyperreal::Real;
 
-use crate::predicate::{
-    Certainty, Escalation, PredicateCertificate, PredicateOutcome, PredicateReport, RefinementNeed,
-    Sign,
-};
-use crate::predicates::order::compare_reals_report_with_policy;
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
+use crate::predicates::order::compare_reals_with_policy;
 
-/// Try to certify a sign from an exact closed interval enclosure.
-///
-/// The interval endpoints may be supplied in either order. Internally this
-/// function disables Real refinement and uses only structural/exact comparison
-/// routes allowed by `policy`; that makes it suitable as a pre-refinement
-/// filter. A returned decision is a proof that every value in the interval has
-/// the reported sign. If the interval crosses zero, or if endpoint comparison
-/// itself cannot be certified without refinement, the report is explicitly
-/// unknown.
-///
-/// This is the predicate-layer companion to interval arithmetic enclosures:
-/// callers own how the interval was produced, while `hyperlimit` owns the exact
-/// sign certificate.
-pub fn certified_interval_sign_report(first: &Real, second: &Real) -> PredicateReport<Sign> {
-    certified_interval_sign_report_with_policy(first, second, PredicatePolicy)
-}
-
-/// Try to certify a sign from an exact closed interval enclosure with policy.
-pub(crate) fn certified_interval_sign_report_with_policy(
-    first: &Real,
-    second: &Real,
-    policy: PredicatePolicy,
-) -> PredicateReport<Sign> {
-    match certified_interval_sign_with_policy(first, second, policy) {
-        Some(outcome) => {
-            PredicateReport::new(outcome, PredicateCertificate::CertifiedIntervalFilter)
-        }
-        None => PredicateReport::new(
-            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Filter),
-            PredicateCertificate::Unknown,
-        ),
-    }
-}
-
-/// Try to certify a sign from an exact closed ball enclosure.
-///
-/// The ball is the set `center ± radius`. The radius must be structurally or
-/// exactly certified nonnegative under the supplied policy with refinement
-/// disabled; otherwise the report is explicitly unknown. A decided result is a
-/// proof that every value in the ball has the returned sign.
-///
-/// This is the ball analogue of [`certified_interval_sign_report`]. Ball
-/// enclosures are common in approximate and interval filters, but the exact
-/// geometric computation model requires them to return a certificate or an
-/// explicit non-decision before topology can consume them.
-pub fn certified_ball_sign_report(center: &Real, radius: &Real) -> PredicateReport<Sign> {
-    certified_ball_sign_report_with_policy(center, radius, PredicatePolicy)
-}
-
-/// Try to certify a sign from an exact closed ball enclosure with policy.
-pub fn certified_ball_sign_report_with_policy(
+/// Classify a closed ball enclosure, preserving invalid-radius uncertainty.
+pub fn classify_ball_sign_with_policy(
     center: &Real,
     radius: &Real,
     policy: PredicatePolicy,
-) -> PredicateReport<Sign> {
+) -> PredicateOutcome<Sign> {
     match certified_ball_sign_outcome_with_policy(center, radius, policy) {
-        BallFilterResult::Decided(outcome) => {
-            PredicateReport::new(outcome, PredicateCertificate::CertifiedBallFilter)
+        BallFilterResult::Decided(outcome) => outcome,
+        BallFilterResult::Uncertain => {
+            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Filter)
         }
-        BallFilterResult::Uncertain => PredicateReport::new(
-            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Filter),
-            PredicateCertificate::Unknown,
-        ),
-        BallFilterResult::InvalidRadius => PredicateReport::new(
-            PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Filter),
-            PredicateCertificate::Unknown,
-        ),
+        BallFilterResult::InvalidRadius => {
+            PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Filter)
+        }
     }
 }
 
 /// Try to certify a sign from an exact closed ball enclosure.
 ///
 /// Returns `Some` only when the nonnegative ball certifies a sign. Use
-/// [`certified_ball_sign_report`] when callers need to distinguish an invalid
-/// negative radius from an otherwise inconclusive enclosure.
+/// [`classify_ball_sign_with_policy`] when invalid-radius and inconclusive
+/// outcomes must remain distinct.
 pub fn certified_ball_sign(center: &Real, radius: &Real) -> Option<PredicateOutcome<Sign>> {
     certified_ball_sign_with_policy(center, radius, PredicatePolicy)
 }
@@ -129,8 +73,8 @@ pub(crate) fn certified_interval_sign_with_policy(
     // report-bearing forms so trace/report users can audit the sub-decisions
     // that fed this interval certificate, keeping endpoint ordering inside the
     // certified-filter layer rather than treating it as anonymous scalar work.
-    let first_cmp = compare_reals_report_with_policy(first, &zero, policy).value()?;
-    let second_cmp = compare_reals_report_with_policy(second, &zero, policy).value()?;
+    let first_cmp = compare_reals_with_policy(first, &zero, policy).value()?;
+    let second_cmp = compare_reals_with_policy(second, &zero, policy).value()?;
     let lower_cmp = min_ordering(first_cmp, second_cmp);
     let upper_cmp = max_ordering(first_cmp, second_cmp);
 
@@ -168,7 +112,7 @@ fn certified_ball_sign_outcome_with_policy(
 ) -> BallFilterResult {
     crate::trace_dispatch!("hyperlimit", "certified_ball_sign", "start");
     let zero = Real::from(0);
-    match compare_reals_report_with_policy(radius, &zero, policy).value() {
+    match compare_reals_with_policy(radius, &zero, policy).value() {
         Some(Ordering::Less) => {
             crate::trace_dispatch!("hyperlimit", "certified_ball_sign", "invalid-radius");
             return BallFilterResult::InvalidRadius;
@@ -263,20 +207,6 @@ mod tests {
     }
 
     #[test]
-    fn certified_interval_report_carries_interval_filter_certificate() {
-        let report = certified_interval_sign_report(&Real::from(2), &Real::from(5));
-        assert_eq!(report.value(), Some(Sign::Positive));
-        assert_eq!(
-            report.certificate,
-            PredicateCertificate::CertifiedIntervalFilter
-        );
-
-        let unknown = certified_interval_sign_report(&Real::from(-2), &Real::from(5));
-        assert_eq!(unknown.value(), None);
-        assert_eq!(unknown.certificate, PredicateCertificate::Unknown);
-    }
-
-    #[test]
     fn certified_ball_sign_decides_strict_zero_and_crossing_balls() {
         assert_eq!(
             certified_ball_sign(&Real::from(5), &Real::from(2)),
@@ -303,31 +233,5 @@ mod tests {
             ))
         );
         assert_eq!(certified_ball_sign(&Real::from(1), &Real::from(2)), None);
-    }
-
-    #[test]
-    fn certified_ball_report_carries_ball_certificate_and_validates_radius() {
-        let decided = certified_ball_sign_report(&Real::from(9), &Real::from(3));
-        assert_eq!(decided.value(), Some(Sign::Positive));
-        assert_eq!(
-            decided.certificate,
-            PredicateCertificate::CertifiedBallFilter
-        );
-
-        let crossing = certified_ball_sign_report(&Real::from(1), &Real::from(3));
-        assert_eq!(crossing.value(), None);
-        assert_eq!(crossing.certificate, PredicateCertificate::Unknown);
-        assert_eq!(
-            crossing.outcome,
-            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Filter)
-        );
-
-        let invalid = certified_ball_sign_report(&Real::from(1), &Real::from(-1));
-        assert_eq!(invalid.value(), None);
-        assert_eq!(invalid.certificate, PredicateCertificate::Unknown);
-        assert_eq!(
-            invalid.outcome,
-            PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Filter)
-        );
     }
 }

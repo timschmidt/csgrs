@@ -10,9 +10,8 @@
 use crate::PreparedOrientedPlane3;
 use crate::classify::PlaneSide;
 use crate::geometry::{Plane3, Point3};
-use crate::predicate::PredicateUse;
 use crate::predicates::order::compare_reals;
-use crate::predicates::orient::orient3d_report;
+use crate::predicates::orient::orient3d;
 use hyperreal::Real;
 
 /// Exact segment relation to an oriented plane.
@@ -107,8 +106,6 @@ pub struct SegmentPlaneIntersection {
     pub endpoint_on_plane: Option<usize>,
     /// Certified side for each segment endpoint, or `None` when undecided.
     pub endpoint_sides: [Option<PlaneSide>; 2],
-    /// Predicate certificates used to classify the two endpoints.
-    pub predicates: Vec<PredicateUse>,
     /// Structured construction failure retained when a certified crossing
     /// could not produce a split point.
     pub construction_failure: Option<SegmentPlaneConstructionFailure>,
@@ -124,14 +121,6 @@ pub struct SegmentPlaneParameterRatio {
 }
 
 impl SegmentPlaneIntersection {
-    /// Return whether every predicate route produced an exact-preserving proof.
-    pub fn all_proof_producing(&self) -> bool {
-        self.predicates
-            .iter()
-            .copied()
-            .all(PredicateUse::is_proof_producing)
-    }
-
     /// Validate relation, endpoint-side, and construction-field consistency.
     pub fn validate(&self) -> Result<(), SegmentPlaneValidationError> {
         match self.relation {
@@ -289,20 +278,16 @@ pub fn intersect_segment_with_oriented_plane(
     p0: &Point3,
     p1: &Point3,
 ) -> SegmentPlaneIntersection {
-    let reports = [orient3d_report(a, b, c, p0), orient3d_report(a, b, c, p1)];
-    let predicates = reports
-        .iter()
-        .map(|report| PredicateUse::from_certificate(report.certificate))
-        .collect::<Vec<_>>();
+    let outcomes = [orient3d(a, b, c, p0), orient3d(a, b, c, p1)];
     let sides = [
-        reports[0].value().map(PlaneSide::from),
-        reports[1].value().map(PlaneSide::from),
+        outcomes[0].value().map(PlaneSide::from),
+        outcomes[1].value().map(PlaneSide::from),
     ];
 
     let prepared = PreparedOrientedPlane3::new(a, b, c);
     let d0 = point_plane_value(prepared.plane(), p0);
     let d1 = point_plane_value(prepared.plane(), p1);
-    intersect_segment_with_plane_values(&d0, &d1, p0, p1, sides, predicates)
+    intersect_segment_with_plane_values(&d0, &d1, p0, p1, sides)
 }
 
 /// Intersect a closed segment with an explicit oriented plane.
@@ -314,7 +299,7 @@ pub fn intersect_segment_with_plane(
     let d0 = point_plane_value(plane, p0);
     let d1 = point_plane_value(plane, p1);
     let sides = [plane_side_from_value(&d0), plane_side_from_value(&d1)];
-    intersect_segment_with_plane_values(&d0, &d1, p0, p1, sides, Vec::new())
+    intersect_segment_with_plane_values(&d0, &d1, p0, p1, sides)
 }
 
 /// Build a segment/plane event from already-computed exact endpoint plane
@@ -325,13 +310,11 @@ pub fn intersect_segment_with_plane_values(
     p0: &Point3,
     p1: &Point3,
     sides: [Option<PlaneSide>; 2],
-    predicates: Vec<PredicateUse>,
 ) -> SegmentPlaneIntersection {
     let Some([side0, side1]) = transpose_sides(sides) else {
         return event(
             SegmentPlaneRelation::Unknown,
             sides,
-            predicates,
             SegmentPlaneEventConstruction::none(),
         );
     };
@@ -340,25 +323,21 @@ pub fn intersect_segment_with_plane_values(
         (PlaneSide::On, PlaneSide::On) => event(
             SegmentPlaneRelation::Coplanar,
             sides,
-            predicates,
             SegmentPlaneEventConstruction::none(),
         ),
         (PlaneSide::On, _) => event(
             SegmentPlaneRelation::EndpointOnPlane,
             sides,
-            predicates,
             SegmentPlaneEventConstruction::endpoint(0, p0.clone(), Real::from(0)),
         ),
         (_, PlaneSide::On) => event(
             SegmentPlaneRelation::EndpointOnPlane,
             sides,
-            predicates,
             SegmentPlaneEventConstruction::endpoint(1, p1.clone(), Real::from(1)),
         ),
         (PlaneSide::Above, PlaneSide::Above) | (PlaneSide::Below, PlaneSide::Below) => event(
             SegmentPlaneRelation::Disjoint,
             sides,
-            predicates,
             SegmentPlaneEventConstruction::none(),
         ),
         (PlaneSide::Above, PlaneSide::Below) | (PlaneSide::Below, PlaneSide::Above) => {
@@ -366,13 +345,11 @@ pub fn intersect_segment_with_plane_values(
                 Ok((parameter, ratio, point)) => event(
                     SegmentPlaneRelation::ProperCrossing,
                     sides,
-                    predicates,
                     SegmentPlaneEventConstruction::proper_crossing(point, parameter, ratio),
                 ),
                 Err(failure) => event(
                     SegmentPlaneRelation::ConstructionFailed,
                     sides,
-                    predicates,
                     SegmentPlaneEventConstruction::failed(failure),
                 ),
             }
@@ -498,7 +475,6 @@ impl SegmentPlaneEventConstruction {
 fn event(
     relation: SegmentPlaneRelation,
     endpoint_sides: [Option<PlaneSide>; 2],
-    predicates: Vec<PredicateUse>,
     construction: SegmentPlaneEventConstruction,
 ) -> SegmentPlaneIntersection {
     SegmentPlaneIntersection {
@@ -508,7 +484,6 @@ fn event(
         parameter_ratio: construction.parameter_ratio,
         endpoint_on_plane: construction.endpoint_on_plane,
         endpoint_sides,
-        predicates,
         construction_failure: construction.construction_failure,
     }
 }

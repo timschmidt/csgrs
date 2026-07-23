@@ -8,13 +8,9 @@ use crate::classify::{
     Triangle3Location, TriangleLocation,
 };
 use crate::geometry::{HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts, triangle2_facts};
-use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicateUse, RefinementNeed, Sign,
-};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::predicates::order::compare_reals_with_policy;
-use crate::predicates::orient::{
-    orient2d_with_policy, orient3d_report_with_policy, orient3d_with_policy,
-};
+use crate::predicates::orient::{orient2d_with_policy, orient3d_with_policy};
 use crate::predicates::segment_plane::{
     SegmentPlaneIntersection, SegmentPlaneRelation, SegmentPlaneValidationError,
     intersect_segment_with_plane_values, point_plane_value,
@@ -120,23 +116,6 @@ impl<'a> PreparedTriangle2<'a> {
             Some(self.orientation),
         )
     }
-
-    /// Classify a point with the crate-local strict predicate marker.
-    pub(crate) fn classify_point_with_policy(
-        &self,
-        point: &Point2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<TriangleLocation> {
-        classify_point_triangle_impl(
-            self.a,
-            self.b,
-            self.c,
-            point,
-            policy,
-            Some(self.facts),
-            Some(self.orientation),
-        )
-    }
 }
 
 /// Reusable exact predicates for one 3D triangle.
@@ -202,23 +181,6 @@ impl<'a> PreparedTriangle3<'a> {
             self.c,
             point,
             PredicatePolicy::STRICT,
-            &self.normal,
-            self.normal_signs,
-        )
-    }
-
-    /// Classify a point with the crate-local strict predicate marker.
-    pub(crate) fn classify_point_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<Triangle3Location> {
-        classify_point_triangle3_impl(
-            self.a,
-            self.b,
-            self.c,
-            point,
-            policy,
             &self.normal,
             self.normal_signs,
         )
@@ -370,9 +332,6 @@ pub struct RayTriangleIntersectionReport {
     pub point: Option<Point3>,
     /// Location of [`Self::point`] relative to the closed triangle.
     pub triangle_location: Option<Triangle3Location>,
-    /// Predicate certificates used to classify the ray origin against the
-    /// supporting plane.
-    pub predicates: Vec<PredicateUse>,
 }
 
 impl RayTriangleIntersectionReport {
@@ -434,15 +393,6 @@ impl RayTriangleIntersectionReport {
     /// Return whether this report retained a constructed candidate point.
     pub fn has_candidate_point(&self) -> bool {
         self.point.is_some()
-    }
-
-    /// Return whether every retained predicate route produced an
-    /// exact-preserving proof.
-    pub fn all_proof_producing(&self) -> bool {
-        self.predicates
-            .iter()
-            .copied()
-            .all(PredicateUse::is_proof_producing)
     }
 }
 
@@ -583,26 +533,22 @@ pub(crate) fn classify_segment_triangle3_intersection_report_with_policy(
         "plane-event-replay"
     );
     let plane = triangle_support_plane(a, b, c);
-    let reports = [
-        orient3d_report_with_policy(a, b, c, p, policy),
-        orient3d_report_with_policy(a, b, c, q, policy),
+    let outcomes = [
+        orient3d_with_policy(a, b, c, p, policy),
+        orient3d_with_policy(a, b, c, q, policy),
     ];
-    for report in reports {
-        if let PredicateOutcome::Unknown { needed, stage } = report.outcome {
+    for outcome in outcomes {
+        if let PredicateOutcome::Unknown { needed, stage } = outcome {
             return PredicateOutcome::unknown(needed, stage);
         }
     }
-    let predicates = reports
-        .iter()
-        .map(|report| PredicateUse::from_certificate(report.certificate))
-        .collect::<Vec<_>>();
     let sides = [
-        reports[0].value().map(PlaneSide::from),
-        reports[1].value().map(PlaneSide::from),
+        outcomes[0].value().map(PlaneSide::from),
+        outcomes[1].value().map(PlaneSide::from),
     ];
     let d0 = point_plane_value(&plane, p);
     let d1 = point_plane_value(&plane, q);
-    let plane_event = intersect_segment_with_plane_values(&d0, &d1, p, q, sides, predicates);
+    let plane_event = intersect_segment_with_plane_values(&d0, &d1, p, q, sides);
 
     match plane_event.relation {
         SegmentPlaneRelation::Unknown => {
@@ -844,10 +790,6 @@ pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
 ) -> PredicateOutcome<RayTriangleIntersectionReport> {
     crate::trace_dispatch!("hyperlimit", "ray_triangle3_report", "ray-plane-replay");
     let plane = triangle_support_plane(a, b, c);
-    let origin_report = orient3d_report_with_policy(a, b, c, origin, policy);
-    if let PredicateOutcome::Unknown { needed, stage } = origin_report.outcome {
-        return PredicateOutcome::unknown(needed, stage);
-    }
     let origin_expression = plane_expression_at(&plane, origin);
     let origin_sign = match sign_for_ray_triangle(&origin_expression, policy) {
         PredicateOutcome::Decided { value, .. } => value,
@@ -863,8 +805,6 @@ pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
         }
     };
     let origin_side = Some(PlaneSide::from(origin_sign));
-    let predicates = vec![PredicateUse::from_certificate(origin_report.certificate)];
-
     if direction_sign == Sign::Zero {
         let relation = if origin_sign == Sign::Zero {
             RayTriangleIntersection::Coplanar
@@ -880,7 +820,6 @@ pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
                 parameter_ratio: None,
                 point: None,
                 triangle_location: None,
-                predicates,
             },
             Certainty::Exact,
             Escalation::Exact,
@@ -897,7 +836,6 @@ pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
                 parameter_ratio: None,
                 point: None,
                 triangle_location: None,
-                predicates,
             },
             Certainty::Exact,
             Escalation::Exact,
@@ -917,7 +855,6 @@ pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
                         parameter_ratio: None,
                         point: Some(origin.clone()),
                         triangle_location: Some(value),
-                        predicates,
                     },
                     Certainty::Exact,
                     Escalation::Exact,
@@ -948,7 +885,6 @@ pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
                     }),
                     point: Some(intersection),
                     triangle_location: Some(value),
-                    predicates,
                 },
                 Certainty::Exact,
                 Escalation::Exact,

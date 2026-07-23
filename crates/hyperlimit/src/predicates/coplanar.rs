@@ -10,8 +10,8 @@
 
 use crate::classify::{SegmentIntersection, TriangleLocation};
 use crate::geometry::{Point2, Point3};
-use crate::predicate::{PredicateOutcome, PredicateUse, Sign};
-use crate::predicates::orient::orient2d_report;
+use crate::predicate::{PredicateOutcome, Sign};
+use crate::predicates::orient::orient2d;
 use crate::predicates::ring::ring_area_sign;
 use crate::predicates::segment::classify_segment_intersection;
 use crate::predicates::segment_plane::segment_parameter_from_axis;
@@ -87,20 +87,9 @@ pub struct CoplanarTriangleClassification {
     pub right_vertices_in_left: [Option<TriangleLocation>; 3],
     /// Locations of left-triangle vertices relative to the right triangle.
     pub left_vertices_in_right: [Option<TriangleLocation>; 3],
-    /// Predicate certificates retained while choosing the projection.
-    pub predicates: Vec<PredicateUse>,
 }
 
 impl CoplanarTriangleClassification {
-    /// Return whether the projection predicates produced exact-preserving
-    /// proofs.
-    pub fn projection_proof_producing(&self) -> bool {
-        self.predicates
-            .iter()
-            .copied()
-            .all(PredicateUse::is_proof_producing)
-    }
-
     /// Validate projection, retained predicate facts, and relation coherence.
     ///
     /// Unknown results may retain a certified projection and a prefix of edge
@@ -181,77 +170,46 @@ pub enum TriangleDegeneracy {
     Unknown,
 }
 
-/// Predicate reports retained while classifying one triangle.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TrianglePredicateReport {
-    /// Degeneracy result.
-    pub degeneracy: TriangleDegeneracy,
-    /// Predicate certificates used by the classification.
-    pub predicates: Vec<PredicateUse>,
-}
-
-impl TrianglePredicateReport {
-    /// Return whether all retained predicate routes were proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
-        self.predicates
-            .iter()
-            .copied()
-            .all(PredicateUse::is_proof_producing)
-    }
-}
-
 /// Classify whether three exact 3D points form a non-degenerate triangle.
 ///
 /// Degeneracy is tested by exact 2D orientation in coordinate projections. If
 /// every projection has zero orientation, the three 3D points are collinear.
 /// This uses exact determinant predicates in every coordinate projection.
-pub fn classify_triangle3_degeneracy(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-) -> TrianglePredicateReport {
-    let reports = [
-        orient2d_report(
+pub fn classify_triangle3_degeneracy(a: &Point3, b: &Point3, c: &Point3) -> TriangleDegeneracy {
+    let outcomes = [
+        orient2d(
             &project_point3(a, CoplanarProjection::Xy),
             &project_point3(b, CoplanarProjection::Xy),
             &project_point3(c, CoplanarProjection::Xy),
         ),
-        orient2d_report(
+        orient2d(
             &project_point3(a, CoplanarProjection::Xz),
             &project_point3(b, CoplanarProjection::Xz),
             &project_point3(c, CoplanarProjection::Xz),
         ),
-        orient2d_report(
+        orient2d(
             &project_point3(a, CoplanarProjection::Yz),
             &project_point3(b, CoplanarProjection::Yz),
             &project_point3(c, CoplanarProjection::Yz),
         ),
     ];
 
-    let mut predicates = Vec::with_capacity(reports.len());
     let mut all_zero = true;
 
-    for report in reports {
-        predicates.push(PredicateUse::from_certificate(report.certificate));
-        match report.value() {
+    for outcome in outcomes {
+        match outcome.value() {
             Some(Sign::Positive | Sign::Negative) => {
-                return TrianglePredicateReport {
-                    degeneracy: TriangleDegeneracy::NonDegenerate,
-                    predicates,
-                };
+                return TriangleDegeneracy::NonDegenerate;
             }
             Some(Sign::Zero) => {}
             None => all_zero = false,
         }
     }
 
-    TrianglePredicateReport {
-        degeneracy: if all_zero {
-            TriangleDegeneracy::Degenerate
-        } else {
-            TriangleDegeneracy::Unknown
-        },
-        predicates,
+    if all_zero {
+        TriangleDegeneracy::Degenerate
+    } else {
+        TriangleDegeneracy::Unknown
     }
 }
 
@@ -269,7 +227,6 @@ pub fn classify_coplanar_triangles(
             edge_intersections: Vec::new(),
             right_vertices_in_left: [None, None, None],
             left_vertices_in_right: [None, None, None],
-            predicates: Vec::new(),
         };
     }
     let left_points = [&points[left[0]], &points[left[1]], &points[left[2]]];
@@ -282,14 +239,13 @@ pub fn classify_coplanar_triangle_points(
     left: [&Point3; 3],
     right: [&Point3; 3],
 ) -> CoplanarTriangleClassification {
-    let Some((projection, predicates)) = choose_coplanar_projection(left) else {
+    let Some(projection) = choose_coplanar_projection(left) else {
         return CoplanarTriangleClassification {
             projection: None,
             relation: CoplanarTriangleRelation::Unknown,
             edge_intersections: Vec::new(),
             right_vertices_in_left: [None, None, None],
             left_vertices_in_right: [None, None, None],
-            predicates: Vec::new(),
         };
     };
 
@@ -316,7 +272,7 @@ pub fn classify_coplanar_triangle_points(
                     edge_intersections.push(value);
                 }
                 PredicateOutcome::Unknown { .. } => {
-                    return unknown_with_projection(projection, predicates, edge_intersections);
+                    return unknown_with_projection(projection, edge_intersections);
                 }
             }
         }
@@ -324,11 +280,11 @@ pub fn classify_coplanar_triangle_points(
 
     let right_vertices_in_left = classify_vertices_in_triangle(&left2, &right2);
     if right_vertices_in_left.iter().any(Option::is_none) {
-        return unknown_with_projection(projection, predicates, edge_intersections);
+        return unknown_with_projection(projection, edge_intersections);
     }
     let left_vertices_in_right = classify_vertices_in_triangle(&right2, &left2);
     if left_vertices_in_right.iter().any(Option::is_none) {
-        return unknown_with_projection(projection, predicates, edge_intersections);
+        return unknown_with_projection(projection, edge_intersections);
     }
 
     for location in right_vertices_in_left
@@ -357,26 +313,21 @@ pub fn classify_coplanar_triangle_points(
         edge_intersections,
         right_vertices_in_left,
         left_vertices_in_right,
-        predicates,
     }
 }
 
 /// Choose a coordinate projection whose triangle orientation is certified
 /// nonzero.
-pub fn choose_coplanar_projection(
-    triangle: [&Point3; 3],
-) -> Option<(CoplanarProjection, Vec<PredicateUse>)> {
-    let mut predicates = Vec::with_capacity(3);
+pub fn choose_coplanar_projection(triangle: [&Point3; 3]) -> Option<CoplanarProjection> {
     for projection in [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
         CoplanarProjection::Yz,
     ] {
         let projected = project_triangle3(triangle, projection);
-        let report = orient2d_report(&projected[0], &projected[1], &projected[2]);
-        predicates.push(PredicateUse::from_certificate(report.certificate));
-        if matches!(report.value(), Some(Sign::Positive | Sign::Negative)) {
-            return Some((projection, predicates));
+        let outcome = orient2d(&projected[0], &projected[1], &projected[2]);
+        if matches!(outcome.value(), Some(Sign::Positive | Sign::Negative)) {
+            return Some(projection);
         }
     }
     None
@@ -509,7 +460,7 @@ pub fn intersect_segment_with_projected_line3(
 /// Return the exact signed 2D orientation determinant.
 ///
 /// This is the raw determinant value behind the orientation predicate. Callers
-/// must still use [`orient2d_report`] or another certified sign classifier for
+/// must still use [`crate::orient2d`] or another certified sign classifier for
 /// topology decisions; the value helper exists for exact construction
 /// parameters that are consumed only after predicates have selected the
 /// combinatorial case, preserving the predicate/construction boundary.
@@ -657,7 +608,6 @@ fn classify_vertices_in_triangle(
 
 fn unknown_with_projection(
     projection: CoplanarProjection,
-    predicates: Vec<PredicateUse>,
     edge_intersections: Vec<SegmentIntersection>,
 ) -> CoplanarTriangleClassification {
     CoplanarTriangleClassification {
@@ -666,7 +616,6 @@ fn unknown_with_projection(
         edge_intersections,
         right_vertices_in_left: [None, None, None],
         left_vertices_in_right: [None, None, None],
-        predicates,
     }
 }
 
@@ -681,13 +630,11 @@ mod tests {
 
     #[test]
     fn triangle3_degeneracy_uses_projected_orientations() {
-        let report = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 1, 0));
-        assert_eq!(report.degeneracy, TriangleDegeneracy::NonDegenerate);
-        assert!(report.all_proof_producing());
+        let result = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 1, 0));
+        assert_eq!(result, TriangleDegeneracy::NonDegenerate);
 
         let degenerate = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 1, 1), &p3(2, 2, 2));
-        assert_eq!(degenerate.degeneracy, TriangleDegeneracy::Degenerate);
-        assert!(degenerate.all_proof_producing());
+        assert_eq!(degenerate, TriangleDegeneracy::Degenerate);
     }
 
     #[test]

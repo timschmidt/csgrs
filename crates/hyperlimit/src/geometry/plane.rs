@@ -11,11 +11,9 @@ use hyperreal::{
 use crate::RealSymbolicDependencyMask;
 use crate::classify::{PlaneAabbRelation, PlaneSegmentRelation, PlaneSide, PlaneTriangleRelation};
 use crate::geometry::Point3;
-use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicateUse, RefinementNeed, Sign,
-};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::predicates::order::compare_reals_with_policy;
-use crate::predicates::orient::{orient3d_report_with_policy, orient3d_with_policy};
+use crate::predicates::orient::orient3d_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
 
@@ -112,19 +110,9 @@ pub struct TrianglePlaneClassification {
     pub relation: TrianglePlaneRelation,
     /// Per-query-vertex side, or `None` when the predicate was undecided.
     pub vertex_sides: [Option<PlaneSide>; 3],
-    /// Predicate certificates used by the three orientation tests.
-    pub predicates: Vec<PredicateUse>,
 }
 
 impl TrianglePlaneClassification {
-    /// Return whether every predicate used here was proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
-        self.predicates
-            .iter()
-            .copied()
-            .all(PredicateUse::is_proof_producing)
-    }
-
     /// Validate that retained vertex side facts imply the reported relation.
     pub fn validate(&self) -> Result<(), TrianglePlaneValidationError> {
         if triangle_plane_relation_from_sides(self.vertex_sides) == self.relation {
@@ -812,23 +800,20 @@ pub(crate) fn classify_triangle_against_oriented_plane_with_policy(
     query: [&Point3; 3],
     policy: PredicatePolicy,
 ) -> TrianglePlaneClassification {
-    let reports = [
-        orient3d_report_with_policy(plane[0], plane[1], plane[2], query[0], policy),
-        orient3d_report_with_policy(plane[0], plane[1], plane[2], query[1], policy),
-        orient3d_report_with_policy(plane[0], plane[1], plane[2], query[2], policy),
+    let outcomes = [
+        orient3d_with_policy(plane[0], plane[1], plane[2], query[0], policy),
+        orient3d_with_policy(plane[0], plane[1], plane[2], query[1], policy),
+        orient3d_with_policy(plane[0], plane[1], plane[2], query[2], policy),
     ];
 
-    let mut predicates = Vec::with_capacity(reports.len());
     let mut sides = [None, None, None];
-    for (index, report) in reports.into_iter().enumerate() {
-        predicates.push(PredicateUse::from_certificate(report.certificate));
-        sides[index] = report.value().map(PlaneSide::from);
+    for (index, outcome) in outcomes.into_iter().enumerate() {
+        sides[index] = outcome.value().map(PlaneSide::from);
     }
 
     TrianglePlaneClassification {
         relation: triangle_plane_relation_from_sides(sides),
         vertex_sides: sides,
-        predicates,
     }
 }
 
@@ -1451,30 +1436,6 @@ mod tests {
         assert_eq!(
             forged.validate(),
             Err(PlaneAabbReportValidationError::RelationMismatch)
-        );
-    }
-
-    #[test]
-    fn session_prepared_plane_aabb3_report_replays() {
-        let session = crate::session::ExactGeometrySession::default();
-        let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
-        let prepared = session.prepare_plane3(&plane);
-        let min = p3(0.0, 0.0, 0.0);
-        let max = p3(2.0, 2.0, 2.0);
-        let report = session
-            .classify_prepared_plane3_aabb3_report(&prepared, &min, &max)
-            .value()
-            .expect("session report should decide");
-
-        assert_eq!(
-            session
-                .classify_prepared_plane3_aabb3(&prepared, &min, &max)
-                .value(),
-            Some(report.relation)
-        );
-        assert_eq!(
-            report.validate_against_sources(&plane, &min, &max, PredicatePolicy),
-            Ok(())
         );
     }
 

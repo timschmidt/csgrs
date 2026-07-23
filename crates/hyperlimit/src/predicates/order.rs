@@ -8,9 +8,7 @@ use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use crate::geometry::{Point2, Point3};
-use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicateReport, RefinementNeed, Sign,
-};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::real::sub_ref;
 use crate::resolve::{map_outcome, resolve_real_sign_direct};
 use hyperreal::Real;
@@ -20,39 +18,17 @@ pub fn classify_real_sign(value: &Real) -> PredicateOutcome<Sign> {
     classify_real_sign_with_policy(value, PredicatePolicy)
 }
 
-/// Decide the sign of one Real value and return predicate provenance.
-pub fn classify_real_sign_report(value: &Real) -> PredicateReport<Sign> {
-    classify_real_sign_report_with_policy(value, PredicatePolicy)
-}
-
 /// Decide the sign of one Real value with an explicit predicate policy.
 pub(crate) fn classify_real_sign_with_policy(
     value: &Real,
-    policy: PredicatePolicy,
-) -> PredicateOutcome<Sign> {
-    classify_real_sign_report_with_policy(value, policy).outcome
-}
-
-/// Decide the sign of one Real value with an explicit predicate policy and
-/// provenance certificate.
-pub(crate) fn classify_real_sign_report_with_policy(
-    value: &Real,
     _policy: PredicatePolicy,
-) -> PredicateReport<Sign> {
-    PredicateReport::from_outcome(resolve_real_sign_direct(
-        value,
-        RefinementNeed::RealRefinement,
-    ))
+) -> PredicateOutcome<Sign> {
+    resolve_real_sign_direct(value, RefinementNeed::RealRefinement)
 }
 
 /// Compare two Real values by deciding the sign of `left - right`.
 pub fn compare_reals(left: &Real, right: &Real) -> PredicateOutcome<Ordering> {
     compare_reals_with_policy(left, right, PredicatePolicy)
-}
-
-/// Compare two Real values and return predicate provenance.
-pub fn compare_reals_report(left: &Real, right: &Real) -> PredicateReport<Ordering> {
-    compare_reals_report_with_policy(left, right, PredicatePolicy)
 }
 
 /// Compare two Real values with an explicit predicate escalation policy.
@@ -66,39 +42,24 @@ pub fn compare_reals_report(left: &Real, right: &Real) -> PredicateReport<Orderi
 pub fn compare_reals_with_policy(
     left: &Real,
     right: &Real,
-    policy: PredicatePolicy,
-) -> PredicateOutcome<Ordering> {
-    compare_reals_report_with_policy(left, right, policy).outcome
-}
-
-/// Compare two Real values with an explicit policy and provenance certificate.
-///
-/// Ordering predicates are often used as sub-decisions in intervals,
-/// sweep-line queues, and boundary classifiers. Returning a report makes that
-/// sub-decision auditable without changing the lightweight
-/// [`compare_reals_with_policy`] API. Approximate views remain outside the
-/// topology path, while certified sign decisions expose how they were decided.
-pub(crate) fn compare_reals_report_with_policy(
-    left: &Real,
-    right: &Real,
     _policy: PredicatePolicy,
-) -> PredicateReport<Ordering> {
+) -> PredicateOutcome<Ordering> {
     if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
         crate::trace_dispatch!("hyperlimit", "compare_reals", "exact-rational");
-        return PredicateReport::from_outcome(PredicateOutcome::decided(
+        return PredicateOutcome::decided(
             left.partial_cmp(right)
                 .expect("exact rational ordering is total"),
             Certainty::Exact,
             Escalation::Exact,
-        ));
+        );
     }
 
     crate::trace_dispatch!("hyperlimit", "compare_reals", "difference-sign");
     let difference = sub_ref(left, right);
-    PredicateReport::from_outcome(map_outcome(
+    map_outcome(
         resolve_real_sign_direct(&difference, RefinementNeed::RealRefinement),
         ordering_from_sign,
-    ))
+    )
 }
 
 /// Return whether `left <= right` under the exact Real ordering predicate.
@@ -257,14 +218,6 @@ pub fn compare_point2_lexicographic(left: &Point2, right: &Point2) -> PredicateO
     compare_point2_lexicographic_with_policy(left, right, PredicatePolicy)
 }
 
-/// Compare two 2D points lexicographically with predicate provenance.
-pub fn compare_point2_lexicographic_report(
-    left: &Point2,
-    right: &Point2,
-) -> PredicateReport<Ordering> {
-    compare_point2_lexicographic_report_with_policy(left, right, PredicatePolicy)
-}
-
 /// Compare two 2D points lexicographically by `(x, y)` with an explicit policy.
 ///
 /// This is useful for deterministic exact event queues and canonical endpoint
@@ -275,46 +228,30 @@ pub(crate) fn compare_point2_lexicographic_with_policy(
     right: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
-    compare_point2_lexicographic_report_with_policy(left, right, policy).outcome
-}
-
-/// Compare two 2D points lexicographically with an explicit policy and report.
-pub(crate) fn compare_point2_lexicographic_report_with_policy(
-    left: &Point2,
-    right: &Point2,
-    policy: PredicatePolicy,
-) -> PredicateReport<Ordering> {
-    match compare_reals_report_with_policy(&left.x, &right.x, policy).outcome {
+    match compare_reals_with_policy(&left.x, &right.x, policy) {
         PredicateOutcome::Decided {
             value: Ordering::Equal,
             certainty: x_certainty,
             stage: x_stage,
-        } => match compare_reals_report_with_policy(&left.y, &right.y, policy).outcome {
+        } => match compare_reals_with_policy(&left.y, &right.y, policy) {
             PredicateOutcome::Decided {
                 value,
                 certainty: y_certainty,
                 stage: y_stage,
-            } => PredicateReport::from_outcome(PredicateOutcome::decided(
+            } => PredicateOutcome::decided(
                 value,
                 max_certainty(x_certainty, y_certainty),
                 max_stage(x_stage, y_stage),
-            )),
-            PredicateOutcome::Unknown { needed, stage } => {
-                PredicateReport::from_outcome(PredicateOutcome::unknown(needed, stage))
-            }
+            ),
+            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
         },
-        decided_or_unknown => PredicateReport::from_outcome(decided_or_unknown),
+        decided_or_unknown => decided_or_unknown,
     }
 }
 
 /// Return whether two 2D points have equal coordinates.
 pub fn point2_equal(left: &Point2, right: &Point2) -> PredicateOutcome<bool> {
     point2_equal_with_policy(left, right, PredicatePolicy)
-}
-
-/// Return whether two 2D points have equal coordinates with provenance.
-pub fn point2_equal_report(left: &Point2, right: &Point2) -> PredicateReport<bool> {
-    point2_equal_report_with_policy(left, right, PredicatePolicy)
 }
 
 /// Return whether two 2D points have equal coordinates with an explicit
@@ -329,33 +266,15 @@ pub(crate) fn point2_equal_with_policy(
     right: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
-    point2_equal_report_with_policy(left, right, policy).outcome
-}
-
-/// Return whether two 2D points have equal coordinates with explicit policy
-/// and provenance.
-pub(crate) fn point2_equal_report_with_policy(
-    left: &Point2,
-    right: &Point2,
-    policy: PredicatePolicy,
-) -> PredicateReport<bool> {
-    PredicateReport::from_outcome(map_outcome(
-        compare_point2_lexicographic_report_with_policy(left, right, policy).outcome,
+    map_outcome(
+        compare_point2_lexicographic_with_policy(left, right, policy),
         |ordering| ordering == Ordering::Equal,
-    ))
+    )
 }
 
 /// Compare two 3D points lexicographically by `(x, y, z)`.
 pub fn compare_point3_lexicographic(left: &Point3, right: &Point3) -> PredicateOutcome<Ordering> {
     compare_point3_lexicographic_with_policy(left, right, PredicatePolicy)
-}
-
-/// Compare two 3D points lexicographically with predicate provenance.
-pub fn compare_point3_lexicographic_report(
-    left: &Point3,
-    right: &Point3,
-) -> PredicateReport<Ordering> {
-    compare_point3_lexicographic_report_with_policy(left, right, PredicatePolicy)
 }
 
 /// Compare two 3D points lexicographically by `(x, y, z)` with an explicit
@@ -370,64 +289,48 @@ pub(crate) fn compare_point3_lexicographic_with_policy(
     right: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
-    compare_point3_lexicographic_report_with_policy(left, right, policy).outcome
-}
-
-/// Compare two 3D points lexicographically with an explicit policy and report.
-pub(crate) fn compare_point3_lexicographic_report_with_policy(
-    left: &Point3,
-    right: &Point3,
-    policy: PredicatePolicy,
-) -> PredicateReport<Ordering> {
-    match compare_reals_report_with_policy(&left.x, &right.x, policy).outcome {
+    match compare_reals_with_policy(&left.x, &right.x, policy) {
         PredicateOutcome::Decided {
             value: Ordering::Equal,
             certainty: x_certainty,
             stage: x_stage,
-        } => match compare_reals_report_with_policy(&left.y, &right.y, policy).outcome {
+        } => match compare_reals_with_policy(&left.y, &right.y, policy) {
             PredicateOutcome::Decided {
                 value: Ordering::Equal,
                 certainty: y_certainty,
                 stage: y_stage,
-            } => match compare_reals_report_with_policy(&left.z, &right.z, policy).outcome {
+            } => match compare_reals_with_policy(&left.z, &right.z, policy) {
                 PredicateOutcome::Decided {
                     value,
                     certainty: z_certainty,
                     stage: z_stage,
-                } => PredicateReport::from_outcome(PredicateOutcome::decided(
+                } => PredicateOutcome::decided(
                     value,
                     max_certainty(max_certainty(x_certainty, y_certainty), z_certainty),
                     max_stage(max_stage(x_stage, y_stage), z_stage),
-                )),
+                ),
                 PredicateOutcome::Unknown { needed, stage } => {
-                    PredicateReport::from_outcome(PredicateOutcome::unknown(needed, stage))
+                    PredicateOutcome::unknown(needed, stage)
                 }
             },
             PredicateOutcome::Decided {
                 value,
                 certainty: y_certainty,
                 stage: y_stage,
-            } => PredicateReport::from_outcome(PredicateOutcome::decided(
+            } => PredicateOutcome::decided(
                 value,
                 max_certainty(x_certainty, y_certainty),
                 max_stage(x_stage, y_stage),
-            )),
-            PredicateOutcome::Unknown { needed, stage } => {
-                PredicateReport::from_outcome(PredicateOutcome::unknown(needed, stage))
-            }
+            ),
+            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
         },
-        decided_or_unknown => PredicateReport::from_outcome(decided_or_unknown),
+        decided_or_unknown => decided_or_unknown,
     }
 }
 
 /// Return whether two 3D points have equal coordinates.
 pub fn point3_equal(left: &Point3, right: &Point3) -> PredicateOutcome<bool> {
     point3_equal_with_policy(left, right, PredicatePolicy)
-}
-
-/// Return whether two 3D points have equal coordinates with provenance.
-pub fn point3_equal_report(left: &Point3, right: &Point3) -> PredicateReport<bool> {
-    point3_equal_report_with_policy(left, right, PredicatePolicy)
 }
 
 /// Return whether two 3D points have equal coordinates with an explicit
@@ -442,20 +345,10 @@ pub(crate) fn point3_equal_with_policy(
     right: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
-    point3_equal_report_with_policy(left, right, policy).outcome
-}
-
-/// Return whether two 3D points have equal coordinates with explicit policy
-/// and provenance.
-pub(crate) fn point3_equal_report_with_policy(
-    left: &Point3,
-    right: &Point3,
-    policy: PredicatePolicy,
-) -> PredicateReport<bool> {
-    PredicateReport::from_outcome(map_outcome(
-        compare_point3_lexicographic_report_with_policy(left, right, policy).outcome,
+    map_outcome(
+        compare_point3_lexicographic_with_policy(left, right, policy),
         |ordering| ordering == Ordering::Equal,
-    ))
+    )
 }
 
 #[inline(always)]
@@ -525,29 +418,6 @@ mod tests {
     }
 
     #[test]
-    fn exact_rational_ordering_report_exposes_exact_certificate() {
-        let report = compare_reals_report(&real(7), &real(3));
-
-        assert_eq!(report.value(), Some(Ordering::Greater));
-        assert_eq!(
-            report.certificate,
-            crate::PredicateCertificate::ExactRealFact
-        );
-    }
-
-    #[test]
-    fn symbolic_ordering_report_preserves_bounded_refinement_certificate() {
-        let upper = hyperreal::Real::new(hyperreal::Rational::fraction(355, 113).unwrap());
-        let report = compare_reals_report(&hyperreal::Real::pi(), &upper);
-
-        assert_eq!(report.value(), Some(Ordering::Less));
-        assert_eq!(
-            report.certificate,
-            crate::PredicateCertificate::BoundedRefinement
-        );
-    }
-
-    #[test]
     fn point2_lexicographic_ordering_uses_y_as_tie_breaker() {
         let left = Point2::new(real(1), real(4));
         let right = Point2::new(real(1), real(5));
@@ -587,31 +457,6 @@ mod tests {
 
         assert_eq!(point3_equal(&left, &same).value(), Some(true));
         assert_eq!(point3_equal(&left, &different).value(), Some(false));
-    }
-
-    #[test]
-    fn point_ordering_and_equality_reports_match_outcome_apis() {
-        let left = Point2::new(real(1), real(4));
-        let right = Point2::new(real(1), real(5));
-        let left3 = Point3::new(real(1), real(4), real(6));
-        let right3 = Point3::new(real(1), real(4), real(7));
-
-        assert_eq!(
-            compare_point2_lexicographic_report(&left, &right).value(),
-            compare_point2_lexicographic(&left, &right).value()
-        );
-        assert_eq!(
-            point2_equal_report(&left, &right).value(),
-            point2_equal(&left, &right).value()
-        );
-        assert_eq!(
-            compare_point3_lexicographic_report(&left3, &right3).value(),
-            compare_point3_lexicographic(&left3, &right3).value()
-        );
-        assert_eq!(
-            point3_equal_report(&left3, &right3).value(),
-            point3_equal(&left3, &right3).value()
-        );
     }
 
     #[test]

@@ -6,8 +6,8 @@ mod dispatch_trace;
 use criterion::{BenchmarkId, Criterion, black_box};
 use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
 use hyperlimit::{
-    CoplanarProjection, CoplanarTriangleRelation, ExactGeometrySession, LineSide, Plane3,
-    PlaneSide, Point2, Point3, PredicateOutcome, PreparedIncircle2, PreparedInsphere3,
+    CoplanarProjection, CoplanarTriangleRelation, LineSide, Plane3, PlaneSide, Point2, Point3,
+    PredicateOutcome, PreparedHalfspaceSystem3, PreparedIncircle2, PreparedInsphere3,
     PreparedLine2, PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign,
     SupportDopRelation, TriangleDegeneracy, TriangleTriangleIntersection, affine_independent_d,
     certified_ball_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
@@ -70,7 +70,6 @@ fn bench_predicates(c: &mut Criterion) {
     bench_nd_symbolic_scale(c);
     bench_shared_scale_views(c);
     bench_transformed_predicates(c);
-    bench_versioned_prepared(c);
     bench_hypermesh_port_helpers(c);
 
     // Parallel batch APIs require `Sync` real storage. `hyperreal::Real`
@@ -401,12 +400,12 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
     // remain exact determinant-ratio constructions.
     group.bench_function("triangle3_degeneracy/projected_orientations", |bench| {
         bench.iter(|| {
-            let report = classify_triangle3_degeneracy(
+            let result = classify_triangle3_degeneracy(
                 black_box(&points[0]),
                 black_box(&points[1]),
                 black_box(&points[2]),
             );
-            black_box(match report.degeneracy {
+            black_box(match result {
                 TriangleDegeneracy::NonDegenerate => 1_i64,
                 TriangleDegeneracy::Degenerate => 0,
                 TriangleDegeneracy::Unknown => -1,
@@ -807,28 +806,6 @@ fn bench_prepared_construction(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_versioned_prepared(c: &mut Criterion) {
-    let mut group = c.benchmark_group("versioned_prepared");
-    let session = ExactGeometrySession::default();
-    let a = rational_point2(0, 1, 0, 1);
-    let b = rational_point2(4, 1, 0, 1);
-    let line = session.versioned_prepared(session.prepare_line2(&a, &b));
-
-    // This row keeps construction-version cache diagnostics visible beside
-    // predicate rows. It measures metadata checks only; stale prepared facts are
-    // scheduling data, not topology certificates.
-    group.bench_function("line2/freshness_current", |bench| {
-        bench.iter(|| black_box(line.freshness_for(black_box(session)).is_current()))
-    });
-
-    let mut stale_session = session;
-    stale_session.advance_version();
-    group.bench_function("line2/freshness_stale", |bench| {
-        bench.iter(|| black_box(line.freshness_for(black_box(stale_session)).is_current()))
-    });
-    group.finish();
-}
-
 fn bench_representation(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     bench_orient2d(c, label, real);
     bench_line_side(c, label, real);
@@ -1219,22 +1196,21 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
     });
 
     group.bench_function("convex/prepared_halfspace_feasibility3", |b| {
-        let session = ExactGeometrySession::default();
         let feasible = exact_rational_shifted_box_planes3();
         let infeasible = vec![
             Plane3::new(rational_point3(1, 1, 0, 1, 0, 1), rational_real(1, 1)),
             Plane3::new(rational_point3(-1, 1, 0, 1, 0, 1), rational_real(0, 1)),
         ];
-        let prepared_feasible = session.prepare_halfspace_system3(&feasible);
-        let prepared_infeasible = session.prepare_halfspace_system3(&infeasible);
+        let prepared_feasible = PreparedHalfspaceSystem3::new(&feasible);
+        let prepared_infeasible = PreparedHalfspaceSystem3::new(&infeasible);
         b.iter(|| {
-            let feasible_status = session
-                .classify_prepared_halfspace_feasibility3(black_box(&prepared_feasible))
+            let feasible_status = black_box(&prepared_feasible)
+                .classify_feasibility()
                 .value()
                 .map(|report| report.is_feasible())
                 .unwrap_or(false);
-            let infeasible_status = session
-                .classify_prepared_halfspace_feasibility3(black_box(&prepared_infeasible))
+            let infeasible_status = black_box(&prepared_infeasible)
+                .classify_feasibility()
                 .value()
                 .map(|report| report.infeasibility_certificate.is_some())
                 .unwrap_or(true);

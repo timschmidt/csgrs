@@ -185,8 +185,8 @@ pub fn classify_triangle_triangle3_points_with_policy(
 ) -> PredicateOutcome<TriangleTriangleClassification> {
     crate::trace_dispatch!("hyperlimit", "triangle_triangle3", "plane-edge-composition");
 
-    let left_degeneracy = classify_triangle3_degeneracy(left[0], left[1], left[2]).degeneracy;
-    let right_degeneracy = classify_triangle3_degeneracy(right[0], right[1], right[2]).degeneracy;
+    let left_degeneracy = classify_triangle3_degeneracy(left[0], left[1], left[2]);
+    let right_degeneracy = classify_triangle3_degeneracy(right[0], right[1], right[2]);
     if left_degeneracy == TriangleDegeneracy::Unknown
         || right_degeneracy == TriangleDegeneracy::Unknown
     {
@@ -414,7 +414,7 @@ fn coplanar_segment_intersects_triangle(
     triangle: [&Point3; 3],
     policy: PredicatePolicy,
 ) -> Result<bool, PredicateOutcome<TriangleTriangleClassification>> {
-    let Some((projection, _)) = choose_coplanar_projection(triangle) else {
+    let Some(projection) = choose_coplanar_projection(triangle) else {
         return Err(PredicateOutcome::unknown(
             RefinementNeed::Unsupported,
             Escalation::Undecided,

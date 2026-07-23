@@ -3,8 +3,8 @@
 //! The generated inputs stay in `hyperreal::Real` and never use primitive-float
 //! topology. The checks focus on metamorphic laws that should survive every
 //! exact kernel and fallback route: orientation reversal/cyclicity, batch/scalar
-//! agreement, prepared-line/prepared-incircle/prepared-insphere agreement,
-//! versioned prepared-cache freshness, and circle/sphere boundary behavior.
+//! agreement, prepared-line/prepared-incircle/prepared-insphere agreement, and
+//! circle/sphere boundary behavior.
 //!
 //! Run with: `cargo fuzz run predicate_invariants` from `hyperlimit/fuzz/`.
 
@@ -12,28 +12,25 @@
 
 use arbitrary::Arbitrary;
 use hyperlimit::{
-    AabbSphereIntersection, CachePayoff, ConstructionFreshness, ConstructionVersion, LineSide,
-    Plane3, Point2, Point3, PredicateApiSemantics, PredicateOutcome, PredicatePolicy, Sign,
-    SphereIntersection, SupportDop3, SupportDopPlaneRelation, SupportDopRelation, SupportSlab3,
-    certified_ball_sign, certified_interval_sign, classify_coplanar_triangles,
-    classify_triangle3_degeneracy, classify_aabb3_sphere_intersection, classify_circle_line2,
-    classify_circle_segment2, classify_circle_line2_batch, classify_circle_segment2_batch,
-    classify_halfspace_feasibility3, classify_homogeneous_point_plane,
-    classify_plane_aabb3_report,
-    classify_point_convex_planes3, classify_point_convex_polygon2, classify_point_line,
-    classify_point_line_batch, classify_point_ring_even_odd, classify_point_ring_even_odd_report,
-    classify_ray_triangle3_intersection,
+    AabbSphereIntersection, CoplanarProjection, LineSide, Plane3, Point2, Point3, PredicateOutcome,
+    PredicatePolicy, PreparedHalfspaceSystem3, PreparedIncircle2, PreparedInsphere3, PreparedLine2,
+    SegmentPlaneRelation, Sign, SphereIntersection, SupportDop3, SupportDopPlaneRelation,
+    SupportDopRelation, SupportSlab3, TriangleDegeneracy, certified_ball_sign,
+    certified_interval_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
+    classify_circle_line2_batch, classify_circle_segment2, classify_circle_segment2_batch,
+    classify_coplanar_triangles, classify_halfspace_feasibility3, classify_homogeneous_point_plane,
+    classify_plane_aabb3_report, classify_point_convex_planes3, classify_point_convex_polygon2,
+    classify_point_line, classify_point_line_batch, classify_point_ring_even_odd,
+    classify_point_ring_even_odd_report, classify_ray_triangle3_intersection,
     classify_ray_triangle3_intersection_batch, classify_ray_triangle3_intersection_report,
-    classify_segment_triangle3_intersection, classify_segment3_intersection,
-    classify_segment_triangle3_intersection_batch, classify_segment3_intersection_batch,
-    classify_segment_triangle3_intersection_report, classify_sphere3_intersection,
-    classify_triangle_triangle3, compare_point_line3_distance_squared,
-    compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
-    compare_point2_lexicographic, compare_point2_lexicographic_report, compare_reals,
-    compare_reals_report, incircle2d, insphere3d, intersect_segment_with_oriented_plane,
-    intersect_three_planes, intersect_two_planes, orient2d, orient2d_batch, point2_equal,
-    point2_equal_report, projected_line_parameter3, projected_segment_parameter3,
-    CoplanarProjection, SegmentPlaneRelation, TriangleDegeneracy,
+    classify_segment_triangle3_intersection, classify_segment_triangle3_intersection_batch,
+    classify_segment_triangle3_intersection_report, classify_segment3_intersection,
+    classify_segment3_intersection_batch, classify_sphere3_intersection,
+    classify_triangle_triangle3, classify_triangle3_degeneracy,
+    compare_point_line3_distance_squared, compare_point_plane_distance_squared,
+    compare_point_segment3_distance_squared, incircle2d, insphere3d,
+    intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes, orient2d,
+    orient2d_batch, projected_line_parameter3, projected_segment_parameter3,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -152,26 +149,8 @@ fn predicate_invariants(input: Input) {
             .expect("even-odd ring report must replay against exact sources");
     }
 
-    let session = hyperlimit::ExactGeometrySession::default();
-    let payoff = CachePayoff::new(3, 2, 2).expect("generated prepared line should repay");
-    let prepared = session.versioned_prepared_with_payoff(session.prepare_line2(&a, &b), payoff);
-    assert_eq!(prepared.source_version(), ConstructionVersion::ZERO);
-    assert_eq!(prepared.payoff(), Some(payoff));
-    assert_eq!(
-        prepared.api_semantics(),
-        PredicateApiSemantics::CachePopulating
-    );
-    assert!(prepared.is_current_for(session));
-    assert_eq!(
-        prepared.freshness_for(session),
-        ConstructionFreshness::Current
-    );
-    assert_eq!(
-        session
-            .classify_prepared_line2(prepared.prepared(), &c)
-            .value(),
-        line_side
-    );
+    let prepared = PreparedLine2::new(&a, &b);
+    assert_eq!(prepared.classify_point(&c).value(), line_side);
 
     let line_batch_cases = [
         (a.clone(), b.clone(), c.clone()),
@@ -187,22 +166,6 @@ fn predicate_invariants(input: Input) {
         classify_point_line(&a, &b, &d).value()
     );
 
-    assert_eq!(
-        compare_reals_report(&a.x, &b.x).value(),
-        compare_reals(&a.x, &b.x).value(),
-        "report-bearing Real ordering must agree with lightweight outcome API"
-    );
-    assert_eq!(
-        compare_point2_lexicographic_report(&a, &b).value(),
-        compare_point2_lexicographic(&a, &b).value(),
-        "report-bearing point ordering must agree with lightweight outcome API"
-    );
-    assert_eq!(
-        point2_equal_report(&a, &b).value(),
-        point2_equal(&a, &b).value(),
-        "report-bearing point equality must agree with lightweight outcome API"
-    );
-
     // Any input site lies exactly on its own circumcircle. Degenerate fixed
     // triples may make the circle predicate zero for broader reasons, but the
     // boundary-site law must always hold when the predicate decides.
@@ -214,18 +177,14 @@ fn predicate_invariants(input: Input) {
     assert_decided_zero(insphere3d(&p, &q, &r, &s, &r));
     assert_decided_zero(insphere3d(&p, &q, &r, &s, &s));
 
-    let prepared_incircle = session.versioned_prepared(session.prepare_incircle2(&a, &b, &c));
-    assert!(prepared_incircle.is_current_for(session));
+    let prepared_incircle = PreparedIncircle2::new(&a, &b, &c);
     assert_eq!(
-        session
-            .test_prepared_incircle2(prepared_incircle.prepared(), &d)
-            .value(),
+        prepared_incircle.test_point(&d).value(),
         incircle2d(&a, &b, &c, &d).value(),
         "prepared in-circle path must agree with scalar predicate"
     );
     assert!(
         prepared_incircle
-            .prepared()
             .coefficient_facts()
             .coefficient_exact
             .all_exact_rational,
@@ -233,25 +192,20 @@ fn predicate_invariants(input: Input) {
     );
     assert_eq!(
         prepared_incircle
-            .prepared()
             .coefficient_facts()
             .coefficient_unknown_zero_count(),
         0,
         "rational lifted-circle coefficients should have decidable zero status"
     );
 
-    let prepared_insphere = session.versioned_prepared(session.prepare_insphere3(&p, &q, &r, &s));
-    assert!(prepared_insphere.is_current_for(session));
+    let prepared_insphere = PreparedInsphere3::new(&p, &q, &r, &s);
     assert_eq!(
-        session
-            .test_prepared_insphere3(prepared_insphere.prepared(), &t)
-            .value(),
+        prepared_insphere.test_point(&t).value(),
         insphere3d(&p, &q, &r, &s, &t).value(),
         "prepared in-sphere path must agree with scalar predicate"
     );
     assert!(
         prepared_insphere
-            .prepared()
             .coefficient_facts()
             .coefficient_exact
             .all_exact_rational,
@@ -259,33 +213,11 @@ fn predicate_invariants(input: Input) {
     );
     assert_eq!(
         prepared_insphere
-            .prepared()
             .coefficient_facts()
             .coefficient_unknown_zero_count(),
         0,
         "rational lifted-sphere coefficients should have decidable zero status"
     );
-
-    // Fuzz the versioned prepared-cache invalidation boundary. Stale prepared
-    // objects are legal Rust borrows, but their retained facts must be treated
-    // as scheduling metadata to recompute or bypass, never as topology
-    // certificates. Cached object facts have version provenance, while exact
-    // predicates still certify signs.
-    let mut stale_session = session;
-    stale_session.advance_version();
-    for freshness in [
-        prepared.freshness_for(stale_session),
-        prepared_incircle.freshness_for(stale_session),
-        prepared_insphere.freshness_for(stale_session),
-    ] {
-        assert_eq!(
-            freshness,
-            ConstructionFreshness::StaleSource {
-                cached: ConstructionVersion::ZERO,
-                current: stale_session.version()
-            }
-        );
-    }
 
     let interval = certified_interval_sign(&a.x, &b.x);
     let ax_sign = sign_of_rational(&a.x);
@@ -411,16 +343,9 @@ fn predicate_invariants(input: Input) {
     }
 
     let ray_direction = Point3::new(&q.x - &p.x, &q.y - &p.y, &q.z - &p.z);
-    let segment_triangle =
-        classify_segment_triangle3_intersection(&p, &q, &p, &r, &s).value();
+    let segment_triangle = classify_segment_triangle3_intersection(&p, &q, &p, &r, &s).value();
     let ray_triangle = classify_ray_triangle3_intersection(&p, &ray_direction, &p, &r, &s).value();
-    let segment_triangle_batch = [(
-        p.clone(),
-        q.clone(),
-        p.clone(),
-        r.clone(),
-        s.clone(),
-    )];
+    let segment_triangle_batch = [(p.clone(), q.clone(), p.clone(), r.clone(), s.clone())];
     assert_eq!(
         classify_segment_triangle3_intersection_batch(&segment_triangle_batch)[0].value(),
         segment_triangle,
@@ -487,13 +412,9 @@ fn predicate_invariants(input: Input) {
 
     let triangle_degeneracy = classify_triangle3_degeneracy(&p, &q, &r);
     assert_ne!(
-        triangle_degeneracy.degeneracy,
+        triangle_degeneracy,
         TriangleDegeneracy::Unknown,
         "rational 3D triangle degeneracy should be exactly decided"
-    );
-    assert!(
-        triangle_degeneracy.all_proof_producing(),
-        "triangle degeneracy should retain proof-producing predicate routes"
     );
 
     let segment_plane = intersect_segment_with_oriented_plane(&p, &q, &r, &s, &t);
@@ -612,8 +533,11 @@ fn predicate_invariants(input: Input) {
         Plane3::new(Point3::new(0.into(), 0.into(), 1.into()), (-1).into()),
     ];
     assert_eq!(
-        classify_point_convex_planes3(&unit_cube_planes, &Point3::new(0.into(), 0.into(), 0.into()))
-            .value(),
+        classify_point_convex_planes3(
+            &unit_cube_planes,
+            &Point3::new(0.into(), 0.into(), 0.into())
+        )
+        .value(),
         Some(hyperlimit::ConvexPointLocation::Boundary),
         "convex plane composition must retain exact boundary points"
     );
@@ -655,9 +579,21 @@ fn predicate_invariants(input: Input) {
     }
 
     let unit_dop = SupportDop3::from_slabs(vec![
-        SupportSlab3::new(Point3::new(1.into(), 0.into(), 0.into()), 0.into(), 1.into()),
-        SupportSlab3::new(Point3::new(0.into(), 1.into(), 0.into()), 0.into(), 1.into()),
-        SupportSlab3::new(Point3::new(0.into(), 0.into(), 1.into()), 0.into(), 1.into()),
+        SupportSlab3::new(
+            Point3::new(1.into(), 0.into(), 0.into()),
+            0.into(),
+            1.into(),
+        ),
+        SupportSlab3::new(
+            Point3::new(0.into(), 1.into(), 0.into()),
+            0.into(),
+            1.into(),
+        ),
+        SupportSlab3::new(
+            Point3::new(0.into(), 0.into(), 1.into()),
+            0.into(),
+            1.into(),
+        ),
     ]);
     assert_eq!(
         unit_dop
@@ -771,14 +707,9 @@ fn predicate_invariants(input: Input) {
             "halfspace feasibility witness must replay through point-plane predicates"
         );
     }
-    let prepared_fixed_point_halfspaces =
-        session.versioned_prepared(session.prepare_halfspace_system3(&fixed_point_halfspaces));
-    assert!(
-        prepared_fixed_point_halfspaces.is_current_for(session),
-        "freshly prepared halfspace systems must be current for their session"
-    );
-    if let Some(feasibility) = session
-        .classify_prepared_halfspace_feasibility3(prepared_fixed_point_halfspaces.prepared())
+    let prepared_fixed_point_halfspaces = PreparedHalfspaceSystem3::new(&fixed_point_halfspaces);
+    if let Some(feasibility) = prepared_fixed_point_halfspaces
+        .classify_feasibility()
         .value()
     {
         assert!(
@@ -786,11 +717,8 @@ fn predicate_invariants(input: Input) {
             "prepared coordinate halfspaces that pin a generated point must be feasible"
         );
         assert_eq!(
-            session
-                .validate_prepared_halfspace_report3(
-                    prepared_fixed_point_halfspaces.prepared(),
-                    &feasibility,
-                )
+            feasibility
+                .validate_against_planes(&fixed_point_halfspaces)
                 .value(),
             Some(true),
             "prepared halfspace feasibility witnesses must replay exactly"
@@ -818,10 +746,9 @@ fn predicate_invariants(input: Input) {
             "halfspace infeasibility certificate must replay exactly"
         );
     }
-    let prepared_impossible_halfspaces =
-        session.versioned_prepared(session.prepare_halfspace_system3(&impossible_halfspaces));
-    if let Some(report) = session
-        .classify_prepared_halfspace_feasibility3(prepared_impossible_halfspaces.prepared())
+    let prepared_impossible_halfspaces = PreparedHalfspaceSystem3::new(&impossible_halfspaces);
+    if let Some(report) = prepared_impossible_halfspaces
+        .classify_feasibility()
         .value()
     {
         assert_eq!(
@@ -834,11 +761,8 @@ fn predicate_invariants(input: Input) {
             "prepared opposed exact halfspaces should retain a Farkas certificate"
         );
         assert_eq!(
-            session
-                .validate_prepared_halfspace_report3(
-                    prepared_impossible_halfspaces.prepared(),
-                    &report,
-                )
+            report
+                .validate_against_planes(&impossible_halfspaces)
                 .value(),
             Some(true),
             "prepared halfspace infeasibility certificates must replay exactly"

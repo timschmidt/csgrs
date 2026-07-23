@@ -23,10 +23,8 @@ mod orient;
 mod plane;
 mod predicate;
 mod predicates;
-mod provenance;
 mod real;
 mod resolve;
-mod session;
 
 pub use hyperreal::{
     CertifiedRealSign, DomainFacts as RealDomainFacts, DomainStatus as RealDomainStatus,
@@ -74,8 +72,8 @@ pub use geometry::{
 pub use orient::{
     Point2, Point3, PreparedCircle2Polynomial, PreparedIncircle2, PreparedInsphere3,
     PreparedLiftedPolynomialFacts, PreparedLine2, PreparedPredicateFacts,
-    PreparedSphere3Polynomial, classify_point_line, incircle2d, incircle2d_report, insphere3d,
-    insphere3d_report, orient2d, orient2d_report, orient2d_with_policy, orient3d, orient3d_report,
+    PreparedSphere3Polynomial, classify_point_line, incircle2d, insphere3d, orient2d,
+    orient2d_with_policy, orient3d,
 };
 pub use plane::{
     Plane3, PlaneAabbReport, PlaneAabbReportValidationError, PreparedOrientedPlane3,
@@ -86,9 +84,8 @@ pub use plane::{
     triangle_plane_relation_from_sides,
 };
 pub use predicate::{
-    Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateApiSemantics,
-    PredicateCertificate, PredicateOutcome, PredicatePolicy, PredicatePrecisionStage,
-    PredicateReport, PredicateUse, RefinementNeed, Sign, SignKnowledge,
+    Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateOutcome,
+    PredicatePolicy, RefinementNeed, Sign, SignKnowledge,
 };
 pub use predicates::aabb::{
     PreparedAabb2, PreparedAabb3, aabb2s_intersect, aabb3s_intersect, classify_aabb2_intersection,
@@ -98,9 +95,9 @@ pub use predicates::aabb::{
 pub use predicates::convex::{classify_point_convex_planes3, classify_point_convex_polygon2};
 pub use predicates::coplanar::{
     CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,
-    CoplanarTriangleValidationError, TriangleDegeneracy, TrianglePredicateReport,
-    ccw_projected_turn_less, choose_coplanar_projection, classify_coplanar_triangle_points,
-    classify_coplanar_triangles, classify_point_projected_triangle3, classify_triangle3_degeneracy,
+    CoplanarTriangleValidationError, TriangleDegeneracy, ccw_projected_turn_less,
+    choose_coplanar_projection, classify_coplanar_triangle_points, classify_coplanar_triangles,
+    classify_point_projected_triangle3, classify_triangle3_degeneracy,
     derive_coplanar_triangle_relation, intersect_segment_with_projected_line3, midpoint3,
     orient2d_value, project_point3, project_triangle3, projected_line_parameter3,
     projected_polygon_area2_abs_value, projected_polygon_area2_sign, projected_polygon_area2_value,
@@ -121,8 +118,7 @@ pub use predicates::dop::{
     support_dop3_from_points, witnessed_support_dop3_from_points,
 };
 pub use predicates::filters::{
-    certified_ball_sign, certified_ball_sign_report, certified_ball_sign_report_with_policy,
-    certified_interval_sign, certified_interval_sign_report,
+    certified_ball_sign, certified_interval_sign, classify_ball_sign_with_policy,
 };
 pub use predicates::halfspace::{
     HalfspaceFeasibilityReport, HalfspaceInfeasibilityCertificate, PreparedHalfspaceSystem3,
@@ -134,11 +130,9 @@ pub use predicates::interval::{
 };
 pub use predicates::nd::{affine_independent_d, insphere_d, orient_d};
 pub use predicates::order::{
-    classify_real_sign, classify_real_sign_report, compare_point2_lexicographic,
-    compare_point2_lexicographic_report, compare_point3_lexicographic,
-    compare_point3_lexicographic_report, compare_reals, compare_reals_report,
-    compare_reals_with_policy, point2_equal, point2_equal_report, point3_equal,
-    point3_equal_report, real_clamp, real_ge, real_le, real_max, real_min,
+    classify_real_sign, compare_point2_lexicographic, compare_point3_lexicographic, compare_reals,
+    compare_reals_with_policy, point2_equal, point3_equal, real_clamp, real_ge, real_le, real_max,
+    real_min,
 };
 pub use predicates::ring::{
     Ring2Facts, RingEvenOddEdgeReport, RingEvenOddReport, RingEvenOddValidationError,
@@ -172,13 +166,4 @@ pub use predicates::triangle_triangle::{
     TriangleTriangleClassification, TriangleTriangleValidationError, classify_triangle_triangle3,
     classify_triangle_triangle3_points_with_policy, classify_triangle_triangle3_with_policy,
 };
-pub use provenance::{
-    ApproximationPolicy, ConstructionProvenance, ConstructionProvenanceValidationError, MeshSource,
-    SourceProvenance,
-};
 pub use real::{RealFacts, RealPredicateExt, RealZeroKnowledge};
-pub use session::{
-    CachePayoff, CachedApproximateView, ConstructionCertificate, ConstructionDependencies,
-    ConstructionFreshness, ConstructionVersion, ExactGeometrySession, VersionedFacts,
-    VersionedPredicateReport, VersionedPrepared,
-};

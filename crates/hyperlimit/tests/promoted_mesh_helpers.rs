@@ -74,7 +74,6 @@ fn triangle_plane_classifier_retains_sides_and_replays_sources() {
     );
     assert_eq!(above_query.relation, TrianglePlaneRelation::StrictlyBelow);
     assert_eq!(above_query.vertex_sides, [Some(PlaneSide::Below); 3]);
-    assert!(above_query.all_proof_producing());
     above_query.validate().unwrap();
     above_query
         .validate_against_sources(&points, [0, 1, 2], [3, 4, 5])
