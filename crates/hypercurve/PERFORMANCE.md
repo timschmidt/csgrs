@@ -2247,6 +2247,38 @@ complete all-feature suites, warnings-as-errors Clippy and rustdoc, and the
 10,000-run AddressSanitizer differential Boolean campaign pass; the fuzzer
 finished at 5,906 coverage points and 18,772 feature edges.
 
+The following crossing-index checkpoint separates the dense integer key from
+the exact local key. Large certified crossing arrays are first grouped by
+source-segment index using the allocation-free unstable integer sort. The
+already-required segment-offset vector then identifies independent parameter
+slices. Groups of at most 16 crossings use one exact insertion pass that both
+locates each value and rejects equality; larger groups retain `sort_unstable`
+and a separate adjacent certificate, preserving \(O(k \log k)\) behavior for a
+pathological segment crossed many times.
+
+Two alternating 21-sample, 30-iteration star1024 contour trials measured
+6.391--6.427 ms after grouping versus 6.815--6.842 ms at the normalized-product
+checkpoint, another 5.7--6.6% improvement. Repeated star64 and star256 trials
+remain neutral because they stay below the 1,024-event crossover. In the
+complete star1024 matrix, ordinary/prepared exact contours measured 6.813/6.705
+ms, versus 20.301 ms for Cavalier, 10.188 ms for `i_overlay`, and 10.086 ms for
+`geo`.
+
+The 500-operation profile reduces normalized-comparator self-time from 6.63%
+at the preceding checkpoint to 3.72%; final exact point construction leaves
+5.27% in the shared dyadic accumulator. Heaptrack records exactly 1,104,312
+allocations, 2,192 temporaries, and 16.58 MiB peak heap for both binaries across
+ten star1024 contour operations. A corrected in-place counting-bucket prototype
+improved the preceding checkpoint by only 1--2% and required an additional
+segment-sized cursor allocation, so the faster zero-allocation grouped sort was
+retained instead.
+
+Direct tests cover shuffled segment groups, exact local order, duplicates, and
+the bounded dense-group fallback. The complete all-feature suite, strict
+Clippy, and warning-denied rustdoc pass. The 10,000-run AddressSanitizer
+differential Boolean campaign completed without failure at 5,912 coverage
+points and 18,797 feature edges.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

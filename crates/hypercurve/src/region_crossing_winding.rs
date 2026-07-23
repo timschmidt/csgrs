@@ -180,32 +180,36 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         // The fixed-product comparator wins once sorting dominates, while the
         // smaller ordinary comparator preserves instruction locality below here.
         const MIN_NORMALIZED_PRODUCT_CROSSINGS: usize = 1_024;
-        let sorted = if index.certified_line_crossings.is_some()
+        if index.certified_line_crossings.is_some()
             && crossing_count >= MIN_NORMALIZED_PRODUCT_CROSSINGS
         {
-            sort_and_validate_unique_normalized(
+            index.first_segment_offsets = sort_segment_groups_and_validate_unique_normalized(
                 &mut index.first,
                 index.certified_line_crossings,
                 policy,
-            ) && sort_and_validate_unique_normalized(
+                first_contour.len(),
+            )?;
+            index.second_segment_offsets = sort_segment_groups_and_validate_unique_normalized(
                 &mut index.second,
                 index.certified_line_crossings,
                 policy,
-            )
+                second_contour.len(),
+            )?;
         } else {
-            sort_and_validate_unique(&mut index.first, index.certified_line_crossings, policy)
-                && sort_and_validate_unique(
+            if !sort_and_validate_unique(&mut index.first, index.certified_line_crossings, policy)
+                || !sort_and_validate_unique(
                     &mut index.second,
                     index.certified_line_crossings,
                     policy,
                 )
-        };
-        if !sorted {
-            return None;
+            {
+                return None;
+            }
+            index.first_segment_offsets =
+                segment_crossing_offsets(&index.first, first_contour.len())?;
+            index.second_segment_offsets =
+                segment_crossing_offsets(&index.second, second_contour.len())?;
         }
-        index.first_segment_offsets = segment_crossing_offsets(&index.first, first_contour.len())?;
-        index.second_segment_offsets =
-            segment_crossing_offsets(&index.second, second_contour.len())?;
 
         (crossing_count != 0
             && index.crossing_count(pair.first()) == crossing_count
@@ -375,24 +379,58 @@ fn sort_and_validate_unique(
 
 #[cold]
 #[inline(never)]
-fn sort_and_validate_unique_normalized(
+fn sort_segment_groups_and_validate_unique_normalized(
     crossings: &mut [RegionLineCrossing<'_>],
     certified: Option<&[CertifiedLineCrossingEvent]>,
     policy: &CurvePolicy,
-) -> bool {
-    let mut order_decided = true;
-    crossings.sort_unstable_by(|left, right| {
-        left.segment_index.cmp(&right.segment_index).then_with(|| {
-            match compare_crossing_parameters_normalized(left, right, certified, policy) {
-                Some(ordering) => ordering,
-                None => {
-                    order_decided = false;
-                    std::cmp::Ordering::Equal
+    segment_count: usize,
+) -> Option<Vec<usize>> {
+    crossings.sort_unstable_by_key(|crossing| crossing.segment_index);
+    let offsets = segment_crossing_offsets(crossings, segment_count)?;
+
+    for range in offsets.windows(2) {
+        let segment_crossings = &mut crossings[range[0]..range[1]];
+        const MAX_FUSED_INSERTION_CROSSINGS: usize = 16;
+        if segment_crossings.len() > MAX_FUSED_INSERTION_CROSSINGS {
+            let mut order_decided = true;
+            segment_crossings.sort_unstable_by(|left, right| {
+                match compare_crossing_parameters_normalized(left, right, certified, policy) {
+                    Some(ordering) => ordering,
+                    None => {
+                        order_decided = false;
+                        std::cmp::Ordering::Equal
+                    }
+                }
+            });
+            if !order_decided
+                || !segment_crossings.windows(2).all(|window| {
+                    compare_crossing_parameters_normalized(
+                        &window[0], &window[1], certified, policy,
+                    ) == Some(std::cmp::Ordering::Less)
+                })
+            {
+                return None;
+            }
+            continue;
+        }
+        for current in 1..segment_crossings.len() {
+            let mut insertion = current;
+            while insertion != 0 {
+                match compare_crossing_parameters_normalized(
+                    &segment_crossings[insertion - 1],
+                    &segment_crossings[current],
+                    certified,
+                    policy,
+                ) {
+                    Some(std::cmp::Ordering::Less) => break,
+                    Some(std::cmp::Ordering::Greater) => insertion -= 1,
+                    Some(std::cmp::Ordering::Equal) | None => return None,
                 }
             }
-        })
-    });
-    order_decided && crossing_order_is_certified_normalized(crossings, certified, policy)
+            segment_crossings[insertion..=current].rotate_right(1);
+        }
+    }
+    Some(offsets)
 }
 
 fn compare_crossing_parameters(
@@ -460,19 +498,6 @@ fn crossing_order_is_certified(
     })
 }
 
-fn crossing_order_is_certified_normalized(
-    crossings: &[RegionLineCrossing<'_>],
-    certified: Option<&[CertifiedLineCrossingEvent]>,
-    policy: &CurvePolicy,
-) -> bool {
-    crossings.windows(2).all(|window| {
-        window[0].segment_index < window[1].segment_index
-            || window[0].segment_index == window[1].segment_index
-                && compare_crossing_parameters_normalized(&window[0], &window[1], certified, policy)
-                    == Some(std::cmp::Ordering::Less)
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -517,5 +542,65 @@ mod tests {
 
         let mut duplicates = vec![crossing(0, &lower, &point), crossing(0, &lower, &point)];
         assert!(!sort_and_validate_unique(&mut duplicates, None, &policy));
+    }
+
+    #[test]
+    fn grouped_crossing_sort_builds_offsets_and_certifies_local_order() {
+        let policy = CurvePolicy::certified();
+        let point = Point2::new(Real::zero(), Real::zero());
+        let lower = Real::from(1_i8);
+        let upper = Real::from(2_i8);
+        let mut crossings = vec![
+            crossing(2, &upper, &point),
+            crossing(0, &upper, &point),
+            crossing(2, &lower, &point),
+            crossing(1, &lower, &point),
+        ];
+
+        let offsets =
+            sort_segment_groups_and_validate_unique_normalized(&mut crossings, None, &policy, 3)
+                .unwrap();
+        assert_eq!(offsets, [0, 1, 2, 4]);
+        assert_eq!(
+            compare_crossing_parameters(&crossings[2], &crossings[3], None, &policy),
+            Some(std::cmp::Ordering::Less)
+        );
+
+        let mut duplicates = vec![crossing(2, &lower, &point), crossing(2, &lower, &point)];
+        assert!(
+            sort_segment_groups_and_validate_unique_normalized(&mut duplicates, None, &policy, 3,)
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn grouped_crossing_sort_bounds_dense_segment_insertion_work() {
+        let policy = CurvePolicy::certified();
+        let point = Point2::new(Real::zero(), Real::zero());
+        let parameters = (0..32).map(Real::from).collect::<Vec<_>>();
+        let mut crossings = parameters
+            .iter()
+            .rev()
+            .map(|parameter| crossing(0, parameter, &point))
+            .collect::<Vec<_>>();
+
+        let offsets =
+            sort_segment_groups_and_validate_unique_normalized(&mut crossings, None, &policy, 1)
+                .unwrap();
+        assert_eq!(offsets, [0, parameters.len()]);
+        assert!(crossings.windows(2).all(|window| {
+            compare_crossing_parameters(&window[0], &window[1], None, &policy)
+                == Some(std::cmp::Ordering::Less)
+        }));
+
+        let mut duplicates = parameters
+            .iter()
+            .map(|parameter| crossing(0, parameter, &point))
+            .collect::<Vec<_>>();
+        duplicates.push(crossing(0, &parameters[0], &point));
+        assert!(
+            sort_segment_groups_and_validate_unique_normalized(&mut duplicates, None, &policy, 1,)
+                .is_none()
+        );
     }
 }
