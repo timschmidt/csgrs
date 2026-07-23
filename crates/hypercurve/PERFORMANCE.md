@@ -1882,6 +1882,26 @@ the AddressSanitizer `region_boolean` target completed 8,431 executions in 31
 seconds without failure after seeding from 1,039 retained cases. It does not
 satisfy the completion gate.
 
+A native determinant-event prototype established the next representation
+boundary. It retained crossing numerators and the shared denominator in fixed
+words, compared parameters without constructing `Real` values, sorted the
+crossing index in that form, and materialized the public event values on
+demand. Complete Boolean output still has to put the selected parameters into
+each emitted `LineSeg2::support_range`, however, so every retained crossing
+parameter was eventually materialized while the determinant carrier remained
+live. The prototype therefore added storage instead of replacing it.
+
+On the star64 dispatch trace, the prototype increased total dispatch events
+from 3,272 to 3,461, rational temporaries from 177 to 194, reductions from 24
+to 47, GCDs from 116 to 140, and `Real` constructions from 903 to 915; the 40
+fused line intersections were unchanged. The fixed 11-sample, 50-iteration
+star1024 exact-contour comparison measured 12.680 ms/iteration versus 12.548 ms
+for the retained checkpoint, a 1.05% regression. The prototype was removed.
+Another determinant event should be attempted only after retained line source
+ranges can hold a shared compact determinant-backed form, or another
+representation that replaces the two final `Real` parameters rather than
+coexisting with them.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
