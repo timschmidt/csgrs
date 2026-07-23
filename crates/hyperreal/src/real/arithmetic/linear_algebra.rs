@@ -65,19 +65,13 @@ impl PreparedAffineDet2PairFilter {
     /// Orient both endpoints of the second pair against the first pair.
     #[inline]
     pub fn first_signs(&self) -> (Option<RealSign>, Option<RealSign>) {
-        (
-            Real::certified_affine_det2_sign_f64(self.first[0], self.first[1], self.second[0]),
-            Real::certified_affine_det2_sign_f64(self.first[0], self.first[1], self.second[1]),
-        )
+        Real::certified_affine_det2_signs_f64(self.first[0], self.first[1], self.second)
     }
 
     /// Orient both endpoints of the first pair against the second pair.
     #[inline]
     pub fn second_signs(&self) -> (Option<RealSign>, Option<RealSign>) {
-        (
-            Real::certified_affine_det2_sign_f64(self.second[0], self.second[1], self.first[0]),
-            Real::certified_affine_det2_sign_f64(self.second[0], self.second[1], self.first[1]),
-        )
+        Real::certified_affine_det2_signs_f64(self.second[0], self.second[1], self.first)
     }
 }
 
@@ -1041,16 +1035,46 @@ impl Real {
     fn certified_affine_det2_sign_f64(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> Option<RealSign> {
         let [ax, ay] = a;
         let [bx, by] = b;
-        let [cx, cy] = c;
-
         let abx = bx - ax;
         let aby = by - ay;
+        if !Self::normal_or_zero_f64(abx) || !Self::normal_or_zero_f64(aby) {
+            return None;
+        }
+        Self::certified_affine_det2_sign_from_direction_f64([ax, ay], [abx, aby], c)
+    }
+
+    #[inline]
+    fn certified_affine_det2_signs_f64(
+        a: [f64; 2],
+        b: [f64; 2],
+        points: [[f64; 2]; 2],
+    ) -> (Option<RealSign>, Option<RealSign>) {
+        let [ax, ay] = a;
+        let [bx, by] = b;
+        let abx = bx - ax;
+        let aby = by - ay;
+        if !Self::normal_or_zero_f64(abx) || !Self::normal_or_zero_f64(aby) {
+            return (None, None);
+        }
+        let direction = [abx, aby];
+        (
+            Self::certified_affine_det2_sign_from_direction_f64(a, direction, points[0]),
+            Self::certified_affine_det2_sign_from_direction_f64(a, direction, points[1]),
+        )
+    }
+
+    #[inline]
+    fn certified_affine_det2_sign_from_direction_f64(
+        a: [f64; 2],
+        direction: [f64; 2],
+        c: [f64; 2],
+    ) -> Option<RealSign> {
+        let [ax, ay] = a;
+        let [abx, aby] = direction;
+        let [cx, cy] = c;
         let acx = cx - ax;
         let acy = cy - ay;
-        if ![abx, aby, acx, acy]
-            .into_iter()
-            .all(Self::normal_or_zero_f64)
-        {
+        if !Self::normal_or_zero_f64(acx) || !Self::normal_or_zero_f64(acy) {
             return None;
         }
 
@@ -1058,9 +1082,10 @@ impl Real {
         let right = aby * acx;
         let det = left - right;
         let magnitude_sum = left.abs() + right.abs();
-        if ![left, right, det, magnitude_sum]
-            .into_iter()
-            .all(Self::normal_or_zero_f64)
+        if !Self::normal_or_zero_f64(left)
+            || !Self::normal_or_zero_f64(right)
+            || !Self::normal_or_zero_f64(det)
+            || !Self::normal_or_zero_f64(magnitude_sum)
         {
             return None;
         }
