@@ -1,13 +1,9 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperbrep::{
-    BrepCoedge, BrepConstructionKind, BrepConstructionManifest, BrepEdge, BrepEdgeId,
-    BrepEdgeOrientation, BrepExportFormat, BrepExportManifest, BrepExportScalarPolicy, BrepFace,
-    BrepFaceId, BrepFaceTessellationManifest, BrepFeatureId, BrepImportedSurfaceFamily, BrepLoop,
-    BrepLoopId, BrepLossyFloatImportReport, BrepMeshHandoffReport, BrepNurbsCurve3, BrepPcurve,
-    BrepPlanarExtrusionConstruction, BrepPlanarFaceRegion, BrepPlanarRegionConstruction,
-    BrepPlanarTrimLoop, BrepRationalBezier3, BrepShell, BrepShellTessellationReport,
-    BrepSourceVersion, BrepSurface, BrepSurfaceId, BrepSurfaceSource, BrepTopologyFingerprint,
-    BrepVertex, BrepVertexId,
+    BrepCoedge, BrepEdge, BrepEdgeId, BrepEdgeOrientation, BrepFace, BrepFaceId, BrepLoop,
+    BrepLoopId, BrepNurbsCurve3, BrepPcurve, BrepPlanarExtrusionConstruction, BrepPlanarFaceRegion,
+    BrepPlanarRegionConstruction, BrepPlanarTrimLoop, BrepRationalBezier3, BrepShell, BrepSurface,
+    BrepSurfaceId, BrepVertex, BrepVertexId,
 };
 use hypercurve::{Contour2, Curve2, CurvePath2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperlimit::{Plane3, Point2, Point3};
@@ -86,7 +82,6 @@ fn paired_strip(edge_count: usize) -> BrepShell {
         surfaces: vec![BrepSurface::plane(
             BrepSurfaceId(0),
             Plane3::new(p(0, 0, 1), r(0)),
-            BrepSurfaceSource::ExactConstruction,
         )],
         faces: vec![
             BrepFace::new(
@@ -125,7 +120,6 @@ fn planar_ring(edge_count: usize) -> BrepShell {
         surfaces: vec![BrepSurface::plane(
             BrepSurfaceId(0),
             Plane3::new(p(0, 0, 1), r(0)),
-            BrepSurfaceSource::ExactConstruction,
         )],
         faces: vec![BrepFace::new(
             BrepFaceId(0),
@@ -176,7 +170,6 @@ fn planar_many_loop_face(loop_count: usize) -> BrepShell {
         surfaces: vec![BrepSurface::plane(
             BrepSurfaceId(0),
             Plane3::new(p(0, 0, 1), r(0)),
-            BrepSurfaceSource::ExactConstruction,
         )],
         faces: vec![BrepFace::with_inner(
             BrepFaceId(0),
@@ -215,36 +208,12 @@ fn cube_shell() -> BrepShell {
             BrepEdge::new(BrepEdgeId(11), BrepVertexId(3), BrepVertexId(7)),
         ],
         surfaces: vec![
-            BrepSurface::plane(
-                BrepSurfaceId(0),
-                Plane3::new(p(0, 0, -1), r(0)),
-                BrepSurfaceSource::ExactConstruction,
-            ),
-            BrepSurface::plane(
-                BrepSurfaceId(1),
-                Plane3::new(p(0, 0, 1), r(-1)),
-                BrepSurfaceSource::ExactConstruction,
-            ),
-            BrepSurface::plane(
-                BrepSurfaceId(2),
-                Plane3::new(p(0, -1, 0), r(0)),
-                BrepSurfaceSource::ExactConstruction,
-            ),
-            BrepSurface::plane(
-                BrepSurfaceId(3),
-                Plane3::new(p(0, 1, 0), r(-1)),
-                BrepSurfaceSource::ExactConstruction,
-            ),
-            BrepSurface::plane(
-                BrepSurfaceId(4),
-                Plane3::new(p(-1, 0, 0), r(0)),
-                BrepSurfaceSource::ExactConstruction,
-            ),
-            BrepSurface::plane(
-                BrepSurfaceId(5),
-                Plane3::new(p(1, 0, 0), r(-1)),
-                BrepSurfaceSource::ExactConstruction,
-            ),
+            BrepSurface::plane(BrepSurfaceId(0), Plane3::new(p(0, 0, -1), r(0))),
+            BrepSurface::plane(BrepSurfaceId(1), Plane3::new(p(0, 0, 1), r(-1))),
+            BrepSurface::plane(BrepSurfaceId(2), Plane3::new(p(0, -1, 0), r(0))),
+            BrepSurface::plane(BrepSurfaceId(3), Plane3::new(p(0, 1, 0), r(-1))),
+            BrepSurface::plane(BrepSurfaceId(4), Plane3::new(p(-1, 0, 0), r(0))),
+            BrepSurface::plane(BrepSurfaceId(5), Plane3::new(p(1, 0, 0), r(-1))),
         ],
         faces: vec![
             BrepFace::new(
@@ -332,7 +301,7 @@ fn cube_shell() -> BrepShell {
 fn bench_shell_audit(c: &mut Criterion) {
     let shell = paired_strip(1024);
     c.bench_function("hyperbrep paired strip shell audit", |b| {
-        b.iter(|| shell.audit_closure())
+        b.iter(|| shell.closure_report())
     });
     c.bench_function("hyperbrep topology validation report", |b| {
         b.iter(|| shell.validate_topology())
@@ -392,7 +361,7 @@ fn bench_shell_audit(c: &mut Criterion) {
         b.iter(|| prepared_query.batch_report(&query_points, &query_segments))
     });
     c.bench_function("hyperbrep face validation report", |b| {
-        b.iter(|| trim_shell.face_validation_report(BrepFaceId(0), None))
+        b.iter(|| trim_shell.face_validation_report(BrepFaceId(0)))
     });
     c.bench_function("hyperbrep geometry validation report", |b| {
         b.iter(|| trim_shell.geometry_validation_report(BrepFaceId(0)))
@@ -401,13 +370,13 @@ fn bench_shell_audit(c: &mut Criterion) {
         b.iter(|| shell.shell_volume_report())
     });
     c.bench_function("hyperbrep solid readiness report", |b| {
-        b.iter(|| trim_shell.solid_readiness_report(None))
+        b.iter(|| trim_shell.solid_readiness_report())
     });
     c.bench_function("hyperbrep exact retained surface handoff", |b| {
         b.iter(|| shell.exact_surface_handoff())
     });
     c.bench_function("hyperbrep exact retained solid handoff", |b| {
-        b.iter(|| shell.exact_solid_handoff(None))
+        b.iter(|| shell.exact_solid_handoff())
     });
     let cube = cube_shell();
     c.bench_function("hyperbrep exact triangle mesh handoff report", |b| {
@@ -424,15 +393,12 @@ fn bench_shell_audit(c: &mut Criterion) {
         [r(1), r(1), r(1)],
         2,
         hypervoxel::LengthUnit::Unitless,
-        Some(hypervoxel::GridSource::new("bench:cube", 1)),
     )
     .unwrap();
-    let voxel_source = hypervoxel::GridSource::new("bench:cube", 1);
-    c.bench_function("hyperbrep voxel handoff report", |b| {
-        b.iter(|| cube.voxel_handoff_report(voxel_frame.clone(), Some(voxel_source.clone())))
+    c.bench_function("hyperbrep prepare voxel geometry", |b| {
+        b.iter(|| cube.prepare_voxel_geometry().unwrap())
     });
-    let voxel_handoff = cube.voxel_handoff_report(voxel_frame.clone(), Some(voxel_source.clone()));
-    let prepared_voxel_solid = voxel_handoff.prepared_triangle_solid.clone().unwrap();
+    let prepared_voxel_solid = cube.prepare_voxel_geometry().unwrap().triangle_solid;
     c.bench_function("hyperbrep prepared voxel solid materialization", |b| {
         b.iter(|| {
             hypervoxel::voxelize_prepared_exact_triangle_solid_mesh(
@@ -444,73 +410,22 @@ fn bench_shell_audit(c: &mut Criterion) {
             .unwrap()
         })
     });
-    let package_manifest = hyperbrep::BrepHandoffPackageManifest::basic()
-        .with_physics_density(r(1))
-        .with_voxel(hyperbrep::BrepVoxelPackageRequest {
-            frame: voxel_frame,
-            expected_source: Some(voxel_source),
-            require_triangle_voxelization: true,
-        });
-    c.bench_function("hyperbrep consolidated handoff package", |b| {
-        b.iter(|| cube.handoff_package_report(None, package_manifest.clone()))
-    });
     c.bench_function("hyperbrep surface inventory", |b| {
         b.iter(|| hyperbrep::BrepSurfaceInventoryReport::from_surfaces(&shell.surfaces))
     });
-    let manifests = shell
-        .faces
-        .iter()
-        .map(|face| {
-            let boundary_edges = face.loops().map(|face_loop| face_loop.coedges.len()).sum();
-            BrepFaceTessellationManifest::exact_planar(face.id, 1022, 1024, boundary_edges, 0)
-        })
-        .collect::<Vec<_>>();
-    c.bench_function("hyperbrep shell tessellation readiness report", |b| {
-        b.iter(|| BrepShellTessellationReport::from_shell_manifests(&shell, &manifests))
-    });
-    c.bench_function("hyperbrep derived mesh handoff report", |b| {
-        b.iter(|| BrepMeshHandoffReport::from_shell_manifests(&shell, &manifests))
-    });
-    c.bench_function("hyperbrep generated exact planar mesh handoff", |b| {
-        b.iter(|| shell.exact_planar_mesh_handoff_report())
-    });
-    let construction = BrepConstructionManifest::exact(
-        BrepFeatureId::new("bench:strip").unwrap(),
-        BrepConstructionKind::PlanarFace,
-        vec![BrepSourceVersion::new("source:strip", 1024).unwrap()],
-        &shell,
-    );
-    c.bench_function("hyperbrep construction provenance report", |b| {
-        b.iter(|| construction.report(&shell))
-    });
-    c.bench_function("hyperbrep retained shell fingerprint", |b| {
-        b.iter(|| BrepTopologyFingerprint::from_shell(&shell))
-    });
     let source_region = rectangle_region(64, 32);
-    let source_surface = BrepSurface::plane(
-        BrepSurfaceId(0),
-        Plane3::new(p(0, 0, 1), r(0)),
-        BrepSurfaceSource::ExactConstruction,
-    );
+    let source_surface = BrepSurface::plane(BrepSurfaceId(0), Plane3::new(p(0, 0, 1), r(0)));
     c.bench_function("hyperbrep planar region face construction", |b| {
         b.iter(|| {
             BrepPlanarRegionConstruction::from_region_on_surface(
                 &source_region,
                 source_surface.clone(),
-                BrepFeatureId::new("bench:region-face").unwrap(),
-                vec![BrepSourceVersion::new("region:bench", 1).unwrap()],
             )
         })
     });
     c.bench_function("hyperbrep planar region extrusion construction", |b| {
         b.iter(|| {
-            BrepPlanarExtrusionConstruction::vertical_prism_from_region(
-                &source_region,
-                r(0),
-                r(8),
-                BrepFeatureId::new("bench:region-extrusion").unwrap(),
-                vec![BrepSourceVersion::new("region:bench", 2).unwrap()],
-            )
+            BrepPlanarExtrusionConstruction::vertical_prism_from_region(&source_region, r(0), r(8))
         })
     });
     let holed_region = curve_region(
@@ -519,56 +434,10 @@ fn bench_shell_audit(c: &mut Criterion) {
     );
     c.bench_function("hyperbrep holed region extrusion construction", |b| {
         b.iter(|| {
-            BrepPlanarExtrusionConstruction::vertical_prism_from_region(
-                &holed_region,
-                r(0),
-                r(8),
-                BrepFeatureId::new("bench:holed-region-extrusion").unwrap(),
-                vec![BrepSourceVersion::new("region:bench", 3).unwrap()],
-            )
+            BrepPlanarExtrusionConstruction::vertical_prism_from_region(&holed_region, r(0), r(8))
         })
     });
-    c.bench_function("hyperbrep derived mesh handoff with provenance", |b| {
-        b.iter(|| {
-            BrepMeshHandoffReport::from_shell_manifests_with_construction(
-                &shell,
-                &manifests,
-                Some(&construction),
-            )
-        })
-    });
-    let coordinates = (0..3072).map(|i| (i as f64) * 0.25).collect::<Vec<_>>();
-    let imported_surfaces = vec![BrepImportedSurfaceFamily::Plane; 128];
-    c.bench_function("hyperbrep lossy f64 import audit", |b| {
-        b.iter(|| {
-            BrepLossyFloatImportReport::inspect_f64(
-                "bench:f64",
-                &coordinates,
-                &imported_surfaces,
-                true,
-                true,
-            )
-        })
-    });
-    let mesh_handoff = BrepMeshHandoffReport::from_shell_manifests(&shell, &manifests);
-    let export = BrepExportManifest {
-        format: BrepExportFormat::Obj,
-        scalar_policy: BrepExportScalarPolicy::F64,
-        source_object_ids: vec!["shell:bench-strip".into()],
-        exported_primitives: mesh_handoff.triangle_count,
-        exported_coordinates: mesh_handoff.lifted_vertex_count * 3,
-        finite_exported_coordinates: mesh_handoff.lifted_vertex_count * 3,
-        labels_preserved: true,
-        exact_replay_declared: true,
-    };
-    c.bench_function("hyperbrep export certificate report", |b| {
-        b.iter(|| export.report(Some(&mesh_handoff)))
-    });
-    let plane_surface = BrepSurface::plane(
-        BrepSurfaceId(99),
-        Plane3::new(p(0, 0, 1), r(-512)),
-        BrepSurfaceSource::ExactConstruction,
-    );
+    let plane_surface = BrepSurface::plane(BrepSurfaceId(99), Plane3::new(p(0, 0, 1), r(-512)));
     let prepared_surface = plane_surface.prepare();
     let surface_query_points = (0..1024).map(|i| p(i % 17, i % 31, i)).collect::<Vec<_>>();
     let surface_uvs = (0..1024)

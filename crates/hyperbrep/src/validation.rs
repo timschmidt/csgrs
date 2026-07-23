@@ -12,7 +12,6 @@ use crate::bounds::{BrepFaceBoundsReport, BrepShellBoundsReport};
 use crate::frame::BrepFaceUvBoundsReport;
 use crate::report::{BrepShellClosureReport, BrepTopologyValidationReport};
 use crate::surface::{BrepSurfaceBlocker, BrepSurfaceFacts, BrepSurfaceKind};
-use crate::tessellation::{BrepFaceTessellationManifest, BrepFaceTessellationReport};
 use crate::topology::{BrepFaceId, BrepShell};
 use crate::trim::BrepFaceTrimSetReport;
 
@@ -31,8 +30,6 @@ pub enum BrepFaceValidationBlocker {
     UvBoundsNotReady,
     /// Face geometry consistency could not be certified.
     GeometryNotReady,
-    /// Optional tessellation evidence was supplied but was not ready.
-    TessellationNotReady,
 }
 
 /// Explicit blocker for shell validation.
@@ -127,8 +124,6 @@ pub struct BrepFaceValidationReport {
     pub uv_bounds: Option<BrepFaceUvBoundsReport>,
     /// Geometry consistency report for the face, when the face exists.
     pub geometry: Option<BrepGeometryValidationReport>,
-    /// Optional tessellation report replayed against the same source face.
-    pub tessellation: Option<BrepFaceTessellationReport>,
     /// Explicit validation blockers.
     pub blockers: Vec<BrepFaceValidationBlocker>,
     /// Whether retained surface and trim evidence are ready.
@@ -137,9 +132,6 @@ pub struct BrepFaceValidationReport {
     pub exact_bounds_ready: bool,
     /// Whether exact face UV bounds are ready.
     pub exact_uv_bounds_ready: bool,
-    /// Whether the optional tessellation evidence is ready, or no tessellation
-    /// evidence was requested.
-    pub tessellation_ready: bool,
     /// Whether the face is ready for downstream exact/certified consumers.
     pub exact_face_ready: bool,
 }
@@ -183,13 +175,13 @@ impl BrepShellValidationReport {
     /// invalid faces remain blockers instead of being sewn or tolerance-merged.
     pub fn from_shell(shell: &BrepShell) -> Self {
         let topology = shell.validate_topology();
-        let closure = shell.audit_closure();
+        let closure = shell.closure_report();
         let bounds = shell.shell_bounds_report();
         let edge_agreement = shell.edge_agreement_report();
         let faces = shell
             .faces
             .iter()
-            .map(|face| shell.face_validation_report(face.id, None))
+            .map(|face| shell.face_validation_report(face.id))
             .collect::<Vec<_>>();
         let ready_face_boundary_count = faces
             .iter()
@@ -250,14 +242,9 @@ impl BrepFaceValidationReport {
     /// Validate one face from retained shell evidence.
     ///
     /// This face-level aggregation keeps surface preparation, trim topology,
-    /// and optional derived-mesh evidence as explicit replayed facts. A caller
-    /// can consume `exact_face_ready` only after the component reports agree;
-    /// unsupported or lossy sources remain named blockers.
-    pub fn from_shell_face(
-        shell: &BrepShell,
-        face: BrepFaceId,
-        tessellation_manifest: Option<&BrepFaceTessellationManifest>,
-    ) -> Self {
+    /// as explicit facts. A caller can consume `exact_face_ready` only after
+    /// the component reports agree; unsupported geometry remains a named blocker.
+    pub fn from_shell_face(shell: &BrepShell, face: BrepFaceId) -> Self {
         let Some(source_face) = shell.faces.iter().find(|candidate| candidate.id == face) else {
             return Self {
                 face,
@@ -268,12 +255,10 @@ impl BrepFaceValidationReport {
                 bounds: None,
                 uv_bounds: None,
                 geometry: None,
-                tessellation: None,
                 blockers: vec![BrepFaceValidationBlocker::MissingFace],
                 exact_face_boundary_ready: false,
                 exact_bounds_ready: false,
                 exact_uv_bounds_ready: false,
-                tessellation_ready: tessellation_manifest.is_none(),
                 exact_face_ready: false,
             };
         };
@@ -316,24 +301,12 @@ impl BrepFaceValidationReport {
             blockers.push(BrepFaceValidationBlocker::GeometryNotReady);
         }
 
-        let tessellation = tessellation_manifest.map(|manifest| {
-            BrepFaceTessellationReport::from_shell_face(shell, face, Some(manifest))
-        });
-        let tessellation_ready = tessellation
-            .as_ref()
-            .is_none_or(|report| report.exact_surface_handoff_ready);
-        if !tessellation_ready {
-            blockers.push(BrepFaceValidationBlocker::TessellationNotReady);
-        }
-
         let exact_bounds_ready = bounds.exact_bounds_ready;
         let exact_uv_bounds_ready = uv_bounds.exact_uv_bounds_ready;
         let exact_face_boundary_ready =
             surface_ready && trim_set.trim_set_ready && geometry.geometry_ready;
-        let exact_face_ready = exact_face_boundary_ready
-            && exact_bounds_ready
-            && exact_uv_bounds_ready
-            && tessellation_ready;
+        let exact_face_ready =
+            exact_face_boundary_ready && exact_bounds_ready && exact_uv_bounds_ready;
         Self {
             face,
             face_found: true,
@@ -343,12 +316,10 @@ impl BrepFaceValidationReport {
             bounds: Some(bounds),
             uv_bounds: Some(uv_bounds),
             geometry: Some(geometry),
-            tessellation,
             blockers,
             exact_face_boundary_ready,
             exact_bounds_ready,
             exact_uv_bounds_ready,
-            tessellation_ready,
             exact_face_ready,
         }
     }
@@ -527,12 +498,8 @@ impl BrepShell {
         BrepGeometryValidationReport::from_shell_face(self, face)
     }
 
-    /// Validate retained face evidence and optional tessellation evidence.
-    pub fn face_validation_report(
-        &self,
-        face: BrepFaceId,
-        tessellation_manifest: Option<&BrepFaceTessellationManifest>,
-    ) -> BrepFaceValidationReport {
-        BrepFaceValidationReport::from_shell_face(self, face, tessellation_manifest)
+    /// Validate retained face evidence.
+    pub fn face_validation_report(&self, face: BrepFaceId) -> BrepFaceValidationReport {
+        BrepFaceValidationReport::from_shell_face(self, face)
     }
 }

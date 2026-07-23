@@ -77,7 +77,7 @@ impl BrepExactTriangleMeshHandoffReport {
     /// Downstream consumers receive explicit evidence and blockers rather than
     /// hidden tolerance repair.
     pub fn from_shell(shell: &BrepShell) -> Self {
-        let solid = shell.solid_readiness_report(None);
+        let solid = shell.solid_readiness_report();
         let mut blockers = Vec::new();
         if !solid.exact_solid_boundary_ready {
             blockers.push(BrepTriangleMeshBlocker::SolidReadinessNotReady);

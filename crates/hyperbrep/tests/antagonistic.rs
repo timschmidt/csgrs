@@ -1,18 +1,11 @@
 use hyperbrep::{
-    BrepCoedge, BrepConstructionBlocker, BrepConstructionKind, BrepConstructionManifest, BrepEdge,
-    BrepEdgeAgreementBlocker, BrepEdgeId, BrepEdgeOrientation, BrepExactSolidHandoffBlocker,
-    BrepExactSurfaceHandoffBlocker, BrepExportBlocker, BrepExportFormat, BrepExportManifest,
-    BrepExportScalarPolicy, BrepFace, BrepFaceAreaBlocker, BrepFaceId,
-    BrepFaceTessellationManifest, BrepFeatureId, BrepHandoffPackageBlocker,
-    BrepHandoffPackageManifest, BrepImportedSurfaceFamily, BrepLoop, BrepLoopId,
-    BrepLossyFloatImportReport, BrepLossyImportBlocker, BrepMeshHandoffReport,
-    BrepPhysicsMassBlocker, BrepPlanarExtrusionConstruction,
+    BrepCoedge, BrepEdge, BrepEdgeAgreementBlocker, BrepEdgeId, BrepEdgeOrientation,
+    BrepExactSolidHandoffBlocker, BrepExactSurfaceHandoffBlocker, BrepFace, BrepFaceAreaBlocker,
+    BrepFaceId, BrepLoop, BrepLoopId, BrepPhysicsMassBlocker, BrepPlanarExtrusionConstruction,
     BrepPlanarExtrusionConstructionBlocker, BrepPlanarRegionConstruction,
-    BrepPlanarRegionConstructionBlocker, BrepShell, BrepShellBlocker, BrepShellTessellationReport,
-    BrepShellVolumeBlocker, BrepSourceVersion, BrepSurface, BrepSurfaceId,
-    BrepSurfaceIntersectionRelation, BrepSurfaceSource, BrepTessellationBlocker,
-    BrepTopologyValidationBlocker, BrepTriangleMeshBlocker, BrepTrimLoopBlocker, BrepVertex,
-    BrepVertexId, BrepVoxelHandoffBlocker, BrepVoxelPackageRequest,
+    BrepPlanarRegionConstructionBlocker, BrepShell, BrepShellBlocker, BrepShellVolumeBlocker,
+    BrepSurface, BrepSurfaceId, BrepSurfaceIntersectionRelation, BrepTopologyValidationBlocker,
+    BrepTriangleMeshBlocker, BrepTrimLoopBlocker, BrepVertex, BrepVertexId,
 };
 use hypercurve::{Contour2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperlimit::{Plane3, PlaneSide, Point2, Point3, classify_point_plane};
@@ -73,7 +66,6 @@ fn triangle_shell(reverse_second: bool) -> BrepShell {
         surfaces: vec![BrepSurface::plane(
             BrepSurfaceId(0),
             Plane3::new(p(0, 0, 1), r(0)),
-            BrepSurfaceSource::ExactConstruction,
         )],
         faces: vec![
             BrepFace::new(
@@ -106,11 +98,11 @@ fn triangle_shell(reverse_second: bool) -> BrepShell {
 
 #[test]
 fn opposite_edge_uses_are_closed_but_same_orientation_pairs_are_blocked() {
-    let closed = triangle_shell(true).audit_closure();
+    let closed = triangle_shell(true).closure_report();
     assert!(closed.closed);
     assert!(closed.exact_shell_ready);
 
-    let same_direction = triangle_shell(false).audit_closure();
+    let same_direction = triangle_shell(false).closure_report();
     assert!(!same_direction.closed);
     assert!(!same_direction.exact_shell_ready);
     assert_eq!(same_direction.same_orientation_pair_count, 3);
@@ -141,7 +133,6 @@ proptest! {
             surfaces: vec![BrepSurface::plane(
                 BrepSurfaceId(0),
                 Plane3::new(p(0, 0, 1), r(0)),
-                BrepSurfaceSource::ExactConstruction,
             )],
             faces: vec![BrepFace::new(
                 BrepFaceId(0),
@@ -149,7 +140,7 @@ proptest! {
                 BrepLoop::new(BrepLoopId(0), coedges),
             )],
         };
-        let report = shell.audit_closure();
+        let report = shell.closure_report();
         let topology = shell.validate_topology();
         let validation = shell.shell_validation_report();
         let area = shell.face_area_report(BrepFaceId(0));
@@ -189,210 +180,10 @@ proptest! {
                 .blockers
                 .contains(&BrepTriangleMeshBlocker::SolidReadinessNotReady)
         );
-        let frame = hypervoxel::GridFrame::new(
-            [r(0), r(0), r(0)],
-            [r(1), r(1), r(1)],
-            1,
-            hypervoxel::LengthUnit::Unitless,
-            None,
-        ).unwrap();
-        let voxel = shell.voxel_handoff_report(frame, None);
-        prop_assert!(voxel.exact_aabb_handoff_ready);
-        prop_assert!(!voxel.exact_triangle_source_ready);
-        prop_assert!(!voxel.exact_triangle_voxelization_ready);
-        prop_assert!(
-            voxel
-                .blockers
-                .contains(&BrepVoxelHandoffBlocker::TriangleMeshNotReady)
-        );
-        let package = shell.handoff_package_report(
-            None,
-            BrepHandoffPackageManifest::basic()
-                .with_voxel(BrepVoxelPackageRequest {
-                    frame: hypervoxel::GridFrame::new(
-                        [r(0), r(0), r(0)],
-                        [r(1), r(1), r(1)],
-                        1,
-                        hypervoxel::LengthUnit::Unitless,
-                        None,
-                    ).unwrap(),
-                    expected_source: None,
-                    require_triangle_voxelization: false,
-                }),
-        );
-        prop_assert!(!package.all_requested_exact_ready);
-        prop_assert!(
-            package
-                .blockers
-                .contains(&BrepHandoffPackageBlocker::TriangleMeshNotReady)
-        );
+        prop_assert!(shell.prepare_voxel_geometry().is_err());
     }
 
-    #[test]
-    fn generated_mesh_handoff_requires_one_exact_manifest_per_face(edge_count in 3_usize..=24, supplied_manifest in proptest::bool::ANY) {
-        let vertices = (0..edge_count)
-            .map(|i| BrepVertex::new(BrepVertexId(i as u64), p(i as i32, 0, 0)))
-            .collect::<Vec<_>>();
-        let edges = (0..edge_count)
-            .map(|i| {
-                BrepEdge::new(
-                    BrepEdgeId(i as u64),
-                    BrepVertexId(i as u64),
-                    BrepVertexId(((i + 1) % edge_count) as u64),
-                )
-            })
-            .collect::<Vec<_>>();
-        let forward = (0..edge_count)
-            .map(|i| BrepCoedge::new(BrepEdgeId(i as u64), BrepEdgeOrientation::Forward))
-            .collect::<Vec<_>>();
-        let reversed = (0..edge_count).rev()
-            .map(|i| BrepCoedge::new(BrepEdgeId(i as u64), BrepEdgeOrientation::Reversed))
-            .collect::<Vec<_>>();
-        let shell = BrepShell {
-            vertices,
-            edges,
-            surfaces: vec![BrepSurface::plane(
-                BrepSurfaceId(0),
-                Plane3::new(p(0, 0, 1), r(0)),
-                BrepSurfaceSource::ExactConstruction,
-            )],
-            faces: vec![
-                BrepFace::new(
-                    BrepFaceId(0),
-                    BrepSurfaceId(0),
-                    BrepLoop::new(BrepLoopId(0), forward),
-                ),
-                BrepFace::new(
-                    BrepFaceId(1),
-                    BrepSurfaceId(0),
-                    BrepLoop::new(BrepLoopId(1), reversed),
-                ),
-            ],
-        };
-        let manifests = if supplied_manifest {
-            vec![
-                BrepFaceTessellationManifest::exact_planar(BrepFaceId(0), edge_count - 2, edge_count, edge_count, 0),
-                BrepFaceTessellationManifest::exact_planar(BrepFaceId(1), edge_count - 2, edge_count, edge_count, 0),
-            ]
-        } else {
-            vec![BrepFaceTessellationManifest::exact_planar(BrepFaceId(0), edge_count - 2, edge_count, edge_count, 0)]
-        };
-        let shell_tessellation = BrepShellTessellationReport::from_shell_manifests(&shell, &manifests);
-        prop_assert_eq!(shell_tessellation.exact_surface_handoff_ready, supplied_manifest);
-        prop_assert_eq!(shell_tessellation.exact_solid_handoff_ready, supplied_manifest);
-        prop_assert_eq!(shell_tessellation.source_face_count, 2);
-        prop_assert_eq!(shell_tessellation.blocked_face_count, if supplied_manifest { 0 } else { 1 });
-
-        let report = BrepMeshHandoffReport::from_shell_manifests(&shell, &manifests);
-
-        prop_assert_eq!(report.exact_surface_handoff_ready, supplied_manifest);
-        prop_assert_eq!(report.exact_solid_handoff_ready, supplied_manifest);
-        prop_assert_eq!(report.tessellation, shell_tessellation);
-        if supplied_manifest {
-            prop_assert_eq!(report.blocked_face_count, 0);
-            prop_assert_eq!(report.triangle_count, 2 * (edge_count - 2));
-        } else {
-            prop_assert_eq!(report.blocked_face_count, 1);
-            prop_assert!(
-                report.faces[1]
-                    .blockers
-                    .contains(&BrepTessellationBlocker::MissingManifest)
-            );
-        }
-
-        let generated = shell.exact_planar_tessellation_manifests();
-        prop_assert!(generated.is_empty());
-        let generated_report = shell.exact_planar_mesh_handoff_report();
-        prop_assert!(!generated_report.exact_surface_handoff_ready);
-        prop_assert_eq!(generated_report.blocked_face_count, 2);
-        prop_assert!(generated_report
-            .faces
-            .iter()
-            .all(|face| face
-                .blockers
-                .contains(&BrepTessellationBlocker::MissingManifest)));
-    }
-
-    #[test]
-    fn generated_construction_snapshot_rejects_stale_topology(
-        edge_count in 3_usize..=24,
-        mutation in 0_u8..=2,
-    ) {
-        let vertices = (0..=edge_count)
-            .map(|i| BrepVertex::new(BrepVertexId(i as u64), p(i as i32, 0, 0)))
-            .collect::<Vec<_>>();
-        let edges = (0..edge_count)
-            .map(|i| BrepEdge::new(BrepEdgeId(i as u64), BrepVertexId(i as u64), BrepVertexId((i + 1) as u64)))
-            .collect::<Vec<_>>();
-        let forward = (0..edge_count)
-            .map(|i| BrepCoedge::new(BrepEdgeId(i as u64), BrepEdgeOrientation::Forward))
-            .collect::<Vec<_>>();
-        let reversed = (0..edge_count)
-            .map(|i| BrepCoedge::new(BrepEdgeId(i as u64), BrepEdgeOrientation::Reversed))
-            .collect::<Vec<_>>();
-        let shell = BrepShell {
-            vertices,
-            edges,
-            surfaces: vec![BrepSurface::plane(
-                BrepSurfaceId(0),
-                Plane3::new(p(0, 0, 1), r(0)),
-                BrepSurfaceSource::ExactConstruction,
-            )],
-            faces: vec![
-                BrepFace::new(
-                    BrepFaceId(0),
-                    BrepSurfaceId(0),
-                    BrepLoop::new(BrepLoopId(0), forward),
-                ),
-                BrepFace::new(
-                    BrepFaceId(1),
-                    BrepSurfaceId(0),
-                    BrepLoop::new(BrepLoopId(1), reversed),
-                ),
-            ],
-        };
-        let manifest = BrepConstructionManifest::exact(
-            BrepFeatureId::new("generated:strip").unwrap(),
-            BrepConstructionKind::PlanarFace,
-            vec![BrepSourceVersion::new("source:strip", edge_count as u64).unwrap()],
-            &shell,
-        );
-        let mut checked_shell = shell.clone();
-        match mutation {
-            0 => {}
-            1 => checked_shell
-                .edges
-                .push(BrepEdge::new(BrepEdgeId(999), BrepVertexId(0), BrepVertexId(0))),
-            _ => {
-                checked_shell.edges[0] = BrepEdge::new(
-                    BrepEdgeId(0),
-                    BrepVertexId(1),
-                    BrepVertexId(0),
-                );
-            }
-        }
-        let report = manifest.report(&checked_shell);
-
-        prop_assert_eq!(report.construction_fresh, mutation == 0);
-        prop_assert_eq!(report.topology_fingerprint_current, mutation == 0);
-        prop_assert_eq!(report.topology_snapshot_current, mutation != 1);
-        if mutation == 1 {
-            prop_assert!(
-                report
-                    .blockers
-                    .contains(&BrepConstructionBlocker::StaleTopologySnapshot)
-            );
-        }
-        if mutation != 0 {
-            prop_assert!(
-                report
-                    .blockers
-                    .contains(&BrepConstructionBlocker::StaleTopologyFingerprint)
-            );
-        }
-    }
-
-    #[test]
+     #[test]
     fn generated_planar_region_construction_preserves_exact_uv_bounds(
         width in 1_i32..=64,
         height in 1_i32..=64,
@@ -403,21 +194,14 @@ proptest! {
             BrepSurface::unsupported(
                 BrepSurfaceId(0),
                 "nurbs-surface",
-                BrepSurfaceSource::ExactConstruction,
             )
         } else {
             BrepSurface::plane(
                 BrepSurfaceId(0),
                 Plane3::new(p(0, 0, 1), r(0)),
-                BrepSurfaceSource::ExactConstruction,
             )
         };
-        let constructed = BrepPlanarRegionConstruction::from_region_on_surface(
-            &region,
-            surface,
-            BrepFeatureId::new("generated:planar-region").unwrap(),
-            vec![BrepSourceVersion::new("region:rect", width as u64 + height as u64).unwrap()],
-        );
+        let constructed = BrepPlanarRegionConstruction::from_region_on_surface(&region, surface);
 
         prop_assert_eq!(constructed.exact_construction_ready, !unsupported_surface);
         if unsupported_surface {
@@ -440,14 +224,6 @@ proptest! {
                 uv_bounds.max,
                 Some(hyperlimit::Point2::new(r(width), r(height)))
             );
-            prop_assert!(
-                constructed
-                    .manifest
-                    .as_ref()
-                    .unwrap()
-                    .report(shell)
-                    .construction_fresh
-            );
         }
     }
 
@@ -462,8 +238,6 @@ proptest! {
             &region,
             r(0),
             r(height),
-            BrepFeatureId::new("generated:extrusion").unwrap(),
-            vec![BrepSourceVersion::new("region:extrusion", (width + depth + height) as u64).unwrap()],
         );
 
         prop_assert!(constructed.exact_construction_ready);
@@ -473,27 +247,15 @@ proptest! {
         prop_assert_eq!(constructed.edge_count, 12);
         prop_assert_eq!(constructed.face_count, 6);
         let shell = constructed.shell.as_ref().unwrap();
-        let solid = shell.solid_readiness_report(constructed.manifest.as_ref());
+        let solid = shell.solid_readiness_report();
         prop_assert!(solid.exact_solid_boundary_ready);
         prop_assert_eq!(
             solid.volume.signed_six_volume,
             Some(r(6 * width * depth * height))
         );
         prop_assert!(shell.physics_mass_handoff_report(r(1)).exact_physics_mass_ready);
-        let frame = hypervoxel::GridFrame::new(
-            [r(0), r(0), r(0)],
-            [r(1), r(1), r(1)],
-            6,
-            hypervoxel::LengthUnit::Unitless,
-            None,
-        ).unwrap();
-        let voxel = shell.voxel_handoff_report(frame, None);
-        prop_assert!(voxel.exact_aabb_handoff_ready);
-        prop_assert!(voxel.exact_triangle_source_ready);
-        prop_assert!(voxel.exact_triangle_voxelization_ready);
-        prop_assert!(voxel.exact_triangle_solid.is_some());
-        prop_assert!(voxel.prepared_triangle_solid.is_some());
-        prop_assert!(voxel.blockers.is_empty());
+        let voxel = shell.prepare_voxel_geometry();
+        prop_assert!(voxel.is_ok());
     }
 
     #[test]
@@ -504,8 +266,6 @@ proptest! {
             &rect_region(2, 3),
             r(0),
             r(height),
-            BrepFeatureId::new("generated:bad-extrusion").unwrap(),
-            vec![BrepSourceVersion::new("region:bad-extrusion", 1).unwrap()],
         );
 
         prop_assert!(!constructed.exact_construction_ready);
@@ -534,8 +294,6 @@ proptest! {
             &region,
             r(0),
             r(height),
-            BrepFeatureId::new("generated:holed-extrusion").unwrap(),
-            vec![BrepSourceVersion::new("region:holed-extrusion", 1).unwrap()],
         );
 
         prop_assert!(constructed.exact_construction_ready);
@@ -544,7 +302,7 @@ proptest! {
         prop_assert_eq!(constructed.edge_count, 24);
         prop_assert_eq!(constructed.face_count, 10);
         let shell = constructed.shell.as_ref().unwrap();
-        let solid = shell.solid_readiness_report(constructed.manifest.as_ref());
+        let solid = shell.solid_readiness_report();
         prop_assert!(solid.exact_solid_boundary_ready);
         prop_assert_eq!(
             solid.volume.signed_six_volume,
@@ -553,93 +311,12 @@ proptest! {
         prop_assert!(shell.physics_mass_handoff_report(r(1)).exact_physics_mass_ready);
     }
 
-    #[test]
-    fn generated_lossy_import_audit_tracks_finiteness_and_surface_support(values in proptest::collection::vec(-1000.0_f64..=1000.0, 0..48), add_nan in proptest::bool::ANY, include_unsupported in proptest::bool::ANY) {
-        let mut coordinates = values;
-        if add_nan {
-            coordinates.push(f64::NAN);
-        }
-        let finite_count = coordinates.iter().filter(|value| value.is_finite()).count();
-        let mut surfaces = vec![BrepImportedSurfaceFamily::Plane];
-        if include_unsupported {
-            surfaces.push(BrepImportedSurfaceFamily::Nurbs);
-        }
-
-        let report = BrepLossyFloatImportReport::inspect_f64(
-            "generated:adapter",
-            &coordinates,
-            &surfaces,
-            true,
-            true,
-        );
-
-        prop_assert_eq!(report.finite_coordinate_count, finite_count);
-        prop_assert_eq!(report.exact_dyadic_lift_count, finite_count);
-        prop_assert_eq!(report.non_finite_coordinate_indexes.is_empty(), !add_nan);
-        prop_assert_eq!(
-            report.blockers.contains(&BrepLossyImportBlocker::NonFiniteCoordinate),
-            add_nan
-        );
-        prop_assert_eq!(
-            report.blockers.contains(&BrepLossyImportBlocker::UnsupportedSurfaceKind),
-            include_unsupported
-        );
-        prop_assert_eq!(
-            report.adapter_replay_ready,
-            !add_nan && !include_unsupported && coordinates.len() % 3 == 0
-        );
-    }
-
-    #[test]
-    fn generated_export_report_tracks_source_ids_and_coordinate_finiteness(
-        primitive_count in 0_usize..=64,
-        coordinate_count in 0_usize..=192,
-        finite_delta in 0_usize..=8,
-        include_source in proptest::bool::ANY,
-        exact_replay in proptest::bool::ANY,
-    ) {
-        let finite_coordinates = coordinate_count.saturating_sub(finite_delta);
-        let manifest = BrepExportManifest {
-            format: BrepExportFormat::Step,
-            scalar_policy: BrepExportScalarPolicy::ExactText,
-            source_object_ids: if include_source { vec!["shell:generated".into()] } else { Vec::new() },
-            exported_primitives: primitive_count,
-            exported_coordinates: coordinate_count,
-            finite_exported_coordinates: finite_coordinates,
-            labels_preserved: true,
-            exact_replay_declared: exact_replay,
-        };
-        let report = manifest.report(None);
-
-        prop_assert_eq!(
-            report.blockers.contains(&BrepExportBlocker::MissingSourceObjectIds),
-            !include_source
-        );
-        prop_assert_eq!(
-            report.blockers.contains(&BrepExportBlocker::EmptyExport),
-            primitive_count == 0
-        );
-        prop_assert_eq!(
-            report.blockers.contains(&BrepExportBlocker::NonFiniteExportCoordinates),
-            finite_coordinates != coordinate_count
-        );
-        prop_assert_eq!(
-            report.blockers.contains(&BrepExportBlocker::ExternalBrepReplayMissing),
-            !exact_replay
-        );
-        prop_assert_eq!(
-            report.export_ready,
-            include_source && primitive_count > 0 && finite_coordinates == coordinate_count && exact_replay
-        );
-    }
-
-    #[test]
+     #[test]
     fn generated_prepared_plane_surface_matches_hyperlimit_classifier(a in -8_i32..=8, b in -8_i32..=8, c in 1_i32..=8, d in -16_i32..=16, x in -8_i32..=8, y in -8_i32..=8, z in -8_i32..=8) {
         let plane = Plane3::new(p(a, b, c), r(d));
         let surface = BrepSurface::plane(
             BrepSurfaceId(500),
             plane.clone(),
-            BrepSurfaceSource::ExactConstruction,
         );
         let prepared = surface.prepare();
         let point = p(x, y, z);
@@ -657,7 +334,6 @@ proptest! {
         let surface = BrepSurface::plane(
             BrepSurfaceId(501),
             Plane3::new(p(0, 0, c), r(d)),
-            BrepSurfaceSource::ExactConstruction,
         );
         let uv = Point2::new(r(u), r(v));
         let eval = surface.evaluate_frame_uv(uv.clone());
@@ -675,7 +351,6 @@ proptest! {
         let surface = BrepSurface::plane(
             BrepSurfaceId(502),
             plane.clone(),
-            BrepSurfaceSource::ExactConstruction,
         );
         let uv = Point2::new(r(u), r(v));
         let eval = surface.evaluate_frame_uv(uv.clone());
@@ -698,12 +373,10 @@ proptest! {
         let first = BrepSurface::plane(
             BrepSurfaceId(503),
             Plane3::new(p(a, b, c), r(d)),
-            BrepSurfaceSource::ExactConstruction,
         );
         let coincident = BrepSurface::plane(
             BrepSurfaceId(504),
             Plane3::new(p(a * scale, b * scale, c * scale), r(d * scale)),
-            BrepSurfaceSource::ExactConstruction,
         );
         prop_assert_eq!(
             first.intersect_surface(&coincident).relation,
@@ -716,7 +389,6 @@ proptest! {
                 p(a * scale, b * scale, c * scale),
                 r(d * scale + shift),
             ),
-            BrepSurfaceSource::ExactConstruction,
         );
         let stationary = first.stationary_distance_to_surface(&separated);
         prop_assert_eq!(
@@ -759,7 +431,6 @@ proptest! {
             surfaces: vec![BrepSurface::plane(
                 BrepSurfaceId(0),
                 Plane3::new(p(0, 0, 1), r(0)),
-                BrepSurfaceSource::ExactConstruction,
             )],
             faces: vec![BrepFace::new(
                 BrepFaceId(0),
@@ -786,7 +457,7 @@ proptest! {
             uv_bounds.max,
             Some(Point2::new(r((edge_count - 1) as i32), r(4.min((edge_count - 1) as i32))))
         );
-        let validation = shell.face_validation_report(BrepFaceId(0), None);
+        let validation = shell.face_validation_report(BrepFaceId(0));
         prop_assert_eq!(validation.exact_face_boundary_ready, !reverse_one);
         prop_assert!(validation.exact_bounds_ready);
         prop_assert!(validation.exact_uv_bounds_ready);
@@ -811,7 +482,7 @@ proptest! {
         prop_assert!(preflight.preflight_ready);
         prop_assert_eq!(preflight.relation, Some(hyperlimit::Aabb3Intersection::Touching));
         prop_assert!(preflight.requires_narrow_phase);
-        let solid = shell.solid_readiness_report(None);
+        let solid = shell.solid_readiness_report();
         prop_assert!(!solid.exact_solid_boundary_ready);
         prop_assert!(!solid.closed_shell_ready);
         prop_assert!(!solid.exact_volume_ready);
@@ -844,7 +515,7 @@ proptest! {
                 .contains(&BrepExactSurfaceHandoffBlocker::ShellValidationNotReady),
             reverse_one
         );
-        let solid_handoff = shell.exact_solid_handoff(None);
+        let solid_handoff = shell.exact_solid_handoff();
         prop_assert!(!solid_handoff.exact_solid_handoff_ready);
         prop_assert_eq!(
             solid_handoff

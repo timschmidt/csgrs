@@ -1,8 +1,6 @@
 //! Retained BREP surface carriers.
 //!
-//! A surface record is source evidence for faces, not an implicit tolerance
-//! adapter. Unsupported and lossy imports remain named surface kinds so callers
-//! cannot accidentally treat them as exact BREP topology.
+//! Surface records retain analytic geometry needed by faces.
 
 use hyperlimit::{Escalation, Plane3, PlaneSide, Point3, PredicateOutcome, PreparedPlane3};
 
@@ -20,19 +18,6 @@ impl BrepSurfaceId {
     pub const fn get(self) -> u64 {
         self.0
     }
-}
-
-/// Provenance class for a retained surface.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
-pub enum BrepSurfaceSource {
-    /// Constructed exactly inside the Hyper stack.
-    ExactConstruction,
-    /// Imported with exact scalar parameters and retained topology evidence.
-    ExactImport,
-    /// Imported through a lossy or tolerance-bearing adapter.
-    LossyImport,
-    /// Source/provenance is not known.
-    Unknown,
 }
 
 /// Analytic surface family retained by `hyperbrep`.
@@ -54,8 +39,6 @@ pub struct BrepSurface {
     pub id: BrepSurfaceId,
     /// Analytic or explicit unsupported surface kind.
     pub kind: BrepSurfaceKind,
-    /// Surface provenance class.
-    pub source: BrepSurfaceSource,
 }
 
 /// Prepared facts for a retained BREP surface.
@@ -69,8 +52,6 @@ pub struct BrepSurface {
 pub struct BrepSurfaceFacts {
     /// Retained surface id.
     pub surface: BrepSurfaceId,
-    /// Whether the source/provenance is exact Hyper evidence.
-    pub exact_source: bool,
     /// Whether this surface family has current exact-core support.
     pub supported_family: bool,
     /// Whether the surface is a supported exact plane with nonzero normal.
@@ -88,8 +69,6 @@ pub struct BrepSurfaceFacts {
 /// Explicit blocker for surface preparation or evaluation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum BrepSurfaceBlocker {
-    /// Surface provenance is lossy or unknown.
-    NonExactSource,
     /// Surface family is unsupported by the current exact core.
     UnsupportedFamily,
     /// Plane normal is structurally zero.
@@ -138,50 +117,33 @@ pub struct BrepSurfacePointReport {
 
 impl BrepSurface {
     /// Construct an exact planar surface record.
-    pub fn plane(id: BrepSurfaceId, plane: Plane3, source: BrepSurfaceSource) -> Self {
+    pub fn plane(id: BrepSurfaceId, plane: Plane3) -> Self {
         Self {
             id,
             kind: BrepSurfaceKind::Plane(Box::new(plane)),
-            source,
         }
     }
 
     /// Construct a named unsupported surface record.
-    pub fn unsupported(
-        id: BrepSurfaceId,
-        family: impl Into<String>,
-        source: BrepSurfaceSource,
-    ) -> Self {
+    pub fn unsupported(id: BrepSurfaceId, family: impl Into<String>) -> Self {
         Self {
             id,
             kind: BrepSurfaceKind::Unsupported {
                 family: family.into(),
             },
-            source,
         }
-    }
-
-    /// Returns whether this surface is exact Hyper-owned evidence.
-    pub const fn has_exact_source(&self) -> bool {
-        matches!(
-            self.source,
-            BrepSurfaceSource::ExactConstruction | BrepSurfaceSource::ExactImport
-        )
     }
 
     /// Returns whether the surface is a plane with a structurally nonzero normal.
     pub fn is_supported_exact_plane(&self) -> bool {
         match &self.kind {
-            BrepSurfaceKind::Plane(plane) => {
-                self.has_exact_source() && !plane.structural_facts().normal_known_zero()
-            }
+            BrepSurfaceKind::Plane(plane) => !plane.structural_facts().normal_known_zero(),
             BrepSurfaceKind::Unsupported { .. } => false,
         }
     }
 
     /// Return exact-core surface facts without evaluating any trim topology.
     pub fn facts(&self) -> BrepSurfaceFacts {
-        let exact_source = self.has_exact_source();
         let mut supported_family = false;
         let mut supported_exact_plane = false;
         let mut dyadic_schedule = false;
@@ -193,11 +155,10 @@ impl BrepSurface {
             normal_known_zero = plane_facts.normal_known_zero();
             dyadic_schedule = plane_facts.has_dyadic_schedule();
             shared_denominator_schedule = plane_facts.has_shared_denominator_schedule();
-            supported_exact_plane = exact_source && !normal_known_zero;
+            supported_exact_plane = !normal_known_zero;
         }
         BrepSurfaceFacts {
             surface: self.id,
-            exact_source,
             supported_family,
             supported_exact_plane,
             dyadic_schedule,
@@ -210,7 +171,7 @@ impl BrepSurface {
     /// Prepare this surface for repeated exact point classification.
     ///
     /// This wraps `hyperlimit::PreparedPlane3` for planes and returns explicit
-    /// blockers for unsupported or lossy surfaces. Prepared predicate state
+    /// blockers for unsupported surfaces. Prepared predicate state
     /// does not imply face-topology or trim validity.
     pub fn prepare(&self) -> PreparedBrepSurface<'_> {
         let facts = self.facts();
@@ -233,9 +194,6 @@ impl BrepSurface {
 
     fn blockers_from_facts(&self, facts: &BrepSurfaceFacts) -> Vec<BrepSurfaceBlocker> {
         let mut blockers = Vec::new();
-        if !facts.exact_source {
-            blockers.push(BrepSurfaceBlocker::NonExactSource);
-        }
         if !facts.supported_family {
             blockers.push(BrepSurfaceBlocker::UnsupportedFamily);
         }

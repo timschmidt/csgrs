@@ -175,7 +175,7 @@ impl BrepShell {
     /// references, and supported-surface readiness. It does not infer missing
     /// geometry or merge nearby vertices. Oriented edge uses assemble loops,
     /// loops bound faces, and closed shells require paired manifold edge uses.
-    pub fn audit_closure(&self) -> BrepShellClosureReport {
+    pub fn closure_report(&self) -> BrepShellClosureReport {
         BrepShellClosureReport::from_shell(self)
     }
 

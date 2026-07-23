@@ -104,7 +104,6 @@ fn planar_pcurve_owns_top_level_nurbs_and_reports_native_trim_limit() {
         vec![p(0, 0), p(1, 2), p(3, 0)],
         vec![r(1), r(2), r(1)],
         vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-        None,
     )
     .unwrap();
     let path = CurvePath2::try_new(vec![curve]).unwrap();

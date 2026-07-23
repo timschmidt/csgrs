@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperreal::Real;
 
-use crate::surface::{BrepSurfaceKind, BrepSurfaceSource};
+use crate::surface::BrepSurfaceKind;
 use crate::topology::{BrepEdge, BrepEdgeOrientation, BrepFaceId, BrepShell, BrepVertexId};
 
 /// Coordinate plane used for a projected planar area computation.
@@ -124,12 +124,7 @@ impl BrepFaceAreaReport {
             );
         };
         let (projection_axis, normal_component) = match &surface.kind {
-            BrepSurfaceKind::Plane(plane)
-                if matches!(
-                    surface.source,
-                    BrepSurfaceSource::ExactConstruction | BrepSurfaceSource::ExactImport
-                ) =>
-            {
+            BrepSurfaceKind::Plane(plane) => {
                 let Some(axis_index) = select_projection_axis(plane) else {
                     blockers.push(BrepFaceAreaBlocker::NonAxisAlignedPlane);
                     return Self::blocked(face, true, blockers, Vec::new());
@@ -142,7 +137,7 @@ impl BrepFaceAreaReport {
                 };
                 (axis, component)
             }
-            BrepSurfaceKind::Plane(_) | BrepSurfaceKind::Unsupported { .. } => {
+            BrepSurfaceKind::Unsupported { .. } => {
                 blockers.push(BrepFaceAreaBlocker::UnsupportedSurface);
                 return Self::blocked(face, true, blockers, Vec::new());
             }

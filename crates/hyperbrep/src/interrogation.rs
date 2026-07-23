@@ -7,14 +7,13 @@
 use hyperlimit::{Point2, Point3};
 use hyperreal::{Real, RealSign};
 
+use crate::BrepSurfaceKind;
 use crate::{BrepPlaneFrameAxis, BrepSurface, BrepSurfaceFrameReport, BrepSurfaceId};
-use crate::{BrepSurfaceKind, BrepSurfaceSource};
 
 /// Explicit blocker for exact surface differential interrogation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum BrepSurfaceInterrogationBlocker {
     /// The retained source is lossy or unknown.
-    NonExactSource,
     /// The surface family is not implemented by the exact interrogation core.
     UnsupportedSurface,
     /// No exact parameter frame was available.
@@ -92,13 +91,6 @@ impl BrepSurface {
         let evaluation = self.evaluate_frame_uv(uv.clone());
         let frame = evaluation.frame;
         let mut blockers = Vec::new();
-        if !matches!(
-            self.source,
-            BrepSurfaceSource::ExactConstruction | BrepSurfaceSource::ExactImport
-        ) {
-            blockers.push(BrepSurfaceInterrogationBlocker::NonExactSource);
-        }
-
         let plane = match &self.kind {
             BrepSurfaceKind::Plane(plane) => Some(plane.as_ref()),
             BrepSurfaceKind::Unsupported { .. } => {
@@ -280,11 +272,7 @@ mod tests {
 
     #[test]
     fn diagonal_plane_has_exact_point_tangents_normal_and_zero_curvature() {
-        let surface = BrepSurface::plane(
-            BrepSurfaceId::new(1),
-            Plane3::new(p(1, 1, 1), r(-6)),
-            BrepSurfaceSource::ExactConstruction,
-        );
+        let surface = BrepSurface::plane(BrepSurfaceId::new(1), Plane3::new(p(1, 1, 1), r(-6)));
 
         let report = surface.interrogate_uv(Point2::new(r(1), r(2)));
 
@@ -306,11 +294,7 @@ mod tests {
 
     #[test]
     fn unsupported_surface_keeps_interrogation_blockers_visible() {
-        let surface = BrepSurface::unsupported(
-            BrepSurfaceId::new(2),
-            "nurbs-surface",
-            BrepSurfaceSource::ExactImport,
-        );
+        let surface = BrepSurface::unsupported(BrepSurfaceId::new(2), "nurbs-surface");
         let report = surface.interrogate_uv(Point2::new(r(0), r(0)));
 
         assert!(!report.exact_differential_ready);

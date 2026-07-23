@@ -13,13 +13,6 @@ use std::rc::Rc;
 use hyperlimit::Point3;
 use hyperreal::Real;
 
-/// Stable application source for a retained spatial curve.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
-pub struct BrepCurveSource3 {
-    id: u64,
-    version: u64,
-}
-
 /// Spatial curve family owned by HyperBREP.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum BrepCurveFamily3 {
@@ -67,7 +60,6 @@ pub enum BrepCurveErrorKind3 {
 pub struct BrepCurveError3 {
     operation: BrepCurveOperation3,
     family: BrepCurveFamily3,
-    source: Option<BrepCurveSource3>,
     kind: BrepCurveErrorKind3,
 }
 
@@ -128,11 +120,10 @@ pub enum BrepCurveGeometry3 {
     Nurbs(BrepNurbsCurve3),
 }
 
-/// Top-level exact spatial curve with stable provenance.
+/// Top-level exact spatial curve.
 #[derive(Clone, Debug)]
 pub struct BrepCurve3 {
     geometry: BrepCurveGeometry3,
-    source: Option<BrepCurveSource3>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -143,39 +134,15 @@ struct HomogeneousPoint3 {
     w: Real,
 }
 
-impl BrepCurveSource3 {
-    /// Constructs a source at version zero.
-    pub const fn new(id: u64) -> Self {
-        Self::with_version(id, 0)
-    }
-
-    /// Constructs a source with an explicit version.
-    pub const fn with_version(id: u64, version: u64) -> Self {
-        Self { id, version }
-    }
-
-    /// Returns the opaque source id.
-    pub const fn id(self) -> u64 {
-        self.id
-    }
-
-    /// Returns the source version captured by retained facts.
-    pub const fn version(self) -> u64 {
-        self.version
-    }
-}
-
 impl BrepCurveError3 {
     fn new(
         operation: BrepCurveOperation3,
         family: BrepCurveFamily3,
-        source: Option<BrepCurveSource3>,
         kind: BrepCurveErrorKind3,
     ) -> Self {
         Self {
             operation,
             family,
-            source,
             kind,
         }
     }
@@ -188,11 +155,6 @@ impl BrepCurveError3 {
     /// Returns the spatial curve family involved in the failure.
     pub const fn family(&self) -> BrepCurveFamily3 {
         self.family
-    }
-
-    /// Returns stable source provenance when supplied.
-    pub const fn source_id(&self) -> Option<BrepCurveSource3> {
-        self.source
     }
 
     /// Returns the specific failure reason.
@@ -281,12 +243,11 @@ impl BrepRationalBezier3 {
 
     /// Evaluates a point exactly over `[0, 1]` with homogeneous de Casteljau.
     pub fn point_at(&self, parameter: &Real) -> BrepCurveResult3<Point3> {
-        validate_unit_parameter(parameter, BrepCurveFamily3::RationalBezier, None)?;
+        validate_unit_parameter(parameter, BrepCurveFamily3::RationalBezier)?;
         evaluate_homogeneous_bezier(self.homogeneous_controls(), parameter).ok_or_else(|| {
             BrepCurveError3::new(
                 BrepCurveOperation3::Evaluation,
                 BrepCurveFamily3::RationalBezier,
-                None,
                 BrepCurveErrorKind3::ProjectiveDivision,
             )
         })
@@ -389,17 +350,11 @@ impl BrepNurbsCurve3 {
 
     /// Evaluates an exact model-space point with homogeneous de Boor.
     pub fn point_at(&self, parameter: &Real) -> BrepCurveResult3<Point3> {
-        validate_parameter(
-            parameter,
-            self.parameter_domain(),
-            BrepCurveFamily3::Nurbs,
-            None,
-        )?;
+        validate_parameter(parameter, self.parameter_domain(), BrepCurveFamily3::Nurbs)?;
         let span = self.find_span(parameter).ok_or_else(|| {
             BrepCurveError3::new(
                 BrepCurveOperation3::Evaluation,
                 BrepCurveFamily3::Nurbs,
-                None,
                 BrepCurveErrorKind3::InvalidParameterDomain,
             )
         })?;
@@ -414,7 +369,6 @@ impl BrepNurbsCurve3 {
             BrepCurveError3::new(
                 BrepCurveOperation3::Evaluation,
                 BrepCurveFamily3::Nurbs,
-                None,
                 BrepCurveErrorKind3::ProjectiveDivision,
             )
         })
@@ -472,9 +426,9 @@ impl PartialEq for BrepCurveGeometry3 {
 }
 
 impl BrepCurve3 {
-    /// Wraps spatial geometry with optional stable source/version provenance.
-    pub const fn new(geometry: BrepCurveGeometry3, source: Option<BrepCurveSource3>) -> Self {
-        Self { geometry, source }
+    /// Wraps exact spatial geometry.
+    pub const fn new(geometry: BrepCurveGeometry3) -> Self {
+        Self { geometry }
     }
 
     /// Returns retained model-space geometry.
@@ -485,11 +439,6 @@ impl BrepCurve3 {
     /// Returns the spatial family.
     pub const fn family(&self) -> BrepCurveFamily3 {
         self.geometry.family()
-    }
-
-    /// Returns stable source/version provenance when supplied.
-    pub const fn source(&self) -> Option<BrepCurveSource3> {
-        self.source
     }
 
     /// Returns the exact public parameter domain.
@@ -509,40 +458,37 @@ impl BrepCurve3 {
     pub fn point_at(&self, parameter: &Real) -> BrepCurveResult3<Point3> {
         let result = match self.geometry() {
             BrepCurveGeometry3::Line(line) => {
-                validate_unit_parameter(parameter, BrepCurveFamily3::Line, self.source)?;
+                validate_unit_parameter(parameter, BrepCurveFamily3::Line)?;
                 Ok(line.point_at(parameter))
             }
             BrepCurveGeometry3::RationalBezier(curve) => curve.point_at(parameter),
             BrepCurveGeometry3::Nurbs(curve) => curve.point_at(parameter),
         };
-        result.map_err(|mut error| {
-            error.source = self.source;
-            error
-        })
+        result
     }
 }
 
 impl PartialEq for BrepCurve3 {
     fn eq(&self, other: &Self) -> bool {
-        self.geometry == other.geometry && self.source == other.source
+        self.geometry == other.geometry
     }
 }
 
 impl From<BrepLineSegment3> for BrepCurve3 {
     fn from(value: BrepLineSegment3) -> Self {
-        Self::new(BrepCurveGeometry3::Line(Box::new(value)), None)
+        Self::new(BrepCurveGeometry3::Line(Box::new(value)))
     }
 }
 
 impl From<BrepRationalBezier3> for BrepCurve3 {
     fn from(value: BrepRationalBezier3) -> Self {
-        Self::new(BrepCurveGeometry3::RationalBezier(value), None)
+        Self::new(BrepCurveGeometry3::RationalBezier(value))
     }
 }
 
 impl From<BrepNurbsCurve3> for BrepCurve3 {
     fn from(value: BrepNurbsCurve3) -> Self {
-        Self::new(BrepCurveGeometry3::Nurbs(value), None)
+        Self::new(BrepCurveGeometry3::Nurbs(value))
     }
 }
 
@@ -576,7 +522,7 @@ impl HomogeneousPoint3 {
 }
 
 fn construction_error(family: BrepCurveFamily3, kind: BrepCurveErrorKind3) -> BrepCurveError3 {
-    BrepCurveError3::new(BrepCurveOperation3::Construction, family, None, kind)
+    BrepCurveError3::new(BrepCurveOperation3::Construction, family, kind)
 }
 
 fn validate_control_net(
@@ -637,11 +583,7 @@ fn evaluate_homogeneous_de_boor(
     level[degree].project()
 }
 
-fn validate_unit_parameter(
-    parameter: &Real,
-    family: BrepCurveFamily3,
-    source: Option<BrepCurveSource3>,
-) -> BrepCurveResult3<()> {
+fn validate_unit_parameter(parameter: &Real, family: BrepCurveFamily3) -> BrepCurveResult3<()> {
     validate_parameter(
         parameter,
         &BrepCurveParameterDomain3 {
@@ -649,7 +591,6 @@ fn validate_unit_parameter(
             end: Real::one(),
         },
         family,
-        source,
     )
 }
 
@@ -657,7 +598,6 @@ fn validate_parameter(
     parameter: &Real,
     domain: &BrepCurveParameterDomain3,
     family: BrepCurveFamily3,
-    source: Option<BrepCurveSource3>,
 ) -> BrepCurveResult3<()> {
     let after_start = matches!(
         compare_reals(parameter, domain.start()),
@@ -673,7 +613,6 @@ fn validate_parameter(
         Err(BrepCurveError3::new(
             BrepCurveOperation3::Evaluation,
             family,
-            source,
             BrepCurveErrorKind3::ParameterOutsideDomain,
         ))
     }

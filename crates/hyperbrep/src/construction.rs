@@ -13,10 +13,7 @@ use hypercurve::{Classification, Contour2, CurvePolicy, CurveRegion2, Segment2};
 use hyperlimit::{Plane3, Point2 as LimitPoint2, Point3};
 use hyperreal::Real;
 
-use crate::provenance::{
-    BrepConstructionKind, BrepConstructionManifest, BrepFeatureId, BrepSourceVersion,
-};
-use crate::surface::{BrepSurface, BrepSurfaceId, BrepSurfaceSource};
+use crate::surface::{BrepSurface, BrepSurfaceId};
 use crate::topology::{
     BrepCoedge, BrepEdge, BrepEdgeId, BrepEdgeOrientation, BrepFace, BrepFaceId, BrepLoop,
     BrepLoopId, BrepShell, BrepVertex, BrepVertexId,
@@ -41,8 +38,6 @@ pub enum BrepPlanarRegionConstructionBlocker {
     SurfaceEvaluationFailed,
     /// Exact construction produced topology that failed validation.
     ConstructedShellNotExactReady,
-    /// Exact construction provenance could not be marked fresh.
-    ConstructionManifestNotFresh,
 }
 
 /// Exact planar-region construction artifact.
@@ -50,8 +45,6 @@ pub enum BrepPlanarRegionConstructionBlocker {
 pub struct BrepPlanarRegionConstruction {
     /// Constructed retained BREP shell, when every construction gate succeeds.
     pub shell: Option<BrepShell>,
-    /// Construction manifest tied to the emitted shell fingerprint.
-    pub manifest: Option<BrepConstructionManifest>,
     /// Number of material contours in the source region.
     pub material_contour_count: usize,
     /// Number of hole contours in the source region.
@@ -62,7 +55,7 @@ pub struct BrepPlanarRegionConstruction {
     pub edge_count: usize,
     /// Explicit construction blockers.
     pub blockers: Vec<BrepPlanarRegionConstructionBlocker>,
-    /// Whether the retained shell and manifest are exact construction evidence.
+    /// Whether the retained shell is exact construction evidence.
     pub exact_construction_ready: bool,
 }
 
@@ -87,8 +80,6 @@ pub enum BrepPlanarExtrusionConstructionBlocker {
     UnknownHeightSign,
     /// Exact construction produced topology that failed solid validation.
     ConstructedSolidNotExactReady,
-    /// Exact construction provenance could not be marked fresh.
-    ConstructionManifestNotFresh,
 }
 
 /// Exact vertical extrusion construction artifact.
@@ -96,8 +87,6 @@ pub enum BrepPlanarExtrusionConstructionBlocker {
 pub struct BrepPlanarExtrusionConstruction {
     /// Constructed retained BREP shell, when every construction gate succeeds.
     pub shell: Option<BrepShell>,
-    /// Construction manifest tied to the emitted shell fingerprint.
-    pub manifest: Option<BrepConstructionManifest>,
     /// Number of source contour vertices across material and hole contours.
     pub source_vertex_count: usize,
     /// Number of retained exact vertices emitted.
@@ -108,7 +97,7 @@ pub struct BrepPlanarExtrusionConstruction {
     pub face_count: usize,
     /// Explicit construction blockers.
     pub blockers: Vec<BrepPlanarExtrusionConstructionBlocker>,
-    /// Whether the retained shell and manifest are exact solid evidence.
+    /// Whether the retained shell is exact solid evidence.
     pub exact_construction_ready: bool,
 }
 
@@ -119,12 +108,7 @@ impl BrepPlanarRegionConstruction {
     /// until surface-frame evaluation constructs model-space vertices.
     /// Unsupported segments block construction instead of falling back to a
     /// display polyline.
-    pub fn from_region_on_surface(
-        region: &CurveRegion2,
-        surface: BrepSurface,
-        feature: BrepFeatureId,
-        sources: Vec<BrepSourceVersion>,
-    ) -> Self {
+    pub fn from_region_on_surface(region: &CurveRegion2, surface: BrepSurface) -> Self {
         let mut blockers = BTreeSet::new();
         let native = match region.native_contours_fast_path(&CurvePolicy::certified()) {
             Ok(Classification::Decided(native)) => Some(native),
@@ -198,30 +182,20 @@ impl BrepPlanarRegionConstruction {
             None
         };
 
-        let (shell, manifest) = match shell {
+        let shell = match shell {
             Some(shell) => {
-                let validation = shell.face_validation_report(BrepFaceId(0), None);
+                let validation = shell.face_validation_report(BrepFaceId(0));
                 if !validation.exact_face_boundary_ready {
                     blockers
                         .insert(BrepPlanarRegionConstructionBlocker::ConstructedShellNotExactReady);
                 }
-                let manifest = BrepConstructionManifest::exact(
-                    feature,
-                    BrepConstructionKind::PlanarFace,
-                    sources,
-                    &shell,
-                );
-                if !manifest.report(&shell).construction_fresh {
-                    blockers
-                        .insert(BrepPlanarRegionConstructionBlocker::ConstructionManifestNotFresh);
-                }
                 if blockers.is_empty() {
-                    (Some(shell), Some(manifest))
+                    Some(shell)
                 } else {
-                    (None, None)
+                    None
                 }
             }
-            None => (None, None),
+            None => None,
         };
 
         let blockers = blockers.into_iter().collect::<Vec<_>>();
@@ -230,9 +204,8 @@ impl BrepPlanarRegionConstruction {
             hole_contour_count,
             vertex_count: shell.as_ref().map_or(0, |shell| shell.vertices.len()),
             edge_count: shell.as_ref().map_or(0, |shell| shell.edges.len()),
-            exact_construction_ready: blockers.is_empty() && shell.is_some() && manifest.is_some(),
+            exact_construction_ready: blockers.is_empty() && shell.is_some(),
             shell,
-            manifest,
             blockers,
         }
     }
@@ -246,13 +219,7 @@ impl BrepPlanarExtrusionConstruction {
     /// emits analytic side planes instead of triangulating or sampling.
     /// Unsupported source families and unresolved signs block the shell before
     /// downstream physics or voxel handoffs can trust it.
-    pub fn vertical_prism_from_region(
-        region: &CurveRegion2,
-        base_z: Real,
-        height: Real,
-        feature: BrepFeatureId,
-        sources: Vec<BrepSourceVersion>,
-    ) -> Self {
+    pub fn vertical_prism_from_region(region: &CurveRegion2, base_z: Real, height: Real) -> Self {
         let mut blockers = BTreeSet::new();
         let native = match region.native_contours_fast_path(&CurvePolicy::certified()) {
             Ok(Classification::Decided(native)) => Some(native),
@@ -314,32 +281,21 @@ impl BrepPlanarExtrusionConstruction {
             None
         };
 
-        let (shell, manifest) = match shell {
+        let shell = match shell {
             Some(shell) => {
-                let solid = shell.solid_readiness_report(None);
+                let solid = shell.solid_readiness_report();
                 if !solid.exact_solid_boundary_ready {
                     blockers.insert(
                         BrepPlanarExtrusionConstructionBlocker::ConstructedSolidNotExactReady,
                     );
                 }
-                let manifest = BrepConstructionManifest::exact(
-                    feature,
-                    BrepConstructionKind::Extrusion,
-                    sources,
-                    &shell,
-                );
-                if !manifest.report(&shell).construction_fresh {
-                    blockers.insert(
-                        BrepPlanarExtrusionConstructionBlocker::ConstructionManifestNotFresh,
-                    );
-                }
                 if blockers.is_empty() {
-                    (Some(shell), Some(manifest))
+                    Some(shell)
                 } else {
-                    (None, None)
+                    None
                 }
             }
-            None => (None, None),
+            None => None,
         };
 
         let blockers = blockers.into_iter().collect::<Vec<_>>();
@@ -348,9 +304,8 @@ impl BrepPlanarExtrusionConstruction {
             vertex_count: shell.as_ref().map_or(0, |shell| shell.vertices.len()),
             edge_count: shell.as_ref().map_or(0, |shell| shell.edges.len()),
             face_count: shell.as_ref().map_or(0, |shell| shell.faces.len()),
-            exact_construction_ready: blockers.is_empty() && shell.is_some() && manifest.is_some(),
+            exact_construction_ready: blockers.is_empty() && shell.is_some(),
             shell,
-            manifest,
             blockers,
         }
     }
@@ -475,7 +430,6 @@ fn build_vertical_prism_shell(
             Point3::new(Real::from(0), Real::from(0), Real::from(-1)),
             base_z,
         ),
-        BrepSurfaceSource::ExactConstruction,
     ));
     surfaces.push(BrepSurface::plane(
         BrepSurfaceId(1),
@@ -483,7 +437,6 @@ fn build_vertical_prism_shell(
             Point3::new(Real::from(0), Real::from(0), Real::from(1)),
             -top_z,
         ),
-        BrepSurfaceSource::ExactConstruction,
     ));
 
     let outer = built_loops
@@ -576,7 +529,6 @@ fn build_vertical_prism_shell(
             surfaces.push(BrepSurface::plane(
                 surface,
                 Plane3::new(Point3::new(normal_x, normal_y, Real::from(0)), offset),
-                BrepSurfaceSource::ExactConstruction,
             ));
             let loop_id = BrepLoopId(next_loop_id);
             next_loop_id += 1;

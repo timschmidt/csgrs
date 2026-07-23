@@ -6,7 +6,6 @@
 //! own provenance and replay reports.
 
 use crate::bounds::BrepShellBoundsReport;
-use crate::provenance::{BrepConstructionManifest, BrepConstructionProvenanceReport};
 use crate::solid::BrepSolidReadinessReport;
 use crate::topology::BrepShell;
 use crate::validation::BrepShellValidationReport;
@@ -32,8 +31,6 @@ pub enum BrepExactSolidHandoffBlocker {
     SolidReadinessNotReady,
     /// Exact signed-volume/orientation replay is not ready.
     VolumeNotReady,
-    /// Optional construction provenance was supplied but is stale or rejected.
-    ConstructionNotFresh,
 }
 
 /// Exact retained-surface handoff for downstream consumers.
@@ -70,8 +67,6 @@ pub struct BrepExactSolidHandoffReport {
     pub solid: BrepSolidReadinessReport,
     /// Exact signed-volume/orientation replayed at handoff time.
     pub volume: BrepShellVolumeReport,
-    /// Optional construction freshness replay.
-    pub construction: Option<BrepConstructionProvenanceReport>,
     /// Explicit blockers.
     pub blockers: Vec<BrepExactSolidHandoffBlocker>,
     /// Whether downstream crates may consume this as exact retained closed-solid
@@ -128,17 +123,13 @@ impl BrepExactSolidHandoffReport {
     ///
     /// This is the retained-BREP counterpart to `hypermesh`'s exact solid
     /// handoff: it requires a ready retained surface handoff, closed-shell solid
-    /// readiness, optional construction freshness, and exact signed-volume
+    /// readiness and exact signed-volume
     /// replay. Derived triangulations remain separate mesh handoffs and are not
     /// promoted to trusted solid topology.
-    pub fn from_shell(shell: &BrepShell, construction: Option<&BrepConstructionManifest>) -> Self {
+    pub fn from_shell(shell: &BrepShell) -> Self {
         let surface = BrepExactSurfaceHandoffReport::from_shell(shell);
-        let solid = shell.solid_readiness_report(construction);
+        let solid = shell.solid_readiness_report();
         let volume = solid.volume.clone();
-        let construction = solid.construction.clone();
-        let construction_fresh = construction
-            .as_ref()
-            .is_none_or(|report| report.construction_fresh);
 
         let mut blockers = Vec::new();
         if !surface.exact_surface_handoff_ready {
@@ -150,16 +141,12 @@ impl BrepExactSolidHandoffReport {
         if !volume.exact_volume_ready {
             blockers.push(BrepExactSolidHandoffBlocker::VolumeNotReady);
         }
-        if !construction_fresh {
-            blockers.push(BrepExactSolidHandoffBlocker::ConstructionNotFresh);
-        }
         let exact_solid_handoff_ready = blockers.is_empty();
 
         Self {
             surface,
             solid,
             volume,
-            construction,
             blockers,
             exact_solid_handoff_ready,
             retained_brep_only: true,
@@ -174,10 +161,7 @@ impl BrepShell {
     }
 
     /// Build an exact retained-solid handoff report.
-    pub fn exact_solid_handoff(
-        &self,
-        construction: Option<&BrepConstructionManifest>,
-    ) -> BrepExactSolidHandoffReport {
-        BrepExactSolidHandoffReport::from_shell(self, construction)
+    pub fn exact_solid_handoff(&self) -> BrepExactSolidHandoffReport {
+        BrepExactSolidHandoffReport::from_shell(self)
     }
 }

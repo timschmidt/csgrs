@@ -9,15 +9,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
 
 [[package]]
-name = "arc-swap"
-version = "1.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c049c0be4daef0b145cb3555416b3b8ef5b7888a38aea1a3a155801fe7b0810b"
-dependencies = [
- "rustversion",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -64,7 +55,7 @@ name = "hyperbrep"
 version = "0.2.0"
 dependencies = [
  "hypercurve",
- "hyperlimit 0.4.0",
+ "hyperlimit",
  "hyperphysics",
  "hyperreal",
  "hypertri",
@@ -86,9 +77,9 @@ dependencies = [
 name = "hypercurve"
 version = "0.3.0"
 dependencies = [
- "hyperlimit 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyperlimit",
  "hyperreal",
- "hypersolve 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hypersolve",
  "num",
 ]
 
@@ -100,29 +91,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyperlattice"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b65eff926d97a7fafc3985d1faba167e0e67b7870f90af494fa1269ac64d45a9"
-dependencies = [
- "hyperreal",
-]
-
-[[package]]
 name = "hyperlimit"
 version = "0.4.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperreal",
-]
-
-[[package]]
-name = "hyperlimit"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fdb6de18515d37cdb973dffe5e6ba994b7fd27bfcbef3d4d1b23780946f5bef"
-dependencies = [
- "hyperlattice 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyperlattice",
  "hyperreal",
 ]
 
@@ -130,8 +102,8 @@ dependencies = [
 name = "hypermesh"
 version = "0.1.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperlimit 0.4.0",
+ "hyperlattice",
+ "hyperlimit",
  "hyperreal",
 ]
 
@@ -139,18 +111,17 @@ dependencies = [
 name = "hyperphysics"
 version = "0.3.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperlimit 0.4.0",
+ "hyperlattice",
+ "hyperlimit",
  "hypermesh",
  "hyperreal",
- "hypersolve 0.3.0",
+ "hypersolve",
 ]
 
 [[package]]
 name = "hyperreal"
 version = "0.13.1"
 dependencies = [
- "arc-swap",
  "num",
 ]
 
@@ -158,19 +129,8 @@ dependencies = [
 name = "hypersolve"
 version = "0.3.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperlimit 0.4.0",
- "hyperreal",
-]
-
-[[package]]
-name = "hypersolve"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "856dd8b8ab0e75bb2619ab0f1fb35c66586c14cdd5f6c592fc16e3a1cc32fa41"
-dependencies = [
- "hyperlattice 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyperlimit 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyperlattice",
+ "hyperlimit",
  "hyperreal",
 ]
 
@@ -178,7 +138,7 @@ dependencies = [
 name = "hypertri"
 version = "0.4.0"
 dependencies = [
- "hyperlimit 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyperlimit",
  "hyperreal",
 ]
 
@@ -186,9 +146,10 @@ dependencies = [
 name = "hypervoxel"
 version = "0.3.0"
 dependencies = [
- "hyperlattice 0.6.0",
- "hyperlimit 0.4.0",
+ "hyperlattice",
+ "hyperlimit",
  "hyperreal",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -297,10 +258,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 
 [[package]]
-name = "rustversion"
-version = "1.0.23"
+name = "rustc-hash"
+version = "2.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
+checksum = "6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d"
 
 [[package]]
 name = "shlex"

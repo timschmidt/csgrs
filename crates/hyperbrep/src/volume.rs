@@ -85,11 +85,11 @@ impl BrepShellVolumeReport {
     /// `hyperreal::Real`. Open shells, broken loop chains, and undecidable signs
     /// remain explicit blockers.
     pub fn from_shell(shell: &BrepShell) -> Self {
-        let closure = shell.audit_closure();
+        let closure = shell.closure_report();
         let face_reports = shell
             .faces
             .iter()
-            .map(|face| shell.face_validation_report(face.id, None))
+            .map(|face| shell.face_validation_report(face.id))
             .collect::<Vec<_>>();
         Self::from_shell_with_evidence(shell, &closure, &face_reports)
     }

@@ -5,7 +5,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::surface::{BrepSurface, BrepSurfaceKind, BrepSurfaceSource};
+use crate::surface::{BrepSurface, BrepSurfaceKind};
 use crate::topology::{BrepEdgeId, BrepEdgeOrientation, BrepShell, BrepVertexId};
 
 /// Count summary for a retained BREP shell.
@@ -36,10 +36,6 @@ pub struct BrepSurfaceInventoryReport {
     pub unsupported_count: usize,
     /// Planar surfaces whose normal is structurally known to be zero.
     pub zero_normal_count: usize,
-    /// Surfaces sourced through lossy adapters.
-    pub lossy_source_count: usize,
-    /// Surfaces with unknown provenance.
-    pub unknown_source_count: usize,
     /// Whether every surface is a supported exact plane.
     pub all_exact_planar: bool,
 }
@@ -61,11 +57,6 @@ impl BrepSurfaceInventoryReport {
                     }
                 }
                 BrepSurfaceKind::Unsupported { .. } => report.unsupported_count += 1,
-            }
-            match surface.source {
-                BrepSurfaceSource::LossyImport => report.lossy_source_count += 1,
-                BrepSurfaceSource::Unknown => report.unknown_source_count += 1,
-                BrepSurfaceSource::ExactConstruction | BrepSurfaceSource::ExactImport => {}
             }
             report.all_exact_planar &= surface.is_supported_exact_plane();
         }
@@ -102,10 +93,6 @@ pub enum BrepShellBlocker {
     ZeroNormalSurface,
     /// At least one surface is unsupported.
     UnsupportedSurface,
-    /// At least one surface came from a lossy adapter.
-    LossySurfaceSource,
-    /// At least one surface has unknown provenance.
-    UnknownSurfaceSource,
     /// At least one edge is used fewer than two times.
     BoundaryEdges,
     /// At least one edge is used more than two times.
@@ -433,12 +420,6 @@ impl BrepShellClosureReport {
         }
         if surface_inventory.unsupported_count > 0 {
             blockers.insert(BrepShellBlocker::UnsupportedSurface);
-        }
-        if surface_inventory.lossy_source_count > 0 {
-            blockers.insert(BrepShellBlocker::LossySurfaceSource);
-        }
-        if surface_inventory.unknown_source_count > 0 {
-            blockers.insert(BrepShellBlocker::UnknownSurfaceSource);
         }
 
         let mut boundary_edge_count = 0_usize;

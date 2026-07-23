@@ -12,8 +12,7 @@ use hyperlimit::{
 use hyperreal::{Real, RealSign};
 
 use crate::{
-    BrepCurve3, BrepCurveFamily3, BrepCurveGeometry3, BrepCurveSource3, BrepSurface, BrepSurfaceId,
-    BrepSurfaceKind, BrepSurfaceSource,
+    BrepCurve3, BrepCurveFamily3, BrepCurveGeometry3, BrepSurface, BrepSurfaceId, BrepSurfaceKind,
 };
 
 /// Furthest analytic intersection stage reached.
@@ -44,7 +43,6 @@ pub enum BrepCurveSurfaceIntersectionRelation {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum BrepCurveSurfaceBlocker {
     /// Surface provenance is lossy or unknown.
-    NonExactSurfaceSource,
     /// Surface family is unsupported.
     UnsupportedSurface,
     /// Curve family has no current exact analytic intersection solver.
@@ -60,8 +58,6 @@ pub enum BrepCurveSurfaceBlocker {
 /// Exact finite-curve/surface intersection and stationary-distance report.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BrepCurveSurfaceIntersectionReport {
-    /// Stable curve source/version when retained.
-    pub curve_source: Option<BrepCurveSource3>,
     /// Retained curve family.
     pub curve_family: BrepCurveFamily3,
     /// Retained surface id.
@@ -109,7 +105,6 @@ pub enum BrepSurfaceIntersectionRelation {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum BrepSurfaceIntersectionBlocker {
     /// At least one surface source is lossy or unknown.
-    NonExactSource,
     /// At least one surface family is unsupported.
     UnsupportedSurface,
     /// Parallelism or coincidence could not be certified.
@@ -160,9 +155,6 @@ impl BrepCurve3 {
     /// Intersect this retained model-space curve with an analytic surface.
     pub fn intersect_surface(&self, surface: &BrepSurface) -> BrepCurveSurfaceIntersectionReport {
         let mut blockers = Vec::new();
-        if !exact_source(surface.source) {
-            blockers.push(BrepCurveSurfaceBlocker::NonExactSurfaceSource);
-        }
         let plane = match &surface.kind {
             BrepSurfaceKind::Plane(plane) if surface.is_supported_exact_plane() => {
                 Some(plane.as_ref())
@@ -199,9 +191,6 @@ impl BrepSurface {
     /// Classify and construct the analytic intersection with another surface.
     pub fn intersect_surface(&self, other: &Self) -> BrepSurfaceIntersectionReport {
         let mut blockers = Vec::new();
-        if !exact_source(self.source) || !exact_source(other.source) {
-            blockers.push(BrepSurfaceIntersectionBlocker::NonExactSource);
-        }
         let (first_plane, second_plane) = match (&self.kind, &other.kind) {
             (BrepSurfaceKind::Plane(first), BrepSurfaceKind::Plane(second))
                 if self.is_supported_exact_plane() && other.is_supported_exact_plane() =>
@@ -378,7 +367,6 @@ fn curve_plane_report(
         )
     });
     BrepCurveSurfaceIntersectionReport {
-        curve_source: curve.source(),
         curve_family: curve.family(),
         surface: surface.id,
         stage: if exact_classification_ready {
@@ -480,20 +468,12 @@ fn point_zero_status(point: &Point3) -> Option<bool> {
     (!unknown).then_some(true)
 }
 
-fn exact_source(source: BrepSurfaceSource) -> bool {
-    matches!(
-        source,
-        BrepSurfaceSource::ExactConstruction | BrepSurfaceSource::ExactImport
-    )
-}
-
 fn blocked_curve_report(
     curve: &BrepCurve3,
     surface: &BrepSurface,
     blockers: Vec<BrepCurveSurfaceBlocker>,
 ) -> BrepCurveSurfaceIntersectionReport {
     BrepCurveSurfaceIntersectionReport {
-        curve_source: curve.source(),
         curve_family: curve.family(),
         surface: surface.id,
         stage: BrepSurfaceIntersectionStage::InputValidation,
@@ -545,18 +525,13 @@ mod tests {
     }
 
     fn plane(id: u64, normal: Point3, offset: i64) -> BrepSurface {
-        BrepSurface::plane(
-            BrepSurfaceId::new(id),
-            Plane3::new(normal, r(offset)),
-            BrepSurfaceSource::ExactConstruction,
-        )
+        BrepSurface::plane(BrepSurfaceId::new(id), Plane3::new(normal, r(offset)))
     }
 
     fn line(start: Point3, end: Point3) -> BrepCurve3 {
-        BrepCurve3::new(
-            BrepCurveGeometry3::Line(Box::new(BrepLineSegment3::new(start, end))),
-            Some(BrepCurveSource3::new(7)),
-        )
+        BrepCurve3::new(BrepCurveGeometry3::Line(Box::new(BrepLineSegment3::new(
+            start, end,
+        ))))
     }
 
     #[test]

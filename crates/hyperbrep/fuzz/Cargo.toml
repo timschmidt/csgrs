@@ -24,6 +24,9 @@ hypervoxel = { path = "../../hypervoxel" }
 
 [patch.crates-io]
 hyperreal = { path = "../../hyperreal" }
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit" }
+hypersolve = { path = "../../hypersolve" }
 
 [[bin]]
 name = "voxel_handoff"

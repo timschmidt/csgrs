@@ -2,11 +2,10 @@
 //!
 //! A retained BREP shell is not automatically a solid. This module aggregates
 //! closure, per-face validation, exact shell bounds, and optional construction
-//! freshness into a report-bearing solid handoff gate for downstream consumers.
+//! closure, bounds, face validation, and signed volume into a solid-readiness gate.
 
 use crate::adjacency::BrepShellEdgeAgreementReport;
 use crate::bounds::BrepShellBoundsReport;
-use crate::provenance::{BrepConstructionManifest, BrepConstructionProvenanceReport};
 use crate::report::BrepShellClosureReport;
 use crate::topology::BrepShell;
 use crate::validation::BrepFaceValidationReport;
@@ -23,8 +22,6 @@ pub enum BrepSolidReadinessBlocker {
     EdgeAgreementNotReady,
     /// At least one face validation report is not exact-ready.
     FaceValidationNotReady,
-    /// Optional construction provenance was supplied but is stale or rejected.
-    ConstructionNotFresh,
     /// The shell has no faces.
     EmptyShell,
     /// Exact volume or orientation replay is not ready.
@@ -42,8 +39,6 @@ pub struct BrepSolidReadinessReport {
     pub edge_agreement: BrepShellEdgeAgreementReport,
     /// Per-face validation reports.
     pub faces: Vec<BrepFaceValidationReport>,
-    /// Optional construction freshness replay.
-    pub construction: Option<BrepConstructionProvenanceReport>,
     /// Exact signed-volume/orientation evidence.
     pub volume: BrepShellVolumeReport,
     /// Number of exact-ready faces.
@@ -59,9 +54,6 @@ pub struct BrepSolidReadinessReport {
     /// Whether every retained edge has opposite adjacent uses whose endpoint
     /// images replay on both adjacent support surfaces.
     pub edge_agreement_ready: bool,
-    /// Whether optional construction evidence is fresh, or no construction
-    /// evidence was requested.
-    pub construction_fresh: bool,
     /// Whether exact volume/orientation replay is available.
     pub exact_volume_ready: bool,
     /// Explicit blockers.
@@ -76,19 +68,18 @@ impl BrepSolidReadinessReport {
     ///
     /// This is stricter than a mesh/export gate and narrower than a full CAD
     /// kernel. Consumers may use the shell only when closure, face evidence,
-    /// bounds, source freshness, and signed volume replay as exact or certified
+    /// bounds, face validation, and signed volume classification as exact or certified
     /// facts. The determinant-based volume certificate blocks instead of
     /// guessing when retained BREP evidence is not exact-ready.
-    pub fn from_shell(shell: &BrepShell, construction: Option<&BrepConstructionManifest>) -> Self {
-        let shell_closure = shell.audit_closure();
+    pub fn from_shell(shell: &BrepShell) -> Self {
+        let shell_closure = shell.closure_report();
         let shell_bounds = shell.shell_bounds_report();
         let edge_agreement = shell.edge_agreement_report();
         let faces = shell
             .faces
             .iter()
-            .map(|face| shell.face_validation_report(face.id, None))
+            .map(|face| shell.face_validation_report(face.id))
             .collect::<Vec<_>>();
-        let construction = construction.map(|manifest| manifest.report(shell));
         let volume = BrepShellVolumeReport::from_shell_with_evidence(shell, &shell_closure, &faces);
         let ready_face_count = faces.iter().filter(|face| face.exact_face_ready).count();
         let blocked_face_count = faces.len().saturating_sub(ready_face_count);
@@ -96,9 +87,6 @@ impl BrepSolidReadinessReport {
         let all_faces_ready = !faces.is_empty() && blocked_face_count == 0;
         let exact_bounds_ready = shell_bounds.exact_bounds_ready;
         let edge_agreement_ready = edge_agreement.shell_edge_agreement_ready;
-        let construction_fresh = construction
-            .as_ref()
-            .is_none_or(|report| report.construction_fresh);
         let exact_volume_ready = volume.exact_volume_ready;
 
         let mut blockers = Vec::new();
@@ -117,9 +105,6 @@ impl BrepSolidReadinessReport {
         if !all_faces_ready {
             blockers.push(BrepSolidReadinessBlocker::FaceValidationNotReady);
         }
-        if !construction_fresh {
-            blockers.push(BrepSolidReadinessBlocker::ConstructionNotFresh);
-        }
         if !exact_volume_ready {
             blockers.push(BrepSolidReadinessBlocker::VolumeReplayUnavailable);
         }
@@ -129,14 +114,12 @@ impl BrepSolidReadinessReport {
             && all_faces_ready
             && exact_bounds_ready
             && edge_agreement_ready
-            && exact_volume_ready
-            && construction_fresh;
+            && exact_volume_ready;
         Self {
             shell_closure,
             shell_bounds,
             edge_agreement,
             faces,
-            construction,
             volume,
             ready_face_count,
             blocked_face_count,
@@ -144,7 +127,6 @@ impl BrepSolidReadinessReport {
             all_faces_ready,
             exact_bounds_ready,
             edge_agreement_ready,
-            construction_fresh,
             exact_volume_ready,
             blockers,
             exact_solid_boundary_ready,
@@ -154,10 +136,7 @@ impl BrepSolidReadinessReport {
 
 impl BrepShell {
     /// Build a solid-readiness report from retained shell evidence.
-    pub fn solid_readiness_report(
-        &self,
-        construction: Option<&BrepConstructionManifest>,
-    ) -> BrepSolidReadinessReport {
-        BrepSolidReadinessReport::from_shell(self, construction)
+    pub fn solid_readiness_report(&self) -> BrepSolidReadinessReport {
+        BrepSolidReadinessReport::from_shell(self)
     }
 }

@@ -1,6 +1,6 @@
 use hyperbrep::{
     BrepCurve3, BrepCurveErrorKind3, BrepCurveFamily3, BrepCurveGeometry3, BrepCurveOperation3,
-    BrepCurveSource3, BrepLineSegment3, BrepNurbsCurve3, BrepRationalBezier3,
+    BrepLineSegment3, BrepNurbsCurve3, BrepRationalBezier3,
 };
 use hyperlimit::Point3;
 use hyperreal::Real;
@@ -18,15 +18,13 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
 }
 
 #[test]
-fn top_level_spatial_line_evaluates_exactly_with_provenance() {
-    let source = BrepCurveSource3::with_version(17, 4);
-    let curve = BrepCurve3::new(
-        BrepCurveGeometry3::Line(Box::new(BrepLineSegment3::new(p(0, 0, 0), p(2, 4, 6)))),
-        Some(source),
-    );
+fn top_level_spatial_line_evaluates_exactly() {
+    let curve = BrepCurve3::new(BrepCurveGeometry3::Line(Box::new(BrepLineSegment3::new(
+        p(0, 0, 0),
+        p(2, 4, 6),
+    ))));
 
     assert_eq!(curve.family(), BrepCurveFamily3::Line);
-    assert_eq!(curve.source(), Some(source));
     assert_eq!(curve.point_at(&q(1, 2)).unwrap(), p(1, 2, 3));
     assert_eq!(curve.parameter_domain().start(), &r(0));
     assert_eq!(curve.parameter_domain().end(), &r(1));
@@ -121,15 +119,13 @@ fn spatial_nurbs_validates_degree_knots_and_active_domain() {
 }
 
 #[test]
-fn top_level_spatial_errors_retain_operation_family_and_source() {
-    let source = BrepCurveSource3::new(42);
+fn top_level_spatial_errors_retain_operation_and_family() {
     let singular =
         BrepRationalBezier3::try_new(vec![p(0, 0, 0), p(1, 1, 1)], vec![r(0), r(0)]).unwrap();
-    let curve = BrepCurve3::new(BrepCurveGeometry3::RationalBezier(singular), Some(source));
+    let curve = BrepCurve3::new(BrepCurveGeometry3::RationalBezier(singular));
     let error = curve.point_at(&q(1, 2)).unwrap_err();
     assert_eq!(error.operation(), BrepCurveOperation3::Evaluation);
     assert_eq!(error.family(), BrepCurveFamily3::RationalBezier);
-    assert_eq!(error.source_id(), Some(source));
     assert_eq!(error.kind(), &BrepCurveErrorKind3::ProjectiveDivision);
 
     let outside = BrepCurve3::from(BrepLineSegment3::new(p(0, 0, 0), p(1, 0, 0)))
