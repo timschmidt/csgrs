@@ -4,11 +4,14 @@
 //! bins used by [`crate::LineArcRegion2`]. It assumes intersections and overlaps have
 //! already been resolved by earlier topology stages.
 
-use std::{cmp::Ordering, rc::Rc};
+use std::{cell::OnceCell, cmp::Ordering, rc::Rc};
 
 use hyperreal::Real;
 
-use crate::bbox::{Aabb2, aabbs_decided_disjoint};
+use crate::bbox::{
+    Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_contour_aabb,
+    decided_segment_aabb,
+};
 use crate::classify::compare_reals;
 use crate::{
     ArcArcIntersection, CircularArc2, Classification, Contour2, ContourPointLocation, CurveError,
@@ -1652,6 +1655,27 @@ impl LineArcRegion2 {
                 Classification::Uncertain(blocker.reason)
             }
         })
+    }
+
+    pub(crate) fn from_validated_boundary_contours(
+        contours: Vec<Contour2>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        if contours.len() <= 1 {
+            return Ok(Classification::Decided(Self::from_material_contours(
+                contours,
+            )));
+        }
+        Ok(
+            match contour_nesting_depths_impl(&contours, policy, false)? {
+                BoundaryContourNestingOutcome::Decided { nesting, .. } => Classification::Decided(
+                    assign_boundary_contour_roles(contours, &nesting, false).0,
+                ),
+                BoundaryContourNestingOutcome::Blocked { blocker, .. } => {
+                    Classification::Uncertain(blocker.reason)
+                }
+            },
+        )
     }
 
     /// Builds a region by nesting borrowed closed boundary contours.
@@ -12861,9 +12885,143 @@ fn retained_status_for_boundary_contour_blocker(
     }
 }
 
+fn contour_aabb_overlap_neighbors(
+    contour_boxes: &[Option<Aabb2>],
+    policy: &CurvePolicy,
+) -> Option<Vec<Vec<usize>>> {
+    const MIN_RETAINED_NEIGHBOR_COUNT: usize = 4_096;
+    const RETAINED_NEIGHBORS_PER_CONTOUR: usize = 32;
+
+    let retained_neighbor_limit = contour_boxes
+        .len()
+        .saturating_mul(RETAINED_NEIGHBORS_PER_CONTOUR)
+        .max(MIN_RETAINED_NEIGHBOR_COUNT);
+    let mut ordered = contour_boxes
+        .iter()
+        .enumerate()
+        .filter_map(|(index, bbox)| bbox.as_ref().map(|bbox| (index, bbox)))
+        .collect::<Vec<_>>();
+    let mut ordering_failed = false;
+    ordered.sort_by(|(_, left), (_, right)| {
+        compare_reals(left.min().x(), right.min().x(), policy).unwrap_or_else(|| {
+            ordering_failed = true;
+            Ordering::Equal
+        })
+    });
+    if ordering_failed {
+        return None;
+    }
+
+    let mut neighbors = (0..contour_boxes.len())
+        .map(|_| Vec::new())
+        .collect::<Vec<_>>();
+    let mut retained_neighbor_count = 0_usize;
+    let mut active = Vec::<(usize, &Aabb2)>::new();
+    for (current_index, current_box) in ordered {
+        active.retain(|(_, active_box)| {
+            compare_reals(active_box.max().x(), current_box.min().x(), policy)
+                != Some(Ordering::Less)
+        });
+        for &(active_index, active_box) in &active {
+            if aabbs_decided_disjoint(active_box, current_box, policy) {
+                continue;
+            }
+            retained_neighbor_count += 1;
+            if retained_neighbor_count > retained_neighbor_limit {
+                return None;
+            }
+            neighbors[active_index].push(current_index);
+            neighbors[current_index].push(active_index);
+        }
+        active.push((current_index, current_box));
+    }
+
+    for undecided_index in contour_boxes
+        .iter()
+        .enumerate()
+        .filter_map(|(index, bbox)| bbox.is_none().then_some(index))
+    {
+        for other_index in 0..contour_boxes.len() {
+            if undecided_index == other_index
+                || contour_boxes[other_index].is_none() && other_index < undecided_index
+            {
+                continue;
+            }
+            retained_neighbor_count += 1;
+            if retained_neighbor_count > retained_neighbor_limit {
+                return None;
+            }
+            neighbors[undecided_index].push(other_index);
+            neighbors[other_index].push(undecided_index);
+        }
+    }
+
+    for contour_neighbors in &mut neighbors {
+        contour_neighbors.sort_unstable();
+    }
+    Some(neighbors)
+}
+
+fn aabb_may_contain(outer: &Aabb2, inner: &Aabb2, policy: &CurvePolicy) -> bool {
+    let mut predicates = [
+        (
+            outer
+                .min_x()
+                .to_f64_lossy()
+                .zip(inner.min_x().to_f64_lossy())
+                .map_or(f64::NEG_INFINITY, |(outer, inner)| outer - inner),
+            outer.min_x(),
+            inner.min_x(),
+            Ordering::Greater,
+        ),
+        (
+            outer
+                .min_y()
+                .to_f64_lossy()
+                .zip(inner.min_y().to_f64_lossy())
+                .map_or(f64::NEG_INFINITY, |(outer, inner)| outer - inner),
+            outer.min_y(),
+            inner.min_y(),
+            Ordering::Greater,
+        ),
+        (
+            inner
+                .max_x()
+                .to_f64_lossy()
+                .zip(outer.max_x().to_f64_lossy())
+                .map_or(f64::NEG_INFINITY, |(inner, outer)| inner - outer),
+            outer.max_x(),
+            inner.max_x(),
+            Ordering::Less,
+        ),
+        (
+            inner
+                .max_y()
+                .to_f64_lossy()
+                .zip(outer.max_y().to_f64_lossy())
+                .map_or(f64::NEG_INFINITY, |(inner, outer)| inner - outer),
+            outer.max_y(),
+            inner.max_y(),
+            Ordering::Less,
+        ),
+    ];
+    predicates.sort_by(|left, right| right.0.total_cmp(&left.0));
+    predicates
+        .into_iter()
+        .all(|(_, outer, inner, violation)| compare_reals(outer, inner, policy) != Some(violation))
+}
+
 fn contour_nesting_depths(
     contours: &[Contour2],
     policy: &CurvePolicy,
+) -> CurveResult<BoundaryContourNestingOutcome> {
+    contour_nesting_depths_impl(contours, policy, true)
+}
+
+fn contour_nesting_depths_impl(
+    contours: &[Contour2],
+    policy: &CurvePolicy,
+    validate_intersections: bool,
 ) -> CurveResult<BoundaryContourNestingOutcome> {
     let candidate_pair_count = contours
         .len()
@@ -12875,21 +13033,88 @@ fn contour_nesting_depths(
         intersection_event_count: 0,
         nesting_classification_count: 0,
     };
+    // Region construction compares every contour pair, then classifies a
+    // boundary sample against every other contour. Retain the broad-phase
+    // certificates across both passes instead of rebuilding them for every
+    // pair and point query. Segment boxes stay lazy because disjoint contour
+    // boxes settle the common case without them.
+    let contour_boxes = contours
+        .iter()
+        .map(|contour| decided_contour_aabb(contour, policy))
+        .collect::<Vec<_>>();
+    let segment_boxes = (0..contours.len())
+        .map(|_| OnceCell::<Vec<Option<Aabb2>>>::new())
+        .collect::<Vec<_>>();
+    let aabb_overlap_neighbors = contour_aabb_overlap_neighbors(&contour_boxes, policy);
 
-    for (left_index, left) in contours.iter().enumerate() {
-        for (right_offset, right) in contours[left_index + 1..].iter().enumerate() {
-            counts.tested_pair_count += 1;
-            let intersections = left.intersect_contour(right, policy)?;
-            counts.intersection_event_count += intersections.len();
-            if let Some(reason) = contour_intersection_blocker(&intersections) {
-                return Ok(BoundaryContourNestingOutcome::Blocked {
-                    blocker: BoundaryContourNestingBlocker {
-                        reason,
-                        first_contour_index: left_index,
-                        second_contour_index: left_index + 1 + right_offset,
-                    },
-                    counts,
-                });
+    if validate_intersections {
+        for (left_index, left) in contours.iter().enumerate() {
+            let mut neighbor_position = aabb_overlap_neighbors.as_ref().map_or(0, |neighbors| {
+                neighbors[left_index].partition_point(|&index| index <= left_index)
+            });
+            for (right_offset, right) in contours[left_index + 1..].iter().enumerate() {
+                counts.tested_pair_count += 1;
+                let right_index = left_index + 1 + right_offset;
+                if let Some(neighbors) = &aabb_overlap_neighbors {
+                    if neighbors[left_index].get(neighbor_position).copied() != Some(right_index) {
+                        continue;
+                    }
+                    neighbor_position += 1;
+                }
+                if let (Some(left_box), Some(right_box)) = (
+                    contour_boxes[left_index].as_ref(),
+                    contour_boxes[right_index].as_ref(),
+                ) && aabbs_decided_disjoint(left_box, right_box, policy)
+                {
+                    continue;
+                }
+                let intersections = if let (Some(left_boxes), Some(right_boxes)) = (
+                    left.exact_dyadic_line_aabbs(policy),
+                    right.exact_dyadic_line_aabbs(policy),
+                ) {
+                    crate::events::intersect_contours_with_exact_dyadic_line_aabbs(
+                        left,
+                        right,
+                        &left_boxes,
+                        &right_boxes,
+                        policy,
+                    )?
+                } else {
+                    let left_segment_boxes = segment_boxes[left_index].get_or_init(|| {
+                        left.segments()
+                            .iter()
+                            .map(|segment| decided_segment_aabb(segment, policy))
+                            .collect()
+                    });
+                    let right_segment_boxes = segment_boxes[right_index].get_or_init(|| {
+                        right
+                            .segments()
+                            .iter()
+                            .map(|segment| decided_segment_aabb(segment, policy))
+                            .collect()
+                    });
+                    crate::events::intersect_contours_with_cached_aabbs(
+                        left,
+                        right,
+                        contour_boxes[left_index].as_ref(),
+                        contour_boxes[right_index].as_ref(),
+                        left_segment_boxes,
+                        right_segment_boxes,
+                        None,
+                        policy,
+                    )?
+                };
+                counts.intersection_event_count += intersections.len();
+                if let Some(reason) = contour_intersection_blocker(&intersections) {
+                    return Ok(BoundaryContourNestingOutcome::Blocked {
+                        blocker: BoundaryContourNestingBlocker {
+                            reason,
+                            first_contour_index: left_index,
+                            second_contour_index: left_index + 1 + right_offset,
+                        },
+                        counts,
+                    });
+                }
             }
         }
     }
@@ -12934,13 +13159,48 @@ fn contour_nesting_depths(
                 continue;
             };
             let mut containing_contour_indices = Vec::new();
+            let mut neighbor_position = 0;
             for (container_index, container) in contours.iter().enumerate() {
                 if candidate_index == container_index {
                     continue;
                 }
 
                 counts.nesting_classification_count += 1;
-                match container.classify_point(&sample, policy) {
+                if let Some(neighbors) = &aabb_overlap_neighbors {
+                    if neighbors[candidate_index].get(neighbor_position).copied()
+                        != Some(container_index)
+                    {
+                        continue;
+                    }
+                    neighbor_position += 1;
+                }
+                if let (Some(container_box), Some(candidate_box)) = (
+                    contour_boxes[container_index].as_ref(),
+                    contour_boxes[candidate_index].as_ref(),
+                ) && !aabb_may_contain(container_box, candidate_box, policy)
+                {
+                    continue;
+                }
+                if contour_boxes[container_index]
+                    .as_ref()
+                    .is_some_and(|bbox| aabb_decided_misses_point(bbox, &sample, policy))
+                {
+                    continue;
+                }
+                let container_segment_boxes = segment_boxes[container_index].get_or_init(|| {
+                    container
+                        .segments()
+                        .iter()
+                        .map(|segment| decided_segment_aabb(segment, policy))
+                        .collect()
+                });
+                match crate::contour::classify_contour_point_with_cached_aabbs(
+                    container,
+                    &sample,
+                    contour_boxes[container_index].as_ref(),
+                    container_segment_boxes,
+                    policy,
+                ) {
                     Classification::Decided(ContourPointLocation::Inside) => {
                         containing_contour_indices.push(container_index);
                     }

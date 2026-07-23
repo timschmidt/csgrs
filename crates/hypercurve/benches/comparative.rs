@@ -583,6 +583,20 @@ fn benchmark_polygon_booleans(runner: &Runner) {
         star_polygon(64, 18.0, 7.0, 96.0, 68.0, std::f64::consts::PI / 64.0),
         CommonBooleanOp::Intersection,
     );
+    benchmark_boolean_case(
+        runner,
+        "polygon_boolean/star256_intersection",
+        star_polygon(256, 0.0, 0.0, 100.0, 72.0, 0.0),
+        star_polygon(256, 18.0, 7.0, 96.0, 68.0, std::f64::consts::PI / 256.0),
+        CommonBooleanOp::Intersection,
+    );
+    benchmark_boolean_case(
+        runner,
+        "polygon_boolean/star1024_intersection",
+        star_polygon(1024, 0.0, 0.0, 100.0, 72.0, 0.0),
+        star_polygon(1024, 18.0, 7.0, 96.0, 68.0, std::f64::consts::PI / 1024.0),
+        CommonBooleanOp::Intersection,
+    );
 }
 
 fn benchmark_contour_offset(runner: &Runner) {

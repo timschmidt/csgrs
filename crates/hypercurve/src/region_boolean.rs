@@ -1436,7 +1436,7 @@ fn boolean_region_between_impl(
         .expect("region Boolean requests contour boundary output");
     if !retain_pipeline_report {
         return Ok(
-            match LineArcRegion2::from_boundary_contours(contours, policy)? {
+            match LineArcRegion2::from_validated_boundary_contours(contours, policy)? {
                 Classification::Decided(region) => {
                     region_boolean_result_from_role_assigned_shortcut_region(
                         first,

@@ -577,9 +577,33 @@ fn real_between(value: &Real, min: &Real, max: &Real, policy: &CurvePolicy) -> O
         return Some(value >= min - tolerance && value <= max + tolerance);
     }
 
+    // Approximation only chooses which exact bound to test first. Values above
+    // a box are common in broad-phase scans; checking the upper bound first in
+    // that case avoids an otherwise guaranteed lower-bound comparison without
+    // allowing the lossy view to decide topology.
+    let check_upper_first = matches!(
+        (
+            value.to_f64_lossy(),
+            min.to_f64_lossy(),
+            max.to_f64_lossy(),
+        ),
+        (Some(value), Some(_), Some(max)) if value.is_finite() && max.is_finite() && value > max
+    );
+    if check_upper_first {
+        let upper = compare_reals(value, max, policy)?;
+        if matches!(upper, Ordering::Greater) {
+            return Some(false);
+        }
+        let lower = compare_reals(value, min, policy)?;
+        return Some(!matches!(lower, Ordering::Less));
+    }
+
     let lower = compare_reals(value, min, policy)?;
+    if matches!(lower, Ordering::Less) {
+        return Some(false);
+    }
     let upper = compare_reals(value, max, policy)?;
-    Some(!matches!(lower, Ordering::Less) && !matches!(upper, Ordering::Greater))
+    Some(!matches!(upper, Ordering::Greater))
 }
 
 fn edge_preview_tolerance(policy: &CurvePolicy) -> f64 {
