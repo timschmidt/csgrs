@@ -71,9 +71,11 @@ pub(crate) struct ExactDyadicLineAabbs {
     // with the exact bounds this reconstructs both directed endpoints without
     // retaining four duplicate binary64 coordinates per segment.
     start_at_max: Vec<u8>,
-    /// Segment indices ordered by exact dyadic minimum x. Contours exceeding
+    /// Segment indices ordered by exact dyadic minimum x. The low 16 bits hold
+    /// the ordered segment index and the high 16 bits hold the segment with the
+    /// greatest maximum x in the prefix through that entry. Contours exceeding
     /// the compact index range retain their bounds and use the exact fallback.
-    pub(crate) min_x_order: Option<Vec<u32>>,
+    pub(crate) min_x_order_with_prefix_max: Option<Vec<u32>>,
 }
 
 impl ExactDyadicLineAabbs {
@@ -92,6 +94,26 @@ impl ExactDyadicLineAabbs {
             (bounds.max_y, bounds.min_y)
         };
         [[start_x, start_y], [end_x, end_y]]
+    }
+
+    #[inline]
+    pub(crate) const fn ordered_segment_index(packed_entry: u32) -> usize {
+        (packed_entry as u16) as usize
+    }
+
+    #[inline]
+    fn prefix_max_segment_index(packed_entry: u32) -> usize {
+        ((packed_entry >> 16) as u16) as usize
+    }
+
+    #[inline]
+    pub(crate) fn first_possible_x_overlap(&self, min_x: f64) -> usize {
+        let Some(order) = &self.min_x_order_with_prefix_max else {
+            return 0;
+        };
+        order.partition_point(|&packed_entry| {
+            self.segments[Self::prefix_max_segment_index(packed_entry)].max_x < min_x
+        })
     }
 }
 
@@ -878,21 +900,31 @@ fn exact_dyadic_line_aabbs(segments: &[Segment2]) -> Option<ExactDyadicLineAabbs
         max_x: bounds.max_x.max(segment.max_x),
         max_y: bounds.max_y.max(segment.max_y),
     });
-    let min_x_order = u32::try_from(segments.len()).ok().map(|length| {
-        let mut order = (0..length).collect::<Vec<_>>();
+    let min_x_order_with_prefix_max = (segments.len() <= usize::from(u16::MAX) + 1).then(|| {
+        let mut order = (0..segments.len())
+            .map(|index| index as u32)
+            .collect::<Vec<_>>();
         order.sort_unstable_by(|left, right| {
             segments[*left as usize]
                 .min_x
                 .total_cmp(&segments[*right as usize].min_x)
                 .then_with(|| left.cmp(right))
         });
+        let mut prefix_max_segment_index = order[0];
+        for entry in &mut order {
+            let index = *entry;
+            if segments[index as usize].max_x > segments[prefix_max_segment_index as usize].max_x {
+                prefix_max_segment_index = index;
+            }
+            *entry = index | (prefix_max_segment_index << 16);
+        }
         order
     });
     Some(ExactDyadicLineAabbs {
         contour,
         segments,
         start_at_max,
-        min_x_order,
+        min_x_order_with_prefix_max,
     })
 }
 
@@ -1377,7 +1409,12 @@ mod tests {
         assert_eq!(bounds.contour.min_y, 0.0);
         assert_eq!(bounds.contour.max_x, 3.0);
         assert_eq!(bounds.contour.max_y, 4.0);
-        assert_eq!(bounds.min_x_order.as_deref(), Some(&[0, 2, 3, 1][..]));
+        assert_eq!(
+            bounds.min_x_order_with_prefix_max.as_deref(),
+            Some(&[0, 2, 3, 1][..])
+        );
+        assert_eq!(bounds.first_possible_x_overlap(3.0), 0);
+        assert_eq!(bounds.first_possible_x_overlap(4.0), contour.len());
         assert_eq!(bounds.segment_endpoints(0), [[-2.0, 0.0], [3.0, 0.0]]);
         assert_eq!(bounds.segment_endpoints(2), [[3.0, 4.0], [-2.0, 4.0]]);
         assert_eq!(bounds.segment_endpoints(3), [[-2.0, 4.0], [-2.0, 0.0]]);
@@ -1391,6 +1428,41 @@ mod tests {
                 .exact_dyadic_line_aabbs(&CurvePolicy::exact_symbolic())
                 .is_none()
         );
+    }
+
+    #[test]
+    fn exact_dyadic_line_bounds_pack_changing_prefix_maximum() {
+        let contour = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(point(0, 0), Real::zero()),
+            BulgeVertex2::new(point(1, 0), Real::zero()),
+            BulgeVertex2::new(point(10, 1), Real::zero()),
+            BulgeVertex2::new(point(10, 2), Real::zero()),
+        ])
+        .unwrap();
+        let bounds = contour
+            .exact_dyadic_line_aabbs(&CurvePolicy::certified())
+            .unwrap();
+        let packed = bounds.min_x_order_with_prefix_max.as_deref().unwrap();
+
+        assert_eq!(
+            packed
+                .iter()
+                .copied()
+                .map(ExactDyadicLineAabbs::ordered_segment_index)
+                .collect::<Vec<_>>(),
+            [0, 3, 1, 2]
+        );
+        assert_eq!(
+            packed
+                .iter()
+                .copied()
+                .map(ExactDyadicLineAabbs::prefix_max_segment_index)
+                .collect::<Vec<_>>(),
+            [0, 3, 3, 3]
+        );
+        assert_eq!(bounds.first_possible_x_overlap(2.0), 1);
+        assert_eq!(bounds.first_possible_x_overlap(10.0), 1);
+        assert_eq!(bounds.first_possible_x_overlap(11.0), contour.len());
     }
 
     #[test]

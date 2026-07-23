@@ -835,7 +835,7 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
     }
     debug_assert_eq!(a_boxes.segments.len(), a.len());
     debug_assert_eq!(b_boxes.segments.len(), b.len());
-    let Some(b_order) = &b_boxes.min_x_order else {
+    let Some(b_order) = &b_boxes.min_x_order_with_prefix_max else {
         return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
             a, b, a_boxes, b_boxes, policy,
         );
@@ -866,8 +866,10 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
         let Segment2::Line(a_line) = &a.segments()[a_segment_index] else {
             unreachable!("exact dyadic line bounds contain only line segments");
         };
-        for &b_segment_index in b_order {
-            let b_segment_index = b_segment_index as usize;
+        let first_possible_overlap = b_boxes.first_possible_x_overlap(a_box.min_x);
+        for &packed_b_index in &b_order[first_possible_overlap..] {
+            let b_segment_index =
+                crate::contour::ExactDyadicLineAabbs::ordered_segment_index(packed_b_index);
             let b_box = b_boxes.segments[b_segment_index];
             if b_box.min_x > a_box.max_x {
                 break;

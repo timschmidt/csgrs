@@ -2279,6 +2279,34 @@ Clippy, and warning-denied rustdoc pass. The 10,000-run AddressSanitizer
 differential Boolean campaign completed without failure at 5,912 coverage
 points and 18,797 feature edges.
 
+The following broad-phase checkpoint eliminates repeated expired-prefix visits
+without retaining another index. Each existing four-byte minimum-x order entry
+now packs its segment index in the low 16 bits and the segment supplying the
+greatest maximum x in its prefix in the high 16 bits. A binary search over
+those nondecreasing prefix maxima skips every box whose maximum x is strictly
+left of the current source box. Touching boundaries remain candidates, and all
+coordinates in this cache remain lossless binary64 dyadics; exact segment
+predicates still decide every surviving pair.
+
+For the star64, star256, and star1024 fixtures, the skipped expired prefix
+removes 1,330 of 2,116, 22,110 of 33,804, and 356,634 of 540,592 ordered box
+visits respectively. Alternating fixed-iteration star1024 contour trials moved
+from 6.46--6.50 ms medians to 6.28 ms, a 2.8--3.3% improvement; star64 improved
+about 2% and star256 remained neutral within run noise. In the follow-up full
+star1024 matrix, ordinary/prepared exact contours measured 6.169/6.099 ms,
+versus 19.344 ms for Cavalier, 10.131 ms for `i_overlay`, and 10.044 ms for
+`geo`.
+
+The collector's self-time in the frame-pointer profile fell from 11.47% to
+7.97%. In-place packing preserves the preceding trace exactly: ten star1024
+contour operations still record 1,104,312 allocations, 2,192 temporaries, and
+16.58 MiB peak heap. Direct tests cover a changing prefix maximum, strict
+left-of rejection, boundary retention, packed order, and equality with the
+unreserved exact collector. The complete all-feature suite, strict Clippy, and
+warning-denied rustdoc pass. The 10,000-run AddressSanitizer differential
+Boolean campaign completed without failure at 5,924 coverage points and 18,872
+feature edges.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
