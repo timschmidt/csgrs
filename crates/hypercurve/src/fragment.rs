@@ -53,7 +53,7 @@ enum CompactLineFragmentGeometry {
 
 #[derive(Debug)]
 struct CompactLineSplitMarker {
-    param: Real,
+    param: Option<Real>,
     point: Point2,
 }
 
@@ -100,18 +100,34 @@ impl CompactLineContourFragment {
         &'a self,
         full_start: &'a Real,
         full_end: &'a Real,
-    ) -> (&'a Real, &'a Real) {
+    ) -> Option<(&'a Real, &'a Real)> {
         match &self.geometry {
-            CompactLineFragmentGeometry::Whole => (full_start, full_end),
+            CompactLineFragmentGeometry::Whole => Some((full_start, full_end)),
             CompactLineFragmentGeometry::Split { data, marker_index } => {
                 let markers = &data.markers;
                 let start = marker_index
                     .checked_sub(1)
-                    .map_or(full_start, |index| &markers[index].param);
-                let end = markers
-                    .get(*marker_index)
-                    .map_or(full_end, |marker| &marker.param);
-                (start, end)
+                    .map_or(Some(full_start), |index| markers[index].param.as_ref())?;
+                let end = match markers.get(*marker_index) {
+                    Some(marker) => marker.param.as_ref()?,
+                    None => full_end,
+                };
+                Some((start, end))
+            }
+        }
+    }
+
+    pub(crate) fn parameter_is_materialized(&self) -> bool {
+        match &self.geometry {
+            CompactLineFragmentGeometry::Whole => true,
+            CompactLineFragmentGeometry::Split { data, marker_index } => {
+                marker_index
+                    .checked_sub(1)
+                    .is_none_or(|index| data.markers[index].param.is_some())
+                    && data
+                        .markers
+                        .get(*marker_index)
+                        .is_none_or(|marker| marker.param.is_some())
             }
         }
     }
@@ -122,11 +138,22 @@ impl CompactLineContourFragment {
             CompactLineFragmentGeometry::Split { data, marker_index } => ParamRange::new(
                 marker_index.checked_sub(1).map_or_else(
                     || data.full_start.clone(),
-                    |index| data.markers[index].param.clone(),
+                    |index| {
+                        data.markers[index]
+                            .param
+                            .clone()
+                            .expect("provenance emission requires materialized parameters")
+                    },
                 ),
-                data.markers
-                    .get(marker_index)
-                    .map_or_else(|| data.full_end.clone(), |marker| marker.param.clone()),
+                data.markers.get(marker_index).map_or_else(
+                    || data.full_end.clone(),
+                    |marker| {
+                        marker
+                            .param
+                            .clone()
+                            .expect("provenance emission requires materialized parameters")
+                    },
+                ),
             ),
         }
     }
@@ -282,8 +309,8 @@ pub(crate) fn compact_line_contour_fragments_from_crossing_windings(
         let markers = crossings
             .iter()
             .map(|crossing| CompactLineSplitMarker {
-                param: crossing.parameter.clone(),
-                point: crossing.point.clone(),
+                param: crossing_windings.materialized_parameter(crossing).cloned(),
+                point: crossing_windings.point(crossing).clone(),
             })
             .collect::<Vec<_>>();
         if let Classification::Uncertain(reason) = append_compact_line_split_fragments(
@@ -876,7 +903,7 @@ mod tests {
                 first_source,
                 0,
                 vec![CompactLineSplitMarker {
-                    param: fraction(1, 2),
+                    param: Some(fraction(1, 2)),
                     point: p(2, 0),
                 }],
                 &policy,
@@ -900,7 +927,7 @@ mod tests {
         let one = Real::one();
         assert_eq!(
             fragments[0].source_parameters(&zero, &one),
-            (&zero, &fraction(1, 2))
+            Some((&zero, &fraction(1, 2)))
         );
         let (
             CompactLineFragmentGeometry::Split { data: first, .. },
@@ -913,7 +940,10 @@ mod tests {
         assert_eq!(first.markers.len(), 1);
         let (whole_start, whole_end) = fragments[2].endpoints(&contour.segments()[1]).unwrap();
         assert_eq!((whole_start, whole_end), (&p(4, 0), &p(4, 4)));
-        assert_eq!(fragments[2].source_parameters(&zero, &one), (&zero, &one));
+        assert_eq!(
+            fragments[2].source_parameters(&zero, &one),
+            Some((&zero, &one))
+        );
 
         let Segment2::Line(first) = fragments[0].materialize(&contour.segments()[0]).unwrap()
         else {

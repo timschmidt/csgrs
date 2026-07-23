@@ -1366,7 +1366,11 @@ fn boolean_region_between_impl(
     policy: &CurvePolicy,
     retain_pipeline_report: bool,
 ) -> CurveResult<RegionBooleanResult2> {
-    let boundary_events = first.intersect_region(second, policy)?;
+    let boundary_events = if retain_pipeline_report {
+        first.intersect_region(second, policy)?
+    } else {
+        crate::region_events::intersect_region_views_point_only(first, second, policy)?
+    };
     if let Some(region) = retained_offset_region_boolean(first, second, op, policy) {
         return Ok(region_boolean_result_from_role_assigned_shortcut_region(
             first,
@@ -1634,10 +1638,15 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
     let boundary_events = match known_boundary_events {
         Some(boundary_events) => boundary_events,
         None => {
-            owned_boundary_events = match prepared {
-                Some((first, second)) => first.intersect_prepared_region(second, policy)?,
-                None => first.intersect_region(second, policy)?,
-            };
+            owned_boundary_events =
+                if retain_pipeline_report || output_kind == BooleanBoundaryOutputKind::Loops {
+                    match prepared {
+                        Some((first, second)) => first.intersect_prepared_region(second, policy)?,
+                        None => first.intersect_region(second, policy)?,
+                    }
+                } else {
+                    crate::region_events::intersect_region_views_point_only(first, second, policy)?
+                };
             &owned_boundary_events
         }
     };
@@ -1808,6 +1817,9 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                             return Ok(Classification::Uncertain(reason));
                         }
                     }
+                }
+                if !compact_fragments.parameters_are_materialized() {
+                    break 'compact;
                 }
                 let emitted = selection.emit_boundary_fragments_from_owned_compact_split(
                     compact_fragments,
@@ -2462,6 +2474,13 @@ pub(crate) fn boundary_contact_overlap_flag(
     let mut saw_contact = false;
     let mut saw_overlap = false;
     for pair in intersections.pairs() {
+        if pair
+            .intersections()
+            .retained_certified_line_crossings()
+            .is_some()
+        {
+            return Classification::Decided(None);
+        }
         for event in pair.intersections.events() {
             match event {
                 ContourIntersection::Point(point) => match point.kind {

@@ -823,17 +823,24 @@ impl CompactLineRegionFragmentSet {
             let first_source_segment =
                 compact_source_segment(first, second, contour_fragments.key, first_fragment)?;
             let (first_start, first_end) = first_fragment.endpoints(first_source_segment)?;
-            let (first_param_start, first_param_end) =
-                first_fragment.source_parameters(&full_start, &full_end);
-            let certified_endpoint = certified_fragment_endpoint(
-                endpoint_contacts,
-                contour_fragments.key,
-                source_contour,
-                first_fragment.source_segment_index,
-                first_param_start,
-                first_param_end,
-                policy,
-            );
+            let certified_endpoint = if endpoint_contacts.is_empty() {
+                Some(CertifiedFragmentEndpoint::Start)
+            } else {
+                let Some((first_param_start, first_param_end)) =
+                    first_fragment.source_parameters(&full_start, &full_end)
+                else {
+                    return Ok(None);
+                };
+                certified_fragment_endpoint(
+                    endpoint_contacts,
+                    contour_fragments.key,
+                    source_contour,
+                    first_fragment.source_segment_index,
+                    first_param_start,
+                    first_param_end,
+                    policy,
+                )
+            };
             let source_side = contour_fragments.key.side;
             let mut opposite_winding = match classify_fragment_interior_with(
                 first_start,

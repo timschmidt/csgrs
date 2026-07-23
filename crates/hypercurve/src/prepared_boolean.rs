@@ -92,7 +92,11 @@ fn boolean_region_between_prepared_impl(
 ) -> CurveResult<RegionBooleanResult2> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
-    let boundary_events = first.intersect_prepared_region(second, policy)?;
+    let boundary_events = if retain_pipeline_report {
+        first.intersect_prepared_region(second, policy)?
+    } else {
+        crate::region_events::intersect_region_views_point_only(&first_view, &second_view, policy)?
+    };
     if let Some(region) =
         crate::region_boolean::retained_offset_region_boolean(&first_view, &second_view, op, policy)
     {

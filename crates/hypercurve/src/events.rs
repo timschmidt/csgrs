@@ -7,11 +7,13 @@
 //! boxes only remove pairs whose disjointness is decided; every remaining
 //! candidate goes through the exact segment kernels.
 
+use std::cell::OnceCell;
 use std::cmp::Ordering;
 use std::fmt;
 use std::num::NonZeroU64;
+use std::rc::Rc;
 
-use hyperreal::Real;
+use hyperreal::{ExactDyadicLineParameters2, Real};
 
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{
@@ -40,25 +42,156 @@ pub enum ContourOperand {
 /// A normalized set of contour-pair topology events.
 #[derive(Clone, Default)]
 pub struct ContourIntersectionSet {
-    events: Vec<ContourIntersection>,
+    storage: ContourIntersectionStorage,
     // Bits 0..62 retain positive winding deltas. Bit 63 is always set so the
     // `Option<NonZeroU64>` occupies one word; larger event sets use the exact
     // fallback instead of allocating a sidecar.
     certified_positive_line_crossings: Option<NonZeroU64>,
 }
 
+#[derive(Clone)]
+enum ContourIntersectionStorage {
+    Materialized(Vec<ContourIntersection>),
+    CertifiedLineCrossings {
+        crossings: Rc<Vec<CertifiedLineCrossingEvent>>,
+        materialized: OnceCell<Vec<ContourIntersection>>,
+    },
+}
+
+impl Default for ContourIntersectionStorage {
+    fn default() -> Self {
+        Self::Materialized(Vec::new())
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct CertifiedLineCrossingEvent {
+    pub(crate) a_segment_index: u16,
+    pub(crate) b_segment_index: u16,
+    pub(crate) point: Point2,
+    parameters: CertifiedLineCrossingParameters,
+}
+
+#[derive(Clone, Debug)]
+enum CertifiedLineCrossingParameters {
+    ExactDyadic(ExactDyadicLineParameters2),
+    Materialized([Real; 2]),
+}
+
+impl CertifiedLineCrossingEvent {
+    fn new_exact_dyadic(
+        a_segment_index: u16,
+        b_segment_index: u16,
+        point: Point2,
+        parameters: ExactDyadicLineParameters2,
+    ) -> Self {
+        Self {
+            a_segment_index,
+            b_segment_index,
+            point,
+            parameters: CertifiedLineCrossingParameters::ExactDyadic(parameters),
+        }
+    }
+
+    fn new_materialized(
+        a_segment_index: u16,
+        b_segment_index: u16,
+        point: Point2,
+        a_param: Real,
+        b_param: Real,
+    ) -> Self {
+        Self {
+            a_segment_index,
+            b_segment_index,
+            point,
+            parameters: CertifiedLineCrossingParameters::Materialized([a_param, b_param]),
+        }
+    }
+
+    fn parameter_index(operand: ContourOperand) -> usize {
+        match operand {
+            ContourOperand::First => 0,
+            ContourOperand::Second => 1,
+        }
+    }
+
+    pub(crate) fn compare_parameter(
+        &self,
+        other: &Self,
+        operand: ContourOperand,
+        policy: &CurvePolicy,
+    ) -> Option<Ordering> {
+        match (&self.parameters, &other.parameters) {
+            (
+                CertifiedLineCrossingParameters::ExactDyadic(left),
+                CertifiedLineCrossingParameters::ExactDyadic(right),
+            ) => Some(match operand {
+                ContourOperand::First => left.compare_first_parameter(right),
+                ContourOperand::Second => left.compare_second_parameter(right),
+            }),
+            (
+                CertifiedLineCrossingParameters::Materialized(left),
+                CertifiedLineCrossingParameters::Materialized(right),
+            ) => compare_reals(
+                &left[Self::parameter_index(operand)],
+                &right[Self::parameter_index(operand)],
+                policy,
+            ),
+            _ => {
+                let left = self.materialize_parameter(operand);
+                let right = other.materialize_parameter(operand);
+                compare_reals(&left, &right, policy)
+            }
+        }
+    }
+
+    fn materialize_parameter(&self, operand: ContourOperand) -> Real {
+        match &self.parameters {
+            CertifiedLineCrossingParameters::ExactDyadic(parameters) => match operand {
+                ContourOperand::First => parameters.materialize_first_parameter(),
+                ContourOperand::Second => parameters.materialize_second_parameter(),
+            },
+            CertifiedLineCrossingParameters::Materialized(parameters) => {
+                parameters[Self::parameter_index(operand)].clone()
+            }
+        }
+    }
+
+    pub(crate) fn materialized_parameter(&self, operand: ContourOperand) -> Option<&Real> {
+        match &self.parameters {
+            CertifiedLineCrossingParameters::ExactDyadic(_) => None,
+            CertifiedLineCrossingParameters::Materialized(parameters) => {
+                Some(&parameters[Self::parameter_index(operand)])
+            }
+        }
+    }
+
+    fn materialize(&self) -> ContourIntersection {
+        ContourIntersection::Point(ContourPointIntersection {
+            a_segment_index: usize::from(self.a_segment_index),
+            b_segment_index: usize::from(self.b_segment_index),
+            a_segment_kind: SegmentKind::Line,
+            b_segment_kind: SegmentKind::Line,
+            point: self.point.clone(),
+            a_param: self.materialize_parameter(ContourOperand::First),
+            b_param: self.materialize_parameter(ContourOperand::Second),
+            kind: IntersectionKind::Crossing,
+        })
+    }
+}
+
 impl fmt::Debug for ContourIntersectionSet {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("ContourIntersectionSet")
-            .field("events", &self.events)
+            .field("events", &self.events())
             .finish()
     }
 }
 
 impl PartialEq for ContourIntersectionSet {
     fn eq(&self, other: &Self) -> bool {
-        self.events == other.events
+        self.events() == other.events()
     }
 }
 
@@ -67,7 +200,7 @@ impl ContourIntersectionSet {
     pub fn new(events: Vec<ContourIntersection>) -> CurveResult<Self> {
         validate_contour_intersection_events(&events, &CurvePolicy::certified())?;
         Ok(Self {
-            events,
+            storage: ContourIntersectionStorage::Materialized(events),
             certified_positive_line_crossings: None,
         })
     }
@@ -76,7 +209,7 @@ impl ContourIntersectionSet {
         // Module-private collectors normalize each relation as it is appended;
         // public or forged event vectors still go through `new` above.
         Self {
-            events,
+            storage: ContourIntersectionStorage::Materialized(events),
             certified_positive_line_crossings: None,
         }
     }
@@ -86,8 +219,33 @@ impl ContourIntersectionSet {
         positive_crossings: Option<NonZeroU64>,
     ) -> Self {
         Self {
-            events,
+            storage: ContourIntersectionStorage::Materialized(events),
             certified_positive_line_crossings: positive_crossings,
+        }
+    }
+
+    fn from_certified_line_crossing_points(
+        crossings: Vec<CertifiedLineCrossingEvent>,
+        positive_crossings: Option<NonZeroU64>,
+    ) -> Self {
+        if crossings.is_empty() {
+            return Self::default();
+        }
+        Self {
+            storage: ContourIntersectionStorage::CertifiedLineCrossings {
+                crossings: Rc::new(crossings),
+                materialized: OnceCell::new(),
+            },
+            certified_positive_line_crossings: positive_crossings,
+        }
+    }
+
+    pub(crate) fn retained_certified_line_crossings(
+        &self,
+    ) -> Option<&Rc<Vec<CertifiedLineCrossingEvent>>> {
+        match &self.storage {
+            ContourIntersectionStorage::CertifiedLineCrossings { crossings, .. } => Some(crossings),
+            ContourIntersectionStorage::Materialized(_) => None,
         }
     }
 
@@ -102,46 +260,80 @@ impl ContourIntersectionSet {
 
     /// Returns all events in segment-pair scan order.
     pub fn events(&self) -> &[ContourIntersection] {
-        &self.events
+        match &self.storage {
+            ContourIntersectionStorage::Materialized(events) => events,
+            ContourIntersectionStorage::CertifiedLineCrossings {
+                crossings,
+                materialized,
+            } => materialized.get_or_init(|| {
+                crossings
+                    .iter()
+                    .map(CertifiedLineCrossingEvent::materialize)
+                    .collect()
+            }),
+        }
     }
 
     /// Consumes the set and returns its events.
     pub fn into_events(self) -> Vec<ContourIntersection> {
-        self.events
+        match self.storage {
+            ContourIntersectionStorage::Materialized(events) => events,
+            ContourIntersectionStorage::CertifiedLineCrossings {
+                crossings,
+                materialized,
+            } => materialized.into_inner().unwrap_or_else(|| {
+                crossings
+                    .iter()
+                    .map(CertifiedLineCrossingEvent::materialize)
+                    .collect()
+            }),
+        }
     }
 
     /// Returns true when no events were collected.
     pub fn is_empty(&self) -> bool {
-        self.events.is_empty()
+        self.len() == 0
     }
 
     /// Returns the number of collected events.
     pub fn len(&self) -> usize {
-        self.events.len()
+        match &self.storage {
+            ContourIntersectionStorage::Materialized(events) => events.len(),
+            ContourIntersectionStorage::CertifiedLineCrossings { crossings, .. } => crossings.len(),
+        }
     }
 
     /// Returns retained point intersection events.
     pub fn point_event_count(&self) -> usize {
-        self.events
-            .iter()
-            .filter(|event| matches!(event, ContourIntersection::Point(_)))
-            .count()
+        match &self.storage {
+            ContourIntersectionStorage::Materialized(events) => events
+                .iter()
+                .filter(|event| matches!(event, ContourIntersection::Point(_)))
+                .count(),
+            ContourIntersectionStorage::CertifiedLineCrossings { crossings, .. } => crossings.len(),
+        }
     }
 
     /// Returns retained overlap intersection events.
     pub fn overlap_event_count(&self) -> usize {
-        self.events
-            .iter()
-            .filter(|event| matches!(event, ContourIntersection::Overlap(_)))
-            .count()
+        match &self.storage {
+            ContourIntersectionStorage::Materialized(events) => events
+                .iter()
+                .filter(|event| matches!(event, ContourIntersection::Overlap(_)))
+                .count(),
+            ContourIntersectionStorage::CertifiedLineCrossings { .. } => 0,
+        }
     }
 
     /// Returns retained unresolved intersection events.
     pub fn uncertain_event_count(&self) -> usize {
-        self.events
-            .iter()
-            .filter(|event| matches!(event, ContourIntersection::Uncertain(_)))
-            .count()
+        match &self.storage {
+            ContourIntersectionStorage::Materialized(events) => events
+                .iter()
+                .filter(|event| matches!(event, ContourIntersection::Uncertain(_)))
+                .count(),
+            ContourIntersectionStorage::CertifiedLineCrossings { .. } => 0,
+        }
     }
 
     /// Returns events for one segment sorted by that segment's local parameter.
@@ -153,7 +345,7 @@ impl ContourIntersectionSet {
     ) -> Classification<Vec<&'a ContourIntersection>> {
         let mut sorted: Vec<(&ContourIntersection, Real)> = Vec::new();
 
-        for event in self.events.iter() {
+        for event in self.events() {
             if event.segment_index(operand) != Some(segment_index) {
                 continue;
             }
@@ -472,7 +664,28 @@ pub(crate) fn intersect_contours_with_exact_dyadic_line_aabbs(
         && a.len() <= usize::from(u16::MAX) + 1
         && b.len() <= usize::from(u16::MAX) + 1
     {
-        intersect_contours_with_retained_line_candidates(a, b, a_boxes, b_boxes, policy)
+        intersect_contours_with_retained_line_candidates::<false>(a, b, a_boxes, b_boxes, policy)
+    } else {
+        intersect_contours_with_unreserved_exact_dyadic_line_aabbs(a, b, a_boxes, b_boxes, policy)
+    }
+}
+
+pub(crate) fn intersect_contours_with_exact_dyadic_line_aabbs_point_only(
+    a: &Contour2,
+    b: &Contour2,
+    a_boxes: &crate::contour::ExactDyadicLineAabbs,
+    b_boxes: &crate::contour::ExactDyadicLineAabbs,
+    policy: &CurvePolicy,
+) -> CurveResult<ContourIntersectionSet> {
+    const MIN_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 256;
+    const MAX_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 4_194_304;
+    let pair_count = a.len().saturating_mul(b.len());
+    if (MIN_RETAINED_CERTIFICATE_PAIR_COUNT..=MAX_RETAINED_CERTIFICATE_PAIR_COUNT)
+        .contains(&pair_count)
+        && a.len() <= usize::from(u16::MAX) + 1
+        && b.len() <= usize::from(u16::MAX) + 1
+    {
+        intersect_contours_with_retained_line_candidates::<true>(a, b, a_boxes, b_boxes, policy)
     } else {
         intersect_contours_with_unreserved_exact_dyadic_line_aabbs(a, b, a_boxes, b_boxes, policy)
     }
@@ -533,7 +746,7 @@ fn intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
     Ok(ContourIntersectionSet::from_normalized_events(events))
 }
 
-fn intersect_contours_with_retained_line_candidates(
+fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
     a: &Contour2,
     b: &Contour2,
     a_boxes: &crate::contour::ExactDyadicLineAabbs,
@@ -619,7 +832,8 @@ fn intersect_contours_with_retained_line_candidates(
             }
         }
     }
-    let mut events = Vec::with_capacity(candidates.len());
+    let mut events = Vec::with_capacity(if POINT_ONLY { 0 } else { candidates.len() });
+    let mut crossings = Vec::with_capacity(if POINT_ONLY { candidates.len() } else { 0 });
     let retain_crossing_signs = candidates.len() < 64;
     let mut positive_crossings = 1_u64 << 63;
     for (event_index, candidate) in candidates.into_iter().enumerate() {
@@ -630,37 +844,78 @@ fn intersect_contours_with_retained_line_candidates(
         let (Segment2::Line(a_line), Segment2::Line(b_line)) = (a_segment, b_segment) else {
             unreachable!("exact dyadic line bounds contain only line segments");
         };
-        let LineLineIntersection::Point {
-            point,
-            a_param,
-            b_param,
-            kind,
-        } = a_line.intersect_line_with_certified_exact_dyadic_proper_crossing(b_line, policy)?
-        else {
-            return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
-                a, b, a_boxes, b_boxes, policy,
-            );
-        };
-        events.push(ContourIntersection::Point(ContourPointIntersection {
-            a_segment_index,
-            b_segment_index,
-            a_segment_kind: SegmentKind::Line,
-            b_segment_kind: SegmentKind::Line,
-            point,
-            a_param,
-            b_param,
-            kind,
-        }));
+        if POINT_ONLY {
+            let crossing = match Real::exact_rational_line_intersection2_point_known_dyadic(
+                [a_line.start().x(), a_line.start().y()],
+                [a_line.end().x(), a_line.end().y()],
+                [b_line.start().x(), b_line.start().y()],
+                [b_line.end().x(), b_line.end().y()],
+            ) {
+                Some((parameters, [x, y])) => CertifiedLineCrossingEvent::new_exact_dyadic(
+                    candidate.a_segment_index,
+                    candidate.b_segment_index,
+                    Point2::new(x, y),
+                    parameters,
+                ),
+                None => {
+                    let LineLineIntersection::Point {
+                        point,
+                        a_param,
+                        b_param,
+                        ..
+                    } = a_line.intersect_line_with_certified_exact_dyadic_proper_crossing(
+                        b_line, policy,
+                    )?
+                    else {
+                        return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
+                            a, b, a_boxes, b_boxes, policy,
+                        );
+                    };
+                    CertifiedLineCrossingEvent::new_materialized(
+                        candidate.a_segment_index,
+                        candidate.b_segment_index,
+                        point,
+                        a_param,
+                        b_param,
+                    )
+                }
+            };
+            crossings.push(crossing);
+        } else {
+            let LineLineIntersection::Point {
+                point,
+                a_param,
+                b_param,
+                kind,
+            } = a_line
+                .intersect_line_with_certified_exact_dyadic_proper_crossing(b_line, policy)?
+            else {
+                return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
+                    a, b, a_boxes, b_boxes, policy,
+                );
+            };
+            events.push(ContourIntersection::Point(ContourPointIntersection {
+                a_segment_index,
+                b_segment_index,
+                a_segment_kind: SegmentKind::Line,
+                b_segment_kind: SegmentKind::Line,
+                point,
+                a_param,
+                b_param,
+                kind,
+            }));
+        }
         if retain_crossing_signs && candidate.positive_crossing {
             positive_crossings |= 1 << event_index;
         }
     }
-    Ok(ContourIntersectionSet::from_certified_line_crossings(
-        events,
-        retain_crossing_signs.then(|| {
-            NonZeroU64::new(positive_crossings).expect("the retained marker bit is nonzero")
-        }),
-    ))
+    let signs = retain_crossing_signs
+        .then(|| NonZeroU64::new(positive_crossings).expect("the retained marker bit is nonzero"));
+    Ok(if POINT_ONLY {
+        ContourIntersectionSet::from_certified_line_crossing_points(crossings, signs)
+    } else {
+        ContourIntersectionSet::from_certified_line_crossings(events, signs)
+    })
 }
 
 pub(crate) fn intersect_contour_self(
@@ -1781,8 +2036,21 @@ mod tests {
         let second = star(64, (18.0, 7.0), (96.0, 68.0), std::f64::consts::PI / 64.0);
         let first_boxes = first.exact_dyadic_line_aabbs(&policy).unwrap();
         let second_boxes = second.exact_dyadic_line_aabbs(&policy).unwrap();
+        assert!(
+            std::mem::size_of::<CertifiedLineCrossingEvent>()
+                <= std::mem::size_of::<ContourPointIntersection>(),
+            "the lazy exact crossing carrier must not exceed an eager point event"
+        );
 
-        let retained = intersect_contours_with_retained_line_candidates(
+        let retained = intersect_contours_with_retained_line_candidates::<false>(
+            &first,
+            &second,
+            &first_boxes,
+            &second_boxes,
+            &policy,
+        )
+        .unwrap();
+        let point_only = intersect_contours_with_retained_line_candidates::<true>(
             &first,
             &second,
             &first_boxes,
@@ -1800,6 +2068,7 @@ mod tests {
         .unwrap();
 
         assert!(retained.len() < 64);
+        assert!(point_only.retained_certified_line_crossings().is_some());
         for (event_index, event) in retained.events().iter().enumerate() {
             let ContourIntersection::Point(point) = event else {
                 panic!("the certified candidate path emits only point crossings");
@@ -1815,6 +2084,7 @@ mod tests {
                 crate::intersect::certified_line_crossing_winding_delta(first_line, second_line),
             );
         }
+        assert_eq!(point_only, retained);
         assert_eq!(retained, unreserved);
     }
 

@@ -122,6 +122,13 @@ impl RegionPointEndpointContactIndex {
     ) -> Self {
         let mut index = Self::default();
         for pair in intersections.pairs() {
+            if pair
+                .intersections()
+                .retained_certified_line_crossings()
+                .is_some()
+            {
+                continue;
+            }
             for event in pair.intersections().events() {
                 let ContourIntersection::Point(point) = event else {
                     continue;
@@ -135,6 +142,10 @@ impl RegionPointEndpointContactIndex {
             }
         }
         index
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.vertex_masks.is_empty()
     }
 
     fn record(
@@ -368,6 +379,22 @@ pub(crate) fn intersect_region_views(
     second: &RegionView2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<RegionIntersectionSet> {
+    intersect_region_views_impl::<false>(first, second, policy)
+}
+
+pub(crate) fn intersect_region_views_point_only(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionIntersectionSet> {
+    intersect_region_views_impl::<true>(first, second, policy)
+}
+
+fn intersect_region_views_impl<const POINT_ONLY: bool>(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionIntersectionSet> {
     let mut pairs = Vec::new();
     let mut workload = RegionIntersectionWorkload::default();
     let first_material_boxes = contour_intersection_aabbs(first.material_contours(), policy);
@@ -375,7 +402,7 @@ pub(crate) fn intersect_region_views(
     let second_material_boxes = contour_intersection_aabbs(second.material_contours(), policy);
     let second_hole_boxes = contour_intersection_aabbs(second.hole_contours(), policy);
 
-    collect_role_pairs(
+    collect_role_pairs::<POINT_ONLY>(
         &mut pairs,
         &mut workload,
         first.material_contours(),
@@ -386,7 +413,7 @@ pub(crate) fn intersect_region_views(
         RegionContourRole::Material,
         policy,
     )?;
-    collect_role_pairs(
+    collect_role_pairs::<POINT_ONLY>(
         &mut pairs,
         &mut workload,
         first.material_contours(),
@@ -397,7 +424,7 @@ pub(crate) fn intersect_region_views(
         RegionContourRole::Hole,
         policy,
     )?;
-    collect_role_pairs(
+    collect_role_pairs::<POINT_ONLY>(
         &mut pairs,
         &mut workload,
         first.hole_contours(),
@@ -408,7 +435,7 @@ pub(crate) fn intersect_region_views(
         RegionContourRole::Material,
         policy,
     )?;
-    collect_role_pairs(
+    collect_role_pairs::<POINT_ONLY>(
         &mut pairs,
         &mut workload,
         first.hole_contours(),
@@ -520,6 +547,10 @@ fn region_event_segment_kind_counts(
 ) -> SegmentKindCounts {
     let mut counts = SegmentKindCounts::default();
     for pair in events.pairs() {
+        if let Some(crossings) = pair.intersections().retained_certified_line_crossings() {
+            counts.lines += crossings.len();
+            continue;
+        }
         for event in pair.intersections.events() {
             match event.segment_kind(operand) {
                 SegmentKind::Line => counts.lines += 1,
@@ -530,7 +561,7 @@ fn region_event_segment_kind_counts(
     counts
 }
 
-fn collect_role_pairs(
+fn collect_role_pairs<const POINT_ONLY: bool>(
     pairs: &mut Vec<RegionContourIntersection>,
     workload: &mut RegionIntersectionWorkload,
     first_contours: &[&crate::Contour2],
@@ -558,13 +589,23 @@ fn collect_role_pairs(
                 second_boxes[second_index].exact.as_ref(),
             ) {
                 (Some(first), Some(second)) => {
-                    crate::events::intersect_contours_with_exact_dyadic_line_aabbs(
-                        first_contour,
-                        second_contour,
-                        first,
-                        second,
-                        policy,
-                    )?
+                    if POINT_ONLY {
+                        crate::events::intersect_contours_with_exact_dyadic_line_aabbs_point_only(
+                            first_contour,
+                            second_contour,
+                            first,
+                            second,
+                            policy,
+                        )?
+                    } else {
+                        crate::events::intersect_contours_with_exact_dyadic_line_aabbs(
+                            first_contour,
+                            second_contour,
+                            first,
+                            second,
+                            policy,
+                        )?
+                    }
                 }
                 _ => {
                     let first_segment_boxes =

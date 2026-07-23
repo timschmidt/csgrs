@@ -1967,6 +1967,51 @@ operands. Future work should avoid creating or repeatedly observing parameter
 GCD inputs at the event/output boundary rather than replacing the established
 native reducer.
 
+A contour-only determinant lane now crosses that boundary without changing the
+public intersection APIs or report-bearing provenance path. Hyperreal retains
+only the two determinant numerators and their shared denominator in a 96-byte
+fixed-word carrier. It compares either source parameter by aligned native
+cross-products, with an exact arbitrary-precision comparison fallback for
+extreme exponent gaps, and reduces a parameter only if an observable API asks
+for it. Hypercurve pairs that carrier with the exact point in a lazy event
+sidecar. The all-line Boolean crossing index consumes the carrier directly;
+compact fragment classification and endpoint-chain assembly consume only exact
+points. Crossings outside the fixed kernel retain the eager parameters, and
+mixed, curved, overlap, loop-provenance, and report-bearing queries retain the
+existing exact pipeline. A static layout regression requires the lazy crossing
+carrier to be no larger than the eager point event.
+
+The star64 trace fell from 3,272 to 3,116 dispatch events, from 177 to 175
+rational temporaries, from 116 to 40 GCD observations, and from 903 to 825
+`Real` constructions; reductions remained 24 and all 40 intersections stayed
+on exact line kernels. Unlike the rejected point-coordinate ordering prototype,
+the trace contains no coordinate canonicalization during crossing sort. A
+randomized Hyperreal regression compares both retained parameter orders with
+their materialized exact values, and the Hypercurve dense-event regression
+materializes the lazy events and proves equality with both eager retained and
+arbitrary-precision collectors.
+
+The conservative 31-sample, 50-iteration star1024 region median is 9.819 ms,
+20.1% below the retained 12.291 ms checkpoint. In fixed 11-sample runs,
+ordinary and prepared contour output measured 8.668 and 8.653 ms, while
+prepared region output measured 9.675 ms. The contemporary finite competitors
+measured 19.439 ms for Cavalier, 9.954 ms for `i_overlay`, and 10.230 ms for
+`geo`, so exact Hypercurve region and contour output lead this large fixture.
+The crossover remains incomplete: star64 region/contour output measured about
+99 us versus 28--36 us for the finite competitors, and star256 contour output
+measured 0.692 ms versus 0.478--0.512 ms. Provenance-bearing loop output remains
+eager by design.
+
+Three standalone one-operation star1024 runs peaked at 32,848--32,868 KiB RSS,
+about 1.4 MiB above the preceding 31,416 KiB median despite the lazy carrier
+not exceeding the eager event's static size. The large-curve latency and exact
+arithmetic reductions justify retaining the lane, but lowering process peak
+memory remains an explicit follow-up rather than a completed gate. Both full
+all-feature suites, warnings-as-errors Clippy, and warnings-as-errors rustdoc
+passed. The AddressSanitizer `region_boolean` differential target completed
+7,864 executions at 5,863 coverage points and 18,235 feature edges without a
+failure; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

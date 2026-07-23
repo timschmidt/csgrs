@@ -51,6 +51,15 @@ impl CompactLineRegionFragmentSet {
             .map(|contour| contour.fragments.len())
             .sum()
     }
+
+    pub(crate) fn parameters_are_materialized(&self) -> bool {
+        self.contours.iter().all(|contour| {
+            contour
+                .fragments
+                .iter()
+                .all(CompactLineContourFragment::parameter_is_materialized)
+        })
+    }
 }
 
 /// Fragment materialization report for one keyed source contour.
@@ -785,6 +794,19 @@ fn validate_region_intersection_evidence_against_views(
     for pair in intersections.pairs() {
         let first_contour = contour_for_key(first, RegionSide::First, pair.first)?;
         let second_contour = contour_for_key(second, RegionSide::Second, pair.second)?;
+        if let Some(crossings) = pair.intersections().retained_certified_line_crossings() {
+            for crossing in crossings.iter() {
+                validate_event_segment_index(
+                    Some(usize::from(crossing.a_segment_index)),
+                    first_contour.len(),
+                )?;
+                validate_event_segment_index(
+                    Some(usize::from(crossing.b_segment_index)),
+                    second_contour.len(),
+                )?;
+            }
+            continue;
+        }
         for event in pair.intersections.events() {
             validate_event_segment_index(
                 event.segment_index(ContourOperand::First),
