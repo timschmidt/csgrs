@@ -204,6 +204,120 @@ impl ExactDyadicLineParameters2 {
         }
     }
 
+    #[inline]
+    fn multiply_magnitudes(left: u128, right: u128) -> [u64; 4] {
+        let left = [left as u64, (left >> 64) as u64];
+        let right = [right as u64, (right >> 64) as u64];
+        let mut product = [0_u64; 4];
+        for (left_index, left_limb) in left.into_iter().enumerate() {
+            let mut carry = 0_u128;
+            for (right_index, right_limb) in right.into_iter().enumerate() {
+                let index = left_index + right_index;
+                let total = u128::from(product[index])
+                    + u128::from(left_limb) * u128::from(right_limb)
+                    + carry;
+                product[index] = total as u64;
+                carry = total >> 64;
+            }
+            let index = left_index + 2;
+            let total = u128::from(product[index]) + carry;
+            product[index] = total as u64;
+            debug_assert_eq!(total >> 64, 0);
+        }
+        product
+    }
+
+    #[inline]
+    fn product_bit_length(product: &[u64; 4]) -> u128 {
+        let index = product
+            .iter()
+            .rposition(|limb| *limb != 0)
+            .expect("nonzero parameter product has a nonzero limb");
+        u128::try_from(index * 64 + (64 - product[index].leading_zeros() as usize))
+            .expect("fixed product bit length fits u128")
+    }
+
+    #[inline]
+    fn compare_normalized_products(
+        left: [u64; 4],
+        left_bit_length: u128,
+        right: [u64; 4],
+        right_bit_length: u128,
+    ) -> Ordering {
+        let left_shift = u32::try_from(256 - left_bit_length)
+            .expect("four-limb product normalization shift fits u32");
+        let right_shift = u32::try_from(256 - right_bit_length)
+            .expect("four-limb product normalization shift fits u32");
+        let normalized_limb = |product: &[u64; 4], shift: u32, target: usize| {
+            let word_shift = (shift / 64) as usize;
+            if target < word_shift {
+                return 0;
+            }
+            let source = target - word_shift;
+            let bit_shift = shift % 64;
+            let mut limb = product[source] << bit_shift;
+            if bit_shift != 0 && source != 0 {
+                limb |= product[source - 1] >> (64 - bit_shift);
+            }
+            limb
+        };
+        for target in (0..4).rev() {
+            let ordering = normalized_limb(&left, left_shift, target)
+                .cmp(&normalized_limb(&right, right_shift, target));
+            if ordering != Ordering::Equal {
+                return ordering;
+            }
+        }
+        Ordering::Equal
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn compare_parameter_normalized(&self, index: usize, other: &Self) -> Ordering {
+        let left_numerator = self.numerator(index);
+        let right_numerator = other.numerator(index);
+        let left_denominator = self.denominator();
+        let right_denominator = other.denominator();
+        let left_sign = left_numerator.sign * left_denominator.sign;
+        let right_sign = right_numerator.sign * right_denominator.sign;
+        if left_sign != right_sign {
+            return match (left_sign, right_sign) {
+                (Minus, _) | (_, Plus) => Ordering::Less,
+                (Plus, _) | (_, Minus) => Ordering::Greater,
+                _ => Ordering::Equal,
+            };
+        }
+        if left_sign == NoSign {
+            return Ordering::Equal;
+        }
+
+        let left_shift = u128::from(left_denominator.denominator_shift)
+            + u128::from(right_numerator.denominator_shift);
+        let right_shift = u128::from(right_denominator.denominator_shift)
+            + u128::from(left_numerator.denominator_shift);
+        let left =
+            Self::multiply_magnitudes(left_numerator.magnitude, right_denominator.magnitude);
+        let right =
+            Self::multiply_magnitudes(right_numerator.magnitude, left_denominator.magnitude);
+        let left_bit_length = Self::product_bit_length(&left);
+        let right_bit_length = Self::product_bit_length(&right);
+        let ordering =
+            match (left_bit_length + left_shift).cmp(&(right_bit_length + right_shift)) {
+                Ordering::Equal => Self::compare_normalized_products(
+                    left,
+                    left_bit_length,
+                    right,
+                    right_bit_length,
+                ),
+                ordering => ordering,
+            };
+        if left_sign == Minus {
+            ordering.reverse()
+        } else {
+            ordering
+        }
+    }
+
     fn compare_parameter(&self, index: usize, other: &Self) -> Ordering {
         let left_numerator = self.numerator(index);
         let right_numerator = other.numerator(index);
@@ -278,6 +392,18 @@ impl ExactDyadicLineParameters2 {
     /// Compare the parameter on the second source line without reducing it.
     pub fn compare_second_parameter(&self, other: &Self) -> Ordering {
         self.compare_parameter(1, other)
+    }
+
+    /// Compare the first parameter through normalized fixed-width products.
+    #[doc(hidden)]
+    pub fn compare_first_parameter_normalized(&self, other: &Self) -> Ordering {
+        self.compare_parameter_normalized(0, other)
+    }
+
+    /// Compare the second parameter through normalized fixed-width products.
+    #[doc(hidden)]
+    pub fn compare_second_parameter_normalized(&self, other: &Self) -> Ordering {
+        self.compare_parameter_normalized(1, other)
     }
 
     pub(crate) fn materialize_parameter(&self, index: usize) -> Rational {

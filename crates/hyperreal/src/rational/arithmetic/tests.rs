@@ -63,6 +63,107 @@ mod tests {
     }
 
     #[test]
+    fn compact_dyadic_parameter_comparison_matches_biguint_cross_products() {
+        fn next(state: &mut u64) -> u64 {
+            *state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            *state
+        }
+
+        fn word(state: &mut u64, allow_zero: bool) -> DyadicWord {
+            let magnitude = (u128::from(next(state)) << 64) | u128::from(next(state));
+            let sign = if allow_zero && next(state).is_multiple_of(29) {
+                NoSign
+            } else if next(state) & 1 == 0 {
+                Plus
+            } else {
+                Minus
+            };
+            DyadicWord {
+                sign,
+                magnitude: if sign == NoSign { 0 } else { magnitude.max(1) },
+                denominator_shift: next(state) % 2_048,
+            }
+        }
+
+        fn expected(
+            left_numerator: DyadicWord,
+            left_denominator: DyadicWord,
+            right_numerator: DyadicWord,
+            right_denominator: DyadicWord,
+        ) -> Ordering {
+            let left_sign = left_numerator.sign * left_denominator.sign;
+            let right_sign = right_numerator.sign * right_denominator.sign;
+            if left_sign != right_sign {
+                return match (left_sign, right_sign) {
+                    (Minus, _) | (_, Plus) => Ordering::Less,
+                    (Plus, _) | (_, Minus) => Ordering::Greater,
+                    _ => Ordering::Equal,
+                };
+            }
+            if left_sign == NoSign {
+                return Ordering::Equal;
+            }
+            let left_shift = left_denominator.denominator_shift
+                + right_numerator.denominator_shift;
+            let right_shift = right_denominator.denominator_shift
+                + left_numerator.denominator_shift;
+            let common_shift = left_shift.min(right_shift);
+            let left = (BigUint::from(left_numerator.magnitude)
+                * right_denominator.magnitude)
+                << usize::try_from(left_shift - common_shift).unwrap();
+            let right = (BigUint::from(right_numerator.magnitude)
+                * left_denominator.magnitude)
+                << usize::try_from(right_shift - common_shift).unwrap();
+            let ordering = left.cmp(&right);
+            if left_sign == Minus {
+                ordering.reverse()
+            } else {
+                ordering
+            }
+        }
+
+        let mut state = 0x243f_6a88_85a3_08d3;
+        for _ in 0..20_000 {
+            let left_numerators = [word(&mut state, true), word(&mut state, true)];
+            let left_denominator = word(&mut state, false);
+            let right_numerators = [word(&mut state, true), word(&mut state, true)];
+            let right_denominator = word(&mut state, false);
+            let left = ExactDyadicLineParameters2::from_words(
+                left_numerators,
+                left_denominator,
+            );
+            let right = ExactDyadicLineParameters2::from_words(
+                right_numerators,
+                right_denominator,
+            );
+            let expected_first = expected(
+                left_numerators[0],
+                left_denominator,
+                right_numerators[0],
+                right_denominator,
+            );
+            let expected_second = expected(
+                left_numerators[1],
+                left_denominator,
+                right_numerators[1],
+                right_denominator,
+            );
+            assert_eq!(left.compare_first_parameter(&right), expected_first);
+            assert_eq!(
+                left.compare_first_parameter_normalized(&right),
+                expected_first
+            );
+            assert_eq!(left.compare_second_parameter(&right), expected_second);
+            assert_eq!(
+                left.compare_second_parameter_normalized(&right),
+                expected_second
+            );
+        }
+    }
+
+    #[test]
     fn rational_data_layout_stays_bounded() {
         assert!(
             size_of::<RationalData>() <= 88,

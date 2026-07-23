@@ -1247,6 +1247,36 @@ Hyperreal suite, the complete downstream Hypercurve all-feature suite, strict
 Clippy, warning-denied rustdoc, and a 10,000-run AddressSanitizer region-Boolean
 campaign (5,902 coverage points and 18,712 feature edges) passed.
 
+### Normalized fixed-width dyadic quotient ordering
+
+Retained line intersections store each parameter as a signed `u128` dyadic
+numerator divided by a signed `u128` dyadic denominator. Comparing two such
+parameters previously sent both cross-products through the general six-limb
+signed-product accumulator even though each magnitude product is bounded to
+256 bits. The compact comparator now forms those products directly in four
+`u64` limbs. Different effective bit lengths decide immediately; equal lengths
+are shifted conceptually to a common most-significant bit and compared one limb
+at a time. Sign reversal is applied only after the magnitude order is known.
+No approximation or arbitrary-precision materialization is involved.
+
+The ordinary accumulator route remains available because its smaller inlined
+body has better instruction locality for short sorts. Downstream Hypercurve
+selects the normalized route only for certified crossing sets of at least
+1,024 events. Two alternating paired star1024 contour trials measured
+6.765--6.948 ms/iteration with normalized products versus
+7.219--7.316 ms/iteration through the preceding accumulator route, a 5--6%
+end-to-end gain. Star64 and star256 remain on the previous path and were neutral
+across repeated paired runs.
+
+The 500-operation star1024 profile attributes 6.63% self-time to the normalized
+comparator while accumulator self-time falls from 12.60% to 6.07%, leaving only
+the final exact point-construction uses. A 20,000-case deterministic oracle
+compares both compact implementations against `BigUint` cross-products across
+both signs and denominator shifts through 2,047. The complete 562-test
+all-feature Hyperreal suite, downstream Hypercurve suite, strict Clippy,
+warning-denied rustdoc, and the 10,000-run AddressSanitizer region-Boolean
+campaign (5,906 coverage points and 18,772 feature edges) pass.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
