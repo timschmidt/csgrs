@@ -1481,6 +1481,61 @@ mod tests {
     }
 
     #[test]
+    fn native_word_product_sums_match_stack_accumulation() {
+        fn next(state: &mut u64) -> u64 {
+            *state ^= *state << 13;
+            *state ^= *state >> 7;
+            *state ^= *state << 17;
+            *state
+        }
+
+        fn word(state: &mut u64) -> DyadicWord {
+            let control = next(state);
+            let sign = match control & 15 {
+                0 => NoSign,
+                value if value & 1 == 0 => Plus,
+                _ => Minus,
+            };
+            let magnitude = if sign == NoSign {
+                0
+            } else if control & 31 == 1 {
+                u128::MAX - u128::from(next(state) & 255)
+            } else {
+                u128::from(next(state) & ((1_u64 << 56) - 1)) + 1
+            };
+            DyadicWord {
+                sign,
+                magnitude,
+                denominator_shift: next(state) % 32,
+            }
+        }
+
+        let mut state = 0xa54f_f53a_5f1d_36f1_u64;
+        let mut admitted = 0_u32;
+        let mut deferred = 0_u32;
+        for _ in 0..20_000 {
+            let left = [word(&mut state), word(&mut state)];
+            let right = [word(&mut state), word(&mut state)];
+            let positive_terms = [next(&mut state) & 1 == 0, next(&mut state) & 1 == 0];
+            let stack = Rational::product_sum_dyadic_words(left, right, positive_terms)
+                .expect("the 384-bit reference carrier covers the generated products");
+            match Rational::product_sum_dyadic_words_word(left, right, positive_terms) {
+                Some(native) => {
+                    let reference = Rational::dyadic_stack_sum_word(stack)
+                        .expect("a native result must fit the reference word envelope");
+                    assert_eq!(native.sign, reference.sign);
+                    assert_eq!(native.magnitude, reference.magnitude);
+                    assert_eq!(native.denominator_shift, reference.denominator_shift);
+                    admitted += 1;
+                }
+                None => deferred += 1,
+            }
+        }
+        assert!(admitted > 10_000, "only {admitted} native sums admitted");
+        assert!(deferred > 100, "only {deferred} wide sums deferred");
+    }
+
+    #[test]
     fn exact_dyadic_f64_view_rejects_unrepresentable_values() {
         let too_precise = Rational::new((1_i64 << 54) + 1);
         let exactly_representable = Rational::new((1_i64 << 54) + 4);

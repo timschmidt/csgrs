@@ -935,15 +935,17 @@ impl Rational {
         };
         let second_delta = difference(second_end, second_start)?;
         let start_delta = difference(second_start, first.start)?;
-        let denominator = Self::cross_dyadic_words(first.delta, second_delta)
-            .and_then(Self::dyadic_stack_sum_word)?;
+        let cross = |left, right| {
+            Self::cross_dyadic_words_word(left, right).or_else(|| {
+                Self::cross_dyadic_words(left, right).and_then(Self::dyadic_stack_sum_word)
+            })
+        };
+        let denominator = cross(first.delta, second_delta)?;
         if denominator.sign == NoSign {
             return None;
         }
-        let first_numerator = Self::cross_dyadic_words(start_delta, second_delta)
-            .and_then(Self::dyadic_stack_sum_word)?;
-        let second_numerator = Self::cross_dyadic_words(start_delta, first.delta)
-            .and_then(Self::dyadic_stack_sum_word)?;
+        let first_numerator = cross(start_delta, second_delta)?;
+        let second_numerator = cross(start_delta, first.delta)?;
         Some(DyadicLineIntersectionPlan {
             first_start: first.start,
             first_delta: first.delta,
@@ -2860,6 +2862,17 @@ impl Rational {
         })
     }
 
+    fn dyadic_word_stack_sum(word: DyadicWord) -> DyadicStackSum {
+        let mut magnitude = DyadicStackAccumulator::default();
+        magnitude.0[0] = word.magnitude as u64;
+        magnitude.0[1] = (word.magnitude >> 64) as u64;
+        DyadicStackSum {
+            sign: word.sign,
+            magnitude,
+            denominator_shift: word.denominator_shift,
+        }
+    }
+
     fn dyadic_stack_sum_wide_word(sum: DyadicStackSum) -> Option<DyadicWideWord> {
         if sum.magnitude.0[4..].iter().any(|limb| *limb != 0) {
             return None;
@@ -2904,8 +2917,59 @@ impl Rational {
         ))
     }
 
+    fn product_sum_dyadic_words_word<const N: usize>(
+        left: [DyadicWord; N],
+        right: [DyadicWord; N],
+        positive_terms: [bool; N],
+    ) -> Option<DyadicWord> {
+        let denominator_shifts: [u64; N] = core::array::from_fn(|index| {
+            left[index].denominator_shift + right[index].denominator_shift
+        });
+        let max_shift = denominator_shifts.into_iter().max().unwrap_or(0);
+        let mut sum = (NoSign, 0_u128);
+        for index in 0..N {
+            let sign = (if positive_terms[index] { Plus } else { Minus })
+                * left[index].sign
+                * right[index].sign;
+            if sign == NoSign {
+                continue;
+            }
+            let shift =
+                u32::try_from(max_shift - denominator_shifts[index]).ok()?;
+            let magnitude = left[index]
+                .magnitude
+                .checked_mul(right[index].magnitude)
+                .and_then(|magnitude| Self::checked_word_shift_left(magnitude, shift))?;
+            sum = Self::signed_word_sum(sum, (sign, magnitude))?;
+        }
+        if sum.0 == NoSign {
+            return Some(DyadicWord {
+                sign: NoSign,
+                magnitude: 0,
+                denominator_shift: 0,
+            });
+        }
+        let common_shift = u64::from(sum.1.trailing_zeros()).min(max_shift);
+        Some(DyadicWord {
+            sign: sum.0,
+            magnitude: sum.1 >> common_shift,
+            denominator_shift: max_shift - common_shift,
+        })
+    }
+
     fn cross_dyadic_words(left: [DyadicWord; 2], right: [DyadicWord; 2]) -> Option<DyadicStackSum> {
         Self::product_sum_dyadic_words(
+            [left[0], left[1]],
+            [right[1], right[0]],
+            [true, false],
+        )
+    }
+
+    fn cross_dyadic_words_word(
+        left: [DyadicWord; 2],
+        right: [DyadicWord; 2],
+    ) -> Option<DyadicWord> {
+        Self::product_sum_dyadic_words_word(
             [left[0], left[1]],
             [right[1], right[0]],
             [true, false],
@@ -4010,11 +4074,11 @@ impl Rational {
 
     fn line_intersection2_point_from_plan(plan: DyadicLineIntersectionPlan) -> Option<[Self; 2]> {
         let coordinate = |index: usize| {
-            let affine = Self::product_sum_dyadic_words(
-                [plan.first_start[index], plan.numerators[0]],
-                [plan.denominator, plan.first_delta[index]],
-                [true, true],
-            )?;
+            let left = [plan.first_start[index], plan.numerators[0]];
+            let right = [plan.denominator, plan.first_delta[index]];
+            let affine = Self::product_sum_dyadic_words_word(left, right, [true, true])
+                .map(Self::dyadic_word_stack_sum)
+                .or_else(|| Self::product_sum_dyadic_words(left, right, [true, true]))?;
             if affine.sign == NoSign {
                 return Some(Self::zero());
             }

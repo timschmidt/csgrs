@@ -1380,6 +1380,36 @@ strict Clippy, and warning-denied rustdoc pass. The 10,000-run AddressSanitizer
 differential Boolean campaign completed without failure at 5,891 coverage
 points and 18,881 feature edges.
 
+### Native-word two-product sums
+
+Compact line determinants and affine point numerators previously entered the
+384-bit stack accumulator even when both aligned products and their signed sum
+fit `u128`. They now try checked native multiplication, alignment, signed
+addition/subtraction, and dyadic normalization first. Any product, shift, sum,
+or cancellation result outside that envelope immediately reruns the unchanged
+stack path; wide and arbitrary-precision behavior is unaffected.
+
+In two same-layout alternating 21-sample star1024 contour comparisons, the
+native path measured 5.575 and 5.653 ms/iteration versus 5.732 and 5.736 ms,
+an improvement of 2.7% and 1.4%. Seven-run counters over 320 iterations
+reduced instructions from 25.969 to 25.392 billion, branches from 4.345 to
+4.152 billion, and branch misses from 23.52 to 21.04 million; cycle totals
+were equal within run noise. Reversed star64 trials improved 2.7--3.0%, while
+ordinary rectangle contours fell from 5.768 to 5.223 us.
+
+The complete star1024 matrix measured ordinary/prepared exact contours at
+5.487/5.567 ms, versus 19.764 ms for Cavalier, 10.059 ms for `i_overlay`, and
+10.082 ms for `geo`. Heaptrack is unchanged from the direct-binary64
+checkpoint: ten operations use 1,104,313 allocations, 2,193 temporaries, and
+16.58 MiB peak heap.
+
+A 20,000-case randomized arithmetic oracle compares every admitted native sum
+with the 384-bit result and forces checked overflow deferrals. The compact and
+wide line-intersection oracles cover the integrated fallback. Both complete
+all-feature suites, strict Clippy, and warning-denied rustdoc pass. The
+10,000-run AddressSanitizer differential Boolean campaign completed without
+failure at 5,895 coverage points and 18,890 feature edges.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
