@@ -816,13 +816,25 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
     };
 
     #[derive(Clone, Copy)]
-    struct Candidate {
-        a_segment_index: u16,
-        b_segment_index: u16,
-        positive_crossing: bool,
+    struct Candidate(u32);
+
+    impl Candidate {
+        fn new(a_segment_index: u16, b_segment_index: u16) -> Self {
+            Self(u32::from(a_segment_index) | (u32::from(b_segment_index) << 16))
+        }
+
+        fn a_segment_index(self) -> u16 {
+            self.0 as u16
+        }
+
+        fn b_segment_index(self) -> u16 {
+            (self.0 >> 16) as u16
+        }
     }
+    const _: () = assert!(std::mem::size_of::<Candidate>() == 4);
 
     let mut candidates = Vec::new();
+    let mut positive_crossings = 1_u64 << 63;
     for (a_segment_index, a_box) in a_boxes.segments.iter().copied().enumerate() {
         let a_endpoints = a_boxes.segment_endpoints(a_segment_index);
         let Segment2::Line(a_line) = &a.segments()[a_segment_index] else {
@@ -849,40 +861,46 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                 b_endpoints,
             );
             match relation {
-                CertifiedLineSegmentSupportRelation::Separated => {}
                 CertifiedLineSegmentSupportRelation::ProperCrossing(sign) => {
                     if candidates.is_empty() {
                         candidates.reserve_exact(a.len().min(b.len()).min(64));
                     }
+                    let event_index = candidates.len();
                     // The dispatcher admits this path only when both contour
-                    // lengths fit the compact candidate index.
-                    candidates.push(Candidate {
-                        a_segment_index: a_segment_index as u16,
-                        b_segment_index: b_segment_index as u16,
-                        positive_crossing: match sign {
+                    // lengths fit the packed candidate indices.
+                    candidates.push(Candidate::new(
+                        a_segment_index as u16,
+                        b_segment_index as u16,
+                    ));
+                    if event_index < 63
+                        && match sign {
                             hyperreal::RealSign::Positive => true,
                             hyperreal::RealSign::Negative => false,
                             hyperreal::RealSign::Zero => {
                                 unreachable!("a certified proper crossing has nonzero orientation")
                             }
-                        },
-                    });
+                        }
+                    {
+                        positive_crossings |= 1 << event_index;
+                    }
                 }
                 CertifiedLineSegmentSupportRelation::Unknown => {
                     return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
                         a, b, a_boxes, b_boxes, policy,
                     );
                 }
+                CertifiedLineSegmentSupportRelation::Separated => {}
             }
         }
     }
     let mut events = Vec::with_capacity(if POINT_ONLY { 0 } else { candidates.len() });
     let mut crossings = Vec::with_capacity(if POINT_ONLY { candidates.len() } else { 0 });
     let retain_crossing_signs = candidates.len() < 64;
-    let mut positive_crossings = 1_u64 << 63;
-    for (event_index, candidate) in candidates.into_iter().enumerate() {
-        let a_segment_index = usize::from(candidate.a_segment_index);
-        let b_segment_index = usize::from(candidate.b_segment_index);
+    for candidate in candidates {
+        let a_segment_index_u16 = candidate.a_segment_index();
+        let b_segment_index_u16 = candidate.b_segment_index();
+        let a_segment_index = usize::from(a_segment_index_u16);
+        let b_segment_index = usize::from(b_segment_index_u16);
         let a_segment = &a.segments()[a_segment_index];
         let b_segment = &b.segments()[b_segment_index];
         let (Segment2::Line(a_line), Segment2::Line(b_line)) = (a_segment, b_segment) else {
@@ -896,8 +914,8 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                 [b_line.end().x(), b_line.end().y()],
             ) {
                 Some((parameters, [x, y])) => CertifiedLineCrossingEvent::new_exact_dyadic(
-                    candidate.a_segment_index,
-                    candidate.b_segment_index,
+                    a_segment_index_u16,
+                    b_segment_index_u16,
                     Point2::new(x, y),
                     parameters,
                 ),
@@ -909,8 +927,8 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                 ) {
                     Some((parameters, [x, y])) => {
                         CertifiedLineCrossingEvent::new_exact_dyadic_wide(
-                            candidate.a_segment_index,
-                            candidate.b_segment_index,
+                            a_segment_index_u16,
+                            b_segment_index_u16,
                             Point2::new(x, y),
                             parameters,
                         )
@@ -930,8 +948,8 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                             );
                         };
                         CertifiedLineCrossingEvent::new_materialized(
-                            candidate.a_segment_index,
-                            candidate.b_segment_index,
+                            a_segment_index_u16,
+                            b_segment_index_u16,
                             point,
                             a_param,
                             b_param,
@@ -963,9 +981,6 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                 b_param,
                 kind,
             }));
-        }
-        if retain_crossing_signs && candidate.positive_crossing {
-            positive_crossings |= 1 << event_index;
         }
     }
     let signs = retain_crossing_signs

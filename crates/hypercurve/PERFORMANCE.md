@@ -2158,6 +2158,25 @@ LeakSanitizer disabled under ptrace, the AddressSanitizer `region_boolean`
 differential target completed 10,000 executions at 5,901 coverage points and
 18,616 feature edges without failure.
 
+The next event-collector checkpoint packs each retained proper-crossing
+candidate's two `u16` segment indices into one `u32`. Crossing orientation was
+already representable in the existing sub-64-event bitset, so the temporary
+record falls from 6 to 4 bytes without moving or weakening a predicate. A
+static layout assertion protects that bound. Two paired 31-sample star256
+contour runs measured 0.456 versus 0.475 ms and 0.475 versus 0.489 ms, a
+2.8--4.0% improvement. A 21-sample star1024 run measured 7.557 versus
+7.605 ms, while star64 remained within roughly 1% of the preceding checkpoint.
+Heaptrack still records 59,096 allocations, 1,052 temporaries, and 697.47 KiB
+peak heap because the change shrinks an existing staging allocation.
+
+Three broader variants were measured and removed. Emitting crossings during
+the broad-phase scan avoided one allocation and improved star1024 by about 3%,
+but geometric vector growth raised the eleven-run RSS median from 24,040 to
+24,432 KiB; the two-stage collector intentionally keeps its exactly sized
+retained output. A lazy exact-f64 interval tree raised star1024 to 8.060 ms,
+6.7% slower than the packed linear sweep. Replacing endpoint hashing with a
+sorted flat index raised star64 by about 2% and star1024 by about 2.5%.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
