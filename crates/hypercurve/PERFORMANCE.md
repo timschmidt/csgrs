@@ -2405,9 +2405,16 @@ Seven-run counters over 320 iterations reduced instructions from 25.969 to
 star64 trials improved 2.7--3.0%, and ordinary rectangle contours improved
 from 5.768 to 5.223 us.
 
-The complete star1024 matrix measured ordinary/prepared exact contours at
-5.487/5.567 ms, versus 19.764 ms for Cavalier, 10.059 ms for `i_overlay`, and
-10.082 ms for `geo`. Heaptrack remains 1,104,313 allocations, 2,193
+Replacing the const-generic loop with the explicit fixed two-term shape then
+reduced a 31-sample star1024 contour trial from 5.550 to 5.403 ms. Seven-run
+counters fell from 8.119 to 7.792 billion cycles and from 25.392 to
+25.190 billion instructions. Final star64 and star256 trials measured
+49.806 us and 0.392 ms; rectangle contours measured 5.306 us.
+
+The complete final star1024 matrix measured ordinary/prepared exact contours
+at 5.661/5.376 ms, with the ordinary row noisier than its dedicated trial.
+Competitors measured 19.857 ms for Cavalier, 10.119 ms for `i_overlay`, and
+10.117 ms for `geo`. Heaptrack remains 1,104,313 allocations, 2,193
 temporaries, and 16.58 MiB peak heap across ten operations.
 
 Hyperreal's 20,000-case native-versus-stack oracle covers admitted results and
@@ -2415,7 +2422,7 @@ checked overflow deferrals; the existing compact/wide crossing oracles and
 retained collector equality test cover integration. Both complete all-feature
 suites, strict Clippy, and warning-denied rustdoc pass. The 10,000-run
 AddressSanitizer differential Boolean campaign completed without failure at
-5,895 coverage points and 18,890 feature edges.
+5,891 coverage points and 18,933 feature edges.
 
 ## Optimization boundary
 
