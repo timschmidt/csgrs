@@ -297,6 +297,33 @@ impl Real {
         .map(|(parameters, point)| (parameters, point.map(Real::new)))
     }
 
+    /// Prepare one exact-dyadic line for repeated compact crossing queries.
+    #[doc(hidden)]
+    pub fn prepare_exact_dyadic_line2(
+        start: [&Real; 2],
+        end: [&Real; 2],
+    ) -> Option<crate::PreparedExactDyadicLine2> {
+        Rational::prepare_line_intersection2_first_known_dyadic(
+            start.map(|value| &value.rational),
+            end.map(|value| &value.rational),
+        )
+    }
+
+    /// Solve a certified proper crossing against one prepared dyadic line.
+    #[doc(hidden)]
+    pub fn exact_rational_line_intersection2_point_with_prepared_first(
+        first: &crate::PreparedExactDyadicLine2,
+        second_start: [&Real; 2],
+        second_end: [&Real; 2],
+    ) -> Option<(crate::ExactDyadicLineParameters2, [Real; 2])> {
+        Rational::line_intersection2_point_with_prepared_first(
+            first,
+            second_start.map(|value| &value.rational),
+            second_end.map(|value| &value.rational),
+        )
+        .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
     /// Solve a certified proper crossing whose dyadic determinants exceed the
     /// native-word carrier but fit the wider fixed-stack envelope.
     #[doc(hidden)]
@@ -309,6 +336,21 @@ impl Real {
         Rational::line_intersection2_point_known_dyadic_wide(
             first_start.map(|value| &value.rational),
             first_end.map(|value| &value.rational),
+            second_start.map(|value| &value.rational),
+            second_end.map(|value| &value.rational),
+        )
+        .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
+    /// Solve a wide certified crossing against one prepared dyadic line.
+    #[doc(hidden)]
+    pub fn exact_rational_line_intersection2_point_wide_with_prepared_first(
+        first: &crate::PreparedExactDyadicLine2,
+        second_start: [&Real; 2],
+        second_end: [&Real; 2],
+    ) -> Option<(crate::ExactDyadicWideLineParameters2, [Real; 2])> {
+        Rational::line_intersection2_point_wide_with_prepared_first(
+            first,
             second_start.map(|value| &value.rational),
             second_end.map(|value| &value.rational),
         )

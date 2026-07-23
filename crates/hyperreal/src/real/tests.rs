@@ -2821,6 +2821,18 @@ mod tests {
                     [&second_end[0], &second_end[1]],
                 )
                 .expect("the point-only kernel shares the fused path's checked bounds");
+            let prepared = Real::prepare_exact_dyadic_line2(
+                [&first_start[0], &first_start[1]],
+                [&first_end[0], &first_end[1]],
+            )
+            .expect("the fused path's first line should prepare");
+            let (prepared_parameters, prepared_point) =
+                Real::exact_rational_line_intersection2_point_with_prepared_first(
+                    &prepared,
+                    [&second_start[0], &second_start[1]],
+                    [&second_end[0], &second_end[1]],
+                )
+                .expect("prepared and one-shot compact paths share bounds");
             fused_cases += 1;
             let first_numerator = Real::diff_of_products(
                 &start_delta[0],
@@ -2854,6 +2866,15 @@ mod tests {
                 ]
             );
             assert_eq!(point_only, point);
+            assert_eq!(prepared_point, point);
+            assert_eq!(
+                prepared_parameters.materialize_first_parameter(),
+                expected_first
+            );
+            assert_eq!(
+                prepared_parameters.materialize_second_parameter(),
+                expected_second
+            );
             retained_cases.push((retained_parameters, expected_first, expected_second));
         }
         assert!(
@@ -2917,6 +2938,7 @@ mod tests {
             )
             .is_none()
         );
+        assert!(Real::prepare_exact_dyadic_line2([&wide, &zero], [&one, &one]).is_none());
     }
 
     #[test]
@@ -3047,6 +3069,18 @@ mod tests {
             else {
                 continue;
             };
+            let prepared = Real::prepare_exact_dyadic_line2(
+                [&first_start[0], &first_start[1]],
+                [&first_end[0], &first_end[1]],
+            )
+            .expect("the wide determinant path still uses word-sized source deltas");
+            let (prepared_parameters, prepared_point) =
+                Real::exact_rational_line_intersection2_point_wide_with_prepared_first(
+                    &prepared,
+                    [&second_start[0], &second_start[1]],
+                    [&second_end[0], &second_end[1]],
+                )
+                .expect("prepared and one-shot wide paths share bounds");
             let first_numerator = Real::diff_of_products(
                 &start_delta[0],
                 &second_delta[1],
@@ -3069,6 +3103,15 @@ mod tests {
                     Real::affine(&first_start[0], &expected_first, &first_delta[0]),
                     Real::affine(&first_start[1], &expected_first, &first_delta[1]),
                 ]
+            );
+            assert_eq!(prepared_point, point);
+            assert_eq!(
+                prepared_parameters.materialize_first_parameter(),
+                expected_first
+            );
+            assert_eq!(
+                prepared_parameters.materialize_second_parameter(),
+                expected_second
             );
             retained_cases.push((parameters, expected_first, expected_second));
         }

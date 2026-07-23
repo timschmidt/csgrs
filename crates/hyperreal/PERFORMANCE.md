@@ -1314,6 +1314,38 @@ downstream Hypercurve suite, strict Clippy, and warning-denied rustdoc pass.
 The 10,000-run AddressSanitizer differential Boolean campaign completed
 without failure at 5,892 coverage points and 18,786 feature edges.
 
+### Prepared exact-dyadic line point plans
+
+Compact and wide fused line-intersection kernels previously converted both
+source lines to native dyadic words and rebuilt both exact deltas for every
+crossing. Hypercurve's retained candidate stream is already grouped by its
+first segment, so the first endpoint words and delta now live in a
+`PreparedExactDyadicLine2` for that segment's entire group. The second line,
+three determinants, and both final rational coordinates remain independently
+computed per crossing. Inputs outside the word-sized endpoint/delta envelope
+still return `None` for the unchanged general exact path.
+
+Two alternating 21-sample star1024 contour trials measured
+5.733--5.737 ms/iteration with the prepared exact line versus
+5.865--5.880 ms at the preceding predicate-reuse checkpoint, a further
+2.2--2.5% improvement. Dedicated smaller trials measured 53.155 us at star64
+versus 53.560 us, and 0.423 ms at star256 versus 0.434 ms. The ordinary
+four-segment rectangle path remained healthy at 5.339 us versus 5.487 us.
+
+The complete comparison matrix measured ordinary exact star1024 contours at
+5.816 ms, and a dedicated prepared-contour rerun measured 5.863 ms. Finite
+competitor rows were 19.590 ms for Cavalier, 10.316 ms for `i_overlay`, and
+10.275 ms for `geo`. The preparation is stack-only: ten star1024 contour
+operations remain exactly 1,104,312 allocations, 2,192 temporaries, and
+16.58 MiB peak heap.
+
+The existing 512-case compact and 256-case wide exact-arithmetic oracles now
+run every admitted crossing through both one-shot and prepared plans, compare
+both retained parameters and coordinates, and cover endpoint-word overflow
+fallback. Both complete all-feature suites, strict Clippy, and warning-denied
+rustdoc pass. The 10,000-run AddressSanitizer differential Boolean campaign
+completed without failure at 5,892 coverage points and 18,825 feature edges.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

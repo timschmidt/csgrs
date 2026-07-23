@@ -131,6 +131,18 @@ struct DyadicLineIntersectionPlan {
     numerators: [DyadicWord; 2],
 }
 
+/// Prepared exact-dyadic source line for repeated intersection points.
+///
+/// The compact endpoint words and their exact delta are retained without
+/// materializing standalone rational differences. Queries that exceed this
+/// native-word envelope return `None` for the general exact fallback.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedExactDyadicLine2 {
+    start: [DyadicWord; 2],
+    delta: [DyadicWord; 2],
+}
+
 #[derive(Clone, Copy, Debug)]
 struct DyadicWideWord {
     sign: Sign,
@@ -779,9 +791,43 @@ impl DyadicStackAccumulator {
 }
 
 impl Rational {
+    fn prepare_line2_known_dyadic(
+        start: [&Self; 2],
+        end: [&Self; 2],
+    ) -> Option<PreparedExactDyadicLine2> {
+        let point_words = |point: [&Self; 2]| {
+            Some([
+                Self::known_dyadic_word(point[0])?,
+                Self::known_dyadic_word(point[1])?,
+            ])
+        };
+        let start = point_words(start)?;
+        let end = point_words(end)?;
+        Some(PreparedExactDyadicLine2 {
+            start,
+            delta: [
+                Self::difference_dyadic_words(end[0], start[0])?,
+                Self::difference_dyadic_words(end[1], start[1])?,
+            ],
+        })
+    }
+
     fn line_intersection2_plan_known_dyadic(
         first_start: [&Self; 2],
         first_end: [&Self; 2],
+        second_start: [&Self; 2],
+        second_end: [&Self; 2],
+    ) -> Option<DyadicLineIntersectionPlan> {
+        let first = Self::prepare_line2_known_dyadic(first_start, first_end)?;
+        Self::line_intersection2_plan_with_prepared_first(
+            &first,
+            second_start,
+            second_end,
+        )
+    }
+
+    fn line_intersection2_plan_with_prepared_first(
+        first: &PreparedExactDyadicLine2,
         second_start: [&Self; 2],
         second_end: [&Self; 2],
     ) -> Option<DyadicLineIntersectionPlan> {
@@ -791,8 +837,6 @@ impl Rational {
                 Self::known_dyadic_word(point[1])?,
             ])
         };
-        let first_start = point_words(first_start)?;
-        let first_end = point_words(first_end)?;
         let second_start = point_words(second_start)?;
         let second_end = point_words(second_end)?;
         let difference = |left: [DyadicWord; 2], right: [DyadicWord; 2]| {
@@ -801,21 +845,20 @@ impl Rational {
                 Self::difference_dyadic_words(left[1], right[1])?,
             ])
         };
-        let first_delta = difference(first_end, first_start)?;
         let second_delta = difference(second_end, second_start)?;
-        let start_delta = difference(second_start, first_start)?;
-        let denominator = Self::cross_dyadic_words(first_delta, second_delta)
+        let start_delta = difference(second_start, first.start)?;
+        let denominator = Self::cross_dyadic_words(first.delta, second_delta)
             .and_then(Self::dyadic_stack_sum_word)?;
         if denominator.sign == NoSign {
             return None;
         }
         let first_numerator = Self::cross_dyadic_words(start_delta, second_delta)
             .and_then(Self::dyadic_stack_sum_word)?;
-        let second_numerator = Self::cross_dyadic_words(start_delta, first_delta)
+        let second_numerator = Self::cross_dyadic_words(start_delta, first.delta)
             .and_then(Self::dyadic_stack_sum_word)?;
         Some(DyadicLineIntersectionPlan {
-            first_start,
-            first_delta,
+            first_start: first.start,
+            first_delta: first.delta,
             denominator,
             numerators: [first_numerator, second_numerator],
         })
@@ -827,14 +870,25 @@ impl Rational {
         second_start: [&Self; 2],
         second_end: [&Self; 2],
     ) -> Option<DyadicWideLineIntersectionPlan> {
+        let first = Self::prepare_line2_known_dyadic(first_start, first_end)?;
+        Self::line_intersection2_wide_plan_with_prepared_first(
+            &first,
+            second_start,
+            second_end,
+        )
+    }
+
+    fn line_intersection2_wide_plan_with_prepared_first(
+        first: &PreparedExactDyadicLine2,
+        second_start: [&Self; 2],
+        second_end: [&Self; 2],
+    ) -> Option<DyadicWideLineIntersectionPlan> {
         let point_words = |point: [&Self; 2]| {
             Some([
                 Self::known_dyadic_word(point[0])?,
                 Self::known_dyadic_word(point[1])?,
             ])
         };
-        let first_start = point_words(first_start)?;
-        let first_end = point_words(first_end)?;
         let second_start = point_words(second_start)?;
         let second_end = point_words(second_end)?;
         let difference = |left: [DyadicWord; 2], right: [DyadicWord; 2]| {
@@ -843,11 +897,10 @@ impl Rational {
                 Self::difference_dyadic_words(left[1], right[1])?,
             ])
         };
-        let first_delta = difference(first_end, first_start)?;
         let second_delta = difference(second_end, second_start)?;
-        let start_delta = difference(second_start, first_start)?;
+        let start_delta = difference(second_start, first.start)?;
         let denominator = Self::dyadic_stack_sum_wide_word(Self::cross_dyadic_words(
-            first_delta,
+            first.delta,
             second_delta,
         )?)?;
         if denominator.sign == NoSign {
@@ -859,11 +912,11 @@ impl Rational {
         )?)?;
         let second_numerator = Self::dyadic_stack_sum_wide_word(Self::cross_dyadic_words(
             start_delta,
-            first_delta,
+            first.delta,
         )?)?;
         Some(DyadicWideLineIntersectionPlan {
-            first_start,
-            first_delta,
+            first_start: first.start,
+            first_delta: first.delta,
             denominator,
             numerators: [first_numerator, second_numerator],
         })
@@ -3677,6 +3730,32 @@ impl Rational {
         ))
     }
 
+    pub(crate) fn prepare_line_intersection2_first_known_dyadic(
+        first_start: [&Self; 2],
+        first_end: [&Self; 2],
+    ) -> Option<PreparedExactDyadicLine2> {
+        Self::prepare_line2_known_dyadic(first_start, first_end)
+    }
+
+    pub(crate) fn line_intersection2_point_with_prepared_first(
+        first: &PreparedExactDyadicLine2,
+        second_start: [&Self; 2],
+        second_end: [&Self; 2],
+    ) -> Option<(ExactDyadicLineParameters2, [Self; 2])> {
+        let plan =
+            Self::line_intersection2_plan_with_prepared_first(first, second_start, second_end)?;
+        let point = Self::line_intersection2_point_from_plan(plan)?;
+        crate::trace_dispatch!(
+            "rational",
+            "line-intersection2",
+            "dyadic-stack-fused-point-prepared"
+        );
+        Some((
+            ExactDyadicLineParameters2::from_words(plan.numerators, plan.denominator),
+            point,
+        ))
+    }
+
     pub(crate) fn line_intersection2_point_known_dyadic_wide(
         first_start: [&Self; 2],
         first_end: [&Self; 2],
@@ -3689,6 +3768,43 @@ impl Rational {
             second_start,
             second_end,
         )?;
+        let point = Self::line_intersection2_point_from_wide_plan(plan)?;
+        crate::trace_dispatch!(
+            "rational",
+            "line-intersection2",
+            "dyadic-stack-fused-point-wide"
+        );
+        Some((
+            ExactDyadicWideLineParameters2::from_words(plan.numerators, plan.denominator),
+            point,
+        ))
+    }
+
+    pub(crate) fn line_intersection2_point_wide_with_prepared_first(
+        first: &PreparedExactDyadicLine2,
+        second_start: [&Self; 2],
+        second_end: [&Self; 2],
+    ) -> Option<(ExactDyadicWideLineParameters2, [Self; 2])> {
+        let plan = Self::line_intersection2_wide_plan_with_prepared_first(
+            first,
+            second_start,
+            second_end,
+        )?;
+        let point = Self::line_intersection2_point_from_wide_plan(plan)?;
+        crate::trace_dispatch!(
+            "rational",
+            "line-intersection2",
+            "dyadic-stack-fused-point-wide-prepared"
+        );
+        Some((
+            ExactDyadicWideLineParameters2::from_words(plan.numerators, plan.denominator),
+            point,
+        ))
+    }
+
+    fn line_intersection2_point_from_wide_plan(
+        plan: DyadicWideLineIntersectionPlan,
+    ) -> Option<[Self; 2]> {
         let coordinate = |index: usize| {
             let affine = Self::product_sum_wide_narrow_words(
                 [plan.denominator, plan.numerators[0]],
@@ -3703,16 +3819,7 @@ impl Rational {
                 plan.denominator,
             ))
         };
-        let point = [coordinate(0)?, coordinate(1)?];
-        crate::trace_dispatch!(
-            "rational",
-            "line-intersection2",
-            "dyadic-stack-fused-point-wide"
-        );
-        Some((
-            ExactDyadicWideLineParameters2::from_words(plan.numerators, plan.denominator),
-            point,
-        ))
+        Some([coordinate(0)?, coordinate(1)?])
     }
 
     pub(crate) fn line_intersection2_known_dyadic(
