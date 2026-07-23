@@ -57,26 +57,6 @@ fn direct_boolean_results(left: &Mesh<()>, right: &Mesh<()>, count: usize) -> Ve
     results
 }
 
-fn prepared_boolean_results(
-    prepared: &csgrs::mesh::hypermesh::PreparedMeshBoolean<'_, ()>,
-    count: usize,
-) -> Vec<Mesh<()>> {
-    let mut results = Vec::with_capacity(count);
-    if count >= 1 {
-        results.push(prepared.try_union().unwrap());
-    }
-    if count >= 2 {
-        results.push(prepared.try_difference().unwrap());
-    }
-    if count >= 3 {
-        results.push(prepared.try_intersection().unwrap());
-    }
-    if count >= 4 {
-        results.push(prepared.try_xor().unwrap());
-    }
-    results
-}
-
 fn boolean_measurement(results: &[Mesh<()>]) -> Measurement {
     let polygons = results
         .iter()
@@ -669,37 +649,14 @@ fn run() {
     let boolean_left = Mesh::cube(Real::from(4_u8), ());
     let boolean_right =
         Mesh::cube(Real::from(4_u8), ()).translate(Real::one(), Real::one(), Real::one());
-    config.run("feature", "mesh_boolean", "direct_four", 1, || {
+    config.run("feature", "mesh_boolean", "immediate_four", 1, || {
         boolean_measurement(&direct_boolean_results(&boolean_left, &boolean_right, 4))
-    });
-    config.run(
-        "feature",
-        "mesh_boolean",
-        "prepare_and_extract_four",
-        1,
-        || {
-            let prepared = boolean_left.try_prepare_boolean(&boolean_right).unwrap();
-            boolean_measurement(&prepared_boolean_results(&prepared, 4))
-        },
-    );
-    let prepared_boolean = boolean_left.try_prepare_boolean(&boolean_right).unwrap();
-    config.run("feature", "mesh_boolean", "extract_four_prebuilt", 1, || {
-        boolean_measurement(&prepared_boolean_results(&prepared_boolean, 4))
     });
 
     for count in 1..=4 {
-        let direct_case = format!("direct_{count}");
-        config.run("feature", "mesh_boolean_crossover", &direct_case, 1, || {
+        let immediate_case = format!("immediate_{count}");
+        config.run("feature", "mesh_boolean_count", &immediate_case, 1, || {
             boolean_measurement(&direct_boolean_results(&boolean_left, &boolean_right, count))
-        });
-        let prepare_case = format!("prepare_extract_{count}");
-        config.run("feature", "mesh_boolean_crossover", &prepare_case, 1, || {
-            let prepared = boolean_left.try_prepare_boolean(&boolean_right).unwrap();
-            boolean_measurement(&prepared_boolean_results(&prepared, count))
-        });
-        let extract_case = format!("prebuilt_extract_{count}");
-        config.run("feature", "mesh_boolean_crossover", &extract_case, 1, || {
-            boolean_measurement(&prepared_boolean_results(&prepared_boolean, count))
         });
     }
 
@@ -734,19 +691,9 @@ fn run() {
         ),
     ];
     for (fixture, left, right) in &boolean_fixtures {
-        let prepared = left.try_prepare_boolean(right).unwrap();
-        let direct_case = format!("{fixture}_direct_four");
-        config.run("feature", "mesh_boolean_fixtures", &direct_case, 1, || {
+        let immediate_case = format!("{fixture}_immediate_four");
+        config.run("feature", "mesh_boolean_fixtures", &immediate_case, 1, || {
             boolean_measurement(&direct_boolean_results(left, right, 4))
-        });
-        let prepare_case = format!("{fixture}_prepare_extract_four");
-        config.run("feature", "mesh_boolean_fixtures", &prepare_case, 1, || {
-            let prepared = left.try_prepare_boolean(right).unwrap();
-            boolean_measurement(&prepared_boolean_results(&prepared, 4))
-        });
-        let extract_case = format!("{fixture}_prebuilt_extract_four");
-        config.run("feature", "mesh_boolean_fixtures", &extract_case, 1, || {
-            boolean_measurement(&prepared_boolean_results(&prepared, 4))
         });
     }
 

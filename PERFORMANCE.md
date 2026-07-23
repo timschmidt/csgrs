@@ -10,8 +10,7 @@ the release benchmark profile. Times are medians after two warmup batches.
 | `adapters/graphics_export/f32_48384` | 59.4 ms/op | 1.04 ms/op | 98.2% faster | Same finite row/index contract and strict overflow error |
 | `adapters/graphics_export/f64_48384` (split-buffer control) | 1.16 ms/op | 0.52 ms/op | 55.2% faster | Same 48,384 interleaved rows and indices with no temporary split buffers |
 | `mesh_io/all_exporters` | 87.602 ms | 81.581 ms | 6.9% faster | 385,166 output bytes and checksum |
-| `mesh_boolean/prepare_and_extract_four` | 31.542 ms | 9.606 ms | 69.5% faster | 120 polygons, 120 corners, exact buffers and metadata |
-| `mesh_boolean/extract_four_prebuilt` | 31.542 ms | 2.174 ms | 93.1% faster | Same four closure-certified outputs |
+| `mesh_boolean/immediate_four` | 0.596–0.659 ms | operation-scoped | N/A | Four independently closure-certified outputs, 120 polygons/corners, stable checksum |
 | `mesh_queries/ray_intersections` | 32.851 ms/op | 30.819 ms/op | 6.2% faster | Same exact ordered hit points, distances, and checksum |
 | `kernel/construct_box/unit` (cold) | 36.157 us/op | 28.308 us/op | 21.7% faster | Same 12-facet checksum; 1.338x faster than CGAL EPECK |
 | `kernel/center/translated_box` (cold) | 23.768 us/op | 3.400 us/op | 85.7% faster | Same 12-coordinate checksum; 1.991x faster than CGAL EPECK |
@@ -97,17 +96,11 @@ complete native sweep it fell from 36.157 us to 28.308 us (21.7%), versus
 CGAL's 6.810 us. Every cold and warm row beat or tied both comparison engines;
 the only tie was the timer-scale identical-box intersection at 100 ns cold.
 
-Mesh polygon storage now distinguishes its unique storage identity from a
-geometry-lineage identity. Metadata-only mapping preserves that lineage, while
-every mutable polygon access assigns a fresh lineage before geometry can
-change. Repeated Boolean arrangement lookup can therefore compare two scalar
-identities instead of allocating and scanning every polygon-corner position
-identity; remapped metadata still reuses the exact arrangement and restores
-the current source metadata. The retained indexed adapter also omits its
-position-ID lookup unless the connectivity API requests it, so Boolean input
-does not materialize lazy sphere corners solely to build an unused map.
+The indexed adapter omits its position-ID lookup unless the connectivity API
+requests it, so Boolean input does not materialize lazy sphere corners solely
+to build an unused map.
 
-On the cold sphere/box union trace, the direct Boolean-preparation subtree fell
+On the cold sphere/box union trace, the direct Boolean subtree fell
 from 16,718,295 to 16,655,056 instructions (0.38%), while the setup-heavy whole
 process fell from 54,481,865 to 54,413,625 instructions (0.13%). The complete
 15-cold/9-warm cross-kernel sweep retained all output sizes and checksums;
@@ -129,62 +122,26 @@ storage from source topology bounds before exporters populate it. Deduplication
 still uses retained position and plane identities; output order and serialized
 bytes are unchanged.
 
-`Mesh::try_prepare_boolean` now adapts and subdivides one mesh pair into a
-borrowed `PreparedMeshBoolean` once, then extracts union, difference,
-intersection, and symmetric difference from retained exact winding evidence.
-Each extraction still closure-certifies the HyperMesh result and restores
-source polygon metadata. Direct methods now use the same pipeline with a
-single-operation scope, preserving operation-specific winding-reachability
-pruning without retaining a separate one-shot implementation. Empty,
-adapter-empty, exactly disjoint, and identical inputs are prepared as exact
-set-identity states, preserving the former direct polygonization and metadata.
+Mesh Booleans now have one immediate path. `try_union`, `try_difference`,
+`try_intersection`, and `try_xor` select one operation, apply exact
+empty/disjoint/identical/axis-aligned-box shortcuts when certified, and
+otherwise request HyperMesh's direct certified triangle soup. CSGRS restores
+source metadata while materializing the result. There is no public retained
+Boolean carrier, thread-local arrangement cache, compatibility alias, or
+build-once/extract-many benchmark.
 
-Nine-sample release medians characterize the unified path:
+The previous multi-result measurements are historical evidence for machinery
+that is intentionally no longer supported, so those benchmark rows and
+claims have been removed. `mesh_boolean/immediate_four` remains as the
+independent-operation workload; the kernel comparison measures the same
+public calls. Future optimization is evaluated on cold immediate latency,
+allocation count, exact output rows, source metadata, and closure.
 
-| Workload | Scoped direct | Prepare + extract | Prebuilt extract |
-|---|---:|---:|---:|
-| overlapping, one operation | 7.90 ms | 7.94 ms | 0.59 ms |
-| overlapping, two operations | 15.60 ms | 8.35 ms | 0.98 ms |
-| overlapping, four operations | 31.55 ms | 9.61 ms | 2.18 ms |
-| disjoint, four operations | 20.9 us | 20.2 us | 20.0 us |
-| identical, four operations | 154.1 us | 44.6 us | 8.2 us |
-| contained, four operations | 26.29 ms | 7.50 ms | 1.16 ms |
-| face-touching, four operations | 24.53 ms | 6.80 ms | 0.76 ms |
-
-Every row retains the same polygon/corner checksum. Focused differential tests
-also compare exact vertex rows, source metadata, and shortcut polygonization.
-
-Cold HyperMesh extraction now reuses each certified source triangle's retained
-exact support normal when materializing CSGRS shading normals. Previously every
-used source polygon rebuilt an exact cross product even though HyperMesh had
-already constructed the same oriented support plane during preparation. The
-retained area vector passes through the existing finite shading-normal boundary
-and CSGRS normal cache; symbolic or unavailable source normals retain the full
-exact recomputation fallback. Cache lookup precedes source-vector cloning, so
-repeated extraction keeps the prior warmed path.
-
-Seven counter runs over 500 fresh sphere/box operations measured the extraction
-change after the source-centroid optimization:
-
-| operation | recomputed source normal | retained support normal | result |
-| --- | ---: | ---: | ---: |
-| union | 9,925,432,002 | 9,481,373,714 | 4.47% fewer instructions |
-| difference | 8,295,496,270 | 7,883,059,273 | 4.97% fewer instructions |
-
-Cycles fell 7.16% for union and 8.47% for difference. In a 15-sample matched
-cross-kernel run, cold exact difference measured 1.908 ms versus CGAL EPECK's
-1.896 ms, and cold union measured 2.693 ms versus 2.480 ms. Retained CSGRS was
-20.49x faster than CGAL for difference and 17.55x for union, while both cold
-and retained rows remained well ahead of tight OpenCascade. Focused tests
-verify retained source orientation, invalid-source rejection, output flat-normal
-orientation, exact buffers, and metadata.
-
-Validation passed the locked default and all-feature suites (306/370 library
-tests plus all integration tests), every locked feature check, all-target and
-all-feature Clippy with warnings denied, warning-denied rustdoc, spelling, both
-adversarial scripts, and the benchmark and fuzz-target builds. The retained
-Boolean adapter and mesh-pair sanitizer targets each completed 1,000 ASAN runs
-without failure.
+Three warm release samples of the overlapping-box sentinel measured
+0.596–0.659 ms for all four immediate calls together, with 120 output
+polygons/corners and the same checksum in every sample. The certified
+axis-aligned-box shortcuts dominate that fixture; non-box workloads remain
+covered by the direct HyperMesh triangle-soup path.
 
 Cold HyperMesh output materialization now appends all triangle vertices to one
 preallocated buffer and gives each CSGRS polygon an exact shared range. Source
@@ -554,13 +511,11 @@ transform-matrix ASAN executions without another failure.
 ## End-to-end dispatch evidence
 
 Dispatch recording now occurs inside each selected benchmark closure, so setup
-for unselected feature rows cannot contaminate a trace. On the overlapping-cube
-four-operation sentinel, ordinary calls recorded 1,012,924 dispatch events,
-56,224 point classifications, four HyperMesh preparations, and four
-subdivisions. Build-once/extract-four recorded 354,164 events, 14,056 point
-classifications, one preparation, and one subdivision. Both traces recorded
-four output-closure certifications, zero approximation events, zero refinement
-events, and zero unknown-fact events.
+for unselected feature rows cannot contaminate a trace. The
+`mesh_boolean/immediate_four` sentinel records four independent public Boolean
+calls and four output-closure certifications. The former retained-state
+comparison is intentionally absent; there is no cache or alternate extraction
+surface to benchmark.
 
 The public free writer surfaces now have their own in-memory benchmark rather
 than inheriting evidence only from the `Mesh` string-returning wrappers. The

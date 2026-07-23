@@ -761,21 +761,20 @@ fn run() {
     let yeahright_box_input =
         facet_count(&yeahright_boolean_source) + facet_count(&yeahright_box);
     config.run("corpus", "boolean_all", "yeahright_hull_box", 1, || {
-        let prepared = black_box(&yeahright_boolean_source)
-            .try_prepare_boolean(black_box(&yeahright_box))
-            .expect("YeahRight box Booleans must prepare");
+        let source = black_box(&yeahright_boolean_source);
+        let clipping_box = black_box(&yeahright_box);
         let outputs = [
-            prepared
-                .try_union()
+            source
+                .try_union(clipping_box)
                 .expect("YeahRight box union must remain valid"),
-            prepared
-                .try_difference()
+            source
+                .try_difference(clipping_box)
                 .expect("YeahRight box difference must remain valid"),
-            prepared
-                .try_intersection()
+            source
+                .try_intersection(clipping_box)
                 .expect("YeahRight box intersection must remain valid"),
-            prepared
-                .try_xor()
+            source
+                .try_xor(clipping_box)
                 .expect("YeahRight box xor must remain valid"),
         ];
         assert!(

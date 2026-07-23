@@ -43,7 +43,7 @@ comparison kernels has no corresponding abstraction.
 |---|---|
 | Metadata filtering, mapping, and source-face propagation | CGAL and OpenCascade carriers do not expose CSGRS metadata semantics |
 | Hyperreal expression evaluation and finite-boundary conversion | Scalar/exactness substrate rather than a shared solid-kernel operation |
-| HyperMesh preparation and retained-arrangement extraction | No equivalent reusable arrangement API exists in both native kernels |
+| HyperMesh exact metadata-preserving output adaptation | No equivalent source-metadata contract exists in both native kernels |
 | Convex hull and Minkowski sum | CGAL has direct facilities, but the installed OpenCascade modeling API has no corresponding general mesh operator |
 | Laplacian/Taubin smoothing | No common operator with matching boundary and weighting semantics |
 | Loft, twist, revolve, and path sweep | No single high-level operator with matching profile, cap, seam, and discretization contracts across all three kernels |

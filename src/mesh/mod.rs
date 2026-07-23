@@ -518,7 +518,6 @@ struct MeshPolygonStorage<M: Clone> {
     topology: OnceLock<(usize, usize, bool)>,
     connectivity: OnceLock<connectivity::Connectivity>,
     connectivity_counts: OnceLock<(usize, usize)>,
-    disjoint_partner: OnceLock<u64>,
     cuboid_vertex_pool: OnceLock<Arc<LazySubdivisionVertexPool>>,
     transform_layout: OnceLock<Arc<TransformLayout>>,
     manifold: OnceLock<bool>,
@@ -557,7 +556,6 @@ impl<M: Clone> MeshPolygonStorage<M> {
             topology: OnceLock::from(topology),
             connectivity: OnceLock::new(),
             connectivity_counts: OnceLock::new(),
-            disjoint_partner: OnceLock::new(),
             cuboid_vertex_pool: OnceLock::new(),
             transform_layout: OnceLock::new(),
             manifold: OnceLock::new(),
@@ -649,19 +647,6 @@ impl<M: Clone> MeshPolygons<M> {
 
     pub(crate) fn geometry_lineage_identity(&self) -> u64 {
         self.0.geometry_lineage
-    }
-
-    #[inline]
-    fn shares_storage_with(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
-    }
-
-    pub(crate) fn is_retained_disjoint_with(&self, other_storage_identity: u64) -> bool {
-        self.0.disjoint_partner.get() == Some(&other_storage_identity)
-    }
-
-    pub(crate) fn retain_disjoint_partner(&self, other_storage_identity: u64) {
-        let _ = self.0.disjoint_partner.set(other_storage_identity);
     }
 
     fn transform_layout(&self) -> &Arc<TransformLayout> {
@@ -785,7 +770,6 @@ impl<M: Clone> DerefMut for MeshPolygons<M> {
         storage.topology = OnceLock::new();
         storage.connectivity = OnceLock::new();
         storage.connectivity_counts = OnceLock::new();
-        storage.disjoint_partner = OnceLock::new();
         storage.cuboid_vertex_pool = OnceLock::new();
         storage.transform_layout = OnceLock::new();
         storage.manifold = OnceLock::new();
@@ -5794,56 +5778,25 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh union, or the reason
     /// hypermesh could not import, validate, or materialize the result.
     pub fn try_union(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.storage_identity() == other.polygons.storage_identity() {
-            return Ok(Self {
-                polygons: self.polygons.clone(),
-                bounding_box: OnceLock::new(),
-            });
-        }
-        if let Some(mesh) = self.exact_axis_aligned_box_union(other) {
-            return Ok(mesh);
-        }
-        self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Union)?
-            .try_union()
+        self.boolean_operation(other, hypermesh::HypermeshBooleanOp::Union)
     }
 
     /// Return a new mesh representing the exact hypermesh difference, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_difference(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.storage_identity() == other.polygons.storage_identity() {
-            return Ok(Self::empty());
-        }
-        if let Some(mesh) = self.exact_axis_aligned_box_difference(other) {
-            return Ok(mesh);
-        }
-        self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Difference)?
-            .try_difference()
+        self.boolean_operation(other, hypermesh::HypermeshBooleanOp::Difference)
     }
 
     /// Return a new mesh representing the exact hypermesh intersection, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_intersection(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.shares_storage_with(&other.polygons) {
-            return Ok(Self {
-                polygons: self.polygons.clone(),
-                bounding_box: OnceLock::new(),
-            });
-        }
-        if let Some(mesh) = self.exact_axis_aligned_box_intersection(other) {
-            return Ok(mesh);
-        }
-        self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Intersection)?
-            .try_intersection()
+        self.boolean_operation(other, hypermesh::HypermeshBooleanOp::Intersection)
     }
 
     /// Return a new mesh representing the exact hypermesh symmetric
     /// difference, or the typed reason hypermesh could not produce it.
     pub fn try_xor(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.storage_identity() == other.polygons.storage_identity() {
-            return Ok(Self::empty());
-        }
-        self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Xor)?
-            .try_xor()
+        self.boolean_operation(other, hypermesh::HypermeshBooleanOp::Xor)
     }
 }
 
