@@ -41,13 +41,6 @@ impl ParamRange {
     pub const fn end(&self) -> &Real {
         &self.end
     }
-
-    pub(crate) fn into_reversed(self) -> Self {
-        Self {
-            start: self.end,
-            end: self.start,
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -495,7 +488,7 @@ impl LineSeg2 {
             certified_line_segment_support_relation(self, other),
             CertifiedLineSegmentSupportRelation::ProperCrossing(_)
         ));
-        if self.retained_support_ranges_decided_disjoint(other, policy) == Some(true) {
+        if self.retained_support_intervals_decided_disjoint(other, policy) == Some(true) {
             return Ok(LineLineIntersection::None);
         }
         if let Some(relation) = self.retained_offset_relation(other, policy) {
@@ -574,7 +567,7 @@ impl LineSeg2 {
         if !aabb_overlap_certified && line_segments_decided_axis_separated(self, other, policy) {
             return Ok(LineLineIntersection::None);
         }
-        if self.retained_support_ranges_decided_disjoint(other, policy) == Some(true) {
+        if self.retained_support_intervals_decided_disjoint(other, policy) == Some(true) {
             return Ok(LineLineIntersection::None);
         }
         // The dense rank schedule has already certified overlapping boxes and

@@ -22,7 +22,6 @@ pub struct LineSeg2 {
     // Shared supports retain source orientation; this bit recovers the
     // fragment's directed tangent without subtracting its wide endpoints.
     support_direction_reversed: bool,
-    support_range: Option<ParamRange>,
     offset_provenance: Option<Rc<LineOffsetProvenance2>>,
 }
 
@@ -68,7 +67,6 @@ impl LineSeg2 {
             endpoints_decided_distinct,
             support: None,
             support_direction_reversed: false,
-            support_range: None,
             offset_provenance: None,
         })
     }
@@ -81,7 +79,6 @@ impl LineSeg2 {
             endpoints_decided_distinct: false,
             support: None,
             support_direction_reversed: false,
-            support_range: None,
             offset_provenance: None,
         }
     }
@@ -147,35 +144,22 @@ impl LineSeg2 {
             endpoints_decided_distinct,
             support: Some(self.fragment_support()),
             support_direction_reversed: self.support_direction_reversed,
-            support_range: None,
             offset_provenance: self.offset_provenance.clone(),
         })
     }
 
-    pub(crate) fn fragment_between_with_source_range_after_distinct_endpoints(
+    pub(crate) fn fragment_between_after_distinct_endpoints(
         &self,
         start: Point2,
         end: Point2,
-        source_range: ParamRange,
         support: Rc<LineSupport2>,
     ) -> Self {
-        let support_range = self
-            .support_range
-            .as_ref()
-            .map_or(source_range.clone(), |parent| {
-                let width = parent.end() - parent.start();
-                ParamRange::new(
-                    parent.start() + &width * source_range.start(),
-                    parent.start() + width * source_range.end(),
-                )
-            });
         Self {
             start,
             end,
             endpoints_decided_distinct: true,
             support: Some(support),
             support_direction_reversed: self.support_direction_reversed,
-            support_range: Some(support_range),
             offset_provenance: self.offset_provenance.clone(),
         }
     }
@@ -189,7 +173,7 @@ impl LineSeg2 {
         })
     }
 
-    pub(crate) fn retained_support_ranges_decided_disjoint(
+    pub(crate) fn retained_support_intervals_decided_disjoint(
         &self,
         other: &Self,
         policy: &CurvePolicy,
@@ -199,10 +183,16 @@ impl LineSeg2 {
         if !Rc::ptr_eq(first_support, second_support) {
             return None;
         }
-        let first = self.support_range.as_ref()?;
-        let second = other.support_range.as_ref()?;
-        let (first_start, first_end) = ordered_range(first, policy)?;
-        let (second_start, second_end) = ordered_range(second, policy)?;
+        let use_x = match compare_reals(first_support.start.x(), first_support.end.x(), policy) {
+            Some(Ordering::Less | Ordering::Greater) => true,
+            Some(Ordering::Equal) => false,
+            None => match compare_reals(first_support.start.y(), first_support.end.y(), policy) {
+                Some(Ordering::Less | Ordering::Greater) => false,
+                Some(Ordering::Equal) | None => return None,
+            },
+        };
+        let (first_start, first_end) = ordered_line_endpoints(self, use_x, policy)?;
+        let (second_start, second_end) = ordered_line_endpoints(other, use_x, policy)?;
         Some(
             compare_reals(first_end, second_start, policy) == Some(Ordering::Less)
                 || compare_reals(second_end, first_start, policy) == Some(Ordering::Less),
@@ -323,7 +313,6 @@ impl LineSeg2 {
             endpoints_decided_distinct,
             support,
             support_direction_reversed: self.support_direction_reversed,
-            support_range: self.support_range.clone(),
             // An arbitrary point map need not preserve signed offset distance.
             offset_provenance: None,
         })
@@ -356,10 +345,6 @@ impl LineSeg2 {
             endpoints_decided_distinct: self.endpoints_decided_distinct,
             support: self.support.clone(),
             support_direction_reversed: self.support.is_some() && !self.support_direction_reversed,
-            support_range: self
-                .support_range
-                .as_ref()
-                .map(|range| ParamRange::new(range.end().clone(), range.start().clone())),
             offset_provenance,
         }
     }
@@ -372,7 +357,6 @@ impl LineSeg2 {
         if self.support.is_some() {
             self.support_direction_reversed = !self.support_direction_reversed;
         }
-        self.support_range = self.support_range.map(ParamRange::into_reversed);
         self
     }
 
@@ -1283,10 +1267,19 @@ fn point_matches_arc_endpoint(
     crate::classify::is_zero(&end_distance, policy)
 }
 
-fn ordered_range<'a>(range: &'a ParamRange, policy: &CurvePolicy) -> Option<(&'a Real, &'a Real)> {
-    match compare_reals(range.start(), range.end(), policy)? {
-        Ordering::Less | Ordering::Equal => Some((range.start(), range.end())),
-        Ordering::Greater => Some((range.end(), range.start())),
+fn ordered_line_endpoints<'a>(
+    line: &'a LineSeg2,
+    use_x: bool,
+    policy: &CurvePolicy,
+) -> Option<(&'a Real, &'a Real)> {
+    let (start, end) = if use_x {
+        (line.start().x(), line.end().x())
+    } else {
+        (line.start().y(), line.end().y())
+    };
+    match compare_reals(start, end, policy)? {
+        Ordering::Less | Ordering::Equal => Some((start, end)),
+        Ordering::Greater => Some((end, start)),
     }
 }
 

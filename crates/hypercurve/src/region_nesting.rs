@@ -13436,7 +13436,7 @@ mod tests {
     use crate::{
         BulgeVertex2, Contour2, ContourIntersection, ContourIntersectionSet,
         ContourPointIntersection, ContourUncertainIntersection, CurvePolicy, IntersectionKind,
-        LineSeg2, ParamRange, Point2, Segment2, SegmentKind, UncertaintyReason,
+        LineSeg2, Point2, Segment2, SegmentKind, UncertaintyReason,
     };
     use hyperreal::{Real, RealSign};
 
@@ -13464,18 +13464,16 @@ mod tests {
             let midpoint = source.point_at(half.clone());
             let support = source.fragment_support();
             segments.push(Segment2::Line(
-                source.fragment_between_with_source_range_after_distinct_endpoints(
+                source.fragment_between_after_distinct_endpoints(
                     source.start().clone(),
                     midpoint.clone(),
-                    ParamRange::new(Real::zero(), half.clone()),
                     support.clone(),
                 ),
             ));
             segments.push(Segment2::Line(
-                source.fragment_between_with_source_range_after_distinct_endpoints(
+                source.fragment_between_after_distinct_endpoints(
                     midpoint,
                     source.end().clone(),
-                    ParamRange::new(half.clone(), Real::one()),
                     support,
                 ),
             ));

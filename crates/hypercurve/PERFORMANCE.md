@@ -1902,6 +1902,39 @@ ranges can hold a shared compact determinant-backed form, or another
 representation that replaces the two final `Real` parameters rather than
 coexisting with them.
 
+The retained-line prerequisite is now smaller than a new parameter
+representation: `LineSeg2::support_range` was duplicate state. Its only
+consumer asked whether two fragments sharing the same source support were
+strictly disjoint. Ordering the fragment endpoints on a certified nonconstant
+support coordinate proves the same interval relation exactly, including
+vertical and reversed fragments, without retaining or composing two source
+parameters. Recursively split and similarity-transformed fragments keep the
+same support and endpoint proof. Removing the field, its composition
+arithmetic, and its reversal plumbing reduces `LineSeg2` from 328 to 232 bytes
+on 64-bit targets and removes 19 net implementation lines before the new
+regression coverage. The public mixed `Segment2` remains 376 bytes because the
+arc variant still fixes its inline size.
+
+The star64 dispatch trace is unchanged at 3,272 events, 177 rational
+temporaries, 24 reductions, 116 GCDs, 903 `Real` constructions, and 40 fused
+line intersections: the improvement removes duplicate retained state rather
+than moving arithmetic elsewhere. The immediate matched 11-sample,
+50-iteration star1024 exact-contour median fell from 12.787 to 12.340 ms. A
+more conservative 31-sample run measured 12.291 ms, 2.0% below the preceding
+12.548 ms checkpoint. The nine-sample matrix measured ordinary and prepared
+exact contours at 12.324 and 12.168 ms, exact regions at 13.596 and 13.407 ms,
+and exact loops at 12.997 and 12.798 ms. Cavalier measured 19.669 ms, while
+`i_overlay` and `geo` remain ahead at 10.041 and 10.196 ms.
+
+All-feature tests, warnings-as-errors all-target Clippy, and warnings-as-errors
+rustdoc passed. The AddressSanitizer `region_boolean` differential fuzz target
+completed 8,257 executions at 5,844 coverage points and 18,140 feature edges
+without failure; LeakSanitizer alone remained disabled under ptrace. Direct
+contour emission no longer materializes retained line parameters, so a compact
+determinant event can now replace ordinary parameter `Real`s on that path.
+Report-bearing boundary-fragment APIs still require exact parameters on demand
+and remain the materialization boundary. The broad competitor gate is not met.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

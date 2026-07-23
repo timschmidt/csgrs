@@ -142,17 +142,15 @@ impl CompactLineContourFragment {
             CompactLineFragmentGeometry::Split { data, marker_index } => {
                 let markers = &data.markers;
                 let start = marker_index.checked_sub(1).map_or_else(
-                    || (source_line.start().clone(), data.full_start.clone()),
-                    |index| (markers[index].point.clone(), markers[index].param.clone()),
+                    || source_line.start().clone(),
+                    |index| markers[index].point.clone(),
                 );
-                let end = markers.get(*marker_index).map_or_else(
-                    || (source_line.end().clone(), data.full_end.clone()),
-                    |marker| (marker.point.clone(), marker.param.clone()),
-                );
-                source_line.fragment_between_with_source_range_after_distinct_endpoints(
-                    start.0,
-                    end.0,
-                    ParamRange::new(start.1, end.1),
+                let end = markers
+                    .get(*marker_index)
+                    .map_or_else(|| source_line.end().clone(), |marker| marker.point.clone());
+                source_line.fragment_between_after_distinct_endpoints(
+                    start,
+                    end,
                     data.source_support.clone(),
                 )
             }
@@ -726,13 +724,12 @@ fn build_fragment_segment(
 
     match source_segment {
         // `append_segment_fragments` has just certified these endpoints as
-        // distinct. Preserve that proof while retaining the source range
-        // instead of asking exact-real arithmetic to prove it a second time.
+        // distinct. Preserve that proof and the shared source support instead
+        // of asking exact-real arithmetic to prove it a second time.
         Segment2::Line(line) => Ok(Classification::Decided(Segment2::Line(
-            line.fragment_between_with_source_range_after_distinct_endpoints(
+            line.fragment_between_after_distinct_endpoints(
                 start.point.clone(),
                 end.point.clone(),
-                ParamRange::new(start.param.clone(), end.param.clone()),
                 line_support
                     .expect("split line fragments have prepared source support")
                     .clone(),
@@ -791,7 +788,7 @@ mod tests {
                 std::mem::size_of::<CompactLineSplitMarker>()
                     < std::mem::size_of::<SegmentSplitMarker>()
             );
-            assert!(std::mem::size_of::<LineSeg2>() <= 328);
+            assert!(std::mem::size_of::<LineSeg2>() <= 232);
             assert!(std::mem::size_of::<crate::CircularArc2>() <= 376);
             assert!(std::mem::size_of::<Segment2>() <= 376);
         }
@@ -827,7 +824,31 @@ mod tests {
             panic!("expected line fragments");
         };
         assert_eq!(
-            first.retained_support_ranges_decided_disjoint(last, &policy),
+            first.retained_support_intervals_decided_disjoint(last, &policy),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn retained_support_interval_orders_vertical_reversed_fragments_from_endpoints() {
+        let vertical_point = |y| Point2::new(Real::zero(), Real::from(y));
+        let source = LineSeg2::try_new(vertical_point(0), vertical_point(6)).unwrap();
+        let support = source.fragment_support();
+        let first = source
+            .fragment_between_after_distinct_endpoints(
+                vertical_point(0),
+                vertical_point(2),
+                support.clone(),
+            )
+            .into_reversed();
+        let last = source.fragment_between_after_distinct_endpoints(
+            vertical_point(4),
+            vertical_point(6),
+            support,
+        );
+
+        assert_eq!(
+            first.retained_support_intervals_decided_disjoint(&last, &CurvePolicy::certified()),
             Some(true)
         );
     }
@@ -903,7 +924,7 @@ mod tests {
             panic!("compact line fragment should materialize a line");
         };
         assert_eq!(
-            first.retained_support_ranges_decided_disjoint(&second, &policy),
+            first.retained_support_intervals_decided_disjoint(&second, &policy),
             Some(false)
         );
     }
