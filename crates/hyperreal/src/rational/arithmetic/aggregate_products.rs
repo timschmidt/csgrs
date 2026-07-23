@@ -116,11 +116,113 @@ struct DyadicStackSum {
     denominator_shift: u64,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct DyadicWord {
     sign: Sign,
     magnitude: u128,
     denominator_shift: u64,
+}
+
+#[derive(Clone, Copy)]
+struct DyadicLineIntersectionPlan {
+    first_start: [DyadicWord; 2],
+    first_delta: [DyadicWord; 2],
+    denominator: DyadicWord,
+    numerators: [DyadicWord; 2],
+}
+
+/// Compact exact parameters for a line crossing whose inputs are dyadic.
+///
+/// The determinant quotients stay in their native word representation so
+/// geometry layers can order crossings without constructing reduced
+/// rationals. Parameters are materialized only when an API exposes them.
+#[doc(hidden)]
+#[derive(Clone, Debug)]
+pub struct ExactDyadicLineParameters2 {
+    numerators: [DyadicWord; 2],
+    denominator: DyadicWord,
+}
+
+impl ExactDyadicLineParameters2 {
+    fn compare_parameter(&self, index: usize, other: &Self) -> Ordering {
+        let left_numerator = self.numerators[index];
+        let right_numerator = other.numerators[index];
+        let left_sign = left_numerator.sign * self.denominator.sign;
+        let right_sign = right_numerator.sign * other.denominator.sign;
+        if left_sign != right_sign {
+            return match (left_sign, right_sign) {
+                (Minus, _) | (_, Plus) => Ordering::Less,
+                (Plus, _) | (_, Minus) => Ordering::Greater,
+                _ => Ordering::Equal,
+            };
+        }
+        if left_sign == NoSign {
+            return Ordering::Equal;
+        }
+
+        let left_shift = u128::from(self.denominator.denominator_shift)
+            + u128::from(right_numerator.denominator_shift);
+        let right_shift = u128::from(other.denominator.denominator_shift)
+            + u128::from(left_numerator.denominator_shift);
+        let exponent_ordering = if left_shift >= right_shift + 256 {
+            Some(Ordering::Greater)
+        } else if right_shift >= left_shift + 256 {
+            Some(Ordering::Less)
+        } else {
+            None
+        };
+        let common_shift = left_shift.min(right_shift);
+        let mut left = DyadicStackAccumulator::default();
+        let mut right = DyadicStackAccumulator::default();
+        let ordering = exponent_ordering.unwrap_or_else(|| match (
+            left.add_product(
+                left_numerator.magnitude,
+                other.denominator.magnitude,
+                u64::try_from(left_shift - common_shift)
+                    .expect("bounded dyadic comparison shift fits u64"),
+            ),
+            right.add_product(
+                right_numerator.magnitude,
+                self.denominator.magnitude,
+                u64::try_from(right_shift - common_shift)
+                    .expect("bounded dyadic comparison shift fits u64"),
+            ),
+        ) {
+            (Some(()), Some(())) => left.0.iter().rev().cmp(right.0.iter().rev()),
+            _ => {
+                let mut left =
+                    BigUint::from(left_numerator.magnitude) * other.denominator.magnitude;
+                let mut right =
+                    BigUint::from(right_numerator.magnitude) * self.denominator.magnitude;
+                left <<= usize::try_from(left_shift - common_shift)
+                    .expect("bounded dyadic comparison shift fits usize");
+                right <<= usize::try_from(right_shift - common_shift)
+                    .expect("bounded dyadic comparison shift fits usize");
+                left.cmp(&right)
+            }
+        });
+        if left_sign == Minus {
+            ordering.reverse()
+        } else {
+            ordering
+        }
+    }
+
+    /// Compare the parameter on the first source line without reducing it.
+    pub fn compare_first_parameter(&self, other: &Self) -> Ordering {
+        self.compare_parameter(0, other)
+    }
+
+    /// Compare the parameter on the second source line without reducing it.
+    pub fn compare_second_parameter(&self, other: &Self) -> Ordering {
+        self.compare_parameter(1, other)
+    }
+
+    pub(crate) fn materialize_parameter(&self, index: usize) -> Rational {
+        Rational::quotient_dyadic_words(self.numerators[index], self.denominator)
+            .expect("retained dyadic line parameter remains representable")
+            .0
+    }
 }
 
 impl DyadicStackAccumulator {
@@ -255,6 +357,56 @@ impl DyadicStackAccumulator {
 }
 
 impl Rational {
+    fn line_intersection2_plan_known_dyadic(
+        first_start: [&Self; 2],
+        first_end: [&Self; 2],
+        second_start: [&Self; 2],
+        second_end: [&Self; 2],
+    ) -> Option<DyadicLineIntersectionPlan> {
+        let point_words = |point: [&Self; 2]| {
+            Some([
+                Self::known_dyadic_word(point[0])?,
+                Self::known_dyadic_word(point[1])?,
+            ])
+        };
+        let first_start = point_words(first_start)?;
+        let first_end = point_words(first_end)?;
+        let second_start = point_words(second_start)?;
+        let second_end = point_words(second_end)?;
+        let difference = |left: [DyadicWord; 2], right: [DyadicWord; 2]| {
+            Some([
+                Self::difference_dyadic_words(left[0], right[0])?,
+                Self::difference_dyadic_words(left[1], right[1])?,
+            ])
+        };
+        let first_delta = difference(first_end, first_start)?;
+        let second_delta = difference(second_end, second_start)?;
+        let start_delta = difference(second_start, first_start)?;
+        let denominator = Self::dyadic_stack_sum_word(Self::cross_dyadic_words(
+            first_delta,
+            second_delta,
+        )?)?;
+        if denominator.sign == NoSign
+            || (denominator.magnitude != 1 && denominator.magnitude % 2 == 0)
+        {
+            return None;
+        }
+        let first_numerator = Self::dyadic_stack_sum_word(Self::cross_dyadic_words(
+            start_delta,
+            second_delta,
+        )?)?;
+        let second_numerator = Self::dyadic_stack_sum_word(Self::cross_dyadic_words(
+            start_delta,
+            first_delta,
+        )?)?;
+        Some(DyadicLineIntersectionPlan {
+            first_start,
+            first_delta,
+            denominator,
+            numerators: [first_numerator, second_numerator],
+        })
+    }
+
     /// Use one full-width remainder when exactly one operand fits a native word.
     ///
     /// Word pairs stay in the native binary reducer. Mixed-width identity and
@@ -2924,56 +3076,55 @@ impl Rational {
     /// materializing coordinate deltas or determinant rationals. Returns
     /// `None` when a word or fixed-stack bound is exceeded so the caller can
     /// retain its arbitrary-precision construction.
+    pub(crate) fn line_intersection2_point_known_dyadic(
+        first_start: [&Self; 2],
+        first_end: [&Self; 2],
+        second_start: [&Self; 2],
+        second_end: [&Self; 2],
+    ) -> Option<(ExactDyadicLineParameters2, [Self; 2])> {
+        let plan = Self::line_intersection2_plan_known_dyadic(
+            first_start,
+            first_end,
+            second_start,
+            second_end,
+        )?;
+        let point = Self::line_intersection2_point_from_plan(plan)?;
+        crate::trace_dispatch!("rational", "line-intersection2", "dyadic-stack-fused-point");
+        Some((
+            ExactDyadicLineParameters2 {
+                numerators: plan.numerators,
+                denominator: plan.denominator,
+            },
+            point,
+        ))
+    }
+
     pub(crate) fn line_intersection2_known_dyadic(
         first_start: [&Self; 2],
         first_end: [&Self; 2],
         second_start: [&Self; 2],
         second_end: [&Self; 2],
     ) -> Option<(Self, Self, [Self; 2])> {
-        let point_words = |point: [&Self; 2]| {
-            Some([
-                Self::known_dyadic_word(point[0])?,
-                Self::known_dyadic_word(point[1])?,
-            ])
-        };
-        let first_start = point_words(first_start)?;
-        let first_end = point_words(first_end)?;
-        let second_start = point_words(second_start)?;
-        let second_end = point_words(second_end)?;
-        let difference = |left: [DyadicWord; 2], right: [DyadicWord; 2]| {
-            Some([
-                Self::difference_dyadic_words(left[0], right[0])?,
-                Self::difference_dyadic_words(left[1], right[1])?,
-            ])
-        };
-        let first_delta = difference(first_end, first_start)?;
-        let second_delta = difference(second_end, second_start)?;
-        let start_delta = difference(second_start, first_start)?;
-        let denominator = Self::dyadic_stack_sum_word(Self::cross_dyadic_words(
-            first_delta,
-            second_delta,
-        )?)?;
-        if denominator.sign == NoSign
-            || (denominator.magnitude != 1 && denominator.magnitude % 2 == 0)
-        {
-            return None;
-        }
-        let first_numerator = Self::dyadic_stack_sum_word(Self::cross_dyadic_words(
-            start_delta,
-            second_delta,
-        )?)?;
-        let second_numerator = Self::dyadic_stack_sum_word(Self::cross_dyadic_words(
-            start_delta,
-            first_delta,
-        )?)?;
-        let (first_parameter, _) = Self::quotient_dyadic_words(first_numerator, denominator)?;
+        let plan = Self::line_intersection2_plan_known_dyadic(
+            first_start,
+            first_end,
+            second_start,
+            second_end,
+        )?;
+        let (first_parameter, _) =
+            Self::quotient_dyadic_words(plan.numerators[0], plan.denominator)?;
         let (second_parameter, _) =
-            Self::quotient_dyadic_words(second_numerator, denominator)?;
+            Self::quotient_dyadic_words(plan.numerators[1], plan.denominator)?;
+        let point = Self::line_intersection2_point_from_plan(plan)?;
+        crate::trace_dispatch!("rational", "line-intersection2", "dyadic-stack-fused");
+        Some((first_parameter, second_parameter, point))
+    }
 
+    fn line_intersection2_point_from_plan(plan: DyadicLineIntersectionPlan) -> Option<[Self; 2]> {
         let coordinate = |index: usize| {
             let affine = Self::product_sum_dyadic_words(
-                [first_start[index], first_numerator],
-                [denominator, first_delta[index]],
+                [plan.first_start[index], plan.numerators[0]],
+                [plan.denominator, plan.first_delta[index]],
                 [true, true],
             )?;
             if affine.sign == NoSign {
@@ -2981,14 +3132,12 @@ impl Rational {
             }
             Some(Self::quotient_dyadic_stack_sum_unreduced(
                 affine,
-                denominator.sign,
-                denominator.denominator_shift,
-                denominator.magnitude,
+                plan.denominator.sign,
+                plan.denominator.denominator_shift,
+                plan.denominator.magnitude,
             ))
         };
-        let point = [coordinate(0)?, coordinate(1)?];
-        crate::trace_dispatch!("rational", "line-intersection2", "dyadic-stack-fused");
-        Some((first_parameter, second_parameter, point))
+        Some([coordinate(0)?, coordinate(1)?])
     }
 
     /// Construct `t = numerator / denominator` and both coordinates of

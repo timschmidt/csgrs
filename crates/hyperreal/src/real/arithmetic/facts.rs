@@ -282,6 +282,25 @@ impl Real {
     /// retaining intermediate differences and determinants in native scalar
     /// accumulators. Wider inputs return `None` for the general exact path.
     #[doc(hidden)]
+    pub fn exact_rational_line_intersection2_point_known_dyadic(
+        first_start: [&Real; 2],
+        first_end: [&Real; 2],
+        second_start: [&Real; 2],
+        second_end: [&Real; 2],
+    ) -> Option<(crate::ExactDyadicLineParameters2, [Real; 2])> {
+        Rational::line_intersection2_point_known_dyadic(
+            first_start.map(|value| &value.rational),
+            first_end.map(|value| &value.rational),
+            second_start.map(|value| &value.rational),
+            second_end.map(|value| &value.rational),
+        )
+        .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
+    /// Solve a certified proper crossing between exact dyadic endpoints while
+    /// retaining intermediate differences and determinants in native scalar
+    /// accumulators. Wider inputs return `None` for the general exact path.
+    #[doc(hidden)]
     pub fn exact_rational_line_intersection2_known_dyadic(
         first_start: [&Real; 2],
         first_end: [&Real; 2],
@@ -1012,5 +1031,17 @@ impl Real {
         } else {
             [scaled_lower, scaled_upper]
         })
+    }
+}
+
+impl crate::ExactDyadicLineParameters2 {
+    /// Materialize the exact parameter on the first source line.
+    pub fn materialize_first_parameter(&self) -> Real {
+        Real::new(self.materialize_parameter(0))
+    }
+
+    /// Materialize the exact parameter on the second source line.
+    pub fn materialize_second_parameter(&self) -> Real {
+        Real::new(self.materialize_parameter(1))
     }
 }

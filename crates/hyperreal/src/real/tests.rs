@@ -2769,6 +2769,7 @@ mod tests {
     fn fused_dyadic_line_intersection_matches_expanded_exact_arithmetic() {
         let mut state = 0x6a09_e667_f3bc_c909_u64;
         let mut fused_cases = 0;
+        let mut retained_cases = Vec::new();
         for _ in 0..512 {
             let points: [[Real; 2]; 4] = core::array::from_fn(|_| {
                 core::array::from_fn(|_| {
@@ -2812,6 +2813,14 @@ mod tests {
             else {
                 continue;
             };
+            let (retained_parameters, point_only) =
+                Real::exact_rational_line_intersection2_point_known_dyadic(
+                    [&first_start[0], &first_start[1]],
+                    [&first_end[0], &first_end[1]],
+                    [&second_start[0], &second_start[1]],
+                    [&second_end[0], &second_end[1]],
+                )
+                .expect("the point-only kernel shares the fused path's checked bounds");
             fused_cases += 1;
             let first_numerator = Real::diff_of_products(
                 &start_delta[0],
@@ -2830,17 +2839,44 @@ mod tests {
             assert_eq!(first_parameter, expected_first);
             assert_eq!(second_parameter, expected_second);
             assert_eq!(
+                retained_parameters.materialize_first_parameter(),
+                expected_first
+            );
+            assert_eq!(
+                retained_parameters.materialize_second_parameter(),
+                expected_second
+            );
+            assert_eq!(
                 point,
                 [
                     Real::affine(&first_start[0], &expected_first, &first_delta[0]),
                     Real::affine(&first_start[1], &expected_first, &first_delta[1]),
                 ]
             );
+            assert_eq!(point_only, point);
+            retained_cases.push((retained_parameters, expected_first, expected_second));
         }
         assert!(
             fused_cases > 400,
             "only {fused_cases} cases used the fused path"
         );
+        for pair in retained_cases.windows(2) {
+            let [
+                (left, left_first, left_second),
+                (right, right_first, right_second),
+            ] = pair
+            else {
+                unreachable!("a two-element window has two retained parameter cases");
+            };
+            assert_eq!(
+                left.compare_first_parameter(right),
+                left_first.partial_cmp(right_first).unwrap()
+            );
+            assert_eq!(
+                left.compare_second_parameter(right),
+                left_second.partial_cmp(right_second).unwrap()
+            );
+        }
     }
 
     #[test]
@@ -2862,6 +2898,15 @@ mod tests {
                 [&one, &zero],
             ),
             None
+        );
+        assert!(
+            Real::exact_rational_line_intersection2_point_known_dyadic(
+                [&wide, &zero],
+                [&one, &one],
+                [&zero, &one],
+                [&one, &zero],
+            )
+            .is_none()
         );
     }
 
