@@ -1397,9 +1397,16 @@ reduced instructions from 25.969 to 25.392 billion, branches from 4.345 to
 were equal within run noise. Reversed star64 trials improved 2.7--3.0%, while
 ordinary rectangle contours fell from 5.768 to 5.223 us.
 
-The complete star1024 matrix measured ordinary/prepared exact contours at
-5.487/5.567 ms, versus 19.764 ms for Cavalier, 10.059 ms for `i_overlay`, and
-10.082 ms for `geo`. Heaptrack is unchanged from the direct-binary64
+Making the fixed two-term shape explicit instead of routing it through a
+const-generic loop then reduced a 31-sample star1024 contour trial from
+5.550 to 5.403 ms. Seven-run counters fell from 8.119 to 7.792 billion cycles
+and 25.392 to 25.190 billion instructions. Final star64 and star256 trials
+measured 49.806 us and 0.392 ms; rectangle contours measured 5.306 us.
+
+The complete final star1024 matrix measured ordinary/prepared exact contours
+at 5.661/5.376 ms, with the ordinary row noisier than its dedicated trial.
+Competitors measured 19.857 ms for Cavalier, 10.119 ms for `i_overlay`, and
+10.117 ms for `geo`. Heaptrack is unchanged from the direct-binary64
 checkpoint: ten operations use 1,104,313 allocations, 2,193 temporaries, and
 16.58 MiB peak heap.
 
@@ -1408,7 +1415,7 @@ with the 384-bit result and forces checked overflow deferrals. The compact and
 wide line-intersection oracles cover the integrated fallback. Both complete
 all-feature suites, strict Clippy, and warning-denied rustdoc pass. The
 10,000-run AddressSanitizer differential Boolean campaign completed without
-failure at 5,895 coverage points and 18,890 feature edges.
+failure at 5,891 coverage points and 18,933 feature edges.
 
 ### Architecture and measurement triggers
 

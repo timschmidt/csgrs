@@ -1519,7 +1519,7 @@ mod tests {
             let positive_terms = [next(&mut state) & 1 == 0, next(&mut state) & 1 == 0];
             let stack = Rational::product_sum_dyadic_words(left, right, positive_terms)
                 .expect("the 384-bit reference carrier covers the generated products");
-            match Rational::product_sum_dyadic_words_word(left, right, positive_terms) {
+            match Rational::product_sum2_dyadic_words_word(left, right, positive_terms) {
                 Some(native) => {
                     let reference = Rational::dyadic_stack_sum_word(stack)
                         .expect("a native result must fit the reference word envelope");

@@ -2917,31 +2917,32 @@ impl Rational {
         ))
     }
 
-    fn product_sum_dyadic_words_word<const N: usize>(
-        left: [DyadicWord; N],
-        right: [DyadicWord; N],
-        positive_terms: [bool; N],
+    #[inline]
+    fn product_sum2_dyadic_words_word(
+        left: [DyadicWord; 2],
+        right: [DyadicWord; 2],
+        positive_terms: [bool; 2],
     ) -> Option<DyadicWord> {
-        let denominator_shifts: [u64; N] = core::array::from_fn(|index| {
-            left[index].denominator_shift + right[index].denominator_shift
-        });
-        let max_shift = denominator_shifts.into_iter().max().unwrap_or(0);
-        let mut sum = (NoSign, 0_u128);
-        for index in 0..N {
+        let denominator_shifts = [
+            left[0].denominator_shift + right[0].denominator_shift,
+            left[1].denominator_shift + right[1].denominator_shift,
+        ];
+        let max_shift = denominator_shifts[0].max(denominator_shifts[1]);
+        let product = |index: usize| {
             let sign = (if positive_terms[index] { Plus } else { Minus })
                 * left[index].sign
                 * right[index].sign;
             if sign == NoSign {
-                continue;
+                return Some((NoSign, 0));
             }
-            let shift =
-                u32::try_from(max_shift - denominator_shifts[index]).ok()?;
+            let shift = u32::try_from(max_shift - denominator_shifts[index]).ok()?;
             let magnitude = left[index]
                 .magnitude
                 .checked_mul(right[index].magnitude)
                 .and_then(|magnitude| Self::checked_word_shift_left(magnitude, shift))?;
-            sum = Self::signed_word_sum(sum, (sign, magnitude))?;
-        }
+            Some((sign, magnitude))
+        };
+        let sum = Self::signed_word_sum(product(0)?, product(1)?)?;
         if sum.0 == NoSign {
             return Some(DyadicWord {
                 sign: NoSign,
@@ -2969,7 +2970,7 @@ impl Rational {
         left: [DyadicWord; 2],
         right: [DyadicWord; 2],
     ) -> Option<DyadicWord> {
-        Self::product_sum_dyadic_words_word(
+        Self::product_sum2_dyadic_words_word(
             [left[0], left[1]],
             [right[1], right[0]],
             [true, false],
@@ -4076,7 +4077,7 @@ impl Rational {
         let coordinate = |index: usize| {
             let left = [plan.first_start[index], plan.numerators[0]];
             let right = [plan.denominator, plan.first_delta[index]];
-            let affine = Self::product_sum_dyadic_words_word(left, right, [true, true])
+            let affine = Self::product_sum2_dyadic_words_word(left, right, [true, true])
                 .map(Self::dyadic_word_stack_sum)
                 .or_else(|| Self::product_sum_dyadic_words(left, right, [true, true]))?;
             if affine.sign == NoSign {
