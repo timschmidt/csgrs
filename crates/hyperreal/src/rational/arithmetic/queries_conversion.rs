@@ -246,21 +246,7 @@ impl Rational {
 
     #[inline]
     fn compare_shifted_to(left: &BigUint, shift: u64, right: &BigUint) -> Ordering {
-        let left_bits = left.bits().saturating_add(shift);
-        let right_bits = right.bits();
-        match left_bits.cmp(&right_bits) {
-            Ordering::Equal => {}
-            ordering => return ordering,
-        }
-
-        for bit in (0..right_bits).rev() {
-            let left_bit = bit >= shift && left.bit(bit - shift);
-            match left_bit.cmp(&right.bit(bit)) {
-                Ordering::Equal => {}
-                ordering => return ordering,
-            }
-        }
-        Ordering::Equal
+        compare_shifted_biguints(left, shift, right, 0)
     }
 
     pub(crate) fn msd_exact(&self) -> Option<i32> {

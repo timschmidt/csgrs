@@ -1,9 +1,10 @@
 impl PartialEq for Rational {
     fn eq(&self, other: &Self) -> bool {
-        if self.sign != other.sign {
-            return false;
-        }
-        if self.denominator == other.denominator {
+        if std::sync::Arc::ptr_eq(&self.0, &other.0) {
+            true
+        } else if self.sign != other.sign {
+            false
+        } else if self.denominator == other.denominator {
             self.numerator == other.numerator
         } else if let Some(ordering) = compare_dyadic_magnitudes(self, other) {
             ordering.is_eq()
@@ -35,6 +36,9 @@ impl std::hash::Hash for Rational {
 impl PartialOrd for Rational {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         use std::cmp::Ordering::*;
+        if std::sync::Arc::ptr_eq(&self.0, &other.0) {
+            return Some(Equal);
+        }
         match self.sign.cmp(&other.sign) {
             Less => return Some(Less),
             Greater => return Some(Greater),
@@ -65,10 +69,21 @@ impl PartialOrd for Rational {
             }
         } else if let (Some(left_msd), Some(right_msd)) =
             (self.msd_exact(), other.msd_exact())
-            && left_msd != right_msd
         {
-            crate::trace_dispatch!("rational", "comparison", "magnitude-bits");
-            let ordering = left_msd.cmp(&right_msd);
+            let ordering = if left_msd != right_msd {
+                crate::trace_dispatch!("rational", "comparison", "magnitude-bits");
+                left_msd.cmp(&right_msd)
+            } else if let Some(ordering) =
+                compare_normalized_magnitude_intervals(self, other, left_msd)
+            {
+                crate::trace_dispatch!("rational", "comparison", "leading-bits-interval");
+                ordering
+            } else {
+                crate::trace_dispatch!("rational", "comparison", "biguint-cross-product");
+                let left = &self.numerator * &other.denominator;
+                let right = &other.numerator * &self.denominator;
+                left.cmp(&right)
+            };
             match self.sign {
                 Plus => Some(ordering),
                 Minus => Some(ordering.reverse()),
@@ -85,6 +100,67 @@ impl PartialOrd for Rational {
             }
         }
     }
+}
+
+fn compare_normalized_magnitude_intervals(
+    left: &Rational,
+    right: &Rational,
+    common_msd: i32,
+) -> Option<std::cmp::Ordering> {
+    let (left_lower, left_upper) = normalized_rational_magnitude_interval(left, common_msd)?;
+    let (right_lower, right_upper) = normalized_rational_magnitude_interval(right, common_msd)?;
+    if left_upper < right_lower {
+        Some(std::cmp::Ordering::Less)
+    } else if right_upper < left_lower {
+        Some(std::cmp::Ordering::Greater)
+    } else {
+        None
+    }
+}
+
+fn normalized_rational_magnitude_interval(
+    value: &Rational,
+    msd: i32,
+) -> Option<(f64, f64)> {
+    let (numerator_lower, numerator_upper) = normalized_biguint_interval(&value.numerator)?;
+    let (denominator_lower, denominator_upper) = normalized_biguint_interval(&value.denominator)?;
+    let raw_exponent =
+        i128::from(value.numerator.bits()) - i128::from(value.denominator.bits());
+    let scale_shift = raw_exponent - i128::from(msd);
+    if !(0..=1).contains(&scale_shift) {
+        return None;
+    }
+    let scale = if scale_shift == 0 { 1.0 } else { 2.0 };
+    let lower = ((numerator_lower / denominator_upper) * scale).next_down();
+    let upper = ((numerator_upper / denominator_lower) * scale).next_up();
+    (lower.is_finite() && upper.is_finite()).then_some((lower, upper))
+}
+
+fn normalized_biguint_interval(value: &BigUint) -> Option<(f64, f64)> {
+    const SIGNIFICAND_BITS: u64 = 53;
+
+    let bits = value.bits();
+    if bits == 0 {
+        return None;
+    }
+    if bits <= SIGNIFICAND_BITS {
+        let normalized =
+            value.to_u64()? as f64 / (1_u64 << (bits.saturating_sub(1) as u32)) as f64;
+        return Some((normalized, normalized));
+    }
+
+    let mut digits = value.iter_u64_digits();
+    let high = digits.next_back()?;
+    let high_bits = 64 - u64::from(high.leading_zeros());
+    let leading = if high_bits >= SIGNIFICAND_BITS {
+        high >> (high_bits - SIGNIFICAND_BITS)
+    } else {
+        let remaining = SIGNIFICAND_BITS - high_bits;
+        (high << remaining) | (digits.next_back().unwrap_or_default() >> (64 - remaining))
+    };
+    let lower = leading as f64 / (1_u64 << (SIGNIFICAND_BITS - 1)) as f64;
+    let upper = (leading + 1) as f64 / (1_u64 << (SIGNIFICAND_BITS - 1)) as f64;
+    Some((lower, upper))
 }
 
 fn compare_word_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp::Ordering> {

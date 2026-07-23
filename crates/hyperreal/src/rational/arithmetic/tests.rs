@@ -2974,6 +2974,48 @@ mod tests {
     }
 
     #[test]
+    fn leading_bit_interval_comparison_matches_large_cross_products() {
+        for bits in [129_usize, 257, 521] {
+            for left_offset in [3_u32, 17, 257, 65_537] {
+                for right_offset in [5_u32, 31, 1_025, 131_071] {
+                    let left = Rational::from_parts_raw(
+                        Plus,
+                        (BigUint::one() << bits) + BigUint::from(left_offset),
+                        (BigUint::one() << (bits - 1)) + BigUint::from(right_offset | 1),
+                    );
+                    let right = Rational::from_parts_raw(
+                        Plus,
+                        (BigUint::one() << bits)
+                            + (BigUint::from(right_offset) << (bits / 3))
+                            + BigUint::from(1_u8),
+                        (BigUint::one() << (bits - 1))
+                            + (BigUint::from(left_offset) << (bits / 4))
+                            + BigUint::from(1_u8),
+                    );
+                    let expected = (&left.numerator * &right.denominator)
+                        .cmp(&(&right.numerator * &left.denominator));
+                    assert_eq!(left.partial_cmp(&right), Some(expected));
+
+                    let left_negative = Rational::from_parts_raw(
+                        Minus,
+                        left.numerator.clone(),
+                        left.denominator.clone(),
+                    );
+                    let right_negative = Rational::from_parts_raw(
+                        Minus,
+                        right.numerator.clone(),
+                        right.denominator.clone(),
+                    );
+                    assert_eq!(
+                        left_negative.partial_cmp(&right_negative),
+                        Some(expected.reverse())
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn same() {
         use std::cmp::Ordering;
 
