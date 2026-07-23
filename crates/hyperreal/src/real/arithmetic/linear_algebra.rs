@@ -1,14 +1,15 @@
 /// Certified floating filter for repeated affine 2D determinant signs.
 ///
 /// Construction succeeds only when the fixed points have exact dyadic `f64`
-/// views. Each query is independently range checked and certified against the
-/// same conservative roundoff bound as [`Real::certified_affine_det2_sign`].
-/// An inconclusive query returns `None`, preserving the caller's exact fallback.
+/// views and their direction is normal or zero. Each query is independently
+/// range checked and certified against the same conservative roundoff bound as
+/// [`Real::certified_affine_det2_sign`]. An inconclusive query returns `None`,
+/// preserving the caller's exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
 pub struct PreparedAffineDet2Filter {
     a: [f64; 2],
-    b: [f64; 2],
+    direction: [f64; 2],
 }
 
 /// Certified floating filters for both orientations of a segment pair.
@@ -57,7 +58,31 @@ impl PreparedAffineDet2Filter {
     #[inline]
     pub fn sign(&self, c: [&Real; 2]) -> Option<RealSign> {
         let [cx, cy] = Real::exact_dyadic_f64(c)?;
-        Real::certified_affine_det2_sign_f64(self.a, self.b, [cx, cy])
+        Real::certified_affine_det2_sign_from_direction_f64(
+            self.a,
+            self.direction,
+            [cx, cy],
+        )
+    }
+
+    /// Try to certify two exact-dyadic binary64 query points.
+    #[inline]
+    pub fn signs_exact_dyadic_f64(
+        &self,
+        points: [[f64; 2]; 2],
+    ) -> (Option<RealSign>, Option<RealSign>) {
+        (
+            Real::certified_affine_det2_sign_from_direction_f64(
+                self.a,
+                self.direction,
+                points[0],
+            ),
+            Real::certified_affine_det2_sign_from_direction_f64(
+                self.a,
+                self.direction,
+                points[1],
+            ),
+        )
     }
 }
 
@@ -577,10 +602,27 @@ impl Real {
         b: [&Real; 2],
     ) -> Option<PreparedAffineDet2Filter> {
         let [ax, ay, bx, by] = Self::exact_dyadic_f64([a[0], a[1], b[0], b[1]])?;
-        Some(PreparedAffineDet2Filter {
-            a: [ax, ay],
-            b: [bx, by],
-        })
+        Self::prepare_affine_det2_filter_from_exact_dyadic_f64([ax, ay], [bx, by])
+    }
+
+    /// Prepare an affine determinant filter from retained exact-dyadic
+    /// binary64 endpoints.
+    ///
+    /// The line direction and its range certificate are computed once so
+    /// repeated query points do not reload that fixed work.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_affine_det2_filter_from_exact_dyadic_f64(
+        a: [f64; 2],
+        b: [f64; 2],
+    ) -> Option<PreparedAffineDet2Filter> {
+        let direction = [b[0] - a[0], b[1] - a[1]];
+        if !Self::normal_or_zero_f64(direction[0])
+            || !Self::normal_or_zero_f64(direction[1])
+        {
+            return None;
+        }
+        Some(PreparedAffineDet2Filter { a, direction })
     }
 
     /// Prepare both affine determinant directions for a segment pair.
@@ -1082,17 +1124,17 @@ impl Real {
         let right = aby * acx;
         let det = left - right;
         let magnitude_sum = left.abs() + right.abs();
-        if !Self::normal_or_zero_f64(left)
-            || !Self::normal_or_zero_f64(right)
-            || !Self::normal_or_zero_f64(det)
-            || !Self::normal_or_zero_f64(magnitude_sum)
-        {
+        if !Self::normal_or_zero_f64(magnitude_sum) {
             return None;
         }
 
         // Three rounded operations contribute to each product-difference
         // decision. This is the conservative one-branch determinant bound used
         // by adaptive robust-predicate filters, with an absolute product sum.
+        // Once that bound is normal it also dominates the absolute rounding
+        // error of any subnormal product or difference, so those intermediates
+        // need no separate classification. An overflowed product makes the
+        // magnitude non-normal above.
         const THETA: f64 = 3.330_669_062_177_372_2e-16;
         let error_bound = THETA * magnitude_sum;
         if magnitude_sum != 0.0 && !error_bound.is_normal() {

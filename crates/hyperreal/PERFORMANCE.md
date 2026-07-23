@@ -1277,6 +1277,43 @@ all-feature Hyperreal suite, downstream Hypercurve suite, strict Clippy,
 warning-denied rustdoc, and the 10,000-run AddressSanitizer region-Boolean
 campaign (5,906 coverage points and 18,772 feature edges) pass.
 
+### Reused affine determinant certificates
+
+The certified binary64 affine determinant filter previously classified each
+rounded product and the final difference independently even after establishing
+a normal aggregate error bound. The product-magnitude sum and its scaled error
+bound are sufficient: when the latter is normal it also dominates the absolute
+rounding error of a subnormal product or difference, while an overflow makes
+the magnitude non-normal. Removing the redundant intermediate classifications
+preserves the same conservative topology boundary and admits only cases whose
+absolute underflow error is already covered.
+
+The reusable two-dimensional filter now also retains its checked line direction
+instead of recomputing it for every query, and accepts two retained exact-dyadic
+binary64 points in one call. Downstream Hypercurve prepares the fixed source
+line once per broad-phase suffix and lazily prepares the other direction only
+after the first same-side rejection fails. No approximate result is cached:
+every returned sign remains independently bounded, and inconclusive directions
+or points still enter the exact word and arbitrary-precision fallbacks.
+
+Two alternating 21-sample star1024 contour comparisons measured
+5.996--6.121 ms/iteration with reused certificates versus 6.115--6.251 ms at
+the preceding exact prefix-sweep checkpoint, about 2% faster end to end. The
+complete comparison matrix measured ordinary/prepared exact contours at
+5.878/5.856 ms, versus 19.807 ms for Cavalier, 10.233 ms for `i_overlay`, and
+10.604 ms for `geo`. Star64 remained neutral within run noise and star256
+improved about 2%. The ordinary four-segment rectangle-union contour path also
+improved from 5.471 to 5.367 us/iteration.
+
+Tests retain the 20,000-case exact determinant oracle and add direct coverage
+for retained binary64 pairs, direction overflow, safely dominated subnormal
+products, and aggregate-underflow fallback. Ten downstream star1024 contour
+operations remain exactly 1,104,312 allocations, 2,192 temporaries, and
+16.58 MiB peak heap. The complete 563-test all-feature Hyperreal suite,
+downstream Hypercurve suite, strict Clippy, and warning-denied rustdoc pass.
+The 10,000-run AddressSanitizer differential Boolean campaign completed
+without failure at 5,892 coverage points and 18,786 feature edges.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

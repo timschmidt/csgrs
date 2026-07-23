@@ -480,6 +480,37 @@ mod tests {
     }
 
     #[test]
+    fn certified_affine_det2_sign_bounds_subnormal_products_absolutely() {
+        let zero = Real::zero();
+        let min_normal = Real::try_from(f64::MIN_POSITIVE).unwrap();
+        let one = Real::one();
+        let small = Real::try_from(2.0_f64.powi(-100)).unwrap();
+
+        // The first product underflows into the subnormal range, but the
+        // normal aggregate bound dominates its absolute rounding error.
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&zero, &zero],
+                [&min_normal, &one],
+                [&one, &small],
+            ),
+            Some(RealSign::Negative),
+        );
+
+        // When the aggregate itself is subnormal, the filter stays
+        // inconclusive and leaves the decision to the exact fallback.
+        let half = Real::try_from(0.5_f64).unwrap();
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&zero, &zero],
+                [&min_normal, &zero],
+                [&zero, &half],
+            ),
+            None,
+        );
+    }
+
+    #[test]
     fn prepared_linear_form3_filter_only_returns_exact_signs() {
         let coefficients = [
             Real::from(2_i32),
@@ -839,6 +870,23 @@ mod tests {
                 )
             );
         }
+
+        let retained = Real::prepare_affine_det2_filter_from_exact_dyadic_f64(
+            [-1.0, -1.0],
+            [1.0, 1.0],
+        )
+        .expect("normal exact-dyadic direction should prepare");
+        assert_eq!(
+            retained.signs_exact_dyadic_f64([[0.25, 0.5], [0.5, 0.25]]),
+            (Some(RealSign::Positive), Some(RealSign::Negative)),
+        );
+        assert!(
+            Real::prepare_affine_det2_filter_from_exact_dyadic_f64(
+                [-f64::MAX, 0.0],
+                [f64::MAX, 0.0],
+            )
+            .is_none()
+        );
     }
 
     #[test]
