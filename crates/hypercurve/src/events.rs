@@ -952,56 +952,57 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                 );
             };
             let b_endpoints = b_boxes.segment_endpoints(b_segment_index);
-            let crossing = match Real::exact_dyadic_f64_line_intersection2_point_with_prepared_first(
-                prepared_a_line,
-                b_endpoints[0],
-                b_endpoints[1],
-            ) {
-                Some((parameters, [x, y])) => CertifiedLineCrossingEvent::new_exact_dyadic(
-                    a_segment_index_u16,
-                    b_segment_index_u16,
-                    Point2::new(x, y),
-                    parameters,
-                ),
-                None => {
-                    match Real::exact_dyadic_f64_line_intersection2_point_wide_with_prepared_first(
-                        prepared_a_line,
-                        b_endpoints[0],
-                        b_endpoints[1],
-                    ) {
-                        Some((parameters, [x, y])) => {
-                            CertifiedLineCrossingEvent::new_exact_dyadic_wide(
-                                a_segment_index_u16,
-                                b_segment_index_u16,
-                                Point2::new(x, y),
-                                parameters,
-                            )
-                        }
-                        None => {
-                            let LineLineIntersection::Point {
-                                point,
-                                a_param,
-                                b_param,
-                                ..
-                            } = a_line.intersect_line_with_certified_exact_dyadic_proper_crossing(
-                                b_line, policy,
-                            )?
-                            else {
-                                return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
-                                    a, b, a_boxes, b_boxes, policy,
-                                );
-                            };
-                            CertifiedLineCrossingEvent::new_materialized(
-                                a_segment_index_u16,
-                                b_segment_index_u16,
-                                point,
-                                a_param,
-                                b_param,
-                            )
+            let crossing =
+                match Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
+                    prepared_a_line,
+                    b_endpoints[0],
+                    b_endpoints[1],
+                ) {
+                    Some((parameters, point)) => CertifiedLineCrossingEvent::new_exact_dyadic(
+                        a_segment_index_u16,
+                        b_segment_index_u16,
+                        Point2::from_exact_dyadic_line_point(point),
+                        parameters,
+                    ),
+                    None => {
+                        match Real::exact_dyadic_f64_line_intersection2_retained_point_wide_with_prepared_first(
+                            prepared_a_line,
+                            b_endpoints[0],
+                            b_endpoints[1],
+                        ) {
+                            Some((parameters, point)) => {
+                                CertifiedLineCrossingEvent::new_exact_dyadic_wide(
+                                    a_segment_index_u16,
+                                    b_segment_index_u16,
+                                    Point2::from_exact_dyadic_wide_line_point(point),
+                                    parameters,
+                                )
+                            }
+                            None => {
+                                let LineLineIntersection::Point {
+                                    point,
+                                    a_param,
+                                    b_param,
+                                    ..
+                                } = a_line.intersect_line_with_certified_exact_dyadic_proper_crossing(
+                                    b_line, policy,
+                                )?
+                                else {
+                                    return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
+                                        a, b, a_boxes, b_boxes, policy,
+                                    );
+                                };
+                                CertifiedLineCrossingEvent::new_materialized(
+                                    a_segment_index_u16,
+                                    b_segment_index_u16,
+                                    point,
+                                    a_param,
+                                    b_param,
+                                )
+                            }
                         }
                     }
-                }
-            };
+                };
             crossings.push(crossing);
         } else {
             let LineLineIntersection::Point {

@@ -2424,6 +2424,54 @@ suites, strict Clippy, and warning-denied rustdoc pass. The 10,000-run
 AddressSanitizer differential Boolean campaign completed without failure at
 5,891 coverage points and 18,933 feature edges.
 
+The next point-storage checkpoint removes eager rational materialization from
+proper line crossings that only need a retained point. Hyperreal now returns
+the two fixed-stack affine numerators and their shared denominator as a compact
+exact carrier. `Point2` retains that carrier behind the same one-word shared
+handle used by ordinary points and materializes its two public `Real`
+coordinates once, on demand. Low pointer bits distinguish the ordinary,
+compact, and wide shared payloads; compile-time alignment checks, matching
+`Arc` clone/drop dispatch, stable `OnceLock` storage, and cross-thread tests
+protect the ownership boundary. Ordinary point payloads remain exactly two
+`Real` values (96 bytes), so the broad public point API does not pay for the
+line-only optimization.
+
+This changes storage, not geometry: exact crossing parameters, ordering,
+fallbacks, point equality, and public `x`/`y` results are unchanged. Randomized
+compact and wide arithmetic oracles compare deferred materialization with the
+eager path, while retained-event tests cover downstream grouping and fallback.
+
+The fixed star workloads show the scaling effect. Star64 exact contours fell
+from 49.806 to 35.327 us, star256 from 0.392 to 0.308 ms, and the complete
+star1024 matrix measured ordinary/prepared exact contours at 3.948/3.886 ms.
+The same star1024 run measured 19.455 ms for Cavalier, 10.033 ms for
+`i_overlay`, and 10.075 ms for `geo`, making the exact contour row about 2.5
+times faster than the nearest finite competitor on this polygon workload.
+Ordinary exact regions measured 5.027 ms and prepared regions 5.281 ms;
+complete loop-producing rows measured 11.129/11.049 ms. Rectangle contours
+remained effectively flat at 5.390--5.404 us versus 5.306 us.
+
+Across ten star1024 contour operations, heaptrack allocations fell from
+1,104,313 to 464,773 (57.9%) while the 2,193 temporary peak and 16.58 MiB peak
+heap were unchanged. Seven counter runs over 320 iterations fell from 7.792 to
+5.854 billion cycles, 25.190 to 19.254 billion instructions, and 4.152 to
+2.994 billion branches. The remaining polygon profile is led by event
+collection, support relations, and normalized parameter comparison rather than
+point rational construction.
+
+The complete default and all-feature suites, strict default/all-feature
+Clippy, warning-denied rustdoc, fuzz-target builds, and the native demo suite
+pass. The post-change AddressSanitizer `region_boolean` differential campaign
+completed 10,000 executions without failure at 6,025 coverage points and
+19,382 feature edges.
+
+This is a line-overlay scaling checkpoint, not the endpoint of the Hypercurve
+audit. The next selection is based on large complex polynomial/rational
+Bézier, arc, B-spline/NURBS, offset, arrangement, and pathological-region
+profiles across the whole public API. The general `CurveRegion2` pipeline and
+the `LineArc` accelerator remain until those mixed-curve workloads meet the
+same exactness, capacity, and competitive performance gates.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

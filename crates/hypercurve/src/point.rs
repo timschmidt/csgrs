@@ -1,30 +1,121 @@
 //! Two-dimensional points backed by [`hyperreal::Real`].
 
-use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
-use std::sync::Arc;
+use hyperreal::{
+    ExactDyadicLinePoint2, ExactDyadicWideLinePoint2, Real, ZeroKnowledge as ZeroStatus,
+};
+use std::{
+    fmt,
+    ptr::NonNull,
+    sync::{Arc, OnceLock},
+};
 
 /// A two-dimensional point.
-#[derive(Clone, Debug)]
-pub struct Point2(Arc<Point2Data>);
+pub struct Point2(NonNull<()>);
 
-#[derive(Debug)]
 struct Point2Data {
-    x: Real,
-    y: Real,
+    coordinates: [Real; 2],
+}
+
+struct DeferredPoint2<P> {
+    point: P,
+    coordinates: OnceLock<Box<[Real; 2]>>,
+}
+
+const POINT_TAG_MASK: usize = 0b11;
+const MATERIALIZED_POINT_TAG: usize = 0;
+const EXACT_DYADIC_POINT_TAG: usize = 1;
+const EXACT_DYADIC_WIDE_POINT_TAG: usize = 2;
+const _: () = {
+    assert!(std::mem::align_of::<Point2Data>() > POINT_TAG_MASK);
+    assert!(std::mem::align_of::<DeferredPoint2<ExactDyadicLinePoint2>>() > POINT_TAG_MASK);
+    assert!(std::mem::align_of::<DeferredPoint2<ExactDyadicWideLinePoint2>>() > POINT_TAG_MASK);
+};
+
+// SAFETY: every tagged pointer owns one strong `Arc` reference to one of the
+// three Send + Sync payloads below. Clone and Drop dispatch on the immutable
+// tag and use the corresponding `Arc` raw-pointer operation.
+unsafe impl Send for Point2 {}
+// SAFETY: coordinate access is immutable, and deferred initialization uses
+// `OnceLock`; every possible payload is Sync.
+unsafe impl Sync for Point2 {}
+
+impl Clone for Point2 {
+    #[inline]
+    fn clone(&self) -> Self {
+        if self.tag() == MATERIALIZED_POINT_TAG {
+            // SAFETY: the materialized tag is assigned only from
+            // Arc<Point2Data>.
+            unsafe {
+                Arc::increment_strong_count(self.materialized_pointer::<Point2Data>());
+            }
+        } else {
+            self.increment_deferred_strong_count();
+        }
+        Self(self.0)
+    }
+}
+
+impl Drop for Point2 {
+    #[inline]
+    fn drop(&mut self) {
+        if self.tag() == MATERIALIZED_POINT_TAG {
+            // SAFETY: this Point2 owns one strong Arc<Point2Data> reference.
+            unsafe {
+                Arc::decrement_strong_count(self.materialized_pointer::<Point2Data>());
+            }
+        } else {
+            self.decrement_deferred_strong_count();
+        }
+    }
+}
+
+impl fmt::Debug for Point2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("Point2")
+            .field("x", self.x())
+            .field("y", self.y())
+            .finish()
+    }
 }
 
 impl PartialEq for Point2 {
     fn eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
-            || ((&self.0.x - &other.0.x).zero_status() == ZeroStatus::Zero
-                && (&self.0.y - &other.0.y).zero_status() == ZeroStatus::Zero)
+        self.0 == other.0
+            || ((self.x() - other.x()).zero_status() == ZeroStatus::Zero
+                && (self.y() - other.y()).zero_status() == ZeroStatus::Zero)
     }
 }
 
 impl Point2 {
     /// Constructs a point from Real coordinates.
     pub fn new(x: Real, y: Real) -> Self {
-        Self(Arc::new(Point2Data { x, y }))
+        Self::from_arc(
+            Arc::new(Point2Data {
+                coordinates: [x, y],
+            }),
+            MATERIALIZED_POINT_TAG,
+        )
+    }
+
+    pub(crate) fn from_exact_dyadic_line_point(point: ExactDyadicLinePoint2) -> Self {
+        Self::from_arc(
+            Arc::new(DeferredPoint2 {
+                point,
+                coordinates: OnceLock::new(),
+            }),
+            EXACT_DYADIC_POINT_TAG,
+        )
+    }
+
+    pub(crate) fn from_exact_dyadic_wide_line_point(point: ExactDyadicWideLinePoint2) -> Self {
+        Self::from_arc(
+            Arc::new(DeferredPoint2 {
+                point,
+                coordinates: OnceLock::new(),
+            }),
+            EXACT_DYADIC_WIDE_POINT_TAG,
+        )
     }
 
     /// Constructs a point from values convertible into Real coordinates.
@@ -37,17 +128,122 @@ impl Point2 {
     }
 
     /// Returns the x coordinate.
+    #[inline]
     pub fn x(&self) -> &Real {
-        &self.0.x
+        &self.coordinates()[0]
     }
 
     /// Returns the y coordinate.
+    #[inline]
     pub fn y(&self) -> &Real {
-        &self.0.y
+        &self.coordinates()[1]
     }
 
     pub(crate) fn identity(&self) -> u64 {
-        Arc::as_ptr(&self.0) as usize as u64
+        self.pointer::<()>().addr() as u64
+    }
+
+    fn from_arc<T>(point: Arc<T>, tag: usize) -> Self {
+        debug_assert!(tag <= POINT_TAG_MASK);
+        let pointer = Arc::into_raw(point).cast_mut().cast::<()>();
+        debug_assert_eq!(pointer.addr() & POINT_TAG_MASK, 0);
+        let tagged = pointer.map_addr(|address| address | tag);
+        // SAFETY: Arc never returns a null data pointer.
+        Self(unsafe { NonNull::new_unchecked(tagged) })
+    }
+
+    #[inline(always)]
+    fn tag(&self) -> usize {
+        self.0.as_ptr().addr() & POINT_TAG_MASK
+    }
+
+    #[inline(always)]
+    fn pointer<T>(&self) -> *const T {
+        self.0
+            .as_ptr()
+            .map_addr(|address| address & !POINT_TAG_MASK)
+            .cast()
+    }
+
+    #[inline(always)]
+    fn materialized_pointer<T>(&self) -> *const T {
+        debug_assert_eq!(self.tag(), MATERIALIZED_POINT_TAG);
+        self.0.as_ptr().cast()
+    }
+
+    #[inline(always)]
+    fn coordinates(&self) -> &[Real; 2] {
+        if self.tag() == MATERIALIZED_POINT_TAG {
+            // SAFETY: the tag is assigned only from Arc<Point2Data>.
+            &unsafe { &*self.materialized_pointer::<Point2Data>() }.coordinates
+        } else {
+            self.deferred_coordinates()
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn deferred_coordinates(&self) -> &[Real; 2] {
+        match self.tag() {
+            EXACT_DYADIC_POINT_TAG => {
+                // SAFETY: the tag is assigned only from this deferred Arc type.
+                let deferred = unsafe { &*self.pointer::<DeferredPoint2<ExactDyadicLinePoint2>>() };
+                deferred
+                    .coordinates
+                    .get_or_init(|| Box::new(deferred.point.materialize()))
+            }
+            EXACT_DYADIC_WIDE_POINT_TAG => {
+                // SAFETY: the tag is assigned only from this deferred Arc type.
+                let deferred =
+                    unsafe { &*self.pointer::<DeferredPoint2<ExactDyadicWideLinePoint2>>() };
+                deferred
+                    .coordinates
+                    .get_or_init(|| Box::new(deferred.point.materialize()))
+            }
+            _ => unreachable!("two-bit point tag has a reserved value"),
+        }
+    }
+
+    #[inline(always)]
+    fn increment_deferred_strong_count(&self) {
+        // SAFETY: constructors preserve the tag/type correspondence for the
+        // full lifetime of the raw Arc pointer.
+        unsafe {
+            match self.tag() {
+                EXACT_DYADIC_POINT_TAG => {
+                    Arc::increment_strong_count(
+                        self.pointer::<DeferredPoint2<ExactDyadicLinePoint2>>(),
+                    );
+                }
+                EXACT_DYADIC_WIDE_POINT_TAG => {
+                    Arc::increment_strong_count(
+                        self.pointer::<DeferredPoint2<ExactDyadicWideLinePoint2>>(),
+                    );
+                }
+                _ => unreachable!("deferred point has an exact carrier tag"),
+            }
+        }
+    }
+
+    #[inline(always)]
+    fn decrement_deferred_strong_count(&self) {
+        // SAFETY: this Point2 owns one strong reference of the type selected
+        // by its immutable deferred tag.
+        unsafe {
+            match self.tag() {
+                EXACT_DYADIC_POINT_TAG => {
+                    Arc::decrement_strong_count(
+                        self.pointer::<DeferredPoint2<ExactDyadicLinePoint2>>(),
+                    );
+                }
+                EXACT_DYADIC_WIDE_POINT_TAG => {
+                    Arc::decrement_strong_count(
+                        self.pointer::<DeferredPoint2<ExactDyadicWideLinePoint2>>(),
+                    );
+                }
+                _ => unreachable!("deferred point has an exact carrier tag"),
+            }
+        }
     }
 
     /// Returns `self - other` as a coordinate pair.
@@ -94,13 +290,14 @@ impl Point2 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::mem::size_of;
 
     #[test]
     fn clones_share_exact_coordinate_storage_and_identity() {
         let point = Point2::from_values(3_i8, -5_i8);
         let clone = point.clone();
 
-        assert!(Arc::ptr_eq(&point.0, &clone.0));
+        assert_eq!(point.0, clone.0);
         assert_eq!(point.identity(), clone.identity());
         assert_eq!(point.x(), clone.x());
         assert_eq!(point.y(), clone.y());
@@ -110,5 +307,99 @@ mod tests {
     fn point_handle_remains_send_and_sync() {
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<Point2>();
+    }
+
+    #[test]
+    fn exact_line_coordinates_materialize_on_first_observation() {
+        let prepared = Real::prepare_exact_dyadic_f64_line2([0.0, 0.0], [2.0, 2.0]).unwrap();
+        let (_, retained) =
+            Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
+                &prepared,
+                [0.0, 2.0],
+                [2.0, 0.0],
+            )
+            .unwrap();
+        let point = Point2::from_exact_dyadic_line_point(retained);
+        // SAFETY: the constructor above assigns this exact tag/type pair.
+        let deferred = unsafe { &*point.pointer::<DeferredPoint2<ExactDyadicLinePoint2>>() };
+        assert_eq!(point.tag(), EXACT_DYADIC_POINT_TAG);
+        assert!(deferred.coordinates.get().is_none());
+
+        let clone = point.clone();
+        assert_eq!(point.x(), &Real::one());
+        assert!(deferred.coordinates.get().is_some());
+        assert_eq!(clone.y(), &Real::one());
+        assert_eq!(point, Point2::from_values(1_i8, 1_i8));
+    }
+
+    #[test]
+    fn tagged_storage_preserves_materialized_point_layout() {
+        assert_eq!(size_of::<Point2>(), size_of::<usize>());
+        assert_eq!(size_of::<Point2Data>(), 2 * size_of::<Real>());
+        assert!(size_of::<DeferredPoint2<ExactDyadicLinePoint2>>() <= 176);
+        assert!(size_of::<DeferredPoint2<ExactDyadicWideLinePoint2>>() <= 192);
+    }
+
+    #[test]
+    fn tagged_clones_outlive_their_original_owner() {
+        let materialized = {
+            let original = Point2::from_values(7_i8, -9_i8);
+            original.clone()
+        };
+        assert_eq!(materialized, Point2::from_values(7_i8, -9_i8));
+
+        let prepared = Real::prepare_exact_dyadic_f64_line2([0.0, 0.0], [2.0, 2.0]).unwrap();
+        let deferred = {
+            let (_, retained) =
+                Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
+                    &prepared,
+                    [0.0, 2.0],
+                    [2.0, 0.0],
+                )
+                .unwrap();
+            Point2::from_exact_dyadic_line_point(retained).clone()
+        };
+        assert_eq!(deferred, Point2::from_values(1_i8, 1_i8));
+    }
+
+    #[test]
+    fn wide_deferred_point_materializes_and_drops() {
+        let extent = 2_f64.powi(100);
+        let near_extent = f64::from_bits(extent.to_bits() - 1);
+        let prepared =
+            Real::prepare_exact_dyadic_f64_line2([0.0, 0.0], [extent, near_extent]).unwrap();
+        let (_, retained) =
+            Real::exact_dyadic_f64_line_intersection2_retained_point_wide_with_prepared_first(
+                &prepared,
+                [0.0, near_extent],
+                [extent, 0.0],
+            )
+            .unwrap();
+        let point = Point2::from_exact_dyadic_wide_line_point(retained);
+
+        assert_eq!(point.tag(), EXACT_DYADIC_WIDE_POINT_TAG);
+        assert_eq!(point.x(), &Real::try_from(extent / 2.0).unwrap());
+        assert_eq!(point.y(), &Real::try_from(near_extent / 2.0).unwrap());
+    }
+
+    #[test]
+    fn deferred_point_can_materialize_from_another_thread() {
+        let prepared = Real::prepare_exact_dyadic_f64_line2([0.0, 0.0], [2.0, 2.0]).unwrap();
+        let (_, retained) =
+            Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
+                &prepared,
+                [0.0, 2.0],
+                [2.0, 0.0],
+            )
+            .unwrap();
+        let point = Point2::from_exact_dyadic_line_point(retained);
+        let clone = point.clone();
+        std::thread::spawn(move || {
+            assert_eq!(clone.x(), &Real::one());
+            assert_eq!(clone.y(), &Real::one());
+        })
+        .join()
+        .unwrap();
+        assert_eq!(point, Point2::from_values(1_i8, 1_i8));
     }
 }
