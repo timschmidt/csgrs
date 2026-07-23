@@ -2307,6 +2307,33 @@ warning-denied rustdoc pass. The 10,000-run AddressSanitizer differential
 Boolean campaign completed without failure at 5,924 coverage points and 18,872
 feature edges.
 
+The next cross-stack predicate checkpoint reuses the fixed affine line through
+each source segment's entire candidate suffix. Hyperreal's prepared filter now
+retains its already-certified direction and evaluates both retained exact-dyadic
+binary64 query points together. The second line direction remains lazy, so a
+first-line same-side separation still exits before doing that work. Its
+aggregate determinant bound also makes separate product and result
+classifications redundant: a normal scaled bound dominates absolute subnormal
+rounding, while non-normal magnitudes still fall through to the unchanged exact
+filters.
+
+Two alternating 21-sample star1024 contour comparisons measured
+5.996--6.121 ms versus 6.115--6.251 ms at the preceding prefix-sweep
+checkpoint, about 2% faster. Star64 remained neutral within run noise and
+star256 improved about 2%. In the complete star1024 matrix, ordinary/prepared
+exact contours measured 5.878/5.856 ms, versus 19.807 ms for Cavalier,
+10.233 ms for `i_overlay`, and 10.604 ms for `geo`. The ordinary four-segment
+rectangle-union contour path also improved from 5.471 to 5.367 us.
+
+The reuse is stack-only. Heaptrack remains exactly 1,104,312 allocations,
+2,192 temporaries, and 16.58 MiB peak heap across ten star1024 contour
+operations. Direct tests compare retained pair queries with one-shot
+certificates, cover direction overflow and subnormal-boundary fallback, and
+retain equality with the unreserved exact event collector. Both complete
+all-feature suites, strict Clippy, and warning-denied rustdoc pass. The
+10,000-run AddressSanitizer differential Boolean campaign completed without
+failure at 5,892 coverage points and 18,786 feature edges.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

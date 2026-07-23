@@ -7,7 +7,7 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::{PreparedAffineDet2PairFilter, Real, RealSign};
+use hyperreal::{PreparedAffineDet2Filter, PreparedAffineDet2PairFilter, Real, RealSign};
 
 use crate::classify::{
     at_unit_interval_endpoint, compare_reals, in_closed_unit_interval, is_zero, max_real, min_real,
@@ -905,17 +905,31 @@ pub(crate) fn certified_line_segment_support_relation(
     certified_line_segment_support_relation_with_filter(first, second, floating)
 }
 
-pub(crate) fn certified_line_segment_support_relation_with_exact_dyadic_f64(
+pub(crate) fn certified_line_segment_support_relation_with_prepared_exact_dyadic_f64(
     first: &LineSeg2,
     second: &LineSeg2,
+    first_filter: Option<PreparedAffineDet2Filter>,
     first_endpoints: [[f64; 2]; 2],
     second_endpoints: [[f64; 2]; 2],
 ) -> CertifiedLineSegmentSupportRelation {
-    let floating = Real::prepare_affine_det2_pair_filter_from_exact_dyadic_f64(
-        first_endpoints,
-        second_endpoints,
-    );
-    certified_line_segment_support_relation_with_filter(first, second, Some(floating))
+    certified_line_segment_support_relation_with_floating_signs(
+        first,
+        second,
+        || {
+            first_filter.map_or((None, None), |filter| {
+                filter.signs_exact_dyadic_f64(second_endpoints)
+            })
+        },
+        || {
+            Real::prepare_affine_det2_filter_from_exact_dyadic_f64(
+                second_endpoints[0],
+                second_endpoints[1],
+            )
+            .map_or((None, None), |filter| {
+                filter.signs_exact_dyadic_f64(first_endpoints)
+            })
+        },
+    )
 }
 
 fn certified_line_segment_support_relation_with_filter(
@@ -923,6 +937,24 @@ fn certified_line_segment_support_relation_with_filter(
     second: &LineSeg2,
     floating: Option<PreparedAffineDet2PairFilter>,
 ) -> CertifiedLineSegmentSupportRelation {
+    certified_line_segment_support_relation_with_floating_signs(
+        first,
+        second,
+        || floating.map_or((None, None), |filter| filter.first_signs()),
+        || floating.map_or((None, None), |filter| filter.second_signs()),
+    )
+}
+
+fn certified_line_segment_support_relation_with_floating_signs<FirstSigns, SecondSigns>(
+    first: &LineSeg2,
+    second: &LineSeg2,
+    first_floating_signs: FirstSigns,
+    second_floating_signs: SecondSigns,
+) -> CertifiedLineSegmentSupportRelation
+where
+    FirstSigns: FnOnce() -> (Option<RealSign>, Option<RealSign>),
+    SecondSigns: FnOnce() -> (Option<RealSign>, Option<RealSign>),
+{
     fn orientations(
         line: &LineSeg2,
         first: &Point2,
@@ -963,22 +995,14 @@ fn certified_line_segment_support_relation_with_filter(
         )
     }
 
-    let (second_start, second_end) = orientations(
-        first,
-        second.start(),
-        second.end(),
-        floating.map_or((None, None), |filter| filter.first_signs()),
-    );
+    let (second_start, second_end) =
+        orientations(first, second.start(), second.end(), first_floating_signs());
     if strictly_same_side(second_start, second_end) {
         return CertifiedLineSegmentSupportRelation::Separated;
     }
 
-    let (first_start, first_end) = orientations(
-        second,
-        first.start(),
-        first.end(),
-        floating.map_or((None, None), |filter| filter.second_signs()),
-    );
+    let (first_start, first_end) =
+        orientations(second, first.start(), first.end(), second_floating_signs());
     if strictly_same_side(first_start, first_end) {
         return CertifiedLineSegmentSupportRelation::Separated;
     }

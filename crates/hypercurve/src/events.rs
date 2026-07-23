@@ -22,7 +22,7 @@ use crate::classify::{
 };
 use crate::intersect::{
     CertifiedLineSegmentSupportRelation,
-    certified_line_segment_support_relation_with_exact_dyadic_f64,
+    certified_line_segment_support_relation_with_prepared_exact_dyadic_f64,
 };
 use crate::{
     ArcArcIntersection, Classification, Contour2, CurveError, CurvePolicy, CurveResult,
@@ -863,6 +863,8 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
     let mut positive_crossings = 1_u64 << 63;
     for (a_segment_index, a_box) in a_boxes.segments.iter().copied().enumerate() {
         let a_endpoints = a_boxes.segment_endpoints(a_segment_index);
+        let a_filter =
+            Real::prepare_affine_det2_filter_from_exact_dyadic_f64(a_endpoints[0], a_endpoints[1]);
         let Segment2::Line(a_line) = &a.segments()[a_segment_index] else {
             unreachable!("exact dyadic line bounds contain only line segments");
         };
@@ -882,9 +884,10 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                 unreachable!("exact dyadic line bounds contain only line segments");
             };
             let b_endpoints = b_boxes.segment_endpoints(b_segment_index);
-            let relation = certified_line_segment_support_relation_with_exact_dyadic_f64(
+            let relation = certified_line_segment_support_relation_with_prepared_exact_dyadic_f64(
                 a_line,
                 b_line,
+                a_filter,
                 a_endpoints,
                 b_endpoints,
             );
