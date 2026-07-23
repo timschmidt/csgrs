@@ -1850,6 +1850,38 @@ test passed. Its extended AddressSanitizer `real_exact` fuzz target completed
 85,423 executions in 31 seconds without failure; LeakSanitizer alone was
 disabled because the managed ptrace environment cannot attach it.
 
+The next parameter experiment established a narrower boundary. Deferring the
+two parameter GCDs reduced the star64 trace from 116 to 55 total GCDs, but
+repeated ordering on the larger unreduced cross-products raised the matched
+star1024 contour row from 12.621 to 13.548 ms. That experiment was removed:
+canonical parameters are cheaper for the current repeatedly compared event
+model. A future shared determinant event must compare its native words
+directly rather than store ordinary unreduced `Rational` nodes.
+
+The retained event-storage step instead consumes the already sorted crossing
+index directly. It no longer rebuilds a contour-sized
+`Vec<Vec<SegmentSplitMarker>>`, repeats the segment index on every marker, or
+clones source endpoints and zero/one parameters into every crossed segment.
+Compact marker arrays now contain only true intersection points and parameters;
+source endpoint geometry is implicit, and one zero/one parameter pair is shared
+by all sibling fragments. One shared split-data node owns those values and the
+source support, reducing `CompactLineContourFragment` from 40 to 32 bytes and
+its interior marker from 56 to 48 bytes on 64-bit targets. Removing the
+superseded marker builder and certified constructor also leaves this change 60
+source lines smaller.
+
+The conservative matched 31-sample, 50-iteration star1024 contour median is now
+12.548 ms against the immediate 12.621 ms checkpoint and the original 13.517
+ms clean anchor. The nine-sample matrix measured star64 region/contours at
+125.8/127.5 us, star256 at 1.086/0.966 ms, and star1024 at 13.981/12.643 ms;
+prepared star1024 contours measured 12.815 ms. Cavalier measured 19.333 ms at
+star1024, while `i_overlay` and `geo` remain ahead at 10.034 and 10.097 ms. The
+compact representation is retained for its measured latency, static memory
+reduction, and larger-curve capacity. The full all-feature suite passed, and
+the AddressSanitizer `region_boolean` target completed 8,431 executions in 31
+seconds without failure after seeding from 1,039 retained cases. It does not
+satisfy the completion gate.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

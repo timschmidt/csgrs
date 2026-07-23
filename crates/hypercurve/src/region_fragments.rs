@@ -6,7 +6,7 @@
 //! entry/exit or fill-state classification in polygon clipping traversal.
 
 use crate::fragment::{
-    CompactLineContourFragment, compact_line_contour_fragments_from_split_markers,
+    CompactLineContourFragment, compact_line_contour_fragments_from_crossing_windings,
 };
 use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
 use crate::{
@@ -223,16 +223,17 @@ pub(crate) fn split_single_material_line_regions_compact(
             second.material_contours()[0],
         ),
     ] {
-        let Some(markers) = crossing_windings.split_markers(key, contour) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let fragments = match compact_line_contour_fragments_from_crossing_windings(
+            contour,
+            key,
+            crossing_windings,
+            policy,
+        )? {
+            Classification::Decided(fragments) => fragments,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
-        let fragments =
-            match compact_line_contour_fragments_from_split_markers(contour, markers, policy)? {
-                Classification::Decided(fragments) => fragments,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
         contours.push(CompactLineRegionContourFragments { key, fragments });
     }
     Ok(Classification::Decided(CompactLineRegionFragmentSet {

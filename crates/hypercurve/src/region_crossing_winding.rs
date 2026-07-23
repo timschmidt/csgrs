@@ -11,17 +11,16 @@ use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    Contour2, ContourIntersection, ContourSplitMarkers, CurvePolicy, IntersectionKind, Point2,
-    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionSide, RegionView2, Segment2,
-    SegmentKind, SegmentSplitMarker,
+    ContourIntersection, CurvePolicy, IntersectionKind, Point2, RegionContourKey,
+    RegionContourRole, RegionIntersectionSet, RegionSide, RegionView2, Segment2, SegmentKind,
 };
 
 #[derive(Clone, Debug)]
-struct RegionLineCrossing<'a> {
-    segment_index: usize,
-    parameter: &'a Real,
-    point: &'a Point2,
-    winding_delta: i32,
+pub(crate) struct RegionLineCrossing<'a> {
+    pub(crate) segment_index: usize,
+    pub(crate) parameter: &'a Real,
+    pub(crate) point: &'a Point2,
+    pub(crate) winding_delta: i32,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -159,55 +158,6 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
             .map_or(0, <[RegionLineCrossing]>::len)
     }
 
-    pub(crate) fn split_markers(
-        &self,
-        key: RegionContourKey,
-        contour: &Contour2,
-    ) -> Option<ContourSplitMarkers> {
-        // `from_intersections` has already certified unique proper crossings
-        // in strict source-parameter order. Reusing that order avoids rebuilding
-        // and sorting the same marker set.
-        let crossings = self.crossings_for_key(key)?;
-        let offsets = match key.side {
-            RegionSide::First => &self.first_segment_offsets,
-            RegionSide::Second => &self.second_segment_offsets,
-        };
-        if offsets.len() != contour.len() + 1 {
-            return None;
-        }
-
-        let zero = Real::zero();
-        let one = Real::one();
-        let mut segment_markers = Vec::with_capacity(contour.len());
-        for (segment_index, segment) in contour.segments().iter().enumerate() {
-            let segment_crossings = &crossings[offsets[segment_index]..offsets[segment_index + 1]];
-            if segment_crossings.is_empty() {
-                segment_markers.push(Vec::new());
-                continue;
-            }
-            let mut markers = Vec::with_capacity(segment_crossings.len() + 2);
-            markers.push(SegmentSplitMarker {
-                segment_index,
-                param: zero.clone(),
-                point: segment.start().clone(),
-            });
-            markers.extend(segment_crossings.iter().map(|crossing| SegmentSplitMarker {
-                segment_index,
-                param: crossing.parameter.clone(),
-                point: crossing.point.clone(),
-            }));
-            markers.push(SegmentSplitMarker {
-                segment_index,
-                param: one.clone(),
-                point: segment.end().clone(),
-            });
-            segment_markers.push(markers);
-        }
-        Some(ContourSplitMarkers::from_certified_sorted_source_markers(
-            segment_markers,
-        ))
-    }
-
     fn winding_delta_sum(&self, key: RegionContourKey) -> i64 {
         self.crossings_for_key(key).map_or(0, |crossings| {
             crossings
@@ -231,7 +181,7 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         // Compact fragments retain source order, and every same-segment
         // boundary corresponds one-to-one with the next certified crossing.
         let crossing = self
-            .crossings(key, previous_segment_index)?
+            .crossings_for_segment(key, previous_segment_index)?
             .get(*segment_transition_index)?;
         *segment_transition_index += 1;
         Some(crossing.winding_delta)
@@ -247,7 +197,7 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         })
     }
 
-    fn crossings(
+    pub(crate) fn crossings_for_segment(
         &self,
         key: RegionContourKey,
         segment_index: usize,
