@@ -1819,6 +1819,37 @@ APIs materialize four independent canonical rationals. This is also the
 architecture required to reduce the large line-only `Segment2` memory traffic
 without boxing public arc variants or weakening exact degeneracy behavior.
 
+The first shared-determinant representation step now lives at the Hyperreal
+intersection boundary. Both segment parameters remain eagerly reduced because
+split order observes them. The two exact affine point coordinates retain their
+unreduced quotient internally, so the compact all-line pipeline can clone,
+compare, and emit them without performing two odd GCDs per proper crossing.
+Observable rational access, exact extraction, hashing, formatting,
+serialization, representation-sensitive dyadic kernels, and lossy IO all
+canonicalize through one thread-safe retained value. Sign and cross-product
+comparisons remain exact on the stored ratio. This uses the existing primary
+cache slot and leaves `RationalData` at 88 bytes.
+
+The star64 dispatch trace recorded 40 fused line intersections and zero
+lazy-coordinate canonicalizations during Boolean assembly. In the matched
+21-sample, 50-iteration star1024 contour run, the clean 13.517 ms checkpoint
+fell to 12.761 ms/iteration (5.6%). The wider nine-sample comparison measured
+star64 region/contours at 129.8/137.7 us, star256 at 1.080/0.958 ms, and
+star1024 at 13.742/12.681 ms; prepared star1024 contours measured 12.497 ms.
+At star1024 this is faster than `cavalier_contours` at 19.340 ms, but remains
+behind `i_overlay` and `geo` at 10.000 and 10.095 ms. At 64 and 256 vertices
+the finite competitors also remain faster, so the broad completion target is
+not met: candidate/event storage and exact parameter canonicalization remain
+the next scaling work, and the general mixed-curve pipeline and LineArc
+accelerator remain in place.
+
+Three standalone star1024 runs peaked at 31,288--31,504 KiB RSS (31,416 KiB
+median), effectively flat against the 31,336 KiB checkpoint. Hyperreal's full
+557-test unit suite plus every integration, property, serde, oracle, and doc
+test passed. Its extended AddressSanitizer `real_exact` fuzz target completed
+85,423 executions in 31 seconds without failure; LeakSanitizer alone was
+disabled because the managed ptrace environment cannot attach it.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
