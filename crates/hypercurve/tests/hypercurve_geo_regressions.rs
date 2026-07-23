@@ -138,13 +138,7 @@ fn assert_boolean_samples_match_geo(
         .boolean_region(&second_region, op, FillRule::NonZero, &policy())
         .unwrap();
     let Classification::Decided(result) = result else {
-        let report = first_region
-            .boolean_region_with_report(&second_region, op, FillRule::NonZero, &policy())
-            .unwrap();
-        panic!(
-            "expected Geo-derived boolean case to be decided, got {result:?}; report={:#?}",
-            report.report(),
-        );
+        panic!("expected Geo-derived boolean case to be decided, got {result:?}");
     };
 
     for &(x, y) in samples {
@@ -400,117 +394,6 @@ fn geo_boolean_triangle_pair_matches_geo_samples() {
         assert_boolean_samples_match_geo(first, second, op, samples);
     }
 }
-
-#[test]
-fn geo_unary_union_third_triangle_shared_edge_is_resolved_by_fill_side() {
-    let first = &[
-        (204.0, 287.0),
-        (203.69670020700084, 288.2213844497616),
-        (200.38308697914755, 288.338793163584),
-    ];
-    let second = &[
-        (210.0, 290.0),
-        (204.07584923592933, 288.2701221108328),
-        (212.24082541367974, 285.47846008552216),
-    ];
-    let third = &[
-        (211.0, 292.0),
-        (202.07584923592933, 288.2701221108328),
-        (212.24082541367974, 285.47846008552216),
-        (210.0, 290.0),
-    ];
-
-    let first_region = region_from_rings(&[first], &[]);
-    let second_region = region_from_rings(&[second], &[]);
-    let third_region = region_from_rings(&[third], &[]);
-    let Classification::Decided(partial) = first_region
-        .boolean_region(
-            &second_region,
-            BooleanOp::Union,
-            FillRule::NonZero,
-            &policy(),
-        )
-        .unwrap()
-    else {
-        panic!("expected first pairwise union to be decided");
-    };
-
-    let result = partial
-        .boolean_region_with_report(
-            &third_region,
-            BooleanOp::Union,
-            FillRule::NonZero,
-            &policy(),
-        )
-        .unwrap();
-    let region = result.region().expect("shared-edge union materialized");
-    assert_eq!(result.report().blocker(), None);
-    assert_eq!(result.report().boundary_overlap_event_count(), 1);
-    assert_eq!(result.report().result_material_contour_count(), Some(1));
-    assert_eq!(result.report().result_boundary_segment_count(), Some(7));
-    let pipeline = result
-        .report()
-        .pipeline_report()
-        .expect("shared-edge union retained its arrangement pipeline");
-    assert_eq!(
-        pipeline
-            .fragment_selection_report()
-            .boundary_needs_resolution_count(),
-        Some(2)
-    );
-    assert_eq!(
-        pipeline
-            .boundary_fragment_emission_report()
-            .unresolved_boundary_count(),
-        Some(0)
-    );
-    assert_eq!(pipeline.shared_boundary_resolution_count(), 1);
-    let resolution = &pipeline.shared_boundary_resolutions()[0];
-    assert!(resolution.same_direction());
-    assert!(resolution.first_filled_side_is_left());
-    assert!(resolution.second_filled_side_is_left());
-    assert_eq!(
-        resolution.first_action(),
-        BooleanFragmentAction::KeepSourceDirection
-    );
-    assert_eq!(resolution.second_action(), BooleanFragmentAction::Discard);
-    let prepared_third = third_region.prepare_topology_queries(&policy());
-    let prepared_result = partial
-        .as_view()
-        .boolean_region_with_report_against_prepared_region(
-            &prepared_third,
-            BooleanOp::Union,
-            FillRule::NonZero,
-            &policy(),
-        )
-        .unwrap();
-    assert_eq!(prepared_result.region(), Some(region));
-    assert_eq!(prepared_result.report().blocker(), None);
-    assert_eq!(
-        prepared_result
-            .report()
-            .pipeline_report()
-            .expect("prepared shared-edge union retained its arrangement pipeline")
-            .shared_boundary_resolutions(),
-        pipeline.shared_boundary_resolutions()
-    );
-
-    let geo_expected = geo_polygon(first)
-        .union(&geo_polygon(second))
-        .union(&geo_polygon(third));
-    for &(x, y) in &[(210.0, 289.0), (203.0, 288.0), (214.0, 289.0)] {
-        let expected_inside = geo_expected.contains(&Point::new(x, y));
-        assert_eq!(
-            region.classify_point(&p(x, y), &policy()),
-            Classification::Decided(if expected_inside {
-                RegionPointLocation::Inside
-            } else {
-                RegionPointLocation::Outside
-            })
-        );
-    }
-}
-
 #[test]
 fn geo_issue_913_polygon_union_pair_matches_geo_samples() {
     let first = &[

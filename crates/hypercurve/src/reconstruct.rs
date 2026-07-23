@@ -15,11 +15,9 @@ use std::f64::consts::PI;
 use hyperreal::Real;
 
 use crate::{
-    BulgeVertex2, Classification, Contour2, CurveError, CurveFamily2, CurveOperation2, CurvePolicy,
-    CurveRegion2, CurveResult, CurveString2, ExactCurveError, ExactCurveResult, FillRule,
-    FinitePolyline2, FiniteRegionProfile2, LineSeg2, Point2, RetainedImportFormat2,
-    RetainedImportRecord2, RetainedSourceTolerance2, RetainedTopologyStatus, Segment2, SegmentKind,
-    SegmentKindCounts,
+    BulgeVertex2, Contour2, CurveError, CurveFamily2, CurveOperation2, CurvePolicy, CurveRegion2,
+    CurveResult, CurveString2, ExactCurveError, ExactCurveResult, FillRule, FinitePolyline2,
+    FiniteRegionProfile2, LineSeg2, Point2, Segment2,
 };
 
 const DEFAULT_DISTANCE_TOLERANCE: f64 = 1e-6;
@@ -51,87 +49,6 @@ pub struct PolylineReconstructionOptions {
     /// Minimum number of sampled points required before a run can be promoted
     /// to a circular arc.
     pub min_arc_points: usize,
-}
-
-/// Result of importing a finite open line string.
-#[derive(Clone, Debug, PartialEq)]
-pub struct FiniteCurveStringImport2 {
-    curve: CurveString2,
-    record: RetainedImportRecord2,
-}
-
-/// Result of importing a finite closed line ring.
-#[derive(Clone, Debug, PartialEq)]
-pub struct FiniteContourImport2 {
-    contour: Contour2,
-    record: RetainedImportRecord2,
-}
-
-/// Source sample provenance for one reconstructed output segment.
-#[derive(Clone, Debug, PartialEq)]
-pub struct PolylineReconstructionSegmentReport2 {
-    output_segment_index: usize,
-    output_segment_kind: SegmentKind,
-    retained_start_sample_index: usize,
-    retained_end_sample_index: usize,
-    retained_sample_count: usize,
-    wraps_retained_samples: bool,
-    output_start_point: Point2,
-    output_end_point: Point2,
-    status: RetainedTopologyStatus,
-}
-
-/// Report for finite polyline reconstruction into native line/arc topology.
-#[derive(Clone, Debug, PartialEq)]
-pub struct PolylineReconstructionReport2 {
-    closed: bool,
-    fill_rule: Option<FillRule>,
-    input_point_count: usize,
-    retained_sample_count: usize,
-    discarded_duplicate_count: usize,
-    output_segment_count: Option<usize>,
-    output_segment_kind_counts: Option<SegmentKindCounts>,
-    segment_reports: Vec<PolylineReconstructionSegmentReport2>,
-    options: PolylineReconstructionOptions,
-    lossy_boundary: bool,
-    status: RetainedTopologyStatus,
-}
-
-/// Result of report-bearing open polyline reconstruction.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveStringPolylineReconstructionResult2 {
-    curve_string: CurveString2,
-    report: PolylineReconstructionReport2,
-}
-
-/// Result of report-bearing closed polyline reconstruction.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourPolylineReconstructionResult2 {
-    contour: Contour2,
-    report: PolylineReconstructionReport2,
-}
-
-/// Reconstruction evidence for one segmented material profile and its holes.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionProfileRecoveryReport2 {
-    material: PolylineReconstructionReport2,
-    holes: Vec<PolylineReconstructionReport2>,
-}
-
-/// Report for recovering a curved region from segmented finite profiles.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionRecoveryReport2 {
-    profiles: Vec<CurveRegionProfileRecoveryReport2>,
-    material_loop_count: usize,
-    hole_loop_count: usize,
-    lossy_boundary: bool,
-}
-
-/// A recovered exact-scalar curved region and its finite-boundary evidence.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionRecoveryResult2 {
-    region: CurveRegion2,
-    report: CurveRegionRecoveryReport2,
 }
 
 impl PolylineReconstructionOptions {
@@ -171,294 +88,6 @@ impl PolylineReconstructionOptions {
 
     fn distance_limit(self, scale: f64) -> f64 {
         self.distance_tolerance + self.relative_tolerance * scale.abs()
-    }
-}
-
-impl FiniteCurveStringImport2 {
-    /// Returns the imported native curve string.
-    pub const fn curve_string(&self) -> &CurveString2 {
-        &self.curve
-    }
-
-    /// Returns retained import evidence for the finite source.
-    pub const fn report(&self) -> &RetainedImportRecord2 {
-        &self.record
-    }
-
-    /// Returns retained import evidence for the finite source.
-    pub const fn record(&self) -> &RetainedImportRecord2 {
-        &self.record
-    }
-
-    /// Consumes the import result and returns the native curve string.
-    pub fn into_curve_string(self) -> CurveString2 {
-        self.curve
-    }
-
-    /// Consumes the import result and returns both native geometry and evidence.
-    pub fn into_parts(self) -> (CurveString2, RetainedImportRecord2) {
-        (self.curve, self.record)
-    }
-}
-
-impl FiniteContourImport2 {
-    /// Returns the imported native contour.
-    pub const fn contour(&self) -> &Contour2 {
-        &self.contour
-    }
-
-    /// Returns retained import evidence for the finite source.
-    pub const fn report(&self) -> &RetainedImportRecord2 {
-        &self.record
-    }
-
-    /// Returns retained import evidence for the finite source.
-    pub const fn record(&self) -> &RetainedImportRecord2 {
-        &self.record
-    }
-
-    /// Consumes the import result and returns the native contour.
-    pub fn into_contour(self) -> Contour2 {
-        self.contour
-    }
-
-    /// Consumes the import result and returns both native geometry and evidence.
-    pub fn into_parts(self) -> (Contour2, RetainedImportRecord2) {
-        (self.contour, self.record)
-    }
-}
-
-impl PolylineReconstructionSegmentReport2 {
-    /// Returns the reconstructed output segment index.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-
-    /// Returns the primitive family of the reconstructed output segment.
-    pub const fn output_segment_kind(&self) -> SegmentKind {
-        self.output_segment_kind
-    }
-
-    /// Returns the first retained source sample index consumed by this segment.
-    pub const fn retained_start_sample_index(&self) -> usize {
-        self.retained_start_sample_index
-    }
-
-    /// Returns the final retained source sample index consumed by this segment.
-    pub const fn retained_end_sample_index(&self) -> usize {
-        self.retained_end_sample_index
-    }
-
-    /// Returns retained source samples spanned by this output segment.
-    pub const fn retained_sample_count(&self) -> usize {
-        self.retained_sample_count
-    }
-
-    /// Returns true when this segment crosses the retained closed-ring sample seam.
-    pub const fn wraps_retained_samples(&self) -> bool {
-        self.wraps_retained_samples
-    }
-
-    /// Returns the exact output segment start point.
-    pub const fn output_start_point(&self) -> &Point2 {
-        &self.output_start_point
-    }
-
-    /// Returns the exact output segment end point.
-    pub const fn output_end_point(&self) -> &Point2 {
-        &self.output_end_point
-    }
-
-    /// Returns retained reconstruction status for this output segment.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-}
-
-impl PolylineReconstructionReport2 {
-    /// Returns whether the source samples were interpreted as a closed ring.
-    pub const fn closed(&self) -> bool {
-        self.closed
-    }
-
-    /// Returns the fill rule for closed reconstruction results.
-    pub const fn fill_rule(&self) -> Option<FillRule> {
-        self.fill_rule
-    }
-
-    /// Returns the number of source sample points supplied.
-    pub const fn input_point_count(&self) -> usize {
-        self.input_point_count
-    }
-
-    /// Returns the number of samples retained after duplicate/closure filtering.
-    pub const fn retained_sample_count(&self) -> usize {
-        self.retained_sample_count
-    }
-
-    /// Returns finite duplicate samples consumed as reconstruction metadata.
-    pub const fn discarded_duplicate_count(&self) -> usize {
-        self.discarded_duplicate_count
-    }
-
-    /// Returns output segment count when reconstruction materialized.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        self.output_segment_count
-    }
-
-    /// Returns primitive-family counts for materialized output segments.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.output_segment_kind_counts
-    }
-
-    /// Returns per-output-segment source sample provenance.
-    pub fn segment_reports(&self) -> &[PolylineReconstructionSegmentReport2] {
-        &self.segment_reports
-    }
-
-    /// Returns the reconstruction options used for this finite source.
-    pub const fn options(&self) -> PolylineReconstructionOptions {
-        self.options
-    }
-
-    /// Returns true because reconstruction crosses a finite lossy boundary.
-    pub const fn lossy_boundary(&self) -> bool {
-        self.lossy_boundary
-    }
-
-    /// Returns retained topology status for the reconstructed carrier.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-}
-
-impl CurveStringPolylineReconstructionResult2 {
-    /// Returns the reconstructed native curve string.
-    pub const fn curve_string(&self) -> &CurveString2 {
-        &self.curve_string
-    }
-
-    /// Consumes this result and returns the reconstructed curve string.
-    pub fn into_curve_string(self) -> CurveString2 {
-        self.curve_string
-    }
-
-    /// Consumes this result and returns retained reconstruction evidence.
-    pub fn into_report(self) -> PolylineReconstructionReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the reconstructed curve string with its report.
-    pub fn into_parts(self) -> (CurveString2, PolylineReconstructionReport2) {
-        (self.curve_string, self.report)
-    }
-
-    /// Returns retained reconstruction evidence.
-    pub const fn report(&self) -> &PolylineReconstructionReport2 {
-        &self.report
-    }
-
-    /// Returns the reconstructed curve string as a convenience classification.
-    pub const fn curve_string_classification(&self) -> Classification<&CurveString2> {
-        Classification::Decided(&self.curve_string)
-    }
-
-    /// Consumes this result and returns the reconstructed curve string as a convenience classification.
-    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
-        Classification::Decided(self.curve_string)
-    }
-}
-
-impl ContourPolylineReconstructionResult2 {
-    /// Returns the reconstructed native contour.
-    pub const fn contour(&self) -> &Contour2 {
-        &self.contour
-    }
-
-    /// Consumes this result and returns the reconstructed contour.
-    pub fn into_contour(self) -> Contour2 {
-        self.contour
-    }
-
-    /// Consumes this result and returns retained reconstruction evidence.
-    pub fn into_report(self) -> PolylineReconstructionReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the reconstructed contour with its report.
-    pub fn into_parts(self) -> (Contour2, PolylineReconstructionReport2) {
-        (self.contour, self.report)
-    }
-
-    /// Returns retained reconstruction evidence.
-    pub const fn report(&self) -> &PolylineReconstructionReport2 {
-        &self.report
-    }
-
-    /// Returns the reconstructed contour as a convenience classification.
-    pub const fn contour_classification(&self) -> Classification<&Contour2> {
-        Classification::Decided(&self.contour)
-    }
-
-    /// Consumes this result and returns the reconstructed contour as a convenience classification.
-    pub fn into_contour_classification(self) -> Classification<Contour2> {
-        Classification::Decided(self.contour)
-    }
-}
-
-impl CurveRegionProfileRecoveryReport2 {
-    /// Returns reconstruction evidence for the material ring.
-    pub const fn material(&self) -> &PolylineReconstructionReport2 {
-        &self.material
-    }
-
-    /// Returns reconstruction evidence for the owned hole rings.
-    pub fn holes(&self) -> &[PolylineReconstructionReport2] {
-        &self.holes
-    }
-}
-
-impl CurveRegionRecoveryReport2 {
-    /// Returns profile-aligned reconstruction evidence.
-    pub fn profiles(&self) -> &[CurveRegionProfileRecoveryReport2] {
-        &self.profiles
-    }
-
-    /// Returns the number of recovered material loops.
-    pub const fn material_loop_count(&self) -> usize {
-        self.material_loop_count
-    }
-
-    /// Returns the number of recovered hole loops.
-    pub const fn hole_loop_count(&self) -> usize {
-        self.hole_loop_count
-    }
-
-    /// Returns true because finite segmentation cannot retain general source curves exactly.
-    pub const fn lossy_boundary(&self) -> bool {
-        self.lossy_boundary
-    }
-}
-
-impl CurveRegionRecoveryResult2 {
-    /// Returns the recovered exact-scalar curved region.
-    pub const fn region(&self) -> &CurveRegion2 {
-        &self.region
-    }
-
-    /// Returns finite-boundary reconstruction evidence.
-    pub const fn report(&self) -> &CurveRegionRecoveryReport2 {
-        &self.report
-    }
-
-    /// Consumes the result and returns the recovered region.
-    pub fn into_region(self) -> CurveRegion2 {
-        self.region
-    }
-
-    /// Consumes the result and returns the recovered region with its report.
-    pub fn into_parts(self) -> (CurveRegion2, CurveRegionRecoveryReport2) {
-        (self.region, self.report)
     }
 }
 
@@ -529,7 +158,19 @@ impl CurveString2 {
     /// Unlike [`CurveString2::reconstruct_from_polyline`], this constructor
     /// makes no attempt to infer arcs from samples.
     pub fn from_finite_line_string(points: &[[f64; 2]]) -> CurveResult<Self> {
-        Self::import_finite_line_string(points).map(FiniteCurveStringImport2::into_curve_string)
+        if points.len() < 2 {
+            return Err(CurveError::InsufficientVertices);
+        }
+
+        let mut segments = Vec::with_capacity(points.len() - 1);
+        for edge in points.windows(2) {
+            let start = point_from_finite_xy(edge[0])?;
+            let end = point_from_finite_xy(edge[1])?;
+            if let Ok(line) = LineSeg2::try_new(start, end) {
+                segments.push(Segment2::Line(line));
+            }
+        }
+        Self::try_new(segments)
     }
 
     /// Constructs an open line-segment curve string from an iterator of finite
@@ -548,117 +189,6 @@ impl CurveString2 {
         Self::from_finite_line_string(&points)
     }
 
-    /// Imports an open finite line string as native line geometry.
-    ///
-    /// Adjacent duplicate finite points are not represented as zero-length
-    /// native segments. All non-duplicate points are promoted through [`Real`]
-    /// before constructing exact-aware line segments.
-    pub fn import_finite_line_string(points: &[[f64; 2]]) -> CurveResult<FiniteCurveStringImport2> {
-        Self::import_finite_line_string_with_source(
-            points,
-            RetainedImportFormat2::FinitePolyline,
-            0,
-            None,
-        )
-    }
-
-    /// Imports an open finite line string as native line geometry and returns
-    /// retained source evidence.
-    pub fn import_finite_line_string_with_report(
-        points: &[[f64; 2]],
-    ) -> CurveResult<FiniteCurveStringImport2> {
-        Self::import_finite_line_string(points)
-    }
-
-    /// Imports an open finite line string with retained source metadata.
-    ///
-    /// This method is the adapter hook for STEP/DXF readers that already
-    /// decoded a finite polyline or faceted curve preview. The source handle
-    /// and tolerance are retained as lossy import evidence; the emitted line
-    /// segments are still the only native geometry, and the record keeps
-    /// [`RetainedTopologyStatus::ImportedLossy`](crate::RetainedTopologyStatus::ImportedLossy)
-    /// visible to callers.
-    pub fn import_finite_line_string_with_source(
-        points: &[[f64; 2]],
-        format: RetainedImportFormat2,
-        source_index: u64,
-        source_tolerance: Option<RetainedSourceTolerance2>,
-    ) -> CurveResult<FiniteCurveStringImport2> {
-        Self::import_finite_line_string_with_source_version(
-            points,
-            format,
-            source_index,
-            0,
-            source_tolerance,
-        )
-    }
-
-    /// Imports an open finite line string with retained source metadata and a
-    /// source version/revision.
-    pub fn import_finite_line_string_with_source_version(
-        points: &[[f64; 2]],
-        format: RetainedImportFormat2,
-        source_index: u64,
-        source_version: u64,
-        source_tolerance: Option<RetainedSourceTolerance2>,
-    ) -> CurveResult<FiniteCurveStringImport2> {
-        if points.len() < 2 {
-            return Err(CurveError::InsufficientVertices);
-        }
-
-        let mut segments = Vec::with_capacity(points.len() - 1);
-        let mut discarded_duplicate_count = 0_usize;
-        for edge in points.windows(2) {
-            let start = point_from_finite_xy(edge[0])?;
-            let end = point_from_finite_xy(edge[1])?;
-            if let Ok(line) = crate::LineSeg2::try_new(start, end) {
-                segments.push(crate::Segment2::Line(line));
-            } else {
-                discarded_duplicate_count += 1;
-            }
-        }
-        let curve = Self::try_new(segments)?;
-        let record = RetainedImportRecord2::try_new_open_line_string_with_source_version(
-            format,
-            source_index,
-            source_version,
-            source_tolerance,
-            points.len(),
-            curve.len(),
-            discarded_duplicate_count,
-        )?;
-        Ok(FiniteCurveStringImport2 { curve, record })
-    }
-
-    /// Imports an open finite line string with retained source metadata and
-    /// report-bearing naming.
-    pub fn import_finite_line_string_with_source_report(
-        points: &[[f64; 2]],
-        format: RetainedImportFormat2,
-        source_index: u64,
-        source_tolerance: Option<RetainedSourceTolerance2>,
-    ) -> CurveResult<FiniteCurveStringImport2> {
-        Self::import_finite_line_string_with_source(points, format, source_index, source_tolerance)
-    }
-
-    /// Imports an open finite line string with retained source metadata,
-    /// version evidence, and report-bearing naming.
-    pub fn import_finite_line_string_with_source_version_report(
-        points: &[[f64; 2]],
-        format: RetainedImportFormat2,
-        source_index: u64,
-        source_version: u64,
-        source_tolerance: Option<RetainedSourceTolerance2>,
-    ) -> CurveResult<FiniteCurveStringImport2> {
-        Self::import_finite_line_string_with_source_version(
-            points,
-            format,
-            source_index,
-            source_version,
-            source_tolerance,
-        )
-    }
-
     /// Reconstructs an open curve string from sampled polyline points.
     ///
     /// This is a finite-precision import helper. It is useful after tracing,
@@ -668,16 +198,6 @@ impl CurveString2 {
         points: &[Point2],
         options: PolylineReconstructionOptions,
     ) -> CurveResult<Self> {
-        Self::reconstruct_from_polyline_with_report(points, options)
-            .map(CurveStringPolylineReconstructionResult2::into_curve_string)
-    }
-
-    /// Reconstructs an open curve string from sampled polyline points and
-    /// retains finite reconstruction evidence.
-    pub fn reconstruct_from_polyline_with_report(
-        points: &[Point2],
-        options: PolylineReconstructionOptions,
-    ) -> CurveResult<CurveStringPolylineReconstructionResult2> {
         let options = options.validate()?;
         let samples = sample_open_points(points, options)?;
         if samples.len() < 2 {
@@ -686,21 +206,7 @@ impl CurveString2 {
 
         let spans = reconstruct_spans(&samples, options)?;
         let vertices = bulge_vertices_from_reconstruction_spans(&samples, &spans)?;
-        let curve_string = Self::from_bulge_vertices(&vertices)?;
-        let report = polyline_reconstruction_report(
-            false,
-            None,
-            points.len(),
-            samples.len(),
-            points.len().saturating_sub(samples.len()),
-            &spans,
-            curve_string.segments(),
-            options,
-        );
-        Ok(CurveStringPolylineReconstructionResult2 {
-            curve_string,
-            report,
-        })
+        Self::from_bulge_vertices(&vertices)
     }
 }
 
@@ -749,7 +255,7 @@ impl Contour2 {
     /// to [`CurveString2::from_finite_line_string`]; it imports finite boundary
     /// coordinates as exact-aware line topology without fitting arcs.
     pub fn from_finite_ring(points: &[[f64; 2]]) -> CurveResult<Self> {
-        Self::import_finite_ring(points).map(FiniteContourImport2::into_contour)
+        Self::from_finite_ring_with_fill_rule(points, FillRule::NonZero)
     }
 
     /// Constructs a closed straight-segment contour from finite `f64` ring
@@ -758,113 +264,11 @@ impl Contour2 {
         points: &[[f64; 2]],
         fill_rule: FillRule,
     ) -> CurveResult<Self> {
-        Self::import_finite_ring_with_fill_rule(points, fill_rule)
-            .map(FiniteContourImport2::into_contour)
-    }
-
-    /// Imports a closed finite line ring as native contour geometry.
-    ///
-    /// A repeated final point equal to the first point is accepted as finite
-    /// file-format closure metadata and removed before native contour
-    /// construction. The emitted native contour remains the exact topology
-    /// carrier.
-    pub fn import_finite_ring(points: &[[f64; 2]]) -> CurveResult<FiniteContourImport2> {
-        Self::import_finite_ring_with_source(
-            points,
-            FillRule::NonZero,
-            RetainedImportFormat2::FinitePolyline,
-            0,
-            None,
-        )
-    }
-
-    /// Imports a closed finite line ring as native contour geometry and
-    /// returns retained source evidence.
-    pub fn import_finite_ring_with_report(
-        points: &[[f64; 2]],
-    ) -> CurveResult<FiniteContourImport2> {
-        Self::import_finite_ring(points)
-    }
-
-    /// Imports a closed finite line ring with an explicit fill rule.
-    pub fn import_finite_ring_with_fill_rule(
-        points: &[[f64; 2]],
-        fill_rule: FillRule,
-    ) -> CurveResult<FiniteContourImport2> {
-        Self::import_finite_ring_with_source(
-            points,
-            fill_rule,
-            RetainedImportFormat2::FinitePolyline,
-            0,
-            None,
-        )
-    }
-
-    /// Imports a closed finite line ring with an explicit fill rule and
-    /// report-bearing naming.
-    pub fn import_finite_ring_with_fill_rule_report(
-        points: &[[f64; 2]],
-        fill_rule: FillRule,
-    ) -> CurveResult<FiniteContourImport2> {
-        Self::import_finite_ring_with_fill_rule(points, fill_rule)
-    }
-
-    /// Imports a closed finite ring with retained source metadata.
-    ///
-    /// Repeated finite source points, including a repeated closing point, are
-    /// counted as discarded source-edge metadata in the retained record. They
-    /// are not allowed to become zero-length native edges, matching the
-    /// exact-object boundary described by the exactness model.
-    pub fn import_finite_ring_with_source(
-        points: &[[f64; 2]],
-        fill_rule: FillRule,
-        format: RetainedImportFormat2,
-        source_index: u64,
-        source_tolerance: Option<RetainedSourceTolerance2>,
-    ) -> CurveResult<FiniteContourImport2> {
-        Self::import_finite_ring_with_source_version(
-            points,
-            fill_rule,
-            format,
-            source_index,
-            0,
-            source_tolerance,
-        )
-    }
-
-    /// Imports a closed finite line ring with retained source metadata and
-    /// report-bearing naming.
-    pub fn import_finite_ring_with_source_report(
-        points: &[[f64; 2]],
-        fill_rule: FillRule,
-        format: RetainedImportFormat2,
-        source_index: u64,
-        source_tolerance: Option<RetainedSourceTolerance2>,
-    ) -> CurveResult<FiniteContourImport2> {
-        Self::import_finite_ring_with_source(
-            points,
-            fill_rule,
-            format,
-            source_index,
-            source_tolerance,
-        )
-    }
-
-    /// Imports a closed finite ring with retained source metadata and a source
-    /// version/revision.
-    pub fn import_finite_ring_with_source_version(
-        points: &[[f64; 2]],
-        fill_rule: FillRule,
-        format: RetainedImportFormat2,
-        source_index: u64,
-        source_version: u64,
-        source_tolerance: Option<RetainedSourceTolerance2>,
-    ) -> CurveResult<FiniteContourImport2> {
         if points.len() < 3 {
             return Err(CurveError::InsufficientVertices);
         }
 
-        let (retained_points, discarded_duplicate_count) = finite_ring_points(points)?;
+        let (retained_points, _) = finite_ring_points(points)?;
         let mut segments = Vec::with_capacity(retained_points.len());
         for index in 0..retained_points.len() {
             let start = retained_points[index].clone();
@@ -877,37 +281,10 @@ impl Contour2 {
             // therefore unnecessary work at this finite adapter boundary.
             segments.push(Segment2::Line(LineSeg2::new_unchecked(start, end)));
         }
-        let contour = Self::new_unchecked(CurveString2::new_unchecked(segments), fill_rule);
-        let record = RetainedImportRecord2::try_new_closed_ring_with_source_version(
-            format,
-            source_index,
-            source_version,
-            source_tolerance,
-            points.len(),
-            contour.len(),
-            discarded_duplicate_count,
-        )?;
-        Ok(FiniteContourImport2 { contour, record })
-    }
-
-    /// Imports a closed finite line ring with retained source metadata,
-    /// version evidence, and report-bearing naming.
-    pub fn import_finite_ring_with_source_version_report(
-        points: &[[f64; 2]],
-        fill_rule: FillRule,
-        format: RetainedImportFormat2,
-        source_index: u64,
-        source_version: u64,
-        source_tolerance: Option<RetainedSourceTolerance2>,
-    ) -> CurveResult<FiniteContourImport2> {
-        Self::import_finite_ring_with_source_version(
-            points,
+        Ok(Self::new_unchecked(
+            CurveString2::new_unchecked(segments),
             fill_rule,
-            format,
-            source_index,
-            source_version,
-            source_tolerance,
-        )
+        ))
     }
 
     /// Reconstructs a closed contour from sampled polyline points using the
@@ -929,27 +306,13 @@ impl Contour2 {
         options: PolylineReconstructionOptions,
         fill_rule: FillRule,
     ) -> CurveResult<Self> {
-        Self::reconstruct_from_closed_polyline_with_fill_rule_and_report(points, options, fill_rule)
-            .map(ContourPolylineReconstructionResult2::into_contour)
-    }
-
-    /// Reconstructs a closed contour from sampled polyline points with an
-    /// explicit fill rule and retained finite reconstruction evidence.
-    pub fn reconstruct_from_closed_polyline_with_fill_rule_and_report(
-        points: &[Point2],
-        options: PolylineReconstructionOptions,
-        fill_rule: FillRule,
-    ) -> CurveResult<ContourPolylineReconstructionResult2> {
         let options = options.validate()?;
         let mut samples = sample_open_points(points, options)?;
-        let duplicate_count = points.len().saturating_sub(samples.len());
-        let mut discarded_duplicate_count = duplicate_count;
         if samples.len() >= 2
             && distance(&samples[0], &samples[samples.len() - 1])
                 <= options.duplicate_point_tolerance
         {
             samples.pop();
-            discarded_duplicate_count += 1;
         }
         if samples.len() < 3 {
             return Err(CurveError::InsufficientVertices);
@@ -960,31 +323,7 @@ impl Contour2 {
         let spans = reconstruct_spans(&closed_samples, options)?;
         let vertices = bulge_vertices_from_reconstruction_spans(&closed_samples, &spans)?;
         let curve = CurveString2::from_bulge_vertices(&vertices)?;
-        let contour = Self::try_new_with_fill_rule(curve.into_segments(), fill_rule)?;
-        let report = polyline_reconstruction_report(
-            true,
-            Some(fill_rule),
-            points.len(),
-            samples.len(),
-            discarded_duplicate_count,
-            &spans,
-            contour.segments(),
-            options,
-        );
-        Ok(ContourPolylineReconstructionResult2 { contour, report })
-    }
-
-    /// Reconstructs a closed contour from sampled polyline points using the
-    /// non-zero fill rule and retains finite reconstruction evidence.
-    pub fn reconstruct_from_closed_polyline_with_report(
-        points: &[Point2],
-        options: PolylineReconstructionOptions,
-    ) -> CurveResult<ContourPolylineReconstructionResult2> {
-        Self::reconstruct_from_closed_polyline_with_fill_rule_and_report(
-            points,
-            options,
-            FillRule::NonZero,
-        )
+        Self::try_new_with_fill_rule(curve.into_segments(), fill_rule)
     }
 }
 
@@ -1001,61 +340,26 @@ impl CurveRegion2 {
         options: PolylineReconstructionOptions,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<Self> {
-        Self::recover_from_finite_profiles_with_report(profiles, options, policy)
-            .map(CurveRegionRecoveryResult2::into_region)
-    }
-
-    /// Recovers exact-scalar line/arc boundaries and retains per-ring evidence.
-    ///
-    /// Every finite coordinate is promoted into [`hyperreal::Real`] before
-    /// native curve construction. The recovered geometry is exact relative to
-    /// those promoted samples, while the report records that the relation to
-    /// the pre-segmentation curve is necessarily lossy.
-    pub fn recover_from_finite_profiles_with_report(
-        profiles: &[FiniteRegionProfile2],
-        options: PolylineReconstructionOptions,
-        policy: &CurvePolicy,
-    ) -> ExactCurveResult<CurveRegionRecoveryResult2> {
         let mut material_contours = Vec::with_capacity(profiles.len());
         let hole_count = profiles.iter().map(|profile| profile.holes().len()).sum();
         let mut hole_contours = Vec::with_capacity(hole_count);
-        let mut profile_reports = Vec::with_capacity(profiles.len());
 
         for profile in profiles {
-            let material = recover_finite_ring(profile.material(), options)?;
-            let (material_contour, material_report) = material.into_parts();
-            material_contours.push(material_contour);
+            material_contours.push(recover_finite_ring(profile.material(), options)?);
 
-            let mut hole_reports = Vec::with_capacity(profile.holes().len());
             for hole in profile.holes() {
-                let recovered = recover_finite_ring(hole, options)?;
-                let (hole_contour, hole_report) = recovered.into_parts();
-                hole_contours.push(hole_contour);
-                hole_reports.push(hole_report);
+                hole_contours.push(recover_finite_ring(hole, options)?);
             }
-            profile_reports.push(CurveRegionProfileRecoveryReport2 {
-                material: material_report,
-                holes: hole_reports,
-            });
         }
 
-        let recovered = Self::try_from_native_contours(material_contours, hole_contours, policy)?;
-        Ok(CurveRegionRecoveryResult2 {
-            region: recovered,
-            report: CurveRegionRecoveryReport2 {
-                profiles: profile_reports,
-                material_loop_count: profiles.len(),
-                hole_loop_count: hole_count,
-                lossy_boundary: true,
-            },
-        })
+        Self::try_from_native_contours(material_contours, hole_contours, policy)
     }
 }
 
 fn recover_finite_ring(
     ring: &FinitePolyline2,
     options: PolylineReconstructionOptions,
-) -> ExactCurveResult<ContourPolylineReconstructionResult2> {
+) -> ExactCurveResult<Contour2> {
     if !ring.is_closed() {
         return Err(curve_region_recovery_error(CurveError::Topology(
             "curve-region recovery requires explicitly closed finite rings".into(),
@@ -1068,17 +372,12 @@ fn recover_finite_ring(
         .map(point_from_finite_xy)
         .collect::<CurveResult<Vec<_>>>()
         .map_err(curve_region_recovery_error)?;
-    Contour2::reconstruct_from_closed_polyline_with_report(&points, options)
+    Contour2::reconstruct_from_closed_polyline(&points, options)
         .map_err(curve_region_recovery_error)
 }
 
 fn curve_region_recovery_error(cause: CurveError) -> ExactCurveError {
-    ExactCurveError::invalid(
-        CurveOperation2::Construction,
-        CurveFamily2::Line,
-        None,
-        cause,
-    )
+    ExactCurveError::invalid(CurveOperation2::Construction, CurveFamily2::Line, cause)
 }
 
 fn finite_ring_points(points: &[[f64; 2]]) -> CurveResult<(Vec<Point2>, usize)> {
@@ -1140,85 +439,6 @@ fn bulge_vertices_from_reconstruction_spans(
         Real::zero(),
     ));
     Ok(vertices)
-}
-
-fn polyline_reconstruction_report(
-    closed: bool,
-    fill_rule: Option<FillRule>,
-    input_point_count: usize,
-    retained_sample_count: usize,
-    discarded_duplicate_count: usize,
-    spans: &[Span],
-    output_segments: &[Segment2],
-    options: PolylineReconstructionOptions,
-) -> PolylineReconstructionReport2 {
-    PolylineReconstructionReport2 {
-        closed,
-        fill_rule,
-        input_point_count,
-        retained_sample_count,
-        discarded_duplicate_count,
-        output_segment_count: Some(output_segments.len()),
-        output_segment_kind_counts: Some(segment_kind_counts(output_segments)),
-        segment_reports: polyline_reconstruction_segment_reports(
-            closed,
-            retained_sample_count,
-            spans,
-            output_segments,
-        ),
-        options,
-        lossy_boundary: true,
-        status: RetainedTopologyStatus::ImportedLossy,
-    }
-}
-
-fn polyline_reconstruction_segment_reports(
-    closed: bool,
-    retained_sample_count: usize,
-    spans: &[Span],
-    output_segments: &[Segment2],
-) -> Vec<PolylineReconstructionSegmentReport2> {
-    spans
-        .iter()
-        .zip(output_segments.iter())
-        .enumerate()
-        .map(|(output_segment_index, (span, segment))| {
-            let retained_start_sample_index = if closed && retained_sample_count > 0 {
-                span.start % retained_sample_count
-            } else {
-                span.start
-            };
-            let retained_end_sample_index = if closed && retained_sample_count > 0 {
-                span.end % retained_sample_count
-            } else {
-                span.end
-            };
-            let wraps_retained_samples =
-                closed && retained_end_sample_index < retained_start_sample_index;
-            PolylineReconstructionSegmentReport2 {
-                output_segment_index,
-                output_segment_kind: segment.structural_facts().kind,
-                retained_start_sample_index,
-                retained_end_sample_index,
-                retained_sample_count: span.end - span.start + 1,
-                wraps_retained_samples,
-                output_start_point: segment.start().clone(),
-                output_end_point: segment.end().clone(),
-                status: RetainedTopologyStatus::ImportedLossy,
-            }
-        })
-        .collect()
-}
-
-fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for segment in segments {
-        match segment {
-            Segment2::Line(_) => counts.lines += 1,
-            Segment2::Arc(_) => counts.arcs += 1,
-        }
-    }
-    counts
 }
 
 #[derive(Clone, Debug)]

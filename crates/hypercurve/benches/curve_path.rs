@@ -124,7 +124,6 @@ fn main() {
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
         vec![r(1), r(2), r(3), r(4)],
         vec![r(0), r(1), r(2), r(3), r(4), r(5), r(6)],
-        None,
     )
     .expect("benchmark NURBS is valid");
     let spline_split_iterations = 1_000_u32;

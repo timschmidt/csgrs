@@ -102,20 +102,14 @@ fn diagonal_ribbon(rung_count: usize, y_offset: i32) -> Contour2 {
 fn bench_direct(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
     let first = zigzag(segment_count, 0);
     let second = zigzag_with_remote_tail(segment_count, 100);
-    let expected_pairs = first.len() * second.len();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let result = black_box(&first)
-            .intersect_curve_string_with_report(black_box(&second), black_box(policy))
+            .intersect_curve_string(black_box(&second), black_box(policy))
             .expect("separated exact paths should be decidable");
-        assert_eq!(result.report().candidate_pair_count(), expected_pairs);
-        assert_eq!(
-            result.report().skipped_aabb_pair_count() + result.report().tested_pair_count(),
-            expected_pairs
-        );
-        assert!(result.intersections().is_empty());
-        checksum = checksum.wrapping_add(black_box(result.report().skipped_aabb_pair_count()));
+        assert!(result.is_empty());
+        checksum = checksum.wrapping_add(black_box(result.len()));
     }
     let elapsed = started.elapsed();
     println!(
@@ -127,22 +121,16 @@ fn bench_direct(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
 fn bench_prepared(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
     let first = zigzag(segment_count, 0);
     let second = zigzag_with_remote_tail(segment_count, 100);
-    let expected_pairs = first.len() * second.len();
     let first = first.prepare_topology_queries(policy);
     let second = second.prepare_topology_queries(policy);
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let result = black_box(&first)
-            .intersect_prepared_curve_string_with_report(black_box(&second), black_box(policy))
+            .intersect_prepared_curve_string(black_box(&second), black_box(policy))
             .expect("separated prepared paths should be decidable");
-        assert_eq!(result.report().candidate_pair_count(), expected_pairs);
-        assert_eq!(
-            result.report().skipped_aabb_pair_count() + result.report().tested_pair_count(),
-            expected_pairs
-        );
-        assert!(result.intersections().is_empty());
-        checksum = checksum.wrapping_add(black_box(result.report().skipped_aabb_pair_count()));
+        assert!(result.is_empty());
+        checksum = checksum.wrapping_add(black_box(result.len()));
     }
     let elapsed = started.elapsed();
     println!(
@@ -154,20 +142,14 @@ fn bench_prepared(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
 fn bench_x_dense(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
     let first = vertically_dense_zigzag(segment_count, 0);
     let second = vertically_dense_zigzag_with_remote_tail(segment_count, 10_000);
-    let expected_pairs = first.len() * second.len();
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let result = black_box(&first)
-            .intersect_curve_string_with_report(black_box(&second), black_box(policy))
+            .intersect_curve_string(black_box(&second), black_box(policy))
             .expect("separated exact paths should be decidable");
-        assert_eq!(result.report().candidate_pair_count(), expected_pairs);
-        assert_eq!(
-            result.report().skipped_aabb_pair_count() + result.report().tested_pair_count(),
-            expected_pairs
-        );
-        assert!(result.intersections().is_empty());
-        checksum = checksum.wrapping_add(black_box(result.report().skipped_aabb_pair_count()));
+        assert!(result.is_empty());
+        checksum = checksum.wrapping_add(black_box(result.len()));
     }
     let elapsed = started.elapsed();
     println!(

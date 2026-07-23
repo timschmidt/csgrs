@@ -14,7 +14,6 @@ use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
 use crate::{
     Classification, CurveError, CurvePolicy, CurveResult, LineArcRegion2, LineSide, Point2,
-    RetainedTopologyStatus, SegmentKindCounts, SelfContactPredicatePath2, SelfContactReport2,
     UncertaintyReason,
 };
 
@@ -33,135 +32,6 @@ pub enum OffsetCap {
     /// Extend each trace by one half-width along endpoint tangents before
     /// adding straight endpoint connectors.
     Square,
-}
-
-/// Furthest exact stage reached by checked open curve-string offsetting.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CurveStringOffsetStage2 {
-    /// Primitive offset segments and joins were being materialized.
-    OffsetConstruction,
-    /// The raw joined offset was checked for self-contacting topology.
-    SelfContactValidation,
-}
-
-/// Exact construction family used to build raw offset segments before validation.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum OffsetConstructionPath2 {
-    /// Source line/arc segments were offset as primitive parallels and joined exactly.
-    PrimitiveParallelSegmentsWithExactJoins,
-}
-
-/// Exact construction family used to close an open offset outline with endpoint caps.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum OutlineCapConstructionPath2 {
-    /// Endpoint caps were circular arcs centered at source endpoints.
-    RoundEndpointArcCaps,
-    /// Endpoint caps were direct line connectors between left and right traces.
-    ButtEndpointLineCaps,
-    /// Endpoint traces were tangent-extended, then closed with line connectors.
-    SquareTangentExtensionLineCaps,
-}
-
-/// Report for a checked open curve-string left offset.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveStringOffsetReport2 {
-    stage: CurveStringOffsetStage2,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
-    raw_offset_construction_path: Option<OffsetConstructionPath2>,
-    raw_offset_segment_count: Option<usize>,
-    raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
-    self_contact_report: Option<SelfContactReport2>,
-    output_segment_count: Option<usize>,
-    output_segment_kind_counts: Option<SegmentKindCounts>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Result of report-bearing checked open curve-string offsetting.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveStringOffsetResult2 {
-    curve_string: Option<CurveString2>,
-    report: CurveStringOffsetReport2,
-}
-
-/// Furthest exact stage reached by checked closed-contour offsetting.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ContourOffsetStage2 {
-    /// Primitive offset segments and joins were being materialized.
-    OffsetConstruction,
-    /// The raw joined offset was checked for self-contacting topology.
-    SelfContactValidation,
-}
-
-/// Report for a checked closed-contour left offset.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourOffsetReport2 {
-    stage: ContourOffsetStage2,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
-    raw_offset_construction_path: Option<OffsetConstructionPath2>,
-    raw_offset_segment_count: Option<usize>,
-    raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
-    self_contact_report: Option<SelfContactReport2>,
-    output_segment_count: Option<usize>,
-    output_segment_kind_counts: Option<SegmentKindCounts>,
-    fill_rule: FillRule,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Result of report-bearing checked closed-contour offsetting.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourOffsetResult2 {
-    contour: Option<Contour2>,
-    report: ContourOffsetReport2,
-}
-
-/// Furthest exact stage reached by checked open curve-string outline offsetting.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CurveStringOutlineOffsetStage2 {
-    /// The requested outline half-width was being classified.
-    DistanceValidation,
-    /// The source open curve string was checked for self-contacting topology.
-    SourceSelfContactValidation,
-    /// The left offset trace was being materialized.
-    LeftOffsetConstruction,
-    /// The right offset trace was being materialized.
-    RightOffsetConstruction,
-    /// Endpoint caps and cap-specific trace extensions were being materialized.
-    CapConstruction,
-    /// The closed outline contour was checked for closure and self-contacting topology.
-    OutlineTopologyValidation,
-}
-
-/// Report for a checked closed outline around an open curve string.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveStringOutlineOffsetReport2 {
-    stage: CurveStringOutlineOffsetStage2,
-    cap: OffsetCap,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
-    source_self_contact_report: Option<SelfContactReport2>,
-    left_offset_construction_path: Option<OffsetConstructionPath2>,
-    left_offset_segment_count: Option<usize>,
-    left_offset_segment_kind_counts: Option<SegmentKindCounts>,
-    right_offset_construction_path: Option<OffsetConstructionPath2>,
-    right_offset_segment_count: Option<usize>,
-    right_offset_segment_kind_counts: Option<SegmentKindCounts>,
-    cap_construction_path: Option<OutlineCapConstructionPath2>,
-    outline_segment_count: Option<usize>,
-    outline_segment_kind_counts: Option<SegmentKindCounts>,
-    outline_self_contact_report: Option<SelfContactReport2>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Result of report-bearing checked open curve-string outline offsetting.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveStringOutlineOffsetResult2 {
-    outline: Option<Contour2>,
-    report: CurveStringOutlineOffsetReport2,
 }
 
 impl LineSeg2 {
@@ -300,91 +170,16 @@ impl CurveString2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        let result = self.offset_left_checked_with_report(distance, policy)?;
-        let blocker = result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(curve_string) = result.into_curve_string() {
-            Ok(Classification::Decided(curve_string))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
-    }
-
-    /// Returns a report-bearing raw joined left offset, rejecting self-contacting output.
-    ///
-    /// The report records source inventory, the raw joined offset segment count
-    /// before self-contact validation, the final output count when accepted,
-    /// and the exact blocker otherwise.
-    pub fn offset_left_checked_with_report(
-        &self,
-        distance: Real,
-        policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringOffsetResult2> {
-        let source_segment_count = self.len();
-        let source_segment_kind_counts = segment_kind_counts(self.segments());
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
             Classification::Decided(offset) => offset,
-            Classification::Uncertain(reason) => {
-                return Ok(blocked_curve_string_offset_result(
-                    CurveStringOffsetStage2::OffsetConstruction,
-                    source_segment_count,
-                    source_segment_kind_counts,
-                    Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                    None,
-                    None,
-                    None,
-                    retained_status_for_offset_blocker(reason),
-                    reason,
-                ));
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let raw_offset_segment_count = offset.len();
-        let raw_offset_segment_kind_counts = segment_kind_counts(offset.segments());
-
-        let self_contact = offset.has_self_contacts_with_report(policy)?;
-        match self_contact.has_self_contacts() {
-            Classification::Decided(false) => Ok(CurveStringOffsetResult2 {
-                curve_string: Some(offset),
-                report: CurveStringOffsetReport2 {
-                    stage: CurveStringOffsetStage2::SelfContactValidation,
-                    source_segment_count,
-                    source_segment_kind_counts,
-                    raw_offset_construction_path: Some(
-                        OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins,
-                    ),
-                    raw_offset_segment_count: Some(raw_offset_segment_count),
-                    raw_offset_segment_kind_counts: Some(raw_offset_segment_kind_counts),
-                    self_contact_report: Some(self_contact.report().clone()),
-                    output_segment_count: Some(raw_offset_segment_count),
-                    output_segment_kind_counts: Some(raw_offset_segment_kind_counts),
-                    status: RetainedTopologyStatus::NativeExact,
-                    blocker: None,
-                },
-            }),
-            Classification::Decided(true) => Ok(blocked_curve_string_offset_result(
-                CurveStringOffsetStage2::SelfContactValidation,
-                source_segment_count,
-                source_segment_kind_counts,
-                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                Some(raw_offset_segment_count),
-                Some(raw_offset_segment_kind_counts),
-                Some(self_contact.report().clone()),
-                RetainedTopologyStatus::Unsupported,
-                UncertaintyReason::Unsupported,
-            )),
-            Classification::Uncertain(reason) => Ok(blocked_curve_string_offset_result(
-                CurveStringOffsetStage2::SelfContactValidation,
-                source_segment_count,
-                source_segment_kind_counts,
-                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                Some(raw_offset_segment_count),
-                Some(raw_offset_segment_kind_counts),
-                Some(self_contact.report().clone()),
-                retained_status_for_offset_blocker(reason),
-                reason,
-            )),
+        match offset.has_self_contacts(policy)? {
+            Classification::Decided(false) => Ok(Classification::Decided(offset)),
+            Classification::Decided(true) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
     }
 
@@ -404,62 +199,7 @@ impl CurveString2 {
         cap: OffsetCap,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Contour2>> {
-        self.offset_outline_with_report(distance, cap, policy)
-            .map(Self::outline_classification_from_report)
-    }
-
-    /// Builds a report-bearing checked closed outline around this open curve string.
-    ///
-    /// The report records cap style, source and intermediate segment counts,
-    /// the furthest exact stage reached, and the exact blocker for unresolved
-    /// or unsupported outline topology.
-    pub fn offset_outline_with_report(
-        &self,
-        distance: Real,
-        cap: OffsetCap,
-        policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringOutlineOffsetResult2> {
-        checked_outline_with_report(self, distance, cap, policy)
-    }
-
-    /// Builds a report-bearing checked closed outline with round endpoint caps.
-    pub fn offset_outline_round_caps_with_report(
-        &self,
-        distance: Real,
-        policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringOutlineOffsetResult2> {
-        self.offset_outline_with_report(distance, OffsetCap::Round, policy)
-    }
-
-    /// Builds a report-bearing checked closed outline with butt endpoint caps.
-    pub fn offset_outline_butt_caps_with_report(
-        &self,
-        distance: Real,
-        policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringOutlineOffsetResult2> {
-        self.offset_outline_with_report(distance, OffsetCap::Butt, policy)
-    }
-
-    /// Builds a report-bearing checked closed outline with square endpoint caps.
-    pub fn offset_outline_square_caps_with_report(
-        &self,
-        distance: Real,
-        policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringOutlineOffsetResult2> {
-        self.offset_outline_with_report(distance, OffsetCap::Square, policy)
-    }
-
-    fn outline_classification_from_report(
-        result: CurveStringOutlineOffsetResult2,
-    ) -> Classification<Contour2> {
-        let blocker = result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match result.into_outline() {
-            Some(outline) => Classification::Decided(outline),
-            None => Classification::Uncertain(blocker),
-        }
+        checked_outline(self, distance, cap, policy)
     }
 
     /// Builds a checked closed outline around this open curve string.
@@ -476,8 +216,7 @@ impl CurveString2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Contour2>> {
-        self.offset_outline_round_caps_with_report(distance, policy)
-            .map(Self::outline_classification_from_report)
+        self.offset_outline(distance, OffsetCap::Round, policy)
     }
 
     /// Builds a checked closed outline around this open curve string.
@@ -493,8 +232,7 @@ impl CurveString2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Contour2>> {
-        self.offset_outline_butt_caps_with_report(distance, policy)
-            .map(Self::outline_classification_from_report)
+        self.offset_outline(distance, OffsetCap::Butt, policy)
     }
 
     /// Builds a checked closed outline with square endpoint caps.
@@ -511,8 +249,7 @@ impl CurveString2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Contour2>> {
-        self.offset_outline_square_caps_with_report(distance, policy)
-            .map(Self::outline_classification_from_report)
+        self.offset_outline(distance, OffsetCap::Square, policy)
     }
 }
 
@@ -797,96 +534,16 @@ impl Contour2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        let result = self.offset_left_checked_with_report(distance, policy)?;
-        let blocker = result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(contour) = result.into_contour() {
-            Ok(Classification::Decided(contour))
-        } else {
-            Ok(Classification::Uncertain(blocker))
-        }
-    }
-
-    /// Returns a report-bearing raw joined left offset, rejecting self-contacting output.
-    ///
-    /// The report records source inventory, the raw joined offset segment count
-    /// before self-contact validation, the final output count when accepted,
-    /// the retained fill rule, and the exact blocker otherwise.
-    pub fn offset_left_checked_with_report(
-        &self,
-        distance: Real,
-        policy: &CurvePolicy,
-    ) -> CurveResult<ContourOffsetResult2> {
-        let source_segment_count = self.len();
-        let source_segment_kind_counts = segment_kind_counts(self.segments());
-        let fill_rule = self.fill_rule();
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
             Classification::Decided(offset) => offset,
-            Classification::Uncertain(reason) => {
-                return Ok(blocked_contour_offset_result(
-                    ContourOffsetStage2::OffsetConstruction,
-                    source_segment_count,
-                    source_segment_kind_counts,
-                    Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                    None,
-                    None,
-                    None,
-                    fill_rule,
-                    retained_status_for_offset_blocker(reason),
-                    reason,
-                ));
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let raw_offset_segment_count = offset.len();
-        let raw_offset_segment_kind_counts = segment_kind_counts(offset.segments());
-
-        let self_contact = offset.has_self_contacts_with_report(policy)?;
-        match self_contact.has_self_contacts() {
-            Classification::Decided(false) => Ok(ContourOffsetResult2 {
-                contour: Some(offset),
-                report: ContourOffsetReport2 {
-                    stage: ContourOffsetStage2::SelfContactValidation,
-                    source_segment_count,
-                    source_segment_kind_counts,
-                    raw_offset_construction_path: Some(
-                        OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins,
-                    ),
-                    raw_offset_segment_count: Some(raw_offset_segment_count),
-                    raw_offset_segment_kind_counts: Some(raw_offset_segment_kind_counts),
-                    self_contact_report: Some(self_contact.report().clone()),
-                    output_segment_count: Some(raw_offset_segment_count),
-                    output_segment_kind_counts: Some(raw_offset_segment_kind_counts),
-                    fill_rule,
-                    status: RetainedTopologyStatus::NativeExact,
-                    blocker: None,
-                },
-            }),
-            Classification::Decided(true) => Ok(blocked_contour_offset_result(
-                ContourOffsetStage2::SelfContactValidation,
-                source_segment_count,
-                source_segment_kind_counts,
-                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                Some(raw_offset_segment_count),
-                Some(raw_offset_segment_kind_counts),
-                Some(self_contact.report().clone()),
-                fill_rule,
-                RetainedTopologyStatus::Unsupported,
-                UncertaintyReason::Unsupported,
-            )),
-            Classification::Uncertain(reason) => Ok(blocked_contour_offset_result(
-                ContourOffsetStage2::SelfContactValidation,
-                source_segment_count,
-                source_segment_kind_counts,
-                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                Some(raw_offset_segment_count),
-                Some(raw_offset_segment_kind_counts),
-                Some(self_contact.report().clone()),
-                fill_rule,
-                retained_status_for_offset_blocker(reason),
-                reason,
-            )),
+        match offset.has_self_contacts(policy)? {
+            Classification::Decided(false) => Ok(Classification::Decided(offset)),
+            Classification::Decided(true) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
     }
 }
@@ -1186,676 +843,36 @@ fn compare_points_lexicographically(
     }
 }
 
-impl ContourOffsetReport2 {
-    /// Returns the furthest exact checked-offset stage reached.
-    pub const fn stage(&self) -> ContourOffsetStage2 {
-        self.stage
-    }
-
-    /// Returns the source contour segment count.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns primitive-family counts for the source contour.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
-    }
-
-    /// Returns the exact construction family used for raw offset segments.
-    pub const fn raw_offset_construction_path(&self) -> Option<OffsetConstructionPath2> {
-        self.raw_offset_construction_path
-    }
-
-    /// Returns the raw joined offset segment count before self-contact rejection.
-    pub const fn raw_offset_segment_count(&self) -> Option<usize> {
-        self.raw_offset_segment_count
-    }
-
-    /// Returns primitive-family counts for the raw joined contour offset.
-    pub const fn raw_offset_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.raw_offset_segment_kind_counts
-    }
-
-    /// Returns self-contact scan evidence when validation was reached.
-    pub const fn self_contact_report(&self) -> Option<&SelfContactReport2> {
-        self.self_contact_report.as_ref()
-    }
-
-    /// Returns the predicate/filter path used by self-contact validation, when reached.
-    pub const fn self_contact_predicate_path(&self) -> Option<SelfContactPredicatePath2> {
-        match self.self_contact_report.as_ref() {
-            Some(report) => Some(report.predicate_path()),
-            None => None,
-        }
-    }
-
-    /// Returns output segment count when the checked offset materialized.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        self.output_segment_count
-    }
-
-    /// Returns primitive-family counts for the checked materialized contour offset.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.output_segment_kind_counts
-    }
-
-    /// Returns the fill rule retained from the source contour.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.fill_rule
-    }
-
-    /// Returns checked offset topology status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized checked offsets.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl ContourOffsetResult2 {
-    /// Returns the materialized checked offset, if accepted.
-    pub const fn contour(&self) -> Option<&Contour2> {
-        self.contour.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized checked offset.
-    pub fn into_contour(self) -> Option<Contour2> {
-        self.contour
-    }
-
-    /// Consumes this result and returns retained checked-offset evidence.
-    pub fn into_report(self) -> ContourOffsetReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized checked offset with its report.
-    pub fn into_parts(self) -> (Option<Contour2>, ContourOffsetReport2) {
-        (self.contour, self.report)
-    }
-
-    /// Returns retained checked-offset evidence.
-    pub const fn report(&self) -> &ContourOffsetReport2 {
-        &self.report
-    }
-
-    /// Returns the checked contour offset as a convenience classification.
-    pub fn contour_classification(&self) -> Classification<&Contour2> {
-        match self.contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the checked contour offset as a convenience classification.
-    pub fn into_contour_classification(self) -> Classification<Contour2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-impl CurveStringOutlineOffsetReport2 {
-    /// Returns the furthest exact outline-offset stage reached.
-    pub const fn stage(&self) -> CurveStringOutlineOffsetStage2 {
-        self.stage
-    }
-
-    /// Returns the endpoint cap style used by this outline construction.
-    pub const fn cap(&self) -> OffsetCap {
-        self.cap
-    }
-
-    /// Returns the source open curve-string segment count.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns primitive-family counts for the source open curve string.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
-    }
-
-    /// Returns source self-contact validation evidence when that stage was reached.
-    pub const fn source_self_contact_report(&self) -> Option<&SelfContactReport2> {
-        self.source_self_contact_report.as_ref()
-    }
-
-    /// Returns the predicate/filter path used by source self-contact validation, when reached.
-    pub const fn source_self_contact_predicate_path(&self) -> Option<SelfContactPredicatePath2> {
-        match self.source_self_contact_report.as_ref() {
-            Some(report) => Some(report.predicate_path()),
-            None => None,
-        }
-    }
-
-    /// Returns the exact construction family used for the left offset trace.
-    pub const fn left_offset_construction_path(&self) -> Option<OffsetConstructionPath2> {
-        self.left_offset_construction_path
-    }
-
-    /// Returns the left offset trace segment count after raw joining.
-    pub const fn left_offset_segment_count(&self) -> Option<usize> {
-        self.left_offset_segment_count
-    }
-
-    /// Returns primitive-family counts for the left offset trace.
-    pub const fn left_offset_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.left_offset_segment_kind_counts
-    }
-
-    /// Returns the exact construction family used for the right offset trace.
-    pub const fn right_offset_construction_path(&self) -> Option<OffsetConstructionPath2> {
-        self.right_offset_construction_path
-    }
-
-    /// Returns the right offset trace segment count after raw joining.
-    pub const fn right_offset_segment_count(&self) -> Option<usize> {
-        self.right_offset_segment_count
-    }
-
-    /// Returns primitive-family counts for the right offset trace.
-    pub const fn right_offset_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.right_offset_segment_kind_counts
-    }
-
-    /// Returns the exact construction family used for endpoint caps.
-    pub const fn cap_construction_path(&self) -> Option<OutlineCapConstructionPath2> {
-        self.cap_construction_path
-    }
-
-    /// Returns the closed outline segment count before final topology rejection.
-    pub const fn outline_segment_count(&self) -> Option<usize> {
-        self.outline_segment_count
-    }
-
-    /// Returns primitive-family counts for the closed outline before final topology rejection.
-    pub const fn outline_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.outline_segment_kind_counts
-    }
-
-    /// Returns final closed-outline self-contact validation evidence when reached.
-    pub const fn outline_self_contact_report(&self) -> Option<&SelfContactReport2> {
-        self.outline_self_contact_report.as_ref()
-    }
-
-    /// Returns the predicate/filter path used by outline self-contact validation, when reached.
-    pub const fn outline_self_contact_predicate_path(&self) -> Option<SelfContactPredicatePath2> {
-        match self.outline_self_contact_report.as_ref() {
-            Some(report) => Some(report.predicate_path()),
-            None => None,
-        }
-    }
-
-    /// Returns checked outline topology status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized outline offsets.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl CurveStringOutlineOffsetResult2 {
-    /// Returns the materialized checked outline, if accepted.
-    pub const fn outline(&self) -> Option<&Contour2> {
-        self.outline.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized checked outline.
-    pub fn into_outline(self) -> Option<Contour2> {
-        self.outline
-    }
-
-    /// Consumes this result and returns retained checked-outline evidence.
-    pub fn into_report(self) -> CurveStringOutlineOffsetReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized checked outline with its report.
-    pub fn into_parts(self) -> (Option<Contour2>, CurveStringOutlineOffsetReport2) {
-        (self.outline, self.report)
-    }
-
-    /// Returns retained checked-outline evidence.
-    pub const fn report(&self) -> &CurveStringOutlineOffsetReport2 {
-        &self.report
-    }
-
-    /// Returns the checked outline as a convenience classification.
-    pub fn outline_classification(&self) -> Classification<&Contour2> {
-        match self.outline() {
-            Some(outline) => Classification::Decided(outline),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the checked outline as a convenience classification.
-    pub fn into_outline_classification(self) -> Classification<Contour2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_outline() {
-            Some(outline) => Classification::Decided(outline),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-impl CurveStringOffsetReport2 {
-    /// Returns the furthest exact checked-offset stage reached.
-    pub const fn stage(&self) -> CurveStringOffsetStage2 {
-        self.stage
-    }
-
-    /// Returns the source curve-string segment count.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns primitive-family counts for the source curve string.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
-    }
-
-    /// Returns the exact construction family used for raw offset segments.
-    pub const fn raw_offset_construction_path(&self) -> Option<OffsetConstructionPath2> {
-        self.raw_offset_construction_path
-    }
-
-    /// Returns the raw joined offset segment count before self-contact rejection.
-    pub const fn raw_offset_segment_count(&self) -> Option<usize> {
-        self.raw_offset_segment_count
-    }
-
-    /// Returns primitive-family counts for the raw joined offset.
-    pub const fn raw_offset_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.raw_offset_segment_kind_counts
-    }
-
-    /// Returns self-contact scan evidence when validation was reached.
-    pub const fn self_contact_report(&self) -> Option<&SelfContactReport2> {
-        self.self_contact_report.as_ref()
-    }
-
-    /// Returns the predicate/filter path used by self-contact validation, when reached.
-    pub const fn self_contact_predicate_path(&self) -> Option<SelfContactPredicatePath2> {
-        match self.self_contact_report.as_ref() {
-            Some(report) => Some(report.predicate_path()),
-            None => None,
-        }
-    }
-
-    /// Returns output segment count when the checked offset materialized.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        self.output_segment_count
-    }
-
-    /// Returns primitive-family counts for the checked materialized offset.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.output_segment_kind_counts
-    }
-
-    /// Returns checked offset topology status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized checked offsets.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl CurveStringOffsetResult2 {
-    /// Returns the materialized checked offset, if accepted.
-    pub const fn curve_string(&self) -> Option<&CurveString2> {
-        self.curve_string.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized checked offset.
-    pub fn into_curve_string(self) -> Option<CurveString2> {
-        self.curve_string
-    }
-
-    /// Consumes this result and returns retained checked-offset evidence.
-    pub fn into_report(self) -> CurveStringOffsetReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized checked offset with its report.
-    pub fn into_parts(self) -> (Option<CurveString2>, CurveStringOffsetReport2) {
-        (self.curve_string, self.report)
-    }
-
-    /// Returns retained checked-offset evidence.
-    pub const fn report(&self) -> &CurveStringOffsetReport2 {
-        &self.report
-    }
-
-    /// Returns the checked curve-string offset as a convenience classification.
-    pub fn curve_string_classification(&self) -> Classification<&CurveString2> {
-        match self.curve_string() {
-            Some(curve_string) => Classification::Decided(curve_string),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the checked curve-string offset as a convenience classification.
-    pub fn into_curve_string_classification(self) -> Classification<CurveString2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_curve_string() {
-            Some(curve_string) => Classification::Decided(curve_string),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for segment in segments {
-        match segment {
-            Segment2::Line(_) => counts.lines += 1,
-            Segment2::Arc(_) => counts.arcs += 1,
-        }
-    }
-    counts
-}
-
-fn blocked_curve_string_offset_result(
-    stage: CurveStringOffsetStage2,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
-    raw_offset_construction_path: Option<OffsetConstructionPath2>,
-    raw_offset_segment_count: Option<usize>,
-    raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
-    self_contact_report: Option<SelfContactReport2>,
-    status: RetainedTopologyStatus,
-    blocker: UncertaintyReason,
-) -> CurveStringOffsetResult2 {
-    CurveStringOffsetResult2 {
-        curve_string: None,
-        report: CurveStringOffsetReport2 {
-            stage,
-            source_segment_count,
-            source_segment_kind_counts,
-            raw_offset_construction_path,
-            raw_offset_segment_count,
-            raw_offset_segment_kind_counts,
-            self_contact_report,
-            output_segment_count: None,
-            output_segment_kind_counts: None,
-            status,
-            blocker: Some(blocker),
-        },
-    }
-}
-
-fn blocked_contour_offset_result(
-    stage: ContourOffsetStage2,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
-    raw_offset_construction_path: Option<OffsetConstructionPath2>,
-    raw_offset_segment_count: Option<usize>,
-    raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
-    self_contact_report: Option<SelfContactReport2>,
-    fill_rule: FillRule,
-    status: RetainedTopologyStatus,
-    blocker: UncertaintyReason,
-) -> ContourOffsetResult2 {
-    ContourOffsetResult2 {
-        contour: None,
-        report: ContourOffsetReport2 {
-            stage,
-            source_segment_count,
-            source_segment_kind_counts,
-            raw_offset_construction_path,
-            raw_offset_segment_count,
-            raw_offset_segment_kind_counts,
-            self_contact_report,
-            output_segment_count: None,
-            output_segment_kind_counts: None,
-            fill_rule,
-            status,
-            blocker: Some(blocker),
-        },
-    }
-}
-
-fn blocked_curve_string_outline_offset_result(
-    stage: CurveStringOutlineOffsetStage2,
-    cap: OffsetCap,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
-    source_self_contact_report: Option<SelfContactReport2>,
-    left_offset_construction_path: Option<OffsetConstructionPath2>,
-    left_offset_segment_count: Option<usize>,
-    left_offset_segment_kind_counts: Option<SegmentKindCounts>,
-    right_offset_construction_path: Option<OffsetConstructionPath2>,
-    right_offset_segment_count: Option<usize>,
-    right_offset_segment_kind_counts: Option<SegmentKindCounts>,
-    cap_construction_path: Option<OutlineCapConstructionPath2>,
-    outline_segment_count: Option<usize>,
-    outline_segment_kind_counts: Option<SegmentKindCounts>,
-    outline_self_contact_report: Option<SelfContactReport2>,
-    status: RetainedTopologyStatus,
-    blocker: UncertaintyReason,
-) -> CurveStringOutlineOffsetResult2 {
-    CurveStringOutlineOffsetResult2 {
-        outline: None,
-        report: CurveStringOutlineOffsetReport2 {
-            stage,
-            cap,
-            source_segment_count,
-            source_segment_kind_counts,
-            source_self_contact_report,
-            left_offset_construction_path,
-            left_offset_segment_count,
-            left_offset_segment_kind_counts,
-            right_offset_construction_path,
-            right_offset_segment_count,
-            right_offset_segment_kind_counts,
-            cap_construction_path,
-            outline_segment_count,
-            outline_segment_kind_counts,
-            outline_self_contact_report,
-            status,
-            blocker: Some(blocker),
-        },
-    }
-}
-
-const fn retained_status_for_offset_blocker(reason: UncertaintyReason) -> RetainedTopologyStatus {
-    match reason {
-        UncertaintyReason::Unsupported | UncertaintyReason::Boundary => {
-            RetainedTopologyStatus::Unsupported
-        }
-        _ => RetainedTopologyStatus::Unresolved,
-    }
-}
-
-fn checked_outline_with_report(
+fn checked_outline(
     source: &CurveString2,
     distance: Real,
     cap: OffsetCap,
     policy: &CurvePolicy,
-) -> CurveResult<CurveStringOutlineOffsetResult2> {
-    let source_segment_count = source.len();
-    let source_segment_kind_counts = segment_kind_counts(source.segments());
+) -> CurveResult<Classification<Contour2>> {
     match real_sign(&distance, policy) {
         Some(RealSign::Positive) => {}
         Some(RealSign::Zero | RealSign::Negative) => {
-            return Ok(blocked_curve_string_outline_offset_result(
-                CurveStringOutlineOffsetStage2::DistanceValidation,
-                cap,
-                source_segment_count,
-                source_segment_kind_counts,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                RetainedTopologyStatus::Unsupported,
-                UncertaintyReason::Unsupported,
-            ));
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
-        None => {
-            return Ok(blocked_curve_string_outline_offset_result(
-                CurveStringOutlineOffsetStage2::DistanceValidation,
-                cap,
-                source_segment_count,
-                source_segment_kind_counts,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                RetainedTopologyStatus::Unresolved,
-                UncertaintyReason::RealSign,
-            ));
-        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 
-    let source_self_contact = source.has_self_contacts_with_report(policy)?;
-    let source_self_contact_report = source_self_contact.report().clone();
-    match source_self_contact.has_self_contacts() {
+    match source.has_self_contacts(policy)? {
         Classification::Decided(false) => {}
         Classification::Decided(true) => {
-            return Ok(blocked_curve_string_outline_offset_result(
-                CurveStringOutlineOffsetStage2::SourceSelfContactValidation,
-                cap,
-                source_segment_count,
-                source_segment_kind_counts,
-                Some(source_self_contact_report),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                RetainedTopologyStatus::Unsupported,
-                UncertaintyReason::Unsupported,
-            ));
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
-        Classification::Uncertain(reason) => {
-            return Ok(blocked_curve_string_outline_offset_result(
-                CurveStringOutlineOffsetStage2::SourceSelfContactValidation,
-                cap,
-                source_segment_count,
-                source_segment_kind_counts,
-                Some(source_self_contact_report),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                retained_status_for_offset_blocker(reason),
-                reason,
-            ));
-        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
 
     let left = match source.offset_left_with_line_joins(distance.clone(), policy)? {
         Classification::Decided(left) => left,
-        Classification::Uncertain(reason) => {
-            return Ok(blocked_curve_string_outline_offset_result(
-                CurveStringOutlineOffsetStage2::LeftOffsetConstruction,
-                cap,
-                source_segment_count,
-                source_segment_kind_counts,
-                Some(source_self_contact_report.clone()),
-                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                retained_status_for_offset_blocker(reason),
-                reason,
-            ));
-        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let left_offset_segment_count = left.len();
-    let left_offset_segment_kind_counts = segment_kind_counts(left.segments());
-
     let right = match source.offset_left_with_line_joins(-distance.clone(), policy)? {
         Classification::Decided(right) => right,
-        Classification::Uncertain(reason) => {
-            return Ok(blocked_curve_string_outline_offset_result(
-                CurveStringOutlineOffsetStage2::RightOffsetConstruction,
-                cap,
-                source_segment_count,
-                source_segment_kind_counts,
-                Some(source_self_contact_report.clone()),
-                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                Some(left_offset_segment_count),
-                Some(left_offset_segment_kind_counts),
-                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                retained_status_for_offset_blocker(reason),
-                reason,
-            ));
-        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let right_offset_segment_count = right.len();
-    let right_offset_segment_kind_counts = segment_kind_counts(right.segments());
-
     let offsets = OutlineOffsets {
         start_center: source.start().ok_or(CurveError::EmptyCurveString)?.clone(),
         end_center: source.end().ok_or(CurveError::EmptyCurveString)?.clone(),
@@ -1866,82 +883,11 @@ fn checked_outline_with_report(
         left,
         right,
     };
-
     let segments = match outline_segments_for_cap(source, offsets, distance, cap, policy)? {
         Classification::Decided(segments) => segments,
-        Classification::Uncertain(reason) => {
-            return Ok(blocked_curve_string_outline_offset_result(
-                CurveStringOutlineOffsetStage2::CapConstruction,
-                cap,
-                source_segment_count,
-                source_segment_kind_counts,
-                Some(source_self_contact_report.clone()),
-                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                Some(left_offset_segment_count),
-                Some(left_offset_segment_kind_counts),
-                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-                Some(right_offset_segment_count),
-                Some(right_offset_segment_kind_counts),
-                Some(outline_cap_construction_path(cap)),
-                None,
-                None,
-                None,
-                retained_status_for_offset_blocker(reason),
-                reason,
-            ));
-        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let outline_segment_count = segments.len();
-    let outline_segment_kind_counts = segment_kind_counts(&segments);
-
-    let checked_outline = checked_outline_contour_with_report(segments, policy)?;
-    match checked_outline.contour {
-        Some(outline) => Ok(CurveStringOutlineOffsetResult2 {
-            outline: Some(outline),
-            report: CurveStringOutlineOffsetReport2 {
-                stage: CurveStringOutlineOffsetStage2::OutlineTopologyValidation,
-                cap,
-                source_segment_count,
-                source_segment_kind_counts,
-                source_self_contact_report: Some(source_self_contact_report.clone()),
-                left_offset_construction_path: Some(
-                    OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins,
-                ),
-                left_offset_segment_count: Some(left_offset_segment_count),
-                left_offset_segment_kind_counts: Some(left_offset_segment_kind_counts),
-                right_offset_construction_path: Some(
-                    OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins,
-                ),
-                right_offset_segment_count: Some(right_offset_segment_count),
-                right_offset_segment_kind_counts: Some(right_offset_segment_kind_counts),
-                cap_construction_path: Some(outline_cap_construction_path(cap)),
-                outline_segment_count: Some(outline_segment_count),
-                outline_segment_kind_counts: Some(outline_segment_kind_counts),
-                outline_self_contact_report: checked_outline.self_contact_report,
-                status: RetainedTopologyStatus::NativeExact,
-                blocker: None,
-            },
-        }),
-        None => Ok(blocked_curve_string_outline_offset_result(
-            CurveStringOutlineOffsetStage2::OutlineTopologyValidation,
-            cap,
-            source_segment_count,
-            source_segment_kind_counts,
-            Some(source_self_contact_report),
-            Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-            Some(left_offset_segment_count),
-            Some(left_offset_segment_kind_counts),
-            Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
-            Some(right_offset_segment_count),
-            Some(right_offset_segment_kind_counts),
-            Some(outline_cap_construction_path(cap)),
-            Some(outline_segment_count),
-            Some(outline_segment_kind_counts),
-            checked_outline.self_contact_report,
-            retained_status_for_offset_blocker(checked_outline.blocker),
-            checked_outline.blocker,
-        )),
-    }
+    checked_outline_contour(segments, policy)
 }
 
 fn outline_segments_for_cap(
@@ -1955,14 +901,6 @@ fn outline_segments_for_cap(
         OffsetCap::Round => outline_segments_with_round_caps(offsets, policy),
         OffsetCap::Butt => outline_segments_with_butt_caps(offsets),
         OffsetCap::Square => outline_segments_with_square_caps(source, offsets, distance),
-    }
-}
-
-const fn outline_cap_construction_path(cap: OffsetCap) -> OutlineCapConstructionPath2 {
-    match cap {
-        OffsetCap::Round => OutlineCapConstructionPath2::RoundEndpointArcCaps,
-        OffsetCap::Butt => OutlineCapConstructionPath2::ButtEndpointLineCaps,
-        OffsetCap::Square => OutlineCapConstructionPath2::SquareTangentExtensionLineCaps,
     }
 }
 
@@ -2112,55 +1050,26 @@ struct OutlineOffsets {
     right_end: Point2,
 }
 
-struct CheckedOutlineContour {
-    contour: Option<Contour2>,
-    self_contact_report: Option<SelfContactReport2>,
-    blocker: UncertaintyReason,
-}
-
-// Contour closure and self-contact checks are deliberately centralized so every
-// open-outline cap style preserves the same "raw construction, no trimming"
-// contract described by profile-offset construction.
-fn checked_outline_contour_with_report(
+fn checked_outline_contour(
     segments: Vec<Segment2>,
     policy: &CurvePolicy,
-) -> CurveResult<CheckedOutlineContour> {
+) -> CurveResult<Classification<Contour2>> {
     let outline = match Contour2::try_new(segments) {
         Ok(outline) => outline,
         Err(CurveError::DisconnectedCurveString) => {
-            return Ok(CheckedOutlineContour {
-                contour: None,
-                self_contact_report: None,
-                blocker: UncertaintyReason::Unsupported,
-            });
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         Err(CurveError::AmbiguousCurveStringConnection) => {
-            return Ok(CheckedOutlineContour {
-                contour: None,
-                self_contact_report: None,
-                blocker: UncertaintyReason::RealSign,
-            });
+            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         }
         Err(error) => return Err(error),
     };
-    let self_contact = outline.has_self_contacts_with_report(policy)?;
-    let self_contact_report = self_contact.report().clone();
-    match self_contact.has_self_contacts() {
-        Classification::Decided(false) => Ok(CheckedOutlineContour {
-            contour: Some(outline),
-            self_contact_report: Some(self_contact_report),
-            blocker: UncertaintyReason::Unsupported,
-        }),
-        Classification::Decided(true) => Ok(CheckedOutlineContour {
-            contour: None,
-            self_contact_report: Some(self_contact_report),
-            blocker: UncertaintyReason::Unsupported,
-        }),
-        Classification::Uncertain(reason) => Ok(CheckedOutlineContour {
-            contour: None,
-            self_contact_report: Some(self_contact_report),
-            blocker: reason,
-        }),
+    match outline.has_self_contacts(policy)? {
+        Classification::Decided(false) => Ok(Classification::Decided(outline)),
+        Classification::Decided(true) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
 }
 

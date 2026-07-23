@@ -59,7 +59,6 @@ pub struct RegionBooleanReport2 {
     result_boundary_segment_kind_counts: Option<SegmentKindCounts>,
     pipeline_report: Option<RegionBooleanPipelineReport2>,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
-    prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -143,36 +142,6 @@ pub enum RegionBooleanStage2 {
     BoundaryExtraction,
     /// Checked boundary contours were built and role-assigned into a region.
     RegionRoleAssignment,
-}
-
-/// Prepared-cache evidence consumed by a report-bearing region boolean.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RegionBooleanPreparedCacheReport2 {
-    first: RegionPreparedCacheAudit2,
-    second: RegionPreparedCacheAudit2,
-}
-
-/// Per-operand prepared region cache inventory.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct RegionPreparedCacheAudit2 {
-    freshness: RegionPreparedCacheFreshness2,
-    prepared_contour_count: usize,
-    prepared_material_segment_count: usize,
-    prepared_material_segment_kind_counts: SegmentKindCounts,
-    prepared_hole_segment_count: usize,
-    prepared_hole_segment_kind_counts: SegmentKindCounts,
-    prepared_segment_count: usize,
-    prepared_segment_kind_counts: SegmentKindCounts,
-    decided_segment_box_count: usize,
-    undecided_segment_box_count: usize,
-    region_box_decided: bool,
-}
-
-/// Freshness claim for prepared boolean cache evidence.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RegionPreparedCacheFreshness2 {
-    /// Prepared cache borrows the current source contours for this query.
-    BorrowedCurrentSource,
 }
 
 /// Result of report-bearing closed region boolean materialization.
@@ -624,18 +593,6 @@ impl LineArcRegion2 {
         self.as_view()
             .boolean_region(&other.as_view(), op, fill_rule, policy)
     }
-
-    /// Computes a role-assigned boolean region and retains materialization evidence.
-    pub fn boolean_region_with_report(
-        &self,
-        other: &Self,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionBooleanResult2> {
-        self.as_view()
-            .boolean_region_with_report(&other.as_view(), op, fill_rule, policy)
-    }
 }
 
 impl RegionView2<'_> {
@@ -685,21 +642,6 @@ impl RegionView2<'_> {
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<LineArcRegion2>> {
         boolean_region_between(self, other, op, fill_rule, policy)
-    }
-
-    /// Computes a role-assigned boolean region and retains materialization evidence.
-    ///
-    /// The result uses the checked boundary-contour boolean path and the
-    /// report-bearing contour nesting pass, so callers can audit output contour
-    /// counts, final material/hole role assignment, and blockers.
-    pub fn boolean_region_with_report(
-        &self,
-        other: &RegionView2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionBooleanResult2> {
-        boolean_region_between_with_report(self, other, op, fill_rule, policy)
     }
 }
 
@@ -1009,11 +951,6 @@ impl RegionBooleanReport2 {
         self.role_reports().map(<[_]>::len)
     }
 
-    /// Returns prepared-cache inventory and freshness evidence, when used.
-    pub const fn prepared_cache_report(&self) -> Option<&RegionBooleanPreparedCacheReport2> {
-        self.prepared_cache_report.as_ref()
-    }
-
     /// Returns boolean-region materialization status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -1285,111 +1222,6 @@ impl RegionBooleanSharedBoundaryResolution2 {
     }
 }
 
-impl RegionBooleanPreparedCacheReport2 {
-    /// Builds a prepared-cache evidence report from per-operand audits.
-    pub(crate) const fn new(
-        first: RegionPreparedCacheAudit2,
-        second: RegionPreparedCacheAudit2,
-    ) -> Self {
-        Self { first, second }
-    }
-
-    /// Returns prepared-cache evidence for the first operand.
-    pub const fn first(&self) -> &RegionPreparedCacheAudit2 {
-        &self.first
-    }
-
-    /// Returns prepared-cache evidence for the second operand.
-    pub const fn second(&self) -> &RegionPreparedCacheAudit2 {
-        &self.second
-    }
-}
-
-impl RegionPreparedCacheAudit2 {
-    /// Builds per-region prepared cache evidence.
-    pub(crate) const fn new(
-        prepared_contour_count: usize,
-        prepared_material_segment_count: usize,
-        prepared_material_segment_kind_counts: SegmentKindCounts,
-        prepared_hole_segment_count: usize,
-        prepared_hole_segment_kind_counts: SegmentKindCounts,
-        prepared_segment_count: usize,
-        prepared_segment_kind_counts: SegmentKindCounts,
-        decided_segment_box_count: usize,
-        undecided_segment_box_count: usize,
-        region_box_decided: bool,
-    ) -> Self {
-        Self {
-            freshness: RegionPreparedCacheFreshness2::BorrowedCurrentSource,
-            prepared_contour_count,
-            prepared_material_segment_count,
-            prepared_material_segment_kind_counts,
-            prepared_hole_segment_count,
-            prepared_hole_segment_kind_counts,
-            prepared_segment_count,
-            prepared_segment_kind_counts,
-            decided_segment_box_count,
-            undecided_segment_box_count,
-            region_box_decided,
-        }
-    }
-
-    /// Returns the cache freshness claim for this borrowed prepared view.
-    pub const fn freshness(&self) -> RegionPreparedCacheFreshness2 {
-        self.freshness
-    }
-
-    /// Returns the number of prepared material and hole contours.
-    pub const fn prepared_contour_count(&self) -> usize {
-        self.prepared_contour_count
-    }
-
-    /// Returns the number of prepared material boundary segments.
-    pub const fn prepared_material_segment_count(&self) -> usize {
-        self.prepared_material_segment_count
-    }
-
-    /// Returns primitive-family counts for prepared material boundary segments.
-    pub const fn prepared_material_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.prepared_material_segment_kind_counts
-    }
-
-    /// Returns the number of prepared hole boundary segments.
-    pub const fn prepared_hole_segment_count(&self) -> usize {
-        self.prepared_hole_segment_count
-    }
-
-    /// Returns primitive-family counts for prepared hole boundary segments.
-    pub const fn prepared_hole_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.prepared_hole_segment_kind_counts
-    }
-
-    /// Returns the number of prepared boundary segments.
-    pub const fn prepared_segment_count(&self) -> usize {
-        self.prepared_segment_count
-    }
-
-    /// Returns primitive-family counts for all prepared boundary segments.
-    pub const fn prepared_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.prepared_segment_kind_counts
-    }
-
-    /// Returns the number of decided segment AABBs retained by preparation.
-    pub const fn decided_segment_box_count(&self) -> usize {
-        self.decided_segment_box_count
-    }
-
-    /// Returns the number of source segment AABBs that remained undecided.
-    pub const fn undecided_segment_box_count(&self) -> usize {
-        self.undecided_segment_box_count
-    }
-
-    /// Returns whether preparation retained a decided whole-region AABB.
-    pub const fn region_box_decided(&self) -> bool {
-        self.region_box_decided
-    }
-}
-
 impl RegionBooleanResult2 {
     /// Returns the materialized boolean region, if construction succeeded.
     pub const fn region(&self) -> Option<&LineArcRegion2> {
@@ -1526,16 +1358,6 @@ pub(crate) fn boolean_region_between(
     )
 }
 
-pub(crate) fn boolean_region_between_with_report(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    policy: &CurvePolicy,
-) -> CurveResult<RegionBooleanResult2> {
-    boolean_region_between_impl(first, second, op, fill_rule, policy, true)
-}
-
 fn boolean_region_between_impl(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
@@ -1555,7 +1377,6 @@ fn boolean_region_between_impl(
             &boundary_events,
             region,
             RegionBooleanBoundaryContourSourcePath2::ContainmentShortcut,
-            None,
         ));
     }
     if op == BooleanOp::Xor {
@@ -1570,7 +1391,6 @@ fn boolean_region_between_impl(
                     &boundary_events,
                     region,
                     RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut,
-                    None,
                 ))
             }
             Classification::Uncertain(reason) => Ok(blocked_region_boolean_result(
@@ -1627,7 +1447,6 @@ fn boolean_region_between_impl(
                         &boundary_events,
                         region,
                         boundary_contour_source_path,
-                        None,
                     )
                 }
                 Classification::Uncertain(reason) => blocked_region_boolean_result(
@@ -2311,7 +2130,6 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_pipeline_report(
         boundary_events,
         contours,
         boundary_contour_source_path,
-        None,
         pipeline_report,
         policy,
     )
@@ -2327,7 +2145,6 @@ pub(crate) fn region_boolean_result_from_role_assigned_shortcut_region(
     boundary_events: &RegionIntersectionSet,
     region: LineArcRegion2,
     boundary_contour_source_path: RegionBooleanBoundaryContourSourcePath2,
-    prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
 ) -> RegionBooleanResult2 {
     let result_view = region.as_view();
     let result_material_contour_count = result_view.material_contours().len();
@@ -2376,7 +2193,6 @@ pub(crate) fn region_boolean_result_from_role_assigned_shortcut_region(
             result_boundary_segment_kind_counts: Some(result_boundary_segment_kind_counts),
             pipeline_report: None,
             boundary_build_report: None,
-            prepared_cache_report,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -2393,7 +2209,6 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
     boundary_events: &RegionIntersectionSet,
     contours: Vec<Contour2>,
     boundary_contour_source_path: RegionBooleanBoundaryContourSourcePath2,
-    prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
     pipeline_report: Option<RegionBooleanPipelineReport2>,
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
@@ -2458,7 +2273,6 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
             result_boundary_segment_kind_counts,
             pipeline_report,
             boundary_build_report: Some(boundary_build_report),
-            prepared_cache_report,
             status,
             blocker,
         },
@@ -2484,7 +2298,6 @@ pub(crate) fn blocked_region_boolean_result(
         boundary_events,
         status,
         blocker,
-        None,
     )
 }
 
@@ -2498,7 +2311,6 @@ pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
     boundary_events: &RegionIntersectionSet,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
-    prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
 ) -> RegionBooleanResult2 {
     RegionBooleanResult2 {
         region: None,
@@ -2541,7 +2353,6 @@ pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
             result_boundary_segment_kind_counts: None,
             pipeline_report: None,
             boundary_build_report: None,
-            prepared_cache_report,
             status,
             blocker: Some(blocker),
         },

@@ -75,7 +75,6 @@ fn certified_exact_scalar_segmentation_covers_rational_bezier_and_nurbs() {
         vec![p(0, 0), p(2, 4), p(4, 0)],
         vec![r(1), r(2), r(1)],
         vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-        None,
     )
     .unwrap();
 

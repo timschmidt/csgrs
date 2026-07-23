@@ -6,7 +6,7 @@ use std::rc::Rc;
 use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
     BezierSubcurve2, Classification, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2,
-    CurveParameterSide2, CurvePolicy, CurveSource2, ExactCurveError, ExactCurveResult, Point2,
+    CurveParameterSide2, CurvePolicy, ExactCurveError, ExactCurveResult, Point2,
     RationalBSplineBezierExtraction2, RationalBSplineCurve2, RationalBezier2, RationalBezierSpan2,
     Real, Similarity2, SplinePeriodicity2, UncertaintyReason,
 };
@@ -19,7 +19,6 @@ const MAX_RETAINED_DEGREE_ELEVATIONS: usize = 8;
 #[derive(Debug)]
 struct NurbsData2 {
     retained: RationalBSplineCurve2,
-    source: Option<CurveSource2>,
     endpoints: NurbsEndpoints2,
     decomposition: OnceCell<Cached<NurbsBezierDecomposition2>>,
     native_subcurves: OnceCell<Cached<Vec<BezierSubcurve2>>>,
@@ -36,7 +35,7 @@ enum NurbsEndpoints2 {
     Extracted { start: Point2, end: Point2 },
 }
 
-/// Exact rational B-spline/NURBS curve with retained source identity.
+/// Exact rational B-spline/NURBS curve with shared lazy caches.
 ///
 /// Clones share the same immutable source carrier and lazy exact caches. The
 /// homogeneous Boehm decomposition and native-topology promotion therefore run
@@ -52,11 +51,10 @@ pub struct NurbsBezierDecomposition2 {
     extraction: RationalBSplineBezierExtraction2,
 }
 
-/// Borrowed exact NURBS Bezier span with source provenance.
+/// Borrowed exact NURBS Bezier span and its knot-span index.
 #[derive(Clone, Copy, Debug)]
 pub struct NurbsBezierSpanView2<'a> {
     span_index: usize,
-    source: Option<CurveSource2>,
     span: &'a RationalBezierSpan2,
 }
 
@@ -72,11 +70,10 @@ pub struct NurbsNativeSpanView2<'a> {
 pub struct NurbsDegreeElevation2 {
     source_degree: usize,
     target_degree: usize,
-    source: Option<CurveSource2>,
     spans: Rc<[NurbsElevatedBezierSpan2]>,
 }
 
-/// One exact elevated rational Bezier span with NURBS source provenance.
+/// One exact elevated rational Bezier span with its original knot interval.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NurbsElevatedBezierSpan2 {
     span_index: usize,
@@ -93,18 +90,7 @@ impl NurbsCurve2 {
         weights: Vec<Real>,
         knots: Vec<Real>,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_with_optional_source(degree, control_points, weights, knots, None)
-    }
-
-    /// Constructs a NURBS curve with stable source provenance.
-    pub fn try_new_with_source(
-        degree: usize,
-        control_points: Vec<Point2>,
-        weights: Vec<Real>,
-        knots: Vec<Real>,
-        source: CurveSource2,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_with_optional_source(degree, control_points, weights, knots, Some(source))
+        Self::try_new_with_optional_source(degree, control_points, weights, knots)
     }
 
     /// Constructs a periodic NURBS from one period of controls and knot breaks.
@@ -118,30 +104,7 @@ impl NurbsCurve2 {
         weights: Vec<Real>,
         period_knots: Vec<Real>,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_periodic_with_optional_source(
-            degree,
-            control_points,
-            weights,
-            period_knots,
-            None,
-        )
-    }
-
-    /// Constructs a periodic NURBS with stable source provenance.
-    pub fn try_new_periodic_with_source(
-        degree: usize,
-        control_points: Vec<Point2>,
-        weights: Vec<Real>,
-        period_knots: Vec<Real>,
-        source: CurveSource2,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_periodic_with_optional_source(
-            degree,
-            control_points,
-            weights,
-            period_knots,
-            Some(source),
-        )
+        Self::try_new_periodic_with_optional_source(degree, control_points, weights, period_knots)
     }
 
     fn try_new_periodic_with_optional_source(
@@ -149,30 +112,22 @@ impl NurbsCurve2 {
         control_points: Vec<Point2>,
         mut weights: Vec<Real>,
         period_knots: Vec<Real>,
-        source: Option<CurveSource2>,
     ) -> ExactCurveResult<Self> {
         if weights.len() != control_points.len() {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::Construction,
                 CurveFamily2::Nurbs,
-                source,
                 CurveError::InvalidPeriodicSpline,
             ));
         }
-        let expansion = expand_periodic_spline(
-            degree,
-            control_points,
-            period_knots,
-            CurveFamily2::Nurbs,
-            source,
-        )?;
+        let expansion =
+            expand_periodic_spline(degree, control_points, period_knots, CurveFamily2::Nurbs)?;
         weights.extend_from_within(..degree);
         Self::try_new_expanded(
             degree,
             expansion.control_points,
             weights,
             expansion.knots,
-            source,
             SplinePeriodicity2::Periodic {
                 period: expansion.period,
             },
@@ -184,14 +139,12 @@ impl NurbsCurve2 {
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         knots: Vec<Real>,
-        source: Option<CurveSource2>,
     ) -> ExactCurveResult<Self> {
         Self::try_new_expanded(
             degree,
             control_points,
             weights,
             knots,
-            source,
             SplinePeriodicity2::NonPeriodic,
         )
     }
@@ -201,7 +154,6 @@ impl NurbsCurve2 {
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         knots: Vec<Real>,
-        source: Option<CurveSource2>,
         periodicity: SplinePeriodicity2,
     ) -> ExactCurveResult<Self> {
         let valid_layout = degree
@@ -222,7 +174,6 @@ impl NurbsCurve2 {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::Construction,
                 CurveFamily2::Nurbs,
-                source,
                 CurveError::InvalidBSpline,
             ));
         }
@@ -236,9 +187,8 @@ impl NurbsCurve2 {
                 &CurvePolicy::certified(),
             ),
             CurveOperation2::Construction,
-            source,
         )?;
-        Self::from_retained(retained, source, None)
+        Self::from_retained(retained, None)
     }
 
     pub(crate) fn try_new_expanded_with_periodicity(
@@ -246,15 +196,13 @@ impl NurbsCurve2 {
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         knots: Vec<Real>,
-        source: Option<CurveSource2>,
         periodicity: SplinePeriodicity2,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_expanded(degree, control_points, weights, knots, source, periodicity)
+        Self::try_new_expanded(degree, control_points, weights, knots, periodicity)
     }
 
     fn from_retained(
         retained: RationalBSplineCurve2,
-        source: Option<CurveSource2>,
         preserved_endpoints: Option<(Point2, Point2)>,
     ) -> ExactCurveResult<Self> {
         let decomposition = OnceCell::new();
@@ -264,14 +212,12 @@ impl NurbsCurve2 {
             retained.knots(),
             retained.degree(),
             retained.control_points().len(),
-            source,
         )? {
             NurbsEndpoints2::AuthoredControls
         } else {
             let extraction = exact_value(
                 retained.extract_bezier_spans(&CurvePolicy::certified()),
                 CurveOperation2::Construction,
-                source,
             )?;
             let start = extraction
                 .spans()
@@ -293,7 +239,6 @@ impl NurbsCurve2 {
         let curve = Self {
             data: Rc::new(NurbsData2 {
                 retained,
-                source,
                 endpoints,
                 decomposition,
                 native_subcurves: OnceCell::new(),
@@ -349,7 +294,7 @@ impl NurbsCurve2 {
 
     /// Inserts one exact knot with homogeneous Boehm refinement.
     ///
-    /// The curve image and authored source identity are preserved. If an
+    /// The curve image, parameterization, and endpoints are preserved. If an
     /// interior knot already has full Bezier multiplicity, this returns a clone
     /// sharing the original carrier and caches.
     pub fn insert_knot(&self, knot: Real) -> ExactCurveResult<Self> {
@@ -359,9 +304,8 @@ impl NurbsCurve2 {
     /// Inserts an ordered batch of exact knots in one homogeneous refinement pass.
     ///
     /// The working control net is projected and validated only once. Exact
-    /// source/version evidence, periodicity, endpoints, and parameterization
-    /// are preserved. Repeated equal requests from any clone reuse a bounded
-    /// retained result.
+    /// periodicity, endpoints, and parameterization are preserved. Repeated
+    /// equal requests from any clone reuse a bounded retained result.
     pub fn insert_knots(&self, knots: Vec<Real>) -> ExactCurveResult<Self> {
         if knots.is_empty() {
             return Ok(self.clone());
@@ -437,8 +381,8 @@ impl NurbsCurve2 {
 
     /// Elevates every exact rational Bezier knot span to `target_degree`.
     ///
-    /// The result retains source knot intervals and source/version identity,
-    /// so callers can consume elevated homogeneous spans without changing the
+    /// The result retains the original knot intervals so callers can consume
+    /// elevated homogeneous spans without changing the
     /// NURBS parameterization or inventing a less-continuous replacement knot
     /// vector. Equal requests and blockers are retained across clones.
     pub fn degree_elevation(
@@ -449,7 +393,6 @@ impl NurbsCurve2 {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::DegreeElevation,
                 CurveFamily2::Nurbs,
-                self.data.source,
                 CurveError::InvalidDegreeElevation,
             ));
         }
@@ -496,7 +439,6 @@ impl NurbsCurve2 {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::DegreeElevation,
                 CurveFamily2::Nurbs,
-                self.data.source,
                 CurveError::InvalidDegreeElevation,
             ));
         }
@@ -547,7 +489,7 @@ impl NurbsCurve2 {
             .map(|(span_index, (source_span, rational_span))| {
                 let curve = rational_span
                     .elevated_to_degree(target_degree)
-                    .map_err(|error| remap_degree_elevation_error(error, self.data.source))?;
+                    .map_err(|error| remap_degree_elevation_error(error))?;
                 let (parameter_start, parameter_end) = source_span.knot_interval();
                 Ok(NurbsElevatedBezierSpan2 {
                     span_index,
@@ -560,7 +502,6 @@ impl NurbsCurve2 {
         Ok(NurbsDegreeElevation2 {
             source_degree: self.degree(),
             target_degree,
-            source: self.data.source,
             spans: spans.into(),
         })
     }
@@ -575,7 +516,6 @@ impl NurbsCurve2 {
                     ExactCurveError::invalid(
                         CurveOperation2::DegreeElevation,
                         CurveFamily2::Nurbs,
-                        self.data.source,
                         CurveError::InvalidDegreeElevation,
                     )
                 })?;
@@ -600,14 +540,12 @@ impl NurbsCurve2 {
             let multiplicity = exact_nurbs_knot_multiplicity(
                 self.knots(),
                 &knot,
-                self.data.source,
                 CurveOperation2::DegreeElevation,
             )?;
             if multiplicity <= self.degree() {
                 exact_points_equal(
                     spans[span_index - 1].curve().end(),
                     spans[span_index].curve().start(),
-                    self.data.source,
                     CurveOperation2::DegreeElevation,
                 )?;
                 let scale = (span_weights[span_index - 1]
@@ -620,7 +558,6 @@ impl NurbsCurve2 {
                     ExactCurveError::invalid(
                         CurveOperation2::DegreeElevation,
                         CurveFamily2::Nurbs,
-                        self.data.source,
                         cause.into(),
                     )
                 })?;
@@ -673,7 +610,6 @@ impl NurbsCurve2 {
             control_points,
             weights,
             knots,
-            self.data.source,
             self.periodicity().clone(),
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::DegreeElevation))?;
@@ -686,16 +622,11 @@ impl NurbsCurve2 {
                 .retained
                 .insert_knots(knots, &CurvePolicy::certified()),
             CurveOperation2::KnotInsertion,
-            self.data.source,
         )?;
         if inserted_count == 0 {
             return Ok(self.clone());
         }
-        Self::from_retained(
-            retained,
-            self.data.source,
-            Some((self.start().clone(), self.end().clone())),
-        )
+        Self::from_retained(retained, Some((self.start().clone(), self.end().clone())))
     }
 
     fn remove_knot_uncached(&self, knot: Real) -> ExactCurveResult<Option<Self>> {
@@ -704,16 +635,11 @@ impl NurbsCurve2 {
                 .retained
                 .remove_knot(knot, &CurvePolicy::certified()),
             CurveOperation2::KnotRemoval,
-            self.data.source,
         )?;
         retained
             .map(|retained| {
-                Self::from_retained(
-                    retained,
-                    self.data.source,
-                    Some((self.start().clone(), self.end().clone())),
-                )
-                .map_err(|error| remap_nurbs_operation(error, CurveOperation2::KnotRemoval))
+                Self::from_retained(retained, Some((self.start().clone(), self.end().clone())))
+                    .map_err(|error| remap_nurbs_operation(error, CurveOperation2::KnotRemoval))
             })
             .transpose()
     }
@@ -738,7 +664,6 @@ impl NurbsCurve2 {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Subdivision,
                 CurveFamily2::Nurbs,
-                self.data.source,
                 UncertaintyReason::Ordering,
             ));
         }
@@ -759,7 +684,6 @@ impl NurbsCurve2 {
             refined.control_points()[..=left_end].to_vec(),
             refined.weights()[..=left_end].to_vec(),
             left_knots,
-            self.data.source,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))?;
         let right = Self::try_new_with_optional_source(
@@ -767,7 +691,6 @@ impl NurbsCurve2 {
             refined.control_points()[right_start..].to_vec(),
             refined.weights()[right_start..].to_vec(),
             right_knots,
-            self.data.source,
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))?;
         Ok((left, right))
@@ -800,8 +723,7 @@ impl NurbsCurve2 {
     /// Returns the same NURBS image with traversal direction reversed.
     ///
     /// Controls and weights are reversed, while knots are reflected through
-    /// the authored domain midpoint. The source parameter domain and source
-    /// provenance are preserved exactly.
+    /// the parameter-domain midpoint. The parameter domain is preserved exactly.
     pub fn reversed(&self) -> ExactCurveResult<Self> {
         let (start, end) = self.parameter_domain();
         let knot_sum = start + end;
@@ -820,13 +742,12 @@ impl NurbsCurve2 {
             control_points,
             weights,
             knots,
-            self.data.source,
             self.periodicity().clone(),
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Reversal))
     }
 
-    /// Applies an exact planar similarity while retaining periodicity and source.
+    /// Applies an exact planar similarity while retaining periodicity.
     pub fn transform_similarity(&self, transform: &Similarity2) -> ExactCurveResult<Self> {
         Self::try_new_expanded(
             self.degree(),
@@ -836,7 +757,6 @@ impl NurbsCurve2 {
                 .collect(),
             self.weights().to_vec(),
             self.knots().to_vec(),
-            self.data.source,
             self.periodicity().clone(),
         )
         .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Transformation))
@@ -863,11 +783,6 @@ impl NurbsCurve2 {
         }
     }
 
-    /// Returns retained source identity when supplied by the caller.
-    pub fn source(&self) -> Option<CurveSource2> {
-        self.data.source
-    }
-
     /// Returns whether exact Bezier decomposition has already been retained.
     pub fn is_bezier_decomposition_cached(&self) -> bool {
         self.data.decomposition.get().is_some()
@@ -886,24 +801,21 @@ impl NurbsCurve2 {
                     .retained
                     .extract_bezier_spans(&CurvePolicy::certified()),
                 CurveOperation2::BezierDecomposition,
-                self.data.source,
             )
             .map(|extraction| NurbsBezierDecomposition2 { extraction })
         })
     }
 
-    /// Iterates exact retained Bezier spans with source identity and intervals.
+    /// Iterates exact retained Bezier spans with indices and knot intervals.
     pub fn bezier_spans(
         &self,
     ) -> ExactCurveResult<impl ExactSizeIterator<Item = NurbsBezierSpanView2<'_>>> {
-        let source = self.data.source;
-        Ok(self.bezier_decomposition()?.spans().iter().enumerate().map(
-            move |(span_index, span)| NurbsBezierSpanView2 {
-                span_index,
-                source,
-                span,
-            },
-        ))
+        Ok(self
+            .bezier_decomposition()?
+            .spans()
+            .iter()
+            .enumerate()
+            .map(move |(span_index, span)| NurbsBezierSpanView2 { span_index, span }))
     }
 
     /// Returns native conic/polynomial Bezier spans when every span supports them.
@@ -919,7 +831,6 @@ impl NurbsCurve2 {
                     .extraction
                     .native_subcurves(&CurvePolicy::certified()),
                 CurveOperation2::NativeTopology,
-                self.data.source,
             )
         })?;
         Ok(subcurves)
@@ -929,17 +840,12 @@ impl NurbsCurve2 {
     pub fn native_spans(
         &self,
     ) -> ExactCurveResult<impl ExactSizeIterator<Item = NurbsNativeSpanView2<'_>>> {
-        let source = self.data.source;
         let decomposition = self.bezier_decomposition()?;
         let native = self.native_subcurves()?;
         debug_assert_eq!(decomposition.spans().len(), native.len());
         Ok(decomposition.spans().iter().zip(native).enumerate().map(
             move |(span_index, (span, curve))| NurbsNativeSpanView2 {
-                source_span: NurbsBezierSpanView2 {
-                    span_index,
-                    source,
-                    span,
-                },
+                source_span: NurbsBezierSpanView2 { span_index, span },
                 curve,
             },
         ))
@@ -970,7 +876,7 @@ impl NurbsCurve2 {
             if side == CurveParameterSide2::Right {
                 return Ok(right);
             }
-            return matching_nurbs_point(left, right, self.data.source);
+            return matching_nurbs_point(left, right);
         }
         self.point_at_canonical_side(parameter, side)
     }
@@ -994,7 +900,6 @@ impl NurbsCurve2 {
             self.periodicity(),
             side,
             CurveFamily2::Nurbs,
-            self.data.source,
         )?;
         self.point_at_side(&wrapped, side)
     }
@@ -1005,8 +910,7 @@ impl NurbsCurve2 {
         side: CurveParameterSide2,
     ) -> ExactCurveResult<Point2> {
         let decomposition = self.bezier_decomposition()?;
-        let (first, last) =
-            select_span_indices(decomposition.spans(), parameter, self.data.source)?;
+        let (first, last) = select_span_indices(decomposition.spans(), parameter)?;
         let first_point = self.point_on_span(first, parameter)?;
         if first == last || side == CurveParameterSide2::Left {
             return Ok(first_point);
@@ -1015,21 +919,16 @@ impl NurbsCurve2 {
         if side == CurveParameterSide2::Right {
             return Ok(last_point);
         }
-        matching_nurbs_point(first_point, last_point, self.data.source)
+        matching_nurbs_point(first_point, last_point)
     }
 
     fn point_on_span(&self, span_index: usize, parameter: &Real) -> ExactCurveResult<Point2> {
         let decomposition = self.bezier_decomposition()?;
-        let local = local_span_parameter(
-            &decomposition.spans()[span_index],
-            parameter,
-            self.data.source,
-        )?;
+        let local = local_span_parameter(&decomposition.spans()[span_index], parameter)?;
         let curve = &self.rational_spans()?[span_index];
         exact_classification(
             curve.point_at_classified(&local, &CurvePolicy::certified()),
             CurveOperation2::Evaluation,
-            self.data.source,
         )
     }
 
@@ -1101,7 +1000,7 @@ impl NurbsCurve2 {
             if side == CurveParameterSide2::Right {
                 return Ok(right);
             }
-            return matching_nurbs_derivatives(left, right, self.data.source);
+            return matching_nurbs_derivatives(left, right);
         }
         self.derivatives_at_canonical_side(parameter, max_order, side)
     }
@@ -1130,7 +1029,6 @@ impl NurbsCurve2 {
             self.periodicity(),
             side,
             CurveFamily2::Nurbs,
-            self.data.source,
         )?;
         self.derivatives_at_side(&wrapped, max_order, side)
     }
@@ -1142,8 +1040,7 @@ impl NurbsCurve2 {
         side: CurveParameterSide2,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition = self.bezier_decomposition()?;
-        let (first, last) =
-            select_span_indices(decomposition.spans(), parameter, self.data.source)?;
+        let (first, last) = select_span_indices(decomposition.spans(), parameter)?;
         let first_derivatives = self.derivatives_on_span(first, parameter, max_order)?;
         if first == last || side == CurveParameterSide2::Left {
             return Ok(first_derivatives);
@@ -1152,7 +1049,7 @@ impl NurbsCurve2 {
         if side == CurveParameterSide2::Right {
             return Ok(last_derivatives);
         }
-        matching_nurbs_derivatives(first_derivatives, last_derivatives, self.data.source)
+        matching_nurbs_derivatives(first_derivatives, last_derivatives)
     }
 
     fn derivatives_on_span(
@@ -1163,13 +1060,12 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition = self.bezier_decomposition()?;
         let span = &decomposition.spans()[span_index];
-        let local = local_span_parameter(span, parameter, self.data.source)?;
+        let local = local_span_parameter(span, parameter)?;
         let rational_span = &self.rational_spans()?[span_index];
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(
                 rational_span.derivative_at_classified(&local, &CurvePolicy::certified()),
                 CurveOperation2::Evaluation,
-                self.data.source,
             )?]
         } else {
             exact_classification(
@@ -1179,7 +1075,6 @@ impl NurbsCurve2 {
                     &CurvePolicy::certified(),
                 ),
                 CurveOperation2::Evaluation,
-                self.data.source,
             )?
         };
         let (start, end) = span.knot_interval();
@@ -1187,7 +1082,6 @@ impl NurbsCurve2 {
             ExactCurveError::invalid(
                 CurveOperation2::Evaluation,
                 CurveFamily2::Nurbs,
-                self.data.source,
                 cause.into(),
             )
         })?;
@@ -1215,7 +1109,6 @@ impl NurbsCurve2 {
                         ExactCurveError::invalid(
                             CurveOperation2::NativeTopology,
                             CurveFamily2::Nurbs,
-                            self.data.source,
                             cause,
                         )
                     })
@@ -1238,13 +1131,11 @@ impl NurbsCurve2 {
             (Some(_), Some(_)) => Err(ExactCurveError::invalid(
                 CurveOperation2::Construction,
                 CurveFamily2::Nurbs,
-                self.data.source,
                 CurveError::PeriodicSplineSeamMismatch,
             )),
             _ => Err(ExactCurveError::blocked(
                 CurveOperation2::Construction,
                 CurveFamily2::Nurbs,
-                self.data.source,
                 UncertaintyReason::RealSign,
             )),
         }
@@ -1265,7 +1156,6 @@ impl NurbsCurve2 {
             _ => Err(ExactCurveError::blocked(
                 CurveOperation2::Evaluation,
                 CurveFamily2::Nurbs,
-                self.data.source,
                 UncertaintyReason::Ordering,
             )),
         }
@@ -1274,7 +1164,7 @@ impl NurbsCurve2 {
 
 impl PartialEq for NurbsCurve2 {
     fn eq(&self, other: &Self) -> bool {
-        self.data.retained == other.data.retained && self.data.source == other.data.source
+        self.data.retained == other.data.retained
     }
 }
 
@@ -1316,11 +1206,6 @@ impl<'a> NurbsBezierSpanView2<'a> {
         self.span_index
     }
 
-    /// Returns the owning curve source identity, when supplied.
-    pub const fn source(self) -> Option<CurveSource2> {
-        self.source
-    }
-
     /// Returns the retained rational Bezier degree.
     pub const fn degree(self) -> usize {
         self.span.degree()
@@ -1348,7 +1233,7 @@ impl<'a> NurbsBezierSpanView2<'a> {
 }
 
 impl<'a> NurbsNativeSpanView2<'a> {
-    /// Returns source NURBS span provenance for the promoted curve.
+    /// Returns the NURBS span from which the native curve was promoted.
     pub const fn source_span(self) -> NurbsBezierSpanView2<'a> {
         self.source_span
     }
@@ -1368,11 +1253,6 @@ impl NurbsDegreeElevation2 {
     /// Returns the exact elevated degree shared by every span.
     pub const fn target_degree(&self) -> usize {
         self.target_degree
-    }
-
-    /// Returns stable source identity retained from the NURBS carrier.
-    pub const fn source(&self) -> Option<CurveSource2> {
-        self.source
     }
 
     /// Returns elevated spans in source knot order.
@@ -1411,40 +1291,30 @@ fn cached_result<T>(
 fn exact_value<T>(
     result: crate::CurveResult<Classification<T>>,
     operation: CurveOperation2,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<T> {
     match result {
         Ok(Classification::Decided(value)) => Ok(value),
         Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
             operation,
             CurveFamily2::Nurbs,
-            source,
             reason,
         )),
         Err(cause) => Err(ExactCurveError::invalid(
             operation,
             CurveFamily2::Nurbs,
-            source,
             cause,
         )),
     }
 }
 
-fn remap_degree_elevation_error(
-    error: ExactCurveError,
-    source: Option<CurveSource2>,
-) -> ExactCurveError {
+fn remap_degree_elevation_error(error: ExactCurveError) -> ExactCurveError {
     match error {
-        ExactCurveError::Invalid { cause, .. } => ExactCurveError::invalid(
-            CurveOperation2::DegreeElevation,
-            CurveFamily2::Nurbs,
-            source,
-            cause,
-        ),
+        ExactCurveError::Invalid { cause, .. } => {
+            ExactCurveError::invalid(CurveOperation2::DegreeElevation, CurveFamily2::Nurbs, cause)
+        }
         ExactCurveError::Blocked(blocker) => ExactCurveError::blocked(
             CurveOperation2::DegreeElevation,
             CurveFamily2::Nurbs,
-            source,
             blocker.reason(),
         ),
     }
@@ -1476,13 +1346,11 @@ fn validate_strict_interior(
         (Some(_), Some(_)) => Err(ExactCurveError::invalid(
             operation,
             CurveFamily2::Nurbs,
-            curve.source(),
             CurveError::InvalidCurveParameter,
         )),
         _ => Err(ExactCurveError::blocked(
             operation,
             CurveFamily2::Nurbs,
-            curve.source(),
             UncertaintyReason::Ordering,
         )),
     }
@@ -1492,7 +1360,6 @@ fn has_clamped_endpoints(
     knots: &[Real],
     degree: usize,
     control_count: usize,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<bool> {
     let policy = CurvePolicy::certified();
     match (
@@ -1508,7 +1375,6 @@ fn has_clamped_endpoints(
         _ => Err(ExactCurveError::blocked(
             CurveOperation2::Construction,
             CurveFamily2::Nurbs,
-            source,
             UncertaintyReason::Ordering,
         )),
     }
@@ -1530,13 +1396,11 @@ fn validate_subcurve_range(curve: &NurbsCurve2, start: &Real, end: &Real) -> Exa
         (Some(_), Some(_), Some(_)) => Err(ExactCurveError::invalid(
             CurveOperation2::Subdivision,
             CurveFamily2::Nurbs,
-            curve.source(),
             CurveError::InvalidCurveRange,
         )),
         _ => Err(ExactCurveError::blocked(
             CurveOperation2::Subdivision,
             CurveFamily2::Nurbs,
-            curve.source(),
             UncertaintyReason::Ordering,
         )),
     }
@@ -1545,7 +1409,6 @@ fn validate_subcurve_range(curve: &NurbsCurve2, start: &Real, end: &Real) -> Exa
 fn exact_nurbs_knot_multiplicity(
     knots: &[Real],
     knot: &Real,
-    source: Option<CurveSource2>,
     operation: CurveOperation2,
 ) -> ExactCurveResult<usize> {
     let policy = CurvePolicy::certified();
@@ -1558,7 +1421,6 @@ fn exact_nurbs_knot_multiplicity(
                 return Err(ExactCurveError::blocked(
                     operation,
                     CurveFamily2::Nurbs,
-                    source,
                     UncertaintyReason::Ordering,
                 ));
             }
@@ -1570,7 +1432,6 @@ fn exact_nurbs_knot_multiplicity(
 fn exact_points_equal(
     first: &Point2,
     second: &Point2,
-    source: Option<CurveSource2>,
     operation: CurveOperation2,
 ) -> ExactCurveResult<()> {
     let policy = CurvePolicy::certified();
@@ -1582,13 +1443,11 @@ fn exact_points_equal(
         (Some(_), Some(_)) => Err(ExactCurveError::invalid(
             operation,
             CurveFamily2::Nurbs,
-            source,
             CurveError::InvalidDegreeElevation,
         )),
         _ => Err(ExactCurveError::blocked(
             operation,
             CurveFamily2::Nurbs,
-            source,
             UncertaintyReason::RealSign,
         )),
     }
@@ -1596,25 +1455,18 @@ fn exact_points_equal(
 
 fn remap_nurbs_operation(error: ExactCurveError, operation: CurveOperation2) -> ExactCurveError {
     match error {
-        ExactCurveError::Invalid {
-            family,
-            source,
-            cause,
-            ..
-        } => ExactCurveError::invalid(operation, family, source, cause),
-        ExactCurveError::Blocked(blocker) => ExactCurveError::blocked(
-            operation,
-            blocker.family(),
-            blocker.source(),
-            blocker.reason(),
-        ),
+        ExactCurveError::Invalid { family, cause, .. } => {
+            ExactCurveError::invalid(operation, family, cause)
+        }
+        ExactCurveError::Blocked(blocker) => {
+            ExactCurveError::blocked(operation, blocker.family(), blocker.reason())
+        }
     }
 }
 
 fn select_span_indices(
     spans: &[RationalBezierSpan2],
     parameter: &Real,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<(usize, usize)> {
     let policy = CurvePolicy::certified();
     let mut first = None;
@@ -1636,7 +1488,6 @@ fn select_span_indices(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
                     CurveFamily2::Nurbs,
-                    source,
                     UncertaintyReason::Ordering,
                 ));
             }
@@ -1646,7 +1497,6 @@ fn select_span_indices(
         ExactCurveError::invalid(
             CurveOperation2::Evaluation,
             CurveFamily2::Nurbs,
-            source,
             CurveError::InvalidCurveParameter,
         )
     })
@@ -1655,7 +1505,6 @@ fn select_span_indices(
 fn matching_nurbs_derivatives(
     first: Vec<CurveDerivative2>,
     second: Vec<CurveDerivative2>,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<Vec<CurveDerivative2>> {
     debug_assert_eq!(first.len(), second.len());
     let policy = CurvePolicy::certified();
@@ -1669,7 +1518,6 @@ fn matching_nurbs_derivatives(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
                     CurveFamily2::Nurbs,
-                    source,
                     UncertaintyReason::Boundary,
                 ));
             }
@@ -1677,7 +1525,6 @@ fn matching_nurbs_derivatives(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
                     CurveFamily2::Nurbs,
-                    source,
                     UncertaintyReason::RealSign,
                 ));
             }
@@ -1686,11 +1533,7 @@ fn matching_nurbs_derivatives(
     Ok(first)
 }
 
-fn matching_nurbs_point(
-    first: Point2,
-    second: Point2,
-    source: Option<CurveSource2>,
-) -> ExactCurveResult<Point2> {
+fn matching_nurbs_point(first: Point2, second: Point2) -> ExactCurveResult<Point2> {
     let policy = CurvePolicy::certified();
     match (
         crate::classify::compare_reals(first.x(), second.x(), &policy),
@@ -1700,30 +1543,23 @@ fn matching_nurbs_point(
         (Some(_), Some(_)) => Err(ExactCurveError::blocked(
             CurveOperation2::Evaluation,
             CurveFamily2::Nurbs,
-            source,
             UncertaintyReason::Boundary,
         )),
         _ => Err(ExactCurveError::blocked(
             CurveOperation2::Evaluation,
             CurveFamily2::Nurbs,
-            source,
             UncertaintyReason::RealSign,
         )),
     }
 }
 
-fn local_span_parameter(
-    span: &RationalBezierSpan2,
-    parameter: &Real,
-    source: Option<CurveSource2>,
-) -> ExactCurveResult<Real> {
+fn local_span_parameter(span: &RationalBezierSpan2, parameter: &Real) -> ExactCurveResult<Real> {
     let (start, end) = span.knot_interval();
     let width = end - start;
     ((parameter - start) / width).map_err(|cause| {
         ExactCurveError::invalid(
             CurveOperation2::Evaluation,
             CurveFamily2::Nurbs,
-            source,
             cause.into(),
         )
     })
@@ -1732,14 +1568,12 @@ fn local_span_parameter(
 fn exact_classification<T>(
     classification: Classification<T>,
     operation: CurveOperation2,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<T> {
     match classification {
         Classification::Decided(value) => Ok(value),
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
             operation,
             CurveFamily2::Nurbs,
-            source,
             reason,
         )),
     }

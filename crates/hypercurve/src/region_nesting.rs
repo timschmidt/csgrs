@@ -1673,7 +1673,7 @@ impl LineArcRegion2 {
     /// become material and odd-depth contours become holes. If intersections,
     /// touches, or undecided containment predicates prevent role assignment, no
     /// region is materialized and the report carries the blocker.
-    pub fn from_boundary_contours_with_report(
+    pub(crate) fn from_boundary_contours_with_report(
         contours: Vec<Contour2>,
         policy: &CurvePolicy,
     ) -> CurveResult<RegionBoundaryContourBuildResult2> {
@@ -1735,19 +1735,6 @@ impl LineArcRegion2 {
                 blocker: None,
             },
         })
-    }
-
-    /// Builds a region from borrowed closed boundary contours and retains role evidence.
-    ///
-    /// This clones the exact contour carriers at the API boundary, then
-    /// delegates to [`LineArcRegion2::from_boundary_contours_with_report`] so the
-    /// retained nesting, validation, and material/hole role reports are
-    /// identical to the owned constructor.
-    pub fn from_boundary_contours_borrowed_with_report(
-        contours: &[Contour2],
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionBoundaryContourBuildResult2> {
-        Self::from_boundary_contours_with_report(contours.to_vec(), policy)
     }
 }
 
@@ -9103,28 +9090,11 @@ impl RegionArrangement2 {
     /// Consumes this result and returns the materialized region with a derived arrangement report.
     ///
     /// This keeps owned output and its retained diagnostic evidence together.
-    pub fn into_region_with_report(self) -> (Option<LineArcRegion2>, RegionArrangementReport2) {
+    pub(crate) fn into_region_with_report(
+        self,
+    ) -> (Option<LineArcRegion2>, RegionArrangementReport2) {
         let Self { report, region } = self;
         (region, report)
-    }
-
-    /// Consumes this result and returns the region classification with a derived arrangement report.
-    ///
-    /// This preserves the retained blocker in the classification while deriving
-    /// the report directly from arrangement facts.
-    pub fn into_region_classification_with_report(
-        self,
-    ) -> (Classification<LineArcRegion2>, RegionArrangementReport2) {
-        let Self { report, region } = self;
-        let blocker = report
-            .summary()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        let classification = match region {
-            Some(region) => Classification::Decided(region),
-            None => Classification::Uncertain(blocker),
-        };
-        (classification, report)
     }
 
     /// Consumes this result and returns the materialized region, if any.

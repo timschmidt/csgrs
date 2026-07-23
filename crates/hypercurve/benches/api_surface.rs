@@ -2,8 +2,7 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    CurveResult, NurbsCurve2, Point2, Real, RetainedImportFormat2, RetainedImportRecord2,
-    RetainedSourceTolerance2, Similarity2, finite_polyline_vertex_centroid,
+    CurveResult, NurbsCurve2, Point2, Real, Similarity2, finite_polyline_vertex_centroid,
     finite_ring_signed_area, triangulate_finite_rings, try_finite_polyline_vertex_centroid,
     try_finite_ring_signed_area,
 };
@@ -77,24 +76,8 @@ fn main() -> CurveResult<()> {
     });
 
     measure("nurbs_global_interpolation", 10_000, || {
-        let interpolation =
-            NurbsCurve2::interpolate_uniform(2, vec![p(0, 0), p(2, 2), p(4, 0)]).unwrap();
-        interpolation.curve().control_points().len() + interpolation.report().parameters().len()
-    });
-
-    let tolerance = RetainedSourceTolerance2::try_new(1.0e-6, 1.0e-9)?;
-    measure("retained_import_record", 100_000, || {
-        let record = RetainedImportRecord2::try_new_open_line_string_with_source_version(
-            RetainedImportFormat2::Step,
-            17,
-            4,
-            Some(tolerance),
-            64,
-            63,
-            0,
-        )
-        .unwrap();
-        record.input_point_count() + record.emitted_segment_count()
+        let curve = NurbsCurve2::interpolate_uniform(2, vec![p(0, 0), p(2, 2), p(4, 0)]).unwrap();
+        curve.control_points().len()
     });
 
     let material = [[0.0, 0.0], [8.0, 0.0], [8.0, 6.0], [0.0, 6.0]];

@@ -1,4 +1,4 @@
-//! Top-level exact curve-pair intersection with retained span provenance.
+//! Top-level exact curve-pair intersection with retained parameter intervals.
 
 use std::cell::OnceCell;
 use std::rc::Rc;
@@ -10,7 +10,7 @@ use crate::intersect::oriented_param_range_overlap;
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
-    CurveError, CurveGeometry2, CurveOperation2, CurvePolicy, CurveResult, CurveSpanProvenance2,
+    CurveError, CurveGeometry2, CurveOperation2, CurvePolicy, CurveResult, CurveSpanRange2,
     ExactCurveError, ExactCurveResult, LineArcIntersection, LineArcIntersectionPoint, LineArcOrder,
     LineLineIntersection, ParamRange, Point2, PreparedRationalBezierIntersection2, RationalBezier2,
     RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
@@ -22,11 +22,11 @@ use crate::{
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveIntersectionParameter2 {
     promoted_span_index: usize,
-    provenance: CurveSpanProvenance2,
+    span_range: CurveSpanRange2,
     local_parameter: BezierParameter2,
 }
 
-/// One exact top-level curve contact with source provenance on both operands.
+/// One exact top-level curve contact with parameters on both operands.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveIntersectionContact2 {
     first: CurveIntersectionParameter2,
@@ -39,8 +39,6 @@ pub struct CurveIntersectionContact2 {
 pub struct CurveIntersectionOverlap2 {
     first_span_index: usize,
     second_span_index: usize,
-    first: CurveSpanProvenance2,
-    second: CurveSpanProvenance2,
     first_range: BezierParameterRange2,
     second_range: BezierParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
@@ -60,11 +58,11 @@ pub enum CurveIntersectionPairBlockerKind2 {
     SharedComponent,
 }
 
-/// Provenance-bearing blocker for one pair of promoted source spans.
+/// Blocker for one pair of promoted spans.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveIntersectionPairBlocker2 {
-    first: CurveSpanProvenance2,
-    second: CurveSpanProvenance2,
+    first_span_index: usize,
+    second_span_index: usize,
     kind: CurveIntersectionPairBlockerKind2,
 }
 
@@ -162,15 +160,18 @@ fn prepare_span_pairs(
     for (first_span_index, first) in first_evaluators.iter().enumerate() {
         for (second_span_index, second) in second_evaluators.iter().enumerate() {
             let retained_overlap = if shares_injective_lineage {
-                let (first_start, first_end) = first_fragments[first_span_index]
-                    .provenance()
-                    .source_parameter_range();
-                let (second_start, second_end) = second_fragments[second_span_index]
-                    .provenance()
-                    .source_parameter_range();
+                let (first_start, first_end) = first_fragments[first_span_index].parameter_range();
+                let (second_start, second_end) =
+                    second_fragments[second_span_index].parameter_range();
                 oriented_param_range_overlap(
-                    &ParamRange::new(first_start.clone(), first_end.clone()),
-                    &ParamRange::new(second_start.clone(), second_end.clone()),
+                    &ParamRange::new(
+                        first_curve.lineage_parameter_at(first_start)?,
+                        first_curve.lineage_parameter_at(first_end)?,
+                    ),
+                    &ParamRange::new(
+                        second_curve.lineage_parameter_at(second_start)?,
+                        second_curve.lineage_parameter_at(second_end)?,
+                    ),
                     policy,
                 )
             } else {
@@ -212,7 +213,6 @@ fn prepare_span_pairs(
                     return Err(ExactCurveError::invalid(
                         CurveOperation2::Intersection,
                         first_curve.family(),
-                        first_curve.source(),
                         cause,
                     ));
                 }
@@ -270,7 +270,7 @@ fn endpoint_parameter(
         };
     Ok(Some(CurveIntersectionParameter2 {
         promoted_span_index,
-        provenance: fragments[promoted_span_index].provenance().clone(),
+        span_range: fragments[promoted_span_index].span_range().clone(),
         local_parameter: BezierParameter2::Exact(local_parameter),
     }))
 }
@@ -289,12 +289,7 @@ fn native_line_intersection(
         .intersect_line(second_line, policy)
         .map(Some)
         .map_err(|cause| {
-            ExactCurveError::invalid(
-                CurveOperation2::Intersection,
-                first.family(),
-                first.source(),
-                cause,
-            )
+            ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
         })
 }
 
@@ -315,12 +310,7 @@ fn native_line_arc_intersection(
     relation
         .map(|relation| Some((order, relation)))
         .map_err(|cause| {
-            ExactCurveError::invalid(
-                CurveOperation2::Intersection,
-                first.family(),
-                first.source(),
-                cause,
-            )
+            ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
         })
 }
 
@@ -336,12 +326,12 @@ fn build_native_line_report(
         |first_parameter: Real, second_parameter: Real, point: Point2| CurveIntersectionContact2 {
             first: CurveIntersectionParameter2 {
                 promoted_span_index: 0,
-                provenance: first_fragment.provenance().clone(),
+                span_range: first_fragment.span_range().clone(),
                 local_parameter: BezierParameter2::Exact(first_parameter),
             },
             second: CurveIntersectionParameter2 {
                 promoted_span_index: 0,
-                provenance: second_fragment.provenance().clone(),
+                span_range: second_fragment.span_range().clone(),
                 local_parameter: BezierParameter2::Exact(second_parameter),
             },
             point: RationalBezierIntersectionPointEvidence2::Exact(point),
@@ -369,7 +359,6 @@ fn build_native_line_report(
                     return Err(ExactCurveError::invalid(
                         CurveOperation2::Intersection,
                         first.family(),
-                        first.source(),
                         CurveError::DegenerateOverlapRange,
                     ));
                 }
@@ -377,7 +366,6 @@ fn build_native_line_report(
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Intersection,
                         first.family(),
-                        first.source(),
                         UncertaintyReason::Ordering,
                     ));
                 }
@@ -405,8 +393,6 @@ fn build_native_line_report(
                 vec![CurveIntersectionOverlap2 {
                     first_span_index: 0,
                     second_span_index: 0,
-                    first: first_fragment.provenance().clone(),
-                    second: second_fragment.provenance().clone(),
                     first_range: BezierParameterRange2::from_exact(
                         a_range.start().clone(),
                         a_range.end().clone(),
@@ -423,7 +409,6 @@ fn build_native_line_report(
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 first.family(),
-                first.source(),
                 *reason,
             ));
         }
@@ -468,7 +453,6 @@ fn build_native_line_arc_report(
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 first.family(),
-                first.source(),
                 *reason,
             ));
         }
@@ -512,12 +496,12 @@ fn append_native_line_arc_contact(
     for arc_span_index in arc_span_indices {
         let line_parameter = CurveIntersectionParameter2 {
             promoted_span_index: 0,
-            provenance: line_fragment.provenance().clone(),
+            span_range: line_fragment.span_range().clone(),
             local_parameter: BezierParameter2::Exact(hit.line_param.clone()),
         };
         let arc_parameter = CurveIntersectionParameter2 {
             promoted_span_index: arc_span_index,
-            provenance: arc_fragments[arc_span_index].provenance().clone(),
+            span_range: arc_fragments[arc_span_index].span_range().clone(),
             local_parameter: native_arc_span_parameter(
                 arc_curve,
                 &arc_evaluators[arc_span_index],
@@ -545,7 +529,6 @@ fn append_native_line_arc_contact(
         return Err(ExactCurveError::blocked(
             CurveOperation2::Intersection,
             arc_curve.family(),
-            arc_curve.source(),
             UncertaintyReason::Predicate,
         ));
     }
@@ -565,7 +548,6 @@ fn parameter_range_covers_unit(
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 curve.family(),
-                curve.source(),
                 UncertaintyReason::Ordering,
             ));
         }
@@ -589,12 +571,7 @@ fn native_arc_intersection(
     let relation = first_arc
         .circle_relation(second_arc, policy)
         .map_err(|cause| {
-            ExactCurveError::invalid(
-                CurveOperation2::Intersection,
-                first.family(),
-                first.source(),
-                cause,
-            )
+            ExactCurveError::invalid(CurveOperation2::Intersection, first.family(), cause)
         })?;
     let candidates = match relation {
         CircleCircleRelation::Coincident => {
@@ -654,7 +631,7 @@ fn build_native_arc_report(
                 let candidate = CurveIntersectionContact2 {
                     first: CurveIntersectionParameter2 {
                         promoted_span_index: first_span_index,
-                        provenance: first_fragments[first_span_index].provenance().clone(),
+                        span_range: first_fragments[first_span_index].span_range().clone(),
                         local_parameter: native_arc_span_parameter(
                             first,
                             &first_evaluators[first_span_index],
@@ -664,7 +641,7 @@ fn build_native_arc_report(
                     },
                     second: CurveIntersectionParameter2 {
                         promoted_span_index: second_span_index,
-                        provenance: second_fragments[second_span_index].provenance().clone(),
+                        span_range: second_fragments[second_span_index].span_range().clone(),
                         local_parameter: native_arc_span_parameter(
                             second,
                             &second_evaluators[second_span_index],
@@ -686,7 +663,6 @@ fn build_native_arc_report(
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 first.family(),
-                first.source(),
                 UncertaintyReason::Predicate,
             ));
         }
@@ -806,7 +782,6 @@ fn build_native_coincident_arc_report(
                             return Err(ExactCurveError::blocked(
                                 CurveOperation2::Intersection,
                                 second.family(),
-                                second.source(),
                                 reason,
                             ));
                         }
@@ -836,8 +811,6 @@ fn build_native_coincident_arc_report(
                     overlaps.push(CurveIntersectionOverlap2 {
                         first_span_index,
                         second_span_index,
-                        first: first_fragment.provenance().clone(),
-                        second: second_fragment.provenance().clone(),
                         first_range,
                         second_range,
                         orientation,
@@ -847,7 +820,6 @@ fn build_native_coincident_arc_report(
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Intersection,
                         first.family(),
-                        first.source(),
                         reason,
                     ));
                 }
@@ -881,7 +853,7 @@ fn append_native_arc_span_contact(
     let candidate = CurveIntersectionContact2 {
         first: CurveIntersectionParameter2 {
             promoted_span_index: first_span_index,
-            provenance: first_fragments[first_span_index].provenance().clone(),
+            span_range: first_fragments[first_span_index].span_range().clone(),
             local_parameter: native_arc_span_parameter(
                 first,
                 &first_evaluators[first_span_index],
@@ -891,7 +863,7 @@ fn append_native_arc_span_contact(
         },
         second: CurveIntersectionParameter2 {
             promoted_span_index: second_span_index,
-            provenance: second_fragments[second_span_index].provenance().clone(),
+            span_range: second_fragments[second_span_index].span_range().clone(),
             local_parameter: native_arc_span_parameter(
                 second,
                 &second_evaluators[second_span_index],
@@ -925,7 +897,6 @@ fn native_arc_overlap_range(
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
             CurveOperation2::Intersection,
             curve.family(),
-            curve.source(),
             reason,
         )),
     }
@@ -948,7 +919,6 @@ fn bezier_parameter_range_covers_unit(
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 curve.family(),
-                curve.source(),
                 reason,
             ));
         }
@@ -963,14 +933,9 @@ fn bezier_parameter_range_covers_unit(
         .map_err(|cause| native_arc_parameter_error(curve, cause))?;
     match (lower_is_zero, upper_is_one) {
         (Classification::Decided(lower), Classification::Decided(upper)) => Ok(lower && upper),
-        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
-            Err(ExactCurveError::blocked(
-                CurveOperation2::Intersection,
-                curve.family(),
-                curve.source(),
-                reason,
-            ))
-        }
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => Err(
+            ExactCurveError::blocked(CurveOperation2::Intersection, curve.family(), reason),
+        ),
     }
 }
 
@@ -987,12 +952,7 @@ fn arc_span_indices_for_point(
         let span =
             CircularArc2::try_from_center(start, end, arc.center().clone(), arc.is_clockwise())
                 .map_err(|cause| {
-                    ExactCurveError::invalid(
-                        CurveOperation2::Intersection,
-                        curve.family(),
-                        curve.source(),
-                        cause,
-                    )
+                    ExactCurveError::invalid(CurveOperation2::Intersection, curve.family(), cause)
                 })?;
         match span.contains_sweep_point(point, policy) {
             Classification::Decided(true) => indices.push(span_index),
@@ -1001,7 +961,6 @@ fn arc_span_indices_for_point(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Intersection,
                     curve.family(),
-                    curve.source(),
                     reason,
                 ));
             }
@@ -1020,7 +979,6 @@ fn native_arc_span_parameter(
         return Err(ExactCurveError::invalid(
             CurveOperation2::Intersection,
             curve.family(),
-            curve.source(),
             CurveError::InvalidRationalBezier,
         ));
     }
@@ -1049,12 +1007,7 @@ fn native_arc_span_parameter(
 }
 
 fn native_arc_parameter_error(curve: &Curve2, cause: CurveError) -> ExactCurveError {
-    ExactCurveError::invalid(
-        CurveOperation2::Intersection,
-        curve.family(),
-        curve.source(),
-        cause,
-    )
+    ExactCurveError::invalid(CurveOperation2::Intersection, curve.family(), cause)
 }
 
 impl Curve2 {
@@ -1250,9 +1203,9 @@ impl PreparedCurveIntersection2 {
             unreachable!("native dispatch returned before generic span replay")
         };
         for pair in pairs {
-            let first_provenance = first_fragments[pair.first_span_index].provenance().clone();
-            let second_provenance = second_fragments[pair.second_span_index]
-                .provenance()
+            let first_span_range = first_fragments[pair.first_span_index].span_range().clone();
+            let second_span_range = second_fragments[pair.second_span_index]
+                .span_range()
                 .clone();
             if let PreparedCurveSpanPairState::RetainedLineageOverlap {
                 first_range,
@@ -1263,8 +1216,6 @@ impl PreparedCurveIntersection2 {
                 overlaps.push(CurveIntersectionOverlap2 {
                     first_span_index: pair.first_span_index,
                     second_span_index: pair.second_span_index,
-                    first: first_provenance,
-                    second: second_provenance,
                     first_range: BezierParameterRange2::from_exact(
                         first_range.start().clone(),
                         first_range.end().clone(),
@@ -1280,8 +1231,8 @@ impl PreparedCurveIntersection2 {
             let span_contacts = match &pair.state {
                 PreparedCurveSpanPairState::Blocked(reason) => {
                     blockers.push(CurveIntersectionPairBlocker2 {
-                        first: first_provenance,
-                        second: second_provenance,
+                        first_span_index: pair.first_span_index,
+                        second_span_index: pair.second_span_index,
                         kind: CurveIntersectionPairBlockerKind2::Uncertain(*reason),
                     });
                     continue;
@@ -1290,8 +1241,8 @@ impl PreparedCurveIntersection2 {
                     Ok(contacts) => contacts,
                     Err(ExactCurveError::Blocked(blocker)) => {
                         blockers.push(CurveIntersectionPairBlocker2 {
-                            first: first_provenance,
-                            second: second_provenance,
+                            first_span_index: pair.first_span_index,
+                            second_span_index: pair.second_span_index,
                             kind: CurveIntersectionPairBlockerKind2::Uncertain(blocker.reason()),
                         });
                         continue;
@@ -1300,7 +1251,6 @@ impl PreparedCurveIntersection2 {
                         return Err(ExactCurveError::invalid(
                             CurveOperation2::Intersection,
                             self.data.first.family(),
-                            self.data.first.source(),
                             cause,
                         ));
                     }
@@ -1315,8 +1265,8 @@ impl PreparedCurveIntersection2 {
                     append_unique_contacts(
                         &mut contacts,
                         &span_contacts,
-                        &first_provenance,
-                        &second_provenance,
+                        &first_span_range,
+                        &second_span_range,
                         pair.first_span_index,
                         pair.second_span_index,
                         &self.data.policy,
@@ -1326,8 +1276,6 @@ impl PreparedCurveIntersection2 {
                     overlaps.push(CurveIntersectionOverlap2 {
                         first_span_index: pair.first_span_index,
                         second_span_index: pair.second_span_index,
-                        first: first_provenance,
-                        second: second_provenance,
                         first_range: overlap.first_range().clone(),
                         second_range: overlap.second_range().clone(),
                         orientation: overlap.orientation(),
@@ -1340,22 +1288,22 @@ impl PreparedCurveIntersection2 {
                     append_unique_contacts(
                         &mut contacts,
                         &span_contacts,
-                        &first_provenance,
-                        &second_provenance,
+                        &first_span_range,
+                        &second_span_range,
                         pair.first_span_index,
                         pair.second_span_index,
                         &self.data.policy,
                     );
                     blockers.push(CurveIntersectionPairBlocker2 {
-                        first: first_provenance,
-                        second: second_provenance,
+                        first_span_index: pair.first_span_index,
+                        second_span_index: pair.second_span_index,
                         kind: CurveIntersectionPairBlockerKind2::IncompleteReplay { candidates },
                     });
                 }
                 RationalBezierIntersectionContacts2::DegenerateResultant => {
                     blockers.push(CurveIntersectionPairBlocker2 {
-                        first: first_provenance,
-                        second: second_provenance,
+                        first_span_index: pair.first_span_index,
+                        second_span_index: pair.second_span_index,
                         kind: CurveIntersectionPairBlockerKind2::SharedComponent,
                     });
                 }
@@ -1383,7 +1331,6 @@ impl PreparedCurveIntersection2 {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Arrangement,
                 self.data.first.family(),
-                self.data.first.source(),
                 reason,
             ));
         }
@@ -1448,9 +1395,9 @@ impl CurveIntersectionParameter2 {
         self.promoted_span_index
     }
 
-    /// Returns source identity and exact source-span range.
-    pub const fn provenance(&self) -> &CurveSpanProvenance2 {
-        &self.provenance
+    /// Returns the promoted span's public parameter interval.
+    pub const fn span_range(&self) -> &CurveSpanRange2 {
+        &self.span_range
     }
 
     /// Returns the exact parameter in the promoted span's local `[0, 1]` domain.
@@ -1461,14 +1408,7 @@ impl CurveIntersectionParameter2 {
     /// Returns the exact authored curve parameter when directly represented.
     pub fn exact_curve_parameter(&self) -> Option<Real> {
         let local = self.local_parameter.as_exact()?;
-        let (start, end) = self.provenance.parameter_range();
-        Some(start + (end - start) * local)
-    }
-
-    /// Returns the exact parameter in the root source curve when directly represented.
-    pub fn exact_source_parameter(&self) -> Option<Real> {
-        let local = self.local_parameter.as_exact()?;
-        let (start, end) = self.provenance.source_parameter_range();
+        let (start, end) = self.span_range.endpoints();
         Some(start + (end - start) * local)
     }
 }
@@ -1491,14 +1431,14 @@ impl CurveIntersectionContact2 {
 }
 
 impl CurveIntersectionPairBlocker2 {
-    /// Returns provenance for the first blocked span.
-    pub const fn first(&self) -> &CurveSpanProvenance2 {
-        &self.first
+    /// Returns the promoted span index on the first curve.
+    pub const fn first_span_index(&self) -> usize {
+        self.first_span_index
     }
 
-    /// Returns provenance for the second blocked span.
-    pub const fn second(&self) -> &CurveSpanProvenance2 {
-        &self.second
+    /// Returns the promoted span index on the second curve.
+    pub const fn second_span_index(&self) -> usize {
+        self.second_span_index
     }
 
     /// Returns the retained blocker kind and exact replay evidence.
@@ -1516,16 +1456,6 @@ impl CurveIntersectionOverlap2 {
     /// Returns the promoted span index on the second curve.
     pub const fn second_span_index(&self) -> usize {
         self.second_span_index
-    }
-
-    /// Returns provenance for the first shared span.
-    pub const fn first(&self) -> &CurveSpanProvenance2 {
-        &self.first
-    }
-
-    /// Returns provenance for the second shared span.
-    pub const fn second(&self) -> &CurveSpanProvenance2 {
-        &self.second
     }
 
     /// Returns the exact local overlap range on the first promoted span.
@@ -1636,13 +1566,11 @@ pub(crate) fn split_curve_spans(
                 Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                     CurveOperation2::Arrangement,
                     curve.family(),
-                    curve.source(),
                     reason,
                 )),
                 Err(cause) => Err(ExactCurveError::invalid(
                     CurveOperation2::Arrangement,
                     curve.family(),
-                    curve.source(),
                     cause,
                 )),
             }
@@ -1653,8 +1581,8 @@ pub(crate) fn split_curve_spans(
 fn append_unique_contacts(
     output: &mut Vec<CurveIntersectionContact2>,
     contacts: &[RationalBezierIntersectionContact2],
-    first_provenance: &CurveSpanProvenance2,
-    second_provenance: &CurveSpanProvenance2,
+    first_span_range: &CurveSpanRange2,
+    second_span_range: &CurveSpanRange2,
     first_span_index: usize,
     second_span_index: usize,
     policy: &CurvePolicy,
@@ -1663,12 +1591,12 @@ fn append_unique_contacts(
         let candidate = CurveIntersectionContact2 {
             first: CurveIntersectionParameter2 {
                 promoted_span_index: first_span_index,
-                provenance: first_provenance.clone(),
+                span_range: first_span_range.clone(),
                 local_parameter: contact.first_parameter().clone(),
             },
             second: CurveIntersectionParameter2 {
                 promoted_span_index: second_span_index,
-                provenance: second_provenance.clone(),
+                span_range: second_span_range.clone(),
                 local_parameter: contact.second_parameter().clone(),
             },
             point: contact.point().clone(),

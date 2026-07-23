@@ -154,15 +154,10 @@ fn bench_curve_string_checked_offset_report(iterations: u32) -> CurveResult<()> 
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.offset_left_checked_with_report(s(1), &policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("curve_string_checked_offset_report became non-native");
-        }
-        let offset = result
-            .curve_string()
-            .expect("curve_string_checked_offset_report should materialize");
+        let Classification::Decided(offset) = curve.offset_left_checked(s(1), &policy)? else {
+            panic!("curve_string_checked_offset benchmark became uncertain");
+        };
         total_segments += black_box(offset.len());
-        total_segments += black_box(result.report().raw_offset_segment_count().unwrap_or(0));
     }
 
     let elapsed = started.elapsed();
@@ -210,15 +205,11 @@ fn bench_curve_string_round_cap_outline_report(iterations: u32) -> CurveResult<(
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.offset_outline_round_caps_with_report(s(1), &policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("curve_string_round_cap_outline_report became non-native");
-        }
-        let outline = result
-            .outline()
-            .expect("curve_string_round_cap_outline_report should materialize");
+        let Classification::Decided(outline) = curve.offset_outline_round_caps(s(1), &policy)?
+        else {
+            panic!("curve_string_round_cap_outline benchmark became uncertain");
+        };
         total_segments += black_box(outline.len());
-        total_segments += black_box(result.report().outline_segment_count().unwrap_or(0));
     }
 
     let elapsed = started.elapsed();
@@ -347,15 +338,10 @@ fn bench_contour_checked_offset_report(iterations: u32) -> CurveResult<()> {
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = contour.offset_left_checked_with_report(s(1), &policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("contour_checked_offset_report became non-native");
-        }
-        let offset = result
-            .contour()
-            .expect("contour_checked_offset_report should materialize");
+        let Classification::Decided(offset) = contour.offset_left_checked(s(1), &policy)? else {
+            panic!("contour_checked_offset benchmark became uncertain");
+        };
         total_segments += black_box(offset.len());
-        total_segments += black_box(result.report().raw_offset_segment_count().unwrap_or(0));
     }
 
     let elapsed = started.elapsed();

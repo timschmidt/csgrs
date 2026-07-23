@@ -6,8 +6,7 @@ use hyperreal::RealSign;
 
 use crate::{
     CircularArc2, Classification, CurveError, CurveFamily2, CurveOperation2, CurvePolicy,
-    CurveSource2, ExactCurveError, ExactCurveResult, Point2, RationalQuadraticBezier2, Real,
-    UncertaintyReason,
+    ExactCurveError, ExactCurveResult, Point2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 
 /// Exact rational quadratic span from one circular-arc decomposition.
@@ -61,7 +60,7 @@ impl CircularArcBezierDecomposition2 {
 
     /// Evaluates the piecewise-rational arc parameterization on `[0, 1]`.
     pub fn point_at(&self, parameter: &Real) -> ExactCurveResult<Point2> {
-        evaluate_decomposition(self, parameter, None)
+        evaluate_decomposition(self, parameter)
     }
 }
 
@@ -79,18 +78,17 @@ impl CircularArcBezierSpan2 {
 
 pub(crate) fn decompose_circular_arc(
     arc: &CircularArc2,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<CircularArcBezierDecomposition2> {
     arc.rational_bezier_decomposition()
         .cloned()
-        .map_err(|error| contextualize_arc_error(error, source))
+        .map_err(|error| contextualize_arc_error(error))
 }
 
 fn compute_circular_arc_decomposition(
     arc: &CircularArc2,
 ) -> ExactCurveResult<CircularArcBezierDecomposition2> {
-    validate_radius(arc, None)?;
-    let kind = classify_sweep(arc, None)?;
+    validate_radius(arc)?;
+    let kind = classify_sweep(arc)?;
     let points = match kind {
         ArcSweepKind::Minor => vec![arc.start().clone(), arc.end().clone()],
         ArcSweepKind::Semicircle => vec![
@@ -98,11 +96,7 @@ fn compute_circular_arc_decomposition(
             perpendicular_midpoint(arc),
             arc.end().clone(),
         ],
-        ArcSweepKind::Major => vec![
-            arc.start().clone(),
-            major_midpoint(arc, None)?,
-            arc.end().clone(),
-        ],
+        ArcSweepKind::Major => vec![arc.start().clone(), major_midpoint(arc)?, arc.end().clone()],
         ArcSweepKind::FullCircle => full_circle_quarter_points(arc),
     };
     let span_count = points.len() - 1;
@@ -110,16 +104,11 @@ fn compute_circular_arc_decomposition(
     let mut spans = Vec::with_capacity(span_count);
     for (span_index, endpoints) in points.windows(2).enumerate() {
         let parameter_start = (Real::from(span_index as u8) / &denominator)
-            .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, None, cause.into()))?;
+            .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
         let parameter_end = (Real::from((span_index + 1) as u8) / &denominator)
-            .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, None, cause.into()))?;
+            .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
         spans.push(CircularArcBezierSpan2 {
-            curve: rational_minor_arc_span(
-                arc.center(),
-                arc.radius_squared_ref(),
-                endpoints,
-                None,
-            )?,
+            curve: rational_minor_arc_span(arc.center(), arc.radius_squared_ref(), endpoints)?,
             parameter_start,
             parameter_end,
         });
@@ -130,7 +119,6 @@ fn compute_circular_arc_decomposition(
 pub(crate) fn evaluate_decomposition(
     decomposition: &CircularArcBezierDecomposition2,
     parameter: &Real,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<Point2> {
     let policy = CurvePolicy::certified();
     for span in &decomposition.spans {
@@ -139,15 +127,13 @@ pub(crate) fn evaluate_decomposition(
         match (lower, upper) {
             (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less | Ordering::Equal)) => {
                 let width = &span.parameter_end - &span.parameter_start;
-                let local = ((parameter - &span.parameter_start) / width).map_err(|cause| {
-                    arc_error(CurveOperation2::Evaluation, source, cause.into())
-                })?;
+                let local = ((parameter - &span.parameter_start) / width)
+                    .map_err(|cause| arc_error(CurveOperation2::Evaluation, cause.into()))?;
                 return match span.curve.point_at(local, &policy) {
                     Classification::Decided(point) => Ok(point),
                     Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                         CurveOperation2::Evaluation,
                         CurveFamily2::CircularArc,
-                        source,
                         reason,
                     )),
                 };
@@ -157,7 +143,6 @@ pub(crate) fn evaluate_decomposition(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
                     CurveFamily2::CircularArc,
-                    source,
                     UncertaintyReason::Ordering,
                 ));
             }
@@ -165,18 +150,16 @@ pub(crate) fn evaluate_decomposition(
     }
     Err(arc_error(
         CurveOperation2::Evaluation,
-        source,
         CurveError::InvalidCurveParameter,
     ))
 }
 
-fn validate_radius(arc: &CircularArc2, source: Option<CurveSource2>) -> ExactCurveResult<()> {
+fn validate_radius(arc: &CircularArc2) -> ExactCurveResult<()> {
     match crate::classify::is_zero(arc.radius_squared_ref(), &CurvePolicy::certified()) {
         Some(false) => {}
         Some(true) => {
             return Err(arc_error(
                 CurveOperation2::BezierDecomposition,
-                source,
                 CurveError::ZeroRadiusArc,
             ));
         }
@@ -184,7 +167,6 @@ fn validate_radius(arc: &CircularArc2, source: Option<CurveSource2>) -> ExactCur
             return Err(ExactCurveError::blocked(
                 CurveOperation2::BezierDecomposition,
                 CurveFamily2::CircularArc,
-                source,
                 UncertaintyReason::RealSign,
             ));
         }
@@ -198,27 +180,22 @@ fn validate_radius(arc: &CircularArc2, source: Option<CurveSource2>) -> ExactCur
         Some(true) => Ok(()),
         Some(false) => Err(arc_error(
             CurveOperation2::BezierDecomposition,
-            source,
             CurveError::RadiusMismatch,
         )),
         None => Err(ExactCurveError::blocked(
             CurveOperation2::BezierDecomposition,
             CurveFamily2::CircularArc,
-            source,
             UncertaintyReason::RealSign,
         )),
     }
 }
 
-pub(crate) fn classify_sweep(
-    arc: &CircularArc2,
-    source: Option<CurveSource2>,
-) -> ExactCurveResult<ArcSweepKind> {
+pub(crate) fn classify_sweep(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKind> {
     arc.retained_facts
         .sweep_kind
         .get_or_init(|| classify_sweep_uncached(arc))
         .clone()
-        .map_err(|error| contextualize_arc_error(error, source))
+        .map_err(|error| contextualize_arc_error(error))
 }
 
 fn classify_sweep_uncached(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKind> {
@@ -231,7 +208,6 @@ fn classify_sweep_uncached(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKind>
             return Err(ExactCurveError::blocked(
                 CurveOperation2::BezierDecomposition,
                 CurveFamily2::CircularArc,
-                None,
                 UncertaintyReason::RealSign,
             ));
         }
@@ -244,7 +220,6 @@ fn classify_sweep_uncached(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKind>
         ExactCurveError::blocked(
             CurveOperation2::BezierDecomposition,
             CurveFamily2::CircularArc,
-            None,
             UncertaintyReason::RealSign,
         )
     })?;
@@ -265,13 +240,11 @@ fn classify_sweep_uncached(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKind>
                 Some(RealSign::Negative) => Ok(ArcSweepKind::Semicircle),
                 Some(_) => Err(arc_error(
                     CurveOperation2::BezierDecomposition,
-                    None,
                     CurveError::InvalidArcSweep,
                 )),
                 None => Err(ExactCurveError::blocked(
                     CurveOperation2::BezierDecomposition,
                     CurveFamily2::CircularArc,
-                    None,
                     UncertaintyReason::RealSign,
                 )),
             }
@@ -289,16 +262,16 @@ fn perpendicular_midpoint(arc: &CircularArc2) -> Point2 {
     Point2::new(arc.center().x() + x, arc.center().y() + y)
 }
 
-fn major_midpoint(arc: &CircularArc2, source: Option<CurveSource2>) -> ExactCurveResult<Point2> {
+fn major_midpoint(arc: &CircularArc2) -> ExactCurveResult<Point2> {
     let start = arc.start().delta_from(arc.center());
     let end = arc.end().delta_from(arc.center());
     let sum_x = &start.0 + &end.0;
     let sum_y = &start.1 + &end.1;
     let sum_length_squared = (&sum_x * &sum_x) + (&sum_y * &sum_y);
     let scale = (arc.radius_squared() / sum_length_squared)
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, source, cause.into()))?
+        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?
         .sqrt()
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, source, cause.into()))?;
+        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
     Ok(Point2::new(
         arc.center().x() - (&sum_x * &scale),
         arc.center().y() - (&sum_y * &scale),
@@ -330,21 +303,19 @@ fn rational_minor_arc_span(
     center: &Point2,
     radius_squared: &Real,
     endpoints: &[Point2],
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<RationalQuadraticBezier2> {
     let start = endpoints[0].delta_from(center);
     let end = endpoints[1].delta_from(center);
     let dot = (&start.0 * &end.0) + (&start.1 * &end.1);
     let two_radius_squared = Real::from(2_i8) * radius_squared;
     let weight_squared = ((radius_squared + dot) / two_radius_squared)
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, source, cause.into()))?;
+        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
     match crate::classify::compare_reals(&weight_squared, &Real::zero(), &CurvePolicy::certified())
     {
         Some(Ordering::Greater) => {}
         Some(_) => {
             return Err(arc_error(
                 CurveOperation2::BezierDecomposition,
-                source,
                 CurveError::InvalidArcSweep,
             ));
         }
@@ -352,7 +323,6 @@ fn rational_minor_arc_span(
             return Err(ExactCurveError::blocked(
                 CurveOperation2::BezierDecomposition,
                 CurveFamily2::CircularArc,
-                source,
                 UncertaintyReason::RealSign,
             ));
         }
@@ -360,58 +330,35 @@ fn rational_minor_arc_span(
     let weight = weight_squared
         .clone()
         .sqrt()
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, source, cause.into()))?;
+        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
     let control_denominator = Real::from(2_i8) * weight_squared;
     let control_x = ((&start.0 + &end.0) / &control_denominator)
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, source, cause.into()))?;
+        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
     let control_y = ((&start.1 + &end.1) / control_denominator)
-        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, source, cause.into()))?;
+        .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause.into()))?;
     RationalQuadraticBezier2::try_unit_end_weights(
         endpoints[0].clone(),
         Point2::new(center.x() + control_x, center.y() + control_y),
         endpoints[1].clone(),
         weight,
     )
-    .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, source, cause))
+    .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause))
 }
 
-fn arc_error(
-    operation: CurveOperation2,
-    source: Option<CurveSource2>,
-    cause: CurveError,
-) -> ExactCurveError {
-    ExactCurveError::invalid(operation, CurveFamily2::CircularArc, source, cause)
+fn arc_error(operation: CurveOperation2, cause: CurveError) -> ExactCurveError {
+    ExactCurveError::invalid(operation, CurveFamily2::CircularArc, cause)
 }
 
-fn contextualize_arc_error(
-    error: ExactCurveError,
-    source: Option<CurveSource2>,
-) -> ExactCurveError {
-    let Some(source) = source else {
-        return error;
-    };
-    match error {
-        ExactCurveError::Invalid {
-            operation,
-            family,
-            cause,
-            ..
-        } => ExactCurveError::invalid(operation, family, Some(source), cause),
-        ExactCurveError::Blocked(blocker) => ExactCurveError::blocked(
-            blocker.operation(),
-            blocker.family(),
-            Some(source),
-            blocker.reason(),
-        ),
-    }
+fn contextualize_arc_error(error: ExactCurveError) -> ExactCurveError {
+    error
 }
 
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;
 
-    use super::{CircularArc2, decompose_circular_arc};
-    use crate::{CurveSource2, Point2, Real};
+    use super::CircularArc2;
+    use crate::{Point2, Real};
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -430,23 +377,5 @@ mod tests {
         assert!(Rc::ptr_eq(&arc.retained_facts, &clone.retained_facts));
         assert!(clone.retained_facts.sweep_kind.get().is_some());
         assert!(clone.retained_facts.bezier_decomposition.get().is_some());
-    }
-
-    #[test]
-    fn cached_arc_failure_receives_each_top_level_source_context() {
-        let arc = CircularArc2::new_unchecked_with_radius(
-            point(0, 0),
-            point(1, 0),
-            point(0, 0),
-            Real::zero(),
-            false,
-            None,
-        );
-
-        let first = decompose_circular_arc(&arc, Some(CurveSource2::new(17))).unwrap_err();
-        let second = decompose_circular_arc(&arc, Some(CurveSource2::new(29))).unwrap_err();
-
-        assert_eq!(first.source(), Some(CurveSource2::new(17)));
-        assert_eq!(second.source(), Some(CurveSource2::new(29)));
     }
 }

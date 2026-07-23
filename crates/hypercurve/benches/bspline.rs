@@ -2,9 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Classification, Curve2, CurvePolicy, CurveResult, NurbsCurve2, NurbsInterpolationSolvePath2,
-    Point2, PolynomialBSplineCurve2, PolynomialSplineCurve2, RationalBSplineCurve2,
-    RationalQuadraticBSplineCurve2, Real,
+    Classification, Curve2, CurvePolicy, CurveResult, NurbsCurve2, Point2, PolynomialBSplineCurve2,
+    PolynomialSplineCurve2, RationalBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -40,13 +39,9 @@ fn main() -> CurveResult<()> {
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let extraction = decided(spline.extract_bezier_spans(&policy)?);
-        let profile = decided(spline.retained_curve_profile(0, &policy)?);
         let facts = decided(extraction.span_fact_report(&policy)?);
         checksum ^= black_box(
-            extraction.spans().len()
-                + extraction.inserted_knot_count()
-                + profile.cache_summary().span_count()
-                + facts.span_facts().len(),
+            extraction.spans().len() + extraction.inserted_knot_count() + facts.span_facts().len(),
         );
     }
     let elapsed = started.elapsed();
@@ -106,12 +101,10 @@ fn main() -> CurveResult<()> {
     let mut rational_checksum = 0_usize;
     for _ in 0..iterations {
         let extraction = decided(rational.extract_bezier_spans(&policy)?);
-        let profile = decided(rational.retained_curve_profile(1, &policy)?);
         let facts = decided(extraction.span_fact_report(&policy)?);
         rational_checksum ^= black_box(
             extraction.spans().len()
                 + extraction.inserted_knot_count()
-                + profile.cache_summary().native_span_count()
                 + facts
                     .span_facts()
                     .iter()
@@ -136,13 +129,11 @@ fn main() -> CurveResult<()> {
     let mut rational_cubic_checksum = 0_usize;
     for _ in 0..iterations {
         let extraction = decided(rational_cubic.extract_bezier_spans(&policy)?);
-        let profile = decided(rational_cubic.retained_curve_profile(2, &policy)?);
         let facts = decided(extraction.span_fact_report(&policy)?);
         rational_cubic_checksum ^= black_box(
             extraction.spans().len()
                 + extraction.inserted_knot_count()
                 + extraction.refined_weights().len()
-                + profile.cache_summary().retained_span_count()
                 + facts.span_facts().len(),
         );
     }
@@ -519,13 +510,8 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut interpolation_checksum = 0_usize;
     for points in interpolation_inputs {
-        let interpolation = NurbsCurve2::interpolate_uniform(3, points).unwrap();
-        interpolation_checksum ^= black_box(
-            interpolation.curve().control_points().len()
-                + interpolation.report().coefficient_matrix().len()
-                + interpolation.report().x_numerators().len()
-                + interpolation.report().y_numerators().len(),
-        );
+        let curve = NurbsCurve2::interpolate_uniform(3, points).unwrap();
+        interpolation_checksum ^= black_box(curve.control_points().len());
     }
     let elapsed = started.elapsed();
     println!(
@@ -538,12 +524,9 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut symbolic_interpolation_checksum = 0_usize;
     for _ in 0..symbolic_interpolation_count {
-        let interpolation =
+        let curve =
             NurbsCurve2::interpolate_centripetal(2, symbolic_interpolation_points.clone()).unwrap();
-        symbolic_interpolation_checksum ^= black_box(match interpolation.report().solve_path() {
-            NurbsInterpolationSolvePath2::DenseBareissCramerResidualReplay => 1,
-            NurbsInterpolationSolvePath2::DenseBareissCramerIdentity => 2,
-        });
+        symbolic_interpolation_checksum ^= black_box(curve.control_points().len());
     }
     let elapsed = started.elapsed();
     println!(
@@ -556,13 +539,11 @@ fn main() -> CurveResult<()> {
     let mut retained_interpolation_checksum = 0_usize;
     for _ in 0..iterations {
         let replay = retained_interpolation.clone();
-        retained_interpolation_checksum ^= black_box(
-            replay.curve().control_points().len() + replay.report().coefficient_matrix().len(),
-        );
+        retained_interpolation_checksum ^= black_box(replay.control_points().len());
     }
     let elapsed = started.elapsed();
     println!(
-        "nurbs_clone_shared_interpolation_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_interpolation_checksum}",
+        "nurbs_clone_interpolated_curve: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_interpolation_checksum}",
         elapsed / iterations
     );
 

@@ -8,11 +8,8 @@ use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decide
 use crate::classify::{classify_oriented_line, compare_reals, real_sign};
 use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
-    BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
-    CurveStringChamferPredicatePath2, CurveStringChamferReport2, CurveStringFilletPredicatePath2,
-    CurveStringFilletReport2, CurveStringTrimPoint2, CurveStringTrimSegmentReport2, LineSeg2,
-    LineSide, Point2, RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
-    UncertaintyReason,
+    BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2, LineSeg2,
+    LineSide, Point2, Segment2, UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -33,164 +30,6 @@ pub enum ContourPointLocation {
     Boundary,
     /// The point is inside the filled contour.
     Inside,
-}
-
-/// Report for converting a connected curve string into a closed contour.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourClosureReport2 {
-    stage: ContourClosureStage2,
-    predicate_path: ContourClosurePredicatePath2,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
-    output_segment_kind_counts: Option<SegmentKindCounts>,
-    source_start_point: Point2,
-    source_end_point: Point2,
-    endpoint_distance_squared: Real,
-    fill_rule: FillRule,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Furthest exact stage reached by curve-string closure.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ContourClosureStage2 {
-    /// Endpoint equality evidence was being validated.
-    EndpointValidation,
-    /// The closed contour was materialized with the requested fill rule.
-    ContourMaterialization,
-}
-
-/// Exact predicate path used while validating curve-string closure.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ContourClosurePredicatePath2 {
-    /// Squared endpoint distance was proven exactly zero.
-    ExactSquaredEndpointDistanceZero,
-    /// Squared endpoint distance was proven exactly nonzero.
-    ExactSquaredEndpointDistanceNonzero,
-    /// The active arithmetic policy could not decide the squared endpoint distance sign.
-    UnresolvedSquaredEndpointDistanceSign,
-}
-
-/// Result of report-bearing curve-string closure.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourClosureResult2 {
-    contour: Option<Contour2>,
-    report: ContourClosureReport2,
-}
-
-/// Report for a closed-contour native-segment chamfer.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourChamferReport2 {
-    stage: ContourChamferStage2,
-    vertex_index: usize,
-    curve_string_report: CurveStringChamferReport2,
-    source_segment_count: usize,
-    output_segment_count: Option<usize>,
-    fill_rule: FillRule,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Result of a report-bearing closed-contour chamfer.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourChamferResult2 {
-    contour: Option<Contour2>,
-    report: ContourChamferReport2,
-}
-
-/// Furthest exact stage reached by a closed-contour chamfer attempt.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ContourChamferStage2 {
-    /// The delegated open curve-string chamfer was being validated or materialized.
-    CurveStringEdit,
-    /// The edited segment sequence was validated as a closed contour.
-    ContourMaterialization,
-}
-
-/// Report for a closed-contour native-segment fillet.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourFilletReport2 {
-    stage: ContourFilletStage2,
-    vertex_index: usize,
-    curve_string_report: CurveStringFilletReport2,
-    source_segment_count: usize,
-    output_segment_count: Option<usize>,
-    fill_rule: FillRule,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Result of a report-bearing closed-contour fillet.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourFilletResult2 {
-    contour: Option<Contour2>,
-    report: ContourFilletReport2,
-}
-
-/// Furthest exact stage reached by a closed-contour fillet attempt.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ContourFilletStage2 {
-    /// The delegated open curve-string fillet was being validated or materialized.
-    CurveStringEdit,
-    /// The edited segment sequence was validated as a closed contour.
-    ContourMaterialization,
-}
-
-/// One retained source run emitted by a closed-contour line merge.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourLineMergeSpanReport2 {
-    source_start_segment_index: usize,
-    source_end_segment_index: usize,
-    source_segment_indices: Vec<usize>,
-    source_segment_kind_counts: SegmentKindCounts,
-    source_start_point: Point2,
-    source_end_point: Point2,
-    output_segment_index: usize,
-    output_segment_kind: SegmentKind,
-    output_start_point: Point2,
-    output_end_point: Point2,
-    status: RetainedTopologyStatus,
-}
-
-/// Report for exact adjacent-line merging on a closed contour.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourLineMergeReport2 {
-    stage: ContourLineMergeStage2,
-    predicate_path: ContourLineMergePredicatePath2,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
-    output_segment_count: Option<usize>,
-    output_segment_kind_counts: Option<SegmentKindCounts>,
-    adjacent_pair_count: usize,
-    merged_pair_count: usize,
-    preserved_pair_count: usize,
-    fill_rule: FillRule,
-    spans: Vec<ContourLineMergeSpanReport2>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Result of report-bearing closed-contour adjacent-line merging.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContourLineMergeResult2 {
-    contour: Option<Contour2>,
-    report: ContourLineMergeReport2,
-}
-
-/// Furthest exact stage reached by closed-contour adjacent-line merging.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ContourLineMergeStage2 {
-    /// Wraparound and interior line adjacency predicates were being classified.
-    AdjacencyClassification,
-    /// The merged segment sequence was validated as a closed contour.
-    ContourMaterialization,
-}
-
-/// Exact predicate path used while classifying closed-contour line-merge pairs.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ContourLineMergePredicatePath2 {
-    /// Adjacent line candidates were classified by exact support and direction predicates.
-    ExactLineSupportAndDirection,
 }
 
 /// A closed sequence of connected native segments.
@@ -394,64 +233,6 @@ impl Contour2 {
         self.offset_provenance.is_some()
     }
 
-    /// Converts a connected curve string into a closed contour with a report.
-    ///
-    /// The closure decision is exact: the first and last points must have a
-    /// structurally proven zero squared distance. Certified-open chains and
-    /// unknown endpoint equality are retained as non-materialized reports
-    /// instead of being snapped or closed by an implicit segment.
-    pub fn from_curve_string_with_report(
-        curve: CurveString2,
-        fill_rule: FillRule,
-    ) -> CurveResult<ContourClosureResult2> {
-        let source_segment_count = curve.len();
-        let source_segment_kind_counts = segment_kind_counts(curve.segments());
-        let source_start_point = curve.start().ok_or(CurveError::EmptyCurveString)?.clone();
-        let source_end_point = curve.end().ok_or(CurveError::EmptyCurveString)?.clone();
-        let endpoint_distance_squared = source_start_point.distance_squared(&source_end_point);
-        let predicate_path = contour_closure_predicate_path(&endpoint_distance_squared);
-        match closure_status_from_distance(&endpoint_distance_squared) {
-            Classification::Decided(()) => Ok(ContourClosureResult2 {
-                contour: Some(Self {
-                    curve,
-                    fill_rule,
-                    offset_provenance: None,
-                    signed_area_cache: Rc::new(OnceCell::new()),
-                    exact_dyadic_line_aabbs_cache: Rc::new(OnceCell::new()),
-                }),
-                report: ContourClosureReport2 {
-                    stage: ContourClosureStage2::ContourMaterialization,
-                    predicate_path,
-                    source_segment_count,
-                    source_segment_kind_counts,
-                    output_segment_kind_counts: Some(source_segment_kind_counts),
-                    source_start_point,
-                    source_end_point,
-                    endpoint_distance_squared,
-                    fill_rule,
-                    status: RetainedTopologyStatus::NativeExact,
-                    blocker: None,
-                },
-            }),
-            Classification::Uncertain(reason) => Ok(ContourClosureResult2 {
-                contour: None,
-                report: ContourClosureReport2 {
-                    stage: ContourClosureStage2::EndpointValidation,
-                    predicate_path,
-                    source_segment_count,
-                    source_segment_kind_counts,
-                    output_segment_kind_counts: None,
-                    source_start_point,
-                    source_end_point,
-                    endpoint_distance_squared,
-                    fill_rule,
-                    status: retained_status_for_contour_closure_blocker(reason),
-                    blocker: Some(reason),
-                },
-            }),
-        }
-    }
-
     /// Constructs a closed contour from exact bulge vertices.
     ///
     /// The final vertex's bulge defines the segment back to the first vertex.
@@ -513,304 +294,112 @@ impl Contour2 {
     pub fn merge_adjacent_collinear_lines(
         &self,
         policy: &CurvePolicy,
-    ) -> CurveResult<ContourLineMergeResult2> {
+    ) -> CurveResult<Classification<Contour2>> {
         let source_segment_count = self.segments().len();
-        let source_segment_kind_counts = segment_kind_counts(self.segments());
         let mut adjacency = Vec::with_capacity(source_segment_count);
         let mut break_index = None;
-        let mut adjacent_pair_count = 0_usize;
-        let mut merged_pair_count = 0_usize;
-        let mut preserved_pair_count = 0_usize;
         for index in 0..source_segment_count {
             let next_index = (index + 1) % source_segment_count;
-            adjacent_pair_count += 1;
             match merge_adjacent_line_segments(
                 &self.segments()[index],
                 &self.segments()[next_index],
                 policy,
             )? {
                 Classification::Decided(Some(_)) => {
-                    merged_pair_count += 1;
                     adjacency.push(true);
                 }
                 Classification::Decided(None) => {
-                    preserved_pair_count += 1;
                     adjacency.push(false);
                     break_index = Some(index);
                 }
                 Classification::Uncertain(reason) => {
-                    return Ok(ContourLineMergeResult2 {
-                        contour: None,
-                        report: ContourLineMergeReport2 {
-                            stage: ContourLineMergeStage2::AdjacencyClassification,
-                            predicate_path:
-                                ContourLineMergePredicatePath2::ExactLineSupportAndDirection,
-                            source_segment_count,
-                            source_segment_kind_counts,
-                            output_segment_count: None,
-                            output_segment_kind_counts: None,
-                            adjacent_pair_count,
-                            merged_pair_count,
-                            preserved_pair_count,
-                            fill_rule: self.fill_rule,
-                            spans: Vec::new(),
-                            status: RetainedTopologyStatus::Unresolved,
-                            blocker: Some(reason),
-                        },
-                    });
+                    return Ok(Classification::Uncertain(reason));
                 }
             }
         }
 
         let Some(break_index) = break_index else {
-            return Ok(ContourLineMergeResult2 {
-                contour: None,
-                report: ContourLineMergeReport2 {
-                    stage: ContourLineMergeStage2::AdjacencyClassification,
-                    predicate_path: ContourLineMergePredicatePath2::ExactLineSupportAndDirection,
-                    source_segment_count,
-                    source_segment_kind_counts,
-                    output_segment_count: None,
-                    output_segment_kind_counts: None,
-                    adjacent_pair_count,
-                    merged_pair_count,
-                    preserved_pair_count,
-                    fill_rule: self.fill_rule,
-                    spans: Vec::new(),
-                    status: RetainedTopologyStatus::Unsupported,
-                    blocker: Some(UncertaintyReason::Boundary),
-                },
-            });
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         };
 
         let start_index = (break_index + 1) % source_segment_count;
         let mut output_segments = Vec::with_capacity(source_segment_count);
-        let mut spans = Vec::new();
-        let mut run = vec![start_index];
+        let mut run_start_index = start_index;
         let mut current_index = start_index;
         loop {
             let next_index = (current_index + 1) % source_segment_count;
             if next_index == start_index {
                 push_contour_line_merge_run(
                     self.segments(),
-                    &run,
+                    run_start_index,
+                    current_index,
                     &mut output_segments,
-                    &mut spans,
                 )?;
                 break;
             }
 
-            if adjacency[current_index] {
-                run.push(next_index);
-            } else {
+            if !adjacency[current_index] {
                 push_contour_line_merge_run(
                     self.segments(),
-                    &run,
+                    run_start_index,
+                    current_index,
                     &mut output_segments,
-                    &mut spans,
                 )?;
-                run = vec![next_index];
+                run_start_index = next_index;
             }
             current_index = next_index;
         }
 
-        let contour = Self::try_new_with_fill_rule(output_segments, self.fill_rule)?;
-        let output_segment_kind_counts = segment_kind_counts(contour.segments());
-        Ok(ContourLineMergeResult2 {
-            report: ContourLineMergeReport2 {
-                stage: ContourLineMergeStage2::ContourMaterialization,
-                predicate_path: ContourLineMergePredicatePath2::ExactLineSupportAndDirection,
-                source_segment_count,
-                source_segment_kind_counts,
-                output_segment_count: Some(contour.len()),
-                output_segment_kind_counts: Some(output_segment_kind_counts),
-                adjacent_pair_count,
-                merged_pair_count,
-                preserved_pair_count,
-                fill_rule: self.fill_rule,
-                spans,
-                status: RetainedTopologyStatus::NativeExact,
-                blocker: None,
-            },
-            contour: Some(contour),
-        })
+        Self::try_new_with_fill_rule(output_segments, self.fill_rule).map(Classification::Decided)
     }
 
     /// Chamfers an interior native-segment contour vertex by exact parameters.
-    ///
-    /// `vertex_index` identifies the shared vertex between
-    /// `segments[vertex_index - 1]` and `segments[vertex_index]`, with
-    /// `vertex_index == 0` using the final segment as the previous segment.
-    /// The underlying curve-string chamfer report is retained, and the
-    /// resulting segment sequence is accepted only through the checked closed
-    /// contour constructor. Wrapped vertex edits rotate the materialized closed
-    /// boundary but remap retained source segment indices back to this contour.
     pub fn chamfer_vertex_by_parameters(
         &self,
         vertex_index: usize,
         previous_param: Real,
         next_param: Real,
         policy: &CurvePolicy,
-    ) -> CurveResult<ContourChamferResult2> {
-        self.chamfer_vertex_by_parameters_with_report(
-            vertex_index,
-            previous_param,
-            next_param,
-            policy,
-        )
-    }
-
-    /// Chamfers an interior native-segment contour vertex by exact parameters and retains evidence.
-    pub fn chamfer_vertex_by_parameters_with_report(
-        &self,
-        vertex_index: usize,
-        previous_param: Real,
-        next_param: Real,
-        policy: &CurvePolicy,
-    ) -> CurveResult<ContourChamferResult2> {
+    ) -> CurveResult<Classification<Contour2>> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
-        let chamfer = if vertex_index == 0 {
-            let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut chamfer = rotated.chamfer_vertex_by_parameters_with_report(
-                1,
-                previous_param,
-                next_param,
-                policy,
-            )?;
-            let source_segment_count = self.segments().len();
-            chamfer.report_mut().remap_source_segment_indices(|index| {
-                remap_wraparound_chamfer_source_index(index, source_segment_count)
-            });
-            chamfer
+        let edit = if vertex_index == 0 {
+            CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?
+                .chamfer_vertex_by_parameters(1, previous_param, next_param, policy)?
         } else {
-            self.curve.chamfer_vertex_by_parameters_with_report(
+            self.curve.chamfer_vertex_by_parameters(
                 vertex_index,
                 previous_param,
                 next_param,
                 policy,
             )?
         };
-        let curve_string_report = chamfer.report().clone();
-        let status = curve_string_report.status();
-        let blocker = curve_string_report.blocker();
-        let contour = match chamfer.into_curve_string() {
-            Some(curve_string) => Some(Self::try_new_with_fill_rule(
-                curve_string.into_segments(),
-                self.fill_rule,
-            )?),
-            None => None,
-        };
-        let stage = if contour.is_some() {
-            ContourChamferStage2::ContourMaterialization
-        } else {
-            ContourChamferStage2::CurveStringEdit
-        };
-        let output_segment_count = contour.as_ref().map(Contour2::len);
-        Ok(ContourChamferResult2 {
-            contour,
-            report: ContourChamferReport2 {
-                stage,
-                vertex_index,
-                curve_string_report,
-                source_segment_count: self.segments().len(),
-                output_segment_count,
-                fill_rule: self.fill_rule,
-                status,
-                blocker,
-            },
-        })
+        self.classify_edited_curve_string(edit)
     }
 
     /// Chamfers an interior native-segment contour vertex by exact cut points.
-    ///
-    /// The supplied points are validated against the adjacent source native
-    /// segments by the underlying curve-string operation. Materialization then
-    /// goes back through the checked contour constructor, so closed topology is
-    /// retained only when the resulting segment sequence is still certified.
-    /// Wrapped vertex edits rotate the materialized closed boundary but remap
-    /// retained source segment indices back to this contour.
     pub fn chamfer_vertex_by_points(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
         next_point: &Point2,
         policy: &CurvePolicy,
-    ) -> CurveResult<ContourChamferResult2> {
-        self.chamfer_vertex_by_points_with_report(vertex_index, previous_point, next_point, policy)
-    }
-
-    /// Chamfers an interior native-segment contour vertex by exact cut points and retains evidence.
-    pub fn chamfer_vertex_by_points_with_report(
-        &self,
-        vertex_index: usize,
-        previous_point: &Point2,
-        next_point: &Point2,
-        policy: &CurvePolicy,
-    ) -> CurveResult<ContourChamferResult2> {
+    ) -> CurveResult<Classification<Contour2>> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
-        let chamfer = if vertex_index == 0 {
-            let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut chamfer = rotated.chamfer_vertex_by_points_with_report(
-                1,
-                previous_point,
-                next_point,
-                policy,
-            )?;
-            let source_segment_count = self.segments().len();
-            chamfer.report_mut().remap_source_segment_indices(|index| {
-                remap_wraparound_chamfer_source_index(index, source_segment_count)
-            });
-            chamfer
+        let edit = if vertex_index == 0 {
+            CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?
+                .chamfer_vertex_by_points(1, previous_point, next_point, policy)?
         } else {
-            self.curve.chamfer_vertex_by_points_with_report(
-                vertex_index,
-                previous_point,
-                next_point,
-                policy,
-            )?
+            self.curve
+                .chamfer_vertex_by_points(vertex_index, previous_point, next_point, policy)?
         };
-        let curve_string_report = chamfer.report().clone();
-        let status = curve_string_report.status();
-        let blocker = curve_string_report.blocker();
-        let contour = match chamfer.into_curve_string() {
-            Some(curve_string) => Some(Self::try_new_with_fill_rule(
-                curve_string.into_segments(),
-                self.fill_rule,
-            )?),
-            None => None,
-        };
-        let stage = if contour.is_some() {
-            ContourChamferStage2::ContourMaterialization
-        } else {
-            ContourChamferStage2::CurveStringEdit
-        };
-        let output_segment_count = contour.as_ref().map(Contour2::len);
-        Ok(ContourChamferResult2 {
-            contour,
-            report: ContourChamferReport2 {
-                stage,
-                vertex_index,
-                curve_string_report,
-                source_segment_count: self.segments().len(),
-                output_segment_count,
-                fill_rule: self.fill_rule,
-                status,
-                blocker,
-            },
-        })
+        self.classify_edited_curve_string(edit)
     }
 
     /// Fillets an interior native-segment contour vertex by exact parameters and center.
-    ///
-    /// `vertex_index` identifies the shared vertex between
-    /// `segments[vertex_index - 1]` and `segments[vertex_index]`, with
-    /// `vertex_index == 0` using the final segment as the previous segment.
-    /// The underlying curve-string fillet report is retained, and wrapped
-    /// vertex edits remap retained source segment indices back to this contour.
     pub fn fillet_vertex_by_parameters(
         &self,
         vertex_index: usize,
@@ -819,47 +408,22 @@ impl Contour2 {
         center: &Point2,
         clockwise: bool,
         policy: &CurvePolicy,
-    ) -> CurveResult<ContourFilletResult2> {
-        self.fillet_vertex_by_parameters_with_report(
-            vertex_index,
-            previous_param,
-            next_param,
-            center,
-            clockwise,
-            policy,
-        )
-    }
-
-    /// Fillets an interior native-segment contour vertex by exact parameters and center, retaining evidence.
-    pub fn fillet_vertex_by_parameters_with_report(
-        &self,
-        vertex_index: usize,
-        previous_param: Real,
-        next_param: Real,
-        center: &Point2,
-        clockwise: bool,
-        policy: &CurvePolicy,
-    ) -> CurveResult<ContourFilletResult2> {
+    ) -> CurveResult<Classification<Contour2>> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
-        let fillet = if vertex_index == 0 {
-            let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut fillet = rotated.fillet_vertex_by_parameters_with_report(
-                1,
-                previous_param,
-                next_param,
-                center,
-                clockwise,
-                policy,
-            )?;
-            let source_segment_count = self.segments().len();
-            fillet.report_mut().remap_source_segment_indices(|index| {
-                remap_wraparound_chamfer_source_index(index, source_segment_count)
-            });
-            fillet
+        let edit = if vertex_index == 0 {
+            CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?
+                .fillet_vertex_by_parameters(
+                    1,
+                    previous_param,
+                    next_param,
+                    center,
+                    clockwise,
+                    policy,
+                )?
         } else {
-            self.curve.fillet_vertex_by_parameters_with_report(
+            self.curve.fillet_vertex_by_parameters(
                 vertex_index,
                 previous_param,
                 next_param,
@@ -868,46 +432,10 @@ impl Contour2 {
                 policy,
             )?
         };
-        let curve_string_report = fillet.report().clone();
-        let status = curve_string_report.status();
-        let blocker = curve_string_report.blocker();
-        let contour = match fillet.into_curve_string() {
-            Some(curve_string) => Some(Self::try_new_with_fill_rule(
-                curve_string.into_segments(),
-                self.fill_rule,
-            )?),
-            None => None,
-        };
-        let stage = if contour.is_some() {
-            ContourFilletStage2::ContourMaterialization
-        } else {
-            ContourFilletStage2::CurveStringEdit
-        };
-        let output_segment_count = contour.as_ref().map(Contour2::len);
-        Ok(ContourFilletResult2 {
-            contour,
-            report: ContourFilletReport2 {
-                stage,
-                vertex_index,
-                curve_string_report,
-                source_segment_count: self.segments().len(),
-                output_segment_count,
-                fill_rule: self.fill_rule,
-                status,
-                blocker,
-            },
-        })
+        self.classify_edited_curve_string(edit)
     }
 
     /// Fillets an interior native-segment contour vertex by exact tangent points and center.
-    ///
-    /// The supplied points and center are validated by the underlying
-    /// curve-string operation: tangent points must be strict interior points on
-    /// adjacent native segments, the center must certify a nonzero equal radius,
-    /// and the arc orientation must match the contour traversal. The
-    /// materialized result is accepted only through the checked closed-contour
-    /// constructor, and wrapped vertex edits remap retained source indices back
-    /// to this contour.
     pub fn fillet_vertex_by_points(
         &self,
         vertex_index: usize,
@@ -916,47 +444,15 @@ impl Contour2 {
         center: &Point2,
         clockwise: bool,
         policy: &CurvePolicy,
-    ) -> CurveResult<ContourFilletResult2> {
-        self.fillet_vertex_by_points_with_report(
-            vertex_index,
-            previous_point,
-            next_point,
-            center,
-            clockwise,
-            policy,
-        )
-    }
-
-    /// Fillets an interior native-segment contour vertex by exact tangent points and center, retaining evidence.
-    pub fn fillet_vertex_by_points_with_report(
-        &self,
-        vertex_index: usize,
-        previous_point: &Point2,
-        next_point: &Point2,
-        center: &Point2,
-        clockwise: bool,
-        policy: &CurvePolicy,
-    ) -> CurveResult<ContourFilletResult2> {
+    ) -> CurveResult<Classification<Contour2>> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
-        let fillet = if vertex_index == 0 {
-            let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut fillet = rotated.fillet_vertex_by_points_with_report(
-                1,
-                previous_point,
-                next_point,
-                center,
-                clockwise,
-                policy,
-            )?;
-            let source_segment_count = self.segments().len();
-            fillet.report_mut().remap_source_segment_indices(|index| {
-                remap_wraparound_chamfer_source_index(index, source_segment_count)
-            });
-            fillet
+        let edit = if vertex_index == 0 {
+            CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?
+                .fillet_vertex_by_points(1, previous_point, next_point, center, clockwise, policy)?
         } else {
-            self.curve.fillet_vertex_by_points_with_report(
+            self.curve.fillet_vertex_by_points(
                 vertex_index,
                 previous_point,
                 next_point,
@@ -965,35 +461,20 @@ impl Contour2 {
                 policy,
             )?
         };
-        let curve_string_report = fillet.report().clone();
-        let status = curve_string_report.status();
-        let blocker = curve_string_report.blocker();
-        let contour = match fillet.into_curve_string() {
-            Some(curve_string) => Some(Self::try_new_with_fill_rule(
-                curve_string.into_segments(),
-                self.fill_rule,
-            )?),
-            None => None,
-        };
-        let stage = if contour.is_some() {
-            ContourFilletStage2::ContourMaterialization
-        } else {
-            ContourFilletStage2::CurveStringEdit
-        };
-        let output_segment_count = contour.as_ref().map(Contour2::len);
-        Ok(ContourFilletResult2 {
-            contour,
-            report: ContourFilletReport2 {
-                stage,
-                vertex_index,
-                curve_string_report,
-                source_segment_count: self.segments().len(),
-                output_segment_count,
-                fill_rule: self.fill_rule,
-                status,
-                blocker,
-            },
-        })
+        self.classify_edited_curve_string(edit)
+    }
+
+    fn classify_edited_curve_string(
+        &self,
+        edit: Classification<CurveString2>,
+    ) -> CurveResult<Classification<Contour2>> {
+        match edit {
+            Classification::Decided(curve_string) => {
+                Self::try_new_with_fill_rule(curve_string.into_segments(), self.fill_rule)
+                    .map(Classification::Decided)
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 
     /// Returns this contour's exact signed area when every segment can provide
@@ -1141,605 +622,6 @@ impl Contour2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<crate::ContourFragmentSet>> {
         crate::fragment::split_contour_at_self_intersections(self, intersections, policy)
-    }
-}
-
-impl ContourClosureReport2 {
-    /// Returns the furthest exact closure stage reached.
-    pub const fn stage(&self) -> ContourClosureStage2 {
-        self.stage
-    }
-
-    /// Returns the exact predicate path used to validate closure.
-    pub const fn predicate_path(&self) -> ContourClosurePredicatePath2 {
-        self.predicate_path
-    }
-
-    /// Returns the source curve-string segment count.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns primitive-family counts for the source curve string.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
-    }
-
-    /// Returns primitive-family counts for the materialized contour.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.output_segment_kind_counts
-    }
-
-    /// Returns the exact source curve-string start point tested for closure.
-    pub const fn source_start_point(&self) -> &Point2 {
-        &self.source_start_point
-    }
-
-    /// Returns the exact source curve-string end point tested for closure.
-    pub const fn source_end_point(&self) -> &Point2 {
-        &self.source_end_point
-    }
-
-    /// Returns exact squared endpoint distance evidence for closure.
-    pub const fn endpoint_distance_squared(&self) -> &Real {
-        &self.endpoint_distance_squared
-    }
-
-    /// Returns the fill rule requested for the contour.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.fill_rule
-    }
-
-    /// Returns closure materialization status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized closure attempts.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl ContourClosureResult2 {
-    /// Returns the materialized contour, if the curve string was closed.
-    pub const fn contour(&self) -> Option<&Contour2> {
-        self.contour.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized contour, if any.
-    pub fn into_contour(self) -> Option<Contour2> {
-        self.contour
-    }
-
-    /// Consumes this result and returns retained closure evidence.
-    pub fn into_report(self) -> ContourClosureReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized contour with its report.
-    pub fn into_parts(self) -> (Option<Contour2>, ContourClosureReport2) {
-        (self.contour, self.report)
-    }
-
-    /// Returns retained closure evidence.
-    pub const fn report(&self) -> &ContourClosureReport2 {
-        &self.report
-    }
-
-    /// Returns the closed contour as a convenience classification.
-    pub fn contour_classification(&self) -> Classification<&Contour2> {
-        match self.contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the closed contour as a convenience classification.
-    pub fn into_contour_classification(self) -> Classification<Contour2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-impl ContourChamferReport2 {
-    /// Returns the furthest exact contour chamfer stage reached.
-    pub const fn stage(&self) -> ContourChamferStage2 {
-        self.stage
-    }
-
-    /// Returns the contour vertex index requested by the chamfer.
-    pub const fn vertex_index(&self) -> usize {
-        self.vertex_index
-    }
-
-    /// Returns the retained open curve-string chamfer report.
-    pub const fn curve_string_report(&self) -> &CurveStringChamferReport2 {
-        &self.curve_string_report
-    }
-
-    /// Returns the exact predicate path used by the delegated chamfer edit.
-    pub const fn predicate_path(&self) -> CurveStringChamferPredicatePath2 {
-        self.curve_string_report.predicate_path()
-    }
-
-    /// Returns the previous source segment index at the chamfered contour vertex.
-    pub const fn previous_segment_index(&self) -> usize {
-        self.curve_string_report.previous_segment_index()
-    }
-
-    /// Returns the next source segment index at the chamfered contour vertex.
-    pub const fn next_segment_index(&self) -> usize {
-        self.curve_string_report.next_segment_index()
-    }
-
-    /// Returns retained previous-segment trim evidence.
-    pub const fn previous_trim(&self) -> &CurveStringTrimPoint2 {
-        self.curve_string_report.previous_trim()
-    }
-
-    /// Returns retained next-segment trim evidence.
-    pub const fn next_trim(&self) -> &CurveStringTrimPoint2 {
-        self.curve_string_report.next_trim()
-    }
-
-    /// Returns the exact previous-line cut point when the chamfer materialized.
-    pub const fn previous_cut_point(&self) -> Option<&Point2> {
-        self.curve_string_report.previous_cut_point()
-    }
-
-    /// Returns the exact next-line cut point when the chamfer materialized.
-    pub const fn next_cut_point(&self) -> Option<&Point2> {
-        self.curve_string_report.next_cut_point()
-    }
-
-    /// Returns retained source ranges for the shortened adjacent contour segments.
-    pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
-        self.curve_string_report.segment_reports()
-    }
-
-    /// Returns retained adjacent-source trim range count.
-    pub const fn trim_segment_report_count(&self) -> usize {
-        self.curve_string_report.trim_segment_report_count()
-    }
-
-    /// Returns the inserted chamfer segment index in the output contour.
-    pub const fn chamfer_segment_index(&self) -> Option<usize> {
-        self.curve_string_report.chamfer_segment_index()
-    }
-
-    /// Returns the source contour segment count captured by this report.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns primitive-family counts for the source contour segments.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.curve_string_report.source_segment_kind_counts()
-    }
-
-    /// Returns output segment count when the edited contour materialized.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        self.output_segment_count
-    }
-
-    /// Returns primitive-family counts for the materialized chamfered contour.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.curve_string_report.output_segment_kind_counts()
-    }
-
-    /// Returns the fill rule preserved by this contour edit.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.fill_rule
-    }
-
-    /// Returns contour chamfer materialization status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized contour chamfers.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl ContourChamferResult2 {
-    /// Returns the materialized chamfered contour, if supported.
-    pub const fn contour(&self) -> Option<&Contour2> {
-        self.contour.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized chamfered contour, if any.
-    pub fn into_contour(self) -> Option<Contour2> {
-        self.contour
-    }
-
-    /// Consumes this result and returns retained contour chamfer evidence.
-    pub fn into_report(self) -> ContourChamferReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized chamfered contour with its report.
-    pub fn into_parts(self) -> (Option<Contour2>, ContourChamferReport2) {
-        (self.contour, self.report)
-    }
-
-    /// Returns the retained contour chamfer report.
-    pub const fn report(&self) -> &ContourChamferReport2 {
-        &self.report
-    }
-
-    /// Returns the chamfered contour as a convenience classification.
-    pub fn contour_classification(&self) -> Classification<&Contour2> {
-        match self.contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the chamfered contour as a convenience classification.
-    pub fn into_contour_classification(self) -> Classification<Contour2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-impl ContourFilletReport2 {
-    /// Returns the furthest exact contour fillet stage reached.
-    pub const fn stage(&self) -> ContourFilletStage2 {
-        self.stage
-    }
-
-    /// Returns the contour vertex index requested by the fillet.
-    pub const fn vertex_index(&self) -> usize {
-        self.vertex_index
-    }
-
-    /// Returns the retained open curve-string fillet report.
-    pub const fn curve_string_report(&self) -> &CurveStringFilletReport2 {
-        &self.curve_string_report
-    }
-
-    /// Returns the exact predicate path used by the delegated fillet edit.
-    pub const fn predicate_path(&self) -> CurveStringFilletPredicatePath2 {
-        self.curve_string_report.predicate_path()
-    }
-
-    /// Returns the previous source segment index at the filleted contour vertex.
-    pub const fn previous_segment_index(&self) -> usize {
-        self.curve_string_report.previous_segment_index()
-    }
-
-    /// Returns the next source segment index at the filleted contour vertex.
-    pub const fn next_segment_index(&self) -> usize {
-        self.curve_string_report.next_segment_index()
-    }
-
-    /// Returns retained previous-segment trim evidence.
-    pub const fn previous_trim(&self) -> &CurveStringTrimPoint2 {
-        self.curve_string_report.previous_trim()
-    }
-
-    /// Returns retained next-segment trim evidence.
-    pub const fn next_trim(&self) -> &CurveStringTrimPoint2 {
-        self.curve_string_report.next_trim()
-    }
-
-    /// Returns the exact previous-line tangent point when the fillet materialized.
-    pub const fn previous_tangent_point(&self) -> Option<&Point2> {
-        self.curve_string_report.previous_tangent_point()
-    }
-
-    /// Returns the exact next-line tangent point when the fillet materialized.
-    pub const fn next_tangent_point(&self) -> Option<&Point2> {
-        self.curve_string_report.next_tangent_point()
-    }
-
-    /// Returns the certified fillet center when validation reached that stage.
-    pub const fn center(&self) -> Option<&Point2> {
-        self.curve_string_report.center()
-    }
-
-    /// Returns the certified squared radius when validation reached that stage.
-    pub const fn radius_squared(&self) -> Option<&Real> {
-        self.curve_string_report.radius_squared()
-    }
-
-    /// Returns retained source ranges for the shortened adjacent contour segments.
-    pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
-        self.curve_string_report.segment_reports()
-    }
-
-    /// Returns retained adjacent-source trim range count.
-    pub const fn trim_segment_report_count(&self) -> usize {
-        self.curve_string_report.trim_segment_report_count()
-    }
-
-    /// Returns the inserted fillet arc segment index in the output contour.
-    pub const fn fillet_segment_index(&self) -> Option<usize> {
-        self.curve_string_report.fillet_segment_index()
-    }
-
-    /// Returns the source contour segment count captured by this report.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns primitive-family counts for the source contour segments.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.curve_string_report.source_segment_kind_counts()
-    }
-
-    /// Returns output segment count when the edited contour materialized.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        self.output_segment_count
-    }
-
-    /// Returns primitive-family counts for the materialized filleted contour.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.curve_string_report.output_segment_kind_counts()
-    }
-
-    /// Returns the fill rule preserved by this contour edit.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.fill_rule
-    }
-
-    /// Returns contour fillet materialization status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized contour fillets.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl ContourFilletResult2 {
-    /// Returns the materialized filleted contour, if supported.
-    pub const fn contour(&self) -> Option<&Contour2> {
-        self.contour.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized filleted contour, if any.
-    pub fn into_contour(self) -> Option<Contour2> {
-        self.contour
-    }
-
-    /// Consumes this result and returns retained contour fillet evidence.
-    pub fn into_report(self) -> ContourFilletReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized filleted contour with its report.
-    pub fn into_parts(self) -> (Option<Contour2>, ContourFilletReport2) {
-        (self.contour, self.report)
-    }
-
-    /// Returns the retained contour fillet report.
-    pub const fn report(&self) -> &ContourFilletReport2 {
-        &self.report
-    }
-
-    /// Returns the filleted contour as a convenience classification.
-    pub fn contour_classification(&self) -> Classification<&Contour2> {
-        match self.contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the filleted contour as a convenience classification.
-    pub fn into_contour_classification(self) -> Classification<Contour2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-impl ContourLineMergeSpanReport2 {
-    /// Returns the first source segment index included in this output segment.
-    pub const fn source_start_segment_index(&self) -> usize {
-        self.source_start_segment_index
-    }
-
-    /// Returns the final source segment index included in this output segment.
-    pub const fn source_end_segment_index(&self) -> usize {
-        self.source_end_segment_index
-    }
-
-    /// Returns source segment indices included in this output segment.
-    pub fn source_segment_indices(&self) -> &[usize] {
-        &self.source_segment_indices
-    }
-
-    /// Returns primitive-family counts for the retained source segment run.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
-    }
-
-    /// Returns the exact start point of the retained source run.
-    pub const fn source_start_point(&self) -> &Point2 {
-        &self.source_start_point
-    }
-
-    /// Returns the exact end point of the retained source run.
-    pub const fn source_end_point(&self) -> &Point2 {
-        &self.source_end_point
-    }
-
-    /// Returns the output segment index produced for this source run.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-
-    /// Returns the primitive family of the emitted output segment.
-    pub const fn output_segment_kind(&self) -> SegmentKind {
-        self.output_segment_kind
-    }
-
-    /// Returns the exact start point of this emitted contour segment.
-    pub const fn output_start_point(&self) -> &Point2 {
-        &self.output_start_point
-    }
-
-    /// Returns the exact end point of this emitted contour segment.
-    pub const fn output_end_point(&self) -> &Point2 {
-        &self.output_end_point
-    }
-
-    /// Returns retained topology status for this source run.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-}
-
-impl ContourLineMergeReport2 {
-    /// Returns the furthest exact contour line-merge stage reached.
-    pub const fn stage(&self) -> ContourLineMergeStage2 {
-        self.stage
-    }
-
-    /// Returns the exact predicate path used while classifying adjacent merge pairs.
-    pub const fn predicate_path(&self) -> ContourLineMergePredicatePath2 {
-        self.predicate_path
-    }
-
-    /// Returns the source contour segment count captured by this report.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns primitive-family counts for the source contour.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
-    }
-
-    /// Returns the output segment count when the merge materialized.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        self.output_segment_count
-    }
-
-    /// Returns primitive-family counts for the materialized output contour.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.output_segment_kind_counts
-    }
-
-    /// Returns adjacent contour segment pairs classified, including wraparound.
-    pub const fn adjacent_pair_count(&self) -> usize {
-        self.adjacent_pair_count
-    }
-
-    /// Returns adjacent pairs merged into a longer line run.
-    pub const fn merged_pair_count(&self) -> usize {
-        self.merged_pair_count
-    }
-
-    /// Returns adjacent pairs preserved as corners, arcs, or reversals.
-    pub const fn preserved_pair_count(&self) -> usize {
-        self.preserved_pair_count
-    }
-
-    /// Returns the fill rule preserved by this contour edit.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.fill_rule
-    }
-
-    /// Returns retained source runs for materialized output segments.
-    pub fn spans(&self) -> &[ContourLineMergeSpanReport2] {
-        &self.spans
-    }
-
-    /// Returns merge materialization status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized merge attempts.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl ContourLineMergeResult2 {
-    /// Returns the materialized merged contour, if supported.
-    pub const fn contour(&self) -> Option<&Contour2> {
-        self.contour.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized merged contour, if any.
-    pub fn into_contour(self) -> Option<Contour2> {
-        self.contour
-    }
-
-    /// Consumes this result and returns retained contour line-merge evidence.
-    pub fn into_report(self) -> ContourLineMergeReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized merged contour with its report.
-    pub fn into_parts(self) -> (Option<Contour2>, ContourLineMergeReport2) {
-        (self.contour, self.report)
-    }
-
-    /// Returns the retained contour line-merge report.
-    pub const fn report(&self) -> &ContourLineMergeReport2 {
-        &self.report
-    }
-
-    /// Returns the merged contour as a convenience classification.
-    pub fn contour_classification(&self) -> Classification<&Contour2> {
-        match self.contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the merged contour as a convenience classification.
-    pub fn into_contour_classification(self) -> Classification<Contour2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_contour() {
-            Some(contour) => Classification::Decided(contour),
-            None => Classification::Uncertain(blocker),
-        }
     }
 }
 
@@ -2061,7 +943,7 @@ fn center_arc_signed_sweep(
     cross: Real,
     dot: Real,
 ) -> CurveResult<Option<Real>> {
-    let sweep = match crate::arc_bezier::classify_sweep(arc, None) {
+    let sweep = match crate::arc_bezier::classify_sweep(arc) {
         Ok(sweep) => sweep,
         Err(crate::ExactCurveError::Blocked(_)) => return Ok(None),
         Err(crate::ExactCurveError::Invalid { cause, .. }) => return Err(cause),
@@ -2103,80 +985,22 @@ fn wraparound_chamfer_segments(segments: &[Segment2]) -> Vec<Segment2> {
     rotated
 }
 
-fn remap_wraparound_chamfer_source_index(index: usize, source_segment_count: usize) -> usize {
-    if index == 0 {
-        source_segment_count - 1
-    } else {
-        index - 1
-    }
-}
-
 fn push_contour_line_merge_run(
     source_segments: &[Segment2],
-    source_indices: &[usize],
+    first_source_index: usize,
+    last_source_index: usize,
     output_segments: &mut Vec<Segment2>,
-    spans: &mut Vec<ContourLineMergeSpanReport2>,
 ) -> CurveResult<()> {
-    let output_segment_index = output_segments.len();
-    let first_source_index = source_indices[0];
-    let last_source_index = *source_indices
-        .last()
-        .expect("line merge run should not be empty");
-    let source_start_point = source_segments[first_source_index].start().clone();
-    let source_end_point = source_segments[last_source_index].end().clone();
-    let segment = if source_indices.len() == 1 {
+    let segment = if first_source_index == last_source_index {
         source_segments[first_source_index].clone()
     } else {
         Segment2::Line(LineSeg2::try_new(
-            source_start_point.clone(),
-            source_end_point.clone(),
+            source_segments[first_source_index].start().clone(),
+            source_segments[last_source_index].end().clone(),
         )?)
     };
     output_segments.push(segment);
-    spans.push(ContourLineMergeSpanReport2 {
-        source_start_segment_index: first_source_index,
-        source_end_segment_index: last_source_index,
-        source_segment_indices: source_indices.to_vec(),
-        source_segment_kind_counts: contour_line_merge_run_kind_counts(
-            source_segments,
-            source_indices,
-        ),
-        source_start_point,
-        source_end_point,
-        output_segment_index,
-        output_segment_kind: output_segments[output_segment_index]
-            .structural_facts()
-            .kind,
-        output_start_point: output_segments[output_segment_index].start().clone(),
-        output_end_point: output_segments[output_segment_index].end().clone(),
-        status: RetainedTopologyStatus::NativeExact,
-    });
     Ok(())
-}
-
-fn contour_line_merge_run_kind_counts(
-    source_segments: &[Segment2],
-    source_indices: &[usize],
-) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for source_index in source_indices {
-        match &source_segments[*source_index] {
-            Segment2::Line(_) => counts.lines += 1,
-            Segment2::Arc(_) => counts.arcs += 1,
-        }
-    }
-    counts
-}
-
-fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for segment in segments {
-        match segment {
-            Segment2::Line(_) => counts.lines += 1,
-            Segment2::Arc(_) => counts.arcs += 1,
-        }
-    }
-    counts
 }
 
 fn validate_closed_curve_string(curve: &CurveString2) -> CurveResult<()> {
@@ -2206,25 +1030,6 @@ fn closure_status_from_distance(distance_squared: &Real) -> Classification<()> {
         ZeroStatus::Zero => Classification::Decided(()),
         ZeroStatus::NonZero => Classification::Uncertain(UncertaintyReason::Boundary),
         ZeroStatus::Unknown => Classification::Uncertain(UncertaintyReason::RealSign),
-    }
-}
-
-fn contour_closure_predicate_path(distance_squared: &Real) -> ContourClosurePredicatePath2 {
-    match distance_squared.zero_status() {
-        ZeroStatus::Zero => ContourClosurePredicatePath2::ExactSquaredEndpointDistanceZero,
-        ZeroStatus::NonZero => ContourClosurePredicatePath2::ExactSquaredEndpointDistanceNonzero,
-        ZeroStatus::Unknown => ContourClosurePredicatePath2::UnresolvedSquaredEndpointDistanceSign,
-    }
-}
-
-fn retained_status_for_contour_closure_blocker(
-    reason: UncertaintyReason,
-) -> RetainedTopologyStatus {
-    match reason {
-        UncertaintyReason::Boundary | UncertaintyReason::Unsupported => {
-            RetainedTopologyStatus::Unsupported
-        }
-        _ => RetainedTopologyStatus::Unresolved,
     }
 }
 
@@ -2297,7 +1102,7 @@ pub(crate) fn process_arc_winding(
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<i32> {
-    let sweep_kind = crate::arc_bezier::classify_sweep(arc, None).ok()?;
+    let sweep_kind = crate::arc_bezier::classify_sweep(arc).ok()?;
     if matches!(
         sweep_kind,
         crate::arc_bezier::ArcSweepKind::Major | crate::arc_bezier::ArcSweepKind::FullCircle

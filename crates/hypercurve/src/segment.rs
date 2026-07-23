@@ -665,7 +665,7 @@ impl CircularArc2 {
             return Classification::Decided(true);
         }
 
-        let sweep_kind = match crate::arc_bezier::classify_sweep(self, None) {
+        let sweep_kind = match crate::arc_bezier::classify_sweep(self) {
             Ok(kind) => kind,
             Err(crate::ExactCurveError::Blocked(blocker)) => {
                 return Classification::Uncertain(blocker.reason());
@@ -912,7 +912,7 @@ impl CircularArc2 {
     }
 
     fn compute_directed_sweep_angle(&self) -> CurveResult<Classification<Real>> {
-        let sweep_kind = match crate::arc_bezier::classify_sweep(self, None) {
+        let sweep_kind = match crate::arc_bezier::classify_sweep(self) {
             Ok(kind) => kind,
             Err(crate::ExactCurveError::Invalid { cause, .. }) => return Err(cause),
             Err(crate::ExactCurveError::Blocked(blocker)) => {

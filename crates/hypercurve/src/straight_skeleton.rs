@@ -10021,7 +10021,6 @@ mod tests {
                 2,
                 line_controls.clone(),
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-                None,
             )
             .unwrap(),
             Curve2::try_nurbs(
@@ -10029,7 +10028,6 @@ mod tests {
                 line_controls,
                 vec![r(1), r(2), r(1)],
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-                None,
             )
             .unwrap(),
         ] {
@@ -10082,7 +10080,6 @@ mod tests {
             rational_arc_controls.clone(),
             rational_arc_weights.clone(),
             vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-            None,
         )
         .unwrap();
         for curve in [

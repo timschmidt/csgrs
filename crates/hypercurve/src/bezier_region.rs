@@ -32,11 +32,10 @@ use crate::{
     BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2, CurveError, CurveFamily2,
     CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2,
-    CurvePathBooleanOperand2, CurvePathIntersectionContact2, CurvePolicy, CurveResult,
-    CurveSpanProvenance2, ExactCurveError, ExactCurveResult, FillRule, LineArcRegion2, LineSeg2,
-    Point2, PreparedRegionView2, QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2,
-    RationalQuadraticBezier2, RegionArrangement2, RegionArrangementReport2, RegionPointLocation,
-    Segment2, UncertaintyReason,
+    CurvePathIntersectionContact2, CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult,
+    FillRule, LineArcRegion2, LineSeg2, Point2, PreparedRegionView2, QuadraticBezier2,
+    RationalBezier2, RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
+    RegionArrangementReport2, RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -111,7 +110,6 @@ impl CurveRegionFragmentSource2 {
 #[derive(Clone)]
 pub struct CurveRegion2 {
     boundary_loops: Vec<CurveRegionBoundaryLoop2>,
-    fragment_provenance: Option<Rc<[CurveRegionFragmentProvenance2]>>,
     certified_loop_roles: Option<Rc<[CurveRegionLoopRole]>>,
     certified_loop_fill_rules: Option<Rc<[FillRule]>>,
     filled_side_is_left: Rc<OnceCell<CurveResult<Classification<Rc<[bool]>>>>>,
@@ -126,7 +124,6 @@ impl Default for CurveRegion2 {
     fn default() -> Self {
         let region = Self {
             boundary_loops: Vec::new(),
-            fragment_provenance: None,
             certified_loop_roles: Some(Rc::from(Vec::new())),
             certified_loop_fill_rules: Some(Rc::from(Vec::new())),
             filled_side_is_left: Rc::new(OnceCell::new()),
@@ -313,21 +310,6 @@ impl CurveRegionArrangement2 {
     /// Consumes the result and preserves both output and arrangement evidence.
     pub fn into_parts(self) -> (Option<CurveRegion2>, RegionArrangementReport2) {
         (self.region, self.report)
-    }
-
-    /// Consumes the result as a classification while retaining its report.
-    pub fn into_region_classification_with_report(
-        self,
-    ) -> (Classification<CurveRegion2>, RegionArrangementReport2) {
-        let blocker = self
-            .report
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        let classification = match self.region {
-            Some(region) => Classification::Decided(region),
-            None => Classification::Uncertain(blocker),
-        };
-        (classification, self.report)
     }
 }
 
@@ -678,7 +660,6 @@ impl std::fmt::Debug for CurveRegion2 {
         formatter
             .debug_struct("CurveRegion2")
             .field("boundary_loops", &self.boundary_loops)
-            .field("fragment_provenance", &self.fragment_provenance)
             .field("certified_loop_roles", &self.certified_loop_roles)
             .field("certified_loop_fill_rules", &self.certified_loop_fill_rules)
             .finish()
@@ -688,104 +669,8 @@ impl std::fmt::Debug for CurveRegion2 {
 impl PartialEq for CurveRegion2 {
     fn eq(&self, other: &Self) -> bool {
         self.boundary_loops == other.boundary_loops
-            && self.fragment_provenance == other.fragment_provenance
             && self.certified_loop_roles == other.certified_loop_roles
             && self.certified_loop_fill_rules == other.certified_loop_fill_rules
-    }
-}
-
-/// Authored source lineage for one emitted top-level curved-region fragment.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionFragmentProvenance2 {
-    arrangement_fragment_index: usize,
-    arrangement_source_index: usize,
-    operand: Option<CurvePathBooleanOperand2>,
-    source_path_index: usize,
-    family: CurveFamily2,
-    curve_index: usize,
-    promoted_span_index: usize,
-    split_fragment_index: usize,
-    span: CurveSpanProvenance2,
-    reversed: bool,
-}
-
-impl CurveRegionFragmentProvenance2 {
-    /// Constructs certified authored lineage for one emitted arrangement fragment.
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn new(
-        arrangement_fragment_index: usize,
-        arrangement_source_index: usize,
-        operand: Option<CurvePathBooleanOperand2>,
-        source_path_index: usize,
-        family: CurveFamily2,
-        curve_index: usize,
-        promoted_span_index: usize,
-        split_fragment_index: usize,
-        span: CurveSpanProvenance2,
-        reversed: bool,
-    ) -> Self {
-        Self {
-            arrangement_fragment_index,
-            arrangement_source_index,
-            operand,
-            source_path_index,
-            family,
-            curve_index,
-            promoted_span_index,
-            split_fragment_index,
-            span,
-            reversed,
-        }
-    }
-
-    /// Returns the fragment index in the emitted arrangement graph.
-    pub const fn arrangement_fragment_index(&self) -> usize {
-        self.arrangement_fragment_index
-    }
-
-    /// Returns the stable source index used by the arrangement graph.
-    pub const fn arrangement_source_index(&self) -> usize {
-        self.arrangement_source_index
-    }
-
-    /// Returns the Boolean operand, or `None` for direct boundary construction.
-    pub const fn operand(&self) -> Option<CurvePathBooleanOperand2> {
-        self.operand
-    }
-
-    /// Returns the source path index within the originating operation.
-    pub const fn source_path_index(&self) -> usize {
-        self.source_path_index
-    }
-
-    /// Returns the authored curve family.
-    pub const fn family(&self) -> CurveFamily2 {
-        self.family
-    }
-
-    /// Returns the authored curve index within its source path.
-    pub const fn curve_index(&self) -> usize {
-        self.curve_index
-    }
-
-    /// Returns the promoted native span index within the authored curve.
-    pub const fn promoted_span_index(&self) -> usize {
-        self.promoted_span_index
-    }
-
-    /// Returns the exact split-fragment index within the promoted span.
-    pub const fn split_fragment_index(&self) -> usize {
-        self.split_fragment_index
-    }
-
-    /// Returns exact authored source and parameter-range lineage.
-    pub const fn span(&self) -> &CurveSpanProvenance2 {
-        &self.span
-    }
-
-    /// Returns whether Boolean ownership reversed the authored traversal.
-    pub const fn reversed(&self) -> bool {
-        self.reversed
     }
 }
 
@@ -1625,58 +1510,6 @@ fn validate_retained_region_loops(boundary_loops: &[CurveRegionBoundaryLoop2]) -
     validate_retained_region_arrangement_sources(boundary_loops)
 }
 
-fn validate_curve_region_fragment_provenance(
-    boundary_loops: &[CurveRegionBoundaryLoop2],
-    provenance: &[CurveRegionFragmentProvenance2],
-) -> CurveResult<()> {
-    if provenance.is_empty() {
-        if boundary_loops.is_empty() {
-            return Ok(());
-        }
-        return Err(CurveError::Topology(
-            "curve-region authored fragment provenance must be nonempty".into(),
-        ));
-    }
-    for (index, source) in provenance.iter().enumerate() {
-        if source.arrangement_fragment_index() != index {
-            return Err(CurveError::Topology(
-                "curve-region authored provenance must follow arrangement-fragment order".into(),
-            ));
-        }
-    }
-
-    let mut referenced = vec![false; provenance.len()];
-    for boundary_loop in boundary_loops {
-        let Some(sources) = boundary_loop.arrangement_sources() else {
-            return Err(CurveError::Topology(
-                "curve-region authored provenance requires arrangement sources on every loop"
-                    .into(),
-            ));
-        };
-        for source in sources {
-            let Some(authored) = provenance.get(source.arrangement_fragment_index()) else {
-                return Err(CurveError::Topology(
-                    "curve-region arrangement source lacks authored provenance".into(),
-                ));
-            };
-            if authored.arrangement_source_index() != source.source_curve_index()
-                || authored.split_fragment_index() != source.source_fragment_index()
-            {
-                return Err(CurveError::Topology(
-                    "curve-region authored provenance does not match arrangement source".into(),
-                ));
-            }
-            referenced[source.arrangement_fragment_index()] = true;
-        }
-    }
-    if referenced.iter().any(|referenced| !referenced) {
-        return Err(CurveError::Topology(
-            "curve-region authored provenance contains an unreferenced arrangement fragment".into(),
-        ));
-    }
-    Ok(())
-}
-
 fn validate_retained_region_arrangement_sources(
     boundary_loops: &[CurveRegionBoundaryLoop2],
 ) -> CurveResult<()> {
@@ -1973,12 +1806,7 @@ fn native_region_from_curve_paths(
 }
 
 fn curve_region_promotion_error(cause: CurveError) -> ExactCurveError {
-    ExactCurveError::invalid(
-        CurveOperation2::Construction,
-        CurveFamily2::Line,
-        None,
-        cause,
-    )
+    ExactCurveError::invalid(CurveOperation2::Construction, CurveFamily2::Line, cause)
 }
 
 fn promote_native_region_arrangement(
@@ -1994,7 +1822,7 @@ fn promote_native_region_arrangement(
 }
 
 fn curve_region_edit_error(operation: CurveOperation2, cause: CurveError) -> ExactCurveError {
-    ExactCurveError::invalid(operation, CurveFamily2::Line, None, cause)
+    ExactCurveError::invalid(operation, CurveFamily2::Line, cause)
 }
 
 fn wrap_segmented_parallel_fallback(
@@ -2263,7 +2091,7 @@ impl CurveRegion2 {
     /// containment-depth assignment, and material/hole binning. Any decided
     /// output is immediately promoted to `CurveRegion2`; callers never need to
     /// own or inspect the transient [`LineArcRegion2`] result.
-    pub fn try_from_native_boundary_contours_with_report(
+    pub(crate) fn try_from_native_boundary_contours_with_report(
         contours: Vec<Contour2>,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<CurveRegionBoundaryContourBuildResult2> {
@@ -2275,15 +2103,6 @@ impl CurveRegion2 {
             .map(|region| Self::try_from_line_arc_region(region, policy))
             .transpose()?;
         Ok(CurveRegionBoundaryContourBuildResult2 { region, report })
-    }
-
-    /// Borrowed counterpart to
-    /// [`CurveRegion2::try_from_native_boundary_contours_with_report`].
-    pub fn try_from_native_boundary_contours_borrowed_with_report(
-        contours: &[Contour2],
-        policy: &CurvePolicy,
-    ) -> ExactCurveResult<CurveRegionBoundaryContourBuildResult2> {
-        Self::try_from_native_boundary_contours_with_report(contours.to_vec(), policy)
     }
 
     /// Constructs unified filled topology from one possibly self-intersecting
@@ -2359,13 +2178,12 @@ impl CurveRegion2 {
         certified_filled_sides: Option<Vec<bool>>,
     ) -> ExactCurveResult<Self> {
         if paths.len() != roles.len() || paths.len() != fill_rules.len() {
-            let (family, source) = paths.first().map_or((CurveFamily2::Line, None), |path| {
-                (path.curves()[0].family(), path.curves()[0].source())
-            });
+            let family = paths
+                .first()
+                .map_or(CurveFamily2::Line, |path| path.curves()[0].family());
             return Err(ExactCurveError::invalid(
                 CurveOperation2::Construction,
                 family,
-                source,
                 CurveError::Topology(
                     "curved-region loop roles and fill rules must match boundary path count".into(),
                 ),
@@ -2398,22 +2216,20 @@ impl CurveRegion2 {
     /// Constructs a top-level exact curved region from closed boundary paths.
     ///
     /// Every authored family is promoted through its clone-shared native
-    /// topology once. The result retains path, curve, promoted-span, source,
-    /// and exact parameter lineage for every boundary fragment.
+    /// topology once.
     pub fn try_from_boundary_paths(paths: &[CurvePath2]) -> ExactCurveResult<Self> {
         let mut boundary_loops = Vec::with_capacity(paths.len());
-        let mut provenance = Vec::new();
-        for (path_index, path) in paths.iter().enumerate() {
+        let mut next_arrangement_fragment_index = 0;
+        for path in paths {
             path.bezier_boundary_loop()
                 .map_err(|error| error.with_operation(CurveOperation2::Construction))?;
             let fragment_capacity = path.native_bezier_fragments()?.len();
             let mut fragments = Vec::with_capacity(fragment_capacity);
             let mut arrangement_sources = Vec::with_capacity(fragment_capacity);
-            for (curve_index, curve) in path.curves().iter().enumerate() {
-                for (promoted_span_index, native) in
-                    curve.native_bezier_fragments()?.iter().enumerate()
-                {
-                    let arrangement_fragment_index = provenance.len();
+            for curve in path.curves() {
+                for native in curve.native_bezier_fragments()? {
+                    let arrangement_fragment_index = next_arrangement_fragment_index;
+                    next_arrangement_fragment_index += 1;
                     fragments.push(BezierSplitFragment2::Materialized {
                         start: BezierParameter2::Exact(Real::zero()),
                         end: BezierParameter2::Exact(Real::one()),
@@ -2423,18 +2239,6 @@ impl CurveRegion2 {
                         arrangement_fragment_index,
                         arrangement_fragment_index,
                         0,
-                    ));
-                    provenance.push(CurveRegionFragmentProvenance2::new(
-                        arrangement_fragment_index,
-                        arrangement_fragment_index,
-                        None,
-                        path_index,
-                        curve.family(),
-                        curve_index,
-                        promoted_span_index,
-                        0,
-                        native.provenance().clone(),
-                        false,
                     ));
                 }
             }
@@ -2446,20 +2250,17 @@ impl CurveRegion2 {
                 ExactCurveError::invalid(
                     CurveOperation2::Construction,
                     path.curves()[0].family(),
-                    path.curves()[0].source(),
                     cause,
                 )
             })?;
             boundary_loops.push(boundary_loop);
         }
-        Self::new(boundary_loops)
-            .and_then(|region| region.with_fragment_provenance(provenance))
-            .map_err(|cause| {
-                let (family, source) = paths.first().map_or((CurveFamily2::Line, None), |path| {
-                    (path.curves()[0].family(), path.curves()[0].source())
-                });
-                ExactCurveError::invalid(CurveOperation2::Construction, family, source, cause)
-            })
+        Self::new(boundary_loops).map_err(|cause| {
+            let family = paths
+                .first()
+                .map_or(CurveFamily2::Line, |path| path.curves()[0].family());
+            ExactCurveError::invalid(CurveOperation2::Construction, family, cause)
+        })
     }
 
     /// Applies a nonsingular exact planar affine transform to every retained
@@ -2483,7 +2284,6 @@ impl CurveRegion2 {
                 return Err(ExactCurveError::invalid(
                     CurveOperation2::Transformation,
                     CurveFamily2::RationalBezier,
-                    None,
                     CurveError::InvalidAffineTransform,
                 ));
             }
@@ -2491,7 +2291,6 @@ impl CurveRegion2 {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Transformation,
                     CurveFamily2::RationalBezier,
-                    None,
                     UncertaintyReason::RealSign,
                 ));
             }
@@ -2519,7 +2318,6 @@ impl CurveRegion2 {
             loops.push(boundary);
         }
         let mut transformed = Self::new(loops).map_err(affine_region_error)?;
-        transformed.fragment_provenance = self.fragment_provenance.clone();
         transformed.certified_loop_roles = self.certified_loop_roles.clone();
         transformed.certified_loop_fill_rules = self.certified_loop_fill_rules.clone();
         let sides = match self
@@ -2534,7 +2332,6 @@ impl CurveRegion2 {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Transformation,
                     CurveFamily2::RationalBezier,
-                    None,
                     reason,
                 ));
             }
@@ -2559,7 +2356,6 @@ impl CurveRegion2 {
         validate_retained_region_loops(&boundary_loops)?;
         Ok(Self {
             boundary_loops,
-            fragment_provenance: None,
             certified_loop_roles: None,
             certified_loop_fill_rules: None,
             filled_side_is_left: Rc::new(OnceCell::new()),
@@ -2569,16 +2365,6 @@ impl CurveRegion2 {
             retained_rational_evaluators: Rc::new(OnceCell::new()),
             signed_area_cache: Rc::new(OnceCell::new()),
         })
-    }
-
-    /// Attaches internally certified source lineage to every emitted fragment.
-    pub(crate) fn with_fragment_provenance(
-        mut self,
-        fragment_provenance: Vec<CurveRegionFragmentProvenance2>,
-    ) -> CurveResult<Self> {
-        validate_curve_region_fragment_provenance(&self.boundary_loops, &fragment_provenance)?;
-        self.fragment_provenance = Some(fragment_provenance.into());
-        Ok(self)
     }
 
     pub(crate) fn with_certified_filled_side_is_left(
@@ -2655,11 +2441,6 @@ impl CurveRegion2 {
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
-    }
-
-    /// Returns authored source lineage for direct or Boolean construction.
-    pub fn fragment_provenance(&self) -> Option<&[CurveRegionFragmentProvenance2]> {
-        self.fragment_provenance.as_deref()
     }
 
     /// Materializes retained region carriers from a decided retained traversal.
@@ -3247,12 +3028,11 @@ impl CurveRegion2 {
         let chamfer = contour
             .chamfer_vertex_by_parameters(vertex_index, previous_param, next_param, policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?;
-        let blocker = chamfer
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        let Some(contour) = chamfer.into_contour() else {
-            return Ok(Classification::Uncertain(blocker));
+        let contour = match chamfer {
+            Classification::Decided(contour) => contour,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         let edited = replace_native_region_role_contour(region, role, ordinal, contour)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?;
@@ -3316,12 +3096,11 @@ impl CurveRegion2 {
                 policy,
             )
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?;
-        let blocker = fillet
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        let Some(contour) = fillet.into_contour() else {
-            return Ok(Classification::Uncertain(blocker));
+        let contour = match fillet {
+            Classification::Decided(contour) => contour,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         let edited = replace_native_region_role_contour(region, role, ordinal, contour)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?;
@@ -4762,7 +4541,6 @@ fn affine_region_error(cause: CurveError) -> ExactCurveError {
     ExactCurveError::invalid(
         CurveOperation2::Transformation,
         CurveFamily2::RationalBezier,
-        None,
         cause,
     )
 }
@@ -4809,7 +4587,6 @@ fn transform_retained_region_fragment(
         | BezierSplitFragment2::Unresolved { .. } => Err(ExactCurveError::blocked(
             CurveOperation2::Transformation,
             CurveFamily2::RationalBezier,
-            None,
             UncertaintyReason::Unsupported,
         )),
     }

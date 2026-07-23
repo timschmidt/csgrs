@@ -19,6 +19,13 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
+fn expect_decided<T>(classification: Classification<T>, message: &str) -> T {
+    match classification {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(_) => panic!("{message}"),
+    }
+}
+
 fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
@@ -66,9 +73,7 @@ fn bench_parameter_trim(iterations: u32) -> CurveResult<()> {
             CurveStringTrimPoint2::new(2, q(1, 2)),
             &policy,
         )?;
-        let trimmed = result
-            .curve_string()
-            .expect("parameter trim benchmark should materialize");
+        let trimmed = expect_decided(result, "parameter trim benchmark should materialize");
         total_segments += black_box(trimmed.len());
     }
 
@@ -92,9 +97,10 @@ fn bench_point_arc_trim(iterations: u32) -> CurveResult<()> {
 
     for _ in 0..iterations {
         let result = curve.trim_between_points(&p(1, -1), &p(2, 0), &policy)?;
-        let trimmed = result
-            .curve_string()
-            .expect("point-bearing arc trim benchmark should materialize");
+        let trimmed = expect_decided(
+            result,
+            "point-bearing arc trim benchmark should materialize",
+        );
         total_segments += black_box(trimmed.len());
     }
 
@@ -120,9 +126,7 @@ fn bench_parameter_arc_trim(iterations: u32) -> CurveResult<()> {
 
     for _ in 0..iterations {
         let result = curve.trim_between_parameters(start.clone(), end.clone(), &policy)?;
-        let trimmed = result
-            .curve_string()
-            .expect("parameter arc trim benchmark should materialize");
+        let trimmed = expect_decided(result, "parameter arc trim benchmark should materialize");
         total_segments += black_box(trimmed.len());
     }
 
@@ -144,9 +148,10 @@ fn bench_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
 
     for _ in 0..iterations {
         let result = curve.trim_between_curve_intersections(&start_cutter, &end_cutter, &policy)?;
-        let trimmed = result
-            .curve_string()
-            .expect("curve-intersection trim benchmark should materialize");
+        let trimmed = expect_decided(
+            result,
+            "curve-intersection trim benchmark should materialize",
+        );
         total_segments += black_box(trimmed.len());
     }
 
@@ -175,9 +180,10 @@ fn bench_prepared_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
             &prepared_end,
             &policy,
         )?;
-        let trimmed = result
-            .curve_string()
-            .expect("prepared curve-intersection trim benchmark should materialize");
+        let trimmed = expect_decided(
+            result,
+            "prepared curve-intersection trim benchmark should materialize",
+        );
         total_segments += black_box(trimmed.len());
     }
 
@@ -196,23 +202,16 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_outputs = 0_usize;
-    let mut total_boundary_hits = 0_usize;
-    let mut total_interval_classifications = 0_usize;
 
     for _ in 0..iterations {
         let result = curve.trim_inside_region(&region, &policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("region trim benchmark became non-native");
-        }
-        total_outputs += black_box(result.curve_strings().len());
-        total_boundary_hits += black_box(result.report().boundary_hit_count());
-        total_interval_classifications +=
-            black_box(result.report().interval_classification_count());
+        let trimmed = expect_decided(result, "region trim benchmark became uncertain");
+        total_outputs += black_box(trimmed.len());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}, boundary hits={total_boundary_hits}, interval classifications={total_interval_classifications}",
+        "curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}",
         elapsed / iterations
     );
     Ok(())
@@ -227,23 +226,16 @@ fn bench_prepared_region_trim(iterations: u32) -> CurveResult<()> {
     let prepared_region = region.prepare_topology_queries(&policy);
     let started = Instant::now();
     let mut total_outputs = 0_usize;
-    let mut total_boundary_hits = 0_usize;
-    let mut total_interval_classifications = 0_usize;
 
     for _ in 0..iterations {
         let result = prepared_curve.trim_inside_prepared_region(&prepared_region, &policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("prepared region trim benchmark became non-native");
-        }
-        total_outputs += black_box(result.curve_strings().len());
-        total_boundary_hits += black_box(result.report().boundary_hit_count());
-        total_interval_classifications +=
-            black_box(result.report().interval_classification_count());
+        let trimmed = expect_decided(result, "prepared region trim benchmark became uncertain");
+        total_outputs += black_box(trimmed.len());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "prepared_curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}, boundary hits={total_boundary_hits}, interval classifications={total_interval_classifications}",
+        "prepared_curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}",
         elapsed / iterations
     );
     Ok(())
@@ -258,20 +250,18 @@ fn bench_line_chamfer(iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_segments = 0_usize;
-    let mut total_trim_ranges = 0_usize;
 
     for _ in 0..iterations {
         let result = curve.chamfer_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy)?;
-        let chamfered = result
-            .curve_string()
-            .expect("line-line chamfer benchmark should materialize");
+        let Classification::Decided(chamfered) = result else {
+            panic!("line-line chamfer benchmark became uncertain");
+        };
         total_segments += black_box(chamfered.len());
-        total_trim_ranges += black_box(result.report().trim_segment_report_count());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_line_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
+        "curve_string_line_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -285,20 +275,18 @@ fn bench_arc_chamfer(iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_segments = 0_usize;
-    let mut total_trim_ranges = 0_usize;
 
     for _ in 0..iterations {
         let result = curve.chamfer_vertex_by_parameters(1, q(5, 7), q(2, 7), &policy)?;
-        let chamfered = result
-            .curve_string()
-            .expect("arc-arc chamfer benchmark should materialize");
+        let Classification::Decided(chamfered) = result else {
+            panic!("arc-arc chamfer benchmark became uncertain");
+        };
         total_segments += black_box(chamfered.len());
-        total_trim_ranges += black_box(result.report().trim_segment_report_count());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_arc_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
+        "curve_string_arc_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -313,21 +301,19 @@ fn bench_line_fillet(iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_segments = 0_usize;
-    let mut total_trim_ranges = 0_usize;
 
     for _ in 0..iterations {
         let result =
             curve.fillet_vertex_by_parameters(1, q(3, 4), q(1, 4), &p(3, 1), false, &policy)?;
-        let filleted = result
-            .curve_string()
-            .expect("line-line fillet benchmark should materialize");
+        let Classification::Decided(filleted) = result else {
+            panic!("line-line fillet benchmark became uncertain");
+        };
         total_segments += black_box(filleted.len());
-        total_trim_ranges += black_box(result.report().trim_segment_report_count());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_line_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
+        "curve_string_line_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -357,7 +343,6 @@ fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![Segment2::Arc(previous_arc), Segment2::Arc(next_arc)])?;
     let started = Instant::now();
     let mut total_segments = 0_usize;
-    let mut total_trim_ranges = 0_usize;
 
     for _ in 0..iterations {
         let result = curve.fillet_vertex_by_parameters(
@@ -368,16 +353,15 @@ fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
             false,
             &policy,
         )?;
-        let filleted = result
-            .curve_string()
-            .expect("arc-arc fillet benchmark should materialize");
+        let Classification::Decided(filleted) = result else {
+            panic!("arc-arc fillet benchmark became uncertain");
+        };
         total_segments += black_box(filleted.len());
-        total_trim_ranges += black_box(result.report().trim_segment_report_count());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_arc_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
+        "curve_string_arc_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -397,9 +381,9 @@ fn bench_arc_extension(iterations: u32) -> CurveResult<()> {
     for _ in 0..iterations {
         let result =
             curve.extend_endpoint_to_point(CurveStringEndpoint2::End, p(-1, 0), &policy)?;
-        let extended = result
-            .curve_string()
-            .expect("arc extension benchmark should materialize");
+        let Classification::Decided(extended) = result else {
+            panic!("arc extension benchmark became uncertain");
+        };
         total_segments += black_box(extended.len());
     }
 
@@ -424,15 +408,10 @@ fn bench_curve_string_line_merge_report(iterations: u32) -> CurveResult<()> {
 
     for _ in 0..iterations {
         let result = curve.merge_adjacent_collinear_lines(&policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("curve string line merge benchmark became non-native");
-        }
-        let merged = result
-            .curve_string()
-            .expect("line merge benchmark should materialize");
+        let Classification::Decided(merged) = result else {
+            panic!("curve string line merge benchmark became uncertain");
+        };
         total_spans += black_box(merged.len());
-        total_spans += black_box(result.report().spans().len());
-        total_spans += black_box(result.report().merged_pair_count());
     }
 
     let elapsed = started.elapsed();
@@ -455,15 +434,10 @@ fn bench_curve_string_reversed_duplicate_report(iterations: u32) -> CurveResult<
 
     for _ in 0..iterations {
         let result = curve.remove_adjacent_reversed_duplicates()?;
-        if !result.report().status().is_native_exact() {
-            panic!("curve string reversed duplicate benchmark became non-native");
-        }
-        let deduped = result
-            .curve_string()
-            .expect("reversed duplicate benchmark should materialize");
+        let Classification::Decided(deduped) = result else {
+            panic!("curve string reversed duplicate benchmark became uncertain");
+        };
         total_retained += black_box(deduped.len());
-        total_retained += black_box(result.report().retained_segments().len());
-        total_retained += black_box(result.report().removed_pairs().len());
     }
 
     let elapsed = started.elapsed();
@@ -482,16 +456,12 @@ fn bench_curve_string_pair_link_report(iterations: u32) -> CurveResult<()> {
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = first.link_connected_endpoints_with_report(&second, &policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("curve string pair link benchmark became non-native");
-        }
-        let linked = result
-            .linked_curve_string()
-            .expect("pair link benchmark should materialize");
-        total_segments += black_box(linked.curve_string().len());
-        total_segments += black_box(result.report().output_segments().len());
-        total_segments += black_box(result.report().exact_endpoint_pair_count());
+        let Classification::Decided(Some(linked)) =
+            first.link_connected_endpoints(&second, &policy)?
+        else {
+            panic!("pair link benchmark should materialize");
+        };
+        total_segments += black_box(linked.len());
     }
 
     let elapsed = started.elapsed();
@@ -510,26 +480,17 @@ fn bench_curve_string_ordered_link_report(iterations: u32) -> CurveResult<()> {
     ];
     let policy = CurvePolicy::certified();
     let started = Instant::now();
-    let mut total_steps = 0_usize;
-    let mut total_materialized_steps = 0_usize;
+    let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
         let result = CurveString2::link_ordered_connected_endpoints(curves.clone(), &policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("curve string ordered link benchmark became non-native");
-        }
-        let linked = result
-            .curve_string()
-            .expect("ordered link benchmark should materialize");
-        total_steps += black_box(linked.len());
-        total_steps += black_box(result.report().attempted_link_step_count());
-        total_materialized_steps += black_box(result.report().materialized_link_step_count());
-        total_steps += black_box(result.report().output_source_indices().len());
+        let linked = expect_decided(result, "ordered link benchmark should materialize");
+        total_segments += black_box(linked.len());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_ordered_link_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total steps={total_steps}, materialized steps={total_materialized_steps}",
+        "curve_string_ordered_link: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -544,15 +505,8 @@ fn bench_curve_string_connect_report(iterations: u32) -> CurveResult<()> {
 
     for _ in 0..iterations {
         let result = first.connect_end_to_start_with_line(&second, &policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("curve string connect benchmark became non-native");
-        }
-        let connected = result
-            .curve_string()
-            .expect("connect benchmark should materialize");
+        let connected = expect_decided(result, "connect benchmark should materialize");
         total_segments += black_box(connected.len());
-        total_segments += black_box(result.report().output_segments().len());
-        total_segments += black_box(result.report().connector_segment_index().unwrap_or(0));
     }
 
     let elapsed = started.elapsed();
@@ -572,15 +526,14 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     let mut total_roles = 0_usize;
 
     for _ in 0..iterations {
-        let result = LineArcRegion2::from_boundary_contours_with_report(
+        let Classification::Decided(region) = LineArcRegion2::from_boundary_contours(
             vec![material.clone(), hole.clone(), island.clone()],
             &policy,
-        )?;
-        let report = result.report();
-        if !report.status().is_native_exact() {
-            panic!("boundary contour region build benchmark became non-native");
-        }
-        total_roles += black_box(report.role_reports().len());
+        )?
+        else {
+            panic!("boundary contour region build benchmark became uncertain");
+        };
+        total_roles += black_box(region.material_contours().len() + region.hole_contours().len());
     }
 
     let elapsed = started.elapsed();
@@ -748,16 +701,10 @@ fn bench_contour_line_merge_report(iterations: u32) -> CurveResult<()> {
 
     for _ in 0..iterations {
         let result = contour.merge_adjacent_collinear_lines(&policy)?;
-        if !result.report().status().is_native_exact() {
-            panic!("contour line merge benchmark became non-native");
-        }
-        let merged = result
-            .contour()
-            .expect("contour line merge benchmark should materialize");
+        let Classification::Decided(merged) = result else {
+            panic!("contour line merge benchmark became uncertain");
+        };
         total_spans += black_box(merged.len());
-        total_spans += black_box(result.report().spans().len());
-        total_spans += black_box(result.report().merged_pair_count());
-        total_spans += black_box(result.report().preserved_pair_count());
     }
 
     let elapsed = started.elapsed();
@@ -768,42 +715,26 @@ fn bench_contour_line_merge_report(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_region_boolean_report(iterations: u32) -> CurveResult<()> {
+fn bench_region_boolean(iterations: u32) -> CurveResult<()> {
     let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_boundary_contours = 0_usize;
-    let mut total_boundary_events = 0_usize;
-    let mut total_fragment_events = 0_usize;
 
     for _ in 0..iterations {
-        let result = first.boolean_region_with_report(
-            &second,
-            BooleanOp::Union,
-            FillRule::NonZero,
-            &policy,
-        )?;
-        let report = result.report();
-        if !report.status().is_native_exact()
-            || report.query_path() != RegionBooleanQueryPath2::Direct
-            || result.region().is_none()
-        {
-            panic!("region boolean benchmark became non-native or used the wrong query path");
-        }
-        total_boundary_contours += black_box(report.boundary_contour_count().unwrap_or_default());
-        total_boundary_events += black_box(report.boundary_intersection_event_count());
-        total_fragment_events += black_box(
-            report
-                .pipeline_report()
-                .map(|pipeline| pipeline.fragment_build_report().intersection_event_count())
-                .unwrap_or_default(),
-        );
+        let Classification::Decided(result) =
+            first.boolean_region(&second, BooleanOp::Union, FillRule::NonZero, &policy)?
+        else {
+            panic!("region boolean benchmark became uncertain");
+        };
+        total_boundary_contours +=
+            black_box(result.material_contours().len() + result.hole_contours().len());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "region_boolean_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}, boundary events={total_boundary_events}, fragment events={total_fragment_events}",
+        "region_boolean: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}",
         elapsed / iterations
     );
     Ok(())
@@ -831,7 +762,7 @@ fn bench_contour_signed_area_cache(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_prepared_region_boolean_report(iterations: u32) -> CurveResult<()> {
+fn bench_prepared_region_boolean(iterations: u32) -> CurveResult<()> {
     let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let policy = CurvePolicy::certified();
@@ -839,38 +770,24 @@ fn bench_prepared_region_boolean_report(iterations: u32) -> CurveResult<()> {
     let prepared_second = second.prepare_topology_queries(&policy);
     let started = Instant::now();
     let mut total_boundary_contours = 0_usize;
-    let mut total_boundary_events = 0_usize;
-    let mut total_fragment_events = 0_usize;
 
     for _ in 0..iterations {
-        let result = prepared_first.boolean_region_with_report(
+        let Classification::Decided(result) = prepared_first.boolean_region(
             &prepared_second,
             BooleanOp::Union,
             FillRule::NonZero,
             &policy,
-        )?;
-        let report = result.report();
-        if !report.status().is_native_exact()
-            || report.query_path() != RegionBooleanQueryPath2::Prepared
-            || result.region().is_none()
-        {
-            panic!(
-                "prepared region boolean benchmark became non-native or used the wrong query path"
-            );
-        }
-        total_boundary_contours += black_box(report.boundary_contour_count().unwrap_or_default());
-        total_boundary_events += black_box(report.boundary_intersection_event_count());
-        total_fragment_events += black_box(
-            report
-                .pipeline_report()
-                .map(|pipeline| pipeline.fragment_build_report().intersection_event_count())
-                .unwrap_or_default(),
-        );
+        )?
+        else {
+            panic!("prepared region boolean benchmark became uncertain");
+        };
+        total_boundary_contours +=
+            black_box(result.material_contours().len() + result.hole_contours().len());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "prepared_region_boolean_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}, boundary events={total_boundary_events}, fragment events={total_fragment_events}",
+        "prepared_region_boolean: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}",
         elapsed / iterations
     );
     Ok(())
@@ -901,7 +818,7 @@ fn main() -> CurveResult<()> {
     bench_region_arrangement_report_replay(100_000)?;
     bench_contour_line_merge_report(1_000)?;
     bench_contour_signed_area_cache(100_000)?;
-    bench_region_boolean_report(1_000)?;
-    bench_prepared_region_boolean_report(1_000)?;
+    bench_region_boolean(1_000)?;
+    bench_prepared_region_boolean(1_000)?;
     Ok(())
 }

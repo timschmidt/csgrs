@@ -65,16 +65,12 @@ mod region_crossing_winding;
 mod region_events;
 mod region_fragments;
 mod region_nesting;
-mod retained_curve;
-mod retained_import;
 mod retained_status;
 mod segment;
 mod self_intersect;
 mod spline_periodic;
 mod split;
 mod straight_skeleton;
-#[cfg(feature = "svg")]
-mod svg_io;
 mod transform;
 mod translation_obstacle;
 #[cfg(feature = "triangulation")]
@@ -82,14 +78,7 @@ mod triangulation;
 
 pub use arc_bezier::{CircularArcBezierDecomposition2, CircularArcBezierSpan2};
 pub use bbox::Aabb2;
-pub use bezier::{
-    BezierEndpoint, BezierInterpolationReplayPath2, BezierInterpolationSolvePath2, CubicBezier2,
-    CubicBezierHermiteInterpolationReport2, CubicBezierHermiteInterpolationResult2,
-    CubicBezierHermiteInterpolationStage2, EndpointTangent2, QuadraticBezier2,
-    QuadraticBezierMidpointInterpolationReport2, QuadraticBezierMidpointInterpolationResult2,
-    QuadraticBezierMidpointInterpolationStage2, QuadraticBezierPointInterpolationReport2,
-    QuadraticBezierPointInterpolationResult2, QuadraticBezierPointInterpolationStage2,
-};
+pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
 pub use bezier_algebraic_image::{
     BezierAlgebraicCoordinateImage, BezierAlgebraicImageStatus, BezierAlgebraicPointImage2,
     BezierAlgebraicRationalCoordinateImage, BezierAlgebraicTangentImage2,
@@ -129,11 +118,11 @@ pub use bezier_region::{
     CurveRegionBoundaryContourBuildResult2, CurveRegionBoundaryLoop2,
     CurveRegionCertifiedParallelLoopReport2, CurveRegionCertifiedParallelOffsetReport2,
     CurveRegionCertifiedParallelOffsetResult2, CurveRegionCertifiedSegmentationReport2,
-    CurveRegionCertifiedSegmentationResult2, CurveRegionFragmentProvenance2,
-    CurveRegionFragmentSource2, CurveRegionLineRoleReport2, CurveRegionLoopRole,
-    CurveRegionNativeContourView2, CurveRegionNestingRoleReport2, CurveRegionProfile2,
-    CurveRegionSegmentationLoopReport2, CurveRegionSegmentedOffsetReport2,
-    CurveRegionSegmentedOffsetResult2, CurveRegionSignedAreaRoleReport2, PreparedCurveRegionView2,
+    CurveRegionCertifiedSegmentationResult2, CurveRegionFragmentSource2,
+    CurveRegionLineRoleReport2, CurveRegionLoopRole, CurveRegionNativeContourView2,
+    CurveRegionNestingRoleReport2, CurveRegionProfile2, CurveRegionSegmentationLoopReport2,
+    CurveRegionSegmentedOffsetReport2, CurveRegionSegmentedOffsetResult2,
+    CurveRegionSignedAreaRoleReport2, PreparedCurveRegionView2,
 };
 pub use bezier_retained_measure::{
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
@@ -193,17 +182,11 @@ pub use bspline::{
 };
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
-pub use contour::{
-    Contour2, ContourChamferReport2, ContourChamferResult2, ContourChamferStage2,
-    ContourClosurePredicatePath2, ContourClosureReport2, ContourClosureResult2,
-    ContourClosureStage2, ContourFilletReport2, ContourFilletResult2, ContourFilletStage2,
-    ContourLineMergePredicatePath2, ContourLineMergeReport2, ContourLineMergeResult2,
-    ContourLineMergeSpanReport2, ContourLineMergeStage2, ContourPointLocation, FillRule,
-};
+pub use contour::{Contour2, ContourPointLocation, FillRule};
 pub use curve::{
     Curve2, CurveDerivative2, CurveFamily2, CurveGeometry2, CurveParameterDomain2,
-    CurveParameterSide2, CurvePath2, CurvePathView2, CurveSource2, CurveSpanProvenance2,
-    CurveView2, NativeBezierBoundaryLoop2, NativeBezierFragment2,
+    CurveParameterSide2, CurvePath2, CurvePathView2, CurveSpanRange2, CurveView2,
+    NativeBezierBoundaryLoop2, NativeBezierFragment2,
 };
 pub use curve_intersection::{
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
@@ -222,37 +205,8 @@ pub use curve_region_boolean::{
     CurveRegionIntersectionOverlap2, CurveRegionIntersectionReport2, PreparedCurveRegionBoolean2,
 };
 pub use curve_string::{
-    ConnectedCurveString2, CurveString2, CurveStringChamferInputPath2,
-    CurveStringChamferPredicatePath2, CurveStringChamferReport2, CurveStringChamferResult2,
-    CurveStringChamferStage2, CurveStringConnectOutputSegmentReport2,
-    CurveStringConnectPredicatePath2, CurveStringConnectReport2, CurveStringConnectSource2,
-    CurveStringConnectStage2, CurveStringCurveTrimHit2, CurveStringCurveTrimQueryPath2,
-    CurveStringCurveTrimReport2, CurveStringCurveTrimResult2, CurveStringCurveTrimStage2,
-    CurveStringDeduplicatePredicatePath2, CurveStringDeduplicateReport2,
-    CurveStringDeduplicateResult2, CurveStringDeduplicateRetainedSegmentReport2,
-    CurveStringDeduplicateStage2, CurveStringEndpoint2,
-    CurveStringEndpointConnectionPredicatePath2, CurveStringEndpointConnectionReport2,
-    CurveStringEndpointConnectionStatus2, CurveStringExtendPredicatePath2,
-    CurveStringExtendReport2, CurveStringExtendResult2, CurveStringExtendStage2,
-    CurveStringFilletInputPath2, CurveStringFilletPredicatePath2, CurveStringFilletReport2,
-    CurveStringFilletResult2, CurveStringFilletStage2, CurveStringIntersection,
-    CurveStringIntersectionPredicatePath2, CurveStringIntersectionPreparedCacheReport2,
-    CurveStringIntersectionQueryPath2, CurveStringIntersectionReport2,
-    CurveStringIntersectionResult2, CurveStringLineMergePredicatePath2,
-    CurveStringLineMergeReport2, CurveStringLineMergeResult2, CurveStringLineMergeSpanReport2,
-    CurveStringLineMergeStage2, CurveStringLinkAttemptReport2, CurveStringLinkAttemptResult2,
-    CurveStringLinkKind2, CurveStringLinkOutputSegmentReport2, CurveStringLinkPredicatePath2,
-    CurveStringLinkReport2, CurveStringLinkSourceInput2, CurveStringLinkStage2,
-    CurveStringOrderedLinkPredicatePath2, CurveStringOrderedLinkReport2,
-    CurveStringOrderedLinkStage2, CurveStringOrderedLinkStepReport2,
-    CurveStringPreparedCacheAudit2, CurveStringPreparedCacheFreshness2,
-    CurveStringRegionTrimBoundaryPredicatePath2, CurveStringRegionTrimHit2,
-    CurveStringRegionTrimIntervalReport2, CurveStringRegionTrimPreparedCacheReport2,
-    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimReport2, CurveStringRegionTrimResult2,
-    CurveStringRegionTrimStage2, CurveStringReversedDuplicatePairReport2,
-    CurveStringTrimInputPath2, CurveStringTrimPoint2, CurveStringTrimPredicatePath2,
-    CurveStringTrimReport2, CurveStringTrimResult2, CurveStringTrimSegmentReport2,
-    LinkedCurveString2, OrderedLinkedCurveString2, RegionTrimPreparedCacheAudit2,
+    CurveString2, CurveStringEndpoint2, CurveStringIntersection, CurveStringLinkKind2,
+    CurveStringTrimPoint2,
 };
 pub use error::{
     CurveError, CurveOperation2, CurveResult, ExactCurveBlocker, ExactCurveError, ExactCurveResult,
@@ -280,16 +234,7 @@ pub use nurbs::{
     NurbsBezierDecomposition2, NurbsBezierSpanView2, NurbsCurve2, NurbsDegreeElevation2,
     NurbsElevatedBezierSpan2, NurbsNativeSpanView2,
 };
-pub use nurbs_interpolation::{
-    NurbsInterpolation2, NurbsInterpolationParameterization2, NurbsInterpolationReport2,
-    NurbsInterpolationSolvePath2,
-};
-pub use offset::{
-    ContourOffsetReport2, ContourOffsetResult2, ContourOffsetStage2, CurveStringOffsetReport2,
-    CurveStringOffsetResult2, CurveStringOffsetStage2, CurveStringOutlineOffsetReport2,
-    CurveStringOutlineOffsetResult2, CurveStringOutlineOffsetStage2, OffsetCap,
-    OffsetConstructionPath2, OutlineCapConstructionPath2,
-};
+pub use offset::OffsetCap;
 pub use point::Point2;
 pub use policy::{CurvePolicy, NumericMode, Tolerance};
 pub use polynomial_spline::{
@@ -307,21 +252,14 @@ pub use rational_bezier_general::{
     RationalBezierIntersectionTopology2, RationalBezierOverlapOrientation2,
     RationalBezierPointIncidence2,
 };
-pub use reconstruct::{
-    ContourPolylineReconstructionResult2, CurveRegionProfileRecoveryReport2,
-    CurveRegionRecoveryReport2, CurveRegionRecoveryResult2,
-    CurveStringPolylineReconstructionResult2, FiniteContourImport2, FiniteCurveStringImport2,
-    PolylineReconstructionOptions, PolylineReconstructionReport2,
-    PolylineReconstructionSegmentReport2,
-};
+pub use reconstruct::PolylineReconstructionOptions;
 #[doc(hidden)]
 pub use region::LineArcRegion2;
 pub use region::{RegionContourProfile, RegionPointLocation, RegionView2};
 pub use region_boolean::{
     RegionBooleanBoundaryContourSourcePath2, RegionBooleanBoundaryPredicatePath2,
-    RegionBooleanPipelineReport2, RegionBooleanPreparedCacheReport2, RegionBooleanQueryPath2,
-    RegionBooleanReport2, RegionBooleanResult2, RegionBooleanSharedBoundaryResolution2,
-    RegionBooleanStage2, RegionPreparedCacheAudit2, RegionPreparedCacheFreshness2,
+    RegionBooleanPipelineReport2, RegionBooleanQueryPath2, RegionBooleanReport2,
+    RegionBooleanResult2, RegionBooleanSharedBoundaryResolution2, RegionBooleanStage2,
 };
 pub use region_events::{
     RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
@@ -346,20 +284,8 @@ pub use region_nesting::{
     RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentRingSourceReport2,
     RegionLineSegmentSplitIntersectionReport2, RegionLineSegmentSplitPredicatePath2,
 };
-pub use retained_curve::{
-    RetainedCurveCacheSummary2, RetainedCurveFamily2, RetainedCurveIdentity2,
-    RetainedCurveProfile2, RetainedEndpointEvidence2, RetainedParameterDomain1,
-    RetainedTrimDirection, RetainedTrimInterval1,
-};
-pub use retained_import::{
-    RetainedImportFormat2, RetainedImportRecord2, RetainedImportTopology2, RetainedSourceTolerance2,
-};
 pub use retained_status::RetainedTopologyStatus;
 pub use segment::{CircularArc2, LineSeg2, Segment2};
-pub use self_intersect::{
-    SelfContactPredicatePath2, SelfContactPreparedCacheFreshness2, SelfContactPreparedCacheReport2,
-    SelfContactReport2, SelfContactResult2,
-};
 pub use spline_periodic::SplinePeriodicity2;
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
 pub use straight_skeleton::{
@@ -373,14 +299,6 @@ pub use straight_skeleton::{
     StraightSkeletonStage2, StraightSkeletonSupportProvenance2,
     StraightSkeletonTrajectoryGeometry2, StraightSkeletonTrajectoryKind2,
     StraightSkeletonVertexTrajectory2,
-};
-#[cfg(feature = "svg")]
-pub use svg_io::{
-    SvgContourImportReport2, SvgContourImportResult2, SvgPathExportCurveReport2,
-    SvgPathExportReport2, SvgPathExportResult2, SvgPathExportSegmentReport2, SvgPathExportTarget2,
-    SvgPathImportReport2, SvgPathImportResult2, SvgRegionImportReport2, SvgRegionImportResult2,
-    import_svg_contour_path_data_with_report, import_svg_path_data_with_report,
-    import_svg_region_path_data_with_report, retained_svg_import_record,
 };
 pub use transform::Similarity2;
 pub use translation_obstacle::{

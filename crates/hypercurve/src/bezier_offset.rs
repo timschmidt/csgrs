@@ -1969,12 +1969,7 @@ fn parallel_curves_are_connected(curves: &[Curve2]) -> bool {
 }
 
 fn parallel_path_error(source: &Curve2, cause: CurveError) -> ExactCurveError {
-    ExactCurveError::invalid(
-        CurveOperation2::Offset,
-        source.family(),
-        source.source(),
-        cause,
-    )
+    ExactCurveError::invalid(CurveOperation2::Offset, source.family(), cause)
 }
 
 trait StagedBezierOffset {

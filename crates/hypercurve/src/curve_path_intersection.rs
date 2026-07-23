@@ -10,9 +10,8 @@ use crate::{
     CircleCircleRelation, Classification, ContourPointLocation, Curve2, CurveFamily2,
     CurveGeometry2, CurveIntersectionContact2, CurveIntersectionOverlap2,
     CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2,
-    CurvePolicy, CurveRegion2, CurveRegionFragmentProvenance2, CurveResult, CurveSpanProvenance2,
-    ExactCurveError, ExactCurveResult, PreparedCurveIntersection2,
-    RationalBezierOverlapOrientation2, UncertaintyReason,
+    CurvePolicy, CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
+    PreparedCurveIntersection2, RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
 /// Filled side of an oriented closed curve path.
@@ -65,7 +64,7 @@ pub enum CurvePathBooleanFragmentAction2 {
     KeepReversed,
 }
 
-/// One classified split fragment with full authored and promoted provenance.
+/// One classified split fragment with authored and promoted indices.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurvePathBooleanFragment2 {
     operand: CurvePathBooleanOperand2,
@@ -74,7 +73,6 @@ pub struct CurvePathBooleanFragment2 {
     promoted_span_index: usize,
     split_fragment_index: usize,
     arrangement_source_index: usize,
-    provenance: CurveSpanProvenance2,
     fragment: BezierSplitFragment2,
     start_topology_vertex: Option<usize>,
     end_topology_vertex: Option<usize>,
@@ -101,7 +99,7 @@ struct CurvePathBooleanSelectionData {
     region: OnceCell<ExactCurveResult<CurveRegion2>>,
 }
 
-/// One path-pair contact with authored curve indices and exact span provenance.
+/// One path-pair contact with authored curve and span indices.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurvePathIntersectionContact2 {
     first_curve_index: usize,
@@ -433,7 +431,6 @@ impl PreparedCurvePathIntersection2 {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Arrangement,
                 self.data.first.curves()[blocker.first_curve_index].family(),
-                self.data.first.curves()[blocker.first_curve_index].source(),
                 reason,
             ));
         }
@@ -646,7 +643,7 @@ impl CurvePathIntersectionContact2 {
         self.second_curve_index
     }
 
-    /// Returns the exact curve-pair contact and source-span provenance.
+    /// Returns the exact curve-pair contact.
     pub const fn contact(&self) -> &CurveIntersectionContact2 {
         &self.contact
     }
@@ -663,7 +660,7 @@ impl CurvePathIntersectionOverlap2 {
         self.second_curve_index
     }
 
-    /// Returns the certified overlap and source-span provenance.
+    /// Returns the certified overlap.
     pub const fn overlap(&self) -> &CurveIntersectionOverlap2 {
         &self.overlap
     }
@@ -680,7 +677,7 @@ impl CurvePathIntersectionBlocker2 {
         self.second_curve_index
     }
 
-    /// Returns the exact blocked span pair and its provenance.
+    /// Returns the exact blocked span pair.
     pub const fn blocker(&self) -> &CurveIntersectionPairBlocker2 {
         &self.blocker
     }
@@ -714,7 +711,7 @@ impl CurvePathIntersectionReport2 {
 
     /// Resolves every certified shared span using exact regularized-Boolean side logic.
     ///
-    /// The first operand wins deterministic provenance when a shared image remains on
+    /// The first operand wins deterministic ownership when a shared image remains on
     /// the output boundary. The action records whether its authored direction already
     /// places result material on the left or must be reversed.
     pub fn resolve_overlap_ownership(
@@ -764,7 +761,7 @@ impl CurveBoundaryInteriorSide2 {
 }
 
 impl CurvePathOverlapResolution2 {
-    /// Returns the certified shared span and complete source provenance.
+    /// Returns the certified shared span.
     pub const fn overlap(&self) -> &CurvePathIntersectionOverlap2 {
         &self.overlap
     }
@@ -819,11 +816,6 @@ impl CurvePathBooleanFragment2 {
     /// Returns the stable source index used by the selected arrangement.
     pub const fn arrangement_source_index(&self) -> usize {
         self.arrangement_source_index
-    }
-
-    /// Returns exact authored source and parameter-range provenance.
-    pub const fn provenance(&self) -> &CurveSpanProvenance2 {
-        &self.provenance
     }
 
     /// Returns the retained exact split fragment.
@@ -961,43 +953,11 @@ impl CurvePathBooleanSelection2 {
             let graph = self.arrangement_graph_view()?;
             let traversal = self.traversal_view()?;
             match CurveRegion2::from_retained_arrangement_traversal(graph, traversal) {
-                Classification::Decided(region) => {
-                    let provenance = self
-                        .data
-                        .fragments
-                        .iter()
-                        .filter(|fragment| {
-                            fragment.action != CurvePathBooleanFragmentAction2::Discard
-                        })
-                        .enumerate()
-                        .map(|(arrangement_fragment_index, fragment)| {
-                            CurveRegionFragmentProvenance2::new(
-                                arrangement_fragment_index,
-                                fragment.arrangement_source_index,
-                                Some(fragment.operand),
-                                match fragment.operand {
-                                    CurvePathBooleanOperand2::First => 0,
-                                    CurvePathBooleanOperand2::Second => 1,
-                                },
-                                fragment.family,
-                                fragment.curve_index,
-                                fragment.promoted_span_index,
-                                fragment.split_fragment_index,
-                                fragment.provenance.clone(),
-                                fragment.action == CurvePathBooleanFragmentAction2::KeepReversed,
-                            )
-                        })
-                        .collect();
-                    region
-                        .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
-                        .map_err(|cause| {
-                            selection_invalid_error_from_first(&self.data.fragments, cause)
-                        })?
-                        .with_fragment_provenance(provenance)
-                        .map_err(|cause| {
-                            selection_invalid_error_from_first(&self.data.fragments, cause)
-                        })
-                }
+                Classification::Decided(region) => region
+                    .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
+                    .map_err(|cause| {
+                        selection_invalid_error_from_first(&self.data.fragments, cause)
+                    }),
                 Classification::Uncertain(reason) => Err(selection_blocked_error_from_first(
                     &self.data.fragments,
                     reason,
@@ -1108,34 +1068,26 @@ fn append_boolean_fragments(
     let mut local_source_index = 0_usize;
     for split in splits {
         let curve = &path.curves()[split.curve_index()];
-        let native_fragments = curve.native_bezier_fragments()?;
         for (promoted_span_index, materialization) in split.materializations().iter().enumerate() {
-            let provenance = native_fragments[promoted_span_index].provenance().clone();
             for (split_fragment_index, fragment) in materialization.fragments().iter().enumerate() {
                 let (start, end) = split_fragment_parameter_range(fragment);
                 let overlap_action = match overlap_action_for_fragment(
                     operand,
                     split.curve_index(),
-                    &provenance,
+                    promoted_span_index,
                     start,
                     end,
                     overlaps,
                     policy,
                 )
                 .map_err(|cause| {
-                    ExactCurveError::invalid(
-                        CurveOperation2::Boolean,
-                        curve.family(),
-                        curve.source(),
-                        cause,
-                    )
+                    ExactCurveError::invalid(CurveOperation2::Boolean, curve.family(), cause)
                 })? {
                     Classification::Decided(action) => action,
                     Classification::Uncertain(reason) => {
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Boolean,
                             curve.family(),
-                            curve.source(),
                             reason,
                         ));
                     }
@@ -1161,7 +1113,6 @@ fn append_boolean_fragments(
                                     ExactCurveError::invalid(
                                         CurveOperation2::Boolean,
                                         curve.family(),
-                                        curve.source(),
                                         cause.into(),
                                     )
                                 })?;
@@ -1172,7 +1123,6 @@ fn append_boolean_fragments(
                             ExactCurveError::invalid(
                                 CurveOperation2::Boolean,
                                 curve.family(),
-                                curve.source(),
                                 cause,
                             )
                         })?,
@@ -1183,7 +1133,6 @@ fn append_boolean_fragments(
                             return Err(ExactCurveError::blocked(
                                 CurveOperation2::Boolean,
                                 curve.family(),
-                                curve.source(),
                                 reason,
                             ));
                         }
@@ -1203,7 +1152,6 @@ fn append_boolean_fragments(
                             return Err(ExactCurveError::blocked(
                                 CurveOperation2::Boolean,
                                 curve.family(),
-                                curve.source(),
                                 reason,
                             ));
                         }
@@ -1212,7 +1160,6 @@ fn append_boolean_fragments(
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Boolean,
                             curve.family(),
-                            curve.source(),
                             UncertaintyReason::Boundary,
                         ));
                     }
@@ -1235,7 +1182,6 @@ fn append_boolean_fragments(
                     promoted_span_index,
                     split_fragment_index,
                     arrangement_source_index: source_offset + local_source_index,
-                    provenance: provenance.clone(),
                     fragment: fragment.clone(),
                     start_topology_vertex: topology_vertex_for_parameter(
                         report,
@@ -1288,12 +1234,7 @@ fn classify_retained_same_circle_fragment(
     let relation = source_arc
         .circle_relation(target_arc, policy)
         .map_err(|cause| {
-            ExactCurveError::invalid(
-                CurveOperation2::Boolean,
-                curve.family(),
-                curve.source(),
-                cause,
-            )
+            ExactCurveError::invalid(CurveOperation2::Boolean, curve.family(), cause)
         })?;
     match relation {
         CircleCircleRelation::Coincident => Ok(Some(
@@ -1384,7 +1325,7 @@ fn topology_vertex_for_parameter(
 fn overlap_action_for_fragment(
     operand: CurvePathBooleanOperand2,
     curve_index: usize,
-    provenance: &CurveSpanProvenance2,
+    promoted_span_index: usize,
     fragment_start: &BezierParameter2,
     fragment_end: &BezierParameter2,
     overlaps: &[CurvePathOverlapResolution2],
@@ -1395,12 +1336,12 @@ fn overlap_action_for_fragment(
         let (matches_source, range) = match operand {
             CurvePathBooleanOperand2::First => (
                 overlap.first_curve_index() == curve_index
-                    && overlap.overlap().first() == provenance,
+                    && overlap.overlap().first_span_index() == promoted_span_index,
                 overlap.overlap().first_range(),
             ),
             CurvePathBooleanOperand2::Second => (
                 overlap.second_curve_index() == curve_index
-                    && overlap.overlap().second() == provenance,
+                    && overlap.overlap().second_span_index() == promoted_span_index,
                 overlap.overlap().second_range(),
             ),
         };
@@ -1479,12 +1420,7 @@ fn selection_invalid_error(
     source: &CurvePathBooleanFragment2,
     cause: crate::CurveError,
 ) -> ExactCurveError {
-    ExactCurveError::invalid(
-        CurveOperation2::Boolean,
-        source.family,
-        source.provenance.source(),
-        cause,
-    )
+    ExactCurveError::invalid(CurveOperation2::Boolean, source.family, cause)
 }
 
 fn selection_invalid_error_from_first(
@@ -1494,7 +1430,7 @@ fn selection_invalid_error_from_first(
     if let Some(source) = fragments.first() {
         selection_invalid_error(source, cause)
     } else {
-        ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, None, cause)
+        ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause)
     }
 }
 
@@ -1503,15 +1439,8 @@ fn selection_blocked_error_from_first(
     reason: UncertaintyReason,
 ) -> ExactCurveError {
     fragments.first().map_or_else(
-        || ExactCurveError::blocked(CurveOperation2::Boolean, CurveFamily2::Line, None, reason),
-        |source| {
-            ExactCurveError::blocked(
-                CurveOperation2::Boolean,
-                source.family,
-                source.provenance.source(),
-                reason,
-            )
-        },
+        || ExactCurveError::blocked(CurveOperation2::Boolean, CurveFamily2::Line, reason),
+        |source| ExactCurveError::blocked(CurveOperation2::Boolean, source.family, reason),
     )
 }
 

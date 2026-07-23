@@ -948,32 +948,6 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
         Classification::Decided(0)
     );
 }
-
-#[test]
-fn report_bearing_native_nesting_returns_only_the_unified_region() {
-    let policy = CurvePolicy::certified();
-    let built = CurveRegion2::try_from_native_boundary_contours_with_report(
-        vec![square(0, 0, 8, 8), square(2, 2, 6, 6)],
-        &policy,
-    )
-    .unwrap();
-
-    assert_eq!(built.report().material_contour_count(), Some(1));
-    assert_eq!(built.report().hole_contour_count(), Some(1));
-    assert_eq!(
-        built.region().unwrap().loop_role_counts(&policy).unwrap(),
-        Classification::Decided((1, 1))
-    );
-    assert!(matches!(
-        built.region_classification(),
-        Classification::Decided(region) if region.len() == 2
-    ));
-    assert!(matches!(
-        built.into_region_classification(),
-        Classification::Decided(region) if region.len() == 2
-    ));
-}
-
 #[test]
 fn authored_line_arc_paths_retain_the_native_offset_engine() {
     let policy = CurvePolicy::certified();
@@ -1021,26 +995,6 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
             .uses_native_fast_path()
     );
 }
-
-#[test]
-fn unordered_native_arrangement_materializes_the_unified_carrier_with_report() {
-    let policy = CurvePolicy::certified();
-    let mut segments = square(0, 0, 10, 10).segments().to_vec();
-    segments.rotate_left(2);
-
-    let arranged =
-        CurveRegion2::arrange_unordered_segments(segments, FillRule::NonZero, &policy).unwrap();
-
-    assert_eq!(arranged.report().source_segments().len(), 4);
-    assert_eq!(arranged.report().fill_rule(), FillRule::NonZero);
-    let region = decided(arranged.region_classification());
-    assert!(region.is_line_image_region_cached());
-    assert_eq!(
-        region.classify_point(&p(5, 5), &policy).unwrap(),
-        Classification::Decided(RegionPointLocation::Inside)
-    );
-}
-
 #[test]
 fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
     let policy = CurvePolicy::certified();
@@ -1198,40 +1152,4 @@ fn empty_region_promotion_is_decided_and_cached() {
     assert!(decided(promoted.filled_side_is_left(&policy).unwrap()).is_empty());
     assert!(decided(promoted.line_arc_region_fast_path(&policy).unwrap()).is_empty());
     assert_eq!(CurveRegion2::empty(), CurveRegion2::default());
-}
-
-#[test]
-fn segmented_profiles_recover_exact_scalar_curves_and_explicit_roles() {
-    let policy = CurvePolicy::certified();
-    let source = LineArcRegion2::new(vec![square(0, 0, 10, 10)], vec![square(2, 2, 8, 8)]);
-    let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
-    let projection = FiniteProjectionOptions::try_new(0.01).unwrap();
-    let profiles = decided(
-        promoted
-            .segment_to_finite_profiles(&projection, &policy)
-            .unwrap(),
-    );
-
-    let recovered = CurveRegion2::recover_from_finite_profiles_with_report(
-        &profiles,
-        PolylineReconstructionOptions::default(),
-        &policy,
-    )
-    .unwrap();
-
-    assert_eq!(recovered.report().material_loop_count(), 1);
-    assert_eq!(recovered.report().hole_loop_count(), 1);
-    assert!(recovered.report().lossy_boundary());
-    assert_eq!(recovered.report().profiles().len(), 1);
-    assert_eq!(recovered.report().profiles()[0].holes().len(), 1);
-    assert_eq!(
-        decided(recovered.region().loop_roles(&policy).unwrap()),
-        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
-    );
-    for point in [p(-1, 5), p(1, 1), p(5, 5)] {
-        assert_eq!(
-            recovered.region().classify_point(&point, &policy).unwrap(),
-            source.classify_point(&point, &policy)
-        );
-    }
 }

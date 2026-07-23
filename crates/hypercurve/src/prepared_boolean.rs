@@ -9,8 +9,7 @@
 use crate::prepared::PreparedRegionView2;
 use crate::{
     BooleanBoundaryLoopSet, BooleanOp, Classification, Contour2, CurvePolicy, CurveResult,
-    FillRule, LineArcRegion2, RegionBooleanPreparedCacheReport2, RegionBooleanResult2,
-    RegionPreparedCacheAudit2,
+    FillRule, LineArcRegion2, RegionBooleanResult2,
 };
 
 pub(crate) fn boolean_boundary_loops_between_prepared(
@@ -83,16 +82,6 @@ pub(crate) fn boolean_region_between_prepared(
     )
 }
 
-pub(crate) fn boolean_region_between_prepared_with_report(
-    first: &PreparedRegionView2<'_>,
-    second: &PreparedRegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    policy: &CurvePolicy,
-) -> CurveResult<RegionBooleanResult2> {
-    boolean_region_between_prepared_impl(first, second, op, fill_rule, policy, true)
-}
-
 fn boolean_region_between_prepared_impl(
     first: &PreparedRegionView2<'_>,
     second: &PreparedRegionView2<'_>,
@@ -117,7 +106,6 @@ fn boolean_region_between_prepared_impl(
                 &boundary_events,
                 region,
                 crate::RegionBooleanBoundaryContourSourcePath2::ContainmentShortcut,
-                retain_pipeline_report.then(|| region_boolean_prepared_cache_report(first, second)),
             ),
         );
     }
@@ -133,8 +121,6 @@ fn boolean_region_between_prepared_impl(
                     &boundary_events,
                     region,
                     crate::RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut,
-                    retain_pipeline_report
-                        .then(|| region_boolean_prepared_cache_report(first, second)),
                 ),
             ),
             Classification::Uncertain(reason) => Ok(
@@ -147,8 +133,6 @@ fn boolean_region_between_prepared_impl(
                     &boundary_events,
                     crate::region_boolean::retained_status_for_boolean_blocker(reason),
                     reason,
-                    retain_pipeline_report
-                        .then(|| region_boolean_prepared_cache_report(first, second)),
                 ),
             ),
         };
@@ -177,8 +161,6 @@ fn boolean_region_between_prepared_impl(
                         &boundary_events,
                         crate::region_boolean::retained_status_for_boolean_blocker(reason),
                         reason,
-                        retain_pipeline_report
-                            .then(|| region_boolean_prepared_cache_report(first, second)),
                     ),
                 );
             }
@@ -199,7 +181,6 @@ fn boolean_region_between_prepared_impl(
                         &boundary_events,
                         region,
                         boundary_contour_source_path,
-                        None,
                     )
                 }
                 Classification::Uncertain(reason) => {
@@ -212,7 +193,6 @@ fn boolean_region_between_prepared_impl(
                         &boundary_events,
                         crate::region_boolean::retained_status_for_boolean_blocker(reason),
                         reason,
-                        None,
                     )
                 }
             },
@@ -227,34 +207,8 @@ fn boolean_region_between_prepared_impl(
         &boundary_events,
         contours,
         boundary_contour_source_path,
-        Some(region_boolean_prepared_cache_report(first, second)),
         pipeline_report,
         policy,
-    )
-}
-
-fn region_boolean_prepared_cache_report(
-    first: &PreparedRegionView2<'_>,
-    second: &PreparedRegionView2<'_>,
-) -> RegionBooleanPreparedCacheReport2 {
-    RegionBooleanPreparedCacheReport2::new(
-        prepared_region_cache_audit(first),
-        prepared_region_cache_audit(second),
-    )
-}
-
-fn prepared_region_cache_audit(region: &PreparedRegionView2<'_>) -> RegionPreparedCacheAudit2 {
-    RegionPreparedCacheAudit2::new(
-        region.prepared_contour_count(),
-        region.prepared_material_segment_count(),
-        region.prepared_material_segment_kind_counts(),
-        region.prepared_hole_segment_count(),
-        region.prepared_hole_segment_kind_counts(),
-        region.prepared_segment_count(),
-        region.prepared_segment_kind_counts(),
-        region.decided_segment_box_count(),
-        region.undecided_segment_box_count(),
-        region.region_box().is_some(),
     )
 }
 

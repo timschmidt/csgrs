@@ -29,7 +29,7 @@ no exact-dispatch requirement.
 | Editing, offsets, fitting, and reconstruction | `hypercurve_contour`, `hypercurve_offset`, `hypercurve_bezier_fit_offset`, `hypercurve_reconstruct` | `editing`, `offset`, `reconstruction` | checked curve-string offset |
 | Contours, regions, Boolean topology, and prepared queries | `hypercurve_boolean`, `hypercurve_region*`, `hypercurve_curve_region_boolean` | `containment`, `bezier_region` | region Boolean and prepared containment |
 | Pathological retained-region memory, transforms, intersections, and all Boolean operations | benchmark fixture smoke paths plus the ordinary family/Boolean suites | `pathological_regions`; feature-gated pathological lanes in `comparative` | every curve family and `Real` representation class across calibrated 100 MiB, 500 MiB, and 1 GiB native inputs |
-| Finite projection, retained import, triangulation, and SVG boundary | `hypercurve_region`, `hypercurve_triangulation`, `hypercurve_svg_io` | `api_surface`, `svg_io` | not applicable to the finite-only adapter work; exact reconstruction/topology is traced by the rows above |
+| Finite projection, retained import, and triangulation boundary | `hypercurve_region`, `hypercurve_triangulation` | `api_surface` | not applicable to the finite-only adapter work; exact reconstruction/topology is traced by the rows above |
 
 The `dispatch-trace` feature enables the shared `hyperreal`/`hyperlimit`
 exact-computation trace recorder. The `dispatch_trace` benchmark exercises

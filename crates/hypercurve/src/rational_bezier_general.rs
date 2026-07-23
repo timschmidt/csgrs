@@ -348,13 +348,11 @@ impl PreparedRationalBezierIntersection2 {
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 *reason,
             )),
             Err(cause) => Err(ExactCurveError::invalid(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 cause.clone(),
             )),
         }
@@ -372,13 +370,11 @@ impl PreparedRationalBezierIntersection2 {
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Arrangement,
                 CurveFamily2::RationalBezier,
-                None,
                 *reason,
             )),
             Err(cause) => Err(ExactCurveError::invalid(
                 CurveOperation2::Arrangement,
                 CurveFamily2::RationalBezier,
-                None,
                 cause.clone(),
             )),
         }
@@ -579,7 +575,6 @@ impl RationalBezier2 {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::DegreeElevation,
                 CurveFamily2::RationalBezier,
-                None,
                 CurveError::InvalidDegreeElevation,
             ));
         }
@@ -593,7 +588,6 @@ impl RationalBezier2 {
             ExactCurveError::invalid(
                 CurveOperation2::DegreeElevation,
                 CurveFamily2::RationalBezier,
-                None,
                 CurveError::InvalidDegreeElevation,
             )
         })?;
@@ -621,7 +615,6 @@ impl RationalBezier2 {
             ExactCurveError::invalid(
                 CurveOperation2::DegreeElevation,
                 CurveFamily2::RationalBezier,
-                None,
                 CurveError::InvalidDegreeElevation,
             )
         })?;
@@ -629,7 +622,6 @@ impl RationalBezier2 {
             ExactCurveError::invalid(
                 CurveOperation2::DegreeElevation,
                 CurveFamily2::RationalBezier,
-                None,
                 CurveError::InvalidDegreeElevation,
             )
         })?;
@@ -641,7 +633,6 @@ impl RationalBezier2 {
                 ExactCurveError::invalid(
                     CurveOperation2::DegreeElevation,
                     CurveFamily2::RationalBezier,
-                    None,
                     CurveError::InvalidDegreeElevation,
                 )
             })?;
@@ -649,7 +640,6 @@ impl RationalBezier2 {
                 ExactCurveError::invalid(
                     CurveOperation2::DegreeElevation,
                     CurveFamily2::RationalBezier,
-                    None,
                     cause.into(),
                 )
             })?;
@@ -667,7 +657,6 @@ impl RationalBezier2 {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::DegreeElevation,
                         CurveFamily2::RationalBezier,
-                        None,
                         reason,
                     ));
                 }
@@ -679,7 +668,6 @@ impl RationalBezier2 {
                 ExactCurveError::invalid(
                     CurveOperation2::DegreeElevation,
                     CurveFamily2::RationalBezier,
-                    None,
                     cause,
                 )
             },
@@ -719,7 +707,6 @@ impl RationalBezier2 {
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                 CurveOperation2::Evaluation,
                 CurveFamily2::RationalBezier,
-                None,
                 reason,
             )),
         }
@@ -757,7 +744,6 @@ impl RationalBezier2 {
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                 CurveOperation2::Evaluation,
                 CurveFamily2::RationalBezier,
-                None,
                 reason,
             )),
         }
@@ -814,7 +800,6 @@ impl RationalBezier2 {
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                 CurveOperation2::Evaluation,
                 CurveFamily2::RationalBezier,
-                None,
                 reason,
             )),
         }
@@ -906,7 +891,6 @@ impl RationalBezier2 {
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                 CurveOperation2::Classification,
                 CurveFamily2::RationalBezier,
-                None,
                 reason,
             )),
         }
@@ -936,13 +920,11 @@ impl RationalBezier2 {
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Classification,
                 CurveFamily2::RationalBezier,
-                None,
                 reason,
             )),
             Err(cause) => Err(ExactCurveError::invalid(
                 CurveOperation2::Classification,
                 CurveFamily2::RationalBezier,
-                None,
                 cause,
             )),
         }
@@ -1093,13 +1075,11 @@ impl RationalBezier2 {
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 reason,
             )),
             Err(cause) => Err(ExactCurveError::invalid(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 cause,
             )),
         }
@@ -1205,13 +1185,11 @@ impl RationalBezier2 {
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 reason,
             )),
             Err(cause) => Err(ExactCurveError::invalid(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 cause,
             )),
         }
@@ -1228,13 +1206,11 @@ impl RationalBezier2 {
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 reason,
             )),
             Err(cause) => Err(ExactCurveError::invalid(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 cause,
             )),
         }
@@ -1277,13 +1253,11 @@ impl RationalBezier2 {
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 reason,
             )),
             Err(cause) => Err(ExactCurveError::invalid(
                 CurveOperation2::Intersection,
                 CurveFamily2::RationalBezier,
-                None,
                 cause,
             )),
         }

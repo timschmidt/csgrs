@@ -1,8 +1,8 @@
 //! Exact periodic spline construction and parameter normalization.
 
 use crate::{
-    CurveError, CurveFamily2, CurveOperation2, CurveParameterSide2, CurvePolicy, CurveSource2,
-    ExactCurveError, ExactCurveResult, Point2, Real, UncertaintyReason,
+    CurveError, CurveFamily2, CurveOperation2, CurveParameterSide2, CurvePolicy, ExactCurveError,
+    ExactCurveResult, Point2, Real, UncertaintyReason,
 };
 
 /// Exact periodicity evidence retained by a spline carrier.
@@ -43,18 +43,13 @@ pub(crate) fn expand_periodic_spline(
     mut control_points: Vec<Point2>,
     period_knots: Vec<Real>,
     family: CurveFamily2,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<PeriodicSplineExpansion2> {
     let unique_control_count = control_points.len();
     let valid_layout = degree >= 1
         && unique_control_count > degree
         && period_knots.len() == unique_control_count + 1;
     if !valid_layout {
-        return Err(periodic_error(
-            family,
-            source,
-            CurveError::InvalidPeriodicSpline,
-        ));
+        return Err(periodic_error(family, CurveError::InvalidPeriodicSpline));
     }
 
     let policy = CurvePolicy::certified();
@@ -62,17 +57,12 @@ pub(crate) fn expand_periodic_spline(
         match crate::classify::compare_reals(&pair[0], &pair[1], &policy) {
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
             Some(std::cmp::Ordering::Greater) => {
-                return Err(periodic_error(
-                    family,
-                    source,
-                    CurveError::InvalidPeriodicSpline,
-                ));
+                return Err(periodic_error(family, CurveError::InvalidPeriodicSpline));
             }
             None => {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Construction,
                     family,
-                    source,
                     UncertaintyReason::Ordering,
                 ));
             }
@@ -86,17 +76,12 @@ pub(crate) fn expand_periodic_spline(
     match crate::classify::compare_reals(&Real::zero(), &period, &policy) {
         Some(std::cmp::Ordering::Less) => {}
         Some(_) => {
-            return Err(periodic_error(
-                family,
-                source,
-                CurveError::InvalidPeriodicSpline,
-            ));
+            return Err(periodic_error(family, CurveError::InvalidPeriodicSpline));
         }
         None => {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Construction,
                 family,
-                source,
                 UncertaintyReason::Ordering,
             ));
         }
@@ -132,13 +117,11 @@ pub(crate) fn wrap_periodic_parameter(
     periodicity: &SplinePeriodicity2,
     side: CurveParameterSide2,
     family: CurveFamily2,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<Real> {
     let Some(period) = periodicity.period() else {
         return Err(ExactCurveError::invalid(
             CurveOperation2::Evaluation,
             family,
-            source,
             CurveError::CurveIsNotPeriodic,
         ));
     };
@@ -148,7 +131,6 @@ pub(crate) fn wrap_periodic_parameter(
             ExactCurveError::blocked(
                 CurveOperation2::Evaluation,
                 family,
-                source,
                 UncertaintyReason::Ordering,
             )
         })?;
@@ -161,16 +143,11 @@ pub(crate) fn wrap_periodic_parameter(
         None => Err(ExactCurveError::blocked(
             CurveOperation2::Evaluation,
             family,
-            source,
             UncertaintyReason::Ordering,
         )),
     }
 }
 
-fn periodic_error(
-    family: CurveFamily2,
-    source: Option<CurveSource2>,
-    cause: CurveError,
-) -> ExactCurveError {
-    ExactCurveError::invalid(CurveOperation2::Construction, family, source, cause)
+fn periodic_error(family: CurveFamily2, cause: CurveError) -> ExactCurveError {
+    ExactCurveError::invalid(CurveOperation2::Construction, family, cause)
 }

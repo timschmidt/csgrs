@@ -95,7 +95,7 @@ fn main() {
                 [angle.cos(), angle.sin()]
             })
             .collect::<Vec<_>>();
-        Contour2::import_finite_ring(&points)
+        Contour2::from_finite_ring(&points)
     });
 
     trace("nurbs_global_interpolation", || {
@@ -136,13 +136,8 @@ fn main() {
     let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     trace("region_boolean", || {
-        let result = first.boolean_region_with_report(
-            &second,
-            BooleanOp::Union,
-            FillRule::NonZero,
-            &policy,
-        )?;
-        assert!(result.region().is_some());
+        let result = first.boolean_region(&second, BooleanOp::Union, FillRule::NonZero, &policy)?;
+        assert!(matches!(result, Classification::Decided(_)));
         Ok(result)
     });
 
@@ -155,13 +150,13 @@ fn main() {
         std::f64::consts::PI / 64.0,
     )]);
     trace("star64_region_boolean", || {
-        let result = first_star.boolean_region_with_report(
+        let result = first_star.boolean_region(
             &second_star,
             BooleanOp::Intersection,
             FillRule::EvenOdd,
             &policy,
         )?;
-        assert!(result.region().is_some());
+        assert!(matches!(result, Classification::Decided(_)));
         Ok(result)
     });
 

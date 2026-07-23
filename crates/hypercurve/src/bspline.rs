@@ -14,9 +14,7 @@ use crate::classify::{compare_reals, is_zero};
 use crate::{
     Aabb2, Axis2, BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy,
     CurveResult, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
-    RetainedCurveCacheSummary2, RetainedCurveFamily2, RetainedCurveIdentity2,
-    RetainedCurveProfile2, RetainedEndpointEvidence2, RetainedParameterDomain1,
-    RetainedTopologyStatus, RetainedTrimInterval1, SplinePeriodicity2, UncertaintyReason,
+    RetainedTopologyStatus, SplinePeriodicity2, UncertaintyReason,
 };
 
 /// Exact polynomial B-spline curve in the plane.
@@ -343,80 +341,6 @@ impl PolynomialBSplineCurve2 {
             },
         ))
     }
-
-    /// Builds a retained CAD-curve profile from exact B-spline evidence.
-    ///
-    /// The active domain is `[U[p], U[n+1]]`, the default trim is
-    /// the whole domain, and the cache summary is produced by exact Boehm
-    /// extraction.  No polyline preview or sampled geometry can promote the
-    /// carrier: the topology status is native only because polynomial
-    /// quadratic/cubic spans are exact native Bezier topology in this kernel.
-    pub fn retained_curve_profile(
-        &self,
-        source_index: u64,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RetainedCurveProfile2>> {
-        self.retained_curve_profile_with_source_version(source_index, 0, policy)
-    }
-
-    /// Builds a retained CAD-curve profile with source version/revision evidence.
-    pub fn retained_curve_profile_with_source_version(
-        &self,
-        source_index: u64,
-        source_version: u64,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RetainedCurveProfile2>> {
-        let domain = match bspline_parameter_domain(
-            &self.knots,
-            self.degree,
-            self.control_points.len(),
-            policy,
-        )? {
-            Classification::Decided(domain) => domain,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let trim = match default_trim(&domain, policy)? {
-            Classification::Decided(trim) => trim,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let extraction = match self.extract_bezier_spans(policy)? {
-            Classification::Decided(extraction) => extraction,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let cache_summary = RetainedCurveCacheSummary2::new_with_source_version(
-            source_version,
-            self.control_points.len(),
-            self.knots.len(),
-            extraction.spans().len(),
-            extraction.spans().len(),
-            0,
-        )?;
-        Ok(Classification::Decided(RetainedCurveProfile2::new(
-            RetainedCurveIdentity2::new_with_source_version(
-                RetainedCurveFamily2::PolynomialBSpline,
-                source_index,
-                source_version,
-            ),
-            domain.clone(),
-            trim,
-            self.periodicity.clone(),
-            RetainedTopologyStatus::NativeExact,
-            endpoint_evidence(
-                extraction
-                    .spans()
-                    .first()
-                    .ok_or(CurveError::InvalidBSpline)?
-                    .start(),
-                extraction
-                    .spans()
-                    .last()
-                    .ok_or(CurveError::InvalidBSpline)?
-                    .end(),
-                &domain,
-            ),
-            cache_summary,
-        )?))
-    }
 }
 
 impl PolynomialBSplineBezierExtraction2 {
@@ -557,75 +481,6 @@ impl RationalQuadraticBSplineCurve2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         Ok(Classification::Decided(extraction))
-    }
-
-    /// Builds a retained CAD-curve profile from exact quadratic NURBS evidence.
-    ///
-    /// Degree-two rational spans are exact native rational quadratic Beziers in
-    /// the current kernel, so the profile status is native after homogeneous
-    /// knot insertion certifies all refined weights.  This keeps the NURBS
-    /// source domain and endpoint evidence attached to the native bridge.
-    pub fn retained_curve_profile(
-        &self,
-        source_index: u64,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RetainedCurveProfile2>> {
-        self.retained_curve_profile_with_source_version(source_index, 0, policy)
-    }
-
-    /// Builds a retained CAD-curve profile with source version/revision evidence.
-    pub fn retained_curve_profile_with_source_version(
-        &self,
-        source_index: u64,
-        source_version: u64,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RetainedCurveProfile2>> {
-        let domain =
-            match bspline_parameter_domain(&self.knots, 2, self.control_points.len(), policy)? {
-                Classification::Decided(domain) => domain,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-        let trim = match default_trim(&domain, policy)? {
-            Classification::Decided(trim) => trim,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let extraction = match self.extract_bezier_spans(policy)? {
-            Classification::Decided(extraction) => extraction,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let cache_summary = RetainedCurveCacheSummary2::new_with_source_version(
-            source_version,
-            self.control_points.len(),
-            self.knots.len(),
-            extraction.spans().len(),
-            extraction.spans().len(),
-            0,
-        )?;
-        Ok(Classification::Decided(RetainedCurveProfile2::new(
-            RetainedCurveIdentity2::new_with_source_version(
-                RetainedCurveFamily2::RationalQuadraticBSpline,
-                source_index,
-                source_version,
-            ),
-            domain.clone(),
-            trim,
-            SplinePeriodicity2::NonPeriodic,
-            RetainedTopologyStatus::NativeExact,
-            endpoint_evidence(
-                extraction
-                    .spans()
-                    .first()
-                    .ok_or(CurveError::InvalidBSpline)?
-                    .start(),
-                extraction
-                    .spans()
-                    .last()
-                    .ok_or(CurveError::InvalidBSpline)?
-                    .end(),
-                &domain,
-            ),
-            cache_summary,
-        )?))
     }
 }
 
@@ -969,97 +824,6 @@ impl RationalBSplineCurve2 {
             }
         }
         extract_refined_rational_spans(&refined, policy)
-    }
-
-    /// Builds a retained CAD-curve profile from exact rational B-spline evidence.
-    ///
-    /// The profile records the source knot domain, whole-domain trim, retained
-    /// periodicity, exact extracted endpoint evidence, and a span cache summary.
-    /// Unequal-weight cubics and higher-degree spans promote to exact general
-    /// rational Beziers rather than being degree-reduced or tessellated. This
-    /// is the same retained-object boundary described by the exactness model, applied
-    /// to NURBS carrier admission.
-    pub fn retained_curve_profile(
-        &self,
-        source_index: u64,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RetainedCurveProfile2>> {
-        self.retained_curve_profile_with_source_version(source_index, 0, policy)
-    }
-
-    /// Builds a retained CAD-curve profile with source version/revision evidence.
-    pub fn retained_curve_profile_with_source_version(
-        &self,
-        source_index: u64,
-        source_version: u64,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RetainedCurveProfile2>> {
-        let domain = match bspline_parameter_domain(
-            &self.knots,
-            self.degree,
-            self.control_points.len(),
-            policy,
-        )? {
-            Classification::Decided(domain) => domain,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let trim = match default_trim(&domain, policy)? {
-            Classification::Decided(trim) => trim,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let extraction = match self.extract_bezier_spans(policy)? {
-            Classification::Decided(extraction) => extraction,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let report = match extraction.native_topology_report(policy)? {
-            Classification::Decided(report) => report,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let native_span_count = report
-            .span_reports()
-            .iter()
-            .filter(|span| span.status().is_native_exact())
-            .count();
-        let retained_span_count = report.span_reports().len() - native_span_count;
-        let topology_status = if report.is_fully_native_exact() {
-            RetainedTopologyStatus::NativeExact
-        } else {
-            RetainedTopologyStatus::Unsupported
-        };
-        let cache_summary = RetainedCurveCacheSummary2::new_with_source_version(
-            source_version,
-            self.control_points.len(),
-            self.knots.len(),
-            report.span_reports().len(),
-            native_span_count,
-            retained_span_count,
-        )?;
-
-        Ok(Classification::Decided(RetainedCurveProfile2::new(
-            RetainedCurveIdentity2::new_with_source_version(
-                RetainedCurveFamily2::RationalBSpline,
-                source_index,
-                source_version,
-            ),
-            domain.clone(),
-            trim,
-            self.periodicity.clone(),
-            topology_status,
-            endpoint_evidence(
-                extraction
-                    .spans()
-                    .first()
-                    .and_then(|span| span.control_points().first())
-                    .ok_or(CurveError::InvalidBSpline)?,
-                extraction
-                    .spans()
-                    .last()
-                    .and_then(|span| span.control_points().last())
-                    .ok_or(CurveError::InvalidBSpline)?,
-                &domain,
-            ),
-            cache_summary,
-        )?))
     }
 }
 
@@ -2171,36 +1935,6 @@ fn weight_domain_report(
     )
 }
 
-fn bspline_parameter_domain(
-    knots: &[Real],
-    degree: usize,
-    control_count: usize,
-    policy: &CurvePolicy,
-) -> CurveResult<Classification<RetainedParameterDomain1>> {
-    let Some(start) = knots.get(degree) else {
-        return Err(CurveError::InvalidBSpline);
-    };
-    let Some(end) = knots.get(control_count) else {
-        return Err(CurveError::InvalidBSpline);
-    };
-    RetainedParameterDomain1::try_new(start.clone(), end.clone(), policy)
-}
-
-fn default_trim(
-    domain: &RetainedParameterDomain1,
-    policy: &CurvePolicy,
-) -> CurveResult<Classification<RetainedTrimInterval1>> {
-    RetainedTrimInterval1::try_new(domain.start().clone(), domain.end().clone(), domain, policy)
-}
-
-fn endpoint_evidence(
-    start_point: &Point2,
-    end_point: &Point2,
-    domain: &RetainedParameterDomain1,
-) -> RetainedEndpointEvidence2 {
-    RetainedEndpointEvidence2::new(domain, start_point.clone(), end_point.clone())
-}
-
 fn distinct_bezier_break_knots(
     knots: &[Real],
     degree: usize,
@@ -2519,7 +2253,7 @@ mod tests {
     }
 
     #[test]
-    fn retained_periodicity_is_single_source_of_truth_for_profiles_and_knot_insertion() {
+    fn retained_periodicity_survives_knot_insertion() {
         let policy = CurvePolicy::certified();
         let periodicity = SplinePeriodicity2::Periodic {
             period: Real::from(4),
@@ -2534,13 +2268,7 @@ mod tests {
             )
             .unwrap(),
         );
-        let polynomial_profile = decided(
-            polynomial
-                .retained_curve_profile_with_source_version(7, 3, &policy)
-                .unwrap(),
-        );
         assert_eq!(polynomial.periodicity(), &periodicity);
-        assert_eq!(polynomial_profile.periodicity(), &periodicity);
 
         let rational = decided(
             RationalBSplineCurve2::try_new_with_periodicity(
@@ -2560,12 +2288,6 @@ mod tests {
         );
         assert_eq!(inserted_count, 1);
         assert_eq!(inserted.periodicity(), &periodicity);
-        let inserted_profile = decided(
-            inserted
-                .retained_curve_profile_with_source_version(8, 4, &policy)
-                .unwrap(),
-        );
-        assert_eq!(inserted_profile.periodicity(), &periodicity);
     }
 
     #[test]

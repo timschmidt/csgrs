@@ -669,14 +669,6 @@ impl BooleanFragmentSelection {
         )
     }
 
-    /// Converts selected classifications into boundary fragments and retains evidence.
-    pub fn emit_boundary_fragments_with_report(
-        &self,
-        fragments: &RegionFragmentSet,
-    ) -> CurveResult<BooleanBoundaryFragmentEmissionResult2> {
-        self.emit_boundary_fragments_with_report_impl(fragments, false)
-    }
-
     pub(crate) fn emit_boundary_fragments_from_certified_split_with_report(
         &self,
         fragments: &RegionFragmentSet,
@@ -1362,7 +1354,7 @@ impl RegionFragmentSet {
     }
 
     /// Classifies fragments against the opposite region and retains selection evidence.
-    pub fn classify_for_boolean_with_report(
+    fn classify_for_boolean_with_report(
         &self,
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,

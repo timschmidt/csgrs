@@ -13,24 +13,17 @@ use crate::bbox::{
     Aabb2, aabb_decided_misses_point, aabb_decided_strictly_right_of_point, aabbs_decided_disjoint,
     decided_segment_aabb,
 };
-use crate::curve_string::{
-    CurveStringXOverlapCandidates, curve_string_intersection_relation_counts,
-    curve_string_x_overlap_schedule, decided_segment_box_count,
-};
+use crate::curve_string::{CurveStringXOverlapCandidates, curve_string_x_overlap_schedule};
 use crate::events::SegmentAabbXIndex;
 use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::region_events::RegionIntersectionWorkload;
 use crate::{
     BooleanBoundaryLoopSet, BooleanOp, CircularArc2, CircularArc2Facts, Classification, Contour2,
     ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
-    CurveStringCurveTrimQueryPath2, CurveStringCurveTrimResult2, CurveStringIntersection,
-    CurveStringIntersectionPreparedCacheReport2, CurveStringIntersectionQueryPath2,
-    CurveStringIntersectionReport2, CurveStringIntersectionResult2, CurveStringPreparedCacheAudit2,
-    CurveStringRegionTrimPreparedCacheReport2, CurveStringRegionTrimResult2, FillRule,
-    LineArcRegion2, LineSeg2, LineSeg2Facts, LineSide, Point2, RegionBooleanResult2,
+    CurveStringIntersection, FillRule, LineArcRegion2, LineSeg2, LineSeg2Facts, LineSide, Point2,
     RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
-    RegionPointLocation, RegionSide, RegionTrimPreparedCacheAudit2, RegionView2, Segment2,
-    SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    RegionPointLocation, RegionSide, RegionView2, Segment2, SegmentIntersection, SegmentKind,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -194,7 +187,7 @@ impl<'a> PreparedCircularArc2<'a> {
     ) -> Classification<bool> {
         #[cfg(feature = "predicates")]
         if !matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
-            let sweep_kind = match crate::arc_bezier::classify_sweep(self.arc, None) {
+            let sweep_kind = match crate::arc_bezier::classify_sweep(self.arc) {
                 Ok(kind) => kind,
                 Err(crate::ExactCurveError::Blocked(blocker)) => {
                     return Classification::Uncertain(blocker.reason());
@@ -468,23 +461,11 @@ impl<'a> PreparedCurveStringView2<'a> {
         other: &PreparedCurveStringView2<'_>,
         policy: &CurvePolicy,
     ) -> CurveResult<Vec<CurveStringIntersection>> {
-        self.intersect_prepared_curve_string_with_report(other, policy)
-            .map(|result| result.into_intersections())
-    }
-
-    /// Collects intersections against another prepared curve string with scan evidence.
-    pub fn intersect_prepared_curve_string_with_report(
-        &self,
-        other: &PreparedCurveStringView2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringIntersectionResult2> {
         intersect_prepared_segment_pairs_with_cached_aabbs(
             &self.prepared_segments,
             &other.prepared_segments,
             self.segment_boxes(),
             other.segment_boxes(),
-            CurveStringIntersectionQueryPath2::Prepared,
-            Some(curve_string_intersection_prepared_cache_report(self, other)),
             policy,
         )
     }
@@ -496,18 +477,8 @@ impl<'a> PreparedCurveStringView2<'a> {
         other: &CurveString2,
         policy: &CurvePolicy,
     ) -> CurveResult<Vec<CurveStringIntersection>> {
-        self.intersect_curve_string_with_report(other, policy)
-            .map(|result| result.into_intersections())
-    }
-
-    /// Collects intersections against an ordinary curve string with scan evidence.
-    pub fn intersect_curve_string_with_report(
-        &self,
-        other: &CurveString2,
-        policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringIntersectionResult2> {
         let other = PreparedCurveStringView2::from_curve_string(other, policy);
-        self.intersect_prepared_curve_string_with_report(&other, policy)
+        self.intersect_prepared_curve_string(&other, policy)
     }
 
     /// Trims the prepared source curve between point intersections with two prepared cutters.
@@ -520,18 +491,11 @@ impl<'a> PreparedCurveStringView2<'a> {
         start_cutter: &PreparedCurveStringView2<'_>,
         end_cutter: &PreparedCurveStringView2<'_>,
         policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringCurveTrimResult2> {
-        let start_events =
-            self.intersect_prepared_curve_string_with_report(start_cutter, policy)?;
-        let end_events = self.intersect_prepared_curve_string_with_report(end_cutter, policy)?;
-        self.curve.trim_between_curve_intersection_events(
-            start_cutter.curve_string(),
-            start_events,
-            end_cutter.curve_string(),
-            end_events,
-            CurveStringCurveTrimQueryPath2::Prepared,
-            policy,
-        )
+    ) -> CurveResult<Classification<CurveString2>> {
+        let start_events = self.intersect_prepared_curve_string(start_cutter, policy)?;
+        let end_events = self.intersect_prepared_curve_string(end_cutter, policy)?;
+        self.curve
+            .trim_between_curve_intersection_events(start_events, end_events, policy)
     }
 
     /// Retains portions of this prepared open curve string inside a prepared region.
@@ -545,12 +509,8 @@ impl<'a> PreparedCurveStringView2<'a> {
         &self,
         region: &PreparedRegionView2<'_>,
         policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringRegionTrimResult2> {
-        self.curve.trim_inside_prepared_region(
-            region,
-            Some(curve_string_region_trim_prepared_cache_report(self, region)),
-            policy,
-        )
+    ) -> CurveResult<Classification<Vec<CurveString2>>> {
+        self.curve.trim_inside_prepared_region(region, policy)
     }
 
     /// Retains portions of this prepared open curve string inside an ordinary region.
@@ -558,31 +518,19 @@ impl<'a> PreparedCurveStringView2<'a> {
         &self,
         region: &LineArcRegion2,
         policy: &CurvePolicy,
-    ) -> CurveResult<CurveStringRegionTrimResult2> {
+    ) -> CurveResult<Classification<Vec<CurveString2>>> {
         let region = PreparedRegionView2::from_region(region, policy);
         self.trim_inside_prepared_region(&region, policy)
     }
 
     /// Classifies whether this prepared open curve string self-contacts.
     pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
-        self.has_self_contacts_with_report(policy)
-            .map(|result| result.has_self_contacts())
-    }
-
-    /// Classifies self contacts and retains cached broad-phase scan evidence.
-    pub fn has_self_contacts_with_report(
-        &self,
-        policy: &CurvePolicy,
-    ) -> CurveResult<crate::SelfContactResult2> {
-        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs_and_report(
+        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs(
             self.curve.segments(),
             &self.segment_boxes,
             false,
             policy,
         )
-        .map(|result| {
-            result.with_prepared_cache(prepared_self_contact_cache_report_for_curve(self))
-        })
     }
 }
 
@@ -825,24 +773,12 @@ impl<'a> PreparedContourView2<'a> {
 
     /// Classifies whether this prepared closed contour self-contacts.
     pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
-        self.has_self_contacts_with_report(policy)
-            .map(|result| result.has_self_contacts())
-    }
-
-    /// Classifies self contacts and retains cached broad-phase scan evidence.
-    pub fn has_self_contacts_with_report(
-        &self,
-        policy: &CurvePolicy,
-    ) -> CurveResult<crate::SelfContactResult2> {
-        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs_and_report(
+        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs(
             self.contour.segments(),
             &self.segment_boxes,
             true,
             policy,
         )
-        .map(|result| {
-            result.with_prepared_cache(prepared_self_contact_cache_report_for_contour(self))
-        })
     }
 }
 
@@ -1315,24 +1251,6 @@ impl<'a> PreparedRegionView2<'a> {
         crate::prepared_boolean::boolean_region_between_prepared(self, other, op, fill_rule, policy)
     }
 
-    /// Computes a role-assigned boolean region and retains materialization evidence.
-    ///
-    /// This is the report-bearing counterpart to
-    /// [`PreparedRegionView2::boolean_region`]. Prepared caches still only
-    /// prune candidates; the final report comes from checked boundary contours
-    /// and exact contour nesting.
-    pub fn boolean_region_with_report(
-        &self,
-        other: &PreparedRegionView2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionBooleanResult2> {
-        crate::prepared_boolean::boolean_region_between_prepared_with_report(
-            self, other, op, fill_rule, policy,
-        )
-    }
-
     /// Computes a role-assigned boolean region against an ordinary region view.
     ///
     /// The right operand is prepared transiently, after which the same prepared
@@ -1348,18 +1266,6 @@ impl<'a> PreparedRegionView2<'a> {
     ) -> CurveResult<Classification<LineArcRegion2>> {
         let other = PreparedRegionView2::from_region_view(other, policy);
         self.boolean_region(&other, op, fill_rule, policy)
-    }
-
-    /// Computes a report-bearing boolean region against an ordinary region view.
-    pub fn boolean_region_with_report_against_region(
-        &self,
-        other: &RegionView2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionBooleanResult2> {
-        let other = PreparedRegionView2::from_region_view(other, policy);
-        self.boolean_region_with_report(&other, op, fill_rule, policy)
     }
 }
 
@@ -1465,18 +1371,6 @@ impl<'a> RegionView2<'a> {
     ) -> CurveResult<Classification<LineArcRegion2>> {
         let this = PreparedRegionView2::from_region_view(self, policy);
         this.boolean_region(other, op, fill_rule, policy)
-    }
-
-    /// Computes a report-bearing boolean region against a prepared right operand.
-    pub fn boolean_region_with_report_against_prepared_region(
-        &self,
-        other: &PreparedRegionView2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionBooleanResult2> {
-        let this = PreparedRegionView2::from_region_view(self, policy);
-        this.boolean_region_with_report(other, op, fill_rule, policy)
     }
 }
 
@@ -1874,19 +1768,11 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
     second_prepared_segments: &[PreparedSegment2<'_>],
     first_segment_boxes: &[Option<Aabb2>],
     second_segment_boxes: &[Option<Aabb2>],
-    query_path: CurveStringIntersectionQueryPath2,
-    prepared_cache_report: Option<CurveStringIntersectionPreparedCacheReport2>,
     policy: &CurvePolicy,
-) -> CurveResult<CurveStringIntersectionResult2> {
+) -> CurveResult<Vec<CurveStringIntersection>> {
     let mut intersections = Vec::new();
-    let candidate_pair_count = first_prepared_segments.len() * second_prepared_segments.len();
-    let mut skipped_aabb_pair_count = 0_usize;
-    let mut tested_pair_count = 0_usize;
     let x_overlap_schedule =
         curve_string_x_overlap_schedule(first_segment_boxes, second_segment_boxes);
-    if let Some(schedule) = &x_overlap_schedule {
-        skipped_aabb_pair_count = candidate_pair_count - schedule.candidate_pair_count();
-    }
 
     for (a_segment_index, a_segment) in first_prepared_segments.iter().enumerate() {
         for b_segment_index in x_overlap_schedule.as_ref().map_or_else(
@@ -1899,20 +1785,10 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
                 second_segment_boxes.get(b_segment_index),
             ) && aabbs_decided_disjoint(a_box, b_box, policy)
             {
-                skipped_aabb_pair_count += 1;
                 continue;
             }
 
-            tested_pair_count += 1;
-            let relation = match (a_segment, b_segment) {
-                (PreparedSegment2::Line(_), PreparedSegment2::Line(_))
-                | (PreparedSegment2::Line(_), PreparedSegment2::Arc(_))
-                | (PreparedSegment2::Arc(_), PreparedSegment2::Line(_))
-                | (PreparedSegment2::Arc(_), PreparedSegment2::Arc(_)) => {
-                    a_segment.intersect_prepared_segment(b_segment, policy)?
-                }
-            };
-
+            let relation = a_segment.intersect_prepared_segment(b_segment, policy)?;
             if !relation.is_none() {
                 intersections.push(CurveStringIntersection {
                     a_segment_index,
@@ -1929,111 +1805,7 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
         }
     }
 
-    let intersection_count = intersections.len();
-    let relation_counts = curve_string_intersection_relation_counts(&intersections);
-    let first_decided_segment_box_count = decided_segment_box_count(first_segment_boxes);
-    let second_decided_segment_box_count = decided_segment_box_count(second_segment_boxes);
-    let first_undecided_segment_box_count = first_prepared_segments
-        .len()
-        .saturating_sub(first_decided_segment_box_count);
-    let second_undecided_segment_box_count = second_prepared_segments
-        .len()
-        .saturating_sub(second_decided_segment_box_count);
-    Ok(CurveStringIntersectionResult2::from_parts(
-        intersections,
-        CurveStringIntersectionReport2::new_native_exact(
-            first_prepared_segments.len(),
-            second_prepared_segments.len(),
-            prepared_segment_kind_counts(first_prepared_segments),
-            prepared_segment_kind_counts(second_prepared_segments),
-            first_decided_segment_box_count,
-            second_decided_segment_box_count,
-            first_undecided_segment_box_count,
-            second_undecided_segment_box_count,
-            candidate_pair_count,
-            skipped_aabb_pair_count,
-            tested_pair_count,
-            intersection_count,
-            relation_counts.point,
-            relation_counts.overlap,
-            relation_counts.uncertain,
-            query_path,
-            prepared_cache_report,
-        ),
-    ))
-}
-
-fn curve_string_intersection_prepared_cache_report(
-    first: &PreparedCurveStringView2<'_>,
-    second: &PreparedCurveStringView2<'_>,
-) -> CurveStringIntersectionPreparedCacheReport2 {
-    CurveStringIntersectionPreparedCacheReport2::new(
-        prepared_curve_string_cache_audit(first),
-        prepared_curve_string_cache_audit(second),
-    )
-}
-
-fn prepared_curve_string_cache_audit(
-    curve: &PreparedCurveStringView2<'_>,
-) -> CurveStringPreparedCacheAudit2 {
-    CurveStringPreparedCacheAudit2::new(
-        curve.prepared_segment_count(),
-        curve.prepared_segment_kind_counts(),
-        curve.decided_segment_box_count(),
-        curve.undecided_segment_box_count(),
-        curve.curve_box().is_some(),
-    )
-}
-
-fn prepared_self_contact_cache_report_for_curve(
-    curve: &PreparedCurveStringView2<'_>,
-) -> crate::SelfContactPreparedCacheReport2 {
-    crate::SelfContactPreparedCacheReport2::new(
-        curve.prepared_segment_count(),
-        curve.prepared_segment_kind_counts(),
-        curve.decided_segment_box_count(),
-        curve.undecided_segment_box_count(),
-        curve.curve_box().is_some(),
-    )
-}
-
-fn prepared_self_contact_cache_report_for_contour(
-    contour: &PreparedContourView2<'_>,
-) -> crate::SelfContactPreparedCacheReport2 {
-    crate::SelfContactPreparedCacheReport2::new(
-        contour.prepared_segment_count(),
-        contour.prepared_segment_kind_counts(),
-        contour.decided_segment_box_count(),
-        contour.undecided_segment_box_count(),
-        contour.contour_box().is_some(),
-    )
-}
-
-fn curve_string_region_trim_prepared_cache_report(
-    source: &PreparedCurveStringView2<'_>,
-    region: &PreparedRegionView2<'_>,
-) -> CurveStringRegionTrimPreparedCacheReport2 {
-    CurveStringRegionTrimPreparedCacheReport2::new(
-        prepared_curve_string_cache_audit(source),
-        prepared_region_trim_cache_audit(region),
-    )
-}
-
-fn prepared_region_trim_cache_audit(
-    region: &PreparedRegionView2<'_>,
-) -> RegionTrimPreparedCacheAudit2 {
-    RegionTrimPreparedCacheAudit2::new(
-        region.prepared_contour_count(),
-        region.prepared_material_segment_count(),
-        region.prepared_material_segment_kind_counts(),
-        region.prepared_hole_segment_count(),
-        region.prepared_hole_segment_kind_counts(),
-        region.prepared_segment_count(),
-        region.prepared_segment_kind_counts(),
-        region.decided_segment_box_count(),
-        region.undecided_segment_box_count(),
-        region.region_box().is_some(),
-    )
+    Ok(intersections)
 }
 
 #[cfg(feature = "predicates")]

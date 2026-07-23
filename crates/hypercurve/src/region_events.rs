@@ -351,7 +351,7 @@ impl RegionIntersectionSet {
     }
 
     /// Splits every contour in both region views at this event set and retains a report.
-    pub fn split_regions_with_report(
+    pub(crate) fn split_regions_with_report(
         &self,
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,

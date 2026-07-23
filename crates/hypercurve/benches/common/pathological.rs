@@ -438,7 +438,6 @@ fn family_curve(
             3,
             vec![start, control1, control2, end],
             clamped_cubic_knots(),
-            None,
         )
         .expect("clamped polynomial spline is valid"),
         CurveFamily2::Nurbs => Curve2::try_nurbs(
@@ -446,7 +445,6 @@ fn family_curve(
             vec![start, linear_control1, linear_control2, end],
             vec![Real::one(); 4],
             clamped_cubic_knots(),
-            None,
         )
         .expect("clamped NURBS is valid"),
     }

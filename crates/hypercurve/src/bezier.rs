@@ -11,10 +11,7 @@ use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 use std::cmp::Ordering;
 
 use crate::classify::{compare_reals, is_zero};
-use crate::{
-    Aabb2, Classification, CurvePolicy, CurveResult, Point2, RetainedTopologyStatus,
-    UncertaintyReason,
-};
+use crate::{Aabb2, Classification, CurvePolicy, CurveResult, Point2, UncertaintyReason};
 
 /// An endpoint of a parametric Bezier segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -37,124 +34,6 @@ pub struct EndpointTangent2 {
     dx: Real,
     dy: Real,
     zero_status: ZeroStatus,
-}
-
-/// Report for exact quadratic interpolation through a retained midpoint.
-#[derive(Clone, Debug, PartialEq)]
-pub struct QuadraticBezierMidpointInterpolationReport2 {
-    stage: QuadraticBezierMidpointInterpolationStage2,
-    interpolation_parameter: Real,
-    start_point: Point2,
-    midpoint_constraint: Point2,
-    end_point: Point2,
-    solved_control_point: Option<Point2>,
-    solve_path: Option<BezierInterpolationSolvePath2>,
-    replay_path: Option<BezierInterpolationReplayPath2>,
-    replayed_midpoint: Option<Point2>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Furthest exact stage reached by quadratic midpoint interpolation.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum QuadraticBezierMidpointInterpolationStage2 {
-    /// The exact Bernstein control point was being solved.
-    ControlSolve,
-    /// The native quadratic span was materialized and replayed.
-    SegmentMaterialization,
-}
-
-/// Result of exact quadratic interpolation through a retained midpoint.
-#[derive(Clone, Debug, PartialEq)]
-pub struct QuadraticBezierMidpointInterpolationResult2 {
-    curve: Option<QuadraticBezier2>,
-    report: QuadraticBezierMidpointInterpolationReport2,
-}
-
-/// Report for exact quadratic interpolation through one retained parameter point.
-#[derive(Clone, Debug, PartialEq)]
-pub struct QuadraticBezierPointInterpolationReport2 {
-    stage: QuadraticBezierPointInterpolationStage2,
-    interpolation_parameter: Real,
-    start_point: Point2,
-    interpolation_point: Point2,
-    end_point: Point2,
-    solved_control_point: Option<Point2>,
-    solve_path: Option<BezierInterpolationSolvePath2>,
-    replay_path: Option<BezierInterpolationReplayPath2>,
-    replayed_point: Option<Point2>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Furthest exact stage reached by quadratic point interpolation.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum QuadraticBezierPointInterpolationStage2 {
-    /// The retained interpolation parameter was being validated.
-    ParameterValidation,
-    /// The exact Bernstein control point was being solved.
-    ControlSolve,
-    /// The native quadratic span was materialized and replayed.
-    SegmentMaterialization,
-}
-
-/// Result of exact quadratic interpolation through one retained parameter point.
-#[derive(Clone, Debug, PartialEq)]
-pub struct QuadraticBezierPointInterpolationResult2 {
-    curve: Option<QuadraticBezier2>,
-    report: QuadraticBezierPointInterpolationReport2,
-}
-
-/// Report for exact cubic Hermite interpolation from endpoint derivatives.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CubicBezierHermiteInterpolationReport2 {
-    stage: CubicBezierHermiteInterpolationStage2,
-    start_point: Point2,
-    start_tangent: EndpointTangent2,
-    end_point: Point2,
-    end_tangent: EndpointTangent2,
-    solved_first_control_point: Option<Point2>,
-    solved_second_control_point: Option<Point2>,
-    solve_path: Option<BezierInterpolationSolvePath2>,
-    replay_path: Option<BezierInterpolationReplayPath2>,
-    replayed_start_tangent: Option<EndpointTangent2>,
-    replayed_end_tangent: Option<EndpointTangent2>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Exact algebraic solve used to construct interpolated Bezier control points.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BezierInterpolationSolvePath2 {
-    /// Solved the interior quadratic Bernstein control from one retained parameter point.
-    QuadraticBernsteinInteriorPoint,
-    /// Solved the quadratic control from the retained half-parameter midpoint equation.
-    QuadraticBernsteinMidpoint,
-    /// Solved cubic controls from endpoint derivative constraints.
-    CubicHermiteEndpointDerivatives,
-}
-
-/// Replay path used to certify interpolated Bezier constraints after materialization.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BezierInterpolationReplayPath2 {
-    /// Materialized control points were replayed with exact Bezier evaluation.
-    ExactEvaluationReplay,
-}
-
-/// Furthest exact stage reached by cubic Hermite interpolation.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CubicBezierHermiteInterpolationStage2 {
-    /// The two cubic control points were being solved from endpoint derivatives.
-    ControlSolve,
-    /// The native cubic span was materialized and replayed.
-    SegmentMaterialization,
-}
-
-/// Result of exact cubic Hermite interpolation from endpoint derivatives.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CubicBezierHermiteInterpolationResult2 {
-    curve: Option<CubicBezier2>,
-    report: CubicBezierHermiteInterpolationReport2,
 }
 
 impl EndpointTangent2 {
@@ -182,350 +61,6 @@ impl EndpointTangent2 {
     /// Returns whether the derivative vector is structurally zero.
     pub const fn zero_status(&self) -> ZeroStatus {
         self.zero_status
-    }
-}
-
-impl QuadraticBezierMidpointInterpolationReport2 {
-    /// Returns the furthest exact interpolation stage reached.
-    pub const fn stage(&self) -> QuadraticBezierMidpointInterpolationStage2 {
-        self.stage
-    }
-
-    /// Returns the retained interpolation parameter.
-    pub const fn interpolation_parameter(&self) -> &Real {
-        &self.interpolation_parameter
-    }
-
-    /// Returns the exact start-point constraint.
-    pub const fn start_point(&self) -> &Point2 {
-        &self.start_point
-    }
-
-    /// Returns the exact midpoint constraint at `t = 1/2`.
-    pub const fn midpoint_constraint(&self) -> &Point2 {
-        &self.midpoint_constraint
-    }
-
-    /// Returns the exact end-point constraint.
-    pub const fn end_point(&self) -> &Point2 {
-        &self.end_point
-    }
-
-    /// Returns the solved quadratic control point, when materialized.
-    pub const fn solved_control_point(&self) -> Option<&Point2> {
-        self.solved_control_point.as_ref()
-    }
-
-    /// Returns the exact algebraic solve path used to construct the control point.
-    pub const fn solve_path(&self) -> Option<BezierInterpolationSolvePath2> {
-        self.solve_path
-    }
-
-    /// Returns the exact replay path used to validate the materialized span.
-    pub const fn replay_path(&self) -> Option<BezierInterpolationReplayPath2> {
-        self.replay_path
-    }
-
-    /// Returns the replayed curve point at the interpolation parameter.
-    pub const fn replayed_midpoint(&self) -> Option<&Point2> {
-        self.replayed_midpoint.as_ref()
-    }
-
-    /// Returns the interpolation status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized interpolation attempts.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl QuadraticBezierMidpointInterpolationResult2 {
-    /// Returns the materialized quadratic Bezier span, if supported.
-    pub const fn curve(&self) -> Option<&QuadraticBezier2> {
-        self.curve.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized quadratic Bezier span, if any.
-    pub fn into_curve(self) -> Option<QuadraticBezier2> {
-        self.curve
-    }
-
-    /// Consumes this result and returns retained interpolation evidence.
-    pub fn into_report(self) -> QuadraticBezierMidpointInterpolationReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized span with its report.
-    pub fn into_parts(
-        self,
-    ) -> (
-        Option<QuadraticBezier2>,
-        QuadraticBezierMidpointInterpolationReport2,
-    ) {
-        (self.curve, self.report)
-    }
-
-    /// Returns retained interpolation evidence.
-    pub const fn report(&self) -> &QuadraticBezierMidpointInterpolationReport2 {
-        &self.report
-    }
-
-    /// Returns the interpolated span as a convenience classification.
-    pub fn curve_classification(&self) -> Classification<&QuadraticBezier2> {
-        match self.curve() {
-            Some(curve) => Classification::Decided(curve),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the interpolated span as a convenience classification.
-    pub fn into_curve_classification(self) -> Classification<QuadraticBezier2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_curve() {
-            Some(curve) => Classification::Decided(curve),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-impl QuadraticBezierPointInterpolationReport2 {
-    /// Returns the furthest exact interpolation stage reached.
-    pub const fn stage(&self) -> QuadraticBezierPointInterpolationStage2 {
-        self.stage
-    }
-
-    /// Returns the retained interpolation parameter.
-    pub const fn interpolation_parameter(&self) -> &Real {
-        &self.interpolation_parameter
-    }
-
-    /// Returns the exact start-point constraint.
-    pub const fn start_point(&self) -> &Point2 {
-        &self.start_point
-    }
-
-    /// Returns the exact interpolation point constraint.
-    pub const fn interpolation_point(&self) -> &Point2 {
-        &self.interpolation_point
-    }
-
-    /// Returns the exact end-point constraint.
-    pub const fn end_point(&self) -> &Point2 {
-        &self.end_point
-    }
-
-    /// Returns the solved quadratic control point, when materialized.
-    pub const fn solved_control_point(&self) -> Option<&Point2> {
-        self.solved_control_point.as_ref()
-    }
-
-    /// Returns the exact algebraic solve path used to construct the control point.
-    pub const fn solve_path(&self) -> Option<BezierInterpolationSolvePath2> {
-        self.solve_path
-    }
-
-    /// Returns the exact replay path used to validate the materialized span.
-    pub const fn replay_path(&self) -> Option<BezierInterpolationReplayPath2> {
-        self.replay_path
-    }
-
-    /// Returns the replayed curve point at the interpolation parameter.
-    pub const fn replayed_point(&self) -> Option<&Point2> {
-        self.replayed_point.as_ref()
-    }
-
-    /// Returns the interpolation status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized interpolation attempts.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl QuadraticBezierPointInterpolationResult2 {
-    /// Returns the materialized quadratic Bezier span, if supported.
-    pub const fn curve(&self) -> Option<&QuadraticBezier2> {
-        self.curve.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized quadratic Bezier span, if any.
-    pub fn into_curve(self) -> Option<QuadraticBezier2> {
-        self.curve
-    }
-
-    /// Consumes this result and returns retained interpolation evidence.
-    pub fn into_report(self) -> QuadraticBezierPointInterpolationReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized span with its report.
-    pub fn into_parts(
-        self,
-    ) -> (
-        Option<QuadraticBezier2>,
-        QuadraticBezierPointInterpolationReport2,
-    ) {
-        (self.curve, self.report)
-    }
-
-    /// Returns retained interpolation evidence.
-    pub const fn report(&self) -> &QuadraticBezierPointInterpolationReport2 {
-        &self.report
-    }
-
-    /// Returns the interpolated span as a convenience classification.
-    pub fn curve_classification(&self) -> Classification<&QuadraticBezier2> {
-        match self.curve() {
-            Some(curve) => Classification::Decided(curve),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the interpolated span as a convenience classification.
-    pub fn into_curve_classification(self) -> Classification<QuadraticBezier2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_curve() {
-            Some(curve) => Classification::Decided(curve),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-impl CubicBezierHermiteInterpolationReport2 {
-    /// Returns the furthest exact interpolation stage reached.
-    pub const fn stage(&self) -> CubicBezierHermiteInterpolationStage2 {
-        self.stage
-    }
-
-    /// Returns the exact start-point constraint.
-    pub const fn start_point(&self) -> &Point2 {
-        &self.start_point
-    }
-
-    /// Returns the exact start derivative constraint.
-    pub const fn start_tangent(&self) -> &EndpointTangent2 {
-        &self.start_tangent
-    }
-
-    /// Returns the exact end-point constraint.
-    pub const fn end_point(&self) -> &Point2 {
-        &self.end_point
-    }
-
-    /// Returns the exact end derivative constraint.
-    pub const fn end_tangent(&self) -> &EndpointTangent2 {
-        &self.end_tangent
-    }
-
-    /// Returns the solved first cubic control point, when materialized.
-    pub const fn solved_first_control_point(&self) -> Option<&Point2> {
-        self.solved_first_control_point.as_ref()
-    }
-
-    /// Returns the solved second cubic control point, when materialized.
-    pub const fn solved_second_control_point(&self) -> Option<&Point2> {
-        self.solved_second_control_point.as_ref()
-    }
-
-    /// Returns the exact algebraic solve path used to construct the control points.
-    pub const fn solve_path(&self) -> Option<BezierInterpolationSolvePath2> {
-        self.solve_path
-    }
-
-    /// Returns the exact replay path used to validate the materialized span.
-    pub const fn replay_path(&self) -> Option<BezierInterpolationReplayPath2> {
-        self.replay_path
-    }
-
-    /// Returns the replayed start derivative from the materialized cubic span.
-    pub const fn replayed_start_tangent(&self) -> Option<&EndpointTangent2> {
-        self.replayed_start_tangent.as_ref()
-    }
-
-    /// Returns the replayed end derivative from the materialized cubic span.
-    pub const fn replayed_end_tangent(&self) -> Option<&EndpointTangent2> {
-        self.replayed_end_tangent.as_ref()
-    }
-
-    /// Returns the interpolation status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized interpolation attempts.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl CubicBezierHermiteInterpolationResult2 {
-    /// Returns the materialized cubic Bezier span, if supported.
-    pub const fn curve(&self) -> Option<&CubicBezier2> {
-        self.curve.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized cubic Bezier span, if any.
-    pub fn into_curve(self) -> Option<CubicBezier2> {
-        self.curve
-    }
-
-    /// Consumes this result and returns retained interpolation evidence.
-    pub fn into_report(self) -> CubicBezierHermiteInterpolationReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized span with its report.
-    pub fn into_parts(self) -> (Option<CubicBezier2>, CubicBezierHermiteInterpolationReport2) {
-        (self.curve, self.report)
-    }
-
-    /// Returns retained interpolation evidence.
-    pub const fn report(&self) -> &CubicBezierHermiteInterpolationReport2 {
-        &self.report
-    }
-
-    /// Returns the interpolated span as a convenience classification.
-    pub fn curve_classification(&self) -> Classification<&CubicBezier2> {
-        match self.curve() {
-            Some(curve) => Classification::Decided(curve),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the interpolated span as a convenience classification.
-    pub fn into_curve_classification(self) -> Classification<CubicBezier2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_curve() {
-            Some(curve) => Classification::Decided(curve),
-            None => Classification::Uncertain(blocker),
-        }
     }
 }
 
@@ -564,46 +99,8 @@ impl QuadraticBezier2 {
         end: Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        let result =
-            Self::interpolate_point_at_parameter_with_report(start, t, point, end, policy)?;
-        let blocker = result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match result.into_curve() {
-            Some(curve) => Ok(Classification::Decided(curve)),
-            None => Ok(Classification::Uncertain(blocker)),
-        }
-    }
-
-    /// Constructs the exact quadratic Bezier span through `point` at parameter `t`.
-    ///
-    /// The returned report records domain validation, the exact constraint
-    /// points, retained parameter, solved control point, and replayed image.
-    pub fn interpolate_point_at_parameter_with_report(
-        start: Point2,
-        t: Real,
-        point: Point2,
-        end: Point2,
-        policy: &CurvePolicy,
-    ) -> CurveResult<QuadraticBezierPointInterpolationResult2> {
-        if let Some((status, blocker)) = quadratic_interpolation_parameter_blocker(&t, policy) {
-            return Ok(QuadraticBezierPointInterpolationResult2 {
-                curve: None,
-                report: QuadraticBezierPointInterpolationReport2 {
-                    stage: QuadraticBezierPointInterpolationStage2::ParameterValidation,
-                    interpolation_parameter: t,
-                    start_point: start,
-                    interpolation_point: point,
-                    end_point: end,
-                    solved_control_point: None,
-                    solve_path: None,
-                    replay_path: None,
-                    replayed_point: None,
-                    status,
-                    blocker: Some(blocker),
-                },
-            });
+        if let Some(blocker) = quadratic_interpolation_parameter_blocker(&t, policy) {
+            return Ok(Classification::Uncertain(blocker));
         }
 
         let one_minus_t = Real::one() - &t;
@@ -617,26 +114,11 @@ impl QuadraticBezier2 {
             / denominator.clone())?;
         let control_y =
             (((point_y - &(start.y() * &start_weight)) - &(end.y() * &end_weight)) / denominator)?;
-        let control = Point2::new(control_x, control_y);
-        let curve = Self::new(start.clone(), control.clone(), end.clone());
-        let replayed_point = curve.point_at(t.clone());
-
-        Ok(QuadraticBezierPointInterpolationResult2 {
-            curve: Some(curve),
-            report: QuadraticBezierPointInterpolationReport2 {
-                stage: QuadraticBezierPointInterpolationStage2::SegmentMaterialization,
-                interpolation_parameter: t,
-                start_point: start,
-                interpolation_point: point,
-                end_point: end,
-                solved_control_point: Some(control),
-                solve_path: Some(BezierInterpolationSolvePath2::QuadraticBernsteinInteriorPoint),
-                replay_path: Some(BezierInterpolationReplayPath2::ExactEvaluationReplay),
-                replayed_point: Some(replayed_point),
-                status: RetainedTopologyStatus::NativeExact,
-                blocker: None,
-            },
-        })
+        Ok(Classification::Decided(Self::new(
+            start,
+            Point2::new(control_x, control_y),
+            end,
+        )))
     }
 
     /// Constructs the exact quadratic Bezier span through `midpoint` at `t = 1/2`.
@@ -645,50 +127,19 @@ impl QuadraticBezier2 {
     /// `B(1/2) = (start + 2 * control + end) / 4` exactly over [`Real`], then
     /// replays the retained midpoint constraint against the materialized curve.
     pub fn interpolate_midpoint(start: Point2, midpoint: Point2, end: Point2) -> CurveResult<Self> {
-        Self::interpolate_midpoint_with_report(start, midpoint, end).map(|result| {
-            result
-                .into_curve()
-                .expect("exact midpoint interpolation materializes")
-        })
-    }
-
-    /// Constructs the exact quadratic Bezier span through `midpoint` at `t = 1/2`.
-    ///
-    /// The returned report records the exact constraint points, retained
-    /// parameter, solved control point, and replayed midpoint image.
-    pub fn interpolate_midpoint_with_report(
-        start: Point2,
-        midpoint: Point2,
-        end: Point2,
-    ) -> CurveResult<QuadraticBezierMidpointInterpolationResult2> {
         let two = Real::from(2_i8);
         let half = (Real::one() / two.clone())?;
-        let result = Self::interpolate_point_at_parameter_with_report(
-            start.clone(),
+        let Classification::Decided(curve) = Self::interpolate_point_at_parameter(
+            start,
             half,
-            midpoint.clone(),
-            end.clone(),
+            midpoint,
+            end,
             &CurvePolicy::certified(),
-        )?;
-        let control = result.report().solved_control_point().cloned();
-        let replayed_midpoint = result.report().replayed_point().cloned();
-
-        Ok(QuadraticBezierMidpointInterpolationResult2 {
-            curve: result.into_curve(),
-            report: QuadraticBezierMidpointInterpolationReport2 {
-                stage: QuadraticBezierMidpointInterpolationStage2::SegmentMaterialization,
-                interpolation_parameter: (Real::one() / two)?,
-                start_point: start,
-                midpoint_constraint: midpoint,
-                end_point: end,
-                solved_control_point: control,
-                solve_path: Some(BezierInterpolationSolvePath2::QuadraticBernsteinMidpoint),
-                replay_path: Some(BezierInterpolationReplayPath2::ExactEvaluationReplay),
-                replayed_midpoint,
-                status: RetainedTopologyStatus::NativeExact,
-                blocker: None,
-            },
-        })
+        )?
+        else {
+            unreachable!("the exact half parameter is strictly interior")
+        };
+        Ok(curve)
     }
 
     /// Returns the start point.
@@ -820,26 +271,6 @@ impl CubicBezier2 {
         end: Point2,
         end_tangent: EndpointTangent2,
     ) -> CurveResult<Self> {
-        Self::interpolate_hermite_with_report(start, start_tangent, end, end_tangent).map(
-            |result| {
-                result
-                    .into_curve()
-                    .expect("exact cubic Hermite interpolation materializes")
-            },
-        )
-    }
-
-    /// Constructs the exact cubic Bezier span with retained endpoint derivatives.
-    ///
-    /// The returned report records the endpoint constraints, solved Bezier
-    /// control points, and replayed endpoint derivatives from the materialized
-    /// cubic span.
-    pub fn interpolate_hermite_with_report(
-        start: Point2,
-        start_tangent: EndpointTangent2,
-        end: Point2,
-        end_tangent: EndpointTangent2,
-    ) -> CurveResult<CubicBezierHermiteInterpolationResult2> {
         let three = Real::from(3_i8);
         let first_control_dx = (start_tangent.dx() / three.clone())?;
         let first_control_dy = (start_tangent.dy() / three.clone())?;
@@ -847,33 +278,7 @@ impl CubicBezier2 {
         let second_control_dy = (end_tangent.dy() / three)?;
         let control1 = start.translated(first_control_dx, first_control_dy);
         let control2 = end.translated(-second_control_dx, -second_control_dy);
-        let curve = Self::new(
-            start.clone(),
-            control1.clone(),
-            control2.clone(),
-            end.clone(),
-        );
-        let replayed_start_tangent = curve.endpoint_tangent(BezierEndpoint::Start);
-        let replayed_end_tangent = curve.endpoint_tangent(BezierEndpoint::End);
-
-        Ok(CubicBezierHermiteInterpolationResult2 {
-            curve: Some(curve),
-            report: CubicBezierHermiteInterpolationReport2 {
-                stage: CubicBezierHermiteInterpolationStage2::SegmentMaterialization,
-                start_point: start,
-                start_tangent,
-                end_point: end,
-                end_tangent,
-                solved_first_control_point: Some(control1),
-                solved_second_control_point: Some(control2),
-                solve_path: Some(BezierInterpolationSolvePath2::CubicHermiteEndpointDerivatives),
-                replay_path: Some(BezierInterpolationReplayPath2::ExactEvaluationReplay),
-                replayed_start_tangent: Some(replayed_start_tangent),
-                replayed_end_tangent: Some(replayed_end_tangent),
-                status: RetainedTopologyStatus::NativeExact,
-                blocker: None,
-            },
-        })
+        Ok(Self::new(start, control1, control2, end))
     }
 
     /// Returns the start point.
@@ -993,26 +398,17 @@ fn point_equals_at_parameter(
 fn quadratic_interpolation_parameter_blocker(
     t: &Real,
     policy: &CurvePolicy,
-) -> Option<(RetainedTopologyStatus, UncertaintyReason)> {
+) -> Option<UncertaintyReason> {
     let zero = Real::zero();
     let one = Real::one();
     let Some(lower) = compare_reals(t, &zero, policy) else {
-        return Some((
-            RetainedTopologyStatus::Unresolved,
-            UncertaintyReason::Ordering,
-        ));
+        return Some(UncertaintyReason::Ordering);
     };
     let Some(upper) = compare_reals(t, &one, policy) else {
-        return Some((
-            RetainedTopologyStatus::Unresolved,
-            UncertaintyReason::Ordering,
-        ));
+        return Some(UncertaintyReason::Ordering);
     };
     if !matches!(lower, Ordering::Greater) || !matches!(upper, Ordering::Less) {
-        return Some((
-            RetainedTopologyStatus::Unsupported,
-            UncertaintyReason::Boundary,
-        ));
+        return Some(UncertaintyReason::Boundary);
     }
     None
 }

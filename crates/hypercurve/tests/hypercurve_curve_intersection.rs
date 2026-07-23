@@ -5,9 +5,9 @@ use hypercurve::{
 };
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
-    CurveGeometry2, CurvePath2, CurvePathOverlapAction2, CurvePolicy, CurveSource2, LineSeg2,
-    Point2, RationalBezier2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, Real,
+    CurveGeometry2, CurvePath2, CurvePathOverlapAction2, CurvePolicy, LineSeg2, Point2,
+    RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    Real,
 };
 
 fn r(value: i32) -> Real {
@@ -40,30 +40,20 @@ fn assert_real_close(left: &Real, right: &Real, tolerance: f64) {
 
 #[test]
 fn top_level_rational_intersection_retains_sources_and_shared_report() {
-    let first_source = CurveSource2::with_version(100, 3);
-    let first = Curve2::with_source(
-        CurveGeometry2::RationalBezier(
-            RationalBezier2::try_new(
-                vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
-                vec![r(1), r(1), r(1)],
-            )
-            .unwrap(),
-        ),
-        first_source,
-    )
-    .unwrap();
-    let second_source = CurveSource2::with_version(101, 4);
-    let second = Curve2::with_source(
-        CurveGeometry2::RationalBezier(
-            RationalBezier2::try_new(
-                vec![Point2::new(r(0), q(1, 4)), Point2::new(r(1), q(1, 4))],
-                vec![r(1), r(1)],
-            )
-            .unwrap(),
-        ),
-        second_source,
-    )
-    .unwrap();
+    let first = Curve2::new(CurveGeometry2::RationalBezier(
+        RationalBezier2::try_new(
+            vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
+            vec![r(1), r(1), r(1)],
+        )
+        .unwrap(),
+    ));
+    let second = Curve2::new(CurveGeometry2::RationalBezier(
+        RationalBezier2::try_new(
+            vec![Point2::new(r(0), q(1, 4)), Point2::new(r(1), q(1, 4))],
+            vec![r(1), r(1)],
+        )
+        .unwrap(),
+    ));
 
     let prepared = first
         .try_prepare_intersection(&second, &CurvePolicy::certified())
@@ -80,8 +70,6 @@ fn top_level_rational_intersection_retains_sources_and_shared_report() {
     assert_eq!(report.contacts().len(), 1);
     assert!(report.blockers().is_empty());
     let contact = &report.contacts()[0];
-    assert_eq!(contact.first().provenance().source(), Some(first_source));
-    assert_eq!(contact.second().provenance().source(), Some(second_source));
     assert_eq!(contact.first().exact_curve_parameter(), Some(q(1, 2)));
     assert_eq!(contact.second().exact_curve_parameter(), Some(q(1, 2)));
     assert!(matches!(
@@ -103,13 +91,11 @@ fn top_level_rational_intersection_retains_sources_and_shared_report() {
 
 #[test]
 fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
-    let source = CurveSource2::new(110);
     let spline = Curve2::try_nurbs(
         1,
         vec![p(0, 0), p(1, 1), p(2, 0)],
         vec![r(1), r(1), r(1)],
         vec![r(0), r(0), r(1), r(2), r(2)],
-        Some(source),
     )
     .unwrap();
     let line = Curve2::from(LineSeg2::try_new(p(0, 1), p(2, 1)).unwrap());
@@ -123,7 +109,6 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
     assert_eq!(report.contacts().len(), 1, "{report:?}");
     let contact = &report.contacts()[0];
     assert_eq!(contact.first().exact_curve_parameter(), Some(r(1)));
-    assert_eq!(contact.first().provenance().source(), Some(source));
     assert_eq!(contact.second().exact_curve_parameter(), Some(q(1, 2)));
     let topology = prepared.topology_view().unwrap();
     assert_eq!(topology.first().len(), 2);
@@ -208,16 +193,8 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
             .subcurve_between_exact(&q(1, 4), &Real::one(), &policy)
             .unwrap(),
     );
-    let first = Curve2::with_source(
-        CurveGeometry2::RationalBezier(first_curve),
-        CurveSource2::new(120),
-    )
-    .unwrap();
-    let second = Curve2::with_source(
-        CurveGeometry2::RationalBezier(second_curve),
-        CurveSource2::new(121),
-    )
-    .unwrap();
+    let first = Curve2::new(CurveGeometry2::RationalBezier(first_curve));
+    let second = Curve2::new(CurveGeometry2::RationalBezier(second_curve));
 
     let prepared = first.try_prepare_intersection(&second, &policy).unwrap();
     let report = prepared.report_view().unwrap();
@@ -244,25 +221,17 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
 #[test]
 #[cfg(feature = "predicates")]
 fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
-    let first = Curve2::with_source(
-        CurveGeometry2::RationalBezier(
-            RationalBezier2::try_new(
-                vec![p(0, 0), Point2::new(q(1, 4), r(0)), p(1, 0)],
-                vec![r(1), r(1), r(1)],
-            )
+    let first = Curve2::new(CurveGeometry2::RationalBezier(
+        RationalBezier2::try_new(
+            vec![p(0, 0), Point2::new(q(1, 4), r(0)), p(1, 0)],
+            vec![r(1), r(1), r(1)],
+        )
+        .unwrap(),
+    ));
+    let second = Curve2::new(CurveGeometry2::RationalBezier(
+        RationalBezier2::try_new(vec![Point2::new(q(1, 2), r(0)), p(1, 0)], vec![r(1), r(1)])
             .unwrap(),
-        ),
-        CurveSource2::new(126),
-    )
-    .unwrap();
-    let second = Curve2::with_source(
-        CurveGeometry2::RationalBezier(
-            RationalBezier2::try_new(vec![Point2::new(q(1, 2), r(0)), p(1, 0)], vec![r(1), r(1)])
-                .unwrap(),
-        ),
-        CurveSource2::new(127),
-    )
-    .unwrap();
+    ));
 
     let prepared = first
         .try_prepare_intersection(&second, &CurvePolicy::certified())
@@ -307,17 +276,13 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
 #[test]
 #[cfg(feature = "predicates")]
 fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
-    let parameterized_bottom = Curve2::with_source(
-        CurveGeometry2::RationalBezier(
-            RationalBezier2::try_new(
-                vec![p(0, 0), Point2::new(q(1, 4), r(0)), p(1, 0)],
-                vec![r(1), r(1), r(1)],
-            )
-            .unwrap(),
-        ),
-        CurveSource2::new(128),
-    )
-    .unwrap();
+    let parameterized_bottom = Curve2::new(CurveGeometry2::RationalBezier(
+        RationalBezier2::try_new(
+            vec![p(0, 0), Point2::new(q(1, 4), r(0)), p(1, 0)],
+            vec![r(1), r(1), r(1)],
+        )
+        .unwrap(),
+    ));
     let first = CurvePath2::try_new(vec![
         parameterized_bottom,
         Curve2::from(LineSeg2::try_new(p(1, 0), p(1, 1)).unwrap()),
@@ -363,21 +328,17 @@ fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
 #[test]
 #[cfg(feature = "predicates")]
 fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
-    let partial_parabola = Curve2::with_source(
-        CurveGeometry2::RationalBezier(
-            RationalBezier2::try_new(
-                vec![
-                    Point2::new(q(1, 2), q(1, 4)),
-                    Point2::new(q(3, 4), q(1, 2)),
-                    p(1, 1),
-                ],
-                vec![r(1), r(1), r(1)],
-            )
-            .unwrap(),
-        ),
-        CurveSource2::new(129),
-    )
-    .unwrap();
+    let partial_parabola = Curve2::new(CurveGeometry2::RationalBezier(
+        RationalBezier2::try_new(
+            vec![
+                Point2::new(q(1, 2), q(1, 4)),
+                Point2::new(q(3, 4), q(1, 2)),
+                p(1, 1),
+            ],
+            vec![r(1), r(1), r(1)],
+        )
+        .unwrap(),
+    ));
     let nonlinear_parabola = RationalBezier2::try_new(
         vec![
             p(0, 0),
@@ -395,11 +356,9 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
     ])
     .unwrap();
     let second = CurvePath2::try_new(vec![
-        Curve2::with_source(
-            CurveGeometry2::RationalBezier(nonlinear_parabola.reversed()),
-            CurveSource2::new(130),
-        )
-        .unwrap(),
+        Curve2::new(CurveGeometry2::RationalBezier(
+            nonlinear_parabola.reversed(),
+        )),
         Curve2::from(LineSeg2::try_new(p(0, 0), p(0, -1)).unwrap()),
         Curve2::from(LineSeg2::try_new(p(0, -1), p(1, -1)).unwrap()),
         Curve2::from(LineSeg2::try_new(p(1, -1), p(1, 1)).unwrap()),
@@ -427,39 +386,20 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
     assert_eq!(selection.overlap_resolutions().len(), 1);
     assert_eq!(selection.traversal_view().unwrap().closed_count(), 1);
     let region = selection.region_view().unwrap();
-    let provenance = region
-        .fragment_provenance()
-        .expect("top-level curved Boolean retains authored fragment lineage");
-    assert_eq!(provenance.len(), selection.kept_fragment_count());
-    assert!(
-        provenance
-            .iter()
-            .enumerate()
-            .all(|(index, source)| source.arrangement_fragment_index() == index)
-    );
-    assert!(provenance.iter().any(|source| {
-        source.family() == hypercurve::CurveFamily2::RationalBezier
-            && source.span().source() == Some(CurveSource2::new(130))
-    }));
-    assert!(
-        provenance.iter().any(|source| {
-            source.operand() == Some(hypercurve::CurvePathBooleanOperand2::First)
-        })
-    );
-    assert!(
-        provenance.iter().any(|source| {
-            source.operand() == Some(hypercurve::CurvePathBooleanOperand2::Second)
-        })
-    );
+    assert!(matches!(
+        region.materialized_boundary_paths().unwrap(),
+        Classification::Uncertain(_)
+    ));
 }
 
 #[test]
 fn top_level_polynomial_trims_reuse_certified_source_lineage() {
-    let source = Curve2::with_source(
-        CurveGeometry2::CubicBezier(CubicBezier2::new(p(0, 0), p(1, 3), p(3, 3), p(4, 0))),
-        CurveSource2::new(123),
-    )
-    .unwrap();
+    let source = Curve2::new(CurveGeometry2::CubicBezier(CubicBezier2::new(
+        p(0, 0),
+        p(1, 3),
+        p(3, 3),
+        p(4, 0),
+    )));
     let first = source.subcurve(Real::zero(), q(3, 4)).unwrap();
     let second = source.subcurve(q(1, 4), Real::one()).unwrap();
 
@@ -509,34 +449,6 @@ fn top_level_disjoint_curves_produce_a_complete_empty_report() {
     assert!(report.is_disjoint());
     assert!(report.contacts().is_empty());
     assert!(report.blockers().is_empty());
-}
-
-#[test]
-fn top_level_contact_distinguishes_trim_parameter_from_root_source_parameter() {
-    let source = CurveSource2::new(122);
-    let root = Curve2::with_source(
-        CurveGeometry2::Line(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
-        source,
-    )
-    .unwrap();
-    let trimmed = root.subcurve(q(1, 4), q(3, 4)).unwrap();
-    let cutter = Curve2::from(
-        LineSeg2::try_new(Point2::new(q(3, 2), r(-1)), Point2::new(q(3, 2), r(1))).unwrap(),
-    );
-
-    let report = trimmed
-        .try_prepare_intersection(&cutter, &CurvePolicy::certified())
-        .unwrap()
-        .report()
-        .unwrap();
-    assert_eq!(report.contacts().len(), 1);
-    let parameter = report.contacts()[0].first();
-    assert_eq!(parameter.exact_curve_parameter(), Some(q(1, 4)));
-    assert_eq!(parameter.exact_source_parameter(), Some(q(3, 8)));
-    assert_eq!(
-        parameter.provenance().source_parameter_range(),
-        (&q(1, 4), &q(3, 4))
-    );
 }
 
 #[test]
@@ -620,8 +532,6 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
     assert_eq!(report.contacts().len(), 2);
     assert_eq!(report.overlaps().len(), 1);
     let overlap = &report.overlaps()[0];
-    assert_eq!(overlap.first().source_span_index(), Some(0));
-    assert_eq!(overlap.second().source_span_index(), Some(0));
     assert_ne!(overlap.first_range().start(), &Real::zero());
     assert_eq!(overlap.first_range().end(), &Real::one());
     assert_eq!(overlap.second_range().start(), &Real::zero());
@@ -751,11 +661,12 @@ fn closed_under_curve(curve: Curve2, lower_y: i32) -> CurvePath2 {
 #[test]
 fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
     let policy = CurvePolicy::certified();
-    let source = Curve2::with_source(
-        CurveGeometry2::CubicBezier(CubicBezier2::new(p(0, 0), p(1, 3), p(3, 3), p(4, 0))),
-        CurveSource2::new(130),
-    )
-    .unwrap();
+    let source = Curve2::new(CurveGeometry2::CubicBezier(CubicBezier2::new(
+        p(0, 0),
+        p(1, 3),
+        p(3, 3),
+        p(4, 0),
+    )));
     let first_curve = source.subcurve(Real::zero(), q(3, 4)).unwrap();
     let second_curve = source.subcurve(q(1, 4), Real::one()).unwrap();
     let first = closed_under_curve(first_curve, -5);
@@ -1068,7 +979,6 @@ fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
         )
         .unwrap();
     assert_eq!(direct.signed_area().unwrap(), Some(r(7)));
-    assert!(direct.fragment_provenance().is_some());
 }
 
 #[test]
@@ -1278,14 +1188,6 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
             Classification::Decided(RegionPointLocation::Boundary),
             "{operation:?} retained algebraic boundary"
         );
-        assert!(
-            region
-                .fragment_provenance()
-                .expect("curved Boolean result keeps authored lineage")
-                .iter()
-                .any(|source| source.reversed())
-        );
-
         let transformed = region
             .transform_affine(
                 &r(-2),
@@ -1298,7 +1200,6 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
             )
             .unwrap_or_else(|error| panic!("{operation:?} affine transform: {error:?}"));
         assert!(transformed.has_algebraic_fragments());
-        assert!(transformed.fragment_provenance().is_some());
         for (point, expected) in [
             (p(7, 2), RegionPointLocation::Inside),
             (p(7, 8), RegionPointLocation::Outside),
@@ -1366,7 +1267,6 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
                 2,
                 controls.to_vec(),
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-                None,
             )
             .unwrap(),
         ),
@@ -1377,7 +1277,6 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
                 controls.to_vec(),
                 vec![r(1); 3],
                 vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-                None,
             )
             .unwrap(),
         ),
@@ -1406,21 +1305,13 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
             BooleanOp::Difference,
             BooleanOp::Xor,
         ] {
-            let region = prepared
+            let _region = prepared
                 .boolean_region(
                     operation,
                     CurveBoundaryInteriorSide2::Left,
                     CurveBoundaryInteriorSide2::Left,
                 )
                 .unwrap_or_else(|error| panic!("{family:?} {operation:?}: {error:?}"));
-            assert!(
-                region
-                    .fragment_provenance()
-                    .unwrap()
-                    .iter()
-                    .any(|provenance| provenance.family() == family),
-                "{family:?} {operation:?} lost the source family"
-            );
         }
     }
 }

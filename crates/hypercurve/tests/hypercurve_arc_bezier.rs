@@ -1,6 +1,6 @@
 use hypercurve::{
     BezierSubcurve2, CircularArc2, Classification, Curve2, CurveGeometry2, CurvePath2, CurvePolicy,
-    CurveSource2, LineSeg2, Point2, Real,
+    LineSeg2, Point2, Real,
 };
 use hyperreal::RealSign;
 use std::cmp::Ordering;
@@ -244,14 +244,9 @@ fn sweep_fraction_orders_full_circle_cardinal_points_exactly() {
 
 #[test]
 fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
-    let source = CurveSource2::with_version(70, 4);
-    let arc = Curve2::with_source(
-        CurveGeometry2::CircularArc(
-            CircularArc2::try_from_center(p(-1, 0), p(1, 0), p(0, 0), false).unwrap(),
-        ),
-        source,
-    )
-    .unwrap();
+    let arc = Curve2::new(CurveGeometry2::CircularArc(
+        CircularArc2::try_from_center(p(-1, 0), p(1, 0), p(0, 0), false).unwrap(),
+    ));
     let clone = arc.clone();
     let fragments = arc.native_bezier_fragments().unwrap();
 
@@ -265,9 +260,6 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
             .iter()
             .all(|fragment| matches!(fragment.curve(), BezierSubcurve2::RationalQuadratic(_)))
     );
-    assert_eq!(fragments[0].provenance().source(), Some(source));
-    assert_eq!(fragments[0].provenance().source_span_index(), Some(0));
-    assert_eq!(fragments[1].provenance().source_span_index(), Some(1));
     assert_eq!(arc.point_at(&half()).unwrap(), p(0, -1));
 
     let closing = Curve2::from(LineSeg2::try_new(p(1, 0), p(-1, 0)).unwrap());

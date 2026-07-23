@@ -7,8 +7,8 @@ use std::rc::Rc;
 use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
     BezierSubcurve2, Classification, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2,
-    CurveParameterSide2, CurvePolicy, CurveSource2, ExactCurveError, ExactCurveResult, NurbsCurve2,
-    Point2, PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBezier2, Real,
+    CurveParameterSide2, CurvePolicy, ExactCurveError, ExactCurveResult, NurbsCurve2, Point2,
+    PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBezier2, Real,
     Similarity2, SplinePeriodicity2, UncertaintyReason,
 };
 
@@ -17,7 +17,6 @@ type Cached<T> = Result<T, ExactCurveError>;
 #[derive(Debug)]
 struct PolynomialSplineData2 {
     retained: PolynomialBSplineCurve2,
-    source: Option<CurveSource2>,
     endpoints: SplineEndpoints2,
     decomposition: OnceCell<Cached<PolynomialSplineBezierDecomposition2>>,
     rational_spans: OnceCell<Cached<Vec<RationalBezier2>>>,
@@ -49,7 +48,6 @@ pub struct PolynomialSplineBezierDecomposition2 {
 #[derive(Clone, Copy, Debug)]
 pub struct PolynomialSplineBezierSpanView2<'a> {
     span_index: usize,
-    source: Option<CurveSource2>,
     curve: &'a BezierSubcurve2,
     interval: &'a (Real, Real),
 }
@@ -61,17 +59,7 @@ impl PolynomialSplineCurve2 {
         control_points: Vec<Point2>,
         knots: Vec<Real>,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_with_optional_source(degree, control_points, knots, None)
-    }
-
-    /// Constructs a polynomial B-spline with stable source provenance.
-    pub fn try_new_with_source(
-        degree: usize,
-        control_points: Vec<Point2>,
-        knots: Vec<Real>,
-        source: CurveSource2,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_with_optional_source(degree, control_points, knots, Some(source))
+        Self::try_new_with_optional_source(degree, control_points, knots)
     }
 
     /// Constructs a periodic polynomial B-spline from one period of controls and knots.
@@ -80,42 +68,24 @@ impl PolynomialSplineCurve2 {
         control_points: Vec<Point2>,
         period_knots: Vec<Real>,
     ) -> ExactCurveResult<Self> {
-        Self::try_new_periodic_with_optional_source(degree, control_points, period_knots, None)
-    }
-
-    /// Constructs a periodic polynomial B-spline with stable source provenance.
-    pub fn try_new_periodic_with_source(
-        degree: usize,
-        control_points: Vec<Point2>,
-        period_knots: Vec<Real>,
-        source: CurveSource2,
-    ) -> ExactCurveResult<Self> {
-        Self::try_new_periodic_with_optional_source(
-            degree,
-            control_points,
-            period_knots,
-            Some(source),
-        )
+        Self::try_new_periodic_with_optional_source(degree, control_points, period_knots)
     }
 
     fn try_new_periodic_with_optional_source(
         degree: usize,
         control_points: Vec<Point2>,
         period_knots: Vec<Real>,
-        source: Option<CurveSource2>,
     ) -> ExactCurveResult<Self> {
         let expansion = expand_periodic_spline(
             degree,
             control_points,
             period_knots,
             CurveFamily2::PolynomialBSpline,
-            source,
         )?;
         Self::try_new_expanded(
             degree,
             expansion.control_points,
             expansion.knots,
-            source,
             SplinePeriodicity2::Periodic {
                 period: expansion.period,
             },
@@ -126,13 +96,11 @@ impl PolynomialSplineCurve2 {
         degree: usize,
         control_points: Vec<Point2>,
         knots: Vec<Real>,
-        source: Option<CurveSource2>,
     ) -> ExactCurveResult<Self> {
         Self::try_new_expanded(
             degree,
             control_points,
             knots,
-            source,
             SplinePeriodicity2::NonPeriodic,
         )
     }
@@ -141,7 +109,6 @@ impl PolynomialSplineCurve2 {
         degree: usize,
         control_points: Vec<Point2>,
         knots: Vec<Real>,
-        source: Option<CurveSource2>,
         periodicity: SplinePeriodicity2,
     ) -> ExactCurveResult<Self> {
         let valid_layout = degree
@@ -159,7 +126,6 @@ impl PolynomialSplineCurve2 {
             return Err(ExactCurveError::invalid(
                 CurveOperation2::Construction,
                 CurveFamily2::PolynomialBSpline,
-                source,
                 CurveError::InvalidBSpline,
             ));
         }
@@ -172,23 +138,20 @@ impl PolynomialSplineCurve2 {
                 &CurvePolicy::certified(),
             ),
             CurveOperation2::Construction,
-            source,
         )?;
         let decomposition = OnceCell::new();
         let endpoints = if has_clamped_endpoints(
             retained.knots(),
             retained.degree(),
             retained.control_points().len(),
-            source,
         )? {
             SplineEndpoints2::AuthoredControls
         } else {
             let extraction = exact_value(
                 retained.extract_bezier_spans(&CurvePolicy::certified()),
                 CurveOperation2::Construction,
-                source,
             )?;
-            let intervals = source_intervals(&extraction, source)?;
+            let intervals = source_intervals(&extraction)?;
             let start = extraction
                 .spans()
                 .first()
@@ -212,7 +175,6 @@ impl PolynomialSplineCurve2 {
         let curve = Self {
             data: Rc::new(PolynomialSplineData2 {
                 retained,
-                source,
                 endpoints,
                 decomposition,
                 rational_spans: OnceCell::new(),
@@ -277,11 +239,6 @@ impl PolynomialSplineCurve2 {
         }
     }
 
-    /// Returns retained source identity when supplied by the caller.
-    pub fn source(&self) -> Option<CurveSource2> {
-        self.data.source
-    }
-
     /// Inserts one exact knot without changing the polynomial spline image.
     pub fn insert_knot(&self, knot: Real) -> ExactCurveResult<Self> {
         let refined = self
@@ -336,7 +293,6 @@ impl PolynomialSplineCurve2 {
             self.degree(),
             control_points,
             knots,
-            self.data.source,
             self.periodicity().clone(),
         )
         .map_err(|error| remap_spline_operation(error, CurveOperation2::Reversal))
@@ -351,7 +307,6 @@ impl PolynomialSplineCurve2 {
                 .map(|point| transform.transform_point(point))
                 .collect(),
             self.knots().to_vec(),
-            self.data.source,
             self.periodicity().clone(),
         )
         .map_err(|error| remap_spline_operation(error, CurveOperation2::Transformation))
@@ -375,9 +330,8 @@ impl PolynomialSplineCurve2 {
                     .retained
                     .extract_bezier_spans(&CurvePolicy::certified()),
                 CurveOperation2::BezierDecomposition,
-                self.data.source,
             )?;
-            let intervals = source_intervals(&extraction, self.data.source)?;
+            let intervals = source_intervals(&extraction)?;
             Ok(PolynomialSplineBezierDecomposition2 {
                 extraction,
                 intervals,
@@ -389,7 +343,6 @@ impl PolynomialSplineCurve2 {
     pub fn bezier_spans(
         &self,
     ) -> ExactCurveResult<impl ExactSizeIterator<Item = PolynomialSplineBezierSpanView2<'_>>> {
-        let source = self.data.source;
         let decomposition = self.bezier_decomposition()?;
         Ok(decomposition
             .spans()
@@ -399,7 +352,6 @@ impl PolynomialSplineCurve2 {
             .map(
                 move |(span_index, (curve, interval))| PolynomialSplineBezierSpanView2 {
                     span_index,
-                    source,
                     curve,
                     interval,
                 },
@@ -427,7 +379,7 @@ impl PolynomialSplineCurve2 {
             if side == CurveParameterSide2::Right {
                 return Ok(right);
             }
-            return matching_spline_point(left, right, self.data.source);
+            return matching_spline_point(left, right);
         }
         self.point_at_canonical_side(parameter, side)
     }
@@ -451,7 +403,6 @@ impl PolynomialSplineCurve2 {
             self.periodicity(),
             side,
             CurveFamily2::PolynomialBSpline,
-            self.data.source,
         )?;
         self.point_at_side(&wrapped, side)
     }
@@ -462,15 +413,13 @@ impl PolynomialSplineCurve2 {
         side: CurveParameterSide2,
     ) -> ExactCurveResult<Point2> {
         let decomposition = self.bezier_decomposition()?;
-        let (first, last) =
-            select_span_indices(decomposition.intervals(), parameter, self.data.source)?;
+        let (first, last) = select_span_indices(decomposition.intervals(), parameter)?;
         let first_interval = &decomposition.intervals()[first];
         let first_point = evaluate_span(
             &decomposition.spans()[first],
             &first_interval.0,
             &first_interval.1,
             parameter,
-            self.data.source,
         )?;
         if first == last || side == CurveParameterSide2::Left {
             return Ok(first_point);
@@ -481,12 +430,11 @@ impl PolynomialSplineCurve2 {
             &last_interval.0,
             &last_interval.1,
             parameter,
-            self.data.source,
         )?;
         if side == CurveParameterSide2::Right {
             return Ok(last_point);
         }
-        matching_spline_point(first_point, last_point, self.data.source)
+        matching_spline_point(first_point, last_point)
     }
 
     /// Evaluates the exact first derivative in the authored knot parameter.
@@ -553,7 +501,7 @@ impl PolynomialSplineCurve2 {
             if side == CurveParameterSide2::Right {
                 return Ok(right);
             }
-            return matching_spline_derivatives(left, right, self.data.source);
+            return matching_spline_derivatives(left, right);
         }
         self.derivatives_at_canonical_side(parameter, max_order, side)
     }
@@ -582,7 +530,6 @@ impl PolynomialSplineCurve2 {
             self.periodicity(),
             side,
             CurveFamily2::PolynomialBSpline,
-            self.data.source,
         )?;
         self.derivatives_at_side(&wrapped, max_order, side)
     }
@@ -594,8 +541,7 @@ impl PolynomialSplineCurve2 {
         side: CurveParameterSide2,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition = self.bezier_decomposition()?;
-        let (first, last) =
-            select_span_indices(decomposition.intervals(), parameter, self.data.source)?;
+        let (first, last) = select_span_indices(decomposition.intervals(), parameter)?;
         let first_derivatives = self.derivatives_on_span(first, parameter, max_order)?;
         if first == last || side == CurveParameterSide2::Left {
             return Ok(first_derivatives);
@@ -604,7 +550,7 @@ impl PolynomialSplineCurve2 {
         if side == CurveParameterSide2::Right {
             return Ok(last_derivatives);
         }
-        matching_spline_derivatives(first_derivatives, last_derivatives, self.data.source)
+        matching_spline_derivatives(first_derivatives, last_derivatives)
     }
 
     fn derivatives_on_span(
@@ -614,24 +560,24 @@ impl PolynomialSplineCurve2 {
         max_order: usize,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let interval = &self.bezier_decomposition()?.intervals()[span_index];
-        let local = local_span_parameter(interval, parameter, self.data.source)?;
+        let local = local_span_parameter(interval, parameter)?;
         let evaluator = &self.rational_spans()?[span_index];
         let local_derivatives = if max_order == 1 {
-            vec![exact_classification(
-                evaluator.derivative_at_classified(&local, &CurvePolicy::certified()),
-                self.data.source,
-            )?]
+            vec![exact_classification(evaluator.derivative_at_classified(
+                &local,
+                &CurvePolicy::certified(),
+            ))?]
         } else {
-            exact_classification(
-                evaluator.derivatives_at_classified(&local, max_order, &CurvePolicy::certified()),
-                self.data.source,
-            )?
+            exact_classification(evaluator.derivatives_at_classified(
+                &local,
+                max_order,
+                &CurvePolicy::certified(),
+            ))?
         };
         let inverse_width = (Real::one() / (&interval.1 - &interval.0)).map_err(|cause| {
             ExactCurveError::invalid(
                 CurveOperation2::Evaluation,
                 CurveFamily2::PolynomialBSpline,
-                self.data.source,
                 cause.into(),
             )
         })?;
@@ -650,7 +596,7 @@ impl PolynomialSplineCurve2 {
             self.bezier_decomposition()?
                 .spans()
                 .iter()
-                .map(|curve| rationalize_subcurve(curve, self.data.source))
+                .map(|curve| rationalize_subcurve(curve))
                 .collect()
         })?;
         Ok(spans)
@@ -663,7 +609,6 @@ impl PolynomialSplineCurve2 {
             self.control_points().to_vec(),
             weights,
             self.knots().to_vec(),
-            self.source(),
             self.periodicity().clone(),
         );
         result
@@ -678,7 +623,6 @@ impl PolynomialSplineCurve2 {
             curve.degree(),
             curve.control_points().to_vec(),
             curve.knots().to_vec(),
-            curve.source(),
             curve.periodicity().clone(),
         );
         result.map_err(|error| remap_spline_operation(error, operation))
@@ -697,13 +641,11 @@ impl PolynomialSplineCurve2 {
             (Some(_), Some(_)) => Err(ExactCurveError::invalid(
                 CurveOperation2::Construction,
                 CurveFamily2::PolynomialBSpline,
-                self.data.source,
                 CurveError::PeriodicSplineSeamMismatch,
             )),
             _ => Err(ExactCurveError::blocked(
                 CurveOperation2::Construction,
                 CurveFamily2::PolynomialBSpline,
-                self.data.source,
                 UncertaintyReason::RealSign,
             )),
         }
@@ -724,7 +666,6 @@ impl PolynomialSplineCurve2 {
             _ => Err(ExactCurveError::blocked(
                 CurveOperation2::Evaluation,
                 CurveFamily2::PolynomialBSpline,
-                self.data.source,
                 UncertaintyReason::Ordering,
             )),
         }
@@ -733,7 +674,7 @@ impl PolynomialSplineCurve2 {
 
 impl PartialEq for PolynomialSplineCurve2 {
     fn eq(&self, other: &Self) -> bool {
-        self.data.retained == other.data.retained && self.data.source == other.data.source
+        self.data.retained == other.data.retained
     }
 }
 
@@ -775,11 +716,6 @@ impl<'a> PolynomialSplineBezierSpanView2<'a> {
         self.span_index
     }
 
-    /// Returns the owning curve source identity, when supplied.
-    pub const fn source(self) -> Option<CurveSource2> {
-        self.source
-    }
-
     /// Returns the exact native polynomial Bezier curve.
     pub const fn curve(self) -> &'a BezierSubcurve2 {
         self.curve
@@ -793,7 +729,6 @@ impl<'a> PolynomialSplineBezierSpanView2<'a> {
 
 fn source_intervals(
     extraction: &PolynomialBSplineBezierExtraction2,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<Vec<(Real, Real)>> {
     let policy = CurvePolicy::certified();
     let degree = extraction.degree();
@@ -810,7 +745,6 @@ fn source_intervals(
                 return Err(ExactCurveError::invalid(
                     CurveOperation2::BezierDecomposition,
                     CurveFamily2::PolynomialBSpline,
-                    source,
                     CurveError::InvalidBSpline,
                 ));
             }
@@ -818,7 +752,6 @@ fn source_intervals(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::BezierDecomposition,
                     CurveFamily2::PolynomialBSpline,
-                    source,
                     UncertaintyReason::Ordering,
                 ));
             }
@@ -828,7 +761,6 @@ fn source_intervals(
         return Err(ExactCurveError::invalid(
             CurveOperation2::BezierDecomposition,
             CurveFamily2::PolynomialBSpline,
-            source,
             CurveError::Topology("B-spline span/interval count mismatch".into()),
         ));
     }
@@ -839,7 +771,6 @@ fn has_clamped_endpoints(
     knots: &[Real],
     degree: usize,
     control_count: usize,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<bool> {
     let policy = CurvePolicy::certified();
     match (
@@ -855,7 +786,6 @@ fn has_clamped_endpoints(
         _ => Err(ExactCurveError::blocked(
             CurveOperation2::Construction,
             CurveFamily2::PolynomialBSpline,
-            source,
             UncertaintyReason::Ordering,
         )),
     }
@@ -866,13 +796,11 @@ fn evaluate_span(
     start: &Real,
     end: &Real,
     parameter: &Real,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<Point2> {
     let local = ((parameter - start) / (end - start)).map_err(|cause| {
         ExactCurveError::invalid(
             CurveOperation2::Evaluation,
             CurveFamily2::PolynomialBSpline,
-            source,
             cause.into(),
         )
     })?;
@@ -885,7 +813,6 @@ fn evaluate_span(
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
                     CurveFamily2::PolynomialBSpline,
-                    source,
                     reason,
                 )),
             }
@@ -896,7 +823,6 @@ fn evaluate_span(
                 Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
                     CurveFamily2::PolynomialBSpline,
-                    source,
                     reason,
                 )),
             }
@@ -904,10 +830,7 @@ fn evaluate_span(
     }
 }
 
-fn rationalize_subcurve(
-    curve: &BezierSubcurve2,
-    source: Option<CurveSource2>,
-) -> Cached<RationalBezier2> {
+fn rationalize_subcurve(curve: &BezierSubcurve2) -> Cached<RationalBezier2> {
     let (control_points, weights) = match curve {
         BezierSubcurve2::Quadratic(curve) => (
             curve.control_points().into_iter().cloned().collect(),
@@ -927,7 +850,6 @@ fn rationalize_subcurve(
         ExactCurveError::invalid(
             CurveOperation2::NativeTopology,
             CurveFamily2::PolynomialBSpline,
-            source,
             cause,
         )
     })
@@ -936,7 +858,6 @@ fn rationalize_subcurve(
 fn select_span_indices(
     intervals: &[(Real, Real)],
     parameter: &Real,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<(usize, usize)> {
     let policy = CurvePolicy::certified();
     let mut first = None;
@@ -955,7 +876,6 @@ fn select_span_indices(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
                     CurveFamily2::PolynomialBSpline,
-                    source,
                     UncertaintyReason::Ordering,
                 ));
             }
@@ -965,37 +885,27 @@ fn select_span_indices(
         ExactCurveError::invalid(
             CurveOperation2::Evaluation,
             CurveFamily2::PolynomialBSpline,
-            source,
             CurveError::InvalidCurveParameter,
         )
     })
 }
 
-fn local_span_parameter(
-    interval: &(Real, Real),
-    parameter: &Real,
-    source: Option<CurveSource2>,
-) -> ExactCurveResult<Real> {
+fn local_span_parameter(interval: &(Real, Real), parameter: &Real) -> ExactCurveResult<Real> {
     ((parameter - &interval.0) / (&interval.1 - &interval.0)).map_err(|cause| {
         ExactCurveError::invalid(
             CurveOperation2::Evaluation,
             CurveFamily2::PolynomialBSpline,
-            source,
             cause.into(),
         )
     })
 }
 
-fn exact_classification<T>(
-    classification: Classification<T>,
-    source: Option<CurveSource2>,
-) -> ExactCurveResult<T> {
+fn exact_classification<T>(classification: Classification<T>) -> ExactCurveResult<T> {
     match classification {
         Classification::Decided(value) => Ok(value),
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
             CurveOperation2::Evaluation,
             CurveFamily2::PolynomialBSpline,
-            source,
             reason,
         )),
     }
@@ -1004,7 +914,6 @@ fn exact_classification<T>(
 fn matching_spline_derivatives(
     first: Vec<CurveDerivative2>,
     second: Vec<CurveDerivative2>,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<Vec<CurveDerivative2>> {
     debug_assert_eq!(first.len(), second.len());
     let policy = CurvePolicy::certified();
@@ -1018,7 +927,6 @@ fn matching_spline_derivatives(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
                     CurveFamily2::PolynomialBSpline,
-                    source,
                     UncertaintyReason::Boundary,
                 ));
             }
@@ -1026,7 +934,6 @@ fn matching_spline_derivatives(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Evaluation,
                     CurveFamily2::PolynomialBSpline,
-                    source,
                     UncertaintyReason::RealSign,
                 ));
             }
@@ -1035,11 +942,7 @@ fn matching_spline_derivatives(
     Ok(first)
 }
 
-fn matching_spline_point(
-    first: Point2,
-    second: Point2,
-    source: Option<CurveSource2>,
-) -> ExactCurveResult<Point2> {
+fn matching_spline_point(first: Point2, second: Point2) -> ExactCurveResult<Point2> {
     let policy = CurvePolicy::certified();
     match (
         crate::classify::compare_reals(first.x(), second.x(), &policy),
@@ -1049,13 +952,11 @@ fn matching_spline_point(
         (Some(_), Some(_)) => Err(ExactCurveError::blocked(
             CurveOperation2::Evaluation,
             CurveFamily2::PolynomialBSpline,
-            source,
             UncertaintyReason::Boundary,
         )),
         _ => Err(ExactCurveError::blocked(
             CurveOperation2::Evaluation,
             CurveFamily2::PolynomialBSpline,
-            source,
             UncertaintyReason::RealSign,
         )),
     }
@@ -1074,20 +975,17 @@ fn cached_result<T>(
 fn exact_value<T>(
     result: crate::CurveResult<Classification<T>>,
     operation: CurveOperation2,
-    source: Option<CurveSource2>,
 ) -> ExactCurveResult<T> {
     match result {
         Ok(Classification::Decided(value)) => Ok(value),
         Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
             operation,
             CurveFamily2::PolynomialBSpline,
-            source,
             reason,
         )),
         Err(cause) => Err(ExactCurveError::invalid(
             operation,
             CurveFamily2::PolynomialBSpline,
-            source,
             cause,
         )),
     }
@@ -1095,18 +993,12 @@ fn exact_value<T>(
 
 fn remap_spline_operation(error: ExactCurveError, operation: CurveOperation2) -> ExactCurveError {
     match error {
-        ExactCurveError::Invalid {
-            family,
-            source,
-            cause,
-            ..
-        } => ExactCurveError::invalid(operation, family, source, cause),
-        ExactCurveError::Blocked(blocker) => ExactCurveError::blocked(
-            operation,
-            blocker.family(),
-            blocker.source(),
-            blocker.reason(),
-        ),
+        ExactCurveError::Invalid { family, cause, .. } => {
+            ExactCurveError::invalid(operation, family, cause)
+        }
+        ExactCurveError::Blocked(blocker) => {
+            ExactCurveError::blocked(operation, blocker.family(), blocker.reason())
+        }
     }
 }
 
@@ -1115,14 +1007,11 @@ fn remap_spline_family_operation(
     operation: CurveOperation2,
 ) -> ExactCurveError {
     match error {
-        ExactCurveError::Invalid { source, cause, .. } => {
-            ExactCurveError::invalid(operation, CurveFamily2::PolynomialBSpline, source, cause)
+        ExactCurveError::Invalid { cause, .. } => {
+            ExactCurveError::invalid(operation, CurveFamily2::PolynomialBSpline, cause)
         }
-        ExactCurveError::Blocked(blocker) => ExactCurveError::blocked(
-            operation,
-            CurveFamily2::PolynomialBSpline,
-            blocker.source(),
-            blocker.reason(),
-        ),
+        ExactCurveError::Blocked(blocker) => {
+            ExactCurveError::blocked(operation, CurveFamily2::PolynomialBSpline, blocker.reason())
+        }
     }
 }

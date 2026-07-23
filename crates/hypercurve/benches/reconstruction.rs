@@ -3,7 +3,6 @@ use std::time::Instant;
 
 use hypercurve::{
     Contour2, CurveResult, CurveString2, Point2, PolylineReconstructionOptions, Real,
-    RetainedImportFormat2, RetainedSourceTolerance2,
 };
 
 fn r(value: f64) -> Real {
@@ -108,41 +107,27 @@ fn bench_closed_reconstruction(name: &str, points: &[Point2], iterations: u32) -
 
 fn main() -> CurveResult<()> {
     let import_points = finite_line_samples(256);
-    let tolerance = RetainedSourceTolerance2::try_new(1.0e-6, 1.0e-9)?;
     let started = Instant::now();
     let mut total_import_segments = 0_usize;
     for _ in 0..10_000 {
-        let import = CurveString2::import_finite_line_string_with_source(
-            &import_points,
-            RetainedImportFormat2::Step,
-            17,
-            Some(tolerance),
-        )?;
-        total_import_segments += black_box(
-            import.curve_string().len()
-                + import.record().emitted_segment_count()
-                + import.record().discarded_duplicate_count(),
-        );
+        let curve = CurveString2::from_finite_line_string(&import_points)?;
+        total_import_segments += black_box(curve.len());
     }
     let elapsed = started.elapsed();
     println!(
-        "retained_import_line_string_256: 10000 iterations in {elapsed:?} ({:?}/iter), total segments={total_import_segments}",
+        "finite_line_string_256: 10000 iterations in {elapsed:?} ({:?}/iter), total segments={total_import_segments}",
         elapsed / 10_000
     );
     let ring_points = finite_ring_samples(384);
     let started = Instant::now();
     let mut total_ring_segments = 0_usize;
     for _ in 0..10_000 {
-        let import = Contour2::import_finite_ring(&ring_points)?;
-        total_ring_segments += black_box(
-            import.contour().len()
-                + import.record().emitted_segment_count()
-                + import.record().discarded_duplicate_count(),
-        );
+        let contour = Contour2::from_finite_ring(&ring_points)?;
+        total_ring_segments += black_box(contour.len());
     }
     let elapsed = started.elapsed();
     println!(
-        "retained_import_ring_384: 10000 iterations in {elapsed:?} ({:?}/iter), total segments={total_ring_segments}",
+        "finite_ring_384: 10000 iterations in {elapsed:?} ({:?}/iter), total segments={total_ring_segments}",
         elapsed / 10_000
     );
     bench_open_reconstruction("reconstruct_collinear_256", &line_samples(256), 10_000)?;

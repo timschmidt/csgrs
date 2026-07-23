@@ -1,8 +1,6 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, ContourOffsetStage2, CurvePolicy,
-    CurveString2, CurveStringOffsetStage2, CurveStringOutlineOffsetStage2, FillRule, LineSeg2,
-    OffsetCap, OffsetConstructionPath2, OutlineCapConstructionPath2, Point2, Real, Segment2,
-    SegmentKindCounts, SelfContactPredicatePath2, UncertaintyReason,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2, LineSeg2,
+    OffsetCap, Point2, Real, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -251,71 +249,6 @@ fn curve_string_checked_offset_accepts_simple_open_path() {
 
     assert_eq!(offset.len(), 2);
 }
-
-#[test]
-fn curve_string_checked_offset_report_materializes_simple_open_path() {
-    let curve =
-        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 3)]).unwrap();
-    let offset = curve
-        .offset_left_checked_with_report(s(1), &policy())
-        .unwrap();
-
-    assert!(offset.report().status().is_native_exact());
-    assert_eq!(
-        offset.report().stage(),
-        CurveStringOffsetStage2::SelfContactValidation
-    );
-    assert_eq!(offset.report().source_segment_count(), 2);
-    assert_eq!(
-        offset.report().source_segment_kind_counts(),
-        SegmentKindCounts { lines: 2, arcs: 0 }
-    );
-    assert_eq!(offset.report().raw_offset_segment_count(), Some(2));
-    assert_eq!(
-        offset.report().raw_offset_construction_path(),
-        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
-    );
-    assert_eq!(
-        offset.report().raw_offset_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 2, arcs: 0 })
-    );
-    let self_contact = offset.report().self_contact_report().unwrap();
-    assert_eq!(self_contact.segment_count(), 2);
-    assert_eq!(
-        self_contact.segment_kind_counts(),
-        SegmentKindCounts { lines: 2, arcs: 0 }
-    );
-    assert_eq!(self_contact.candidate_pair_count(), 1);
-    assert_eq!(self_contact.skipped_aabb_pair_count(), 0);
-    assert_eq!(self_contact.tested_pair_count(), 1);
-    assert_eq!(
-        offset.report().self_contact_predicate_path(),
-        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
-    );
-    assert_eq!(self_contact.first_contact_first_segment_index(), None);
-    assert_eq!(self_contact.first_contact_second_segment_index(), None);
-    assert_eq!(offset.report().output_segment_count(), Some(2));
-    assert_eq!(
-        offset.report().output_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 2, arcs: 0 })
-    );
-    assert_eq!(offset.report().blocker(), None);
-    assert!(matches!(
-        offset.curve_string_classification(),
-        Classification::Decided(curve_string) if curve_string.len() == 2
-    ));
-    let owned_report = offset.clone().into_report();
-    assert_eq!(&owned_report, offset.report());
-    let (owned_curve_string, owned_parts_report) = offset.clone().into_parts();
-    assert_eq!(owned_curve_string.as_ref(), offset.curve_string());
-    assert_eq!(&owned_parts_report, offset.report());
-    assert!(matches!(
-        offset.clone().into_curve_string_classification(),
-        Classification::Decided(curve_string) if curve_string.len() == 2
-    ));
-    assert_eq!(offset.curve_string().unwrap().len(), 2);
-}
-
 #[test]
 fn curve_string_checked_offset_rejects_self_contacting_result() {
     let curve = CurveString2::try_new(vec![
@@ -330,72 +263,6 @@ fn curve_string_checked_offset_rejects_self_contacting_result() {
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
-
-#[test]
-fn curve_string_checked_offset_report_blocks_self_contacting_result() {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 4),
-        line_segment(4, 4, 0, 4),
-        line_segment(0, 4, 4, 0),
-    ])
-    .unwrap();
-
-    let offset = curve
-        .offset_left_checked_with_report(s(0), &policy())
-        .unwrap();
-
-    assert!(offset.curve_string().is_none());
-    assert!(offset.report().status().is_retained_evidence());
-    assert_eq!(
-        offset.report().stage(),
-        CurveStringOffsetStage2::SelfContactValidation
-    );
-    assert_eq!(offset.report().source_segment_count(), 3);
-    assert_eq!(
-        offset.report().source_segment_kind_counts(),
-        SegmentKindCounts { lines: 3, arcs: 0 }
-    );
-    assert_eq!(offset.report().raw_offset_segment_count(), Some(3));
-    assert_eq!(
-        offset.report().raw_offset_construction_path(),
-        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
-    );
-    assert_eq!(
-        offset.report().raw_offset_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 3, arcs: 0 })
-    );
-    let self_contact = offset.report().self_contact_report().unwrap();
-    assert_eq!(self_contact.segment_count(), 3);
-    assert_eq!(self_contact.candidate_pair_count(), 2);
-    assert_eq!(self_contact.skipped_aabb_pair_count(), 0);
-    assert_eq!(self_contact.tested_pair_count(), 2);
-    assert_eq!(
-        offset.report().self_contact_predicate_path(),
-        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
-    );
-    assert_eq!(self_contact.first_contact_first_segment_index(), Some(0));
-    assert_eq!(self_contact.first_contact_second_segment_index(), Some(2));
-    assert_eq!(offset.report().output_segment_count(), None);
-    assert_eq!(offset.report().output_segment_kind_counts(), None);
-    assert_eq!(
-        offset.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
-    );
-    assert_eq!(
-        offset.curve_string_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-    let owned_report = offset.clone().into_report();
-    assert_eq!(&owned_report, offset.report());
-    let (owned_curve_string, owned_parts_report) = offset.clone().into_parts();
-    assert_eq!(owned_curve_string, None);
-    assert_eq!(&owned_parts_report, offset.report());
-    assert_eq!(
-        offset.into_curve_string_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-}
-
 #[test]
 fn curve_string_offset_outline_dispatches_cap_styles() {
     let curve =
@@ -448,116 +315,6 @@ fn curve_string_round_cap_outline_wraps_single_line() {
     assert_eq!(start_cap.center(), &p(0, 0));
     assert!(start_cap.is_clockwise());
 }
-
-#[test]
-fn curve_string_round_cap_outline_report_materializes_single_line() {
-    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
-    let outline = curve
-        .offset_outline_round_caps_with_report(s(1), &policy())
-        .unwrap();
-
-    assert!(outline.report().status().is_native_exact());
-    assert_eq!(
-        outline.report().stage(),
-        CurveStringOutlineOffsetStage2::OutlineTopologyValidation
-    );
-    assert_eq!(outline.report().cap(), OffsetCap::Round);
-    assert_eq!(outline.report().source_segment_count(), 1);
-    assert_eq!(
-        outline.report().source_segment_kind_counts(),
-        SegmentKindCounts { lines: 1, arcs: 0 }
-    );
-    let source_self_contact = outline
-        .report()
-        .source_self_contact_report()
-        .expect("source self-contact validation should be retained");
-    assert!(source_self_contact.status().is_native_exact());
-    assert_eq!(source_self_contact.segment_count(), 1);
-    assert_eq!(
-        source_self_contact.segment_kind_counts(),
-        SegmentKindCounts { lines: 1, arcs: 0 }
-    );
-    assert_eq!(
-        outline.report().source_self_contact_predicate_path(),
-        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
-    );
-    assert_eq!(source_self_contact.blocker(), None);
-    assert_eq!(
-        source_self_contact.first_contact_first_segment_index(),
-        None
-    );
-    assert_eq!(
-        source_self_contact.first_contact_second_segment_index(),
-        None
-    );
-    assert_eq!(outline.report().left_offset_segment_count(), Some(1));
-    assert_eq!(
-        outline.report().left_offset_construction_path(),
-        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
-    );
-    assert_eq!(
-        outline.report().left_offset_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 1, arcs: 0 })
-    );
-    assert_eq!(outline.report().right_offset_segment_count(), Some(1));
-    assert_eq!(
-        outline.report().right_offset_construction_path(),
-        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
-    );
-    assert_eq!(
-        outline.report().right_offset_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 1, arcs: 0 })
-    );
-    assert_eq!(
-        outline.report().cap_construction_path(),
-        Some(OutlineCapConstructionPath2::RoundEndpointArcCaps)
-    );
-    assert_eq!(outline.report().outline_segment_count(), Some(4));
-    assert_eq!(
-        outline.report().outline_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 2, arcs: 2 })
-    );
-    let outline_self_contact = outline
-        .report()
-        .outline_self_contact_report()
-        .expect("final outline self-contact validation should be retained");
-    assert!(outline_self_contact.status().is_native_exact());
-    assert!(outline_self_contact.closed());
-    assert_eq!(outline_self_contact.segment_count(), 4);
-    assert_eq!(
-        outline_self_contact.segment_kind_counts(),
-        SegmentKindCounts { lines: 2, arcs: 2 }
-    );
-    assert_eq!(
-        outline.report().outline_self_contact_predicate_path(),
-        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
-    );
-    assert_eq!(outline_self_contact.blocker(), None);
-    assert_eq!(
-        outline_self_contact.first_contact_first_segment_index(),
-        None
-    );
-    assert_eq!(
-        outline_self_contact.first_contact_second_segment_index(),
-        None
-    );
-    assert_eq!(outline.report().blocker(), None);
-    assert!(matches!(
-        outline.outline_classification(),
-        Classification::Decided(outline) if outline.len() == 4
-    ));
-    let owned_report = outline.clone().into_report();
-    assert_eq!(&owned_report, outline.report());
-    let (owned_outline, owned_parts_report) = outline.clone().into_parts();
-    assert_eq!(owned_outline.as_ref(), outline.outline());
-    assert_eq!(&owned_parts_report, outline.report());
-    assert!(matches!(
-        outline.clone().into_outline_classification(),
-        Classification::Decided(outline) if outline.len() == 4
-    ));
-    assert_eq!(outline.outline().unwrap().len(), 4);
-}
-
 #[test]
 fn curve_string_round_cap_outline_keeps_mitered_corners() {
     let curve =
@@ -596,56 +353,6 @@ fn curve_string_round_cap_outline_rejects_nonpositive_distance() {
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
-
-#[test]
-fn curve_string_round_cap_outline_report_blocks_nonpositive_distance() {
-    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
-    let outline = curve
-        .offset_outline_with_report(s(0), OffsetCap::Round, &policy())
-        .unwrap();
-
-    assert!(outline.outline().is_none());
-    assert!(outline.report().status().is_retained_evidence());
-    assert_eq!(
-        outline.report().stage(),
-        CurveStringOutlineOffsetStage2::DistanceValidation
-    );
-    assert_eq!(outline.report().cap(), OffsetCap::Round);
-    assert_eq!(outline.report().source_segment_count(), 1);
-    assert_eq!(
-        outline.report().source_segment_kind_counts(),
-        SegmentKindCounts { lines: 1, arcs: 0 }
-    );
-    assert_eq!(outline.report().source_self_contact_report(), None);
-    assert_eq!(outline.report().left_offset_construction_path(), None);
-    assert_eq!(outline.report().left_offset_segment_count(), None);
-    assert_eq!(outline.report().left_offset_segment_kind_counts(), None);
-    assert_eq!(outline.report().right_offset_construction_path(), None);
-    assert_eq!(outline.report().right_offset_segment_count(), None);
-    assert_eq!(outline.report().right_offset_segment_kind_counts(), None);
-    assert_eq!(outline.report().cap_construction_path(), None);
-    assert_eq!(outline.report().outline_segment_count(), None);
-    assert_eq!(outline.report().outline_segment_kind_counts(), None);
-    assert_eq!(outline.report().outline_self_contact_report(), None);
-    assert_eq!(
-        outline.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
-    );
-    assert_eq!(
-        outline.outline_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-    let owned_report = outline.clone().into_report();
-    assert_eq!(&owned_report, outline.report());
-    let (owned_outline, owned_parts_report) = outline.clone().into_parts();
-    assert_eq!(owned_outline, None);
-    assert_eq!(&owned_parts_report, outline.report());
-    assert_eq!(
-        outline.into_outline_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-}
-
 #[test]
 fn curve_string_round_cap_outline_rejects_self_contacting_input() {
     let curve = CurveString2::try_new(vec![
@@ -660,70 +367,6 @@ fn curve_string_round_cap_outline_rejects_self_contacting_input() {
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
-
-#[test]
-fn curve_string_round_cap_outline_report_blocks_self_contacting_input() {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 4),
-        line_segment(4, 4, 0, 4),
-        line_segment(0, 4, 4, 0),
-    ])
-    .unwrap();
-
-    let outline = curve
-        .offset_outline_round_caps_with_report(s(1), &policy())
-        .unwrap();
-
-    assert!(outline.outline().is_none());
-    assert!(outline.report().status().is_retained_evidence());
-    assert_eq!(
-        outline.report().stage(),
-        CurveStringOutlineOffsetStage2::SourceSelfContactValidation
-    );
-    assert_eq!(outline.report().cap(), OffsetCap::Round);
-    assert_eq!(outline.report().source_segment_count(), 3);
-    assert_eq!(
-        outline.report().source_segment_kind_counts(),
-        SegmentKindCounts { lines: 3, arcs: 0 }
-    );
-    let source_self_contact = outline
-        .report()
-        .source_self_contact_report()
-        .expect("source self-contact blocker should retain scan evidence");
-    assert!(source_self_contact.status().is_native_exact());
-    assert_eq!(source_self_contact.segment_count(), 3);
-    assert_eq!(
-        source_self_contact.segment_kind_counts(),
-        SegmentKindCounts { lines: 3, arcs: 0 }
-    );
-    assert_eq!(
-        outline.report().source_self_contact_predicate_path(),
-        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
-    );
-    assert_eq!(
-        source_self_contact.first_contact_first_segment_index(),
-        Some(0)
-    );
-    assert_eq!(
-        source_self_contact.first_contact_second_segment_index(),
-        Some(2)
-    );
-    assert_eq!(outline.report().left_offset_construction_path(), None);
-    assert_eq!(outline.report().left_offset_segment_count(), None);
-    assert_eq!(outline.report().left_offset_segment_kind_counts(), None);
-    assert_eq!(outline.report().right_offset_construction_path(), None);
-    assert_eq!(outline.report().right_offset_segment_count(), None);
-    assert_eq!(outline.report().right_offset_segment_kind_counts(), None);
-    assert_eq!(outline.report().cap_construction_path(), None);
-    assert_eq!(outline.report().outline_segment_count(), None);
-    assert_eq!(outline.report().outline_segment_kind_counts(), None);
-    assert_eq!(outline.report().outline_self_contact_report(), None);
-    assert_eq!(
-        outline.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
-    );
-}
-
 #[test]
 fn curve_string_butt_cap_outline_wraps_single_line() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
@@ -838,32 +481,6 @@ fn curve_string_square_cap_outline_extends_single_line() {
     assert_line(&outline.segments()[2], p(5, -1), p(-1, -1));
     assert_line(&outline.segments()[3], p(-1, -1), p(-1, 1));
 }
-
-#[test]
-fn curve_string_square_cap_outline_report_names_cap_construction_path() {
-    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
-    let outline = curve
-        .offset_outline_square_caps_with_report(s(1), &policy())
-        .unwrap();
-
-    assert!(outline.report().status().is_native_exact());
-    assert_eq!(outline.report().cap(), OffsetCap::Square);
-    assert_eq!(
-        outline.report().left_offset_construction_path(),
-        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
-    );
-    assert_eq!(
-        outline.report().right_offset_construction_path(),
-        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
-    );
-    assert_eq!(
-        outline.report().cap_construction_path(),
-        Some(OutlineCapConstructionPath2::SquareTangentExtensionLineCaps)
-    );
-    assert_eq!(outline.report().outline_segment_count(), Some(4));
-    assert_eq!(outline.report().blocker(), None);
-}
-
 #[test]
 fn curve_string_square_cap_outline_extends_mitered_path_end_tangents() {
     let curve =
@@ -1025,63 +642,6 @@ fn contour_checked_offset_accepts_simple_rectangle() {
     };
     assert_eq!(offset.len(), 4);
 }
-
-#[test]
-fn contour_checked_offset_report_materializes_simple_rectangle() {
-    let rectangle = Contour2::from_bulge_vertices(&[
-        vertex(0, 0, 0),
-        vertex(6, 0, 0),
-        vertex(6, 6, 0),
-        vertex(0, 6, 0),
-    ])
-    .unwrap();
-
-    let offset = rectangle
-        .offset_left_checked_with_report(s(1), &policy())
-        .unwrap();
-
-    assert!(offset.report().status().is_native_exact());
-    assert_eq!(
-        offset.report().stage(),
-        ContourOffsetStage2::SelfContactValidation
-    );
-    assert_eq!(offset.report().source_segment_count(), 4);
-    assert_eq!(
-        offset.report().source_segment_kind_counts(),
-        SegmentKindCounts { lines: 4, arcs: 0 }
-    );
-    assert_eq!(offset.report().raw_offset_segment_count(), Some(4));
-    assert_eq!(
-        offset.report().raw_offset_construction_path(),
-        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
-    );
-    assert_eq!(
-        offset.report().raw_offset_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 4, arcs: 0 })
-    );
-    assert_eq!(offset.report().output_segment_count(), Some(4));
-    assert_eq!(
-        offset.report().output_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 4, arcs: 0 })
-    );
-    assert_eq!(offset.report().fill_rule(), FillRule::NonZero);
-    assert_eq!(offset.report().blocker(), None);
-    assert!(matches!(
-        offset.contour_classification(),
-        Classification::Decided(contour) if contour.len() == 4
-    ));
-    let owned_report = offset.clone().into_report();
-    assert_eq!(&owned_report, offset.report());
-    let (owned_contour, owned_parts_report) = offset.clone().into_parts();
-    assert_eq!(owned_contour.as_ref(), offset.contour());
-    assert_eq!(&owned_parts_report, offset.report());
-    assert!(matches!(
-        offset.clone().into_contour_classification(),
-        Classification::Decided(contour) if contour.len() == 4
-    ));
-    assert_eq!(offset.contour().unwrap().len(), 4);
-}
-
 #[test]
 fn contour_checked_offset_rejects_self_contacting_result() {
     let bowtie = Contour2::from_bulge_vertices(&[
@@ -1094,73 +654,6 @@ fn contour_checked_offset_rejects_self_contacting_result() {
 
     assert_eq!(
         bowtie.offset_left_checked(s(0), &policy()).unwrap(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-}
-
-#[test]
-fn contour_checked_offset_report_blocks_self_contacting_result() {
-    let bowtie = Contour2::from_bulge_vertices(&[
-        vertex(0, 0, 0),
-        vertex(4, 4, 0),
-        vertex(0, 4, 0),
-        vertex(4, 0, 0),
-    ])
-    .unwrap();
-
-    let offset = bowtie
-        .offset_left_checked_with_report(s(0), &policy())
-        .unwrap();
-
-    assert!(offset.contour().is_none());
-    assert!(offset.report().status().is_retained_evidence());
-    assert_eq!(
-        offset.report().stage(),
-        ContourOffsetStage2::SelfContactValidation
-    );
-    assert_eq!(offset.report().source_segment_count(), 4);
-    assert_eq!(
-        offset.report().source_segment_kind_counts(),
-        SegmentKindCounts { lines: 4, arcs: 0 }
-    );
-    assert_eq!(offset.report().raw_offset_segment_count(), Some(4));
-    assert_eq!(
-        offset.report().raw_offset_construction_path(),
-        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
-    );
-    assert_eq!(
-        offset.report().raw_offset_segment_kind_counts(),
-        Some(SegmentKindCounts { lines: 4, arcs: 0 })
-    );
-    let self_contact = offset.report().self_contact_report().unwrap();
-    assert_eq!(self_contact.segment_count(), 4);
-    assert_eq!(self_contact.candidate_pair_count(), 2);
-    assert_eq!(self_contact.skipped_aabb_pair_count(), 0);
-    assert_eq!(self_contact.tested_pair_count(), 2);
-    assert_eq!(
-        offset.report().self_contact_predicate_path(),
-        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
-    );
-    assert_eq!(self_contact.first_contact_first_segment_index(), Some(0));
-    assert_eq!(self_contact.first_contact_second_segment_index(), Some(2));
-    assert_eq!(offset.report().output_segment_count(), None);
-    assert_eq!(offset.report().output_segment_kind_counts(), None);
-    assert_eq!(offset.report().fill_rule(), FillRule::NonZero);
-    assert_eq!(
-        offset.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
-    );
-    assert_eq!(
-        offset.contour_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-    let owned_report = offset.clone().into_report();
-    assert_eq!(&owned_report, offset.report());
-    let (owned_contour, owned_parts_report) = offset.clone().into_parts();
-    assert_eq!(owned_contour, None);
-    assert_eq!(&owned_parts_report, offset.report());
-    assert_eq!(
-        offset.into_contour_classification(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }

@@ -38,7 +38,6 @@ default = ["predicates"]
 predicates = ["dep:hyperlimit"]
 dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit?/dispatch-trace"]
 serde = []
-svg = []
 triangulation = ["dep:hypertri"]
 comparative-benchmarks = [
     "dep:cavalier_contours",
@@ -118,11 +117,6 @@ harness = false
 [[bench]]
 name = "reconstruction"
 harness = false
-
-[[bench]]
-name = "svg_io"
-harness = false
-required-features = ["svg"]
 
 [[bench]]
 name = "dispatch_trace"

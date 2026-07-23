@@ -34,10 +34,10 @@ fn public_curve_query_emits_correlated_exact_path_trace() {
 fn public_finite_ring_import_emits_correlated_exact_path_trace() {
     hyperreal::dispatch_trace::reset();
     let import = hyperreal::dispatch_trace::with_recording(|| {
-        Contour2::import_finite_ring(&[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0]])
+        Contour2::from_finite_ring(&[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0]])
     })
     .unwrap();
-    assert_eq!(import.contour().len(), 4);
+    assert_eq!(import.len(), 4);
 
     let snapshot = hyperreal::dispatch_trace::take_trace();
     let summary = snapshot.correlation_summary();

@@ -206,7 +206,6 @@ fn rational_axis_monotonicity_preserves_typed_sign_blocker() {
         .unwrap_err();
     assert_eq!(error.operation(), CurveOperation2::Classification);
     assert_eq!(error.family(), CurveFamily2::RationalBezier);
-    assert_eq!(error.source(), None);
     assert!(matches!(
         error,
         ExactCurveError::Blocked(blocker)
@@ -227,7 +226,6 @@ fn rational_evaluation_and_bounds_preserve_typed_sign_blockers() {
     ] {
         assert_eq!(error.operation(), CurveOperation2::Evaluation);
         assert_eq!(error.family(), CurveFamily2::RationalBezier);
-        assert_eq!(error.source(), None);
         assert!(matches!(
             error,
             ExactCurveError::Blocked(blocker)
@@ -526,7 +524,6 @@ fn rational_contacts_preserve_a_typed_sign_blocker_after_bound_fallthrough() {
         .unwrap_err();
     assert_eq!(error.operation(), CurveOperation2::Intersection);
     assert_eq!(error.family(), CurveFamily2::RationalBezier);
-    assert_eq!(error.source(), None);
     assert!(matches!(
         error,
         ExactCurveError::Blocked(blocker)
@@ -985,64 +982,6 @@ fn rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges() {
         &ParamRange::new(Real::one(), q(1, 4))
     );
 }
-
-#[test]
-fn rational_partial_overlap_reuses_exact_source_parameter_lineage() {
-    let policy = CurvePolicy::certified();
-    let source = curve();
-    let first = decided(
-        source
-            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
-            .unwrap(),
-    );
-    let second = decided(
-        source
-            .subcurve_between_exact(&q(1, 4), &Real::one(), &policy)
-            .unwrap(),
-    );
-
-    assert!(!first.is_homogeneous_power_basis_cached());
-    assert!(!second.is_homogeneous_power_basis_cached());
-    let RationalBezierIntersectionContacts2::Overlap(overlap) =
-        first.intersection_contacts(&second, &policy).unwrap()
-    else {
-        panic!("source-related partial overlap was not certified");
-    };
-    assert_eq!(
-        overlap.first_range(),
-        &ParamRange::new(q(1, 3), Real::one())
-    );
-    assert_eq!(
-        overlap.second_range(),
-        &ParamRange::new(Real::zero(), q(2, 3))
-    );
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
-    assert!(!first.is_homogeneous_power_basis_cached());
-    assert!(!second.is_homogeneous_power_basis_cached());
-
-    let reversed = second.reversed();
-    let RationalBezierIntersectionContacts2::Overlap(reversed_overlap) =
-        first.intersection_contacts(&reversed, &policy).unwrap()
-    else {
-        panic!("reversed source-related partial overlap was not certified");
-    };
-    assert_eq!(
-        reversed_overlap.first_range(),
-        &ParamRange::new(q(1, 3), Real::one())
-    );
-    assert_eq!(
-        reversed_overlap.second_range(),
-        &ParamRange::new(Real::one(), q(1, 3))
-    );
-    assert_eq!(
-        reversed_overlap.orientation(),
-        RationalBezierOverlapOrientation2::Reversed
-    );
-}
-
 #[test]
 fn independently_constructed_partial_overlap_reconstructs_rational_endpoints() {
     let policy = CurvePolicy::certified();

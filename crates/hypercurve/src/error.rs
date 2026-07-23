@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use crate::{CurveFamily2, CurveSource2, UncertaintyReason};
+use crate::{CurveFamily2, UncertaintyReason};
 
 /// Result alias used by `hypercurve`.
 pub type CurveResult<T> = Result<T, CurveError>;
@@ -56,22 +56,19 @@ pub enum CurveOperation2 {
 pub struct ExactCurveBlocker {
     operation: CurveOperation2,
     family: CurveFamily2,
-    source: Option<CurveSource2>,
     reason: UncertaintyReason,
 }
 
 impl ExactCurveBlocker {
     /// Constructs a contextual exact-operation blocker.
-    pub const fn new(
+    pub(crate) const fn new(
         operation: CurveOperation2,
         family: CurveFamily2,
-        source: Option<CurveSource2>,
         reason: UncertaintyReason,
     ) -> Self {
         Self {
             operation,
             family,
-            source,
             reason,
         }
     }
@@ -84,11 +81,6 @@ impl ExactCurveBlocker {
     /// Returns the curve family involved in the blocked operation.
     pub const fn family(self) -> CurveFamily2 {
         self.family
-    }
-
-    /// Returns source identity when the curve retained one.
-    pub const fn source(self) -> Option<CurveSource2> {
-        self.source
     }
 
     /// Returns the exact predicate or capability reason.
@@ -106,8 +98,6 @@ pub enum ExactCurveError {
         operation: CurveOperation2,
         /// Curve family being processed.
         family: CurveFamily2,
-        /// Stable source identity when available.
-        source: Option<CurveSource2>,
         /// Underlying invariant failure.
         cause: CurveError,
     },
@@ -116,29 +106,26 @@ pub enum ExactCurveError {
 }
 
 impl ExactCurveError {
-    /// Wraps a low-level curve error with operation and provenance context.
-    pub const fn invalid(
+    /// Wraps a low-level curve error with operation context.
+    pub(crate) const fn invalid(
         operation: CurveOperation2,
         family: CurveFamily2,
-        source: Option<CurveSource2>,
         cause: CurveError,
     ) -> Self {
         Self::Invalid {
             operation,
             family,
-            source,
             cause,
         }
     }
 
-    /// Constructs a blocker with operation and provenance context.
-    pub const fn blocked(
+    /// Constructs a blocker with operation context.
+    pub(crate) const fn blocked(
         operation: CurveOperation2,
         family: CurveFamily2,
-        source: Option<CurveSource2>,
         reason: UncertaintyReason,
     ) -> Self {
-        Self::Blocked(ExactCurveBlocker::new(operation, family, source, reason))
+        Self::Blocked(ExactCurveBlocker::new(operation, family, reason))
     }
 
     /// Returns the operation that failed.
@@ -157,28 +144,10 @@ impl ExactCurveError {
         }
     }
 
-    /// Returns retained source identity when available.
-    pub const fn source(&self) -> Option<CurveSource2> {
-        match self {
-            Self::Invalid { source, .. } => *source,
-            Self::Blocked(blocker) => blocker.source(),
-        }
-    }
-
     pub(crate) fn with_operation(self, operation: CurveOperation2) -> Self {
         match self {
-            Self::Invalid {
-                family,
-                source,
-                cause,
-                ..
-            } => Self::invalid(operation, family, source, cause),
-            Self::Blocked(blocker) => Self::blocked(
-                operation,
-                blocker.family(),
-                blocker.source(),
-                blocker.reason(),
-            ),
+            Self::Invalid { family, cause, .. } => Self::invalid(operation, family, cause),
+            Self::Blocked(blocker) => Self::blocked(operation, blocker.family(), blocker.reason()),
         }
     }
 }
@@ -190,9 +159,6 @@ impl fmt::Display for ExactCurveBlocker {
             "exact {:?} for {:?} was blocked by {:?}",
             self.operation, self.family, self.reason
         )?;
-        if let Some(source) = self.source {
-            write!(f, " (source {}, version {})", source.id(), source.version())?;
-        }
         Ok(())
     }
 }
@@ -203,13 +169,9 @@ impl fmt::Display for ExactCurveError {
             Self::Invalid {
                 operation,
                 family,
-                source,
                 cause,
             } => {
                 write!(f, "invalid {:?} during exact {:?}", family, operation)?;
-                if let Some(source) = source {
-                    write!(f, " (source {}, version {})", source.id(), source.version())?;
-                }
                 write!(f, ": {cause}")
             }
             Self::Blocked(blocker) => blocker.fmt(f),

@@ -251,21 +251,11 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<Self> {
         if let Classification::Decided(native) =
             self.line_arc_region_fast_path(policy).map_err(|cause| {
-                ExactCurveError::invalid(
-                    CurveOperation2::Transformation,
-                    CurveFamily2::Line,
-                    None,
-                    cause,
-                )
+                ExactCurveError::invalid(CurveOperation2::Transformation, CurveFamily2::Line, cause)
             })?
         {
             let transformed = native.transform_similarity(transform).map_err(|cause| {
-                ExactCurveError::invalid(
-                    CurveOperation2::Transformation,
-                    CurveFamily2::Line,
-                    None,
-                    cause,
-                )
+                ExactCurveError::invalid(CurveOperation2::Transformation, CurveFamily2::Line, cause)
             })?;
             return Self::try_from_line_arc_region(&transformed, policy)
                 .map_err(|error| error.with_operation(CurveOperation2::Transformation));

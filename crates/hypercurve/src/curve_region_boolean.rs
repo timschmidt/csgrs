@@ -9,12 +9,12 @@ use crate::{
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveError,
     CurveFamily2, CurveIntersectionContact2, CurveIntersectionOverlap2,
     CurveIntersectionPairBlocker2, CurveOperation2, CurvePathBooleanOperand2, CurvePolicy,
-    CurveRegion2, CurveRegionFragmentProvenance2, ExactCurveError, ExactCurveResult, FillRule,
-    PreparedCurveIntersection2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RegionPointLocation, UncertaintyReason,
+    CurveRegion2, ExactCurveError, ExactCurveResult, FillRule, PreparedCurveIntersection2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    RegionPointLocation, UncertaintyReason,
 };
 
-/// Stable identity and provenance for one retained region-boundary carrier.
+/// Stable identity for one retained region-boundary carrier.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionCarrierRef2 {
     carrier_index: usize,
@@ -22,7 +22,6 @@ pub struct CurveRegionCarrierRef2 {
     loop_index: usize,
     fragment_index: usize,
     family: CurveFamily2,
-    provenance: Option<CurveRegionFragmentProvenance2>,
 }
 
 /// One exact contact between retained carriers from two curved regions.
@@ -97,7 +96,6 @@ struct RegionCarrier {
     end: BezierParameter2,
     reversed: bool,
     filled_side_is_left: bool,
-    provenance: Option<CurveRegionFragmentProvenance2>,
 }
 
 #[derive(Debug)]
@@ -160,11 +158,6 @@ impl CurveRegionCarrierRef2 {
     /// Returns the exact carrier family used by intersection dispatch.
     pub const fn family(&self) -> CurveFamily2 {
         self.family
-    }
-
-    /// Returns authored/arrangement provenance when the source region retained it.
-    pub const fn provenance(&self) -> Option<&CurveRegionFragmentProvenance2> {
-        self.provenance.as_ref()
     }
 }
 
@@ -498,7 +491,6 @@ impl PreparedCurveRegionBoolean2 {
             loop_index: carrier.loop_index,
             fragment_index: carrier.fragment_index,
             family: carrier.family,
-            provenance: carrier.provenance.clone(),
         }
     }
 
@@ -750,8 +742,6 @@ impl PreparedCurveRegionBoolean2 {
         }
 
         let mut arrangement_fragments = Vec::new();
-        let mut output_provenance = Vec::new();
-        let mut provenance_complete = true;
         for (carrier_index, carrier) in self.data.carriers.iter().enumerate() {
             let split_fragments = split_carrier(carrier, &events[carrier_index], &self.data.policy)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
@@ -778,27 +768,10 @@ impl PreparedCurveRegionBoolean2 {
                     }
                     RegionFragmentAction::Discard => unreachable!(),
                 };
-                let arrangement_fragment_index = arrangement_fragments.len();
                 arrangement_fragments.push(
                     BezierArrangementFragment2::new(carrier_index, split_fragment_index, fragment)
                         .with_topology_vertices(start_topology_vertex, end_topology_vertex),
                 );
-                if let Some(provenance) = &carrier.provenance {
-                    output_provenance.push(CurveRegionFragmentProvenance2::new(
-                        arrangement_fragment_index,
-                        carrier_index,
-                        Some(carrier.operand),
-                        provenance.source_path_index(),
-                        provenance.family(),
-                        provenance.curve_index(),
-                        provenance.promoted_span_index(),
-                        split_fragment_index,
-                        provenance.span().clone(),
-                        provenance.reversed() ^ (action == RegionFragmentAction::KeepReversed),
-                    ));
-                } else {
-                    provenance_complete = false;
-                }
             }
         }
 
@@ -816,11 +789,6 @@ impl PreparedCurveRegionBoolean2 {
         region = region
             .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
             .map_err(|cause| self.invalid(0, cause))?;
-        if provenance_complete {
-            region = region
-                .with_fragment_provenance(output_provenance)
-                .map_err(|cause| self.invalid(0, cause))?;
-        }
         Ok(region)
     }
 
@@ -909,22 +877,12 @@ impl PreparedCurveRegionBoolean2 {
 
     fn invalid(&self, carrier_index: usize, cause: CurveError) -> ExactCurveError {
         let carrier = &self.data.carriers[carrier_index];
-        ExactCurveError::invalid(
-            CurveOperation2::Boolean,
-            carrier.family,
-            source_of(carrier),
-            cause,
-        )
+        ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
     }
 
     fn blocked(&self, carrier_index: usize, reason: UncertaintyReason) -> ExactCurveError {
         let carrier = &self.data.carriers[carrier_index];
-        ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            carrier.family,
-            source_of(carrier),
-            reason,
-        )
+        ExactCurveError::blocked(CurveOperation2::Boolean, carrier.family, reason)
     }
 }
 
@@ -947,20 +905,17 @@ fn build_region_carriers(
         return Ok(Vec::new());
     }
     let filled_sides = match region.filled_side_is_left(policy).map_err(|cause| {
-        ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, None, cause)
+        ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause)
     })? {
         Classification::Decided(sides) => sides,
         Classification::Uncertain(reason) => {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Boolean,
                 CurveFamily2::Line,
-                None,
                 reason,
             ));
         }
     };
-    let provenance = region.fragment_provenance();
-    let mut flat_index = 0_usize;
     let mut carriers = Vec::new();
     for (loop_index, boundary_loop) in region.boundary_loops().iter().enumerate() {
         for (fragment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
@@ -985,7 +940,6 @@ fn build_region_carriers(
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Boolean,
                         CurveFamily2::RationalBezier,
-                        None,
                         UncertaintyReason::Unsupported,
                     ));
                 }
@@ -1000,11 +954,7 @@ fn build_region_carriers(
                 end,
                 reversed,
                 filled_side_is_left: filled_sides[loop_index],
-                provenance: provenance
-                    .and_then(|records| records.get(flat_index))
-                    .cloned(),
             });
-            flat_index += 1;
         }
     }
     Ok(carriers)
@@ -1073,7 +1023,6 @@ fn push_carrier_event(
                 ExactCurveError::invalid(
                     CurveOperation2::Boolean,
                     CurveFamily2::RationalBezier,
-                    None,
                     cause,
                 )
             })? {
@@ -1088,7 +1037,6 @@ fn push_carrier_event(
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Boolean,
                     CurveFamily2::RationalBezier,
-                    None,
                     reason,
                 ));
             }
@@ -1405,7 +1353,6 @@ fn ascending_range<'a>(
         Ordering::Equal => Err(ExactCurveError::invalid(
             CurveOperation2::Boolean,
             CurveFamily2::RationalBezier,
-            None,
             CurveError::DegenerateOverlapRange,
         )),
     }
@@ -1420,7 +1367,6 @@ fn decided_parameter_cmp(
         ExactCurveError::invalid(
             CurveOperation2::Boolean,
             CurveFamily2::RationalBezier,
-            None,
             cause,
         )
     })? {
@@ -1428,7 +1374,6 @@ fn decided_parameter_cmp(
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
             CurveOperation2::Boolean,
             CurveFamily2::RationalBezier,
-            None,
             reason,
         )),
     }
@@ -1449,13 +1394,6 @@ const fn subcurve_family(curve: &BezierSubcurve2) -> CurveFamily2 {
         BezierSubcurve2::RationalQuadratic(_) => CurveFamily2::RationalQuadraticBezier,
         BezierSubcurve2::Rational(_) => CurveFamily2::RationalBezier,
     }
-}
-
-fn source_of(carrier: &RegionCarrier) -> Option<crate::CurveSource2> {
-    carrier
-        .provenance
-        .as_ref()
-        .and_then(|provenance| provenance.span().source())
 }
 
 fn same_contact_point(
@@ -1486,7 +1424,7 @@ fn empty_operand_result(
             }
         }
         BooleanOp::Intersection => CurveRegion2::new(Vec::new()).map_err(|cause| {
-            ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, None, cause)
+            ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause)
         })?,
         BooleanOp::Difference => first.clone(),
     };
@@ -1500,7 +1438,7 @@ fn identical_operand_result(
     match operation {
         BooleanOp::Union | BooleanOp::Intersection => Ok(region.clone()),
         BooleanOp::Difference | BooleanOp::Xor => CurveRegion2::new(Vec::new()).map_err(|cause| {
-            ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, None, cause)
+            ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause)
         }),
     }
 }

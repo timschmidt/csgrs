@@ -333,7 +333,7 @@ impl BooleanBoundaryFragmentSet {
     }
 
     /// Assembles directed boundary fragments and retains traversal evidence.
-    pub fn assemble_chains_with_report(
+    pub(crate) fn assemble_chains_with_report(
         &self,
         policy: &CurvePolicy,
     ) -> BooleanBoundaryChainAssemblyResult2 {
@@ -653,27 +653,6 @@ impl BooleanBoundaryChainSet {
         ))
     }
 
-    /// Extracts closed chains as boolean boundary loops and retains evidence.
-    pub fn closed_loops_with_report(&self) -> BooleanBoundaryLoopExtractionResult2 {
-        if self.chains.iter().any(|chain| !chain.is_closed()) {
-            return blocked_boolean_boundary_loop_extraction_result(
-                self,
-                BooleanBoundaryLoopExtractionStage2::ChainClosureValidation,
-                UncertaintyReason::Unsupported,
-            );
-        }
-
-        let loops = self
-            .chains
-            .iter()
-            .map(|chain| BooleanBoundaryLoop::from_closed_chain(chain.fragments.clone()))
-            .collect();
-        decided_boolean_boundary_loop_extraction_result(
-            self,
-            BooleanBoundaryLoopSet::from_extracted(loops),
-        )
-    }
-
     /// Consumes the chain set and extracts closed chains as boundary loops.
     pub fn into_closed_loops(self) -> Classification<BooleanBoundaryLoopSet> {
         if self.chains.iter().any(|chain| !chain.is_closed()) {
@@ -688,7 +667,7 @@ impl BooleanBoundaryChainSet {
     }
 
     /// Consumes the chain set and extracts closed chains with retained evidence.
-    pub fn into_closed_loops_with_report(self) -> BooleanBoundaryLoopExtractionResult2 {
+    pub(crate) fn into_closed_loops_with_report(self) -> BooleanBoundaryLoopExtractionResult2 {
         if self.chains.iter().any(|chain| !chain.is_closed()) {
             return blocked_boolean_boundary_loop_extraction_result(
                 &self,
@@ -1038,7 +1017,7 @@ impl BooleanBoundaryLoopSet {
     /// with retained source contour/fragment indices. Validation remains
     /// structural: this constructor does not claim to resolve boolean graph
     /// topology, it preserves a prior exact decision as closed boundary loops.
-    pub fn from_contours_with_report(
+    fn from_contours_with_report(
         contours: Vec<Contour2>,
     ) -> CurveResult<BooleanBoundaryLoopConstructionResult2> {
         let source_contour_count = contours.len();
@@ -1102,7 +1081,7 @@ impl BooleanBoundaryLoopSet {
     /// This clones exact contour carriers only at the API boundary, preserving
     /// the same retained source contour/fragment reports as the owned
     /// constructor.
-    pub fn from_contours_borrowed_with_report(
+    fn from_contours_borrowed_with_report(
         contours: &[Contour2],
     ) -> CurveResult<BooleanBoundaryLoopConstructionResult2> {
         Self::from_contours_with_report(contours.to_vec())
@@ -1149,37 +1128,6 @@ impl BooleanBoundaryLoopSet {
             .collect()
     }
 
-    /// Clones every validated loop into closed contours and retains transfer evidence.
-    pub fn to_contours_with_report(
-        &self,
-        fill_rule: FillRule,
-    ) -> BooleanBoundaryContourTransferResult2 {
-        let mut contours = Vec::with_capacity(self.loops.len());
-        for boundary_loop in &self.loops {
-            match boundary_loop.to_contour(fill_rule) {
-                Ok(contour) => contours.push(contour),
-                Err(_) => {
-                    return blocked_boolean_boundary_contour_transfer_result(
-                        self.len(),
-                        loop_set_fragment_count(self),
-                        loop_set_fragment_kind_counts(self),
-                        fill_rule,
-                        BooleanBoundaryContourTransferStage2::ContourMaterialization,
-                        UncertaintyReason::Unsupported,
-                    );
-                }
-            }
-        }
-        decided_boolean_boundary_contour_transfer_result(
-            self.len(),
-            loop_set_fragment_count(self),
-            loop_set_fragment_kind_counts(self),
-            loop_set_output_fragment_reports(self),
-            fill_rule,
-            contours,
-        )
-    }
-
     /// Consumes every validated loop into a closed contour.
     pub fn into_contours(self, fill_rule: FillRule) -> CurveResult<Vec<Contour2>> {
         self.loops
@@ -1189,7 +1137,7 @@ impl BooleanBoundaryLoopSet {
     }
 
     /// Consumes every validated loop into closed contours and retains transfer evidence.
-    pub fn into_contours_with_report(
+    pub(crate) fn into_contours_with_report(
         self,
         fill_rule: FillRule,
     ) -> BooleanBoundaryContourTransferResult2 {
@@ -1691,20 +1639,6 @@ fn retained_status_for_chain_assembly_blocker(
         }
         _ => RetainedTopologyStatus::Unresolved,
     }
-}
-
-fn decided_boolean_boundary_loop_extraction_result(
-    source: &BooleanBoundaryChainSet,
-    loops: BooleanBoundaryLoopSet,
-) -> BooleanBoundaryLoopExtractionResult2 {
-    decided_boolean_boundary_loop_extraction_counts_result(
-        source.len(),
-        chain_set_fragment_count(source),
-        chain_set_fragment_kind_counts(source),
-        source.closed_count(),
-        source.len() - source.closed_count(),
-        loops,
-    )
 }
 
 fn decided_boolean_boundary_loop_extraction_counts_result(

@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BulgeVertex2, Classification, CurvePolicy, CurveString2, CurveStringEndpoint2,
-    CurveStringTrimPoint2, FillRule, Point2, Real, LineArcRegion2,
+    CurveStringTrimPoint2, FillRule, LineArcRegion2, Point2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -54,59 +54,24 @@ fn rectangle_region(origin: Point2, width: u8, height: u8) -> Option<LineArcRegi
 }
 
 fn touch_curve(curve: &CurveString2, policy: &CurvePolicy, data: &[u8]) {
-    let _ = curve.merge_adjacent_collinear_lines(policy).map(|result| {
-        let _ = result.report().source_segment_count();
-        let _ = result.report().adjacent_pair_count();
-        let _ = result.report().merged_pair_count();
-        let _ = result.report().preserved_pair_count();
-        let _ = result.report().output_segment_count();
-        let _ = result.report().spans().len();
-        let _ = result.report().status();
-        let _ = result.report().blocker();
-    });
-
-    let _ = curve.remove_adjacent_reversed_duplicates().map(|result| {
-        let _ = result.report().source_segment_count();
-        let _ = result.report().output_segment_count();
-        let _ = result.report().retained_source_segment_indices().len();
-        let _ = result.report().retained_segments().len();
-        let _ = result.report().removed_pairs().len();
-        let _ = result.report().status();
-        let _ = result.report().blocker();
-    });
+    let _ = curve.merge_adjacent_collinear_lines(policy);
+    let _ = curve.remove_adjacent_reversed_duplicates();
 
     if !curve.is_empty() {
         let start = CurveStringTrimPoint2::new(0, q(data[0]));
         let end = CurveStringTrimPoint2::new(curve.len() - 1, q(data[1]));
-        let _ = curve
-            .trim_between_parameters(start, end, policy)
-            .map(|result| {
-                let _ = result.report().segment_reports().len();
-                let _ = result.report().output_segment_count();
-                let _ = result.report().status();
-                let _ = result.report().blocker();
-            });
+        let _ = curve.trim_between_parameters(start, end, policy);
 
-        let _ = curve
-            .extend_endpoint_to_point(CurveStringEndpoint2::Start, point(data[2], data[3]), policy)
-            .map(|result| {
-                let _ = result.report().endpoint();
-                let _ = result.report().source_segment_index();
-                let _ = result.report().source_param();
-                let _ = result.report().output_segment_count();
-                let _ = result.report().status();
-                let _ = result.report().blocker();
-            });
-        let _ = curve
-            .extend_endpoint_to_point(CurveStringEndpoint2::End, point(data[4], data[5]), policy)
-            .map(|result| {
-                let _ = result.report().endpoint();
-                let _ = result.report().source_segment_index();
-                let _ = result.report().source_param();
-                let _ = result.report().output_segment_count();
-                let _ = result.report().status();
-                let _ = result.report().blocker();
-            });
+        let _ = curve.extend_endpoint_to_point(
+            CurveStringEndpoint2::Start,
+            point(data[2], data[3]),
+            policy,
+        );
+        let _ = curve.extend_endpoint_to_point(
+            CurveStringEndpoint2::End,
+            point(data[4], data[5]),
+            policy,
+        );
     }
 }
 
@@ -127,95 +92,28 @@ fuzz_target!(|data: &[u8]| {
     touch_curve(&curve, &policy, data);
 
     if let Some(other) = curve_from_points(&points[2..6]) {
-        let _ = curve
-            .link_connected_endpoints_with_report(&other, &policy)
-            .map(|result| {
-                let _ = result.report().endpoint_pair_count();
-                let _ = result.report().exact_endpoint_pair_count();
-                let _ = result.report().disconnected_endpoint_pair_count();
-                let _ = result.report().unresolved_endpoint_pair_count();
-                let _ = result.report().output_segment_count();
-                let _ = result.report().status();
-                let _ = result.report().blocker();
-            });
-        let _ = curve
-            .connect_nearest_endpoints_with_line(&other, &policy)
-            .map(|result| {
-                let _ = result.report().endpoint_pair_count();
-                let _ = result.report().exact_endpoint_pair_count();
-                let _ = result.report().disconnected_endpoint_pair_count();
-                let _ = result.report().unresolved_endpoint_pair_count();
-                let _ = result.report().connector_segment_index();
-                let _ = result.report().output_segment_count();
-                let _ = result.report().status();
-                let _ = result.report().blocker();
-            });
-        let _ = curve
-            .trim_between_curve_intersections(&other, &other, &policy)
-            .map(|result| {
-                let _ = result.report().start_hits().len();
-                let _ = result.report().end_hits().len();
-                let _ = result
-                    .report()
-                    .start_intersection_report()
-                    .candidate_pair_count();
-                let _ = result
-                    .report()
-                    .end_intersection_report()
-                    .candidate_pair_count();
-                let _ = result
-                    .report()
-                    .trim_report()
-                    .map(|report| report.output_segment_count());
-                let _ = result.report().status();
-                let _ = result.report().blocker();
-            });
+        let _ = curve.link_connected_endpoints(&other, &policy);
+        let _ = curve.connect_nearest_endpoints_with_line(&other, &policy);
+        let _ = curve.trim_between_curve_intersections(&other, &other, &policy);
     }
 
     if let Some(region) = rectangle_region(points[0].clone(), data[12], data[13]) {
-        let _ = curve.trim_inside_region(&region, &policy).map(|result| {
-            let _ = result.report().boundary_candidate_pair_count();
-            let _ = result.report().boundary_skipped_aabb_pair_count();
-            let _ = result.report().boundary_tested_pair_count();
-            let _ = result.report().boundary_hit_count();
-            let _ = result.report().interval_candidate_count();
-            let _ = result.report().interval_classification_count();
-            let _ = result.report().output_segment_count();
-            let _ = result.report().status();
-            let _ = result.report().blocker();
-        });
+        let _ = curve.trim_inside_region(&region, &policy);
     }
 
-    let _ = curve
-        .chamfer_vertex_by_parameters(1, q(data[14]), q(data[15]), &policy)
-        .map(|result| {
-            let _ = result.report().trim_segment_report_count();
-            let _ = result.report().chamfer_segment_index();
-            let _ = result.report().output_segment_count();
-            let _ = result.report().status();
-            let _ = result.report().blocker();
-        });
-    let _ = curve
-        .fillet_vertex_by_parameters(
-            1,
-            q(data[14]),
-            q(data[15]),
-            &point(data[6], data[7]),
-            data[8] & 1 == 0,
-            &policy,
-        )
-        .map(|result| {
-            let _ = result.report().trim_segment_report_count();
-            let _ = result.report().radius_squared();
-            let _ = result.report().fillet_segment_index();
-            let _ = result.report().output_segment_count();
-            let _ = result.report().status();
-            let _ = result.report().blocker();
-        });
+    let _ = curve.chamfer_vertex_by_parameters(1, q(data[14]), q(data[15]), &policy);
+    let _ = curve.fillet_vertex_by_parameters(
+        1,
+        q(data[14]),
+        q(data[15]),
+        &point(data[6], data[7]),
+        data[8] & 1 == 0,
+        &policy,
+    );
 
     if let Ok(Classification::Decided(linked)) =
         CurveString2::link_connected_endpoints(&curve, &curve, &policy)
     {
-        let _ = linked.map(|linked| linked.report().output_segment_count());
+        let _ = linked.as_ref().map(CurveString2::len);
     }
 });
