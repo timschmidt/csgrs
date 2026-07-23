@@ -66,9 +66,17 @@ pub struct InterfaceAspect {
 pub enum InterfaceKind {
     /// Physical body or sub-body.
     Body,
-    /// PCB/electronics package footprint.
+    /// Legacy PCB/electronics package marker.
+    #[deprecated(
+        since = "0.23.0",
+        note = "compatibility marker scheduled for removal in csgrs 0.25.0; PCB package and footprint semantics belong to hypercircuit::LandPattern"
+    )]
     Package,
-    /// Electrical terminal group.
+    /// Legacy electrical terminal-group marker.
+    #[deprecated(
+        since = "0.23.0",
+        note = "compatibility marker scheduled for removal in csgrs 0.25.0; electrical interfaces belong to hypercircuit::DeviceModel and DevicePin"
+    )]
     Electrical,
     /// Thermal/contact region.
     Thermal,
@@ -80,7 +88,12 @@ pub enum InterfaceKind {
     Custom(String),
 }
 
-/// Terminal exposed by a part.
+/// Geometry-attached terminal handle exposed by a part.
+///
+/// This remains useful for mechanical, thermal, and process attachment points.
+/// New electrical pins and PCB pads must be authored as
+/// `hypercircuit::DevicePin` and `hypercircuit::LandPatternPad`; legacy
+/// `role = "pin"` or `role = "pad"` values are compatibility data only.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PartTerminal {
     /// Stable terminal handle.

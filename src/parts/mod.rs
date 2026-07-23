@@ -9,6 +9,9 @@
 //! (<https://doi.org/10.1016/0925-7721(95)00040-2>): an exploded diagram,
 //! blueprint, or part handoff is useful only when it states which geometry facts
 //! were exact, which were preview-only, and which could not be decided.
+//!
+//! PCB/electrical ownership is explicitly outside this module. See the
+//! repository's `PCB_MIGRATION.md` for the compatibility-removal schedule.
 
 mod blueprint;
 mod metadata;

@@ -944,13 +944,10 @@ fn transform_curve_with_matrix(
     curve: &Curve2,
     mat: &Matrix4,
 ) -> hypercurve::ExactCurveResult<Vec<Curve2>> {
-    let invalid = |cause| {
-        hypercurve::ExactCurveError::invalid(
-            hypercurve::CurveOperation2::Transformation,
-            curve.family(),
-            curve.source(),
-            cause,
-        )
+    let invalid = |cause| hypercurve::ExactCurveError::Invalid {
+        operation: hypercurve::CurveOperation2::Transformation,
+        family: curve.family(),
+        cause,
     };
     let transformed = match curve.geometry() {
         CurveGeometry2::Line(line) => vec![Curve2::from(
@@ -1042,13 +1039,10 @@ fn transform_bezier_subcurve_with_matrix(
     mat: &Matrix4,
 ) -> hypercurve::ExactCurveResult<BezierSubcurve2> {
     let family = Curve2::from(curve.clone()).family();
-    let invalid = |cause| {
-        hypercurve::ExactCurveError::invalid(
-            hypercurve::CurveOperation2::Transformation,
-            family,
-            None,
-            cause,
-        )
+    let invalid = |cause| hypercurve::ExactCurveError::Invalid {
+        operation: hypercurve::CurveOperation2::Transformation,
+        family,
+        cause,
     };
     match curve {
         BezierSubcurve2::Quadratic(curve) => {

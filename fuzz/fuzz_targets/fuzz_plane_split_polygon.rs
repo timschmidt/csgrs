@@ -3,7 +3,7 @@
 #![no_main]
 
 use csgrs::mesh::plane::Plane;
-use csgrs::mesh::Polygon;
+use csgrs::polygon_mesh::Polygon;
 use csgrs::vertex::Vertex;
 use hyperlattice::{Point3, Real, Vector3};
 use libfuzzer_sys::fuzz_target;

@@ -93,7 +93,7 @@ opt-level = "z"
 [dependencies]
 # geometry
 #alum = "0.6.1"
-hypercurve = { version = "0.3.0", path = "../hypercurve", features = ["triangulation", "svg"] }
+hypercurve = { version = "0.3.0", path = "../hypercurve", features = ["triangulation"] }
 hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
 hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
 hypermesh = { version = "0.1.0", path = "../hypermesh" }
