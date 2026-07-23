@@ -1935,6 +1935,38 @@ determinant event can now replace ordinary parameter `Real`s on that path.
 Report-bearing boundary-fragment APIs still require exact parameters on demand
 and remain the materialization boundary. The broad competitor gate is not met.
 
+The next retained-crossing experiments further narrowed that boundary and were
+removed. A fixed-word determinant carrier could not represent every star1024
+crossing. Falling back without repeating the broad phase restored the retained
+star64 arithmetic trace exactly (3,272 dispatches, 177 temporaries, 24
+reductions, 116 GCDs, 903 `Real` constructions, and 40 fused intersections),
+but the 11-sample, 50-iteration star1024 median was 12.800 ms, about 4% slower
+than the 12.291 ms retained checkpoint. Widening or retaining that carrier
+would therefore add live state without removing the eventual parameter
+materialization.
+
+An exact point plus each source line's nonconstant dyadic coordinate was a
+smaller carrier and ordered crossings without parameters. Reconstructing a
+parameter as `(point_axis - start_axis) / (end_axis - start_axis)` is exact,
+but complete Boolean output repeated costly rational divisions after the fused
+intersection kernel had already computed those parameters. It measured 54.371
+ms/iteration. Retaining the eager parameters while lazily constructing public
+events reduced that to 14.406 ms, and borrowing those parameters directly
+through winding and compact markers reached 14.012 ms. The clean checkpoint
+reproduced at 13.473 ms on the same run sequence, so the lazy event sidecar and
+indirection were also removed. The existing contiguous normalized event vector
+is the faster carrier while selected output still observes ordinary `Real`
+parameters.
+
+Finally, the retained profile attributed 15.25% of instructions to Hyperreal's
+balanced `u128` GCD. Replacing its tuned quotient/subtraction hybrid with a
+remainder-free Stein loop passed all 483 Hyperreal unit tests but raised the
+same star1024 median from 13.473 to 14.059 ms. Lower retired instruction count
+does not compensate for the longer dependency chain on these determinant
+operands. Future work should avoid creating or repeatedly observing parameter
+GCD inputs at the event/output boundary rather than replacing the established
+native reducer.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
