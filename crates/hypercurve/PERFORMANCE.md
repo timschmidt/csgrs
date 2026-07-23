@@ -2051,6 +2051,60 @@ prevents it from starting, the AddressSanitizer `region_boolean` differential
 target completed 7,991 executions at 5,881 coverage points and 18,384 feature
 edges without a failure.
 
+The next checkpoint compacts the immutable native geometry rather than changing
+its arithmetic. `Point2` now owns exact coordinates through one shared `Arc`;
+clones and endpoint-chain identities reuse that allocation while preserving
+`Send + Sync`. `CircularArc2` moves its geometry into the `Rc` allocation that
+already held its lazy exact facts, so an arc clone shares both geometry and
+certificates. A source `LineSeg2` lazily retains one fragment support for all of
+its children. Consuming reversal drops that oriented cache, and fragments which
+already carry a source support continue to reuse it directly. On 64-bit targets,
+`Point2`, `LineSeg2`, `CircularArc2`, `Segment2`, and the compact split marker
+fell from 104, 232, 376, 376, and 152 bytes to 8, 48, 8, 48, and 56 bytes.
+Static layout regressions, shared-coordinate/cache tests, and a reversal
+orientation regression protect those boundaries.
+
+The star64 arithmetic trace is exactly unchanged at 2,823 dispatch events, 135
+rational temporaries, 12 reductions, 12 GCD observations, 755 `Real`
+constructions, and 40 fused line intersections. The current CPU profile reduces
+`memmove` from 10.65% at the preceding inline-geometry checkpoint to 1.33%;
+the previously visible per-source fragment-support allocator is no longer a
+top-level sample. Across 100 selected ordinary star64 operations plus fixture
+validation, heaptrack records 68,828 allocations and 1,154 temporaries, versus
+71,271 and 1,153 at the preceding checkpoint. The line-support cache removes
+8,267 allocations from the otherwise-identical compact-point candidate. Peak
+tracked heap fell from 838.92 to 703.89 KiB.
+
+In the fixed 21-sample, 500-iteration star64 matrix, ordinary region/contour
+output measured 65.328/65.431 us per iteration and prepared region/contour
+output measured 64.289/63.286 us, versus 78.044/76.726 and 75.347/74.972 us at
+the preceding checkpoint. Provenance-bearing ordinary/prepared loop output
+measured 119.299/118.905 us. The finite competitors measured 27.760 us for
+Cavalier, 34.915 us for `i_overlay`, and 36.078 us for `geo`, so the small
+crossover remains open. Arc-only star-loop isolation improved by 9--11%, and a
+mixed capsule inward-offset lane improved by 6--10%, showing that the compact
+arc carrier is not merely a line-Boolean specialization.
+
+In fixed 11-sample, 500-iteration star256 runs, region/contour output measured
+0.655/0.532 ms and prepared contour output measured 0.523 ms. Cavalier,
+`i_overlay`, and `geo` measured 0.480, 0.507, and 0.513 ms, leaving exact contour
+output close to but still behind the finite implementations at this size. In
+the 21-sample, 50-iteration star1024 matrix, region/contour output measured
+9.379/8.161 ms and prepared region/contour output measured 9.196/8.055 ms.
+Cavalier, `i_overlay`, and `geo` measured 19.607, 10.078, and 10.278 ms, so exact
+Hypercurve retains its large-fixture lead. Five standalone one-operation
+star1024 runs peaked at 24,016--24,356 KiB RSS (24,284 KiB median), 8,764 KiB
+or 26.5% below the preceding 33,048 KiB median.
+
+All-feature tests, warnings-as-errors all-target Clippy, and
+warnings-as-errors rustdoc passed. With LeakSanitizer disabled because ptrace
+prevents it from starting, the AddressSanitizer `region_boolean` differential
+target completed 7,730 executions at 5,940 coverage points and 18,614 feature
+edges without failure. Stable Rust cannot const-dereference `Arc` or `Rc`, so
+the public `Point2`, `CircularArc2`, native-segment, prepared-segment, and AABB
+accessors that traverse these handles are no longer `const fn`; their ordinary
+signatures, immutability, exact values, and runtime behavior are unchanged.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

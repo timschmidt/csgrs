@@ -282,7 +282,7 @@ impl<'a> PreparedSegment2<'a> {
     }
 
     /// Returns the exact start point of the prepared source segment.
-    pub const fn start(&self) -> &Point2 {
+    pub fn start(&self) -> &Point2 {
         match self {
             Self::Line(line) => line.line_segment().start(),
             Self::Arc(arc) => arc.circular_arc().start(),
@@ -290,7 +290,7 @@ impl<'a> PreparedSegment2<'a> {
     }
 
     /// Returns the exact end point of the prepared source segment.
-    pub const fn end(&self) -> &Point2 {
+    pub fn end(&self) -> &Point2 {
         match self {
             Self::Line(line) => line.line_segment().end(),
             Self::Arc(arc) => arc.circular_arc().end(),

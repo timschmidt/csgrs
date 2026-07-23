@@ -292,22 +292,22 @@ impl Aabb2 {
     }
 
     /// Returns the minimum x coordinate.
-    pub const fn min_x(&self) -> &Real {
+    pub fn min_x(&self) -> &Real {
         self.min.x()
     }
 
     /// Returns the minimum y coordinate.
-    pub const fn min_y(&self) -> &Real {
+    pub fn min_y(&self) -> &Real {
         self.min.y()
     }
 
     /// Returns the maximum x coordinate.
-    pub const fn max_x(&self) -> &Real {
+    pub fn max_x(&self) -> &Real {
         self.max.x()
     }
 
     /// Returns the maximum y coordinate.
-    pub const fn max_y(&self) -> &Real {
+    pub fn max_y(&self) -> &Real {
         self.max.y()
     }
 

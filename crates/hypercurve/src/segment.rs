@@ -19,6 +19,7 @@ pub struct LineSeg2 {
     end: Point2,
     endpoints_decided_distinct: bool,
     support: Option<Rc<LineSupport2>>,
+    fragment_support_cache: OnceCell<Rc<LineSupport2>>,
     // Shared supports retain source orientation; this bit recovers the
     // fragment's directed tangent without subtracting its wide endpoints.
     support_direction_reversed: bool,
@@ -66,6 +67,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct,
             support: None,
+            fragment_support_cache: OnceCell::new(),
             support_direction_reversed: false,
             offset_provenance: None,
         })
@@ -78,6 +80,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct: false,
             support: None,
+            fragment_support_cache: OnceCell::new(),
             support_direction_reversed: false,
             offset_provenance: None,
         }
@@ -143,6 +146,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct,
             support: Some(self.fragment_support()),
+            fragment_support_cache: OnceCell::new(),
             support_direction_reversed: self.support_direction_reversed,
             offset_provenance: self.offset_provenance.clone(),
         })
@@ -159,6 +163,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct: true,
             support: Some(support),
+            fragment_support_cache: OnceCell::new(),
             support_direction_reversed: self.support_direction_reversed,
             offset_provenance: self.offset_provenance.clone(),
         }
@@ -166,10 +171,14 @@ impl LineSeg2 {
 
     pub(crate) fn fragment_support(&self) -> Rc<LineSupport2> {
         self.support.clone().unwrap_or_else(|| {
-            Rc::new(LineSupport2 {
-                start: self.start.clone(),
-                end: self.end.clone(),
-            })
+            self.fragment_support_cache
+                .get_or_init(|| {
+                    Rc::new(LineSupport2 {
+                        start: self.start.clone(),
+                        end: self.end.clone(),
+                    })
+                })
+                .clone()
         })
     }
 
@@ -208,12 +217,7 @@ impl LineSeg2 {
         let mut offset = Self::try_new(start, end)?;
         let provenance = match self.offset_provenance.as_ref() {
             None => LineOffsetProvenance2 {
-                source: self.support.clone().unwrap_or_else(|| {
-                    Rc::new(LineSupport2 {
-                        start: self.start.clone(),
-                        end: self.end.clone(),
-                    })
-                }),
+                source: self.fragment_support(),
                 left_distance: distance,
             },
             Some(provenance) => LineOffsetProvenance2 {
@@ -312,6 +316,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct,
             support,
+            fragment_support_cache: OnceCell::new(),
             support_direction_reversed: self.support_direction_reversed,
             // An arbitrary point map need not preserve signed offset distance.
             offset_provenance: None,
@@ -344,6 +349,7 @@ impl LineSeg2 {
             end: self.start.clone(),
             endpoints_decided_distinct: self.endpoints_decided_distinct,
             support: self.support.clone(),
+            fragment_support_cache: OnceCell::new(),
             support_direction_reversed: self.support.is_some() && !self.support_direction_reversed,
             offset_provenance,
         }
@@ -354,6 +360,7 @@ impl LineSeg2 {
             return self.reversed();
         }
         std::mem::swap(&mut self.start, &mut self.end);
+        self.fragment_support_cache.take();
         if self.support.is_some() {
             self.support_direction_reversed = !self.support_direction_reversed;
         }
@@ -421,17 +428,20 @@ impl LineSeg2 {
 /// A finite circular arc segment.
 #[derive(Clone, Debug)]
 pub struct CircularArc2 {
+    // Geometry and lazy facts share one allocation. Arc clones already share
+    // the immutable geometry, while native segment vectors no longer inherit
+    // the full inline arc payload for every line element.
+    pub(crate) retained_facts: Rc<CircularArcRetainedFacts2>,
+}
+
+#[derive(Debug)]
+pub(crate) struct CircularArcRetainedFacts2 {
     start: Point2,
     end: Point2,
     center: Point2,
     radius_squared: Real,
     endpoints_on_stored_circle: bool,
     clockwise: bool,
-    pub(crate) retained_facts: Rc<CircularArcRetainedFacts2>,
-}
-
-#[derive(Debug, Default)]
-pub(crate) struct CircularArcRetainedFacts2 {
     source_bulge: Option<Real>,
     pub(crate) sweep_kind: OnceCell<crate::ExactCurveResult<crate::arc_bezier::ArcSweepKind>>,
     pub(crate) bezier_decomposition:
@@ -444,10 +454,30 @@ pub(crate) struct CircularArcRetainedFacts2 {
 }
 
 impl CircularArcRetainedFacts2 {
-    fn with_source_bulge(source_bulge: Option<Real>) -> Self {
+    fn new(
+        start: Point2,
+        end: Point2,
+        center: Point2,
+        radius_squared: Real,
+        endpoints_on_stored_circle: bool,
+        clockwise: bool,
+        source_bulge: Option<Real>,
+    ) -> Self {
         Self {
+            start,
+            end,
+            center,
+            radius_squared,
+            endpoints_on_stored_circle,
+            clockwise,
             source_bulge,
-            ..Self::default()
+            sweep_kind: OnceCell::new(),
+            bezier_decomposition: OnceCell::new(),
+            representative_point: OnceCell::new(),
+            directed_sweep_angle: OnceCell::new(),
+            parameter_lineage: OnceCell::new(),
+            parameter_witnesses: OnceCell::new(),
+            fragments: OnceCell::new(),
         }
     }
 }
@@ -477,16 +507,42 @@ const MAX_RETAINED_ARC_FRAGMENTS: usize = 8;
 
 impl PartialEq for CircularArc2 {
     fn eq(&self, other: &Self) -> bool {
-        self.start == other.start
-            && self.end == other.end
-            && self.center == other.center
-            && self.radius_squared == other.radius_squared
-            && self.clockwise == other.clockwise
+        self.start() == other.start()
+            && self.end() == other.end()
+            && self.center() == other.center()
+            && self.radius_squared_ref() == other.radius_squared_ref()
+            && self.is_clockwise() == other.is_clockwise()
             && self.bulge() == other.bulge()
     }
 }
 
 impl CircularArc2 {
+    fn data(&self) -> &CircularArcRetainedFacts2 {
+        &self.retained_facts
+    }
+
+    fn from_geometry(
+        start: Point2,
+        end: Point2,
+        center: Point2,
+        radius_squared: Real,
+        endpoints_on_stored_circle: bool,
+        clockwise: bool,
+        source_bulge: Option<Real>,
+    ) -> Self {
+        Self {
+            retained_facts: Rc::new(CircularArcRetainedFacts2::new(
+                start,
+                end,
+                center,
+                radius_squared,
+                endpoints_on_stored_circle,
+                clockwise,
+                source_bulge,
+            )),
+        }
+    }
+
     /// Constructs a circular arc from endpoints, center, and orientation.
     pub fn try_from_center(
         start: Point2,
@@ -507,15 +563,15 @@ impl CircularArc2 {
             ZeroStatus::Unknown => false,
         };
 
-        Ok(Self {
+        Ok(Self::from_geometry(
             start,
             end,
             center,
-            radius_squared: start_radius_squared,
+            start_radius_squared,
             endpoints_on_stored_circle,
             clockwise,
-            retained_facts: Rc::new(CircularArcRetainedFacts2::default()),
-        })
+            None,
+        ))
     }
 
     pub(crate) fn new_unchecked_with_radius(
@@ -526,15 +582,7 @@ impl CircularArc2 {
         clockwise: bool,
         bulge: Option<Real>,
     ) -> Self {
-        Self {
-            start,
-            end,
-            center,
-            radius_squared,
-            endpoints_on_stored_circle: false,
-            clockwise,
-            retained_facts: Rc::new(CircularArcRetainedFacts2::with_source_bulge(bulge)),
-        }
+        Self::from_geometry(start, end, center, radius_squared, false, clockwise, bulge)
     }
 
     pub(crate) fn new_with_certified_radius(
@@ -545,15 +593,7 @@ impl CircularArc2 {
         clockwise: bool,
         bulge: Option<Real>,
     ) -> Self {
-        Self {
-            start,
-            end,
-            center,
-            radius_squared,
-            endpoints_on_stored_circle: true,
-            clockwise,
-            retained_facts: Rc::new(CircularArcRetainedFacts2::with_source_bulge(bulge)),
-        }
+        Self::from_geometry(start, end, center, radius_squared, true, clockwise, bulge)
     }
 
     pub(crate) fn try_from_center_with_bulge(
@@ -601,37 +641,37 @@ impl CircularArc2 {
     }
 
     /// Returns the arc start point.
-    pub const fn start(&self) -> &Point2 {
-        &self.start
+    pub fn start(&self) -> &Point2 {
+        &self.data().start
     }
 
     /// Returns the arc end point.
-    pub const fn end(&self) -> &Point2 {
-        &self.end
+    pub fn end(&self) -> &Point2 {
+        &self.data().end
     }
 
     /// Returns the arc center.
-    pub const fn center(&self) -> &Point2 {
-        &self.center
+    pub fn center(&self) -> &Point2 {
+        &self.data().center
     }
 
     /// Returns the squared radius.
     pub fn radius_squared(&self) -> Real {
-        self.radius_squared.clone()
+        self.retained_facts.radius_squared.clone()
     }
 
     /// Returns the stored squared radius by reference.
-    pub const fn radius_squared_ref(&self) -> &Real {
-        &self.radius_squared
+    pub fn radius_squared_ref(&self) -> &Real {
+        &self.data().radius_squared
     }
 
-    pub(crate) const fn endpoints_on_stored_circle_are_certified(&self) -> bool {
-        self.endpoints_on_stored_circle
+    pub(crate) fn endpoints_on_stored_circle_are_certified(&self) -> bool {
+        self.data().endpoints_on_stored_circle
     }
 
     /// Returns whether this arc travels clockwise from start to end.
-    pub const fn is_clockwise(&self) -> bool {
-        self.clockwise
+    pub fn is_clockwise(&self) -> bool {
+        self.data().clockwise
     }
 
     /// Returns the source bulge when this arc was constructed from one.
@@ -669,8 +709,8 @@ impl CircularArc2 {
             return Classification::Decided(true);
         }
 
-        let start_side = classify_oriented_line(&self.center, &self.start, point, policy);
-        let end_side = classify_oriented_line(&self.center, &self.end, point, policy);
+        let start_side = classify_oriented_line(self.center(), self.start(), point, policy);
+        let end_side = classify_oriented_line(self.center(), self.end(), point, policy);
         let (Classification::Decided(start_side), Classification::Decided(end_side)) =
             (start_side, end_side)
         else {
@@ -686,12 +726,12 @@ impl CircularArc2 {
         end_side: LineSide,
         sweep_kind: crate::arc_bezier::ArcSweepKind,
     ) -> Classification<bool> {
-        let start_contains = if self.clockwise {
+        let start_contains = if self.is_clockwise() {
             matches!(start_side, LineSide::Right | LineSide::On)
         } else {
             matches!(start_side, LineSide::Left | LineSide::On)
         };
-        let end_contains = if self.clockwise {
+        let end_contains = if self.is_clockwise() {
             matches!(end_side, LineSide::Left | LineSide::On)
         } else {
             matches!(end_side, LineSide::Right | LineSide::On)
@@ -708,7 +748,7 @@ impl CircularArc2 {
         if point_matches_arc_endpoint(self, point, policy) == Some(true) {
             return Classification::Decided(true);
         }
-        let radius_delta = point.distance_squared(&self.center) - self.radius_squared();
+        let radius_delta = point.distance_squared(self.center()) - self.radius_squared();
         match is_zero(&radius_delta, policy) {
             Some(false) => Classification::Decided(false),
             Some(true) => self.contains_sweep_point(point, policy),
@@ -817,7 +857,7 @@ impl CircularArc2 {
             }
         }
         match compare_reals(fraction, &Real::zero(), policy) {
-            Some(Ordering::Equal) => return Ok(Classification::Decided(self.start.clone())),
+            Some(Ordering::Equal) => return Ok(Classification::Decided(self.start().clone())),
             Some(_) => {}
             None => {
                 return Ok(Classification::Uncertain(
@@ -826,7 +866,7 @@ impl CircularArc2 {
             }
         }
         match compare_reals(fraction, &Real::one(), policy) {
-            Some(Ordering::Equal) => return Ok(Classification::Decided(self.end.clone())),
+            Some(Ordering::Equal) => return Ok(Classification::Decided(self.end().clone())),
             Some(_) => {}
             None => {
                 return Ok(Classification::Uncertain(
@@ -850,13 +890,16 @@ impl CircularArc2 {
                 let root_width = lineage.root_range.end() - lineage.root_range.start();
                 let root_fraction = lineage.root_range.start() + &(root_width * fraction);
                 (
-                    lineage.root_start.delta_from(&self.center),
+                    lineage.root_start.delta_from(self.center()),
                     &lineage.root_sweep_angle * root_fraction,
                 )
             } else {
-                (self.start.delta_from(&self.center), sweep_angle * fraction)
+                (
+                    self.start().delta_from(self.center()),
+                    sweep_angle * fraction,
+                )
             };
-        let signed_angle = if self.clockwise {
+        let signed_angle = if self.is_clockwise() {
             -traversal_angle
         } else {
             traversal_angle
@@ -864,8 +907,8 @@ impl CircularArc2 {
         let cosine = signed_angle.clone().cos();
         let sine = signed_angle.sin();
         Ok(Classification::Decided(Point2::new(
-            self.center.x() + (&radial.0 * &cosine) - (&radial.1 * &sine),
-            self.center.y() + (&radial.0 * sine) + (&radial.1 * cosine),
+            self.center().x() + (&radial.0 * &cosine) - (&radial.1 * &sine),
+            self.center().y() + (&radial.0 * sine) + (&radial.1 * cosine),
         )))
     }
 
@@ -942,7 +985,7 @@ impl CircularArc2 {
                     Err(error) => return Err(error.clone()),
                 };
                 (
-                    self.start.clone(),
+                    self.start().clone(),
                     source_sweep,
                     ParamRange::new(Real::zero(), Real::one()),
                 )
@@ -956,9 +999,9 @@ impl CircularArc2 {
         let fragment = Self::new_with_certified_radius(
             start.clone(),
             end.clone(),
-            self.center.clone(),
+            self.center().clone(),
             self.radius_squared(),
-            self.clockwise,
+            self.is_clockwise(),
             None,
         );
         let _ =
@@ -1066,25 +1109,33 @@ impl CircularArc2 {
 
     /// Returns this arc with traversal direction reversed.
     pub fn reversed(&self) -> Self {
-        Self {
-            start: self.end.clone(),
-            end: self.start.clone(),
-            center: self.center.clone(),
-            radius_squared: self.radius_squared.clone(),
-            endpoints_on_stored_circle: self.endpoints_on_stored_circle,
-            clockwise: !self.clockwise,
-            retained_facts: Rc::new(CircularArcRetainedFacts2::with_source_bulge(
-                self.bulge().map(|bulge| -bulge.clone()),
-            )),
-        }
+        Self::from_geometry(
+            self.end().clone(),
+            self.start().clone(),
+            self.center().clone(),
+            self.radius_squared(),
+            self.endpoints_on_stored_circle_are_certified(),
+            !self.is_clockwise(),
+            self.bulge().map(|bulge| -bulge.clone()),
+        )
     }
 
-    pub(crate) fn into_reversed(mut self) -> Self {
-        std::mem::swap(&mut self.start, &mut self.end);
-        self.clockwise = !self.clockwise;
-        let source_bulge = self.bulge().map(|bulge| -bulge.clone());
-        self.retained_facts = Rc::new(CircularArcRetainedFacts2::with_source_bulge(source_bulge));
-        self
+    pub(crate) fn into_reversed(self) -> Self {
+        let retained_facts = match Rc::try_unwrap(self.retained_facts) {
+            Ok(retained_facts) => {
+                return Self::from_geometry(
+                    retained_facts.end,
+                    retained_facts.start,
+                    retained_facts.center,
+                    retained_facts.radius_squared,
+                    retained_facts.endpoints_on_stored_circle,
+                    !retained_facts.clockwise,
+                    retained_facts.source_bulge.map(|bulge| -bulge),
+                );
+            }
+            Err(retained_facts) => retained_facts,
+        };
+        Self { retained_facts }.reversed()
     }
 }
 
@@ -1119,7 +1170,7 @@ impl Segment2 {
     }
 
     /// Returns the segment start point.
-    pub const fn start(&self) -> &Point2 {
+    pub fn start(&self) -> &Point2 {
         match self {
             Self::Line(line) => line.start(),
             Self::Arc(arc) => arc.start(),
@@ -1127,7 +1178,7 @@ impl Segment2 {
     }
 
     /// Returns the segment end point.
-    pub const fn end(&self) -> &Point2 {
+    pub fn end(&self) -> &Point2 {
         match self {
             Self::Line(line) => line.end(),
             Self::Arc(arc) => arc.end(),
@@ -1259,11 +1310,11 @@ fn point_matches_arc_endpoint(
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<bool> {
-    let start_distance = point.distance_squared(&arc.start);
+    let start_distance = point.distance_squared(arc.start());
     if crate::classify::is_zero(&start_distance, policy)? {
         return Some(true);
     }
-    let end_distance = point.distance_squared(&arc.end);
+    let end_distance = point.distance_squared(arc.end());
     crate::classify::is_zero(&end_distance, policy)
 }
 

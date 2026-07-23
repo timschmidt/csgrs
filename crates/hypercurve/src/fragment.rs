@@ -825,6 +825,8 @@ fn radius_delta_is_zero(delta: &Real, radius_squared: &Real, policy: &CurvePolic
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use super::*;
     use crate::LineSeg2;
 
@@ -835,14 +837,15 @@ mod tests {
         );
         #[cfg(target_pointer_width = "64")]
         {
+            assert!(std::mem::size_of::<Point2>() <= 8);
             assert!(std::mem::size_of::<CompactLineContourFragment>() <= 32);
             assert!(
                 std::mem::size_of::<CompactLineSplitMarker>()
                     < std::mem::size_of::<SegmentSplitMarker>()
             );
-            assert!(std::mem::size_of::<LineSeg2>() <= 232);
-            assert!(std::mem::size_of::<crate::CircularArc2>() <= 376);
-            assert!(std::mem::size_of::<Segment2>() <= 376);
+            assert!(std::mem::size_of::<LineSeg2>() <= 48);
+            assert!(std::mem::size_of::<crate::CircularArc2>() <= 8);
+            assert!(std::mem::size_of::<Segment2>() <= 48);
         }
     }
 
@@ -878,6 +881,31 @@ mod tests {
         assert_eq!(
             first.retained_support_intervals_decided_disjoint(last, &policy),
             Some(true)
+        );
+    }
+
+    #[test]
+    fn source_line_reuses_support_and_reversal_drops_the_oriented_cache() {
+        let source = LineSeg2::try_new(point(0), point(6)).unwrap();
+        let original_start = source.start().clone();
+        let original_end = source.end().clone();
+        let first = source.fragment_support();
+        let second = source.fragment_support();
+
+        assert!(Rc::ptr_eq(&first, &second));
+
+        let reversed = source.into_reversed();
+        let reversed_support = reversed.fragment_support();
+        assert!(!Rc::ptr_eq(&first, &reversed_support));
+        let fragment = reversed.fragment_between_after_distinct_endpoints(
+            original_end.clone(),
+            point(3),
+            reversed_support,
+        );
+        assert_eq!(fragment.support_start(), &original_end);
+        assert_eq!(
+            fragment.support_delta(),
+            original_start.delta_from(&original_end)
         );
     }
 
