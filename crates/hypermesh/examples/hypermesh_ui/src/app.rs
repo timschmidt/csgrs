@@ -573,10 +573,15 @@ fn cube_triangles() -> Vec<Triangle> {
 fn input_mesh_faces(mesh: &InputMesh, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Triangles);
     for triangle in &mesh.triangles {
-        for index in triangle.indices() {
-            if let Some(point) = mesh.positions.get(index) {
-                out.push(ExactVertex::new(point.clone(), color));
-            }
+        let [Some(a), Some(b), Some(c)] = triangle
+            .indices()
+            .map(|index| mesh.positions.get(index).cloned())
+        else {
+            continue;
+        };
+        let shaded = flat_shaded_color(color, [&a, &b, &c]);
+        for point in [a, b, c] {
+            out.push(ExactVertex::new(point, shaded));
         }
     }
     out
@@ -599,13 +604,59 @@ fn input_mesh_wire(mesh: &InputMesh, color: Color3) -> ExactMesh {
 fn triangle_soup_faces(soup: &TriangleSoup, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Triangles);
     for triangle in &soup.triangles {
-        for index in triangle {
-            if let Some(vertex) = soup.vertices.get(*index) {
-                out.push(ExactVertex::new(output_vertex_point(vertex), color));
-            }
+        let [Some(a), Some(b), Some(c)] =
+            triangle.map(|index| soup.vertices.get(index).map(output_vertex_point))
+        else {
+            continue;
+        };
+        let shaded = flat_shaded_color(color, [&a, &b, &c]);
+        for point in [a, b, c] {
+            out.push(ExactVertex::new(point, shaded));
         }
     }
     out
+}
+
+fn flat_shaded_color(base: Color3, [a, b, c]: [&Point3; 3]) -> Color3 {
+    const AMBIENT: f64 = 0.28;
+    const DIFFUSE: f64 = 0.72;
+    // Unit vector from the surface toward a fixed world-space key light.
+    const LIGHT: [f64; 3] = [
+        0.365_148_371_670_110_7,
+        -0.182_574_185_835_055_36,
+        0.912_870_929_175_276_9,
+    ];
+
+    let Some(a) = a.to_f64_array_lossy() else {
+        return base;
+    };
+    let Some(b) = b.to_f64_array_lossy() else {
+        return base;
+    };
+    let Some(c) = c.to_f64_array_lossy() else {
+        return base;
+    };
+    let ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    let ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    let normal = [
+        ab[1] * ac[2] - ab[2] * ac[1],
+        ab[2] * ac[0] - ab[0] * ac[2],
+        ab[0] * ac[1] - ab[1] * ac[0],
+    ];
+    let length =
+        (normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]).sqrt();
+    if !length.is_finite() || length <= f64::EPSILON {
+        return base;
+    }
+    let diffuse = ((normal[0] * LIGHT[0] + normal[1] * LIGHT[1] + normal[2] * LIGHT[2]) / length)
+        .max(0.0);
+    let intensity = (AMBIENT + DIFFUSE * diffuse) as f32;
+    Color3::new(
+        base.r * intensity,
+        base.g * intensity,
+        base.b * intensity,
+    )
+    .unwrap_or(base)
 }
 
 fn triangle_soup_wire(soup: &TriangleSoup, color: Color3) -> ExactMesh {
@@ -696,5 +747,33 @@ mod tests {
                 result.err()
             );
         }
+    }
+
+    #[test]
+    fn flat_shading_is_consistent_across_coplanar_triangles() {
+        let base = Color3::new(0.41, 0.86, 0.60).unwrap();
+        let a = p(0, 0, 0);
+        let b = p(2, 0, 0);
+        let c = p(2, 2, 0);
+        let d = p(0, 2, 0);
+
+        assert_eq!(
+            flat_shaded_color(base, [&a, &b, &c]),
+            flat_shaded_color(base, [&a, &c, &d])
+        );
+    }
+
+    #[test]
+    fn flat_shading_distinguishes_surface_orientations() {
+        let base = Color3::new(0.41, 0.86, 0.60).unwrap();
+        let origin = p(0, 0, 0);
+        let x = p(1, 0, 0);
+        let y = p(0, 1, 0);
+        let z = p(0, 0, 1);
+
+        assert_ne!(
+            flat_shaded_color(base, [&origin, &x, &y]),
+            flat_shaded_color(base, [&origin, &y, &z])
+        );
     }
 }
