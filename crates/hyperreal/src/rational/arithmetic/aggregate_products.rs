@@ -106,7 +106,7 @@ const DYADIC_STACK_LIMBS: usize = 6;
 // Keep the common geometry envelope allocation-free through 384 bits. Every
 // operation is checked; operands, alignment, or carries outside this bound
 // return to the arbitrary-precision reducer without changing the result.
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 struct DyadicStackAccumulator([u64; DYADIC_STACK_LIMBS]);
 
 #[derive(Clone, Copy)]
@@ -131,6 +131,21 @@ struct DyadicLineIntersectionPlan {
     numerators: [DyadicWord; 2],
 }
 
+#[derive(Clone, Copy, Debug)]
+struct DyadicWideWord {
+    sign: Sign,
+    magnitude: [u64; 4],
+    denominator_shift: u64,
+}
+
+#[derive(Clone, Copy)]
+struct DyadicWideLineIntersectionPlan {
+    first_start: [DyadicWord; 2],
+    first_delta: [DyadicWord; 2],
+    denominator: DyadicWideWord,
+    numerators: [DyadicWideWord; 2],
+}
+
 /// Compact exact parameters for a line crossing whose inputs are dyadic.
 ///
 /// The determinant quotients stay in their native word representation so
@@ -139,16 +154,63 @@ struct DyadicLineIntersectionPlan {
 #[doc(hidden)]
 #[derive(Clone, Debug)]
 pub struct ExactDyadicLineParameters2 {
-    numerators: [DyadicWord; 2],
-    denominator: DyadicWord,
+    numerator_magnitudes: [u128; 2],
+    denominator_magnitude: u128,
+    denominator_shifts: [u64; 3],
+    signs: [Sign; 3],
+}
+
+/// Wider compact exact parameters for dyadic line crossings whose determinant
+/// does not fit the native-word carrier.
+///
+/// Geometry layers normally box this uncommon representation so the dominant
+/// inline crossing event stays compact.
+#[doc(hidden)]
+#[derive(Clone, Debug)]
+pub struct ExactDyadicWideLineParameters2 {
+    numerator_magnitudes: [[u64; 4]; 2],
+    denominator_magnitude: [u64; 4],
+    denominator_shifts: [u64; 3],
+    signs: [Sign; 3],
 }
 
 impl ExactDyadicLineParameters2 {
+    fn from_words(numerators: [DyadicWord; 2], denominator: DyadicWord) -> Self {
+        Self {
+            numerator_magnitudes: [numerators[0].magnitude, numerators[1].magnitude],
+            denominator_magnitude: denominator.magnitude,
+            denominator_shifts: [
+                numerators[0].denominator_shift,
+                numerators[1].denominator_shift,
+                denominator.denominator_shift,
+            ],
+            signs: [numerators[0].sign, numerators[1].sign, denominator.sign],
+        }
+    }
+
+    fn numerator(&self, index: usize) -> DyadicWord {
+        DyadicWord {
+            sign: self.signs[index],
+            magnitude: self.numerator_magnitudes[index],
+            denominator_shift: self.denominator_shifts[index],
+        }
+    }
+
+    fn denominator(&self) -> DyadicWord {
+        DyadicWord {
+            sign: self.signs[2],
+            magnitude: self.denominator_magnitude,
+            denominator_shift: self.denominator_shifts[2],
+        }
+    }
+
     fn compare_parameter(&self, index: usize, other: &Self) -> Ordering {
-        let left_numerator = self.numerators[index];
-        let right_numerator = other.numerators[index];
-        let left_sign = left_numerator.sign * self.denominator.sign;
-        let right_sign = right_numerator.sign * other.denominator.sign;
+        let left_numerator = self.numerator(index);
+        let right_numerator = other.numerator(index);
+        let left_denominator = self.denominator();
+        let right_denominator = other.denominator();
+        let left_sign = left_numerator.sign * left_denominator.sign;
+        let right_sign = right_numerator.sign * right_denominator.sign;
         if left_sign != right_sign {
             return match (left_sign, right_sign) {
                 (Minus, _) | (_, Plus) => Ordering::Less,
@@ -160,9 +222,9 @@ impl ExactDyadicLineParameters2 {
             return Ordering::Equal;
         }
 
-        let left_shift = u128::from(self.denominator.denominator_shift)
+        let left_shift = u128::from(left_denominator.denominator_shift)
             + u128::from(right_numerator.denominator_shift);
-        let right_shift = u128::from(other.denominator.denominator_shift)
+        let right_shift = u128::from(right_denominator.denominator_shift)
             + u128::from(left_numerator.denominator_shift);
         let exponent_ordering = if left_shift >= right_shift + 256 {
             Some(Ordering::Greater)
@@ -177,13 +239,13 @@ impl ExactDyadicLineParameters2 {
         let ordering = exponent_ordering.unwrap_or_else(|| match (
             left.add_product(
                 left_numerator.magnitude,
-                other.denominator.magnitude,
+                right_denominator.magnitude,
                 u64::try_from(left_shift - common_shift)
                     .expect("bounded dyadic comparison shift fits u64"),
             ),
             right.add_product(
                 right_numerator.magnitude,
-                self.denominator.magnitude,
+                left_denominator.magnitude,
                 u64::try_from(right_shift - common_shift)
                     .expect("bounded dyadic comparison shift fits u64"),
             ),
@@ -191,9 +253,9 @@ impl ExactDyadicLineParameters2 {
             (Some(()), Some(())) => left.0.iter().rev().cmp(right.0.iter().rev()),
             _ => {
                 let mut left =
-                    BigUint::from(left_numerator.magnitude) * other.denominator.magnitude;
+                    BigUint::from(left_numerator.magnitude) * right_denominator.magnitude;
                 let mut right =
-                    BigUint::from(right_numerator.magnitude) * self.denominator.magnitude;
+                    BigUint::from(right_numerator.magnitude) * left_denominator.magnitude;
                 left <<= usize::try_from(left_shift - common_shift)
                     .expect("bounded dyadic comparison shift fits usize");
                 right <<= usize::try_from(right_shift - common_shift)
@@ -219,9 +281,198 @@ impl ExactDyadicLineParameters2 {
     }
 
     pub(crate) fn materialize_parameter(&self, index: usize) -> Rational {
-        Rational::quotient_dyadic_words(self.numerators[index], self.denominator)
+        Rational::quotient_dyadic_words(self.numerator(index), self.denominator())
             .expect("retained dyadic line parameter remains representable")
             .0
+    }
+}
+
+impl ExactDyadicWideLineParameters2 {
+    fn from_words(numerators: [DyadicWideWord; 2], denominator: DyadicWideWord) -> Self {
+        Self {
+            numerator_magnitudes: [numerators[0].magnitude, numerators[1].magnitude],
+            denominator_magnitude: denominator.magnitude,
+            denominator_shifts: [
+                numerators[0].denominator_shift,
+                numerators[1].denominator_shift,
+                denominator.denominator_shift,
+            ],
+            signs: [numerators[0].sign, numerators[1].sign, denominator.sign],
+        }
+    }
+
+    fn numerator(&self, index: usize) -> DyadicWideWord {
+        DyadicWideWord {
+            sign: self.signs[index],
+            magnitude: self.numerator_magnitudes[index],
+            denominator_shift: self.denominator_shifts[index],
+        }
+    }
+
+    fn denominator(&self) -> DyadicWideWord {
+        DyadicWideWord {
+            sign: self.signs[2],
+            magnitude: self.denominator_magnitude,
+            denominator_shift: self.denominator_shifts[2],
+        }
+    }
+
+    fn wide_word(value: DyadicWord) -> DyadicWideWord {
+        DyadicWideWord {
+            sign: value.sign,
+            magnitude: [
+                value.magnitude as u64,
+                (value.magnitude >> 64) as u64,
+                0,
+                0,
+            ],
+            denominator_shift: value.denominator_shift,
+        }
+    }
+
+    fn multiply_magnitudes(left: [u64; 4], right: [u64; 4]) -> [u64; 8] {
+        let mut product = [0_u64; 8];
+        for (left_index, left_limb) in left.into_iter().enumerate() {
+            let mut carry = 0_u128;
+            for (right_index, right_limb) in right.into_iter().enumerate() {
+                let index = left_index + right_index;
+                let total = u128::from(product[index])
+                    + u128::from(left_limb) * u128::from(right_limb)
+                    + carry;
+                product[index] = total as u64;
+                carry = total >> 64;
+            }
+            product[left_index + 4] = carry as u64;
+        }
+        product
+    }
+
+    fn shifted_product(product: [u64; 8], shift: u128) -> [u64; 16] {
+        let word_shift = usize::try_from(shift / 64)
+            .expect("bounded wide comparison shift fits usize");
+        let bit_shift = u32::try_from(shift % 64).expect("limb bit shift fits u32");
+        let mut shifted = [0_u64; 16];
+        for (index, limb) in product.into_iter().enumerate() {
+            if limb == 0 {
+                continue;
+            }
+            shifted[word_shift + index] |= limb << bit_shift;
+            if bit_shift != 0 {
+                shifted[word_shift + index + 1] |= limb >> (64 - bit_shift);
+            }
+        }
+        shifted
+    }
+
+    fn compare_parameter_words(
+        left_numerator: DyadicWideWord,
+        left_denominator: DyadicWideWord,
+        right_numerator: DyadicWideWord,
+        right_denominator: DyadicWideWord,
+    ) -> Ordering {
+        let left_sign = left_numerator.sign * left_denominator.sign;
+        let right_sign = right_numerator.sign * right_denominator.sign;
+        if left_sign != right_sign {
+            return match (left_sign, right_sign) {
+                (Minus, _) | (_, Plus) => Ordering::Less,
+                (Plus, _) | (_, Minus) => Ordering::Greater,
+                _ => Ordering::Equal,
+            };
+        }
+        if left_sign == NoSign {
+            return Ordering::Equal;
+        }
+
+        let left = Self::multiply_magnitudes(
+            left_numerator.magnitude,
+            right_denominator.magnitude,
+        );
+        let right = Self::multiply_magnitudes(
+            right_numerator.magnitude,
+            left_denominator.magnitude,
+        );
+        let bit_len = |value: &[u64; 8]| {
+            let index = value
+                .iter()
+                .rposition(|limb| *limb != 0)
+                .expect("nonzero parameter product has a nonzero limb");
+            u128::try_from(index * 64 + (64 - value[index].leading_zeros() as usize))
+                .expect("fixed product bit length fits u128")
+        };
+        let left_shift = u128::from(left_denominator.denominator_shift)
+            + u128::from(right_numerator.denominator_shift);
+        let right_shift = u128::from(right_denominator.denominator_shift)
+            + u128::from(left_numerator.denominator_shift);
+        let ordering = match (bit_len(&left) + left_shift).cmp(&(bit_len(&right) + right_shift)) {
+            Ordering::Equal => {
+                let common_shift = left_shift.min(right_shift);
+                let left = Self::shifted_product(left, left_shift - common_shift);
+                let right = Self::shifted_product(right, right_shift - common_shift);
+                left.iter().rev().cmp(right.iter().rev())
+            }
+            ordering => ordering,
+        };
+        if left_sign == Minus {
+            ordering.reverse()
+        } else {
+            ordering
+        }
+    }
+
+    fn compare_parameter(&self, index: usize, other: &Self) -> Ordering {
+        Self::compare_parameter_words(
+            self.numerator(index),
+            self.denominator(),
+            other.numerator(index),
+            other.denominator(),
+        )
+    }
+
+    fn compare_parameter_to_compact(
+        &self,
+        index: usize,
+        other: &ExactDyadicLineParameters2,
+    ) -> Ordering {
+        Self::compare_parameter_words(
+            self.numerator(index),
+            self.denominator(),
+            Self::wide_word(other.numerator(index)),
+            Self::wide_word(other.denominator()),
+        )
+    }
+
+    /// Compare the parameter on the first source line without reducing it.
+    pub fn compare_first_parameter(&self, other: &Self) -> Ordering {
+        self.compare_parameter(0, other)
+    }
+
+    /// Compare the parameter on the second source line without reducing it.
+    pub fn compare_second_parameter(&self, other: &Self) -> Ordering {
+        self.compare_parameter(1, other)
+    }
+
+    /// Compare the first parameter with the native-word carrier.
+    pub fn compare_first_parameter_to_compact(
+        &self,
+        other: &ExactDyadicLineParameters2,
+    ) -> Ordering {
+        self.compare_parameter_to_compact(0, other)
+    }
+
+    /// Compare the second parameter with the native-word carrier.
+    pub fn compare_second_parameter_to_compact(
+        &self,
+        other: &ExactDyadicLineParameters2,
+    ) -> Ordering {
+        self.compare_parameter_to_compact(1, other)
+    }
+
+    pub(crate) fn materialize_parameter(&self, index: usize) -> Rational {
+        Rational::quotient_dyadic_wide_words(
+            self.numerator(index),
+            self.denominator(),
+            false,
+        )
     }
 }
 
@@ -244,6 +495,66 @@ impl DyadicStackAccumulator {
             let total = u128::from(product[index]) + carry;
             product[index] = total as u64;
             debug_assert_eq!(total >> 64, 0);
+        }
+
+        let word_shift = usize::try_from(shift / 64).ok()?;
+        let bit_shift = u32::try_from(shift % 64).expect("limb bit shift fits u32");
+        let mut aligned = Self::default();
+        for (index, limb) in product.into_iter().enumerate() {
+            if limb == 0 {
+                continue;
+            }
+            let target = word_shift.checked_add(index)?;
+            if target >= DYADIC_STACK_LIMBS {
+                return None;
+            }
+            aligned.0[target] |= limb << bit_shift;
+            if bit_shift != 0 {
+                let high = limb >> (64 - bit_shift);
+                if high != 0 {
+                    let target = target.checked_add(1)?;
+                    if target >= DYADIC_STACK_LIMBS {
+                        return None;
+                    }
+                    aligned.0[target] |= high;
+                }
+            }
+        }
+
+        let mut carry = false;
+        for (value, addend) in self.0.iter_mut().zip(aligned.0) {
+            let (sum, first_carry) = value.overflowing_add(addend);
+            let (sum, second_carry) = sum.overflowing_add(u64::from(carry));
+            *value = sum;
+            carry = first_carry || second_carry;
+        }
+        (!carry).then_some(())
+    }
+
+    fn add_wide_word_product(
+        &mut self,
+        left: [u64; 4],
+        right: u128,
+        shift: u64,
+    ) -> Option<()> {
+        let right = [right as u64, (right >> 64) as u64];
+        let mut product = [0_u64; DYADIC_STACK_LIMBS];
+        for (left_index, left_limb) in left.into_iter().enumerate() {
+            let mut carry = 0_u128;
+            for (right_index, right_limb) in right.into_iter().enumerate() {
+                let index = left_index + right_index;
+                let total = u128::from(product[index])
+                    + u128::from(left_limb) * u128::from(right_limb)
+                    + carry;
+                product[index] = total as u64;
+                carry = total >> 64;
+            }
+            let index = left_index + 2;
+            let total = u128::from(product[index]) + carry;
+            product[index] = total as u64;
+            if total >> 64 != 0 {
+                return None;
+            }
         }
 
         let word_shift = usize::try_from(shift / 64).ok()?;
@@ -382,24 +693,64 @@ impl Rational {
         let first_delta = difference(first_end, first_start)?;
         let second_delta = difference(second_end, second_start)?;
         let start_delta = difference(second_start, first_start)?;
-        let denominator = Self::dyadic_stack_sum_word(Self::cross_dyadic_words(
-            first_delta,
-            second_delta,
-        )?)?;
-        if denominator.sign == NoSign
-            || (denominator.magnitude != 1 && denominator.magnitude % 2 == 0)
-        {
+        let denominator = Self::cross_dyadic_words(first_delta, second_delta)
+            .and_then(Self::dyadic_stack_sum_word)?;
+        if denominator.sign == NoSign {
             return None;
         }
-        let first_numerator = Self::dyadic_stack_sum_word(Self::cross_dyadic_words(
+        let first_numerator = Self::cross_dyadic_words(start_delta, second_delta)
+            .and_then(Self::dyadic_stack_sum_word)?;
+        let second_numerator = Self::cross_dyadic_words(start_delta, first_delta)
+            .and_then(Self::dyadic_stack_sum_word)?;
+        Some(DyadicLineIntersectionPlan {
+            first_start,
+            first_delta,
+            denominator,
+            numerators: [first_numerator, second_numerator],
+        })
+    }
+
+    fn line_intersection2_wide_plan_known_dyadic(
+        first_start: [&Self; 2],
+        first_end: [&Self; 2],
+        second_start: [&Self; 2],
+        second_end: [&Self; 2],
+    ) -> Option<DyadicWideLineIntersectionPlan> {
+        let point_words = |point: [&Self; 2]| {
+            Some([
+                Self::known_dyadic_word(point[0])?,
+                Self::known_dyadic_word(point[1])?,
+            ])
+        };
+        let first_start = point_words(first_start)?;
+        let first_end = point_words(first_end)?;
+        let second_start = point_words(second_start)?;
+        let second_end = point_words(second_end)?;
+        let difference = |left: [DyadicWord; 2], right: [DyadicWord; 2]| {
+            Some([
+                Self::difference_dyadic_words(left[0], right[0])?,
+                Self::difference_dyadic_words(left[1], right[1])?,
+            ])
+        };
+        let first_delta = difference(first_end, first_start)?;
+        let second_delta = difference(second_end, second_start)?;
+        let start_delta = difference(second_start, first_start)?;
+        let denominator = Self::dyadic_stack_sum_wide_word(Self::cross_dyadic_words(
+            first_delta,
+            second_delta,
+        )?)?;
+        if denominator.sign == NoSign {
+            return None;
+        }
+        let first_numerator = Self::dyadic_stack_sum_wide_word(Self::cross_dyadic_words(
             start_delta,
             second_delta,
         )?)?;
-        let second_numerator = Self::dyadic_stack_sum_word(Self::cross_dyadic_words(
+        let second_numerator = Self::dyadic_stack_sum_wide_word(Self::cross_dyadic_words(
             start_delta,
             first_delta,
         )?)?;
-        Some(DyadicLineIntersectionPlan {
+        Some(DyadicWideLineIntersectionPlan {
             first_start,
             first_delta,
             denominator,
@@ -2231,6 +2582,19 @@ impl Rational {
         })
     }
 
+    fn dyadic_stack_sum_wide_word(sum: DyadicStackSum) -> Option<DyadicWideWord> {
+        if sum.magnitude.0[4..].iter().any(|limb| *limb != 0) {
+            return None;
+        }
+        Some(DyadicWideWord {
+            sign: sum.sign,
+            magnitude: sum.magnitude.0[..4]
+                .try_into()
+                .expect("four-limb prefix has fixed width"),
+            denominator_shift: sum.denominator_shift,
+        })
+    }
+
     fn product_sum_dyadic_words<const N: usize>(
         left: [DyadicWord; N],
         right: [DyadicWord; N],
@@ -2268,6 +2632,37 @@ impl Rational {
             [right[1], right[0]],
             [true, false],
         )
+    }
+
+    fn product_sum_wide_narrow_words<const N: usize>(
+        left: [DyadicWideWord; N],
+        right: [DyadicWord; N],
+        positive_terms: [bool; N],
+    ) -> Option<DyadicStackSum> {
+        let denominator_shifts: [u64; N] = core::array::from_fn(|index| {
+            left[index].denominator_shift + right[index].denominator_shift
+        });
+        let max_shift = denominator_shifts.into_iter().max().unwrap_or(0);
+        let mut positive = DyadicStackAccumulator::default();
+        let mut negative = DyadicStackAccumulator::default();
+        for index in 0..N {
+            let sign = (if positive_terms[index] { Plus } else { Minus })
+                * left[index].sign
+                * right[index].sign;
+            let accumulator = match sign {
+                Plus => &mut positive,
+                Minus => &mut negative,
+                NoSign => continue,
+            };
+            accumulator.add_wide_word_product(
+                left[index].magnitude,
+                right[index].magnitude,
+                max_shift - denominator_shifts[index],
+            )?;
+        }
+        Some(Self::finish_dyadic_stack_sum(
+            positive, negative, max_shift,
+        ))
     }
 
     fn dyadic_product_alignment<const N: usize>(
@@ -3072,6 +3467,81 @@ impl Rational {
         )
     }
 
+    fn dyadic_wide_magnitude(value: DyadicWideWord) -> BigUint {
+        let last = value
+            .magnitude
+            .iter()
+            .rposition(|limb| *limb != 0)
+            .expect("nonzero wide dyadic word has a nonzero limb");
+        let mut digits = Vec::with_capacity((last + 1) * 2);
+        for limb in &value.magnitude[..=last] {
+            digits.push(*limb as u32);
+            digits.push((*limb >> 32) as u32);
+        }
+        while digits.last() == Some(&0) {
+            digits.pop();
+        }
+        BigUint::new(digits)
+    }
+
+    fn quotient_dyadic_wide_words(
+        numerator: DyadicWideWord,
+        denominator: DyadicWideWord,
+        unreduced: bool,
+    ) -> Self {
+        debug_assert_ne!(denominator.sign, NoSign);
+        if numerator.sign == NoSign {
+            return Self::zero();
+        }
+        let mut magnitude = Self::dyadic_wide_magnitude(numerator);
+        let mut scale = Self::dyadic_wide_magnitude(denominator);
+        if denominator.denominator_shift > numerator.denominator_shift {
+            magnitude <<= usize::try_from(
+                denominator.denominator_shift - numerator.denominator_shift,
+            )
+            .expect("dyadic quotient shift fits usize");
+        } else if numerator.denominator_shift > denominator.denominator_shift {
+            scale <<= usize::try_from(
+                numerator.denominator_shift - denominator.denominator_shift,
+            )
+            .expect("dyadic quotient shift fits usize");
+        }
+        let sign = numerator.sign * denominator.sign;
+        if unreduced {
+            trace_rational_temporary!();
+            Self::from_parts_raw_unreduced(sign, magnitude, scale)
+        } else {
+            Self::from_bigint_fraction(BigInt::from_biguint(sign, magnitude), scale)
+                .expect("retained nonzero determinant is a valid rational divisor")
+        }
+    }
+
+    fn quotient_dyadic_stack_sum_by_wide_unreduced(
+        numerator: DyadicStackSum,
+        denominator: DyadicWideWord,
+    ) -> Self {
+        debug_assert_ne!(numerator.sign, NoSign);
+        let mut magnitude = numerator.magnitude.into_biguint();
+        let mut scale = Self::dyadic_wide_magnitude(denominator);
+        if denominator.denominator_shift > numerator.denominator_shift {
+            magnitude <<= usize::try_from(
+                denominator.denominator_shift - numerator.denominator_shift,
+            )
+            .expect("dyadic quotient shift fits usize");
+        } else if numerator.denominator_shift > denominator.denominator_shift {
+            scale <<= usize::try_from(
+                numerator.denominator_shift - denominator.denominator_shift,
+            )
+            .expect("dyadic quotient shift fits usize");
+        }
+        trace_rational_temporary!();
+        Self::from_parts_raw_unreduced(
+            numerator.sign * denominator.sign,
+            magnitude,
+            scale,
+        )
+    }
+
     /// Solve a proper crossing between four exact dyadic points without
     /// materializing coordinate deltas or determinant rationals. Returns
     /// `None` when a word or fixed-stack bound is exceeded so the caller can
@@ -3091,10 +3561,45 @@ impl Rational {
         let point = Self::line_intersection2_point_from_plan(plan)?;
         crate::trace_dispatch!("rational", "line-intersection2", "dyadic-stack-fused-point");
         Some((
-            ExactDyadicLineParameters2 {
-                numerators: plan.numerators,
-                denominator: plan.denominator,
-            },
+            ExactDyadicLineParameters2::from_words(plan.numerators, plan.denominator),
+            point,
+        ))
+    }
+
+    pub(crate) fn line_intersection2_point_known_dyadic_wide(
+        first_start: [&Self; 2],
+        first_end: [&Self; 2],
+        second_start: [&Self; 2],
+        second_end: [&Self; 2],
+    ) -> Option<(ExactDyadicWideLineParameters2, [Self; 2])> {
+        let plan = Self::line_intersection2_wide_plan_known_dyadic(
+            first_start,
+            first_end,
+            second_start,
+            second_end,
+        )?;
+        let coordinate = |index: usize| {
+            let affine = Self::product_sum_wide_narrow_words(
+                [plan.denominator, plan.numerators[0]],
+                [plan.first_start[index], plan.first_delta[index]],
+                [true, true],
+            )?;
+            if affine.sign == NoSign {
+                return Some(Self::zero());
+            }
+            Some(Self::quotient_dyadic_stack_sum_by_wide_unreduced(
+                affine,
+                plan.denominator,
+            ))
+        };
+        let point = [coordinate(0)?, coordinate(1)?];
+        crate::trace_dispatch!(
+            "rational",
+            "line-intersection2",
+            "dyadic-stack-fused-point-wide"
+        );
+        Some((
+            ExactDyadicWideLineParameters2::from_words(plan.numerators, plan.denominator),
             point,
         ))
     }

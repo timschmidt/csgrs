@@ -2908,6 +2908,192 @@ mod tests {
             )
             .is_none()
         );
+        assert!(
+            Real::exact_rational_line_intersection2_point_known_dyadic_wide(
+                [&wide, &zero],
+                [&one, &one],
+                [&zero, &one],
+                [&one, &zero],
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn fused_wide_dyadic_line_intersection_retains_large_determinants() {
+        let extent = (1_u128 << 100) + 3;
+        let integer = |value| Real::new(Rational::from_bigint(num::BigInt::from(value)));
+        let zero = Real::zero();
+        let first_start = [zero.clone(), zero.clone()];
+        let first_end = [integer(extent), integer(extent - 1)];
+        let second_start = [zero.clone(), integer(extent - 1)];
+        let second_end = [integer(extent), zero.clone()];
+
+        assert!(
+            Real::exact_rational_line_intersection2_point_known_dyadic(
+                [&first_start[0], &first_start[1]],
+                [&first_end[0], &first_end[1]],
+                [&second_start[0], &second_start[1]],
+                [&second_end[0], &second_end[1]],
+            )
+            .is_none()
+        );
+        let (parameters, point) = Real::exact_rational_line_intersection2_point_known_dyadic_wide(
+            [&first_start[0], &first_start[1]],
+            [&first_end[0], &first_end[1]],
+            [&second_start[0], &second_start[1]],
+            [&second_end[0], &second_end[1]],
+        )
+        .expect("the four-limb determinant carrier covers this crossing");
+        let half: Real = "1/2".parse().unwrap();
+        assert_eq!(parameters.materialize_first_parameter(), half);
+        assert_eq!(parameters.materialize_second_parameter(), half);
+        assert_eq!(
+            point,
+            [
+                Real::new(
+                    Rational::from_bigint_fraction(
+                        num::BigInt::from(extent),
+                        num::BigUint::from(2_u8),
+                    )
+                    .unwrap(),
+                ),
+                Real::new(
+                    Rational::from_bigint_fraction(
+                        num::BigInt::from(extent - 1),
+                        num::BigUint::from(2_u8),
+                    )
+                    .unwrap(),
+                ),
+            ]
+        );
+
+        let three = Real::from(3_i8);
+        let one = Real::one();
+        let minus_one = Real::from(-1_i8);
+        let (compact, _) = Real::exact_rational_line_intersection2_point_known_dyadic(
+            [&zero, &zero],
+            [&three, &zero],
+            [&one, &minus_one],
+            [&one, &one],
+        )
+        .unwrap();
+        assert_eq!(
+            parameters.compare_first_parameter_to_compact(&compact),
+            std::cmp::Ordering::Greater
+        );
+        assert_eq!(
+            parameters.compare_second_parameter_to_compact(&compact),
+            std::cmp::Ordering::Equal
+        );
+        assert_eq!(
+            parameters.compare_first_parameter(&parameters),
+            std::cmp::Ordering::Equal
+        );
+    }
+
+    #[test]
+    fn fused_wide_dyadic_line_intersection_matches_expanded_exact_arithmetic() {
+        let mut state = 0xbb67_ae85_84ca_a73b_u64;
+        let extent = (num::BigInt::from(1_u8) << 100_usize) + 3_u8;
+        let mut retained_cases = Vec::new();
+        for _ in 0..256 {
+            let points: [[Real; 2]; 4] = core::array::from_fn(|_| {
+                core::array::from_fn(|_| {
+                    state = state
+                        .wrapping_mul(2_862_933_555_777_941_757)
+                        .wrapping_add(3_037_000_493);
+                    let coefficient = i64::try_from(state % 2049).unwrap() - 1024;
+                    let denominator =
+                        num::BigUint::from(1_u8) << usize::try_from((state >> 32) % 8).unwrap();
+                    Real::new(
+                        Rational::from_bigint_fraction(
+                            num::BigInt::from(coefficient) * &extent,
+                            denominator,
+                        )
+                        .unwrap(),
+                    )
+                })
+            });
+            let [first_start, first_end, second_start, second_end] = &points;
+            let first_delta = [
+                &first_end[0] - &first_start[0],
+                &first_end[1] - &first_start[1],
+            ];
+            let second_delta = [
+                &second_end[0] - &second_start[0],
+                &second_end[1] - &second_start[1],
+            ];
+            let start_delta = [
+                &second_start[0] - &first_start[0],
+                &second_start[1] - &first_start[1],
+            ];
+            let denominator = Real::diff_of_products(
+                &first_delta[0],
+                &second_delta[1],
+                &first_delta[1],
+                &second_delta[0],
+            );
+            if denominator == Real::zero() {
+                continue;
+            }
+            let Some((parameters, point)) =
+                Real::exact_rational_line_intersection2_point_known_dyadic_wide(
+                    [&first_start[0], &first_start[1]],
+                    [&first_end[0], &first_end[1]],
+                    [&second_start[0], &second_start[1]],
+                    [&second_end[0], &second_end[1]],
+                )
+            else {
+                continue;
+            };
+            let first_numerator = Real::diff_of_products(
+                &start_delta[0],
+                &second_delta[1],
+                &start_delta[1],
+                &second_delta[0],
+            );
+            let second_numerator = Real::diff_of_products(
+                &start_delta[0],
+                &first_delta[1],
+                &start_delta[1],
+                &first_delta[0],
+            );
+            let expected_first = (&first_numerator / &denominator).unwrap();
+            let expected_second = (&second_numerator / &denominator).unwrap();
+            assert_eq!(parameters.materialize_first_parameter(), expected_first);
+            assert_eq!(parameters.materialize_second_parameter(), expected_second);
+            assert_eq!(
+                point,
+                [
+                    Real::affine(&first_start[0], &expected_first, &first_delta[0]),
+                    Real::affine(&first_start[1], &expected_first, &first_delta[1]),
+                ]
+            );
+            retained_cases.push((parameters, expected_first, expected_second));
+        }
+        assert!(
+            retained_cases.len() > 240,
+            "only {} cases used the wide fused path",
+            retained_cases.len()
+        );
+        for pair in retained_cases.windows(2) {
+            let [
+                (left, left_first, left_second),
+                (right, right_first, right_second),
+            ] = pair
+            else {
+                unreachable!("a two-element window has two retained parameter cases");
+            };
+            assert_eq!(
+                left.compare_first_parameter(right),
+                left_first.partial_cmp(right_first).unwrap()
+            );
+            assert_eq!(
+                left.compare_second_parameter(right),
+                left_second.partial_cmp(right_second).unwrap()
+            );
+        }
     }
 
     #[cfg(feature = "dispatch-trace")]

@@ -64,9 +64,14 @@ mod tests {
             size_of::<Rational>()
         );
         assert!(
-            size_of::<crate::ExactDyadicLineParameters2>() <= 96,
+            size_of::<crate::ExactDyadicLineParameters2>() <= 80,
             "ExactDyadicLineParameters2 grew to {} bytes",
             size_of::<crate::ExactDyadicLineParameters2>()
+        );
+        assert!(
+            size_of::<crate::ExactDyadicWideLineParameters2>() <= 128,
+            "ExactDyadicWideLineParameters2 grew to {} bytes",
+            size_of::<crate::ExactDyadicWideLineParameters2>()
         );
         assert!(
             size_of::<Class>() <= 16,
