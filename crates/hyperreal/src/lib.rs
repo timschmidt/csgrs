@@ -13,7 +13,8 @@
 
 mod rational;
 pub use crate::rational::{
-    ExactDyadicLineParameters2, ExactDyadicWideLineParameters2, PreparedExactDyadicLine2, Rational,
+    ExactDyadicLineParameters2, ExactDyadicLinePoint2, ExactDyadicWideLineParameters2,
+    ExactDyadicWideLinePoint2, PreparedExactDyadicLine2, Rational,
 };
 
 mod structural;

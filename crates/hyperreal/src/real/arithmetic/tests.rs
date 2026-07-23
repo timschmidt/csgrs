@@ -69,9 +69,19 @@ mod tests {
             size_of::<crate::ExactDyadicLineParameters2>()
         );
         assert!(
+            size_of::<crate::ExactDyadicLinePoint2>() <= 160,
+            "ExactDyadicLinePoint2 grew to {} bytes",
+            size_of::<crate::ExactDyadicLinePoint2>()
+        );
+        assert!(
             size_of::<crate::ExactDyadicWideLineParameters2>() <= 128,
             "ExactDyadicWideLineParameters2 grew to {} bytes",
             size_of::<crate::ExactDyadicWideLineParameters2>()
+        );
+        assert!(
+            size_of::<crate::ExactDyadicWideLinePoint2>() <= 176,
+            "ExactDyadicWideLinePoint2 grew to {} bytes",
+            size_of::<crate::ExactDyadicWideLinePoint2>()
         );
         assert!(
             size_of::<Class>() <= 16,

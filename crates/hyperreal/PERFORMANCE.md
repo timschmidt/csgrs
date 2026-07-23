@@ -1417,6 +1417,30 @@ all-feature suites, strict Clippy, and warning-denied rustdoc pass. The
 10,000-run AddressSanitizer differential Boolean campaign completed without
 failure at 5,891 coverage points and 18,933 feature edges.
 
+The next exact-line checkpoint adds compact retained point carriers alongside
+the existing eager APIs. A carrier stores the two fixed-stack affine
+numerators and their shared determinant denominator without allocating or
+canonicalizing two `Rational` values. Its explicit `materialize` boundary
+replays the same exact quotient construction. Compact and wide prepared-first
+entry points let downstream topology retain this representation when point
+coordinates are not immediately observed, while the original eager functions
+keep their established code-generated hot path.
+
+Randomized compact and wide intersection oracles compare carrier
+materialization with the eager exact result, including sign, normalization,
+and fallback cases. Layout guards cap the compact carrier at 160 bytes and the
+wide carrier at 176 bytes. In Hypercurve's fixed star1024 exact-contour
+workload, consuming these carriers lazily reduced ten-operation heaptrack
+allocations from 1,104,313 to 464,773 and lowered the contour median from the
+5.403 ms scalar checkpoint to about 3.95 ms. Exact parameters and arbitrary
+precision fallback behavior are unchanged.
+
+This API is deliberately a substrate for geometry carriers rather than a
+general replacement for `Real`: callers that immediately need independent
+canonical rationals should continue to use the eager point functions. Further
+work is driven by whole-Hypercurve profiles, especially large complex
+polynomial/rational Bézier, arc, spline/NURBS, offset, and region workloads.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

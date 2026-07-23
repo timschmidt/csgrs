@@ -109,7 +109,7 @@ const DYADIC_STACK_LIMBS: usize = 6;
 #[derive(Clone, Copy, Debug, Default)]
 struct DyadicStackAccumulator([u64; DYADIC_STACK_LIMBS]);
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct DyadicStackSum {
     sign: Sign,
     magnitude: DyadicStackAccumulator,
@@ -172,6 +172,22 @@ pub struct ExactDyadicLineParameters2 {
     signs: [Sign; 3],
 }
 
+/// Deferred exact coordinates for a line crossing with a native-word
+/// determinant.
+///
+/// The affine coordinate numerators stay in the fixed-stack representation
+/// used by the intersection kernel. Geometry layers can retain this carrier
+/// without allocating arbitrary-precision rationals and materialize the two
+/// coordinates only if they are observed.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExactDyadicLinePoint2 {
+    coordinate_numerators: [DyadicStackSum; 2],
+    denominator_magnitude: u128,
+    denominator_shift: u64,
+    denominator_sign: Sign,
+}
+
 /// Wider compact exact parameters for dyadic line crossings whose determinant
 /// does not fit the native-word carrier.
 ///
@@ -184,6 +200,54 @@ pub struct ExactDyadicWideLineParameters2 {
     denominator_magnitude: [u64; 4],
     denominator_shifts: [u64; 3],
     signs: [Sign; 3],
+}
+
+/// Deferred exact coordinates for a line crossing with a wide determinant.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExactDyadicWideLinePoint2 {
+    coordinate_numerators: [DyadicStackSum; 2],
+    denominator_magnitude: [u64; 4],
+    denominator_shift: u64,
+    denominator_sign: Sign,
+}
+
+impl ExactDyadicLinePoint2 {
+    pub(crate) fn materialize_rationals(&self) -> [Rational; 2] {
+        self.coordinate_numerators.map(|numerator| {
+            if numerator.sign == NoSign {
+                Rational::zero()
+            } else {
+                Rational::quotient_dyadic_stack_sum_unreduced(
+                    numerator,
+                    self.denominator_sign,
+                    self.denominator_shift,
+                    self.denominator_magnitude,
+                )
+            }
+        })
+    }
+}
+
+impl ExactDyadicWideLinePoint2 {
+    fn denominator(&self) -> DyadicWideWord {
+        DyadicWideWord {
+            sign: self.denominator_sign,
+            magnitude: self.denominator_magnitude,
+            denominator_shift: self.denominator_shift,
+        }
+    }
+
+    pub(crate) fn materialize_rationals(&self) -> [Rational; 2] {
+        let denominator = self.denominator();
+        self.coordinate_numerators.map(|numerator| {
+            if numerator.sign == NoSign {
+                Rational::zero()
+            } else {
+                Rational::quotient_dyadic_stack_sum_by_wide_unreduced(numerator, denominator)
+            }
+        })
+    }
 }
 
 impl ExactDyadicLineParameters2 {
@@ -3964,6 +4028,28 @@ impl Rational {
         ))
     }
 
+    pub(crate) fn line_intersection2_retained_point_with_prepared_first_exact_dyadic_f64(
+        first: &PreparedExactDyadicLine2,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(ExactDyadicLineParameters2, ExactDyadicLinePoint2)> {
+        let plan = Self::line_intersection2_plan_with_prepared_first_exact_dyadic_f64(
+            first,
+            second_start,
+            second_end,
+        )?;
+        let point = Self::line_intersection2_retained_point_from_plan(plan)?;
+        crate::trace_dispatch!(
+            "rational",
+            "line-intersection2",
+            "dyadic-stack-retained-point-prepared-f64"
+        );
+        Some((
+            ExactDyadicLineParameters2::from_words(plan.numerators, plan.denominator),
+            point,
+        ))
+    }
+
     pub(crate) fn line_intersection2_point_known_dyadic_wide(
         first_start: [&Self; 2],
         first_end: [&Self; 2],
@@ -4032,6 +4118,28 @@ impl Rational {
         ))
     }
 
+    pub(crate) fn line_intersection2_retained_point_wide_with_prepared_first_exact_dyadic_f64(
+        first: &PreparedExactDyadicLine2,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(ExactDyadicWideLineParameters2, ExactDyadicWideLinePoint2)> {
+        let plan = Self::line_intersection2_wide_plan_with_prepared_first_exact_dyadic_f64(
+            first,
+            second_start,
+            second_end,
+        )?;
+        let point = Self::line_intersection2_retained_point_from_wide_plan(plan)?;
+        crate::trace_dispatch!(
+            "rational",
+            "line-intersection2",
+            "dyadic-stack-retained-point-wide-prepared-f64"
+        );
+        Some((
+            ExactDyadicWideLineParameters2::from_words(plan.numerators, plan.denominator),
+            point,
+        ))
+    }
+
     fn line_intersection2_point_from_wide_plan(
         plan: DyadicWideLineIntersectionPlan,
     ) -> Option<[Self; 2]> {
@@ -4050,6 +4158,24 @@ impl Rational {
             ))
         };
         Some([coordinate(0)?, coordinate(1)?])
+    }
+
+    fn line_intersection2_retained_point_from_wide_plan(
+        plan: DyadicWideLineIntersectionPlan,
+    ) -> Option<ExactDyadicWideLinePoint2> {
+        let coordinate = |index: usize| {
+            Self::product_sum_wide_narrow_words(
+                [plan.denominator, plan.numerators[0]],
+                [plan.first_start[index], plan.first_delta[index]],
+                [true, true],
+            )
+        };
+        Some(ExactDyadicWideLinePoint2 {
+            coordinate_numerators: [coordinate(0)?, coordinate(1)?],
+            denominator_magnitude: plan.denominator.magnitude,
+            denominator_shift: plan.denominator.denominator_shift,
+            denominator_sign: plan.denominator.sign,
+        })
     }
 
     pub(crate) fn line_intersection2_known_dyadic(
@@ -4091,6 +4217,24 @@ impl Rational {
             ))
         };
         Some([coordinate(0)?, coordinate(1)?])
+    }
+
+    fn line_intersection2_retained_point_from_plan(
+        plan: DyadicLineIntersectionPlan,
+    ) -> Option<ExactDyadicLinePoint2> {
+        let coordinate = |index: usize| {
+            let left = [plan.first_start[index], plan.numerators[0]];
+            let right = [plan.denominator, plan.first_delta[index]];
+            Self::product_sum2_dyadic_words_word(left, right, [true, true])
+                .map(Self::dyadic_word_stack_sum)
+                .or_else(|| Self::product_sum_dyadic_words(left, right, [true, true]))
+        };
+        Some(ExactDyadicLinePoint2 {
+            coordinate_numerators: [coordinate(0)?, coordinate(1)?],
+            denominator_magnitude: plan.denominator.magnitude,
+            denominator_shift: plan.denominator.denominator_shift,
+            denominator_sign: plan.denominator.sign,
+        })
     }
 
     /// Construct `t = numerator / denominator` and both coordinates of

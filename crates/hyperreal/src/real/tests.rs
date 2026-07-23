@@ -2855,6 +2855,13 @@ mod tests {
                     exact_f64_point(second_end),
                 )
                 .expect("direct binary64 and retained-rational paths share bounds");
+            let (retained_f64_parameters, retained_f64_point) =
+                Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
+                    &f64_prepared,
+                    exact_f64_point(second_start),
+                    exact_f64_point(second_end),
+                )
+                .expect("retained and materialized binary64 paths share bounds");
             fused_cases += 1;
             let first_numerator = Real::diff_of_products(
                 &start_delta[0],
@@ -2890,6 +2897,7 @@ mod tests {
             assert_eq!(point_only, point);
             assert_eq!(prepared_point, point);
             assert_eq!(f64_point, point);
+            assert_eq!(retained_f64_point.materialize(), point);
             assert_eq!(
                 prepared_parameters.materialize_first_parameter(),
                 expected_first
@@ -2901,6 +2909,14 @@ mod tests {
             assert_eq!(f64_parameters.materialize_first_parameter(), expected_first);
             assert_eq!(
                 f64_parameters.materialize_second_parameter(),
+                expected_second
+            );
+            assert_eq!(
+                retained_f64_parameters.materialize_first_parameter(),
+                expected_first
+            );
+            assert_eq!(
+                retained_f64_parameters.materialize_second_parameter(),
                 expected_second
             );
             retained_cases.push((retained_parameters, expected_first, expected_second));
@@ -3064,6 +3080,13 @@ mod tests {
                 [binary64_extent, 0.0],
             )
             .expect("the fixed wide carrier should retain the binary64 crossing");
+        let (retained_binary64_parameters, retained_binary64_point) =
+            Real::exact_dyadic_f64_line_intersection2_retained_point_wide_with_prepared_first(
+                &binary64_prepared,
+                [0.0, binary64_near_extent],
+                [binary64_extent, 0.0],
+            )
+            .expect("the deferred wide carrier should retain the binary64 crossing");
         assert_eq!(binary64_parameters.materialize_first_parameter(), half);
         assert_eq!(binary64_parameters.materialize_second_parameter(), half);
         assert_eq!(
@@ -3073,6 +3096,15 @@ mod tests {
                 Real::try_from(binary64_near_extent / 2.0).unwrap(),
             ]
         );
+        assert_eq!(
+            retained_binary64_parameters.materialize_first_parameter(),
+            half
+        );
+        assert_eq!(
+            retained_binary64_parameters.materialize_second_parameter(),
+            half
+        );
+        assert_eq!(retained_binary64_point.materialize(), binary64_point);
         assert!(
             Real::prepare_exact_dyadic_f64_line2([f64::INFINITY, 0.0], [binary64_extent, 0.0],)
                 .is_none()

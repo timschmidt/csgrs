@@ -348,6 +348,23 @@ impl Real {
         .map(|(parameters, point)| (parameters, point.map(Real::new)))
     }
 
+    /// Retain exact crossing coordinates without allocating rational scalars.
+    #[doc(hidden)]
+    pub fn exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
+        first: &crate::PreparedExactDyadicLine2,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(
+        crate::ExactDyadicLineParameters2,
+        crate::ExactDyadicLinePoint2,
+    )> {
+        Rational::line_intersection2_retained_point_with_prepared_first_exact_dyadic_f64(
+            first,
+            second_start,
+            second_end,
+        )
+    }
+
     /// Solve a certified proper crossing whose dyadic determinants exceed the
     /// native-word carrier but fit the wider fixed-stack envelope.
     #[doc(hidden)]
@@ -394,6 +411,24 @@ impl Real {
             second_end,
         )
         .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
+    /// Retain wide exact crossing coordinates without allocating rational
+    /// scalars.
+    #[doc(hidden)]
+    pub fn exact_dyadic_f64_line_intersection2_retained_point_wide_with_prepared_first(
+        first: &crate::PreparedExactDyadicLine2,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(
+        crate::ExactDyadicWideLineParameters2,
+        crate::ExactDyadicWideLinePoint2,
+    )> {
+        Rational::line_intersection2_retained_point_wide_with_prepared_first_exact_dyadic_f64(
+            first,
+            second_start,
+            second_end,
+        )
     }
 
     /// Solve a certified proper crossing between exact dyadic endpoints while
@@ -1130,6 +1165,22 @@ impl Real {
         } else {
             [scaled_lower, scaled_upper]
         })
+    }
+}
+
+impl crate::ExactDyadicLinePoint2 {
+    /// Materialize the two exact rational coordinates retained by this point.
+    #[doc(hidden)]
+    pub fn materialize(&self) -> [Real; 2] {
+        self.materialize_rationals().map(Real::new)
+    }
+}
+
+impl crate::ExactDyadicWideLinePoint2 {
+    /// Materialize the two exact rational coordinates retained by this point.
+    #[doc(hidden)]
+    pub fn materialize(&self) -> [Real; 2] {
+        self.materialize_rationals().map(Real::new)
     }
 }
 
