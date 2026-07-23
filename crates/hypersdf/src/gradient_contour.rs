@@ -13,7 +13,7 @@ use std::collections::VecDeque;
 use hyperlimit::Point3;
 
 use crate::sampling::{SdfGridSamplingReport, SdfPreviewSample};
-use crate::status::{SdfFreshness, SdfMetricStatus};
+use crate::status::SdfMetricStatus;
 
 /// Source route used to build an approximated-gradient contouring report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -121,8 +121,6 @@ pub enum SdfGradientContourBlocker {
     NonFiniteOrZeroStep,
     /// At least one sample value is missing or non-finite.
     NonFinitePrimitiveSample,
-    /// The prepared source was stale when samples were taken.
-    StaleSource,
     /// Primitive finite-difference gradients are lossy proposal evidence.
     LossyGradientApproximation,
     /// At least one active cell has unknown corner signs.
@@ -235,8 +233,6 @@ pub struct SdfGradientContourReport {
     pub source: SdfGradientContourSource,
     /// Metric claim inherited from the sample report.
     pub metric_status: SdfMetricStatus,
-    /// Prepared-source freshness inherited from the sample report.
-    pub freshness: SdfFreshness,
     /// Original sampled grid report.
     pub grid_samples: SdfGridSamplingReport,
     /// Primitive sample rows.
@@ -339,7 +335,6 @@ fn build_gradient_contour_report(
     grid_samples: SdfGridSamplingReport,
 ) -> SdfGradientContourReport {
     let metric_status = grid_samples.samples.metric_status;
-    let freshness = grid_samples.samples.freshness;
     let expected_count = grid_samples.grid.point_count().ok();
     let actual_count = grid_samples.samples.samples.len();
     let invalid_sample_count = expected_count != Some(actual_count);
@@ -390,9 +385,6 @@ fn build_gradient_contour_report(
             &mut blockers,
             SdfGradientContourBlocker::NonFiniteOrZeroStep,
         );
-    }
-    if matches!(freshness, SdfFreshness::Stale) {
-        push_blocker(&mut blockers, SdfGradientContourBlocker::StaleSource);
     }
 
     let unknown_sample_count = samples
@@ -449,7 +441,6 @@ fn build_gradient_contour_report(
     SdfGradientContourReport {
         source,
         metric_status,
-        freshness,
         grid_samples,
         samples,
         gradients,

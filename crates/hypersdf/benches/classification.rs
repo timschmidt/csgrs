@@ -3,9 +3,8 @@ use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
 use hypersdf::{
-    SdfCoordinate, SdfExpr, SdfGradientContourReport, SdfHandoffDomain, SdfPreviewGrid,
-    SdfProjectionProposal, SdfProjectionProposalKind, SdfSamplingPrecision, SdfVoxelCellGrid,
-    SdfVoxelGridSource, prepare,
+    SdfCoordinate, SdfExpr, SdfGradientContourReport, SdfPreviewGrid, SdfProjectionProposal,
+    SdfProjectionProposalKind, SdfSamplingPrecision, SdfVoxelCellGrid, prepare,
 };
 
 fn r(value: i32) -> Real {
@@ -99,9 +98,6 @@ fn bench_point_classification(c: &mut Criterion) {
     c.bench_function("hypersdf prepared point batch classification", |b| {
         b.iter(|| csg.classify_points(black_box(points.iter())))
     });
-    c.bench_function("hypersdf prepared point batch report", |b| {
-        b.iter(|| csg.classify_points_report(black_box(points.iter())))
-    });
     c.bench_function("hypersdf preview sample points f32", |b| {
         b.iter(|| csg.sample_points_preview(black_box(points.iter()), SdfSamplingPrecision::F32))
     });
@@ -160,21 +156,6 @@ fn bench_point_classification(c: &mut Criterion) {
     );
     c.bench_function("hypersdf projection replay", |b| {
         b.iter(|| sphere.replay_projection_proposal(black_box(proposal.clone())))
-    });
-    let package = csg
-        .handoff_package()
-        .with_grid_samples(
-            csg.sample_grid_preview(grid.clone(), SdfSamplingPrecision::F32)
-                .expect("bench grid"),
-        )
-        .with_mesh_preview(
-            csg.mesh_preview_from_grid(grid.clone(), SdfSamplingPrecision::F32)
-                .expect("bench mesh preview"),
-        )
-        .with_shader_preview(csg.export_glsl_preview("field", SdfSamplingPrecision::F32))
-        .with_projection_replay(sphere.replay_projection_proposal(proposal.clone()));
-    c.bench_function("hypersdf handoff package mesh requirement", |b| {
-        b.iter(|| package.require_domain(black_box(SdfHandoffDomain::MeshPreview)))
     });
     c.bench_function("hypersdf translated point classification", |b| {
         b.iter(|| translated.classify_point(black_box(&point)))
@@ -269,23 +250,9 @@ fn bench_cell_classification(c: &mut Criterion) {
     c.bench_function("hypersdf prepared cell batch classification", |b| {
         b.iter(|| sphere.classify_cells(black_box(mins.iter().zip(maxs.iter()))))
     });
-    c.bench_function("hypersdf prepared cell batch report", |b| {
-        b.iter(|| sphere.classify_cells_report(black_box(mins.iter().zip(maxs.iter()))))
-    });
-    c.bench_function("hypersdf conservative cell handoff", |b| {
-        b.iter(|| sphere.classify_cells_for_handoff(black_box(mins.iter().zip(maxs.iter()))))
-    });
-    let voxel_grid = SdfVoxelCellGrid::new(p(-100, -100, -100), p(50, 50, 50), [4, 4, 4])
-        .with_source(SdfVoxelGridSource::new("bench:sphere", 1));
-    c.bench_function("hypersdf hypervoxel grid handoff", |b| {
-        b.iter(|| sphere.classify_voxel_grid_for_handoff(black_box(voxel_grid.clone())))
-    });
-    let voxel_report = sphere
-        .classify_voxel_grid_for_handoff(voxel_grid)
-        .expect("positive benchmark grid");
-    let voxel_interchange = voxel_report.interchange_manifest();
-    c.bench_function("hypersdf hypervoxel interchange manifest", |b| {
-        b.iter(|| voxel_report.interchange_report(black_box(&voxel_interchange)))
+    let voxel_grid = SdfVoxelCellGrid::new(p(-100, -100, -100), p(50, 50, 50), [4, 4, 4]);
+    c.bench_function("hypersdf voxel grid classification", |b| {
+        b.iter(|| sphere.classify_voxel_grid(black_box(voxel_grid.clone())))
     });
     c.bench_function("hypersdf sphere cell interval", |b| {
         b.iter(|| sphere.interval_cell(black_box(&min), black_box(&max)))

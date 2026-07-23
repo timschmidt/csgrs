@@ -11,9 +11,7 @@
 use hyperlimit::Point3;
 use hyperreal::Real;
 
-use crate::status::{
-    SdfFreshness, SdfMetricStatus, SdfPointClassificationReport, SdfPointLocation,
-};
+use crate::status::{SdfMetricStatus, SdfPointClassificationReport, SdfPointLocation};
 
 /// Kind of external proposal being replayed through `hypersdf`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -81,8 +79,6 @@ pub struct SdfProjectionReplayReport {
     pub displacement_squared: Real,
     /// Metric claim of the source field.
     pub metric_status: SdfMetricStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
     /// Acceptance status after replay.
     pub status: SdfProjectionReplayStatus,
 }
@@ -94,7 +90,6 @@ impl SdfProjectionReplayReport {
         proposal: SdfProjectionProposal,
         candidate_report: SdfPointClassificationReport,
         metric_status: SdfMetricStatus,
-        freshness: SdfFreshness,
     ) -> Self {
         let displacement_squared = squared_distance3(&proposal.query, &proposal.candidate);
         let status = match candidate_report.location {
@@ -109,7 +104,6 @@ impl SdfProjectionReplayReport {
             candidate_report,
             displacement_squared,
             metric_status,
-            freshness,
             status,
         }
     }

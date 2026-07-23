@@ -13,7 +13,7 @@ use hyperlimit::{Point3, PredicateOutcome, compare_reals};
 use hyperreal::Real;
 
 use crate::expr::{SdfCoordinate, SdfExpr};
-use crate::status::{SdfFreshness, SdfMetricStatus};
+use crate::status::SdfMetricStatus;
 
 /// Primitive scalar precision requested from a preview sampler.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -56,8 +56,6 @@ pub struct SdfSamplingReport {
     pub metric_status: SdfMetricStatus,
     /// Whether the samples may be consumed as topology evidence.
     pub topology_status: SdfSampleTopologyStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
     /// Number of query points.
     pub sample_count: usize,
     /// Number of samples that could not be lowered to a finite primitive float.
@@ -183,7 +181,6 @@ pub(crate) fn sample_expr_points_preview<'a, I>(
     points: I,
     precision: SdfSamplingPrecision,
     metric_status: SdfMetricStatus,
-    freshness: SdfFreshness,
 ) -> SdfSamplingReport
 where
     I: IntoIterator<Item = &'a Point3>,
@@ -210,7 +207,6 @@ where
         precision,
         metric_status,
         topology_status: SdfSampleTopologyStatus::PreviewOnly,
-        freshness,
         sample_count: samples.len(),
         non_finite_count,
         negative_count: sign_counts.negative,
@@ -258,11 +254,9 @@ pub(crate) fn sample_expr_grid_preview(
     grid: SdfPreviewGrid,
     precision: SdfSamplingPrecision,
     metric_status: SdfMetricStatus,
-    freshness: SdfFreshness,
 ) -> Result<SdfGridSamplingReport, SdfGridSamplingError> {
     let points = grid.points()?;
-    let samples =
-        sample_expr_points_preview(expr, points.iter(), precision, metric_status, freshness);
+    let samples = sample_expr_points_preview(expr, points.iter(), precision, metric_status);
     Ok(SdfGridSamplingReport { grid, samples })
 }
 

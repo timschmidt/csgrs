@@ -18,9 +18,7 @@ use crate::expr::SdfExpr;
 use crate::gradient::{SdfGradientReport, gradient_expr_point, normal_from_gradient_report};
 use crate::primitive::SdfPrimitive;
 use crate::sampling::{SdfGridSamplingReport, SdfPreviewSample};
-use crate::status::{
-    SdfEvidenceStatus, SdfFreshness, SdfGradientStatus, SdfMetricStatus, SdfNormalStatus,
-};
+use crate::status::{SdfEvidenceStatus, SdfGradientStatus, SdfMetricStatus, SdfNormalStatus};
 use crate::transform::SdfTransform;
 
 /// Source route used to build a dual-contouring proposal report.
@@ -185,8 +183,6 @@ pub enum SdfDualContouringBlocker {
     NonFinitePrimitiveSample,
     /// The report was built from primitive samples without retained SDF replay.
     LossyPrimitiveSamples,
-    /// Prepared SDF evidence is stale relative to its source version.
-    StaleSource,
     /// A zero endpoint or zero edge requires tie handling before topology use.
     DegenerateZeroTouch,
     /// The local sign pattern has more than one plausible connectivity.
@@ -308,8 +304,6 @@ pub struct SdfDualContouringReport {
     pub source: SdfDualContouringSource,
     /// Metric claim of the retained expression or sampled grid.
     pub metric_status: SdfMetricStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
     /// Original regular-grid sample report.
     pub grid_samples: SdfGridSamplingReport,
     /// Point sample records with sign evidence.
@@ -437,7 +431,6 @@ fn build_dual_contouring_report(
     } else {
         SdfMetricStatus::SampledApproximation
     };
-    let freshness = grid_samples.samples.freshness;
     let expected_count = grid_samples.grid.point_count().ok();
     let invalid_sample_count = expected_count != Some(grid_samples.samples.samples.len());
     let grid_too_small = grid_samples
@@ -462,9 +455,6 @@ fn build_dual_contouring_report(
             &mut blockers,
             SdfDualContouringBlocker::LossyPrimitiveSamples,
         );
-    }
-    if matches!(freshness, SdfFreshness::Stale) {
-        push_blocker(&mut blockers, SdfDualContouringBlocker::StaleSource);
     }
 
     let unknown_sample_count = samples
@@ -547,7 +537,6 @@ fn build_dual_contouring_report(
     SdfDualContouringReport {
         source,
         metric_status,
-        freshness,
         grid_samples,
         samples,
         crossing_edge_count: crossings.len(),
@@ -997,7 +986,6 @@ fn exact_normal(expr: &SdfExpr, point: &Point3) -> (Option<Vector3>, SdfDualNorm
         gradient: outcome.clone().value(),
         gradient_status: SdfGradientStatus::ExactSymbolic,
         evidence: SdfEvidenceStatus::from_outcome(&outcome),
-        freshness: SdfFreshness::Unversioned,
     };
     let normal = normal_from_gradient_report(report);
     if normal.normal_status == SdfNormalStatus::ExactDirection {

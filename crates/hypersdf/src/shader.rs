@@ -11,7 +11,7 @@ use hyperreal::Real;
 use crate::expr::{SdfCoordinate, SdfExpr};
 use crate::primitive::SdfPrimitive;
 use crate::sampling::{SdfSampleTopologyStatus, SdfSamplingPrecision};
-use crate::status::{SdfFreshness, SdfMetricStatus};
+use crate::status::SdfMetricStatus;
 use crate::transform::SdfTransform;
 
 /// Shader language requested by a preview export.
@@ -30,8 +30,6 @@ pub struct SdfShaderExportReport {
     pub precision: SdfSamplingPrecision,
     /// Metric claim of the source expression before shader lowering.
     pub metric_status: SdfMetricStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
     /// Whether the generated source may be consumed as topology evidence.
     pub topology_status: SdfSampleTopologyStatus,
     /// Number of exact constants that could not be lowered to finite floats.
@@ -56,7 +54,6 @@ pub(crate) fn export_expr_glsl_preview(
     function_name: &str,
     precision: SdfSamplingPrecision,
     metric_status: SdfMetricStatus,
-    freshness: SdfFreshness,
 ) -> SdfShaderExportReport {
     let mut context = ShaderExportContext {
         precision,
@@ -85,7 +82,6 @@ pub(crate) fn export_expr_glsl_preview(
         language: SdfShaderLanguage::Glsl,
         precision,
         metric_status,
-        freshness,
         topology_status: SdfSampleTopologyStatus::PreviewOnly,
         non_finite_constant_count: context.non_finite_constant_count,
         unsupported_nodes: context.unsupported_nodes,

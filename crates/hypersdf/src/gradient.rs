@@ -16,7 +16,7 @@ use hyperreal::Real;
 use crate::expr::{SdfCoordinate, SdfExpr};
 use crate::primitive::SdfPrimitive;
 use crate::sampling::scalar_expr_point;
-use crate::status::{SdfEvidenceStatus, SdfFreshness, SdfGradientStatus, SdfNormalStatus};
+use crate::status::{SdfEvidenceStatus, SdfGradientStatus, SdfNormalStatus};
 
 /// Point-gradient report for a retained expression.
 #[derive(Clone, Debug, PartialEq)]
@@ -29,8 +29,6 @@ pub struct SdfGradientReport {
     pub gradient_status: SdfGradientStatus,
     /// Exact/certified evidence status.
     pub evidence: SdfEvidenceStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
 }
 
 impl SdfGradientReport {
@@ -68,8 +66,6 @@ pub struct SdfNormalReport {
     pub gradient_status: SdfGradientStatus,
     /// Exact/certified evidence status for the normal validity decision.
     pub evidence: SdfEvidenceStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
 }
 
 impl SdfNormalReport {
@@ -98,7 +94,6 @@ pub(crate) fn normal_from_gradient_report(report: SdfGradientReport) -> SdfNorma
             normal_status: SdfNormalStatus::Unknown,
             gradient_status: report.gradient_status,
             evidence: report.evidence,
-            freshness: report.freshness,
         };
     };
     let norm_squared = vector_norm_squared(&gradient);
@@ -113,7 +108,6 @@ pub(crate) fn normal_from_gradient_report(report: SdfGradientReport) -> SdfNorma
             normal_status: SdfNormalStatus::ExactDirection,
             gradient_status: report.gradient_status,
             evidence: SdfEvidenceStatus::Certified { certainty, stage },
-            freshness: report.freshness,
         },
         PredicateOutcome::Decided {
             value: Ordering::Equal,
@@ -125,7 +119,6 @@ pub(crate) fn normal_from_gradient_report(report: SdfGradientReport) -> SdfNorma
             normal_status: SdfNormalStatus::ZeroGradient,
             gradient_status: report.gradient_status,
             evidence: SdfEvidenceStatus::Certified { certainty, stage },
-            freshness: report.freshness,
         },
         PredicateOutcome::Decided { .. } => SdfNormalReport {
             point: report.point,
@@ -136,7 +129,6 @@ pub(crate) fn normal_from_gradient_report(report: SdfGradientReport) -> SdfNorma
                 needed: RefinementNeed::ExactArithmetic,
                 stage: Escalation::Undecided,
             },
-            freshness: report.freshness,
         },
         PredicateOutcome::Unknown { needed, stage } => SdfNormalReport {
             point: report.point,
@@ -144,7 +136,6 @@ pub(crate) fn normal_from_gradient_report(report: SdfGradientReport) -> SdfNorma
             normal_status: SdfNormalStatus::Unknown,
             gradient_status: report.gradient_status,
             evidence: SdfEvidenceStatus::Unknown { needed, stage },
-            freshness: report.freshness,
         },
     }
 }

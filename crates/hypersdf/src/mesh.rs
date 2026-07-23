@@ -10,7 +10,7 @@
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 
 use crate::sampling::{SdfGridSamplingReport, SdfSampleTopologyStatus};
-use crate::status::{SdfFreshness, SdfMetricStatus};
+use crate::status::SdfMetricStatus;
 
 /// Preview meshing backend named by the report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -55,8 +55,6 @@ pub struct SdfMeshPreviewReport {
     pub backend: SdfMeshPreviewBackend,
     /// Metric claim of the source expression before scalar lowering.
     pub metric_status: SdfMetricStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
     /// Whether generated data may be consumed as topology evidence.
     pub topology_status: SdfSampleTopologyStatus,
     /// Normal provenance for generated vertices.
@@ -93,7 +91,6 @@ impl SdfMeshPreviewReport {
         Self {
             backend: SdfMeshPreviewBackend::SurfaceNets,
             metric_status: grid_samples.samples.metric_status,
-            freshness: grid_samples.samples.freshness,
             topology_status: SdfSampleTopologyStatus::PreviewOnly,
             normal_status,
             grid_samples,

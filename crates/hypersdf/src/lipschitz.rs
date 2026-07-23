@@ -15,7 +15,7 @@ use hyperreal::Real;
 use crate::expr::SdfExpr;
 use crate::interval::{SdfInterval, interval_expr_cell};
 use crate::primitive::{SdfPrimitive, farthest_squared_distance3_to_aabb, radius_squared_domain};
-use crate::status::{SdfEvidenceStatus, SdfFreshness, SdfLipschitzStatus};
+use crate::status::{SdfEvidenceStatus, SdfLipschitzStatus};
 
 /// Conservative local Lipschitz-bound report over a closed AABB/cell.
 #[derive(Clone, Debug, PartialEq)]
@@ -30,8 +30,6 @@ pub struct SdfLipschitzReport {
     pub lipschitz_status: SdfLipschitzStatus,
     /// Exact/certified evidence status for the bound.
     pub evidence: SdfEvidenceStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
 }
 
 impl SdfLipschitzReport {

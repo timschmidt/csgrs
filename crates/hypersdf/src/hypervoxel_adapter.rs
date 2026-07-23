@@ -6,20 +6,20 @@
 //! storage or frame semantics in this crate.
 
 use hypervoxel::{
-    ContinuousFieldVoxelCell, ContinuousFieldVoxelManifest, GridFrame, GridSource, HypervoxelError,
+    ContinuousFieldVoxelBatch, ContinuousFieldVoxelCell, GridFrame, HypervoxelError,
     HypervoxelResult, MaterialRegionId, VoxelCell, VoxelPayload, continuous_field_address,
 };
 
-use crate::{SdfHypervoxelHandoffReport, SdfVoxelOccupancy};
+use crate::{SdfVoxelBatch, SdfVoxelOccupancy};
 
-/// Converts an SDF voxel handoff report into a `hypervoxel` intake manifest.
-pub fn continuous_field_manifest_from_sdf(
-    report: &SdfHypervoxelHandoffReport,
+/// Converts an SDF voxel batch into a `hypervoxel` continuous-field batch.
+pub fn continuous_field_batch_from_sdf(
+    batch: &SdfVoxelBatch,
     frame: GridFrame,
     material: MaterialRegionId,
-) -> HypervoxelResult<ContinuousFieldVoxelManifest> {
-    let mut cells = Vec::with_capacity(report.cells.len());
-    for cell in &report.cells {
+) -> HypervoxelResult<ContinuousFieldVoxelBatch> {
+    let mut cells = Vec::with_capacity(batch.cells.len());
+    for cell in &batch.cells {
         let address = continuous_field_address(
             &frame,
             [
@@ -33,18 +33,7 @@ pub fn continuous_field_manifest_from_sdf(
             voxel_cell_from_sdf(cell.occupancy, material),
         ));
     }
-    let source = report
-        .grid
-        .source
-        .as_ref()
-        .map(|source| GridSource::new(source.id.clone(), source.version));
-    Ok(ContinuousFieldVoxelManifest {
-        frame,
-        source: source.clone(),
-        expected_source: source,
-        expected_cell_count: report.cell_count,
-        cells,
-    })
+    Ok(ContinuousFieldVoxelBatch { frame, cells })
 }
 
 fn voxel_cell_from_sdf(occupancy: SdfVoxelOccupancy, material: MaterialRegionId) -> VoxelCell {

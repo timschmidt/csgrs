@@ -223,17 +223,6 @@ impl SdfCellLocation {
     }
 }
 
-/// Freshness of a prepared expression relative to its source construction.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum SdfFreshness {
-    /// The prepared carrier has no independent source version to compare.
-    Unversioned,
-    /// Prepared facts match the source version.
-    Current,
-    /// Prepared facts are known to be stale.
-    Stale,
-}
-
 /// Report returned by point classification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SdfPointClassificationReport {
@@ -247,8 +236,6 @@ pub struct SdfPointClassificationReport {
     pub metric_status: SdfMetricStatus,
     /// Exact/certified evidence status.
     pub evidence: SdfEvidenceStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
 }
 
 impl SdfPointClassificationReport {
@@ -280,8 +267,6 @@ pub struct SdfCellClassificationReport {
     pub metric_status: SdfMetricStatus,
     /// Exact/certified evidence status.
     pub evidence: SdfEvidenceStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
 }
 
 impl SdfCellClassificationReport {

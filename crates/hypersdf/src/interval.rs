@@ -21,7 +21,7 @@ use crate::primitive::{
     half_width_domain, radial_squared, radius_squared_domain, rounded_aabb_domain,
     squared_distance3, torus_domain,
 };
-use crate::status::{SdfEvidenceStatus, SdfFreshness, SdfMetricStatus};
+use crate::status::{SdfEvidenceStatus, SdfMetricStatus};
 
 /// Certified scalar interval over a query domain.
 #[derive(Clone, Debug, PartialEq)]
@@ -45,8 +45,6 @@ pub struct SdfIntervalReport {
     pub interval: Option<SdfInterval>,
     /// Evidence for the interval decision.
     pub evidence: SdfEvidenceStatus,
-    /// Prepared-source freshness.
-    pub freshness: SdfFreshness,
 }
 
 impl SdfIntervalReport {
