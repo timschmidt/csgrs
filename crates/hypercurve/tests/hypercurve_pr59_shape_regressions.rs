@@ -7,12 +7,8 @@
 //! material contours, hole contours, and boolean membership semantics.
 
 use hypercurve::{
-    BooleanBoundaryChainAssemblyStage2, BooleanBoundaryContourTransferStage2,
-    BooleanBoundaryFragmentEmissionStage2, BooleanBoundaryLoopExtractionStage2, BooleanOp,
-    BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, LineArcRegion2, Point2, Real,
-    RegionBooleanBoundaryContourSourcePath2, RegionBooleanBoundaryPredicatePath2,
-    RegionBooleanQueryPath2, RegionBooleanStage2, RegionFragmentBuildPredicatePath2,
-    RegionFragmentBuildStage2, RegionPointLocation, RetainedTopologyStatus, SegmentKindCounts,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, LineArcRegion2,
+    Point2, Real, RegionPointLocation,
 };
 
 type HPoint = Point2;

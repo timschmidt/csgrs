@@ -1,8 +1,7 @@
 use hypercurve::{
-    BezierSubcurve2, BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveError, CurveFamily2, CurveGeometry2, CurveOperation2,
-    CurvePath2, CurvePolicy, CurveRegion2, ExactCurveError, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation, Similarity2,
+    CircularArc2, Classification, CubicBezier2, Curve2, CurveError, CurveFamily2, CurveGeometry2,
+    CurveOperation2, CurvePath2, CurvePolicy, CurveRegion2, ExactCurveError, LineSeg2, Point2,
+    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation,
 };
 use proptest::prelude::*;
 

@@ -1,6 +1,6 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurveError, CurveString2, FillRule, Point2,
-    PolylineReconstructionOptions, Real, Segment2, SegmentKind, SegmentKindCounts,
+    BulgeVertex2, Contour2, CurveError, CurveString2, FillRule, Point2,
+    PolylineReconstructionOptions, Real, Segment2,
 };
 
 fn r(value: f64) -> Real {
@@ -9,14 +9,6 @@ fn r(value: f64) -> Real {
 
 fn p(x: f64, y: f64) -> Point2 {
     Point2::new(r(x), r(y))
-}
-
-fn assert_close(actual: f64, expected: f64) {
-    let tolerance = 1e-8_f64.max(expected.abs() * 1e-8);
-    assert!(
-        (actual - expected).abs() <= tolerance,
-        "expected {actual} to be within {tolerance} of {expected}"
-    );
 }
 
 #[test]

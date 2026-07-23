@@ -1,15 +1,10 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, LineArcRegion2, Real,
-    RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentBuildPredicatePath2,
-    RegionFragmentBuildStage2, RegionFragmentSet, RegionSide, SegmentKind, SegmentKindCounts,
+    RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentSet, RegionSide,
 };
 
 fn s(value: i32) -> Real {
     value.into()
-}
-
-fn q(numerator: i32, denominator: i32) -> Real {
-    (Real::from(numerator) / Real::from(denominator)).unwrap()
 }
 
 fn p(x: i32, y: i32) -> hypercurve::Point2 {

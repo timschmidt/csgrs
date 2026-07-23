@@ -157,12 +157,12 @@ fn interpolate_with_inputs(
         .map(|(x, y)| Point2::new(x, y))
         .collect::<Vec<_>>();
     let curve = NurbsCurve2::try_new(degree, control_points, control_weights, knots)
-        .map_err(|error| remap_interpolation_error(error))?;
+        .map_err(remap_interpolation_error)?;
     if x_solve.residual_replayed && y_solve.residual_replayed {
         for (parameter, expected) in parameters.iter().zip(&data_points) {
             let actual = curve
                 .point_at(parameter)
-                .map_err(|error| remap_interpolation_error(error))?;
+                .map_err(remap_interpolation_error)?;
             match exact_point_equal(&actual, expected) {
                 Ok(()) => {}
                 Err(ExactCurveError::Blocked(_)) => {
@@ -177,7 +177,7 @@ fn interpolate_with_inputs(
 
 fn interpolation_determinant(coefficient_matrix: &[Vec<Real>]) -> ExactCurveResult<Real> {
     let report = determinant_bareiss(coefficient_matrix, INTERPOLATION_SOLVE_PRECISION)
-        .map_err(|error| interpolation_solve_error(error))?;
+        .map_err(interpolation_solve_error)?;
     match crate::classify::compare_reals(
         &report.determinant,
         &Real::zero(),
@@ -204,7 +204,7 @@ fn solve_interpolation_coordinates_bareiss(
         right_hand_sides,
         INTERPOLATION_SOLVE_PRECISION,
     )
-    .map_err(|error| interpolation_solve_error(error))?;
+    .map_err(interpolation_solve_error)?;
     for replay in &report.residual_replays {
         if !replay.accepted {
             let row = replay
@@ -247,7 +247,7 @@ fn solve_interpolation_coordinate_cramer_identity(
             replaced[row][column] = value.clone();
         }
         let numerator = determinant_bareiss(&replaced, INTERPOLATION_SOLVE_PRECISION)
-            .map_err(|error| interpolation_solve_error(error))?
+            .map_err(interpolation_solve_error)?
             .determinant;
         let value = (numerator.clone() / determinant.clone()).map_err(|_| {
             ExactCurveError::invalid(

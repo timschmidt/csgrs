@@ -8,9 +8,8 @@
 
 use geo::{BooleanOps as _, Contains as _, Coord, LineString, MultiPolygon, Point, Polygon};
 use hypercurve::{
-    BooleanFragmentAction, BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy,
-    FillRule, IntersectionKind, LineArcRegion2, LineLineIntersection, LineSeg2, Point2, Real,
-    RegionPointLocation,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, IntersectionKind,
+    LineArcRegion2, LineLineIntersection, LineSeg2, Point2, Real, RegionPointLocation,
 };
 
 type HPoint = Point2;

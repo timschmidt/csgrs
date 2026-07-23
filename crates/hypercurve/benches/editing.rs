@@ -4,7 +4,7 @@ use std::time::Instant;
 use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult,
     CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineArcRegion2, LineSeg2,
-    Point2, Real, RegionBooleanQueryPath2, Segment2,
+    Point2, Real, Segment2,
 };
 
 fn s(value: i32) -> Real {

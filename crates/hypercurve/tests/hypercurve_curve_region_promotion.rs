@@ -1,8 +1,8 @@
 use hypercurve::{
     BezierFlatteningOptions, CircularArc2, Classification, Contour2, Curve2, CurvePath2,
     CurvePolicy, CurveRegion2, CurveRegionLoopRole, FillRule, FiniteProjectionOptions,
-    LineArcRegion2, LineSeg2, Point2, PolylineReconstructionOptions, QuadraticBezier2, Real,
-    RegionPointLocation, Segment2, Similarity2,
+    LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, Real, RegionPointLocation, Segment2,
+    Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 

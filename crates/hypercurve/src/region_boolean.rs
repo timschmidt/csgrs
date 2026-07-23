@@ -1774,9 +1774,12 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                     }
                 };
                 if output_kind == BooleanBoundaryOutputKind::Contours {
-                    match selection
-                        .endpoint_chain_indices_from_compact_split(&compact_fragments, policy)?
-                    {
+                    match selection.endpoint_chain_indices_from_compact_split(
+                        &compact_fragments,
+                        first,
+                        second,
+                        policy,
+                    )? {
                         Classification::Decided(Some(chain_indices)) => {
                             let contours = match selection.emit_contours_from_owned_compact_split(
                                 compact_fragments,

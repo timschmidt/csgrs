@@ -330,6 +330,8 @@ impl BooleanFragmentSelection {
     pub(crate) fn endpoint_chain_indices_from_compact_split(
         &self,
         fragments: &CompactLineRegionFragmentSet,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Option<BooleanBoundaryChainIndices>>> {
         let mut sources = fragments.contours().iter().flat_map(|contour| {
@@ -358,17 +360,17 @@ impl BooleanFragmentSelection {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
                 BooleanFragmentAction::KeepSourceDirection => {
+                    let source_segment = compact_source_segment(first, second, key, source)?;
+                    let (start, end) = source.endpoints(source_segment)?;
                     endpoints.push(BorrowedBooleanBoundaryEdge::from_endpoints(
-                        &source.start,
-                        &source.end,
-                        false,
+                        start, end, false,
                     ));
                 }
                 BooleanFragmentAction::KeepReversed => {
+                    let source_segment = compact_source_segment(first, second, key, source)?;
+                    let (start, end) = source.endpoints(source_segment)?;
                     endpoints.push(BorrowedBooleanBoundaryEdge::from_endpoints(
-                        &source.start,
-                        &source.end,
-                        true,
+                        start, end, true,
                     ));
                 }
             }
@@ -513,14 +515,16 @@ impl BooleanFragmentSelection {
                             )
                         })?;
                     let reversed = classification.action == BooleanFragmentAction::KeepReversed;
+                    let source_segment_index = source.source_segment_index;
                     let segment = source.materialize(source_segment)?;
+                    let source_range = source.into_source_range();
                     directed_fragments.push(DirectedBooleanFragment {
                         key,
                         fragment_index,
-                        source_segment_index: source.source_segment_index,
+                        source_segment_index,
                         source_segment_start_point: source_segment.start().clone(),
                         source_segment_end_point: source_segment.end().clone(),
-                        source_range: source.source_range,
+                        source_range,
                         reversed,
                         segment: if reversed {
                             segment.into_reversed()
@@ -814,25 +818,31 @@ impl CompactLineRegionFragmentSet {
             let Some(first_fragment) = contour_fragments.fragments.first() else {
                 return Ok(None);
             };
+            let full_start = Real::zero();
+            let full_end = Real::one();
+            let first_source_segment =
+                compact_source_segment(first, second, contour_fragments.key, first_fragment)?;
+            let (first_start, first_end) = first_fragment.endpoints(first_source_segment)?;
+            let (first_param_start, first_param_end) =
+                first_fragment.source_parameters(&full_start, &full_end);
             let certified_endpoint = certified_fragment_endpoint(
                 endpoint_contacts,
                 contour_fragments.key,
                 source_contour,
                 first_fragment.source_segment_index,
-                &first_fragment.source_range,
+                first_param_start,
+                first_param_end,
                 policy,
             );
             let source_side = contour_fragments.key.side;
             let mut opposite_winding = match classify_fragment_interior_with(
-                &first_fragment.start,
-                &first_fragment.end,
+                first_start,
+                first_end,
                 certified_endpoint,
                 &interior_sample_fractions,
                 |fraction| {
                     Ok(Classification::Decided(
-                        first_fragment
-                            .start
-                            .lerp(&first_fragment.end, fraction.clone()),
+                        first_start.lerp(first_end, fraction.clone()),
                     ))
                 },
                 |sample| classify_opposite_winding(source_side, sample),
@@ -847,12 +857,14 @@ impl CompactLineRegionFragmentSet {
             for (fragment_index, fragment) in contour_fragments.fragments.iter().enumerate() {
                 if fragment_index != 0 {
                     let previous = &contour_fragments.fragments[fragment_index - 1];
+                    let (_, previous_end) = previous.source_parameters(&full_start, &full_end);
+                    let (fragment_start, _) = fragment.source_parameters(&full_start, &full_end);
                     let Some(delta) = crossing_windings.delta_between_fragments(
                         contour_fragments.key,
                         previous.source_segment_index,
-                        &previous.source_range,
+                        previous_end,
                         fragment.source_segment_index,
-                        &fragment.source_range,
+                        fragment_start,
                     ) else {
                         return Ok(None);
                     };
@@ -1460,7 +1472,8 @@ impl RegionFragmentSet {
                 contour_fragments.key,
                 source_contour,
                 first_fragment.source_segment_index,
-                &first_fragment.source_range,
+                first_fragment.source_range.start(),
+                first_fragment.source_range.end(),
                 policy,
             );
             let source_side = contour_fragments.key.side;
@@ -1491,9 +1504,9 @@ impl RegionFragmentSet {
                     let Some(delta) = crossing_windings.delta_between_fragments(
                         contour_fragments.key,
                         fragments[fragment_index - 1].source_segment_index,
-                        &fragments[fragment_index - 1].source_range,
+                        fragments[fragment_index - 1].source_range.end(),
                         fragment.source_segment_index,
-                        &fragment.source_range,
+                        fragment.source_range.start(),
                     ) else {
                         return Ok(None);
                     };
@@ -1594,7 +1607,8 @@ impl RegionFragmentSet {
                         contour_fragments.key,
                         source_contour,
                         fragment.source_segment_index,
-                        &fragment.source_range,
+                        fragment.source_range.start(),
+                        fragment.source_range.end(),
                         policy,
                     )
                 });
@@ -1656,14 +1670,15 @@ fn certified_fragment_endpoint(
     key: RegionContourKey,
     source_contour: &crate::Contour2,
     source_segment_index: usize,
-    source_range: &ParamRange,
+    source_range_start: &Real,
+    source_range_end: &Real,
     policy: &CurvePolicy,
 ) -> Option<CertifiedFragmentEndpoint> {
     if !contacts.parameter_is_contact(
         key,
         source_segment_index,
         source_contour.len(),
-        source_range.start(),
+        source_range_start,
         policy,
     ) {
         Some(CertifiedFragmentEndpoint::Start)
@@ -1671,13 +1686,29 @@ fn certified_fragment_endpoint(
         key,
         source_segment_index,
         source_contour.len(),
-        source_range.end(),
+        source_range_end,
         policy,
     ) {
         Some(CertifiedFragmentEndpoint::End)
     } else {
         None
     }
+}
+
+fn compact_source_segment<'a>(
+    first: &'a RegionView2<'_>,
+    second: &'a RegionView2<'_>,
+    key: RegionContourKey,
+    fragment: &crate::fragment::CompactLineContourFragment,
+) -> CurveResult<&'a Segment2> {
+    source_contour_for_key(first, second, key)?
+        .segments()
+        .get(fragment.source_segment_index)
+        .ok_or_else(|| {
+            CurveError::Topology(
+                "compact boolean fragment references a missing source segment".into(),
+            )
+        })
 }
 
 fn contour_location_from_winding(winding: i32, fill_rule: FillRule) -> RegionPointLocation {

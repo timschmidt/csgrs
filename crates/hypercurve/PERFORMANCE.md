@@ -1647,6 +1647,33 @@ the new path at 160.047 and 160.254 us/iter versus 161.534 and 163.055 us/iter f
 committed baseline, a 0.9--1.7% wall-time improvement. The exact path remains roughly
 5.7 times slower than the latest matched `cavalier_contours` checkpoint.
 
+Compact strict-crossing fragments now borrow exact split points and parameters from
+one shared marker owner per contour. Previously every fragment cloned both exact
+endpoints and its parameter range out of the already-retained marker bins, then
+dropped those duplicates after selection. Unsplit lines now retain only their source
+segment index; split fragments retain that index, their marker position, and the
+shared source support. Endpoint chaining and winding propagation borrow the original
+exact values, while only selected output fragments clone the values required by
+`LineSeg2`'s retained support range. This preserves exact coordinates, parameter
+ranges, source-support identity, and the existing general fallback.
+
+Against the certified-orientation checkpoint, the 5,000-operation star64 instruction
+run fell from 8,758,225,603 to 8,274,445,706 retired instructions (5.52%). Twenty-
+operation DHAT allocation fell from 7,925,789 to 6,217,661 bytes (21.55%), reads from
+21,541,922 to 19,967,289 bytes (7.31%), and writes from 10,454,460 to 8,257,928 bytes
+(21.01%). Allocation blocks rose by 54 (0.14%) because each contour now has one shared
+marker-owner allocation; peak live heap remained exactly 779,825 bytes. A final
+CPU-pinned 11-sample paired release run measured ordinary exact region output at
+144.352 us/iter, 7.87% faster than the 156.674 us post-provenance-removal baseline.
+`cavalier_contours`, `i_overlay`, and `geo` measured 28.274, 34.958, and 36.666
+us/iter in that run, leaving the exact path 5.11 times behind the fastest approximate
+competitor.
+
+Both complete feature-mode test matrices, all-target/all-feature warnings-as-errors
+Clippy, and warnings-as-errors rustdoc passed. The AddressSanitizer region-Boolean
+differential fuzzer completed 1,138 runs at 5,472 coverage points and 16,159 feature
+edges without a failure; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

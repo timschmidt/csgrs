@@ -1,23 +1,14 @@
 use hypercurve::{
-    Aabb2, BooleanBoundaryChain, BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
-    BooleanBoundaryContourTransferStage2, BooleanBoundaryFragmentEmissionStage2,
-    BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopConstructionStage2,
-    BooleanBoundaryLoopExtractionStage2, BooleanBoundaryLoopSet, BooleanFragmentAction,
-    BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
-    BooleanOp, BulgeVertex2, Classification, Contour2, ContourFragment, ContourFragmentSet,
-    ContourOperand, ContourSplitMarkers, CurveError, CurvePolicy, DirectedBooleanFragment,
-    FillRule, LineArcRegion2, LineLineIntersection, LineSeg2, ParamRange, Real,
-    RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentSet,
-    RegionPointLocation, RegionSide, Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts,
-    UncertaintyReason,
+    BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
+    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
+    BooleanFragmentSelection, BooleanOp, BulgeVertex2, Classification, Contour2, ContourFragment,
+    ContourFragmentSet, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, LineArcRegion2,
+    LineSeg2, ParamRange, Real, RegionContourFragments, RegionContourKey, RegionContourRole,
+    RegionFragmentSet, RegionPointLocation, RegionSide, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
     value.into()
-}
-
-fn q(numerator: i32, denominator: i32) -> Real {
-    (s(numerator) / s(denominator)).unwrap()
 }
 
 fn p(x: i32, y: i32) -> hypercurve::Point2 {
@@ -39,43 +30,6 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
         vertex(xmax, ymax, 0),
         vertex(xmin, ymax, 0),
     ])
-}
-
-fn center_defined_circle(radius: i32, clockwise: bool) -> Contour2 {
-    Contour2::try_new(vec![
-        Segment2::Arc(
-            hypercurve::CircularArc2::try_from_center(
-                p(radius, 0),
-                p(-radius, 0),
-                p(0, 0),
-                clockwise,
-            )
-            .unwrap(),
-        ),
-        Segment2::Arc(
-            hypercurve::CircularArc2::try_from_center(
-                p(-radius, 0),
-                p(radius, 0),
-                p(0, 0),
-                clockwise,
-            )
-            .unwrap(),
-        ),
-    ])
-    .unwrap()
-}
-
-fn major_arc_segment_contour(radius: i32) -> Contour2 {
-    let start = p(radius, 0);
-    let end = p(0, radius);
-    Contour2::try_new(vec![
-        Segment2::Arc(
-            hypercurve::CircularArc2::try_from_center(start.clone(), end.clone(), p(0, 0), true)
-                .unwrap(),
-        ),
-        Segment2::Line(LineSeg2::try_new(end, start).unwrap()),
-    ])
-    .unwrap()
 }
 
 fn triangle(vertices: [(i32, i32); 3]) -> Contour2 {
@@ -147,29 +101,6 @@ fn assert_exact_boolean_matrix(
 
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
-}
-
-fn symbolic_regular_polygon(radius: Real, sides: usize) -> Contour2 {
-    symbolic_regular_polygon_at(radius, sides, Real::zero(), Real::zero())
-}
-
-fn symbolic_regular_polygon_at(
-    radius: Real,
-    sides: usize,
-    center_x: Real,
-    center_y: Real,
-) -> Contour2 {
-    let points = (0..sides)
-        .map(|index| {
-            let fraction = (Real::from(index as u64) / Real::from(sides as u64)).unwrap();
-            let angle = Real::tau() * fraction;
-            [
-                center_x.clone() + radius.clone() * angle.clone().cos(),
-                center_y.clone() + radius.clone() * angle.sin(),
-            ]
-        })
-        .collect::<Vec<_>>();
-    Contour2::from_real_ring(&points).unwrap()
 }
 
 #[test]

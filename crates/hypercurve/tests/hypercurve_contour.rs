@@ -1,7 +1,6 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy,
-    CurveString2, FillRule, LineArcRegion2, Real, RegionPointLocation, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    FillRule, Real, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {

@@ -228,7 +228,7 @@ pub(crate) fn split_single_material_line_regions_compact(
             }
         };
         let fragments =
-            match compact_line_contour_fragments_from_split_markers(contour, &markers, policy)? {
+            match compact_line_contour_fragments_from_split_markers(contour, markers, policy)? {
                 Classification::Decided(fragments) => fragments,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));

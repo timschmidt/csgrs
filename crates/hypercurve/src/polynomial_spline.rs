@@ -596,7 +596,7 @@ impl PolynomialSplineCurve2 {
             self.bezier_decomposition()?
                 .spans()
                 .iter()
-                .map(|curve| rationalize_subcurve(curve))
+                .map(rationalize_subcurve)
                 .collect()
         })?;
         Ok(spans)

@@ -489,7 +489,7 @@ impl NurbsCurve2 {
             .map(|(span_index, (source_span, rational_span))| {
                 let curve = rational_span
                     .elevated_to_degree(target_degree)
-                    .map_err(|error| remap_degree_elevation_error(error))?;
+                    .map_err(remap_degree_elevation_error)?;
                 let (parameter_start, parameter_end) = source_span.knot_interval();
                 Ok(NurbsElevatedBezierSpan2 {
                     span_index,

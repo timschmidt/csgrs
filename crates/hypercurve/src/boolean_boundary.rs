@@ -999,8 +999,7 @@ impl BooleanBoundaryLoopSet {
     /// Builds a loop set from borrowed already-decided closed contours.
     ///
     /// This clones the exact contour carriers at the API boundary and then uses
-    /// the same report-bearing structural transfer as
-    /// [`BooleanBoundaryLoopSet::from_contours_with_report`].
+    /// the same report-bearing structural transfer as the owned contour path.
     pub fn from_contours_borrowed(contours: &[Contour2]) -> CurveResult<Self> {
         Self::from_contours_borrowed_with_report(contours)?
             .into_loops()

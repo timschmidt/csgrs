@@ -11,8 +11,8 @@ use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    ContourIntersection, CurvePolicy, IntersectionKind, ParamRange, RegionContourKey,
-    RegionContourRole, RegionIntersectionSet, RegionSide, RegionView2, Segment2, SegmentKind,
+    ContourIntersection, CurvePolicy, IntersectionKind, RegionContourKey, RegionContourRole,
+    RegionIntersectionSet, RegionSide, RegionView2, Segment2, SegmentKind,
 };
 
 #[derive(Clone, Debug)]
@@ -161,20 +161,20 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         &self,
         key: RegionContourKey,
         previous_segment_index: usize,
-        previous_range: &ParamRange,
+        previous_end: &Real,
         current_segment_index: usize,
-        current_range: &ParamRange,
+        current_start: &Real,
     ) -> Option<i32> {
         if previous_segment_index != current_segment_index {
             return Some(0);
         }
-        if previous_range.end() != current_range.start() {
+        if previous_end != current_start {
             return None;
         }
         let crossings = self.crossings(key, previous_segment_index)?;
         let mut matched = crossings
             .iter()
-            .filter(|crossing| crossing.parameter == previous_range.end());
+            .filter(|crossing| crossing.parameter == previous_end);
         let delta = matched.next()?.winding_delta;
         matched.next().is_none().then_some(delta)
     }

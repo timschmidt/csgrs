@@ -81,7 +81,7 @@ pub(crate) fn decompose_circular_arc(
 ) -> ExactCurveResult<CircularArcBezierDecomposition2> {
     arc.rational_bezier_decomposition()
         .cloned()
-        .map_err(|error| contextualize_arc_error(error))
+        .map_err(contextualize_arc_error)
 }
 
 fn compute_circular_arc_decomposition(
@@ -195,7 +195,7 @@ pub(crate) fn classify_sweep(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKin
         .sweep_kind
         .get_or_init(|| classify_sweep_uncached(arc))
         .clone()
-        .map_err(|error| contextualize_arc_error(error))
+        .map_err(contextualize_arc_error)
 }
 
 fn classify_sweep_uncached(arc: &CircularArc2) -> ExactCurveResult<ArcSweepKind> {
