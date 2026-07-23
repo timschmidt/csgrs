@@ -1796,6 +1796,29 @@ AddressSanitizer region-Boolean differential fuzz pass completed 1,305 execution
 5,674 coverage points and 16,991 feature edges without a failure; LeakSanitizer alone
 remained disabled under ptrace.
 
+The next clean star1024 contour checkpoint reproduced at 13.44--13.55 ms/iter,
+versus about 9.9--10.0 ms for `i_overlay` and `geo`. A 999 Hz profile assigned
+15.24% self time to Hyperreal's exact `u128` GCD, 5.46% to fixed-stack dyadic
+products, 4.88% to retained candidate/event collection, 4.42% to memory moves,
+and 2.72% to the fused exact line-intersection wrapper.
+
+Several bounded alternatives were measured and removed. Choosing the smaller of
+minimum-x and maximum-x candidate prefixes reduced candidate samples but was
+wall-time neutral. A cached exact-AABB hierarchy preserved the public event
+order but increased contour time about 4%. Enlarging the compact-candidate
+reservation regressed about 0.5%. Compacting `LineSeg2`'s retained parameter
+range reduced that type from 328 to 256 bytes, but `Segment2` remained fixed by
+the 376-byte arc variant and the extra conversion increased contour latency.
+Prepared primitive-direction certificates removed wide coordinate reductions
+inside Hyperreal but left star1024 unchanged after certificate plumbing.
+
+The remaining scaling target is therefore the event representation, not another
+candidate filter: proper crossings need a compact shared-determinant form that
+can serve split ordering, point identity, and winding propagation before public
+APIs materialize four independent canonical rationals. This is also the
+architecture required to reduce the large line-only `Segment2` memory traffic
+without boxing public arc variants or weakening exact degeneracy behavior.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
