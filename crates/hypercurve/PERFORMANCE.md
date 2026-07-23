@@ -2391,6 +2391,32 @@ Both complete all-feature suites, strict Clippy, and warning-denied rustdoc
 pass. The 10,000-run AddressSanitizer differential Boolean campaign completed
 without failure at 5,891 coverage points and 18,881 feature edges.
 
+The next exact-arithmetic checkpoint specializes the two-product sums used by
+compact line determinants and affine point numerators. Checked `u128`
+multiplication, alignment, signed summation, and normalization handle the
+common binary64 envelope directly; any overflow or shift miss reruns the
+unchanged 384-bit stack accumulator.
+
+Two same-layout alternating 21-sample star1024 contour comparisons measured
+5.575 and 5.653 ms versus 5.732 and 5.736 ms, improving 2.7% and 1.4%.
+Seven-run counters over 320 iterations reduced instructions from 25.969 to
+25.392 billion, branches from 4.345 to 4.152 billion, and branch misses from
+23.52 to 21.04 million; cycles were neutral within system noise. Reversed
+star64 trials improved 2.7--3.0%, and ordinary rectangle contours improved
+from 5.768 to 5.223 us.
+
+The complete star1024 matrix measured ordinary/prepared exact contours at
+5.487/5.567 ms, versus 19.764 ms for Cavalier, 10.059 ms for `i_overlay`, and
+10.082 ms for `geo`. Heaptrack remains 1,104,313 allocations, 2,193
+temporaries, and 16.58 MiB peak heap across ten operations.
+
+Hyperreal's 20,000-case native-versus-stack oracle covers admitted results and
+checked overflow deferrals; the existing compact/wide crossing oracles and
+retained collector equality test cover integration. Both complete all-feature
+suites, strict Clippy, and warning-denied rustdoc pass. The 10,000-run
+AddressSanitizer differential Boolean campaign completed without failure at
+5,895 coverage points and 18,890 feature edges.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
