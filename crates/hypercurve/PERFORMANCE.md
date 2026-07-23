@@ -2361,6 +2361,36 @@ Both complete all-feature suites, strict Clippy, and warning-denied rustdoc
 pass. The 10,000-run AddressSanitizer differential Boolean campaign completed
 without failure at 5,892 coverage points and 18,825 feature edges.
 
+The next point-construction checkpoint consumes the exact finite binary64
+endpoints already reconstructed by the line AABB cache. Hyperreal decodes
+their IEEE-754 sign, significand, and exponent directly into normalized dyadic
+words, avoiding four retained-rational canonicalization and magnitude probes
+per crossing. The compact/wide determinant plans and every exact fallback are
+otherwise unchanged.
+
+Two alternating 21-sample star1024 contour comparisons measured
+5.634 and 5.542 ms versus 5.769 and 5.686 ms at the prepared-rational
+checkpoint, a 2.3--2.5% improvement. Seven-run counters over 320 fixed
+iterations reduced cycles from 8.247 to 8.080 billion, instructions from
+26.274 to 25.969 billion, and branches from 4.443 to 4.345 billion. Star64
+measured 51.242 us versus 52.424 us; star256 measured 0.416 ms versus
+0.435 ms.
+
+The complete star1024 matrix measured ordinary/prepared exact contours at
+5.656/5.445 ms, versus 19.809 ms for Cavalier, 10.139 ms for `i_overlay`, and
+10.074 ms for `geo`. The 16.58 MiB peak and per-operation allocations are
+unchanged. Heaptrack records one extra 240-byte process-startup temporary, so
+the ten-operation process totals are 1,104,313 allocations and 2,193
+temporaries instead of 1,104,312 and 2,192.
+
+The retained collector still matches the unreserved exact sweep. Hyperreal
+also compares direct and canonical dyadic words over 20,000 random IEEE-754
+patterns, runs the direct compact path through the 512-case crossing oracle,
+and covers a wide direct determinant plus non-finite and oversized fallback.
+Both complete all-feature suites, strict Clippy, and warning-denied rustdoc
+pass. The 10,000-run AddressSanitizer differential Boolean campaign completed
+without failure at 5,891 coverage points and 18,881 feature edges.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

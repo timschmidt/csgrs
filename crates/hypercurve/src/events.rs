@@ -941,10 +941,9 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
         };
         if POINT_ONLY {
             if prepared_a_segment_index != Some(a_segment_index_u16) {
-                prepared_a_line = Real::prepare_exact_dyadic_line2(
-                    [a_line.start().x(), a_line.start().y()],
-                    [a_line.end().x(), a_line.end().y()],
-                );
+                let a_endpoints = a_boxes.segment_endpoints(a_segment_index);
+                prepared_a_line =
+                    Real::prepare_exact_dyadic_f64_line2(a_endpoints[0], a_endpoints[1]);
                 prepared_a_segment_index = Some(a_segment_index_u16);
             }
             let Some(prepared_a_line) = prepared_a_line.as_ref() else {
@@ -952,10 +951,11 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                     a, b, a_boxes, b_boxes, policy,
                 );
             };
-            let crossing = match Real::exact_rational_line_intersection2_point_with_prepared_first(
+            let b_endpoints = b_boxes.segment_endpoints(b_segment_index);
+            let crossing = match Real::exact_dyadic_f64_line_intersection2_point_with_prepared_first(
                 prepared_a_line,
-                [b_line.start().x(), b_line.start().y()],
-                [b_line.end().x(), b_line.end().y()],
+                b_endpoints[0],
+                b_endpoints[1],
             ) {
                 Some((parameters, [x, y])) => CertifiedLineCrossingEvent::new_exact_dyadic(
                     a_segment_index_u16,
@@ -964,10 +964,10 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                     parameters,
                 ),
                 None => {
-                    match Real::exact_rational_line_intersection2_point_wide_with_prepared_first(
+                    match Real::exact_dyadic_f64_line_intersection2_point_wide_with_prepared_first(
                         prepared_a_line,
-                        [b_line.start().x(), b_line.start().y()],
-                        [b_line.end().x(), b_line.end().y()],
+                        b_endpoints[0],
+                        b_endpoints[1],
                     ) {
                         Some((parameters, [x, y])) => {
                             CertifiedLineCrossingEvent::new_exact_dyadic_wide(
