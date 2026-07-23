@@ -172,7 +172,7 @@ let revolve_shape = square.revolve(Real::from(360), 16, ())?;
 
 - **`Profile::offset(distance)`** - certified sharp offset through Hypercurve; remaining regularized cases require the optional `offset` feature.
 - **`Profile::offset_rounded(distance)`** - rounded offset behind the optional `offset` feature.
-- **`Profile::try_straight_skeleton()`** - exact inward wavefront skeleton for one simple convex line contour, with event/source evidence available through `straight_skeleton_report`; concave split-event requirements remain explicit blockers behind the optional `offset` feature.
+- **`Profile::try_straight_skeleton()`** - exact inward wavefront skeleton for one simple convex line contour, with event/source evidence available through `straight_skeleton_result`; concave split-event requirements remain explicit blockers behind the optional `offset` feature.
 - **`Profile::bounding_box()`** - computes the bounding box of the shape.
 - **`Profile::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
 - **`Profile::triangulate()`** - subdivides the Profile into triangles
@@ -288,24 +288,14 @@ let union_result = cube.try_union(&sphere)?;
 let difference_result = cube.try_difference(&sphere)?;
 let intersection_result = cylinder.try_intersection(&sphere)?;
 let xor_result = cylinder.try_xor(&sphere)?;
-
-// When several results are needed for the same pair, retain one certified
-// arrangement and reuse its exact subdivision and winding evidence.
-let prepared = cube.try_prepare_boolean(&sphere)?;
-let union_result = prepared.try_union()?;
-let difference_result = prepared.try_difference()?;
-let intersection_result = prepared.try_intersection()?;
-let xor_result = prepared.try_xor()?;
 ```
 
 `Mesh<M>` and `Profile` provide typed `try_union`, `try_difference`,
 `try_intersection`, and `try_xor` methods. Compatibility methods on
 `csgrs::csg::CSG` panic if certification reports an error or uncertainty.
-All mesh Boolean methods use the same prepared pipeline. Direct methods request
-one operation and retain its operation-specific pruning, while
-`Mesh::try_prepare_boolean` retains all four for build-once/extract-many use.
-Its borrow ties the preparation to the source meshes, every general extraction
-remains closure-certified by HyperMesh, and exact empty/disjoint/identical
+Every mesh Boolean call is immediate and operation-scoped. HyperMesh returns
+certified indexed triangles directly, and CSGRS restores source metadata while
+materializing the result. Exact empty, disjoint, identical, and axis-aligned-box
 shortcuts preserve source metadata and polygonization.
 
 ### Transformations
@@ -519,15 +509,15 @@ and memory usage:
 - accept borrowed slices where ownership is unnecessary,
 - use Rayon where work is independently parallelizable,
 - minimize allocation and cloning, and
-- retain exact facts, bounds, and topology for reuse across operations.
+- preserve exact facts, bounds, and topology through each operation.
 
 The retained reference-guided measurements and replay commands are recorded in
 [PERFORMANCE.md](PERFORMANCE.md). In particular, renderer buffers stream from
 certified polygon triangulation without materializing a throwaway triangle
 `Mesh`, and indexed exporters reserve from known topology bounds.
-Repeated mesh Booleans can retain one borrowed certified arrangement through
-`Mesh::try_prepare_boolean`, while ray queries stream borrowed triangle vertices
-without materializing temporary triangle records.
+Mesh Booleans materialize their certified output immediately, while ray
+queries stream borrowed triangle vertices without materializing temporary
+triangle records.
 
 ## Todo
 

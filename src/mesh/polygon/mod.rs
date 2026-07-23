@@ -2099,20 +2099,6 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         normal
     }
 
-    pub(crate) fn calculate_normal_from_retained_area(
-        &self,
-        area_normal: &Vector3,
-    ) -> Vector3 {
-        if let Some(normal) = self.cached_new_normal() {
-            return normal;
-        }
-        let normal = finite_normalized_exact_rational(area_normal)
-            .or_else(|| area_normal.normalize().ok())
-            .unwrap_or_else(Vector3::z);
-        self.cache_new_normal(normal.clone());
-        normal
-    }
-
     pub(crate) fn cached_new_normal(&self) -> Option<Vector3> {
         POLYGON_NORMALS.with_borrow(|normals| {
             normals.get(&self.plane_id).and_then(|cached| {
