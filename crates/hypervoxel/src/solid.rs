@@ -8,11 +8,10 @@
 //! epsilon-derived topology decision.
 
 use crate::{
-    BoundaryPolicy, ExactHalfSpace, GridFrame, GridSource, HypervoxelError, HypervoxelResult,
-    MaterialRegionId, OccupancyState, QuantizationPolicy, SparseVoxelGrid, VoxelAddress,
-    VoxelAggregateFacts, VoxelCell, VoxelHalfSpaceClassifier, VoxelPayload,
-    VoxelPredicateCertificateReport, VoxelizationPolicy, VoxelizationReport,
-    classify_cell_against_halfspace,
+    BoundaryPolicy, ExactHalfSpace, GridFrame, HypervoxelError, HypervoxelResult, MaterialRegionId,
+    OccupancyState, QuantizationPolicy, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts,
+    VoxelCell, VoxelHalfSpaceClassifier, VoxelPayload, VoxelPredicateCertificateReport,
+    VoxelizationPolicy, VoxelizationReport, classify_cell_against_halfspace,
 };
 
 /// Convex solid represented as an intersection of exact half-spaces.
@@ -20,8 +19,6 @@ use crate::{
 pub struct ExactConvexHalfSpaceSet {
     /// Half-spaces whose intersection defines the solid.
     pub halfspaces: Vec<ExactHalfSpace>,
-    /// Optional source provenance for the solid as a whole.
-    pub source: Option<GridSource>,
 }
 
 /// Preflight report for an [`ExactConvexHalfSpaceSet`].
@@ -46,8 +43,8 @@ pub struct ExactConvexHalfSpaceSetReport {
 
 impl ExactConvexHalfSpaceSet {
     /// Creates an exact convex half-space set.
-    pub fn new(halfspaces: Vec<ExactHalfSpace>, source: Option<GridSource>) -> Self {
-        Self { halfspaces, source }
+    pub fn new(halfspaces: Vec<ExactHalfSpace>) -> Self {
+        Self { halfspaces }
     }
 
     /// Returns `true` when the set contains at least one boundary predicate.
@@ -212,7 +209,6 @@ pub fn voxelize_exact_convex_halfspace_set(
         grid.iter().map(|(_, cell)| cell),
     )?;
     let report = VoxelizationReport {
-        source: solid.source.clone(),
         frame,
         policy,
         aggregate,

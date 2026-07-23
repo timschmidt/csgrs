@@ -11,8 +11,7 @@ fn main() -> HypervoxelResult<()> {
     let mut grid = SparseVoxelGrid::new(frame);
     let address = VoxelAddress::new(3, [2, 1, 0])?;
 
-    let edit = grid.set(address, VoxelCell::material(MaterialRegionId(4)))?;
-    assert!(edit.exact_edit_replay_ready);
+    grid.set(address, VoxelCell::material(MaterialRegionId(4)))?;
     assert_eq!(
         grid.get(address)?.payload,
         VoxelPayload::MaterialRegion(MaterialRegionId(4))

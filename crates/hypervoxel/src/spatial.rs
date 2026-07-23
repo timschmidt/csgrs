@@ -2,15 +2,14 @@
 //!
 //! Occupancy aggregates say what is known about cell values. Spatial aggregate
 //! facts say where those values live: exact enclosing bounds, root child
-//! presence, stored-cell counts, and optional source freshness. These facts
-//! remain structured object data instead of being inferred later from a lossy
-//! mesh, preview, or floating-point bounding box.
+//! presence, and stored-cell counts. These facts remain structured object data
+//! instead of being inferred later from a lossy mesh, preview, or
+//! floating-point bounding box.
 
 use hyperreal::{CertifiedRealOrdering, Real};
 
 use crate::{
-    ExactAabb3, FreshnessStatus, HypervoxelError, HypervoxelResult, OccupancyState,
-    SparseVoxelGrid, VoxelAddress, VoxelizationReport,
+    ExactAabb3, HypervoxelError, HypervoxelResult, OccupancyState, SparseVoxelGrid, VoxelAddress,
 };
 
 /// Exact spatial facts for a sparse grid or aggregate region.
@@ -34,18 +33,11 @@ pub struct VoxelSpatialAggregateFacts {
     /// their absence is represented by [`Self::has_spatial_evidence`] instead
     /// of by a vacuous bounding box convention.
     pub exact_bounds_ready: bool,
-    /// Optional source freshness copied from a voxelization report.
-    pub freshness: FreshnessStatus,
-    /// Whether the source binding is current enough for source replay.
-    pub source_replay_ready: bool,
 }
 
 impl VoxelSpatialAggregateFacts {
     /// Builds spatial aggregate facts for all stored non-empty cells.
-    pub fn from_grid(
-        grid: &SparseVoxelGrid,
-        report: Option<&VoxelizationReport>,
-    ) -> HypervoxelResult<Self> {
+    pub fn from_grid(grid: &SparseVoxelGrid) -> HypervoxelResult<Self> {
         let mut stored_cells = 0_usize;
         let mut child_presence_mask = 0_u8;
         let mut exact_bounds: Option<ExactAabb3> = None;
@@ -63,9 +55,6 @@ impl VoxelSpatialAggregateFacts {
             });
         }
 
-        let freshness = report
-            .map(VoxelizationReport::freshness)
-            .unwrap_or(FreshnessStatus::Unknown);
         let has_spatial_evidence = stored_cells > 0;
         let exact_bounds_ready = has_spatial_evidence && exact_bounds.is_some();
 
@@ -75,8 +64,6 @@ impl VoxelSpatialAggregateFacts {
             child_presence_mask,
             exact_bounds,
             exact_bounds_ready,
-            freshness,
-            source_replay_ready: exact_bounds_ready && freshness == FreshnessStatus::Current,
         })
     }
 

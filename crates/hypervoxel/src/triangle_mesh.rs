@@ -21,10 +21,10 @@ use hyperlimit::{
 use hyperreal::{Rational, Real};
 
 use crate::{
-    BoundaryPolicy, CellBounds, GridFrame, GridSource, HypervoxelError, HypervoxelResult,
-    MaterialRegionId, OccupancyState, QuantizationPolicy, SparseVoxelGrid, VoxelAddress,
-    VoxelAggregateFacts, VoxelCell, VoxelPayload, VoxelPredicateCertificateReport,
-    VoxelizationPolicy, VoxelizationReport,
+    BoundaryPolicy, CellBounds, GridFrame, HypervoxelError, HypervoxelResult, MaterialRegionId,
+    OccupancyState, QuantizationPolicy, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts,
+    VoxelCell, VoxelPayload, VoxelPredicateCertificateReport, VoxelizationPolicy,
+    VoxelizationReport,
 };
 
 /// Exact triangle supplied by a mesh/BREP owner.
@@ -86,24 +86,12 @@ pub struct ExactTriangle3Report {
 pub struct ExactTriangleSurfaceMesh {
     /// Retained source triangles.
     pub triangles: Vec<ExactTriangle3>,
-    /// Optional source/version that produced the triangles.
-    pub source: Option<GridSource>,
-    /// Whether the producer reported exact source replay for these triangles.
-    pub exact_source_replay_available: bool,
 }
 
 impl ExactTriangleSurfaceMesh {
     /// Creates a retained exact triangle-surface handoff.
-    pub fn new(
-        triangles: Vec<ExactTriangle3>,
-        source: Option<GridSource>,
-        exact_source_replay_available: bool,
-    ) -> Self {
-        Self {
-            triangles,
-            source,
-            exact_source_replay_available,
-        }
+    pub fn new(triangles: Vec<ExactTriangle3>) -> Self {
+        Self { triangles }
     }
 
     /// Reports whether this retained triangle set is an exact source handoff.
@@ -117,16 +105,13 @@ impl ExactTriangleSurfaceMesh {
         }
         let triangle_count = self.triangles.len();
         let empty_triangle_set = triangle_count == 0;
-        let exact_triangle_source_ready = self.exact_source_replay_available
-            && !empty_triangle_set
-            && degenerate_triangle_count == 0
-            && unknown_triangle_count == 0;
+        let exact_triangle_source_ready =
+            !empty_triangle_set && degenerate_triangle_count == 0 && unknown_triangle_count == 0;
         ExactTriangleSurfaceMeshReport {
             triangle_count,
             empty_triangle_set,
             degenerate_triangle_count,
             unknown_triangle_count,
-            exact_source_replay_available: self.exact_source_replay_available,
             exact_triangle_source_ready,
         }
     }
@@ -143,8 +128,6 @@ pub struct ExactTriangleSurfaceMeshReport {
     pub degenerate_triangle_count: usize,
     /// Number of triangles whose predicate readiness was undecided.
     pub unknown_triangle_count: usize,
-    /// Whether producer-side exact replay was available.
-    pub exact_source_replay_available: bool,
     /// Whether source triangles are ready for exact surface voxelization.
     pub exact_triangle_source_ready: bool,
 }
@@ -298,12 +281,6 @@ pub fn voxelize_exact_triangle_surface_mesh(
             reason: "triangle surface mesh has uncertified triangle predicates",
         });
     }
-    if !source_report.exact_source_replay_available {
-        return Err(HypervoxelError::InvalidSourceGeometry {
-            reason: "triangle surface mesh lacks exact source replay",
-        });
-    }
-
     let mut grid = SparseVoxelGrid::new(frame.clone());
     let mut boundary_cells = 0_usize;
     let mut unknown_cells = 0_usize;
@@ -385,7 +362,6 @@ pub fn voxelize_exact_triangle_surface_mesh(
         grid.iter().map(|(_, cell)| cell),
     )?;
     let report = VoxelizationReport {
-        source: mesh.source.clone(),
         frame,
         policy,
         aggregate,
@@ -506,7 +482,6 @@ pub fn voxelize_exact_triangle_solid_mesh(
         grid.iter().map(|(_, cell)| cell),
     )?;
     let report = VoxelizationReport {
-        source: mesh.surface.source.clone(),
         frame,
         policy,
         aggregate,
@@ -539,11 +514,6 @@ fn validate_surface_source_report(
     if source_report.unknown_triangle_count > 0 {
         return Err(HypervoxelError::InvalidSourceGeometry {
             reason: "triangle surface mesh has uncertified triangle predicates",
-        });
-    }
-    if !source_report.exact_source_replay_available {
-        return Err(HypervoxelError::InvalidSourceGeometry {
-            reason: "triangle surface mesh lacks exact source replay",
         });
     }
     Ok(())

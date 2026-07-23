@@ -3,12 +3,9 @@ use hypervoxel::{
     AddressRay, AggregateCertainty, AxisPermutationTransform, CellBounds, CertifiedFieldInterval,
     CertifiedTensorInterval, CertifiedVectorInterval, ChunkPagedSparseGrid, ChunkShape,
     ExactAffineTransform, FieldAggregateFacts, FieldEnvelopeFacts, FieldSampleId,
-    FieldSampleRecord, FreshnessStatus, GridFrame, GridSource, HypervoxelError, MaterialRegionId,
-    OccupancyState, PreparedVoxelGrid, ProcessGridArtifact, ProcessGridRole, SignedAxis,
-    SparseVoxelGrid, SupportCellStatus, SupportDirection, SweptVolumeProvenance, VoxelAddress,
-    VoxelCandidateKind, VoxelCandidateManifest, VoxelCell, VoxelEditBatch, VoxelFieldCouplingKind,
-    VoxelFieldCouplingManifest, VoxelSideTables, audit_chunk_paged_field_samples,
-    classify_chunk_paged_support_mask, classify_support_mask, query_field_samples,
+    FieldSampleRecord, GridFrame, HypervoxelError, MaterialRegionId, PreparedVoxelGrid, SignedAxis,
+    SparseVoxelGrid, SupportCellStatus, SupportDirection, VoxelAddress, VoxelCell, VoxelEditBatch,
+    VoxelSideTables, classify_chunk_paged_support_mask, classify_support_mask, query_field_samples,
     sweep_address_segment, trace_address_ray, trace_address_segment,
 };
 
@@ -45,7 +42,6 @@ fn field_aggregate_unions_certified_side_table_bounds() {
             label: "dose low".into(),
             lower: Some(rf(1, 4)),
             upper: Some(rf(3, 4)),
-            provenance: "fixture".into(),
         },
     );
     side_tables.insert_field_sample(
@@ -54,7 +50,6 @@ fn field_aggregate_unions_certified_side_table_bounds() {
             label: "dose high".into(),
             lower: Some(rf(1, 2)),
             upper: Some(rf(5, 4)),
-            provenance: "fixture".into(),
         },
     );
 
@@ -71,21 +66,6 @@ fn field_aggregate_unions_certified_side_table_bounds() {
     assert_eq!(facts.missing_records, 0);
     let query = query_field_samples(&grid, &side_tables);
     assert!(query.is_fully_resolved());
-    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
-    let paged_field = audit_chunk_paged_field_samples(&paged, &side_tables).unwrap();
-    assert_eq!(paged_field.query, query);
-    assert_eq!(paged_field.aggregate, facts);
-    assert_eq!(paged_field.tested_pages, 2);
-    assert_eq!(paged_field.tested_cells, 2);
-    assert_eq!(paged_field.field_payload_cells, 2);
-    assert_eq!(paged_field.non_field_payload_cells, 0);
-    assert_eq!(paged_field.unknown_cells, 0);
-    assert_eq!(paged_field.lossy_cells, 0);
-    assert_eq!(
-        paged_field.referenced_samples,
-        [FieldSampleId(1), FieldSampleId(2)].into()
-    );
-    assert!(paged_field.exact_paged_field_audit_ready);
 }
 
 #[test]
@@ -166,7 +146,6 @@ fn field_aggregate_reports_missing_records_and_bounds_as_unknown() {
             label: "unbounded".into(),
             lower: Some(r(0)),
             upper: None,
-            provenance: "fixture".into(),
         },
     );
 
@@ -188,47 +167,6 @@ fn field_aggregate_reports_missing_records_and_bounds_as_unknown() {
     assert!(query.missing_bounds.contains(&FieldSampleId(1)));
     assert!(query.missing_records.contains(&FieldSampleId(2)));
     assert!(!query.is_fully_resolved());
-    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
-    let paged_field = audit_chunk_paged_field_samples(&paged, &side_tables).unwrap();
-    assert_eq!(paged_field.query, query);
-    assert_eq!(paged_field.aggregate, facts);
-    assert_eq!(paged_field.field_payload_cells, 2);
-    assert_eq!(paged_field.non_field_payload_cells, 0);
-    assert!(!paged_field.exact_paged_field_audit_ready);
-
-    let mut blocked_grid = grid.clone();
-    blocked_grid
-        .set(
-            VoxelAddress::new(3, [3, 1, 1]).unwrap(),
-            VoxelCell::unknown(),
-        )
-        .unwrap();
-    blocked_grid
-        .set(
-            VoxelAddress::new(3, [4, 1, 1]).unwrap(),
-            VoxelCell::lossy_adapter_value(9),
-        )
-        .unwrap();
-    let blocked_paged =
-        ChunkPagedSparseGrid::from_sparse_grid(&blocked_grid, ChunkShape::new(1).unwrap()).unwrap();
-    let blocked_field = audit_chunk_paged_field_samples(&blocked_paged, &side_tables).unwrap();
-    assert_eq!(blocked_field.query, query);
-    assert_eq!(blocked_field.field_payload_cells, 2);
-    assert_eq!(blocked_field.non_field_payload_cells, 2);
-    assert_eq!(blocked_field.unknown_cells, 1);
-    assert_eq!(blocked_field.lossy_cells, 1);
-    assert!(!blocked_field.exact_paged_field_audit_ready);
-
-    let empty_paged = ChunkPagedSparseGrid::from_sparse_grid(
-        &SparseVoxelGrid::new(frame()),
-        ChunkShape::new(1).unwrap(),
-    )
-    .unwrap();
-    let empty_paged_field = audit_chunk_paged_field_samples(&empty_paged, &side_tables).unwrap();
-    assert_eq!(empty_paged_field.tested_pages, 0);
-    assert_eq!(empty_paged_field.tested_cells, 0);
-    assert!(empty_paged_field.query.is_fully_resolved());
-    assert!(!empty_paged_field.exact_paged_field_audit_ready);
 }
 
 #[test]
@@ -246,19 +184,11 @@ fn inverted_field_interval_is_rejected_before_it_can_certify_grid_state() {
             label: "bad".into(),
             lower: Some(r(2)),
             upper: Some(r(1)),
-            provenance: "antagonistic".into(),
         },
     );
 
     assert!(matches!(
         FieldAggregateFacts::from_grid(&grid, &side_tables),
-        Err(HypervoxelError::UnknownScalarOrdering {
-            field: "inverted field interval"
-        })
-    ));
-    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
-    assert!(matches!(
-        audit_chunk_paged_field_samples(&paged, &side_tables),
         Err(HypervoxelError::UnknownScalarOrdering {
             field: "inverted field interval"
         })
@@ -273,60 +203,8 @@ fn edit_batches_apply_in_order_and_empty_cells_remove_explicit_storage() {
     batch.push(address, VoxelCell::material(MaterialRegionId(3)));
     batch.push(address, VoxelCell::empty());
 
-    let reports = batch.apply_to(&mut grid).unwrap();
-    assert_eq!(reports.len(), 2);
-    assert!(reports.iter().all(|report| report.frame_validated));
-    assert!(reports[0].stored_explicit_cell);
-    assert!(reports[0].exact_edit_replay_ready);
-    assert!(!reports[0].removed_explicit_cell);
-    assert!(reports[1].removed_explicit_cell);
-    assert!(reports[1].exact_edit_replay_ready);
-    assert!(!reports[1].semantic_noop);
-    assert_eq!(reports[0].current.occupancy, OccupancyState::Filled);
-    assert_eq!(
-        reports[1].previous.unwrap().occupancy,
-        OccupancyState::Filled
-    );
+    batch.apply_to(&mut grid).unwrap();
     assert!(grid.is_empty());
-
-    let mut replay_grid = SparseVoxelGrid::new(frame());
-    let summary = batch.apply_with_report(&mut replay_grid).unwrap();
-    assert_eq!(summary.applied_edits, 2);
-    assert!(summary.has_applied_edits);
-    assert_eq!(summary.stored_explicit_cells, 1);
-    assert_eq!(summary.removed_explicit_cells, 1);
-    assert_eq!(summary.semantic_noops, 0);
-    assert_eq!(summary.non_exact_current_cells, 0);
-    assert!(summary.exact_batch_replay_ready);
-    assert!(replay_grid.is_empty());
-
-    let mut uncertain_grid = SparseVoxelGrid::new(frame());
-    let mut uncertain_batch = VoxelEditBatch::new();
-    uncertain_batch.push(address, VoxelCell::unknown());
-    uncertain_batch.push(
-        VoxelAddress::new(3, [2, 1, 1]).unwrap(),
-        VoxelCell::lossy_adapter_value(11),
-    );
-    let uncertain_summary = uncertain_batch
-        .apply_with_report(&mut uncertain_grid)
-        .unwrap();
-    assert_eq!(uncertain_summary.non_exact_current_cells, 2);
-    assert!(
-        uncertain_summary
-            .edits
-            .iter()
-            .all(|edit| !edit.exact_edit_replay_ready)
-    );
-    assert!(!uncertain_summary.exact_batch_replay_ready);
-
-    let empty_batch = VoxelEditBatch::new();
-    let empty_summary = empty_batch
-        .apply_with_report(&mut SparseVoxelGrid::new(frame()))
-        .unwrap();
-    assert_eq!(empty_summary.applied_edits, 0);
-    assert!(!empty_summary.has_applied_edits);
-    assert_eq!(empty_summary.non_exact_current_cells, 0);
-    assert!(!empty_summary.exact_batch_replay_ready);
 }
 
 #[test]
@@ -464,141 +342,6 @@ fn invalid_signed_axis_transform_rejects_duplicate_source_axes() {
         ),
         Err(HypervoxelError::InvalidAxisPermutation)
     ));
-}
-
-#[test]
-fn process_grid_artifact_carries_role_provenance_and_aggregate_without_domain_laws() {
-    let aggregate = hypervoxel::VoxelAggregateFacts::from_cells([&VoxelCell::process_state(
-        hypervoxel::ProcessStateId(4),
-    )]);
-    let artifact = ProcessGridArtifact::new(
-        ProcessGridRole::PhotopolymerDose,
-        Some(GridSource::new("exposure:path:17", 3)),
-        vec!["resin-lot-a".into(), "405nm".into()],
-        aggregate,
-    );
-
-    assert_eq!(artifact.role, ProcessGridRole::PhotopolymerDose);
-    assert_eq!(artifact.source.unwrap().version, 3);
-    assert_eq!(artifact.process_tags.len(), 2);
-    assert!(artifact.aggregate.all_filled);
-}
-
-#[test]
-fn swept_volume_provenance_rejects_broad_phase_cache_as_path_truth() {
-    let aggregate = hypervoxel::VoxelAggregateFacts::from_cells([&VoxelCell::process_state(
-        hypervoxel::ProcessStateId(4),
-    )]);
-    let artifact = ProcessGridArtifact::new(
-        ProcessGridRole::SweptVolumeCache,
-        Some(GridSource::new("toolpath:roughing", 9)),
-        vec!["6mm endmill".into()],
-        aggregate,
-    )
-    .with_swept_volume(SweptVolumeProvenance {
-        source: Some(GridSource::new("toolpath:roughing", 9)),
-        expected_source_version: Some(9),
-        tool_or_beam: Some("6mm endmill".into()),
-        exact_source_replay_available: true,
-        broad_phase_only: true,
-        quantization_policy: "conservative cover, keep boundary".into(),
-    });
-
-    let swept = artifact.swept_volume.as_ref().unwrap().report();
-    assert_eq!(swept.source_freshness, FreshnessStatus::Current);
-    assert!(swept.has_tool_or_beam);
-    assert!(swept.has_quantization_policy);
-    assert!(swept.exact_source_replay_available);
-    assert!(swept.broad_phase_only);
-    assert!(!swept.can_stand_in_for_exact_path);
-
-    let stale = SweptVolumeProvenance {
-        source: Some(GridSource::new("toolpath:roughing", 8)),
-        expected_source_version: Some(9),
-        tool_or_beam: Some("6mm endmill".into()),
-        exact_source_replay_available: true,
-        broad_phase_only: false,
-        quantization_policy: "conservative cover, keep boundary".into(),
-    }
-    .report();
-    assert_eq!(stale.source_freshness, FreshnessStatus::Stale);
-    assert!(!stale.can_stand_in_for_exact_path);
-
-    let exact_ready = SweptVolumeProvenance {
-        source: Some(GridSource::new("toolpath:finishing", 2)),
-        expected_source_version: Some(2),
-        tool_or_beam: Some("1mm ball endmill".into()),
-        exact_source_replay_available: true,
-        broad_phase_only: false,
-        quantization_policy: "exact source replay required".into(),
-    }
-    .report();
-    assert!(exact_ready.can_stand_in_for_exact_path);
-
-    let missing_tool = SweptVolumeProvenance {
-        source: Some(GridSource::new("toolpath:finishing", 2)),
-        expected_source_version: Some(2),
-        tool_or_beam: Some(" ".into()),
-        exact_source_replay_available: true,
-        broad_phase_only: false,
-        quantization_policy: "exact source replay required".into(),
-    }
-    .report();
-    assert!(!missing_tool.has_tool_or_beam);
-    assert!(!missing_tool.can_stand_in_for_exact_path);
-
-    let missing_policy = SweptVolumeProvenance {
-        source: Some(GridSource::new("toolpath:finishing", 2)),
-        expected_source_version: Some(2),
-        tool_or_beam: Some("1mm ball endmill".into()),
-        exact_source_replay_available: true,
-        broad_phase_only: false,
-        quantization_policy: String::new(),
-    }
-    .report();
-    assert!(!missing_policy.has_quantization_policy);
-    assert!(!missing_policy.can_stand_in_for_exact_path);
-}
-
-#[test]
-fn voxel_candidate_requires_fresh_exact_replay_before_promotion() {
-    let exact = VoxelCandidateManifest {
-        kind: VoxelCandidateKind::CompressionOrLodPolicy,
-        freshness: FreshnessStatus::Current,
-        aggregate_certainty: AggregateCertainty::Exact,
-        unknown_count: 0,
-        lossy_count: 0,
-        exact_replay_available: true,
-        exact_evidence_count: 3,
-    }
-    .report();
-    assert!(exact.has_exact_evidence);
-    assert!(exact.promotable_as_exact);
-
-    let vacuous = VoxelCandidateManifest {
-        kind: VoxelCandidateKind::CompressionOrLodPolicy,
-        freshness: FreshnessStatus::Current,
-        aggregate_certainty: AggregateCertainty::Exact,
-        unknown_count: 0,
-        lossy_count: 0,
-        exact_replay_available: true,
-        exact_evidence_count: 0,
-    }
-    .report();
-    assert!(!vacuous.has_exact_evidence);
-    assert!(!vacuous.promotable_as_exact);
-
-    let stale_lossy = VoxelCandidateManifest {
-        kind: VoxelCandidateKind::ExposureDoseSchedule,
-        freshness: FreshnessStatus::Stale,
-        aggregate_certainty: AggregateCertainty::Lossy,
-        unknown_count: 1,
-        lossy_count: 1,
-        exact_replay_available: true,
-        exact_evidence_count: 1,
-    }
-    .report();
-    assert!(!stale_lossy.promotable_as_exact);
 }
 
 #[test]
@@ -768,56 +511,4 @@ fn support_mask_reports_unsupported_unknown_and_lossy_cells_explicitly() {
         .unwrap_err(),
         HypervoxelError::MismatchedAddressDepth { left: 3, right: 2 }
     );
-}
-
-#[test]
-fn field_coupling_requires_residual_replay_or_adapter_error_report() {
-    let exact_aggregate =
-        hypervoxel::VoxelAggregateFacts::from_cells([&VoxelCell::field_sample(FieldSampleId(1))]);
-    let exact = VoxelFieldCouplingManifest {
-        kind: VoxelFieldCouplingKind::Electromagnetic,
-        freshness: FreshnessStatus::Current,
-        aggregate: exact_aggregate,
-        residual_replay_available: true,
-        adapter_error_bound: None,
-        missing_sample_records: 0,
-    }
-    .report();
-    assert!(exact.usable_as_exact_residual_evidence);
-    assert!(!exact.has_adapter_error_bound);
-    assert!(!exact.certified_adapter_error_bound_ready);
-    assert!(!exact.requires_error_bounded_adapter);
-
-    let uncertain_aggregate = hypervoxel::VoxelAggregateFacts::from_cells([&VoxelCell::unknown()]);
-    let adapter = VoxelFieldCouplingManifest {
-        kind: VoxelFieldCouplingKind::Thermal,
-        freshness: FreshnessStatus::Current,
-        aggregate: uncertain_aggregate,
-        residual_replay_available: false,
-        adapter_error_bound: Some(rf(1, 1000)),
-        missing_sample_records: 1,
-    }
-    .report();
-    assert!(!adapter.usable_as_exact_residual_evidence);
-    assert!(adapter.has_adapter_error_bound);
-    assert!(adapter.adapter_error_bound_non_negative);
-    assert!(adapter.certified_adapter_error_bound_ready);
-    assert!(adapter.requires_error_bounded_adapter);
-
-    let invalid_bound = VoxelFieldCouplingManifest {
-        kind: VoxelFieldCouplingKind::Optical,
-        freshness: FreshnessStatus::Current,
-        aggregate: hypervoxel::VoxelAggregateFacts::from_cells([&VoxelCell::field_sample(
-            FieldSampleId(2),
-        )]),
-        residual_replay_available: false,
-        adapter_error_bound: Some(r(-1)),
-        missing_sample_records: 0,
-    }
-    .report();
-    assert!(invalid_bound.has_adapter_error_bound);
-    assert!(!invalid_bound.adapter_error_bound_non_negative);
-    assert!(!invalid_bound.certified_adapter_error_bound_ready);
-    assert!(!invalid_bound.usable_as_exact_residual_evidence);
-    assert!(!invalid_bound.requires_error_bounded_adapter);
 }

@@ -20,11 +20,7 @@ fn exact_rational_voxelization_does_not_request_approximation() {
         .depth(2)
         .build()
         .unwrap();
-    let solid = ExactBox::new(
-        [q(1, 3), q(1, 3), q(1, 3)],
-        [q(2, 3), q(2, 3), q(2, 3)],
-        None,
-    );
+    let solid = ExactBox::new([q(1, 3), q(1, 3), q(1, 3)], [q(2, 3), q(2, 3), q(2, 3)]);
     let (_, report) = voxelize_exact_box(
         frame,
         &solid,

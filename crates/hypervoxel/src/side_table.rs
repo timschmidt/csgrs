@@ -1,4 +1,4 @@
-//! Provenance-bearing side tables for compact voxel payload IDs.
+//! Side tables for compact voxel payload IDs.
 //!
 //! Voxel cells intentionally store small IDs rather than embedding material
 //! laws or field data in every octree node. The grid stores combinatorial and
@@ -17,8 +17,6 @@ pub struct MaterialRegionRecord {
     pub label: String,
     /// Optional exact density or domain-owned scalar property.
     pub density: Option<Real>,
-    /// Source/provenance text such as a part id, datasheet id, or measured lot.
-    pub provenance: String,
 }
 
 /// Field-sample metadata referenced by [`FieldSampleId`].
@@ -30,8 +28,6 @@ pub struct FieldSampleRecord {
     pub lower: Option<Real>,
     /// Exact upper bound for scalar samples, when known.
     pub upper: Option<Real>,
-    /// Source/provenance text.
-    pub provenance: String,
 }
 
 /// Process-state metadata referenced by [`ProcessStateId`].
@@ -39,8 +35,6 @@ pub struct FieldSampleRecord {
 pub struct ProcessStateRecord {
     /// Human-readable label.
     pub label: String,
-    /// Source/provenance text.
-    pub provenance: String,
 }
 
 /// Side tables for compact voxel payload references.

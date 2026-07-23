@@ -10,8 +10,8 @@ use std::collections::BTreeSet;
 use std::collections::BTreeMap;
 
 use crate::{
-    AggregateCertainty, LegacyAdapterKind, LegacyAdapterStatus, MaterialRegionId, SparseVoxelGrid,
-    VoxelPayload, VoxelSideTables,
+    LegacyAdapterKind, LegacyAdapterStatus, MaterialRegionId, SparseVoxelGrid, VoxelPayload,
+    VoxelSideTables,
 };
 
 /// Material references observed in a sparse grid.
@@ -35,50 +35,6 @@ impl MaterialRegionQuery {
     }
 }
 
-/// Metadata audit for material regions referenced by a grid.
-///
-/// Hypervoxel does not own material laws. This report is the voxel-side
-/// contract that a downstream material/physics crate can inspect before it
-/// interprets density, composition, elasticity, conductivity, optical constants,
-/// or fabrication state. The grid preserves object-level evidence and explicit
-/// unknowns instead of guessing missing material facts from IDs or labels.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct MaterialRegionMetadataReport {
-    /// Number of distinct material regions referenced by cells.
-    pub referenced_regions: usize,
-    /// Whether at least one material region was referenced.
-    ///
-    /// Absence of material regions is useful diagnostic information, but it is
-    /// not complete material evidence.
-    pub has_material_regions: bool,
-    /// Number of referenced regions with side-table records.
-    pub resolved_records: usize,
-    /// Referenced material regions missing from the side table.
-    pub missing_records: BTreeSet<MaterialRegionId>,
-    /// Referenced material regions with exact density metadata.
-    pub records_with_density: BTreeSet<MaterialRegionId>,
-    /// Referenced material regions whose records omit density.
-    pub records_missing_density: BTreeSet<MaterialRegionId>,
-    /// Referenced material regions whose records have an empty label.
-    pub empty_labels: BTreeSet<MaterialRegionId>,
-    /// Referenced material regions whose records have empty provenance.
-    pub empty_provenance: BTreeSet<MaterialRegionId>,
-    /// Conservative certainty of the material metadata carried by hypervoxel.
-    pub certainty: AggregateCertainty,
-}
-
-impl MaterialRegionMetadataReport {
-    /// Returns whether every referenced material region has complete metadata
-    /// for the fields that hypervoxel is allowed to audit.
-    pub fn is_complete(&self) -> bool {
-        self.has_material_regions
-            && self.missing_records.is_empty()
-            && self.records_missing_density.is_empty()
-            && self.empty_labels.is_empty()
-            && self.empty_provenance.is_empty()
-    }
-}
-
 /// Queries material-region references over explicitly stored sparse cells.
 pub fn query_material_regions(
     grid: &SparseVoxelGrid,
@@ -97,63 +53,6 @@ pub fn query_material_regions(
     MaterialRegionQuery {
         referenced,
         missing_records,
-    }
-}
-
-/// Audits material side-table metadata for regions referenced by a grid.
-pub fn report_material_region_metadata(
-    query: &MaterialRegionQuery,
-    side_tables: &VoxelSideTables,
-) -> MaterialRegionMetadataReport {
-    let mut records_with_density = BTreeSet::new();
-    let mut records_missing_density = BTreeSet::new();
-    let mut empty_labels = BTreeSet::new();
-    let mut empty_provenance = BTreeSet::new();
-
-    for id in query
-        .referenced
-        .iter()
-        .filter(|id| !query.missing_records.contains(id))
-    {
-        let record = side_tables
-            .material(*id)
-            .expect("query marked this material as resolved");
-        if record.density.is_some() {
-            records_with_density.insert(*id);
-        } else {
-            records_missing_density.insert(*id);
-        }
-        if record.label.is_empty() {
-            empty_labels.insert(*id);
-        }
-        if record.provenance.is_empty() {
-            empty_provenance.insert(*id);
-        }
-    }
-
-    let resolved_records = query.referenced.len() - query.missing_records.len();
-    let has_material_regions = !query.referenced.is_empty();
-    let certainty = if has_material_regions
-        && query.missing_records.is_empty()
-        && records_missing_density.is_empty()
-        && empty_labels.is_empty()
-        && empty_provenance.is_empty()
-    {
-        AggregateCertainty::Exact
-    } else {
-        AggregateCertainty::Unknown
-    };
-
-    MaterialRegionMetadataReport {
-        referenced_regions: query.referenced.len(),
-        has_material_regions,
-        resolved_records,
-        missing_records: query.missing_records.clone(),
-        records_with_density,
-        records_missing_density,
-        empty_labels,
-        empty_provenance,
-        certainty,
     }
 }
 
@@ -234,9 +133,6 @@ pub fn lookup_material_display_colors(
         resolved_colors: query.referenced.len() - missing_colors.len(),
         complete_display_palette_ready: query.has_references() && missing_colors.is_empty(),
         missing_colors,
-        adapter: LegacyAdapterStatus::lossy(
-            LegacyAdapterKind::GreedyMesh,
-            "material display color lookup",
-        ),
+        adapter: LegacyAdapterStatus::new(LegacyAdapterKind::GreedyMesh),
     }
 }

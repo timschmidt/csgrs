@@ -1,10 +1,7 @@
 #![no_main]
 
 use hypermesh::{InputMesh, Point3, Real, Triangle};
-use hypervoxel::{
-    HypermeshTriangleSolidAdapterBlocker, PreparedExactTriangleSolidMesh,
-    adapt_hypermesh_exact_solid,
-};
+use hypervoxel::{PreparedExactTriangleSolidMesh, adapt_hypermesh_exact_solid};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: (u8, bool, bool)| {
@@ -36,21 +33,11 @@ fuzz_target!(|data: (u8, bool, bool)| {
         triangles,
     );
 
-    let adapter = adapt_hypermesh_exact_solid(&mesh, None).unwrap();
+    let adapter = adapt_hypermesh_exact_solid(&mesh);
     if closed_policy {
-        assert!(adapter.report.exact_triangle_solid_ready);
-        let prepared = PreparedExactTriangleSolidMesh::prepare(adapter.solid.unwrap()).unwrap();
+        let prepared = PreparedExactTriangleSolidMesh::prepare(adapter.unwrap()).unwrap();
         assert!(prepared.report().exact_prepared_solid_ready);
     } else {
-        assert!(!adapter.report.exact_triangle_solid_ready);
-        assert!(adapter.solid.is_none());
-        if !closed_policy {
-            assert!(
-                adapter
-                    .report
-                    .blockers
-                    .contains(&HypermeshTriangleSolidAdapterBlocker::SolidHandoffNotReady)
-            );
-        }
+        assert!(adapter.is_err());
     }
 });

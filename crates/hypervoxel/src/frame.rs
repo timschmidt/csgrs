@@ -1,12 +1,12 @@
 //! Exact voxel grid frames.
 //!
-//! A `GridFrame` keeps the grid origin, axis pitches, source units, and source
-//! provenance together instead of rediscovering them from scalar coordinates
-//! or approximated chunk sizes.
+//! A `GridFrame` keeps the grid origin, axis pitches, and source units together
+//! instead of rediscovering them from scalar coordinates or approximated chunk
+//! sizes.
 
 use hyperreal::{Real, RealExactSetFacts, RealSign};
 
-use crate::{ChunkShape, HypervoxelError, HypervoxelResult};
+use crate::{HypervoxelError, HypervoxelResult};
 
 /// Maximum exact octree depth supported by the current `u64` address model.
 pub const MAX_ADDRESS_DEPTH: u8 = 21;
@@ -24,64 +24,6 @@ pub enum LengthUnit {
     Micrometer,
     /// Nanometers.
     Nanometer,
-}
-
-/// Source/provenance for a grid frame.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct GridSource {
-    /// Stable source identifier, such as a mesh id, path id, or imported file id.
-    pub id: String,
-    /// Monotonic construction or import version.
-    pub version: u64,
-}
-
-/// Orientation handedness of a grid-frame manifest.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum GridHandedness {
-    /// Right-handed axis convention.
-    RightHanded,
-    /// Left-handed axis convention.
-    LeftHanded,
-    /// Handedness is not known.
-    Unknown,
-}
-
-/// Source coordinate-system family for a grid-frame manifest.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum GridCoordinateSystem {
-    /// Hyper-native exact grid coordinates.
-    HyperGrid,
-    /// Imported CAD/model coordinates.
-    SourceModel,
-    /// Image, medical, or volume index coordinates.
-    ImageVolume,
-    /// Display/render coordinates.
-    Display,
-    /// Coordinate system is not known.
-    Unknown,
-}
-
-/// Basis metadata exposed by a grid-frame manifest.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum GridBasis {
-    /// Axis-aligned basis with positive per-axis pitch.
-    AxisAligned,
-    /// Signed axis permutation over an axis-aligned source basis.
-    SignedPermutation,
-    /// General exact affine basis.
-    ExactAffine,
-    /// Basis is not known.
-    Unknown,
-}
-
-impl GridSource {
-    /// Creates a new source/version pair.
-    pub fn new(id: impl Into<String>, version: u64) -> Self {
-        Self {
-            id: id.into(),
-            version,
-        }
-    }
 }
 
 /// One exact axis pitch for an axis-aligned voxel grid.
@@ -113,7 +55,6 @@ pub struct GridFrame {
     axes: [GridAxis; 3],
     depth: u8,
     units: LengthUnit,
-    source: Option<GridSource>,
 }
 
 impl GridFrame {
@@ -123,7 +64,6 @@ impl GridFrame {
         pitch: [Real; 3],
         depth: u8,
         units: LengthUnit,
-        source: Option<GridSource>,
     ) -> HypervoxelResult<Self> {
         if depth > MAX_ADDRESS_DEPTH {
             return Err(HypervoxelError::DepthTooLarge {
@@ -141,7 +81,6 @@ impl GridFrame {
             ],
             depth,
             units,
-            source,
         })
     }
 
@@ -173,11 +112,6 @@ impl GridFrame {
     /// Returns the source length unit.
     pub fn units(&self) -> LengthUnit {
         self.units
-    }
-
-    /// Returns the optional source version.
-    pub fn source(&self) -> Option<&GridSource> {
-        self.source.as_ref()
     }
 
     /// Returns `2^depth`, the number of finest cells per axis.
@@ -219,62 +153,6 @@ pub struct GridFrameFacts {
     pub exact_scalars: RealExactSetFacts,
 }
 
-/// Manifest for grid-frame metadata that adapters must make explicit.
-///
-/// `GridFrame` stores the exact axis-aligned model used by Hyper kernels. This
-/// manifest records adapter-facing frame facts such as handedness, basis,
-/// source coordinate system, and chunk shape without mutating the core frame.
-/// Object structure and provenance remain available so downstream predicates
-/// do not infer geometry from an approximate view or import convention.
-#[derive(Clone, Debug, PartialEq)]
-pub struct GridFrameManifest {
-    /// Exact Hyper grid frame.
-    pub frame: GridFrame,
-    /// Basis family declared by the adapter or caller.
-    pub basis: GridBasis,
-    /// Handedness declared by the adapter or caller.
-    pub handedness: GridHandedness,
-    /// Source coordinate-system family.
-    pub coordinate_system: GridCoordinateSystem,
-    /// Optional chunk shape associated with the frame.
-    pub chunk_shape: Option<ChunkShape>,
-}
-
-/// Report from a grid-frame manifest.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct GridFrameManifestReport {
-    /// Frame exactness and scheduling facts.
-    pub facts: GridFrameFacts,
-    /// Basis family declared by the adapter or caller.
-    pub basis: GridBasis,
-    /// Handedness declared by the adapter or caller.
-    pub handedness: GridHandedness,
-    /// Source coordinate-system family.
-    pub coordinate_system: GridCoordinateSystem,
-    /// Optional chunk shape associated with the frame.
-    pub chunk_shape: Option<ChunkShape>,
-    /// Whether the manifest has all required structural metadata.
-    pub complete: bool,
-}
-
-impl GridFrameManifest {
-    /// Builds a report that keeps frame metadata separate from voxel samples.
-    pub fn report(&self) -> GridFrameManifestReport {
-        let complete = self.basis != GridBasis::Unknown
-            && self.handedness != GridHandedness::Unknown
-            && self.coordinate_system != GridCoordinateSystem::Unknown
-            && self.chunk_shape.is_some();
-        GridFrameManifestReport {
-            facts: self.frame.facts(),
-            basis: self.basis,
-            handedness: self.handedness,
-            coordinate_system: self.coordinate_system,
-            chunk_shape: self.chunk_shape,
-            complete,
-        }
-    }
-}
-
 impl GridFrameFacts {
     /// Returns whether all origin and pitch scalars are exact rationals.
     pub fn is_exact_rational_frame(&self) -> bool {
@@ -304,7 +182,6 @@ pub struct GridFrameBuilder {
     pitch: [Real; 3],
     depth: u8,
     units: LengthUnit,
-    source: Option<GridSource>,
 }
 
 impl Default for GridFrameBuilder {
@@ -314,7 +191,6 @@ impl Default for GridFrameBuilder {
             pitch: [1.into(), 1.into(), 1.into()],
             depth: 0,
             units: LengthUnit::Unitless,
-            source: None,
         }
     }
 }
@@ -344,14 +220,8 @@ impl GridFrameBuilder {
         self
     }
 
-    /// Sets source provenance.
-    pub fn source(mut self, source: GridSource) -> Self {
-        self.source = Some(source);
-        self
-    }
-
     /// Builds the validated frame.
     pub fn build(self) -> HypervoxelResult<GridFrame> {
-        GridFrame::new(self.origin, self.pitch, self.depth, self.units, self.source)
+        GridFrame::new(self.origin, self.pitch, self.depth, self.units)
     }
 }

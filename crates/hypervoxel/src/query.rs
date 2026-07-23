@@ -6,8 +6,8 @@ use hyperlimit::{Aabb3Intersection, Point3, PredicateOutcome, classify_aabb3_int
 use rustc_hash::FxHashSet;
 
 use crate::{
-    AggregateCertainty, ExactAabb3, FreshnessStatus, GridAabbHandoff, OccupancyState,
-    PreparedVoxelGrid, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
+    ExactAabb3, OccupancyState, PreparedVoxelGrid, SparseVoxelGrid, VoxelAddress,
+    VoxelAggregateFacts, VoxelCell,
 };
 
 /// Occupancy query result for one address.
@@ -140,51 +140,6 @@ impl AabbBroadPhaseQuery {
     }
 }
 
-/// Prepared acceleration evidence retained beside a sparse query handle.
-///
-/// This report describes prepared *facts* rather than promising a
-/// floating-point acceleration structure. An AABB
-/// handoff, Morton order, or predicate replay cache is only usable as exact
-/// evidence when its provenance says so. The retained report frame is checked
-/// against the prepared grid frame so a reused cache cannot borrow freshness
-/// from a different object.
-#[derive(Clone, Debug, PartialEq)]
-pub struct PreparedQueryReport {
-    /// Number of explicitly stored cells covered by the prepared handle.
-    pub stored_cells: usize,
-    /// Number of explicitly stored non-empty cells.
-    pub non_empty_cells: usize,
-    /// Whether at least one non-empty cell produced query evidence.
-    ///
-    /// Prepared predicate replay can make a cache reusable, but it is not by
-    /// itself a voxel query result. This flag prevents an empty prepared handle
-    /// from becoming exact evidence through a
-    /// vacuous aggregate.
-    pub has_query_evidence: bool,
-    /// Exact aggregate facts retained with the prepared handle.
-    pub aggregate: VoxelAggregateFacts,
-    /// Freshness of the optional voxelization/import report.
-    pub freshness: FreshnessStatus,
-    /// Whether the retained report was built for this prepared grid frame.
-    pub report_frame_matches: bool,
-    /// Exact AABB handoffs for explicitly stored non-empty cells.
-    pub aabb_handoffs: Vec<GridAabbHandoff>,
-    /// Whether the prepared handle can replay exact source predicates.
-    pub predicate_replay_available: bool,
-    /// Number of prepared cache entries that can be reused without changing semantics.
-    pub cache_entries: usize,
-    /// Conservative estimate of how many exact cell reads the cache can avoid.
-    pub estimated_saved_cell_reads: usize,
-    /// Whether this prepared handle can be consumed as exact query evidence.
-    ///
-    /// Prepared caches are only evidence when their source report is current,
-    /// the retained frame matches, exact predicate replay is available, and the
-    /// aggregate packet contains non-empty exact cell evidence with no unknown
-    /// or lossy state. A cache saves work but cannot repair stale provenance,
-    /// uncertified topology, or absent query evidence.
-    pub exact_query_evidence_ready: bool,
-}
-
 impl QueryRegion {
     /// Returns whether an address belongs to this region.
     pub fn contains(&self, address: VoxelAddress) -> bool {
@@ -232,12 +187,6 @@ pub trait PreparedSparseVoxelGridExt {
 
     /// Returns all explicitly stored non-empty addresses in deterministic order.
     fn stored_non_empty_addresses(&self) -> Vec<VoxelAddress>;
-
-    /// Returns prepared-query evidence and cache-payoff accounting.
-    fn prepared_query_report(
-        &self,
-        predicate_replay_available: bool,
-    ) -> crate::HypervoxelResult<PreparedQueryReport>;
 
     /// Returns in-frame six-neighbors for one address.
     fn query_neighbors6(&self, address: VoxelAddress) -> NeighborQuery;
@@ -291,55 +240,6 @@ impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
             .filter(|(_, cell)| cell.occupancy != OccupancyState::Empty)
             .map(|(address, _)| *address)
             .collect()
-    }
-
-    fn prepared_query_report(
-        &self,
-        predicate_replay_available: bool,
-    ) -> crate::HypervoxelResult<PreparedQueryReport> {
-        let stored_cells = self.storage.iter().count();
-        let non_empty = self.stored_non_empty_addresses();
-        let aabb_handoffs = non_empty
-            .iter()
-            .copied()
-            .map(|address| GridAabbHandoff::from_address(&self.frame, address))
-            .collect::<crate::HypervoxelResult<Vec<_>>>()?;
-        let cache_entries = aabb_handoffs.len() + usize::from(predicate_replay_available);
-        let estimated_saved_cell_reads = cache_entries;
-        let has_query_evidence = !non_empty.is_empty();
-
-        let (freshness, report_frame_matches) =
-            self.report
-                .as_ref()
-                .map_or((FreshnessStatus::Unknown, false), |report| {
-                    if report.frame == self.frame {
-                        (report.freshness(), true)
-                    } else {
-                        (FreshnessStatus::Stale, false)
-                    }
-                });
-
-        let exact_query_evidence_ready = freshness == FreshnessStatus::Current
-            && has_query_evidence
-            && report_frame_matches
-            && predicate_replay_available
-            && self.aggregate.certainty == AggregateCertainty::Exact
-            && !self.aggregate.has_unknown
-            && !self.aggregate.has_lossy;
-
-        Ok(PreparedQueryReport {
-            stored_cells,
-            non_empty_cells: non_empty.len(),
-            has_query_evidence,
-            aggregate: self.aggregate.clone(),
-            freshness,
-            report_frame_matches,
-            aabb_handoffs,
-            predicate_replay_available,
-            cache_entries,
-            estimated_saved_cell_reads,
-            exact_query_evidence_ready,
-        })
     }
 
     fn query_neighbors6(&self, address: VoxelAddress) -> NeighborQuery {

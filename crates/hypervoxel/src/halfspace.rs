@@ -10,10 +10,9 @@ use hyperlimit::{PredicateOutcome, Sign};
 use hyperreal::{Real, RealSign};
 
 use crate::{
-    BoundaryPolicy, GridFrame, GridSource, HypervoxelError, HypervoxelResult, MaterialRegionId,
-    OccupancyState, QuantizationPolicy, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts,
-    VoxelCell, VoxelPayload, VoxelPredicateCertificateReport, VoxelizationPolicy,
-    VoxelizationReport,
+    BoundaryPolicy, GridFrame, HypervoxelError, HypervoxelResult, MaterialRegionId, OccupancyState,
+    QuantizationPolicy, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
+    VoxelPayload, VoxelPredicateCertificateReport, VoxelizationPolicy, VoxelizationReport,
 };
 
 /// Exact half-space `normal . point <= offset`.
@@ -23,8 +22,6 @@ pub struct ExactHalfSpace {
     pub normal: [Real; 3],
     /// Exact offset.
     pub offset: Real,
-    /// Optional source provenance.
-    pub source: Option<GridSource>,
 }
 
 /// Preflight report for an [`ExactHalfSpace`].
@@ -54,12 +51,8 @@ pub struct ExactHalfSpaceReport {
 
 impl ExactHalfSpace {
     /// Creates an exact half-space.
-    pub fn new(normal: [Real; 3], offset: Real, source: Option<GridSource>) -> Self {
-        Self {
-            normal,
-            offset,
-            source,
-        }
+    pub fn new(normal: [Real; 3], offset: Real) -> Self {
+        Self { normal, offset }
     }
 
     /// Reports structural normal validity without lowering to floats.
@@ -215,7 +208,6 @@ pub fn voxelize_exact_halfspace(
         grid.iter().map(|(_, cell)| cell),
     )?;
     let report = VoxelizationReport {
-        source: halfspace.source.clone(),
         frame,
         policy,
         aggregate,

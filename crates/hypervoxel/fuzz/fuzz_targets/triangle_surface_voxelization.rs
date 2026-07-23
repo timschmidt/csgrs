@@ -2,19 +2,15 @@
 
 use hyperreal::Real;
 use hypervoxel::{
-    ExactTriangle3, ExactTriangleSurfaceMesh, GridFrame, GridSource, MaterialRegionId,
-    VoxelizationPolicy, voxelize_exact_triangle_surface_mesh,
+    ExactTriangle3, ExactTriangleSurfaceMesh, GridFrame, MaterialRegionId, VoxelizationPolicy,
+    voxelize_exact_triangle_surface_mesh,
 };
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: (u8, [u8; 9], bool)| {
-    let (depth_raw, coords, source_replay) = data;
+    let (depth_raw, coords, _source_replay) = data;
     let depth = (depth_raw % 3) + 1;
-    let frame = GridFrame::builder()
-        .depth(depth)
-        .source(GridSource::new("fuzz:triangle-surface", 1))
-        .build()
-        .unwrap();
+    let frame = GridFrame::builder().depth(depth).build().unwrap();
     let cells = 1_u64 << depth;
     let vertex = |i: usize| -> [Real; 3] {
         [
@@ -23,11 +19,10 @@ fuzz_target!(|data: (u8, [u8; 9], bool)| {
             Real::from(u64::from(coords[i + 2]) % (cells + 1)),
         ]
     };
-    let mesh = ExactTriangleSurfaceMesh::new(
-        vec![ExactTriangle3::new([vertex(0), vertex(3), vertex(6)], Some(0))],
-        frame.source().cloned(),
-        source_replay,
-    );
+    let mesh = ExactTriangleSurfaceMesh::new(vec![ExactTriangle3::new(
+        [vertex(0), vertex(3), vertex(6)],
+        Some(0),
+    )]);
     let source_report = mesh.report();
     let result = voxelize_exact_triangle_surface_mesh(
         frame,

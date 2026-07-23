@@ -4,20 +4,7 @@
 //! grid. Combinatorial classifications are part of the object-level state, not
 //! debug text that can be dropped after cells are written.
 
-use crate::{
-    FreshnessStatus::Current, GridFrame, GridSource, LegacyAdapterStatus, VoxelAggregateFacts,
-};
-
-/// Freshness of source-dependent grid data.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum FreshnessStatus {
-    /// Source versions match.
-    Current,
-    /// Source version is stale.
-    Stale,
-    /// Freshness could not be checked.
-    Unknown,
-}
+use crate::{GridFrame, LegacyAdapterStatus, VoxelAggregateFacts};
 
 /// Quantization policy for mapping exact geometry into cells.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -158,8 +145,6 @@ impl VoxelPredicateCertificateReport {
 /// Report from a voxelization or import pass.
 #[derive(Clone, Debug, PartialEq)]
 pub struct VoxelizationReport {
-    /// Source used for voxelization.
-    pub source: Option<GridSource>,
     /// Grid frame used by the result.
     pub frame: GridFrame,
     /// Voxelization policy.
@@ -177,27 +162,9 @@ pub struct VoxelizationReport {
 }
 
 impl VoxelizationReport {
-    /// Computes freshness against the grid frame source.
-    pub fn freshness(&self) -> FreshnessStatus {
-        match (self.frame.source(), self.source.as_ref()) {
-            (Some(frame), Some(report)) if frame == report => Current,
-            (Some(_), Some(_)) => FreshnessStatus::Stale,
-            _ => FreshnessStatus::Unknown,
-        }
-    }
-
-    /// Returns whether the source binding can be replayed as current.
-    pub fn source_replay_ready(&self) -> bool {
-        self.freshness() == Current
-    }
-
     /// Returns whether the voxelized topology is certified by exact predicates.
-    ///
-    /// This is deliberately separate from [`Self::source_replay_ready`]. A
-    /// local fixture with no source version may still have exact/certified cell
-    /// topology, while a stale source binding must still be rejected by callers
-    /// that need source replay. Topology is exact only when every combinatorial
-    /// predicate was certified and no lossy or unknown cell participates.
+    /// Topology is exact only when every combinatorial predicate was certified
+    /// and no lossy or unknown cell participates.
     pub fn exact_topology_ready(&self) -> bool {
         self.policy.is_occupancy_policy()
             && self.policy.is_exact_semantic_role()
@@ -205,10 +172,7 @@ impl VoxelizationReport {
             && self.predicate_certificates.is_fully_certified()
             && !self.aggregate.has_unknown
             && !self.aggregate.has_lossy
-            && self
-                .legacy_adapter
-                .as_ref()
-                .is_none_or(|adapter| adapter.exact_replay_ready())
+            && self.legacy_adapter.is_none()
     }
 }
 
@@ -221,8 +185,6 @@ pub struct PreparedVoxelGrid<S> {
     pub storage: S,
     /// Retained aggregate facts.
     pub aggregate: VoxelAggregateFacts,
-    /// Optional source report.
-    pub report: Option<VoxelizationReport>,
 }
 
 impl<S> PreparedVoxelGrid<S> {
@@ -232,13 +194,6 @@ impl<S> PreparedVoxelGrid<S> {
             frame,
             storage,
             aggregate,
-            report: None,
         }
-    }
-
-    /// Attaches a voxelization report.
-    pub fn with_report(mut self, report: VoxelizationReport) -> Self {
-        self.report = Some(report);
-        self
     }
 }

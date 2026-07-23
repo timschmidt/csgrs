@@ -20,8 +20,6 @@ pub enum HypervoxelError {
     InvalidChildIndex(u8),
     /// The caller requested an operation at a depth outside the grid frame.
     DepthOutsideFrame { depth: u8, frame_depth: u8 },
-    /// A report was built for a different source version than the prepared grid.
-    StaleSourceVersion,
     /// Exact ordering was required but could not be certified.
     UnknownOrdering { axis: usize },
     /// A lossy adapter could not represent an exact scalar as a primitive float.
@@ -75,7 +73,6 @@ impl fmt::Display for HypervoxelError {
                 f,
                 "address depth {depth} is outside frame depth {frame_depth}"
             ),
-            Self::StaleSourceVersion => write!(f, "source version is stale for this grid"),
             Self::UnknownOrdering { axis } => {
                 write!(f, "axis {axis} ordering could not be certified")
             }

@@ -16,47 +16,32 @@
 //! the design references.
 
 mod aabb;
-mod adapter;
 mod address;
 mod affine;
 mod aggregate;
-mod artifact;
-mod audit;
 mod batch;
-mod candidate;
 mod cell;
 mod chunk;
 mod chunk_diff;
 mod chunk_faces;
-mod chunk_field;
-mod chunk_handoff;
-mod chunk_material;
-mod chunk_process;
-mod chunk_snapshot;
 mod chunk_storage;
 mod chunk_support;
 mod chunk_surface_mesh;
 mod component_row_plan;
-mod compression;
 mod continuous;
-mod coupling;
 mod differential;
 mod distance;
 mod error;
-mod export_manifest;
 mod field;
 mod frame;
 mod halfspace;
-mod handoff;
 #[cfg(feature = "hypermesh-adapter")]
 mod hypermesh_adapter;
-mod io_manifest;
 mod legacy;
 mod lod;
 mod material;
 mod mesh;
 mod path;
-mod process;
 mod query;
 mod ray_schedule;
 mod report;
@@ -69,12 +54,9 @@ mod storage;
 mod support;
 mod surface_mesh;
 mod surface_topology;
-mod surface_vocabulary;
 mod svo;
 mod svo_surface;
-mod trace;
 mod transform;
-mod triangle_component_audit;
 mod triangle_mesh;
 mod triangle_prepared;
 mod triangle_row_cache;
@@ -83,118 +65,68 @@ mod voxelis_adapter;
 mod voxelize;
 
 pub use aabb::{ExactAabb3, GridAabbHandoff, LatticeAabbHandoff};
-pub use adapter::{
-    AdapterNumericContract, AdapterNumericReport, AdapterScalarPrecision, AdapterToleranceStatus,
-};
 pub use address::{CellBounds, VoxelAddress};
 pub use affine::ExactAffineTransform;
 pub use aggregate::{AggregateCertainty, VoxelAggregateFacts, VoxelOccupancyInterval};
-pub use artifact::{
-    VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactReport, VoxelArtifactRole,
-};
-pub use audit::VoxelizationAudit;
-pub use batch::{VoxelEdit, VoxelEditBatch, VoxelEditBatchReport};
-pub use candidate::{VoxelCandidateKind, VoxelCandidateManifest, VoxelCandidateReport};
+pub use batch::{VoxelEdit, VoxelEditBatch};
 pub use cell::{
     FieldSampleId, MaterialRegionId, OccupancyState, ProcessStateId, VoxelCell, VoxelCellReport,
     VoxelPayload,
 };
 pub use chunk::{ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape};
 pub use chunk_diff::{ChunkPagedSparseGridDiffReport, diff_chunk_paged_sparse_grids};
-pub use chunk_faces::{
-    ChunkPagedExactFaceExtractionReport, ChunkPagedGreedyFacePatchReport,
-    chunk_paged_greedy_face_patch_plan_with_report, extract_chunk_paged_exposed_faces_with_report,
-};
-pub use chunk_field::{ChunkPagedFieldAuditReport, audit_chunk_paged_field_samples};
-pub use chunk_handoff::{ChunkPagedHandoffReport, certify_chunk_paged_handoff};
-pub use chunk_material::{ChunkPagedMaterialAuditReport, audit_chunk_paged_material_regions};
-pub use chunk_process::{ChunkPagedProcessStateAuditReport, audit_chunk_paged_process_states};
-pub use chunk_snapshot::{
-    ChunkPagedSnapshotReplay, chunk_paged_binary_snapshot_v1, chunk_paged_run_length_snapshot_v1,
-};
+pub use chunk_faces::{chunk_paged_greedy_face_patch_plan, extract_chunk_paged_exposed_faces};
 pub use chunk_storage::{
     ChunkPagedAabbBroadPhaseReport, ChunkPagedConnectedComponentReport,
     ChunkPagedManhattanBandReport, ChunkPagedRegionAggregateReport, ChunkPagedSparseGrid,
     ChunkPagedSparsePage, ChunkPagedSparsePageReport, ChunkPagedSparseStorageReport,
 };
 pub use chunk_support::{ChunkPagedSupportMaskReport, classify_chunk_paged_support_mask};
-pub use chunk_surface_mesh::{
-    ChunkPagedExactSurfaceTriangleMeshReport, chunk_paged_exact_surface_triangle_mesh_with_report,
-};
-pub use compression::{
-    CompressedStorageKind, CompressedStorageManifest, CompressedStorageReport, StorageReplayStatus,
-    VoxelMemoryBudgetManifest, VoxelMemoryBudgetReport,
-};
+pub use chunk_surface_mesh::chunk_paged_exact_surface_triangle_mesh;
 pub use continuous::{
-    ContinuousFieldMaterializationBlocker, ContinuousFieldVoxelCell,
-    ContinuousFieldVoxelInterchangeManifest, ContinuousFieldVoxelInterchangeReport,
-    ContinuousFieldVoxelManifest, ContinuousFieldVoxelReport, ContinuousFieldVoxelRowOrder,
-    continuous_field_address,
+    ContinuousFieldVoxelBatch, ContinuousFieldVoxelCell, continuous_field_address,
 };
-pub use coupling::{VoxelFieldCouplingKind, VoxelFieldCouplingManifest, VoxelFieldCouplingReport};
 pub use differential::{SparseGridDiffReport, diff_sparse_grids};
 pub use distance::{
     DistanceFieldPreview, DistanceSample, SignedDistanceFieldPreview, SignedDistanceSample,
     sample_manhattan_distance_field, sample_signed_manhattan_distance_field,
 };
 pub use error::{HypervoxelError, HypervoxelResult};
-pub use export_manifest::{
-    PreviewExportFormat, PreviewExportManifest, PreviewExportReport, PreviewScalarPolicy,
-};
 pub use field::{
     CertifiedFieldBall, CertifiedFieldInterval, CertifiedTensorInterval, CertifiedVectorInterval,
     FieldAggregateFacts, FieldEnvelopeFacts, FieldSampleQuery, query_field_samples,
 };
-pub use frame::{
-    GridAxis, GridBasis, GridCoordinateSystem, GridFrame, GridFrameBuilder, GridFrameFacts,
-    GridFrameManifest, GridFrameManifestReport, GridHandedness, GridSource, LengthUnit,
-};
+pub use frame::{GridAxis, GridFrame, GridFrameBuilder, GridFrameFacts, LengthUnit};
 pub use halfspace::{
     ExactHalfSpace, ExactHalfSpaceReport, VoxelHalfSpaceClassifier,
     classify_cell_against_halfspace, voxelize_exact_halfspace,
 };
-pub use handoff::{
-    SideTableLinkStatus, VoxelHandoffDomain, VoxelHandoffManifest, VoxelHandoffReport,
-};
 #[cfg(feature = "hypermesh-adapter")]
-pub use hypermesh_adapter::{
-    HypermeshTriangleSolidAdapter, HypermeshTriangleSolidAdapterBlocker,
-    HypermeshTriangleSolidAdapterReport, adapt_hypermesh_exact_solid,
-};
-pub use io_manifest::{
-    ImageStackContainer, ImageStackManifest, VoxelChannelMapping, VoxelIndexConvention,
-    VoxelInterchangeFormat, VoxelInterchangeManifest, VoxelIoCompression, VoxelIoMetadata,
-    VoxelIoMetadataStatus, VoxelIoPaletteStatus, VoxelIoPayloadStatus, VoxelIoReport,
-    VoxelSliceNaming, VoxelSliceOrdering,
-};
+pub use hypermesh_adapter::adapt_hypermesh_exact_solid;
 pub use legacy::{LegacyAdapterKind, LegacyAdapterStatus};
 pub use lod::{LodCellSelection, LodSelectionReport, select_lod_cells};
 pub use material::{
-    MaterialColorLookupReport, MaterialDisplayColor, MaterialDisplayPalette,
-    MaterialRegionMetadataReport, MaterialRegionQuery, lookup_material_display_colors,
-    query_material_regions, report_material_region_metadata,
+    MaterialColorLookupReport, MaterialDisplayColor, MaterialDisplayPalette, MaterialRegionQuery,
+    lookup_material_display_colors, query_material_regions,
 };
 pub use mesh::{
-    ExactFaceExtractionReport, ExactVoxelFace, GreedyFacePatch, GreedyFacePatchPlan,
-    LossyMeshExportReport, LossyObjExport, LossyQuadMesh, VoxelFaceSide, extract_exposed_faces,
-    extract_exposed_faces_with_report, greedy_face_patch_plan, lossy_obj_from_quad_mesh,
+    ExactVoxelFace, GreedyFacePatch, GreedyFacePatchPlan, LossyObjExport, LossyQuadMesh,
+    VoxelFaceSide, extract_exposed_faces, greedy_face_patch_plan, lossy_obj_from_quad_mesh,
     lossy_quad_mesh_from_faces,
 };
 pub use path::{
     AddressRay, AddressRayTrace, AddressSegmentTrace, SegmentSweepQuery, sweep_address_segment,
     trace_address_ray, trace_address_segment,
 };
-pub use process::{ProcessGridArtifact, ProcessGridRole, SweptVolumeProvenance, SweptVolumeReport};
 pub use query::{
     AabbBroadPhaseCandidate, AabbBroadPhaseQuery, ConnectedComponentQuery, ManhattanDistanceBand,
-    NeighborQuery, OccupancyQuery, PreparedQueryReport, PreparedSparseVoxelGridExt, QueryRegion,
-    voxel_neighbors6,
+    NeighborQuery, OccupancyQuery, PreparedSparseVoxelGridExt, QueryRegion, voxel_neighbors6,
 };
 pub use report::{
-    BoundaryPolicy, FreshnessStatus, PreparedVoxelGrid, QuantizationPolicy,
-    VoxelPredicateCertificateReport, VoxelizationPolicy, VoxelizationReport,
+    BoundaryPolicy, PreparedVoxelGrid, QuantizationPolicy, VoxelPredicateCertificateReport,
+    VoxelizationPolicy, VoxelizationReport,
 };
-pub use serialize::{DeterministicSnapshot, DeterministicSnapshotReport, SnapshotFormat};
+pub use serialize::{DeterministicSnapshot, SnapshotFormat};
 pub use side_table::{
     FieldSampleRecord, MaterialRegionRecord, ProcessStateRecord, VoxelSideTables,
 };
@@ -202,41 +134,21 @@ pub use solid::{
     ExactConvexHalfSpaceSet, ExactConvexHalfSpaceSetReport, VoxelConvexClassifier,
     classify_cell_against_convex_halfspace_set, voxelize_exact_convex_halfspace_set,
 };
-pub use sparse_surface_mesh::{
-    SparseExactSurfaceTriangleMeshReport, sparse_exact_surface_triangle_mesh_with_report,
-};
+pub use sparse_surface_mesh::sparse_exact_surface_triangle_mesh;
 pub use spatial::VoxelSpatialAggregateFacts;
-pub use storage::{SparseVoxelGrid, VoxelEditReport};
+pub use storage::SparseVoxelGrid;
 pub use support::{
     SupportCellReport, SupportCellStatus, SupportDirection, SupportMaskReport,
     classify_support_mask,
 };
 pub use surface_mesh::{
-    ExactSurfaceTriangle, ExactVoxelSurfaceTriangleMesh, ExactVoxelSurfaceTriangleMeshReport,
+    ExactSurfaceTriangle, ExactVoxelSurfaceTriangleMesh,
     exact_voxel_surface_triangle_mesh_from_faces,
 };
-pub use surface_topology::{
-    ExactSurfaceEdge, ExactSurfaceFaceKey, ExactSurfaceVertex, ExactVoxelSurfaceTopologyReport,
-    audit_exact_voxel_surface_topology,
-};
-pub use surface_vocabulary::{
-    ExactSurfaceTriangleMeshEdge, ExactSurfaceTriangleMeshVocabularyReport,
-    audit_exact_surface_triangle_mesh_vocabulary,
-};
-pub use svo::{
-    SvoCompactionReport, SvoDagStats, SvoEditReport, SvoNodeId, SvoSparseReplayReport,
-    SvoStorageReport, SvoVoxelGrid,
-};
-pub use svo_surface::{
-    SvoExactSurfaceTriangleMeshReport, SvoSurfaceReplayReport,
-    extract_svo_exposed_faces_with_report, svo_exact_surface_triangle_mesh_with_report,
-};
-pub use trace::{VoxelTraceDimension, VoxelTraceManifest, VoxelTraceReport};
+pub use surface_topology::{ExactSurfaceEdge, ExactSurfaceFaceKey, ExactSurfaceVertex};
+pub use svo::{SvoDagStats, SvoNodeId, SvoVoxelGrid};
+pub use svo_surface::{extract_svo_exposed_faces, svo_exact_surface_triangle_mesh};
 pub use transform::{AxisPermutationTransform, SignedAxis};
-pub use triangle_component_audit::{
-    PreparedTriangleSolidComponentConsensusAuditReport,
-    audit_prepared_triangle_solid_component_consensus,
-};
 pub use triangle_mesh::{
     ExactTriangle3, ExactTriangle3Report, ExactTriangleSolidMesh, ExactTriangleSolidMeshReport,
     ExactTriangleSurfaceMesh, ExactTriangleSurfaceMeshReport, VoxelTriangleMeshClassifier,
@@ -251,9 +163,6 @@ pub use triangle_prepared::{
     PreparedTriangleSolidComponentConsensusVoxelizationReport,
     PreparedTriangleSolidComponentVoxelizationReport,
     PreparedTriangleSolidConsensusAxisSweepVoxelizationReport,
-    PreparedTriangleSolidVerifiedAdaptiveAxisSweepVoxelizationReport,
-    PreparedTriangleSolidVerifiedComponentConsensusVoxelizationReport,
-    PreparedTriangleSolidVerifiedConsensusAxisSweepVoxelizationReport,
     PreparedTriangleSolidVoxelizationReport, classify_cell_against_prepared_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
@@ -263,17 +172,9 @@ pub use triangle_prepared::{
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
     voxelize_prepared_exact_triangle_solid_mesh_by_consensus_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus,
-    voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps,
-    voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_local_component_consensus,
-    voxelize_prepared_exact_triangle_solid_mesh_by_verified_component_consensus,
-    voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
-    voxelize_prepared_exact_triangle_solid_mesh_by_verified_consensus_axis_sweeps,
-    voxelize_prepared_exact_triangle_solid_mesh_by_verified_local_component_consensus,
 };
 #[cfg(feature = "legacy-voxelis")]
 pub use voxelis_adapter::{
-    LegacyVoxelisChunkPagedMaterializationReport, LegacyVoxelisExactSurfaceTriangleMeshReport,
-    LegacyVoxelisStorageDiffReport, compare_legacy_voxelis_u8_samples,
     materialize_legacy_voxelis_u8_chunk_paged_storage,
     materialize_legacy_voxelis_u8_exact_surface_triangle_mesh,
 };

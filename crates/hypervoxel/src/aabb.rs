@@ -2,13 +2,13 @@
 //!
 //! These records preserve geometric structure until a predicate or
 //! construction selects the required arithmetic. `ExactAabb3` therefore
-//! carries exact bounds and source addresses instead of silently flattening
-//! voxel cells into display coordinates.
+//! carries exact bounds instead of silently flattening voxel cells into
+//! display coordinates.
 
 use hyperlattice::Vector3;
 use hyperreal::Real;
 
-use crate::{CellBounds, GridFrame, GridSource, HypervoxelResult, VoxelAddress};
+use crate::{CellBounds, GridFrame, HypervoxelResult, VoxelAddress};
 
 /// Exact three-dimensional axis-aligned bounding box.
 #[derive(Clone, Debug, PartialEq)]
@@ -77,8 +77,6 @@ pub struct LatticeAabbHandoff {
     pub min: Vector3,
     /// Maximum exact corner.
     pub max: Vector3,
-    /// Optional source provenance copied from the grid frame.
-    pub source: Option<GridSource>,
 }
 
 impl LatticeAabbHandoff {
@@ -97,15 +95,13 @@ impl LatticeAabbHandoff {
     }
 }
 
-/// Exact AABB plus provenance for inter-crate geometry handoff.
+/// Exact AABB plus its grid address for inter-crate geometry handoff.
 #[derive(Clone, Debug, PartialEq)]
 pub struct GridAabbHandoff {
     /// Source grid address.
     pub address: VoxelAddress,
     /// Exact AABB in the source frame.
     pub bounds: ExactAabb3,
-    /// Optional source provenance copied from the frame.
-    pub source: Option<GridSource>,
 }
 
 impl GridAabbHandoff {
@@ -114,7 +110,6 @@ impl GridAabbHandoff {
         Ok(Self {
             address,
             bounds: address.bounds(frame)?.into(),
-            source: frame.source().cloned(),
         })
     }
 
@@ -129,7 +124,6 @@ impl From<GridAabbHandoff> for LatticeAabbHandoff {
         Self {
             min: handoff.bounds.min_vector(),
             max: handoff.bounds.max_vector(),
-            source: handoff.source,
         }
     }
 }

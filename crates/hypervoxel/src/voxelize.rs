@@ -11,10 +11,9 @@ use core::cmp::Ordering;
 use hyperreal::Real;
 
 use crate::{
-    BoundaryPolicy, GridFrame, GridSource, HypervoxelError, HypervoxelResult, MaterialRegionId,
-    OccupancyState, QuantizationPolicy, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts,
-    VoxelCell, VoxelPayload, VoxelPredicateCertificateReport, VoxelizationPolicy,
-    VoxelizationReport,
+    BoundaryPolicy, GridFrame, HypervoxelError, HypervoxelResult, MaterialRegionId, OccupancyState,
+    QuantizationPolicy, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
+    VoxelPayload, VoxelPredicateCertificateReport, VoxelizationPolicy, VoxelizationReport,
 };
 
 /// Exact axis-aligned box in the same coordinates as a [`GridFrame`].
@@ -24,8 +23,6 @@ pub struct ExactBox {
     pub min: [Real; 3],
     /// Maximum exact corner.
     pub max: [Real; 3],
-    /// Optional source provenance.
-    pub source: Option<GridSource>,
 }
 
 /// Preflight report for an [`ExactBox`].
@@ -59,8 +56,8 @@ impl ExactBox {
     /// Ordering is certified during voxel classification so unresolved symbolic
     /// bounds become explicit unknown cells instead of construction-time
     /// panics.
-    pub fn new(min: [Real; 3], max: [Real; 3], source: Option<GridSource>) -> Self {
-        Self { min, max, source }
+    pub fn new(min: [Real; 3], max: [Real; 3]) -> Self {
+        Self { min, max }
     }
 
     /// Reports whether the box endpoints form a valid exact AABB.
@@ -242,7 +239,6 @@ pub fn voxelize_exact_box(
         grid.iter().map(|(_, cell)| cell),
     )?;
     let report = VoxelizationReport {
-        source: exact_box.source.clone(),
         frame,
         policy,
         aggregate,
