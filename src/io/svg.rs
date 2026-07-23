@@ -1,805 +1,36 @@
-//! Strict SVG document import and fallible finite SVG export.
+//! SVG document import and export through Hypercurve.
 //!
-//! Filled SVG geometry becomes native region topology. Strokes are retained as
-//! centerline wires because `Profile` does not model SVG paint decoration;
-//! width, joins, caps, dashes, and markers are therefore rejected when they
-//! would change the imported topology.
+//! CSGRS owns the [`Profile`] adapter only. Hypercurve owns SVG syntax,
+//! styling, transforms, primitive construction, topology, finite projection,
+//! and serialization.
 
-use crate::csg::CSG;
-use crate::io::{IoError, finite_f64};
+use crate::io::IoError;
 use crate::sketch::Profile;
 use hypercurve::{
-    CircularArc2, Classification, CubicBezier2, Curve2, CurveGeometry2, CurvePath2,
-    CurvePolicy, CurveRegion2, CurveString2, FillRule, FiniteProjectionOptions, LineSeg2,
-    Point2, QuadraticBezier2, Segment2,
+    SvgError, SvgGeometry2, export_svg_document_with_options, import_svg_document_with_options,
 };
-use hyperlattice::{Matrix4, Real};
-use hyperreal::RealSign;
-use std::fmt::Debug;
 
-/// Controls finite approximation at the SVG boundary.
-#[derive(Clone, Copy, Debug)]
-pub struct SvgOptions {
-    pub curve_tolerance: f64,
-    pub max_curve_segments: usize,
-}
+pub use hypercurve::SvgOptions;
 
-impl Default for SvgOptions {
-    fn default() -> Self {
-        Self {
-            curve_tolerance: 0.1,
-            max_curve_segments: 4096,
-        }
-    }
-}
-
-impl SvgOptions {
-    fn validate(self) -> Result<Self, IoError> {
-        if !self.curve_tolerance.is_finite()
-            || self.curve_tolerance <= 0.0
-            || self.max_curve_segments < 8
-        {
-            return Err(IoError::MalformedInput(
-                "SVG projection options require a positive finite tolerance and at least 8 segments"
-                    .into(),
-            ));
-        }
-        Ok(self)
-    }
-
-    fn segments_for_radius(self, radius: f64) -> Result<usize, IoError> {
-        if !radius.is_finite() || radius <= 0.0 {
-            return Err(IoError::MalformedInput(
-                "SVG radius must be finite and positive".into(),
-            ));
-        }
-        let requested = (std::f64::consts::TAU * radius / self.curve_tolerance)
-            .ceil()
-            .max(16.0);
-        if requested > self.max_curve_segments as f64 {
-            return Err(IoError::SizeOverflow {
-                format: "SVG",
-                limit: "configured curve-segment count",
-            });
-        }
-        let requested = requested as usize;
-        Ok(requested)
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-struct Affine2([f64; 6]);
-
-impl Affine2 {
-    const IDENTITY: Self = Self([1.0, 0.0, 0.0, 1.0, 0.0, 0.0]);
-
-    fn then(self, rhs: Self) -> Self {
-        let [a, b, c, d, e, f] = self.0;
-        let [g, h, i, j, k, l] = rhs.0;
-        Self([
-            a * g + c * h,
-            b * g + d * h,
-            a * i + c * j,
-            b * i + d * j,
-            a * k + c * l + e,
-            b * k + d * l + f,
-        ])
-    }
-
-    fn matrix(self) -> Result<Matrix4, IoError> {
-        let values = self
-            .0
-            .map(|value| {
-                Real::try_from(value).map_err(|error| {
-                    IoError::MalformedInput(format!("SVG transform is not finite: {error}"))
-                })
-            })
-            .into_iter()
-            .collect::<Result<Vec<_>, _>>()?;
-        Ok(Matrix4::from_row_major([
-            values[0].clone(),
-            values[2].clone(),
-            Real::zero(),
-            values[4].clone(),
-            values[1].clone(),
-            values[3].clone(),
-            Real::zero(),
-            values[5].clone(),
-            Real::zero(),
-            Real::zero(),
-            Real::one(),
-            Real::zero(),
-            Real::zero(),
-            Real::zero(),
-            Real::zero(),
-            Real::one(),
-        ]))
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-struct StyleContext {
-    transform: Affine2,
-    fill: bool,
-    stroke: bool,
-    displayed: bool,
-    visibility: bool,
-    opacity: f64,
-    fill_opacity: f64,
-    stroke_opacity: f64,
-    stroke_width: f64,
-    fill_rule: FillRule,
-}
-
-impl Default for StyleContext {
-    fn default() -> Self {
-        Self {
-            transform: Affine2::IDENTITY,
-            fill: true,
-            stroke: false,
-            displayed: true,
-            visibility: true,
-            opacity: 1.0,
-            fill_opacity: 1.0,
-            stroke_opacity: 1.0,
-            stroke_width: 1.0,
-            fill_rule: FillRule::NonZero,
-        }
-    }
-}
-
-impl StyleContext {
-    fn visible(self) -> bool {
-        self.displayed && self.visibility && self.opacity > 0.0
-    }
-
-    fn fills(self) -> bool {
-        self.fill && self.fill_opacity > 0.0
-    }
-
-    fn strokes(self) -> bool {
-        self.stroke && self.stroke_opacity > 0.0 && self.stroke_width > 0.0
-    }
-}
-
-fn parse_numbers(value: &str) -> Result<Vec<f64>, IoError> {
-    svgtypes::NumberListParser::from(value)
-        .map(|number| {
-            let number = number.map_err(|error| {
-                IoError::MalformedInput(format!("invalid SVG number list: {error}"))
-            })?;
-            if number.is_finite() {
-                Ok(number)
-            } else {
-                Err(IoError::MalformedInput(
-                    "SVG number list contains a non-finite value".into(),
-                ))
-            }
-        })
-        .collect()
-}
-
-fn parse_transform(value: &str) -> Result<Affine2, IoError> {
-    let mut transform = Affine2::IDENTITY;
-    for token in svgtypes::TransformListParser::from(value) {
-        use svgtypes::TransformListToken;
-        let token = token.map_err(|error| {
-            IoError::MalformedInput(format!("invalid SVG transform {value:?}: {error}"))
-        })?;
-        let next = match token {
-            TransformListToken::Matrix { a, b, c, d, e, f } => Affine2([a, b, c, d, e, f]),
-            TransformListToken::Translate { tx, ty } => Affine2([1.0, 0.0, 0.0, 1.0, tx, ty]),
-            TransformListToken::Scale { sx, sy } => Affine2([sx, 0.0, 0.0, sy, 0.0, 0.0]),
-            TransformListToken::Rotate { angle } => rotation(angle),
-            TransformListToken::SkewX { angle } => {
-                Affine2([1.0, 0.0, angle.to_radians().tan(), 1.0, 0.0, 0.0])
-            },
-            TransformListToken::SkewY { angle } => {
-                Affine2([1.0, angle.to_radians().tan(), 0.0, 1.0, 0.0, 0.0])
-            },
-        };
-        if next.0.iter().any(|value| !value.is_finite()) {
-            return Err(IoError::MalformedInput(
-                "SVG transform contains a non-finite value".into(),
-            ));
-        }
-        transform = transform.then(next);
-    }
-    Ok(transform)
-}
-
-fn rotation(degrees: f64) -> Affine2 {
-    let (sin, cos) = degrees.to_radians().sin_cos();
-    Affine2([cos, sin, -sin, cos, 0.0, 0.0])
-}
-
-fn apply_style(
-    mut context: StyleContext,
-    attrs: &svg::node::Attributes,
-) -> Result<StyleContext, IoError> {
-    let mut properties = Vec::<(&str, &str)>::new();
-    for name in [
-        "fill",
-        "stroke",
-        "fill-rule",
-        "display",
-        "visibility",
-        "opacity",
-        "fill-opacity",
-        "stroke-opacity",
-        "stroke-width",
-        "clip-path",
-        "mask",
-        "stroke-dasharray",
-        "stroke-dashoffset",
-        "stroke-linecap",
-        "stroke-linejoin",
-        "stroke-miterlimit",
-        "vector-effect",
-        "marker-start",
-        "marker-mid",
-        "marker-end",
-    ] {
-        if let Some(value) = attrs.get(name) {
-            properties.push((name, value));
-        }
-    }
-    if let Some(style) = attrs.get("style") {
-        for declaration in style.split(';').filter(|part| !part.trim().is_empty()) {
-            let (name, value) = declaration.split_once(':').ok_or_else(|| {
-                IoError::MalformedInput(format!(
-                    "invalid SVG style declaration {declaration:?}"
-                ))
-            })?;
-            properties.push((name.trim(), value.trim()));
-        }
-    }
-    let mut local_opacity = 1.0;
-    let mut local_display = true;
-    for (name, value) in properties {
-        match name {
-            "fill" => context.fill = value != "none",
-            "stroke" => context.stroke = value != "none",
-            "fill-rule" => {
-                context.fill_rule = match value {
-                    "nonzero" => FillRule::NonZero,
-                    "evenodd" => FillRule::EvenOdd,
-                    _ => {
-                        return Err(IoError::MalformedInput(format!(
-                            "invalid SVG fill-rule {value:?}"
-                        )));
-                    },
-                }
-            },
-            "display" => local_display = value != "none",
-            "visibility" => context.visibility = !matches!(value, "hidden" | "collapse"),
-            "opacity" => local_opacity = unit_interval(value, "opacity")?,
-            "fill-opacity" => context.fill_opacity = unit_interval(value, "fill-opacity")?,
-            "stroke-opacity" => {
-                context.stroke_opacity = unit_interval(value, "stroke-opacity")?
-            },
-            "stroke-width" => {
-                context.stroke_width = value.parse::<f64>()?;
-                if !context.stroke_width.is_finite() || context.stroke_width < 0.0 {
-                    return Err(IoError::MalformedInput(
-                        "SVG stroke-width must be finite and non-negative".into(),
-                    ));
-                }
-            },
-            "clip-path" | "mask" | "stroke-dasharray" | "stroke-dashoffset"
-            | "stroke-linecap" | "stroke-linejoin" | "stroke-miterlimit" | "vector-effect"
-            | "marker-start" | "marker-mid" | "marker-end" => {
-                return Err(IoError::Unsupported {
-                    format: "SVG",
-                    detail: format!("style property {name}"),
-                });
-            },
-            _ => {},
-        }
-    }
-    context.opacity *= local_opacity;
-    context.displayed &= local_display;
-    if let Some(value) = attrs.get("transform") {
-        context.transform = context.transform.then(parse_transform(value)?);
-    }
-    Ok(context)
-}
-
-fn unit_interval(value: &str, name: &str) -> Result<f64, IoError> {
-    let value = if let Some(percent) = value.strip_suffix('%') {
-        percent.parse::<f64>()? / 100.0
-    } else {
-        value.parse::<f64>()?
-    };
-    if !value.is_finite() || !(0.0..=1.0).contains(&value) {
-        return Err(IoError::MalformedInput(format!(
-            "SVG {name} must be between zero and one"
-        )));
-    }
-    Ok(value)
-}
-
-fn number(
-    attrs: &svg::node::Attributes,
-    name: &str,
-    default: Option<f64>,
-) -> Result<f64, IoError> {
-    let value = match attrs.get(name) {
-        Some(value) => value.parse::<f64>()?,
-        None => default
-            .ok_or_else(|| IoError::MalformedInput(format!("missing SVG attribute {name}")))?,
-    };
-    if !value.is_finite() {
-        return Err(IoError::MalformedInput(format!("SVG {name} must be finite")));
-    }
-    Ok(value)
-}
-
-fn real(value: f64, name: &'static str) -> Result<Real, IoError> {
-    Real::try_from(value)
-        .map_err(|error| IoError::MalformedInput(format!("SVG {name} is invalid: {error}")))
-}
-
-fn points(value: &str) -> Result<Vec<[Real; 2]>, IoError> {
-    let numbers = parse_numbers(value)?;
-    if numbers.len() < 4 || numbers.len() % 2 != 0 {
-        return Err(IoError::MalformedInput(
-            "SVG points require coordinate pairs".into(),
-        ));
-    }
-    numbers
-        .chunks_exact(2)
-        .map(|pair| Ok([real(pair[0], "point x")?, real(pair[1], "point y")?]))
-        .collect()
-}
-
-fn imported_path(
-    data: &str,
-    context: StyleContext,
-    _source_index: u64,
-) -> Result<Profile, IoError> {
-    let subpaths = parse_path_data(data)?;
-    let mut region = CurveRegion2::empty();
-    let mut wires = Vec::new();
-    if context.fills() {
-        if subpaths.iter().any(|subpath| !subpath.closed) {
-            return Err(IoError::Geometry {
-                format: "SVG",
-                detail: "filled path contains an explicitly open subpath".into(),
-            });
-        }
-        let paths = subpaths
-            .iter()
-            .map(|subpath| subpath.path.clone())
-            .collect::<Vec<_>>();
-        let policy = CurvePolicy::certified();
-        let preliminary = CurveRegion2::try_from_boundary_paths(&paths).map_err(|error| {
-            IoError::Geometry {
-                format: "SVG",
-                detail: error.to_string(),
-            }
-        })?;
-        let roles =
-            match preliminary
-                .loop_roles(&policy)
-                .map_err(|error| IoError::Geometry {
-                    format: "SVG",
-                    detail: error.to_string(),
-                })? {
-                Classification::Decided(roles) => roles,
-                Classification::Uncertain(reason) => {
-                    return Err(IoError::Geometry {
-                        format: "SVG",
-                        detail: format!("path loop roles were not certified: {reason:?}"),
-                    });
-                },
-            };
-        let fill_rules = vec![context.fill_rule; paths.len()];
-        region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &paths,
-            &roles,
-            &fill_rules,
-        )
-        .map_err(|error| IoError::Geometry {
+fn map_svg_error(error: SvgError) -> IoError {
+    match error {
+        SvgError::MalformedInput(detail) => IoError::MalformedInput(detail),
+        SvgError::Unsupported(detail) => IoError::Unsupported {
             format: "SVG",
-            detail: error.to_string(),
-        })?;
-    }
-    if context.strokes() {
-        for subpath in &subpaths {
-            let segments = subpath
-                .path
-                .curves()
-                .iter()
-                .map(|curve| match curve.geometry() {
-                    CurveGeometry2::Line(line) => Ok(Segment2::Line(line.clone())),
-                    CurveGeometry2::CircularArc(arc) => Ok(Segment2::Arc(arc.clone())),
-                    _ => Err(IoError::Unsupported {
-                        format: "SVG",
-                        detail: "non-line/arc stroked path".into(),
-                    }),
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            wires.push(CurveString2::try_new(segments).map_err(|error| {
-                IoError::Geometry {
-                    format: "SVG",
-                    detail: error.to_string(),
-                }
-            })?);
-        }
-    }
-    Ok(Profile::from_curve_region_and_wires(region, wires))
-}
-
-#[derive(Clone, Debug)]
-struct ParsedSvgSubpath {
-    path: CurvePath2,
-    closed: bool,
-}
-
-fn parse_path_data(data: &str) -> Result<Vec<ParsedSvgSubpath>, IoError> {
-    use svgtypes::PathSegment;
-
-    let mut output = Vec::new();
-    let mut curves = Vec::new();
-    let mut current = None::<Point2>;
-    let mut start = None::<Point2>;
-    let mut previous_cubic_control = None::<Point2>;
-    let mut previous_quadratic_control = None::<Point2>;
-
-    for segment in svgtypes::PathParser::from(data) {
-        let segment = segment
-            .map_err(|error| IoError::MalformedInput(format!("invalid SVG path: {error}")))?;
-        match segment {
-            PathSegment::MoveTo { abs, x, y } => {
-                finish_svg_subpath(&mut output, &mut curves, false)?;
-                let point = svg_path_point(abs, x, y, current.as_ref())?;
-                current = Some(point.clone());
-                start = Some(point);
-                previous_cubic_control = None;
-                previous_quadratic_control = None;
-            },
-            PathSegment::LineTo { abs, x, y } => {
-                let end = svg_path_point(abs, x, y, current.as_ref())?;
-                push_svg_line(&mut curves, &mut current, end)?;
-                previous_cubic_control = None;
-                previous_quadratic_control = None;
-            },
-            PathSegment::HorizontalLineTo { abs, x } => {
-                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let x = real(x, "path x")?;
-                let end = Point2::new(if abs { x } else { from.x() + x }, from.y().clone());
-                push_svg_line(&mut curves, &mut current, end)?;
-                previous_cubic_control = None;
-                previous_quadratic_control = None;
-            },
-            PathSegment::VerticalLineTo { abs, y } => {
-                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let y = real(y, "path y")?;
-                let end = Point2::new(from.x().clone(), if abs { y } else { from.y() + y });
-                push_svg_line(&mut curves, &mut current, end)?;
-                previous_cubic_control = None;
-                previous_quadratic_control = None;
-            },
-            PathSegment::CurveTo {
-                abs,
-                x1,
-                y1,
-                x2,
-                y2,
-                x,
-                y,
-            } => {
-                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let control1 = svg_path_point(abs, x1, y1, Some(from))?;
-                let control2 = svg_path_point(abs, x2, y2, Some(from))?;
-                let end = svg_path_point(abs, x, y, Some(from))?;
-                curves.push(Curve2::from(CubicBezier2::new(
-                    from.clone(),
-                    control1,
-                    control2.clone(),
-                    end.clone(),
-                )));
-                current = Some(end);
-                previous_cubic_control = Some(control2);
-                previous_quadratic_control = None;
-            },
-            PathSegment::SmoothCurveTo { abs, x2, y2, x, y } => {
-                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let control1 = previous_cubic_control
-                    .as_ref()
-                    .map(|control| {
-                        Point2::new(
-                            Real::from(2) * from.x() - control.x(),
-                            Real::from(2) * from.y() - control.y(),
-                        )
-                    })
-                    .unwrap_or_else(|| from.clone());
-                let control2 = svg_path_point(abs, x2, y2, Some(from))?;
-                let end = svg_path_point(abs, x, y, Some(from))?;
-                curves.push(Curve2::from(CubicBezier2::new(
-                    from.clone(),
-                    control1,
-                    control2.clone(),
-                    end.clone(),
-                )));
-                current = Some(end);
-                previous_cubic_control = Some(control2);
-                previous_quadratic_control = None;
-            },
-            PathSegment::Quadratic { abs, x1, y1, x, y } => {
-                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let control = svg_path_point(abs, x1, y1, Some(from))?;
-                let end = svg_path_point(abs, x, y, Some(from))?;
-                curves.push(Curve2::from(QuadraticBezier2::new(
-                    from.clone(),
-                    control.clone(),
-                    end.clone(),
-                )));
-                current = Some(end);
-                previous_cubic_control = None;
-                previous_quadratic_control = Some(control);
-            },
-            PathSegment::SmoothQuadratic { abs, x, y } => {
-                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let control = previous_quadratic_control
-                    .as_ref()
-                    .map(|control| {
-                        Point2::new(
-                            Real::from(2) * from.x() - control.x(),
-                            Real::from(2) * from.y() - control.y(),
-                        )
-                    })
-                    .unwrap_or_else(|| from.clone());
-                let end = svg_path_point(abs, x, y, Some(from))?;
-                curves.push(Curve2::from(QuadraticBezier2::new(
-                    from.clone(),
-                    control.clone(),
-                    end.clone(),
-                )));
-                current = Some(end);
-                previous_cubic_control = None;
-                previous_quadratic_control = Some(control);
-            },
-            PathSegment::EllipticalArc {
-                abs,
-                rx,
-                ry,
-                x_axis_rotation,
-                large_arc,
-                sweep,
-                x,
-                y,
-            } => {
-                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let end = svg_path_point(abs, x, y, Some(from))?;
-                let rx = real(rx, "path arc rx")?;
-                let ry = real(ry, "path arc ry")?;
-                let rotation = real(x_axis_rotation, "path arc rotation")?;
-                if let Some(arc) = svg_circular_arc(
-                    from.clone(),
-                    end.clone(),
-                    rx,
-                    ry,
-                    rotation,
-                    large_arc,
-                    sweep,
-                )? {
-                    curves.push(Curve2::from(arc));
-                }
-                current = Some(end);
-                previous_cubic_control = None;
-                previous_quadratic_control = None;
-            },
-            PathSegment::ClosePath { .. } => {
-                let first = start.as_ref().ok_or_else(svg_path_requires_move)?.clone();
-                push_svg_line(&mut curves, &mut current, first)?;
-                finish_svg_subpath(&mut output, &mut curves, true)?;
-                current = start.clone();
-                previous_cubic_control = None;
-                previous_quadratic_control = None;
-            },
-        }
-    }
-    finish_svg_subpath(&mut output, &mut curves, false)?;
-    if output.is_empty() {
-        return Err(IoError::MalformedInput(
-            "SVG path contains no drawable subpath".into(),
-        ));
-    }
-    Ok(output)
-}
-
-fn svg_path_point(
-    absolute: bool,
-    x: f64,
-    y: f64,
-    current: Option<&Point2>,
-) -> Result<Point2, IoError> {
-    let x = real(x, "path x")?;
-    let y = real(y, "path y")?;
-    if absolute {
-        Ok(Point2::new(x, y))
-    } else if let Some(current) = current {
-        Ok(Point2::new(current.x() + x, current.y() + y))
-    } else {
-        Ok(Point2::new(x, y))
-    }
-}
-
-fn svg_circular_arc(
-    start: Point2,
-    end: Point2,
-    rx: Real,
-    ry: Real,
-    _rotation: Real,
-    large_arc: bool,
-    sweep: bool,
-) -> Result<Option<CircularArc2>, IoError> {
-    if rx != ry {
-        return Err(IoError::Unsupported {
-            format: "SVG",
-            detail: "non-circular elliptical path arc".into(),
-        });
-    }
-    if rx.refine_sign_until(-128) != Some(RealSign::Positive) {
-        return Err(IoError::MalformedInput(
-            "SVG path arc radius must be positive".into(),
-        ));
-    }
-    if start == end {
-        return Ok(None);
-    }
-
-    let chord_squared = start.distance_squared(&end);
-    let radius_squared = &rx * &rx;
-    let four = Real::from(4);
-    let quarter_chord_squared =
-        (&chord_squared / &four).map_err(|error| IoError::Geometry {
-            format: "SVG",
-            detail: error.to_string(),
-        })?;
-    let center_offset_squared = &radius_squared - quarter_chord_squared;
-    let center_offset_scale = match center_offset_squared.refine_sign_until(-128) {
-        Some(RealSign::Negative) => {
-            return Err(IoError::Geometry {
-                format: "SVG",
-                detail: "circular path arc radius is smaller than half its chord".into(),
-            });
+            detail,
         },
-        Some(RealSign::Zero) => Real::zero(),
-        Some(RealSign::Positive) => {
-            let ratio = (center_offset_squared / &chord_squared).map_err(|error| {
-                IoError::Geometry {
-                    format: "SVG",
-                    detail: error.to_string(),
-                }
-            })?;
-            ratio.sqrt().map_err(|error| IoError::Geometry {
-                format: "SVG",
-                detail: error.to_string(),
-            })?
-        },
-        None => {
-            return Err(IoError::Geometry {
-                format: "SVG",
-                detail: "circular path arc center sign is undecidable".into(),
-            });
-        },
-    };
-    let two = Real::from(2);
-    let midpoint = Point2::new(
-        ((start.x() + end.x()) / &two).map_err(|error| IoError::Geometry {
+        SvgError::Geometry(detail) => IoError::Geometry {
             format: "SVG",
-            detail: error.to_string(),
-        })?,
-        ((start.y() + end.y()) / &two).map_err(|error| IoError::Geometry {
-            format: "SVG",
-            detail: error.to_string(),
-        })?,
-    );
-    let dx = end.x() - start.x();
-    let dy = end.y() - start.y();
-    let offset_x = -(&dy * &center_offset_scale);
-    let offset_y = &dx * &center_offset_scale;
-    let centers = [
-        Point2::new(midpoint.x() + &offset_x, midpoint.y() + &offset_y),
-        Point2::new(midpoint.x() - &offset_x, midpoint.y() - &offset_y),
-    ];
-    for center in centers {
-        let start_x = start.x() - center.x();
-        let start_y = start.y() - center.y();
-        let end_x = end.x() - center.x();
-        let end_y = end.y() - center.y();
-        let cross = start_x * end_y - start_y * end_x;
-        let cross_sign = cross.refine_sign_until(-128);
-        let is_major = match cross_sign {
-            Some(RealSign::Zero) => false,
-            Some(RealSign::Positive) => sweep,
-            Some(RealSign::Negative) => !sweep,
-            None => continue,
-        };
-        if is_major == large_arc || cross_sign == Some(RealSign::Zero) {
-            let arc =
-                CircularArc2::try_from_center(start, end, center, sweep).map_err(|error| {
-                    IoError::Geometry {
-                        format: "SVG",
-                        detail: error.to_string(),
-                    }
-                })?;
-            return Ok(Some(arc));
-        }
-    }
-    Err(IoError::Geometry {
-        format: "SVG",
-        detail: "circular path arc flags do not select a certified center".into(),
-    })
-}
-
-fn push_svg_line(
-    curves: &mut Vec<Curve2>,
-    current: &mut Option<Point2>,
-    end: Point2,
-) -> Result<(), IoError> {
-    let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-    if from != &end {
-        curves.push(Curve2::from(
-            LineSeg2::try_new(from.clone(), end.clone()).map_err(|error| {
-                IoError::Geometry {
-                    format: "SVG",
-                    detail: error.to_string(),
-                }
-            })?,
-        ));
-    }
-    *current = Some(end);
-    Ok(())
-}
-
-fn finish_svg_subpath(
-    output: &mut Vec<ParsedSvgSubpath>,
-    curves: &mut Vec<Curve2>,
-    closed: bool,
-) -> Result<(), IoError> {
-    if curves.is_empty() {
-        return Ok(());
-    }
-    let path =
-        CurvePath2::try_new(std::mem::take(curves)).map_err(|error| IoError::Geometry {
-            format: "SVG",
-            detail: error.to_string(),
-        })?;
-    output.push(ParsedSvgSubpath { path, closed });
-    Ok(())
-}
-
-fn svg_path_requires_move() -> IoError {
-    IoError::MalformedInput("SVG path drawing command precedes move-to".into())
-}
-
-fn styled_shape(shape: Profile, context: StyleContext) -> Profile {
-    if context.fills() && !context.strokes() {
-        return shape;
-    }
-    if !context.fills() && !context.strokes() {
-        return Profile::empty();
-    }
-
-    let (region, wires, mut paths) = shape.into_curve_topology();
-    if let Ok(Classification::Decided(boundaries)) = region.materialized_boundary_paths() {
-        paths.extend(boundaries);
-    }
-    Profile::from_curve_topology(
-        if context.fills() {
-            region
-        } else {
-            CurveRegion2::empty()
+            detail,
         },
-        wires,
-        paths,
-    )
+        SvgError::SizeOverflow { limit } => IoError::SizeOverflow {
+            format: "SVG",
+            limit,
+        },
+    }
 }
 
+/// Imports complete SVG documents into CSGRS profiles.
 pub trait FromSVG: Sized {
     fn from_svg(document: &str) -> Result<Self, IoError>;
     fn from_svg_with_options(document: &str, options: SvgOptions) -> Result<Self, IoError>;
@@ -811,238 +42,14 @@ impl FromSVG for Profile {
     }
 
     fn from_svg_with_options(document: &str, options: SvgOptions) -> Result<Self, IoError> {
-        use svg::node::element::tag;
-        use svg::node::element::tag::Type::{Empty, End, Start};
-        use svg::parser::Event;
-
-        let options = options.validate()?;
-        let mut contexts = vec![StyleContext::default()];
-        let mut output = Profile::empty();
-        let mut source_index = 0_u64;
-        for event in svg::read(document)? {
-            let Event::Tag(name, kind, attrs) = event else {
-                if let Event::Error(error) = event {
-                    return Err(error.into());
-                }
-                continue;
-            };
-            if matches!(name, tag::Group | tag::SVG) {
-                match kind {
-                    Start => {
-                        if name == tag::SVG
-                            && contexts.len() > 1
-                            && ["x", "y", "viewBox", "preserveAspectRatio"]
-                                .iter()
-                                .any(|attribute| attrs.contains_key(*attribute))
-                        {
-                            return Err(IoError::Unsupported {
-                                format: "SVG",
-                                detail: "nested SVG viewport transforms".into(),
-                            });
-                        }
-                        let parent = *contexts.last().ok_or_else(|| {
-                            IoError::MalformedInput("SVG style context stack is empty".into())
-                        })?;
-                        contexts.push(apply_style(parent, &attrs)?);
-                    },
-                    End => {
-                        if contexts.len() > 1 {
-                            contexts.pop();
-                        }
-                    },
-                    Empty => {},
-                }
-                continue;
-            }
-            if matches!(kind, End) || matches!(name, tag::Description | tag::Title) {
-                continue;
-            }
-            let parent = *contexts.last().ok_or_else(|| {
-                IoError::MalformedInput("SVG style context stack is empty".into())
-            })?;
-            let context = apply_style(parent, &attrs)?;
-            if !context.visible() {
-                continue;
-            }
-            let shape = match name {
-                tag::Path => {
-                    let data = attrs.get("d").ok_or_else(|| {
-                        IoError::MalformedInput("missing SVG path d attribute".into())
-                    })?;
-                    imported_path(data, context, source_index)?
-                },
-                tag::Circle => {
-                    let radius = number(&attrs, "r", None)?;
-                    let segments = options.segments_for_radius(radius)?;
-                    styled_shape(
-                        Profile::circle(real(radius, "radius")?, segments).translate(
-                            real(number(&attrs, "cx", Some(0.0))?, "cx")?,
-                            real(number(&attrs, "cy", Some(0.0))?, "cy")?,
-                            Real::zero(),
-                        ),
-                        context,
-                    )
-                },
-                tag::Ellipse => {
-                    let rx = number(&attrs, "rx", None)?;
-                    let ry = number(&attrs, "ry", None)?;
-                    if rx <= 0.0 || ry <= 0.0 {
-                        return Err(IoError::MalformedInput(
-                            "SVG ellipse radii must be positive".into(),
-                        ));
-                    }
-                    let segments = options.segments_for_radius(rx.max(ry))?;
-                    styled_shape(
-                        Profile::ellipse(
-                            real(2.0 * rx, "rx")?,
-                            real(2.0 * ry, "ry")?,
-                            segments,
-                        )
-                        .translate(
-                            real(number(&attrs, "cx", Some(0.0))?, "cx")?,
-                            real(number(&attrs, "cy", Some(0.0))?, "cy")?,
-                            Real::zero(),
-                        ),
-                        context,
-                    )
-                },
-                tag::Rectangle => rectangle(&attrs, context, options)?,
-                tag::Line => {
-                    let wire = CurveString2::from_real_point_iter([
-                        [
-                            real(number(&attrs, "x1", Some(0.0))?, "x1")?,
-                            real(number(&attrs, "y1", Some(0.0))?, "y1")?,
-                        ],
-                        [
-                            real(number(&attrs, "x2", Some(0.0))?, "x2")?,
-                            real(number(&attrs, "y2", Some(0.0))?, "y2")?,
-                        ],
-                    ])
-                    .map_err(|error| IoError::Geometry {
-                        format: "SVG",
-                        detail: error.to_string(),
-                    })?;
-                    if context.strokes() {
-                        Profile::from_wires(vec![wire])
-                    } else {
-                        Profile::empty()
-                    }
-                },
-                tag::Polygon => {
-                    let polygon_points = points(attrs.get("points").ok_or_else(|| {
-                        IoError::MalformedInput("missing SVG polygon points".into())
-                    })?)?;
-                    if polygon_points.len() < 3 {
-                        return Err(IoError::MalformedInput(
-                            "SVG polygon requires at least three points".into(),
-                        ));
-                    }
-                    styled_shape(Profile::polygon(&polygon_points), context)
-                },
-                tag::Polyline => {
-                    let polyline_points = points(attrs.get("points").ok_or_else(|| {
-                        IoError::MalformedInput("missing SVG polyline points".into())
-                    })?)?;
-                    let wire = CurveString2::from_real_point_iter(polyline_points.clone())
-                        .map_err(|error| IoError::Geometry {
-                            format: "SVG",
-                            detail: error.to_string(),
-                        })?;
-                    let region = if context.fills() {
-                        Profile::polygon(&polyline_points).as_curve_region().clone()
-                    } else {
-                        CurveRegion2::empty()
-                    };
-                    let wires = if context.strokes() {
-                        vec![wire]
-                    } else {
-                        Vec::new()
-                    };
-                    Profile::from_curve_region_and_wires(region, wires)
-                },
-                other => {
-                    return Err(IoError::Unsupported {
-                        format: "SVG",
-                        detail: format!("element {other}"),
-                    });
-                },
-            };
-            source_index += 1;
-            let transformed = shape.transform(&context.transform.matrix()?);
-            output = output
-                .try_union(&transformed)
-                .map_err(|error| IoError::Geometry {
-                    format: "SVG",
-                    detail: error.to_string(),
-                })?;
-        }
-        Ok(output)
+        let geometry =
+            import_svg_document_with_options(document, options).map_err(map_svg_error)?;
+        let (region, wires, paths) = geometry.into_parts();
+        Ok(Self::from_curve_topology(region, wires, paths))
     }
 }
 
-fn rectangle(
-    attrs: &svg::node::Attributes,
-    context: StyleContext,
-    options: SvgOptions,
-) -> Result<Profile, IoError> {
-    let x = number(attrs, "x", Some(0.0))?;
-    let y = number(attrs, "y", Some(0.0))?;
-    let width = number(attrs, "width", None)?;
-    let height = number(attrs, "height", None)?;
-    if width <= 0.0 || height <= 0.0 {
-        return Err(IoError::MalformedInput(
-            "SVG rectangle dimensions must be positive".into(),
-        ));
-    }
-    let rx_attr = attrs
-        .get("rx")
-        .map(|value| value.parse::<f64>())
-        .transpose()?;
-    let ry_attr = attrs
-        .get("ry")
-        .map(|value| value.parse::<f64>())
-        .transpose()?;
-    let (rx, ry) = match (rx_attr, ry_attr) {
-        (None, None) => (0.0, 0.0),
-        (Some(rx), None) => (rx, rx),
-        (None, Some(ry)) => (ry, ry),
-        (Some(rx), Some(ry)) => (rx, ry),
-    };
-    if !rx.is_finite() || !ry.is_finite() || rx < 0.0 || ry < 0.0 {
-        return Err(IoError::MalformedInput(
-            "SVG rectangle corner radii must be finite and non-negative".into(),
-        ));
-    }
-    let rx = rx.clamp(0.0, width / 2.0);
-    let ry = ry.clamp(0.0, height / 2.0);
-    let shape = if rx == 0.0 || ry == 0.0 {
-        Profile::rectangle(real(width, "width")?, real(height, "height")?)
-    } else {
-        let segments = options.segments_for_radius(rx.max(ry))? / 4;
-        let mut boundary = Vec::new();
-        for (cx, cy, start) in [
-            (width - rx, ry, -std::f64::consts::FRAC_PI_2),
-            (width - rx, height - ry, 0.0),
-            (rx, height - ry, std::f64::consts::FRAC_PI_2),
-            (rx, ry, std::f64::consts::PI),
-        ] {
-            for index in 0..=segments {
-                let angle =
-                    start + std::f64::consts::FRAC_PI_2 * index as f64 / segments as f64;
-                boundary.push([
-                    real(cx + rx * angle.cos(), "rounded rectangle x")?,
-                    real(cy + ry * angle.sin(), "rounded rectangle y")?,
-                ]);
-            }
-        }
-        Profile::polygon(&boundary)
-    };
-    Ok(styled_shape(
-        shape.translate(real(x, "x")?, real(y, "y")?, Real::zero()),
-        context,
-    ))
-}
-
+/// Exports CSGRS profiles as complete SVG documents.
 pub trait ToSVG {
     fn to_svg(&self) -> Result<String, IoError>;
     fn to_svg_with_options(&self, options: SvgOptions) -> Result<String, IoError>;
@@ -1054,97 +61,26 @@ impl ToSVG for Profile {
     }
 
     fn to_svg_with_options(&self, options: SvgOptions) -> Result<String, IoError> {
-        let options = options.validate()?;
-        let projection =
-            FiniteProjectionOptions::try_new(options.curve_tolerance).map_err(|error| {
-                IoError::Geometry {
-                    format: "SVG",
-                    detail: error.to_string(),
-                }
-            })?;
-        let profiles = match self.project_region_profiles(&projection).map_err(|error| {
-            IoError::Geometry {
-                format: "SVG",
-                detail: error.to_string(),
-            }
-        })? {
-            Classification::Decided(profiles) => profiles,
-            Classification::Uncertain(reason) => {
-                return Err(IoError::Geometry {
-                    format: "SVG",
-                    detail: format!("region projection is uncertain: {reason:?}"),
-                });
-            },
-        };
-        let (min_x, min_y, max_x, max_y) =
-            self.native_xy_bounds().ok_or_else(|| IoError::Geometry {
-                format: "SVG",
-                detail: "cannot bound empty geometry".into(),
-            })?;
-        let bounds = [
-            finite_f64(&min_x, "SVG", "minimum x")?,
-            finite_f64(&min_y, "SVG", "minimum y")?,
-            finite_f64(&max_x, "SVG", "maximum x")?,
-            finite_f64(&max_y, "SVG", "maximum y")?,
-        ];
-        let mut body = String::new();
-        for profile in profiles {
-            body.push_str("<path fill=\"black\" fill-rule=\"evenodd\" stroke=\"none\" d=\"");
-            append_ring(&mut body, profile.material().points());
-            for hole in profile.holes() {
-                append_ring(&mut body, hole.points());
-            }
-            body.push_str("\"/>\n");
-        }
-        for wire in self.wires() {
-            let polyline = wire
-                .project_to_finite_polyline(&projection)
-                .map_err(|error| IoError::Geometry {
-                    format: "SVG",
-                    detail: error.to_string(),
-                })?;
-            body.push_str("<path fill=\"none\" stroke=\"black\" d=\"");
-            append_open(&mut body, polyline.points());
-            body.push_str("\"/>\n");
-        }
-        for path in self.curve_paths() {
-            let polyline = path
-                .project_to_finite_polyline(&projection)
-                .map_err(|error| IoError::Geometry {
-                    format: "SVG",
-                    detail: error.to_string(),
-                })?;
-            body.push_str("<path fill=\"none\" stroke=\"black\" d=\"");
-            append_open(&mut body, polyline.points());
-            body.push_str("\"/>\n");
-        }
-        Ok(format!(
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{:.17} {:.17} {:.17} {:.17}\">\n{body}</svg>",
-            bounds[0],
-            bounds[1],
-            bounds[2] - bounds[0],
-            bounds[3] - bounds[1]
-        ))
-    }
-}
-
-fn append_ring(output: &mut String, points: &[[f64; 2]]) {
-    append_open(output, points);
-    output.push_str(" Z ");
-}
-
-fn append_open(output: &mut String, points: &[[f64; 2]]) {
-    if let Some(first) = points.first() {
-        output.push_str(&format!("M {:.17} {:.17}", first[0], first[1]));
-        for point in &points[1..] {
-            output.push_str(&format!(" L {:.17} {:.17}", point[0], point[1]));
-        }
+        export_svg_document_with_options(
+            &SvgGeometry2::new(
+                self.as_curve_region().clone(),
+                self.wires().to_vec(),
+                self.curve_paths().to_vec(),
+            ),
+            options,
+        )
+        .map_err(map_svg_error)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::csg::CSG;
+    use hypercurve::{
+        BezierSplitFragment2, BezierSubcurve2, Classification, Curve2, CurvePath2,
+        CurvePolicy, CurveRegion2, Point2, Real,
+    };
 
     #[test]
     fn imports_inherited_transform_and_svg_defaults() {
@@ -1162,8 +98,8 @@ mod tests {
     }
 
     #[test]
-    fn imports_cubic_fill_without_demoting_curve_region() {
-        let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><path d="M 0 0 C 0 2 2 2 2 0 Z"/></svg>"#;
+    fn imports_cubic_fill_and_stroke_without_demoting_topology() {
+        let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><path d="M 0 0 C 0 2 2 2 2 0 Z" stroke="black"/></svg>"#;
         let profile = Profile::from_svg(document).unwrap();
 
         assert_eq!(
@@ -1181,26 +117,14 @@ mod tests {
                 .flat_map(|boundary| boundary.fragments())
                 .any(|fragment| matches!(
                     fragment,
-                    hypercurve::BezierSplitFragment2::Materialized {
-                        curve: hypercurve::BezierSubcurve2::Cubic(_),
+                    BezierSplitFragment2::Materialized {
+                        curve: BezierSubcurve2::Cubic(_),
                         ..
                     }
                 ))
         );
+        assert_eq!(profile.curve_paths().len(), 1);
         assert_eq!(profile.contains_xy(Real::one(), Real::one()), Some(true));
-    }
-
-    #[test]
-    fn imports_the_exact_circular_subset_and_rejects_true_ellipses() {
-        let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><path d="M 1 0 A 1 1 0 0 1 -1 0 A 1 1 0 0 1 1 0 Z"/></svg>"#;
-        let profile = Profile::from_svg(document).unwrap();
-        assert_eq!(profile.contains_xy(Real::zero(), Real::zero()), Some(true));
-
-        let ellipse = r#"<svg xmlns="http://www.w3.org/2000/svg"><path d="M 2 0 A 2 1 0 0 1 -2 0 Z"/></svg>"#;
-        assert!(matches!(
-            Profile::from_svg(ellipse),
-            Err(IoError::Unsupported { format: "SVG", .. })
-        ));
     }
 
     #[test]
@@ -1219,63 +143,7 @@ mod tests {
     }
 
     #[test]
-    fn export_reports_empty_geometry() {
-        assert!(Profile::empty().to_svg().is_err());
-    }
-
-    #[test]
-    fn rejects_unbounded_curve_sampling() {
-        let document =
-            r#"<svg xmlns="http://www.w3.org/2000/svg"><circle r="1000000"/></svg>"#;
-        assert!(Profile::from_svg(document).is_err());
-    }
-
-    #[test]
-    fn rejects_invalid_shape_dimensions() {
-        for document in [
-            r#"<svg xmlns="http://www.w3.org/2000/svg"><ellipse rx="2" ry="-1"/></svg>"#,
-            r#"<svg xmlns="http://www.w3.org/2000/svg"><rect width="2" height="2" rx="-1"/></svg>"#,
-            r#"<svg xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 1,1"/></svg>"#,
-        ] {
-            assert!(Profile::from_svg(document).is_err());
-        }
-    }
-
-    #[test]
-    fn parses_svg_number_grammar_and_style_overrides() {
-        let document = r#"<svg xmlns="http://www.w3.org/2000/svg">
-            <g fill="none" transform="translate(3-4)">
-                <polygon fill="black" points="0-0 2-0 2-2 0-2"/>
-                <line x1="0" y1="0" x2="2" y2="2" stroke="black"/>
-                <circle r="10" opacity="0"/>
-            </g>
-        </svg>"#;
-        let profile = Profile::from_svg(document).unwrap();
-        assert_eq!(
-            profile
-                .as_curve_region()
-                .loop_role_counts(&CurvePolicy::certified())
-                .unwrap(),
-            Classification::Decided((1, 0))
-        );
-        assert_eq!(profile.wires().len(), 1);
-        let bounds = profile.bounding_box();
-        for (actual, expected) in [
-            (&bounds.mins.x, 3.0),
-            (&bounds.mins.y, -6.0),
-            (&bounds.maxs.x, 5.0),
-            (&bounds.maxs.y, -2.0),
-        ] {
-            let actual = actual.to_f64_lossy().unwrap();
-            assert!(
-                (actual - expected).abs() < 1e-9,
-                "expected {expected}, got {actual}"
-            );
-        }
-    }
-
-    #[test]
-    fn exported_svg_round_trips_through_importer() {
+    fn exported_svg_round_trips_through_hypercurve() {
         let square = Profile::square(Real::from(3_u8));
         let document = square.to_svg().unwrap();
         let reparsed = Profile::from_svg(&document).unwrap();
@@ -1287,7 +155,36 @@ mod tests {
     }
 
     #[test]
-    fn reports_unrepresentable_svg_geometry_features() {
+    fn adapter_preserves_exact_hypercurve_nurbs_paths() {
+        let curve = Curve2::try_nurbs(
+            2,
+            vec![
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::one(), Real::from(2)),
+                Point2::new(Real::from(3), Real::zero()),
+            ],
+            vec![
+                Real::one(),
+                (Real::one() / Real::from(3)).unwrap(),
+                Real::one(),
+            ],
+            vec![0, 0, 0, 1, 1, 1].into_iter().map(Real::from).collect(),
+        )
+        .unwrap();
+        let profile = Profile::from_curve_topology(
+            CurveRegion2::empty(),
+            Vec::new(),
+            vec![CurvePath2::try_new(vec![curve.clone()]).unwrap()],
+        );
+
+        let document = profile.to_svg().unwrap();
+        assert!(document.contains("data-hypercurve-path=\"1:"));
+        let reparsed = Profile::from_svg(&document).unwrap();
+        assert_eq!(reparsed.curve_paths()[0].curves(), &[curve]);
+    }
+
+    #[test]
+    fn maps_hypercurve_svg_errors_to_io_categories() {
         for document in [
             r#"<svg xmlns="http://www.w3.org/2000/svg"><text>geometry</text></svg>"#,
             r#"<svg xmlns="http://www.w3.org/2000/svg"><line x2="1" stroke="black" stroke-dasharray="1 1"/></svg>"#,
@@ -1298,13 +195,12 @@ mod tests {
                 Err(IoError::Unsupported { format: "SVG", .. })
             ));
         }
-
-        let transparent = r#"<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" opacity="0%"/></svg>"#;
-        assert!(
-            Profile::from_svg(transparent)
-                .unwrap()
-                .as_curve_region()
-                .is_empty()
-        );
+        assert!(matches!(
+            Profile::from_svg(
+                r#"<svg xmlns="http://www.w3.org/2000/svg"><ellipse rx="2" ry="-1"/></svg>"#
+            ),
+            Err(IoError::MalformedInput(_))
+        ));
+        assert!(Profile::empty().to_svg().is_err());
     }
 }

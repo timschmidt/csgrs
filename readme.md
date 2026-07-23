@@ -365,6 +365,29 @@ let file_data = std::fs::read("some_file.stl")?;
 let imported_mesh = Mesh::from_stl(&file_data, ())?;
 ```
 
+### SVG
+
+Enable `svg-io` to import and export `Profile` geometry:
+
+```rust
+use csgrs::io::svg::{FromSVG, ToSVG};
+use csgrs::profile::Profile;
+
+let profile = Profile::from_svg(
+    r#"<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 C0 2 2 2 2 0 Z"/></svg>"#,
+)?;
+let document = profile.to_svg()?;
+# Ok::<(), csgrs::io::IoError>(())
+```
+
+Hypercurve owns SVG parsing, inherited styles, transforms, shape/path
+construction, topology, projection, and serialization. CSGRS only adapts the
+resulting `CurveRegion2`, `CurveString2`, and `CurvePath2` values into
+`Profile`, so there is no second SVG geometry implementation. Hypercurve's
+versioned `data-hypercurve-path` extension preserves exact rational,
+B-spline, NURBS, and periodic curve paths across CSGRS SVG round trips while
+remaining valid SVG for other renderers.
+
 ### DXF
 
 - **Export**: `mesh.to_dxf() -> Result<Vec<u8>, IoError>`
