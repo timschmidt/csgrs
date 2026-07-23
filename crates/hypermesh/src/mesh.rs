@@ -102,43 +102,45 @@ impl PolygonSoup {
     }
 }
 
-/// Prepares borrowed mesh views into a combined polygon soup.
-pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
-    prepare_input_with_certified_convex_inputs(meshes, &vec![false; meshes.len()])
+/// Validates borrowed mesh views and builds a combined polygon soup.
+pub fn build_polygon_soup(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
+    build_polygon_soup_with_edge_mode(meshes, None, false)
 }
 
-pub(crate) fn prepare_input_with_certified_convex_inputs(
+pub(crate) fn build_polygon_soup_with_certified_convex_inputs(
     meshes: &[MeshRef<'_>],
     certified_convex_inputs: &[bool],
 ) -> HypermeshResult<PolygonSoup> {
-    prepare_input_with_edge_mode(meshes, certified_convex_inputs, false)
+    build_polygon_soup_with_edge_mode(meshes, Some(certified_convex_inputs), false)
 }
 
-pub(crate) fn prepare_input_with_deferred_edges(
+pub(crate) fn build_polygon_soup_with_deferred_edges(
     meshes: &[MeshRef<'_>],
     certified_convex_inputs: &[bool],
 ) -> HypermeshResult<PolygonSoup> {
-    prepare_input_with_edge_mode(meshes, certified_convex_inputs, true)
+    build_polygon_soup_with_edge_mode(meshes, Some(certified_convex_inputs), true)
 }
 
-fn prepare_input_with_edge_mode(
+fn build_polygon_soup_with_edge_mode(
     meshes: &[MeshRef<'_>],
-    certified_convex_inputs: &[bool],
+    certified_convex_inputs: Option<&[bool]>,
     defer_edges: bool,
 ) -> HypermeshResult<PolygonSoup> {
-    crate::trace_dispatch!("prepare-input", "start");
-    if certified_convex_inputs.len() != meshes.len() {
+    crate::trace_dispatch!("build-polygon-soup", "start");
+    if certified_convex_inputs.is_some_and(|certified| certified.len() != meshes.len()) {
         return Err(HypermeshError::UnknownClassification);
     }
     validate_non_empty_mesh_views(meshes)?;
 
     let bounds = bounds_for_positions(meshes.iter().flat_map(|mesh| mesh.positions.iter()))?;
-    crate::trace_dispatch!("prepare-input", "bounds-computed");
+    crate::trace_dispatch!("build-polygon-soup", "bounds-computed");
 
     let mut polygons = Vec::new();
     let mut polygon_index = 0isize;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
-        let retained_positions = (defer_edges && certified_convex_inputs[mesh_index])
+        let input_is_certified_convex =
+            certified_convex_inputs.is_some_and(|certified| certified[mesh_index]);
+        let retained_positions = (defer_edges && input_is_certified_convex)
             .then(|| Arc::<[Point3]>::from(mesh.positions));
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
@@ -185,7 +187,7 @@ fn prepare_input_with_edge_mode(
             polygons.push(polygon);
             polygon_index += 1;
         }
-        if !certified_convex_inputs[mesh_index] {
+        if !input_is_certified_convex {
             let edge_balance = classify_indexed_edge_balance(mesh);
             if edge_balance.boundary_edges != 0 {
                 return Err(HypermeshError::OpenInput {
@@ -202,7 +204,7 @@ fn prepare_input_with_edge_mode(
         }
     }
 
-    crate::trace_dispatch!("prepare-input", "complete");
+    crate::trace_dispatch!("build-polygon-soup", "complete");
     Ok(PolygonSoup {
         polygons,
         bounds,
@@ -356,7 +358,7 @@ mod tests {
             positions.clone(),
             vec![Triangle::new(0, 1, 2), Triangle::new(0, 3, 1)],
         );
-        let soup = prepare_input_with_deferred_edges(&[mesh.as_ref()], &[true]).unwrap();
+        let soup = build_polygon_soup_with_deferred_edges(&[mesh.as_ref()], &[true]).unwrap();
 
         let (
             Some(RetainedVertexCycle::IndexedTriangle {
@@ -403,6 +405,6 @@ mod tests {
             classify_indexed_edge_balance(&mesh.as_ref()),
             EdgeBalance::default()
         );
-        prepare_input(&[mesh.as_ref()]).expect("closed coincident-index tetrahedron");
+        build_polygon_soup(&[mesh.as_ref()]).expect("closed coincident-index tetrahedron");
     }
 }

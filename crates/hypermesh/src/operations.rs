@@ -1,16 +1,13 @@
 //! Public boolean operation entry points.
 
-use std::sync::{Arc, OnceLock};
-
-use hyperlattice::{
-    HomogeneousPoint3, Point3, Rational, Real, Vector3, homogeneous_point_plane_expression,
-};
+use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
 use hyperreal::PreparedRationalLinearForm4Query;
 
 use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, Classification, Plane, axis_mut, axis_ref, classify_point};
 use crate::mesh::{
-    MeshRef, prepare_input_with_certified_convex_inputs, prepare_input_with_deferred_edges,
+    MeshRef, build_polygon_soup_with_certified_convex_inputs,
+    build_polygon_soup_with_deferred_edges,
 };
 use crate::output::{
     ARRANGEMENT_CLASSIFICATION, BooleanResult, ClassifiedPolygon, certify_output_polygon_closure,
@@ -21,95 +18,29 @@ use crate::storage_hash::StorageHashMap;
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask};
 use crate::winding::{BooleanOp, WindingPair, make_indicator};
 
-const ALL_BOOLEAN_OPERATIONS: [BooleanOp; 4] = [
-    BooleanOp::Union,
-    BooleanOp::Intersection,
-    BooleanOp::Difference,
-    BooleanOp::SymmetricDifference,
-];
-
-/// A certified mesh arrangement that can be extracted for multiple Boolean
-/// operations without repeating input preparation, intersection, BSP, or
-/// winding classification work.
-#[derive(Clone, Debug)]
-pub struct BooleanArrangement {
+struct BooleanComputation {
     soup: crate::mesh::PolygonSoup,
     classified: Vec<crate::output::ClassifiedPolygon>,
-    supported_operations: Vec<BooleanOp>,
-    extraction_cache: Arc<ExtractionCache>,
-    operation_scoped_triangle_extraction: bool,
+    triangle_soup: Option<crate::output::TriangleSoup>,
     input_edges_deferred: bool,
 }
 
-#[derive(Debug, Default)]
-struct ExtractionCache {
-    results: [OnceLock<HypermeshResult<Arc<BooleanResult>>>; 4],
-    triangle_soups: [OnceLock<HypermeshResult<Arc<crate::output::TriangleSoup>>>; 4],
-}
-
-struct PreparedConvexCandidate {
+struct ConvexCandidate {
     classified: Vec<ClassifiedPolygon>,
-    triangle_soups: Vec<(BooleanOp, Arc<crate::output::TriangleSoup>)>,
+    triangle_soup: crate::output::TriangleSoup,
 }
 
-impl PartialEq for BooleanArrangement {
-    fn eq(&self, other: &Self) -> bool {
-        self.soup == other.soup
-            && self.classified == other.classified
-            && self.supported_operations == other.supported_operations
-            && self.operation_scoped_triangle_extraction
-                == other.operation_scoped_triangle_extraction
-            && self.input_edges_deferred == other.input_edges_deferred
-    }
-}
-
-impl BooleanArrangement {
-    /// Returns the retained exact source-plane normal with output orientation.
-    ///
-    /// Triangle extraction keeps a global source index and an orientation for
-    /// every emitted triangle. This accessor lets adapters reuse the support
-    /// normal already constructed during exact input preparation instead of
-    /// rebuilding the same cross product at an output boundary.
-    pub fn oriented_source_normal(&self, source: crate::output::TriangleSource) -> Option<Vector3> {
-        let index = usize::try_from(source.triangle).ok()?;
-        let polygon = self.soup.polygons.get(index)?;
-        if polygon.mesh_index != source.mesh || polygon.polygon_index != source.triangle {
-            return None;
-        }
-        let normal = polygon.support.normal.to_vector();
-        match source.orientation {
-            1 => Some(normal),
-            -1 => Some(-normal),
-            _ => None,
-        }
-    }
-
-    /// Extracts and closure-certifies one Boolean operation from this
-    /// arrangement's stored front/back winding evidence.
-    pub fn extract(&self, op: BooleanOp) -> HypermeshResult<BooleanResult> {
-        self.cached_extract(op)
-            .map(|result| result.as_ref().clone())
-    }
-
-    fn cached_extract(&self, op: BooleanOp) -> HypermeshResult<Arc<BooleanResult>> {
-        self.extraction_cache.results[boolean_operation_index(op)]
-            .get_or_init(|| self.extract_uncached(op).map(Arc::new))
-            .clone()
-    }
-
-    fn extract_uncached(&self, op: BooleanOp) -> HypermeshResult<BooleanResult> {
-        let result = self.select_result(op)?;
+impl BooleanComputation {
+    fn into_result(self, operation: BooleanOp) -> HypermeshResult<BooleanResult> {
+        let result = self.into_selected_result(operation)?;
         certify_output_polygon_closure(&result)?;
         Ok(result)
     }
 
-    fn select_result(&self, op: BooleanOp) -> HypermeshResult<BooleanResult> {
-        if !self.supported_operations.contains(&op) {
-            return Err(crate::error::HypermeshError::UnsupportedBooleanExtraction);
-        }
-        let indicator = make_indicator(op, self.soup.num_meshes);
-        let mut selected = Vec::new();
-        for polygon in &self.classified {
+    fn into_selected_result(self, operation: BooleanOp) -> HypermeshResult<BooleanResult> {
+        let indicator = make_indicator(operation, self.soup.num_meshes);
+        let mut selected = Vec::with_capacity(self.classified.len());
+        for mut polygon in self.classified {
             let winding = polygon
                 .winding()
                 .ok_or(crate::error::HypermeshError::UnknownClassification)?;
@@ -119,7 +50,6 @@ impl BooleanArrangement {
                 &indicator,
             );
             if classification != 0 {
-                let mut polygon = polygon.clone();
                 polygon.classification = classification;
                 if self.input_edges_deferred {
                     polygon.polygon = polygon.polygon.with_rebuilt_edge_planes()?;
@@ -127,62 +57,18 @@ impl BooleanArrangement {
                 selected.push(polygon);
             }
         }
-        Ok(BooleanResult::from_classified(self.soup.clone(), selected))
+        Ok(BooleanResult::from_classified(self.soup, selected))
     }
 
-    /// Extracts one Boolean operation directly as a closure-certified triangle
-    /// soup.
-    ///
-    /// This preserves both polygon-arrangement and final triangle-soup
-    /// certification while avoiding a redundant second polygon closure pass
-    /// between the two stages.
-    pub fn extract_triangle_soup(
-        &self,
-        op: BooleanOp,
-    ) -> HypermeshResult<Arc<crate::output::TriangleSoup>> {
-        self.extraction_cache.triangle_soups[boolean_operation_index(op)]
-            .get_or_init(|| {
-                if !self.supported_operations.contains(&op) {
-                    return Err(crate::error::HypermeshError::UnsupportedBooleanExtraction);
-                }
-                if self.operation_scoped_triangle_extraction {
-                    let selected =
-                        select_classified_fragments(&self.classified, op, self.soup.num_meshes)?;
-                    let arrangement =
-                        crate::output::triangulate_classified_arrangement_precomputed_f64_scan(
-                            &selected,
-                        )?;
-                    select_triangle_arrangement(&arrangement, op, self.soup.num_meshes)
-                        .map(Arc::new)
-                } else {
-                    // Preserve the public extraction order of
-                    // `triangulate_and_resolve_certified(extract(op))`.  A
-                    // shared all-operation triangle arrangement contains
-                    // vertices from fragments rejected by `op`, so selecting
-                    // from it changes the indexed soup even when the exact
-                    // boundary is equivalent.
-                    let result = if let Some(result) =
-                        self.extraction_cache.results[boolean_operation_index(op)].get()
-                    {
-                        result.clone()?
-                    } else {
-                        Arc::new(self.select_result(op)?)
-                    };
-                    crate::output::triangulate_and_resolve_polygon_certified(&result).map(Arc::new)
-                }
-            })
-            .clone()
-    }
-
-    /// Returns the number of certified arrangement fragments retained for
-    /// subsequent extraction.
-    pub fn fragment_count(&self) -> usize {
-        self.classified.len()
-    }
-
-    /// Returns whether this retained arrangement can extract `operation`.
-    pub fn supports(&self, operation: BooleanOp) -> bool {
-        self.supported_operations.contains(&operation)
+    fn into_triangle_soup(
+        self,
+        operation: BooleanOp,
+    ) -> HypermeshResult<crate::output::TriangleSoup> {
+        if let Some(soup) = self.triangle_soup {
+            return Ok(soup);
+        }
+        let result = self.into_selected_result(operation)?;
+        crate::output::triangulate_and_resolve_polygon_certified(&result)
     }
 }
 
@@ -231,7 +117,7 @@ fn select_triangle_arrangement(
 fn certify_triangle_soup_closure(
     soup: crate::output::TriangleSoup,
 ) -> HypermeshResult<crate::output::TriangleSoup> {
-    let closure = crate::output::triangle_soup_closure_report(&soup);
+    let closure = crate::output::triangle_soup_closure_evidence(&soup);
     if !closure.has_no_boundary() {
         return Err(crate::error::HypermeshError::OpenOutput {
             boundary_edges: closure.boundary_edges,
@@ -240,15 +126,6 @@ fn certify_triangle_soup_closure(
         });
     }
     Ok(soup)
-}
-
-const fn boolean_operation_index(operation: BooleanOp) -> usize {
-    match operation {
-        BooleanOp::Union => 0,
-        BooleanOp::Intersection => 1,
-        BooleanOp::Difference => 2,
-        BooleanOp::SymmetricDifference => 3,
-    }
 }
 
 /// Configuration for boolean operations.
@@ -275,130 +152,133 @@ impl Default for EmberConfig {
 /// Performs a boolean operation on borrowed mesh views.
 pub fn boolean_operation(
     meshes: &[MeshRef<'_>],
-    op: BooleanOp,
+    operation: BooleanOp,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
     crate::trace_dispatch!("boolean-operation", "start");
-    let prepared = prepare_boolean_operations(meshes, &[op], config)?;
+    let computation = compute_boolean(meshes, operation, None, config)?;
     crate::trace_dispatch!("boolean-operation", "certify-output-closure");
-    let result = prepared.extract(op)?;
+    let result = computation.into_result(operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
     Ok(result)
 }
 
-/// Builds a certified arrangement once for extraction under multiple Boolean
-/// operations.
-///
-/// This is the all-operation convenience form of
-/// [`prepare_boolean_operations`]. [`boolean_operation`] uses the same prepared
-/// pipeline with a one-operation scope, retaining its operation-specific
-/// pruning without maintaining a separate execution path.
-pub fn build_boolean_arrangement(
-    meshes: &[MeshRef<'_>],
-    config: EmberConfig,
-) -> HypermeshResult<BooleanArrangement> {
-    prepare_boolean_operations(meshes, &ALL_BOOLEAN_OPERATIONS, config)
-}
-
-/// Prepares a certified arrangement for exactly the requested Boolean
-/// operations.
-///
-/// A single-operation preparation retains operation-specific winding
-/// reachability pruning. Multi-operation preparation retains the transition
-/// evidence needed to extract every requested result without repeating input
-/// preparation, intersection, BSP, or winding classification work.
-pub fn prepare_boolean_operations(
-    meshes: &[MeshRef<'_>],
-    operations: &[BooleanOp],
-    config: EmberConfig,
-) -> HypermeshResult<BooleanArrangement> {
-    prepare_boolean_operations_with_certified_convex_inputs(
-        meshes,
-        operations,
-        &vec![false; meshes.len()],
-        config,
-    )
-}
-
-/// Prepares Boolean operations while accepting exact convex-input
-/// certificates supplied by the mesh owner.
+/// Performs a Boolean operation using exact convex-input facts supplied by
+/// the mesh owner.
 ///
 /// A `true` entry certifies that the corresponding input is one closed,
-/// non-self-intersecting, outward-oriented convex shell. Its triangulation
-/// needs no self-arrangement cuts, its face-front winding is zero, and exact
-/// support-plane tests may classify points against it. Cross-input
-/// intersections and every output certification remain exact.
-pub fn prepare_boolean_operations_with_certified_convex_inputs(
+/// non-self-intersecting, outward-oriented convex shell. Cross-input
+/// intersections and output closure remain exactly certified.
+pub fn boolean_operation_with_certified_convex_inputs(
     meshes: &[MeshRef<'_>],
-    operations: &[BooleanOp],
+    operation: BooleanOp,
     certified_convex_inputs: &[bool],
     config: EmberConfig,
-) -> HypermeshResult<BooleanArrangement> {
-    if operations.is_empty() {
-        return Err(crate::error::HypermeshError::EmptyBooleanOperationSet);
-    }
-    if certified_convex_inputs.len() != meshes.len() {
+) -> HypermeshResult<BooleanResult> {
+    crate::trace_dispatch!("boolean-operation", "start");
+    let computation = compute_boolean(meshes, operation, Some(certified_convex_inputs), config)?;
+    crate::trace_dispatch!("boolean-operation", "certify-output-closure");
+    let result = computation.into_result(operation)?;
+    crate::trace_dispatch!("boolean-operation", "complete");
+    Ok(result)
+}
+
+/// Performs a Boolean operation and immediately returns a closure-certified
+/// triangle soup.
+///
+/// This avoids materializing an intermediate polygon result when the caller
+/// needs indexed triangles.
+pub fn boolean_triangle_soup(
+    meshes: &[MeshRef<'_>],
+    operation: BooleanOp,
+    config: EmberConfig,
+) -> HypermeshResult<crate::output::TriangleSoup> {
+    crate::trace_dispatch!("boolean-operation", "start");
+    let computation = compute_boolean(meshes, operation, None, config)?;
+    crate::trace_dispatch!("boolean-operation", "triangulate-output");
+    let soup = computation.into_triangle_soup(operation)?;
+    crate::trace_dispatch!("boolean-operation", "complete");
+    Ok(soup)
+}
+
+/// Performs a Boolean operation with exact convex-input facts and immediately
+/// returns a closure-certified triangle soup.
+///
+/// This is the direct triangle-output counterpart of
+/// [`boolean_operation_with_certified_convex_inputs`].
+pub fn boolean_triangle_soup_with_certified_convex_inputs(
+    meshes: &[MeshRef<'_>],
+    operation: BooleanOp,
+    certified_convex_inputs: &[bool],
+    config: EmberConfig,
+) -> HypermeshResult<crate::output::TriangleSoup> {
+    crate::trace_dispatch!("boolean-operation", "start");
+    let computation = compute_boolean(meshes, operation, Some(certified_convex_inputs), config)?;
+    crate::trace_dispatch!("boolean-operation", "triangulate-output");
+    let soup = computation.into_triangle_soup(operation)?;
+    crate::trace_dispatch!("boolean-operation", "complete");
+    Ok(soup)
+}
+
+fn compute_boolean(
+    meshes: &[MeshRef<'_>],
+    operation: BooleanOp,
+    certified_convex_inputs: Option<&[bool]>,
+    config: EmberConfig,
+) -> HypermeshResult<BooleanComputation> {
+    if certified_convex_inputs.is_some_and(|certified| certified.len() != meshes.len()) {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
-    validate_mesh_refs(meshes)?;
-    let supported_operations = ALL_BOOLEAN_OPERATIONS
-        .into_iter()
-        .filter(|operation| operations.contains(operation))
-        .collect::<Vec<_>>();
+    let certified_convex_inputs = certified_convex_inputs.unwrap_or(&[]);
     let use_two_convex_candidate = meshes.len() == 2 && certified_convex_inputs == [true, true];
     let mut soup = if use_two_convex_candidate {
-        prepare_input_with_deferred_edges(meshes, certified_convex_inputs)?
+        build_polygon_soup_with_deferred_edges(meshes, certified_convex_inputs)?
+    } else if certified_convex_inputs.is_empty() {
+        crate::mesh::build_polygon_soup(meshes)?
     } else {
-        prepare_input_with_certified_convex_inputs(meshes, certified_convex_inputs)?
+        build_polygon_soup_with_certified_convex_inputs(meshes, certified_convex_inputs)?
     };
     let convex_candidate = if use_two_convex_candidate {
-        prepare_two_convex_inputs_projectively(&soup.polygons, &supported_operations)
+        compute_two_convex_inputs_projectively(&soup.polygons, operation)
             .ok()
             .flatten()
     } else {
         None
     };
-    let operation_scoped_triangle_extraction = convex_candidate.is_some();
-    let (classified, triangle_soups, input_edges_deferred) =
-        if let Some(candidate) = convex_candidate {
-            (candidate.classified, candidate.triangle_soups, true)
-        } else {
-            if use_two_convex_candidate {
-                soup = prepare_input_with_certified_convex_inputs(meshes, certified_convex_inputs)?;
-            }
-            let process_bounds = expanded_bounds(&soup.bounds);
-            let ref_point = outside_reference_point(&process_bounds);
-            let ref_wnv = vec![0; soup.num_meshes];
-            (
-                crate::subdivision::subdivide_prepared_with_certified_convex_inputs(
-                    SubdivisionTask::new(
-                        std::mem::take(&mut soup.polygons),
-                        process_bounds,
-                        ref_point,
-                        ref_wnv,
-                    ),
-                    &supported_operations,
-                    certified_convex_inputs,
-                    SubdivisionConfig {
-                        max_depth: config.max_depth,
-                    },
-                )?,
-                Vec::new(),
-                false,
-            )
-        };
-    let extraction_cache = Arc::new(ExtractionCache::default());
-    for (operation, triangle_soup) in triangle_soups {
-        extraction_cache.triangle_soups[boolean_operation_index(operation)]
-            .set(Ok(triangle_soup))
-            .expect("fresh operation extraction cache is unset");
-    }
-    Ok(BooleanArrangement {
+    let (classified, triangle_soup, input_edges_deferred) = if let Some(candidate) =
+        convex_candidate
+    {
+        (candidate.classified, Some(candidate.triangle_soup), true)
+    } else {
+        if use_two_convex_candidate {
+            soup =
+                build_polygon_soup_with_certified_convex_inputs(meshes, certified_convex_inputs)?;
+        }
+        let process_bounds = expanded_bounds(&soup.bounds);
+        let ref_point = outside_reference_point(&process_bounds);
+        let ref_wnv = vec![0; soup.num_meshes];
+        (
+            crate::subdivision::subdivide_boolean_with_certified_convex_inputs(
+                SubdivisionTask::new(
+                    std::mem::take(&mut soup.polygons),
+                    process_bounds,
+                    ref_point,
+                    ref_wnv,
+                ),
+                operation,
+                certified_convex_inputs,
+                SubdivisionConfig {
+                    max_depth: config.max_depth,
+                },
+            )?,
+            None,
+            false,
+        )
+    };
+    Ok(BooleanComputation {
         soup,
         classified,
-        supported_operations,
-        extraction_cache,
-        operation_scoped_triangle_extraction,
+        triangle_soup,
         input_edges_deferred,
     })
 }
@@ -1041,10 +921,10 @@ fn affine_projective_point(point: &HomogeneousPoint3) -> HypermeshResult<Point3>
     })
 }
 
-fn prepare_two_convex_inputs_projectively(
+fn compute_two_convex_inputs_projectively(
     polygons: &[ConvexPolygon],
-    operations: &[BooleanOp],
-) -> HypermeshResult<Option<PreparedConvexCandidate>> {
+    operation: BooleanOp,
+) -> HypermeshResult<Option<ConvexCandidate>> {
     let mut support_planes: [Vec<&Plane>; 2] = std::array::from_fn(|_| Vec::new());
     let mut storage_support_planes: [StorageHashMap<[usize; 4], usize>; 2] =
         std::array::from_fn(|_| StorageHashMap::default());
@@ -1114,8 +994,8 @@ fn prepare_two_convex_inputs_projectively(
         let host = usize::try_from(polygon.mesh_index)
             .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
         let other = 1 - host;
-        let emit_outside = projective_transition_is_emitted(host, other, false, operations);
-        let emit_inside = projective_transition_is_emitted(host, other, true, operations);
+        let emit_outside = projective_transition_is_emitted(host, false, operation);
+        let emit_inside = projective_transition_is_emitted(host, true, operation);
         if !emit_outside && !emit_inside {
             continue;
         }
@@ -1169,7 +1049,7 @@ fn prepare_two_convex_inputs_projectively(
                     host,
                     other,
                     false,
-                    operations,
+                    operation,
                 )?;
             }
             continue;
@@ -1184,7 +1064,7 @@ fn prepare_two_convex_inputs_projectively(
                     host,
                     other,
                     true,
-                    operations,
+                    operation,
                 )?;
             }
             continue;
@@ -1213,7 +1093,7 @@ fn prepare_two_convex_inputs_projectively(
                         host,
                         other,
                         false,
-                        operations,
+                        operation,
                     )?;
                     has_inside = false;
                     break;
@@ -1227,7 +1107,7 @@ fn prepare_two_convex_inputs_projectively(
                         host,
                         other,
                         false,
-                        operations,
+                        operation,
                     )?;
                     remainder = clipped.negative;
                 }
@@ -1242,14 +1122,14 @@ fn prepare_two_convex_inputs_projectively(
                 host,
                 other,
                 true,
-                operations,
+                operation,
             )?;
         }
     }
 
-    let triangle_soups = if let [operation] = operations {
-        if *operation != BooleanOp::SymmetricDifference {
-            let indicator = make_indicator(*operation, support_planes.len());
+    let triangle_soup = {
+        if operation != BooleanOp::SymmetricDifference {
+            let indicator = make_indicator(operation, support_planes.len());
             for fragment in &mut classified {
                 let winding = fragment
                     .winding()
@@ -1273,7 +1153,7 @@ fn prepare_two_convex_inputs_projectively(
                 false,
             )
             .and_then(certify_triangle_soup_closure)
-        } else if *operation == BooleanOp::Union {
+        } else if operation == BooleanOp::Union {
             crate::output::triangulate_selected_preclassified_arrangement_construction_candidates(
                 &classified,
                 true,
@@ -1285,49 +1165,23 @@ fn prepare_two_convex_inputs_projectively(
                 true,
             )
             .and_then(|triangles| {
-                select_triangle_arrangement(&triangles, *operation, support_planes.len())
+                select_triangle_arrangement(&triangles, operation, support_planes.len())
             })
         }
         .or_else(|_| {
             crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
                 .and_then(|triangles| {
-                    select_triangle_arrangement(&triangles, *operation, support_planes.len())
+                    select_triangle_arrangement(&triangles, operation, support_planes.len())
                 })
         });
-        let soup = match soup {
+        match soup {
             Ok(soup) => soup,
             Err(_) => return Ok(None),
-        };
-        vec![(*operation, Arc::new(soup))]
-    } else {
-        let triangles = crate::output::triangulate_classified_arrangement_construction_candidates(
-            &classified,
-            true,
-        )
-        .and_then(|triangles| {
-            for &operation in operations {
-                select_triangle_arrangement(&triangles, operation, support_planes.len())?;
-            }
-            Ok(triangles)
-        })
-        .or_else(|_| {
-            crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
-                .and_then(|triangles| {
-                    for &operation in operations {
-                        select_triangle_arrangement(&triangles, operation, support_planes.len())?;
-                    }
-                    Ok(triangles)
-                })
-        });
-        match triangles {
-            Ok(_) => {}
-            Err(_) => return Ok(None),
         }
-        Vec::new()
     };
-    Ok(Some(PreparedConvexCandidate {
+    Ok(Some(ConvexCandidate {
         classified,
-        triangle_soups,
+        triangle_soup,
     }))
 }
 
@@ -1361,26 +1215,6 @@ fn exact_plane_f64(plane: &Plane) -> Option<[f64; 4]> {
         return None;
     };
     Some([a, b, c, d])
-}
-
-fn select_classified_fragments(
-    classified: &[ClassifiedPolygon],
-    operation: BooleanOp,
-    num_meshes: usize,
-) -> HypermeshResult<Vec<ClassifiedPolygon>> {
-    let indicator = make_indicator(operation, num_meshes);
-    let mut selected = Vec::new();
-    for polygon in classified {
-        let winding = polygon
-            .winding()
-            .ok_or(crate::error::HypermeshError::UnknownClassification)?;
-        if crate::winding::classify_polygon_output(&winding.w_front, &winding.w_back, &indicator)
-            != 0
-        {
-            selected.push(polygon.clone());
-        }
-    }
-    Ok(selected)
 }
 
 fn exact_inside_and_active_planes(
@@ -1669,13 +1503,13 @@ fn push_projective_transition(
     host: usize,
     other: usize,
     inside_other: bool,
-    operations: &[BooleanOp],
+    operation: BooleanOp,
 ) -> HypermeshResult<()> {
     if cycle.points.len() < 3 {
         return Ok(());
     }
     let winding = projective_transition_winding(host, other, inside_other);
-    if !projective_transition_is_emitted(host, other, inside_other, operations) {
+    if !projective_transition_is_emitted(host, inside_other, operation) {
         return Ok(());
     }
     let polygon = cycle.materialize(source, affine_cache)?;
@@ -1711,42 +1545,13 @@ fn projective_transition_winding(host: usize, other: usize, inside_other: bool) 
     WindingPair { w_front, w_back }
 }
 
-fn projective_transition_is_emitted(
-    host: usize,
-    _other: usize,
-    inside_other: bool,
-    operations: &[BooleanOp],
-) -> bool {
-    operations.iter().copied().any(|operation| match operation {
+fn projective_transition_is_emitted(host: usize, inside_other: bool, operation: BooleanOp) -> bool {
+    match operation {
         BooleanOp::Union => !inside_other,
         BooleanOp::Intersection => inside_other,
         BooleanOp::Difference => (host == 0 && !inside_other) || (host == 1 && inside_other),
         BooleanOp::SymmetricDifference => true,
-    })
-}
-
-fn validate_mesh_refs(meshes: &[MeshRef<'_>]) -> HypermeshResult<()> {
-    if meshes.is_empty() {
-        return Err(crate::error::HypermeshError::EmptyInput);
     }
-
-    for (mesh_index, mesh) in meshes.iter().enumerate() {
-        if mesh.positions.is_empty() || mesh.triangles.is_empty() {
-            return Err(crate::error::HypermeshError::EmptyMesh { mesh_index });
-        }
-        for triangle in mesh.triangles {
-            for index in triangle.indices() {
-                if index >= mesh.positions.len() {
-                    return Err(crate::error::HypermeshError::VertexIndexOutOfBounds {
-                        index,
-                        vertex_count: mesh.positions.len(),
-                    });
-                }
-            }
-        }
-    }
-
-    Ok(())
 }
 
 /// Union convenience wrapper.
@@ -1774,6 +1579,15 @@ pub fn boolean_difference(
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
     boolean_operation(&[a, b], BooleanOp::Difference, config)
+}
+
+/// Symmetric-difference convenience wrapper.
+pub fn boolean_symmetric_difference(
+    a: MeshRef<'_>,
+    b: MeshRef<'_>,
+    config: EmberConfig,
+) -> HypermeshResult<BooleanResult> {
+    boolean_operation(&[a, b], BooleanOp::SymmetricDifference, config)
 }
 
 fn expanded_bounds(bounds: &Aabb) -> Aabb {

@@ -30,7 +30,7 @@ closure fact cannot be certified, the operation returns `HypermeshError`.
 ## Main Types
 
 - `InputMesh`, `MeshRef`, and `Triangle` are the owned and borrowed indexed-triangle
-  input types. `prepare_input` validates inputs and builds a combined `PolygonSoup`.
+  input types. `build_polygon_soup` validates inputs and builds a combined `PolygonSoup`.
 - `Point3`, `Vector3`, and `Real` are re-exported from `hyperlattice` for exact mesh
   coordinates.
 - `Plane`, `Aabb`, `Classification`, `ConvexPolygon`, `ExactBvh`, and `LocalBsp`
@@ -40,23 +40,20 @@ closure fact cannot be certified, the operation returns `HypermeshError`.
 - `BooleanOp` selects `Union`, `Intersection`, `Difference`, or
   `SymmetricDifference`. `EmberConfig` controls the optional subdivision-depth
   budget.
-- `BooleanResult` contains the certified classified polygon arrangement. Its
+- `BooleanResult` contains the certified operation-specific polygon output. Its
   `output`, `classifications`, and `winding_pairs` accessors expose geometry and
   classification evidence.
-- `BooleanArrangement` retains certified winding evidence for its requested
-  operation set. `prepare_boolean_operations` can preserve a one-operation
-  pruning schedule or retain several results for extraction from one build;
-  `build_boolean_arrangement` requests all four operations.
 - `OutputPolygon` is an extracted polygon with explicit exact vertices.
   `TriangleSoup` is the indexed triangle output produced by
-  `triangulate_and_resolve_certified`.
+  `triangulate_and_resolve_certified` or the immediate
+  `boolean_triangle_soup` entry point.
 - `ExactGpuMeshBuffers` preserves exact position/normal rows with `u32` indices;
   `GpuMeshBuffersF32` and `GpuMeshBuffersF64` are explicit finite approximations
   for graphics APIs. `TriangleSoup::try_to_gpu_mesh_f32` and
   `TriangleSoup::try_to_gpu_mesh_f64` build flat-shaded buffers directly;
   `approximate_interleaved_gpu_mesh_f32` and its `f64` counterpart avoid
   temporary split buffers for interleaved renderer vertex layouts.
-- `TriangleSoupClosureReport`, `triangle_soup_closure_report`, and
+- `TriangleSoupClosureEvidence`, `triangle_soup_closure_evidence`, and
   `triangle_soup_is_closed` expose exact output closure diagnostics.
 
 ## Precision Model
@@ -79,7 +76,7 @@ error rather than an approximate topology decision.
 
 The Boolean path follows the EMBER architecture:
 
-1. `prepare_input` validates each source mesh and converts triangles to exact planar
+1. `build_polygon_soup` validates each source mesh and converts triangles to exact planar
    polygons with winding-number transitions.
 2. Adaptive axis-aligned subdivision isolates local arrangements while propagating an
    outside reference point and its winding vector.
@@ -106,12 +103,12 @@ repeated exact comparisons during output assembly.
 
 The implementation prioritizes pruning work before invoking expensive exact
 predicates: AABB and BVH rejection, adaptive subdivision, leaf-level pairwise tests,
-local winding traces, and retained arrangement evidence all constrain the exact work.
-All public Boolean operations use one prepared pipeline. `boolean_operation` requests a
-single operation and retains operation-specific winding-reachability pruning;
-`prepare_boolean_operations` requests an explicit reusable subset; and
-`build_boolean_arrangement` retains all four operations. Multi-operation preparation
-avoids repeating intersection, BSP, and winding-classification work.
+local winding traces, and operation-specific reachability all constrain the exact
+work. Every public Boolean call is immediate and operation-scoped.
+`boolean_operation` returns certified polygons, while `boolean_triangle_soup`
+fuses the same operation with indexed output materialization. Certified-convex
+variants accept exact facts from mesh owners without exposing intermediate
+arrangement state.
 The current implementation is single-process Rust and does not claim the parallel
 throughput numbers of the EMBER reference implementation.
 
@@ -121,9 +118,7 @@ Implemented today:
 
 - exact union, intersection, difference, and symmetric difference over multiple
   finite closed-PWN triangle meshes;
-- reusable certified arrangement construction for extracting several operations
-  over the same inputs;
-- one unified scoped-preparation path for single and multi-operation Booleans;
+- immediate operation-specific polygon and triangle-soup Boolean paths;
 - input validation for indices, degeneracy, closure, and directed edge balance;
 - exact polygon intersection, adaptive subdivision, local BSP splitting, and winding
   classification;
@@ -204,10 +199,10 @@ fn main() -> hypermesh::HypermeshResult<()> {
 }
 ```
 
-For two meshes, `boolean_union`, `boolean_intersection`, and `boolean_difference` are
-convenience wrappers. Use `boolean_operation` for multi-mesh operations or symmetric
-difference. Use `extract_output` when polygon loops are preferable to indexed
-triangles.
+For two meshes, `boolean_union`, `boolean_intersection`, `boolean_difference`, and
+`boolean_symmetric_difference` are convenience wrappers. Use `boolean_operation`
+for multi-mesh operations and `boolean_triangle_soup` when indexed triangles are
+the desired result. Use `extract_output` when polygon loops are preferable.
 
 ## Development
 

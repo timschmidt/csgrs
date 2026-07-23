@@ -4,7 +4,7 @@ use hypermesh::{
     ExactGpuVertex, InputMesh, Point3, Real, Triangle, approximate_gpu_mesh_f32,
     approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
     approximate_interleaved_gpu_mesh_f64, convex_hull, convex_hull_with_coplanar_groups,
-    prepare_input,
+    build_polygon_soup,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -44,7 +44,7 @@ fuzz_target!(|data: [u8; 24]| {
             usize::from(data[6] % 7),
         ));
     }
-    if let Ok(mut prepared) = prepare_input(&[mesh.as_ref()]) {
+    if let Ok(mut prepared) = build_polygon_soup(&[mesh.as_ref()]) {
         assert_eq!(prepared.num_meshes, 1);
         assert!(prepared.polygons.iter().all(|polygon| polygon.is_valid()));
         prepared.compute_bounds_from_vertices().unwrap();
@@ -75,7 +75,7 @@ fuzz_target!(|data: [u8; 24]| {
                 .into_iter()
                 .all(|index| index < hull.positions.len())
         }));
-        let prepared = prepare_input(&[hull.as_ref()]).unwrap();
+        let prepared = build_polygon_soup(&[hull.as_ref()]).unwrap();
         assert!(prepared.polygons.iter().all(|polygon| polygon.is_valid()));
     }
 

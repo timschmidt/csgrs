@@ -1,7 +1,7 @@
 use super::*;
 use crate::geometry::Plane;
 use crate::intersection::OverlapInfo;
-use crate::mesh::{OutputVertex, PolygonSoup, prepare_input};
+use crate::mesh::{OutputVertex, PolygonSoup, build_polygon_soup};
 use crate::operations::{EmberConfig, boolean_operation};
 use crate::output::{BooleanResult, TriangleSoup, triangulate_and_resolve_certified};
 use crate::polygon::make_triangle;
@@ -892,7 +892,7 @@ fn subdivision_exhausts_arrangement_splits_before_depth_budget() {
         SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
         &indicator,
         SubdivisionConfig { max_depth: 0 },
-        &[],
+        None,
         &mut output,
         &mut |_task, _indicator, _output| {
             leaf_calls += 1;
@@ -925,7 +925,7 @@ fn certified_root_leaf_preempts_available_arrangement_splits() {
         SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
         &indicator,
         SubdivisionConfig::default(),
-        &[],
+        None,
         &mut output,
         &mut |task, _indicator, local_output| {
             leaf_calls += 1;
@@ -1579,7 +1579,7 @@ fn compute_new_reference_skips_projected_search_after_support_hit() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
 
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
@@ -1625,7 +1625,7 @@ fn alternate_support_reference_matches_general_boolean_results() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let refs = [x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()];
     for op in [
         BooleanOp::Union,
@@ -1671,7 +1671,7 @@ fn ordered_subdivision_splits_keep_lower_child_load_ahead_of_downstream_fanout()
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
@@ -1756,7 +1756,7 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
@@ -1917,7 +1917,7 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
@@ -3900,7 +3900,7 @@ fn unsplittable_subdivision_runs_leaf_processor_once() {
         task,
         &indicator,
         SubdivisionConfig { max_depth: 0 },
-        &[],
+        None,
         &mut output,
         &mut |_task, _indicator, _output| {
             attempts += 1;
@@ -3968,7 +3968,7 @@ fn contract_task_to_polygon_family_bounds_if_tighter_returns_contracted_task() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -3997,7 +3997,7 @@ fn contract_task_to_polygon_family_bounds_if_tighter_skips_already_tight_task() 
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -4038,7 +4038,7 @@ fn contract_task_to_polygon_family_bounds_if_tighter_reuses_cached_subdivision_r
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -4082,7 +4082,7 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -4121,7 +4121,7 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
         task,
         &indicator,
         SubdivisionConfig { max_depth: 0 },
-        &[],
+        None,
         &mut output,
         &mut |_task, _indicator, _output| {
             process_leaf_calls += 1;
@@ -4999,7 +4999,7 @@ fn propagate_child_reference_prefers_direct_result_before_equivalent_cached_reus
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
             soup.polygons.clone(),
@@ -5076,7 +5076,7 @@ fn propagate_child_reference_prefers_direct_result_before_exact_cached_hit() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
             soup.polygons.clone(),
@@ -5459,7 +5459,7 @@ fn process_split_attempt_child_backtracks_on_identical_recursive_state() {
         task.bounds.clone(),
         &indicator,
         SubdivisionConfig { max_depth: 4 },
-        &[BooleanOp::Union],
+        Some(BooleanOp::Union),
         &mut candidate_output,
         &mut candidate_buckets,
         &mut |_task, _indicator, _output| {
@@ -6430,7 +6430,7 @@ fn surface_reference_normalization_departs_open_parallel_surface_family() {
 #[test]
 fn surface_reference_normalization_selects_matching_positive_side_winding() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
     let polygon = soup
         .polygons
         .iter()
@@ -6459,7 +6459,7 @@ fn surface_reference_normalization_selects_matching_positive_side_winding() {
 #[test]
 fn surface_reference_normalization_selects_matching_negative_side_winding() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
     let polygon = soup
         .polygons
         .iter()
@@ -6487,7 +6487,7 @@ fn surface_reference_normalization_selects_matching_negative_side_winding() {
 #[test]
 fn surface_reference_normalization_finds_matching_vertex_cell() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     let (point, definitions, winding) =
@@ -6503,7 +6503,7 @@ fn surface_reference_normalization_finds_matching_vertex_cell() {
 #[test]
 fn surface_reference_normalization_finds_matching_edge_cell() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     let (point, _definitions, winding) =
@@ -6519,7 +6519,7 @@ fn surface_reference_normalization_finds_matching_edge_cell() {
 fn surface_reference_normalization_finds_matching_noncoplanar_surface_cell() {
     let left = tetra_from_face_and_apex(p(2, 0, 0), p(2, 6, 0), p(2, 3, 6), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(0, 3, 0), p(6, 3, 0), p(3, 3, 6), p(3, 5, 2));
-    let soup = prepare_input(&[left.as_ref(), right.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     let (point, _definitions, winding) =
@@ -6534,7 +6534,7 @@ fn surface_reference_normalization_finds_matching_noncoplanar_surface_cell() {
 #[test]
 fn surface_reference_normalization_exhausts_adjacent_cells_for_impossible_winding() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     let err = normalize_surface_reference(&p(1, 1, 1), &[7], &bounds, &soup.polygons).unwrap_err();
@@ -13864,7 +13864,7 @@ fn unsplittable_task_requires_certified_leaf_completion() {
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
         &indicator,
         SubdivisionConfig { max_depth: 4 },
-        &[],
+        None,
         &mut output,
         &mut |_task, _indicator, out| {
             out.push(emitted.clone());
@@ -13897,7 +13897,7 @@ fn unsplittable_task_accepts_certified_leaf_completion() {
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
         &indicator,
         SubdivisionConfig { max_depth: 4 },
-        &[],
+        None,
         &mut output,
         &mut |_task, _indicator, out| {
             out.push(emitted.clone());
@@ -13931,7 +13931,7 @@ fn subdivision_normalizes_reference_definitions_before_leaf_processing() {
         task,
         &indicator,
         SubdivisionConfig { max_depth: 4 },
-        &[],
+        None,
         &mut output,
         &mut |task, _indicator, _output| {
             assert_eq!(task.ref_definitions, axis_defs(&ref_point));
@@ -13982,9 +13982,9 @@ fn operation_subdivision_discards_fixed_difference_outside_region() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 1, 0);
     wall.delta_w = vec![0, 1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
-    let output = subdivide_prepared(
+    let output = subdivide_boolean(
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
-        &[BooleanOp::Difference],
+        BooleanOp::Difference,
         SubdivisionConfig { max_depth: 0 },
     )
     .unwrap();
@@ -13997,9 +13997,9 @@ fn operation_subdivision_keeps_potential_difference_region() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1, 0];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
-    let err = subdivide_prepared(
+    let err = subdivide_boolean(
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
-        &[BooleanOp::Difference],
+        BooleanOp::Difference,
         SubdivisionConfig { max_depth: 0 },
     )
     .unwrap_err();

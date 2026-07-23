@@ -39,9 +39,9 @@ timing, and a recording window that fails on an empty dispatch trace.
 
 | Public executable family | Semantic tests | Release benchmark | Exact path trace |
 | --- | --- | --- | --- |
-| Input meshes, polygon soups, and preparation | `core`, `regression` | `end_to_end/prepare_input` | `mesh_prepare_input` plus the dispatch-trace integration test |
+| Input meshes and polygon soups | `core`, `regression` | `end_to_end/build_polygon_soup` | `mesh_build_polygon_soup` plus the dispatch-trace integration test |
 | Primitives, clipping, intersections, BVHs, and local BSP | `core`, `regression` | exercised inside `end_to_end` Boolean and hull workloads | `polygon_clip_intersection_bvh_bsp` |
-| Boolean arrangement construction, scoped/certified-convex preparation, extraction, and all operations | `core`, `regression` | `end_to_end/boolean_operation` and arrangement/crossover groups | every operation over overlapping, nested, variadic, and subdivided inputs plus `prepared_certified_convex_and_output_views` |
+| Immediate Boolean polygon and triangle output, including certified-convex dispatch and all operations | `core`, `regression` | `end_to_end/boolean_operation` and `end_to_end/boolean_immediate_output` | every operation over overlapping, nested, variadic, and subdivided inputs plus immediate certified-convex output views |
 | Subdivision, leaf processing, segment tracing, and winding propagation | `core`, `regression` | exercised inside `end_to_end` Boolean workloads | Boolean recordings plus `segment_and_winding` |
 | Certified output extraction, triangulation, and closure reports | `core`, `regression` | `end_to_end/output` | Boolean recordings include output-closure certification |
 | Convex hull, coplanar groups, and retained construction facts | `core`, `regression` | all `end_to_end/convex_hull` cases, including both retained variants | `convex_hull/grid_4913` and `convex_hull_public_variants` |
@@ -334,61 +334,39 @@ All production hierarchy plumbing was removed. The benchmark and dispatch
 fixture remain so a future zero-copy query integration can prove a different
 cost model rather than extrapolating from the smaller cube cases.
 
-## 2026-07-15: unified scoped arrangement extraction
+## 2026-07-23: operation-scoped immediate Boolean execution
 
 Status: **kept**
 
-Reference considered:
+The public build-once/extract-many Boolean surface was removed. Each call now
+names exactly one operation, performs only that operation's reachability and
+transition work, closure-certifies the result, and returns owned output without
+exposing or caching intermediate arrangement state.
 
-- Zhou, Grinspun, Zorin, and Jacobson, *Mesh Arrangements for Solid
-  Geometry*, especially its two-stage separation between operation-independent
-  arrangement construction and winding-vector extraction.
+`boolean_operation` returns certified polygons. `boolean_triangle_soup`
+continues directly through certified triangulation and output resolution, and
+the certified-convex variants use the projective two-input fast path without a
+public carrier. The selected classified fragments are moved into the result
+instead of cloned. `boolean_symmetric_difference` completes the two-input
+convenience API.
 
-Hypothesis: clients requesting several Boolean results for the same inputs
-should not repeat input preparation, pairwise intersections, local BSP
-construction, and exact winding classification for every operator.
+The former multi-result crossover measurements are intentionally retired:
+retaining classified arrangements is no longer an API or an optimization
+target. The immediate benchmark group measures polygon output, triangle-soup
+output, and certified-convex triangle-soup output separately so future work is
+judged on cold operation latency and allocation rather than cache reuse.
 
-Implementation:
+A `--quick` Criterion smoke run on two overlapping cubes measured:
 
-- Add `prepare_boolean_operations`, which accepts the exact operation set to
-  retain. A singleton set preserves operation-specific winding-reachability
-  pruning and selected-transition emission; a multi-operation set retains the
-  winding transitions required for every requested extraction.
-- Make `boolean_operation` a compatibility wrapper over singleton preparation
-  and extraction, eliminating its separate general-operation pipeline.
-- Keep `build_boolean_arrangement` as the all-four-operation convenience API.
-- Add `BooleanArrangement::extract`, which applies union, intersection,
-  difference, or symmetric-difference indicators to the retained winding
-  evidence and closure-certifies each result.
-- Preserve coincident fragments with distinct winding evidence inside the
-  arrangement; ordinary operation output keeps its existing geometric
-  deduplication.
-- Reject extraction of operations outside the prepared set instead of silently
-  claiming evidence that was not retained.
+| operation | polygon output | triangle-soup output | certified-convex triangle soup |
+| --- | ---: | ---: | ---: |
+| union | 3.30–3.36 ms | 3.31–3.47 ms | 166.7–167.4 us |
+| intersection | 3.18–3.36 ms | 3.08–3.10 ms | 108.6–110.6 us |
+| difference | 3.15–3.29 ms | 3.17–3.28 ms | 131.5–133.9 us |
+| symmetric difference | 3.38–3.39 ms | 3.36–3.40 ms | 190.1–190.3 us |
 
-Criterion crossover evidence for two overlapping cubes:
-
-| requested operations | scoped direct calls | scoped preparation plus extraction | extraction from prebuilt all-operation arrangement |
-| ---: | ---: | ---: | ---: |
-| 1 | 8.061 ms | 8.373 ms | 0.190 ms |
-| 2 | 16.129 ms | 8.333 ms | 0.273 ms |
-| 3 | 24.442 ms | 8.425 ms | 0.424 ms |
-| 4 | 32.445 ms | 8.711 ms | 0.751 ms |
-
-Singleton preparation and `boolean_operation` execute the same scoped path;
-their small measured difference is benchmark-order noise. Preparation crosses
-over decisively at two requested results, while a prebuilt arrangement makes
-every retained extraction sub-millisecond on this fixture.
-
-Focused tests compare every extracted operation byte-for-byte with the direct
-result for both overlapping and exactly coincident cube pairs. The coincident
-case specifically guards retention of distinct winding evidence.
-
-Final validation passed 952 unit tests, 58 core integration tests, 48
-regressions (with one benchmark-style smoke test intentionally ignored), and
-all doctests. Formatting, all-target/all-feature checking, Clippy with warnings
-denied, rustdoc with warnings denied, and the no-default-feature test matrix
-also passed.
+These short runs are smoke evidence, not a replacement for the longer
+reference-guided sampling protocol.
 
 ## 2026-07-18: retain rational point filter intervals
 
@@ -436,14 +414,13 @@ over `polygon_predicates` (35,735 executions with no failure).
 Status: **kept for difference and intersection**
 
 The certified two-convex path already prunes fragments for one requested
-operation and retains their exact front/back winding evidence. Difference and
+operation and carries their exact front/back winding evidence. Difference and
 intersection nevertheless cloned both winding vectors onto every generated
 triangle, then immediately classified those copies, allocated a second
 triangle/source list, and cloned the merged exact vertex pool. Their operation
-orientation is now classified once per retained polygon and consumed directly
-while triangulating. The arrangement keeps its original winding pairs for
-public retained extraction, closure is still certified on the oriented soup,
-and failure still enters the existing precomputed-f64 exact fallback.
+orientation is now classified once per output polygon and consumed directly
+while triangulating. Closure is still certified on the oriented soup, and
+failure still enters the existing precomputed-f64 exact fallback.
 
 Union and symmetric difference retain the prior construction-plus-winding
 selection path after the direct path did not improve both workloads. A
@@ -473,8 +450,8 @@ point alongside its plane-indexed signs. Only conservative approximate values
 and their certified error radii are retained; uncertain filters continue to
 use the unchanged exact rational signed-product-sum ordering.
 
-A 500-operation alternating-input profile forced a fresh arrangement on every
-call. Rational-to-`f64` conversion fell from 10.97% to 8.20% of sampled cycles,
+A 500-operation alternating-input profile forced a fresh Boolean computation
+on every call. Rational-to-`f64` conversion fell from 10.97% to 8.20% of sampled cycles,
 a 25.3% reduction in the targeted hotspot's share. Total sampled cycles also
 fell from 4.775 billion to 4.713 billion.
 
@@ -492,8 +469,8 @@ sizes and checksums matched throughout.
 
 Warm measurements used 31 similarly interleaved processes. Union and
 symmetric difference were unchanged; difference and intersection moved by
-about 1--2.5% even though prepared-arrangement reuse bypasses the modified
-code, identifying that residual as binary-layout and measurement variation.
+about 1--2.5%, identifying that residual as binary-layout and measurement
+variation.
 
 Validation passed the default and all-feature matrices (954 unit tests, 59/60
 core integration tests, and 48 regressions with one benchmark smoke test
@@ -577,7 +554,7 @@ inside/outside transitions avoid the two unused clones entirely. Exact support
 classification, crossing construction, final edge-plane rebuilding, and output
 closure certification are unchanged.
 
-Five interleaved release runs per side forced a fresh arrangement for each of
+Five interleaved release runs per side forced a fresh Boolean computation for each of
 500 alternating CSGRS sphere/box operations:
 
 | operation | eager placeholders | deferred placeholders | result |
@@ -601,16 +578,17 @@ downstream CSGRS library suite passed all 304 tests.
 
 Status: **kept**
 
-The arrangement already owns every classified polygon through final triangle
-extraction. The construction-candidate triangulator nevertheless cloned the
+The operation computation already owns every classified polygon through final
+triangle output. The construction-candidate triangulator nevertheless cloned the
 whole polygon set into a temporary vector, including exact support coefficients
 and winding vectors, before immediately borrowing those clones. Its internal
-polygon consumers now accept either owned or borrowed carriers and the two
-classified-arrangement entry points pass references. Vertex materialization,
+polygon consumers now accept either owned or borrowed carriers and immediate
+triangle output passes references. Polygon output instead moves the selected
+fragments into the result. Vertex materialization,
 exact duplicate merging, construction-edge T-junction recovery, orientation,
 and closure certification are unchanged.
 
-Five interleaved release runs per side forced a fresh arrangement for each of
+Five interleaved release runs per side forced a fresh Boolean computation for each of
 500 alternating CSGRS sphere/box operations:
 
 | operation | cloned polygons | borrowed polygons | result |
@@ -639,10 +617,10 @@ even though the input polygon soup remains alive for the whole preparation.
 For the sphere/box workload this cloned every exact normal and offset before
 performing read-only equality, classification, and clipping queries. The table
 now borrows each source polygon's support plane. Emitted fragments still own
-their source or derived polygon geometry, so arrangement lifetime and public
-ownership are unchanged.
+their source or derived polygon geometry, so immediate result ownership is
+unchanged.
 
-Five interleaved release runs per side forced a fresh arrangement for each of
+Five interleaved release runs per side forced a fresh Boolean computation for each of
 500 alternating CSGRS sphere/box operations:
 
 | operation | cloned support planes | borrowed support planes | result |
@@ -669,7 +647,7 @@ query and allowing a decided crossing even when a later irrelevant query would
 be undecidable.
 
 Wall-clock movement was below scheduler noise, so five interleaved release runs
-per side measured retired instructions for 500 alternating fresh arrangements:
+per side measured retired instructions for 500 alternating immediate operations:
 
 | operation | visit every vertex | stop at crossing | result |
 | --- | ---: | ---: | ---: |
@@ -1039,9 +1017,10 @@ All reference-derived ideas are mapped as follows:
   inapplicable until that execution policy changes.
 - **Mesh Arrangements:** intersection reuse, arrangement cell construction,
   exact winding-vector propagation, output extraction, and repair avoidance.
-  Pair symmetry, BVH culling, exact-result caching, triangle predicate reuse,
-  and explicit build-once/extract-many arrangement reuse are implemented and
-  benchmarked.
+  Pair symmetry, BVH culling, operation-local exact-result caching, and
+  triangle predicate reuse are implemented and benchmarked. Public retained
+  arrangement reuse was evaluated and subsequently removed in favor of cold
+  immediate-operation performance.
 - **Generalized Winding Numbers:** the hierarchy, retained winding evidence,
   boundary behavior, and repeated-query model have been audited. A 384-polygon
   certified leaf now covers the paper's size scale, but a shared exact segment

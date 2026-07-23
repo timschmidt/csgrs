@@ -689,7 +689,7 @@ pub fn subdivide(
         task,
         indicator,
         config,
-        &[],
+        None,
         &mut output,
         &mut process_leaf,
         &caches,
@@ -699,31 +699,23 @@ pub fn subdivide(
 }
 
 #[cfg(test)]
-pub(crate) fn subdivide_prepared(
+pub(crate) fn subdivide_boolean(
     task: SubdivisionTask,
-    operations: &[BooleanOp],
+    operation: BooleanOp,
     config: SubdivisionConfig,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
-    subdivide_prepared_with_certified_convex_inputs(task, operations, &[], config)
+    subdivide_boolean_with_certified_convex_inputs(task, operation, &[], config)
 }
 
-pub(crate) fn subdivide_prepared_with_certified_convex_inputs(
+pub(crate) fn subdivide_boolean_with_certified_convex_inputs(
     task: SubdivisionTask,
-    operations: &[BooleanOp],
+    operation: BooleanOp,
     certified_convex_inputs: &[bool],
     config: SubdivisionConfig,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
-    if operations.is_empty() {
-        return Err(crate::error::HypermeshError::EmptyBooleanOperationSet);
-    }
     let mut output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
-    let emit_all_transitions = operations.len() > 1;
-    let indicator = if let [operation] = operations {
-        crate::winding::make_indicator(*operation, task.ref_wnv.len())
-    } else {
-        Box::new(|_winding: &[i32]| false) as Box<Indicator>
-    };
+    let indicator = crate::winding::make_indicator(operation, task.ref_wnv.len());
     let pairwise_cache = &caches.pairwise_intersections;
     let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
@@ -735,7 +727,7 @@ pub(crate) fn subdivide_prepared_with_certified_convex_inputs(
         process_leaf_task_into_with_caches(
             task,
             indicator,
-            emit_all_transitions,
+            false,
             output,
             pairwise_cache,
             host_bsp_cache,
@@ -749,7 +741,7 @@ pub(crate) fn subdivide_prepared_with_certified_convex_inputs(
         task,
         &indicator,
         config,
-        operations,
+        Some(operation),
         &mut output,
         &mut process_leaf,
         &caches,
@@ -796,7 +788,7 @@ pub fn subdivide_into(
         task,
         indicator,
         config,
-        &[],
+        None,
         &mut certified_output,
         &mut process_leaf,
         &caches,
@@ -810,7 +802,7 @@ fn subdivide_into_inner_with(
     mut task: SubdivisionTask,
     indicator: &Indicator,
     config: SubdivisionConfig,
-    reachability_operations: &[BooleanOp],
+    reachability_operation: Option<BooleanOp>,
     output: &mut Vec<ClassifiedPolygon>,
     process_leaf: &mut impl FnMut(
         &SubdivisionTask,
@@ -896,7 +888,7 @@ fn subdivide_into_inner_with(
                     contracted_task.clone(),
                     indicator,
                     config,
-                    reachability_operations,
+                    reachability_operation,
                     &mut contracted_output,
                     process_leaf,
                     caches,
@@ -923,20 +915,18 @@ fn subdivide_into_inner_with(
 
     let mut output_buckets = ClassifiedPolygonBucketState::from_classified(output);
 
-    let mut discard_for_every_operation = !reachability_operations.is_empty();
-    for &operation in reachability_operations {
-        if !cached_winding_reachability_with(
+    let discard_for_operation = if let Some(operation) = reachability_operation {
+        cached_winding_reachability_with(
             winding_reachability_cache,
             operation,
             &task.ref_wnv,
             &task.polygons,
             || can_discard_by_winding_reachability(operation, &task.ref_wnv, &task.polygons),
-        )? {
-            discard_for_every_operation = false;
-            break;
-        }
-    }
-    if discard_for_every_operation {
+        )?
+    } else {
+        false
+    };
+    if discard_for_operation {
         crate::trace_dispatch!("subdivision", "winding-reachability-discard");
         return Ok(());
     }
@@ -1015,7 +1005,7 @@ fn subdivide_into_inner_with(
         preferred_split,
         indicator,
         config,
-        reachability_operations,
+        reachability_operation,
         process_leaf,
         caches,
         winding_reachability_cache,
@@ -1034,7 +1024,7 @@ fn subdivide_into_inner_with(
         deferred_splits,
         indicator,
         config,
-        reachability_operations,
+        reachability_operation,
         process_leaf,
         caches,
         winding_reachability_cache,
@@ -1077,7 +1067,7 @@ fn try_ranked_subdivision_attempts(
     split_attempts: impl IntoIterator<Item = RankedSplitAttempt>,
     indicator: &Indicator,
     config: SubdivisionConfig,
-    reachability_operations: &[BooleanOp],
+    reachability_operation: Option<BooleanOp>,
     process_leaf: &mut impl FnMut(
         &SubdivisionTask,
         &Indicator,
@@ -1105,7 +1095,7 @@ fn try_ranked_subdivision_attempts(
                     split_child.bounds,
                     indicator,
                     config,
-                    reachability_operations,
+                    reachability_operation,
                     &mut candidate_output,
                     &mut candidate_buckets,
                     process_leaf,
@@ -1230,7 +1220,7 @@ fn process_split_attempt_child(
     child_bounds: Aabb,
     indicator: &Indicator,
     config: SubdivisionConfig,
-    reachability_operations: &[BooleanOp],
+    reachability_operation: Option<BooleanOp>,
     candidate_output: &mut Vec<ClassifiedPolygon>,
     candidate_buckets: &mut ClassifiedPolygonBucketState,
     process_leaf: &mut impl FnMut(
@@ -1281,7 +1271,7 @@ fn process_split_attempt_child(
                 child_task.clone(),
                 indicator,
                 config,
-                reachability_operations,
+                reachability_operation,
                 &mut child_output,
                 process_leaf,
                 caches,

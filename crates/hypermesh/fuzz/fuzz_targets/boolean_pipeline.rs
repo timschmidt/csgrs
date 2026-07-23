@@ -2,9 +2,10 @@
 
 use hypermesh::{
     BooleanOp, EmberConfig, InputMesh, Point3, Real, Triangle, boolean_difference,
-    boolean_intersection, boolean_operation, boolean_union, build_boolean_arrangement,
-    certify_output_polygon_closure, prepare_boolean_operations,
-    prepare_boolean_operations_with_certified_convex_inputs, triangulate_and_resolve_certified,
+    boolean_intersection, boolean_operation, boolean_operation_with_certified_convex_inputs,
+    boolean_symmetric_difference, boolean_triangle_soup,
+    boolean_triangle_soup_with_certified_convex_inputs, boolean_union,
+    certify_output_polygon_closure, triangulate_and_resolve_certified,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -52,7 +53,7 @@ fn validate(result: &hypermesh::BooleanResult) {
     let closure = certify_output_polygon_closure(result).unwrap();
     assert!(closure.has_no_boundary());
     let soup = triangulate_and_resolve_certified(result).unwrap();
-    assert!(hypermesh::triangle_soup_closure_report(&soup).has_no_boundary());
+    assert!(hypermesh::triangle_soup_closure_evidence(&soup).has_no_boundary());
 }
 
 fuzz_target!(|data: [u8; 4]| {
@@ -75,23 +76,26 @@ fuzz_target!(|data: [u8; 4]| {
             }
         }
         1 => {
-            if let Ok(arrangement) = prepare_boolean_operations(&refs, &[op], config)
-                && let Ok(result) = arrangement.extract(op)
-            {
-                validate(&result);
-                let soup = arrangement.extract_triangle_soup(op).unwrap();
-                assert!(hypermesh::triangle_soup_closure_report(&soup).has_no_boundary());
+            if let Ok(soup) = boolean_triangle_soup(&refs, op, config) {
+                assert!(hypermesh::triangle_soup_closure_evidence(&soup).has_no_boundary());
             }
         }
         2 => {
-            if let Ok(arrangement) = prepare_boolean_operations_with_certified_convex_inputs(
+            if let Ok(result) = boolean_operation_with_certified_convex_inputs(
                 &refs,
-                &[op],
+                op,
                 &[true, true],
                 config,
-            ) && let Ok(result) = arrangement.extract(op)
-            {
+            ) {
                 validate(&result);
+                let soup = boolean_triangle_soup_with_certified_convex_inputs(
+                    &refs,
+                    op,
+                    &[true, true],
+                    config,
+                )
+                .unwrap();
+                assert!(hypermesh::triangle_soup_closure_evidence(&soup).has_no_boundary());
             }
         }
         _ => {
@@ -99,8 +103,9 @@ fuzz_target!(|data: [u8; 4]| {
                 BooleanOp::Union => boolean_union(refs[0], refs[1], config),
                 BooleanOp::Intersection => boolean_intersection(refs[0], refs[1], config),
                 BooleanOp::Difference => boolean_difference(refs[0], refs[1], config),
-                BooleanOp::SymmetricDifference => build_boolean_arrangement(&refs, config)
-                    .and_then(|arrangement| arrangement.extract(op)),
+                BooleanOp::SymmetricDifference => {
+                    boolean_symmetric_difference(refs[0], refs[1], config)
+                }
             };
             if let Ok(result) = result {
                 validate(&result);
