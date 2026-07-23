@@ -10,6 +10,7 @@ use crate::boolean::{
 use hyperreal::RealSign;
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::hash::{BuildHasherDefault, Hasher};
 
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
@@ -1288,6 +1289,34 @@ pub(crate) type BooleanBoundaryChainIndices = Vec<(Vec<usize>, bool)>;
 
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
 
+// Boundary endpoint keys are process-local shared-allocation identities, not
+// attacker-controlled geometry. Scramble their aligned addresses without the
+// general-purpose keyed-hash overhead on this short-lived adjacency map.
+#[derive(Default)]
+struct EndpointIdentityHasher(u64);
+
+impl Hasher for EndpointIdentityHasher {
+    fn finish(&self) -> u64 {
+        self.0
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        let mut value = 0xcbf2_9ce4_8422_2325_u64;
+        for byte in bytes {
+            value ^= u64::from(*byte);
+            value = value.wrapping_mul(0x0000_0100_0000_01b3);
+        }
+        self.0 = value;
+    }
+
+    fn write_u64(&mut self, value: u64) {
+        let mut mixed = value.wrapping_add(0x9e37_79b9_7f4a_7c15);
+        mixed = (mixed ^ (mixed >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        mixed = (mixed ^ (mixed >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+        self.0 = mixed ^ (mixed >> 31);
+    }
+}
+
 pub(crate) trait BooleanBoundaryEdge {
     fn boundary_start(&self) -> &Point2;
     fn boundary_end(&self) -> &Point2;
@@ -1966,7 +1995,10 @@ fn endpoint_adjacency(
 ) -> Classification<EndpointAdjacency> {
     let mut successors = vec![None; fragments.len()];
     let mut predecessors = vec![None; fragments.len()];
-    let mut starts_by_identity = HashMap::with_capacity(fragments.len());
+    let mut starts_by_identity = HashMap::with_capacity_and_hasher(
+        fragments.len(),
+        BuildHasherDefault::<EndpointIdentityHasher>::default(),
+    );
 
     for (index, fragment) in fragments.iter().enumerate() {
         if starts_by_identity

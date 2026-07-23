@@ -41,10 +41,6 @@ impl CompactLineRegionFragmentSet {
         &self.contours
     }
 
-    pub(crate) fn into_contours(self) -> Vec<CompactLineRegionContourFragments> {
-        self.contours
-    }
-
     pub(crate) fn fragment_count(&self) -> usize {
         self.contours
             .iter()
@@ -52,12 +48,15 @@ impl CompactLineRegionFragmentSet {
             .sum()
     }
 
-    pub(crate) fn parameters_are_materialized(&self) -> bool {
+    pub(crate) fn parameters_are_materialized(
+        &self,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
+    ) -> bool {
         self.contours.iter().all(|contour| {
             contour
                 .fragments
                 .iter()
-                .all(CompactLineContourFragment::parameter_is_materialized)
+                .all(|fragment| fragment.parameter_is_materialized(contour.key, crossing_windings))
         })
     }
 }
@@ -232,7 +231,7 @@ pub(crate) fn split_single_material_line_regions_compact(
             second.material_contours()[0],
         ),
     ] {
-        let fragments = match compact_line_contour_fragments_from_crossing_windings(
+        let compact_fragments = match compact_line_contour_fragments_from_crossing_windings(
             contour,
             key,
             crossing_windings,
@@ -243,7 +242,10 @@ pub(crate) fn split_single_material_line_regions_compact(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        contours.push(CompactLineRegionContourFragments { key, fragments });
+        contours.push(CompactLineRegionContourFragments {
+            key,
+            fragments: compact_fragments,
+        });
     }
     Ok(Classification::Decided(CompactLineRegionFragmentSet {
         contours,

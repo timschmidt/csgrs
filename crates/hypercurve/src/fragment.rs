@@ -13,7 +13,7 @@ use hyperreal::Real;
 use crate::classify::{
     compare_reals, compare_reals_for_split_ordering, in_closed_unit_interval, is_zero,
 };
-use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
+use crate::region_crossing_winding::{RegionLineCrossing, RegionLineCrossingWindingIndex};
 use crate::segment::LineSupport2;
 use crate::{
     CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveError, CurvePolicy,
@@ -38,78 +38,79 @@ pub struct ContourFragment {
 
 #[derive(Debug)]
 pub(crate) struct CompactLineContourFragment {
-    pub(crate) source_segment_index: usize,
+    pub(crate) source_segment_index: u32,
     geometry: CompactLineFragmentGeometry,
 }
 
-#[derive(Debug)]
-enum CompactLineFragmentGeometry {
-    Whole,
-    Split {
-        data: Rc<CompactLineSplitData>,
-        marker_index: usize,
-    },
+#[derive(Clone, Copy, Debug)]
+struct CompactLineFragmentGeometry {
+    marker_index: u32,
 }
 
-#[derive(Debug)]
-struct CompactLineSplitMarker {
-    param: Option<Real>,
-    point: Point2,
-}
+impl CompactLineFragmentGeometry {
+    const WHOLE_MARKER_INDEX: u32 = u32::MAX;
 
-#[derive(Debug)]
-enum CompactLineSplitMarkers {
-    One(CompactLineSplitMarker),
-    Many(Vec<CompactLineSplitMarker>),
-}
-
-impl CompactLineSplitMarkers {
-    fn as_slice(&self) -> &[CompactLineSplitMarker] {
-        match self {
-            Self::One(marker) => std::slice::from_ref(marker),
-            Self::Many(markers) => markers,
+    const fn whole() -> Self {
+        Self {
+            marker_index: Self::WHOLE_MARKER_INDEX,
         }
     }
 
-    fn len(&self) -> usize {
-        self.as_slice().len()
+    fn split(marker_index: usize) -> Option<Self> {
+        Some(Self {
+            marker_index: u32::try_from(marker_index).ok()?,
+        })
+    }
+
+    fn split_marker_index(self) -> Option<usize> {
+        (self.marker_index != Self::WHOLE_MARKER_INDEX).then_some(self.marker_index as usize)
     }
 }
 
-#[derive(Debug)]
-struct CompactLineSplitData {
-    // The certified crossing index already supplies segment order and source
-    // incidence. Retain only true interior markers here: source endpoint
-    // geometry is read implicitly from the line, while zero/one parameters are
-    // stored once and shared by all sibling fragments.
-    markers: CompactLineSplitMarkers,
-    full_start: Real,
-    full_end: Real,
-    // One support allocation is shared by every sibling fragment instead of
-    // carrying a second Rc beside the marker owner in every fragment.
-    source_support: Rc<LineSupport2>,
-}
-
 impl CompactLineContourFragment {
+    fn split_crossings<'index, 'events>(
+        &self,
+        key: RegionContourKey,
+        crossing_windings: &'index RegionLineCrossingWindingIndex<'events>,
+    ) -> CurveResult<Option<(&'index [RegionLineCrossing<'events>], usize)>> {
+        match self.geometry.split_marker_index() {
+            None => Ok(None),
+            Some(marker_index) => crossing_windings
+                .crossings_for_segment(key, self.source_segment_index as usize)
+                .filter(|crossings| marker_index <= crossings.len())
+                .map(|crossings| Some((crossings, marker_index)))
+                .ok_or_else(|| {
+                    CurveError::Topology(
+                        "compact line fragment references missing crossing data".into(),
+                    )
+                }),
+        }
+    }
+
     pub(crate) fn endpoints<'a>(
-        &'a self,
+        &self,
         source_segment: &'a Segment2,
+        key: RegionContourKey,
+        crossing_windings: &'a RegionLineCrossingWindingIndex<'_>,
     ) -> CurveResult<(&'a Point2, &'a Point2)> {
         let Segment2::Line(source_line) = source_segment else {
             return Err(CurveError::Topology(
                 "compact line fragment references a non-line source segment".into(),
             ));
         };
-        Ok(match &self.geometry {
-            CompactLineFragmentGeometry::Whole => (source_line.start(), source_line.end()),
-            CompactLineFragmentGeometry::Split { data, marker_index } => {
-                let markers = data.markers.as_slice();
+        Ok(match self.split_crossings(key, crossing_windings)? {
+            None => (source_line.start(), source_line.end()),
+            Some((crossings, marker_index)) => {
                 let start = marker_index
                     .checked_sub(1)
-                    .map_or(source_line.start(), |index| &markers[index].point);
-                let end = markers
-                    .get(*marker_index)
-                    .map_or(source_line.end(), |marker| &marker.point);
+                    .map_or(source_line.start(), |index| {
+                        crossing_windings.point(&crossings[index])
+                    });
+                let end = crossings
+                    .get(marker_index)
+                    .map_or(source_line.end(), |crossing| {
+                        crossing_windings.point(crossing)
+                    });
                 (start, end)
             }
         })
@@ -119,16 +120,19 @@ impl CompactLineContourFragment {
         &'a self,
         full_start: &'a Real,
         full_end: &'a Real,
+        key: RegionContourKey,
+        crossing_windings: &'a RegionLineCrossingWindingIndex<'_>,
     ) -> Option<(&'a Real, &'a Real)> {
-        match &self.geometry {
-            CompactLineFragmentGeometry::Whole => Some((full_start, full_end)),
-            CompactLineFragmentGeometry::Split { data, marker_index } => {
-                let markers = data.markers.as_slice();
+        match self.split_crossings(key, crossing_windings).ok()? {
+            None => Some((full_start, full_end)),
+            Some((crossings, marker_index)) => {
                 let start = marker_index
                     .checked_sub(1)
-                    .map_or(Some(full_start), |index| markers[index].param.as_ref())?;
-                let end = match markers.get(*marker_index) {
-                    Some(marker) => marker.param.as_ref()?,
+                    .map_or(Some(full_start), |index| {
+                        crossing_windings.materialized_parameter(&crossings[index])
+                    })?;
+                let end = match crossings.get(marker_index) {
+                    Some(crossing) => crossing_windings.materialized_parameter(crossing)?,
                     None => full_end,
                 };
                 Some((start, end))
@@ -136,73 +140,86 @@ impl CompactLineContourFragment {
         }
     }
 
-    pub(crate) fn parameter_is_materialized(&self) -> bool {
-        match &self.geometry {
-            CompactLineFragmentGeometry::Whole => true,
-            CompactLineFragmentGeometry::Split { data, marker_index } => {
-                marker_index
-                    .checked_sub(1)
-                    .is_none_or(|index| data.markers.as_slice()[index].param.is_some())
-                    && data
-                        .markers
-                        .as_slice()
-                        .get(*marker_index)
-                        .is_none_or(|marker| marker.param.is_some())
+    pub(crate) fn parameter_is_materialized(
+        &self,
+        key: RegionContourKey,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
+    ) -> bool {
+        match self.split_crossings(key, crossing_windings) {
+            Ok(None) => true,
+            Ok(Some((crossings, marker_index))) => {
+                marker_index.checked_sub(1).is_none_or(|index| {
+                    crossing_windings
+                        .materialized_parameter(&crossings[index])
+                        .is_some()
+                }) && crossings.get(marker_index).is_none_or(|crossing| {
+                    crossing_windings.materialized_parameter(crossing).is_some()
+                })
             }
+            Err(_) => false,
         }
     }
 
-    pub(crate) fn into_source_range(self) -> ParamRange {
-        match self.geometry {
-            CompactLineFragmentGeometry::Whole => ParamRange::new(Real::zero(), Real::one()),
-            CompactLineFragmentGeometry::Split { data, marker_index } => ParamRange::new(
-                marker_index.checked_sub(1).map_or_else(
-                    || data.full_start.clone(),
-                    |index| {
-                        data.markers.as_slice()[index]
-                            .param
-                            .clone()
+    pub(crate) fn source_range(
+        &self,
+        key: RegionContourKey,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
+    ) -> CurveResult<ParamRange> {
+        Ok(match self.split_crossings(key, crossing_windings)? {
+            None => ParamRange::new(Real::zero(), Real::one()),
+            Some((crossings, marker_index)) => ParamRange::new(
+                marker_index
+                    .checked_sub(1)
+                    .map_or_else(Real::zero, |index| {
+                        crossing_windings
+                            .materialized_parameter(&crossings[index])
+                            .cloned()
                             .expect("provenance emission requires materialized parameters")
-                    },
-                ),
-                data.markers.as_slice().get(marker_index).map_or_else(
-                    || data.full_end.clone(),
-                    |marker| {
-                        marker
-                            .param
-                            .clone()
+                    }),
+                crossings
+                    .get(marker_index)
+                    .map_or_else(Real::one, |crossing| {
+                        crossing_windings
+                            .materialized_parameter(crossing)
+                            .cloned()
                             .expect("provenance emission requires materialized parameters")
-                    },
-                ),
+                    }),
             ),
-        }
+        })
     }
 
     /// Builds full line geometry only after Boolean selection retains this fragment.
-    pub(crate) fn materialize(&self, source_segment: &Segment2) -> CurveResult<Segment2> {
+    pub(crate) fn materialize(
+        &self,
+        source_segment: &Segment2,
+        key: RegionContourKey,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
+    ) -> CurveResult<Segment2> {
         let Segment2::Line(source_line) = source_segment else {
             return Err(CurveError::Topology(
                 "compact line fragment references a non-line source segment".into(),
             ));
         };
-        Ok(Segment2::Line(match &self.geometry {
-            CompactLineFragmentGeometry::Split { data, marker_index } => {
-                let markers = data.markers.as_slice();
-                let start = marker_index.checked_sub(1).map_or_else(
-                    || source_line.start().clone(),
-                    |index| markers[index].point.clone(),
-                );
-                let end = markers
-                    .get(*marker_index)
-                    .map_or_else(|| source_line.end().clone(), |marker| marker.point.clone());
-                source_line.fragment_between_after_distinct_endpoints(
-                    start,
-                    end,
-                    data.source_support.clone(),
-                )
-            }
-            CompactLineFragmentGeometry::Whole => source_line.clone(),
-        }))
+        Ok(Segment2::Line(
+            match self.split_crossings(key, crossing_windings)? {
+                Some((crossings, marker_index)) => {
+                    let start = marker_index.checked_sub(1).map_or_else(
+                        || source_line.start().clone(),
+                        |index| crossing_windings.point(&crossings[index]).clone(),
+                    );
+                    let end = crossings.get(marker_index).map_or_else(
+                        || source_line.end().clone(),
+                        |crossing| crossing_windings.point(crossing).clone(),
+                    );
+                    source_line.fragment_between_after_distinct_endpoints(
+                        start,
+                        end,
+                        source_line.fragment_support(),
+                    )
+                }
+                None => source_line.clone(),
+            },
+        ))
     }
 }
 
@@ -309,8 +326,6 @@ pub(crate) fn compact_line_contour_fragments_from_crossing_windings(
 ) -> CurveResult<Classification<Vec<CompactLineContourFragment>>> {
     let fragment_capacity = contour.len() + crossing_windings.crossing_count(key);
     let mut fragments = Vec::with_capacity(fragment_capacity);
-    let full_start = Real::zero();
-    let full_end = Real::one();
     for (segment_index, source_segment) in contour.segments().iter().enumerate() {
         let Some(crossings) = crossing_windings.crossings_for_segment(key, segment_index) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -319,31 +334,24 @@ pub(crate) fn compact_line_contour_fragments_from_crossing_windings(
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         if crossings.is_empty() {
+            let Ok(source_segment_index) = u32::try_from(segment_index) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
             fragments.push(CompactLineContourFragment {
-                source_segment_index: segment_index,
-                geometry: CompactLineFragmentGeometry::Whole,
+                source_segment_index,
+                geometry: CompactLineFragmentGeometry::whole(),
             });
             continue;
         }
 
-        let marker = |crossing| CompactLineSplitMarker {
-            param: crossing_windings.materialized_parameter(crossing).cloned(),
-            point: crossing_windings.point(crossing).clone(),
-        };
-        let markers = if crossings.len() == 1 {
-            CompactLineSplitMarkers::One(marker(&crossings[0]))
-        } else {
-            CompactLineSplitMarkers::Many(crossings.iter().map(marker).collect())
-        };
         if let Classification::Uncertain(reason) = append_compact_line_split_fragments(
             &mut fragments,
             source_line,
             segment_index,
-            markers,
+            crossings,
+            crossing_windings,
             policy,
             source_line.endpoints_decided_distinct(),
-            &full_start,
-            &full_end,
         ) {
             return Ok(Classification::Uncertain(reason));
         }
@@ -355,26 +363,30 @@ fn append_compact_line_split_fragments(
     fragments: &mut Vec<CompactLineContourFragment>,
     source_line: &LineSeg2,
     source_segment_index: usize,
-    markers: CompactLineSplitMarkers,
+    crossings: &[RegionLineCrossing<'_>],
+    crossing_windings: &RegionLineCrossingWindingIndex<'_>,
     policy: &CurvePolicy,
     markers_are_distinct: bool,
-    full_start: &Real,
-    full_end: &Real,
 ) -> Classification<()> {
+    let Ok(source_segment_index) = u32::try_from(source_segment_index) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let marker_count = crossings.len();
     let marker_indices = if markers_are_distinct {
         None
     } else {
-        let mut marker_indices = Vec::with_capacity(markers.len() + 1);
-        for marker_index in 0..=markers.len() {
+        let mut marker_indices = Vec::with_capacity(marker_count + 1);
+        for marker_index in 0..=marker_count {
             let start = marker_index
                 .checked_sub(1)
                 .map_or(source_line.start(), |index| {
-                    &markers.as_slice()[index].point
+                    crossing_windings.point(&crossings[index])
                 });
-            let end = markers
-                .as_slice()
+            let end = crossings
                 .get(marker_index)
-                .map_or(source_line.end(), |marker| &marker.point);
+                .map_or(source_line.end(), |crossing| {
+                    crossing_windings.point(crossing)
+                });
             match is_zero(&start.distance_squared(end), policy) {
                 Some(true) => continue,
                 Some(false) => marker_indices.push(marker_index),
@@ -383,20 +395,14 @@ fn append_compact_line_split_fragments(
         }
         Some(marker_indices)
     };
-    let marker_count = markers.len();
-    let data = Rc::new(CompactLineSplitData {
-        markers,
-        full_start: full_start.clone(),
-        full_end: full_end.clone(),
-        source_support: source_line.fragment_support(),
-    });
+    if CompactLineFragmentGeometry::split(marker_count).is_none() {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    }
     let mut push_fragment = |marker_index| {
         fragments.push(CompactLineContourFragment {
             source_segment_index,
-            geometry: CompactLineFragmentGeometry::Split {
-                data: data.clone(),
-                marker_index,
-            },
+            geometry: CompactLineFragmentGeometry::split(marker_index)
+                .expect("compact split indices were checked above"),
         });
     };
     match marker_indices {
@@ -838,11 +844,7 @@ mod tests {
         #[cfg(target_pointer_width = "64")]
         {
             assert!(std::mem::size_of::<Point2>() <= 8);
-            assert!(std::mem::size_of::<CompactLineContourFragment>() <= 32);
-            assert!(
-                std::mem::size_of::<CompactLineSplitMarker>()
-                    < std::mem::size_of::<SegmentSplitMarker>()
-            );
+            assert!(std::mem::size_of::<CompactLineContourFragment>() <= 8);
             assert!(std::mem::size_of::<LineSeg2>() <= 48);
             assert!(std::mem::size_of::<crate::CircularArc2>() <= 8);
             assert!(std::mem::size_of::<Segment2>() <= 48);
@@ -934,81 +936,19 @@ mod tests {
     }
 
     #[test]
-    fn compact_line_fragments_share_only_interior_markers_until_selection() {
-        let p = |x, y| Point2::new(Real::from(x), Real::from(y));
-        let contour = Contour2::try_new(vec![
-            Segment2::Line(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
-            Segment2::Line(LineSeg2::try_new(p(4, 0), p(4, 4)).unwrap()),
-            Segment2::Line(LineSeg2::try_new(p(4, 4), p(0, 4)).unwrap()),
-            Segment2::Line(LineSeg2::try_new(p(0, 4), p(0, 0)).unwrap()),
-        ])
-        .unwrap();
-        let policy = CurvePolicy::certified();
-        let full_start = Real::zero();
-        let full_end = Real::one();
-        let Segment2::Line(first_source) = &contour.segments()[0] else {
-            unreachable!("test contour is all-line");
+    fn compact_line_fragment_encoding_retains_only_source_and_marker_indices() {
+        let split = CompactLineContourFragment {
+            source_segment_index: 7,
+            geometry: CompactLineFragmentGeometry::split(3).unwrap(),
         };
-        let mut fragments = Vec::with_capacity(5);
-        assert!(matches!(
-            append_compact_line_split_fragments(
-                &mut fragments,
-                first_source,
-                0,
-                CompactLineSplitMarkers::One(CompactLineSplitMarker {
-                    param: Some(fraction(1, 2)),
-                    point: p(2, 0),
-                }),
-                &policy,
-                true,
-                &full_start,
-                &full_end,
-            ),
-            Classification::Decided(())
-        ));
-        fragments.extend(
-            (1..4).map(|source_segment_index| CompactLineContourFragment {
-                source_segment_index,
-                geometry: CompactLineFragmentGeometry::Whole,
-            }),
-        );
+        let whole = CompactLineContourFragment {
+            source_segment_index: 8,
+            geometry: CompactLineFragmentGeometry::whole(),
+        };
 
-        assert_eq!(fragments.len(), 5);
-        let (start, end) = fragments[0].endpoints(&contour.segments()[0]).unwrap();
-        assert_eq!((start, end), (&p(0, 0), &p(2, 0)));
-        let zero = Real::zero();
-        let one = Real::one();
-        assert_eq!(
-            fragments[0].source_parameters(&zero, &one),
-            Some((&zero, &fraction(1, 2)))
-        );
-        let (
-            CompactLineFragmentGeometry::Split { data: first, .. },
-            CompactLineFragmentGeometry::Split { data: second, .. },
-        ) = (&fragments[0].geometry, &fragments[1].geometry)
-        else {
-            panic!("both source intervals should share compact split data");
-        };
-        assert!(Rc::ptr_eq(first, second));
-        assert_eq!(first.markers.len(), 1);
-        let (whole_start, whole_end) = fragments[2].endpoints(&contour.segments()[1]).unwrap();
-        assert_eq!((whole_start, whole_end), (&p(4, 0), &p(4, 4)));
-        assert_eq!(
-            fragments[2].source_parameters(&zero, &one),
-            Some((&zero, &one))
-        );
-
-        let Segment2::Line(first) = fragments[0].materialize(&contour.segments()[0]).unwrap()
-        else {
-            panic!("compact line fragment should materialize a line");
-        };
-        let Segment2::Line(second) = fragments[1].materialize(&contour.segments()[0]).unwrap()
-        else {
-            panic!("compact line fragment should materialize a line");
-        };
-        assert_eq!(
-            first.retained_support_intervals_decided_disjoint(&second, &policy),
-            Some(false)
-        );
+        assert_eq!(split.source_segment_index, 7);
+        assert_eq!(split.geometry.split_marker_index(), Some(3));
+        assert_eq!(whole.source_segment_index, 8);
+        assert_eq!(whole.geometry.split_marker_index(), None);
     }
 }

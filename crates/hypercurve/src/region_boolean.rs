@@ -1791,6 +1791,7 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                         &compact_fragments,
                         first,
                         second,
+                        &crossing_windings,
                         policy,
                     )? {
                         Classification::Decided(Some(chain_indices)) => {
@@ -1800,6 +1801,7 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                                 second,
                                 chain_indices,
                                 fill_rule,
+                                &crossing_windings,
                             )? {
                                 Classification::Decided(contours) => contours,
                                 Classification::Uncertain(reason) => {
@@ -1818,13 +1820,14 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                         }
                     }
                 }
-                if !compact_fragments.parameters_are_materialized() {
+                if !compact_fragments.parameters_are_materialized(&crossing_windings) {
                     break 'compact;
                 }
                 let emitted = selection.emit_boundary_fragments_from_owned_compact_split(
                     compact_fragments,
                     first,
                     second,
+                    &crossing_windings,
                 )?;
                 let output = match output_kind {
                     BooleanBoundaryOutputKind::Loops => {

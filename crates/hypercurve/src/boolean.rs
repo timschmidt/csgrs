@@ -332,6 +332,7 @@ impl BooleanFragmentSelection {
         fragments: &CompactLineRegionFragmentSet,
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Option<BooleanBoundaryChainIndices>>> {
         let mut sources = fragments.contours().iter().flat_map(|contour| {
@@ -361,14 +362,14 @@ impl BooleanFragmentSelection {
                 }
                 BooleanFragmentAction::KeepSourceDirection => {
                     let source_segment = compact_source_segment(first, second, key, source)?;
-                    let (start, end) = source.endpoints(source_segment)?;
+                    let (start, end) = source.endpoints(source_segment, key, crossing_windings)?;
                     endpoints.push(BorrowedBooleanBoundaryEdge::from_endpoints(
                         start, end, false,
                     ));
                 }
                 BooleanFragmentAction::KeepReversed => {
                     let source_segment = compact_source_segment(first, second, key, source)?;
-                    let (start, end) = source.endpoints(source_segment)?;
+                    let (start, end) = source.endpoints(source_segment, key, crossing_windings)?;
                     endpoints.push(BorrowedBooleanBoundaryEdge::from_endpoints(
                         start, end, true,
                     ));
@@ -393,6 +394,7 @@ impl BooleanFragmentSelection {
         second: &RegionView2<'_>,
         chain_indices: BooleanBoundaryChainIndices,
         fill_rule: FillRule,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
     ) -> CurveResult<Classification<Vec<crate::Contour2>>> {
         let mut sources = fragments.contours().iter().flat_map(|contour| {
             let key = contour.key;
@@ -448,13 +450,13 @@ impl BooleanFragmentSelection {
                 };
                 let source_segment = source_contour_for_key(first, second, key)?
                     .segments()
-                    .get(source.source_segment_index)
+                    .get(source.source_segment_index as usize)
                     .ok_or_else(|| {
                         CurveError::Topology(
                             "compact boolean fragment references a missing source segment".into(),
                         )
                     })?;
-                let segment = source.materialize(source_segment)?;
+                let segment = source.materialize(source_segment, key, crossing_windings)?;
                 segments.push(if reversed {
                     segment.into_reversed()
                 } else {
@@ -473,13 +475,14 @@ impl BooleanFragmentSelection {
         fragments: CompactLineRegionFragmentSet,
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
     ) -> CurveResult<BooleanBoundaryFragmentSet> {
         let directed_fragment_capacity = self.emitted_fragment_count();
-        let mut sources = fragments.into_contours().into_iter().flat_map(|contour| {
+        let mut sources = fragments.contours().iter().flat_map(|contour| {
             let key = contour.key;
             contour
                 .fragments
-                .into_iter()
+                .iter()
                 .enumerate()
                 .map(move |(index, source)| (key, index, source))
         });
@@ -507,7 +510,7 @@ impl BooleanFragmentSelection {
                 | BooleanFragmentAction::KeepReversed => {
                     let source_segment = source_contour_for_key(first, second, key)?
                         .segments()
-                        .get(source.source_segment_index)
+                        .get(source.source_segment_index as usize)
                         .ok_or_else(|| {
                             CurveError::Topology(
                                 "compact boolean fragment references a missing source segment"
@@ -515,9 +518,9 @@ impl BooleanFragmentSelection {
                             )
                         })?;
                     let reversed = classification.action == BooleanFragmentAction::KeepReversed;
-                    let source_segment_index = source.source_segment_index;
-                    let segment = source.materialize(source_segment)?;
-                    let source_range = source.into_source_range();
+                    let source_segment_index = source.source_segment_index as usize;
+                    let segment = source.materialize(source_segment, key, crossing_windings)?;
+                    let source_range = source.source_range(key, crossing_windings)?;
                     directed_fragments.push(DirectedBooleanFragment {
                         key,
                         fragment_index,
@@ -822,20 +825,27 @@ impl CompactLineRegionFragmentSet {
             let full_end = Real::one();
             let first_source_segment =
                 compact_source_segment(first, second, contour_fragments.key, first_fragment)?;
-            let (first_start, first_end) = first_fragment.endpoints(first_source_segment)?;
+            let (first_start, first_end) = first_fragment.endpoints(
+                first_source_segment,
+                contour_fragments.key,
+                crossing_windings,
+            )?;
             let certified_endpoint = if endpoint_contacts.is_empty() {
                 Some(CertifiedFragmentEndpoint::Start)
             } else {
-                let Some((first_param_start, first_param_end)) =
-                    first_fragment.source_parameters(&full_start, &full_end)
-                else {
+                let Some((first_param_start, first_param_end)) = first_fragment.source_parameters(
+                    &full_start,
+                    &full_end,
+                    contour_fragments.key,
+                    crossing_windings,
+                ) else {
                     return Ok(None);
                 };
                 certified_fragment_endpoint(
                     endpoint_contacts,
                     contour_fragments.key,
                     source_contour,
-                    first_fragment.source_segment_index,
+                    first_fragment.source_segment_index as usize,
                     first_param_start,
                     first_param_end,
                     policy,
@@ -867,8 +877,8 @@ impl CompactLineRegionFragmentSet {
                     let previous = &contour_fragments.fragments[fragment_index - 1];
                     let Some(delta) = crossing_windings.delta_for_next_fragment(
                         contour_fragments.key,
-                        previous.source_segment_index,
-                        fragment.source_segment_index,
+                        previous.source_segment_index as usize,
+                        fragment.source_segment_index as usize,
                         &mut segment_transition_index,
                     ) else {
                         return Ok(None);
@@ -1708,7 +1718,7 @@ fn compact_source_segment<'a>(
 ) -> CurveResult<&'a Segment2> {
     source_contour_for_key(first, second, key)?
         .segments()
-        .get(fragment.source_segment_index)
+        .get(fragment.source_segment_index as usize)
         .ok_or_else(|| {
             CurveError::Topology(
                 "compact boolean fragment references a missing source segment".into(),

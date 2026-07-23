@@ -2105,6 +2105,59 @@ the public `Point2`, `CircularArc2`, native-segment, prepared-segment, and AABB
 accessors that traverse these handles are no longer `const fn`; their ordinary
 signatures, immutability, exact values, and runtime behavior are unchanged.
 
+The following checkpoint removes duplicated compact-split ownership. The
+retained line-crossing index already stores each exact point and optional
+materialized source parameter in certified per-segment order, and it remains
+alive through fragment classification and output emission. A compact fragment
+is now an 8-byte view containing only a `u32` source-segment index and a `u32`
+boundary-marker index; a sentinel represents an unsplit source segment. The
+previous per-source split allocation, then its contour-local data and marker
+arenas, are unnecessary. Selected fragments still materialize ordinary exact
+line geometry at the same output boundary.
+
+Endpoint-chain assembly also uses a short-lived hash table keyed only by
+process-local shared-point allocation identities. A SplitMix finalizer
+scrambles the aligned pointer values without the keyed general-purpose hash
+overhead; these keys are internal identities rather than user-supplied
+geometry, and `HashMap` still resolves collisions normally. Two alternating
+41-sample, 1,000-iteration star64 contour runs measured 54.1--54.2 us with the
+identity hasher and 56.3--57.5 us with the standard hasher.
+
+The paired release matrices below compare the preceding compact-native-geometry
+checkpoint with the retained crossing-index view. Star64 used 21 samples of
+500 iterations, star256 used 21 samples of 200 iterations, and star1024 used
+11 samples of 20 iterations.
+
+| Workload | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| star64 region / contours | 67.161 / 65.261 us | 55.696 / 54.590 us | 17.1% / 16.4% faster |
+| star64 prepared region / contours | 63.118 / 62.805 us | 52.010 / 51.546 us | 17.6% / 17.9% faster |
+| star64 ordinary / prepared loops | 116.824 / 114.927 us | 108.701 / 104.826 us | 7.0% / 8.8% faster |
+| star256 region / contours | 0.653 / 0.529 ms | 0.582 / 0.457 ms | 11.0% / 13.5% faster |
+| star1024 region / contours | 9.163 / 8.030 ms | 8.770 / 7.501 ms | 4.3% / 6.6% faster |
+| star1024 ordinary / prepared loops | 13.158 / 13.316 ms | 11.997 / 11.773 ms | 8.8% / 11.6% faster |
+
+Exact Hypercurve contour output now measures 0.457 ms at star256, ahead of
+Cavalier at 0.482 ms, `geo` at 0.524 ms, and `i_overlay` at 0.540 ms in this
+run. At star1024, exact region/contour output measures 8.770/7.501 ms, versus
+19.691 ms for Cavalier, 10.058 ms for `i_overlay`, and 10.448 ms for `geo`.
+The star64 crossover remains open: exact contour output is 54.590 us, versus
+27.414, 34.123, and 35.904 us respectively.
+
+Across 100 selected ordinary star64 contour operations plus fixture validation,
+heaptrack records 59,096 allocations and 1,052 temporaries, versus 68,828 and
+1,154 at the preceding checkpoint. Peak tracked heap is effectively unchanged
+at 697.47 KiB versus 703.89 KiB. Eleven paired standalone star1024 runs measured
+24,080 KiB median RSS versus 24,132 KiB for the preceding binary. The exact
+trace also reflects the eliminated parameter copies: star64 falls from 2,823
+to 2,819 dispatch events, 135 to 131 rational temporaries, and 755 to 751
+`Real` constructions; reductions and GCD observations remain 12 each.
+The full all-feature test suite, warnings-as-errors all-target Clippy,
+warnings-as-errors rustdoc, and all-feature bench compilation pass. With
+LeakSanitizer disabled under ptrace, the AddressSanitizer `region_boolean`
+differential target completed 10,000 executions at 5,901 coverage points and
+18,616 feature edges without failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
