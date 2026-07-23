@@ -618,6 +618,24 @@ impl Real {
         })
     }
 
+    /// Prepare both affine determinant directions from retained finite
+    /// binary64 coordinates.
+    ///
+    /// Every finite binary64 value is an exact dyadic rational. Geometry
+    /// caches that have already established a lossless correspondence between
+    /// their exact coordinates and these values can therefore reuse the same
+    /// certified roundoff-bound filter without reloading the scalar caches.
+    /// Non-finite arithmetic remains inconclusive when the returned filter is
+    /// queried, preserving the exact fallback.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_affine_det2_pair_filter_from_exact_dyadic_f64(
+        first: [[f64; 2]; 2],
+        second: [[f64; 2]; 2],
+    ) -> PreparedAffineDet2PairFilter {
+        PreparedAffineDet2PairFilter { first, second }
+    }
+
     #[inline]
     fn exact_rational_homogeneous_point2_i128(point: [&Real; 2]) -> Option<[i128; 3]> {
         let x = point[0].exact_rational_ref()?;

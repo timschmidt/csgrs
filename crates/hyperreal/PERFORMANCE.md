@@ -1158,6 +1158,23 @@ reduced the complete stripped Callgrind lane from 76,985,290 to 76,081,746 instr
 This filter and every fallback are implemented by Hyperreal; the development-only
 GMP/MPFR oracle remains absent from the release dependency graph.
 
+### Retained exact-dyadic affine determinant inputs
+
+Geometry caches that have already proved a lossless binary64 view can now prepare
+the paired affine determinant filter directly from those retained coordinates.
+The filter applies the same conservative roundoff bound, and non-finite or
+inconclusive arithmetic still returns no sign for the caller's exact word or
+arbitrary-precision fallback. This avoids repeating eight scalar-cache loads for
+each candidate without treating a binary64 result as topology evidence by itself.
+
+In the downstream Hypercurve star64 intersection, reusing contour-level endpoint
+certificates reduced a 5,000-operation hardware-counter run from 8,274,445,706 to
+8,038,736,058 retired instructions (2.85%). The post-change symbol trace no longer
+contains `Real::exact_dyadic_f64_cached` among functions above 0.2% self-time. A
+15-sample run measured exact region output at 143.792 us/iter; the fastest
+approximate competitor measured 27.348 us/iter, so the exact path remains 5.26
+times slower.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

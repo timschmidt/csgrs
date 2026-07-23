@@ -90,6 +90,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "prepare_affine_det2_exact_word_filter",
     "prepare_affine_det2_filter",
     "prepare_affine_det2_pair_filter",
+    "prepare_affine_det2_pair_filter_from_exact_dyadic_f64",
     "prepare_affine_det3_exact_word_filter",
     "prepare_affine_det3_filter",
     "prepare_incircle2d_filter",

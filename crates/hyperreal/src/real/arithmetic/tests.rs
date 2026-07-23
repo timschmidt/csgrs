@@ -900,6 +900,23 @@ mod tests {
             )
             .is_none()
         );
+
+        let retained = Real::prepare_affine_det2_pair_filter_from_exact_dyadic_f64(
+            [[-2.0, -1.0], [3.0, 2.0]],
+            [[-1.0, 2.0], [2.0, -2.0]],
+        );
+        assert_eq!(
+            retained.first_signs(),
+            (Some(RealSign::Positive), Some(RealSign::Negative))
+        );
+        assert_eq!(
+            Real::prepare_affine_det2_pair_filter_from_exact_dyadic_f64(
+                [[0.0, 0.0], [1.0, 1.0]],
+                [[f64::INFINITY, 0.0], [0.0, 1.0]],
+            )
+            .first_signs(),
+            (None, Some(RealSign::Positive))
+        );
     }
 
     #[test]
