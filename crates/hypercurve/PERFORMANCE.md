@@ -2472,6 +2472,78 @@ profiles across the whole public API. The general `CurveRegion2` pipeline and
 the `LineArc` accelerator remain until those mixed-curve workloads meet the
 same exactness, capacity, and competitive performance gates.
 
+## Large complex-curve scaling checkpoint
+
+The next whole-API pass added parameterized 64/256/1024-scale lanes for
+arbitrary-degree rational Béziers, B-spline/NURBS decomposition, rational and
+polynomial arrangement, arc paths, and curved-region containment. These lanes
+are isolated with `HYPERCURVE_BENCH_*` environment variables so one operation
+can be profiled without timing unrelated benchmark setup.
+
+Three shared algorithm changes dominate the result:
+
+- Boehm insertion now grows one control slot and updates only its affected
+  window in reverse. Exact knot multiplicity and insertion-span searches use
+  binary partitions. A randomized repeated-knot oracle compares both searches
+  with complete scans.
+- Retained Bézier overlap preparation caches conservative control hulls and
+  uses an exact-certified x sweep for sparse pairs. Control-hull separation is
+  attempted before degree-aligned same-image algebra, and tangent traversal
+  builds adjacency and predecessor counts in one pass.
+- Bernstein/power conversion now uses in-place forward differences and
+  arbitrary-precision binomials, removing the former `u64` degree ceiling and
+  quadratic Pascal-triangle storage. High-degree point evaluation stays in
+  Bernstein form instead of retaining exponentially large power coefficients.
+  Homogeneous subdivision uses Hyperreal's exact two-lane aggregate, and a
+  linear control-net certificate avoids constructing a doubled-degree
+  derivative merely to prove obvious monotonicity.
+
+Same-machine release measurements were:
+
+| Exact workload | Before | After |
+| --- | ---: | ---: |
+| 1024-control NURBS cold Bézier decomposition | 800.3 ms | 13.1 ms |
+| 256-curve retained overlap workflow | 721 ms | 82.5 ms |
+| 1024-curve retained overlap workflow, before/after exact x sweep | 2.054 s | 711 ms |
+| 256-control rational Bézier midpoint split | 3.215 s | 13.5 ms |
+| 1024-control rational Bézier midpoint split | 1.205 s / 567 MiB isolated peak at the preceding in-place checkpoint | 325.7 ms / 7.0 MiB |
+| 1024-control rational Bézier point evaluation after removing the degree blocker | 430.4 ms / 1.44 GiB aggregate peak with retained power basis | 10.3 ms / 9.0 MiB isolated peak |
+| 1024-arc `CurveRegion2` containment without `LineArcRegion2` | `Uncertain(Ordering)`; then 300.9 ms after the first completeness fix | decided `Inside` in 4.15 ms |
+
+The rational point evaluator still reuses a power basis if another algebraic
+API already retained one. Otherwise degree-above-256 evaluation uses an exact
+linear Bernstein recurrence with constant auxiliary state. An independent
+varying-weight test compares it coordinate-for-coordinate with homogeneous de
+Casteljau replay. Arbitrary-degree offset conversion has the matching
+power-to-Bernstein fix.
+
+The arc result does not call the native line/arc accelerator. Irrational-weight
+quadratic contacts first use the represented exact quadratic solver, while
+exact-rational polynomials retain their algebraic-parameter carrier. Ray replay
+checks every contact, including tangencies, for zero projection before winding;
+an inconclusive optional point-incidence precheck therefore falls through
+without weakening boundary detection. Conservative control-hull tests reject
+irrelevant fragments and cast in both directions, which is especially
+important for a query near one end of a thousand-arc path.
+
+```bash
+HYPERCURVE_BENCH_NURBS_ONLY=1 HYPERCURVE_BENCH_NURBS_CONTROLS=1024 \
+  HYPERCURVE_BENCH_NURBS_ITERATIONS=1 cargo bench --bench bspline
+HYPERCURVE_BENCH_RATIONAL_ONLY=1 HYPERCURVE_BENCH_RATIONAL_CONTROLS=1024 \
+  HYPERCURVE_BENCH_RATIONAL_ITERATIONS=1 cargo bench --bench rational_bezier
+HYPERCURVE_BENCH_ARC_ONLY=1 HYPERCURVE_BENCH_ARC_COUNT=1024 \
+  HYPERCURVE_BENCH_ARC_ITERATIONS=1 cargo bench --bench arc
+HYPERCURVE_BENCH_ARRANGEMENT_CURVES=1024 \
+  HYPERCURVE_BENCH_ARRANGEMENT_ITERATIONS=1 cargo bench --bench bezier_arrangement
+```
+
+The all-family pathological cell remains an explicit next target. It still
+prepares 84 candidate pairs in about 659 ms and blocks Boolean selection on a
+`RationalQuadraticBezier` `RealSign` classification, while its exact line/arc
+projection decides all four operations in about 1.4 ms. The arc containment
+fix removes one instance of that blocker class but does not claim that the
+mixed-region gap is closed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

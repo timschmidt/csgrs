@@ -29,6 +29,14 @@ fn benchmark_iterations() -> u32 {
         .max(1)
 }
 
+fn benchmark_curve_count() -> i32 {
+    std::env::var("HYPERCURVE_BENCH_ARRANGEMENT_CURVES")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(64_i32)
+        .clamp(1, i32::MAX / 2)
+}
+
 fn decided<T>(classification: Classification<T>) -> T {
     match classification {
         Classification::Decided(value) => value,
@@ -58,7 +66,8 @@ fn main() -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let split = [decided(BezierParameter2::exact(q(1, 2), &policy)?)];
     let mut materializations = Vec::new();
-    for index in 0..64 {
+    let curve_count = benchmark_curve_count();
+    for index in 0..curve_count {
         let curve = QuadraticBezier2::new(
             p(index * 2, 0),
             p(index * 2 + 1, if index % 2 == 0 { 2 } else { -2 }),
@@ -69,6 +78,18 @@ fn main() -> CurveResult<()> {
     let graph = BezierArrangementGraph2::from_split_materializations(&materializations)?;
 
     let iterations = benchmark_iterations();
+    let started = Instant::now();
+    let mut traversal_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(graph.traverse_with_tangent_order(&policy));
+        traversal_total += black_box(traversal.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_materialized_tangent_order_{curve_count}_curves: {iterations} iterations in {elapsed:?} ({:?}/iter), total={traversal_total}",
+        elapsed / iterations
+    );
+
     let started = Instant::now();
     let mut total = 0_usize;
     for _ in 0..iterations {
@@ -120,7 +141,7 @@ fn main() -> CurveResult<()> {
     }
     let elapsed = started.elapsed();
     println!(
-        "bezier_arrangement_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
+        "bezier_arrangement_full_overlap_workflow_{curve_count}_curves: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
         elapsed / iterations
     );
 

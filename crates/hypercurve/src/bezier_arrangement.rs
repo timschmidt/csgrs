@@ -17,6 +17,8 @@
 //! model: when local
 //! order is not certified, traversal stops instead of guessing.
 
+use std::cmp::Ordering;
+
 use hyperreal::{Real, RealSign};
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootRepresentation,
@@ -231,12 +233,8 @@ impl BezierArrangementGraph2 {
             endpoints.push(endpoints_for_fragment);
         }
 
-        let outgoing = match outgoing_adjacency(&endpoints, policy) {
-            Classification::Decided(outgoing) => outgoing,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        let predecessors = match predecessor_counts(&endpoints, policy) {
-            Classification::Decided(predecessors) => predecessors,
+        let (outgoing, predecessors) = match tangent_adjacency(&endpoints, policy) {
+            Classification::Decided(adjacency) => adjacency,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
 
@@ -295,12 +293,8 @@ impl BezierArrangementGraph2 {
             endpoints.push(endpoints_for_fragment);
         }
 
-        let outgoing = match retained_outgoing_adjacency(&endpoints, policy) {
-            Classification::Decided(outgoing) => outgoing,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        let predecessors = match retained_predecessor_counts(&endpoints, policy) {
-            Classification::Decided(predecessors) => predecessors,
+        let (outgoing, predecessors) = match retained_tangent_adjacency(&endpoints, policy) {
+            Classification::Decided(adjacency) => adjacency,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
 
@@ -1046,30 +1040,13 @@ fn follow_chain(
     Classification::Uncertain(UncertaintyReason::Boundary)
 }
 
-fn outgoing_adjacency(
-    endpoints: &[EndpointData],
-    policy: &CurvePolicy,
-) -> Classification<Vec<Vec<usize>>> {
-    let mut outgoing = vec![Vec::new(); endpoints.len()];
-    for (left_index, left) in endpoints.iter().enumerate() {
-        for (right_index, right) in endpoints.iter().enumerate() {
-            if left_index == right_index {
-                continue;
-            }
-            match points_equal(&left.end, &right.start, policy) {
-                Some(true) => outgoing[left_index].push(right_index),
-                Some(false) => {}
-                None => return Classification::Uncertain(UncertaintyReason::RealSign),
-            }
-        }
-    }
-    Classification::Decided(outgoing)
-}
+type TangentAdjacency = (Vec<Vec<usize>>, Vec<usize>);
 
-fn predecessor_counts(
+fn tangent_adjacency(
     endpoints: &[EndpointData],
     policy: &CurvePolicy,
-) -> Classification<Vec<usize>> {
+) -> Classification<TangentAdjacency> {
+    let mut outgoing = vec![Vec::new(); endpoints.len()];
     let mut predecessors = vec![0_usize; endpoints.len()];
     for (left_index, left) in endpoints.iter().enumerate() {
         for (right_index, right) in endpoints.iter().enumerate() {
@@ -1077,51 +1054,23 @@ fn predecessor_counts(
                 continue;
             }
             match points_equal(&left.end, &right.start, policy) {
-                Some(true) => predecessors[right_index] += 1,
+                Some(true) => {
+                    outgoing[left_index].push(right_index);
+                    predecessors[right_index] += 1;
+                }
                 Some(false) => {}
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
             }
         }
     }
-    Classification::Decided(predecessors)
+    Classification::Decided((outgoing, predecessors))
 }
 
-fn retained_outgoing_adjacency(
+fn retained_tangent_adjacency(
     endpoints: &[RetainedEndpointData],
     policy: &CurvePolicy,
-) -> Classification<Vec<Vec<usize>>> {
+) -> Classification<TangentAdjacency> {
     let mut outgoing = vec![Vec::new(); endpoints.len()];
-    for (left_index, left) in endpoints.iter().enumerate() {
-        let Some(left_end) = left.end.as_ref() else {
-            continue;
-        };
-        for (right_index, right) in endpoints.iter().enumerate() {
-            if left_index == right_index {
-                continue;
-            }
-            let Some(right_start) = right.start.as_ref() else {
-                continue;
-            };
-            match retained_endpoints_equal(
-                left.end_topology_vertex,
-                left_end,
-                right.start_topology_vertex,
-                right_start,
-                policy,
-            ) {
-                Some(true) => outgoing[left_index].push(right_index),
-                Some(false) => {}
-                None => return Classification::Uncertain(UncertaintyReason::RealSign),
-            }
-        }
-    }
-    Classification::Decided(outgoing)
-}
-
-fn retained_predecessor_counts(
-    endpoints: &[RetainedEndpointData],
-    policy: &CurvePolicy,
-) -> Classification<Vec<usize>> {
     let mut predecessors = vec![0_usize; endpoints.len()];
     for (left_index, left) in endpoints.iter().enumerate() {
         let Some(left_end) = left.end.as_ref() else {
@@ -1141,13 +1090,16 @@ fn retained_predecessor_counts(
                 right_start,
                 policy,
             ) {
-                Some(true) => predecessors[right_index] += 1,
+                Some(true) => {
+                    outgoing[left_index].push(right_index);
+                    predecessors[right_index] += 1;
+                }
                 Some(false) => {}
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
             }
         }
     }
-    Classification::Decided(predecessors)
+    Classification::Decided((outgoing, predecessors))
 }
 
 fn follow_retained_tangent_ordered_chain(
@@ -1733,7 +1685,13 @@ fn turn_half(base: &TangentVector, candidate: &TangentVector, policy: &CurvePoli
 }
 
 fn points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<bool> {
-    is_zero(&left.distance_squared(right), policy)
+    if left.identity() == right.identity() {
+        return Some(true);
+    }
+    if compare_reals(left.x(), right.x(), policy)? != Ordering::Equal {
+        return Some(false);
+    }
+    Some(compare_reals(left.y(), right.y(), policy)? == Ordering::Equal)
 }
 
 fn retained_endpoints_equal(

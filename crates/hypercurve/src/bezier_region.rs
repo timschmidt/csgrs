@@ -5218,6 +5218,30 @@ fn retained_loop_sample_point(
     }
 }
 
+fn subcurve_control_hull_contains_point(
+    curve: &BezierSubcurve2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<bool> {
+    let bounds = match curve {
+        BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points(), policy),
+        BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points(), policy),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            if curve.common_nonzero_weight_sign(policy).is_none() {
+                return Classification::Uncertain(UncertaintyReason::RealSign);
+            }
+            Aabb2::from_points(curve.control_points(), policy)
+        }
+        BezierSubcurve2::Rational(_) => {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        }
+    };
+    match bounds {
+        Classification::Decided(bounds) => bounds.contains_point(point, policy),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
 fn classify_point_against_native_loop(
     boundary_loop: &BezierBoundaryLoop2,
     point: &Point2,
@@ -5251,12 +5275,17 @@ fn classify_point_against_native_loop_after_bounds_with_fill_rule(
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<ContourPointLocation>> {
     for fragment in boundary_loop.fragments() {
+        if matches!(
+            subcurve_control_hull_contains_point(fragment, point, policy),
+            Classification::Decided(false)
+        ) {
+            continue;
+        }
         match subcurve_contains_point(fragment, point, policy) {
             Classification::Decided(true) => {
                 return Ok(Classification::Decided(ContourPointLocation::Boundary));
             }
-            Classification::Decided(false) => {}
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            Classification::Decided(false) | Classification::Uncertain(_) => {}
         }
     }
     let rays = ray_candidates(point);
@@ -5358,12 +5387,19 @@ fn classify_point_against_retained_loop_with_fill_rule(
         ));
     }
     for (fragment, evaluator) in boundary_loop.fragments().iter().zip(evaluators) {
+        if let BezierSplitFragment2::Materialized { curve, .. } = fragment
+            && matches!(
+                subcurve_control_hull_contains_point(curve, point, policy),
+                Classification::Decided(false)
+            )
+        {
+            continue;
+        }
         match retained_fragment_contains_point(fragment, evaluator.as_ref(), point, policy)? {
             Classification::Decided(true) => {
                 return Ok(Classification::Decided(ContourPointLocation::Boundary));
             }
-            Classification::Decided(false) => {}
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            Classification::Decided(false) | Classification::Uncertain(_) => {}
         }
     }
     let mut last_reason = UncertaintyReason::Boundary;
@@ -5459,6 +5495,9 @@ fn classify_point_with_retained_ray(
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
         };
+        if !subcurve_control_hull_may_be_ahead(curve, point, &direction_x, &direction_y, policy) {
+            continue;
+        }
         let relation = match subcurve_relation_to_line_with_contacts(curve, ray, policy) {
             Classification::Decided(relation) => relation,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -5471,9 +5510,6 @@ fn classify_point_with_retained_ray(
             }
             BezierLineContactRelation::Contacts { contacts } => {
                 for contact in contacts {
-                    if contact.kind() != BezierLineContactKind::Crossing {
-                        continue;
-                    }
                     let retained = if let Some((start, end, reversed)) = range {
                         retained_parameter_contains(
                             contact.parameter(),
@@ -5528,6 +5564,9 @@ fn classify_point_with_retained_ray(
                     };
                     match ahead {
                         Classification::Decided(std::cmp::Ordering::Greater) => {
+                            if contact.kind() != BezierLineContactKind::Crossing {
+                                continue;
+                            }
                             let reversed = range.is_some_and(|(_, _, reversed)| reversed);
                             let Some(delta) = line_contact_winding_delta(&contact, reversed) else {
                                 return Ok(Classification::Uncertain(
@@ -5630,6 +5669,10 @@ fn classify_point_with_ray(
     let direction_y = ray.end().y() - ray.start().y();
     let mut winding = 0_i32;
     for fragment in boundary_loop.fragments() {
+        if !subcurve_control_hull_may_be_ahead(fragment, point, &direction_x, &direction_y, policy)
+        {
+            continue;
+        }
         let relation = match subcurve_relation_to_line_with_contacts(fragment, ray, policy) {
             Classification::Decided(relation) => relation,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -5642,9 +5685,6 @@ fn classify_point_with_ray(
             }
             BezierLineContactRelation::Contacts { contacts } => {
                 for contact in contacts {
-                    if contact.kind() != BezierLineContactKind::Crossing {
-                        continue;
-                    }
                     let one = BezierParameter2::Exact(Real::one());
                     match contact.parameter().cmp_by_interval(&one, policy)? {
                         Classification::Decided(std::cmp::Ordering::Equal) => continue,
@@ -5681,6 +5721,9 @@ fn classify_point_with_ray(
                     };
                     match ahead {
                         Classification::Decided(std::cmp::Ordering::Greater) => {
+                            if contact.kind() != BezierLineContactKind::Crossing {
+                                continue;
+                            }
                             let Some(delta) = line_contact_winding_delta(&contact, false) else {
                                 return Ok(Classification::Uncertain(
                                     UncertaintyReason::Unsupported,
@@ -5704,6 +5747,57 @@ fn classify_point_with_ray(
     Ok(Classification::Decided(winding_location(
         winding, fill_rule,
     )))
+}
+
+fn control_points_may_be_ahead<'a>(
+    controls: impl IntoIterator<Item = &'a Point2>,
+    origin: &Point2,
+    direction_x: &Real,
+    direction_y: &Real,
+    policy: &CurvePolicy,
+) -> bool {
+    controls.into_iter().any(|control| {
+        let delta_x = control.x() - origin.x();
+        let delta_y = control.y() - origin.y();
+        let projection = Real::dot2_refs([&delta_x, &delta_y], [direction_x, direction_y]);
+        real_sign(&projection, policy) != Some(RealSign::Negative)
+    })
+}
+
+fn subcurve_control_hull_may_be_ahead(
+    curve: &BezierSubcurve2,
+    origin: &Point2,
+    direction_x: &Real,
+    direction_y: &Real,
+    policy: &CurvePolicy,
+) -> bool {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => control_points_may_be_ahead(
+            curve.control_points(),
+            origin,
+            direction_x,
+            direction_y,
+            policy,
+        ),
+        BezierSubcurve2::Cubic(curve) => control_points_may_be_ahead(
+            curve.control_points(),
+            origin,
+            direction_x,
+            direction_y,
+            policy,
+        ),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.common_nonzero_weight_sign(policy).is_none()
+                || control_points_may_be_ahead(
+                    curve.control_points(),
+                    origin,
+                    direction_x,
+                    direction_y,
+                    policy,
+                )
+        }
+        BezierSubcurve2::Rational(_) => true,
+    }
 }
 
 fn line_contact_winding_delta(contact: &BezierLineContact, reversed: bool) -> Option<i32> {
@@ -5810,6 +5904,10 @@ fn ray_candidates(point: &Point2) -> Vec<LineSeg2> {
     let one = Real::one();
     let two = Real::from(2_i8);
     let endpoints = [
+        Point2::new(point.x() - &one, point.y().clone()),
+        Point2::new(point.x().clone(), point.y() - &one),
+        Point2::new(point.x() - &one, point.y() - &two),
+        Point2::new(point.x() - &two, point.y() - &one),
         Point2::new(point.x() + &one, point.y().clone()),
         Point2::new(point.x().clone(), point.y() + &one),
         Point2::new(point.x() + &one, point.y() + &two),
@@ -5909,7 +6007,7 @@ impl BezierSubcurve2 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::RationalQuadraticBezier2;
+    use crate::{CircularArc2, Curve2, CurvePath2, RationalQuadraticBezier2};
 
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -5932,5 +6030,33 @@ mod tests {
             subcurve_contains_point(&subcurve, &p(100, 0), &CurvePolicy::certified()),
             Classification::Uncertain(UncertaintyReason::Boundary)
         );
+    }
+
+    #[test]
+    fn irrational_weight_semicircle_region_classifies_without_native_accelerator() {
+        let policy = CurvePolicy::certified();
+        let upper =
+            Curve2::from(CircularArc2::try_from_center(p(0, 0), p(2, 0), p(1, 0), true).unwrap());
+        let lower =
+            Curve2::from(CircularArc2::try_from_center(p(2, 0), p(0, 0), p(1, 0), true).unwrap());
+        let region = CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(vec![
+            upper, lower,
+        ])
+        .unwrap()])
+        .unwrap();
+        let point = Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap());
+        assert_eq!(
+            region.classify_point(&point, &policy),
+            Ok(Classification::Decided(RegionPointLocation::Inside))
+        );
+        assert_eq!(
+            region.classify_point(&p(1, 1), &policy),
+            Ok(Classification::Decided(RegionPointLocation::Boundary))
+        );
+        assert_eq!(
+            region.classify_point(&p(1, 2), &policy),
+            Ok(Classification::Decided(RegionPointLocation::Outside))
+        );
+        assert!(region.line_image_region.get().is_none());
     }
 }

@@ -25,7 +25,85 @@ fn decided<T>(classification: Classification<T>) -> T {
     }
 }
 
+fn large_nurbs_control_count() -> usize {
+    std::env::var("HYPERCURVE_BENCH_NURBS_CONTROLS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(256)
+        .clamp(4, i32::MAX as usize)
+}
+
+fn large_nurbs_iterations() -> u32 {
+    std::env::var("HYPERCURVE_BENCH_NURBS_ITERATIONS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(50)
+        .max(1)
+}
+
+fn large_nurbs_inputs(control_count: usize) -> (Vec<Point2>, Vec<Real>, Vec<Real>) {
+    let controls = (0..control_count)
+        .map(|index| {
+            let x = i32::try_from(index).unwrap();
+            let y = i32::try_from(index.wrapping_mul(17) % 31).unwrap() - 15;
+            p(x, y)
+        })
+        .collect();
+    let weights = (0..control_count)
+        .map(|index| r(i32::try_from(index % 5 + 1).unwrap()))
+        .collect();
+    let domain_end = i32::try_from(control_count - 3).unwrap();
+    let knots = std::iter::repeat_n(r(0), 4)
+        .chain((1..domain_end).map(r))
+        .chain(std::iter::repeat_n(r(domain_end), 4))
+        .collect();
+    (controls, weights, knots)
+}
+
+fn bench_large_nurbs() {
+    let control_count = large_nurbs_control_count();
+    let iterations = large_nurbs_iterations();
+    let (controls, weights, knots) = large_nurbs_inputs(control_count);
+
+    let started = Instant::now();
+    let mut cold_checksum = 0_usize;
+    for _ in 0..iterations {
+        let curve =
+            NurbsCurve2::try_new(3, controls.clone(), weights.clone(), knots.clone()).unwrap();
+        cold_checksum ^= black_box(curve.bezier_decomposition().unwrap().spans().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "nurbs_large_cold_decomposition_{control_count}_controls: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={cold_checksum}",
+        elapsed / iterations
+    );
+
+    let curve = NurbsCurve2::try_new(3, controls, weights, knots).unwrap();
+    let domain_end = i32::try_from(control_count - 3).unwrap();
+    let parameter = q(domain_end, 2);
+    curve
+        .point_at(&parameter)
+        .expect("large NURBS midpoint evaluates exactly");
+    let started = Instant::now();
+    let mut evaluation_checksum = 0_usize;
+    for _ in 0..iterations {
+        let point = curve.point_at(&parameter).unwrap();
+        evaluation_checksum ^=
+            black_box(point.x().to_f64_lossy().unwrap_or_default().to_bits() as usize);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "nurbs_large_cached_evaluation_{control_count}_controls: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={evaluation_checksum}",
+        elapsed / iterations
+    );
+}
+
 fn main() -> CurveResult<()> {
+    if std::env::var_os("HYPERCURVE_BENCH_NURBS_ONLY").is_some() {
+        bench_large_nurbs();
+        return Ok(());
+    }
+
     let policy = CurvePolicy::certified();
     let spline = decided(PolynomialBSplineCurve2::try_new(
         3,
@@ -546,6 +624,8 @@ fn main() -> CurveResult<()> {
         "nurbs_clone_interpolated_curve: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_interpolation_checksum}",
         elapsed / iterations
     );
+
+    bench_large_nurbs();
 
     Ok(())
 }

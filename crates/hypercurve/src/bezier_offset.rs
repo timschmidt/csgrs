@@ -15,8 +15,9 @@
 //! with exact-scalar interval certification at the acceptance boundary.
 
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
+use num::{BigUint, One};
 
-use crate::bezier_parameter::bernstein_to_power_coefficients;
+use crate::bezier_parameter::{bernstein_to_power_coefficients, exact_nonnegative_integer_real};
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::{
     BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
@@ -2497,34 +2498,33 @@ fn power_to_bernstein_coefficients(coefficients: &[Real], degree: usize) -> Curv
     if coefficients.len() > degree + 1 {
         return Err(CurveError::InvalidDegreeElevation);
     }
-    let binomials = checked_binomial_triangle(degree)?;
-    let mut bernstein = Vec::with_capacity(degree + 1);
+    let mut degree_binomials = Vec::with_capacity(degree + 1);
+    let mut binomial = BigUint::one();
     for index in 0..=degree {
+        degree_binomials.push(exact_nonnegative_integer_real(&binomial)?);
+        if index != degree {
+            binomial *= BigUint::from(degree - index);
+            binomial /= BigUint::from(index + 1);
+        }
+    }
+
+    let mut bernstein = Vec::with_capacity(degree + 1);
+    let mut row = vec![BigUint::one()];
+    for index in 0..=degree {
+        if index != 0 {
+            row.push(BigUint::one());
+            for power in (1..index).rev() {
+                row[power] = &row[power - 1] + &row[power];
+            }
+        }
         let mut value = Real::zero();
         for (power, coefficient) in coefficients.iter().enumerate().take(index + 1) {
-            let numerator = Real::from(binomials[index][power]);
-            let denominator = Real::from(binomials[degree][power]);
-            value = &value + coefficient * (numerator / denominator)?;
+            let numerator = exact_nonnegative_integer_real(&row[power])?;
+            value = &value + coefficient * (numerator / &degree_binomials[power])?;
         }
         bernstein.push(value);
     }
     Ok(bernstein)
-}
-
-fn checked_binomial_triangle(degree: usize) -> CurveResult<Vec<Vec<u64>>> {
-    let mut rows = Vec::with_capacity(degree + 1);
-    rows.push(vec![1_u64]);
-    for row_index in 1..=degree {
-        let previous = &rows[row_index - 1];
-        let mut row = vec![1_u64; row_index + 1];
-        for index in 1..row_index {
-            row[index] = previous[index - 1]
-                .checked_add(previous[index])
-                .ok_or(CurveError::InvalidDegreeElevation)?;
-        }
-        rows.push(row);
-    }
-    Ok(rows)
 }
 
 fn polynomial_from_coefficients(
@@ -2639,4 +2639,27 @@ fn signed_polynomial_on_isolating_interval(
         right
     };
     signed_polynomial_on_isolating_interval(filter, defining, &next, policy, depth + 1)
+}
+
+#[cfg(test)]
+mod conversion_tests {
+    use super::*;
+
+    #[test]
+    fn power_to_bernstein_remains_exact_beyond_u64_binomials() {
+        let degree = 80_usize;
+        let coefficients =
+            power_to_bernstein_coefficients(&[Real::zero(), Real::one()], degree).unwrap();
+        let degree_real = Real::from(u64::try_from(degree).unwrap());
+        let policy = CurvePolicy::certified();
+
+        assert_eq!(coefficients.len(), degree + 1);
+        for (index, coefficient) in coefficients.iter().enumerate() {
+            let expected = (Real::from(u64::try_from(index).unwrap()) / &degree_real).unwrap();
+            assert_eq!(
+                compare_reals(coefficient, &expected, &policy),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
+    }
 }

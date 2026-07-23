@@ -480,6 +480,7 @@ enum ResultantParameterProjection {
 
 const MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE: usize = 128;
 const RATIONAL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
+const MAX_RETAINED_EVALUATION_POWER_DEGREE: usize = 256;
 
 impl PartialEq for RationalBezier2 {
     fn eq(&self, other: &Self) -> bool {
@@ -720,6 +721,14 @@ impl RationalBezier2 {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         }
+        if self.degree() > MAX_RETAINED_EVALUATION_POWER_DEGREE
+            && self.data.homogeneous_power_basis.get().is_none()
+        {
+            return match self.homogeneous_bernstein_value(parameter, policy) {
+                Classification::Decided(point) => project_homogeneous(&point, policy),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            };
+        }
         let Ok(power_basis) = self.homogeneous_power_basis() else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
@@ -731,6 +740,67 @@ impl RationalBezier2 {
             },
             policy,
         )
+    }
+
+    fn homogeneous_bernstein_value(
+        &self,
+        parameter: &Real,
+        policy: &CurvePolicy,
+    ) -> Classification<HomogeneousPoint2> {
+        if is_zero(parameter, policy) == Some(true) {
+            return Classification::Decided(self.homogeneous_controls()[0].clone());
+        }
+        let one_minus_parameter = Real::one() - parameter;
+        if is_zero(&one_minus_parameter, policy) == Some(true) {
+            return Classification::Decided(
+                self.homogeneous_controls()
+                    .last()
+                    .expect("validated rational Bezier has controls")
+                    .clone(),
+            );
+        }
+        if is_zero(&one_minus_parameter, policy) != Some(false) {
+            return self.homogeneous_de_casteljau_value(parameter);
+        }
+        let Ok(parameter_ratio) = parameter / &one_minus_parameter else {
+            return self.homogeneous_de_casteljau_value(parameter);
+        };
+        let mut basis = real_nonnegative_integer_power(&one_minus_parameter, self.degree());
+        let controls = self.homogeneous_controls();
+        let mut value = controls[0].scaled(&basis);
+        for (index, control) in controls.iter().enumerate().skip(1) {
+            let Ok(numerator) = u64::try_from(self.degree() - index + 1) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            let Ok(denominator) = u64::try_from(index) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            basis = basis * &parameter_ratio * Real::from(numerator);
+            let Ok(next_basis) = basis / Real::from(denominator) else {
+                return self.homogeneous_de_casteljau_value(parameter);
+            };
+            basis = next_basis;
+            value.add_scaled(control, &basis);
+        }
+        Classification::Decided(value)
+    }
+
+    fn homogeneous_de_casteljau_value(
+        &self,
+        parameter: &Real,
+    ) -> Classification<HomogeneousPoint2> {
+        let mut level = self.homogeneous_controls().to_vec();
+        let one_minus_parameter = Real::one() - parameter;
+        for next_len in (1..level.len()).rev() {
+            for index in 0..next_len {
+                level[index] = level[index].lerp_with_complement(
+                    &level[index + 1],
+                    parameter,
+                    &one_minus_parameter,
+                );
+            }
+        }
+        Classification::Decided(level.remove(0))
     }
 
     /// Evaluates the exact affine derivative with respect to the Bezier parameter.
@@ -956,6 +1026,9 @@ impl RationalBezier2 {
     ) -> CurveResult<Classification<bool>> {
         if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
             return Ok(Classification::Uncertain(reason));
+        }
+        if self.control_polygon_certifies_axis_monotone(axis, policy) {
+            return Ok(Classification::Decided(true));
         }
         let Some(coefficients) = self.axis_derivative_numerator_bernstein(axis) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -1453,6 +1526,9 @@ impl RationalBezier2 {
         let mut level = self.homogeneous_controls().to_vec();
         let mut left = Vec::with_capacity(level.len());
         let mut right = Vec::with_capacity(level.len());
+        let one_minus_parameter = Real::one() - parameter;
+        let is_midpoint = compare_reals(parameter, &one_minus_parameter, policy)
+            == Some(std::cmp::Ordering::Equal);
         left.push(level[0].clone());
         right.push(
             level
@@ -1460,14 +1536,21 @@ impl RationalBezier2 {
                 .expect("validated rational Bezier has controls")
                 .clone(),
         );
-        while level.len() > 1 {
-            let next = level
-                .windows(2)
-                .map(|pair| pair[0].lerp(&pair[1], parameter))
-                .collect::<Vec<_>>();
-            left.push(next[0].clone());
-            right.push(next.last().expect("de Casteljau level is nonempty").clone());
-            level = next;
+        for next_len in (1..level.len()).rev() {
+            for index in 0..next_len {
+                let interpolated = if is_midpoint {
+                    level[index].midpoint(&level[index + 1], parameter)
+                } else {
+                    level[index].lerp_with_complement(
+                        &level[index + 1],
+                        parameter,
+                        &one_minus_parameter,
+                    )
+                };
+                level[index] = interpolated;
+            }
+            left.push(level[0].clone());
+            right.push(level[next_len - 1].clone());
         }
         right.reverse();
         let left_lineage = self.data.lineage.subrange(&Real::zero(), parameter);
@@ -2411,19 +2494,52 @@ impl RationalBezier2 {
     }
 
     fn has_certified_injective_axis_on(&self, axis: Axis2, policy: &CurvePolicy) -> bool {
+        let (start, end) = match axis {
+            Axis2::X => (self.start().x(), self.end().x()),
+            Axis2::Y => (self.start().y(), self.end().y()),
+        };
+        if self.control_polygon_certifies_axis_monotone(axis, policy)
+            && compare_reals(start, end, policy).is_some_and(|ordering| !ordering.is_eq())
+        {
+            return true;
+        }
         if !matches!(
             self.axis_monotonicity_classified(axis, policy),
             Ok(Classification::Decided(true))
         ) {
             return false;
         }
-        let (start, end) = match axis {
-            Axis2::X => (self.start().x(), self.end().x()),
-            Axis2::Y => (self.start().y(), self.end().y()),
-        };
         // A one-signed Bernstein derivative with distinct endpoint coordinates
         // is strictly monotone on the open domain.
         compare_reals(start, end, policy).is_some_and(|ordering| !ordering.is_eq())
+    }
+
+    fn control_polygon_certifies_axis_monotone(&self, axis: Axis2, policy: &CurvePolicy) -> bool {
+        if !matches!(self.common_weight_sign(policy), Classification::Decided(_)) {
+            return false;
+        }
+        let mut direction = None;
+        for pair in self.control_points().windows(2) {
+            let first = match axis {
+                Axis2::X => pair[0].x(),
+                Axis2::Y => pair[0].y(),
+            };
+            let second = match axis {
+                Axis2::X => pair[1].x(),
+                Axis2::Y => pair[1].y(),
+            };
+            let Some(ordering) = compare_reals(first, second, policy) else {
+                return false;
+            };
+            if ordering.is_eq() {
+                continue;
+            }
+            if direction.is_some_and(|direction| direction != ordering) {
+                return false;
+            }
+            direction = Some(ordering);
+        }
+        true
     }
 
     fn certified_polynomial_graph_component(
@@ -3280,14 +3396,63 @@ fn exact_binomial_product(
 }
 
 impl HomogeneousPoint2 {
-    fn lerp(&self, other: &Self, parameter: &Real) -> Self {
-        let one_minus = Real::one() - parameter;
+    fn scaled(&self, scale: &Real) -> Self {
         Self {
-            x: (&self.x * &one_minus) + (&other.x * parameter),
-            y: (&self.y * &one_minus) + (&other.y * parameter),
-            weight: (&self.weight * &one_minus) + (&other.weight * parameter),
+            x: &self.x * scale,
+            y: &self.y * scale,
+            weight: &self.weight * scale,
         }
     }
+
+    fn add_scaled(&mut self, other: &Self, scale: &Real) {
+        self.x = &self.x + &other.x * scale;
+        self.y = &self.y + &other.y * scale;
+        self.weight = &self.weight + &other.weight * scale;
+    }
+
+    fn midpoint(&self, other: &Self, half: &Real) -> Self {
+        Self {
+            x: Real::dot2_refs([&self.x, &other.x], [half, half]),
+            y: Real::dot2_refs([&self.y, &other.y], [half, half]),
+            weight: Real::dot2_refs([&self.weight, &other.weight], [half, half]),
+        }
+    }
+
+    fn lerp(&self, other: &Self, parameter: &Real) -> Self {
+        let one_minus = Real::one() - parameter;
+        self.lerp_with_complement(other, parameter, &one_minus)
+    }
+
+    fn lerp_with_complement(
+        &self,
+        other: &Self,
+        parameter: &Real,
+        one_minus_parameter: &Real,
+    ) -> Self {
+        Self {
+            x: Real::dot2_refs([&self.x, &other.x], [one_minus_parameter, parameter]),
+            y: Real::dot2_refs([&self.y, &other.y], [one_minus_parameter, parameter]),
+            weight: Real::dot2_refs(
+                [&self.weight, &other.weight],
+                [one_minus_parameter, parameter],
+            ),
+        }
+    }
+}
+
+fn real_nonnegative_integer_power(base: &Real, mut exponent: usize) -> Real {
+    let mut result = Real::one();
+    let mut factor = base.clone();
+    while exponent != 0 {
+        if !exponent.is_multiple_of(2) {
+            result *= &factor;
+        }
+        exponent /= 2;
+        if exponent != 0 {
+            factor = &factor * &factor;
+        }
+    }
+    result
 }
 
 fn project_homogeneous(point: &HomogeneousPoint2, policy: &CurvePolicy) -> Classification<Point2> {
@@ -3335,9 +3500,10 @@ mod tests {
             vec![
                 Point2::new(0.into(), 0.into()),
                 Point2::new(1.into(), 2.into()),
-                Point2::new(3.into(), 1.into()),
+                Point2::new(0.into(), 1.into()),
+                Point2::new(1.into(), 0.into()),
             ],
-            vec![1.into(), 2.into(), 1.into()],
+            vec![1.into(); 4],
         )
         .unwrap();
         let clone = curve.clone();
@@ -3501,5 +3667,75 @@ mod tests {
             ),
             "trimmed replay: {replay:?}; first mappings: {first_mappings:?}; second mappings: {second_mappings:?}"
         );
+    }
+
+    #[test]
+    fn high_degree_point_evaluation_uses_exact_bounded_memory_bernstein_path() {
+        let degree = MAX_RETAINED_EVALUATION_POWER_DEGREE + 1;
+        let curve = RationalBezier2::try_new(
+            (0..=degree)
+                .map(|index| {
+                    Point2::new(
+                        Real::from(u64::try_from(index).unwrap()),
+                        Real::from(u64::try_from(index % 7).unwrap()),
+                    )
+                })
+                .collect(),
+            vec![Real::one(); degree + 1],
+        )
+        .unwrap();
+        let parameter = (Real::one() / Real::from(2_u8)).unwrap();
+        let policy = CurvePolicy::certified();
+
+        let point = curve.point_at(&parameter, &policy).unwrap();
+        let expected_x = (Real::from(u64::try_from(degree).unwrap()) / Real::from(2_u8)).unwrap();
+        assert_eq!(
+            compare_reals(point.x(), &expected_x, &policy),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert!(curve.data.homogeneous_power_basis.get().is_none());
+    }
+
+    #[test]
+    fn high_degree_bernstein_evaluation_matches_de_casteljau_with_varying_weights() {
+        let degree = MAX_RETAINED_EVALUATION_POWER_DEGREE + 1;
+        let curve = RationalBezier2::try_new(
+            (0..=degree)
+                .map(|index| {
+                    Point2::new(
+                        Real::from(u64::try_from(index % 19).unwrap()),
+                        Real::from(u64::try_from(index % 11).unwrap()),
+                    )
+                })
+                .collect(),
+            (0..=degree)
+                .map(|index| Real::from(u64::try_from(index % 5 + 1).unwrap()))
+                .collect(),
+        )
+        .unwrap();
+        let parameter = (Real::one() / Real::from(3_u8)).unwrap();
+        let policy = CurvePolicy::certified();
+
+        let actual = curve.point_at(&parameter, &policy).unwrap();
+        let expected = match curve.homogeneous_de_casteljau_value(&parameter) {
+            Classification::Decided(value) => match project_homogeneous(&value, &policy) {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    panic!("de Casteljau projection blocked: {reason:?}")
+                }
+            },
+            Classification::Uncertain(reason) => {
+                panic!("de Casteljau evaluation blocked: {reason:?}")
+            }
+        };
+        assert_eq!(
+            compare_reals(actual.x(), expected.x(), &policy),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(actual.y(), expected.y(), &policy),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert!(curve.data.homogeneous_power_basis.get().is_none());
     }
 }

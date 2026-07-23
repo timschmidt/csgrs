@@ -1029,6 +1029,25 @@ where
         return Classification::Decided(BezierCurveRelation::SameControlPolygon);
     }
 
+    let hull_relation = match (
+        Aabb2::from_points(first_controls.iter().copied(), policy),
+        Aabb2::from_points(second_controls.iter().copied(), policy),
+    ) {
+        (Classification::Decided(first), Classification::Decided(second)) => {
+            first.overlaps(&second, policy)
+        }
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            Classification::Uncertain(reason)
+        }
+    };
+    match hull_relation {
+        Classification::Decided(false) => {
+            return Classification::Decided(BezierCurveRelation::BoundingBoxesDisjoint);
+        }
+        Classification::Decided(true) => {}
+        Classification::Uncertain(_) => {}
+    }
+
     match same_polynomial_image_by_degree_elevation(&first_controls, &second_controls, policy) {
         Classification::Decided(true) => {
             return Classification::Decided(BezierCurveRelation::SameCurveImage);
@@ -1037,20 +1056,8 @@ where
         Classification::Uncertain(_) => {}
     }
 
-    let first_hull = match Aabb2::from_points(first_controls.iter().copied(), policy) {
-        Classification::Decided(bbox) => bbox,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    let second_hull = match Aabb2::from_points(second_controls.iter().copied(), policy) {
-        Classification::Decided(bbox) => bbox,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    match first_hull.overlaps(&second_hull, policy) {
-        Classification::Decided(false) => {
-            return Classification::Decided(BezierCurveRelation::BoundingBoxesDisjoint);
-        }
-        Classification::Decided(true) => {}
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    if let Classification::Uncertain(reason) = hull_relation {
+        return Classification::Uncertain(reason);
     }
 
     let first_point_image = match point_image_from_controls(&first_controls, policy) {
@@ -2947,6 +2954,15 @@ pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
     distances: Vec<Real>,
     policy: &CurvePolicy,
 ) -> Classification<BezierLineContactRelation> {
+    if distances
+        .iter()
+        .any(|distance| distance.exact_rational_ref().is_none())
+        && let [d0, d1, d2] = distances.as_slice()
+        && let Classification::Decided(relation) =
+            exact_quadratic_line_contact_relation([d0, d1, d2], policy)
+    {
+        return Classification::Decided(relation);
+    }
     let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis(distances, policy) {
         Ok(Classification::Decided(polynomial)) => polynomial,
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
@@ -2982,6 +2998,50 @@ pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
                 Ok(contact) => contact,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
             };
+        contacts.push(contact);
+    }
+    Classification::Decided(BezierLineContactRelation::Contacts { contacts })
+}
+
+fn exact_quadratic_line_contact_relation(
+    distances: [&Real; 3],
+    policy: &CurvePolicy,
+) -> Classification<BezierLineContactRelation> {
+    let two = Real::from(2_i8);
+    let c0 = distances[0].clone();
+    let c1 = &two * &(distances[1] - distances[0]);
+    let c2 = distances[0] - &(&two * distances[1]) + distances[2];
+    let parameters = match polynomial_roots_in_unit_interval(c0, c1.clone(), c2.clone(), policy) {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    if parameters.is_empty() {
+        return Classification::Decided(BezierLineContactRelation::NoContact);
+    }
+
+    let mut contacts = Vec::with_capacity(parameters.len());
+    for parameter in parameters {
+        let derivative = &c1 + &two * &c2 * &parameter;
+        let (kind, crossing_direction) = match real_sign(&derivative, policy) {
+            Some(RealSign::Negative) => (
+                BezierLineContactKind::Crossing,
+                Some(BezierLineCrossingDirection::PositiveToNegative),
+            ),
+            Some(RealSign::Positive) => (
+                BezierLineContactKind::Crossing,
+                Some(BezierLineCrossingDirection::NegativeToPositive),
+            ),
+            Some(RealSign::Zero) => (BezierLineContactKind::Tangent, None),
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        };
+        let contact = match BezierLineContact::with_crossing_direction(
+            BezierParameter2::Exact(parameter),
+            kind,
+            crossing_direction,
+        ) {
+            Ok(contact) => contact,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
         contacts.push(contact);
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })

@@ -22,7 +22,7 @@
 use std::cmp::Ordering;
 
 use hyperreal::{Rational as HyperRational, Real, RealSign};
-use num::{BigInt, BigRational, BigUint, Integer, One, Zero};
+use num::{BigInt, BigRational, BigUint, Integer, One, ToPrimitive, Zero};
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
 use crate::{
@@ -1773,35 +1773,67 @@ pub(crate) fn bernstein_to_power_coefficients(values: Vec<Real>) -> CurveResult<
         .len()
         .checked_sub(1)
         .ok_or(CurveError::InvalidBezierPolynomial)?;
-    let binomials = checked_binomial_triangle(degree)?;
-    let mut coefficients = vec![Real::zero(); values.len()];
-    for (power, coefficient) in coefficients.iter_mut().enumerate() {
-        let mut alternating_sum = Real::zero();
-        for (index, value) in values.iter().take(power + 1).enumerate() {
-            let term = value * &Real::from(binomials[power][index]);
-            if (power - index).is_multiple_of(2) {
-                alternating_sum = &alternating_sum + term;
-            } else {
-                alternating_sum = &alternating_sum - term;
+
+    // If `b` stores the Bernstein controls, power coefficient `k` is
+    // `binomial(degree, k) * Δ^k b[0]`. Building the forward-difference
+    // column in place avoids the old quadratic Pascal triangle and replaces
+    // every inner-loop multiplication by one subtraction. `BigUint` keeps
+    // the conversion exact beyond the former `u64` binomial ceiling.
+    let mut differences = values;
+    let mut coefficients = Vec::with_capacity(degree + 1);
+    let mut degree_binomial = BigUint::one();
+    for power in 0..=degree {
+        if power != 0 {
+            degree_binomial *= BigUint::from(degree - power + 1);
+            degree_binomial /= BigUint::from(power);
+            for index in 0..=degree - power {
+                differences[index] = &differences[index + 1] - &differences[index];
             }
         }
-        *coefficient = alternating_sum * Real::from(binomials[degree][power]);
+        coefficients.push(&differences[0] * exact_nonnegative_integer_real(&degree_binomial)?);
     }
     Ok(coefficients)
 }
 
-fn checked_binomial_triangle(degree: usize) -> CurveResult<Vec<Vec<u64>>> {
-    let mut rows: Vec<Vec<u64>> = Vec::with_capacity(degree + 1);
-    rows.push(vec![1]);
-    for row_index in 1..=degree {
-        let previous = &rows[row_index - 1];
-        let mut row = vec![1; row_index + 1];
-        for index in 1..row_index {
-            row[index] = previous[index - 1]
-                .checked_add(previous[index])
-                .ok_or(CurveError::InvalidBezierPolynomial)?;
-        }
-        rows.push(row);
+pub(crate) fn exact_nonnegative_integer_real(value: &BigUint) -> CurveResult<Real> {
+    if let Some(value) = value.to_u64() {
+        return Ok(Real::from(value));
     }
-    Ok(rows)
+    HyperRational::from_bigint_fraction(BigInt::from(value.clone()), BigUint::one())
+        .map(Real::new)
+        .map_err(Into::into)
+}
+
+#[cfg(test)]
+mod conversion_tests {
+    use super::*;
+
+    #[test]
+    fn bernstein_to_power_remains_exact_beyond_u64_binomials() {
+        let degree = 80_usize;
+        let coefficients = bernstein_to_power_coefficients(
+            (0..=degree)
+                .map(|index| Real::from(u64::try_from(index).unwrap()))
+                .collect(),
+        )
+        .unwrap();
+        let policy = CurvePolicy::certified();
+
+        assert_eq!(coefficients.len(), degree + 1);
+        assert_eq!(
+            compare_reals(&coefficients[0], &Real::zero(), &policy),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &coefficients[1],
+                &Real::from(u64::try_from(degree).unwrap()),
+                &policy
+            ),
+            Some(Ordering::Equal)
+        );
+        assert!(coefficients[2..].iter().all(|coefficient| {
+            compare_reals(coefficient, &Real::zero(), &policy) == Some(Ordering::Equal)
+        }));
+    }
 }

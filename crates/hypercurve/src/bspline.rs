@@ -1691,34 +1691,22 @@ impl BSplineWorkingCurve {
             return Ok(Classification::Decided(()));
         }
 
-        let n = self.control_points.len() - 1;
         let p = self.degree;
-        let mut new_points = vec![self.control_points[0].clone(); self.control_points.len() + 1];
-        for (i, point) in new_points
-            .iter_mut()
-            .enumerate()
-            .take(span.saturating_sub(p) + 1)
-        {
-            *point = self.control_points[i].clone();
-        }
-        let right_start = span - multiplicity + 1;
-        new_points[right_start..=n + 1].clone_from_slice(&self.control_points[right_start - 1..=n]);
-        for (i, point) in new_points
-            .iter_mut()
-            .enumerate()
-            .take(span - multiplicity + 1)
-            .skip(span - p + 1)
-        {
+        let affected_start = span - p + 1;
+        let affected_end = span - multiplicity;
+        self.control_points
+            .insert(affected_end + 1, self.control_points[affected_end].clone());
+        for i in (affected_start..=affected_end).rev() {
             let denominator = &self.knots[i + p] - &self.knots[i];
             let alpha = match (knot.clone() - &self.knots[i]) / denominator {
                 Ok(alpha) => alpha,
                 Err(_) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
             };
-            *point = self.control_points[i - 1].lerp(&self.control_points[i], alpha);
+            self.control_points[i] =
+                self.control_points[i - 1].lerp(&self.control_points[i], alpha);
         }
 
         self.knots.insert(span + 1, knot);
-        self.control_points = new_points;
         self.inserted_knot_count += 1;
         Ok(Classification::Decided(()))
     }
@@ -1736,34 +1724,21 @@ impl HomogeneousBSplineWorkingCurve {
             return Ok(Classification::Decided(()));
         }
 
-        let n = self.controls.len() - 1;
         let p = self.degree;
-        let mut new_controls = vec![self.controls[0].clone(); self.controls.len() + 1];
-        for (i, control) in new_controls
-            .iter_mut()
-            .enumerate()
-            .take(span.saturating_sub(p) + 1)
-        {
-            *control = self.controls[i].clone();
-        }
-        let right_start = span - multiplicity + 1;
-        new_controls[right_start..=n + 1].clone_from_slice(&self.controls[right_start - 1..=n]);
-        for (i, control) in new_controls
-            .iter_mut()
-            .enumerate()
-            .take(span - multiplicity + 1)
-            .skip(span - p + 1)
-        {
+        let affected_start = span - p + 1;
+        let affected_end = span - multiplicity;
+        self.controls
+            .insert(affected_end + 1, self.controls[affected_end].clone());
+        for i in (affected_start..=affected_end).rev() {
             let denominator = &self.knots[i + p] - &self.knots[i];
             let alpha = match (knot.clone() - &self.knots[i]) / denominator {
                 Ok(alpha) => alpha,
                 Err(_) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
             };
-            *control = self.controls[i - 1].lerp(&self.controls[i], alpha);
+            self.controls[i] = self.controls[i - 1].lerp(&self.controls[i], alpha);
         }
 
         self.knots.insert(span + 1, knot);
-        self.controls = new_controls;
         self.inserted_knot_count += 1;
         Ok(Classification::Decided(()))
     }
@@ -1954,15 +1929,11 @@ fn distinct_bezier_break_knots(
 }
 
 fn knot_multiplicity(knots: &[Real], knot: &Real, policy: &CurvePolicy) -> CurveResult<usize> {
-    let mut count = 0;
-    for candidate in knots {
-        match compare_reals(candidate, knot, policy) {
-            Some(Ordering::Equal) => count += 1,
-            Some(Ordering::Less | Ordering::Greater) => {}
-            None => return Err(CurveError::InvalidBSpline),
-        }
-    }
-    Ok(count)
+    let lower =
+        knot_partition_point(knots, knot, false, policy).ok_or(CurveError::InvalidBSpline)?;
+    let upper =
+        knot_partition_point(knots, knot, true, policy).ok_or(CurveError::InvalidBSpline)?;
+    Ok(upper - lower)
 }
 
 fn weights_are_all_equal(weights: &[Real], policy: &CurvePolicy) -> Classification<bool> {
@@ -1990,18 +1961,33 @@ fn find_insertion_span(
     if compare_reals(knot, &knots[n + 1], policy) == Some(Ordering::Equal) {
         return Ok(Some(if n + 1 < knots.len() - 1 { n + 1 } else { n }));
     }
-    for span in degree..=n {
-        let left = compare_reals(&knots[span], knot, policy);
-        let right = compare_reals(knot, &knots[span + 1], policy);
-        match (left, right) {
-            (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less)) => {
-                return Ok(Some(span));
-            }
-            (Some(_), Some(_)) => {}
-            _ => return Ok(None),
+    let insertion = match knot_partition_point(knots, knot, true, policy) {
+        Some(insertion) => insertion,
+        None => return Ok(None),
+    };
+    let Some(span) = insertion.checked_sub(1) else {
+        return Ok(None);
+    };
+    Ok((degree..=n).contains(&span).then_some(span))
+}
+
+fn knot_partition_point(
+    knots: &[Real],
+    knot: &Real,
+    include_equal: bool,
+    policy: &CurvePolicy,
+) -> Option<usize> {
+    let mut left = 0;
+    let mut right = knots.len();
+    while left < right {
+        let middle = left + (right - left) / 2;
+        match compare_reals(&knots[middle], knot, policy)? {
+            Ordering::Less => left = middle + 1,
+            Ordering::Equal if include_equal => left = middle + 1,
+            Ordering::Equal | Ordering::Greater => right = middle,
         }
     }
-    Ok(None)
+    Some(left)
 }
 
 fn extract_refined_bezier_spans(
@@ -2249,6 +2235,64 @@ mod tests {
         match classification {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        }
+    }
+
+    #[test]
+    fn binary_knot_search_matches_complete_scan_on_large_repeated_vectors() {
+        let policy = CurvePolicy::certified();
+        let mut state = 0x9e37_79b9_u64;
+        for case in 0..128_usize {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1);
+            let knot_count = 16 + usize::try_from(state % 240).unwrap();
+            let degree = 3_usize;
+            let control_count = knot_count - degree - 1;
+            let n = control_count - 1;
+            let mut value = -8_i32;
+            let mut knots = Vec::with_capacity(knot_count);
+            for _ in 0..knot_count {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1);
+                value += i32::try_from(state % 3).unwrap();
+                knots.push(Real::from(value));
+            }
+
+            for query_value in -10..=value + 2 {
+                let query = Real::from(query_value);
+                let expected_multiplicity = knots
+                    .iter()
+                    .filter(|existing| {
+                        compare_reals(existing, &query, &policy) == Some(Ordering::Equal)
+                    })
+                    .count();
+                assert_eq!(
+                    knot_multiplicity(&knots, &query, &policy).unwrap(),
+                    expected_multiplicity,
+                    "case={case}; query={query_value}"
+                );
+
+                let expected_span =
+                    if compare_reals(&query, &knots[n + 1], &policy) == Some(Ordering::Equal) {
+                        Some(if n + 1 < knots.len() - 1 { n + 1 } else { n })
+                    } else {
+                        knots
+                            .iter()
+                            .position(|existing| {
+                                compare_reals(existing, &query, &policy) == Some(Ordering::Greater)
+                            })
+                            .unwrap_or(knots.len())
+                            .checked_sub(1)
+                            .filter(|span| (degree..=n).contains(span))
+                    };
+                assert_eq!(
+                    find_insertion_span(&knots, degree, control_count, &query, &policy).unwrap(),
+                    expected_span,
+                    "case={case}; query={query_value}"
+                );
+            }
         }
     }
 

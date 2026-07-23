@@ -15,11 +15,13 @@
 //! model: an overlap is a
 //! first-class event, not an arbitrary successor choice.
 
+use std::cmp::Ordering;
+
 use hyperreal::Real;
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BezierArrangementChain2, BezierArrangementGraph2, BezierArrangementTraversal2,
+    Aabb2, BezierArrangementChain2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierCurveRelation, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
     BezierSubcurve2, Classification, CurveError, CurvePolicy, CurveResult, LineLineIntersection,
     LineSeg2, ParamRange, Point2, RationalBezier2, RationalBezierIntersectionContacts2,
@@ -1632,9 +1634,14 @@ impl BezierRetainedOverlapReport2 {
         } else {
             Vec::new()
         };
+        let control_hulls = graph
+            .fragments()
+            .iter()
+            .map(|fragment| materialized_control_hull(fragment.fragment(), policy))
+            .collect::<Vec<_>>();
         let mut overlaps = Vec::new();
-        for first_index in 0..graph.fragments().len() {
-            for second_index in (first_index + 1)..graph.fragments().len() {
+        let mut visit_pair =
+            |first_index: usize, second_index: usize| -> Result<(), UncertaintyReason> {
                 let relation = match materialized_overlap_relation(
                     graph.fragments()[first_index].fragment(),
                     graph.fragments()[second_index].fragment(),
@@ -1647,17 +1654,27 @@ impl BezierRetainedOverlapReport2 {
                     policy,
                 ) {
                     Classification::Decided(relation) => relation,
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                    Classification::Uncertain(reason) => return Err(reason),
                 };
                 if let Some(relation) = relation {
-                    let overlap =
-                        match BezierRetainedOverlap2::new(first_index, second_index, relation) {
-                            Ok(overlap) => overlap,
-                            Err(_) => {
-                                return Classification::Uncertain(UncertaintyReason::Unsupported);
-                            }
-                        };
+                    let overlap = BezierRetainedOverlap2::new(first_index, second_index, relation)
+                        .map_err(|_| UncertaintyReason::Unsupported)?;
                     overlaps.push(overlap);
+                }
+                Ok(())
+            };
+        if let Some(pairs) = control_hull_candidate_pairs(&control_hulls, policy) {
+            for (first_index, second_index) in pairs {
+                if let Err(reason) = visit_pair(first_index, second_index) {
+                    return Classification::Uncertain(reason);
+                }
+            }
+        } else {
+            for first_index in 0..graph.fragments().len() {
+                for second_index in (first_index + 1)..graph.fragments().len() {
+                    if let Err(reason) = visit_pair(first_index, second_index) {
+                        return Classification::Uncertain(reason);
+                    }
                 }
             }
         }
@@ -2744,6 +2761,120 @@ fn remap_traversal_indices(
     )
 }
 
+fn materialized_control_hull(
+    fragment: &BezierSplitFragment2,
+    policy: &CurvePolicy,
+) -> Option<Aabb2> {
+    let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+        return None;
+    };
+    let hull = match curve {
+        BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points(), policy),
+        BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points(), policy),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.common_nonzero_weight_sign(policy)?;
+            Aabb2::from_points(curve.control_points(), policy)
+        }
+        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
+    };
+    match hull {
+        Classification::Decided(hull) => Some(hull),
+        Classification::Uncertain(_) => None,
+    }
+}
+
+fn control_hull_candidate_pairs(
+    hulls: &[Option<Aabb2>],
+    policy: &CurvePolicy,
+) -> Option<Vec<(usize, usize)>> {
+    const MAX_SPARSE_PAIRS: usize = 262_144;
+
+    let mut bounded = hulls
+        .iter()
+        .enumerate()
+        .filter_map(|(index, hull)| hull.as_ref().map(|hull| (index, hull)))
+        .collect::<Vec<_>>();
+    bounded.sort_unstable_by(|(left_index, left), (right_index, right)| {
+        match (
+            left.min_x()
+                .to_f64_lossy()
+                .filter(|value| value.is_finite()),
+            right
+                .min_x()
+                .to_f64_lossy()
+                .filter(|value| value.is_finite()),
+        ) {
+            (Some(left), Some(right)) => left
+                .total_cmp(&right)
+                .then_with(|| left_index.cmp(right_index)),
+            _ => left_index.cmp(right_index),
+        }
+    });
+    for adjacent in bounded.windows(2) {
+        if !matches!(
+            compare_reals(adjacent[0].1.min_x(), adjacent[1].1.min_x(), policy),
+            Some(Ordering::Less | Ordering::Equal)
+        ) {
+            return None;
+        }
+    }
+
+    let mut pairs = Vec::new();
+    let mut active = Vec::<usize>::new();
+    for (right_index, right) in bounded {
+        let mut write = 0;
+        for read in 0..active.len() {
+            let left_index = active[read];
+            let left = hulls[left_index]
+                .as_ref()
+                .expect("active control hull index is bounded");
+            match compare_reals(left.max_x(), right.min_x(), policy) {
+                Some(Ordering::Less) => {}
+                Some(Ordering::Equal | Ordering::Greater) => {
+                    active[write] = left_index;
+                    write += 1;
+                }
+                None => return None,
+            }
+        }
+        active.truncate(write);
+        for left_index in active.iter().copied() {
+            let left = hulls[left_index]
+                .as_ref()
+                .expect("active control hull index is bounded");
+            if !matches!(left.overlaps(right, policy), Classification::Decided(false)) {
+                pairs.push(ordered_fragment_pair(left_index, right_index));
+                if pairs.len() > MAX_SPARSE_PAIRS {
+                    return None;
+                }
+            }
+        }
+        active.push(right_index);
+    }
+
+    for first_index in 0..hulls.len() {
+        for second_index in (first_index + 1)..hulls.len() {
+            if hulls[first_index].is_none() || hulls[second_index].is_none() {
+                pairs.push((first_index, second_index));
+                if pairs.len() > MAX_SPARSE_PAIRS {
+                    return None;
+                }
+            }
+        }
+    }
+    pairs.sort_unstable();
+    pairs.dedup();
+    Some(pairs)
+}
+
+const fn ordered_fragment_pair(first: usize, second: usize) -> (usize, usize) {
+    if first < second {
+        (first, second)
+    } else {
+        (second, first)
+    }
+}
+
 fn materialized_overlap_relation(
     first: &BezierSplitFragment2,
     second: &BezierSplitFragment2,
@@ -2911,6 +3042,59 @@ fn subcurve_relation(
         }
         (BezierSubcurve2::Cubic(first), BezierSubcurve2::RationalQuadratic(second)) => {
             first.relation_to_rational_quadratic(second, policy)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    use super::*;
+
+    #[test]
+    fn control_hull_sweep_matches_complete_exact_pair_scan() {
+        let policy = CurvePolicy::certified();
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        let mut next = || {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            i32::try_from((state >> 32) % 101).unwrap() - 50
+        };
+
+        for _ in 0..128 {
+            let hulls = (0..32)
+                .map(|_| {
+                    let x0 = next();
+                    let y0 = next();
+                    let x1 = x0 + next().unsigned_abs().min(12) as i32;
+                    let y1 = y0 + next().unsigned_abs().min(12) as i32;
+                    Some(Aabb2::new_unchecked(
+                        Point2::from_values(x0, y0),
+                        Point2::from_values(x1, y1),
+                    ))
+                })
+                .collect::<Vec<_>>();
+            let scheduled = control_hull_candidate_pairs(&hulls, &policy)
+                .expect("integer control hulls have a certified sparse schedule")
+                .into_iter()
+                .collect::<BTreeSet<_>>();
+            let mut complete = BTreeSet::new();
+            for first in 0..hulls.len() {
+                for second in (first + 1)..hulls.len() {
+                    if !matches!(
+                        hulls[first]
+                            .as_ref()
+                            .unwrap()
+                            .overlaps(hulls[second].as_ref().unwrap(), &policy),
+                        Classification::Decided(false)
+                    ) {
+                        complete.insert((first, second));
+                    }
+                }
+            }
+            assert_eq!(scheduled, complete);
         }
     }
 }

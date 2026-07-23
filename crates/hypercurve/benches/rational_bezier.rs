@@ -26,7 +26,99 @@ fn decided<T>(classification: Classification<T>) -> T {
     }
 }
 
+fn large_rational_control_count() -> usize {
+    std::env::var("HYPERCURVE_BENCH_RATIONAL_CONTROLS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(64)
+        .clamp(2, i32::MAX as usize)
+}
+
+fn large_rational_iterations() -> u32 {
+    std::env::var("HYPERCURVE_BENCH_RATIONAL_ITERATIONS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(10)
+        .max(1)
+}
+
+fn large_rational_inputs(control_count: usize) -> (Vec<Point2>, Vec<Real>) {
+    let controls = (0..control_count)
+        .map(|index| {
+            let x = i32::try_from(index).unwrap();
+            let y = i32::try_from(index.wrapping_mul(19) % 37).unwrap() - 18;
+            p(x, y)
+        })
+        .collect();
+    let weights = (0..control_count)
+        .map(|index| r(i32::try_from(index % 5 + 1).unwrap()))
+        .collect();
+    (controls, weights)
+}
+
+fn bench_large_rational_bezier() {
+    let policy = CurvePolicy::certified();
+    let control_count = large_rational_control_count();
+    let iterations = large_rational_iterations();
+    let (controls, weights) = large_rational_inputs(control_count);
+    let parameter = q(1, 2);
+    let operation = std::env::var("HYPERCURVE_BENCH_RATIONAL_OPERATION").ok();
+    let run_evaluation = operation
+        .as_deref()
+        .is_none_or(|value| value == "evaluation");
+    let run_split = operation.as_deref().is_none_or(|value| value == "split");
+
+    if run_evaluation {
+        let started = Instant::now();
+        let mut cold_checksum = 0_usize;
+        for _ in 0..iterations {
+            let curve = RationalBezier2::try_new(controls.clone(), weights.clone()).unwrap();
+            let point = curve.point_at(&parameter, &policy).unwrap();
+            cold_checksum ^= black_box(point.x().to_f64_lossy().unwrap().to_bits() as usize);
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "rational_bezier_large_cold_evaluation_{control_count}_controls: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={cold_checksum}",
+            elapsed / iterations
+        );
+
+        let curve = RationalBezier2::try_new(controls.clone(), weights.clone()).unwrap();
+        curve.point_at(&parameter, &policy).unwrap();
+        let started = Instant::now();
+        let mut cached_checksum = 0_usize;
+        for _ in 0..iterations {
+            let point = curve.point_at(&parameter, &policy).unwrap();
+            cached_checksum ^= black_box(point.y().to_f64_lossy().unwrap().to_bits() as usize);
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "rational_bezier_large_cached_evaluation_{control_count}_controls: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={cached_checksum}",
+            elapsed / iterations
+        );
+    }
+
+    if run_split {
+        let curve = RationalBezier2::try_new(controls, weights).unwrap();
+        let started = Instant::now();
+        let mut split_checksum = 0_usize;
+        for _ in 0..iterations {
+            let (left, right) = decided(curve.split_at_exact(&parameter, &policy).unwrap());
+            split_checksum ^= black_box(left.control_points().len() + right.control_points().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "rational_bezier_large_exact_split_{control_count}_controls: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={split_checksum}",
+            elapsed / iterations
+        );
+    }
+}
+
 fn main() {
+    if std::env::var_os("HYPERCURVE_BENCH_RATIONAL_ONLY").is_some() {
+        bench_large_rational_bezier();
+        return;
+    }
+
     let policy = CurvePolicy::certified();
     let curve = RationalBezier2::try_new(
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
@@ -436,4 +528,6 @@ fn main() {
         "rational_bezier_retained_degree_elevation: {retained_elevation_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_elevation_count}",
         elapsed / retained_elevation_iterations
     );
+
+    bench_large_rational_bezier();
 }
