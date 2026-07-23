@@ -1175,6 +1175,35 @@ contains `Real::exact_dyadic_f64_cached` among functions above 0.2% self-time. A
 approximate competitor measured 27.348 us/iter, so the exact path remains 5.26
 times slower.
 
+### Repeated-denominator crossing reduction boundary
+
+The downstream star1024 exact-contour profile now attributes 15.24% self time to
+the tuned `u128` GCD, 5.46% to fixed-stack dyadic products, 2.72% to the fused
+line-intersection wrapper, and 1.21% to the remaining compiler-runtime `u128`
+division. The workload constructs 5,320 proper crossings and records 21,280
+rational cancellations: two parameters and two coordinates per crossing. The
+two point coordinates reuse the parameter divisor algebraically, but canonical
+standalone rationals still require the residual direction/determinant
+cancellations.
+
+Matched end-to-end trials rejected several locally plausible replacements.
+Stripping powers of two during the wide loop and shortening its small-quotient
+decision tree each regressed about 0.7%. A direct x86-64 two-limb-by-one-limb
+remainder regressed about 0.6%. A scalar Lehmer batch increased the selected
+128-bit sentinel from roughly 134 ns to 368 ns. Moving the product cache out of
+every rational node increased star1024 contour time from roughly 13.44 to 14.11
+ms because retained arithmetic then needed extra allocations. Selecting the
+line with the larger parameter cancellation and deriving coordinate
+cancellations from a separately certified primitive direction were also slower
+or flat after their proof costs were included.
+
+These results set the next crossover: another standalone GCD algorithm is not
+justified by this geometry trace. A material improvement must amortize
+canonicalization across the shared determinant or retain a compact crossing
+form until the event consumer actually needs independent canonical rationals.
+Any such representation must preserve exact equality, ordering, and public
+standalone `Rational` output; GMP remains benchmark/oracle-only.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
