@@ -592,6 +592,9 @@ fn intersect_contours_with_retained_line_candidates(
             match relation {
                 CertifiedLineSegmentSupportRelation::Separated => {}
                 CertifiedLineSegmentSupportRelation::ProperCrossing(sign) => {
+                    if candidates.is_empty() {
+                        candidates.reserve_exact(a.len().min(b.len()).min(64));
+                    }
                     // The dispatcher caps nonempty Cartesian products at
                     // 16,384 pairs, so every participating index fits `u16`.
                     candidates.push(Candidate {
