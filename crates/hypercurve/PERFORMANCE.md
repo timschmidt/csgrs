@@ -2177,6 +2177,35 @@ retained output. A lazy exact-f64 interval tree raised star1024 to 8.060 ms,
 6.7% slower than the packed linear sweep. Replacing endpoint hashing with a
 sorted flat index raised star64 by about 2% and star1024 by about 2.5%.
 
+The next cross-stack checkpoint removes a full-width temporary from
+Hyperreal's exact dyadic product accumulator. Fixed-stack determinant,
+parameter-ordering, and affine-point products are now shifted directly into
+their destination limbs, with carry propagation stopping as soon as the carry
+does. The six-limb admission boundary and arbitrary-precision fallback are
+unchanged.
+
+Matched contour-only trials measured star64 at 53.849 versus 55.065 us,
+star256 at 448.589 versus 467.143 us, and star1024 at 7.203 versus 7.550 ms:
+2.2%, 4.0%, and 4.6% faster. Follow-up full matrices showed gains across
+ordinary and prepared region, contour, and loop outputs after isolated noisy
+rows were rerun: dedicated star64 prepared-loop trials measured 102.027 versus
+103.476 us, and star256 ordinary-region trials measured 568.358 versus 580.775
+us. In the final absolute comparison, exact contours measured 52.623 us at
+star64, 441.384 us at star256, and 7.039 ms at star1024. The corresponding
+competitor rows were 27.729/34.924/36.712 us, 492.026/514.954/530.687 us, and
+20.281/10.135/10.351 ms for Cavalier, `i_overlay`, and `geo`. Exact contour
+output therefore retains the star256 and star1024 lead; the star64 crossover
+remains open.
+
+The 500-operation star1024 profile reduced exact accumulator self-time from
+17.46% to 12.64%. Heaptrack remains exactly 59,096 allocations and 697.47 KiB
+peak heap in the 100-operation star64 contour workload. Eleven standalone
+star1024 processes measured 23,928 KiB median RSS versus 24,172 KiB for the
+preceding binary, with normal process-layout variance. Hyperreal's 561-test
+all-feature suite and Hypercurve's complete all-feature suite, strict Clippy,
+warning-denied rustdoc, and a 10,000-run AddressSanitizer region-Boolean
+campaign (5,902 coverage points and 18,712 feature edges) pass.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
