@@ -764,6 +764,12 @@ mod tests {
         assert!(
             std::mem::size_of::<CompactLineContourFragment>() < std::mem::size_of::<Segment2>()
         );
+        #[cfg(target_pointer_width = "64")]
+        {
+            assert!(std::mem::size_of::<LineSeg2>() <= 328);
+            assert!(std::mem::size_of::<crate::CircularArc2>() <= 376);
+            assert!(std::mem::size_of::<Segment2>() <= 376);
+        }
     }
 
     fn point(x: i32) -> Point2 {

@@ -21,7 +21,6 @@ pub struct LineSeg2 {
     support: Option<Rc<LineSupport2>>,
     support_range: Option<ParamRange>,
     offset_provenance: Option<Rc<LineOffsetProvenance2>>,
-    structural_facts: OnceCell<crate::LineSeg2Facts>,
 }
 
 impl PartialEq for LineSeg2 {
@@ -67,7 +66,6 @@ impl LineSeg2 {
             support: None,
             support_range: None,
             offset_provenance: None,
-            structural_facts: OnceCell::new(),
         })
     }
 
@@ -80,7 +78,6 @@ impl LineSeg2 {
             support: None,
             support_range: None,
             offset_provenance: None,
-            structural_facts: OnceCell::new(),
         }
     }
 
@@ -136,7 +133,6 @@ impl LineSeg2 {
             support: Some(self.fragment_support()),
             support_range: None,
             offset_provenance: self.offset_provenance.clone(),
-            structural_facts: OnceCell::new(),
         })
     }
 
@@ -164,7 +160,6 @@ impl LineSeg2 {
             support: Some(support),
             support_range: Some(support_range),
             offset_provenance: self.offset_provenance.clone(),
-            structural_facts: OnceCell::new(),
         }
     }
 
@@ -313,7 +308,6 @@ impl LineSeg2 {
             support_range: self.support_range.clone(),
             // An arbitrary point map need not preserve signed offset distance.
             offset_provenance: None,
-            structural_facts: OnceCell::new(),
         })
     }
 
@@ -348,7 +342,6 @@ impl LineSeg2 {
                 .as_ref()
                 .map(|range| ParamRange::new(range.end().clone(), range.start().clone())),
             offset_provenance,
-            structural_facts: self.structural_facts.clone(),
         }
     }
 
@@ -415,9 +408,7 @@ impl LineSeg2 {
     /// select faster exact kernels without becoming a substitute for the
     /// orientation predicates used for topology.
     pub fn structural_facts(&self) -> crate::LineSeg2Facts {
-        *self
-            .structural_facts
-            .get_or_init(|| crate::facts::compute_line_segment_facts(self))
+        crate::facts::compute_line_segment_facts(self)
     }
 }
 
@@ -430,12 +421,12 @@ pub struct CircularArc2 {
     radius_squared: Real,
     endpoints_on_stored_circle: bool,
     clockwise: bool,
-    bulge: Option<Real>,
     pub(crate) retained_facts: Rc<CircularArcRetainedFacts2>,
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct CircularArcRetainedFacts2 {
+    source_bulge: Option<Real>,
     pub(crate) sweep_kind: OnceCell<crate::ExactCurveResult<crate::arc_bezier::ArcSweepKind>>,
     pub(crate) bezier_decomposition:
         OnceCell<crate::ExactCurveResult<crate::CircularArcBezierDecomposition2>>,
@@ -444,6 +435,15 @@ pub(crate) struct CircularArcRetainedFacts2 {
     parameter_lineage: OnceCell<Box<CircularArcParameterLineage2>>,
     parameter_witnesses: OnceCell<Box<RefCell<Vec<CircularArcParameterWitness2>>>>,
     fragments: OnceCell<Box<RefCell<Vec<CircularArcFragmentWitness2>>>>,
+}
+
+impl CircularArcRetainedFacts2 {
+    fn with_source_bulge(source_bulge: Option<Real>) -> Self {
+        Self {
+            source_bulge,
+            ..Self::default()
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -476,7 +476,7 @@ impl PartialEq for CircularArc2 {
             && self.center == other.center
             && self.radius_squared == other.radius_squared
             && self.clockwise == other.clockwise
-            && self.bulge == other.bulge
+            && self.bulge() == other.bulge()
     }
 }
 
@@ -508,7 +508,6 @@ impl CircularArc2 {
             radius_squared: start_radius_squared,
             endpoints_on_stored_circle,
             clockwise,
-            bulge: None,
             retained_facts: Rc::new(CircularArcRetainedFacts2::default()),
         })
     }
@@ -528,16 +527,7 @@ impl CircularArc2 {
             radius_squared,
             endpoints_on_stored_circle: false,
             clockwise,
-            bulge,
-            retained_facts: Rc::new(CircularArcRetainedFacts2 {
-                sweep_kind: OnceCell::new(),
-                bezier_decomposition: OnceCell::new(),
-                representative_point: OnceCell::new(),
-                directed_sweep_angle: OnceCell::new(),
-                parameter_lineage: OnceCell::new(),
-                parameter_witnesses: OnceCell::new(),
-                fragments: OnceCell::new(),
-            }),
+            retained_facts: Rc::new(CircularArcRetainedFacts2::with_source_bulge(bulge)),
         }
     }
 
@@ -556,16 +546,7 @@ impl CircularArc2 {
             radius_squared,
             endpoints_on_stored_circle: true,
             clockwise,
-            bulge,
-            retained_facts: Rc::new(CircularArcRetainedFacts2 {
-                sweep_kind: OnceCell::new(),
-                bezier_decomposition: OnceCell::new(),
-                representative_point: OnceCell::new(),
-                directed_sweep_angle: OnceCell::new(),
-                parameter_lineage: OnceCell::new(),
-                parameter_witnesses: OnceCell::new(),
-                fragments: OnceCell::new(),
-            }),
+            retained_facts: Rc::new(CircularArcRetainedFacts2::with_source_bulge(bulge)),
         }
     }
 
@@ -577,7 +558,9 @@ impl CircularArc2 {
         bulge: Option<Real>,
     ) -> CurveResult<Self> {
         let mut arc = Self::try_from_center(start, end, center, clockwise)?;
-        arc.bulge = bulge;
+        Rc::get_mut(&mut arc.retained_facts)
+            .expect("new arc retained facts are uniquely owned")
+            .source_bulge = bulge;
         Ok(arc)
     }
 
@@ -605,7 +588,9 @@ impl CircularArc2 {
         );
 
         let mut arc = Self::try_from_center(start, end, center, clockwise)?;
-        arc.bulge = Some(bulge);
+        Rc::get_mut(&mut arc.retained_facts)
+            .expect("new arc retained facts are uniquely owned")
+            .source_bulge = Some(bulge);
         Ok(arc)
     }
 
@@ -644,8 +629,8 @@ impl CircularArc2 {
     }
 
     /// Returns the source bulge when this arc was constructed from one.
-    pub const fn bulge(&self) -> Option<&Real> {
-        self.bulge.as_ref()
+    pub fn bulge(&self) -> Option<&Real> {
+        self.retained_facts.source_bulge.as_ref()
     }
 
     /// Classifies whether a point lies inside this arc's angular sweep.
@@ -1082,16 +1067,17 @@ impl CircularArc2 {
             radius_squared: self.radius_squared.clone(),
             endpoints_on_stored_circle: self.endpoints_on_stored_circle,
             clockwise: !self.clockwise,
-            bulge: self.bulge.as_ref().map(|bulge| -bulge.clone()),
-            retained_facts: Rc::new(CircularArcRetainedFacts2::default()),
+            retained_facts: Rc::new(CircularArcRetainedFacts2::with_source_bulge(
+                self.bulge().map(|bulge| -bulge.clone()),
+            )),
         }
     }
 
     pub(crate) fn into_reversed(mut self) -> Self {
         std::mem::swap(&mut self.start, &mut self.end);
         self.clockwise = !self.clockwise;
-        self.bulge = self.bulge.map(std::ops::Neg::neg);
-        self.retained_facts = Rc::new(CircularArcRetainedFacts2::default());
+        let source_bulge = self.bulge().map(|bulge| -bulge.clone());
+        self.retained_facts = Rc::new(CircularArcRetainedFacts2::with_source_bulge(source_bulge));
         self
     }
 }
