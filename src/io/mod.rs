@@ -30,8 +30,7 @@ pub mod gerber;
     feature = "amf-io",
     feature = "stl-io",
     feature = "gltf-io",
-    feature = "dxf-io",
-    feature = "svg-io"
+    feature = "dxf-io"
 ))]
 use hyperlattice::Real;
 
@@ -72,11 +71,6 @@ pub enum IoError {
         detail: String,
     },
 
-    #[cfg(feature = "svg-io")]
-    /// Error bubbled up from the `svg` crate during parsing.
-    #[error("SVG parsing failed: {0}")]
-    SvgParsing(#[from] ::svg::parser::Error),
-
     #[cfg(feature = "dxf-io")]
     #[error("DXF processing failed: {0}")]
     Dxf(#[from] ::dxf::DxfError),
@@ -97,8 +91,7 @@ pub enum IoError {
     feature = "ply-io",
     feature = "amf-io",
     feature = "stl-io",
-    feature = "dxf-io",
-    feature = "svg-io"
+    feature = "dxf-io"
 ))]
 pub(crate) fn finite_f64(
     value: &Real,
