@@ -58,12 +58,31 @@ struct CompactLineSplitMarker {
 }
 
 #[derive(Debug)]
+enum CompactLineSplitMarkers {
+    One(CompactLineSplitMarker),
+    Many(Vec<CompactLineSplitMarker>),
+}
+
+impl CompactLineSplitMarkers {
+    fn as_slice(&self) -> &[CompactLineSplitMarker] {
+        match self {
+            Self::One(marker) => std::slice::from_ref(marker),
+            Self::Many(markers) => markers,
+        }
+    }
+
+    fn len(&self) -> usize {
+        self.as_slice().len()
+    }
+}
+
+#[derive(Debug)]
 struct CompactLineSplitData {
     // The certified crossing index already supplies segment order and source
     // incidence. Retain only true interior markers here: source endpoint
     // geometry is read implicitly from the line, while zero/one parameters are
     // stored once and shared by all sibling fragments.
-    markers: Vec<CompactLineSplitMarker>,
+    markers: CompactLineSplitMarkers,
     full_start: Real,
     full_end: Real,
     // One support allocation is shared by every sibling fragment instead of
@@ -84,7 +103,7 @@ impl CompactLineContourFragment {
         Ok(match &self.geometry {
             CompactLineFragmentGeometry::Whole => (source_line.start(), source_line.end()),
             CompactLineFragmentGeometry::Split { data, marker_index } => {
-                let markers = &data.markers;
+                let markers = data.markers.as_slice();
                 let start = marker_index
                     .checked_sub(1)
                     .map_or(source_line.start(), |index| &markers[index].point);
@@ -104,7 +123,7 @@ impl CompactLineContourFragment {
         match &self.geometry {
             CompactLineFragmentGeometry::Whole => Some((full_start, full_end)),
             CompactLineFragmentGeometry::Split { data, marker_index } => {
-                let markers = &data.markers;
+                let markers = data.markers.as_slice();
                 let start = marker_index
                     .checked_sub(1)
                     .map_or(Some(full_start), |index| markers[index].param.as_ref())?;
@@ -123,9 +142,10 @@ impl CompactLineContourFragment {
             CompactLineFragmentGeometry::Split { data, marker_index } => {
                 marker_index
                     .checked_sub(1)
-                    .is_none_or(|index| data.markers[index].param.is_some())
+                    .is_none_or(|index| data.markers.as_slice()[index].param.is_some())
                     && data
                         .markers
+                        .as_slice()
                         .get(*marker_index)
                         .is_none_or(|marker| marker.param.is_some())
             }
@@ -139,13 +159,13 @@ impl CompactLineContourFragment {
                 marker_index.checked_sub(1).map_or_else(
                     || data.full_start.clone(),
                     |index| {
-                        data.markers[index]
+                        data.markers.as_slice()[index]
                             .param
                             .clone()
                             .expect("provenance emission requires materialized parameters")
                     },
                 ),
-                data.markers.get(marker_index).map_or_else(
+                data.markers.as_slice().get(marker_index).map_or_else(
                     || data.full_end.clone(),
                     |marker| {
                         marker
@@ -167,7 +187,7 @@ impl CompactLineContourFragment {
         };
         Ok(Segment2::Line(match &self.geometry {
             CompactLineFragmentGeometry::Split { data, marker_index } => {
-                let markers = &data.markers;
+                let markers = data.markers.as_slice();
                 let start = marker_index.checked_sub(1).map_or_else(
                     || source_line.start().clone(),
                     |index| markers[index].point.clone(),
@@ -306,13 +326,15 @@ pub(crate) fn compact_line_contour_fragments_from_crossing_windings(
             continue;
         }
 
-        let markers = crossings
-            .iter()
-            .map(|crossing| CompactLineSplitMarker {
-                param: crossing_windings.materialized_parameter(crossing).cloned(),
-                point: crossing_windings.point(crossing).clone(),
-            })
-            .collect::<Vec<_>>();
+        let marker = |crossing| CompactLineSplitMarker {
+            param: crossing_windings.materialized_parameter(crossing).cloned(),
+            point: crossing_windings.point(crossing).clone(),
+        };
+        let markers = if crossings.len() == 1 {
+            CompactLineSplitMarkers::One(marker(&crossings[0]))
+        } else {
+            CompactLineSplitMarkers::Many(crossings.iter().map(marker).collect())
+        };
         if let Classification::Uncertain(reason) = append_compact_line_split_fragments(
             &mut fragments,
             source_line,
@@ -333,7 +355,7 @@ fn append_compact_line_split_fragments(
     fragments: &mut Vec<CompactLineContourFragment>,
     source_line: &LineSeg2,
     source_segment_index: usize,
-    markers: Vec<CompactLineSplitMarker>,
+    markers: CompactLineSplitMarkers,
     policy: &CurvePolicy,
     markers_are_distinct: bool,
     full_start: &Real,
@@ -346,8 +368,11 @@ fn append_compact_line_split_fragments(
         for marker_index in 0..=markers.len() {
             let start = marker_index
                 .checked_sub(1)
-                .map_or(source_line.start(), |index| &markers[index].point);
+                .map_or(source_line.start(), |index| {
+                    &markers.as_slice()[index].point
+                });
             let end = markers
+                .as_slice()
                 .get(marker_index)
                 .map_or(source_line.end(), |marker| &marker.point);
             match is_zero(&start.distance_squared(end), policy) {
@@ -902,10 +927,10 @@ mod tests {
                 &mut fragments,
                 first_source,
                 0,
-                vec![CompactLineSplitMarker {
+                CompactLineSplitMarkers::One(CompactLineSplitMarker {
                     param: Some(fraction(1, 2)),
                     point: p(2, 0),
-                }],
+                }),
                 &policy,
                 true,
                 &full_start,

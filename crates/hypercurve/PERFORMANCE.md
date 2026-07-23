@@ -2012,6 +2012,45 @@ passed. The AddressSanitizer `region_boolean` differential target completed
 7,864 executions at 5,863 coverage points and 18,235 feature edges without a
 failure; LeakSanitizer alone remained disabled under ptrace.
 
+The next checkpoint extends the retained determinant lane instead of
+materializing parameters when a crossing exceeds the native carrier. Hyperreal
+now retains up to four fixed limbs per determinant component, compares
+wide/wide and wide/native parameters with exact fixed-limb cross-products, and
+constructs the exact point with the existing checked stack accumulator. The
+uncommon 128-byte wide carrier is boxed; packing the dominant native carrier
+reduced it from 96 to 80 bytes. Boxing the already-uncommon eager parameter pair
+at the same enum boundary reduced the complete lazy crossing event from 224 to
+192 bytes, versus 224 bytes for the eager point event. Randomized wide dyadic
+crossings check both reconstructed coordinates and retained parameter ordering
+against expanded arbitrary-precision arithmetic.
+
+The star64 trace is now 2,823 dispatch events, 135 rational temporaries, 12
+reductions, 12 GCD observations, and 755 `Real` constructions. In a 21-sample,
+500-iteration release run, region/contour output measured 78.044/76.726
+us/iteration and prepared region/contour output measured 75.347/74.972
+us/iteration. The finite competitors measured 27.433 us for Cavalier, 34.420 us
+for `i_overlay`, and 35.872 us for `geo`; the small-fixture crossover therefore
+remains open. Across 100 selected ordinary star64 operations plus fixture
+validation, heaptrack allocations fell from 108,153 at the preceding checkpoint
+to 71,271, while temporary allocations fell from 4,513 to 1,153. In addition to
+the wide carrier, compact split data now stores its common single-marker case
+inline rather than allocating a separate marker vector.
+
+In fixed 11-sample, 500-iteration runs, star256 region/contour output measured
+0.723/0.593 ms, with prepared contour output at 0.588 ms; Cavalier,
+`i_overlay`, and `geo` measured 0.480, 0.507, and 0.516 ms. In a 21-sample,
+50-iteration star1024 run, region/contour output measured 9.667/8.475 ms and
+prepared region/contour output measured 9.686/8.523 ms. The corresponding
+finite competitors measured 19.280, 10.047, and 10.161 ms, so exact Hypercurve
+still leads all three on both large exact output lanes. Three standalone
+one-operation star1024 runs peaked at
+32,972--33,076 KiB RSS (33,048 KiB median), 188 KiB above the preceding 32,860
+KiB median. Both all-feature suites, warnings-as-errors Clippy, and
+warnings-as-errors rustdoc passed. With LeakSanitizer disabled because ptrace
+prevents it from starting, the AddressSanitizer `region_boolean` differential
+target completed 7,991 executions at 5,881 coverage points and 18,384 feature
+edges without a failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -13,7 +13,7 @@ use std::fmt;
 use std::num::NonZeroU64;
 use std::rc::Rc;
 
-use hyperreal::{ExactDyadicLineParameters2, Real};
+use hyperreal::{ExactDyadicLineParameters2, ExactDyadicWideLineParameters2, Real};
 
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{
@@ -75,7 +75,8 @@ pub(crate) struct CertifiedLineCrossingEvent {
 #[derive(Clone, Debug)]
 enum CertifiedLineCrossingParameters {
     ExactDyadic(ExactDyadicLineParameters2),
-    Materialized([Real; 2]),
+    ExactDyadicWide(Box<ExactDyadicWideLineParameters2>),
+    Materialized(Box<[Real; 2]>),
 }
 
 impl CertifiedLineCrossingEvent {
@@ -104,7 +105,21 @@ impl CertifiedLineCrossingEvent {
             a_segment_index,
             b_segment_index,
             point,
-            parameters: CertifiedLineCrossingParameters::Materialized([a_param, b_param]),
+            parameters: CertifiedLineCrossingParameters::Materialized(Box::new([a_param, b_param])),
+        }
+    }
+
+    fn new_exact_dyadic_wide(
+        a_segment_index: u16,
+        b_segment_index: u16,
+        point: Point2,
+        parameters: ExactDyadicWideLineParameters2,
+    ) -> Self {
+        Self {
+            a_segment_index,
+            b_segment_index,
+            point,
+            parameters: CertifiedLineCrossingParameters::ExactDyadicWide(Box::new(parameters)),
         }
     }
 
@@ -130,6 +145,30 @@ impl CertifiedLineCrossingEvent {
                 ContourOperand::Second => left.compare_second_parameter(right),
             }),
             (
+                CertifiedLineCrossingParameters::ExactDyadicWide(left),
+                CertifiedLineCrossingParameters::ExactDyadicWide(right),
+            ) => Some(match operand {
+                ContourOperand::First => left.compare_first_parameter(right),
+                ContourOperand::Second => left.compare_second_parameter(right),
+            }),
+            (
+                CertifiedLineCrossingParameters::ExactDyadicWide(left),
+                CertifiedLineCrossingParameters::ExactDyadic(right),
+            ) => Some(match operand {
+                ContourOperand::First => left.compare_first_parameter_to_compact(right),
+                ContourOperand::Second => left.compare_second_parameter_to_compact(right),
+            }),
+            (
+                CertifiedLineCrossingParameters::ExactDyadic(left),
+                CertifiedLineCrossingParameters::ExactDyadicWide(right),
+            ) => Some(
+                match operand {
+                    ContourOperand::First => right.compare_first_parameter_to_compact(left),
+                    ContourOperand::Second => right.compare_second_parameter_to_compact(left),
+                }
+                .reverse(),
+            ),
+            (
                 CertifiedLineCrossingParameters::Materialized(left),
                 CertifiedLineCrossingParameters::Materialized(right),
             ) => compare_reals(
@@ -151,6 +190,10 @@ impl CertifiedLineCrossingEvent {
                 ContourOperand::First => parameters.materialize_first_parameter(),
                 ContourOperand::Second => parameters.materialize_second_parameter(),
             },
+            CertifiedLineCrossingParameters::ExactDyadicWide(parameters) => match operand {
+                ContourOperand::First => parameters.materialize_first_parameter(),
+                ContourOperand::Second => parameters.materialize_second_parameter(),
+            },
             CertifiedLineCrossingParameters::Materialized(parameters) => {
                 parameters[Self::parameter_index(operand)].clone()
             }
@@ -159,7 +202,8 @@ impl CertifiedLineCrossingEvent {
 
     pub(crate) fn materialized_parameter(&self, operand: ContourOperand) -> Option<&Real> {
         match &self.parameters {
-            CertifiedLineCrossingParameters::ExactDyadic(_) => None,
+            CertifiedLineCrossingParameters::ExactDyadic(_)
+            | CertifiedLineCrossingParameters::ExactDyadicWide(_) => None,
             CertifiedLineCrossingParameters::Materialized(parameters) => {
                 Some(&parameters[Self::parameter_index(operand)])
             }
@@ -857,28 +901,43 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
                     Point2::new(x, y),
                     parameters,
                 ),
-                None => {
-                    let LineLineIntersection::Point {
-                        point,
-                        a_param,
-                        b_param,
-                        ..
-                    } = a_line.intersect_line_with_certified_exact_dyadic_proper_crossing(
-                        b_line, policy,
-                    )?
-                    else {
-                        return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
-                            a, b, a_boxes, b_boxes, policy,
-                        );
-                    };
-                    CertifiedLineCrossingEvent::new_materialized(
-                        candidate.a_segment_index,
-                        candidate.b_segment_index,
-                        point,
-                        a_param,
-                        b_param,
-                    )
-                }
+                None => match Real::exact_rational_line_intersection2_point_known_dyadic_wide(
+                    [a_line.start().x(), a_line.start().y()],
+                    [a_line.end().x(), a_line.end().y()],
+                    [b_line.start().x(), b_line.start().y()],
+                    [b_line.end().x(), b_line.end().y()],
+                ) {
+                    Some((parameters, [x, y])) => {
+                        CertifiedLineCrossingEvent::new_exact_dyadic_wide(
+                            candidate.a_segment_index,
+                            candidate.b_segment_index,
+                            Point2::new(x, y),
+                            parameters,
+                        )
+                    }
+                    None => {
+                        let LineLineIntersection::Point {
+                            point,
+                            a_param,
+                            b_param,
+                            ..
+                        } = a_line.intersect_line_with_certified_exact_dyadic_proper_crossing(
+                            b_line, policy,
+                        )?
+                        else {
+                            return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
+                                a, b, a_boxes, b_boxes, policy,
+                            );
+                        };
+                        CertifiedLineCrossingEvent::new_materialized(
+                            candidate.a_segment_index,
+                            candidate.b_segment_index,
+                            point,
+                            a_param,
+                            b_param,
+                        )
+                    }
+                },
             };
             crossings.push(crossing);
         } else {
