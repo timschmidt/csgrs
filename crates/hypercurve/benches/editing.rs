@@ -168,14 +168,14 @@ fn bench_prepared_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
     let start_cutter = CurveString2::try_new(vec![line_segment(2, -1, 2, 1)])?;
     let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)])?;
     let policy = CurvePolicy::certified();
-    let prepared_curve = curve.prepare_topology_queries(&policy);
-    let prepared_start = start_cutter.prepare_topology_queries(&policy);
-    let prepared_end = end_cutter.prepare_topology_queries(&policy);
+    let prepared_curve = curve.query(&policy);
+    let prepared_start = start_cutter.query(&policy);
+    let prepared_end = end_cutter.query(&policy);
     let started = Instant::now();
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = prepared_curve.trim_between_prepared_curve_intersections(
+        let result = prepared_curve.trim_between_query_intersections(
             &prepared_start,
             &prepared_end,
             &policy,
@@ -222,13 +222,13 @@ fn bench_prepared_region_trim(iterations: u32) -> CurveResult<()> {
     let region =
         LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)]);
     let policy = CurvePolicy::certified();
-    let prepared_curve = curve.prepare_topology_queries(&policy);
-    let prepared_region = region.prepare_topology_queries(&policy);
+    let prepared_curve = curve.query(&policy);
+    let prepared_region = region.query(&policy);
     let started = Instant::now();
     let mut total_outputs = 0_usize;
 
     for _ in 0..iterations {
-        let result = prepared_curve.trim_inside_prepared_region(&prepared_region, &policy)?;
+        let result = prepared_curve.trim_inside_region_query(&prepared_region, &policy)?;
         let trimmed = expect_decided(result, "prepared region trim benchmark became uncertain");
         total_outputs += black_box(trimmed.len());
     }
@@ -395,7 +395,7 @@ fn bench_arc_extension(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_curve_string_line_merge_report(iterations: u32) -> CurveResult<()> {
+fn bench_curve_string_line_merge_evidence(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 2, 0),
         line_segment(2, 0, 5, 0),
@@ -416,13 +416,13 @@ fn bench_curve_string_line_merge_report(iterations: u32) -> CurveResult<()> {
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_line_merge_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total spans={total_spans}",
+        "curve_string_line_merge_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total spans={total_spans}",
         elapsed / iterations
     );
     Ok(())
 }
 
-fn bench_curve_string_reversed_duplicate_report(iterations: u32) -> CurveResult<()> {
+fn bench_curve_string_reversed_duplicate_evidence(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 2, 0),
         line_segment(2, 0, 4, 0),
@@ -442,13 +442,13 @@ fn bench_curve_string_reversed_duplicate_report(iterations: u32) -> CurveResult<
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_reversed_duplicate_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total retained={total_retained}",
+        "curve_string_reversed_duplicate_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total retained={total_retained}",
         elapsed / iterations
     );
     Ok(())
 }
 
-fn bench_curve_string_pair_link_report(iterations: u32) -> CurveResult<()> {
+fn bench_curve_string_pair_link_evidence(iterations: u32) -> CurveResult<()> {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?;
     let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)])?;
     let policy = CurvePolicy::certified();
@@ -466,13 +466,13 @@ fn bench_curve_string_pair_link_report(iterations: u32) -> CurveResult<()> {
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_pair_link_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        "curve_string_pair_link_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
 }
 
-fn bench_curve_string_ordered_link_report(iterations: u32) -> CurveResult<()> {
+fn bench_curve_string_ordered_link_evidence(iterations: u32) -> CurveResult<()> {
     let curves = vec![
         CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?,
         CurveString2::try_new(vec![line_segment(1, 0, 2, 0)])?,
@@ -496,7 +496,7 @@ fn bench_curve_string_ordered_link_report(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_curve_string_connect_report(iterations: u32) -> CurveResult<()> {
+fn bench_curve_string_connect_evidence(iterations: u32) -> CurveResult<()> {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?;
     let second = CurveString2::try_new(vec![line_segment(3, 1, 4, 1)])?;
     let policy = CurvePolicy::certified();
@@ -511,7 +511,7 @@ fn bench_curve_string_connect_report(iterations: u32) -> CurveResult<()> {
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_connect_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        "curve_string_connect_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -659,7 +659,7 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
     Ok(())
 }
 
-fn bench_region_arrangement_report_replay(iterations: u32) -> CurveResult<()> {
+fn bench_region_arrangement_evidence_replay(iterations: u32) -> CurveResult<()> {
     let lines = vec![
         line(0, 0, 10, 0),
         line(10, 0, 10, 10),
@@ -673,20 +673,20 @@ fn bench_region_arrangement_report_replay(iterations: u32) -> CurveResult<()> {
     let mut checksum = 0_usize;
 
     for _ in 0..iterations {
-        let report = black_box(result.report().clone());
-        checksum = checksum.wrapping_add(black_box(report.source_segment_count()));
-        checksum = checksum.wrapping_add(black_box(report.output_segment_count().unwrap_or(0)));
+        let evidence = black_box(result.evidence().clone());
+        checksum = checksum.wrapping_add(black_box(evidence.source_segment_count()));
+        checksum = checksum.wrapping_add(black_box(evidence.output_segment_count().unwrap_or(0)));
     }
 
     let elapsed = started.elapsed();
     println!(
-        "region_arrangement_report_replay: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        "region_arrangement_evidence_replay: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / iterations
     );
     Ok(())
 }
 
-fn bench_contour_line_merge_report(iterations: u32) -> CurveResult<()> {
+fn bench_contour_line_merge_evidence(iterations: u32) -> CurveResult<()> {
     let contour = Contour2::from_bulge_vertices(&[
         vertex(0, 0, 0),
         vertex(2, 0, 0),
@@ -709,7 +709,7 @@ fn bench_contour_line_merge_report(iterations: u32) -> CurveResult<()> {
 
     let elapsed = started.elapsed();
     println!(
-        "contour_line_merge_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total spans={total_spans}",
+        "contour_line_merge_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total spans={total_spans}",
         elapsed / iterations
     );
     Ok(())
@@ -766,8 +766,8 @@ fn bench_prepared_region_boolean(iterations: u32) -> CurveResult<()> {
     let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let policy = CurvePolicy::certified();
-    let prepared_first = first.prepare_topology_queries(&policy);
-    let prepared_second = second.prepare_topology_queries(&policy);
+    let prepared_first = first.query(&policy);
+    let prepared_second = second.query(&policy);
     let started = Instant::now();
     let mut total_boundary_contours = 0_usize;
 
@@ -807,16 +807,16 @@ fn main() -> CurveResult<()> {
     bench_line_fillet(iterations)?;
     bench_arc_fillet(iterations)?;
     bench_arc_extension(iterations)?;
-    bench_curve_string_line_merge_report(iterations)?;
-    bench_curve_string_reversed_duplicate_report(iterations)?;
-    bench_curve_string_pair_link_report(iterations)?;
-    bench_curve_string_ordered_link_report(iterations)?;
-    bench_curve_string_connect_report(iterations)?;
+    bench_curve_string_line_merge_evidence(iterations)?;
+    bench_curve_string_reversed_duplicate_evidence(iterations)?;
+    bench_curve_string_pair_link_evidence(iterations)?;
+    bench_curve_string_ordered_link_evidence(iterations)?;
+    bench_curve_string_connect_evidence(iterations)?;
     bench_boundary_contour_region_build(1_000)?;
     bench_unordered_line_segment_region_build(1_000)?;
     bench_unordered_native_segment_region_build(1_000)?;
-    bench_region_arrangement_report_replay(100_000)?;
-    bench_contour_line_merge_report(1_000)?;
+    bench_region_arrangement_evidence_replay(100_000)?;
+    bench_contour_line_merge_evidence(1_000)?;
     bench_contour_signed_area_cache(100_000)?;
     bench_region_boolean(1_000)?;
     bench_prepared_region_boolean(1_000)?;

@@ -59,11 +59,11 @@ fn public_straight_skeleton_emits_correlated_exact_path_trace() {
     .unwrap();
 
     hyperreal::dispatch_trace::reset();
-    let report = hyperreal::dispatch_trace::with_recording(|| {
+    let evidence = hyperreal::dispatch_trace::with_recording(|| {
         contour.straight_skeleton(&CurvePolicy::certified())
     })
     .unwrap();
-    assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+    assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
 
     let summary = hyperreal::dispatch_trace::take_trace().correlation_summary();
     assert!(summary.dispatch_events > 0 || summary.rational_temporaries > 0);

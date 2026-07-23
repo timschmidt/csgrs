@@ -3,7 +3,7 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2,
     BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
-    BezierAlgebraicTangentVector2, BezierAlgebraicTangentVectorReport,
+    BezierAlgebraicTangentVector2, BezierAlgebraicTangentVectorEvidence,
     BezierAlgebraicTangentVectorStatus, BezierEndpointTangentImage2, BezierParameterInterval,
     BezierParameterPolynomial, BezierTangentTurnOrdering2, Classification, CurvePolicy, Point2,
     QuadraticBezier2, RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
@@ -89,7 +89,7 @@ fn tangent_vector_at(
     let tangent = curve
         .tangent_at_algebraic_parameter(parameter, &policy())
         .unwrap();
-    let BezierAlgebraicTangentVectorReport { status, vector, .. } =
+    let BezierAlgebraicTangentVectorEvidence { status, vector, .. } =
         BezierAlgebraicTangentVector2::from_endpoint_image(
             &BezierEndpointTangentImage2::Polynomial(tangent),
         );
@@ -157,20 +157,20 @@ fn algebraic_tangent_order_separates_opposite_half_turns() {
     let first = tangent_vector(&upward());
     let second = tangent_vector(&downward());
 
-    let report = decided(compare_algebraic_tangent_turn_from_base(
+    let evidence = decided(compare_algebraic_tangent_turn_from_base(
         &base,
         &first,
         &second,
         &policy(),
     ));
 
-    assert_eq!(report.status, BezierAlgebraicTangentOrderStatus::Ordered);
+    assert_eq!(evidence.status, BezierAlgebraicTangentOrderStatus::Ordered);
     assert_eq!(
-        report.ordering,
+        evidence.ordering,
         Some(BezierTangentTurnOrdering2::FirstBeforeSecond)
     );
-    assert!(report.base_first_cross.unwrap().sign.unwrap().is_gt());
-    assert!(report.base_second_cross.unwrap().sign.unwrap().is_lt());
+    assert!(evidence.base_first_cross.unwrap().sign.unwrap().is_gt());
+    assert!(evidence.base_second_cross.unwrap().sign.unwrap().is_lt());
 }
 
 #[test]
@@ -183,19 +183,19 @@ fn algebraic_tangent_order_uses_represented_cross_product_for_same_half() {
         p(r(1), q(1, 2)),
     ));
 
-    let report = decided(compare_algebraic_tangent_turn_from_base(
+    let evidence = decided(compare_algebraic_tangent_turn_from_base(
         &base,
         &first,
         &second,
         &policy(),
     ));
 
-    assert_eq!(report.status, BezierAlgebraicTangentOrderStatus::Ordered);
+    assert_eq!(evidence.status, BezierAlgebraicTangentOrderStatus::Ordered);
     assert_eq!(
-        report.ordering,
+        evidence.ordering,
         Some(BezierTangentTurnOrdering2::SecondBeforeFirst)
     );
-    let cross = report.first_second_cross.unwrap();
+    let cross = evidence.first_second_cross.unwrap();
     assert!(cross.scalar.unwrap().is_valid());
     assert!(cross.sign.unwrap().is_lt());
 }
@@ -211,29 +211,29 @@ fn algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures(
     let second =
         BezierAlgebraicTangentVector2::new(second_source.dx().clone(), second_source.dy().clone());
 
-    let report = decided(compare_algebraic_tangent_turn_from_base(
+    let evidence = decided(compare_algebraic_tangent_turn_from_base(
         &base,
         &first,
         &second,
         &policy(),
     ));
 
-    assert_eq!(report.status, BezierAlgebraicTangentOrderStatus::Ordered);
+    assert_eq!(evidence.status, BezierAlgebraicTangentOrderStatus::Ordered);
     assert_eq!(
-        report.ordering,
+        evidence.ordering,
         Some(BezierTangentTurnOrdering2::SecondBeforeFirst)
     );
-    let cross = report.first_second_cross.unwrap();
+    let cross = evidence.first_second_cross.unwrap();
     assert!(cross.sign.unwrap().is_lt());
 }
 
 #[test]
-fn algebraic_tangent_order_reports_same_direction_without_guessing() {
+fn algebraic_tangent_order_evidence_same_direction_without_guessing() {
     let base = tangent_vector(&horizontal());
     let first = tangent_vector(&upward());
     let second = tangent_vector(&upward());
 
-    let report = decided(compare_algebraic_tangent_turn_from_base(
+    let evidence = decided(compare_algebraic_tangent_turn_from_base(
         &base,
         &first,
         &second,
@@ -241,10 +241,10 @@ fn algebraic_tangent_order_reports_same_direction_without_guessing() {
     ));
 
     assert_eq!(
-        report.status,
+        evidence.status,
         BezierAlgebraicTangentOrderStatus::SameDirection
     );
-    assert!(report.ordering.is_none());
+    assert!(evidence.ordering.is_none());
 }
 
 #[test]
@@ -253,7 +253,7 @@ fn algebraic_tangent_order_rejects_zero_tangent() {
     let zero = tangent_vector(&QuadraticBezier2::new(pi(0, 0), pi(0, 0), pi(0, 0)));
     let second = tangent_vector(&upward());
 
-    let report = decided(compare_algebraic_tangent_turn_from_base(
+    let evidence = decided(compare_algebraic_tangent_turn_from_base(
         &base,
         &zero,
         &second,
@@ -261,10 +261,10 @@ fn algebraic_tangent_order_rejects_zero_tangent() {
     ));
 
     assert_eq!(
-        report.status,
+        evidence.status,
         BezierAlgebraicTangentOrderStatus::ZeroTangent
     );
-    assert!(report.ordering.is_none());
+    assert!(evidence.ordering.is_none());
 }
 
 #[test]
@@ -279,7 +279,7 @@ fn algebraic_same_tangent_order_uses_second_derivative_side_witness() {
         tangent_vector(&downward()).dy().clone(),
     );
 
-    let report = decided(compare_algebraic_same_tangent_second_order(
+    let evidence = decided(compare_algebraic_same_tangent_second_order(
         &tangent,
         &upward_second,
         &tangent,
@@ -288,15 +288,29 @@ fn algebraic_same_tangent_order_uses_second_derivative_side_witness() {
     ));
 
     assert_eq!(
-        report.status,
+        evidence.status,
         BezierAlgebraicSameTangentOrderStatus::Ordered
     );
     assert_eq!(
-        report.ordering,
+        evidence.ordering,
         Some(BezierTangentTurnOrdering2::FirstBeforeSecond)
     );
-    assert!(report.first_curvature_cross.unwrap().sign.unwrap().is_gt());
-    assert!(report.second_curvature_cross.unwrap().sign.unwrap().is_lt());
+    assert!(
+        evidence
+            .first_curvature_cross
+            .unwrap()
+            .sign
+            .unwrap()
+            .is_gt()
+    );
+    assert!(
+        evidence
+            .second_curvature_cross
+            .unwrap()
+            .sign
+            .unwrap()
+            .is_lt()
+    );
 }
 
 #[test]
@@ -306,7 +320,7 @@ fn rational_algebraic_same_tangent_order_uses_second_derivative_side_witness() {
     let (upward_tangent, upward_second) = rational_endpoint_vectors(&upward);
     let (downward_tangent, downward_second) = rational_endpoint_vectors(&downward);
 
-    let report = decided(compare_algebraic_same_tangent_second_order(
+    let evidence = decided(compare_algebraic_same_tangent_second_order(
         &upward_tangent,
         &upward_second,
         &downward_tangent,
@@ -315,15 +329,29 @@ fn rational_algebraic_same_tangent_order_uses_second_derivative_side_witness() {
     ));
 
     assert_eq!(
-        report.status,
+        evidence.status,
         BezierAlgebraicSameTangentOrderStatus::Ordered
     );
     assert_eq!(
-        report.ordering,
+        evidence.ordering,
         Some(BezierTangentTurnOrdering2::FirstBeforeSecond)
     );
-    assert!(report.first_curvature_cross.unwrap().sign.unwrap().is_gt());
-    assert!(report.second_curvature_cross.unwrap().sign.unwrap().is_lt());
+    assert!(
+        evidence
+            .first_curvature_cross
+            .unwrap()
+            .sign
+            .unwrap()
+            .is_gt()
+    );
+    assert!(
+        evidence
+            .second_curvature_cross
+            .unwrap()
+            .sign
+            .unwrap()
+            .is_lt()
+    );
 }
 
 #[test]
@@ -334,7 +362,7 @@ fn algebraic_same_tangent_order_rejects_equal_second_order_evidence() {
         tangent_vector(&upward()).dy().clone(),
     );
 
-    let report = decided(compare_algebraic_same_tangent_second_order(
+    let evidence = decided(compare_algebraic_same_tangent_second_order(
         &tangent,
         &upward_second,
         &tangent,
@@ -343,10 +371,10 @@ fn algebraic_same_tangent_order_rejects_equal_second_order_evidence() {
     ));
 
     assert_eq!(
-        report.status,
+        evidence.status,
         BezierAlgebraicSameTangentOrderStatus::SameDirection
     );
-    assert!(report.ordering.is_none());
+    assert!(evidence.ordering.is_none());
 }
 
 #[test]
@@ -365,7 +393,7 @@ fn algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature() {
         tangent_vector(&downward()).dy().clone(),
     );
 
-    let second_report = decided(compare_algebraic_same_tangent_second_order(
+    let second_evidence = decided(compare_algebraic_same_tangent_second_order(
         &tangent,
         &zero_second,
         &tangent,
@@ -373,11 +401,11 @@ fn algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature() {
         &policy(),
     ));
     assert_eq!(
-        second_report.status,
+        second_evidence.status,
         BezierAlgebraicSameTangentOrderStatus::SameDirection
     );
 
-    let third_report = decided(compare_algebraic_same_tangent_third_order(
+    let third_evidence = decided(compare_algebraic_same_tangent_third_order(
         &tangent,
         &upward_third,
         &tangent,
@@ -386,15 +414,15 @@ fn algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature() {
     ));
 
     assert_eq!(
-        third_report.status,
+        third_evidence.status,
         BezierAlgebraicSameTangentOrderStatus::Ordered
     );
     assert_eq!(
-        third_report.ordering,
+        third_evidence.ordering,
         Some(BezierTangentTurnOrdering2::FirstBeforeSecond)
     );
     assert!(
-        third_report
+        third_evidence
             .first_curvature_cross
             .unwrap()
             .sign
@@ -402,7 +430,7 @@ fn algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature() {
             .is_gt()
     );
     assert!(
-        third_report
+        third_evidence
             .second_curvature_cross
             .unwrap()
             .sign

@@ -303,9 +303,9 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(built.split_overlap_relation_count(), Some(0));
     assert_eq!(built.split_uncertain_relation_count(), Some(0));
     let split_points = built.split_intersection_points().unwrap();
-    let split_reports = built.split_intersection_reports().unwrap();
+    let split_evidence = built.split_intersection_evidence().unwrap();
     assert_eq!(split_points.len(), 4);
-    assert_eq!(split_reports.len(), 4);
+    assert_eq!(split_evidence.len(), 4);
     assert!(split_points.contains(&p(0, 0)));
     assert!(split_points.contains(&p(4, 0)));
     assert!(split_points.contains(&p(0, 4)));
@@ -338,8 +338,8 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         built.output_boundary_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 4, arcs: 0 })
     );
-    let arranged_sources = built.arranged_source_reports().unwrap();
-    assert_eq!(built.arranged_source_report_count(), Some(4));
+    let arranged_sources = built.arranged_source_evidence().unwrap();
+    assert_eq!(built.arranged_source_evidence_count(), Some(4));
     assert_eq!(arranged_sources.len(), 4);
     assert_eq!(arranged_sources[0].source_segment_index(), 0);
     assert_eq!(arranged_sources[0].source_segment_kind(), SegmentKind::Line);
@@ -353,29 +353,29 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         arranged_sources[0].source_range(),
         &hypercurve::ParamRange::new(s(0), s(1))
     );
-    let source_reports = built.source_reports().unwrap();
-    assert_eq!(built.source_report_count(), Some(4));
-    assert_eq!(source_reports.len(), 4);
-    assert_eq!(source_reports[0].source_segment_index(), 0);
-    assert_eq!(source_reports[0].source_segment_start_point(), &p(0, 0));
-    assert_eq!(source_reports[0].source_segment_end_point(), &p(4, 0));
+    let source_evidence = built.source_evidence().unwrap();
+    assert_eq!(built.source_evidence_count(), Some(4));
+    assert_eq!(source_evidence.len(), 4);
+    assert_eq!(source_evidence[0].source_segment_index(), 0);
+    assert_eq!(source_evidence[0].source_segment_start_point(), &p(0, 0));
+    assert_eq!(source_evidence[0].source_segment_end_point(), &p(4, 0));
     assert_eq!(
-        source_reports[0].source_range(),
+        source_evidence[0].source_range(),
         &hypercurve::ParamRange::new(s(0), s(1))
     );
-    assert!(!source_reports[0].reversed());
-    assert_eq!(source_reports[0].source_segment_kind(), SegmentKind::Line);
-    assert_eq!(source_reports[0].output_segment_kind(), SegmentKind::Line);
-    assert_eq!(source_reports[1].source_segment_index(), 3);
-    assert!(!source_reports[1].reversed());
-    assert_eq!(source_reports[2].source_segment_index(), 1);
-    assert!(source_reports[2].reversed());
-    assert_eq!(source_reports[2].source_segment_start_point(), &p(0, 4));
-    assert_eq!(source_reports[2].source_segment_end_point(), &p(4, 4));
+    assert!(!source_evidence[0].reversed());
+    assert_eq!(source_evidence[0].source_segment_kind(), SegmentKind::Line);
+    assert_eq!(source_evidence[0].output_segment_kind(), SegmentKind::Line);
+    assert_eq!(source_evidence[1].source_segment_index(), 3);
+    assert!(!source_evidence[1].reversed());
+    assert_eq!(source_evidence[2].source_segment_index(), 1);
+    assert!(source_evidence[2].reversed());
+    assert_eq!(source_evidence[2].source_segment_start_point(), &p(0, 4));
+    assert_eq!(source_evidence[2].source_segment_end_point(), &p(4, 4));
 
     let ring_cache = built.ring_assembly_cache().unwrap();
-    assert_eq!(ring_cache.arranged_source_reports(), arranged_sources);
-    assert_eq!(ring_cache.source_reports(), source_reports);
+    assert_eq!(ring_cache.arranged_source_evidence(), arranged_sources);
+    assert_eq!(ring_cache.source_evidence(), source_evidence);
 
     let fragment_cache = ring_cache.arranged_fragment_cache();
     assert_eq!(fragment_cache.arranged_fragment_count(), 4);
@@ -399,7 +399,7 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(fragment_cache.fragments()[0].output_end_point(), &p(4, 0));
     assert_eq!(fragment_cache.fragments()[0].source_refs().len(), 1);
     assert_eq!(
-        fragment_cache.fragments()[0].source_refs()[0].arranged_source_report_index(),
+        fragment_cache.fragments()[0].source_refs()[0].arranged_source_evidence_index(),
         0
     );
     assert_eq!(
@@ -439,7 +439,7 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(output_ring_bucket_cache.rings()[0].output_ring_index(), 0);
     assert_eq!(output_ring_bucket_cache.rings()[0].segments().len(), 4);
     assert_eq!(
-        output_ring_bucket_cache.rings()[0].segments()[0].source_report_index(),
+        output_ring_bucket_cache.rings()[0].segments()[0].source_evidence_index(),
         0
     );
     assert_eq!(
@@ -498,8 +498,8 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         2
     );
     assert_eq!(output_direction_bucket_cache.max_bucket_size(), 2);
-    assert_eq!(source_reports[3].source_segment_index(), 2);
-    assert!(source_reports[3].reversed());
+    assert_eq!(source_evidence[3].source_segment_index(), 2);
+    assert!(source_evidence[3].reversed());
     assert!(built.exact_endpoint_connection_count().unwrap() >= 4);
     assert_eq!(built.unresolved_endpoint_connection_count(), Some(0));
     assert_eq!(built.blocker(), None);
@@ -514,11 +514,14 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(built.hole_contour_count(), Some(0));
     assert_eq!(built.material_segment_count(), Some(4));
     assert_eq!(built.hole_segment_count(), Some(0));
-    let role_reports = built.role_reports().unwrap();
-    assert_eq!(built.role_report_count(), Some(role_reports.len()));
-    assert_eq!(role_reports.len(), 1);
-    assert_eq!(role_reports[0].role(), RegionBoundaryContourRole2::Material);
-    assert_eq!(role_reports[0].nesting_depth(), 0);
+    let role_evidence = built.role_evidence().unwrap();
+    assert_eq!(built.role_evidence_count(), Some(role_evidence.len()));
+    assert_eq!(role_evidence.len(), 1);
+    assert_eq!(
+        role_evidence[0].role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(role_evidence[0].nesting_depth(), 0);
 
     let region = built.region().unwrap();
     assert_eq!(
@@ -528,7 +531,7 @@ fn unordered_line_segments_build_region_with_source_provenance() {
 }
 
 #[test]
-fn unordered_line_segments_report_disconnected_boundary_blocker() {
+fn unordered_line_segments_evidence_disconnected_boundary_blocker() {
     let built = evaluate_unordered_line_segments(
         vec![line(0, 0, 1, 0), line(3, 0, 4, 0)],
         FillRule::NonZero,
@@ -579,7 +582,7 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
         Some(RegionLineSegmentArrangedEndpoint2::Start)
     );
     assert_eq!(built.endpoint_graph_blocker_point(), Some(&p(0, 0)));
-    assert_eq!(built.arranged_source_report_count(), Some(2));
+    assert_eq!(built.arranged_source_evidence_count(), Some(2));
     assert_eq!(built.output_ring_count(), None);
     assert_eq!(built.output_boundary_segment_count(), None);
     assert_eq!(built.output_contour_count(), None);
@@ -588,9 +591,9 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
     assert_eq!(built.hole_contour_count(), None);
     assert_eq!(built.material_segment_count(), None);
     assert_eq!(built.hole_segment_count(), None);
-    assert_eq!(built.role_report_count(), None);
-    assert_eq!(built.role_reports(), None);
-    assert_eq!(built.source_report_count(), Some(0));
+    assert_eq!(built.role_evidence_count(), None);
+    assert_eq!(built.role_evidence(), None);
+    assert_eq!(built.source_evidence_count(), Some(0));
     assert_eq!(built.boundary_build_stage(), None);
 
     let endpoint_graph_cache = built.endpoint_graph_cache().unwrap();
@@ -651,7 +654,7 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
     );
     assert_eq!(ring_cache.output_ring_count(), None);
     assert_eq!(ring_cache.output_boundary_segment_count(), None);
-    assert!(ring_cache.source_reports().is_empty());
+    assert!(ring_cache.source_evidence().is_empty());
     assert_eq!(ring_cache.output_ring_bucket_cache().ring_count(), 0);
     assert_eq!(
         ring_cache
@@ -671,7 +674,7 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
             .output_connection_ref_count(),
         0
     );
-    assert_eq!(ring_cache.arranged_source_reports().len(), 2);
+    assert_eq!(ring_cache.arranged_source_evidence().len(), 2);
     assert_eq!(
         ring_cache
             .arranged_fragment_cache()
@@ -726,10 +729,10 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
     assert_eq!(built.split_overlap_relation_count(), Some(0));
     assert_eq!(built.split_uncertain_relation_count(), Some(0));
     let split_points = built.split_intersection_points().unwrap();
-    let split_reports = built.split_intersection_reports().unwrap();
+    let split_evidence = built.split_intersection_evidence().unwrap();
     assert_eq!(split_points, &[p(2, 2)]);
-    assert_eq!(split_reports.len(), 1);
-    let event: &hypercurve::RegionLineSegmentSplitIntersectionReport2 = &split_reports[0];
+    assert_eq!(split_evidence.len(), 1);
+    let event: &hypercurve::RegionLineSegmentSplitIntersectionEvidence2 = &split_evidence[0];
     assert_eq!(event.first_source_segment_index(), 0);
     assert_eq!(event.first_source_segment_kind(), SegmentKind::Line);
     assert_eq!(event.first_source_segment_start_point(), &p(0, 0));
@@ -760,19 +763,19 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
         Some(RegionLineSegmentArrangedEndpoint2::Start)
     );
     assert_eq!(built.endpoint_graph_blocker_point(), Some(&p(0, 0)));
-    let arranged_sources = built.arranged_source_reports().unwrap();
-    assert_eq!(built.arranged_source_report_count(), Some(4));
+    let arranged_sources = built.arranged_source_evidence().unwrap();
+    assert_eq!(built.arranged_source_evidence_count(), Some(4));
     assert_eq!(arranged_sources.len(), 4);
     assert_eq!(arranged_sources[0].source_segment_index(), 0);
     assert_eq!(
         arranged_sources[0].source_range(),
         &hypercurve::ParamRange::new(s(0), q(1, 2))
     );
-    assert_eq!(built.source_report_count(), Some(0));
+    assert_eq!(built.source_evidence_count(), Some(0));
 
     let split_cache = built.split_cache().unwrap();
     assert_eq!(split_cache.intersection_points(), &[p(2, 2)]);
-    assert_eq!(split_cache.intersection_reports(), split_reports);
+    assert_eq!(split_cache.intersection_evidence(), split_evidence);
     assert_eq!(split_cache.output_segment_count(), Some(4));
     assert!(split_cache.blocker_cache().is_none());
     assert_eq!(
@@ -828,8 +831,8 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
     );
 
     let ring_cache = built.ring_assembly_cache().unwrap();
-    assert_eq!(ring_cache.arranged_source_reports(), arranged_sources);
-    assert!(ring_cache.source_reports().is_empty());
+    assert_eq!(ring_cache.arranged_source_evidence(), arranged_sources);
+    assert!(ring_cache.source_evidence().is_empty());
     assert_eq!(ring_cache.output_ring_count(), None);
     assert_eq!(ring_cache.output_ring_bucket_cache().ring_count(), 0);
     assert_eq!(
@@ -856,7 +859,7 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
 }
 
 #[test]
-fn unordered_line_segments_report_overlap_source_pair_blocker() {
+fn unordered_line_segments_evidence_overlap_source_pair_blocker() {
     let built = evaluate_unordered_line_segments(
         vec![line(0, 0, 4, 0), line(2, 0, 6, 0)],
         FillRule::NonZero,
@@ -915,7 +918,7 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
         built.split_blocker_second_source_end_point(),
         Some(&p(6, 0))
     );
-    assert_eq!(built.arranged_source_report_count(), None);
+    assert_eq!(built.arranged_source_evidence_count(), None);
     assert_eq!(built.output_boundary_segment_kind_counts(), None);
     assert_eq!(built.endpoint_graph_blocker_arranged_segment_index(), None);
     assert_eq!(built.endpoint_graph_blocker_endpoint(), None);
@@ -930,7 +933,7 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
     assert_eq!(split_cache.tested_pair_count(), 1);
     assert_eq!(split_cache.intersection_event_count(), 0);
     assert!(split_cache.intersection_points().is_empty());
-    assert!(split_cache.intersection_reports().is_empty());
+    assert!(split_cache.intersection_evidence().is_empty());
     assert_eq!(split_cache.output_segment_count(), None);
     assert_eq!(split_cache.relation_bucket_cache().relation_count(), 1);
     assert_eq!(
@@ -995,11 +998,11 @@ fn borrowed_unordered_line_segments_evaluate_retained_arrangement() {
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
     assert_eq!(built.arranged_segment_count(), Some(4));
-    assert_eq!(built.arranged_source_report_count(), Some(4));
-    assert_eq!(built.source_report_count(), Some(4));
+    assert_eq!(built.arranged_source_evidence_count(), Some(4));
+    assert_eq!(built.source_evidence_count(), Some(4));
 }
 #[test]
-fn unordered_segments_return_retained_report() {
+fn unordered_segments_return_retained_evidence() {
     let lines = vec![
         line(0, 0, 4, 0),
         line(0, 4, 4, 4),
@@ -1009,10 +1012,10 @@ fn unordered_segments_return_retained_report() {
     let result =
         evaluate_borrowed_unordered_line_segments(&lines, FillRule::NonZero, &policy()).unwrap();
     let classification = result.region_classification();
-    let report = result.report();
-    assert!(report.status().unwrap().is_native_exact());
-    assert_eq!(report.source_segment_count(), 4);
-    assert!(report.source_line_segments().is_some());
+    let evidence = result.evidence();
+    assert!(evidence.status().unwrap().is_native_exact());
+    assert_eq!(evidence.source_segment_count(), 4);
+    assert!(evidence.source_line_segments().is_some());
     match classification {
         Classification::Decided(region) => assert_eq!(
             region.classify_point(&p(2, 2), &policy()),
@@ -1024,9 +1027,9 @@ fn unordered_segments_return_retained_report() {
     let result =
         evaluate_unordered_line_segments(lines.clone(), FillRule::NonZero, &policy()).unwrap();
     let classification = result.region_classification();
-    let report = result.report();
-    assert!(report.status().unwrap().is_native_exact());
-    assert_eq!(report.source_segment_count(), 4);
+    let evidence = result.evidence();
+    assert!(evidence.status().unwrap().is_native_exact());
+    assert_eq!(evidence.source_segment_count(), 4);
     assert!(matches!(classification, Classification::Decided(_)));
 
     let disconnected = vec![line(0, 0, 1, 0), line(3, 0, 4, 0)];
@@ -1034,30 +1037,30 @@ fn unordered_segments_return_retained_report() {
         evaluate_borrowed_unordered_line_segments(&disconnected, FillRule::NonZero, &policy())
             .unwrap();
     let classification = result.region_classification();
-    let report = result.report();
+    let evidence = result.evidence();
     assert_eq!(
         classification,
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
-    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
-    assert_eq!(report.materialized_region(), Some(false));
+    assert_eq!(evidence.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(evidence.materialized_region(), Some(false));
 
     let native_segments = lines.into_iter().map(Segment2::Line).collect::<Vec<_>>();
     let result =
         evaluate_borrowed_unordered_segments(&native_segments, FillRule::NonZero, &policy())
             .unwrap();
     let classification = result.region_classification();
-    let report = result.report();
-    assert!(report.status().unwrap().is_native_exact());
-    assert_eq!(report.source_segment_count(), 4);
-    assert!(report.source_line_segments().is_none());
+    let evidence = result.evidence();
+    assert!(evidence.status().unwrap().is_native_exact());
+    assert_eq!(evidence.source_segment_count(), 4);
+    assert!(evidence.source_line_segments().is_none());
     assert!(matches!(classification, Classification::Decided(_)));
 
     let result =
         evaluate_unordered_segments(native_segments, FillRule::NonZero, &policy()).unwrap();
     let classification = result.region_classification();
-    let report = result.report();
-    assert!(report.status().unwrap().is_native_exact());
+    let evidence = result.evidence();
+    assert!(evidence.status().unwrap().is_native_exact());
     assert!(matches!(classification, Classification::Decided(_)));
 }
 #[test]
@@ -1099,9 +1102,9 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(built.split_overlap_relation_count(), Some(0));
     assert_eq!(built.split_uncertain_relation_count(), Some(0));
     let split_points = built.split_intersection_points().unwrap();
-    let split_reports = built.split_intersection_reports().unwrap();
+    let split_evidence = built.split_intersection_evidence().unwrap();
     assert_eq!(split_points.len(), 2);
-    assert_eq!(split_reports.len(), 2);
+    assert_eq!(split_evidence.len(), 2);
     assert!(split_points.contains(&p(0, 0)));
     assert!(split_points.contains(&p(4, 0)));
     assert_eq!(built.split_output_segment_count(), Some(2));
@@ -1140,8 +1143,8 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         built.output_boundary_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 1, arcs: 1 })
     );
-    let arranged_sources = built.arranged_source_reports().unwrap();
-    assert_eq!(built.arranged_source_report_count(), Some(2));
+    let arranged_sources = built.arranged_source_evidence().unwrap();
+    assert_eq!(built.arranged_source_evidence_count(), Some(2));
     assert_eq!(arranged_sources.len(), 2);
     assert_eq!(arranged_sources[0].source_segment_index(), 0);
     assert_eq!(arranged_sources[1].source_segment_index(), 1);
@@ -1159,23 +1162,23 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         arranged_sources[1].arranged_segment_kind(),
         SegmentKind::Arc
     );
-    let source_reports = built.source_reports().unwrap();
-    assert_eq!(built.source_report_count(), Some(2));
-    assert_eq!(source_reports.len(), 2);
-    assert_eq!(source_reports[0].source_segment_index(), 0);
-    assert_eq!(source_reports[1].source_segment_index(), 1);
-    assert_eq!(source_reports[0].source_segment_start_point(), &p(4, 0));
-    assert_eq!(source_reports[0].source_segment_end_point(), &p(0, 0));
-    assert_eq!(source_reports[0].source_segment_kind(), SegmentKind::Line);
-    assert_eq!(source_reports[0].output_segment_kind(), SegmentKind::Line);
-    assert_eq!(source_reports[1].source_segment_kind(), SegmentKind::Arc);
-    assert_eq!(source_reports[1].source_segment_start_point(), &p(0, 0));
-    assert_eq!(source_reports[1].source_segment_end_point(), &p(4, 0));
-    assert_eq!(source_reports[1].output_segment_kind(), SegmentKind::Arc);
+    let source_evidence = built.source_evidence().unwrap();
+    assert_eq!(built.source_evidence_count(), Some(2));
+    assert_eq!(source_evidence.len(), 2);
+    assert_eq!(source_evidence[0].source_segment_index(), 0);
+    assert_eq!(source_evidence[1].source_segment_index(), 1);
+    assert_eq!(source_evidence[0].source_segment_start_point(), &p(4, 0));
+    assert_eq!(source_evidence[0].source_segment_end_point(), &p(0, 0));
+    assert_eq!(source_evidence[0].source_segment_kind(), SegmentKind::Line);
+    assert_eq!(source_evidence[0].output_segment_kind(), SegmentKind::Line);
+    assert_eq!(source_evidence[1].source_segment_kind(), SegmentKind::Arc);
+    assert_eq!(source_evidence[1].source_segment_start_point(), &p(0, 0));
+    assert_eq!(source_evidence[1].source_segment_end_point(), &p(4, 0));
+    assert_eq!(source_evidence[1].output_segment_kind(), SegmentKind::Arc);
 
     let ring_cache = built.ring_assembly_cache().unwrap();
-    assert_eq!(ring_cache.arranged_source_reports(), arranged_sources);
-    assert_eq!(ring_cache.source_reports(), source_reports);
+    assert_eq!(ring_cache.arranged_source_evidence(), arranged_sources);
+    assert_eq!(ring_cache.source_evidence(), source_evidence);
 
     let fragment_cache = ring_cache.arranged_fragment_cache();
     assert_eq!(fragment_cache.arranged_fragment_count(), 2);
@@ -1288,12 +1291,12 @@ fn borrowed_unordered_native_segments_evaluate_retained_arrangement() {
         SegmentKindCounts { lines: 1, arcs: 1 }
     );
     assert_eq!(built.arranged_segment_count(), Some(2));
-    assert_eq!(built.arranged_source_report_count(), Some(2));
-    assert_eq!(built.source_report_count(), Some(2));
+    assert_eq!(built.arranged_source_evidence_count(), Some(2));
+    assert_eq!(built.source_evidence_count(), Some(2));
 }
 
 #[test]
-fn region_arrangement_builds_line_region_with_line_specific_report() {
+fn region_arrangement_builds_line_region_with_line_specific_evidence() {
     let lines = vec![
         line(4, 0, 0, 0),
         line(4, 4, 4, 0),
@@ -1593,7 +1596,7 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     assert_eq!(result.split_tested_pair_count(), Some(4));
     assert_eq!(result.split_intersection_event_count(), Some(4));
     assert_eq!(result.split_intersection_points().unwrap().len(), 4);
-    assert_eq!(result.split_intersection_reports().unwrap().len(), 4);
+    assert_eq!(result.split_intersection_evidence().unwrap().len(), 4);
     assert_eq!(result.split_output_segment_count(), Some(4));
     assert_eq!(result.split_blocker_cache(), None);
     let split_relation_bucket_cache = result.split_relation_bucket_cache().unwrap();
@@ -1666,21 +1669,21 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     assert_eq!(first_split_intersection_bucket.point(), &p(4, 0));
     assert_eq!(first_split_intersection_bucket.intersections().len(), 1);
     assert_eq!(
-        first_split_intersection_bucket.intersections()[0].intersection_report_index(),
+        first_split_intersection_bucket.intersections()[0].intersection_evidence_index(),
         0
     );
     assert_eq!(
         first_split_intersection_bucket.point(),
-        result.split_intersection_reports().unwrap()[0].point()
+        result.split_intersection_evidence().unwrap()[0].point()
     );
     let split_intersection_parameter_cache = result.split_intersection_parameter_cache().unwrap();
     assert_eq!(
         split_intersection_parameter_cache.intersection_event_count(),
-        result.split_intersection_reports().unwrap().len()
+        result.split_intersection_evidence().unwrap().len()
     );
     assert_eq!(
         split_intersection_parameter_cache.source_parameter_ref_count(),
-        result.split_intersection_reports().unwrap().len() * 2
+        result.split_intersection_evidence().unwrap().len() * 2
     );
     assert_eq!(
         result.split_intersection_source_parameter_ref_count(),
@@ -1688,29 +1691,29 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         split_intersection_parameter_cache.parameters().len(),
-        result.split_intersection_reports().unwrap().len()
+        result.split_intersection_evidence().unwrap().len()
     );
     let first_split_parameter = &split_intersection_parameter_cache.parameters()[0];
-    assert_eq!(first_split_parameter.intersection_report_index(), 0);
+    assert_eq!(first_split_parameter.intersection_evidence_index(), 0);
     assert_eq!(
         first_split_parameter.first_source_segment_index(),
-        result.split_intersection_reports().unwrap()[0].first_source_segment_index()
+        result.split_intersection_evidence().unwrap()[0].first_source_segment_index()
     );
     assert_eq!(
         first_split_parameter.first_source_param(),
-        result.split_intersection_reports().unwrap()[0].first_source_param()
+        result.split_intersection_evidence().unwrap()[0].first_source_param()
     );
     assert_eq!(
         first_split_parameter.second_source_segment_index(),
-        result.split_intersection_reports().unwrap()[0].second_source_segment_index()
+        result.split_intersection_evidence().unwrap()[0].second_source_segment_index()
     );
     assert_eq!(
         first_split_parameter.second_source_param(),
-        result.split_intersection_reports().unwrap()[0].second_source_param()
+        result.split_intersection_evidence().unwrap()[0].second_source_param()
     );
     assert_eq!(
         first_split_parameter.point(),
-        result.split_intersection_reports().unwrap()[0].point()
+        result.split_intersection_evidence().unwrap()[0].point()
     );
     assert_eq!(
         result.endpoint_graph_predicate_path(),
@@ -1806,11 +1809,11 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.start_endpoint_ref_count(),
-        result.arranged_source_reports().unwrap().len()
+        result.arranged_source_evidence().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.end_endpoint_ref_count(),
-        result.arranged_source_reports().unwrap().len()
+        result.arranged_source_evidence().unwrap().len()
     );
     assert_eq!(arranged_endpoint_side_bucket_cache.max_bucket_size(), 4);
     assert_eq!(
@@ -1821,11 +1824,11 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         arranged_endpoint_side_bucket_cache.buckets()[0]
             .endpoints()
             .len(),
-        result.arranged_source_reports().unwrap().len()
+        result.arranged_source_evidence().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.buckets()[0].endpoints()[0].arranged_segment_index(),
-        result.arranged_source_reports().unwrap()[0].arranged_segment_index()
+        result.arranged_source_evidence().unwrap()[0].arranged_segment_index()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.buckets()[0].endpoints()[0].endpoint(),
@@ -1839,7 +1842,7 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         arranged_endpoint_side_bucket_cache.buckets()[1]
             .endpoints()
             .len(),
-        result.arranged_source_reports().unwrap().len()
+        result.arranged_source_evidence().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.buckets()[1].endpoints()[0].endpoint(),
@@ -1856,7 +1859,7 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         arranged_endpoint_point_cache.arranged_fragment_ref_count(),
-        result.arranged_source_reports().unwrap().len()
+        result.arranged_source_evidence().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoint_ref_count(),
@@ -1864,20 +1867,20 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoints().len(),
-        result.arranged_source_reports().unwrap().len()
+        result.arranged_source_evidence().unwrap().len()
     );
     let arranged_endpoint_point_ref = &arranged_endpoint_point_cache.endpoints()[0];
     assert_eq!(
         arranged_endpoint_point_ref.arranged_segment_index(),
-        result.arranged_source_reports().unwrap()[0].arranged_segment_index()
+        result.arranged_source_evidence().unwrap()[0].arranged_segment_index()
     );
     assert_eq!(
         arranged_endpoint_point_ref.output_start_point(),
-        result.arranged_source_reports().unwrap()[0].output_start_point()
+        result.arranged_source_evidence().unwrap()[0].output_start_point()
     );
     assert_eq!(
         arranged_endpoint_point_ref.output_end_point(),
-        result.arranged_source_reports().unwrap()[0].output_end_point()
+        result.arranged_source_evidence().unwrap()[0].output_end_point()
     );
     let arranged_endpoint_degree_bucket_cache =
         result.arranged_endpoint_degree_bucket_cache().unwrap();
@@ -1987,8 +1990,8 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     assert_eq!(result.output_ring_count(), Some(1));
     assert_eq!(result.output_boundary_segment_count(), Some(4));
     assert_eq!(
-        result.arranged_source_report_count(),
-        Some(result.arranged_source_reports().unwrap().len())
+        result.arranged_source_evidence_count(),
+        Some(result.arranged_source_evidence().unwrap().len())
     );
     let arranged_fragment_cache = result.arranged_fragment_cache().unwrap();
     assert_eq!(arranged_fragment_cache.arranged_fragment_count(), 4);
@@ -2159,7 +2162,7 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         arranged_fragment_status_bucket_cache.buckets()[0].source_refs()[0]
-            .arranged_source_report_index(),
+            .arranged_source_evidence_index(),
         0
     );
     assert_eq!(
@@ -2211,18 +2214,21 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         arranged_fragment_cache.source_ref_count()
     );
     let arranged_source_range_ref = &arranged_fragment_source_range_cache.ranges()[0];
-    assert_eq!(arranged_source_range_ref.arranged_source_report_index(), 0);
+    assert_eq!(
+        arranged_source_range_ref.arranged_source_evidence_index(),
+        0
+    );
     assert_eq!(
         arranged_source_range_ref.source_segment_index(),
-        result.arranged_source_reports().unwrap()[0].source_segment_index()
+        result.arranged_source_evidence().unwrap()[0].source_segment_index()
     );
     assert_eq!(
         arranged_source_range_ref.source_range(),
-        result.arranged_source_reports().unwrap()[0].source_range()
+        result.arranged_source_evidence().unwrap()[0].source_range()
     );
     assert_eq!(
         arranged_source_range_ref.arranged_segment_index(),
-        result.arranged_source_reports().unwrap()[0].arranged_segment_index()
+        result.arranged_source_evidence().unwrap()[0].arranged_segment_index()
     );
     assert!(arranged_source_range_ref.covers_full_source_range());
     assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
@@ -2232,29 +2238,29 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     assert_eq!(arranged_fragment.arranged_segment_kind(), SegmentKind::Line);
     assert_eq!(
         arranged_fragment.output_start_point(),
-        result.arranged_source_reports().unwrap()[0].output_start_point()
+        result.arranged_source_evidence().unwrap()[0].output_start_point()
     );
     assert_eq!(
         arranged_fragment.output_end_point(),
-        result.arranged_source_reports().unwrap()[0].output_end_point()
+        result.arranged_source_evidence().unwrap()[0].output_end_point()
     );
     assert_eq!(arranged_fragment.source_refs().len(), 1);
     assert_eq!(
-        arranged_fragment.source_refs()[0].arranged_source_report_index(),
+        arranged_fragment.source_refs()[0].arranged_source_evidence_index(),
         0
     );
     assert_eq!(arranged_fragment.source_refs()[0].source_segment_index(), 0);
     assert_eq!(
         arranged_fragment.source_refs()[0].source_range(),
-        result.arranged_source_reports().unwrap()[0].source_range()
+        result.arranged_source_evidence().unwrap()[0].source_range()
     );
     assert_eq!(
         arranged_fragment.source_refs()[0].status(),
-        result.arranged_source_reports().unwrap()[0].status()
+        result.arranged_source_evidence().unwrap()[0].status()
     );
     assert_eq!(
-        result.source_report_count(),
-        Some(result.source_reports().unwrap().len())
+        result.source_evidence_count(),
+        Some(result.source_evidence().unwrap().len())
     );
     let output_ring_bucket_cache = result.output_ring_bucket_cache().unwrap();
     assert_eq!(
@@ -2276,11 +2282,11 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     let output_ring_bucket = &output_ring_bucket_cache.rings()[0];
     assert_eq!(output_ring_bucket.output_ring_index(), 0);
     assert_eq!(output_ring_bucket.segments().len(), 4);
-    assert_eq!(output_ring_bucket.segments()[0].source_report_index(), 0);
+    assert_eq!(output_ring_bucket.segments()[0].source_evidence_index(), 0);
     assert_eq!(output_ring_bucket.segments()[0].output_segment_index(), 0);
     assert_eq!(
         output_ring_bucket.segments()[0].reversed(),
-        result.source_reports().unwrap()[0].reversed()
+        result.source_evidence().unwrap()[0].reversed()
     );
     let output_segment_kind_bucket_cache = result.output_segment_kind_bucket_cache().unwrap();
     assert_eq!(
@@ -2323,20 +2329,21 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         result.output_boundary_segment_kind_counts().unwrap().lines
     );
     assert_eq!(
-        output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].source_report_index(),
+        output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].source_evidence_index(),
         0
     );
     assert_eq!(
         output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].output_ring_index(),
-        result.source_reports().unwrap()[0].output_ring_index()
+        result.source_evidence().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].output_segment_index(),
-        result.source_reports().unwrap()[0].output_segment_index()
+        result.source_evidence().unwrap()[0].output_segment_index()
     );
     assert_eq!(
-        result.source_reports().unwrap()
-            [output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].source_report_index()]
+        result.source_evidence().unwrap()[output_segment_kind_bucket_cache.buckets()[0]
+            .segment_refs()[0]
+            .source_evidence_index()]
         .output_segment_kind(),
         SegmentKind::Line
     );
@@ -2368,7 +2375,7 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         output_segment_source_bucket_cache.output_segment_ref_count(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(output_segment_source_bucket_cache.max_bucket_size(), 1);
     assert_eq!(output_segment_source_bucket_cache.buckets().len(), 4);
@@ -2385,14 +2392,16 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     let source_ref = &output_segment_source_bucket_cache.buckets()[0].segment_refs()[0];
     assert_eq!(
         source_ref.output_ring_index(),
-        result.source_reports().unwrap()[source_ref.source_report_index()].output_ring_index()
+        result.source_evidence().unwrap()[source_ref.source_evidence_index()].output_ring_index()
     );
     assert_eq!(
         source_ref.output_segment_index(),
-        result.source_reports().unwrap()[source_ref.source_report_index()].output_segment_index()
+        result.source_evidence().unwrap()[source_ref.source_evidence_index()]
+            .output_segment_index()
     );
     assert_eq!(
-        result.source_reports().unwrap()[source_ref.source_report_index()].source_segment_index(),
+        result.source_evidence().unwrap()[source_ref.source_evidence_index()]
+            .source_segment_index(),
         output_segment_source_bucket_cache.buckets()[0].source_segment_index()
     );
     let output_segment_source_range_cache = result.output_segment_source_range_cache().unwrap();
@@ -2410,11 +2419,11 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         output_segment_source_range_cache.output_segment_ref_count(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(
         output_segment_source_range_cache.full_source_range_ref_count(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(
         output_segment_source_range_cache.partial_source_range_ref_count(),
@@ -2422,25 +2431,25 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         output_segment_source_range_cache.ranges().len(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     let source_range_ref = &output_segment_source_range_cache.ranges()[0];
-    assert_eq!(source_range_ref.source_report_index(), 0);
+    assert_eq!(source_range_ref.source_evidence_index(), 0);
     assert_eq!(
         source_range_ref.source_segment_index(),
-        result.source_reports().unwrap()[0].source_segment_index()
+        result.source_evidence().unwrap()[0].source_segment_index()
     );
     assert_eq!(
         source_range_ref.source_range(),
-        result.source_reports().unwrap()[0].source_range()
+        result.source_evidence().unwrap()[0].source_range()
     );
     assert_eq!(
         source_range_ref.output_ring_index(),
-        result.source_reports().unwrap()[0].output_ring_index()
+        result.source_evidence().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         source_range_ref.output_segment_index(),
-        result.source_reports().unwrap()[0].output_segment_index()
+        result.source_evidence().unwrap()[0].output_segment_index()
     );
     assert!(source_range_ref.covers_full_source_range());
     let output_segment_endpoint_cache = result.output_segment_endpoint_cache().unwrap();
@@ -2454,33 +2463,33 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         output_segment_endpoint_cache.output_segment_ref_count(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(
         output_segment_endpoint_cache.output_endpoint_ref_count(),
-        result.source_report_count().unwrap() * 2
+        result.source_evidence_count().unwrap() * 2
     );
     assert_eq!(
         output_segment_endpoint_cache.segments().len(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     let endpoint_ref = &output_segment_endpoint_cache.segments()[0];
-    assert_eq!(endpoint_ref.source_report_index(), 0);
+    assert_eq!(endpoint_ref.source_evidence_index(), 0);
     assert_eq!(
         endpoint_ref.output_ring_index(),
-        result.source_reports().unwrap()[0].output_ring_index()
+        result.source_evidence().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         endpoint_ref.output_segment_index(),
-        result.source_reports().unwrap()[0].output_segment_index()
+        result.source_evidence().unwrap()[0].output_segment_index()
     );
     assert_eq!(
         endpoint_ref.output_start_point(),
-        result.source_reports().unwrap()[0].output_start_point()
+        result.source_evidence().unwrap()[0].output_start_point()
     );
     assert_eq!(
         endpoint_ref.output_end_point(),
-        result.source_reports().unwrap()[0].output_end_point()
+        result.source_evidence().unwrap()[0].output_end_point()
     );
     let output_ring_continuity_cache = result.output_ring_continuity_cache().unwrap();
     assert_eq!(
@@ -2501,45 +2510,45 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         output_ring_continuity_cache.output_connection_ref_count(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(
         output_ring_continuity_cache.max_ring_connection_count(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(
         output_ring_continuity_cache.connections().len(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     let continuity_ref = &output_ring_continuity_cache.connections()[0];
-    assert_eq!(continuity_ref.source_report_index(), 0);
-    assert_eq!(continuity_ref.next_source_report_index(), 1);
+    assert_eq!(continuity_ref.source_evidence_index(), 0);
+    assert_eq!(continuity_ref.next_source_evidence_index(), 1);
     assert_eq!(
         continuity_ref.output_ring_index(),
-        result.source_reports().unwrap()[0].output_ring_index()
+        result.source_evidence().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         continuity_ref.output_segment_index(),
-        result.source_reports().unwrap()[0].output_segment_index()
+        result.source_evidence().unwrap()[0].output_segment_index()
     );
     assert_eq!(
         continuity_ref.next_output_segment_index(),
-        result.source_reports().unwrap()[1].output_segment_index()
+        result.source_evidence().unwrap()[1].output_segment_index()
     );
     assert_eq!(
         continuity_ref.output_end_point(),
-        result.source_reports().unwrap()[0].output_end_point()
+        result.source_evidence().unwrap()[0].output_end_point()
     );
     assert_eq!(
         continuity_ref.next_output_start_point(),
-        result.source_reports().unwrap()[1].output_start_point()
+        result.source_evidence().unwrap()[1].output_start_point()
     );
     assert_eq!(
         continuity_ref.output_end_point(),
         continuity_ref.next_output_start_point()
     );
     let closing_continuity_ref = output_ring_continuity_cache.connections().last().unwrap();
-    assert_eq!(closing_continuity_ref.next_source_report_index(), 0);
+    assert_eq!(closing_continuity_ref.next_source_evidence_index(), 0);
     assert_eq!(
         closing_continuity_ref.output_end_point(),
         closing_continuity_ref.next_output_start_point()
@@ -2584,11 +2593,11 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     assert_eq!(output_segment_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         output_segment_status_bucket_cache.output_segment_ref_count(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(
         output_segment_status_bucket_cache.native_exact_ref_count(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(
         output_segment_status_bucket_cache.certified_approximation_ref_count(),
@@ -2617,24 +2626,24 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         output_segment_status_bucket_cache.buckets()[0]
             .segment_refs()
             .len(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(
-        output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].source_report_index(),
+        output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].source_evidence_index(),
         0
     );
     assert_eq!(
         output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].output_ring_index(),
-        result.source_reports().unwrap()[0].output_ring_index()
+        result.source_evidence().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].output_segment_index(),
-        result.source_reports().unwrap()[0].output_segment_index()
+        result.source_evidence().unwrap()[0].output_segment_index()
     );
     assert_eq!(
-        result.source_reports().unwrap()[output_segment_status_bucket_cache.buckets()[0]
+        result.source_evidence().unwrap()[output_segment_status_bucket_cache.buckets()[0]
             .segment_refs()[0]
-            .source_report_index()]
+            .source_evidence_index()]
         .status(),
         RetainedTopologyStatus::NativeExact
     );
@@ -2671,13 +2680,13 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     let reversed_source_segment_count = result.reversed_source_segment_count().unwrap();
     let forward_source_segment_count = result
-        .source_report_count()
+        .source_evidence_count()
         .unwrap()
         .saturating_sub(reversed_source_segment_count);
     assert_eq!(output_segment_direction_bucket_cache.bucket_count(), 2);
     assert_eq!(
         output_segment_direction_bucket_cache.output_segment_ref_count(),
-        result.source_report_count().unwrap()
+        result.source_evidence_count().unwrap()
     );
     assert_eq!(
         output_segment_direction_bucket_cache.forward_segment_ref_count(),
@@ -2703,14 +2712,15 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         let forward_ref = &output_segment_direction_bucket_cache.buckets()[0].segment_refs()[0];
         assert_eq!(
             forward_ref.output_ring_index(),
-            result.source_reports().unwrap()[forward_ref.source_report_index()].output_ring_index()
+            result.source_evidence().unwrap()[forward_ref.source_evidence_index()]
+                .output_ring_index()
         );
         assert_eq!(
             forward_ref.output_segment_index(),
-            result.source_reports().unwrap()[forward_ref.source_report_index()]
+            result.source_evidence().unwrap()[forward_ref.source_evidence_index()]
                 .output_segment_index()
         );
-        assert!(!result.source_reports().unwrap()[forward_ref.source_report_index()].reversed());
+        assert!(!result.source_evidence().unwrap()[forward_ref.source_evidence_index()].reversed());
     }
     assert!(output_segment_direction_bucket_cache.buckets()[1].reversed());
     assert_eq!(
@@ -2723,15 +2733,15 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         let reversed_ref = &output_segment_direction_bucket_cache.buckets()[1].segment_refs()[0];
         assert_eq!(
             reversed_ref.output_ring_index(),
-            result.source_reports().unwrap()[reversed_ref.source_report_index()]
+            result.source_evidence().unwrap()[reversed_ref.source_evidence_index()]
                 .output_ring_index()
         );
         assert_eq!(
             reversed_ref.output_segment_index(),
-            result.source_reports().unwrap()[reversed_ref.source_report_index()]
+            result.source_evidence().unwrap()[reversed_ref.source_evidence_index()]
                 .output_segment_index()
         );
-        assert!(result.source_reports().unwrap()[reversed_ref.source_report_index()].reversed());
+        assert!(result.source_evidence().unwrap()[reversed_ref.source_evidence_index()].reversed());
     }
     assert!(result.evaluated_output());
     assert_eq!(result.materialized_region(), Some(true));
@@ -2781,848 +2791,851 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(result.output_contour_count(), result.output_contour_count());
     assert_eq!(result.output_segment_count(), result.output_segment_count());
-    let arrangement_report = result.report();
-    assert_eq!(arrangement_report.summary(), summary_cache);
-    assert_eq!(arrangement_report.fill_rule(), result.fill_rule());
+    let arrangement_evidence = result.evidence();
+    assert_eq!(arrangement_evidence.summary(), summary_cache);
+    assert_eq!(arrangement_evidence.fill_rule(), result.fill_rule());
     assert_eq!(
-        arrangement_report.evaluated_output(),
+        arrangement_evidence.evaluated_output(),
         result.evaluated_output()
     );
     assert_eq!(
-        arrangement_report.source_segments(),
+        arrangement_evidence.source_segments(),
         result.source_segments()
     );
     assert_eq!(
-        arrangement_report.source_line_segments(),
+        arrangement_evidence.source_line_segments(),
         result.source_line_segments()
     );
     assert_eq!(
-        arrangement_report.source_segment_cache(),
+        arrangement_evidence.source_segment_cache(),
         result.source_segment_cache()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_bucket_cache(),
+        arrangement_evidence.source_endpoint_bucket_cache(),
         result.source_endpoint_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_count(),
+        arrangement_evidence.source_endpoint_count(),
         result.source_endpoint_count()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_bucket_count(),
+        arrangement_evidence.source_endpoint_bucket_count(),
         result.source_endpoint_bucket_count()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_singleton_bucket_count(),
+        arrangement_evidence.source_endpoint_singleton_bucket_count(),
         result.source_endpoint_singleton_bucket_count()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_max_bucket_size(),
+        arrangement_evidence.source_endpoint_max_bucket_size(),
         result.source_endpoint_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.split_schedule_cache(),
+        arrangement_evidence.split_schedule_cache(),
         result.split_schedule_cache()
     );
     assert_eq!(
-        arrangement_report.split_schedule_bucket_cache(),
+        arrangement_evidence.split_schedule_bucket_cache(),
         result.split_schedule_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.split_schedule_candidate_pair_count(),
+        arrangement_evidence.split_schedule_candidate_pair_count(),
         result.split_schedule_candidate_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_schedule_decided_disjoint_pair_count(),
+        arrangement_evidence.split_schedule_decided_disjoint_pair_count(),
         result.split_schedule_decided_disjoint_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_schedule_predicate_candidate_pair_count(),
+        arrangement_evidence.split_schedule_predicate_candidate_pair_count(),
         result.split_schedule_predicate_candidate_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_schedule_undecided_aabb_pair_count(),
+        arrangement_evidence.split_schedule_undecided_aabb_pair_count(),
         result.split_schedule_undecided_aabb_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_schedule_bucket_count(),
+        arrangement_evidence.split_schedule_bucket_count(),
         result.split_schedule_bucket_count()
     );
     assert_eq!(
-        arrangement_report.split_schedule_candidate_ref_count(),
+        arrangement_evidence.split_schedule_candidate_ref_count(),
         result.split_schedule_candidate_ref_count()
     );
     assert_eq!(
-        arrangement_report.split_schedule_max_bucket_size(),
+        arrangement_evidence.split_schedule_max_bucket_size(),
         result.split_schedule_max_bucket_size()
     );
-    assert_eq!(arrangement_report.split_cache(), result.split_cache());
+    assert_eq!(arrangement_evidence.split_cache(), result.split_cache());
     assert_eq!(
-        arrangement_report.split_relation_bucket_cache(),
+        arrangement_evidence.split_relation_bucket_cache(),
         result.split_relation_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.split_intersection_bucket_cache(),
+        arrangement_evidence.split_intersection_bucket_cache(),
         result.split_intersection_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.split_intersection_parameter_cache(),
+        arrangement_evidence.split_intersection_parameter_cache(),
         result.split_intersection_parameter_cache()
     );
     assert_eq!(
-        arrangement_report.split_relation_bucket_count(),
+        arrangement_evidence.split_relation_bucket_count(),
         result.split_relation_bucket_count()
     );
     assert_eq!(
-        arrangement_report.split_relation_ref_count(),
+        arrangement_evidence.split_relation_ref_count(),
         result.split_relation_ref_count()
     );
     assert_eq!(
-        arrangement_report.split_relation_max_bucket_size(),
+        arrangement_evidence.split_relation_max_bucket_size(),
         result.split_relation_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.split_intersection_bucket_count(),
+        arrangement_evidence.split_intersection_bucket_count(),
         result.split_intersection_bucket_count()
     );
     assert_eq!(
-        arrangement_report.split_intersection_singleton_bucket_count(),
+        arrangement_evidence.split_intersection_singleton_bucket_count(),
         result.split_intersection_singleton_bucket_count()
     );
     assert_eq!(
-        arrangement_report.split_intersection_max_bucket_size(),
+        arrangement_evidence.split_intersection_max_bucket_size(),
         result.split_intersection_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.split_intersection_source_parameter_ref_count(),
+        arrangement_evidence.split_intersection_source_parameter_ref_count(),
         result.split_intersection_source_parameter_ref_count()
     );
     assert_eq!(
-        arrangement_report.split_blocker_cache(),
+        arrangement_evidence.split_blocker_cache(),
         result.split_blocker_cache()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_cache(),
+        arrangement_evidence.endpoint_graph_cache(),
         result.endpoint_graph_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_bucket_cache(),
+        arrangement_evidence.arranged_endpoint_bucket_cache(),
         result.arranged_endpoint_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_ref_count(),
+        arrangement_evidence.arranged_endpoint_ref_count(),
         result.arranged_endpoint_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_bucket_count(),
+        arrangement_evidence.arranged_endpoint_bucket_count(),
         result.arranged_endpoint_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_singleton_bucket_count(),
+        arrangement_evidence.arranged_endpoint_singleton_bucket_count(),
         result.arranged_endpoint_singleton_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_max_bucket_size(),
+        arrangement_evidence.arranged_endpoint_max_bucket_size(),
         result.arranged_endpoint_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_side_bucket_cache(),
+        arrangement_evidence.arranged_endpoint_side_bucket_cache(),
         result.arranged_endpoint_side_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_side_bucket_count(),
+        arrangement_evidence.arranged_endpoint_side_bucket_count(),
         result.arranged_endpoint_side_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_side_ref_count(),
+        arrangement_evidence.arranged_endpoint_side_ref_count(),
         result.arranged_endpoint_side_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_start_ref_count(),
+        arrangement_evidence.arranged_endpoint_start_ref_count(),
         result.arranged_endpoint_start_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_end_ref_count(),
+        arrangement_evidence.arranged_endpoint_end_ref_count(),
         result.arranged_endpoint_end_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_side_max_bucket_size(),
+        arrangement_evidence.arranged_endpoint_side_max_bucket_size(),
         result.arranged_endpoint_side_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_point_cache(),
+        arrangement_evidence.arranged_endpoint_point_cache(),
         result.arranged_endpoint_point_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_point_fragment_ref_count(),
+        arrangement_evidence.arranged_endpoint_point_fragment_ref_count(),
         result.arranged_endpoint_point_fragment_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_point_ref_count(),
+        arrangement_evidence.arranged_endpoint_point_ref_count(),
         result.arranged_endpoint_point_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_degree_bucket_cache(),
+        arrangement_evidence.arranged_endpoint_degree_bucket_cache(),
         result.arranged_endpoint_degree_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_degree_bucket_count(),
+        arrangement_evidence.arranged_endpoint_degree_bucket_count(),
         result.arranged_endpoint_degree_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_degree_structural_bucket_ref_count(),
+        arrangement_evidence.arranged_endpoint_degree_structural_bucket_ref_count(),
         result.arranged_endpoint_degree_structural_bucket_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_dangling_structural_bucket_count(),
+        arrangement_evidence.arranged_endpoint_dangling_structural_bucket_count(),
         result.arranged_endpoint_dangling_structural_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_chain_structural_bucket_count(),
+        arrangement_evidence.arranged_endpoint_chain_structural_bucket_count(),
         result.arranged_endpoint_chain_structural_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_branch_structural_bucket_count(),
+        arrangement_evidence.arranged_endpoint_branch_structural_bucket_count(),
         result.arranged_endpoint_branch_structural_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_degree_max_bucket_size(),
+        arrangement_evidence.arranged_endpoint_degree_max_bucket_size(),
         result.arranged_endpoint_degree_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.ring_assembly_cache(),
+        arrangement_evidence.ring_assembly_cache(),
         result.ring_assembly_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_cache(),
+        arrangement_evidence.arranged_fragment_cache(),
         result.arranged_fragment_cache()
     );
-    assert_eq!(arrangement_report.output_cache(), result.output_cache());
+    assert_eq!(arrangement_evidence.output_cache(), result.output_cache());
     assert_eq!(
-        arrangement_report.output_ring_bucket_cache(),
+        arrangement_evidence.output_ring_bucket_cache(),
         result.output_ring_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.output_ring_bucket_count(),
+        arrangement_evidence.output_ring_bucket_count(),
         result.output_ring_bucket_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_segment_ref_count(),
+        arrangement_evidence.output_ring_segment_ref_count(),
         result.output_ring_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_max_segment_count(),
+        arrangement_evidence.output_ring_max_segment_count(),
         result.output_ring_max_segment_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_kind_bucket_cache(),
+        arrangement_evidence.output_segment_kind_bucket_cache(),
         result.output_segment_kind_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_kind_bucket_count(),
+        arrangement_evidence.output_segment_kind_bucket_count(),
         result.output_segment_kind_bucket_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_kind_ref_count(),
+        arrangement_evidence.output_segment_kind_ref_count(),
         result.output_segment_kind_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_line_segment_ref_count(),
+        arrangement_evidence.output_line_segment_ref_count(),
         result.output_line_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_arc_segment_ref_count(),
+        arrangement_evidence.output_arc_segment_ref_count(),
         result.output_arc_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_kind_max_bucket_size(),
+        arrangement_evidence.output_segment_kind_max_bucket_size(),
         result.output_segment_kind_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.output_segment_source_bucket_cache(),
+        arrangement_evidence.output_segment_source_bucket_cache(),
         result.output_segment_source_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_source_bucket_count(),
+        arrangement_evidence.output_segment_source_bucket_count(),
         result.output_segment_source_bucket_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_source_ref_count(),
+        arrangement_evidence.output_segment_source_ref_count(),
         result.output_segment_source_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_source_max_bucket_size(),
+        arrangement_evidence.output_segment_source_max_bucket_size(),
         result.output_segment_source_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.output_segment_source_range_cache(),
+        arrangement_evidence.output_segment_source_range_cache(),
         result.output_segment_source_range_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_source_range_ref_count(),
+        arrangement_evidence.output_segment_source_range_ref_count(),
         result.output_segment_source_range_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_full_source_range_ref_count(),
+        arrangement_evidence.output_full_source_range_ref_count(),
         result.output_full_source_range_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_partial_source_range_ref_count(),
+        arrangement_evidence.output_partial_source_range_ref_count(),
         result.output_partial_source_range_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_endpoint_cache(),
+        arrangement_evidence.output_segment_endpoint_cache(),
         result.output_segment_endpoint_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_endpoint_record_count(),
+        arrangement_evidence.output_segment_endpoint_record_count(),
         result.output_segment_endpoint_record_count()
     );
     assert_eq!(
-        arrangement_report.output_endpoint_ref_count(),
+        arrangement_evidence.output_endpoint_ref_count(),
         result.output_endpoint_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_continuity_cache(),
+        arrangement_evidence.output_ring_continuity_cache(),
         result.output_ring_continuity_cache()
     );
     assert_eq!(
-        arrangement_report.output_ring_continuity_ring_ref_count(),
+        arrangement_evidence.output_ring_continuity_ring_ref_count(),
         result.output_ring_continuity_ring_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_continuity_connection_ref_count(),
+        arrangement_evidence.output_ring_continuity_connection_ref_count(),
         result.output_ring_continuity_connection_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_continuity_max_connection_count(),
+        arrangement_evidence.output_ring_continuity_max_connection_count(),
         result.output_ring_continuity_max_connection_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_status_bucket_cache(),
+        arrangement_evidence.output_segment_status_bucket_cache(),
         result.output_segment_status_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_status_bucket_count(),
+        arrangement_evidence.output_segment_status_bucket_count(),
         result.output_segment_status_bucket_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_status_ref_count(),
+        arrangement_evidence.output_segment_status_ref_count(),
         result.output_segment_status_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_native_exact_segment_ref_count(),
+        arrangement_evidence.output_native_exact_segment_ref_count(),
         result.output_native_exact_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_certified_approximation_segment_ref_count(),
+        arrangement_evidence.output_certified_approximation_segment_ref_count(),
         result.output_certified_approximation_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_display_or_export_segment_ref_count(),
+        arrangement_evidence.output_display_or_export_segment_ref_count(),
         result.output_display_or_export_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_imported_lossy_segment_ref_count(),
+        arrangement_evidence.output_imported_lossy_segment_ref_count(),
         result.output_imported_lossy_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_unsupported_segment_ref_count(),
+        arrangement_evidence.output_unsupported_segment_ref_count(),
         result.output_unsupported_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_unresolved_segment_ref_count(),
+        arrangement_evidence.output_unresolved_segment_ref_count(),
         result.output_unresolved_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_status_max_bucket_size(),
+        arrangement_evidence.output_segment_status_max_bucket_size(),
         result.output_segment_status_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.output_segment_direction_bucket_cache(),
+        arrangement_evidence.output_segment_direction_bucket_cache(),
         result.output_segment_direction_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_direction_bucket_count(),
+        arrangement_evidence.output_segment_direction_bucket_count(),
         result.output_segment_direction_bucket_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_direction_ref_count(),
+        arrangement_evidence.output_segment_direction_ref_count(),
         result.output_segment_direction_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_forward_segment_ref_count(),
+        arrangement_evidence.output_forward_segment_ref_count(),
         result.output_forward_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_reversed_segment_ref_count(),
+        arrangement_evidence.output_reversed_segment_ref_count(),
         result.output_reversed_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_direction_max_bucket_size(),
+        arrangement_evidence.output_segment_direction_max_bucket_size(),
         result.output_segment_direction_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.boundary_output_cache(),
+        arrangement_evidence.boundary_output_cache(),
         result.boundary_output_cache()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_bucket_cache(),
+        arrangement_evidence.boundary_output_role_bucket_cache(),
         result.boundary_output_role_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_bucket_count(),
+        arrangement_evidence.boundary_output_role_bucket_count(),
         result.boundary_output_role_bucket_count()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_contour_count(),
+        arrangement_evidence.boundary_output_role_contour_count(),
         result.boundary_output_role_contour_count()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_segment_count(),
+        arrangement_evidence.boundary_output_role_segment_count(),
         result.boundary_output_role_segment_count()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_max_segment_count(),
+        arrangement_evidence.boundary_output_role_max_segment_count(),
         result.boundary_output_role_max_segment_count()
     );
-    assert_eq!(arrangement_report.role_cache(), result.role_cache());
-    assert_eq!(arrangement_report.role_buckets(), result.role_buckets());
+    assert_eq!(arrangement_evidence.role_cache(), result.role_cache());
+    assert_eq!(arrangement_evidence.role_buckets(), result.role_buckets());
     assert_eq!(
-        arrangement_report.role_status_bucket_cache(),
+        arrangement_evidence.role_status_bucket_cache(),
         result.role_status_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.role_status_bucket_count(),
+        arrangement_evidence.role_status_bucket_count(),
         result.role_status_bucket_count()
     );
     assert_eq!(
-        arrangement_report.role_status_assignment_ref_count(),
+        arrangement_evidence.role_status_assignment_ref_count(),
         result.role_status_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_native_exact_assignment_ref_count(),
+        arrangement_evidence.role_native_exact_assignment_ref_count(),
         result.role_native_exact_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_certified_approximation_assignment_ref_count(),
+        arrangement_evidence.role_certified_approximation_assignment_ref_count(),
         result.role_certified_approximation_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_display_or_export_assignment_ref_count(),
+        arrangement_evidence.role_display_or_export_assignment_ref_count(),
         result.role_display_or_export_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_imported_lossy_assignment_ref_count(),
+        arrangement_evidence.role_imported_lossy_assignment_ref_count(),
         result.role_imported_lossy_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_unsupported_assignment_ref_count(),
+        arrangement_evidence.role_unsupported_assignment_ref_count(),
         result.role_unsupported_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_unresolved_assignment_ref_count(),
+        arrangement_evidence.role_unresolved_assignment_ref_count(),
         result.role_unresolved_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_status_max_bucket_size(),
+        arrangement_evidence.role_status_max_bucket_size(),
         result.role_status_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.role_source_contour_bucket_cache(),
+        arrangement_evidence.role_source_contour_bucket_cache(),
         result.role_source_contour_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.role_source_contour_bucket_count(),
+        arrangement_evidence.role_source_contour_bucket_count(),
         result.role_source_contour_bucket_count()
     );
     assert_eq!(
-        arrangement_report.role_source_contour_assignment_ref_count(),
+        arrangement_evidence.role_source_contour_assignment_ref_count(),
         result.role_source_contour_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_source_contour_max_bucket_size(),
+        arrangement_evidence.role_source_contour_max_bucket_size(),
         result.role_source_contour_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.role_nesting_depth_bucket_cache(),
+        arrangement_evidence.role_nesting_depth_bucket_cache(),
         result.role_nesting_depth_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.role_nesting_depth_bucket_count(),
+        arrangement_evidence.role_nesting_depth_bucket_count(),
         result.role_nesting_depth_bucket_count()
     );
     assert_eq!(
-        arrangement_report.role_nesting_depth_assignment_ref_count(),
+        arrangement_evidence.role_nesting_depth_assignment_ref_count(),
         result.role_nesting_depth_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_nesting_depth_max_bucket_size(),
+        arrangement_evidence.role_nesting_depth_max_bucket_size(),
         result.role_nesting_depth_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.role_containment_bucket_cache(),
+        arrangement_evidence.role_containment_bucket_cache(),
         result.role_containment_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.role_containment_bucket_count(),
+        arrangement_evidence.role_containment_bucket_count(),
         result.role_containment_bucket_count()
     );
     assert_eq!(
-        arrangement_report.role_containment_ref_count(),
+        arrangement_evidence.role_containment_ref_count(),
         result.role_containment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_uncontained_assignment_ref_count(),
+        arrangement_evidence.role_uncontained_assignment_ref_count(),
         result.role_uncontained_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_containment_max_bucket_size(),
+        arrangement_evidence.role_containment_max_bucket_size(),
         result.role_containment_max_bucket_size()
     );
-    assert_eq!(arrangement_report.summary(), result.summary());
+    assert_eq!(arrangement_evidence.summary(), result.summary());
     assert_eq!(
-        arrangement_report.source_segment_count(),
+        arrangement_evidence.source_segment_count(),
         result.source_segment_count()
     );
     assert_eq!(
-        arrangement_report.source_segment_kind_counts(),
+        arrangement_evidence.source_segment_kind_counts(),
         result.source_segment_kind_counts()
     );
     assert_eq!(
-        arrangement_report.source_segment_aabbs(),
+        arrangement_evidence.source_segment_aabbs(),
         result.source_segment_aabbs()
     );
-    assert_eq!(arrangement_report.source_aabb(), result.source_aabb());
+    assert_eq!(arrangement_evidence.source_aabb(), result.source_aabb());
     assert_eq!(
-        arrangement_report.decided_source_segment_aabb_count(),
+        arrangement_evidence.decided_source_segment_aabb_count(),
         result.decided_source_segment_aabb_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_bucket_count(),
+        arrangement_evidence.source_aabb_bucket_count(),
         result.source_aabb_bucket_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_ref_count(),
+        arrangement_evidence.source_aabb_ref_count(),
         result.source_aabb_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_decided_ref_count(),
+        arrangement_evidence.source_aabb_decided_ref_count(),
         result.source_aabb_decided_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_undecided_ref_count(),
+        arrangement_evidence.source_aabb_undecided_ref_count(),
         result.source_aabb_undecided_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_max_bucket_size(),
+        arrangement_evidence.source_aabb_max_bucket_size(),
         result.source_aabb_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.source_segment_kind_bucket_count(),
+        arrangement_evidence.source_segment_kind_bucket_count(),
         result.source_segment_kind_bucket_count()
     );
     assert_eq!(
-        arrangement_report.source_segment_kind_ref_count(),
+        arrangement_evidence.source_segment_kind_ref_count(),
         result.source_segment_kind_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_line_segment_ref_count(),
+        arrangement_evidence.source_line_segment_ref_count(),
         result.source_line_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_arc_segment_ref_count(),
+        arrangement_evidence.source_arc_segment_ref_count(),
         result.source_arc_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_segment_kind_max_bucket_size(),
+        arrangement_evidence.source_segment_kind_max_bucket_size(),
         result.source_segment_kind_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.split_candidate_pair_count(),
+        arrangement_evidence.split_candidate_pair_count(),
         result.split_candidate_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_tested_pair_count(),
+        arrangement_evidence.split_tested_pair_count(),
         result.split_tested_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_point_relation_count(),
+        arrangement_evidence.split_point_relation_count(),
         result.split_point_relation_count()
     );
     assert_eq!(
-        arrangement_report.split_intersection_points(),
+        arrangement_evidence.split_intersection_points(),
         result.split_intersection_points()
     );
     assert_eq!(
-        arrangement_report.split_intersection_reports(),
-        result.split_intersection_reports()
+        arrangement_evidence.split_intersection_evidence(),
+        result.split_intersection_evidence()
     );
     assert_eq!(
-        arrangement_report.split_predicate_path(),
+        arrangement_evidence.split_predicate_path(),
         result.split_predicate_path()
     );
     assert_eq!(
-        arrangement_report.split_output_segment_count(),
+        arrangement_evidence.split_output_segment_count(),
         result.split_output_segment_count()
     );
     assert_eq!(
-        arrangement_report.split_blocker_first_source_segment_index(),
+        arrangement_evidence.split_blocker_first_source_segment_index(),
         result.split_blocker_first_source_segment_index()
     );
     assert_eq!(
-        arrangement_report.split_blocker_first_source_segment_kind(),
+        arrangement_evidence.split_blocker_first_source_segment_kind(),
         result.split_blocker_first_source_segment_kind()
     );
     assert_eq!(
-        arrangement_report.split_blocker_first_source_start_point(),
+        arrangement_evidence.split_blocker_first_source_start_point(),
         result.split_blocker_first_source_start_point()
     );
     assert_eq!(
-        arrangement_report.split_blocker_first_source_end_point(),
+        arrangement_evidence.split_blocker_first_source_end_point(),
         result.split_blocker_first_source_end_point()
     );
     assert_eq!(
-        arrangement_report.split_blocker_second_source_segment_index(),
+        arrangement_evidence.split_blocker_second_source_segment_index(),
         result.split_blocker_second_source_segment_index()
     );
     assert_eq!(
-        arrangement_report.split_blocker_second_source_segment_kind(),
+        arrangement_evidence.split_blocker_second_source_segment_kind(),
         result.split_blocker_second_source_segment_kind()
     );
     assert_eq!(
-        arrangement_report.split_blocker_second_source_start_point(),
+        arrangement_evidence.split_blocker_second_source_start_point(),
         result.split_blocker_second_source_start_point()
     );
     assert_eq!(
-        arrangement_report.split_blocker_second_source_end_point(),
+        arrangement_evidence.split_blocker_second_source_end_point(),
         result.split_blocker_second_source_end_point()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_predicate_path(),
+        arrangement_evidence.endpoint_graph_predicate_path(),
         result.endpoint_graph_predicate_path()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_structural_bucket_count(),
+        arrangement_evidence.endpoint_graph_structural_bucket_count(),
         result.endpoint_graph_structural_bucket_count()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_structural_singleton_bucket_count(),
+        arrangement_evidence.endpoint_graph_structural_singleton_bucket_count(),
         result.endpoint_graph_structural_singleton_bucket_count()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_max_structural_bucket_size(),
+        arrangement_evidence.endpoint_graph_max_structural_bucket_size(),
         result.endpoint_graph_max_structural_bucket_size()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_dangling_endpoint_count(),
+        arrangement_evidence.endpoint_graph_dangling_endpoint_count(),
         result.endpoint_graph_dangling_endpoint_count()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_branch_endpoint_count(),
+        arrangement_evidence.endpoint_graph_branch_endpoint_count(),
         result.endpoint_graph_branch_endpoint_count()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_blocker_arranged_segment_index(),
+        arrangement_evidence.endpoint_graph_blocker_arranged_segment_index(),
         result.endpoint_graph_blocker_arranged_segment_index()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_blocker_endpoint(),
+        arrangement_evidence.endpoint_graph_blocker_endpoint(),
         result.endpoint_graph_blocker_endpoint()
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_blocker_point(),
+        arrangement_evidence.endpoint_graph_blocker_point(),
         result.endpoint_graph_blocker_point()
     );
     assert_eq!(
-        arrangement_report.ring_assembly_predicate_path(),
+        arrangement_evidence.ring_assembly_predicate_path(),
         result.ring_assembly_predicate_path()
     );
     assert_eq!(
-        arrangement_report.attempted_endpoint_connection_count(),
+        arrangement_evidence.attempted_endpoint_connection_count(),
         result.attempted_endpoint_connection_count()
     );
     assert_eq!(
-        arrangement_report.exact_endpoint_connection_count(),
+        arrangement_evidence.exact_endpoint_connection_count(),
         result.exact_endpoint_connection_count()
     );
     assert_eq!(
-        arrangement_report.disconnected_endpoint_connection_count(),
+        arrangement_evidence.disconnected_endpoint_connection_count(),
         result.disconnected_endpoint_connection_count()
     );
     assert_eq!(
-        arrangement_report.unresolved_endpoint_connection_count(),
+        arrangement_evidence.unresolved_endpoint_connection_count(),
         result.unresolved_endpoint_connection_count()
     );
     assert_eq!(
-        arrangement_report.reversed_source_segment_count(),
+        arrangement_evidence.reversed_source_segment_count(),
         result.reversed_source_segment_count()
     );
     assert_eq!(
-        arrangement_report.arranged_segment_count(),
+        arrangement_evidence.arranged_segment_count(),
         result.arranged_segment_count()
     );
     assert_eq!(
-        arrangement_report.arranged_segment_kind_counts(),
+        arrangement_evidence.arranged_segment_kind_counts(),
         result.arranged_segment_kind_counts()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_kind_bucket_count(),
+        arrangement_evidence.arranged_fragment_kind_bucket_count(),
         result.arranged_fragment_kind_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_kind_ref_count(),
+        arrangement_evidence.arranged_fragment_kind_ref_count(),
         result.arranged_fragment_kind_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_line_fragment_ref_count(),
+        arrangement_evidence.arranged_line_fragment_ref_count(),
         result.arranged_line_fragment_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_arc_fragment_ref_count(),
+        arrangement_evidence.arranged_arc_fragment_ref_count(),
         result.arranged_arc_fragment_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_kind_max_bucket_size(),
+        arrangement_evidence.arranged_fragment_kind_max_bucket_size(),
         result.arranged_fragment_kind_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_status_bucket_count(),
+        arrangement_evidence.arranged_fragment_status_bucket_count(),
         result.arranged_fragment_status_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_status_source_ref_count(),
+        arrangement_evidence.arranged_fragment_status_source_ref_count(),
         result.arranged_fragment_status_source_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_native_exact_ref_count(),
+        arrangement_evidence.arranged_fragment_native_exact_ref_count(),
         result.arranged_fragment_native_exact_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_certified_approximation_ref_count(),
+        arrangement_evidence.arranged_fragment_certified_approximation_ref_count(),
         result.arranged_fragment_certified_approximation_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_display_or_export_ref_count(),
+        arrangement_evidence.arranged_fragment_display_or_export_ref_count(),
         result.arranged_fragment_display_or_export_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_imported_lossy_ref_count(),
+        arrangement_evidence.arranged_fragment_imported_lossy_ref_count(),
         result.arranged_fragment_imported_lossy_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_unsupported_ref_count(),
+        arrangement_evidence.arranged_fragment_unsupported_ref_count(),
         result.arranged_fragment_unsupported_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_unresolved_ref_count(),
+        arrangement_evidence.arranged_fragment_unresolved_ref_count(),
         result.arranged_fragment_unresolved_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_status_max_bucket_size(),
+        arrangement_evidence.arranged_fragment_status_max_bucket_size(),
         result.arranged_fragment_status_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.arranged_source_report_count(),
-        result.arranged_source_report_count()
+        arrangement_evidence.arranged_source_evidence_count(),
+        result.arranged_source_evidence_count()
     );
     assert_eq!(
-        arrangement_report.arranged_source_reports(),
-        result.arranged_source_reports()
+        arrangement_evidence.arranged_source_evidence(),
+        result.arranged_source_evidence()
     );
     assert_eq!(
-        arrangement_report.source_report_count(),
-        result.source_report_count()
+        arrangement_evidence.source_evidence_count(),
+        result.source_evidence_count()
     );
-    assert_eq!(arrangement_report.source_reports(), result.source_reports());
     assert_eq!(
-        arrangement_report.output_boundary_segment_kind_counts(),
+        arrangement_evidence.source_evidence(),
+        result.source_evidence()
+    );
+    assert_eq!(
+        arrangement_evidence.output_boundary_segment_kind_counts(),
         result.output_boundary_segment_kind_counts()
     );
     assert_eq!(
-        arrangement_report.output_segment_kind_counts(),
+        arrangement_evidence.output_segment_kind_counts(),
         result.output_segment_kind_counts()
     );
     assert_eq!(
-        arrangement_report.material_contour_count(),
+        arrangement_evidence.material_contour_count(),
         result.material_contour_count()
     );
     assert_eq!(
-        arrangement_report.hole_contour_count(),
+        arrangement_evidence.hole_contour_count(),
         result.hole_contour_count()
     );
     assert_eq!(
-        arrangement_report.material_segment_count(),
+        arrangement_evidence.material_segment_count(),
         result.material_segment_count()
     );
     assert_eq!(
-        arrangement_report.hole_segment_count(),
+        arrangement_evidence.hole_segment_count(),
         result.hole_segment_count()
     );
     assert_eq!(
-        arrangement_report.role_report_count(),
-        result.role_report_count()
+        arrangement_evidence.role_evidence_count(),
+        result.role_evidence_count()
     );
-    assert_eq!(arrangement_report.role_reports(), result.role_reports());
+    assert_eq!(arrangement_evidence.role_evidence(), result.role_evidence());
     assert_eq!(
-        arrangement_report.boundary_build_report(),
-        result.boundary_build_report()
+        arrangement_evidence.boundary_build_evidence(),
+        result.boundary_build_evidence()
     );
     assert_eq!(
-        arrangement_report.boundary_build_stage(),
+        arrangement_evidence.boundary_build_stage(),
         result.boundary_build_stage()
     );
     assert_eq!(
-        arrangement_report.boundary_build_predicate_path(),
+        arrangement_evidence.boundary_build_predicate_path(),
         result.boundary_build_predicate_path()
     );
     assert_eq!(
-        arrangement_report.boundary_build_status(),
+        arrangement_evidence.boundary_build_status(),
         result.boundary_build_status()
     );
     assert_eq!(
-        arrangement_report.boundary_build_blocker(),
+        arrangement_evidence.boundary_build_blocker(),
         result.boundary_build_blocker()
     );
     assert_eq!(
-        arrangement_report.boundary_build_source_contour_count(),
+        arrangement_evidence.boundary_build_source_contour_count(),
         result.boundary_build_source_contour_count()
     );
     assert_eq!(
-        arrangement_report.boundary_build_source_segment_count(),
+        arrangement_evidence.boundary_build_source_segment_count(),
         result.boundary_build_source_segment_count()
     );
     assert_eq!(
-        arrangement_report.boundary_build_validation_candidate_pair_count(),
+        arrangement_evidence.boundary_build_validation_candidate_pair_count(),
         result.boundary_build_validation_candidate_pair_count()
     );
     assert_eq!(
-        arrangement_report.boundary_build_validation_tested_pair_count(),
+        arrangement_evidence.boundary_build_validation_tested_pair_count(),
         result.boundary_build_validation_tested_pair_count()
     );
     assert_eq!(
-        arrangement_report.boundary_build_validation_intersection_event_count(),
+        arrangement_evidence.boundary_build_validation_intersection_event_count(),
         result.boundary_build_validation_intersection_event_count()
     );
     assert_eq!(
-        arrangement_report.boundary_build_nesting_classification_count(),
+        arrangement_evidence.boundary_build_nesting_classification_count(),
         result.boundary_build_nesting_classification_count()
     );
     assert_eq!(
-        arrangement_report.boundary_build_blocker_first_contour_index(),
+        arrangement_evidence.boundary_build_blocker_first_contour_index(),
         result.boundary_build_blocker_first_contour_index()
     );
     assert_eq!(
-        arrangement_report.boundary_build_blocker_second_contour_index(),
+        arrangement_evidence.boundary_build_blocker_second_contour_index(),
         result.boundary_build_blocker_second_contour_index()
     );
     assert_eq!(
-        arrangement_report.materialized_region(),
+        arrangement_evidence.materialized_region(),
         result.materialized_region()
     );
-    assert_eq!(arrangement_report.stage(), result.stage());
-    assert_eq!(arrangement_report.status(), result.status());
-    assert_eq!(arrangement_report.blocker(), result.blocker());
+    assert_eq!(arrangement_evidence.stage(), result.stage());
+    assert_eq!(arrangement_evidence.status(), result.status());
+    assert_eq!(arrangement_evidence.blocker(), result.blocker());
     assert_eq!(
         result.boundary_build_stage(),
         Some(RegionBoundaryContourBuildStage2::RoleAssignment)
@@ -3694,8 +3707,8 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         boundary_role_bucket_cache.buckets()[1].output_segment_count(),
         0
     );
-    let role_reports = result.role_reports().unwrap();
-    assert_eq!(result.role_report_count().unwrap(), role_reports.len());
+    let role_evidence = result.role_evidence().unwrap();
+    assert_eq!(result.role_evidence_count().unwrap(), role_evidence.len());
     assert_eq!(result.material_contour_count(), Some(1));
     assert_eq!(result.hole_contour_count(), Some(0));
     assert_eq!(result.material_segment_count(), Some(4));
@@ -3740,11 +3753,11 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     assert_eq!(role_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
         role_status_bucket_cache.assignment_ref_count(),
-        result.role_report_count().unwrap()
+        result.role_evidence_count().unwrap()
     );
     assert_eq!(
         role_status_bucket_cache.native_exact_ref_count(),
-        result.role_report_count().unwrap()
+        result.role_evidence_count().unwrap()
     );
     assert_eq!(
         role_status_bucket_cache.certified_approximation_ref_count(),
@@ -3762,7 +3775,7 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         role_status_bucket_cache.buckets()[0].assignments().len(),
-        result.role_report_count().unwrap()
+        result.role_evidence_count().unwrap()
     );
     assert_eq!(
         role_status_bucket_cache.buckets()[0].assignments()[0].role(),
@@ -3773,7 +3786,7 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         0
     );
     assert_eq!(
-        role_status_bucket_cache.buckets()[0].assignments()[0].role_report_index(),
+        role_status_bucket_cache.buckets()[0].assignments()[0].role_evidence_index(),
         0
     );
     assert_eq!(
@@ -3806,17 +3819,17 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         role_source_contour_bucket_cache.source_contour_bucket_count(),
-        role_reports.len()
+        role_evidence.len()
     );
     assert_eq!(
         role_source_contour_bucket_cache.assignment_ref_count(),
-        result.role_report_count().unwrap()
+        result.role_evidence_count().unwrap()
     );
     assert_eq!(role_source_contour_bucket_cache.max_bucket_size(), 1);
     assert_eq!(role_source_contour_bucket_cache.buckets().len(), 1);
     assert_eq!(
         role_source_contour_bucket_cache.buckets()[0].source_contour_index(),
-        role_reports[0].source_contour_index()
+        role_evidence[0].source_contour_index()
     );
     assert_eq!(
         role_source_contour_bucket_cache.buckets()[0]
@@ -3830,7 +3843,7 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         RegionBoundaryContourRole2::Material
     );
     assert_eq!(source_contour_assignment.assignment_index(), 0);
-    assert_eq!(source_contour_assignment.role_report_index(), 0);
+    assert_eq!(source_contour_assignment.role_evidence_index(), 0);
     assert_eq!(source_contour_assignment.output_role_index(), 0);
     let role_nesting_depth_bucket_cache = result.role_nesting_depth_bucket_cache().unwrap();
     assert_eq!(
@@ -3851,13 +3864,13 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert_eq!(
         role_nesting_depth_bucket_cache.assignment_ref_count(),
-        result.role_report_count().unwrap()
+        result.role_evidence_count().unwrap()
     );
     assert_eq!(role_nesting_depth_bucket_cache.max_bucket_size(), 1);
     assert_eq!(role_nesting_depth_bucket_cache.buckets().len(), 1);
     assert_eq!(
         role_nesting_depth_bucket_cache.buckets()[0].nesting_depth(),
-        role_reports[0].nesting_depth()
+        role_evidence[0].nesting_depth()
     );
     assert_eq!(
         role_nesting_depth_bucket_cache.buckets()[0]
@@ -3871,7 +3884,7 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
         RegionBoundaryContourRole2::Material
     );
     assert_eq!(nesting_depth_assignment.assignment_index(), 0);
-    assert_eq!(nesting_depth_assignment.role_report_index(), 0);
+    assert_eq!(nesting_depth_assignment.role_evidence_index(), 0);
     assert_eq!(nesting_depth_assignment.source_contour_index(), 0);
     assert_eq!(nesting_depth_assignment.output_role_index(), 0);
     assert_eq!(result.role_buckets().unwrap().len(), 2);
@@ -3886,18 +3899,18 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     );
     assert!(result.role_buckets().unwrap()[1].assignments().is_empty());
     let role_assignment = &result.role_buckets().unwrap()[0].assignments()[0];
-    assert_eq!(role_assignment.role_report_index(), 0);
+    assert_eq!(role_assignment.role_evidence_index(), 0);
     assert_eq!(role_assignment.source_contour_index(), 0);
     assert_eq!(role_assignment.source_segment_count(), 4);
     assert_eq!(role_assignment.source_fill_rule(), FillRule::NonZero);
     assert_eq!(
         role_assignment.nesting_sample_point(),
-        role_reports[0].nesting_sample_point()
+        role_evidence[0].nesting_sample_point()
     );
-    assert_eq!(role_assignment.containing_contour_indices(), &[]);
+    assert!(role_assignment.containing_contour_indices().is_empty());
     assert_eq!(role_assignment.nesting_depth(), 0);
     assert_eq!(role_assignment.output_role_index(), 0);
-    assert_eq!(role_assignment.status(), role_reports[0].status());
+    assert_eq!(role_assignment.status(), role_evidence[0].status());
     assert!(result.region().is_some());
     assert_eq!(
         result.split_predicate_path(),
@@ -3928,7 +3941,7 @@ fn region_arrangement_retains_output_role_containment() {
     assert_eq!(result.output_ring_count(), Some(2));
     assert_eq!(result.material_contour_count(), Some(1));
     assert_eq!(result.hole_contour_count(), Some(1));
-    assert_eq!(result.role_report_count(), Some(2));
+    assert_eq!(result.role_evidence_count(), Some(2));
 
     let boundary_role_bucket_cache = result.boundary_output_role_bucket_cache().unwrap();
     assert_eq!(
@@ -4004,7 +4017,7 @@ fn region_arrangement_retains_output_role_containment() {
     let containment = &containment_bucket.containments()[0];
     assert_eq!(containment.role(), RegionBoundaryContourRole2::Hole);
     assert_eq!(containment.assignment_index(), 0);
-    assert_eq!(containment.role_report_index(), 1);
+    assert_eq!(containment.role_evidence_index(), 1);
     assert_eq!(containment.source_contour_index(), 1);
     assert_eq!(containment.containing_contour_index(), 0);
     assert_eq!(containment.containing_contour_ref_index(), 0);
@@ -4131,731 +4144,734 @@ fn region_arrangement_retains_overlap_blocker() {
     assert_eq!(summary_cache.output_boundary_segment_kind_counts(), None);
     assert_eq!(summary_cache.output_contour_count(), None);
     assert_eq!(summary_cache.output_segment_count(), None);
-    let arrangement_report = result.report();
-    assert_eq!(arrangement_report.summary(), summary_cache);
-    assert_eq!(arrangement_report.fill_rule(), result.fill_rule());
+    let arrangement_evidence = result.evidence();
+    assert_eq!(arrangement_evidence.summary(), summary_cache);
+    assert_eq!(arrangement_evidence.fill_rule(), result.fill_rule());
     assert_eq!(
-        arrangement_report.evaluated_output(),
+        arrangement_evidence.evaluated_output(),
         result.evaluated_output()
     );
     assert_eq!(
-        arrangement_report.source_aabb_bucket_cache(),
+        arrangement_evidence.source_aabb_bucket_cache(),
         result.source_aabb_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.source_segment_kind_bucket_cache(),
+        arrangement_evidence.source_segment_kind_bucket_cache(),
         result.source_segment_kind_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_kind_bucket_cache(),
+        arrangement_evidence.arranged_fragment_kind_bucket_cache(),
         result.arranged_fragment_kind_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_kind_bucket_count(),
+        arrangement_evidence.arranged_fragment_kind_bucket_count(),
         result.arranged_fragment_kind_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_kind_ref_count(),
+        arrangement_evidence.arranged_fragment_kind_ref_count(),
         result.arranged_fragment_kind_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_line_fragment_ref_count(),
+        arrangement_evidence.arranged_line_fragment_ref_count(),
         result.arranged_line_fragment_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_arc_fragment_ref_count(),
+        arrangement_evidence.arranged_arc_fragment_ref_count(),
         result.arranged_arc_fragment_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_kind_max_bucket_size(),
+        arrangement_evidence.arranged_fragment_kind_max_bucket_size(),
         result.arranged_fragment_kind_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_status_bucket_cache(),
+        arrangement_evidence.arranged_fragment_status_bucket_cache(),
         result.arranged_fragment_status_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_status_bucket_count(),
+        arrangement_evidence.arranged_fragment_status_bucket_count(),
         result.arranged_fragment_status_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_status_source_ref_count(),
+        arrangement_evidence.arranged_fragment_status_source_ref_count(),
         result.arranged_fragment_status_source_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_native_exact_ref_count(),
+        arrangement_evidence.arranged_fragment_native_exact_ref_count(),
         result.arranged_fragment_native_exact_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_certified_approximation_ref_count(),
+        arrangement_evidence.arranged_fragment_certified_approximation_ref_count(),
         result.arranged_fragment_certified_approximation_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_display_or_export_ref_count(),
+        arrangement_evidence.arranged_fragment_display_or_export_ref_count(),
         result.arranged_fragment_display_or_export_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_imported_lossy_ref_count(),
+        arrangement_evidence.arranged_fragment_imported_lossy_ref_count(),
         result.arranged_fragment_imported_lossy_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_unsupported_ref_count(),
+        arrangement_evidence.arranged_fragment_unsupported_ref_count(),
         result.arranged_fragment_unsupported_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_unresolved_ref_count(),
+        arrangement_evidence.arranged_fragment_unresolved_ref_count(),
         result.arranged_fragment_unresolved_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_status_max_bucket_size(),
+        arrangement_evidence.arranged_fragment_status_max_bucket_size(),
         result.arranged_fragment_status_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_source_range_cache(),
+        arrangement_evidence.arranged_fragment_source_range_cache(),
         result.arranged_fragment_source_range_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_source_range_ref_count(),
+        arrangement_evidence.arranged_fragment_source_range_ref_count(),
         result.arranged_fragment_source_range_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_full_source_range_ref_count(),
+        arrangement_evidence.arranged_fragment_full_source_range_ref_count(),
         result.arranged_fragment_full_source_range_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_partial_source_range_ref_count(),
+        arrangement_evidence.arranged_fragment_partial_source_range_ref_count(),
         result.arranged_fragment_partial_source_range_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_fragment_cache(),
+        arrangement_evidence.arranged_fragment_cache(),
         result.arranged_fragment_cache()
     );
     assert_eq!(
-        arrangement_report.split_relation_bucket_cache(),
+        arrangement_evidence.split_relation_bucket_cache(),
         result.split_relation_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.split_intersection_bucket_cache(),
+        arrangement_evidence.split_intersection_bucket_cache(),
         result.split_intersection_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.split_intersection_parameter_cache(),
+        arrangement_evidence.split_intersection_parameter_cache(),
         result.split_intersection_parameter_cache()
     );
     assert_eq!(
-        arrangement_report.split_blocker_cache(),
+        arrangement_evidence.split_blocker_cache(),
         result.split_blocker_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_bucket_cache(),
+        arrangement_evidence.arranged_endpoint_bucket_cache(),
         result.arranged_endpoint_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_ref_count(),
+        arrangement_evidence.arranged_endpoint_ref_count(),
         result.arranged_endpoint_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_bucket_count(),
+        arrangement_evidence.arranged_endpoint_bucket_count(),
         result.arranged_endpoint_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_singleton_bucket_count(),
+        arrangement_evidence.arranged_endpoint_singleton_bucket_count(),
         result.arranged_endpoint_singleton_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_max_bucket_size(),
+        arrangement_evidence.arranged_endpoint_max_bucket_size(),
         result.arranged_endpoint_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_side_bucket_cache(),
+        arrangement_evidence.arranged_endpoint_side_bucket_cache(),
         result.arranged_endpoint_side_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_side_bucket_count(),
+        arrangement_evidence.arranged_endpoint_side_bucket_count(),
         result.arranged_endpoint_side_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_side_ref_count(),
+        arrangement_evidence.arranged_endpoint_side_ref_count(),
         result.arranged_endpoint_side_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_start_ref_count(),
+        arrangement_evidence.arranged_endpoint_start_ref_count(),
         result.arranged_endpoint_start_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_end_ref_count(),
+        arrangement_evidence.arranged_endpoint_end_ref_count(),
         result.arranged_endpoint_end_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_side_max_bucket_size(),
+        arrangement_evidence.arranged_endpoint_side_max_bucket_size(),
         result.arranged_endpoint_side_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_point_cache(),
+        arrangement_evidence.arranged_endpoint_point_cache(),
         result.arranged_endpoint_point_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_point_fragment_ref_count(),
+        arrangement_evidence.arranged_endpoint_point_fragment_ref_count(),
         result.arranged_endpoint_point_fragment_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_point_ref_count(),
+        arrangement_evidence.arranged_endpoint_point_ref_count(),
         result.arranged_endpoint_point_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_degree_bucket_cache(),
+        arrangement_evidence.arranged_endpoint_degree_bucket_cache(),
         result.arranged_endpoint_degree_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_degree_bucket_count(),
+        arrangement_evidence.arranged_endpoint_degree_bucket_count(),
         result.arranged_endpoint_degree_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_degree_structural_bucket_ref_count(),
+        arrangement_evidence.arranged_endpoint_degree_structural_bucket_ref_count(),
         result.arranged_endpoint_degree_structural_bucket_ref_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_dangling_structural_bucket_count(),
+        arrangement_evidence.arranged_endpoint_dangling_structural_bucket_count(),
         result.arranged_endpoint_dangling_structural_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_chain_structural_bucket_count(),
+        arrangement_evidence.arranged_endpoint_chain_structural_bucket_count(),
         result.arranged_endpoint_chain_structural_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_branch_structural_bucket_count(),
+        arrangement_evidence.arranged_endpoint_branch_structural_bucket_count(),
         result.arranged_endpoint_branch_structural_bucket_count()
     );
     assert_eq!(
-        arrangement_report.arranged_endpoint_degree_max_bucket_size(),
+        arrangement_evidence.arranged_endpoint_degree_max_bucket_size(),
         result.arranged_endpoint_degree_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.output_ring_bucket_cache(),
+        arrangement_evidence.output_ring_bucket_cache(),
         result.output_ring_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.output_ring_bucket_count(),
+        arrangement_evidence.output_ring_bucket_count(),
         result.output_ring_bucket_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_segment_ref_count(),
+        arrangement_evidence.output_ring_segment_ref_count(),
         result.output_ring_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_max_segment_count(),
+        arrangement_evidence.output_ring_max_segment_count(),
         result.output_ring_max_segment_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_kind_bucket_cache(),
+        arrangement_evidence.output_segment_kind_bucket_cache(),
         result.output_segment_kind_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_kind_bucket_count(),
+        arrangement_evidence.output_segment_kind_bucket_count(),
         result.output_segment_kind_bucket_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_kind_ref_count(),
+        arrangement_evidence.output_segment_kind_ref_count(),
         result.output_segment_kind_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_line_segment_ref_count(),
+        arrangement_evidence.output_line_segment_ref_count(),
         result.output_line_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_arc_segment_ref_count(),
+        arrangement_evidence.output_arc_segment_ref_count(),
         result.output_arc_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_kind_max_bucket_size(),
+        arrangement_evidence.output_segment_kind_max_bucket_size(),
         result.output_segment_kind_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.output_segment_source_bucket_cache(),
+        arrangement_evidence.output_segment_source_bucket_cache(),
         result.output_segment_source_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_source_range_cache(),
+        arrangement_evidence.output_segment_source_range_cache(),
         result.output_segment_source_range_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_source_range_ref_count(),
+        arrangement_evidence.output_segment_source_range_ref_count(),
         result.output_segment_source_range_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_full_source_range_ref_count(),
+        arrangement_evidence.output_full_source_range_ref_count(),
         result.output_full_source_range_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_partial_source_range_ref_count(),
+        arrangement_evidence.output_partial_source_range_ref_count(),
         result.output_partial_source_range_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_endpoint_cache(),
+        arrangement_evidence.output_segment_endpoint_cache(),
         result.output_segment_endpoint_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_endpoint_record_count(),
+        arrangement_evidence.output_segment_endpoint_record_count(),
         result.output_segment_endpoint_record_count()
     );
     assert_eq!(
-        arrangement_report.output_endpoint_ref_count(),
+        arrangement_evidence.output_endpoint_ref_count(),
         result.output_endpoint_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_continuity_cache(),
+        arrangement_evidence.output_ring_continuity_cache(),
         result.output_ring_continuity_cache()
     );
     assert_eq!(
-        arrangement_report.output_ring_continuity_ring_ref_count(),
+        arrangement_evidence.output_ring_continuity_ring_ref_count(),
         result.output_ring_continuity_ring_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_continuity_connection_ref_count(),
+        arrangement_evidence.output_ring_continuity_connection_ref_count(),
         result.output_ring_continuity_connection_ref_count()
     );
     assert_eq!(
-        arrangement_report.output_ring_continuity_max_connection_count(),
+        arrangement_evidence.output_ring_continuity_max_connection_count(),
         result.output_ring_continuity_max_connection_count()
     );
     assert_eq!(
-        arrangement_report.output_segment_status_bucket_cache(),
+        arrangement_evidence.output_segment_status_bucket_cache(),
         result.output_segment_status_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.output_segment_direction_bucket_cache(),
+        arrangement_evidence.output_segment_direction_bucket_cache(),
         result.output_segment_direction_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.boundary_output_cache(),
+        arrangement_evidence.boundary_output_cache(),
         result.boundary_output_cache()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_bucket_cache(),
+        arrangement_evidence.boundary_output_role_bucket_cache(),
         result.boundary_output_role_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_bucket_count(),
+        arrangement_evidence.boundary_output_role_bucket_count(),
         result.boundary_output_role_bucket_count()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_contour_count(),
+        arrangement_evidence.boundary_output_role_contour_count(),
         result.boundary_output_role_contour_count()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_segment_count(),
+        arrangement_evidence.boundary_output_role_segment_count(),
         result.boundary_output_role_segment_count()
     );
     assert_eq!(
-        arrangement_report.boundary_output_role_max_segment_count(),
+        arrangement_evidence.boundary_output_role_max_segment_count(),
         result.boundary_output_role_max_segment_count()
     );
-    assert_eq!(arrangement_report.role_cache(), result.role_cache());
-    assert_eq!(arrangement_report.role_buckets(), result.role_buckets());
+    assert_eq!(arrangement_evidence.role_cache(), result.role_cache());
+    assert_eq!(arrangement_evidence.role_buckets(), result.role_buckets());
     assert_eq!(
-        arrangement_report.role_status_bucket_cache(),
+        arrangement_evidence.role_status_bucket_cache(),
         result.role_status_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.role_status_bucket_count(),
+        arrangement_evidence.role_status_bucket_count(),
         result.role_status_bucket_count()
     );
     assert_eq!(
-        arrangement_report.role_status_assignment_ref_count(),
+        arrangement_evidence.role_status_assignment_ref_count(),
         result.role_status_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_native_exact_assignment_ref_count(),
+        arrangement_evidence.role_native_exact_assignment_ref_count(),
         result.role_native_exact_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_certified_approximation_assignment_ref_count(),
+        arrangement_evidence.role_certified_approximation_assignment_ref_count(),
         result.role_certified_approximation_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_display_or_export_assignment_ref_count(),
+        arrangement_evidence.role_display_or_export_assignment_ref_count(),
         result.role_display_or_export_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_imported_lossy_assignment_ref_count(),
+        arrangement_evidence.role_imported_lossy_assignment_ref_count(),
         result.role_imported_lossy_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_unsupported_assignment_ref_count(),
+        arrangement_evidence.role_unsupported_assignment_ref_count(),
         result.role_unsupported_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_unresolved_assignment_ref_count(),
+        arrangement_evidence.role_unresolved_assignment_ref_count(),
         result.role_unresolved_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_status_max_bucket_size(),
+        arrangement_evidence.role_status_max_bucket_size(),
         result.role_status_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.role_source_contour_bucket_cache(),
+        arrangement_evidence.role_source_contour_bucket_cache(),
         result.role_source_contour_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.role_source_contour_bucket_count(),
+        arrangement_evidence.role_source_contour_bucket_count(),
         result.role_source_contour_bucket_count()
     );
     assert_eq!(
-        arrangement_report.role_source_contour_assignment_ref_count(),
+        arrangement_evidence.role_source_contour_assignment_ref_count(),
         result.role_source_contour_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_source_contour_max_bucket_size(),
+        arrangement_evidence.role_source_contour_max_bucket_size(),
         result.role_source_contour_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.role_nesting_depth_bucket_cache(),
+        arrangement_evidence.role_nesting_depth_bucket_cache(),
         result.role_nesting_depth_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.role_nesting_depth_bucket_count(),
+        arrangement_evidence.role_nesting_depth_bucket_count(),
         result.role_nesting_depth_bucket_count()
     );
     assert_eq!(
-        arrangement_report.role_nesting_depth_assignment_ref_count(),
+        arrangement_evidence.role_nesting_depth_assignment_ref_count(),
         result.role_nesting_depth_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_nesting_depth_max_bucket_size(),
+        arrangement_evidence.role_nesting_depth_max_bucket_size(),
         result.role_nesting_depth_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.role_containment_bucket_cache(),
+        arrangement_evidence.role_containment_bucket_cache(),
         result.role_containment_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.role_containment_bucket_count(),
+        arrangement_evidence.role_containment_bucket_count(),
         result.role_containment_bucket_count()
     );
     assert_eq!(
-        arrangement_report.role_containment_ref_count(),
+        arrangement_evidence.role_containment_ref_count(),
         result.role_containment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_uncontained_assignment_ref_count(),
+        arrangement_evidence.role_uncontained_assignment_ref_count(),
         result.role_uncontained_assignment_ref_count()
     );
     assert_eq!(
-        arrangement_report.role_containment_max_bucket_size(),
+        arrangement_evidence.role_containment_max_bucket_size(),
         result.role_containment_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.source_segment_count(),
+        arrangement_evidence.source_segment_count(),
         result.source_segment_count()
     );
     assert_eq!(
-        arrangement_report.source_segment_kind_counts(),
+        arrangement_evidence.source_segment_kind_counts(),
         result.source_segment_kind_counts()
     );
     assert_eq!(
-        arrangement_report.source_segment_aabbs(),
+        arrangement_evidence.source_segment_aabbs(),
         result.source_segment_aabbs()
     );
-    assert_eq!(arrangement_report.source_aabb(), result.source_aabb());
+    assert_eq!(arrangement_evidence.source_aabb(), result.source_aabb());
     assert_eq!(
-        arrangement_report.decided_source_segment_aabb_count(),
+        arrangement_evidence.decided_source_segment_aabb_count(),
         result.decided_source_segment_aabb_count()
     );
     assert_eq!(
-        arrangement_report.undecided_source_segment_aabb_count(),
+        arrangement_evidence.undecided_source_segment_aabb_count(),
         result.undecided_source_segment_aabb_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_bucket_count(),
+        arrangement_evidence.source_aabb_bucket_count(),
         result.source_aabb_bucket_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_ref_count(),
+        arrangement_evidence.source_aabb_ref_count(),
         result.source_aabb_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_decided_ref_count(),
+        arrangement_evidence.source_aabb_decided_ref_count(),
         result.source_aabb_decided_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_undecided_ref_count(),
+        arrangement_evidence.source_aabb_undecided_ref_count(),
         result.source_aabb_undecided_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_aabb_max_bucket_size(),
+        arrangement_evidence.source_aabb_max_bucket_size(),
         result.source_aabb_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.source_segment_kind_bucket_count(),
+        arrangement_evidence.source_segment_kind_bucket_count(),
         result.source_segment_kind_bucket_count()
     );
     assert_eq!(
-        arrangement_report.source_segment_kind_ref_count(),
+        arrangement_evidence.source_segment_kind_ref_count(),
         result.source_segment_kind_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_line_segment_ref_count(),
+        arrangement_evidence.source_line_segment_ref_count(),
         result.source_line_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_arc_segment_ref_count(),
+        arrangement_evidence.source_arc_segment_ref_count(),
         result.source_arc_segment_ref_count()
     );
     assert_eq!(
-        arrangement_report.source_segment_kind_max_bucket_size(),
+        arrangement_evidence.source_segment_kind_max_bucket_size(),
         result.source_segment_kind_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.source_segment_cache(),
+        arrangement_evidence.source_segment_cache(),
         result.source_segment_cache()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_bucket_cache(),
+        arrangement_evidence.source_endpoint_bucket_cache(),
         result.source_endpoint_bucket_cache()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_count(),
+        arrangement_evidence.source_endpoint_count(),
         result.source_endpoint_count()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_bucket_count(),
+        arrangement_evidence.source_endpoint_bucket_count(),
         result.source_endpoint_bucket_count()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_singleton_bucket_count(),
+        arrangement_evidence.source_endpoint_singleton_bucket_count(),
         result.source_endpoint_singleton_bucket_count()
     );
     assert_eq!(
-        arrangement_report.source_endpoint_max_bucket_size(),
+        arrangement_evidence.source_endpoint_max_bucket_size(),
         result.source_endpoint_max_bucket_size()
     );
     assert_eq!(
-        arrangement_report.split_schedule_cache(),
+        arrangement_evidence.split_schedule_cache(),
         result.split_schedule_cache()
     );
     assert_eq!(
-        arrangement_report.split_schedule_candidate_pair_count(),
+        arrangement_evidence.split_schedule_candidate_pair_count(),
         result.split_schedule_candidate_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_schedule_decided_disjoint_pair_count(),
+        arrangement_evidence.split_schedule_decided_disjoint_pair_count(),
         result.split_schedule_decided_disjoint_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_schedule_predicate_candidate_pair_count(),
+        arrangement_evidence.split_schedule_predicate_candidate_pair_count(),
         result.split_schedule_predicate_candidate_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_schedule_undecided_aabb_pair_count(),
+        arrangement_evidence.split_schedule_undecided_aabb_pair_count(),
         result.split_schedule_undecided_aabb_pair_count()
     );
-    assert_eq!(arrangement_report.split_cache(), result.split_cache());
+    assert_eq!(arrangement_evidence.split_cache(), result.split_cache());
     assert_eq!(
-        arrangement_report.endpoint_graph_cache(),
+        arrangement_evidence.endpoint_graph_cache(),
         result.endpoint_graph_cache()
     );
     assert_eq!(
-        arrangement_report.ring_assembly_cache(),
+        arrangement_evidence.ring_assembly_cache(),
         result.ring_assembly_cache()
     );
-    assert_eq!(arrangement_report.output_cache(), result.output_cache());
-    assert_eq!(arrangement_report.summary(), result.summary());
+    assert_eq!(arrangement_evidence.output_cache(), result.output_cache());
+    assert_eq!(arrangement_evidence.summary(), result.summary());
     assert_eq!(
-        arrangement_report.split_candidate_pair_count(),
+        arrangement_evidence.split_candidate_pair_count(),
         result.split_candidate_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_skipped_aabb_pair_count(),
+        arrangement_evidence.split_skipped_aabb_pair_count(),
         result.split_skipped_aabb_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_tested_pair_count(),
+        arrangement_evidence.split_tested_pair_count(),
         result.split_tested_pair_count()
     );
     assert_eq!(
-        arrangement_report.split_intersection_event_count(),
+        arrangement_evidence.split_intersection_event_count(),
         result.split_intersection_event_count()
     );
     assert_eq!(
-        arrangement_report.split_point_relation_count(),
+        arrangement_evidence.split_point_relation_count(),
         result.split_point_relation_count()
     );
     assert_eq!(
-        arrangement_report.split_overlap_relation_count(),
+        arrangement_evidence.split_overlap_relation_count(),
         result.split_overlap_relation_count()
     );
     assert_eq!(
-        arrangement_report.split_uncertain_relation_count(),
+        arrangement_evidence.split_uncertain_relation_count(),
         result.split_uncertain_relation_count()
     );
     assert_eq!(
-        arrangement_report.split_intersection_points(),
+        arrangement_evidence.split_intersection_points(),
         result.split_intersection_points()
     );
     assert_eq!(
-        arrangement_report.split_intersection_reports(),
-        result.split_intersection_reports()
+        arrangement_evidence.split_intersection_evidence(),
+        result.split_intersection_evidence()
     );
     assert_eq!(
-        arrangement_report.split_predicate_path(),
+        arrangement_evidence.split_predicate_path(),
         result.split_predicate_path()
     );
     assert_eq!(
-        arrangement_report.split_output_segment_count(),
+        arrangement_evidence.split_output_segment_count(),
         result.split_output_segment_count()
     );
     assert_eq!(
-        arrangement_report.split_blocker_first_source_segment_index(),
+        arrangement_evidence.split_blocker_first_source_segment_index(),
         result.split_blocker_first_source_segment_index()
     );
     assert_eq!(
-        arrangement_report.split_blocker_first_source_segment_kind(),
+        arrangement_evidence.split_blocker_first_source_segment_kind(),
         result.split_blocker_first_source_segment_kind()
     );
     assert_eq!(
-        arrangement_report.split_blocker_first_source_start_point(),
+        arrangement_evidence.split_blocker_first_source_start_point(),
         result.split_blocker_first_source_start_point()
     );
     assert_eq!(
-        arrangement_report.split_blocker_first_source_end_point(),
+        arrangement_evidence.split_blocker_first_source_end_point(),
         result.split_blocker_first_source_end_point()
     );
     assert_eq!(
-        arrangement_report.split_blocker_second_source_segment_index(),
+        arrangement_evidence.split_blocker_second_source_segment_index(),
         result.split_blocker_second_source_segment_index()
     );
     assert_eq!(
-        arrangement_report.split_blocker_second_source_segment_kind(),
+        arrangement_evidence.split_blocker_second_source_segment_kind(),
         result.split_blocker_second_source_segment_kind()
     );
     assert_eq!(
-        arrangement_report.split_blocker_second_source_start_point(),
+        arrangement_evidence.split_blocker_second_source_start_point(),
         result.split_blocker_second_source_start_point()
     );
     assert_eq!(
-        arrangement_report.split_blocker_second_source_end_point(),
+        arrangement_evidence.split_blocker_second_source_end_point(),
         result.split_blocker_second_source_end_point()
     );
-    assert_eq!(arrangement_report.endpoint_graph_predicate_path(), None);
-    assert_eq!(arrangement_report.endpoint_graph_endpoint_count(), None);
+    assert_eq!(arrangement_evidence.endpoint_graph_predicate_path(), None);
+    assert_eq!(arrangement_evidence.endpoint_graph_endpoint_count(), None);
     assert_eq!(
-        arrangement_report.endpoint_graph_structural_bucket_count(),
+        arrangement_evidence.endpoint_graph_structural_bucket_count(),
         None
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_structural_singleton_bucket_count(),
+        arrangement_evidence.endpoint_graph_structural_singleton_bucket_count(),
         None
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_max_structural_bucket_size(),
+        arrangement_evidence.endpoint_graph_max_structural_bucket_size(),
         None
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_dangling_endpoint_count(),
+        arrangement_evidence.endpoint_graph_dangling_endpoint_count(),
         None
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_branch_endpoint_count(),
+        arrangement_evidence.endpoint_graph_branch_endpoint_count(),
         None
     );
     assert_eq!(
-        arrangement_report.endpoint_graph_blocker_arranged_segment_index(),
+        arrangement_evidence.endpoint_graph_blocker_arranged_segment_index(),
         None
     );
-    assert_eq!(arrangement_report.endpoint_graph_blocker_endpoint(), None);
-    assert_eq!(arrangement_report.endpoint_graph_blocker_point(), None);
-    assert_eq!(arrangement_report.ring_assembly_predicate_path(), None);
+    assert_eq!(arrangement_evidence.endpoint_graph_blocker_endpoint(), None);
+    assert_eq!(arrangement_evidence.endpoint_graph_blocker_point(), None);
+    assert_eq!(arrangement_evidence.ring_assembly_predicate_path(), None);
     assert_eq!(
-        arrangement_report.attempted_endpoint_connection_count(),
+        arrangement_evidence.attempted_endpoint_connection_count(),
         None
     );
-    assert_eq!(arrangement_report.exact_endpoint_connection_count(), None);
+    assert_eq!(arrangement_evidence.exact_endpoint_connection_count(), None);
     assert_eq!(
-        arrangement_report.disconnected_endpoint_connection_count(),
-        None
-    );
-    assert_eq!(
-        arrangement_report.unresolved_endpoint_connection_count(),
-        None
-    );
-    assert_eq!(arrangement_report.reversed_source_segment_count(), None);
-    assert_eq!(arrangement_report.arranged_segment_count(), None);
-    assert_eq!(arrangement_report.arranged_segment_kind_counts(), None);
-    assert_eq!(
-        arrangement_report.arranged_source_report_count(),
-        result.arranged_source_report_count()
-    );
-    assert_eq!(
-        arrangement_report.arranged_source_reports(),
-        result.arranged_source_reports()
-    );
-    assert_eq!(
-        arrangement_report.source_report_count(),
-        result.source_report_count()
-    );
-    assert_eq!(arrangement_report.source_reports(), result.source_reports());
-    assert_eq!(arrangement_report.output_ring_count(), None);
-    assert_eq!(arrangement_report.output_boundary_segment_count(), None);
-    assert_eq!(
-        arrangement_report.output_boundary_segment_kind_counts(),
-        None
-    );
-    assert_eq!(arrangement_report.output_contour_count(), None);
-    assert_eq!(arrangement_report.output_segment_count(), None);
-    assert_eq!(arrangement_report.output_segment_kind_counts(), None);
-    assert_eq!(arrangement_report.material_contour_count(), None);
-    assert_eq!(arrangement_report.hole_contour_count(), None);
-    assert_eq!(arrangement_report.material_segment_count(), None);
-    assert_eq!(arrangement_report.hole_segment_count(), None);
-    assert_eq!(arrangement_report.role_report_count(), None);
-    assert_eq!(arrangement_report.role_reports(), None);
-    assert_eq!(arrangement_report.boundary_build_stage(), None);
-    assert_eq!(arrangement_report.boundary_build_predicate_path(), None);
-    assert_eq!(arrangement_report.boundary_build_status(), None);
-    assert_eq!(arrangement_report.boundary_build_blocker(), None);
-    assert_eq!(
-        arrangement_report.boundary_build_source_contour_count(),
+        arrangement_evidence.disconnected_endpoint_connection_count(),
         None
     );
     assert_eq!(
-        arrangement_report.boundary_build_source_segment_count(),
+        arrangement_evidence.unresolved_endpoint_connection_count(),
+        None
+    );
+    assert_eq!(arrangement_evidence.reversed_source_segment_count(), None);
+    assert_eq!(arrangement_evidence.arranged_segment_count(), None);
+    assert_eq!(arrangement_evidence.arranged_segment_kind_counts(), None);
+    assert_eq!(
+        arrangement_evidence.arranged_source_evidence_count(),
+        result.arranged_source_evidence_count()
+    );
+    assert_eq!(
+        arrangement_evidence.arranged_source_evidence(),
+        result.arranged_source_evidence()
+    );
+    assert_eq!(
+        arrangement_evidence.source_evidence_count(),
+        result.source_evidence_count()
+    );
+    assert_eq!(
+        arrangement_evidence.source_evidence(),
+        result.source_evidence()
+    );
+    assert_eq!(arrangement_evidence.output_ring_count(), None);
+    assert_eq!(arrangement_evidence.output_boundary_segment_count(), None);
+    assert_eq!(
+        arrangement_evidence.output_boundary_segment_kind_counts(),
+        None
+    );
+    assert_eq!(arrangement_evidence.output_contour_count(), None);
+    assert_eq!(arrangement_evidence.output_segment_count(), None);
+    assert_eq!(arrangement_evidence.output_segment_kind_counts(), None);
+    assert_eq!(arrangement_evidence.material_contour_count(), None);
+    assert_eq!(arrangement_evidence.hole_contour_count(), None);
+    assert_eq!(arrangement_evidence.material_segment_count(), None);
+    assert_eq!(arrangement_evidence.hole_segment_count(), None);
+    assert_eq!(arrangement_evidence.role_evidence_count(), None);
+    assert_eq!(arrangement_evidence.role_evidence(), None);
+    assert_eq!(arrangement_evidence.boundary_build_stage(), None);
+    assert_eq!(arrangement_evidence.boundary_build_predicate_path(), None);
+    assert_eq!(arrangement_evidence.boundary_build_status(), None);
+    assert_eq!(arrangement_evidence.boundary_build_blocker(), None);
+    assert_eq!(
+        arrangement_evidence.boundary_build_source_contour_count(),
         None
     );
     assert_eq!(
-        arrangement_report.boundary_build_validation_candidate_pair_count(),
+        arrangement_evidence.boundary_build_source_segment_count(),
         None
     );
     assert_eq!(
-        arrangement_report.boundary_build_validation_tested_pair_count(),
+        arrangement_evidence.boundary_build_validation_candidate_pair_count(),
         None
     );
     assert_eq!(
-        arrangement_report.boundary_build_validation_intersection_event_count(),
+        arrangement_evidence.boundary_build_validation_tested_pair_count(),
         None
     );
     assert_eq!(
-        arrangement_report.boundary_build_nesting_classification_count(),
+        arrangement_evidence.boundary_build_validation_intersection_event_count(),
         None
     );
     assert_eq!(
-        arrangement_report.boundary_build_blocker_first_contour_index(),
+        arrangement_evidence.boundary_build_nesting_classification_count(),
         None
     );
     assert_eq!(
-        arrangement_report.boundary_build_blocker_second_contour_index(),
+        arrangement_evidence.boundary_build_blocker_first_contour_index(),
         None
     );
-    assert_eq!(arrangement_report.materialized_region(), Some(false));
     assert_eq!(
-        arrangement_report.stage(),
+        arrangement_evidence.boundary_build_blocker_second_contour_index(),
+        None
+    );
+    assert_eq!(arrangement_evidence.materialized_region(), Some(false));
+    assert_eq!(
+        arrangement_evidence.stage(),
         Some(RegionLineSegmentRegionBuildStage2::RingAssembly)
     );
     assert_eq!(
-        arrangement_report.status(),
+        arrangement_evidence.status(),
         Some(RetainedTopologyStatus::Unsupported)
     );
     assert_eq!(
-        arrangement_report.blocker(),
+        arrangement_evidence.blocker(),
         Some(UncertaintyReason::Boundary)
     );
 }
@@ -4882,7 +4898,7 @@ fn unordered_native_segments_return_decided_region() {
 }
 
 #[test]
-fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
+fn unordered_native_segments_evidence_arc_overlap_boundary_blocker() {
     let built = evaluate_unordered_segments(
         vec![
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
@@ -4941,9 +4957,9 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
     assert_eq!(built.endpoint_graph_structural_bucket_count(), None);
     assert_eq!(built.endpoint_graph_blocker_arranged_segment_index(), None);
     assert_eq!(built.endpoint_graph_blocker_endpoint(), None);
-    assert_eq!(built.arranged_source_report_count(), None);
+    assert_eq!(built.arranged_source_evidence_count(), None);
     assert_eq!(built.output_boundary_segment_kind_counts(), None);
-    assert_eq!(built.source_report_count(), None);
+    assert_eq!(built.source_evidence_count(), None);
 
     let split_cache = built.split_cache().unwrap();
     assert_eq!(
@@ -4955,7 +4971,7 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
     assert_eq!(split_cache.tested_pair_count(), 1);
     assert_eq!(split_cache.intersection_event_count(), 0);
     assert!(split_cache.intersection_points().is_empty());
-    assert!(split_cache.intersection_reports().is_empty());
+    assert!(split_cache.intersection_evidence().is_empty());
     assert_eq!(split_cache.output_segment_count(), None);
     assert_eq!(split_cache.relation_bucket_cache().relation_count(), 1);
     assert_eq!(
@@ -5035,30 +5051,33 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
     assert_eq!(built.split_overlap_relation_count(), Some(0));
     assert_eq!(built.split_uncertain_relation_count(), Some(0));
     let split_points = built.split_intersection_points().unwrap();
-    let split_reports = built.split_intersection_reports().unwrap();
+    let split_evidence = built.split_intersection_evidence().unwrap();
     assert_eq!(split_points, &[p(2, -2)]);
-    assert_eq!(split_reports.len(), 1);
-    assert_eq!(split_reports[0].first_source_segment_index(), 0);
+    assert_eq!(split_evidence.len(), 1);
+    assert_eq!(split_evidence[0].first_source_segment_index(), 0);
     assert_eq!(
-        split_reports[0].first_source_segment_kind(),
+        split_evidence[0].first_source_segment_kind(),
         SegmentKind::Arc
     );
     assert_eq!(
-        split_reports[0].first_source_segment_start_point(),
+        split_evidence[0].first_source_segment_start_point(),
         &p(0, 0)
     );
-    assert_eq!(split_reports[0].first_source_segment_end_point(), &p(4, 0));
-    assert_eq!(split_reports[0].second_source_segment_index(), 1);
+    assert_eq!(split_evidence[0].first_source_segment_end_point(), &p(4, 0));
+    assert_eq!(split_evidence[0].second_source_segment_index(), 1);
     assert_eq!(
-        split_reports[0].second_source_segment_kind(),
+        split_evidence[0].second_source_segment_kind(),
         SegmentKind::Line
     );
     assert_eq!(
-        split_reports[0].second_source_segment_start_point(),
+        split_evidence[0].second_source_segment_start_point(),
         &p(2, -3)
     );
-    assert_eq!(split_reports[0].second_source_segment_end_point(), &p(2, 1));
-    assert_eq!(split_reports[0].point(), &p(2, -2));
+    assert_eq!(
+        split_evidence[0].second_source_segment_end_point(),
+        &p(2, 1)
+    );
+    assert_eq!(split_evidence[0].point(), &p(2, -2));
     assert_eq!(built.split_output_segment_count(), Some(4));
     assert_eq!(built.split_blocker_first_source_segment_kind(), None);
     assert_eq!(built.split_blocker_second_source_segment_kind(), None);
@@ -5080,8 +5099,8 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
         Some(RegionLineSegmentArrangedEndpoint2::Start)
     );
     assert_eq!(built.endpoint_graph_blocker_point(), Some(&p(0, 0)));
-    let arranged_sources = built.arranged_source_reports().unwrap();
-    assert_eq!(built.arranged_source_report_count(), Some(4));
+    let arranged_sources = built.arranged_source_evidence().unwrap();
+    assert_eq!(built.arranged_source_evidence_count(), Some(4));
     assert_eq!(arranged_sources.len(), 4);
     assert_eq!(arranged_sources[0].source_segment_index(), 0);
     assert_eq!(arranged_sources[0].source_segment_kind(), SegmentKind::Arc);
@@ -5099,7 +5118,7 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
     assert_eq!(arranged_sources[2].source_segment_kind(), SegmentKind::Line);
     assert_eq!(arranged_sources[2].source_segment_start_point(), &p(2, -3));
     assert_eq!(arranged_sources[2].source_segment_end_point(), &p(2, 1));
-    assert_eq!(built.source_report_count(), Some(0));
+    assert_eq!(built.source_evidence_count(), Some(0));
 
     let split_cache = built.split_cache().unwrap();
     assert_eq!(
@@ -5114,7 +5133,7 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
     assert_eq!(split_cache.overlap_relation_count(), 0);
     assert_eq!(split_cache.uncertain_relation_count(), 0);
     assert_eq!(split_cache.intersection_points(), &[p(2, -2)]);
-    assert_eq!(split_cache.intersection_reports(), split_reports);
+    assert_eq!(split_cache.intersection_evidence(), split_evidence);
     assert_eq!(split_cache.output_segment_count(), Some(4));
     assert!(split_cache.blocker_cache().is_none());
     assert_eq!(
@@ -5200,8 +5219,8 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
     );
     assert_eq!(ring_cache.output_ring_count(), None);
     assert_eq!(ring_cache.output_boundary_segment_count(), None);
-    assert_eq!(ring_cache.arranged_source_reports(), arranged_sources);
-    assert!(ring_cache.source_reports().is_empty());
+    assert_eq!(ring_cache.arranged_source_evidence(), arranged_sources);
+    assert!(ring_cache.source_evidence().is_empty());
     assert_eq!(
         ring_cache
             .arranged_fragment_cache()
@@ -5248,32 +5267,35 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
     assert_eq!(built.split_tested_pair_count(), Some(1));
     assert_eq!(built.split_intersection_event_count(), Some(1));
     assert_eq!(built.split_intersection_points().unwrap(), &[p(4, 3)]);
-    let split_reports = built.split_intersection_reports().unwrap();
-    assert_eq!(split_reports.len(), 1);
-    assert_eq!(split_reports[0].first_source_segment_index(), 0);
+    let split_evidence = built.split_intersection_evidence().unwrap();
+    assert_eq!(split_evidence.len(), 1);
+    assert_eq!(split_evidence[0].first_source_segment_index(), 0);
     assert_eq!(
-        split_reports[0].first_source_segment_kind(),
+        split_evidence[0].first_source_segment_kind(),
         SegmentKind::Arc
     );
     assert_eq!(
-        split_reports[0].first_source_segment_start_point(),
+        split_evidence[0].first_source_segment_start_point(),
         &p(5, 0)
     );
-    assert_eq!(split_reports[0].first_source_segment_end_point(), &p(-5, 0));
-    assert_eq!(split_reports[0].second_source_segment_index(), 1);
     assert_eq!(
-        split_reports[0].second_source_segment_kind(),
+        split_evidence[0].first_source_segment_end_point(),
+        &p(-5, 0)
+    );
+    assert_eq!(split_evidence[0].second_source_segment_index(), 1);
+    assert_eq!(
+        split_evidence[0].second_source_segment_kind(),
         SegmentKind::Arc
     );
     assert_eq!(
-        split_reports[0].second_source_segment_start_point(),
+        split_evidence[0].second_source_segment_start_point(),
         &p(3, 0)
     );
     assert_eq!(
-        split_reports[0].second_source_segment_end_point(),
+        split_evidence[0].second_source_segment_end_point(),
         &p(13, 0)
     );
-    assert_eq!(split_reports[0].point(), &p(4, 3));
+    assert_eq!(split_evidence[0].point(), &p(4, 3));
     assert_eq!(built.split_output_segment_count(), Some(4));
     assert_eq!(built.endpoint_graph_endpoint_count(), Some(8));
     assert_eq!(built.endpoint_graph_structural_bucket_count(), Some(5));
@@ -5293,8 +5315,8 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
         Some(RegionLineSegmentArrangedEndpoint2::Start)
     );
     assert_eq!(built.endpoint_graph_blocker_point(), Some(&p(5, 0)));
-    let arranged_sources = built.arranged_source_reports().unwrap();
-    assert_eq!(built.arranged_source_report_count(), Some(4));
+    let arranged_sources = built.arranged_source_evidence().unwrap();
+    assert_eq!(built.arranged_source_evidence_count(), Some(4));
     assert_eq!(arranged_sources.len(), 4);
     assert_eq!(arranged_sources[0].source_segment_index(), 0);
     assert_eq!(arranged_sources[0].source_segment_kind(), SegmentKind::Arc);
@@ -5306,7 +5328,7 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
         arranged_sources[0].source_range(),
         &hypercurve::ParamRange::new(s(0), arc_hit_fraction)
     );
-    assert_eq!(built.source_report_count(), Some(0));
+    assert_eq!(built.source_evidence_count(), Some(0));
 
     let split_cache = built.split_cache().unwrap();
     assert_eq!(
@@ -5321,7 +5343,7 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
     assert_eq!(split_cache.overlap_relation_count(), 0);
     assert_eq!(split_cache.uncertain_relation_count(), 0);
     assert_eq!(split_cache.intersection_points(), &[p(4, 3)]);
-    assert_eq!(split_cache.intersection_reports(), split_reports);
+    assert_eq!(split_cache.intersection_evidence(), split_evidence);
     assert_eq!(split_cache.output_segment_count(), Some(4));
     assert!(split_cache.blocker_cache().is_none());
     assert_eq!(
@@ -5403,8 +5425,8 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
     );
     assert_eq!(ring_cache.output_ring_count(), None);
     assert_eq!(ring_cache.output_boundary_segment_count(), None);
-    assert_eq!(ring_cache.arranged_source_reports(), arranged_sources);
-    assert!(ring_cache.source_reports().is_empty());
+    assert_eq!(ring_cache.arranged_source_evidence(), arranged_sources);
+    assert!(ring_cache.source_evidence().is_empty());
     assert_eq!(
         ring_cache
             .arranged_fragment_cache()
@@ -5909,14 +5931,14 @@ proptest! {
         prop_assert!(built.exact_endpoint_connection_count().unwrap() >= 2);
         prop_assert_eq!(built.unresolved_endpoint_connection_count(), Some(0));
         prop_assert!(built.reversed_source_segment_count().unwrap() <= 1);
-        let arranged_sources = built.arranged_source_reports().unwrap();
+        let arranged_sources = built.arranged_source_evidence().unwrap();
         prop_assert_eq!(arranged_sources.len(), 2);
         prop_assert!(arranged_sources
             .iter()
             .all(|source| source.status().is_native_exact()));
-        let source_reports = built.source_reports().unwrap();
-        prop_assert_eq!(source_reports.len(), 2);
-        prop_assert!(source_reports
+        let source_evidence = built.source_evidence().unwrap();
+        prop_assert_eq!(source_evidence.len(), 2);
+        prop_assert!(source_evidence
             .iter()
             .all(|source| source.status().is_native_exact()));
         prop_assert_eq!(built.output_ring_count(), Some(1));
@@ -5960,30 +5982,30 @@ fn prepared_region_classifier_matches_owned_region() {
         vec![rectangle(2, 2, 8, 8)],
     );
     let policy = policy();
-    let prepared = region.prepare_point_classifier(&policy);
+    let prepared = region.query(&policy);
 
     assert!(prepared.region_box().is_some());
     assert_eq!(prepared.material_contours().len(), 2);
     assert_eq!(prepared.hole_contours().len(), 1);
-    assert_eq!(prepared.prepared_contour_count(), 3);
-    assert_eq!(prepared.prepared_material_segment_count(), 8);
+    assert_eq!(prepared.contour_count(), 3);
+    assert_eq!(prepared.material_segment_count(), 8);
     assert_eq!(
-        prepared.prepared_material_segment_kind_counts(),
+        prepared.material_segment_kind_counts(),
         SegmentKindCounts { lines: 8, arcs: 0 }
     );
-    assert_eq!(prepared.prepared_hole_segment_count(), 4);
+    assert_eq!(prepared.hole_segment_count(), 4);
     assert_eq!(
-        prepared.prepared_hole_segment_kind_counts(),
+        prepared.hole_segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
-    assert_eq!(prepared.prepared_segment_count(), 12);
+    assert_eq!(prepared.segment_count(), 12);
     assert_eq!(
-        prepared.prepared_segment_kind_counts(),
+        prepared.segment_kind_counts(),
         SegmentKindCounts { lines: 12, arcs: 0 }
     );
     assert_eq!(
-        prepared.prepared_segment_count(),
-        prepared.prepared_material_segment_count() + prepared.prepared_hole_segment_count()
+        prepared.segment_count(),
+        prepared.material_segment_count() + prepared.hole_segment_count()
     );
     assert_eq!(prepared.decided_material_segment_box_count(), 8);
     assert_eq!(prepared.decided_hole_segment_box_count(), 4);
@@ -6019,7 +6041,7 @@ fn prepared_region_view_preserves_boundary_hits() {
     let holes: [Contour2; 0] = [];
     let view = RegionView2::new(&material, &holes);
     let policy = policy();
-    let prepared = view.prepare_point_classifier(&policy);
+    let prepared = view.query(&policy);
 
     assert_eq!(
         prepared.classify_point(&p(20, 22), &policy),

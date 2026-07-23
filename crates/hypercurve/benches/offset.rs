@@ -143,7 +143,7 @@ fn bench_curve_string_checked_offset(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_curve_string_checked_offset_report(iterations: u32) -> CurveResult<()> {
+fn bench_curve_string_checked_offset_evidence(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 4, 0),
         line_segment(4, 0, 4, 3),
@@ -162,7 +162,7 @@ fn bench_curve_string_checked_offset_report(iterations: u32) -> CurveResult<()> 
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_checked_offset_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        "curve_string_checked_offset_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -194,7 +194,7 @@ fn bench_curve_string_round_cap_outline(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_curve_string_round_cap_outline_report(iterations: u32) -> CurveResult<()> {
+fn bench_curve_string_round_cap_outline_evidence(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 4, 0),
         line_segment(4, 0, 4, 3),
@@ -214,7 +214,7 @@ fn bench_curve_string_round_cap_outline_report(iterations: u32) -> CurveResult<(
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_round_cap_outline_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        "curve_string_round_cap_outline_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -326,7 +326,7 @@ fn bench_contour_checked_offset(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_contour_checked_offset_report(iterations: u32) -> CurveResult<()> {
+fn bench_contour_checked_offset_evidence(iterations: u32) -> CurveResult<()> {
     let contour = Contour2::from_bulge_vertices(&[
         vertex(0, 0, 0),
         vertex(10, 0, 0),
@@ -346,7 +346,7 @@ fn bench_contour_checked_offset_report(iterations: u32) -> CurveResult<()> {
 
     let elapsed = started.elapsed();
     println!(
-        "contour_checked_offset_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        "contour_checked_offset_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -530,14 +530,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     bench_curve_string_joined_offset(100_000)?;
     bench_curve_string_round_join_offset(100_000)?;
     bench_curve_string_checked_offset(100_000)?;
-    bench_curve_string_checked_offset_report(100_000)?;
+    bench_curve_string_checked_offset_evidence(100_000)?;
     bench_curve_string_round_cap_outline(100_000)?;
-    bench_curve_string_round_cap_outline_report(100_000)?;
+    bench_curve_string_round_cap_outline_evidence(100_000)?;
     bench_curve_string_butt_cap_outline(100_000)?;
     bench_curve_string_square_cap_outline(100_000)?;
     bench_contour_joined_offset(100_000)?;
     bench_contour_checked_offset(100_000)?;
-    bench_contour_checked_offset_report(100_000)?;
+    bench_contour_checked_offset_evidence(100_000)?;
     bench_exact_bezier_parallel_evaluation(10_000)?;
     bench_bezier_parallel_cusp_isolation(100)?;
     bench_exact_ph_offset_construction(1_000)?;

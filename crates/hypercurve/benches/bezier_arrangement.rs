@@ -4,7 +4,7 @@ use std::time::Instant;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierArrangementFragment2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierRetainedOverlapReport2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CubicBezier2, CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2,
     Real,
 };
@@ -96,25 +96,25 @@ fn main() -> CurveResult<()> {
         let traversal = decided(graph.traverse_with_tangent_order(&policy));
         total += black_box(traversal.len());
         total += black_box(
-            match BezierRetainedOverlapReport2::from_graph(&graph, &policy) {
-                Classification::Decided(report) => {
-                    let split_count = match report.line_overlap_splits(&policy) {
+            match BezierRetainedOverlapEvidence2::from_graph(&graph, &policy) {
+                Classification::Decided(evidence) => {
+                    let split_count = match evidence.line_overlap_splits(&policy) {
                         Classification::Decided(splits) => splits.len(),
                         Classification::Uncertain(_) => 0,
                     };
                     let bezier_split_count =
-                        match report.linear_bezier_overlap_splits(&graph, &policy) {
+                        match evidence.linear_bezier_overlap_splits(&graph, &policy) {
                             Classification::Decided(splits) => splits.len(),
                             Classification::Uncertain(_) => 0,
                         };
-                    report.len() + split_count + bezier_split_count
+                    evidence.len() + split_count + bezier_split_count
                 }
                 Classification::Uncertain(_) => 0,
             },
         );
         total += black_box(
             match graph.traverse_retained_deduplicating_materialized_overlaps(&policy) {
-                Classification::Decided(report) => report.shadowed_fragment_indices().len(),
+                Classification::Decided(evidence) => evidence.shadowed_fragment_indices().len(),
                 Classification::Uncertain(_) => 0,
             },
         );

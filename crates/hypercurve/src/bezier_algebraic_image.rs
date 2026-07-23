@@ -52,7 +52,7 @@ pub enum BezierAlgebraicImageStatus {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierAlgebraicCoordinateImage {
     coefficients: Vec<Real>,
-    report: AlgebraicRootPolynomialImageReport,
+    evidence: AlgebraicRootPolynomialImageReport,
 }
 
 /// One exact rational-function coordinate image at an algebraic parameter.
@@ -60,7 +60,7 @@ pub struct BezierAlgebraicCoordinateImage {
 pub struct BezierAlgebraicRationalCoordinateImage {
     numerator_coefficients: Vec<Real>,
     denominator_coefficients: Vec<Real>,
-    report: AlgebraicRootRationalImageReport,
+    evidence: AlgebraicRootRationalImageReport,
 }
 
 impl BezierAlgebraicRationalCoordinateImage {
@@ -76,14 +76,9 @@ impl BezierAlgebraicRationalCoordinateImage {
         &self.denominator_coefficients
     }
 
-    /// Returns the exact rational-image report produced by `hypersolve`.
-    pub const fn report(&self) -> &AlgebraicRootRationalImageReport {
-        &self.report
-    }
-
     /// Returns the represented coordinate when the image was constructed.
     pub fn representation(&self) -> Option<&AlgebraicRootRepresentation> {
-        self.report.representation.as_ref()
+        self.evidence.representation.as_ref()
     }
 
     /// Compares this exact algebraic coordinate with a represented real value.
@@ -142,7 +137,7 @@ fn compare_algebraic_representation_to_real(
     policy: &CurvePolicy,
 ) -> crate::Classification<Ordering> {
     let exact = exact_real_algebraic_representation(value);
-    let report = compare_algebraic_root_representations_by_difference(
+    let evidence = compare_algebraic_root_representations_by_difference(
         representation,
         &exact,
         AlgebraicRootRefinementComparisonConfig {
@@ -150,7 +145,7 @@ fn compare_algebraic_representation_to_real(
             ..AlgebraicRootRefinementComparisonConfig::default()
         },
     );
-    report
+    evidence
         .comparison
         .ordering
         .map(crate::Classification::Decided)
@@ -175,14 +170,9 @@ impl BezierAlgebraicCoordinateImage {
         &self.coefficients
     }
 
-    /// Returns the exact polynomial-image report produced by `hypersolve`.
-    pub const fn report(&self) -> &AlgebraicRootPolynomialImageReport {
-        &self.report
-    }
-
     /// Returns the represented coordinate when the image was constructed.
     pub fn representation(&self) -> Option<&AlgebraicRootRepresentation> {
-        self.report.representation.as_ref()
+        self.evidence.representation.as_ref()
     }
 }
 
@@ -339,7 +329,7 @@ impl QuadraticBezier2 {
     ///
     /// The returned x/y coordinates are `hypersolve` represented roots for the
     /// exact coordinate polynomials
-    /// `P0 + 2(P1-P0)t + (P0-2P1+P2)t^2`.  This is intentionally report
+    /// `P0 + 2(P1-P0)t + (P0-2P1+P2)t^2`.  This is intentionally evidence
     /// bearing: unsupported polynomial-image evidence remains visible instead
     /// of becoming a rounded point.
     pub fn point_at_algebraic_parameter(
@@ -455,7 +445,7 @@ impl RationalQuadraticBezier2 {
     /// Each coordinate is represented as `N(t)/D(t)` using the homogeneous
     /// Bernstein numerator and weight denominator.  Denominator-domain
     /// certification is delegated to `hypersolve`'s rational-image package, so
-    /// projective boundary uncertainty stays report-bearing instead of being
+    /// projective boundary uncertainty stays evidence-bearing instead of being
     /// sampled into affine space.  This is the rational Bezier analogue of the
     /// polynomial image construction above; see the exactness model for the exact-object
     /// boundary and the Bernstein curve model for the homogeneous conic equations.
@@ -823,7 +813,7 @@ fn coordinate_image(
         let value = evaluate_power_polynomial(&coefficients, parameter_value);
         let representation = exact_real_algebraic_representation(&value);
         return Some(BezierAlgebraicCoordinateImage {
-            report: AlgebraicRootPolynomialImageReport {
+            evidence: AlgebraicRootPolynomialImageReport {
                 status: AlgebraicRootPolynomialImageStatus::Transformed,
                 image_coefficients: coefficients.clone(),
                 representation: Some(representation),
@@ -835,7 +825,7 @@ fn coordinate_image(
     if coefficients.len() == 1 {
         let representation = exact_real_algebraic_representation(&coefficients[0]);
         return Some(BezierAlgebraicCoordinateImage {
-            report: AlgebraicRootPolynomialImageReport {
+            evidence: AlgebraicRootPolynomialImageReport {
                 status: AlgebraicRootPolynomialImageStatus::Transformed,
                 image_coefficients: coefficients.clone(),
                 representation: Some(representation),
@@ -867,15 +857,15 @@ fn coordinate_image_from_replay(
     coefficients: Vec<Real>,
     policy: &CurvePolicy,
 ) -> Option<BezierAlgebraicCoordinateImage> {
-    let report = transform_algebraic_root_polynomial_image(
+    let evidence = transform_algebraic_root_polynomial_image(
         parameter,
         &coefficients,
         policy.predicate_policy,
     );
-    (report.status == AlgebraicRootPolynomialImageStatus::Transformed).then_some(
+    (evidence.status == AlgebraicRootPolynomialImageStatus::Transformed).then_some(
         BezierAlgebraicCoordinateImage {
             coefficients,
-            report,
+            evidence,
         },
     )
 }
@@ -896,17 +886,17 @@ fn rational_coordinate_image_from_replay(
     denominator_coefficients: Vec<Real>,
     policy: &CurvePolicy,
 ) -> Option<BezierAlgebraicRationalCoordinateImage> {
-    let report = transform_algebraic_root_rational_image(
+    let evidence = transform_algebraic_root_rational_image(
         parameter,
         &numerator_coefficients,
         &denominator_coefficients,
         policy.predicate_policy,
     );
-    (report.status == AlgebraicRootRationalImageStatus::Transformed).then_some(
+    (evidence.status == AlgebraicRootRationalImageStatus::Transformed).then_some(
         BezierAlgebraicRationalCoordinateImage {
             numerator_coefficients,
             denominator_coefficients,
-            report,
+            evidence,
         },
     )
 }

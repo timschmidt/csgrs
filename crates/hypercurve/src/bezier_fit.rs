@@ -4,7 +4,7 @@
 //! offset work: a Bezier/conic image can be proven to be exactly one point or
 //! exactly one endpoint line segment, and a certified flattened Bezier polyline
 //! can be proven to have the same zero-error primitive image. These are proof
-//! objects for exact branch decisions, not general fitting reports.
+//! objects for exact branch decisions, not general fitting evidence.
 
 use hyperreal::{Real, RealSign};
 

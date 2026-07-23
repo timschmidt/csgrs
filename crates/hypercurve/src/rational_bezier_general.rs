@@ -242,7 +242,7 @@ enum RationalBezierSharedComponentReplay {
 
 /// Retained split topology derived from one completely replayed curve pair.
 ///
-/// The contact collection is shared with the prepared pair. The two split
+/// The contact collection is shared with the retained pair. The two split
 /// materializations preserve each contact parameter and its exact endpoint
 /// images, so an arrangement can consume the result without rerunning
 /// resultants or algebraic point comparison.
@@ -301,7 +301,7 @@ impl RationalBezierIntersectionTopology2 {
 
 /// Clone-shared retained facts for one rational Bezier pair.
 #[derive(Clone, Debug)]
-pub struct PreparedRationalBezierIntersection2 {
+pub struct RetainedRationalBezierIntersection2 {
     data: Rc<PreparedRationalBezierIntersectionData>,
 }
 
@@ -315,7 +315,7 @@ struct PreparedRationalBezierIntersectionData {
     topology: OnceCell<CurveResult<Classification<RationalBezierIntersectionTopology2>>>,
 }
 
-impl PreparedRationalBezierIntersection2 {
+impl RetainedRationalBezierIntersection2 {
     /// Returns the retained first operand.
     pub fn first(&self) -> &RationalBezier2 {
         &self.data.first
@@ -326,7 +326,7 @@ impl PreparedRationalBezierIntersection2 {
         &self.data.second
     }
 
-    /// Returns the exact policy captured by preparation.
+    /// Returns the exact policy captured when the pair was retained.
     pub fn policy(&self) -> &CurvePolicy {
         &self.data.policy
     }
@@ -1274,11 +1274,11 @@ impl RationalBezier2 {
     }
 
     /// Prepares one pair with typed failure context.
-    pub fn try_prepare_intersection(
+    pub fn retain_intersection(
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> ExactCurveResult<PreparedRationalBezierIntersection2> {
+    ) -> ExactCurveResult<RetainedRationalBezierIntersection2> {
         match self.prepare_intersection_classified(other, policy) {
             Ok(Classification::Decided(prepared)) => Ok(prepared),
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
@@ -1298,7 +1298,7 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<PreparedRationalBezierIntersection2>> {
+    ) -> CurveResult<Classification<RetainedRationalBezierIntersection2>> {
         let special =
             if let Some(contacts) = self.implicit_conic_intersection_contacts(other, policy)? {
                 Some(contacts)
@@ -1318,7 +1318,7 @@ impl RationalBezier2 {
             let retained_contacts = OnceCell::new();
             let _ = retained_contacts.set(Ok(Classification::Decided(contacts)));
             return Ok(Classification::Decided(
-                PreparedRationalBezierIntersection2 {
+                RetainedRationalBezierIntersection2 {
                     data: Rc::new(PreparedRationalBezierIntersectionData {
                         first: self.clone(),
                         second: other.clone(),
@@ -1332,7 +1332,7 @@ impl RationalBezier2 {
         }
         match self.intersection_candidates_classified(other, policy)? {
             Classification::Decided(candidates) => Ok(Classification::Decided(
-                PreparedRationalBezierIntersection2 {
+                RetainedRationalBezierIntersection2 {
                     data: Rc::new(PreparedRationalBezierIntersectionData {
                         first: self.clone(),
                         second: other.clone(),
@@ -3397,16 +3397,16 @@ fn rational_image_parameter(
             denominator = normalized_denominator;
         }
     }
-    let report = transform_algebraic_root_rational_image(
+    let evidence = transform_algebraic_root_rational_image(
         source,
         &numerator,
         &denominator,
         policy.predicate_policy,
     );
-    if report.status != AlgebraicRootRationalImageStatus::Transformed {
+    if evidence.status != AlgebraicRootRationalImageStatus::Transformed {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
-    let Some(representation) = report.representation.as_ref() else {
+    let Some(representation) = evidence.representation.as_ref() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     };
     let zero = Real::zero();
@@ -3663,7 +3663,7 @@ fn compare_algebraic_coordinates(
     second: &AlgebraicRootRepresentation,
     policy: &CurvePolicy,
 ) -> Option<bool> {
-    let report = compare_algebraic_root_representations_by_difference(
+    let evidence = compare_algebraic_root_representations_by_difference(
         first,
         second,
         AlgebraicRootRefinementComparisonConfig {
@@ -3671,7 +3671,10 @@ fn compare_algebraic_coordinates(
             ..AlgebraicRootRefinementComparisonConfig::default()
         },
     );
-    report.comparison.ordering.map(|ordering| ordering.is_eq())
+    evidence
+        .comparison
+        .ordering
+        .map(|ordering| ordering.is_eq())
 }
 
 #[cfg(not(feature = "predicates"))]
@@ -3684,10 +3687,10 @@ fn compare_algebraic_coordinates(
 }
 
 fn resultant_parameter_projection(
-    report: CurveIntersectionResultantReport,
+    evidence: CurveIntersectionResultantReport,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
-    match report.status {
+    match evidence.status {
         CurveIntersectionResultantStatus::Constructed => {}
         CurveIntersectionResultantStatus::UndecidedCoefficient => {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
@@ -3700,7 +3703,7 @@ fn resultant_parameter_projection(
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
     }
-    if report
+    if evidence
         .resultant_coefficients
         .iter()
         .all(|coefficient| is_zero(coefficient, policy) == Some(true))
@@ -3709,7 +3712,7 @@ fn resultant_parameter_projection(
             ResultantParameterProjection::Degenerate,
         ));
     }
-    if report
+    if evidence
         .resultant_coefficients
         .iter()
         .all(|coefficient| is_zero(coefficient, policy) != Some(false))
@@ -3717,7 +3720,7 @@ fn resultant_parameter_projection(
         return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
     }
     let polynomial = match BezierParameterPolynomial::try_new_power_basis(
-        report.resultant_coefficients,
+        evidence.resultant_coefficients,
         policy,
     )? {
         Classification::Decided(polynomial) => polynomial,

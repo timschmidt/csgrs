@@ -9,9 +9,9 @@ use crate::{
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveError,
     CurveFamily2, CurveIntersectionContact2, CurveIntersectionOverlap2,
     CurveIntersectionPairBlocker2, CurveOperation2, CurvePathBooleanOperand2, CurvePolicy,
-    CurveRegion2, ExactCurveError, ExactCurveResult, FillRule, PreparedCurveIntersection2,
+    CurveRegion2, ExactCurveError, ExactCurveResult, FillRule,
     RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RegionPointLocation, UncertaintyReason,
+    RegionPointLocation, RetainedCurveIntersection2, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -43,7 +43,7 @@ pub struct CurveRegionIntersectionOverlap2 {
     orientation: RationalBezierOverlapOrientation2,
 }
 
-/// One incomplete retained carrier pair in a curved-region intersection report.
+/// One incomplete retained carrier pair in a curved-region intersection result.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionIntersectionBlocker2 {
     first: CurveRegionCarrierRef2,
@@ -51,14 +51,14 @@ pub struct CurveRegionIntersectionBlocker2 {
     blocker: CurveIntersectionPairBlocker2,
 }
 
-/// Clone-shared exact contact, overlap, and blocker report for two curved regions.
+/// Clone-shared exact contact, overlap, and blocker result for two curved regions.
 #[derive(Clone, Debug)]
-pub struct CurveRegionIntersectionReport2 {
-    data: Rc<CurveRegionIntersectionReportData>,
+pub struct CurveRegionIntersectionResult2 {
+    data: Rc<CurveRegionIntersectionResultData>,
 }
 
 #[derive(Debug)]
-struct CurveRegionIntersectionReportData {
+struct CurveRegionIntersectionResultData {
     authored_carrier_pair_count: usize,
     candidate_carrier_pair_count: usize,
     contacts: Rc<[CurveRegionIntersectionContact2]>,
@@ -66,9 +66,9 @@ struct CurveRegionIntersectionReportData {
     blockers: Rc<[CurveRegionIntersectionBlocker2]>,
 }
 
-/// Clone-shared retained preparation for repeated curved-region Booleans.
+/// Clone-shared retained arrangement for repeated curved-region Booleans.
 #[derive(Clone, Debug)]
-pub struct PreparedCurveRegionBoolean2 {
+pub struct RetainedCurveRegionBoolean2 {
     data: Rc<PreparedCurveRegionBooleanData>,
 }
 
@@ -81,7 +81,7 @@ struct PreparedCurveRegionBooleanData {
     first_carrier_count: usize,
     authored_carrier_pair_count: usize,
     pairs: Vec<PreparedRegionCarrierPair>,
-    intersection_report: OnceCell<ExactCurveResult<CurveRegionIntersectionReport2>>,
+    intersection_result: OnceCell<ExactCurveResult<CurveRegionIntersectionResult2>>,
     results: [OnceCell<ExactCurveResult<CurveRegion2>>; 4],
 }
 
@@ -102,7 +102,7 @@ struct RegionCarrier {
 struct PreparedRegionCarrierPair {
     first_carrier_index: usize,
     second_carrier_index: usize,
-    prepared: PreparedCurveIntersection2,
+    prepared: RetainedCurveIntersection2,
 }
 
 #[derive(Clone, Debug)]
@@ -135,7 +135,7 @@ enum RegionFragmentAction {
 }
 
 impl CurveRegionCarrierRef2 {
-    /// Returns the flattened carrier index in the prepared pair.
+    /// Returns the flattened carrier index in the retained pair.
     pub const fn carrier_index(&self) -> usize {
         self.carrier_index
     }
@@ -227,7 +227,7 @@ impl CurveRegionIntersectionBlocker2 {
     }
 }
 
-impl CurveRegionIntersectionReport2 {
+impl CurveRegionIntersectionResult2 {
     /// Returns the full Cartesian carrier-pair count before broad-phase pruning.
     pub fn authored_carrier_pair_count(&self) -> usize {
         self.data.authored_carrier_pair_count
@@ -266,12 +266,12 @@ impl CurveRegionIntersectionReport2 {
 
 impl CurveRegion2 {
     /// Prepares a region pair once for repeated exact regularized Booleans.
-    pub fn try_prepare_boolean(
+    pub fn retain_boolean(
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> ExactCurveResult<PreparedCurveRegionBoolean2> {
-        PreparedCurveRegionBoolean2::try_new(self, other, policy)
+    ) -> ExactCurveResult<RetainedCurveRegionBoolean2> {
+        RetainedCurveRegionBoolean2::try_new(self, other, policy)
     }
 
     /// Computes one exact regularized Boolean against another retained region.
@@ -281,25 +281,24 @@ impl CurveRegion2 {
         operation: BooleanOp,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<Self> {
-        self.try_prepare_boolean(other, policy)?
+        self.retain_boolean(other, policy)?
             .boolean_region(operation)
     }
 
     /// Collects exact contacts and overlaps against another retained region.
     ///
-    /// The same prepared carrier pairs used by regularized Booleans are reused,
+    /// The same retained carrier pairs used by regularized Booleans are reused,
     /// including certified broad-phase pruning and algebraic parameter ranges.
     pub fn intersect_region(
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> ExactCurveResult<CurveRegionIntersectionReport2> {
-        self.try_prepare_boolean(other, policy)?
-            .intersection_report()
+    ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
+        self.retain_boolean(other, policy)?.intersection_result()
     }
 }
 
-impl PreparedCurveRegionBoolean2 {
+impl RetainedCurveRegionBoolean2 {
     fn try_new(
         first: &CurveRegion2,
         second: &CurveRegion2,
@@ -335,7 +334,7 @@ impl PreparedCurveRegionBoolean2 {
                 pairs.push(PreparedRegionCarrierPair {
                     first_carrier_index,
                     second_carrier_index,
-                    prepared: first_curve.try_prepare_intersection(second_curve, policy)?,
+                    prepared: first_curve.retain_intersection(second_curve, policy)?,
                 });
             }
         }
@@ -349,7 +348,7 @@ impl PreparedCurveRegionBoolean2 {
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
-                intersection_report: OnceCell::new(),
+                intersection_result: OnceCell::new(),
                 results: std::array::from_fn(|_| OnceCell::new()),
             }),
         })
@@ -365,7 +364,7 @@ impl PreparedCurveRegionBoolean2 {
         &self.data.second
     }
 
-    /// Returns the policy captured by preparation.
+    /// Returns the policy captured when the arrangement was retained.
     pub fn policy(&self) -> &CurvePolicy {
         &self.data.policy
     }
@@ -380,24 +379,24 @@ impl PreparedCurveRegionBoolean2 {
         self.data.pairs.len()
     }
 
-    /// Returns whether the aggregate exact intersection report is cached.
-    pub fn is_intersection_report_cached(&self) -> bool {
-        self.data.intersection_report.get().is_some()
+    /// Returns whether the aggregate exact intersection result is cached.
+    pub fn is_intersection_result_cached(&self) -> bool {
+        self.data.intersection_result.get().is_some()
     }
 
-    /// Returns a clone-shared aggregate exact intersection report.
-    pub fn intersection_report(&self) -> ExactCurveResult<CurveRegionIntersectionReport2> {
-        self.intersection_report_view().cloned()
+    /// Returns a clone-shared aggregate exact intersection result.
+    pub fn intersection_result(&self) -> ExactCurveResult<CurveRegionIntersectionResult2> {
+        self.intersection_result_view().cloned()
     }
 
-    /// Borrows the aggregate exact intersection report without copying records.
-    pub fn intersection_report_view(&self) -> ExactCurveResult<&CurveRegionIntersectionReport2> {
+    /// Borrows the aggregate exact intersection result without copying records.
+    pub fn intersection_result_view(&self) -> ExactCurveResult<&CurveRegionIntersectionResult2> {
         match self
             .data
-            .intersection_report
-            .get_or_init(|| self.build_intersection_report())
+            .intersection_result
+            .get_or_init(|| self.build_intersection_evidence())
         {
-            Ok(report) => Ok(report),
+            Ok(result) => Ok(result),
             Err(error) => Err(error.clone()),
         }
     }
@@ -424,22 +423,22 @@ impl PreparedCurveRegionBoolean2 {
         }
     }
 
-    fn build_intersection_report(&self) -> ExactCurveResult<CurveRegionIntersectionReport2> {
+    fn build_intersection_evidence(&self) -> ExactCurveResult<CurveRegionIntersectionResult2> {
         let mut contacts = Vec::new();
         let mut overlaps = Vec::new();
         let mut blockers = Vec::new();
         for pair in &self.data.pairs {
-            let report = pair.prepared.report_view()?;
+            let result = pair.prepared.result_view()?;
             let first = self.carrier_ref(pair.first_carrier_index);
             let second = self.carrier_ref(pair.second_carrier_index);
-            blockers.extend(report.blockers().iter().cloned().map(|blocker| {
+            blockers.extend(result.blockers().iter().cloned().map(|blocker| {
                 CurveRegionIntersectionBlocker2 {
                     first: first.clone(),
                     second: second.clone(),
                     blocker,
                 }
             }));
-            for contact in report.contacts() {
+            for contact in result.contacts() {
                 if parameter_in_carrier(
                     contact.first().local_parameter(),
                     &self.data.carriers[pair.first_carrier_index],
@@ -456,7 +455,7 @@ impl PreparedCurveRegionBoolean2 {
                     });
                 }
             }
-            for overlap in report.overlaps() {
+            for overlap in result.overlaps() {
                 let Some((first_range, second_range)) =
                     self.clipped_overlap_ranges(pair, overlap)?
                 else {
@@ -472,8 +471,8 @@ impl PreparedCurveRegionBoolean2 {
                 });
             }
         }
-        Ok(CurveRegionIntersectionReport2 {
-            data: Rc::new(CurveRegionIntersectionReportData {
+        Ok(CurveRegionIntersectionResult2 {
+            data: Rc::new(CurveRegionIntersectionResultData {
                 authored_carrier_pair_count: self.data.authored_carrier_pair_count,
                 candidate_carrier_pair_count: self.data.pairs.len(),
                 contacts: contacts.into(),
@@ -556,11 +555,11 @@ impl PreparedCurveRegionBoolean2 {
         if let (Classification::Decided(first), Classification::Decided(second)) = (
             self.data
                 .first
-                .line_arc_region_fast_path(&self.data.policy)
+                .native_line_arc_region(&self.data.policy)
                 .map_err(|cause| self.invalid(0, cause))?,
             self.data
                 .second
-                .line_arc_region_fast_path(&self.data.policy)
+                .native_line_arc_region(&self.data.policy)
                 .map_err(|cause| self.invalid(0, cause))?,
         ) {
             match first
@@ -586,8 +585,8 @@ impl PreparedCurveRegionBoolean2 {
         )?;
         let mut overlaps = Vec::new();
         for pair in &self.data.pairs {
-            let report = pair.prepared.report_view()?;
-            if let Some(blocker) = report.blockers().first() {
+            let result = pair.prepared.result_view()?;
+            if let Some(blocker) = result.blockers().first() {
                 let reason = match blocker.kind() {
                     crate::CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
                     crate::CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
@@ -600,7 +599,7 @@ impl PreparedCurveRegionBoolean2 {
                 return Err(self.blocked(pair.first_carrier_index, reason));
             }
 
-            for contact in report.contacts() {
+            for contact in result.contacts() {
                 let first_parameter = contact.first().local_parameter();
                 let second_parameter = contact.second().local_parameter();
                 if !parameter_in_carrier(
@@ -662,7 +661,7 @@ impl PreparedCurveRegionBoolean2 {
                 )?;
             }
 
-            for overlap in report.overlaps() {
+            for overlap in result.overlaps() {
                 let first_carrier = &self.data.carriers[pair.first_carrier_index];
                 let second_carrier = &self.data.carriers[pair.second_carrier_index];
                 let first_intersects =

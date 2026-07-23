@@ -56,8 +56,8 @@ fn assert_exact_boolean_matrix(
     samples: &[(hypercurve::Point2, bool, bool)],
 ) {
     let policy = policy();
-    let prepared_first = first.prepare_topology_queries(&policy);
-    let prepared_second = second.prepare_topology_queries(&policy);
+    let prepared_first = first.query(&policy);
+    let prepared_second = second.query(&policy);
 
     for op in [
         BooleanOp::Union,

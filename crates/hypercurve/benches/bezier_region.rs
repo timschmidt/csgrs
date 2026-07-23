@@ -187,7 +187,7 @@ fn main() -> CurveResult<()> {
     let mut region_boolean_checksum = 0_usize;
     for _ in 0..region_boolean_iterations {
         let prepared = first_region
-            .try_prepare_boolean(&second_region, &policy)
+            .retain_boolean(&second_region, &policy)
             .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
         let region = prepared
             .boolean_region(BooleanOp::Union)
@@ -201,7 +201,7 @@ fn main() -> CurveResult<()> {
     );
 
     let prepared_region_boolean = first_region
-        .try_prepare_boolean(&second_region, &policy)
+        .retain_boolean(&second_region, &policy)
         .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
     prepared_region_boolean
         .boolean_region_view(BooleanOp::Union)
@@ -316,14 +316,14 @@ fn main() -> CurveResult<()> {
         {
             retained_checksum ^= black_box(format!("{:?}", envelope.envelope()).len());
         }
-        if let Classification::Decided(report) = region.line_image_role_report(&policy)? {
-            retained_checksum ^= black_box(report.roles().len());
+        if let Classification::Decided(evidence) = region.line_image_role_evidence(&policy)? {
+            retained_checksum ^= black_box(evidence.roles().len());
         }
-        if let Classification::Decided(report) = region.signed_area_role_report(&policy)? {
-            retained_checksum ^= black_box(report.roles().len() + report.signed_areas().len());
+        if let Classification::Decided(evidence) = region.signed_area_role_evidence(&policy)? {
+            retained_checksum ^= black_box(evidence.roles().len() + evidence.signed_areas().len());
         }
-        if let Classification::Decided(report) = region.curved_nesting_role_report(&policy)? {
-            retained_checksum ^= black_box(report.roles().len() + report.sample_points().len());
+        if let Classification::Decided(evidence) = region.curved_nesting_role_evidence(&policy)? {
+            retained_checksum ^= black_box(evidence.roles().len() + evidence.sample_points().len());
         }
     }
     let elapsed = started.elapsed();
@@ -439,20 +439,20 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut algebraic_line_role_checksum = 0_usize;
     for _ in 0..iterations {
-        if let Classification::Decided(report) =
-            algebraic_line_region.line_image_role_report(&policy)?
+        if let Classification::Decided(evidence) =
+            algebraic_line_region.line_image_role_evidence(&policy)?
         {
             algebraic_line_role_checksum ^= black_box(
-                report.roles().len()
-                    + report.material_loop_indices().len()
-                    + report.hole_loop_indices().len(),
+                evidence.roles().len()
+                    + evidence.material_loop_indices().len()
+                    + evidence.hole_loop_indices().len(),
             );
             algebraic_line_role_checksum ^= black_box(
                 format!(
                     "{:?}",
-                    report
+                    evidence
                         .try_to_curve_region(&policy)
-                        .expect("line-role report must rebuild a unified region")
+                        .expect("line-role evidence must rebuild a unified region")
                         .filled_area(&policy)?
                 )
                 .len(),
@@ -461,7 +461,7 @@ fn main() -> CurveResult<()> {
     }
     let elapsed = started.elapsed();
     println!(
-        "bezier_retained_algebraic_line_role_report: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={algebraic_line_role_checksum}",
+        "bezier_retained_algebraic_line_role_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={algebraic_line_role_checksum}",
         elapsed / iterations
     );
 
@@ -485,20 +485,20 @@ fn main() -> CurveResult<()> {
             &overlap_traversal,
         ));
         overlap_checksum ^= black_box(format!("{:?}", retained.signed_area()?).len());
-        if let Classification::Decided(report) = retained.line_image_role_report(&policy)? {
+        if let Classification::Decided(evidence) = retained.line_image_role_evidence(&policy)? {
             overlap_checksum ^= black_box(usize::from(
-                report
+                evidence
                     .try_to_curve_region(&policy)
-                    .expect("line-role report must rebuild a unified region")
+                    .expect("line-role evidence must rebuild a unified region")
                     .filled_area(&policy)?
                     .is_decided(),
             ));
         }
-        if let Classification::Decided(report) = retained.signed_area_role_report(&policy)? {
-            overlap_checksum ^= black_box(report.roles().len());
+        if let Classification::Decided(evidence) = retained.signed_area_role_evidence(&policy)? {
+            overlap_checksum ^= black_box(evidence.roles().len());
         }
-        if let Classification::Decided(report) = retained.curved_nesting_role_report(&policy)? {
-            overlap_checksum ^= black_box(report.roles().len() + report.sample_points().len());
+        if let Classification::Decided(evidence) = retained.curved_nesting_role_evidence(&policy)? {
+            overlap_checksum ^= black_box(evidence.roles().len() + evidence.sample_points().len());
         }
     }
     let elapsed = started.elapsed();

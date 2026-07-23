@@ -705,7 +705,7 @@ impl RationalQuadraticBezier2 {
     /// is strictly monotone. The remaining coordinate then reduces to one
     /// weighted Bernstein numerator over the common denominator. Strict order
     /// is sign-normalized by the denominator sign, so uniformly negative
-    /// homogeneous weights report the same Euclidean order as their positive
+    /// homogeneous weights evidence the same Euclidean order as their positive
     /// projective image. This follows the exactness model's exact geometric computation
     /// boundary. The rational homogeneous Bezier
     /// model is the Bernstein and de Casteljau curve model, and
@@ -3612,7 +3612,7 @@ mod tests {
     }
 
     #[test]
-    fn empty_polynomial_control_relation_reports_unsupported() {
+    fn empty_polynomial_control_relation_evidence_unsupported() {
         let rational = RationalQuadraticBezier2::try_new(
             point(0, 0),
             point(1, 1),
@@ -3661,7 +3661,7 @@ mod tests {
     }
 
     #[test]
-    fn rational_midpoint_subdivision_reports_empty_controls() {
+    fn rational_midpoint_subdivision_evidence_empty_controls() {
         assert_eq!(
             subdivide_scalar_bernstein_half(&[]),
             Err(UncertaintyReason::Unsupported)

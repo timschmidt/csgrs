@@ -60,7 +60,7 @@ impl CurveFamily2 {
 pub enum StraightSkeletonStage2 {
     /// Source topology and orientation were being checked.
     InputValidation,
-    /// Exact moving support lines and vertex trajectories were being prepared.
+    /// Exact moving support lines and vertex trajectories were being constructed.
     WavefrontPreparation,
     /// Exact wavefront collapse events were being scheduled.
     EventScheduling,
@@ -322,11 +322,6 @@ pub enum StraightSkeletonBlocker2 {
     DegenerateSignedArea,
     /// Signed-area orientation could not be decided.
     UncertainOrientation,
-    /// Legacy compatibility blocker from the convex-only implementation.
-    ///
-    /// General-position line contours now schedule split events directly, so
-    /// current construction does not emit this variant.
-    SplitEventsRequired { vertex_index: usize },
     /// Multiple topological event classes share one exact time.
     DegenerateSimultaneousEvents,
     /// A certified split did not yield two valid wavefront cycles.
@@ -770,9 +765,9 @@ impl StraightSkeleton2 {
     }
 }
 
-/// Report for exact straight-skeleton construction.
+/// Evidence for exact straight-skeleton construction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct StraightSkeletonReport2 {
+pub struct StraightSkeletonResult2 {
     stage: StraightSkeletonStage2,
     source_edge_count: usize,
     event_count: usize,
@@ -783,7 +778,7 @@ pub struct StraightSkeletonReport2 {
     blocker: Option<StraightSkeletonBlocker2>,
 }
 
-impl StraightSkeletonReport2 {
+impl StraightSkeletonResult2 {
     /// Return the furthest completed construction stage.
     pub const fn stage(&self) -> StraightSkeletonStage2 {
         self.stage
@@ -824,7 +819,7 @@ impl StraightSkeletonReport2 {
         self.blocker.as_ref()
     }
 
-    /// Consume the report and return its skeleton.
+    /// Consume the evidence and return its skeleton.
     pub fn into_skeleton(self) -> Option<StraightSkeleton2> {
         self.skeleton
     }
@@ -1470,8 +1465,8 @@ impl Contour2 {
             .iter()
             .all(|segment| matches!(segment, Segment2::Line(_)))
         {
-            let report = self.straight_skeleton(policy)?;
-            let Some(skeleton) = report.skeleton() else {
+            let evidence = self.straight_skeleton(policy)?;
+            let Some(skeleton) = evidence.skeleton() else {
                 return Ok(Classification::Uncertain(
                     crate::UncertaintyReason::Predicate,
                 ));
@@ -1756,9 +1751,9 @@ impl Contour2 {
     /// approximation. Generic concave input uses exact reflex split events;
     /// unresolved algebraic orderings and non-general-position event clusters
     /// remain explicit blockers.
-    pub fn straight_skeleton(&self, policy: &CurvePolicy) -> CurveResult<StraightSkeletonReport2> {
+    pub fn straight_skeleton(&self, policy: &CurvePolicy) -> CurveResult<StraightSkeletonResult2> {
         let source_edge_count = self.segments().len();
-        let blocked = |stage, blocker| StraightSkeletonReport2 {
+        let blocked = |stage, blocker| StraightSkeletonResult2 {
             stage,
             source_edge_count,
             event_count: 0,
@@ -1774,14 +1769,14 @@ impl Contour2 {
             .iter()
             .any(|segment| matches!(segment, Segment2::Arc(_)))
         {
-            if let Some(report) = self.co_circular_shape_preserving_skeleton(policy)? {
-                return Ok(report);
+            if let Some(evidence) = self.co_circular_shape_preserving_skeleton(policy)? {
+                return Ok(evidence);
             }
-            if let Some(report) = self.two_edge_line_arc_straight_skeleton(policy)? {
-                return Ok(report);
+            if let Some(evidence) = self.two_edge_line_arc_straight_skeleton(policy)? {
+                return Ok(evidence);
             }
-            if let Some(report) = self.shape_preserving_arc_straight_skeleton(policy)? {
-                return Ok(report);
+            if let Some(evidence) = self.shape_preserving_arc_straight_skeleton(policy)? {
+                return Ok(evidence);
             }
         }
 
@@ -1903,7 +1898,7 @@ impl Contour2 {
             build_convex_straight_skeleton(&supports, &lines, policy)
         }?;
         Ok(match result {
-            Ok((skeleton, event_count, simultaneous_event_count)) => StraightSkeletonReport2 {
+            Ok((skeleton, event_count, simultaneous_event_count)) => StraightSkeletonResult2 {
                 stage: StraightSkeletonStage2::Complete,
                 source_edge_count,
                 event_count,
@@ -1914,7 +1909,7 @@ impl Contour2 {
                 blocker: None,
             },
             Err((stage, blocker, event_count, simultaneous_event_count)) => {
-                StraightSkeletonReport2 {
+                StraightSkeletonResult2 {
                     stage,
                     source_edge_count,
                     event_count,
@@ -1931,7 +1926,7 @@ impl Contour2 {
     fn co_circular_shape_preserving_skeleton(
         &self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Option<StraightSkeletonReport2>> {
+    ) -> CurveResult<Option<StraightSkeletonResult2>> {
         let Some(Segment2::Arc(first)) = self.segments().first() else {
             return Ok(None);
         };
@@ -1958,7 +1953,7 @@ impl Contour2 {
             let representative = match arc.representative_point(policy)? {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(_) => {
-                    return Ok(Some(StraightSkeletonReport2 {
+                    return Ok(Some(StraightSkeletonResult2 {
                         stage: StraightSkeletonStage2::InputValidation,
                         source_edge_count: self.segments().len(),
                         event_count: 0,
@@ -1978,7 +1973,7 @@ impl Contour2 {
                     Classification::Decided(true) => overlap = true,
                     Classification::Decided(false) => {}
                     Classification::Uncertain(_) => {
-                        return Ok(Some(StraightSkeletonReport2 {
+                        return Ok(Some(StraightSkeletonResult2 {
                             stage: StraightSkeletonStage2::InputValidation,
                             source_edge_count: self.segments().len(),
                             event_count: 0,
@@ -1993,7 +1988,7 @@ impl Contour2 {
             }
         }
         if overlap {
-            return Ok(Some(StraightSkeletonReport2 {
+            return Ok(Some(StraightSkeletonResult2 {
                 stage: StraightSkeletonStage2::InputValidation,
                 source_edge_count: self.segments().len(),
                 event_count: 0,
@@ -2005,7 +2000,7 @@ impl Contour2 {
             }));
         }
         let radius = first.radius_squared().sqrt()?;
-        Ok(Some(StraightSkeletonReport2 {
+        Ok(Some(StraightSkeletonResult2 {
             stage: StraightSkeletonStage2::Complete,
             source_edge_count: self.segments().len(),
             event_count: 1,
@@ -2025,7 +2020,7 @@ impl Contour2 {
     fn two_edge_line_arc_straight_skeleton(
         &self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Option<StraightSkeletonReport2>> {
+    ) -> CurveResult<Option<StraightSkeletonResult2>> {
         if self.segments().len() != 2 {
             return Ok(None);
         }
@@ -2035,7 +2030,7 @@ impl Contour2 {
             _ => return Ok(None),
         };
         let blocked = |blocker| {
-            Some(StraightSkeletonReport2 {
+            Some(StraightSkeletonResult2 {
                 stage: StraightSkeletonStage2::InputValidation,
                 source_edge_count: 2,
                 event_count: 0,
@@ -2103,7 +2098,7 @@ impl Contour2 {
             Some(RealSign::Positive) => {}
             Some(RealSign::Negative | RealSign::Zero) => return Ok(None),
             None => {
-                return Ok(Some(StraightSkeletonReport2 {
+                return Ok(Some(StraightSkeletonResult2 {
                     stage: StraightSkeletonStage2::EventScheduling,
                     source_edge_count: 2,
                     event_count: 0,
@@ -2121,7 +2116,7 @@ impl Contour2 {
                 Some(Ordering::Less) => return Ok(None),
                 Some(Ordering::Equal | Ordering::Greater) => {}
                 None => {
-                    return Ok(Some(StraightSkeletonReport2 {
+                    return Ok(Some(StraightSkeletonResult2 {
                         stage: StraightSkeletonStage2::EventScheduling,
                         source_edge_count: 2,
                         event_count: 0,
@@ -2143,7 +2138,7 @@ impl Contour2 {
         let trajectories = match self.straight_skeleton_vertex_trajectories(policy)? {
             Classification::Decided(trajectories) => trajectories,
             Classification::Uncertain(_) => {
-                return Ok(Some(StraightSkeletonReport2 {
+                return Ok(Some(StraightSkeletonResult2 {
                     stage: StraightSkeletonStage2::WavefrontPreparation,
                     source_edge_count: 2,
                     event_count: 0,
@@ -2186,7 +2181,7 @@ impl Contour2 {
                 geometry: arc_geometry_from_trajectory(trajectory),
             })
             .collect();
-        Ok(Some(StraightSkeletonReport2 {
+        Ok(Some(StraightSkeletonResult2 {
             stage: StraightSkeletonStage2::Complete,
             source_edge_count: 2,
             event_count: 1,
@@ -2206,7 +2201,7 @@ impl Contour2 {
     fn shape_preserving_arc_straight_skeleton(
         &self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Option<StraightSkeletonReport2>> {
+    ) -> CurveResult<Option<StraightSkeletonResult2>> {
         if self.segments().len() < 3
             || !self
                 .segments()
@@ -2218,14 +2213,14 @@ impl Contour2 {
         match self.has_self_contacts(policy)? {
             Classification::Decided(false) => {}
             Classification::Decided(true) => {
-                return Ok(Some(blocked_shape_preserving_report(
+                return Ok(Some(blocked_shape_preserving_evidence(
                     self.segments().len(),
                     StraightSkeletonStage2::InputValidation,
                     StraightSkeletonBlocker2::SelfContact,
                 )));
             }
             Classification::Uncertain(_) => {
-                return Ok(Some(blocked_shape_preserving_report(
+                return Ok(Some(blocked_shape_preserving_evidence(
                     self.segments().len(),
                     StraightSkeletonStage2::InputValidation,
                     StraightSkeletonBlocker2::UncertainSelfContact,
@@ -2233,7 +2228,7 @@ impl Contour2 {
             }
         }
         let Some(area) = self.signed_area()? else {
-            return Ok(Some(blocked_shape_preserving_report(
+            return Ok(Some(blocked_shape_preserving_evidence(
                 self.segments().len(),
                 StraightSkeletonStage2::InputValidation,
                 StraightSkeletonBlocker2::UnsupportedSignedArea,
@@ -2243,14 +2238,14 @@ impl Contour2 {
             Some(RealSign::Positive) => RealSign::Positive,
             Some(RealSign::Negative) => RealSign::Negative,
             Some(RealSign::Zero) => {
-                return Ok(Some(blocked_shape_preserving_report(
+                return Ok(Some(blocked_shape_preserving_evidence(
                     self.segments().len(),
                     StraightSkeletonStage2::InputValidation,
                     StraightSkeletonBlocker2::DegenerateSignedArea,
                 )));
             }
             None => {
-                return Ok(Some(blocked_shape_preserving_report(
+                return Ok(Some(blocked_shape_preserving_evidence(
                     self.segments().len(),
                     StraightSkeletonStage2::InputValidation,
                     StraightSkeletonBlocker2::UncertainOrientation,
@@ -2272,7 +2267,7 @@ impl Contour2 {
                 }
                 Some(RealSign::Zero) => {}
                 None => {
-                    return Ok(Some(blocked_shape_preserving_report(
+                    return Ok(Some(blocked_shape_preserving_evidence(
                         self.segments().len(),
                         StraightSkeletonStage2::InputValidation,
                         StraightSkeletonBlocker2::UncertainVertexTurn { vertex_index },
@@ -2299,7 +2294,7 @@ impl Contour2 {
                     _ => false,
                 });
         if requires_general_scheduler {
-            return Ok(Some(general_shape_preserving_straight_skeleton_report(
+            return Ok(Some(general_shape_preserving_straight_skeleton_evidence(
                 &supports,
                 &source_points,
                 orientation,
@@ -2318,7 +2313,7 @@ impl Contour2 {
             )? {
                 Ok(Some(reduction)) => Some(reduction),
                 Ok(None) => {
-                    return Ok(Some(general_shape_preserving_straight_skeleton_report(
+                    return Ok(Some(general_shape_preserving_straight_skeleton_evidence(
                         &supports,
                         &source_points,
                         orientation,
@@ -2326,7 +2321,7 @@ impl Contour2 {
                     )?));
                 }
                 Err(blocker) => {
-                    return Ok(Some(blocked_shape_preserving_report(
+                    return Ok(Some(blocked_shape_preserving_evidence(
                         self.segments().len(),
                         StraightSkeletonStage2::EventScheduling,
                         blocker,
@@ -2358,7 +2353,7 @@ impl Contour2 {
                         })
                         .collect::<Vec<_>>();
                     let [bubble_node] = matching_nodes.as_slice() else {
-                        return Ok(Some(blocked_shape_preserving_report(
+                        return Ok(Some(blocked_shape_preserving_evidence(
                             self.segments().len(),
                             StraightSkeletonStage2::WavefrontPreparation,
                             StraightSkeletonBlocker2::InvalidSplitTopology,
@@ -2368,7 +2363,7 @@ impl Contour2 {
                         &mut skeleton.nodes[*bubble_node].kind,
                         reduction.source_edge,
                     ) {
-                        return Ok(Some(blocked_shape_preserving_report(
+                        return Ok(Some(blocked_shape_preserving_evidence(
                             self.segments().len(),
                             StraightSkeletonStage2::WavefrontPreparation,
                             StraightSkeletonBlocker2::InvalidSplitTopology,
@@ -2383,7 +2378,7 @@ impl Contour2 {
                             Some(Ordering::Equal) => shares_active_event = true,
                             Some(Ordering::Less | Ordering::Greater) => {}
                             None => {
-                                return Ok(Some(blocked_shape_preserving_report(
+                                return Ok(Some(blocked_shape_preserving_evidence(
                                     self.segments().len(),
                                     StraightSkeletonStage2::EventScheduling,
                                     StraightSkeletonBlocker2::UncertainEventOrdering,
@@ -2400,7 +2395,7 @@ impl Contour2 {
                         Some(Ordering::Greater) => skeleton.maximum_time = collapse,
                         Some(Ordering::Equal | Ordering::Less) => {}
                         None => {
-                            return Ok(Some(blocked_shape_preserving_report(
+                            return Ok(Some(blocked_shape_preserving_evidence(
                                 self.segments().len(),
                                 StraightSkeletonStage2::EventScheduling,
                                 StraightSkeletonBlocker2::UncertainEventOrdering,
@@ -2408,7 +2403,7 @@ impl Contour2 {
                         }
                     }
                 }
-                StraightSkeletonReport2 {
+                StraightSkeletonResult2 {
                     stage: StraightSkeletonStage2::Complete,
                     source_edge_count: self.segments().len(),
                     event_count,
@@ -2420,7 +2415,7 @@ impl Contour2 {
                 }
             }
             Err((stage, blocker, event_count, simultaneous_event_count)) => {
-                StraightSkeletonReport2 {
+                StraightSkeletonResult2 {
                     stage,
                     source_edge_count: self.segments().len(),
                     event_count,
@@ -2435,12 +2430,12 @@ impl Contour2 {
     }
 }
 
-fn general_shape_preserving_straight_skeleton_report(
+fn general_shape_preserving_straight_skeleton_evidence(
     supports: &[ShapePreservingSupport2],
     source_points: &[Point2],
     orientation: RealSign,
     policy: &CurvePolicy,
-) -> CurveResult<StraightSkeletonReport2> {
+) -> CurveResult<StraightSkeletonResult2> {
     let source_edge_count = supports.len();
     let result = build_general_shape_preserving_straight_skeleton(
         supports,
@@ -2449,7 +2444,7 @@ fn general_shape_preserving_straight_skeleton_report(
         policy,
     )?;
     Ok(match result {
-        Ok((skeleton, event_count, simultaneous_event_count)) => StraightSkeletonReport2 {
+        Ok((skeleton, event_count, simultaneous_event_count)) => StraightSkeletonResult2 {
             stage: StraightSkeletonStage2::Complete,
             source_edge_count,
             event_count,
@@ -2459,7 +2454,7 @@ fn general_shape_preserving_straight_skeleton_report(
             skeleton: Some(skeleton),
             blocker: None,
         },
-        Err((stage, blocker, event_count, simultaneous_event_count)) => StraightSkeletonReport2 {
+        Err((stage, blocker, event_count, simultaneous_event_count)) => StraightSkeletonResult2 {
             stage,
             source_edge_count,
             event_count,
@@ -2480,7 +2475,7 @@ impl CurvePath2 {
     /// circular-conic reductions; every other instance returns a typed
     /// capability blocker with its curve index. No flattening or tolerance
     /// substitution is performed.
-    pub fn straight_skeleton(&self, policy: &CurvePolicy) -> CurveResult<StraightSkeletonReport2> {
+    pub fn straight_skeleton(&self, policy: &CurvePolicy) -> CurveResult<StraightSkeletonResult2> {
         let source_edge_count = self.curves().len();
         let mut segments = Vec::with_capacity(source_edge_count);
         for (curve_index, curve) in self.curves().iter().enumerate() {
@@ -2493,14 +2488,14 @@ impl CurvePath2 {
                             segments.push(Segment2::Line(fit.line().clone()));
                         }
                         Classification::Decided(BezierLineImageFitRelation::NotLine) => {
-                            return Ok(unsupported_curve_family_report(
+                            return Ok(unsupported_curve_family_evidence(
                                 source_edge_count,
                                 curve_index,
                                 CurveFamily2::QuadraticBezier,
                             ));
                         }
                         Classification::Uncertain(_) => {
-                            return Ok(uncertain_curve_family_report(
+                            return Ok(uncertain_curve_family_evidence(
                                 source_edge_count,
                                 curve_index,
                                 CurveFamily2::QuadraticBezier,
@@ -2513,14 +2508,14 @@ impl CurvePath2 {
                         segments.push(Segment2::Line(fit.line().clone()));
                     }
                     Classification::Decided(BezierLineImageFitRelation::NotLine) => {
-                        return Ok(unsupported_curve_family_report(
+                        return Ok(unsupported_curve_family_evidence(
                             source_edge_count,
                             curve_index,
                             CurveFamily2::CubicBezier,
                         ));
                     }
                     Classification::Uncertain(_) => {
-                        return Ok(uncertain_curve_family_report(
+                        return Ok(uncertain_curve_family_evidence(
                             source_edge_count,
                             curve_index,
                             CurveFamily2::CubicBezier,
@@ -2538,14 +2533,14 @@ impl CurvePath2 {
                                     segments.push(Segment2::Arc(arc));
                                 }
                                 Classification::Decided(None) => {
-                                    return Ok(unsupported_curve_family_report(
+                                    return Ok(unsupported_curve_family_evidence(
                                         source_edge_count,
                                         curve_index,
                                         CurveFamily2::RationalQuadraticBezier,
                                     ));
                                 }
                                 Classification::Uncertain(_) => {
-                                    return Ok(uncertain_curve_family_report(
+                                    return Ok(uncertain_curve_family_evidence(
                                         source_edge_count,
                                         curve_index,
                                         CurveFamily2::RationalQuadraticBezier,
@@ -2559,7 +2554,7 @@ impl CurvePath2 {
                                     segments.push(Segment2::Arc(arc));
                                 }
                                 Classification::Decided(None) | Classification::Uncertain(_) => {
-                                    return Ok(uncertain_curve_family_report(
+                                    return Ok(uncertain_curve_family_evidence(
                                         source_edge_count,
                                         curve_index,
                                         CurveFamily2::RationalQuadraticBezier,
@@ -2580,14 +2575,14 @@ impl CurvePath2 {
                                     segments.push(Segment2::Arc(arc));
                                 }
                                 Classification::Decided(None) => {
-                                    return Ok(unsupported_curve_family_report(
+                                    return Ok(unsupported_curve_family_evidence(
                                         source_edge_count,
                                         curve_index,
                                         CurveFamily2::RationalBezier,
                                     ));
                                 }
                                 Classification::Uncertain(_) => {
-                                    return Ok(uncertain_curve_family_report(
+                                    return Ok(uncertain_curve_family_evidence(
                                         source_edge_count,
                                         curve_index,
                                         CurveFamily2::RationalBezier,
@@ -2601,7 +2596,7 @@ impl CurvePath2 {
                                     segments.push(Segment2::Arc(arc));
                                 }
                                 Classification::Decided(None) | Classification::Uncertain(_) => {
-                                    return Ok(uncertain_curve_family_report(
+                                    return Ok(uncertain_curve_family_evidence(
                                         source_edge_count,
                                         curve_index,
                                         CurveFamily2::RationalBezier,
@@ -2623,14 +2618,14 @@ impl CurvePath2 {
                             segments.push(Segment2::Line(line));
                         }
                         Classification::Decided(None) => {
-                            return Ok(unsupported_curve_family_report(
+                            return Ok(unsupported_curve_family_evidence(
                                 source_edge_count,
                                 curve_index,
                                 CurveFamily2::PolynomialBSpline,
                             ));
                         }
                         Classification::Uncertain(_) => {
-                            return Ok(uncertain_curve_family_report(
+                            return Ok(uncertain_curve_family_evidence(
                                 source_edge_count,
                                 curve_index,
                                 CurveFamily2::PolynomialBSpline,
@@ -2655,14 +2650,14 @@ impl CurvePath2 {
                                     segments.push(Segment2::Arc(arc));
                                 }
                                 Classification::Decided(None) => {
-                                    return Ok(unsupported_curve_family_report(
+                                    return Ok(unsupported_curve_family_evidence(
                                         source_edge_count,
                                         curve_index,
                                         CurveFamily2::Nurbs,
                                     ));
                                 }
                                 Classification::Uncertain(_) => {
-                                    return Ok(uncertain_curve_family_report(
+                                    return Ok(uncertain_curve_family_evidence(
                                         source_edge_count,
                                         curve_index,
                                         CurveFamily2::Nurbs,
@@ -2676,7 +2671,7 @@ impl CurvePath2 {
                                     segments.push(Segment2::Arc(arc));
                                 }
                                 Classification::Decided(None) | Classification::Uncertain(_) => {
-                                    return Ok(uncertain_curve_family_report(
+                                    return Ok(uncertain_curve_family_evidence(
                                         source_edge_count,
                                         curve_index,
                                         CurveFamily2::Nurbs,
@@ -2953,12 +2948,12 @@ fn control_net_line_image(
     Ok(Classification::Decided(Some(line)))
 }
 
-fn unsupported_curve_family_report(
+fn unsupported_curve_family_evidence(
     source_edge_count: usize,
     curve_index: usize,
     family: CurveFamily2,
-) -> StraightSkeletonReport2 {
-    blocked_shape_preserving_report(
+) -> StraightSkeletonResult2 {
+    blocked_shape_preserving_evidence(
         source_edge_count,
         StraightSkeletonStage2::InputValidation,
         StraightSkeletonBlocker2::UnsupportedCurveFamily {
@@ -2968,12 +2963,12 @@ fn unsupported_curve_family_report(
     )
 }
 
-fn uncertain_curve_family_report(
+fn uncertain_curve_family_evidence(
     source_edge_count: usize,
     curve_index: usize,
     family: CurveFamily2,
-) -> StraightSkeletonReport2 {
-    blocked_shape_preserving_report(
+) -> StraightSkeletonResult2 {
+    blocked_shape_preserving_evidence(
         source_edge_count,
         StraightSkeletonStage2::InputValidation,
         StraightSkeletonBlocker2::UncertainCurveFamilyReduction {
@@ -2983,12 +2978,12 @@ fn uncertain_curve_family_report(
     )
 }
 
-fn blocked_shape_preserving_report(
+fn blocked_shape_preserving_evidence(
     source_edge_count: usize,
     stage: StraightSkeletonStage2,
     blocker: StraightSkeletonBlocker2,
-) -> StraightSkeletonReport2 {
-    StraightSkeletonReport2 {
+) -> StraightSkeletonResult2 {
+    StraightSkeletonResult2 {
         stage,
         source_edge_count,
         event_count: 0,
@@ -9933,7 +9928,7 @@ mod tests {
     }
 
     #[test]
-    fn curve_path_dispatch_preserves_native_families_and_reports_capabilities() {
+    fn curve_path_dispatch_preserves_native_families_and_evidence_capabilities() {
         for family in [CurveFamily2::Line, CurveFamily2::CircularArc] {
             assert_eq!(
                 family.straight_skeleton_support(),
@@ -9972,8 +9967,8 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let report = path.straight_skeleton(&CurvePolicy::certified()).unwrap();
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
+        let evidence = path.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
 
         let line_start = Point2::new(r(0), r(0));
         let line_end = Point2::new(r(4), r(0));
@@ -10045,11 +10040,11 @@ mod tests {
                 ),
             ])
             .unwrap();
-            let report = path.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = path.straight_skeleton(&CurvePolicy::certified()).unwrap();
             assert_eq!(
-                report.stage(),
+                evidence.stage(),
                 StraightSkeletonStage2::Complete,
-                "{family:?}: {report:?}"
+                "{family:?}: {evidence:?}"
             );
         }
 
@@ -10101,13 +10096,13 @@ mod tests {
                 Curve2::from(LineSeg2::try_new(center.clone(), right.clone()).unwrap()),
             ])
             .unwrap();
-            let report = rational_sector
+            let evidence = rational_sector
                 .straight_skeleton(&CurvePolicy::certified())
                 .unwrap();
             assert_eq!(
-                report.stage(),
+                evidence.stage(),
                 StraightSkeletonStage2::Complete,
-                "{family:?} degree {degree}: {report:?}"
+                "{family:?} degree {degree}: {evidence:?}"
             );
         }
         let noncircular_rational = RationalBezier2::try_new(
@@ -10139,11 +10134,11 @@ mod tests {
             )),
         ])
         .unwrap();
-        let report = unsupported
+        let evidence = unsupported
             .straight_skeleton(&CurvePolicy::certified())
             .unwrap();
         assert_eq!(
-            report.blocker(),
+            evidence.blocker(),
             Some(&StraightSkeletonBlocker2::UnsupportedCurveFamily {
                 curve_index: 0,
                 family: CurveFamily2::QuadraticBezier,
@@ -10233,15 +10228,15 @@ mod tests {
                 ),
             ])
             .unwrap();
-            let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
             assert_eq!(
-                report.stage(),
+                evidence.stage(),
                 StraightSkeletonStage2::Complete,
-                "{report:?}"
+                "{evidence:?}"
             );
-            assert_eq!(report.event_count(), 1);
-            assert_eq!(report.simultaneous_event_count(), 1);
-            let skeleton = report.skeleton().unwrap();
+            assert_eq!(evidence.event_count(), 1);
+            assert_eq!(evidence.simultaneous_event_count(), 1);
+            let skeleton = evidence.skeleton().unwrap();
             let half = (r(1) / r(2)).unwrap();
             assert_eq!(skeleton.maximum_time(), &half);
             assert_eq!(skeleton.nodes().len(), 3);
@@ -10300,15 +10295,15 @@ mod tests {
                 Segment2::Line(LineSeg2::try_new(first_line_end, second_line_end).unwrap()),
             ])
             .unwrap();
-            let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
             assert_eq!(
-                report.stage(),
+                evidence.stage(),
                 StraightSkeletonStage2::Complete,
-                "{report:?}"
+                "{evidence:?}"
             );
-            assert_eq!(report.event_count(), 1);
-            assert_eq!(report.simultaneous_event_count(), 1);
-            let skeleton = report.skeleton().unwrap();
+            assert_eq!(evidence.event_count(), 1);
+            assert_eq!(evidence.simultaneous_event_count(), 1);
+            let skeleton = evidence.skeleton().unwrap();
             let event_time = ((-r(2) + r(8).sqrt().unwrap()) / r(2)).unwrap();
             assert_eq!(skeleton.maximum_time(), &event_time);
             assert_eq!(skeleton.nodes().len(), 4);
@@ -10403,16 +10398,16 @@ mod tests {
                 .iter()
                 .all(|event| [1, 2].contains(&event.source_vertex()))
         );
-        let report = bubble_source
+        let evidence = bubble_source
             .straight_skeleton(&CurvePolicy::certified())
             .unwrap();
         assert_eq!(
-            report.stage(),
+            evidence.stage(),
             StraightSkeletonStage2::Complete,
-            "{report:?}"
+            "{evidence:?}"
         );
-        assert!(report.event_count() >= 3);
-        let skeleton = report.skeleton().unwrap();
+        assert!(evidence.event_count() >= 3);
+        let skeleton = evidence.skeleton().unwrap();
         assert!(skeleton.nodes().len() > bubble_source.segments().len());
         assert!(matches!(
             compare_reals(skeleton.maximum_time(), &r(1), &CurvePolicy::certified()),
@@ -10447,15 +10442,15 @@ mod tests {
             ),
         ])
         .unwrap();
-        let report = clockwise
+        let evidence = clockwise
             .straight_skeleton(&CurvePolicy::certified())
             .unwrap();
         assert_eq!(
-            report.stage(),
+            evidence.stage(),
             StraightSkeletonStage2::Complete,
-            "{report:?}"
+            "{evidence:?}"
         );
-        assert!(report.skeleton().unwrap().nodes().iter().any(|node| {
+        assert!(evidence.skeleton().unwrap().nodes().iter().any(|node| {
             node.kind() == &StraightSkeletonNodeKind2::BubbleEvent { source_edge: 3 }
         }));
     }
@@ -10592,13 +10587,13 @@ mod tests {
             .expect("coincident anti-parallel overlap must terminate exactly");
         assert!(arcs.iter().any(|arc| arc.end_node() == overlap_node
             && arc.kind() == &StraightSkeletonArcKind2::TerminalRidge));
-        let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
         assert_eq!(
-            report.stage(),
+            evidence.stage(),
             StraightSkeletonStage2::Complete,
-            "{report:?}"
+            "{evidence:?}"
         );
-        assert!(report.skeleton().is_some());
+        assert!(evidence.skeleton().is_some());
     }
 
     #[test]
@@ -11538,14 +11533,14 @@ mod tests {
                 )
             }));
             let source = Contour2::try_new(segments).unwrap();
-            let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
             assert_eq!(
-                report.stage(),
+                evidence.stage(),
                 StraightSkeletonStage2::Complete,
-                "{report:?}"
+                "{evidence:?}"
             );
-            assert_eq!(report.event_count(), 2);
-            let skeleton = report.skeleton().unwrap();
+            assert_eq!(evidence.event_count(), 2);
+            let skeleton = evidence.skeleton().unwrap();
             assert_eq!(skeleton.source_edge_count(), 4);
             assert_eq!(skeleton.nodes().len(), 6);
             assert_eq!(skeleton.arcs().len(), 5);
@@ -11595,14 +11590,14 @@ mod tests {
                 ),
             ])
             .unwrap();
-            let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+            let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
             assert_eq!(
-                report.stage(),
+                evidence.stage(),
                 StraightSkeletonStage2::Complete,
-                "{report:?}"
+                "{evidence:?}"
             );
-            assert_eq!(report.event_count(), 1);
-            let skeleton = report.skeleton().unwrap();
+            assert_eq!(evidence.event_count(), 1);
+            let skeleton = evidence.skeleton().unwrap();
             assert!(skeleton.nodes().is_empty());
             assert!(skeleton.arcs().is_empty());
             assert_eq!(skeleton.maximum_time(), &r(1));
@@ -11961,13 +11956,13 @@ mod tests {
 
     #[test]
     fn square_collapses_to_one_exact_center_event() {
-        let report = contour(&[(0, 0), (2, 0), (2, 2), (0, 2)])
+        let evidence = contour(&[(0, 0), (2, 0), (2, 2), (0, 2)])
             .straight_skeleton(&CurvePolicy::certified())
             .unwrap();
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        assert_eq!(report.event_count(), 1);
-        assert_eq!(report.simultaneous_event_count(), 1);
-        let skeleton = report.skeleton().unwrap();
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(evidence.event_count(), 1);
+        assert_eq!(evidence.simultaneous_event_count(), 1);
+        let skeleton = evidence.skeleton().unwrap();
         assert_eq!(skeleton.nodes().len(), 5);
         assert_eq!(skeleton.arcs().len(), 4);
         let center = skeleton.nodes().last().unwrap();
@@ -11977,10 +11972,10 @@ mod tests {
 
     #[test]
     fn rectangle_retains_the_terminal_ridge() {
-        let report = contour(&[(0, 0), (4, 0), (4, 2), (0, 2)])
+        let evidence = contour(&[(0, 0), (4, 0), (4, 2), (0, 2)])
             .straight_skeleton(&CurvePolicy::certified())
             .unwrap();
-        let skeleton = report.skeleton().unwrap();
+        let skeleton = evidence.skeleton().unwrap();
         assert_eq!(skeleton.nodes().len(), 6);
         assert_eq!(skeleton.arcs().len(), 5);
         assert!(
@@ -11994,10 +11989,10 @@ mod tests {
 
     #[test]
     fn clockwise_square_has_the_same_exact_collapse() {
-        let report = contour(&[(0, 0), (0, 2), (2, 2), (2, 0)])
+        let evidence = contour(&[(0, 0), (0, 2), (2, 2), (2, 0)])
             .straight_skeleton(&CurvePolicy::certified())
             .unwrap();
-        let skeleton = report.skeleton().unwrap();
+        let skeleton = evidence.skeleton().unwrap();
         assert_eq!(
             skeleton.nodes().last().unwrap().point(),
             &Point2::new(r(1), r(1))
@@ -12010,23 +12005,23 @@ mod tests {
             &[(0, 0), (1, 0), (2, 0), (2, 2), (0, 2)][..],
             &[(0, 2), (2, 2), (2, 0), (1, 0), (0, 0)][..],
         ] {
-            let report = contour(points)
+            let evidence = contour(points)
                 .straight_skeleton(&CurvePolicy::certified())
                 .unwrap();
-            assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-            assert_eq!(report.source_edge_count(), 5);
-            assert_eq!(report.skeleton().unwrap().nodes().len(), 5);
+            assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+            assert_eq!(evidence.source_edge_count(), 5);
+            assert_eq!(evidence.skeleton().unwrap().nodes().len(), 5);
         }
     }
 
     #[test]
     fn non_general_position_l_shape_materializes_terminal_vertex_event() {
-        let report = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)])
+        let evidence = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)])
             .straight_skeleton(&CurvePolicy::certified())
             .unwrap();
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        assert_eq!(report.vertex_event_count(), 1);
-        let skeleton = report.skeleton().unwrap();
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(evidence.vertex_event_count(), 1);
+        let skeleton = evidence.skeleton().unwrap();
         let two = r(2);
         let half = (r(1) / two).unwrap();
         let event = skeleton
@@ -12073,10 +12068,10 @@ mod tests {
                 ..
             }
         )));
-        let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        assert_eq!(report.split_event_count(), 1);
-        let skeleton = report.skeleton().unwrap();
+        let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(evidence.split_event_count(), 1);
+        let skeleton = evidence.skeleton().unwrap();
         let four = r(4);
         let split_time = (r(7) / &four).unwrap();
         let split_x = (r(87) / four).unwrap();
@@ -12223,14 +12218,14 @@ mod tests {
                 hit_source_edge: 0,
             }
         )));
-        let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
         assert_eq!(
-            report.stage(),
+            evidence.stage(),
             StraightSkeletonStage2::Complete,
-            "{report:?}"
+            "{evidence:?}"
         );
-        assert!(report.split_event_count() >= 1);
-        assert!(report.skeleton().is_some());
+        assert!(evidence.split_event_count() >= 1);
+        assert!(evidence.skeleton().is_some());
     }
 
     #[test]
@@ -12329,17 +12324,17 @@ mod tests {
                 .iter()
                 .any(|node| matches!(node.kind(), StraightSkeletonNodeKind2::SqueezeEvent { .. }))
         );
-        let report = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
+        let evidence = source.straight_skeleton(&CurvePolicy::certified()).unwrap();
         assert_eq!(
-            report.stage(),
+            evidence.stage(),
             StraightSkeletonStage2::Complete,
-            "{report:?}"
+            "{evidence:?}"
         );
     }
 
     #[test]
     fn clockwise_general_position_concave_polygon_completes() {
-        let report = contour(&[
+        let evidence = contour(&[
             (0, 24),
             (17, 24),
             (17, 11),
@@ -12351,9 +12346,9 @@ mod tests {
         ])
         .straight_skeleton(&CurvePolicy::certified())
         .unwrap();
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        assert_eq!(report.split_event_count(), 1);
-        assert!(report.skeleton().is_some());
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(evidence.split_event_count(), 1);
+        assert!(evidence.skeleton().is_some());
     }
 
     #[test]
@@ -12417,16 +12412,16 @@ mod tests {
             ),
         ];
         for (name, points) in fixtures {
-            let report = contour(points)
+            let evidence = contour(points)
                 .straight_skeleton(&CurvePolicy::certified())
                 .unwrap();
             assert_eq!(
-                report.stage(),
+                evidence.stage(),
                 StraightSkeletonStage2::Complete,
                 "{name}: {:?}",
-                report.blocker()
+                evidence.blocker()
             );
-            let skeleton = report.skeleton().unwrap();
+            let skeleton = evidence.skeleton().unwrap();
             assert!(skeleton.arcs().iter().all(|arc| {
                 arc.start_node() < skeleton.nodes().len()
                     && arc.end_node() < skeleton.nodes().len()
@@ -12437,7 +12432,7 @@ mod tests {
 
     #[test]
     fn nonterminal_bridge_collapse_splits_into_two_live_cycles() {
-        let report = contour(&[
+        let evidence = contour(&[
             (0, 0),
             (4, 0),
             (4, 1),
@@ -12453,10 +12448,10 @@ mod tests {
         ])
         .straight_skeleton(&CurvePolicy::certified())
         .unwrap();
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        assert_eq!(report.vertex_event_count(), 2);
-        assert_eq!(report.event_count(), 2);
-        let skeleton = report.skeleton().unwrap();
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(evidence.vertex_event_count(), 2);
+        assert_eq!(evidence.event_count(), 2);
+        let skeleton = evidence.skeleton().unwrap();
         assert!(skeleton.arcs().iter().any(|arc| {
             arc.kind() == &StraightSkeletonArcKind2::TerminalRidge
                 && skeleton.nodes()[arc.start_node()].time() == &r(1)
@@ -12466,7 +12461,7 @@ mod tests {
 
     #[test]
     fn clockwise_nonterminal_bridge_collapse_completes() {
-        let report = contour(&[
+        let evidence = contour(&[
             (0, 4),
             (4, 4),
             (4, 3),
@@ -12482,13 +12477,13 @@ mod tests {
         ])
         .straight_skeleton(&CurvePolicy::certified())
         .unwrap();
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        assert_eq!(report.vertex_event_count(), 2);
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(evidence.vertex_event_count(), 2);
     }
 
     #[test]
     fn same_point_nonterminal_multi_vertex_event_splits_four_live_cycles() {
-        let report = contour(&[
+        let evidence = contour(&[
             (4, 0),
             (8, 0),
             (8, 4),
@@ -12520,10 +12515,10 @@ mod tests {
         ])
         .straight_skeleton(&CurvePolicy::certified())
         .unwrap();
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        assert_eq!(report.vertex_event_count(), 5);
-        assert_eq!(report.event_count(), 2);
-        let center = report
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        assert_eq!(evidence.vertex_event_count(), 5);
+        assert_eq!(evidence.event_count(), 2);
+        let center = evidence
             .skeleton()
             .unwrap()
             .nodes()

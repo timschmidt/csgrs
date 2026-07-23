@@ -120,8 +120,8 @@ fn exercise_offsets(contour: &Contour2, distance: i32) {
 
 fn exercise_clipping(a: &LineArcRegion2, b: &LineArcRegion2) {
     let policy = policy();
-    let prepared_a = a.prepare_topology_queries(&policy);
-    let prepared_b = b.prepare_topology_queries(&policy);
+    let prepared_a = a.query(&policy);
+    let prepared_b = b.query(&policy);
 
     for op in [
         BooleanOp::Union,
@@ -306,7 +306,7 @@ proptest! {
 }
 
 #[test]
-fn self_intersecting_closed_polyline_reconstruction_reports_contacts_without_bad_offsets() {
+fn self_intersecting_closed_polyline_reconstruction_evidence_contacts_without_bad_offsets() {
     let points = bowtie(12);
     let contour = contour_from_points(&points);
 
@@ -322,7 +322,7 @@ fn self_intersecting_closed_polyline_reconstruction_reports_contacts_without_bad
 }
 
 #[test]
-fn reconstructed_slender_concavity_offset_reports_uncertainty_not_radius_mismatch() {
+fn reconstructed_slender_concavity_offset_evidence_uncertainty_not_radius_mismatch() {
     let case = polygon_case(1, 60, 12, 1, 2);
     let mut samples: Vec<_> = case.source_points.iter().map(|&(x, y)| p(x, y)).collect();
     samples.insert(1, samples[1].clone());

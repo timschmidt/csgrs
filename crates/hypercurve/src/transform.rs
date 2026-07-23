@@ -250,7 +250,7 @@ impl CurveRegion2 {
         policy: &crate::CurvePolicy,
     ) -> ExactCurveResult<Self> {
         if let Classification::Decided(native) =
-            self.line_arc_region_fast_path(policy).map_err(|cause| {
+            self.native_line_arc_region(policy).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Transformation, CurveFamily2::Line, cause)
             })?
         {

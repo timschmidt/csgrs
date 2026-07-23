@@ -12,9 +12,8 @@ use crate::classify::real_sign;
 use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
 use crate::region_fragments::CompactLineRegionFragmentSet;
 use crate::{
-    Classification, CurveError, CurvePolicy, CurveResult, FillRule, ParamRange, Point2,
-    RegionContourKey, RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide,
-    RegionView2, RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
+    Classification, CurveError, CurvePolicy, CurveResult, FillRule, Point2, RegionContourKey,
+    RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide, RegionView2, Segment2,
     UncertaintyReason,
 };
 use hyperreal::{Real, RealSign};
@@ -83,98 +82,9 @@ pub struct BooleanFragmentSelection {
     classifications: Vec<BooleanFragmentClassification>,
 }
 
-/// Report for boolean fragment classification against the opposite region.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BooleanFragmentSelectionReport2 {
-    op: BooleanOp,
-    stage: BooleanFragmentSelectionStage2,
-    source_contour_count: usize,
-    source_fragment_count: usize,
-    source_fragment_kind_counts: SegmentKindCounts,
-    classified_fragment_count: Option<usize>,
-    discard_count: Option<usize>,
-    keep_source_direction_count: Option<usize>,
-    keep_reversed_count: Option<usize>,
-    boundary_needs_resolution_count: Option<usize>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Furthest exact stage reached by boolean fragment classification.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BooleanFragmentSelectionStage2 {
-    /// Source-contour orientation and signed fill role were being certified.
-    SourceFillSideClassification,
-    /// A retained fragment representative point was being materialized.
-    RepresentativePoint,
-    /// Representative points were being classified against opposite regions.
-    OppositeRegionClassification,
-    /// Boolean fragment actions were assigned and validated.
-    ActionAssignment,
-}
-
-/// Result of report-bearing boolean fragment classification.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BooleanFragmentSelectionResult2 {
-    selection: Option<BooleanFragmentSelection>,
-    report: BooleanFragmentSelectionReport2,
-}
-
 enum FragmentInteriorClassification<T> {
     Decided(T),
-    Blocked {
-        stage: BooleanFragmentSelectionStage2,
-        reason: UncertaintyReason,
-    },
-}
-
-/// Report for emitting selected boolean classifications as boundary fragments.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BooleanBoundaryFragmentEmissionReport2 {
-    stage: BooleanBoundaryFragmentEmissionStage2,
-    source_classification_count: usize,
-    discard_count: usize,
-    keep_source_direction_count: usize,
-    keep_reversed_count: usize,
-    boundary_needs_resolution_count: usize,
-    directed_fragment_count: Option<usize>,
-    directed_source_segment_kind_counts: Option<SegmentKindCounts>,
-    directed_fragment_kind_counts: Option<SegmentKindCounts>,
-    directed_fragments: Vec<BooleanDirectedFragmentReport2>,
-    unresolved_boundary_count: Option<usize>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Source provenance for one directed boundary fragment emitted by a boolean selection.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BooleanDirectedFragmentReport2 {
-    key: RegionContourKey,
-    fragment_index: usize,
-    source_segment_index: usize,
-    source_segment_kind: SegmentKind,
-    source_segment_start_point: Point2,
-    source_segment_end_point: Point2,
-    source_range: ParamRange,
-    reversed: bool,
-    output_fragment_index: usize,
-    output_fragment_kind: SegmentKind,
-}
-
-/// Furthest exact stage reached by boolean boundary fragment emission.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BooleanBoundaryFragmentEmissionStage2 {
-    /// Selection ownership was being validated against the supplied fragments.
-    SourceValidation,
-    /// Selected fragments were emitted in traversal direction or deferred.
-    FragmentEmission,
-}
-
-/// Result of report-bearing boolean boundary fragment emission.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BooleanBoundaryFragmentEmissionResult2 {
-    fragments: Option<BooleanBoundaryFragmentSet>,
-    report: BooleanBoundaryFragmentEmissionReport2,
+    Blocked(UncertaintyReason),
 }
 
 impl BooleanFragmentSelection {
@@ -273,7 +183,7 @@ impl BooleanFragmentSelection {
         }
         Ok(match endpoint_chain_indices(&endpoints, policy) {
             Ok(chain_indices) => Classification::Decided(chain_indices),
-            Err((_, reason)) => Classification::Uncertain(reason),
+            Err(reason) => Classification::Uncertain(reason),
         })
     }
 
@@ -383,7 +293,7 @@ impl BooleanFragmentSelection {
         }
         Ok(match endpoint_chain_indices(&endpoints, policy) {
             Ok(chain_indices) => Classification::Decided(chain_indices),
-            Err((_, reason)) => Classification::Uncertain(reason),
+            Err(reason) => Classification::Uncertain(reason),
         })
     }
 
@@ -676,57 +586,6 @@ impl BooleanFragmentSelection {
         )
     }
 
-    pub(crate) fn emit_boundary_fragments_from_certified_split_with_report(
-        &self,
-        fragments: &RegionFragmentSet,
-    ) -> CurveResult<BooleanBoundaryFragmentEmissionResult2> {
-        self.emit_boundary_fragments_with_report_impl(fragments, true)
-    }
-
-    fn emit_boundary_fragments_with_report_impl(
-        &self,
-        fragments: &RegionFragmentSet,
-        fragments_are_certified_split_output: bool,
-    ) -> CurveResult<BooleanBoundaryFragmentEmissionResult2> {
-        let Some(fragment_set) =
-            self.emit_boundary_fragments_impl(fragments, fragments_are_certified_split_output)?
-        else {
-            return Ok(blocked_boolean_boundary_fragment_emission_result(
-                self,
-                BooleanBoundaryFragmentEmissionStage2::FragmentEmission,
-                UncertaintyReason::Unsupported,
-            ));
-        };
-        let directed_fragment_count = fragment_set.directed_len();
-        let directed_fragment_kind_counts =
-            directed_boolean_fragment_kind_counts(fragment_set.directed_fragments());
-        let directed_fragment_reports =
-            boolean_directed_fragment_reports(fragment_set.directed_fragments());
-        let directed_source_segment_kind_counts =
-            boolean_directed_fragment_report_source_kind_counts(&directed_fragment_reports);
-        let unresolved_boundary_count = fragment_set.unresolved_len();
-        Ok(BooleanBoundaryFragmentEmissionResult2 {
-            fragments: Some(fragment_set),
-            report: BooleanBoundaryFragmentEmissionReport2 {
-                stage: BooleanBoundaryFragmentEmissionStage2::FragmentEmission,
-                source_classification_count: self.len(),
-                discard_count: self.count_action(BooleanFragmentAction::Discard),
-                keep_source_direction_count: self
-                    .count_action(BooleanFragmentAction::KeepSourceDirection),
-                keep_reversed_count: self.count_action(BooleanFragmentAction::KeepReversed),
-                boundary_needs_resolution_count: self
-                    .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
-                directed_fragment_count: Some(directed_fragment_count),
-                directed_source_segment_kind_counts: Some(directed_source_segment_kind_counts),
-                directed_fragment_kind_counts: Some(directed_fragment_kind_counts),
-                directed_fragments: directed_fragment_reports,
-                unresolved_boundary_count: Some(unresolved_boundary_count),
-                status: RetainedTopologyStatus::NativeExact,
-                blocker: None,
-            },
-        })
-    }
-
     fn emit_boundary_fragments_impl(
         &self,
         fragments: &RegionFragmentSet,
@@ -865,7 +724,7 @@ impl CompactLineRegionFragmentSet {
                 |sample| classify_opposite_winding(source_side, sample),
             )? {
                 FragmentInteriorClassification::Decided(winding) => winding,
-                FragmentInteriorClassification::Blocked { reason, .. } => {
+                FragmentInteriorClassification::Blocked(reason) => {
                     return Ok(Some(Classification::Uncertain(reason)));
                 }
             };
@@ -913,244 +772,6 @@ impl CompactLineRegionFragmentSet {
             ),
         )))
     }
-}
-
-impl BooleanBoundaryFragmentEmissionReport2 {
-    /// Returns the furthest exact emission stage reached.
-    pub const fn stage(&self) -> BooleanBoundaryFragmentEmissionStage2 {
-        self.stage
-    }
-
-    /// Returns source classification count.
-    pub const fn source_classification_count(&self) -> usize {
-        self.source_classification_count
-    }
-
-    /// Returns discard action count.
-    pub const fn discard_count(&self) -> usize {
-        self.discard_count
-    }
-
-    /// Returns source-direction emission action count.
-    pub const fn keep_source_direction_count(&self) -> usize {
-        self.keep_source_direction_count
-    }
-
-    /// Returns reversed emission action count.
-    pub const fn keep_reversed_count(&self) -> usize {
-        self.keep_reversed_count
-    }
-
-    /// Returns unresolved-boundary action count.
-    pub const fn boundary_needs_resolution_count(&self) -> usize {
-        self.boundary_needs_resolution_count
-    }
-
-    /// Returns emitted directed fragment count when materialized.
-    pub const fn directed_fragment_count(&self) -> Option<usize> {
-        self.directed_fragment_count
-    }
-
-    /// Returns primitive-family counts for emitted source segments when materialized.
-    pub const fn directed_source_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.directed_source_segment_kind_counts
-    }
-
-    /// Returns primitive-family counts for emitted directed fragments when materialized.
-    pub const fn directed_fragment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.directed_fragment_kind_counts
-    }
-
-    /// Returns provenance for emitted directed fragments when materialized.
-    pub fn directed_fragments(&self) -> &[BooleanDirectedFragmentReport2] {
-        &self.directed_fragments
-    }
-
-    /// Returns unresolved boundary fragment count when materialized.
-    pub const fn unresolved_boundary_count(&self) -> Option<usize> {
-        self.unresolved_boundary_count
-    }
-
-    /// Returns retained topology status for emission.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized emission.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl BooleanDirectedFragmentReport2 {
-    /// Returns the source keyed contour.
-    pub const fn key(&self) -> RegionContourKey {
-        self.key
-    }
-
-    /// Returns the source contour fragment index.
-    pub const fn fragment_index(&self) -> usize {
-        self.fragment_index
-    }
-
-    /// Returns the source segment index in the original contour.
-    pub const fn source_segment_index(&self) -> usize {
-        self.source_segment_index
-    }
-
-    /// Returns the source segment primitive kind in the original contour.
-    pub const fn source_segment_kind(&self) -> SegmentKind {
-        self.source_segment_kind
-    }
-
-    /// Returns the exact start point of the original source segment.
-    pub const fn source_segment_start_point(&self) -> &Point2 {
-        &self.source_segment_start_point
-    }
-
-    /// Returns the exact end point of the original source segment.
-    pub const fn source_segment_end_point(&self) -> &Point2 {
-        &self.source_segment_end_point
-    }
-
-    /// Returns the retained parameter range on the source segment.
-    pub const fn source_range(&self) -> &ParamRange {
-        &self.source_range
-    }
-
-    /// Returns true when the output fragment was emitted opposite source traversal.
-    pub const fn reversed(&self) -> bool {
-        self.reversed
-    }
-
-    /// Returns the output directed-fragment index.
-    pub const fn output_fragment_index(&self) -> usize {
-        self.output_fragment_index
-    }
-
-    /// Returns the output directed-fragment primitive kind.
-    pub const fn output_fragment_kind(&self) -> SegmentKind {
-        self.output_fragment_kind
-    }
-}
-
-impl BooleanBoundaryFragmentEmissionResult2 {
-    /// Returns emitted boundary fragments, if emission succeeded.
-    pub const fn fragments(&self) -> Option<&BooleanBoundaryFragmentSet> {
-        self.fragments.as_ref()
-    }
-
-    /// Consumes this result and returns emitted boundary fragments, if any.
-    pub fn into_fragments(self) -> Option<BooleanBoundaryFragmentSet> {
-        self.fragments
-    }
-
-    /// Consumes this result and returns retained emission evidence.
-    pub fn into_report(self) -> BooleanBoundaryFragmentEmissionReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns emitted boundary fragments with their report.
-    pub fn into_parts(
-        self,
-    ) -> (
-        Option<BooleanBoundaryFragmentSet>,
-        BooleanBoundaryFragmentEmissionReport2,
-    ) {
-        (self.fragments, self.report)
-    }
-
-    /// Returns retained emission evidence.
-    pub const fn report(&self) -> &BooleanBoundaryFragmentEmissionReport2 {
-        &self.report
-    }
-
-    /// Returns emitted boundary fragments as a classification while retaining this result.
-    pub fn fragments_classification(&self) -> Classification<&BooleanBoundaryFragmentSet> {
-        match self.fragments() {
-            Some(fragments) => Classification::Decided(fragments),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns emitted boundary fragments as a classification.
-    pub fn into_fragments_classification(self) -> Classification<BooleanBoundaryFragmentSet> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_fragments() {
-            Some(fragments) => Classification::Decided(fragments),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-fn blocked_boolean_boundary_fragment_emission_result(
-    selection: &BooleanFragmentSelection,
-    stage: BooleanBoundaryFragmentEmissionStage2,
-    blocker: UncertaintyReason,
-) -> BooleanBoundaryFragmentEmissionResult2 {
-    BooleanBoundaryFragmentEmissionResult2 {
-        fragments: None,
-        report: BooleanBoundaryFragmentEmissionReport2 {
-            stage,
-            source_classification_count: selection.len(),
-            discard_count: selection.count_action(BooleanFragmentAction::Discard),
-            keep_source_direction_count: selection
-                .count_action(BooleanFragmentAction::KeepSourceDirection),
-            keep_reversed_count: selection.count_action(BooleanFragmentAction::KeepReversed),
-            boundary_needs_resolution_count: selection
-                .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
-            directed_fragment_count: None,
-            directed_source_segment_kind_counts: None,
-            directed_fragment_kind_counts: None,
-            directed_fragments: Vec::new(),
-            unresolved_boundary_count: None,
-            status: RetainedTopologyStatus::Unsupported,
-            blocker: Some(blocker),
-        },
-    }
-}
-
-fn boolean_directed_fragment_reports(
-    fragments: &[DirectedBooleanFragment],
-) -> Vec<BooleanDirectedFragmentReport2> {
-    fragments
-        .iter()
-        .enumerate()
-        .map(
-            |(output_fragment_index, fragment)| BooleanDirectedFragmentReport2 {
-                key: fragment.key,
-                fragment_index: fragment.fragment_index,
-                source_segment_index: fragment.source_segment_index,
-                source_segment_kind: fragment.segment.structural_facts().kind,
-                source_segment_start_point: fragment.source_segment_start_point.clone(),
-                source_segment_end_point: fragment.source_segment_end_point.clone(),
-                source_range: fragment.source_range.clone(),
-                reversed: fragment.reversed,
-                output_fragment_index,
-                output_fragment_kind: fragment.segment.structural_facts().kind,
-            },
-        )
-        .collect()
-}
-
-fn boolean_directed_fragment_report_source_kind_counts(
-    fragments: &[BooleanDirectedFragmentReport2],
-) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for fragment in fragments {
-        match fragment.source_segment_kind {
-            SegmentKind::Line => counts.lines += 1,
-            SegmentKind::Arc => counts.arcs += 1,
-        }
-    }
-    counts
 }
 
 impl BooleanOp {
@@ -1375,20 +996,7 @@ impl RegionFragmentSet {
         op: BooleanOp,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BooleanFragmentSelection>> {
-        Ok(self
-            .classify_for_boolean_with_report(first, second, op, policy)?
-            .into_selection_classification())
-    }
-
-    /// Classifies fragments against the opposite region and retains selection evidence.
-    fn classify_for_boolean_with_report(
-        &self,
-        first: &RegionView2<'_>,
-        second: &RegionView2<'_>,
-        op: BooleanOp,
-        policy: &CurvePolicy,
-    ) -> CurveResult<BooleanFragmentSelectionResult2> {
-        self.classify_for_boolean_with_point_classifier_with_report(
+        self.classify_for_boolean_with_point_classifier(
             first,
             second,
             op,
@@ -1403,18 +1011,64 @@ impl RegionFragmentSet {
         )
     }
 
-    pub(crate) fn classify_for_boolean_with_point_classifier_with_report<F>(
+    pub(crate) fn classify_for_boolean_with_line_crossing_winding<F>(
+        &self,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+        endpoint_contacts: &crate::region_events::RegionPointEndpointContactIndex,
+        crossing_windings: &RegionLineCrossingWindingIndex<'_>,
+        classify_opposite_winding: F,
+    ) -> CurveResult<Option<Classification<BooleanFragmentSelection>>>
+    where
+        F: FnMut(RegionSide, &crate::Point2) -> Classification<i32>,
+    {
+        self.classify_for_boolean_with_line_crossing_winding_impl(
+            first,
+            second,
+            op,
+            policy,
+            endpoint_contacts,
+            crossing_windings,
+            classify_opposite_winding,
+        )
+    }
+
+    pub(crate) fn classify_for_boolean_with_contacts_and_point_classifier<F>(
+        &self,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+        endpoint_contacts: Option<&crate::region_events::RegionPointEndpointContactIndex>,
+        classify_opposite: F,
+    ) -> CurveResult<Classification<BooleanFragmentSelection>>
+    where
+        F: FnMut(RegionSide, &crate::Point2) -> Classification<RegionPointLocation>,
+    {
+        self.classify_for_boolean_with_contacts_and_point_classifier_impl(
+            first,
+            second,
+            op,
+            policy,
+            endpoint_contacts,
+            classify_opposite,
+        )
+    }
+
+    fn classify_for_boolean_with_point_classifier<F>(
         &self,
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
         op: BooleanOp,
         policy: &CurvePolicy,
         mut classify_opposite: F,
-    ) -> CurveResult<BooleanFragmentSelectionResult2>
+    ) -> CurveResult<Classification<BooleanFragmentSelection>>
     where
         F: FnMut(RegionSide, &crate::Point2) -> Classification<RegionPointLocation>,
     {
-        self.classify_for_boolean_with_contacts_and_point_classifier_with_report(
+        self.classify_for_boolean_with_contacts_and_point_classifier_impl(
             first,
             second,
             op,
@@ -1424,7 +1078,7 @@ impl RegionFragmentSet {
         )
     }
 
-    pub(crate) fn classify_for_boolean_with_line_crossing_winding_with_report<F>(
+    fn classify_for_boolean_with_line_crossing_winding_impl<F>(
         &self,
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
@@ -1433,7 +1087,7 @@ impl RegionFragmentSet {
         endpoint_contacts: &crate::region_events::RegionPointEndpointContactIndex,
         crossing_windings: &RegionLineCrossingWindingIndex<'_>,
         mut classify_opposite_winding: F,
-    ) -> CurveResult<Option<BooleanFragmentSelectionResult2>>
+    ) -> CurveResult<Option<Classification<BooleanFragmentSelection>>>
     where
         F: FnMut(RegionSide, &crate::Point2) -> Classification<i32>,
     {
@@ -1445,10 +1099,8 @@ impl RegionFragmentSet {
             return Ok(None);
         }
 
-        let source_contour_count = self.len();
         let source_fragment_count = region_fragment_count(self);
         let mut classifications = Vec::with_capacity(source_fragment_count);
-        let source_fragment_kind_counts = region_fragment_kind_counts(self);
         let interior_sample_fractions = [
             (Real::one() / Real::from(2_i8))?,
             (Real::one() / Real::from(3_i8))?,
@@ -1465,15 +1117,7 @@ impl RegionFragmentSet {
             )? {
                 Classification::Decided(filled_side) => filled_side,
                 Classification::Uncertain(reason) => {
-                    return Ok(Some(blocked_boolean_fragment_selection_result(
-                        op,
-                        BooleanFragmentSelectionStage2::SourceFillSideClassification,
-                        source_contour_count,
-                        source_fragment_count,
-                        source_fragment_kind_counts,
-                        classifications.len(),
-                        reason,
-                    )));
+                    return Ok(Some(Classification::Uncertain(reason)));
                 }
             };
             let opposite_fill_rule = match contour_fragments.key.side {
@@ -1500,16 +1144,8 @@ impl RegionFragmentSet {
                 |sample| classify_opposite_winding(source_side, sample),
             )? {
                 FragmentInteriorClassification::Decided(winding) => winding,
-                FragmentInteriorClassification::Blocked { stage, reason } => {
-                    return Ok(Some(blocked_boolean_fragment_selection_result(
-                        op,
-                        stage,
-                        source_contour_count,
-                        source_fragment_count,
-                        source_fragment_kind_counts,
-                        classifications.len(),
-                        reason,
-                    )));
+                FragmentInteriorClassification::Blocked(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
                 }
             };
 
@@ -1554,22 +1190,10 @@ impl RegionFragmentSet {
             classifications,
             source_fragment_count,
         );
-        Ok(Some(BooleanFragmentSelectionResult2 {
-            report: boolean_fragment_selection_report_from_classifications(
-                op,
-                BooleanFragmentSelectionStage2::ActionAssignment,
-                source_contour_count,
-                source_fragment_count,
-                source_fragment_kind_counts,
-                selection.classifications(),
-                RetainedTopologyStatus::NativeExact,
-                None,
-            ),
-            selection: Some(selection),
-        }))
+        Ok(Some(Classification::Decided(selection)))
     }
 
-    pub(crate) fn classify_for_boolean_with_contacts_and_point_classifier_with_report<F>(
+    fn classify_for_boolean_with_contacts_and_point_classifier_impl<F>(
         &self,
         first: &RegionView2<'_>,
         second: &RegionView2<'_>,
@@ -1577,14 +1201,12 @@ impl RegionFragmentSet {
         policy: &CurvePolicy,
         endpoint_contacts: Option<&crate::region_events::RegionPointEndpointContactIndex>,
         mut classify_opposite: F,
-    ) -> CurveResult<BooleanFragmentSelectionResult2>
+    ) -> CurveResult<Classification<BooleanFragmentSelection>>
     where
         F: FnMut(RegionSide, &crate::Point2) -> Classification<RegionPointLocation>,
     {
-        let source_contour_count = self.len();
         let source_fragment_count = region_fragment_count(self);
         let mut classifications = Vec::with_capacity(source_fragment_count);
-        let source_fragment_kind_counts = region_fragment_kind_counts(self);
         let interior_sample_fractions = [
             (Real::one() / Real::from(2_i8))?,
             (Real::one() / Real::from(3_i8))?,
@@ -1601,15 +1223,7 @@ impl RegionFragmentSet {
             )? {
                 Classification::Decided(filled_side) => filled_side,
                 Classification::Uncertain(reason) => {
-                    return Ok(blocked_boolean_fragment_selection_result(
-                        op,
-                        BooleanFragmentSelectionStage2::SourceFillSideClassification,
-                        source_contour_count,
-                        source_fragment_count,
-                        source_fragment_kind_counts,
-                        classifications.len(),
-                        reason,
-                    ));
+                    return Ok(Classification::Uncertain(reason));
                 }
             };
             for (fragment_index, fragment) in
@@ -1635,16 +1249,8 @@ impl RegionFragmentSet {
                     |sample| classify_opposite(source_side, sample),
                 )? {
                     FragmentInteriorClassification::Decided(location) => location,
-                    FragmentInteriorClassification::Blocked { stage, reason } => {
-                        return Ok(blocked_boolean_fragment_selection_result(
-                            op,
-                            stage,
-                            source_contour_count,
-                            source_fragment_count,
-                            source_fragment_kind_counts,
-                            classifications.len(),
-                            reason,
-                        ));
+                    FragmentInteriorClassification::Blocked(reason) => {
+                        return Ok(Classification::Uncertain(reason));
                     }
                 };
                 let action =
@@ -1664,19 +1270,7 @@ impl RegionFragmentSet {
             classifications,
             source_fragment_count,
         );
-        Ok(BooleanFragmentSelectionResult2 {
-            report: boolean_fragment_selection_report_from_classifications(
-                op,
-                BooleanFragmentSelectionStage2::ActionAssignment,
-                source_contour_count,
-                source_fragment_count,
-                source_fragment_kind_counts,
-                selection.classifications(),
-                RetainedTopologyStatus::NativeExact,
-                None,
-            ),
-            selection: Some(selection),
-        })
+        Ok(Classification::Decided(selection))
     }
 }
 
@@ -1807,209 +1401,11 @@ where
     }
 
     if let Some(reason) = classification_blocker {
-        return Ok(FragmentInteriorClassification::Blocked {
-            stage: BooleanFragmentSelectionStage2::OppositeRegionClassification,
-            reason,
-        });
+        return Ok(FragmentInteriorClassification::Blocked(reason));
     }
-    Ok(FragmentInteriorClassification::Blocked {
-        stage: BooleanFragmentSelectionStage2::RepresentativePoint,
-        reason: representative_blocker.unwrap_or(UncertaintyReason::Unsupported),
-    })
-}
-
-impl BooleanFragmentSelectionReport2 {
-    /// Returns the requested boolean operation.
-    pub const fn op(&self) -> BooleanOp {
-        self.op
-    }
-
-    /// Returns the furthest exact classification stage reached.
-    pub const fn stage(&self) -> BooleanFragmentSelectionStage2 {
-        self.stage
-    }
-
-    /// Returns keyed source contour count.
-    pub const fn source_contour_count(&self) -> usize {
-        self.source_contour_count
-    }
-
-    /// Returns total source fragment count.
-    pub const fn source_fragment_count(&self) -> usize {
-        self.source_fragment_count
-    }
-
-    /// Returns primitive-family counts for all source fragments.
-    pub const fn source_fragment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_fragment_kind_counts
-    }
-
-    /// Returns classified fragment count when available.
-    pub const fn classified_fragment_count(&self) -> Option<usize> {
-        self.classified_fragment_count
-    }
-
-    /// Returns discard action count when classification materialized.
-    pub const fn discard_count(&self) -> Option<usize> {
-        self.discard_count
-    }
-
-    /// Returns source-direction emitted action count when classification materialized.
-    pub const fn keep_source_direction_count(&self) -> Option<usize> {
-        self.keep_source_direction_count
-    }
-
-    /// Returns reversed emitted action count when classification materialized.
-    pub const fn keep_reversed_count(&self) -> Option<usize> {
-        self.keep_reversed_count
-    }
-
-    /// Returns unresolved-boundary action count when classification materialized.
-    pub const fn boundary_needs_resolution_count(&self) -> Option<usize> {
-        self.boundary_needs_resolution_count
-    }
-
-    /// Returns retained topology status for classification.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized classification.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl BooleanFragmentSelectionResult2 {
-    /// Returns materialized fragment selection, if classification succeeded.
-    pub const fn selection(&self) -> Option<&BooleanFragmentSelection> {
-        self.selection.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized selection, if any.
-    pub fn into_selection(self) -> Option<BooleanFragmentSelection> {
-        self.selection
-    }
-
-    /// Consumes this result and returns retained selection evidence.
-    pub fn into_report(self) -> BooleanFragmentSelectionReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns materialized selection with its report.
-    pub fn into_parts(
-        self,
-    ) -> (
-        Option<BooleanFragmentSelection>,
-        BooleanFragmentSelectionReport2,
-    ) {
-        (self.selection, self.report)
-    }
-
-    /// Returns retained selection evidence.
-    pub const fn report(&self) -> &BooleanFragmentSelectionReport2 {
-        &self.report
-    }
-
-    /// Returns materialized fragment selection as a classification while retaining this result.
-    pub fn selection_classification(&self) -> Classification<&BooleanFragmentSelection> {
-        match self.selection() {
-            Some(selection) => Classification::Decided(selection),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns materialized fragment selection as a classification.
-    pub fn into_selection_classification(self) -> Classification<BooleanFragmentSelection> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_selection() {
-            Some(selection) => Classification::Decided(selection),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-fn blocked_boolean_fragment_selection_result(
-    op: BooleanOp,
-    stage: BooleanFragmentSelectionStage2,
-    source_contour_count: usize,
-    source_fragment_count: usize,
-    source_fragment_kind_counts: SegmentKindCounts,
-    classified_fragment_count: usize,
-    blocker: UncertaintyReason,
-) -> BooleanFragmentSelectionResult2 {
-    BooleanFragmentSelectionResult2 {
-        selection: None,
-        report: BooleanFragmentSelectionReport2 {
-            op,
-            stage,
-            source_contour_count,
-            source_fragment_count,
-            source_fragment_kind_counts,
-            classified_fragment_count: Some(classified_fragment_count),
-            discard_count: None,
-            keep_source_direction_count: None,
-            keep_reversed_count: None,
-            boundary_needs_resolution_count: None,
-            status: RetainedTopologyStatus::Unresolved,
-            blocker: Some(blocker),
-        },
-    }
-}
-
-fn boolean_fragment_selection_report_from_classifications(
-    op: BooleanOp,
-    stage: BooleanFragmentSelectionStage2,
-    source_contour_count: usize,
-    source_fragment_count: usize,
-    source_fragment_kind_counts: SegmentKindCounts,
-    classifications: &[BooleanFragmentClassification],
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-) -> BooleanFragmentSelectionReport2 {
-    BooleanFragmentSelectionReport2 {
-        op,
-        stage,
-        source_contour_count,
-        source_fragment_count,
-        source_fragment_kind_counts,
-        classified_fragment_count: Some(classifications.len()),
-        discard_count: Some(count_boolean_action(
-            classifications,
-            BooleanFragmentAction::Discard,
-        )),
-        keep_source_direction_count: Some(count_boolean_action(
-            classifications,
-            BooleanFragmentAction::KeepSourceDirection,
-        )),
-        keep_reversed_count: Some(count_boolean_action(
-            classifications,
-            BooleanFragmentAction::KeepReversed,
-        )),
-        boundary_needs_resolution_count: Some(count_boolean_action(
-            classifications,
-            BooleanFragmentAction::BoundaryNeedsResolution,
-        )),
-        status,
-        blocker,
-    }
-}
-
-fn count_boolean_action(
-    classifications: &[BooleanFragmentClassification],
-    action: BooleanFragmentAction,
-) -> usize {
-    classifications
-        .iter()
-        .filter(|classification| classification.action == action)
-        .count()
+    Ok(FragmentInteriorClassification::Blocked(
+        representative_blocker.unwrap_or(UncertaintyReason::Unsupported),
+    ))
 }
 
 fn region_fragment_count(fragments: &RegionFragmentSet) -> usize {
@@ -2020,37 +1416,10 @@ fn region_fragment_count(fragments: &RegionFragmentSet) -> usize {
         .sum()
 }
 
-fn region_fragment_kind_counts(fragments: &RegionFragmentSet) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for contour_fragments in fragments.contours() {
-        for fragment in contour_fragments.fragments.fragments() {
-            add_segment_kind_count(&mut counts, &fragment.segment);
-        }
-    }
-    counts
-}
-
-fn directed_boolean_fragment_kind_counts(
-    fragments: &[DirectedBooleanFragment],
-) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for fragment in fragments {
-        add_segment_kind_count(&mut counts, &fragment.segment);
-    }
-    counts
-}
-
-fn add_segment_kind_count(counts: &mut SegmentKindCounts, segment: &Segment2) {
-    match segment {
-        Segment2::Line(_) => counts.lines += 1,
-        Segment2::Arc(_) => counts.arcs += 1,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Contour2, LineArcRegion2, LineSeg2, PreparedRegionView2};
+    use crate::{Contour2, LineArcRegion2, LineSeg2, RegionQuery2};
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -2082,10 +1451,15 @@ mod tests {
         let second_view = second.as_view();
         let policy = CurvePolicy::certified();
         let events = first_view.intersect_region(&second_view, &policy).unwrap();
-        let fragment_result = events
-            .split_regions_with_report(&first_view, &second_view, &policy)
-            .unwrap();
-        let fragments = fragment_result.fragments().unwrap();
+        let fragments = match events
+            .split_regions(&first_view, &second_view, &policy)
+            .unwrap()
+        {
+            Classification::Decided(fragments) => fragments,
+            Classification::Uncertain(reason) => {
+                panic!("expected exact split, got {reason:?}")
+            }
+        };
         let contacts = crate::region_events::RegionPointEndpointContactIndex::from_intersections(
             &events, &policy,
         );
@@ -2096,11 +1470,11 @@ mod tests {
             &policy,
         )
         .unwrap();
-        let first_prepared = PreparedRegionView2::from_region(&first, &policy);
-        let second_prepared = PreparedRegionView2::from_region(&second, &policy);
+        let first_prepared = RegionQuery2::from_region(&first, &policy);
+        let second_prepared = RegionQuery2::from_region(&second, &policy);
 
         let expected = fragments
-            .classify_for_boolean_with_contacts_and_point_classifier_with_report(
+            .classify_for_boolean_with_contacts_and_point_classifier(
                 &first_view,
                 &second_view,
                 BooleanOp::Union,
@@ -2118,7 +1492,7 @@ mod tests {
             .unwrap();
         let mut winding_queries = 0_usize;
         let actual = fragments
-            .classify_for_boolean_with_line_crossing_winding_with_report(
+            .classify_for_boolean_with_line_crossing_winding(
                 &first_view,
                 &second_view,
                 BooleanOp::Union,

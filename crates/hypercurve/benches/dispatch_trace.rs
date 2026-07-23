@@ -128,9 +128,9 @@ fn main() {
     ])
     .expect("trace concave contour is valid");
     trace("straight_skeleton", || {
-        let report = concave.straight_skeleton(&policy)?;
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        Ok(report)
+        let evidence = concave.straight_skeleton(&policy)?;
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        Ok(evidence)
     });
 
     let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
@@ -160,7 +160,7 @@ fn main() {
         Ok(result)
     });
 
-    let prepared = first.prepare_topology_queries(&policy);
+    let prepared = first.query(&policy);
     trace("prepared_region_containment", || {
         Ok(prepared.classify_point(&p(1, 1), &policy))
     });

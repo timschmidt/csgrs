@@ -40,7 +40,7 @@ fuzz_target!(|data: &[u8]| {
         )
     } else {
         // x(t) = (t - 3/4)^2 is deliberately non-monotone over the
-        // sqrt(1/2) isolator; this should report failure instead of sampling.
+        // sqrt(1/2) isolator; this should evidence failure instead of sampling.
         QuadraticBezier2::new(
             Point2::new(q(9, 16), r(0)),
             Point2::new(q(-3, 16), r(1)),
@@ -85,10 +85,10 @@ fuzz_target!(|data: &[u8]| {
 
     let point = curve
         .point_at_algebraic_parameter(&parameter, &policy)
-        .expect("valid algebraic parameter should produce a report");
+        .expect("valid algebraic parameter should produce a evidence");
     let tangent = curve
         .tangent_at_algebraic_parameter(&parameter, &policy)
-        .expect("valid algebraic parameter should produce a tangent report");
+        .expect("valid algebraic parameter should produce a tangent evidence");
 
     if mode == 0 {
         assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
@@ -102,10 +102,10 @@ fuzz_target!(|data: &[u8]| {
     if let Some(conic) = conic {
         let rational_point = conic
             .point_at_algebraic_parameter(&parameter, &policy)
-            .expect("valid algebraic parameter should produce a rational point report");
+            .expect("valid algebraic parameter should produce a rational point evidence");
         let rational_tangent = conic
             .tangent_at_algebraic_parameter(&parameter, &policy)
-            .expect("valid algebraic parameter should produce a rational tangent report");
+            .expect("valid algebraic parameter should produce a rational tangent evidence");
         if mode == 2 {
             assert_eq!(
                 rational_point.status(),

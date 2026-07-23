@@ -19,7 +19,7 @@ const MIB: usize = 1024 * 1024;
 // A release-build calibration over 100 cells retains approximately 1.5 MiB per
 // cell after native Bezier promotion and exact-polyline projection of both the
 // source and transformed region.
-// Keep the tier mapping explicit and report `/proc` RSS alongside it so changes
+// Keep the tier mapping explicit and evidence `/proc` RSS alongside it so changes
 // in upstream carrier layouts are visible in benchmark output.
 const NATIVE_ESTIMATED_BYTES_PER_CELL: usize = 3 * MIB / 2;
 const CURVE_SAMPLES: usize = 6;

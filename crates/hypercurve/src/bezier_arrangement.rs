@@ -938,19 +938,19 @@ fn negate_retained_tangent(tangent: RetainedTangentVector) -> Option<RetainedTan
 fn negate_algebraic_root(
     value: &AlgebraicRootRepresentation,
 ) -> Option<AlgebraicRootRepresentation> {
-    let report =
+    let evidence =
         arithmetic_algebraic_root_representations(value, None, AlgebraicRootArithmeticOp::Negate);
     if !matches!(
-        report.status,
+        evidence.status,
         AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
             | AlgebraicRootArithmeticStatus::ComputedRepresentation
     ) {
         return None;
     }
-    if let Some(result) = report.result_representation {
+    if let Some(result) = evidence.result_representation {
         return Some(result);
     }
-    report
+    evidence
         .exact_result
         .map(|value| exact_value_representation(&value))
 }
@@ -1352,8 +1352,8 @@ fn compare_retained_turn_from_base(
             let first = retained_tangent_as_algebraic(first);
             let second = retained_tangent_as_algebraic(second);
             match compare_algebraic_tangent_turn_from_base(&base, &first, &second, policy) {
-                Classification::Decided(report) => match report.status {
-                    BezierAlgebraicTangentOrderStatus::Ordered => match report.ordering {
+                Classification::Decided(evidence) => match evidence.status {
+                    BezierAlgebraicTangentOrderStatus::Ordered => match evidence.ordering {
                         Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
                             Classification::Decided(TurnOrdering::FirstBeforeSecond)
                         }
@@ -1422,8 +1422,8 @@ fn compare_retained_same_tangent_second_order(
                     second_second_derivative,
                     policy,
                 ) {
-                    Classification::Decided(report) => {
-                        if report.status == BezierAlgebraicSameTangentOrderStatus::SameDirection {
+                    Classification::Decided(evidence) => {
+                        if evidence.status == BezierAlgebraicSameTangentOrderStatus::SameDirection {
                             return compare_retained_algebraic_same_tangent_third_order(
                                 first,
                                 second,
@@ -1432,9 +1432,9 @@ fn compare_retained_same_tangent_second_order(
                                 policy,
                             );
                         }
-                        retained_algebraic_same_tangent_report_to_turn(
-                            report.status,
-                            report.ordering,
+                        retained_algebraic_same_tangent_evidence_to_turn(
+                            evidence.status,
+                            evidence.ordering,
                         )
                     }
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
@@ -1465,8 +1465,11 @@ fn compare_retained_algebraic_same_tangent_third_order(
                 second_third_derivative,
                 policy,
             ) {
-                Classification::Decided(report) => {
-                    retained_algebraic_same_tangent_report_to_turn(report.status, report.ordering)
+                Classification::Decided(evidence) => {
+                    retained_algebraic_same_tangent_evidence_to_turn(
+                        evidence.status,
+                        evidence.ordering,
+                    )
                 }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             }
@@ -1475,7 +1478,7 @@ fn compare_retained_algebraic_same_tangent_third_order(
     }
 }
 
-fn retained_algebraic_same_tangent_report_to_turn(
+fn retained_algebraic_same_tangent_evidence_to_turn(
     status: BezierAlgebraicSameTangentOrderStatus,
     ordering: Option<BezierTangentTurnOrdering2>,
 ) -> Classification<TurnOrdering> {

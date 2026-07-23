@@ -1095,7 +1095,7 @@ fn regularized_region(
 
 fn geo_boolean_fallback(first: &Shape, second: &Shape, op: HBooleanOp) -> Result<Shape, String> {
     // UI fallback only: this keeps the demo interactive for topology cases that
-    // hypercurve reports as uncertain. The result is a lossy display artifact,
+    // hypercurve evidence as uncertain. The result is a lossy display artifact,
     // not a replacement for exact hypercurve boolean semantics.
     let first = shape_to_geo(first);
     let second = shape_to_geo(second);

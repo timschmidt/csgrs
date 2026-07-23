@@ -45,7 +45,7 @@ curves, which would time a different operation.
   The NURBS fixture additionally checks that both implementations agree at every timed
   parameter to `1e-12` in finite projection.
 - By default, each implementation calibrates an iteration count to approximately 75 ms
-  per sample and reports the median, minimum, and maximum of seven samples.
+  per sample and evidence the median, minimum, and maximum of seven samples.
 
 The runner accepts these environment overrides:
 

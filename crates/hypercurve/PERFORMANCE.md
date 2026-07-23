@@ -13,7 +13,7 @@ finite approximation across a predicate boundary.
 ## Runtime path tracing
 
 Coverage is audited by executable public family, not by assigning artificial
-timings to every enum variant, report accessor, or zero-cost data carrier. A
+timings to every enum variant, evidence accessor, or zero-cost data carrier. A
 family is covered only when a public workload has semantic test assertions, a
 release benchmark, and—when it enters exact computation—a nonempty dispatch
 recording. Finite-only adapters are benchmarked and tested but correctly have
@@ -85,7 +85,7 @@ runs without changing the benchmark workload.
 | Reference | Applied finding and disposition |
 | --- | --- |
 | CGAL, *2D Regularized Boolean Set Operations* and *2D Arrangements* | The arrangement model supports the existing split, classify, resolve, and traverse pipeline in `bezier_arrangement`, `boolean`, and the region Boolean modules. Its aggregate-sweep idea motivated the retained adaptive x-interval scheduler for large curve-string pair batches. A full x-monotone arrangement sweep would require a different exact event/status and provenance architecture, rather than a local optimization of the current pipeline. |
-| Bentley and Ottmann, intersection reporting | Retained as an adaptive one-axis event sweep for large curve-string pair batches. It is deliberately a conservative AABB candidate scheduler, not a full Bentley--Ottmann intersection-status implementation: exact line/arc predicates and source ordering remain unchanged. The crossover and dense fallback are measured below. |
+| Bentley and Ottmann, intersection enumeration | Retained as an adaptive one-axis event sweep for large curve-string pair batches. It is deliberately a conservative AABB candidate scheduler, not a full Bentley--Ottmann intersection-status implementation: exact line/arc predicates and source ordering remain unchanged. The crossover and dense fallback are measured below. |
 | de Casteljau, affine Bézier evaluation | Directly underlies polynomial Bézier evaluation, exact splitting, flattening, metric prefixes, and moment prefixes. Reusing common affine weights throughout subdivision triangles produced the retained optimization measured below; evaluation preserves that expression graph for non-rational parameters. |
 | de Berg et al., *Computational Geometry* | Plane-sweep, arrangement, point-location, and robust subdivision principles match the crate's broad-phase filtering and explicit topology stages. The retained conservative x sweep applies the scheduling portion while leaving exact intersection predicates and ownership unchanged. |
 | Boehm, knot insertion | `bspline` performs exact homogeneous Boehm insertion and retains the resulting Bézier spans and source provenance. This is already the appropriate local transformation; no lossy span approximation was introduced. |
@@ -95,7 +95,7 @@ runs without changing the benchmark workload.
 | Farin, CAGD | Bézier/B-spline evaluation, subdivision, rational homogeneous form, derivatives, and variation-diminishing bounds are pervasive throughout the curve carriers. The retained shared-weight change preserves these exact affine identities. |
 | Foster, Hormann, and Popa, degenerate polygon clipping | The key lesson is to classify and label degenerate intersections explicitly instead of perturbing them. Curve arrangements retain contact multiplicity, tangent/crossing status, overlap ranges, vertex identities, and operation-aware ownership before traversal. |
 | Greiner and Hormann, arbitrary polygon clipping | Intersection insertion followed by entry/exit traversal is reflected in split/classify/traverse Boolean structure. Hypercurve extends the carrier and evidence model for curves and exact degeneracies rather than copying a floating-point polygon-only traversal. |
-| Hobby, finite-precision segment output | Finite output can create or erase incidences, so certified flattening, SVG import/export, and reconstruction stay explicit boundaries with reports. Snap rounding is not silently applied inside exact topology. |
+| Hobby, finite-precision segment output | Finite output can create or erase incidences, so certified flattening, SVG import/export, and reconstruction stay explicit boundaries with evidence. Snap rounding is not silently applied inside exact topology. |
 | Hormann and Agathos, point in polygon | Boundary classification precedes winding decisions, and contours expose both nonzero and even-odd fill rules. Conservative boxes and prepared views accelerate repeated classification without changing the winding result. |
 | Kasa, algebraic circle fitting | The fit is fast but is a multi-sample algebraic approximation with known bias. It was rejected for deterministic streaming reconstruction, where `reconstruct` instead uses the exact three-point circumcircle/Menger witness and records the finite source provenance. |
 | Martinez, Rueda, and Feito, polygon Boolean operations | The sweep overlay provides the asymptotic design and explicit event classification used to motivate the retained large-batch x scheduler. The current curved-region events still retain contour/curve candidates and provenance; replacing them with the paper's polygon-only status structure would be a new carrier architecture and would not preserve curved overlap evidence by construction. |
@@ -108,7 +108,7 @@ runs without changing the benchmark workload.
 | Raph Levien, parallel Béziers and path simplification | Endpoint-tangent cubic fitting with positive arm solving through the exact midpoint is tried before subdivision. It is only a candidate: exact parallel verification controls acceptance, while a deterministic Blend2D lane remains the completion fallback. |
 | Blend2D, simplification and offsetting | Exact same-parameter cubic-to-two-quadratic reduction and the quadratic endpoint-normal construction provide deterministic candidates and radial diagnostics. Hypercurve does not treat Blend2D's radial heuristic as a Hausdorff proof; its independent verifier certifies every emitted span. |
 | Vatti, generic polygon clipping | Scanbeam clipping demonstrates a general event/ownership formulation that handles holes and complex polygons. Hypercurve's region pipeline keeps those roles explicit, and its retained x scheduler supplies the compatible broad-phase benefit. A second polygon-only scanbeam carrier would duplicate rather than optimize the prepared curved-arrangement representation. |
-| Yap, exact geometric computation | The exact-object discipline is the crate-wide rule: structural filters may accelerate a decision, but a topology branch needs certified evidence. Homogeneous carriers, algebraic parameter intervals, retained blockers, and report-bearing prepared objects preserve the information needed for replay. |
+| Yap, exact geometric computation | The exact-object discipline is the crate-wide rule: structural filters may accelerate a decision, but a topology branch needs certified evidence. Homogeneous carriers, algebraic parameter intervals, retained blockers, and evidence-bearing prepared objects preserve the information needed for replay. |
 
 ## Certified Bézier offset completion and baseline
 
@@ -122,7 +122,7 @@ same-parameter bound.
 
 `CurveRegion2::offset_with_certified_bezier_parallel` uses those paths for
 smooth joins, separately chord-certifies the produced path, and regularizes the
-line arrangement. Its report limits the summed bound to the raw
+line arrangement. Its evidence limits the summed bound to the raw
 pre-regularization boundary; branch removal is not mislabeled as a Hausdorff
 certificate for final topology. Corners and unsupported families use the
 existing source-chord fallback, whose weaker guarantee remains explicit.
@@ -196,7 +196,7 @@ symbolic parameters still use the original de Casteljau triangle because its
 expression structure is observable to downstream `Real` zero-status reasoning.
 
 The focused release benchmark cycles through `1/4`, `1/2`, and `3/4` for 500,000
-evaluations. The table reports medians of three same-machine runs.
+evaluations. The table evidence medians of three same-machine runs.
 
 | Workload | de Casteljau baseline | Rational fast path | Change |
 | --- | ---: | ---: | ---: |
@@ -364,7 +364,7 @@ approximations, refinements, or unknown facts.
 
 ## Retained Boolean query work
 
-The report-bearing direct region Boolean path already collected one exact
+The evidence-bearing direct region Boolean path already collected one exact
 boundary-intersection set, but its contact checks recomputed that set and its
 fragment classifier rebuilt both operands' contour and region boxes for every
 representative point. The retained path now consumes the original intersection
@@ -499,7 +499,7 @@ segment before trying that start point. Nesting now evaluates those interior
 samples lazily: the existing endpoint is classified first, while the unchanged
 one-half/one-third/two-thirds sequence remains available if an exact
 point-containment predicate is undecided. Intersection validation, containment
-classification, uncertainty propagation, and public role reports are unchanged.
+classification, uncertainty propagation, and public role evidence are unchanged.
 
 In the same 15-sample, 50 ms comparative configuration, star64 intersection
 fell from 7.822 to 6.379 ms/iter (18.4%) and rectangle union measured 105.207
@@ -511,7 +511,7 @@ and the instruction sweep is 83.9% smaller. The exact Boolean differential fuzz
 target completed 1,000 AddressSanitizer-instrumented runs at 5,054 coverage
 points and 14,451 feature edges without a failure.
 
-Structural report construction and prepared predicates then recomputed the same
+Structural evidence construction and prepared predicates then recomputed the same
 `LineSeg2Facts` across immutable line carriers. Those facts depend only on the
 endpoint coordinate set and the structural zero status of `(dx, dy)`, so lines
 now retain them lazily. Clones carry an already-computed cell, reversal preserves
@@ -623,7 +623,7 @@ net winding change around both closed contours, and a one-to-one match between
 events and materialized split boundaries. Endpoint contacts, tangencies, arcs,
 overlaps, duplicate parameters, uncertain predicates, and any
 proof mismatch retain the per-fragment classifier. A differential regression
-compares the new selection and report with the canonical classifier and confirms
+compares the new selection and evidence with the canonical classifier and confirms
 that a qualifying two-contour case issues only two seed winding queries.
 
 In the latest 15-sample comparative run, star64 intersection fell from 2.858 to
@@ -649,10 +649,10 @@ before proving that it needed only two seed winding numbers. It now scans each
 already-certified all-line source contour directly for those seeds and constructs
 prepared predicates only on fallback. Because that changes the crossover economics,
 every nonempty event set may attempt the conservative retained-crossing proof; any
-ineligible event still falls through unchanged. Finally, fragment reports recover
+ineligible event still falls through unchanged. Finally, fragment evidence recover
 the primitive family directly from the `Segment2` variant instead of recomputing
 full structural facts for each source and materialized fragment. Splitting preserves
-the primitive family, so kind counts and provenance reports remain identical.
+the primitive family, so kind counts and provenance evidence remain identical.
 
 In the final 15-sample comparative run, star64 intersection fell from 2.428 to
 1.734 ms/iter (28.6%) and rectangle union from 53.079 to 35.740 us/iter (32.7%).
@@ -685,7 +685,7 @@ edge contact remains inclusive, and candidate pairs are restored to source segme
 scan order before exact intersection. A differential unit regression compares the
 retained candidates with the original flat AABB filter and includes an unknown box.
 `Segment2::kind` also exposes the authoritative enum family directly so event and
-fragment reports no longer request unrelated structural facts merely to name a
+fragment evidence no longer request unrelated structural facts merely to name a
 primitive.
 
 In the final 15-sample comparative run, star64 intersection fell from 1.734 to
@@ -707,10 +707,10 @@ and the flat-scan fallback are unchanged, while temporary candidate storage is
 bounded by the second contour's segment count instead of the total surviving
 pair count.
 
-The report-bearing region Boolean path also kept borrowed intermediate geometry
+The evidence-bearing region Boolean path also kept borrowed intermediate geometry
 alive through final materialization, cloned closed chains into loops, cloned
-loops into contours, and cloned every completed stage report into the aggregate
-report. Successful stages now consume chains and loops and move their reports;
+loops into contours, and cloned every completed stage evidence into the aggregate
+evidence. Successful stages now consume chains and loops and move their evidence;
 the public evidence remains identical without the redundant exact carriers.
 Against the preceding checkpoint, the stripped one-iteration comparative
 Callgrind sweep fell from 55,566,500 to 53,745,141 instructions (3.28%). The
@@ -731,14 +731,14 @@ capacity tests, not claims that unlike numeric and topology models have equal
 semantics.
 
 Ordinary Boolean and boundary-role APIs then still constructed the complete
-audit trail used by their `*_with_report` counterparts and immediately dropped
+audit trail used by their `*_with_evidence` counterparts and immediately dropped
 it. Fragment emission and chain assembly now share one topology core with
 separate lean and evidence-retaining materialization. The ordinary consuming
 path moves chains into loops and loops into contours without allocating
 per-fragment provenance, and ordinary boundary nesting assigns material/hole
-roles without retaining per-contour sample copies. Report-bearing methods keep
-the existing reports and blockers unchanged. The Boolean fuzz target now
-differentially compares ordinary, report-bearing, and prepared results for all
+roles without retaining per-contour sample copies. Evidence-bearing methods keep
+the existing evidence and blockers unchanged. The Boolean fuzz target now
+differentially compares ordinary, evidence-bearing, and prepared results for all
 four operations.
 
 Exact scalar ordering also returns directly from two exposed rational carriers
@@ -784,14 +784,14 @@ The ordinary star64 comparative lane remains below the indexed crossover and
 its complete Callgrind sweep stayed effectively flat (48,341,067 versus
 48,384,838 instructions).
 
-Ordinary region splitting still called the report-bearing builder and cloned
+Ordinary region splitting still called the evidence-bearing builder and cloned
 every exact source endpoint, parameter range, and output fragment into
-provenance that only `*_with_report` callers observe. Splitting now shares one
-four-role contour traversal with optional report retention. Lean callers keep
-only the fragment inventory; report-bearing calls retain the same successful
+provenance that only `*_with_evidence` callers observe. Splitting now shares one
+four-role contour traversal with optional evidence retention. Lean callers keep
+only the fragment inventory; evidence-bearing calls retain the same successful
 and partial-blocker evidence. The ordinary Boolean pipeline also consumes its
 completed selection when no shared boundary needs resolution instead of
-cloning it out of a report wrapper.
+cloning it out of a evidence wrapper.
 
 The same profile found two repeated exact-proof walks. `ContourSplitMarkers`
 already guarantees endpoint coverage, strict parameter order, unique inserted
@@ -947,10 +947,10 @@ LeakSanitizer alone remained disabled under ptrace.
 
 Prepared region Boolean convenience queries now enter the same authoritative
 lean arrangement pipeline as ordinary region queries while supplying their
-already-built prepared point and winding classifiers. Report-bearing prepared
+already-built prepared point and winding classifiers. Evidence-bearing prepared
 queries select the same shared pipeline with evidence retention enabled. This
 removes a separate 266-line prepared orchestration copy whose convenience path
-always paid report construction, and prevents the two implementations from
+always paid evidence construction, and prevents the two implementations from
 drifting apart again. The comparative polygon lanes now time both ordinary and
 prepared Hypercurve and verify that their boundary sizes match before sampling;
 preparation remains outside the timed operation.
@@ -967,7 +967,7 @@ blocks, while peak heap fell from 1,782,938 to 1,144,334 bytes (35.8%). The
 production and benchmark diff removes a net 157 lines before this note.
 
 Both feature-mode test matrices, format, warnings-as-errors Clippy and rustdoc
-passed, including prepared/direct adversarial polygon parity and report
+passed, including prepared/direct adversarial polygon parity and evidence
 evidence regressions. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,304 coverage points and 15,624 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace. The prepared star64 lane is
@@ -1002,7 +1002,7 @@ LeakSanitizer alone remained disabled under ptrace.
 Lean Boolean boundary materialization now consumes its certified split output,
 selection, emitted fragments, and assembled chains. Provenance, source ranges,
 segments, and reversed segments therefore move through the once-visiting path
-instead of being cloned at each representation boundary. Report-bearing and
+instead of being cloned at each representation boundary. Evidence-bearing and
 public borrowed APIs retain their previous evidence-preserving behavior, while
 both assembly modes share one endpoint-index traversal. The comparative runner
 also accepts `HYPERCURVE_COMPARE_IMPL` so individual implementations can be
@@ -1363,13 +1363,13 @@ rustdoc passed. The AddressSanitizer Boolean differential fuzzer completed
 1,000 runs at 5,567 coverage points and 16,090 feature edges without a failure;
 LeakSanitizer alone remained disabled under ptrace.
 
-Non-report strict-crossing Booleans now split into a private compact fragment
+Non-evidence strict-crossing Booleans now split into a private compact fragment
 carrier that retains only source index, exact parameter range, and native
-segment geometry. The public and report-bearing `ContourFragment` continues to
+segment geometry. The public and evidence-bearing `ContourFragment` continues to
 carry both source endpoints. Direct contour output moves compact segments into
 the result, while loop output clones original source endpoints only for selected
 fragments. Overlaps, endpoint contacts, curved inputs, incomplete winding
-proofs, and report requests retain the general provenance-rich pipeline.
+proofs, and evidence requests retain the general provenance-rich pipeline.
 
 Against the exact-marker-preallocation checkpoint, twenty-iteration Callgrind
 runs improved all six ordinary and prepared large-star lanes. Region and
@@ -1932,7 +1932,7 @@ completed 8,257 executions at 5,844 coverage points and 18,140 feature edges
 without failure; LeakSanitizer alone remained disabled under ptrace. Direct
 contour emission no longer materializes retained line parameters, so a compact
 determinant event can now replace ordinary parameter `Real`s on that path.
-Report-bearing boundary-fragment APIs still require exact parameters on demand
+Evidence-bearing boundary-fragment APIs still require exact parameters on demand
 and remain the materialization boundary. The broad competitor gate is not met.
 
 The next retained-crossing experiments further narrowed that boundary and were
@@ -1968,7 +1968,7 @@ GCD inputs at the event/output boundary rather than replacing the established
 native reducer.
 
 A contour-only determinant lane now crosses that boundary without changing the
-public intersection APIs or report-bearing provenance path. Hyperreal retains
+public intersection APIs or evidence-bearing provenance path. Hyperreal retains
 only the two determinant numerators and their shared denominator in a 96-byte
 fixed-word carrier. It compares either source parameter by aligned native
 cross-products, with an exact arbitrary-precision comparison fallback for
@@ -1977,7 +1977,7 @@ for it. Hypercurve pairs that carrier with the exact point in a lazy event
 sidecar. The all-line Boolean crossing index consumes the carrier directly;
 compact fragment classification and endpoint-chain assembly consume only exact
 points. Crossings outside the fixed kernel retain the eager parameters, and
-mixed, curved, overlap, loop-provenance, and report-bearing queries retain the
+mixed, curved, overlap, loop-provenance, and evidence-bearing queries retain the
 existing exact pipeline. A static layout regression requires the lazy crossing
 carrier to be no larger than the eager point event.
 
@@ -2549,6 +2549,6 @@ mixed-region gap is closed.
 The retained x sweep addresses broad-phase pair scheduling only. A full
 Bentley--Ottmann status ordered by exact curve y-at-x, or the Martinez/Vatti
 overlay ownership machinery, remains architecture-inapplicable to the current
-mixed line/arc pair API unless it can preserve degeneracy reports, overlaps,
+mixed line/arc pair API unless it can preserve degeneracy evidence, overlaps,
 and authored provenance. The new sparse and dense sentinels are the crossover
 evidence for the portion that can be adopted independently.

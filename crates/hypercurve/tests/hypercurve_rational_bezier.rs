@@ -530,9 +530,7 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
     )
     .unwrap();
 
-    let prepared = conic
-        .try_prepare_intersection(&cubic_line, &policy)
-        .unwrap();
+    let prepared = conic.retain_intersection(&cubic_line, &policy).unwrap();
     assert!(prepared.is_contact_replay_cached());
     let RationalBezierIntersectionContacts2::Contacts(contacts) = prepared.try_contacts().unwrap()
     else {
@@ -706,9 +704,7 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
         RationalBezierIntersectionPointEvidence2::Algebraic(_)
     ));
 
-    let prepared = parabola
-        .try_prepare_intersection(&horizontal, &policy)
-        .unwrap();
+    let prepared = parabola.retain_intersection(&horizontal, &policy).unwrap();
     let prepared_clone = prepared.clone();
     assert!(!prepared.is_contact_replay_cached());
     assert!(matches!(
@@ -855,9 +851,7 @@ fn rational_resultant_replays_identical_and_reversed_full_image_overlap() {
         overlap.second_range(),
         &ParamRange::new(Real::one(), Real::zero())
     );
-    let prepared = curve
-        .try_prepare_intersection(&curve.clone(), &policy)
-        .unwrap();
+    let prepared = curve.retain_intersection(&curve.clone(), &policy).unwrap();
     let error = prepared.try_topology().unwrap_err();
     assert_eq!(error.operation(), hypercurve::CurveOperation2::Arrangement);
     assert_eq!(error.family(), CurveFamily2::RationalBezier);
@@ -1213,7 +1207,7 @@ fn rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_line
 }
 
 #[test]
-fn rational_bezier_degree_elevation_reports_invalid_target_and_zero_projective_weight() {
+fn rational_bezier_degree_elevation_evidence_invalid_target_and_zero_projective_weight() {
     let curve = curve();
     let invalid = curve.elevated_to_degree(2).unwrap_err();
     assert_eq!(invalid.operation(), CurveOperation2::DegreeElevation);

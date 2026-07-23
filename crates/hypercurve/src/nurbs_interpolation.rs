@@ -176,14 +176,14 @@ fn interpolate_with_inputs(
 }
 
 fn interpolation_determinant(coefficient_matrix: &[Vec<Real>]) -> ExactCurveResult<Real> {
-    let report = determinant_bareiss(coefficient_matrix, INTERPOLATION_SOLVE_PRECISION)
+    let evidence = determinant_bareiss(coefficient_matrix, INTERPOLATION_SOLVE_PRECISION)
         .map_err(interpolation_solve_error)?;
     match crate::classify::compare_reals(
-        &report.determinant,
+        &evidence.determinant,
         &Real::zero(),
         &CurvePolicy::certified(),
     ) {
-        Some(Ordering::Less | Ordering::Greater) => Ok(report.determinant),
+        Some(Ordering::Less | Ordering::Greater) => Ok(evidence.determinant),
         Some(Ordering::Equal) => Err(ExactCurveError::invalid(
             CurveOperation2::Interpolation,
             CurveFamily2::Nurbs,
@@ -199,13 +199,13 @@ fn solve_interpolation_coordinates_bareiss(
     coefficient_matrix: &[Vec<Real>],
     right_hand_sides: &[Vec<Real>; 2],
 ) -> ExactCurveResult<(InterpolationCoordinateSolve, InterpolationCoordinateSolve)> {
-    let report = solve_dense_linear_system_bareiss_multi_rhs(
+    let evidence = solve_dense_linear_system_bareiss_multi_rhs(
         coefficient_matrix,
         right_hand_sides,
         INTERPOLATION_SOLVE_PRECISION,
     )
     .map_err(interpolation_solve_error)?;
-    for replay in &report.residual_replays {
+    for replay in &evidence.residual_replays {
         if !replay.accepted {
             let row = replay
                 .rows
@@ -219,7 +219,7 @@ fn solve_interpolation_coordinates_bareiss(
             ));
         }
     }
-    let mut solutions = report.solutions.into_iter();
+    let mut solutions = evidence.solutions.into_iter();
     let x_solve = InterpolationCoordinateSolve {
         solution: solutions
             .next()

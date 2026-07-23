@@ -473,7 +473,7 @@ mod tests {
     }
 
     #[test]
-    fn flatten_certificate_reports_actual_depth_used() {
+    fn flatten_certificate_evidence_actual_depth_used() {
         let policy = CurvePolicy::certified();
         let options = BezierFlatteningOptions::try_new(Real::one(), 8, &policy).unwrap();
         let curve = QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 0));

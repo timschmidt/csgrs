@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2,
-    BezierRetainedOverlapReport2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -88,9 +88,9 @@ fuzz_target!(|data: &[u8]| {
                 }
             });
         let _ = graph.traverse_retained_splitting_linear_overlaps(&policy);
-        let _ = BezierRetainedOverlapReport2::from_graph(&graph, &policy).map(|report| {
-            let _ = report.line_overlap_splits(&policy);
-            let _ = report.linear_bezier_overlap_splits(&graph, &policy);
+        let _ = BezierRetainedOverlapEvidence2::from_graph(&graph, &policy).map(|evidence| {
+            let _ = evidence.line_overlap_splits(&policy);
+            let _ = evidence.linear_bezier_overlap_splits(&graph, &policy);
         });
     }
 

@@ -171,7 +171,7 @@ fn contour_chamfer_preserves_fill_rule() {
 }
 
 #[test]
-fn contour_chamfer_reports_boundary_parameters() {
+fn contour_chamfer_evidence_boundary_parameters() {
     assert_eq!(
         rectangle()
             .chamfer_vertex_by_parameters(1, s(1), q(1, 4), &policy())
@@ -180,7 +180,7 @@ fn contour_chamfer_reports_boundary_parameters() {
     );
 }
 #[test]
-fn contour_chamfer_vertex_by_points_reports_off_segment_boundary() {
+fn contour_chamfer_vertex_by_points_evidence_off_segment_boundary() {
     assert_eq!(
         rectangle()
             .chamfer_vertex_by_points(1, &p(5, 0), &p(4, 1), &policy())
@@ -257,7 +257,7 @@ fn contour_fillet_preserves_fill_rule() {
 }
 
 #[test]
-fn contour_fillet_reports_wrong_orientation_boundary() {
+fn contour_fillet_evidence_wrong_orientation_boundary() {
     assert_eq!(
         rectangle()
             .fillet_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), true, &policy())
@@ -405,13 +405,13 @@ fn rectangle_classifies_inside_outside_and_boundary() {
 fn prepared_contour_classification_matches_plain_contour() {
     let contour = rectangle();
     let policy = policy();
-    let prepared = contour.prepare_topology_queries(&policy);
+    let prepared = contour.query(&policy);
 
     assert_eq!(prepared.contour(), &contour);
     assert!(prepared.contour_box().is_some());
     assert_eq!(prepared.segment_boxes().len(), contour.segments().len());
     assert_eq!(
-        prepared.prepared_segment_kind_counts(),
+        prepared.segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
 
@@ -445,7 +445,7 @@ fn prepared_line_winding_index_matches_plain_half_open_vertex_cases() {
     ])
     .unwrap();
     let policy = policy();
-    let prepared = contour.prepare_topology_queries(&policy);
+    let prepared = contour.query(&policy);
 
     for point in [
         p(0, 0),
@@ -567,7 +567,7 @@ fn even_odd_fill_uses_winding_parity() {
     );
 
     let policy = policy();
-    let prepared = twice.prepare_topology_queries(&policy);
+    let prepared = twice.query(&policy);
     assert_eq!(
         prepared.winding_number(&p(1, 0), &policy),
         Classification::Decided(2)

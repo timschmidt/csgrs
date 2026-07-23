@@ -44,7 +44,7 @@ pub(crate) struct ExactCurveWorkspace2 {
     output_cache: Option<ExactCurveArrangementOutputCache2>,
 }
 
-/// Source segment fact retained during workspace preparation.
+/// Source segment fact retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSourceSegmentFact2 {
     source_segment_index: usize,
@@ -57,9 +57,9 @@ pub struct ExactCurveArrangementSourceSegmentFact2 {
 /// AABB certification status retained for one source segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactCurveArrangementSourceAabbStatus2 {
-    /// The source segment box was certified during workspace preparation.
+    /// The source segment box was certified during workspace construction.
     Decided,
-    /// The source segment box stayed uncertain during workspace preparation.
+    /// The source segment box stayed uncertain during workspace construction.
     Undecided,
 }
 
@@ -76,7 +76,7 @@ pub struct ExactCurveArrangementSourceAabbBucket2 {
     source_refs: Vec<ExactCurveArrangementSourceAabbRef2>,
 }
 
-/// Source segment AABB buckets retained during workspace preparation.
+/// Source segment AABB buckets retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSourceAabbBucketCache2 {
     bucket_count: usize,
@@ -100,7 +100,7 @@ pub struct ExactCurveArrangementSourceSegmentKindBucket2 {
     source_refs: Vec<ExactCurveArrangementSourceSegmentKindRef2>,
 }
 
-/// Source segment primitive-family buckets retained during workspace preparation.
+/// Source segment primitive-family buckets retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSourceSegmentKindBucketCache2 {
     bucket_count: usize,
@@ -111,7 +111,7 @@ pub struct ExactCurveArrangementSourceSegmentKindBucketCache2 {
     buckets: Vec<ExactCurveArrangementSourceSegmentKindBucket2>,
 }
 
-/// Source segment fact cache retained during workspace preparation.
+/// Source segment fact cache retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSourceSegmentCache2 {
     source_segment_count: usize,
@@ -140,14 +140,14 @@ pub struct ExactCurveArrangementSourceEndpointRef2 {
     endpoint: ExactCurveArrangementSourceEndpoint2,
 }
 
-/// Exact structural source endpoint bucket retained during workspace preparation.
+/// Exact structural source endpoint bucket retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSourceEndpointBucket2 {
     point: Point2,
     endpoints: Vec<ExactCurveArrangementSourceEndpointRef2>,
 }
 
-/// Exact structural source endpoint buckets retained during workspace preparation.
+/// Exact structural source endpoint buckets retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSourceEndpointBucketCache2 {
     endpoint_count: usize,
@@ -164,7 +164,7 @@ pub enum ExactCurveArrangementSplitCandidateAabbStatus2 {
     DecidedDisjoint,
     /// The source boxes were both decided and not certified disjoint.
     NotDecidedDisjoint,
-    /// One or both source boxes were not certified during workspace preparation.
+    /// One or both source boxes were not certified during workspace construction.
     Undecided,
 }
 
@@ -221,7 +221,7 @@ pub struct ExactCurveArrangementSplitCache2 {
     overlap_relation_count: usize,
     uncertain_relation_count: usize,
     intersection_points: Vec<Point2>,
-    intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
+    intersection_evidence: Vec<RegionLineSegmentSplitIntersectionEvidence2>,
     relation_bucket_cache: ExactCurveArrangementSplitRelationBucketCache2,
     intersection_bucket_cache: ExactCurveArrangementSplitIntersectionBucketCache2,
     intersection_parameter_cache: ExactCurveArrangementSplitIntersectionParameterCache2,
@@ -273,10 +273,10 @@ pub struct ExactCurveArrangementSplitRelationBucketCache2 {
     buckets: Vec<ExactCurveArrangementSplitRelationBucket2>,
 }
 
-/// Reference to a retained split-intersection report inside an exact point bucket.
+/// Reference to a retained split-intersection evidence inside an exact point bucket.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSplitIntersectionRef2 {
-    intersection_report_index: usize,
+    intersection_evidence_index: usize,
 }
 
 /// Exact structural split-intersection bucket retained by an evaluated workspace.
@@ -299,7 +299,7 @@ pub struct ExactCurveArrangementSplitIntersectionBucketCache2 {
 /// Exact source-parameter evidence retained for one split intersection.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSplitIntersectionParameterRef2 {
-    intersection_report_index: usize,
+    intersection_evidence_index: usize,
     first_source_segment_index: usize,
     first_source_param: Real,
     second_source_segment_index: usize,
@@ -433,7 +433,7 @@ pub struct ExactCurveArrangementArrangedEndpointPointCache2 {
 /// Source provenance retained for one arranged fragment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementArrangedFragmentSourceRef2 {
-    arranged_source_report_index: usize,
+    arranged_source_evidence_index: usize,
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
     source_range: ParamRange,
@@ -461,7 +461,7 @@ pub struct ExactCurveArrangementArrangedFragmentRef2 {
 pub struct ExactCurveArrangementArrangedFragmentStatusRef2 {
     arranged_fragment_index: usize,
     source_ref_index: usize,
-    arranged_source_report_index: usize,
+    arranged_source_evidence_index: usize,
 }
 
 /// Arranged fragment bucket grouped by retained primitive family.
@@ -507,7 +507,7 @@ pub struct ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
 /// Arranged fragment source-parameter range retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
-    arranged_source_report_index: usize,
+    arranged_source_evidence_index: usize,
     source_segment_index: usize,
     source_range: ParamRange,
     arranged_segment_index: usize,
@@ -539,7 +539,7 @@ pub struct ExactCurveArrangementArrangedFragmentCache2 {
 /// Output segment provenance retained for one assembled ring bucket.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRingSegmentRef2 {
-    source_report_index: usize,
+    source_evidence_index: usize,
     output_segment_index: usize,
     reversed: bool,
 }
@@ -563,7 +563,7 @@ pub struct ExactCurveArrangementOutputRingBucketCache2 {
 /// Output segment reference retained in a primitive-family bucket.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputSegmentKindRef2 {
-    source_report_index: usize,
+    source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
 }
@@ -589,7 +589,7 @@ pub struct ExactCurveArrangementOutputSegmentKindBucketCache2 {
 /// Output segment reference retained in a source-segment bucket.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputSegmentSourceRef2 {
-    source_report_index: usize,
+    source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
 }
@@ -613,7 +613,7 @@ pub struct ExactCurveArrangementOutputSegmentSourceBucketCache2 {
 /// Output segment source-parameter range retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputSegmentSourceRangeRef2 {
-    source_report_index: usize,
+    source_evidence_index: usize,
     source_segment_index: usize,
     source_range: ParamRange,
     output_ring_index: usize,
@@ -632,7 +632,7 @@ pub struct ExactCurveArrangementOutputSegmentSourceRangeCache2 {
 /// Output segment exact endpoints retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputSegmentEndpointRef2 {
-    source_report_index: usize,
+    source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
     output_start_point: Point2,
@@ -650,8 +650,8 @@ pub struct ExactCurveArrangementOutputSegmentEndpointCache2 {
 /// Exact endpoint continuity retained between adjacent output ring segments.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRingContinuityRef2 {
-    source_report_index: usize,
-    next_source_report_index: usize,
+    source_evidence_index: usize,
+    next_source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
     next_output_segment_index: usize,
@@ -671,7 +671,7 @@ pub struct ExactCurveArrangementOutputRingContinuityCache2 {
 /// Output segment reference retained in a topology-status bucket.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputSegmentStatusRef2 {
-    source_report_index: usize,
+    source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
 }
@@ -701,7 +701,7 @@ pub struct ExactCurveArrangementOutputSegmentStatusBucketCache2 {
 /// Output segment reference retained in a traversal-direction bucket.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputSegmentDirectionRef2 {
-    source_report_index: usize,
+    source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
 }
@@ -727,7 +727,7 @@ pub struct ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
 /// Output role assignment evidence retained for one boundary contour.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRoleAssignment2 {
-    role_report_index: usize,
+    role_evidence_index: usize,
     source_contour_index: usize,
     source_segment_count: usize,
     source_fill_rule: FillRule,
@@ -743,7 +743,7 @@ pub struct ExactCurveArrangementOutputRoleAssignment2 {
 pub struct ExactCurveArrangementOutputRoleStatusRef2 {
     role: RegionBoundaryContourRole2,
     assignment_index: usize,
-    role_report_index: usize,
+    role_evidence_index: usize,
 }
 
 /// Output role bucket retained after boundary contour role assignment.
@@ -780,7 +780,7 @@ pub struct ExactCurveArrangementOutputRoleStatusBucketCache2 {
 pub struct ExactCurveArrangementOutputRoleSourceContourRef2 {
     role: RegionBoundaryContourRole2,
     assignment_index: usize,
-    role_report_index: usize,
+    role_evidence_index: usize,
     output_role_index: usize,
 }
 
@@ -805,7 +805,7 @@ pub struct ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
 pub struct ExactCurveArrangementOutputRoleNestingDepthRef2 {
     role: RegionBoundaryContourRole2,
     assignment_index: usize,
-    role_report_index: usize,
+    role_evidence_index: usize,
     source_contour_index: usize,
     output_role_index: usize,
 }
@@ -831,7 +831,7 @@ pub struct ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
 pub struct ExactCurveArrangementOutputRoleContainmentRef2 {
     role: RegionBoundaryContourRole2,
     assignment_index: usize,
-    role_report_index: usize,
+    role_evidence_index: usize,
     source_contour_index: usize,
     containing_contour_index: usize,
     containing_contour_ref_index: usize,
@@ -858,7 +858,7 @@ pub struct ExactCurveArrangementOutputRoleContainmentBucketCache2 {
 /// Output material/hole role buckets retained after boundary contour role assignment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRoleCache2 {
-    role_report_count: usize,
+    role_evidence_count: usize,
     material_contour_count: usize,
     hole_contour_count: usize,
     material_segment_count: usize,
@@ -913,8 +913,8 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
     output_ring_count: Option<usize>,
     output_boundary_segment_count: Option<usize>,
     output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
-    arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
-    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+    arranged_source_evidence: Vec<RegionLineSegmentArrangedSourceEvidence2>,
+    source_evidence: Vec<RegionLineSegmentRingSourceEvidence2>,
     arranged_fragment_cache: ExactCurveArrangementArrangedFragmentCache2,
     output_ring_bucket_cache: ExactCurveArrangementOutputRingBucketCache2,
     output_segment_kind_bucket_cache: ExactCurveArrangementOutputSegmentKindBucketCache2,
@@ -930,7 +930,7 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputCache2 {
     materialized_region: bool,
-    boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
+    boundary_build_evidence: Option<RegionBoundaryContourBuildEvidence2>,
     boundary_output_cache: Option<ExactCurveArrangementOutputBoundaryCache2>,
     role_cache: Option<ExactCurveArrangementOutputRoleCache2>,
     stage: RegionLineSegmentRegionBuildStage2,
@@ -957,20 +957,20 @@ pub struct ExactCurveArrangementSummary2 {
 ///
 /// This is the domain-level arrangement carrier returned by the
 /// [`LineArcRegion2::arrange_unordered_segments`] family. It retains the certified
-/// facts, blocker evidence, derived report, and optional materialized region so
+/// facts, blocker evidence, derived evidence, and optional materialized region so
 /// repeated inspection does not rerun topology.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionArrangement2 {
-    report: RegionArrangementReport2,
+    evidence: RegionArrangementEvidence2,
     region: Option<LineArcRegion2>,
 }
 
 /// Retained facts and diagnostics for an unordered region arrangement.
 ///
 /// Clones share the immutable arrangement workspace. Reading or cloning this
-/// report does not recompute topology or deep-copy retained geometric facts.
+/// evidence does not recompute topology or deep-copy retained geometric facts.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionArrangementReport2 {
+pub struct RegionArrangementEvidence2 {
     workspace: Rc<ExactCurveWorkspace2>,
     summary_cache: ExactCurveArrangementSummary2,
 }
@@ -986,7 +986,7 @@ pub enum RegionBoundaryContourRole2 {
 
 /// Role assignment for one source boundary contour.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionBoundaryContourRoleReport2 {
+pub struct RegionBoundaryContourRoleEvidence2 {
     source_contour_index: usize,
     source_segment_count: usize,
     source_fill_rule: FillRule,
@@ -998,9 +998,9 @@ pub struct RegionBoundaryContourRoleReport2 {
     status: RetainedTopologyStatus,
 }
 
-/// Report for building a region from already-closed boundary contours.
+/// Evidence for building a region from already-closed boundary contours.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionBoundaryContourBuildReport2 {
+pub struct RegionBoundaryContourBuildEvidence2 {
     stage: RegionBoundaryContourBuildStage2,
     predicate_path: RegionBoundaryContourBuildPredicatePath2,
     source_contour_count: usize,
@@ -1017,7 +1017,7 @@ pub struct RegionBoundaryContourBuildReport2 {
     hole_contour_count: Option<usize>,
     material_segment_count: Option<usize>,
     hole_segment_count: Option<usize>,
-    role_reports: Vec<RegionBoundaryContourRoleReport2>,
+    role_evidence: Vec<RegionBoundaryContourRoleEvidence2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -1038,16 +1038,16 @@ pub enum RegionBoundaryContourBuildPredicatePath2 {
     ExactContourIntersectionAndPointContainment,
 }
 
-/// Result of report-bearing boundary contour region construction.
+/// Result of evidence-bearing boundary contour region construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBoundaryContourBuildResult2 {
     region: Option<LineArcRegion2>,
-    report: RegionBoundaryContourBuildReport2,
+    evidence: RegionBoundaryContourBuildEvidence2,
 }
 
 /// Source line-segment provenance for one assembled boundary ring segment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionLineSegmentRingSourceReport2 {
+pub struct RegionLineSegmentRingSourceEvidence2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
     source_segment_start_point: Point2,
@@ -1064,7 +1064,7 @@ pub struct RegionLineSegmentRingSourceReport2 {
 
 /// Source provenance for one arranged fragment before ring traversal.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionLineSegmentArrangedSourceReport2 {
+pub struct RegionLineSegmentArrangedSourceEvidence2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
     source_segment_start_point: Point2,
@@ -1088,7 +1088,7 @@ pub enum RegionLineSegmentArrangedEndpoint2 {
 
 /// Retained point-intersection evidence collected before unordered region assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionLineSegmentSplitIntersectionReport2 {
+pub struct RegionLineSegmentSplitIntersectionEvidence2 {
     first_source_segment_index: usize,
     first_source_segment_kind: SegmentKind,
     first_source_segment_start_point: Point2,
@@ -1125,9 +1125,9 @@ pub enum RegionLineSegmentRingAssemblyPredicatePath2 {
     ExactEndpointBucketTraversal,
 }
 
-/// Internal staging report for unordered exact segment region construction.
+/// Internal staging evidence for unordered exact segment region construction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionLineSegmentRegionBuildReport2 {
+pub struct RegionLineSegmentRegionBuildEvidence2 {
     stage: RegionLineSegmentRegionBuildStage2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
@@ -1144,7 +1144,7 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     split_overlap_relation_count: usize,
     split_uncertain_relation_count: usize,
     split_intersection_points: Vec<Point2>,
-    split_intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
+    split_intersection_evidence: Vec<RegionLineSegmentSplitIntersectionEvidence2>,
     split_output_segment_count: Option<usize>,
     split_blocker_first_source_segment_index: Option<usize>,
     split_blocker_first_source_segment_kind: Option<SegmentKind>,
@@ -1171,9 +1171,9 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     output_ring_count: Option<usize>,
     output_boundary_segment_count: Option<usize>,
     output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
-    arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
-    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
-    boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
+    arranged_source_evidence: Vec<RegionLineSegmentArrangedSourceEvidence2>,
+    source_evidence: Vec<RegionLineSegmentRingSourceEvidence2>,
+    boundary_build_evidence: Option<RegionBoundaryContourBuildEvidence2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -1193,7 +1193,7 @@ pub enum RegionLineSegmentRegionBuildStage2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildResult2 {
     region: Option<LineArcRegion2>,
-    report: RegionLineSegmentRegionBuildReport2,
+    evidence: RegionLineSegmentRegionBuildEvidence2,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1245,16 +1245,16 @@ fn evaluate_unordered_line_segments_region_result(
 
     let arranged = match arrange_line_segments_at_point_intersections(segments, policy)? {
         Ok(arranged) => arranged,
-        Err((split_report, blocker)) => {
+        Err((split_evidence, blocker)) => {
             return Ok(RegionLineSegmentRegionBuildResult2 {
                 region: None,
-                report: blocked_line_segment_region_report(
+                evidence: blocked_line_segment_region_evidence(
                     segments.len(),
                     line_segment_kind_counts(segments.len()),
-                    Some(split_report),
+                    Some(split_evidence),
                     None,
                     Vec::new(),
-                    LineSegmentRingAssemblyReportParts::default(),
+                    LineSegmentRingAssemblyEvidenceParts::default(),
                     RegionLineSegmentRegionBuildStage2::RingAssembly,
                     retained_status_for_line_segment_region_blocker(blocker),
                     blocker,
@@ -1269,15 +1269,15 @@ fn evaluate_unordered_line_segments_region_result(
             Err((endpoint_graph, counts, blocker)) => {
                 return Ok(RegionLineSegmentRegionBuildResult2 {
                     region: None,
-                    report: blocked_line_segment_region_report(
+                    evidence: blocked_line_segment_region_evidence(
                         segments.len(),
                         line_segment_kind_counts(segments.len()),
-                        Some(arranged.report),
+                        Some(arranged.evidence),
                         Some(endpoint_graph),
-                        line_arranged_source_reports(&arranged.segments),
-                        LineSegmentRingAssemblyReportParts {
+                        line_arranged_source_evidence(&arranged.segments),
+                        LineSegmentRingAssemblyEvidenceParts {
                             counts,
-                            ..LineSegmentRingAssemblyReportParts::default()
+                            ..LineSegmentRingAssemblyEvidenceParts::default()
                         },
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -1289,16 +1289,16 @@ fn evaluate_unordered_line_segments_region_result(
 
     let assembled = match assemble_unordered_line_segment_rings(&arranged.segments, policy)? {
         Ok(assembled) => assembled,
-        Err((report, blocker)) => {
+        Err((evidence, blocker)) => {
             return Ok(RegionLineSegmentRegionBuildResult2 {
                 region: None,
-                report: blocked_line_segment_region_report(
+                evidence: blocked_line_segment_region_evidence(
                     segments.len(),
                     line_segment_kind_counts(segments.len()),
-                    Some(arranged.report),
+                    Some(arranged.evidence),
                     Some(endpoint_graph),
-                    line_arranged_source_reports(&arranged.segments),
-                    report,
+                    line_arranged_source_evidence(&arranged.segments),
+                    evidence,
                     RegionLineSegmentRegionBuildStage2::RingAssembly,
                     retained_status_for_line_segment_region_blocker(blocker),
                     blocker,
@@ -1316,58 +1316,60 @@ fn evaluate_unordered_line_segments_region_result(
         contours.push(contour);
     }
 
-    let built = LineArcRegion2::from_boundary_contours_with_report(contours, policy)?;
+    let built = LineArcRegion2::from_boundary_contours_with_evidence(contours, policy)?;
     let status = built.status();
     let blocker = built.blocker();
     let output_ring_count = built.output_contour_count();
     let output_boundary_segment_count = built.output_segment_count();
     let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
-    let (region, boundary_build_report) = built.into_parts();
+    let (region, boundary_build_evidence) = built.into_parts();
     Ok(RegionLineSegmentRegionBuildResult2 {
         region,
-        report: RegionLineSegmentRegionBuildReport2 {
+        evidence: RegionLineSegmentRegionBuildEvidence2 {
             stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
             source_segment_count: segments.len(),
             source_segment_kind_counts: line_segment_kind_counts(segments.len()),
             arranged_segment_count: Some(arranged.segments.len()),
             arranged_segment_kind_counts: Some(line_segment_kind_counts(arranged.segments.len())),
-            split_predicate_path: arranged.report.predicate_path,
+            split_predicate_path: arranged.evidence.predicate_path,
             endpoint_graph_predicate_path: Some(
                 RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
             ),
             ring_assembly_predicate_path: Some(
                 RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal,
             ),
-            split_candidate_pair_count: arranged.report.candidate_pair_count,
-            split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
-            split_tested_pair_count: arranged.report.tested_pair_count,
-            split_intersection_event_count: arranged.report.intersection_event_count,
-            split_point_relation_count: arranged.report.point_relation_count,
-            split_overlap_relation_count: arranged.report.overlap_relation_count,
-            split_uncertain_relation_count: arranged.report.uncertain_relation_count,
-            split_intersection_points: arranged.report.intersection_points,
-            split_intersection_reports: arranged.report.intersection_reports,
+            split_candidate_pair_count: arranged.evidence.candidate_pair_count,
+            split_skipped_aabb_pair_count: arranged.evidence.skipped_aabb_pair_count,
+            split_tested_pair_count: arranged.evidence.tested_pair_count,
+            split_intersection_event_count: arranged.evidence.intersection_event_count,
+            split_point_relation_count: arranged.evidence.point_relation_count,
+            split_overlap_relation_count: arranged.evidence.overlap_relation_count,
+            split_uncertain_relation_count: arranged.evidence.uncertain_relation_count,
+            split_intersection_points: arranged.evidence.intersection_points,
+            split_intersection_evidence: arranged.evidence.intersection_evidence,
             split_output_segment_count: Some(arranged.segments.len()),
             split_blocker_first_source_segment_index: arranged
-                .report
+                .evidence
                 .blocker_first_source_segment_index,
             split_blocker_first_source_segment_kind: arranged
-                .report
+                .evidence
                 .blocker_first_source_segment_kind,
             split_blocker_first_source_start_point: arranged
-                .report
+                .evidence
                 .blocker_first_source_start_point,
-            split_blocker_first_source_end_point: arranged.report.blocker_first_source_end_point,
+            split_blocker_first_source_end_point: arranged.evidence.blocker_first_source_end_point,
             split_blocker_second_source_segment_index: arranged
-                .report
+                .evidence
                 .blocker_second_source_segment_index,
             split_blocker_second_source_segment_kind: arranged
-                .report
+                .evidence
                 .blocker_second_source_segment_kind,
             split_blocker_second_source_start_point: arranged
-                .report
+                .evidence
                 .blocker_second_source_start_point,
-            split_blocker_second_source_end_point: arranged.report.blocker_second_source_end_point,
+            split_blocker_second_source_end_point: arranged
+                .evidence
+                .blocker_second_source_end_point,
             endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
             endpoint_graph_structural_bucket_count: Some(endpoint_graph.structural_bucket_count),
             endpoint_graph_structural_singleton_bucket_count: Some(
@@ -1400,9 +1402,9 @@ fn evaluate_unordered_line_segments_region_result(
             output_ring_count,
             output_boundary_segment_count,
             output_boundary_segment_kind_counts,
-            arranged_source_reports: line_arranged_source_reports(&arranged.segments),
-            source_reports: assembled.source_reports,
-            boundary_build_report: Some(boundary_build_report),
+            arranged_source_evidence: line_arranged_source_evidence(&arranged.segments),
+            source_evidence: assembled.source_evidence,
+            boundary_build_evidence: Some(boundary_build_evidence),
             status,
             blocker,
         },
@@ -1420,16 +1422,16 @@ fn evaluate_unordered_segments_region_result(
 
     let arranged = match arrange_native_segments_at_point_intersections(segments, policy)? {
         Ok(arranged) => arranged,
-        Err((split_report, blocker)) => {
+        Err((split_evidence, blocker)) => {
             return Ok(RegionLineSegmentRegionBuildResult2 {
                 region: None,
-                report: blocked_line_segment_region_report(
+                evidence: blocked_line_segment_region_evidence(
                     segments.len(),
                     segment_kind_counts(segments),
-                    Some(split_report),
+                    Some(split_evidence),
                     None,
                     Vec::new(),
-                    LineSegmentRingAssemblyReportParts::default(),
+                    LineSegmentRingAssemblyEvidenceParts::default(),
                     RegionLineSegmentRegionBuildStage2::RingAssembly,
                     retained_status_for_line_segment_region_blocker(blocker),
                     blocker,
@@ -1444,15 +1446,15 @@ fn evaluate_unordered_segments_region_result(
             Err((endpoint_graph, counts, blocker)) => {
                 return Ok(RegionLineSegmentRegionBuildResult2 {
                     region: None,
-                    report: blocked_line_segment_region_report(
+                    evidence: blocked_line_segment_region_evidence(
                         segments.len(),
                         segment_kind_counts(segments),
-                        Some(arranged.report),
+                        Some(arranged.evidence),
                         Some(endpoint_graph),
-                        native_arranged_source_reports(segments, &arranged.segments),
-                        LineSegmentRingAssemblyReportParts {
+                        native_arranged_source_evidence(segments, &arranged.segments),
+                        LineSegmentRingAssemblyEvidenceParts {
                             counts,
-                            ..LineSegmentRingAssemblyReportParts::default()
+                            ..LineSegmentRingAssemblyEvidenceParts::default()
                         },
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -1464,16 +1466,16 @@ fn evaluate_unordered_segments_region_result(
 
     let assembled = match assemble_unordered_native_segment_rings(&arranged.segments, policy)? {
         Ok(assembled) => assembled,
-        Err((report, blocker)) => {
+        Err((evidence, blocker)) => {
             return Ok(RegionLineSegmentRegionBuildResult2 {
                 region: None,
-                report: blocked_line_segment_region_report(
+                evidence: blocked_line_segment_region_evidence(
                     segments.len(),
                     segment_kind_counts(segments),
-                    Some(arranged.report),
+                    Some(arranged.evidence),
                     Some(endpoint_graph),
-                    native_arranged_source_reports(segments, &arranged.segments),
-                    report,
+                    native_arranged_source_evidence(segments, &arranged.segments),
+                    evidence,
                     RegionLineSegmentRegionBuildStage2::RingAssembly,
                     retained_status_for_line_segment_region_blocker(blocker),
                     blocker,
@@ -1487,16 +1489,16 @@ fn evaluate_unordered_segments_region_result(
         contours.push(Contour2::try_new_with_fill_rule(ring, fill_rule)?);
     }
 
-    let built = LineArcRegion2::from_boundary_contours_with_report(contours, policy)?;
+    let built = LineArcRegion2::from_boundary_contours_with_evidence(contours, policy)?;
     let status = built.status();
     let blocker = built.blocker();
     let output_ring_count = built.output_contour_count();
     let output_boundary_segment_count = built.output_segment_count();
     let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
-    let (region, boundary_build_report) = built.into_parts();
+    let (region, boundary_build_evidence) = built.into_parts();
     Ok(RegionLineSegmentRegionBuildResult2 {
         region,
-        report: RegionLineSegmentRegionBuildReport2 {
+        evidence: RegionLineSegmentRegionBuildEvidence2 {
             stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
             source_segment_count: segments.len(),
             source_segment_kind_counts: segment_kind_counts(segments),
@@ -1504,43 +1506,45 @@ fn evaluate_unordered_segments_region_result(
             arranged_segment_kind_counts: Some(native_arranged_segment_kind_counts(
                 &arranged.segments,
             )),
-            split_predicate_path: arranged.report.predicate_path,
+            split_predicate_path: arranged.evidence.predicate_path,
             endpoint_graph_predicate_path: Some(
                 RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
             ),
             ring_assembly_predicate_path: Some(
                 RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal,
             ),
-            split_candidate_pair_count: arranged.report.candidate_pair_count,
-            split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
-            split_tested_pair_count: arranged.report.tested_pair_count,
-            split_intersection_event_count: arranged.report.intersection_event_count,
-            split_point_relation_count: arranged.report.point_relation_count,
-            split_overlap_relation_count: arranged.report.overlap_relation_count,
-            split_uncertain_relation_count: arranged.report.uncertain_relation_count,
-            split_intersection_points: arranged.report.intersection_points,
-            split_intersection_reports: arranged.report.intersection_reports,
+            split_candidate_pair_count: arranged.evidence.candidate_pair_count,
+            split_skipped_aabb_pair_count: arranged.evidence.skipped_aabb_pair_count,
+            split_tested_pair_count: arranged.evidence.tested_pair_count,
+            split_intersection_event_count: arranged.evidence.intersection_event_count,
+            split_point_relation_count: arranged.evidence.point_relation_count,
+            split_overlap_relation_count: arranged.evidence.overlap_relation_count,
+            split_uncertain_relation_count: arranged.evidence.uncertain_relation_count,
+            split_intersection_points: arranged.evidence.intersection_points,
+            split_intersection_evidence: arranged.evidence.intersection_evidence,
             split_output_segment_count: Some(arranged.segments.len()),
             split_blocker_first_source_segment_index: arranged
-                .report
+                .evidence
                 .blocker_first_source_segment_index,
             split_blocker_first_source_segment_kind: arranged
-                .report
+                .evidence
                 .blocker_first_source_segment_kind,
             split_blocker_first_source_start_point: arranged
-                .report
+                .evidence
                 .blocker_first_source_start_point,
-            split_blocker_first_source_end_point: arranged.report.blocker_first_source_end_point,
+            split_blocker_first_source_end_point: arranged.evidence.blocker_first_source_end_point,
             split_blocker_second_source_segment_index: arranged
-                .report
+                .evidence
                 .blocker_second_source_segment_index,
             split_blocker_second_source_segment_kind: arranged
-                .report
+                .evidence
                 .blocker_second_source_segment_kind,
             split_blocker_second_source_start_point: arranged
-                .report
+                .evidence
                 .blocker_second_source_start_point,
-            split_blocker_second_source_end_point: arranged.report.blocker_second_source_end_point,
+            split_blocker_second_source_end_point: arranged
+                .evidence
+                .blocker_second_source_end_point,
             endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
             endpoint_graph_structural_bucket_count: Some(endpoint_graph.structural_bucket_count),
             endpoint_graph_structural_singleton_bucket_count: Some(
@@ -1573,9 +1577,9 @@ fn evaluate_unordered_segments_region_result(
             output_ring_count,
             output_boundary_segment_count,
             output_boundary_segment_kind_counts,
-            arranged_source_reports: native_arranged_source_reports(segments, &arranged.segments),
-            source_reports: assembled.source_reports,
-            boundary_build_report: Some(boundary_build_report),
+            arranged_source_evidence: native_arranged_source_evidence(segments, &arranged.segments),
+            source_evidence: assembled.source_evidence,
+            boundary_build_evidence: Some(boundary_build_evidence),
             status,
             blocker,
         },
@@ -1726,12 +1730,12 @@ impl LineArcRegion2 {
 
     /// Builds a region by nesting closed boundary contours and retaining role evidence.
     ///
-    /// This is the report-bearing counterpart to
+    /// This is the evidence-bearing counterpart to
     /// [`LineArcRegion2::from_boundary_contours`]. Contours at even containment depth
     /// become material and odd-depth contours become holes. If intersections,
     /// touches, or undecided containment predicates prevent role assignment, no
-    /// region is materialized and the report carries the blocker.
-    pub(crate) fn from_boundary_contours_with_report(
+    /// region is materialized and the evidence carries the blocker.
+    pub(crate) fn from_boundary_contours_with_evidence(
         contours: Vec<Contour2>,
         policy: &CurvePolicy,
     ) -> CurveResult<RegionBoundaryContourBuildResult2> {
@@ -1753,24 +1757,24 @@ impl LineArcRegion2 {
                 ));
             }
         };
-        let (region, role_reports) = assign_boundary_contour_roles(contours, &nesting, true);
+        let (region, role_evidence) = assign_boundary_contour_roles(contours, &nesting, true);
         let material_contour_count = region.material_contours().len();
         let hole_contour_count = region.hole_contours().len();
         let output_contour_count = material_contour_count + hole_contour_count;
-        let material_segment_count = role_reports
+        let material_segment_count = role_evidence
             .iter()
-            .filter(|report| report.role == RegionBoundaryContourRole2::Material)
-            .map(|report| report.source_segment_count)
+            .filter(|evidence| evidence.role == RegionBoundaryContourRole2::Material)
+            .map(|evidence| evidence.source_segment_count)
             .sum();
-        let hole_segment_count = role_reports
+        let hole_segment_count = role_evidence
             .iter()
-            .filter(|report| report.role == RegionBoundaryContourRole2::Hole)
-            .map(|report| report.source_segment_count)
+            .filter(|evidence| evidence.role == RegionBoundaryContourRole2::Hole)
+            .map(|evidence| evidence.source_segment_count)
             .sum();
         let output_segment_count = material_segment_count + hole_segment_count;
         Ok(RegionBoundaryContourBuildResult2 {
             region: Some(region),
-            report: RegionBoundaryContourBuildReport2 {
+            evidence: RegionBoundaryContourBuildEvidence2 {
                 stage: RegionBoundaryContourBuildStage2::RoleAssignment,
                 predicate_path:
                     RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment,
@@ -1788,7 +1792,7 @@ impl LineArcRegion2 {
                 hole_contour_count: Some(hole_contour_count),
                 material_segment_count: Some(material_segment_count),
                 hole_segment_count: Some(hole_segment_count),
-                role_reports,
+                role_evidence,
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -1799,11 +1803,11 @@ impl LineArcRegion2 {
 fn assign_boundary_contour_roles(
     contours: Vec<Contour2>,
     nesting: &BoundaryContourNestingDepths,
-    retain_reports: bool,
-) -> (LineArcRegion2, Vec<RegionBoundaryContourRoleReport2>) {
+    retain_evidence: bool,
+) -> (LineArcRegion2, Vec<RegionBoundaryContourRoleEvidence2>) {
     let mut material_contours = Vec::new();
     let mut hole_contours = Vec::new();
-    let mut role_reports = Vec::with_capacity(usize::from(retain_reports) * contours.len());
+    let mut role_evidence = Vec::with_capacity(usize::from(retain_evidence) * contours.len());
     for (source_contour_index, (contour, entry)) in
         contours.into_iter().zip(&nesting.entries).enumerate()
     {
@@ -1819,8 +1823,8 @@ fn assign_boundary_contour_roles(
             hole_contours.push(contour);
             (RegionBoundaryContourRole2::Hole, index)
         };
-        if retain_reports {
-            role_reports.push(RegionBoundaryContourRoleReport2 {
+        if retain_evidence {
+            role_evidence.push(RegionBoundaryContourRoleEvidence2 {
                 source_contour_index,
                 source_segment_count,
                 source_fill_rule,
@@ -1835,7 +1839,7 @@ fn assign_boundary_contour_roles(
     }
     (
         LineArcRegion2::new(material_contours, hole_contours),
-        role_reports,
+        role_evidence,
     )
 }
 
@@ -2004,7 +2008,7 @@ impl ExactCurveArrangementSourceAabbBucketCache2 {
         self.source_ref_count
     }
 
-    /// Returns the number of source segment boxes certified during workspace preparation.
+    /// Returns the number of source segment boxes certified during workspace construction.
     pub const fn decided_source_ref_count(&self) -> usize {
         self.decided_source_ref_count
     }
@@ -2172,7 +2176,7 @@ impl ExactCurveArrangementSourceSegmentCache2 {
         self.source_segment_kind_counts
     }
 
-    /// Returns the number of source segment boxes certified during workspace preparation.
+    /// Returns the number of source segment boxes certified during workspace construction.
     pub const fn decided_source_segment_aabb_count(&self) -> usize {
         self.decided_source_segment_aabb_count
     }
@@ -2239,20 +2243,21 @@ impl ExactCurveWorkspace2 {
 
     fn with_region_build_evidence(
         mut self,
-        report: &RegionLineSegmentRegionBuildReport2,
+        evidence: &RegionLineSegmentRegionBuildEvidence2,
         materialized_region: bool,
     ) -> Self {
-        self.split_cache = Some(ExactCurveArrangementSplitCache2::from_region_build_report(
-            report,
-        ));
+        self.split_cache =
+            Some(ExactCurveArrangementSplitCache2::from_region_build_evidence(evidence));
         self.endpoint_graph_cache =
-            ExactCurveArrangementEndpointGraphCache2::from_region_build_report(report);
+            ExactCurveArrangementEndpointGraphCache2::from_region_build_evidence(evidence);
         self.ring_assembly_cache =
-            ExactCurveArrangementRingAssemblyCache2::from_region_build_report(report);
-        self.output_cache = Some(ExactCurveArrangementOutputCache2::from_region_build_report(
-            report,
-            materialized_region,
-        ));
+            ExactCurveArrangementRingAssemblyCache2::from_region_build_evidence(evidence);
+        self.output_cache = Some(
+            ExactCurveArrangementOutputCache2::from_region_build_evidence(
+                evidence,
+                materialized_region,
+            ),
+        );
         self
     }
 
@@ -2276,7 +2281,7 @@ impl ExactCurveWorkspace2 {
         self.source_aabb.as_ref()
     }
 
-    /// Returns the number of source segment boxes certified during workspace preparation.
+    /// Returns the number of source segment boxes certified during workspace construction.
     pub fn decided_source_segment_aabb_count(&self) -> usize {
         self.source_segment_cache
             .decided_source_segment_aabb_count()
@@ -2288,7 +2293,7 @@ impl ExactCurveWorkspace2 {
             .undecided_source_segment_aabb_count()
     }
 
-    /// Returns retained source segment facts prepared before split scheduling.
+    /// Returns source segment facts retained before split scheduling.
     pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
         &self.source_segment_cache
     }
@@ -2359,7 +2364,7 @@ impl ExactCurveWorkspace2 {
         self.source_segment_kind_bucket_cache().max_bucket_size()
     }
 
-    /// Returns exact source endpoint buckets retained during workspace preparation.
+    /// Returns exact source endpoint buckets retained during workspace construction.
     pub const fn source_endpoint_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
@@ -2386,7 +2391,7 @@ impl ExactCurveWorkspace2 {
         self.source_endpoint_bucket_cache().max_bucket_size()
     }
 
-    /// Returns the retained source-pair schedule prepared before split predicates run.
+    /// Returns the source-pair schedule retained before split predicates run.
     pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
         &self.split_schedule_cache
     }
@@ -2577,11 +2582,11 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns exact per-event source and parameter evidence retained by split evaluation.
-    pub fn split_intersection_reports(
+    pub fn split_intersection_evidence(
         &self,
-    ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
+    ) -> Option<&[RegionLineSegmentSplitIntersectionEvidence2]> {
         self.split_cache()
-            .map(ExactCurveArrangementSplitCache2::intersection_reports)
+            .map(ExactCurveArrangementSplitCache2::intersection_evidence)
     }
 
     /// Returns exact source-parameter evidence for retained split intersections.
@@ -2963,29 +2968,29 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns per-arranged-fragment source provenance retained after exact splitting.
-    pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
+    pub fn arranged_source_evidence(&self) -> Option<&[RegionLineSegmentArrangedSourceEvidence2]> {
         self.ring_assembly_cache()
-            .map(ExactCurveArrangementRingAssemblyCache2::arranged_source_reports)
+            .map(ExactCurveArrangementRingAssemblyCache2::arranged_source_evidence)
     }
 
     /// Returns the retained arranged-source provenance record count.
-    pub const fn arranged_source_report_count(&self) -> Option<usize> {
+    pub const fn arranged_source_evidence_count(&self) -> Option<usize> {
         match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.arranged_source_reports.len()),
+            Some(ring_cache) => Some(ring_cache.arranged_source_evidence.len()),
             None => None,
         }
     }
 
     /// Returns per-output segment source provenance retained by ring traversal.
-    pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
+    pub fn source_evidence(&self) -> Option<&[RegionLineSegmentRingSourceEvidence2]> {
         self.ring_assembly_cache()
-            .map(ExactCurveArrangementRingAssemblyCache2::source_reports)
+            .map(ExactCurveArrangementRingAssemblyCache2::source_evidence)
     }
 
     /// Returns the retained output-source provenance record count.
-    pub const fn source_report_count(&self) -> Option<usize> {
+    pub const fn source_evidence_count(&self) -> Option<usize> {
         match self.ring_assembly_cache() {
-            Some(ring_cache) => Some(ring_cache.source_reports.len()),
+            Some(ring_cache) => Some(ring_cache.source_evidence.len()),
             None => None,
         }
     }
@@ -3633,9 +3638,9 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when output reached it.
-    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
+    pub const fn boundary_build_evidence(&self) -> Option<&RegionBoundaryContourBuildEvidence2> {
         match self.output_cache() {
-            Some(output_cache) => output_cache.boundary_build_report(),
+            Some(output_cache) => output_cache.boundary_build_evidence(),
             None => None,
         }
     }
@@ -3854,10 +3859,10 @@ impl ExactCurveWorkspace2 {
         }
     }
 
-    /// Returns retained output role report count when role assignment was reached.
-    pub const fn role_report_count(&self) -> Option<usize> {
+    /// Returns retained output role evidence count when role assignment was reached.
+    pub const fn role_evidence_count(&self) -> Option<usize> {
         match self.role_cache() {
-            Some(role_cache) => Some(role_cache.role_report_count()),
+            Some(role_cache) => Some(role_cache.role_evidence_count()),
             None => None,
         }
     }
@@ -3868,10 +3873,10 @@ impl ExactCurveWorkspace2 {
             .map(ExactCurveArrangementOutputRoleCache2::buckets)
     }
 
-    /// Returns retained output role reports when role assignment was reached.
-    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.boundary_build_report()
-            .map(RegionBoundaryContourBuildReport2::role_reports)
+    /// Returns retained output role evidence when role assignment was reached.
+    pub fn role_evidence(&self) -> Option<&[RegionBoundaryContourRoleEvidence2]> {
+        self.boundary_build_evidence()
+            .map(RegionBoundaryContourBuildEvidence2::role_evidence)
     }
 
     /// Returns output role assignment buckets grouped by topology status.
@@ -4260,41 +4265,41 @@ impl ExactCurveArrangementSplitScheduleCache2 {
 }
 
 impl ExactCurveArrangementSplitCache2 {
-    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
+    fn from_region_build_evidence(evidence: &RegionLineSegmentRegionBuildEvidence2) -> Self {
         let intersection_bucket_cache =
-            split_intersection_bucket_cache(report.split_intersection_reports());
+            split_intersection_bucket_cache(evidence.split_intersection_evidence());
         let intersection_parameter_cache =
-            ExactCurveArrangementSplitIntersectionParameterCache2::from_intersection_reports(
-                report.split_intersection_reports(),
+            ExactCurveArrangementSplitIntersectionParameterCache2::from_intersection_evidence(
+                evidence.split_intersection_evidence(),
             );
         let relation_bucket_cache = ExactCurveArrangementSplitRelationBucketCache2::from_counts(
-            report.split_point_relation_count(),
-            report.split_overlap_relation_count(),
-            report.split_uncertain_relation_count(),
+            evidence.split_point_relation_count(),
+            evidence.split_overlap_relation_count(),
+            evidence.split_uncertain_relation_count(),
         );
         let blocker_cache =
-            ExactCurveArrangementSplitBlockerCache2::from_region_build_report(report);
-        let intersection_reports = report.split_intersection_reports().to_vec();
-        let intersection_points = intersection_reports
+            ExactCurveArrangementSplitBlockerCache2::from_region_build_evidence(evidence);
+        let intersection_evidence = evidence.split_intersection_evidence().to_vec();
+        let intersection_points = intersection_evidence
             .iter()
-            .map(|report| report.point().clone())
+            .map(|evidence| evidence.point().clone())
             .collect::<Vec<_>>();
         Self {
-            predicate_path: report.split_predicate_path(),
-            candidate_pair_count: report.split_candidate_pair_count(),
-            skipped_aabb_pair_count: report.split_skipped_aabb_pair_count(),
-            tested_pair_count: report.split_tested_pair_count(),
-            intersection_event_count: intersection_reports.len(),
-            point_relation_count: report.split_point_relation_count(),
-            overlap_relation_count: report.split_overlap_relation_count(),
-            uncertain_relation_count: report.split_uncertain_relation_count(),
+            predicate_path: evidence.split_predicate_path(),
+            candidate_pair_count: evidence.split_candidate_pair_count(),
+            skipped_aabb_pair_count: evidence.split_skipped_aabb_pair_count(),
+            tested_pair_count: evidence.split_tested_pair_count(),
+            intersection_event_count: intersection_evidence.len(),
+            point_relation_count: evidence.split_point_relation_count(),
+            overlap_relation_count: evidence.split_overlap_relation_count(),
+            uncertain_relation_count: evidence.split_uncertain_relation_count(),
             intersection_points,
-            intersection_reports,
+            intersection_evidence,
             relation_bucket_cache,
             intersection_bucket_cache,
             intersection_parameter_cache,
             blocker_cache,
-            output_segment_count: report.split_output_segment_count(),
+            output_segment_count: evidence.split_output_segment_count(),
         }
     }
 
@@ -4344,8 +4349,8 @@ impl ExactCurveArrangementSplitCache2 {
     }
 
     /// Returns exact per-event source and parameter evidence retained by the split stage.
-    pub fn intersection_reports(&self) -> &[RegionLineSegmentSplitIntersectionReport2] {
-        &self.intersection_reports
+    pub fn intersection_evidence(&self) -> &[RegionLineSegmentSplitIntersectionEvidence2] {
+        &self.intersection_evidence
     }
 
     /// Returns retained split-stage relation buckets.
@@ -4353,7 +4358,7 @@ impl ExactCurveArrangementSplitCache2 {
         &self.relation_bucket_cache
     }
 
-    /// Returns exact split-intersection point buckets derived from retained split reports.
+    /// Returns exact split-intersection point buckets derived from retained split evidence.
     pub const fn intersection_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSplitIntersectionBucketCache2 {
@@ -4379,17 +4384,19 @@ impl ExactCurveArrangementSplitCache2 {
 }
 
 impl ExactCurveArrangementSplitBlockerCache2 {
-    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+    fn from_region_build_evidence(
+        evidence: &RegionLineSegmentRegionBuildEvidence2,
+    ) -> Option<Self> {
         Some(Self {
-            first_source_segment_index: report.split_blocker_first_source_segment_index()?,
-            first_source_segment_kind: report.split_blocker_first_source_segment_kind()?,
-            first_source_start_point: report.split_blocker_first_source_start_point()?.clone(),
-            first_source_end_point: report.split_blocker_first_source_end_point()?.clone(),
-            second_source_segment_index: report.split_blocker_second_source_segment_index()?,
-            second_source_segment_kind: report.split_blocker_second_source_segment_kind()?,
-            second_source_start_point: report.split_blocker_second_source_start_point()?.clone(),
-            second_source_end_point: report.split_blocker_second_source_end_point()?.clone(),
-            blocker: report.blocker(),
+            first_source_segment_index: evidence.split_blocker_first_source_segment_index()?,
+            first_source_segment_kind: evidence.split_blocker_first_source_segment_kind()?,
+            first_source_start_point: evidence.split_blocker_first_source_start_point()?.clone(),
+            first_source_end_point: evidence.split_blocker_first_source_end_point()?.clone(),
+            second_source_segment_index: evidence.split_blocker_second_source_segment_index()?,
+            second_source_segment_kind: evidence.split_blocker_second_source_segment_kind()?,
+            second_source_start_point: evidence.split_blocker_second_source_start_point()?.clone(),
+            second_source_end_point: evidence.split_blocker_second_source_end_point()?.clone(),
+            blocker: evidence.blocker(),
         })
     }
 
@@ -4528,9 +4535,9 @@ impl ExactCurveArrangementSplitRelationBucketCache2 {
 }
 
 impl ExactCurveArrangementSplitIntersectionRef2 {
-    /// Returns the index into [`ExactCurveArrangementSplitCache2::intersection_reports`].
-    pub const fn intersection_report_index(&self) -> usize {
-        self.intersection_report_index
+    /// Returns the index into [`ExactCurveArrangementSplitCache2::intersection_evidence`].
+    pub const fn intersection_evidence_index(&self) -> usize {
+        self.intersection_evidence_index
     }
 }
 
@@ -4540,7 +4547,7 @@ impl ExactCurveArrangementSplitIntersectionBucket2 {
         &self.point
     }
 
-    /// Returns retained split-intersection report references in report order.
+    /// Returns retained split-intersection evidence references in evidence order.
     pub fn intersections(&self) -> &[ExactCurveArrangementSplitIntersectionRef2] {
         &self.intersections
     }
@@ -4567,16 +4574,16 @@ impl ExactCurveArrangementSplitIntersectionBucketCache2 {
         self.max_bucket_size
     }
 
-    /// Returns exact structural split-intersection buckets in report encounter order.
+    /// Returns exact structural split-intersection buckets in evidence encounter order.
     pub fn buckets(&self) -> &[ExactCurveArrangementSplitIntersectionBucket2] {
         &self.buckets
     }
 }
 
 impl ExactCurveArrangementSplitIntersectionParameterRef2 {
-    /// Returns the retained split-intersection report index.
-    pub const fn intersection_report_index(&self) -> usize {
-        self.intersection_report_index
+    /// Returns the retained split-intersection evidence index.
+    pub const fn intersection_evidence_index(&self) -> usize {
+        self.intersection_evidence_index
     }
 
     /// Returns the first source segment index for this split event.
@@ -4606,19 +4613,19 @@ impl ExactCurveArrangementSplitIntersectionParameterRef2 {
 }
 
 impl ExactCurveArrangementSplitIntersectionParameterCache2 {
-    fn from_intersection_reports(
-        intersection_reports: &[RegionLineSegmentSplitIntersectionReport2],
+    fn from_intersection_evidence(
+        intersection_evidence: &[RegionLineSegmentSplitIntersectionEvidence2],
     ) -> Self {
         let mut parameters = Vec::new();
 
-        for (intersection_report_index, report) in intersection_reports.iter().enumerate() {
+        for (intersection_evidence_index, evidence) in intersection_evidence.iter().enumerate() {
             parameters.push(ExactCurveArrangementSplitIntersectionParameterRef2 {
-                intersection_report_index,
-                first_source_segment_index: report.first_source_segment_index(),
-                first_source_param: report.first_source_param().clone(),
-                second_source_segment_index: report.second_source_segment_index(),
-                second_source_param: report.second_source_param().clone(),
-                point: report.point().clone(),
+                intersection_evidence_index,
+                first_source_segment_index: evidence.first_source_segment_index(),
+                first_source_param: evidence.first_source_param().clone(),
+                second_source_segment_index: evidence.second_source_segment_index(),
+                second_source_param: evidence.second_source_param().clone(),
+                point: evidence.point().clone(),
             });
         }
 
@@ -4639,23 +4646,25 @@ impl ExactCurveArrangementSplitIntersectionParameterCache2 {
         self.source_parameter_ref_count
     }
 
-    /// Returns retained split-intersection source parameters in report order.
+    /// Returns retained split-intersection source parameters in evidence order.
     pub fn parameters(&self) -> &[ExactCurveArrangementSplitIntersectionParameterRef2] {
         &self.parameters
     }
 }
 
 impl ExactCurveArrangementEndpointGraphCache2 {
-    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+    fn from_region_build_evidence(
+        evidence: &RegionLineSegmentRegionBuildEvidence2,
+    ) -> Option<Self> {
         let endpoint_bucket_cache =
-            arranged_endpoint_bucket_cache(report.arranged_source_reports());
+            arranged_endpoint_bucket_cache(evidence.arranged_source_evidence());
         let endpoint_side_bucket_cache =
-            ExactCurveArrangementArrangedEndpointSideBucketCache2::from_arranged_source_reports(
-                report.arranged_source_reports(),
+            ExactCurveArrangementArrangedEndpointSideBucketCache2::from_arranged_source_evidence(
+                evidence.arranged_source_evidence(),
             );
         let endpoint_point_cache =
-            ExactCurveArrangementArrangedEndpointPointCache2::from_arranged_source_reports(
-                report.arranged_source_reports(),
+            ExactCurveArrangementArrangedEndpointPointCache2::from_arranged_source_evidence(
+                evidence.arranged_source_evidence(),
             );
         let endpoint_degree_bucket_cache =
             ExactCurveArrangementArrangedEndpointDegreeBucketCache2::from_endpoint_bucket_cache(
@@ -4674,7 +4683,7 @@ impl ExactCurveArrangementEndpointGraphCache2 {
             .map(|bucket| bucket.endpoints().len())
             .sum();
         Some(Self {
-            predicate_path: report.endpoint_graph_predicate_path()?,
+            predicate_path: evidence.endpoint_graph_predicate_path()?,
             endpoint_count: endpoint_bucket_cache.endpoint_count(),
             structural_bucket_count: endpoint_bucket_cache.bucket_count(),
             structural_singleton_bucket_count: endpoint_bucket_cache.singleton_bucket_count(),
@@ -4685,9 +4694,10 @@ impl ExactCurveArrangementEndpointGraphCache2 {
             endpoint_degree_bucket_cache,
             dangling_endpoint_count,
             branch_endpoint_count,
-            blocker_arranged_segment_index: report.endpoint_graph_blocker_arranged_segment_index(),
-            blocker_endpoint: report.endpoint_graph_blocker_endpoint(),
-            blocker_point: report.endpoint_graph_blocker_point().cloned(),
+            blocker_arranged_segment_index: evidence
+                .endpoint_graph_blocker_arranged_segment_index(),
+            blocker_endpoint: evidence.endpoint_graph_blocker_endpoint(),
+            blocker_point: evidence.endpoint_graph_blocker_point().cloned(),
         })
     }
 
@@ -4716,7 +4726,7 @@ impl ExactCurveArrangementEndpointGraphCache2 {
         self.max_structural_bucket_size
     }
 
-    /// Returns exact arranged endpoint buckets derived from retained arranged source reports.
+    /// Returns exact arranged endpoint buckets derived from retained arranged source evidence.
     pub const fn endpoint_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementArrangedEndpointBucketCache2 {
@@ -4915,14 +4925,14 @@ impl ExactCurveArrangementArrangedEndpointSideBucket2 {
 }
 
 impl ExactCurveArrangementArrangedEndpointSideBucketCache2 {
-    fn from_arranged_source_reports(
-        arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
+    fn from_arranged_source_evidence(
+        arranged_source_evidence: &[RegionLineSegmentArrangedSourceEvidence2],
     ) -> Self {
         let mut start_refs = Vec::new();
         let mut end_refs = Vec::new();
 
-        for report in arranged_source_reports {
-            let arranged_segment_index = report.arranged_segment_index();
+        for evidence in arranged_source_evidence {
+            let arranged_segment_index = evidence.arranged_segment_index();
             start_refs.push(ExactCurveArrangementArrangedEndpointRef2 {
                 arranged_segment_index,
                 endpoint: RegionLineSegmentArrangedEndpoint2::Start,
@@ -4945,7 +4955,7 @@ impl ExactCurveArrangementArrangedEndpointSideBucketCache2 {
                 endpoints: end_refs,
             },
         ];
-        let endpoint_ref_count = arranged_source_reports.len().saturating_mul(2);
+        let endpoint_ref_count = arranged_source_evidence.len().saturating_mul(2);
         let max_bucket_size = buckets
             .iter()
             .map(|bucket| bucket.endpoints.len())
@@ -4999,7 +5009,7 @@ impl ExactCurveArrangementArrangedEndpointBucket2 {
         &self.point
     }
 
-    /// Returns arranged endpoints in retained report encounter order.
+    /// Returns arranged endpoints in retained evidence encounter order.
     pub fn endpoints(&self) -> &[ExactCurveArrangementArrangedEndpointRef2] {
         &self.endpoints
     }
@@ -5050,13 +5060,13 @@ impl ExactCurveArrangementArrangedEndpointPointRef2 {
 }
 
 impl ExactCurveArrangementArrangedEndpointPointCache2 {
-    fn from_arranged_source_reports(
-        arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
+    fn from_arranged_source_evidence(
+        arranged_source_evidence: &[RegionLineSegmentArrangedSourceEvidence2],
     ) -> Self {
         let mut endpoints: Vec<ExactCurveArrangementArrangedEndpointPointRef2> = Vec::new();
 
-        for source_report in arranged_source_reports {
-            let arranged_segment_index = source_report.arranged_segment_index();
+        for source_evidence in arranged_source_evidence {
+            let arranged_segment_index = source_evidence.arranged_segment_index();
             if endpoints
                 .iter()
                 .any(|endpoint| endpoint.arranged_segment_index == arranged_segment_index)
@@ -5066,8 +5076,8 @@ impl ExactCurveArrangementArrangedEndpointPointCache2 {
 
             endpoints.push(ExactCurveArrangementArrangedEndpointPointRef2 {
                 arranged_segment_index,
-                output_start_point: source_report.output_start_point().clone(),
-                output_end_point: source_report.output_end_point().clone(),
+                output_start_point: source_evidence.output_start_point().clone(),
+                output_end_point: source_evidence.output_end_point().clone(),
             });
         }
 
@@ -5097,9 +5107,9 @@ impl ExactCurveArrangementArrangedEndpointPointCache2 {
 }
 
 impl ExactCurveArrangementArrangedFragmentSourceRef2 {
-    /// Returns the retained arranged source report index.
-    pub const fn arranged_source_report_index(&self) -> usize {
-        self.arranged_source_report_index
+    /// Returns the retained arranged source evidence index.
+    pub const fn arranged_source_evidence_index(&self) -> usize {
+        self.arranged_source_evidence_index
     }
 
     /// Returns the source segment index used by this arranged fragment.
@@ -5168,9 +5178,9 @@ impl ExactCurveArrangementArrangedFragmentStatusRef2 {
         self.source_ref_index
     }
 
-    /// Returns the retained arranged source report index.
-    pub const fn arranged_source_report_index(&self) -> usize {
-        self.arranged_source_report_index
+    /// Returns the retained arranged source evidence index.
+    pub const fn arranged_source_evidence_index(&self) -> usize {
+        self.arranged_source_evidence_index
     }
 }
 
@@ -5287,7 +5297,7 @@ impl ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
                 let status_ref = ExactCurveArrangementArrangedFragmentStatusRef2 {
                     arranged_fragment_index,
                     source_ref_index,
-                    arranged_source_report_index: source_ref.arranged_source_report_index(),
+                    arranged_source_evidence_index: source_ref.arranged_source_evidence_index(),
                 };
                 match source_ref.status() {
                     RetainedTopologyStatus::NativeExact => native_exact_refs.push(status_ref),
@@ -5412,9 +5422,9 @@ impl ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
 }
 
 impl ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
-    /// Returns the retained arranged source report index.
-    pub const fn arranged_source_report_index(&self) -> usize {
-        self.arranged_source_report_index
+    /// Returns the retained arranged source evidence index.
+    pub const fn arranged_source_evidence_index(&self) -> usize {
+        self.arranged_source_evidence_index
     }
 
     /// Returns the source segment index used by this arranged fragment.
@@ -5439,34 +5449,34 @@ impl ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
 }
 
 impl ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
-    fn from_arranged_source_reports(
-        arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
+    fn from_arranged_source_evidence(
+        arranged_source_evidence: &[RegionLineSegmentArrangedSourceEvidence2],
     ) -> Self {
         let mut full_source_range_ref_count = 0_usize;
         let mut partial_source_range_ref_count = 0_usize;
         let mut ranges = Vec::new();
 
-        for (arranged_source_report_index, source_report) in
-            arranged_source_reports.iter().enumerate()
+        for (arranged_source_evidence_index, source_evidence) in
+            arranged_source_evidence.iter().enumerate()
         {
-            if source_range_is_full(source_report.source_range()) {
+            if source_range_is_full(source_evidence.source_range()) {
                 full_source_range_ref_count += 1;
             } else {
                 partial_source_range_ref_count += 1;
             }
 
             ranges.push(ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
-                arranged_source_report_index,
-                source_segment_index: source_report.source_segment_index(),
-                source_range: source_report.source_range().clone(),
-                arranged_segment_index: source_report.arranged_segment_index(),
+                arranged_source_evidence_index,
+                source_segment_index: source_evidence.source_segment_index(),
+                source_range: source_evidence.source_range().clone(),
+                arranged_segment_index: source_evidence.arranged_segment_index(),
             });
         }
 
         ranges.sort_by_key(|range_ref| {
             (
                 range_ref.arranged_segment_index,
-                range_ref.arranged_source_report_index,
+                range_ref.arranged_source_evidence_index,
             )
         });
 
@@ -5500,39 +5510,41 @@ impl ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
 }
 
 impl ExactCurveArrangementArrangedFragmentCache2 {
-    fn from_arranged_source_reports(
-        arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
+    fn from_arranged_source_evidence(
+        arranged_source_evidence: &[RegionLineSegmentArrangedSourceEvidence2],
     ) -> Self {
         let mut fragments: Vec<ExactCurveArrangementArrangedFragment2> = Vec::new();
         let mut source_segment_kind_counts = SegmentKindCounts::default();
 
-        for (arranged_source_report_index, report) in arranged_source_reports.iter().enumerate() {
-            match report.source_segment_kind() {
+        for (arranged_source_evidence_index, evidence) in
+            arranged_source_evidence.iter().enumerate()
+        {
+            match evidence.source_segment_kind() {
                 SegmentKind::Line => source_segment_kind_counts.lines += 1,
                 SegmentKind::Arc => source_segment_kind_counts.arcs += 1,
             }
 
-            let arranged_segment_index = report.arranged_segment_index();
+            let arranged_segment_index = evidence.arranged_segment_index();
             let fragment_index = fragments
                 .iter()
                 .position(|fragment| fragment.arranged_segment_index == arranged_segment_index)
                 .unwrap_or_else(|| {
                     fragments.push(ExactCurveArrangementArrangedFragment2 {
                         arranged_segment_index,
-                        arranged_segment_kind: report.arranged_segment_kind(),
-                        output_start_point: report.output_start_point().clone(),
-                        output_end_point: report.output_end_point().clone(),
+                        arranged_segment_kind: evidence.arranged_segment_kind(),
+                        output_start_point: evidence.output_start_point().clone(),
+                        output_end_point: evidence.output_end_point().clone(),
                         source_refs: Vec::new(),
                     });
                     fragments.len() - 1
                 });
             fragments[fragment_index].source_refs.push(
                 ExactCurveArrangementArrangedFragmentSourceRef2 {
-                    arranged_source_report_index,
-                    source_segment_index: report.source_segment_index(),
-                    source_segment_kind: report.source_segment_kind(),
-                    source_range: report.source_range().clone(),
-                    status: report.status(),
+                    arranged_source_evidence_index,
+                    source_segment_index: evidence.source_segment_index(),
+                    source_segment_kind: evidence.source_segment_kind(),
+                    source_range: evidence.source_range().clone(),
+                    status: evidence.status(),
                 },
             );
         }
@@ -5541,19 +5553,19 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
         for fragment in &mut fragments {
             fragment
                 .source_refs
-                .sort_by_key(|source_ref| source_ref.arranged_source_report_index);
+                .sort_by_key(|source_ref| source_ref.arranged_source_evidence_index);
         }
 
-        let source_ref_count = arranged_source_reports.len();
+        let source_ref_count = arranged_source_evidence.len();
         let arranged_segment_kind_counts =
-            arranged_report_segment_kind_counts(arranged_source_reports);
+            arranged_evidence_segment_kind_counts(arranged_source_evidence);
         let arranged_fragment_kind_bucket_cache =
             ExactCurveArrangementArrangedFragmentKindBucketCache2::from_fragments(&fragments);
         let arranged_fragment_status_bucket_cache =
             ExactCurveArrangementArrangedFragmentStatusBucketCache2::from_fragments(&fragments);
         let arranged_fragment_source_range_cache =
-            ExactCurveArrangementArrangedFragmentSourceRangeCache2::from_arranged_source_reports(
-                arranged_source_reports,
+            ExactCurveArrangementArrangedFragmentSourceRangeCache2::from_arranged_source_evidence(
+                arranged_source_evidence,
             );
         let max_source_ref_count = fragments
             .iter()
@@ -5627,9 +5639,9 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
 }
 
 impl ExactCurveArrangementOutputRingSegmentRef2 {
-    /// Returns the retained source report index for this output segment.
-    pub const fn source_report_index(&self) -> usize {
-        self.source_report_index
+    /// Returns the retained source evidence index for this output segment.
+    pub const fn source_evidence_index(&self) -> usize {
+        self.source_evidence_index
     }
 
     /// Returns the output segment index inside its ring.
@@ -5656,11 +5668,11 @@ impl ExactCurveArrangementOutputRingBucket2 {
 }
 
 impl ExactCurveArrangementOutputRingBucketCache2 {
-    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+    fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
         let mut rings: Vec<ExactCurveArrangementOutputRingBucket2> = Vec::new();
 
-        for (source_report_index, source_report) in source_reports.iter().enumerate() {
-            let output_ring_index = source_report.output_ring_index();
+        for (source_evidence_index, source_evidence) in source_evidence.iter().enumerate() {
+            let output_ring_index = source_evidence.output_ring_index();
             let ring_index = rings
                 .iter()
                 .position(|ring| ring.output_ring_index == output_ring_index)
@@ -5674,9 +5686,9 @@ impl ExactCurveArrangementOutputRingBucketCache2 {
             rings[ring_index]
                 .segments
                 .push(ExactCurveArrangementOutputRingSegmentRef2 {
-                    source_report_index,
-                    output_segment_index: source_report.output_segment_index(),
-                    reversed: source_report.reversed(),
+                    source_evidence_index,
+                    output_segment_index: source_evidence.output_segment_index(),
+                    reversed: source_evidence.reversed(),
                 });
         }
 
@@ -5686,7 +5698,7 @@ impl ExactCurveArrangementOutputRingBucketCache2 {
                 .sort_by_key(|segment| segment.output_segment_index);
         }
 
-        let segment_ref_count = source_reports.len();
+        let segment_ref_count = source_evidence.len();
         let max_ring_segment_count = rings
             .iter()
             .map(|ring| ring.segments.len())
@@ -5723,9 +5735,9 @@ impl ExactCurveArrangementOutputRingBucketCache2 {
 }
 
 impl ExactCurveArrangementOutputSegmentKindRef2 {
-    /// Returns the retained ring source report index for this output segment.
-    pub const fn source_report_index(&self) -> usize {
-        self.source_report_index
+    /// Returns the retained ring source evidence index for this output segment.
+    pub const fn source_evidence_index(&self) -> usize {
+        self.source_evidence_index
     }
 
     /// Returns the output ring index.
@@ -5752,17 +5764,17 @@ impl ExactCurveArrangementOutputSegmentKindBucket2 {
 }
 
 impl ExactCurveArrangementOutputSegmentKindBucketCache2 {
-    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+    fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
         let mut line_refs = Vec::new();
         let mut arc_refs = Vec::new();
 
-        for (source_report_index, source_report) in source_reports.iter().enumerate() {
+        for (source_evidence_index, source_evidence) in source_evidence.iter().enumerate() {
             let segment_ref = ExactCurveArrangementOutputSegmentKindRef2 {
-                source_report_index,
-                output_ring_index: source_report.output_ring_index(),
-                output_segment_index: source_report.output_segment_index(),
+                source_evidence_index,
+                output_ring_index: source_evidence.output_ring_index(),
+                output_segment_index: source_evidence.output_segment_index(),
             };
-            match source_report.output_segment_kind() {
+            match source_evidence.output_segment_kind() {
                 SegmentKind::Line => line_refs.push(segment_ref),
                 SegmentKind::Arc => arc_refs.push(segment_ref),
             }
@@ -5780,7 +5792,7 @@ impl ExactCurveArrangementOutputSegmentKindBucketCache2 {
                 segment_refs: arc_refs,
             },
         ];
-        let output_segment_ref_count = source_reports.len();
+        let output_segment_ref_count = source_evidence.len();
         let max_bucket_size = buckets
             .iter()
             .map(|bucket| bucket.segment_refs.len())
@@ -5829,9 +5841,9 @@ impl ExactCurveArrangementOutputSegmentKindBucketCache2 {
 }
 
 impl ExactCurveArrangementOutputSegmentSourceRef2 {
-    /// Returns the retained ring source report index for this output segment.
-    pub const fn source_report_index(&self) -> usize {
-        self.source_report_index
+    /// Returns the retained ring source evidence index for this output segment.
+    pub const fn source_evidence_index(&self) -> usize {
+        self.source_evidence_index
     }
 
     /// Returns the output ring index.
@@ -5858,11 +5870,11 @@ impl ExactCurveArrangementOutputSegmentSourceBucket2 {
 }
 
 impl ExactCurveArrangementOutputSegmentSourceBucketCache2 {
-    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+    fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
         let mut buckets: Vec<ExactCurveArrangementOutputSegmentSourceBucket2> = Vec::new();
 
-        for (source_report_index, source_report) in source_reports.iter().enumerate() {
-            let source_segment_index = source_report.source_segment_index();
+        for (source_evidence_index, source_evidence) in source_evidence.iter().enumerate() {
+            let source_segment_index = source_evidence.source_segment_index();
             let bucket_index = buckets
                 .iter()
                 .position(|bucket| bucket.source_segment_index == source_segment_index)
@@ -5876,9 +5888,9 @@ impl ExactCurveArrangementOutputSegmentSourceBucketCache2 {
             buckets[bucket_index]
                 .segment_refs
                 .push(ExactCurveArrangementOutputSegmentSourceRef2 {
-                    source_report_index,
-                    output_ring_index: source_report.output_ring_index(),
-                    output_segment_index: source_report.output_segment_index(),
+                    source_evidence_index,
+                    output_ring_index: source_evidence.output_ring_index(),
+                    output_segment_index: source_evidence.output_segment_index(),
                 });
         }
 
@@ -5888,12 +5900,12 @@ impl ExactCurveArrangementOutputSegmentSourceBucketCache2 {
                 (
                     segment_ref.output_ring_index,
                     segment_ref.output_segment_index,
-                    segment_ref.source_report_index,
+                    segment_ref.source_evidence_index,
                 )
             });
         }
 
-        let output_segment_ref_count = source_reports.len();
+        let output_segment_ref_count = source_evidence.len();
         let max_bucket_size = buckets
             .iter()
             .map(|bucket| bucket.segment_refs.len())
@@ -5930,9 +5942,9 @@ impl ExactCurveArrangementOutputSegmentSourceBucketCache2 {
 }
 
 impl ExactCurveArrangementOutputSegmentSourceRangeRef2 {
-    /// Returns the retained ring source report index for this output segment.
-    pub const fn source_report_index(&self) -> usize {
-        self.source_report_index
+    /// Returns the retained ring source evidence index for this output segment.
+    pub const fn source_evidence_index(&self) -> usize {
+        self.source_evidence_index
     }
 
     /// Returns the source segment index used by this output segment.
@@ -5962,24 +5974,24 @@ impl ExactCurveArrangementOutputSegmentSourceRangeRef2 {
 }
 
 impl ExactCurveArrangementOutputSegmentSourceRangeCache2 {
-    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+    fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
         let mut full_source_range_ref_count = 0_usize;
         let mut partial_source_range_ref_count = 0_usize;
         let mut ranges = Vec::new();
 
-        for (source_report_index, source_report) in source_reports.iter().enumerate() {
-            if source_range_is_full(source_report.source_range()) {
+        for (source_evidence_index, source_evidence) in source_evidence.iter().enumerate() {
+            if source_range_is_full(source_evidence.source_range()) {
                 full_source_range_ref_count += 1;
             } else {
                 partial_source_range_ref_count += 1;
             }
 
             ranges.push(ExactCurveArrangementOutputSegmentSourceRangeRef2 {
-                source_report_index,
-                source_segment_index: source_report.source_segment_index(),
-                source_range: source_report.source_range().clone(),
-                output_ring_index: source_report.output_ring_index(),
-                output_segment_index: source_report.output_segment_index(),
+                source_evidence_index,
+                source_segment_index: source_evidence.source_segment_index(),
+                source_range: source_evidence.source_range().clone(),
+                output_ring_index: source_evidence.output_ring_index(),
+                output_segment_index: source_evidence.output_segment_index(),
             });
         }
 
@@ -5987,7 +5999,7 @@ impl ExactCurveArrangementOutputSegmentSourceRangeCache2 {
             (
                 range_ref.output_ring_index,
                 range_ref.output_segment_index,
-                range_ref.source_report_index,
+                range_ref.source_evidence_index,
             )
         });
 
@@ -6021,9 +6033,9 @@ impl ExactCurveArrangementOutputSegmentSourceRangeCache2 {
 }
 
 impl ExactCurveArrangementOutputSegmentEndpointRef2 {
-    /// Returns the retained ring source report index for this output segment.
-    pub const fn source_report_index(&self) -> usize {
-        self.source_report_index
+    /// Returns the retained ring source evidence index for this output segment.
+    pub const fn source_evidence_index(&self) -> usize {
+        self.source_evidence_index
     }
 
     /// Returns the output ring index.
@@ -6048,16 +6060,16 @@ impl ExactCurveArrangementOutputSegmentEndpointRef2 {
 }
 
 impl ExactCurveArrangementOutputSegmentEndpointCache2 {
-    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+    fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
         let mut segments = Vec::new();
 
-        for (source_report_index, source_report) in source_reports.iter().enumerate() {
+        for (source_evidence_index, source_evidence) in source_evidence.iter().enumerate() {
             segments.push(ExactCurveArrangementOutputSegmentEndpointRef2 {
-                source_report_index,
-                output_ring_index: source_report.output_ring_index(),
-                output_segment_index: source_report.output_segment_index(),
-                output_start_point: source_report.output_start_point().clone(),
-                output_end_point: source_report.output_end_point().clone(),
+                source_evidence_index,
+                output_ring_index: source_evidence.output_ring_index(),
+                output_segment_index: source_evidence.output_segment_index(),
+                output_start_point: source_evidence.output_start_point().clone(),
+                output_end_point: source_evidence.output_end_point().clone(),
             });
         }
 
@@ -6065,7 +6077,7 @@ impl ExactCurveArrangementOutputSegmentEndpointCache2 {
             (
                 segment.output_ring_index,
                 segment.output_segment_index,
-                segment.source_report_index,
+                segment.source_evidence_index,
             )
         });
 
@@ -6093,14 +6105,14 @@ impl ExactCurveArrangementOutputSegmentEndpointCache2 {
 }
 
 impl ExactCurveArrangementOutputRingContinuityRef2 {
-    /// Returns the retained ring source report index for this output segment.
-    pub const fn source_report_index(&self) -> usize {
-        self.source_report_index
+    /// Returns the retained ring source evidence index for this output segment.
+    pub const fn source_evidence_index(&self) -> usize {
+        self.source_evidence_index
     }
 
-    /// Returns the retained ring source report index for the next output segment.
-    pub const fn next_source_report_index(&self) -> usize {
-        self.next_source_report_index
+    /// Returns the retained ring source evidence index for the next output segment.
+    pub const fn next_source_evidence_index(&self) -> usize {
+        self.next_source_evidence_index
     }
 
     /// Returns the output ring index.
@@ -6130,11 +6142,11 @@ impl ExactCurveArrangementOutputRingContinuityRef2 {
 }
 
 impl ExactCurveArrangementOutputRingContinuityCache2 {
-    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
-        let mut rings: Vec<Vec<(usize, &RegionLineSegmentRingSourceReport2)>> = Vec::new();
+    fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
+        let mut rings: Vec<Vec<(usize, &RegionLineSegmentRingSourceEvidence2)>> = Vec::new();
 
-        for (source_report_index, source_report) in source_reports.iter().enumerate() {
-            let output_ring_index = source_report.output_ring_index();
+        for (source_evidence_index, source_evidence) in source_evidence.iter().enumerate() {
+            let output_ring_index = source_evidence.output_ring_index();
             let ring_index = rings
                 .iter()
                 .position(|ring| {
@@ -6145,15 +6157,15 @@ impl ExactCurveArrangementOutputRingContinuityCache2 {
                     rings.push(Vec::new());
                     rings.len() - 1
                 });
-            rings[ring_index].push((source_report_index, source_report));
+            rings[ring_index].push((source_evidence_index, source_evidence));
         }
 
         for ring in &mut rings {
-            ring.sort_by_key(|(_, source_report)| source_report.output_segment_index());
+            ring.sort_by_key(|(_, source_evidence)| source_evidence.output_segment_index());
         }
         rings.sort_by_key(|ring| {
-            ring.first().map_or(usize::MAX, |(_, source_report)| {
-                source_report.output_ring_index()
+            ring.first().map_or(usize::MAX, |(_, source_evidence)| {
+                source_evidence.output_ring_index()
             })
         });
 
@@ -6162,17 +6174,18 @@ impl ExactCurveArrangementOutputRingContinuityCache2 {
         let mut connections = Vec::new();
 
         for ring in rings {
-            for (segment_index, (source_report_index, source_report)) in ring.iter().enumerate() {
-                let (next_source_report_index, next_source_report) =
+            for (segment_index, (source_evidence_index, source_evidence)) in ring.iter().enumerate()
+            {
+                let (next_source_evidence_index, next_source_evidence) =
                     &ring[(segment_index + 1) % ring.len()];
                 connections.push(ExactCurveArrangementOutputRingContinuityRef2 {
-                    source_report_index: *source_report_index,
-                    next_source_report_index: *next_source_report_index,
-                    output_ring_index: source_report.output_ring_index(),
-                    output_segment_index: source_report.output_segment_index(),
-                    next_output_segment_index: next_source_report.output_segment_index(),
-                    output_end_point: source_report.output_end_point().clone(),
-                    next_output_start_point: next_source_report.output_start_point().clone(),
+                    source_evidence_index: *source_evidence_index,
+                    next_source_evidence_index: *next_source_evidence_index,
+                    output_ring_index: source_evidence.output_ring_index(),
+                    output_segment_index: source_evidence.output_segment_index(),
+                    next_output_segment_index: next_source_evidence.output_segment_index(),
+                    output_end_point: source_evidence.output_end_point().clone(),
+                    next_output_start_point: next_source_evidence.output_start_point().clone(),
                 });
             }
         }
@@ -6207,9 +6220,9 @@ impl ExactCurveArrangementOutputRingContinuityCache2 {
 }
 
 impl ExactCurveArrangementOutputSegmentStatusRef2 {
-    /// Returns the retained ring source report index for this output segment.
-    pub const fn source_report_index(&self) -> usize {
-        self.source_report_index
+    /// Returns the retained ring source evidence index for this output segment.
+    pub const fn source_evidence_index(&self) -> usize {
+        self.source_evidence_index
     }
 
     /// Returns the output ring index.
@@ -6236,7 +6249,7 @@ impl ExactCurveArrangementOutputSegmentStatusBucket2 {
 }
 
 impl ExactCurveArrangementOutputSegmentStatusBucketCache2 {
-    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+    fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
         let mut native_exact_refs = Vec::new();
         let mut certified_approximation_refs = Vec::new();
         let mut display_or_export_refs = Vec::new();
@@ -6244,13 +6257,13 @@ impl ExactCurveArrangementOutputSegmentStatusBucketCache2 {
         let mut unsupported_refs = Vec::new();
         let mut unresolved_refs = Vec::new();
 
-        for (source_report_index, source_report) in source_reports.iter().enumerate() {
+        for (source_evidence_index, source_evidence) in source_evidence.iter().enumerate() {
             let segment_ref = ExactCurveArrangementOutputSegmentStatusRef2 {
-                source_report_index,
-                output_ring_index: source_report.output_ring_index(),
-                output_segment_index: source_report.output_segment_index(),
+                source_evidence_index,
+                output_ring_index: source_evidence.output_ring_index(),
+                output_segment_index: source_evidence.output_segment_index(),
             };
-            match source_report.status() {
+            match source_evidence.status() {
                 RetainedTopologyStatus::NativeExact => native_exact_refs.push(segment_ref),
                 RetainedTopologyStatus::CertifiedApproximation => {
                     certified_approximation_refs.push(segment_ref)
@@ -6294,7 +6307,7 @@ impl ExactCurveArrangementOutputSegmentStatusBucketCache2 {
                 segment_refs: unresolved_refs,
             },
         ];
-        let output_segment_ref_count = source_reports.len();
+        let output_segment_ref_count = source_evidence.len();
         let max_bucket_size = buckets
             .iter()
             .map(|bucket| bucket.segment_refs.len())
@@ -6367,9 +6380,9 @@ impl ExactCurveArrangementOutputSegmentStatusBucketCache2 {
 }
 
 impl ExactCurveArrangementOutputSegmentDirectionRef2 {
-    /// Returns the retained ring source report index for this output segment.
-    pub const fn source_report_index(&self) -> usize {
-        self.source_report_index
+    /// Returns the retained ring source evidence index for this output segment.
+    pub const fn source_evidence_index(&self) -> usize {
+        self.source_evidence_index
     }
 
     /// Returns the output ring index.
@@ -6396,17 +6409,17 @@ impl ExactCurveArrangementOutputSegmentDirectionBucket2 {
 }
 
 impl ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
-    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+    fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
         let mut forward_refs = Vec::new();
         let mut reversed_refs = Vec::new();
 
-        for (source_report_index, source_report) in source_reports.iter().enumerate() {
+        for (source_evidence_index, source_evidence) in source_evidence.iter().enumerate() {
             let segment_ref = ExactCurveArrangementOutputSegmentDirectionRef2 {
-                source_report_index,
-                output_ring_index: source_report.output_ring_index(),
-                output_segment_index: source_report.output_segment_index(),
+                source_evidence_index,
+                output_ring_index: source_evidence.output_ring_index(),
+                output_segment_index: source_evidence.output_segment_index(),
             };
-            if source_report.reversed() {
+            if source_evidence.reversed() {
                 reversed_refs.push(segment_ref);
             } else {
                 forward_refs.push(segment_ref);
@@ -6425,7 +6438,7 @@ impl ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
                 segment_refs: reversed_refs,
             },
         ];
-        let output_segment_ref_count = source_reports.len();
+        let output_segment_ref_count = source_evidence.len();
         let max_bucket_size = buckets
             .iter()
             .map(|bucket| bucket.segment_refs.len())
@@ -6474,12 +6487,12 @@ impl ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
 }
 
 impl ExactCurveArrangementOutputRoleAssignment2 {
-    /// Returns the retained boundary role report index.
-    pub const fn role_report_index(&self) -> usize {
-        self.role_report_index
+    /// Returns the retained boundary role evidence index.
+    pub const fn role_evidence_index(&self) -> usize {
+        self.role_evidence_index
     }
 
-    /// Returns the source contour index assigned by this report.
+    /// Returns the source contour index assigned by this evidence.
     pub const fn source_contour_index(&self) -> usize {
         self.source_contour_index
     }
@@ -6531,9 +6544,9 @@ impl ExactCurveArrangementOutputRoleStatusRef2 {
         self.assignment_index
     }
 
-    /// Returns the retained boundary role report index.
-    pub const fn role_report_index(&self) -> usize {
-        self.role_report_index
+    /// Returns the retained boundary role evidence index.
+    pub const fn role_evidence_index(&self) -> usize {
+        self.role_evidence_index
     }
 }
 
@@ -6581,7 +6594,7 @@ impl ExactCurveArrangementOutputRoleStatusBucketCache2 {
                 let status_ref = ExactCurveArrangementOutputRoleStatusRef2 {
                     role,
                     assignment_index,
-                    role_report_index: assignment.role_report_index(),
+                    role_evidence_index: assignment.role_evidence_index(),
                 };
                 match assignment.status() {
                     RetainedTopologyStatus::NativeExact => native_exact_refs.push(status_ref),
@@ -6715,9 +6728,9 @@ impl ExactCurveArrangementOutputRoleSourceContourRef2 {
         self.assignment_index
     }
 
-    /// Returns the retained boundary role report index.
-    pub const fn role_report_index(&self) -> usize {
-        self.role_report_index
+    /// Returns the retained boundary role evidence index.
+    pub const fn role_evidence_index(&self) -> usize {
+        self.role_evidence_index
     }
 
     /// Returns this contour's index inside its output role bin.
@@ -6765,7 +6778,7 @@ impl ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
                     ExactCurveArrangementOutputRoleSourceContourRef2 {
                         role,
                         assignment_index,
-                        role_report_index: assignment.role_report_index(),
+                        role_evidence_index: assignment.role_evidence_index(),
                         output_role_index: assignment.output_role_index(),
                     },
                 );
@@ -6776,7 +6789,7 @@ impl ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
         for bucket in &mut buckets {
             bucket.assignments.sort_by_key(|assignment| {
                 (
-                    assignment.role_report_index,
+                    assignment.role_evidence_index,
                     assignment.output_role_index,
                     assignment.assignment_index,
                 )
@@ -6832,12 +6845,12 @@ impl ExactCurveArrangementOutputRoleNestingDepthRef2 {
         self.assignment_index
     }
 
-    /// Returns the retained boundary role report index.
-    pub const fn role_report_index(&self) -> usize {
-        self.role_report_index
+    /// Returns the retained boundary role evidence index.
+    pub const fn role_evidence_index(&self) -> usize {
+        self.role_evidence_index
     }
 
-    /// Returns the source contour index assigned by this report.
+    /// Returns the source contour index assigned by this evidence.
     pub const fn source_contour_index(&self) -> usize {
         self.source_contour_index
     }
@@ -6887,7 +6900,7 @@ impl ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
                     ExactCurveArrangementOutputRoleNestingDepthRef2 {
                         role,
                         assignment_index,
-                        role_report_index: assignment.role_report_index(),
+                        role_evidence_index: assignment.role_evidence_index(),
                         source_contour_index: assignment.source_contour_index(),
                         output_role_index: assignment.output_role_index(),
                     },
@@ -6899,7 +6912,7 @@ impl ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
         for bucket in &mut buckets {
             bucket.assignments.sort_by_key(|assignment| {
                 (
-                    assignment.role_report_index,
+                    assignment.role_evidence_index,
                     assignment.source_contour_index,
                     assignment.output_role_index,
                     assignment.assignment_index,
@@ -6956,9 +6969,9 @@ impl ExactCurveArrangementOutputRoleContainmentRef2 {
         self.assignment_index
     }
 
-    /// Returns the retained boundary role report index.
-    pub const fn role_report_index(&self) -> usize {
-        self.role_report_index
+    /// Returns the retained boundary role evidence index.
+    pub const fn role_evidence_index(&self) -> usize {
+        self.role_evidence_index
     }
 
     /// Returns the source contour whose nesting evidence is retained.
@@ -7031,7 +7044,7 @@ impl ExactCurveArrangementOutputRoleContainmentBucketCache2 {
                         ExactCurveArrangementOutputRoleContainmentRef2 {
                             role,
                             assignment_index,
-                            role_report_index: assignment.role_report_index(),
+                            role_evidence_index: assignment.role_evidence_index(),
                             source_contour_index: assignment.source_contour_index(),
                             containing_contour_index: *containing_contour_index,
                             containing_contour_ref_index,
@@ -7046,7 +7059,7 @@ impl ExactCurveArrangementOutputRoleContainmentBucketCache2 {
         for bucket in &mut buckets {
             bucket.containments.sort_by_key(|containment| {
                 (
-                    containment.role_report_index,
+                    containment.role_evidence_index,
                     containment.source_contour_index,
                     containment.containing_contour_ref_index,
                     containment.output_role_index,
@@ -7098,27 +7111,29 @@ impl ExactCurveArrangementOutputRoleContainmentBucketCache2 {
 }
 
 impl ExactCurveArrangementOutputRoleCache2 {
-    fn from_boundary_build_report(report: &RegionBoundaryContourBuildReport2) -> Option<Self> {
-        if report.role_reports().is_empty() {
+    fn from_boundary_build_evidence(
+        evidence: &RegionBoundaryContourBuildEvidence2,
+    ) -> Option<Self> {
+        if evidence.role_evidence().is_empty() {
             return None;
         }
 
         let mut material_assignments = Vec::new();
         let mut hole_assignments = Vec::new();
 
-        for (role_report_index, role_report) in report.role_reports().iter().enumerate() {
+        for (role_evidence_index, role_evidence) in evidence.role_evidence().iter().enumerate() {
             let assignment = ExactCurveArrangementOutputRoleAssignment2 {
-                role_report_index,
-                source_contour_index: role_report.source_contour_index(),
-                source_segment_count: role_report.source_segment_count(),
-                source_fill_rule: role_report.source_fill_rule(),
-                nesting_sample_point: role_report.nesting_sample_point().clone(),
-                containing_contour_indices: role_report.containing_contour_indices().to_vec(),
-                nesting_depth: role_report.nesting_depth(),
-                output_role_index: role_report.output_role_index(),
-                status: role_report.status(),
+                role_evidence_index,
+                source_contour_index: role_evidence.source_contour_index(),
+                source_segment_count: role_evidence.source_segment_count(),
+                source_fill_rule: role_evidence.source_fill_rule(),
+                nesting_sample_point: role_evidence.nesting_sample_point().clone(),
+                containing_contour_indices: role_evidence.containing_contour_indices().to_vec(),
+                nesting_depth: role_evidence.nesting_depth(),
+                output_role_index: role_evidence.output_role_index(),
+                status: role_evidence.status(),
             };
-            match role_report.role() {
+            match role_evidence.role() {
                 RegionBoundaryContourRole2::Material => material_assignments.push(assignment),
                 RegionBoundaryContourRole2::Hole => hole_assignments.push(assignment),
             }
@@ -7158,7 +7173,7 @@ impl ExactCurveArrangementOutputRoleCache2 {
             );
 
         Some(Self {
-            role_report_count: report.role_reports().len(),
+            role_evidence_count: evidence.role_evidence().len(),
             material_contour_count,
             hole_contour_count,
             material_segment_count,
@@ -7180,9 +7195,9 @@ impl ExactCurveArrangementOutputRoleCache2 {
         })
     }
 
-    /// Returns the number of retained role reports.
-    pub const fn role_report_count(&self) -> usize {
-        self.role_report_count
+    /// Returns the number of retained role evidence.
+    pub const fn role_evidence_count(&self) -> usize {
+        self.role_evidence_count
     }
 
     /// Returns the number of material contours.
@@ -7240,9 +7255,11 @@ impl ExactCurveArrangementOutputRoleCache2 {
 }
 
 impl ExactCurveArrangementOutputBoundaryCache2 {
-    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
-        let boundary_build_report = report.boundary_build_report()?;
-        if boundary_build_report.role_reports().is_empty() {
+    fn from_region_build_evidence(
+        evidence: &RegionLineSegmentRegionBuildEvidence2,
+    ) -> Option<Self> {
+        let boundary_build_evidence = evidence.boundary_build_evidence()?;
+        if boundary_build_evidence.role_evidence().is_empty() {
             return None;
         }
 
@@ -7251,22 +7268,22 @@ impl ExactCurveArrangementOutputBoundaryCache2 {
         let mut material_segment_count = 0_usize;
         let mut hole_segment_count = 0_usize;
 
-        for role_report in boundary_build_report.role_reports() {
-            match role_report.role() {
+        for role_evidence in boundary_build_evidence.role_evidence() {
+            match role_evidence.role() {
                 RegionBoundaryContourRole2::Material => {
                     material_contour_count += 1;
-                    material_segment_count += role_report.source_segment_count();
+                    material_segment_count += role_evidence.source_segment_count();
                 }
                 RegionBoundaryContourRole2::Hole => {
                     hole_contour_count += 1;
-                    hole_segment_count += role_report.source_segment_count();
+                    hole_segment_count += role_evidence.source_segment_count();
                 }
             }
         }
 
         let mut output_segment_kind_counts = SegmentKindCounts { lines: 0, arcs: 0 };
-        for source_report in report.source_reports() {
-            match source_report.output_segment_kind() {
+        for source_evidence in evidence.source_evidence() {
+            match source_evidence.output_segment_kind() {
                 SegmentKind::Line => output_segment_kind_counts.lines += 1,
                 SegmentKind::Arc => output_segment_kind_counts.arcs += 1,
             }
@@ -7406,41 +7423,45 @@ impl ExactCurveArrangementOutputBoundaryRoleBucket2 {
 }
 
 impl ExactCurveArrangementRingAssemblyCache2 {
-    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
-        let predicate_path = report.ring_assembly_predicate_path()?;
-        let arranged_source_reports = report.arranged_source_reports().to_vec();
-        let source_reports = report.source_reports().to_vec();
+    fn from_region_build_evidence(
+        evidence: &RegionLineSegmentRegionBuildEvidence2,
+    ) -> Option<Self> {
+        let predicate_path = evidence.ring_assembly_predicate_path()?;
+        let arranged_source_evidence = evidence.arranged_source_evidence().to_vec();
+        let source_evidence = evidence.source_evidence().to_vec();
         let arranged_fragment_cache =
-            ExactCurveArrangementArrangedFragmentCache2::from_arranged_source_reports(
-                &arranged_source_reports,
+            ExactCurveArrangementArrangedFragmentCache2::from_arranged_source_evidence(
+                &arranged_source_evidence,
             );
         let output_ring_bucket_cache =
-            ExactCurveArrangementOutputRingBucketCache2::from_source_reports(&source_reports);
+            ExactCurveArrangementOutputRingBucketCache2::from_source_evidence(&source_evidence);
         let output_segment_kind_bucket_cache =
-            ExactCurveArrangementOutputSegmentKindBucketCache2::from_source_reports(
-                &source_reports,
+            ExactCurveArrangementOutputSegmentKindBucketCache2::from_source_evidence(
+                &source_evidence,
             );
         let output_segment_source_bucket_cache =
-            ExactCurveArrangementOutputSegmentSourceBucketCache2::from_source_reports(
-                &source_reports,
+            ExactCurveArrangementOutputSegmentSourceBucketCache2::from_source_evidence(
+                &source_evidence,
             );
         let output_segment_source_range_cache =
-            ExactCurveArrangementOutputSegmentSourceRangeCache2::from_source_reports(
-                &source_reports,
+            ExactCurveArrangementOutputSegmentSourceRangeCache2::from_source_evidence(
+                &source_evidence,
             );
         let output_segment_endpoint_cache =
-            ExactCurveArrangementOutputSegmentEndpointCache2::from_source_reports(&source_reports);
+            ExactCurveArrangementOutputSegmentEndpointCache2::from_source_evidence(
+                &source_evidence,
+            );
         let output_ring_continuity_cache =
-            ExactCurveArrangementOutputRingContinuityCache2::from_source_reports(&source_reports);
+            ExactCurveArrangementOutputRingContinuityCache2::from_source_evidence(&source_evidence);
         let output_segment_status_bucket_cache =
-            ExactCurveArrangementOutputSegmentStatusBucketCache2::from_source_reports(
-                &source_reports,
+            ExactCurveArrangementOutputSegmentStatusBucketCache2::from_source_evidence(
+                &source_evidence,
             );
         let output_segment_direction_bucket_cache =
-            ExactCurveArrangementOutputSegmentDirectionBucketCache2::from_source_reports(
-                &source_reports,
+            ExactCurveArrangementOutputSegmentDirectionBucketCache2::from_source_evidence(
+                &source_evidence,
             );
-        let has_output_segments = !source_reports.is_empty();
+        let has_output_segments = !source_evidence.is_empty();
         let output_boundary_segment_kind_counts =
             has_output_segments.then_some(SegmentKindCounts {
                 lines: output_segment_kind_bucket_cache.line_segment_ref_count(),
@@ -7449,18 +7470,19 @@ impl ExactCurveArrangementRingAssemblyCache2 {
 
         Some(Self {
             predicate_path,
-            attempted_endpoint_connection_count: report.attempted_endpoint_connection_count(),
-            exact_endpoint_connection_count: report.exact_endpoint_connection_count(),
-            disconnected_endpoint_connection_count: report.disconnected_endpoint_connection_count(),
-            unresolved_endpoint_connection_count: report.unresolved_endpoint_connection_count(),
+            attempted_endpoint_connection_count: evidence.attempted_endpoint_connection_count(),
+            exact_endpoint_connection_count: evidence.exact_endpoint_connection_count(),
+            disconnected_endpoint_connection_count: evidence
+                .disconnected_endpoint_connection_count(),
+            unresolved_endpoint_connection_count: evidence.unresolved_endpoint_connection_count(),
             reversed_source_segment_count: output_segment_direction_bucket_cache
                 .reversed_segment_ref_count(),
             output_ring_count: has_output_segments.then_some(output_ring_bucket_cache.ring_count()),
             output_boundary_segment_count: has_output_segments
                 .then_some(output_segment_endpoint_cache.output_segment_ref_count()),
             output_boundary_segment_kind_counts,
-            arranged_source_reports,
-            source_reports,
+            arranged_source_evidence,
+            source_evidence,
             arranged_fragment_cache,
             output_ring_bucket_cache,
             output_segment_kind_bucket_cache,
@@ -7519,13 +7541,13 @@ impl ExactCurveArrangementRingAssemblyCache2 {
     }
 
     /// Returns per-arranged-fragment source provenance after exact splitting.
-    pub fn arranged_source_reports(&self) -> &[RegionLineSegmentArrangedSourceReport2] {
-        &self.arranged_source_reports
+    pub fn arranged_source_evidence(&self) -> &[RegionLineSegmentArrangedSourceEvidence2] {
+        &self.arranged_source_evidence
     }
 
     /// Returns per-output segment source provenance.
-    pub fn source_reports(&self) -> &[RegionLineSegmentRingSourceReport2] {
-        &self.source_reports
+    pub fn source_evidence(&self) -> &[RegionLineSegmentRingSourceEvidence2] {
+        &self.source_evidence
     }
 
     /// Returns per-arranged-fragment source provenance buckets.
@@ -7589,24 +7611,24 @@ impl ExactCurveArrangementRingAssemblyCache2 {
 }
 
 impl ExactCurveArrangementOutputCache2 {
-    fn from_region_build_report(
-        report: &RegionLineSegmentRegionBuildReport2,
+    fn from_region_build_evidence(
+        evidence: &RegionLineSegmentRegionBuildEvidence2,
         materialized_region: bool,
     ) -> Self {
-        let boundary_build_report = report.boundary_build_report().cloned();
+        let boundary_build_evidence = evidence.boundary_build_evidence().cloned();
         let boundary_output_cache =
-            ExactCurveArrangementOutputBoundaryCache2::from_region_build_report(report);
-        let role_cache = boundary_build_report
+            ExactCurveArrangementOutputBoundaryCache2::from_region_build_evidence(evidence);
+        let role_cache = boundary_build_evidence
             .as_ref()
-            .and_then(ExactCurveArrangementOutputRoleCache2::from_boundary_build_report);
+            .and_then(ExactCurveArrangementOutputRoleCache2::from_boundary_build_evidence);
         Self {
             materialized_region,
-            boundary_build_report,
+            boundary_build_evidence,
             boundary_output_cache,
             role_cache,
-            stage: report.stage(),
-            status: report.status(),
-            blocker: report.blocker(),
+            stage: evidence.stage(),
+            status: evidence.status(),
+            blocker: evidence.blocker(),
         }
     }
 
@@ -7616,14 +7638,14 @@ impl ExactCurveArrangementOutputCache2 {
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when reached.
-    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.boundary_build_report.as_ref()
+    pub const fn boundary_build_evidence(&self) -> Option<&RegionBoundaryContourBuildEvidence2> {
+        self.boundary_build_evidence.as_ref()
     }
 
     /// Returns delegated boundary-role assignment stage, if reached.
     pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.stage()),
+        match self.boundary_build_evidence() {
+            Some(evidence) => Some(evidence.stage()),
             None => None,
         }
     }
@@ -7632,88 +7654,88 @@ impl ExactCurveArrangementOutputCache2 {
     pub const fn boundary_build_predicate_path(
         &self,
     ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.predicate_path()),
+        match self.boundary_build_evidence() {
+            Some(evidence) => Some(evidence.predicate_path()),
             None => None,
         }
     }
 
     /// Returns delegated boundary-role assignment retained status, if reached.
     pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.status()),
+        match self.boundary_build_evidence() {
+            Some(evidence) => Some(evidence.status()),
             None => None,
         }
     }
 
     /// Returns delegated boundary-role assignment blocker, if present.
     pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker(),
+        match self.boundary_build_evidence() {
+            Some(evidence) => evidence.blocker(),
             None => None,
         }
     }
 
     /// Returns source contour count from delegated boundary-role assignment, if reached.
     pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.source_contour_count()),
+        match self.boundary_build_evidence() {
+            Some(evidence) => Some(evidence.source_contour_count()),
             None => None,
         }
     }
 
     /// Returns source boundary segment count from delegated boundary-role assignment, if reached.
     pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.source_segment_count()),
+        match self.boundary_build_evidence() {
+            Some(evidence) => Some(evidence.source_segment_count()),
             None => None,
         }
     }
 
     /// Returns contour-pair validation schedule size from delegated role assignment, if reached.
     pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_candidate_pair_count()),
+        match self.boundary_build_evidence() {
+            Some(evidence) => Some(evidence.validation_candidate_pair_count()),
             None => None,
         }
     }
 
     /// Returns contour-pair validation test count from delegated role assignment, if reached.
     pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_tested_pair_count()),
+        match self.boundary_build_evidence() {
+            Some(evidence) => Some(evidence.validation_tested_pair_count()),
             None => None,
         }
     }
 
     /// Returns exact validation intersection event count from delegated role assignment, if reached.
     pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_intersection_event_count()),
+        match self.boundary_build_evidence() {
+            Some(evidence) => Some(evidence.validation_intersection_event_count()),
             None => None,
         }
     }
 
     /// Returns containment classification count from delegated role assignment, if reached.
     pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.nesting_classification_count()),
+        match self.boundary_build_evidence() {
+            Some(evidence) => Some(evidence.nesting_classification_count()),
             None => None,
         }
     }
 
     /// Returns first blocking contour index from delegated role assignment, if present.
     pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker_first_contour_index(),
+        match self.boundary_build_evidence() {
+            Some(evidence) => evidence.blocker_first_contour_index(),
             None => None,
         }
     }
 
     /// Returns second blocking contour index from delegated role assignment, if present.
     pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker_second_contour_index(),
+        match self.boundary_build_evidence() {
+            Some(evidence) => evidence.blocker_second_contour_index(),
             None => None,
         }
     }
@@ -7837,24 +7859,24 @@ fn evaluate_exact_curve_arrangement(
         )?
     };
     let workspace = ExactCurveWorkspace2::from_request(request, policy)?
-        .with_region_build_evidence(staging_result.report(), staging_result.region().is_some());
+        .with_region_build_evidence(staging_result.evidence(), staging_result.region().is_some());
     let region = staging_result.region().cloned();
     let summary_cache = ExactCurveArrangementSummary2::from_workspace(&workspace);
-    let report = RegionArrangementReport2 {
+    let evidence = RegionArrangementEvidence2 {
         workspace: Rc::new(workspace),
         summary_cache,
     };
-    Ok(RegionArrangement2 { report, region })
+    Ok(RegionArrangement2 { evidence, region })
 }
 
 impl RegionArrangement2 {
-    /// Consumes this result and returns its retained arrangement report.
-    pub fn into_report(self) -> RegionArrangementReport2 {
-        self.report
+    /// Consumes this result and returns its retained arrangement evidence.
+    pub fn into_evidence(self) -> RegionArrangementEvidence2 {
+        self.evidence
     }
 
     fn facts(&self) -> &ExactCurveWorkspace2 {
-        self.report.facts()
+        self.evidence.facts()
     }
 
     /// Returns the source segments supplied to the retained arrangement request.
@@ -7892,7 +7914,7 @@ impl RegionArrangement2 {
         self.facts().source_aabb()
     }
 
-    /// Returns the number of source segment boxes certified during workspace preparation.
+    /// Returns the number of source segment boxes certified during workspace construction.
     pub fn decided_source_segment_aabb_count(&self) -> usize {
         self.facts().decided_source_segment_aabb_count()
     }
@@ -7902,7 +7924,7 @@ impl RegionArrangement2 {
         self.facts().undecided_source_segment_aabb_count()
     }
 
-    /// Returns retained source segment facts prepared before split scheduling.
+    /// Returns source segment facts retained before split scheduling.
     pub fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
         self.facts().source_segment_cache()
     }
@@ -7970,7 +7992,7 @@ impl RegionArrangement2 {
         self.facts().source_segment_kind_max_bucket_size()
     }
 
-    /// Returns exact source endpoint buckets retained during workspace preparation.
+    /// Returns exact source endpoint buckets retained during workspace construction.
     pub fn source_endpoint_bucket_cache(&self) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
         self.facts().source_endpoint_bucket_cache()
     }
@@ -7995,7 +8017,7 @@ impl RegionArrangement2 {
         self.facts().source_endpoint_max_bucket_size()
     }
 
-    /// Returns the retained source-pair schedule prepared before split predicates run.
+    /// Returns the source-pair schedule retained before split predicates run.
     pub fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
         self.facts().split_schedule_cache()
     }
@@ -8091,10 +8113,10 @@ impl RegionArrangement2 {
     }
 
     /// Returns exact per-event source and parameter evidence retained by split evaluation.
-    pub fn split_intersection_reports(
+    pub fn split_intersection_evidence(
         &self,
-    ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
-        self.facts().split_intersection_reports()
+    ) -> Option<&[RegionLineSegmentSplitIntersectionEvidence2]> {
+        self.facts().split_intersection_evidence()
     }
 
     /// Returns retained split-stage relation buckets.
@@ -8416,23 +8438,23 @@ impl RegionArrangement2 {
     }
 
     /// Returns per-arranged-fragment source provenance retained after exact splitting.
-    pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
-        self.facts().arranged_source_reports()
+    pub fn arranged_source_evidence(&self) -> Option<&[RegionLineSegmentArrangedSourceEvidence2]> {
+        self.facts().arranged_source_evidence()
     }
 
     /// Returns the retained arranged-source provenance record count.
-    pub fn arranged_source_report_count(&self) -> Option<usize> {
-        self.facts().arranged_source_report_count()
+    pub fn arranged_source_evidence_count(&self) -> Option<usize> {
+        self.facts().arranged_source_evidence_count()
     }
 
     /// Returns per-output segment source provenance retained by ring traversal.
-    pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
-        self.facts().source_reports()
+    pub fn source_evidence(&self) -> Option<&[RegionLineSegmentRingSourceEvidence2]> {
+        self.facts().source_evidence()
     }
 
     /// Returns the retained output-source provenance record count.
-    pub fn source_report_count(&self) -> Option<usize> {
-        self.facts().source_report_count()
+    pub fn source_evidence_count(&self) -> Option<usize> {
+        self.facts().source_evidence_count()
     }
 
     /// Returns per-arranged-fragment source provenance buckets.
@@ -8784,8 +8806,8 @@ impl RegionArrangement2 {
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when output reached it.
-    pub fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.facts().boundary_build_report()
+    pub fn boundary_build_evidence(&self) -> Option<&RegionBoundaryContourBuildEvidence2> {
+        self.facts().boundary_build_evidence()
     }
 
     /// Returns final boundary-role assignment stage, if reached.
@@ -8914,9 +8936,9 @@ impl RegionArrangement2 {
         self.facts().hole_segment_count()
     }
 
-    /// Returns retained output role report count when role assignment was reached.
-    pub fn role_report_count(&self) -> Option<usize> {
-        self.facts().role_report_count()
+    /// Returns retained output role evidence count when role assignment was reached.
+    pub fn role_evidence_count(&self) -> Option<usize> {
+        self.facts().role_evidence_count()
     }
 
     /// Returns output role assignment buckets grouped by topology status.
@@ -9048,19 +9070,19 @@ impl RegionArrangement2 {
         self.facts().role_buckets()
     }
 
-    /// Returns retained output role reports when role assignment was reached.
-    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.facts().role_reports()
+    /// Returns retained output role evidence when role assignment was reached.
+    pub fn role_evidence(&self) -> Option<&[RegionBoundaryContourRoleEvidence2]> {
+        self.facts().role_evidence()
     }
 
-    /// Returns the retained arrangement report without copying its facts.
-    pub fn report(&self) -> &RegionArrangementReport2 {
-        &self.report
+    /// Returns the retained arrangement evidence without copying its facts.
+    pub fn evidence(&self) -> &RegionArrangementEvidence2 {
+        &self.evidence
     }
 
     /// Returns final retained evaluation facts derived from workspace caches.
     pub fn summary(&self) -> &ExactCurveArrangementSummary2 {
-        self.report.summary()
+        self.evidence.summary()
     }
 
     /// Returns whether final output evaluation facts were retained.
@@ -9120,10 +9142,8 @@ impl RegionArrangement2 {
 
     /// Returns the materialized region as the canonical convenience classification.
     ///
-    /// This is the retained-result replacement for deprecated
-    /// `LineArcRegion2::from_unordered_*` convenience constructors: callers keep the
-    /// arrangement evidence and derived report available while still branching
-    /// on a decided region or explicit blocker.
+    /// Callers keep the arrangement and derived evidence available while
+    /// branching on a decided region or explicit blocker.
     pub fn region_classification(&self) -> Classification<&LineArcRegion2> {
         match self.region() {
             Some(region) => Classification::Decided(region),
@@ -9145,14 +9165,14 @@ impl RegionArrangement2 {
         }
     }
 
-    /// Consumes this result and returns the materialized region with a derived arrangement report.
+    /// Consumes this result and returns the materialized region with a derived arrangement evidence.
     ///
     /// This keeps owned output and its retained diagnostic evidence together.
-    pub(crate) fn into_region_with_report(
+    pub(crate) fn into_region_with_evidence(
         self,
-    ) -> (Option<LineArcRegion2>, RegionArrangementReport2) {
-        let Self { report, region } = self;
-        (region, report)
+    ) -> (Option<LineArcRegion2>, RegionArrangementEvidence2) {
+        let Self { evidence, region } = self;
+        (region, evidence)
     }
 
     /// Consumes this result and returns the materialized region, if any.
@@ -9161,8 +9181,8 @@ impl RegionArrangement2 {
     }
 }
 
-impl RegionBoundaryContourRoleReport2 {
-    /// Returns the source contour index assigned by this report.
+impl RegionBoundaryContourRoleEvidence2 {
+    /// Returns the source contour index assigned by this evidence.
     pub const fn source_contour_index(&self) -> usize {
         self.source_contour_index
     }
@@ -9208,7 +9228,7 @@ impl RegionBoundaryContourRoleReport2 {
     }
 }
 
-impl RegionBoundaryContourBuildReport2 {
+impl RegionBoundaryContourBuildEvidence2 {
     /// Returns the furthest exact region-construction stage reached.
     pub const fn stage(&self) -> RegionBoundaryContourBuildStage2 {
         self.stage
@@ -9289,9 +9309,9 @@ impl RegionBoundaryContourBuildReport2 {
         self.hole_segment_count
     }
 
-    /// Returns per-contour exact role reports.
-    pub fn role_reports(&self) -> &[RegionBoundaryContourRoleReport2] {
-        &self.role_reports
+    /// Returns per-contour exact role evidence.
+    pub fn role_evidence(&self) -> &[RegionBoundaryContourRoleEvidence2] {
+        &self.role_evidence
     }
 
     /// Returns region construction status.
@@ -9316,19 +9336,19 @@ impl RegionBoundaryContourBuildResult2 {
         self.region
     }
 
-    /// Consumes this result and returns the retained region-construction report.
-    pub fn into_report(self) -> RegionBoundaryContourBuildReport2 {
-        self.report
+    /// Consumes this result and returns the retained region-construction evidence.
+    pub fn into_evidence(self) -> RegionBoundaryContourBuildEvidence2 {
+        self.evidence
     }
 
-    /// Consumes this result and returns the materialized region with its report.
-    pub fn into_parts(self) -> (Option<LineArcRegion2>, RegionBoundaryContourBuildReport2) {
-        (self.region, self.report)
+    /// Consumes this result and returns the materialized region with its evidence.
+    pub fn into_parts(self) -> (Option<LineArcRegion2>, RegionBoundaryContourBuildEvidence2) {
+        (self.region, self.evidence)
     }
 
-    /// Returns the retained region-construction report.
-    pub const fn report(&self) -> &RegionBoundaryContourBuildReport2 {
-        &self.report
+    /// Returns the retained region-construction evidence.
+    pub const fn evidence(&self) -> &RegionBoundaryContourBuildEvidence2 {
+        &self.evidence
     }
 
     /// Returns the materialized region as a classification while retaining this result.
@@ -9352,101 +9372,101 @@ impl RegionBoundaryContourBuildResult2 {
 
     /// Returns the furthest exact region-construction stage reached.
     pub const fn stage(&self) -> RegionBoundaryContourBuildStage2 {
-        self.report.stage()
+        self.evidence.stage()
     }
 
     /// Returns the exact predicate path used for boundary validation and nesting.
     pub const fn predicate_path(&self) -> RegionBoundaryContourBuildPredicatePath2 {
-        self.report.predicate_path()
+        self.evidence.predicate_path()
     }
 
     /// Returns the number of source boundary contours considered.
     pub const fn source_contour_count(&self) -> usize {
-        self.report.source_contour_count()
+        self.evidence.source_contour_count()
     }
 
     /// Returns the total number of source contour segments considered.
     pub const fn source_segment_count(&self) -> usize {
-        self.report.source_segment_count()
+        self.evidence.source_segment_count()
     }
 
     /// Returns the number of contour pairs scheduled for intersection validation.
     pub const fn validation_candidate_pair_count(&self) -> usize {
-        self.report.validation_candidate_pair_count()
+        self.evidence.validation_candidate_pair_count()
     }
 
     /// Returns the number of contour pairs tested before success or a blocker.
     pub const fn validation_tested_pair_count(&self) -> usize {
-        self.report.validation_tested_pair_count()
+        self.evidence.validation_tested_pair_count()
     }
 
     /// Returns exact contour-intersection events found during nesting validation.
     pub const fn validation_intersection_event_count(&self) -> usize {
-        self.report.validation_intersection_event_count()
+        self.evidence.validation_intersection_event_count()
     }
 
     /// Returns point-containment classifications used to assign nesting roles.
     pub const fn nesting_classification_count(&self) -> usize {
-        self.report.nesting_classification_count()
+        self.evidence.nesting_classification_count()
     }
 
     /// Returns the first source contour index involved in a blocking relation.
     pub const fn blocker_first_contour_index(&self) -> Option<usize> {
-        self.report.blocker_first_contour_index()
+        self.evidence.blocker_first_contour_index()
     }
 
     /// Returns the second source contour index involved in a blocking relation.
     pub const fn blocker_second_contour_index(&self) -> Option<usize> {
-        self.report.blocker_second_contour_index()
+        self.evidence.blocker_second_contour_index()
     }
 
     /// Returns total output contour count when role assignment materialized.
     pub const fn output_contour_count(&self) -> Option<usize> {
-        self.report.output_contour_count()
+        self.evidence.output_contour_count()
     }
 
     /// Returns total output boundary segment count when role assignment materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
-        self.report.output_segment_count()
+        self.evidence.output_segment_count()
     }
 
     /// Returns material contour count when role assignment materialized.
     pub const fn material_contour_count(&self) -> Option<usize> {
-        self.report.material_contour_count()
+        self.evidence.material_contour_count()
     }
 
     /// Returns hole contour count when role assignment materialized.
     pub const fn hole_contour_count(&self) -> Option<usize> {
-        self.report.hole_contour_count()
+        self.evidence.hole_contour_count()
     }
 
     /// Returns material boundary segment count when role assignment materialized.
     pub const fn material_segment_count(&self) -> Option<usize> {
-        self.report.material_segment_count()
+        self.evidence.material_segment_count()
     }
 
     /// Returns hole boundary segment count when role assignment materialized.
     pub const fn hole_segment_count(&self) -> Option<usize> {
-        self.report.hole_segment_count()
+        self.evidence.hole_segment_count()
     }
 
-    /// Returns per-contour exact role reports.
-    pub fn role_reports(&self) -> &[RegionBoundaryContourRoleReport2] {
-        self.report.role_reports()
+    /// Returns per-contour exact role evidence.
+    pub fn role_evidence(&self) -> &[RegionBoundaryContourRoleEvidence2] {
+        self.evidence.role_evidence()
     }
 
     /// Returns region construction status.
     pub const fn status(&self) -> RetainedTopologyStatus {
-        self.report.status()
+        self.evidence.status()
     }
 
     /// Returns the exact blocker for non-materialized construction attempts.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.report.blocker()
+        self.evidence.blocker()
     }
 }
 
-impl RegionLineSegmentRingSourceReport2 {
+impl RegionLineSegmentRingSourceEvidence2 {
     /// Returns the source segment index used by this output segment.
     pub const fn source_segment_index(&self) -> usize {
         self.source_segment_index
@@ -9508,7 +9528,7 @@ impl RegionLineSegmentRingSourceReport2 {
     }
 }
 
-impl RegionLineSegmentArrangedSourceReport2 {
+impl RegionLineSegmentArrangedSourceEvidence2 {
     /// Returns the source segment index used by this arranged fragment.
     pub const fn source_segment_index(&self) -> usize {
         self.source_segment_index
@@ -9560,7 +9580,7 @@ impl RegionLineSegmentArrangedSourceReport2 {
     }
 }
 
-impl RegionLineSegmentRegionBuildReport2 {
+impl RegionLineSegmentRegionBuildEvidence2 {
     /// Returns the furthest exact line-region construction stage reached.
     pub const fn stage(&self) -> RegionLineSegmentRegionBuildStage2 {
         self.stage
@@ -9616,8 +9636,8 @@ impl RegionLineSegmentRegionBuildReport2 {
     }
 
     /// Returns source/parameter evidence for retained point-intersection split events.
-    pub fn split_intersection_reports(&self) -> &[RegionLineSegmentSplitIntersectionReport2] {
-        &self.split_intersection_reports
+    pub fn split_intersection_evidence(&self) -> &[RegionLineSegmentSplitIntersectionEvidence2] {
+        &self.split_intersection_evidence
     }
 
     /// Returns arranged output segment count after splitting, when available.
@@ -9703,18 +9723,18 @@ impl RegionLineSegmentRegionBuildReport2 {
     }
 
     /// Returns per-arranged-fragment source provenance after exact splitting.
-    pub fn arranged_source_reports(&self) -> &[RegionLineSegmentArrangedSourceReport2] {
-        &self.arranged_source_reports
+    pub fn arranged_source_evidence(&self) -> &[RegionLineSegmentArrangedSourceEvidence2] {
+        &self.arranged_source_evidence
     }
 
     /// Returns per-output segment source provenance.
-    pub fn source_reports(&self) -> &[RegionLineSegmentRingSourceReport2] {
-        &self.source_reports
+    pub fn source_evidence(&self) -> &[RegionLineSegmentRingSourceEvidence2] {
+        &self.source_evidence
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when reached.
-    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.boundary_build_report.as_ref()
+    pub const fn boundary_build_evidence(&self) -> Option<&RegionBoundaryContourBuildEvidence2> {
+        self.boundary_build_evidence.as_ref()
     }
 
     /// Returns line-region construction status.
@@ -9728,7 +9748,7 @@ impl RegionLineSegmentRegionBuildReport2 {
     }
 }
 
-impl RegionLineSegmentSplitIntersectionReport2 {
+impl RegionLineSegmentSplitIntersectionEvidence2 {
     /// Returns the first source segment index for this split event.
     pub const fn first_source_segment_index(&self) -> usize {
         self.first_source_segment_index
@@ -9785,7 +9805,7 @@ impl RegionLineSegmentSplitIntersectionReport2 {
     }
 }
 
-impl RegionArrangementReport2 {
+impl RegionArrangementEvidence2 {
     fn facts(&self) -> &ExactCurveWorkspace2 {
         &self.workspace
     }
@@ -9805,7 +9825,7 @@ impl RegionArrangementReport2 {
         self.facts().request().source_line_segments()
     }
 
-    /// Returns retained source segment facts prepared before split scheduling.
+    /// Returns source segment facts retained before split scheduling.
     pub fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
         self.facts().source_segment_cache()
     }
@@ -9873,7 +9893,7 @@ impl RegionArrangementReport2 {
         self.facts().source_segment_kind_max_bucket_size()
     }
 
-    /// Returns exact source endpoint buckets retained during workspace preparation.
+    /// Returns exact source endpoint buckets retained during workspace construction.
     pub fn source_endpoint_bucket_cache(&self) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
         self.facts().source_endpoint_bucket_cache()
     }
@@ -9898,7 +9918,7 @@ impl RegionArrangementReport2 {
         self.facts().source_endpoint_max_bucket_size()
     }
 
-    /// Returns the retained source-pair schedule prepared before split predicates run.
+    /// Returns the source-pair schedule retained before split predicates run.
     pub fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
         self.facts().split_schedule_cache()
     }
@@ -10166,7 +10186,7 @@ impl RegionArrangementReport2 {
         self.source_segment_cache().source_aabb()
     }
 
-    /// Returns the number of source segment boxes certified during workspace preparation.
+    /// Returns the number of source segment boxes certified during workspace construction.
     pub fn decided_source_segment_aabb_count(&self) -> usize {
         self.source_segment_cache()
             .decided_source_segment_aabb_count()
@@ -10219,10 +10239,10 @@ impl RegionArrangementReport2 {
     }
 
     /// Returns exact per-event source and parameter evidence retained by split evaluation.
-    pub fn split_intersection_reports(
+    pub fn split_intersection_evidence(
         &self,
-    ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
-        self.facts().split_intersection_reports()
+    ) -> Option<&[RegionLineSegmentSplitIntersectionEvidence2]> {
+        self.facts().split_intersection_evidence()
     }
 
     /// Returns the exact predicate family used for split arrangement, when reached.
@@ -10484,23 +10504,23 @@ impl RegionArrangementReport2 {
     }
 
     /// Returns the retained arranged-source provenance record count.
-    pub fn arranged_source_report_count(&self) -> Option<usize> {
-        self.facts().arranged_source_report_count()
+    pub fn arranged_source_evidence_count(&self) -> Option<usize> {
+        self.facts().arranged_source_evidence_count()
     }
 
     /// Returns retained arranged-source provenance records, when ring assembly was reached.
-    pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
-        self.facts().arranged_source_reports()
+    pub fn arranged_source_evidence(&self) -> Option<&[RegionLineSegmentArrangedSourceEvidence2]> {
+        self.facts().arranged_source_evidence()
     }
 
     /// Returns the retained output-source provenance record count.
-    pub fn source_report_count(&self) -> Option<usize> {
-        self.facts().source_report_count()
+    pub fn source_evidence_count(&self) -> Option<usize> {
+        self.facts().source_evidence_count()
     }
 
     /// Returns retained output-source provenance records, when ring assembly was reached.
-    pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
-        self.facts().source_reports()
+    pub fn source_evidence(&self) -> Option<&[RegionLineSegmentRingSourceEvidence2]> {
+        self.facts().source_evidence()
     }
 
     /// Returns output ring count retained by ring assembly, when available.
@@ -10939,19 +10959,19 @@ impl RegionArrangementReport2 {
         self.facts().hole_segment_count()
     }
 
-    /// Returns retained output role report count when role assignment was reached.
-    pub fn role_report_count(&self) -> Option<usize> {
-        self.facts().role_report_count()
+    /// Returns retained output role evidence count when role assignment was reached.
+    pub fn role_evidence_count(&self) -> Option<usize> {
+        self.facts().role_evidence_count()
     }
 
-    /// Returns retained output role reports when role assignment was reached.
-    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.facts().role_reports()
+    /// Returns retained output role evidence when role assignment was reached.
+    pub fn role_evidence(&self) -> Option<&[RegionBoundaryContourRoleEvidence2]> {
+        self.facts().role_evidence()
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when output reached it.
-    pub fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.facts().boundary_build_report()
+    pub fn boundary_build_evidence(&self) -> Option<&RegionBoundaryContourBuildEvidence2> {
+        self.facts().boundary_build_evidence()
     }
 
     /// Returns final boundary-role assignment stage, if reached.
@@ -11050,9 +11070,9 @@ impl RegionLineSegmentRegionBuildResult2 {
         self.region.as_ref()
     }
 
-    /// Returns the retained line-region construction report.
-    pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
-        &self.report
+    /// Returns the retained line-region construction evidence.
+    pub const fn evidence(&self) -> &RegionLineSegmentRegionBuildEvidence2 {
+        &self.evidence
     }
 }
 
@@ -11065,7 +11085,7 @@ struct LineSegmentRingAssemblyCounts {
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-struct LineSegmentEndpointGraphReportParts {
+struct LineSegmentEndpointGraphEvidenceParts {
     endpoint_count: usize,
     structural_bucket_count: usize,
     structural_singleton_bucket_count: usize,
@@ -11078,10 +11098,10 @@ struct LineSegmentEndpointGraphReportParts {
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-struct LineSegmentRingAssemblyReportParts {
+struct LineSegmentRingAssemblyEvidenceParts {
     counts: LineSegmentRingAssemblyCounts,
     reversed_source_segment_count: usize,
-    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+    source_evidence: Vec<RegionLineSegmentRingSourceEvidence2>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -11089,11 +11109,11 @@ struct LineSegmentRingAssembly {
     rings: Vec<Vec<LineSeg2>>,
     counts: LineSegmentRingAssemblyCounts,
     reversed_source_segment_count: usize,
-    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+    source_evidence: Vec<RegionLineSegmentRingSourceEvidence2>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-struct LineSegmentSplitReportParts {
+struct LineSegmentSplitEvidenceParts {
     predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
@@ -11103,7 +11123,7 @@ struct LineSegmentSplitReportParts {
     overlap_relation_count: usize,
     uncertain_relation_count: usize,
     intersection_points: Vec<Point2>,
-    intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
+    intersection_evidence: Vec<RegionLineSegmentSplitIntersectionEvidence2>,
     output_segment_count: Option<usize>,
     blocker_first_source_segment_index: Option<usize>,
     blocker_first_source_segment_kind: Option<SegmentKind>,
@@ -11127,7 +11147,7 @@ struct ArrangedLineSegment {
 #[derive(Clone, Debug, PartialEq)]
 struct ArrangedLineSegments {
     segments: Vec<ArrangedLineSegment>,
-    report: LineSegmentSplitReportParts,
+    evidence: LineSegmentSplitEvidenceParts,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -11142,7 +11162,7 @@ struct ArrangedNativeSegment {
 #[derive(Clone, Debug, PartialEq)]
 struct ArrangedNativeSegments {
     segments: Vec<ArrangedNativeSegment>,
-    report: LineSegmentSplitReportParts,
+    evidence: LineSegmentSplitEvidenceParts,
 }
 
 impl ArrangedLineSegment {
@@ -11203,17 +11223,17 @@ fn validate_arranged_line_endpoint_graph(
     policy: &CurvePolicy,
 ) -> Result<
     (
-        LineSegmentEndpointGraphReportParts,
+        LineSegmentEndpointGraphEvidenceParts,
         LineSegmentRingAssemblyCounts,
     ),
     (
-        LineSegmentEndpointGraphReportParts,
+        LineSegmentEndpointGraphEvidenceParts,
         LineSegmentRingAssemblyCounts,
         UncertaintyReason,
     ),
 > {
     let endpoints = arranged_line_endpoints(segments);
-    let mut graph = structural_endpoint_bucket_report(segments, &endpoints);
+    let mut graph = structural_endpoint_bucket_evidence(segments, &endpoints);
     let mut counts = LineSegmentRingAssemblyCounts::default();
 
     for (endpoint_index, endpoint) in endpoints.iter().enumerate() {
@@ -11260,7 +11280,7 @@ fn validate_arranged_line_endpoint_graph(
 }
 
 fn set_endpoint_graph_blocker(
-    graph: &mut LineSegmentEndpointGraphReportParts,
+    graph: &mut LineSegmentEndpointGraphEvidenceParts,
     endpoint: ArrangedLineEndpoint,
     point: &Point2,
 ) {
@@ -11278,10 +11298,10 @@ fn region_arranged_endpoint(endpoint: EndpointCandidate) -> RegionLineSegmentArr
     }
 }
 
-fn structural_endpoint_bucket_report(
+fn structural_endpoint_bucket_evidence(
     segments: &[ArrangedLineSegment],
     endpoints: &[ArrangedLineEndpoint],
-) -> LineSegmentEndpointGraphReportParts {
+) -> LineSegmentEndpointGraphEvidenceParts {
     let mut buckets: Vec<(Point2, usize)> = Vec::new();
     for endpoint in endpoints {
         let point = arranged_line_endpoint_point(segments, *endpoint);
@@ -11295,12 +11315,12 @@ fn structural_endpoint_bucket_report(
         }
     }
 
-    LineSegmentEndpointGraphReportParts {
+    LineSegmentEndpointGraphEvidenceParts {
         endpoint_count: endpoints.len(),
         structural_bucket_count: buckets.len(),
         structural_singleton_bucket_count: buckets.iter().filter(|(_, count)| *count == 1).count(),
         max_structural_bucket_size: buckets.iter().map(|(_, count)| *count).max().unwrap_or(0),
-        ..LineSegmentEndpointGraphReportParts::default()
+        ..LineSegmentEndpointGraphEvidenceParts::default()
     }
 }
 
@@ -11334,17 +11354,17 @@ fn validate_arranged_native_endpoint_graph(
     policy: &CurvePolicy,
 ) -> Result<
     (
-        LineSegmentEndpointGraphReportParts,
+        LineSegmentEndpointGraphEvidenceParts,
         LineSegmentRingAssemblyCounts,
     ),
     (
-        LineSegmentEndpointGraphReportParts,
+        LineSegmentEndpointGraphEvidenceParts,
         LineSegmentRingAssemblyCounts,
         UncertaintyReason,
     ),
 > {
     let endpoints = arranged_native_endpoints(segments);
-    let mut graph = structural_native_endpoint_bucket_report(segments, &endpoints);
+    let mut graph = structural_native_endpoint_bucket_evidence(segments, &endpoints);
     let mut counts = LineSegmentRingAssemblyCounts::default();
 
     for (endpoint_index, endpoint) in endpoints.iter().enumerate() {
@@ -11390,10 +11410,10 @@ fn validate_arranged_native_endpoint_graph(
     }
 }
 
-fn structural_native_endpoint_bucket_report(
+fn structural_native_endpoint_bucket_evidence(
     segments: &[ArrangedNativeSegment],
     endpoints: &[ArrangedLineEndpoint],
-) -> LineSegmentEndpointGraphReportParts {
+) -> LineSegmentEndpointGraphEvidenceParts {
     let mut buckets: Vec<(Point2, usize)> = Vec::new();
     for endpoint in endpoints {
         let point = arranged_native_endpoint_point(segments, *endpoint);
@@ -11407,12 +11427,12 @@ fn structural_native_endpoint_bucket_report(
         }
     }
 
-    LineSegmentEndpointGraphReportParts {
+    LineSegmentEndpointGraphEvidenceParts {
         endpoint_count: endpoints.len(),
         structural_bucket_count: buckets.len(),
         structural_singleton_bucket_count: buckets.iter().filter(|(_, count)| *count == 1).count(),
         max_structural_bucket_size: buckets.iter().map(|(_, count)| *count).max().unwrap_or(0),
-        ..LineSegmentEndpointGraphReportParts::default()
+        ..LineSegmentEndpointGraphEvidenceParts::default()
     }
 }
 
@@ -11444,14 +11464,14 @@ fn arranged_native_endpoint_point(
 fn arrange_line_segments_at_point_intersections(
     segments: &[LineSeg2],
     policy: &CurvePolicy,
-) -> CurveResult<Result<ArrangedLineSegments, (LineSegmentSplitReportParts, UncertaintyReason)>> {
-    let mut report = LineSegmentSplitReportParts {
+) -> CurveResult<Result<ArrangedLineSegments, (LineSegmentSplitEvidenceParts, UncertaintyReason)>> {
+    let mut evidence = LineSegmentSplitEvidenceParts {
         predicate_path: Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine),
         candidate_pair_count: segments
             .len()
             .saturating_mul(segments.len().saturating_sub(1))
             / 2,
-        ..LineSegmentSplitReportParts::default()
+        ..LineSegmentSplitEvidenceParts::default()
     };
     let mut markers = segments
         .iter()
@@ -11479,10 +11499,10 @@ fn arrange_line_segments_at_point_intersections(
                 (&segment_boxes[first_index], &segment_boxes[second_index])
                 && aabbs_decided_disjoint(first_box, second_box, policy)
             {
-                report.skipped_aabb_pair_count += 1;
+                evidence.skipped_aabb_pair_count += 1;
                 continue;
             }
-            report.tested_pair_count += 1;
+            evidence.tested_pair_count += 1;
             match first.intersect_line(second, policy)? {
                 LineLineIntersection::None => {}
                 LineLineIntersection::Point {
@@ -11491,12 +11511,11 @@ fn arrange_line_segments_at_point_intersections(
                     b_param,
                     ..
                 } => {
-                    report.point_relation_count += 1;
-                    report.intersection_event_count += 1;
-                    report.intersection_points.push(point.clone());
-                    report
-                        .intersection_reports
-                        .push(RegionLineSegmentSplitIntersectionReport2 {
+                    evidence.point_relation_count += 1;
+                    evidence.intersection_event_count += 1;
+                    evidence.intersection_points.push(point.clone());
+                    evidence.intersection_evidence.push(
+                        RegionLineSegmentSplitIntersectionEvidence2 {
                             first_source_segment_index: first_index,
                             first_source_segment_kind: SegmentKind::Line,
                             first_source_segment_start_point: first.start().clone(),
@@ -11508,14 +11527,15 @@ fn arrange_line_segments_at_point_intersections(
                             second_source_segment_end_point: second.end().clone(),
                             second_source_param: b_param.clone(),
                             point,
-                        });
+                        },
+                    );
                     if insert_line_split_marker(&mut markers[first_index], a_param, policy)
                         .is_none()
                         || insert_line_split_marker(&mut markers[second_index], b_param, policy)
                             .is_none()
                     {
                         set_split_blocker_pair(
-                            &mut report,
+                            &mut evidence,
                             first_index,
                             SegmentKind::Line,
                             first.start(),
@@ -11525,13 +11545,13 @@ fn arrange_line_segments_at_point_intersections(
                             second.start(),
                             second.end(),
                         );
-                        return Ok(Err((report, UncertaintyReason::Ordering)));
+                        return Ok(Err((evidence, UncertaintyReason::Ordering)));
                     }
                 }
                 LineLineIntersection::Overlap { .. } => {
-                    report.overlap_relation_count += 1;
+                    evidence.overlap_relation_count += 1;
                     set_split_blocker_pair(
-                        &mut report,
+                        &mut evidence,
                         first_index,
                         SegmentKind::Line,
                         first.start(),
@@ -11541,12 +11561,12 @@ fn arrange_line_segments_at_point_intersections(
                         second.start(),
                         second.end(),
                     );
-                    return Ok(Err((report, UncertaintyReason::Boundary)));
+                    return Ok(Err((evidence, UncertaintyReason::Boundary)));
                 }
                 LineLineIntersection::Uncertain { reason } => {
-                    report.uncertain_relation_count += 1;
+                    evidence.uncertain_relation_count += 1;
                     set_split_blocker_pair(
-                        &mut report,
+                        &mut evidence,
                         first_index,
                         SegmentKind::Line,
                         first.start(),
@@ -11556,7 +11576,7 @@ fn arrange_line_segments_at_point_intersections(
                         second.start(),
                         second.end(),
                     );
-                    return Ok(Err((report, reason)));
+                    return Ok(Err((evidence, reason)));
                 }
             }
         }
@@ -11586,16 +11606,16 @@ fn arrange_line_segments_at_point_intersections(
                     });
                 }
                 Some(Ordering::Equal) => {}
-                Some(Ordering::Greater) => return Ok(Err((report, UncertaintyReason::Ordering))),
-                None => return Ok(Err((report, UncertaintyReason::Ordering))),
+                Some(Ordering::Greater) => return Ok(Err((evidence, UncertaintyReason::Ordering))),
+                None => return Ok(Err((evidence, UncertaintyReason::Ordering))),
             }
         }
     }
 
-    report.output_segment_count = Some(arranged.len());
+    evidence.output_segment_count = Some(arranged.len());
     Ok(Ok(ArrangedLineSegments {
         segments: arranged,
-        report,
+        evidence,
     }))
 }
 
@@ -11628,7 +11648,7 @@ fn sort_line_split_markers(
 }
 
 fn set_split_blocker_pair(
-    report: &mut LineSegmentSplitReportParts,
+    evidence: &mut LineSegmentSplitEvidenceParts,
     first_source_segment_index: usize,
     first_source_segment_kind: SegmentKind,
     first_source_start_point: &Point2,
@@ -11638,29 +11658,30 @@ fn set_split_blocker_pair(
     second_source_start_point: &Point2,
     second_source_end_point: &Point2,
 ) {
-    if report.blocker_first_source_segment_index.is_none() {
-        report.blocker_first_source_segment_index = Some(first_source_segment_index);
-        report.blocker_first_source_segment_kind = Some(first_source_segment_kind);
-        report.blocker_first_source_start_point = Some(first_source_start_point.clone());
-        report.blocker_first_source_end_point = Some(first_source_end_point.clone());
-        report.blocker_second_source_segment_index = Some(second_source_segment_index);
-        report.blocker_second_source_segment_kind = Some(second_source_segment_kind);
-        report.blocker_second_source_start_point = Some(second_source_start_point.clone());
-        report.blocker_second_source_end_point = Some(second_source_end_point.clone());
+    if evidence.blocker_first_source_segment_index.is_none() {
+        evidence.blocker_first_source_segment_index = Some(first_source_segment_index);
+        evidence.blocker_first_source_segment_kind = Some(first_source_segment_kind);
+        evidence.blocker_first_source_start_point = Some(first_source_start_point.clone());
+        evidence.blocker_first_source_end_point = Some(first_source_end_point.clone());
+        evidence.blocker_second_source_segment_index = Some(second_source_segment_index);
+        evidence.blocker_second_source_segment_kind = Some(second_source_segment_kind);
+        evidence.blocker_second_source_start_point = Some(second_source_start_point.clone());
+        evidence.blocker_second_source_end_point = Some(second_source_end_point.clone());
     }
 }
 
 fn arrange_native_segments_at_point_intersections(
     segments: &[Segment2],
     policy: &CurvePolicy,
-) -> CurveResult<Result<ArrangedNativeSegments, (LineSegmentSplitReportParts, UncertaintyReason)>> {
-    let mut report = LineSegmentSplitReportParts {
+) -> CurveResult<Result<ArrangedNativeSegments, (LineSegmentSplitEvidenceParts, UncertaintyReason)>>
+{
+    let mut evidence = LineSegmentSplitEvidenceParts {
         predicate_path: Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredNativeSegment),
         candidate_pair_count: segments
             .len()
             .saturating_mul(segments.len().saturating_sub(1))
             / 2,
-        ..LineSegmentSplitReportParts::default()
+        ..LineSegmentSplitEvidenceParts::default()
     };
     let mut markers = segments
         .iter()
@@ -11692,19 +11713,19 @@ fn arrange_native_segments_at_point_intersections(
                 (&segment_boxes[first_index], &segment_boxes[second_index])
                 && aabbs_decided_disjoint(first_box, second_box, policy)
             {
-                report.skipped_aabb_pair_count += 1;
+                evidence.skipped_aabb_pair_count += 1;
                 continue;
             }
-            report.tested_pair_count += 1;
+            evidence.tested_pair_count += 1;
             match native_segment_intersection_split_markers(first, second, policy)? {
                 NativeSegmentIntersectionMarkers::None => {}
                 NativeSegmentIntersectionMarkers::Points(points) => {
-                    report.point_relation_count += 1;
-                    report.intersection_event_count += points.len();
+                    evidence.point_relation_count += 1;
+                    evidence.intersection_event_count += points.len();
                     for point in points {
-                        report.intersection_points.push(point.point.clone());
-                        report.intersection_reports.push(
-                            RegionLineSegmentSplitIntersectionReport2 {
+                        evidence.intersection_points.push(point.point.clone());
+                        evidence.intersection_evidence.push(
+                            RegionLineSegmentSplitIntersectionEvidence2 {
                                 first_source_segment_index: first_index,
                                 first_source_segment_kind: first.structural_facts().kind,
                                 first_source_segment_start_point: first.start().clone(),
@@ -11738,7 +11759,7 @@ fn arrange_native_segments_at_point_intersections(
                             .is_none()
                         {
                             set_split_blocker_pair(
-                                &mut report,
+                                &mut evidence,
                                 first_index,
                                 first.structural_facts().kind,
                                 first.start(),
@@ -11748,14 +11769,14 @@ fn arrange_native_segments_at_point_intersections(
                                 second.start(),
                                 second.end(),
                             );
-                            return Ok(Err((report, UncertaintyReason::Ordering)));
+                            return Ok(Err((evidence, UncertaintyReason::Ordering)));
                         }
                     }
                 }
                 NativeSegmentIntersectionMarkers::Overlap => {
-                    report.overlap_relation_count += 1;
+                    evidence.overlap_relation_count += 1;
                     set_split_blocker_pair(
-                        &mut report,
+                        &mut evidence,
                         first_index,
                         first.structural_facts().kind,
                         first.start(),
@@ -11765,12 +11786,12 @@ fn arrange_native_segments_at_point_intersections(
                         second.start(),
                         second.end(),
                     );
-                    return Ok(Err((report, UncertaintyReason::Boundary)));
+                    return Ok(Err((evidence, UncertaintyReason::Boundary)));
                 }
                 NativeSegmentIntersectionMarkers::Uncertain(reason) => {
-                    report.uncertain_relation_count += 1;
+                    evidence.uncertain_relation_count += 1;
                     set_split_blocker_pair(
-                        &mut report,
+                        &mut evidence,
                         first_index,
                         first.structural_facts().kind,
                         first.start(),
@@ -11780,7 +11801,7 @@ fn arrange_native_segments_at_point_intersections(
                         second.start(),
                         second.end(),
                     );
-                    return Ok(Err((report, reason)));
+                    return Ok(Err((evidence, reason)));
                 }
             }
         }
@@ -11812,22 +11833,22 @@ fn arrange_native_segments_at_point_intersections(
                         }
                         NativeSegmentMaterialization::SkippedEmpty => {}
                         NativeSegmentMaterialization::Unresolved(reason) => {
-                            return Ok(Err((report, reason)));
+                            return Ok(Err((evidence, reason)));
                         }
                     }
                 }
                 Some(Ordering::Equal) => {}
                 Some(Ordering::Greater) | None => {
-                    return Ok(Err((report, UncertaintyReason::Ordering)));
+                    return Ok(Err((evidence, UncertaintyReason::Ordering)));
                 }
             }
         }
     }
 
-    report.output_segment_count = Some(arranged.len());
+    evidence.output_segment_count = Some(arranged.len());
     Ok(Ok(ArrangedNativeSegments {
         segments: arranged,
-        report,
+        evidence,
     }))
 }
 
@@ -12044,21 +12065,21 @@ fn assemble_unordered_line_segment_rings(
     segments: &[ArrangedLineSegment],
     policy: &CurvePolicy,
 ) -> CurveResult<
-    Result<LineSegmentRingAssembly, (LineSegmentRingAssemblyReportParts, UncertaintyReason)>,
+    Result<LineSegmentRingAssembly, (LineSegmentRingAssemblyEvidenceParts, UncertaintyReason)>,
 > {
     let mut used = vec![false; segments.len()];
     let mut rings = Vec::new();
     let mut counts = LineSegmentRingAssemblyCounts::default();
     let mut reversed_source_segment_count = 0_usize;
-    let mut source_reports = Vec::with_capacity(segments.len());
+    let mut source_evidence = Vec::with_capacity(segments.len());
 
     while let Some(seed_index) = used.iter().position(|used| !*used) {
         let output_ring_index = rings.len();
         let mut ring = Vec::new();
         let mut current = segments[seed_index].clone();
         used[seed_index] = true;
-        append_line_segment_ring_source_report(
-            &mut source_reports,
+        append_line_segment_ring_source_evidence(
+            &mut source_evidence,
             &current,
             output_ring_index,
             ring.len(),
@@ -12073,10 +12094,10 @@ fn assemble_unordered_line_segment_rings(
                 Classification::Decided(false) => {}
                 Classification::Uncertain(reason) => {
                     return Ok(Err((
-                        LineSegmentRingAssemblyReportParts {
+                        LineSegmentRingAssemblyEvidenceParts {
                             counts,
                             reversed_source_segment_count,
-                            source_reports,
+                            source_evidence,
                         },
                         reason,
                     )));
@@ -12093,20 +12114,20 @@ fn assemble_unordered_line_segment_rings(
                 Classification::Decided(Some(next)) => next,
                 Classification::Decided(None) => {
                     return Ok(Err((
-                        LineSegmentRingAssemblyReportParts {
+                        LineSegmentRingAssemblyEvidenceParts {
                             counts,
                             reversed_source_segment_count,
-                            source_reports,
+                            source_evidence,
                         },
                         UncertaintyReason::Boundary,
                     )));
                 }
                 Classification::Uncertain(reason) => {
                     return Ok(Err((
-                        LineSegmentRingAssemblyReportParts {
+                        LineSegmentRingAssemblyEvidenceParts {
                             counts,
                             reversed_source_segment_count,
-                            source_reports,
+                            source_evidence,
                         },
                         reason,
                     )));
@@ -12122,8 +12143,8 @@ fn assemble_unordered_line_segment_rings(
             } else {
                 segments[next.arranged_segment_index].clone()
             };
-            append_line_segment_ring_source_report(
-                &mut source_reports,
+            append_line_segment_ring_source_evidence(
+                &mut source_evidence,
                 &current,
                 output_ring_index,
                 ring.len(),
@@ -12134,10 +12155,10 @@ fn assemble_unordered_line_segment_rings(
 
         if ring.len() < 3 {
             return Ok(Err((
-                LineSegmentRingAssemblyReportParts {
+                LineSegmentRingAssemblyEvidenceParts {
                     counts,
                     reversed_source_segment_count,
-                    source_reports,
+                    source_evidence,
                 },
                 UncertaintyReason::Boundary,
             )));
@@ -12149,7 +12170,7 @@ fn assemble_unordered_line_segment_rings(
         rings,
         counts,
         reversed_source_segment_count,
-        source_reports,
+        source_evidence,
     }))
 }
 
@@ -12199,28 +12220,28 @@ struct NativeSegmentRingAssembly {
     rings: Vec<Vec<Segment2>>,
     counts: LineSegmentRingAssemblyCounts,
     reversed_source_segment_count: usize,
-    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+    source_evidence: Vec<RegionLineSegmentRingSourceEvidence2>,
 }
 
 fn assemble_unordered_native_segment_rings(
     segments: &[ArrangedNativeSegment],
     policy: &CurvePolicy,
 ) -> CurveResult<
-    Result<NativeSegmentRingAssembly, (LineSegmentRingAssemblyReportParts, UncertaintyReason)>,
+    Result<NativeSegmentRingAssembly, (LineSegmentRingAssemblyEvidenceParts, UncertaintyReason)>,
 > {
     let mut used = vec![false; segments.len()];
     let mut rings = Vec::new();
     let mut counts = LineSegmentRingAssemblyCounts::default();
     let mut reversed_source_segment_count = 0_usize;
-    let mut source_reports = Vec::with_capacity(segments.len());
+    let mut source_evidence = Vec::with_capacity(segments.len());
 
     while let Some(seed_index) = used.iter().position(|used| !*used) {
         let output_ring_index = rings.len();
         let mut ring = Vec::new();
         let mut current = segments[seed_index].clone();
         used[seed_index] = true;
-        append_native_segment_ring_source_report(
-            &mut source_reports,
+        append_native_segment_ring_source_evidence(
+            &mut source_evidence,
             &current,
             output_ring_index,
             ring.len(),
@@ -12235,10 +12256,10 @@ fn assemble_unordered_native_segment_rings(
                 Classification::Decided(false) => {}
                 Classification::Uncertain(reason) => {
                     return Ok(Err((
-                        LineSegmentRingAssemblyReportParts {
+                        LineSegmentRingAssemblyEvidenceParts {
                             counts,
                             reversed_source_segment_count,
-                            source_reports,
+                            source_evidence,
                         },
                         reason,
                     )));
@@ -12255,20 +12276,20 @@ fn assemble_unordered_native_segment_rings(
                 Classification::Decided(Some(next)) => next,
                 Classification::Decided(None) => {
                     return Ok(Err((
-                        LineSegmentRingAssemblyReportParts {
+                        LineSegmentRingAssemblyEvidenceParts {
                             counts,
                             reversed_source_segment_count,
-                            source_reports,
+                            source_evidence,
                         },
                         UncertaintyReason::Boundary,
                     )));
                 }
                 Classification::Uncertain(reason) => {
                     return Ok(Err((
-                        LineSegmentRingAssemblyReportParts {
+                        LineSegmentRingAssemblyEvidenceParts {
                             counts,
                             reversed_source_segment_count,
-                            source_reports,
+                            source_evidence,
                         },
                         reason,
                     )));
@@ -12284,8 +12305,8 @@ fn assemble_unordered_native_segment_rings(
             } else {
                 segments[next.arranged_segment_index].clone()
             };
-            append_native_segment_ring_source_report(
-                &mut source_reports,
+            append_native_segment_ring_source_evidence(
+                &mut source_evidence,
                 &current,
                 output_ring_index,
                 ring.len(),
@@ -12301,7 +12322,7 @@ fn assemble_unordered_native_segment_rings(
         rings,
         counts,
         reversed_source_segment_count,
-        source_reports,
+        source_evidence,
     }))
 }
 
@@ -12363,14 +12384,14 @@ fn exact_points_match(
     }
 }
 
-fn append_line_segment_ring_source_report(
-    source_reports: &mut Vec<RegionLineSegmentRingSourceReport2>,
+fn append_line_segment_ring_source_evidence(
+    source_evidence: &mut Vec<RegionLineSegmentRingSourceEvidence2>,
     segment: &ArrangedLineSegment,
     output_ring_index: usize,
     output_segment_index: usize,
     reversed: bool,
 ) {
-    source_reports.push(RegionLineSegmentRingSourceReport2 {
+    source_evidence.push(RegionLineSegmentRingSourceEvidence2 {
         source_segment_index: segment.source_segment_index,
         source_segment_kind: SegmentKind::Line,
         source_segment_start_point: segment.source_segment_start_point.clone(),
@@ -12386,14 +12407,14 @@ fn append_line_segment_ring_source_report(
     });
 }
 
-fn append_native_segment_ring_source_report(
-    source_reports: &mut Vec<RegionLineSegmentRingSourceReport2>,
+fn append_native_segment_ring_source_evidence(
+    source_evidence: &mut Vec<RegionLineSegmentRingSourceEvidence2>,
     segment: &ArrangedNativeSegment,
     output_ring_index: usize,
     output_segment_index: usize,
     reversed: bool,
 ) {
-    source_reports.push(RegionLineSegmentRingSourceReport2 {
+    source_evidence.push(RegionLineSegmentRingSourceEvidence2 {
         source_segment_index: segment.source_segment_index,
         source_segment_kind: segment.segment.structural_facts().kind,
         source_segment_start_point: segment.source_segment_start_point.clone(),
@@ -12409,14 +12430,14 @@ fn append_native_segment_ring_source_report(
     });
 }
 
-fn line_arranged_source_reports(
+fn line_arranged_source_evidence(
     segments: &[ArrangedLineSegment],
-) -> Vec<RegionLineSegmentArrangedSourceReport2> {
+) -> Vec<RegionLineSegmentArrangedSourceEvidence2> {
     segments
         .iter()
         .enumerate()
         .map(
-            |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceReport2 {
+            |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceEvidence2 {
                 source_segment_index: segment.source_segment_index,
                 source_segment_kind: SegmentKind::Line,
                 source_segment_start_point: segment.source_segment_start_point.clone(),
@@ -12432,15 +12453,15 @@ fn line_arranged_source_reports(
         .collect()
 }
 
-fn native_arranged_source_reports(
+fn native_arranged_source_evidence(
     source_segments: &[Segment2],
     segments: &[ArrangedNativeSegment],
-) -> Vec<RegionLineSegmentArrangedSourceReport2> {
+) -> Vec<RegionLineSegmentArrangedSourceEvidence2> {
     segments
         .iter()
         .enumerate()
         .map(
-            |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceReport2 {
+            |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceEvidence2 {
                 source_segment_index: segment.source_segment_index,
                 source_segment_kind: source_segments[segment.source_segment_index]
                     .structural_facts()
@@ -12607,20 +12628,20 @@ fn split_schedule_cache(
 }
 
 fn split_intersection_bucket_cache(
-    intersection_reports: &[RegionLineSegmentSplitIntersectionReport2],
+    intersection_evidence: &[RegionLineSegmentSplitIntersectionEvidence2],
 ) -> ExactCurveArrangementSplitIntersectionBucketCache2 {
     let mut buckets: Vec<ExactCurveArrangementSplitIntersectionBucket2> = Vec::new();
-    for (intersection_report_index, report) in intersection_reports.iter().enumerate() {
+    for (intersection_evidence_index, evidence) in intersection_evidence.iter().enumerate() {
         add_split_intersection_bucket_ref(
             &mut buckets,
-            report.point(),
+            evidence.point(),
             ExactCurveArrangementSplitIntersectionRef2 {
-                intersection_report_index,
+                intersection_evidence_index,
             },
         );
     }
 
-    let intersection_event_count = intersection_reports.len();
+    let intersection_event_count = intersection_evidence.len();
     let bucket_count = buckets.len();
     let singleton_bucket_count = buckets
         .iter()
@@ -12656,29 +12677,29 @@ fn add_split_intersection_bucket_ref(
 }
 
 fn arranged_endpoint_bucket_cache(
-    arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
+    arranged_source_evidence: &[RegionLineSegmentArrangedSourceEvidence2],
 ) -> ExactCurveArrangementArrangedEndpointBucketCache2 {
     let mut buckets: Vec<ExactCurveArrangementArrangedEndpointBucket2> = Vec::new();
-    for report in arranged_source_reports {
+    for evidence in arranged_source_evidence {
         add_arranged_endpoint_bucket_ref(
             &mut buckets,
-            report.output_start_point(),
+            evidence.output_start_point(),
             ExactCurveArrangementArrangedEndpointRef2 {
-                arranged_segment_index: report.arranged_segment_index(),
+                arranged_segment_index: evidence.arranged_segment_index(),
                 endpoint: RegionLineSegmentArrangedEndpoint2::Start,
             },
         );
         add_arranged_endpoint_bucket_ref(
             &mut buckets,
-            report.output_end_point(),
+            evidence.output_end_point(),
             ExactCurveArrangementArrangedEndpointRef2 {
-                arranged_segment_index: report.arranged_segment_index(),
+                arranged_segment_index: evidence.arranged_segment_index(),
                 endpoint: RegionLineSegmentArrangedEndpoint2::End,
             },
         );
     }
 
-    let endpoint_count = arranged_source_reports.len() * 2;
+    let endpoint_count = arranged_source_evidence.len() * 2;
     let bucket_count = buckets.len();
     let singleton_bucket_count = buckets
         .iter()
@@ -12736,12 +12757,12 @@ fn native_arranged_segment_kind_counts(segments: &[ArrangedNativeSegment]) -> Se
     counts
 }
 
-fn arranged_report_segment_kind_counts(
-    reports: &[RegionLineSegmentArrangedSourceReport2],
+fn arranged_evidence_segment_kind_counts(
+    evidence: &[RegionLineSegmentArrangedSourceEvidence2],
 ) -> SegmentKindCounts {
     let mut counts = SegmentKindCounts::default();
-    for report in reports {
-        match report.arranged_segment_kind {
+    for evidence in evidence {
+        match evidence.arranged_segment_kind {
             SegmentKind::Line => counts.lines += 1,
             SegmentKind::Arc => counts.arcs += 1,
         }
@@ -12769,92 +12790,93 @@ fn add_segment_kind(counts: &mut SegmentKindCounts, segment: &Segment2) {
     }
 }
 
-fn blocked_line_segment_region_report(
+fn blocked_line_segment_region_evidence(
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
-    split_report: Option<LineSegmentSplitReportParts>,
-    endpoint_graph_report: Option<LineSegmentEndpointGraphReportParts>,
-    arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
-    report: LineSegmentRingAssemblyReportParts,
+    split_evidence: Option<LineSegmentSplitEvidenceParts>,
+    endpoint_graph_evidence: Option<LineSegmentEndpointGraphEvidenceParts>,
+    arranged_source_evidence: Vec<RegionLineSegmentArrangedSourceEvidence2>,
+    evidence: LineSegmentRingAssemblyEvidenceParts,
     stage: RegionLineSegmentRegionBuildStage2,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
-) -> RegionLineSegmentRegionBuildReport2 {
-    let split_report = split_report.unwrap_or_default();
-    let arranged_segment_kind_counts = split_report
+) -> RegionLineSegmentRegionBuildEvidence2 {
+    let split_evidence = split_evidence.unwrap_or_default();
+    let arranged_segment_kind_counts = split_evidence
         .output_segment_count
-        .map(|_| arranged_report_segment_kind_counts(&arranged_source_reports));
-    RegionLineSegmentRegionBuildReport2 {
+        .map(|_| arranged_evidence_segment_kind_counts(&arranged_source_evidence));
+    RegionLineSegmentRegionBuildEvidence2 {
         stage,
         source_segment_count,
         source_segment_kind_counts,
-        arranged_segment_count: split_report.output_segment_count,
+        arranged_segment_count: split_evidence.output_segment_count,
         arranged_segment_kind_counts,
-        split_predicate_path: split_report.predicate_path,
-        endpoint_graph_predicate_path: endpoint_graph_report
+        split_predicate_path: split_evidence.predicate_path,
+        endpoint_graph_predicate_path: endpoint_graph_evidence
             .as_ref()
             .map(|_| RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets),
-        ring_assembly_predicate_path: endpoint_graph_report
+        ring_assembly_predicate_path: endpoint_graph_evidence
             .as_ref()
             .map(|_| RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal),
-        split_candidate_pair_count: split_report.candidate_pair_count,
-        split_skipped_aabb_pair_count: split_report.skipped_aabb_pair_count,
-        split_tested_pair_count: split_report.tested_pair_count,
-        split_intersection_event_count: split_report.intersection_event_count,
-        split_point_relation_count: split_report.point_relation_count,
-        split_overlap_relation_count: split_report.overlap_relation_count,
-        split_uncertain_relation_count: split_report.uncertain_relation_count,
-        split_intersection_points: split_report.intersection_points,
-        split_intersection_reports: split_report.intersection_reports,
-        split_output_segment_count: split_report.output_segment_count,
-        split_blocker_first_source_segment_index: split_report.blocker_first_source_segment_index,
-        split_blocker_first_source_segment_kind: split_report.blocker_first_source_segment_kind,
-        split_blocker_first_source_start_point: split_report.blocker_first_source_start_point,
-        split_blocker_first_source_end_point: split_report.blocker_first_source_end_point,
-        split_blocker_second_source_segment_index: split_report.blocker_second_source_segment_index,
-        split_blocker_second_source_segment_kind: split_report.blocker_second_source_segment_kind,
-        split_blocker_second_source_start_point: split_report.blocker_second_source_start_point,
-        split_blocker_second_source_end_point: split_report.blocker_second_source_end_point,
-        endpoint_graph_endpoint_count: endpoint_graph_report
+        split_candidate_pair_count: split_evidence.candidate_pair_count,
+        split_skipped_aabb_pair_count: split_evidence.skipped_aabb_pair_count,
+        split_tested_pair_count: split_evidence.tested_pair_count,
+        split_intersection_event_count: split_evidence.intersection_event_count,
+        split_point_relation_count: split_evidence.point_relation_count,
+        split_overlap_relation_count: split_evidence.overlap_relation_count,
+        split_uncertain_relation_count: split_evidence.uncertain_relation_count,
+        split_intersection_points: split_evidence.intersection_points,
+        split_intersection_evidence: split_evidence.intersection_evidence,
+        split_output_segment_count: split_evidence.output_segment_count,
+        split_blocker_first_source_segment_index: split_evidence.blocker_first_source_segment_index,
+        split_blocker_first_source_segment_kind: split_evidence.blocker_first_source_segment_kind,
+        split_blocker_first_source_start_point: split_evidence.blocker_first_source_start_point,
+        split_blocker_first_source_end_point: split_evidence.blocker_first_source_end_point,
+        split_blocker_second_source_segment_index: split_evidence
+            .blocker_second_source_segment_index,
+        split_blocker_second_source_segment_kind: split_evidence.blocker_second_source_segment_kind,
+        split_blocker_second_source_start_point: split_evidence.blocker_second_source_start_point,
+        split_blocker_second_source_end_point: split_evidence.blocker_second_source_end_point,
+        endpoint_graph_endpoint_count: endpoint_graph_evidence
             .as_ref()
-            .map(|report| report.endpoint_count),
-        endpoint_graph_structural_bucket_count: endpoint_graph_report
+            .map(|evidence| evidence.endpoint_count),
+        endpoint_graph_structural_bucket_count: endpoint_graph_evidence
             .as_ref()
-            .map(|report| report.structural_bucket_count),
-        endpoint_graph_structural_singleton_bucket_count: endpoint_graph_report
+            .map(|evidence| evidence.structural_bucket_count),
+        endpoint_graph_structural_singleton_bucket_count: endpoint_graph_evidence
             .as_ref()
-            .map(|report| report.structural_singleton_bucket_count),
-        endpoint_graph_max_structural_bucket_size: endpoint_graph_report
+            .map(|evidence| evidence.structural_singleton_bucket_count),
+        endpoint_graph_max_structural_bucket_size: endpoint_graph_evidence
             .as_ref()
-            .map(|report| report.max_structural_bucket_size),
-        endpoint_graph_dangling_endpoint_count: endpoint_graph_report
+            .map(|evidence| evidence.max_structural_bucket_size),
+        endpoint_graph_dangling_endpoint_count: endpoint_graph_evidence
             .as_ref()
-            .map(|report| report.dangling_endpoint_count),
-        endpoint_graph_branch_endpoint_count: endpoint_graph_report
+            .map(|evidence| evidence.dangling_endpoint_count),
+        endpoint_graph_branch_endpoint_count: endpoint_graph_evidence
             .as_ref()
-            .map(|report| report.branch_endpoint_count),
-        endpoint_graph_blocker_arranged_segment_index: endpoint_graph_report
+            .map(|evidence| evidence.branch_endpoint_count),
+        endpoint_graph_blocker_arranged_segment_index: endpoint_graph_evidence
             .as_ref()
-            .and_then(|report| report.blocker_arranged_segment_index),
-        endpoint_graph_blocker_endpoint: endpoint_graph_report
+            .and_then(|evidence| evidence.blocker_arranged_segment_index),
+        endpoint_graph_blocker_endpoint: endpoint_graph_evidence
             .as_ref()
-            .and_then(|report| report.blocker_endpoint),
-        endpoint_graph_blocker_point: endpoint_graph_report
+            .and_then(|evidence| evidence.blocker_endpoint),
+        endpoint_graph_blocker_point: endpoint_graph_evidence
             .as_ref()
-            .and_then(|report| report.blocker_point.clone()),
-        attempted_endpoint_connection_count: report.counts.attempted_endpoint_connection_count,
-        exact_endpoint_connection_count: report.counts.exact_endpoint_connection_count,
-        disconnected_endpoint_connection_count: report
+            .and_then(|evidence| evidence.blocker_point.clone()),
+        attempted_endpoint_connection_count: evidence.counts.attempted_endpoint_connection_count,
+        exact_endpoint_connection_count: evidence.counts.exact_endpoint_connection_count,
+        disconnected_endpoint_connection_count: evidence
             .counts
             .disconnected_endpoint_connection_count,
-        unresolved_endpoint_connection_count: report.counts.unresolved_endpoint_connection_count,
-        reversed_source_segment_count: report.reversed_source_segment_count,
+        unresolved_endpoint_connection_count: evidence.counts.unresolved_endpoint_connection_count,
+        reversed_source_segment_count: evidence.reversed_source_segment_count,
         output_ring_count: None,
         output_boundary_segment_count: None,
         output_boundary_segment_kind_counts: None,
-        arranged_source_reports,
-        source_reports: report.source_reports,
-        boundary_build_report: None,
+        arranged_source_evidence,
+        source_evidence: evidence.source_evidence,
+        boundary_build_evidence: None,
         status,
         blocker: Some(blocker),
     }
@@ -12883,7 +12905,7 @@ fn blocked_boundary_contour_region_result(
         blocker_contour_indices.map_or((None, None), |(first, second)| (Some(first), Some(second)));
     RegionBoundaryContourBuildResult2 {
         region: None,
-        report: RegionBoundaryContourBuildReport2 {
+        evidence: RegionBoundaryContourBuildEvidence2 {
             stage: RegionBoundaryContourBuildStage2::NestingValidation,
             predicate_path:
                 RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment,
@@ -12901,7 +12923,7 @@ fn blocked_boundary_contour_region_result(
             hole_contour_count: None,
             material_segment_count: None,
             hole_segment_count: None,
-            role_reports: Vec::new(),
+            role_evidence: Vec::new(),
             status,
             blocker: Some(blocker),
         },
@@ -13212,7 +13234,7 @@ fn contour_nesting_depths_impl(
         .map(|_| OnceCell::<Vec<Option<Aabb2>>>::new())
         .collect::<Vec<_>>();
     let prepared_contours = (0..contours.len())
-        .map(|_| OnceCell::<crate::PreparedContourView2<'_>>::new())
+        .map(|_| OnceCell::<crate::ContourQuery2<'_>>::new())
         .collect::<Vec<_>>();
     let aabb_overlap_neighbors = contour_aabb_overlap_neighbors(&contour_boxes, policy);
 
@@ -13357,7 +13379,7 @@ fn contour_nesting_depths_impl(
                     continue;
                 }
                 let prepared = prepared_contours[container_index]
-                    .get_or_init(|| crate::PreparedContourView2::from_contour(container, policy));
+                    .get_or_init(|| crate::ContourQuery2::from_contour(container, policy));
                 match prepared.classify_point_assuming_off_boundary(&sample, policy) {
                     Classification::Decided(ContourPointLocation::Inside) => {
                         containing_contour_indices.push(container_index);

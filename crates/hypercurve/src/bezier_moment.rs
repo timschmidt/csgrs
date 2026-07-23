@@ -320,7 +320,7 @@ impl RationalQuadraticBezier2 {
     ///
     /// `None` means the current exact object model cannot certify a finite
     /// affine integral: this happens when the weights do not have one proven
-    /// nonzero sign, or when a symbolic transcendental branch reports a domain
+    /// nonzero sign, or when a symbolic transcendental branch evidence a domain
     /// boundary.  It is deliberately not a sampled fallback.
     pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
         rational_quadratic_signed_area_contribution(self)

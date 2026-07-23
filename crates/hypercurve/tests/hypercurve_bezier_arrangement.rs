@@ -4,9 +4,9 @@ use hypercurve::{
     BezierLineContactKind, BezierMonotoneSpan, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierRetainedLineOverlapSplit2, BezierRetainedLinearOverlapSplit2,
     BezierRetainedLinearOverlapSplitGraph2, BezierRetainedLinearOverlapTraversal2,
-    BezierRetainedOverlap2, BezierRetainedOverlapExtent2, BezierRetainedOverlapOrientation2,
-    BezierRetainedOverlapRefinedFragment2, BezierRetainedOverlapRelation2,
-    BezierRetainedOverlapReport2, BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2,
+    BezierRetainedOverlap2, BezierRetainedOverlapEvidence2, BezierRetainedOverlapExtent2,
+    BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
+    BezierRetainedOverlapRelation2, BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2,
     BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, IntersectionKind,
     LineLineIntersection, LineSeg2, ParamRange, Point2, QuadraticBezier2, RationalBezier2,
     RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, UncertaintyReason,
@@ -864,7 +864,7 @@ fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_infl
 }
 
 #[test]
-fn retained_overlap_report_finds_identical_materialized_fragments() {
+fn retained_overlap_evidence_finds_identical_materialized_fragments() {
     let curve = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
     let first = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
@@ -881,19 +881,22 @@ fn retained_overlap_report_finds_identical_materialized_fragments() {
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
     ]);
 
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
 
-    assert_eq!(report.len(), 1);
-    assert_eq!(report.overlaps()[0].first_fragment_index(), 0);
-    assert_eq!(report.overlaps()[0].second_fragment_index(), 1);
+    assert_eq!(evidence.len(), 1);
+    assert_eq!(evidence.overlaps()[0].first_fragment_index(), 0);
+    assert_eq!(evidence.overlaps()[0].second_fragment_index(), 1);
     assert!(matches!(
-        report.overlaps()[0].relation(),
+        evidence.overlaps()[0].relation(),
         BezierRetainedOverlapRelation2::SameControlPolygon
     ));
 }
 
 #[test]
-fn retained_overlap_report_recognizes_projectively_reversed_rational_fragments() {
+fn retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments() {
     let curve = RationalBezier2::try_new(
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
         vec![r(1), r(2), r(3), r(4)],
@@ -925,17 +928,20 @@ fn retained_overlap_report_recognizes_projectively_reversed_rational_fragments()
         ),
     ]);
 
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
 
-    assert_eq!(report.len(), 1);
+    assert_eq!(evidence.len(), 1);
     assert!(matches!(
-        report.overlaps()[0].relation(),
+        evidence.overlaps()[0].relation(),
         BezierRetainedOverlapRelation2::SameCurveImage
     ));
 }
 
 #[test]
-fn retained_overlap_report_preserves_strict_rational_overlap_ranges() {
+fn retained_overlap_evidence_preserves_strict_rational_overlap_ranges() {
     let curve = RationalBezier2::try_new(
         vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
         vec![r(1), r(1), r(1)],
@@ -967,11 +973,14 @@ fn retained_overlap_report_preserves_strict_rational_overlap_ranges() {
         ),
     ]);
 
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
 
-    assert_eq!(report.len(), 1);
+    assert_eq!(evidence.len(), 1);
     let BezierRetainedOverlapRelation2::RationalBezierOverlap { overlap } =
-        report.overlaps()[0].relation()
+        evidence.overlaps()[0].relation()
     else {
         panic!("strict rational overlap was mislabeled as a whole-image duplicate");
     };
@@ -986,7 +995,7 @@ fn retained_overlap_report_preserves_strict_rational_overlap_ranges() {
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 
-    let split_plan = decided(report.rational_bezier_overlap_splits(&policy()));
+    let split_plan = decided(evidence.rational_bezier_overlap_splits(&policy()));
     assert_eq!(split_plan.len(), 1);
     assert_eq!(
         split_plan[0].first_bezier_range(),
@@ -1122,8 +1131,11 @@ fn retained_rational_overlap_promotes_represented_incidence_root() {
         ),
     ]);
 
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
-    let splits = decided(report.rational_bezier_overlap_splits(&policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+    let splits = decided(evidence.rational_bezier_overlap_splits(&policy()));
 
     assert_eq!(splits.len(), 1);
     assert_eq!(
@@ -1200,7 +1212,7 @@ fn retained_overlap_pair_constructor_rejects_non_overlap_line_evidence() {
 }
 
 #[test]
-fn retained_overlap_report_constructor_rejects_unsorted_or_duplicate_pairs() {
+fn retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs() {
     let first =
         BezierRetainedOverlap2::new(0, 1, BezierRetainedOverlapRelation2::SameControlPolygon)
             .unwrap();
@@ -1208,12 +1220,12 @@ fn retained_overlap_report_constructor_rejects_unsorted_or_duplicate_pairs() {
         BezierRetainedOverlap2::new(0, 2, BezierRetainedOverlapRelation2::SameControlPolygon)
             .unwrap();
 
-    BezierRetainedOverlapReport2::new(vec![first.clone(), second.clone()]).unwrap();
-    assert_topology_error(BezierRetainedOverlapReport2::new(vec![
+    BezierRetainedOverlapEvidence2::new(vec![first.clone(), second.clone()]).unwrap();
+    assert_topology_error(BezierRetainedOverlapEvidence2::new(vec![
         second,
         first.clone(),
     ]));
-    assert_topology_error(BezierRetainedOverlapReport2::new(vec![
+    assert_topology_error(BezierRetainedOverlapEvidence2::new(vec![
         first.clone(),
         first,
     ]));
@@ -1362,7 +1374,7 @@ fn retained_linear_overlap_split_graph_rejects_missing_refined_provenance() {
     assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
         graph,
         Vec::new(),
-        BezierRetainedOverlapReport2::new(Vec::new()).unwrap(),
+        BezierRetainedOverlapEvidence2::new(Vec::new()).unwrap(),
         Vec::new(),
         Vec::new(),
     ));
@@ -1402,7 +1414,7 @@ fn retained_resolved_overlap_constructor_rejects_unordered_indices() {
 fn retained_linear_overlap_split_graph_rejects_forged_resolved_provenance() {
     let graph = partial_line_overlap_graph();
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
-    let (refined_graph, refined_fragments, overlap_report, split_plan, _) =
+    let (refined_graph, refined_fragments, overlap_evidence, split_plan, _) =
         refinement.clone().into_parts();
     let split = &split_plan[0];
     let forged = BezierRetainedResolvedLinearOverlap2::new(
@@ -1421,7 +1433,7 @@ fn retained_linear_overlap_split_graph_rejects_forged_resolved_provenance() {
     assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
         refined_graph,
         refined_fragments,
-        overlap_report,
+        overlap_evidence,
         split_plan,
         vec![forged],
     ));
@@ -1431,7 +1443,7 @@ fn retained_linear_overlap_split_graph_rejects_forged_resolved_provenance() {
 fn retained_linear_overlap_split_graph_rejects_forged_orientation() {
     let graph = partial_line_overlap_graph();
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
-    let (refined_graph, refined_fragments, overlap_report, split_plan, resolved_overlaps) =
+    let (refined_graph, refined_fragments, overlap_evidence, split_plan, resolved_overlaps) =
         refinement.into_parts();
     let resolved = &resolved_overlaps[0];
     assert_eq!(
@@ -1454,14 +1466,14 @@ fn retained_linear_overlap_split_graph_rejects_forged_orientation() {
     assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
         refined_graph,
         refined_fragments,
-        overlap_report,
+        overlap_evidence,
         split_plan,
         vec![forged],
     ));
 }
 
 #[test]
-fn retained_linear_overlap_split_graph_rejects_missing_split_report_evidence() {
+fn retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence() {
     let graph = partial_line_overlap_graph();
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
     let (refined_graph, refined_fragments, _, split_plan, resolved_overlaps) =
@@ -1470,17 +1482,17 @@ fn retained_linear_overlap_split_graph_rejects_missing_split_report_evidence() {
     assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
         refined_graph,
         refined_fragments,
-        BezierRetainedOverlapReport2::new(Vec::new()).unwrap(),
+        BezierRetainedOverlapEvidence2::new(Vec::new()).unwrap(),
         split_plan,
         resolved_overlaps,
     ));
 }
 
 #[test]
-fn retained_linear_overlap_split_graph_rejects_forged_split_report_geometry() {
+fn retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry() {
     let graph = partial_line_overlap_graph();
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
-    let (refined_graph, refined_fragments, overlap_report, split_plan, resolved_overlaps) =
+    let (refined_graph, refined_fragments, overlap_evidence, split_plan, resolved_overlaps) =
         refinement.into_parts();
     let split = &split_plan[0];
     let resolved = &resolved_overlaps[0];
@@ -1510,7 +1522,7 @@ fn retained_linear_overlap_split_graph_rejects_forged_split_report_geometry() {
     assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
         refined_graph,
         refined_fragments,
-        overlap_report,
+        overlap_evidence,
         vec![forged_split],
         vec![forged_resolved],
     ));
@@ -1530,7 +1542,7 @@ fn retained_linear_overlap_traversal_rejects_indices_outside_refinement() {
     let empty_refinement = BezierRetainedLinearOverlapSplitGraph2::new(
         BezierArrangementGraph2::new(Vec::new()).unwrap(),
         Vec::<BezierRetainedOverlapRefinedFragment2>::new(),
-        BezierRetainedOverlapReport2::new(Vec::new()).unwrap(),
+        BezierRetainedOverlapEvidence2::new(Vec::new()).unwrap(),
         Vec::new(),
         Vec::new(),
     )
@@ -1572,7 +1584,7 @@ fn retained_linear_overlap_traversal_rejects_incomplete_refined_partition() {
 }
 
 #[test]
-fn retained_overlap_report_finds_reversed_degree_elevated_same_image() {
+fn retained_overlap_evidence_finds_reversed_degree_elevated_same_image() {
     let quadratic = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let cubic_reversed = CubicBezier2::new(
         p(4, 0),
@@ -1601,17 +1613,20 @@ fn retained_overlap_report_finds_reversed_degree_elevated_same_image() {
         ),
     ]);
 
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
 
-    assert_eq!(report.len(), 1);
+    assert_eq!(evidence.len(), 1);
     assert!(matches!(
-        report.overlaps()[0].relation(),
+        evidence.overlaps()[0].relation(),
         BezierRetainedOverlapRelation2::SameCurveImage
     ));
 }
 
 #[test]
-fn retained_overlap_report_separates_endpoint_touch_from_overlap() {
+fn retained_overlap_evidence_separates_endpoint_touch_from_overlap() {
     let first = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
         end: exact(r(1)),
@@ -1627,13 +1642,16 @@ fn retained_overlap_report_separates_endpoint_touch_from_overlap() {
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
     ]);
 
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
 
-    assert!(report.is_empty());
+    assert!(evidence.is_empty());
 }
 
 #[test]
-fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
+fn retained_overlap_evidence_extracts_partial_line_image_split_ranges() {
     let first = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
         end: exact(r(1)),
@@ -1648,9 +1666,12 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
     ]);
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
 
-    let splits = decided(report.line_overlap_splits(&policy()));
+    let splits = decided(evidence.line_overlap_splits(&policy()));
 
     assert_eq!(splits.len(), 1);
     assert_eq!(splits[0].first_fragment_index(), 0);
@@ -1670,7 +1691,7 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 
-    let bezier_splits = decided(report.linear_bezier_overlap_splits(&graph, &policy()));
+    let bezier_splits = decided(evidence.linear_bezier_overlap_splits(&graph, &policy()));
     assert_eq!(bezier_splits.len(), 1);
     assert_eq!(bezier_splits[0].first_bezier_range().start(), &q(1, 2));
     assert_eq!(bezier_splits[0].first_bezier_range().end(), &r(1));
@@ -1693,18 +1714,18 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
         },
     )
     .unwrap();
-    let forged_report = BezierRetainedOverlapReport2::new(vec![forged_overlap]).unwrap();
+    let forged_evidence = BezierRetainedOverlapEvidence2::new(vec![forged_overlap]).unwrap();
     assert_eq!(
-        decided(forged_report.line_overlap_splits(&policy())).len(),
+        decided(forged_evidence.line_overlap_splits(&policy())).len(),
         1
     );
     assert_eq!(
-        forged_report.linear_bezier_overlap_splits(&graph, &policy()),
+        forged_evidence.linear_bezier_overlap_splits(&graph, &policy()),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
-    assert_eq!(refinement.overlap_report().len(), 1);
+    assert_eq!(refinement.overlap_evidence().len(), 1);
     assert_eq!(refinement.split_plan().len(), 1);
     assert_eq!(refinement.resolved_overlaps().len(), 1);
     assert_eq!(refinement.graph().len(), 4);
@@ -1781,7 +1802,7 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
 }
 
 #[test]
-fn retained_linear_overlap_refinement_reports_reversed_span_orientation() {
+fn retained_linear_overlap_refinement_evidence_reversed_span_orientation() {
     let first = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
         end: exact(r(1)),
@@ -1961,7 +1982,7 @@ fn retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop() {
     );
     let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
 
-    assert_eq!(traversal.refinement().overlap_report().len(), 1);
+    assert_eq!(traversal.refinement().overlap_evidence().len(), 1);
     assert!(traversal.refinement().resolved_overlaps().is_empty());
     assert_eq!(
         traversal.refined_traversal().shadowed_fragment_indices(),
@@ -1976,7 +1997,7 @@ fn retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop() {
 }
 
 #[test]
-fn retained_overlap_report_does_not_call_same_curve_image_a_line_split() {
+fn retained_overlap_evidence_does_not_call_same_curve_image_a_line_split() {
     let curve = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
     let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(
@@ -1998,13 +2019,16 @@ fn retained_overlap_report_does_not_call_same_curve_image_a_line_split() {
             },
         ),
     ]);
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
 
-    assert!(decided(report.line_overlap_splits(&policy())).is_empty());
+    assert!(decided(evidence.line_overlap_splits(&policy())).is_empty());
 }
 
 #[test]
-fn retained_overlap_report_rejects_nonlinear_line_image_bezier_ranges() {
+fn retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges() {
     let first = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
         end: exact(r(1)),
@@ -2019,11 +2043,14 @@ fn retained_overlap_report_rejects_nonlinear_line_image_bezier_ranges() {
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
     ]);
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
 
-    assert_eq!(decided(report.line_overlap_splits(&policy())).len(), 1);
+    assert_eq!(decided(evidence.line_overlap_splits(&policy())).len(), 1);
     assert_eq!(
-        report.linear_bezier_overlap_splits(&graph, &policy()),
+        evidence.linear_bezier_overlap_splits(&graph, &policy()),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
     assert_eq!(
@@ -2033,7 +2060,7 @@ fn retained_overlap_report_rejects_nonlinear_line_image_bezier_ranges() {
 }
 
 #[test]
-fn retained_overlap_report_does_not_sample_algebraic_endpoint_image_fragments() {
+fn retained_overlap_evidence_does_not_sample_algebraic_endpoint_image_fragments() {
     let parameter = algebraic_midpoint_parameter();
     let algebraic = BezierParameter2::algebraic(parameter.clone());
     let curve = through_origin_with_midpoint_tangent(1, 0);
@@ -2050,9 +2077,12 @@ fn retained_overlap_report_does_not_sample_algebraic_endpoint_image_fragments() 
         hypercurve::BezierArrangementFragment2::new(1, 0, fragment),
     ]);
 
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
 
-    assert!(report.is_empty());
+    assert!(evidence.is_empty());
 }
 
 #[test]
@@ -2086,7 +2116,7 @@ fn retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges() {
     let overlap_traversal =
         decided(graph.traverse_retained_deduplicating_materialized_overlaps(&policy()));
 
-    assert_eq!(overlap_traversal.overlap_report().len(), 4);
+    assert_eq!(overlap_traversal.overlap_evidence().len(), 4);
     assert_eq!(overlap_traversal.shadowed_fragment_indices(), &[1, 3, 5, 7]);
     assert_eq!(overlap_traversal.traversal().len(), 1);
     assert_eq!(overlap_traversal.traversal().closed_count(), 1);
@@ -2121,8 +2151,11 @@ fn retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary()
         ),
     ]);
 
-    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
-    assert_eq!(report.len(), 1);
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+    assert_eq!(evidence.len(), 1);
     assert_eq!(
         graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
         Classification::Uncertain(UncertaintyReason::Boundary)

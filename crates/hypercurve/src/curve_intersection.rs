@@ -12,10 +12,10 @@ use crate::{
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
     CurveError, CurveGeometry2, CurveOperation2, CurvePolicy, CurveResult, CurveSpanRange2,
     ExactCurveError, ExactCurveResult, LineArcIntersection, LineArcIntersectionPoint, LineArcOrder,
-    LineLineIntersection, ParamRange, Point2, PreparedRationalBezierIntersection2, RationalBezier2,
+    LineLineIntersection, ParamRange, Point2, RationalBezier2,
     RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
     RationalBezierIntersectionContacts2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, UncertaintyReason,
+    RationalBezierOverlapOrientation2, RetainedRationalBezierIntersection2, UncertaintyReason,
 };
 
 /// Exact source parameter retained for one top-level curve contact.
@@ -66,13 +66,13 @@ pub struct CurveIntersectionPairBlocker2 {
     kind: CurveIntersectionPairBlockerKind2,
 }
 
-/// Retained top-level curve intersection report.
+/// Retained top-level curve intersection result.
 #[derive(Clone, Debug)]
-pub struct CurveIntersectionReport2 {
-    data: Rc<CurveIntersectionReportData>,
+pub struct CurveIntersectionResult2 {
+    data: Rc<CurveIntersectionResultData>,
 }
 
-/// Clone-shared split and arrangement topology for one complete curve-pair report.
+/// Clone-shared split and arrangement topology for one complete curve-pair result.
 #[derive(Clone, Debug)]
 pub struct CurveIntersectionTopology2 {
     data: Rc<CurveIntersectionTopologyData>,
@@ -80,22 +80,22 @@ pub struct CurveIntersectionTopology2 {
 
 #[derive(Debug)]
 struct CurveIntersectionTopologyData {
-    report: CurveIntersectionReport2,
+    result: CurveIntersectionResult2,
     first: Rc<[BezierSplitMaterialization2]>,
     second: Rc<[BezierSplitMaterialization2]>,
     arrangement: OnceCell<CurveResult<BezierArrangementGraph2>>,
 }
 
 #[derive(Debug)]
-struct CurveIntersectionReportData {
+struct CurveIntersectionResultData {
     contacts: Rc<[CurveIntersectionContact2]>,
     overlaps: Rc<[CurveIntersectionOverlap2]>,
     blockers: Rc<[CurveIntersectionPairBlocker2]>,
 }
 
-/// Clone-shared prepared intersection facts for two top-level curves.
+/// Clone-shared retained intersection facts for two top-level curves.
 #[derive(Clone, Debug)]
-pub struct PreparedCurveIntersection2 {
+pub struct RetainedCurveIntersection2 {
     data: Rc<PreparedCurveIntersectionData>,
 }
 
@@ -106,7 +106,7 @@ struct PreparedCurveIntersectionData {
     policy: CurvePolicy,
     span_pair_count: usize,
     dispatch: PreparedCurveIntersectionDispatch,
-    report: OnceCell<ExactCurveResult<CurveIntersectionReport2>>,
+    result: OnceCell<ExactCurveResult<CurveIntersectionResult2>>,
     topology: OnceCell<ExactCurveResult<CurveIntersectionTopology2>>,
 }
 
@@ -137,7 +137,7 @@ struct PreparedCurveSpanPair {
 
 #[derive(Debug)]
 enum PreparedCurveSpanPairState {
-    Prepared(PreparedRationalBezierIntersection2),
+    Prepared(RetainedRationalBezierIntersection2),
     RetainedLineageOverlap {
         first_range: ParamRange,
         second_range: ParamRange,
@@ -204,7 +204,7 @@ fn prepare_span_pairs(
                 });
                 continue;
             }
-            let state = match first.try_prepare_intersection(second, policy) {
+            let state = match first.retain_intersection(second, policy) {
                 Ok(prepared) => PreparedCurveSpanPairState::Prepared(prepared),
                 Err(ExactCurveError::Blocked(blocker)) => {
                     PreparedCurveSpanPairState::Blocked(blocker.reason())
@@ -314,12 +314,12 @@ fn native_line_arc_intersection(
         })
 }
 
-fn build_native_line_report(
+fn build_native_line_evidence(
     first: &Curve2,
     second: &Curve2,
     relation: &LineLineIntersection,
     policy: &CurvePolicy,
-) -> ExactCurveResult<CurveIntersectionReport2> {
+) -> ExactCurveResult<CurveIntersectionResult2> {
     let first_fragment = &first.native_bezier_fragments()?[0];
     let second_fragment = &second.native_bezier_fragments()?[0];
     let contact =
@@ -413,8 +413,8 @@ fn build_native_line_report(
             ));
         }
     };
-    Ok(CurveIntersectionReport2 {
-        data: Rc::new(CurveIntersectionReportData {
+    Ok(CurveIntersectionResult2 {
+        data: Rc::new(CurveIntersectionResultData {
             contacts: contacts.into(),
             overlaps: overlaps.into(),
             blockers: Rc::from([]),
@@ -422,13 +422,13 @@ fn build_native_line_report(
     })
 }
 
-fn build_native_line_arc_report(
+fn build_native_line_arc_evidence(
     first: &Curve2,
     second: &Curve2,
     order: LineArcOrder,
     relation: &LineArcIntersection,
     policy: &CurvePolicy,
-) -> ExactCurveResult<CurveIntersectionReport2> {
+) -> ExactCurveResult<CurveIntersectionResult2> {
     let mut contacts = Vec::new();
     match relation {
         LineArcIntersection::None => {}
@@ -457,8 +457,8 @@ fn build_native_line_arc_report(
             ));
         }
     }
-    Ok(CurveIntersectionReport2 {
-        data: Rc::new(CurveIntersectionReportData {
+    Ok(CurveIntersectionResult2 {
+        data: Rc::new(CurveIntersectionResultData {
             contacts: contacts.into(),
             overlaps: Rc::from([]),
             blockers: Rc::from([]),
@@ -606,16 +606,16 @@ fn native_arc_intersection(
     Ok(Some(NativeArcIntersectionDispatch::Points(points)))
 }
 
-fn build_native_arc_report(
+fn build_native_arc_evidence(
     first: &Curve2,
     second: &Curve2,
     points: &[Point2],
     policy: &CurvePolicy,
-) -> ExactCurveResult<CurveIntersectionReport2> {
+) -> ExactCurveResult<CurveIntersectionResult2> {
     let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
         (first.geometry(), second.geometry())
     else {
-        unreachable!("native arc report requires two circular arcs")
+        unreachable!("native arc result requires two circular arcs")
     };
     let first_fragments = first.native_bezier_fragments()?;
     let second_fragments = second.native_bezier_fragments()?;
@@ -667,8 +667,8 @@ fn build_native_arc_report(
             ));
         }
     }
-    Ok(CurveIntersectionReport2 {
-        data: Rc::new(CurveIntersectionReportData {
+    Ok(CurveIntersectionResult2 {
+        data: Rc::new(CurveIntersectionResultData {
             contacts: contacts.into(),
             overlaps: Rc::from([]),
             blockers: Rc::from([]),
@@ -676,15 +676,15 @@ fn build_native_arc_report(
     })
 }
 
-fn build_native_coincident_arc_report(
+fn build_native_coincident_arc_evidence(
     first: &Curve2,
     second: &Curve2,
     policy: &CurvePolicy,
-) -> ExactCurveResult<CurveIntersectionReport2> {
+) -> ExactCurveResult<CurveIntersectionResult2> {
     let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
         (first.geometry(), second.geometry())
     else {
-        unreachable!("coincident-arc report requires two circular arcs")
+        unreachable!("coincident-arc result requires two circular arcs")
     };
     let first_fragments = first.native_bezier_fragments()?;
     let second_fragments = second.native_bezier_fragments()?;
@@ -827,8 +827,8 @@ fn build_native_coincident_arc_report(
         }
     }
 
-    Ok(CurveIntersectionReport2 {
-        data: Rc::new(CurveIntersectionReportData {
+    Ok(CurveIntersectionResult2 {
+        data: Rc::new(CurveIntersectionResultData {
             contacts: contacts.into(),
             overlaps: overlaps.into(),
             blockers: Rc::from([]),
@@ -1012,11 +1012,11 @@ fn native_arc_parameter_error(curve: &Curve2, cause: CurveError) -> ExactCurveEr
 
 impl Curve2 {
     /// Prepares all promoted span pairs and retains their exact resultant facts.
-    pub fn try_prepare_intersection(
+    pub fn retain_intersection(
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> ExactCurveResult<PreparedCurveIntersection2> {
+    ) -> ExactCurveResult<RetainedCurveIntersection2> {
         let (span_pair_count, dispatch) = match native_line_intersection(self, other, policy)? {
             Some(relation) => (1, PreparedCurveIntersectionDispatch::NativeLine(relation)),
             None => {
@@ -1074,21 +1074,21 @@ impl Curve2 {
                 }
             }
         };
-        Ok(PreparedCurveIntersection2 {
+        Ok(RetainedCurveIntersection2 {
             data: Rc::new(PreparedCurveIntersectionData {
                 first: self.clone(),
                 second: other.clone(),
                 policy: policy.clone(),
                 span_pair_count,
                 dispatch,
-                report: OnceCell::new(),
+                result: OnceCell::new(),
                 topology: OnceCell::new(),
             }),
         })
     }
 }
 
-impl PreparedCurveIntersection2 {
+impl RetainedCurveIntersection2 {
     /// Returns the retained first operand.
     pub fn first(&self) -> &Curve2 {
         &self.data.first
@@ -1099,7 +1099,7 @@ impl PreparedCurveIntersection2 {
         &self.data.second
     }
 
-    /// Returns the exact policy captured when this pair was prepared.
+    /// Returns the exact policy captured when this pair was retained.
     pub fn policy(&self) -> &CurvePolicy {
         &self.data.policy
     }
@@ -1110,19 +1110,19 @@ impl PreparedCurveIntersection2 {
     }
 
     /// Returns whether complete contact replay has already been retained.
-    pub fn is_report_cached(&self) -> bool {
-        self.data.report.get().is_some()
+    pub fn is_result_cached(&self) -> bool {
+        self.data.result.get().is_some()
     }
 
-    /// Returns a clone-shared retained report.
-    pub fn report(&self) -> ExactCurveResult<CurveIntersectionReport2> {
-        self.report_view().cloned()
+    /// Returns a clone-shared retained result.
+    pub fn result(&self) -> ExactCurveResult<CurveIntersectionResult2> {
+        self.result_view().cloned()
     }
 
-    /// Borrows the retained report without copying contacts or blockers.
-    pub fn report_view(&self) -> ExactCurveResult<&CurveIntersectionReport2> {
-        match self.data.report.get_or_init(|| self.build_report()) {
-            Ok(report) => Ok(report),
+    /// Borrows the retained result without copying contacts or blockers.
+    pub fn result_view(&self) -> ExactCurveResult<&CurveIntersectionResult2> {
+        match self.data.result.get_or_init(|| self.build_evidence()) {
+            Ok(result) => Ok(result),
             Err(error) => Err(error.clone()),
         }
     }
@@ -1132,7 +1132,7 @@ impl PreparedCurveIntersection2 {
         self.data.topology.get().is_some()
     }
 
-    /// Returns clone-shared split topology for a complete contact report.
+    /// Returns clone-shared split topology for a complete contact result.
     pub fn topology(&self) -> ExactCurveResult<CurveIntersectionTopology2> {
         self.topology_view().cloned()
     }
@@ -1145,12 +1145,12 @@ impl PreparedCurveIntersection2 {
         }
     }
 
-    fn build_report(&self) -> ExactCurveResult<CurveIntersectionReport2> {
+    fn build_evidence(&self) -> ExactCurveResult<CurveIntersectionResult2> {
         if let PreparedCurveIntersectionDispatch::CertifiedEndpointContact(contact) =
             &self.data.dispatch
         {
-            return Ok(CurveIntersectionReport2 {
-                data: Rc::new(CurveIntersectionReportData {
+            return Ok(CurveIntersectionResult2 {
+                data: Rc::new(CurveIntersectionResultData {
                     contacts: Rc::from([contact.clone()]),
                     overlaps: Rc::from([]),
                     blockers: Rc::from([]),
@@ -1158,7 +1158,7 @@ impl PreparedCurveIntersection2 {
             });
         }
         if let PreparedCurveIntersectionDispatch::NativeLine(relation) = &self.data.dispatch {
-            return build_native_line_report(
+            return build_native_line_evidence(
                 &self.data.first,
                 &self.data.second,
                 relation,
@@ -1168,7 +1168,7 @@ impl PreparedCurveIntersection2 {
         if let PreparedCurveIntersectionDispatch::NativeLineArc { order, relation } =
             &self.data.dispatch
         {
-            return build_native_line_arc_report(
+            return build_native_line_arc_evidence(
                 &self.data.first,
                 &self.data.second,
                 *order,
@@ -1177,7 +1177,7 @@ impl PreparedCurveIntersection2 {
             );
         }
         if let PreparedCurveIntersectionDispatch::NativeArcPoints(points) = &self.data.dispatch {
-            return build_native_arc_report(
+            return build_native_arc_evidence(
                 &self.data.first,
                 &self.data.second,
                 points,
@@ -1188,7 +1188,7 @@ impl PreparedCurveIntersection2 {
             self.data.dispatch,
             PreparedCurveIntersectionDispatch::NativeCoincidentArcs
         ) {
-            return build_native_coincident_arc_report(
+            return build_native_coincident_arc_evidence(
                 &self.data.first,
                 &self.data.second,
                 &self.data.policy,
@@ -1309,8 +1309,8 @@ impl PreparedCurveIntersection2 {
                 }
             }
         }
-        Ok(CurveIntersectionReport2 {
-            data: Rc::new(CurveIntersectionReportData {
+        Ok(CurveIntersectionResult2 {
+            data: Rc::new(CurveIntersectionResultData {
                 contacts: contacts.into(),
                 overlaps: overlaps.into(),
                 blockers: blockers.into(),
@@ -1319,8 +1319,8 @@ impl PreparedCurveIntersection2 {
     }
 
     fn build_topology(&self) -> ExactCurveResult<CurveIntersectionTopology2> {
-        let report = self.report_view()?.clone();
-        if let Some(blocker) = report.blockers().first() {
+        let result = self.result_view()?.clone();
+        if let Some(blocker) = result.blockers().first() {
             let reason = match blocker.kind() {
                 CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
                 CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
@@ -1334,7 +1334,7 @@ impl PreparedCurveIntersection2 {
                 reason,
             ));
         }
-        let first_parameters = report
+        let first_parameters = result
             .contacts()
             .iter()
             .map(|contact| {
@@ -1343,7 +1343,7 @@ impl PreparedCurveIntersection2 {
                     contact.first().local_parameter().clone(),
                 )
             })
-            .chain(report.overlaps().iter().flat_map(|overlap| {
+            .chain(result.overlaps().iter().flat_map(|overlap| {
                 [
                     (
                         overlap.first_span_index(),
@@ -1356,7 +1356,7 @@ impl PreparedCurveIntersection2 {
                 ]
             }));
         let first = split_curve_spans(&self.data.first, first_parameters, &self.data.policy)?;
-        let second_parameters = report
+        let second_parameters = result
             .contacts()
             .iter()
             .map(|contact| {
@@ -1365,7 +1365,7 @@ impl PreparedCurveIntersection2 {
                     contact.second().local_parameter().clone(),
                 )
             })
-            .chain(report.overlaps().iter().flat_map(|overlap| {
+            .chain(result.overlaps().iter().flat_map(|overlap| {
                 [
                     (
                         overlap.second_span_index(),
@@ -1380,7 +1380,7 @@ impl PreparedCurveIntersection2 {
         let second = split_curve_spans(&self.data.second, second_parameters, &self.data.policy)?;
         Ok(CurveIntersectionTopology2 {
             data: Rc::new(CurveIntersectionTopologyData {
-                report,
+                result,
                 first: first.into(),
                 second: second.into(),
                 arrangement: OnceCell::new(),
@@ -1476,7 +1476,7 @@ impl CurveIntersectionOverlap2 {
     }
 }
 
-impl CurveIntersectionReport2 {
+impl CurveIntersectionResult2 {
     /// Returns all certified contacts in deterministic promoted-span order.
     pub fn contacts(&self) -> &[CurveIntersectionContact2] {
         &self.data.contacts
@@ -1504,9 +1504,9 @@ impl CurveIntersectionReport2 {
 }
 
 impl CurveIntersectionTopology2 {
-    /// Returns the complete contact report that generated this topology.
-    pub fn report(&self) -> &CurveIntersectionReport2 {
-        &self.data.report
+    /// Returns the complete contact result that generated this topology.
+    pub fn result(&self) -> &CurveIntersectionResult2 {
+        &self.data.result
     }
 
     /// Returns first-curve materializations in promoted span order.

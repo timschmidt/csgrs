@@ -234,18 +234,18 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
     let options = BezierFlatteningOptions::try_new(q(1, 32), 12, &policy).unwrap();
 
     let segmented = decided(source.segment_certified(&options, &policy).unwrap());
-    assert_eq!(segmented.report().max_source_chord_error(), &q(1, 32));
-    assert!(segmented.report().lossy_boundary());
-    assert_eq!(segmented.report().loop_reports().len(), 1);
+    assert_eq!(segmented.evidence().max_source_chord_error(), &q(1, 32));
+    assert!(segmented.evidence().lossy_boundary());
+    assert_eq!(segmented.evidence().loop_evidence().len(), 1);
     assert_eq!(
-        segmented.report().loop_reports()[0].role(),
+        segmented.evidence().loop_evidence()[0].role(),
         CurveRegionLoopRole::Material
     );
     assert_eq!(
-        segmented.report().loop_reports()[0].fill_rule(),
+        segmented.evidence().loop_evidence()[0].fill_rule(),
         FillRule::NonZero
     );
-    assert!(segmented.report().loop_reports()[0].output_segment_count() > 4);
+    assert!(segmented.evidence().loop_evidence()[0].output_segment_count() > 4);
     assert!(matches!(
         segmented
             .region()
@@ -261,11 +261,11 @@ fn unified_region_offsets_quadratic_boundary_through_certified_exact_segmentatio
     );
 
     assert!(!offset.region().is_empty());
-    assert!(!offset.report().used_exact_native_fast_path());
-    assert!(offset.report().lossy_boundary());
-    assert_eq!(offset.report().max_source_chord_error(), &q(1, 32));
-    assert_eq!(offset.report().loop_reports().len(), 1);
-    assert!(offset.report().loop_reports()[0].output_segment_count() > 4);
+    assert!(!offset.evidence().used_exact_native_fast_path());
+    assert!(offset.evidence().lossy_boundary());
+    assert_eq!(offset.evidence().max_source_chord_error(), &q(1, 32));
+    assert_eq!(offset.evidence().loop_evidence().len(), 1);
+    assert!(offset.evidence().loop_evidence()[0].output_segment_count() > 4);
     assert!(matches!(
         offset.region().native_contours_fast_path(&policy).unwrap(),
         Classification::Decided(_)
@@ -314,7 +314,7 @@ fn unified_region_offset_regularizes_overlapping_expanded_components() {
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
     let offset = decided(promoted.offset(Real::from(2), &policy).unwrap());
-    let native = decided(offset.line_arc_region_fast_path(&policy).unwrap());
+    let native = decided(offset.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours().len(), 1);
     assert!(native.hole_contours().is_empty());
@@ -334,7 +334,7 @@ fn unified_region_offset_regularizes_overlapping_expanded_voids() {
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
     let offset = decided(promoted.offset(Real::from(-2), &policy).unwrap());
-    let native = decided(offset.line_arc_region_fast_path(&policy).unwrap());
+    let native = decided(offset.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours().len(), 1);
     assert_eq!(native.hole_contours().len(), 1);
@@ -351,7 +351,7 @@ fn unified_region_expansion_regularizes_a_closed_concavity() {
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
     let offset = decided(promoted.offset(Real::from(3), &policy).unwrap());
-    let native = decided(offset.line_arc_region_fast_path(&policy).unwrap());
+    let native = decided(offset.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours().len(), 1);
     assert!(native.hole_contours().is_empty());
@@ -407,7 +407,7 @@ fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
         CurveRegion2::try_from_native_material_contours(vec![dumbbell_shape()], &policy).unwrap();
 
     let eroded = decided(source.offset(-q(3, 2), &policy).unwrap());
-    let native = decided(eroded.line_arc_region_fast_path(&policy).unwrap());
+    let native = decided(eroded.native_contours_fast_path(&policy).unwrap());
 
     assert_eq!(native.material_contours().len(), 2);
     assert!(native.hole_contours().is_empty());
@@ -470,7 +470,7 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_exact() {
         Classification::Decided(region) => region,
         Classification::Uncertain(reason) => panic!("symbolic erosion was uncertain: {reason:?}"),
     };
-    let native = decided(eroded.line_arc_region_fast_path(&policy).unwrap());
+    let native = decided(eroded.native_contours_fast_path(&policy).unwrap());
     let vertices = native.material_contours()[0]
         .segments()
         .iter()
@@ -546,7 +546,7 @@ fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
         let classification =
             CurveRegion2::try_from_regularized_native_contour(&contour, &policy).unwrap();
         let region = decided(classification);
-        let native = decided(region.line_arc_region_fast_path(&policy).unwrap());
+        let native = decided(region.native_contours_fast_path(&policy).unwrap());
         assert_eq!(native.material_contours().len(), 2);
         assert!(native.hole_contours().is_empty());
         assert_eq!(
@@ -579,7 +579,7 @@ fn native_self_overlap_regularization_honors_winding_multiplicity() {
         )
         .unwrap(),
     );
-    let native = decided(nonzero.line_arc_region_fast_path(&policy).unwrap());
+    let native = decided(nonzero.native_contours_fast_path(&policy).unwrap());
     assert_eq!(native.material_contours().len(), 1);
     assert!(native.hole_contours().is_empty());
     assert_eq!(
@@ -629,7 +629,7 @@ fn region_promotion_retains_explicit_roles_and_line_fast_path() {
         "nested explicit material must not be reinterpreted as an even-odd hole"
     );
 
-    let prepared = promoted.prepare_point_classifier(&policy).unwrap();
+    let prepared = promoted.query(&policy).unwrap();
     assert!(prepared.uses_native_fast_path());
     assert_eq!(
         prepared.classify_point(&p(5, 5), &policy).unwrap(),
@@ -666,7 +666,7 @@ fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
         "a transformed nested material island must retain its explicit role"
     );
 
-    let prepared = transformed.prepare_point_classifier(&policy).unwrap();
+    let prepared = transformed.query(&policy).unwrap();
     assert!(prepared.uses_native_fast_path());
     assert_eq!(
         prepared.classify_point(&p(15, 11), &policy).unwrap(),
@@ -695,12 +695,7 @@ fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
 
     let rotated = region.transform_similarity(&quarter_turn, &policy).unwrap();
 
-    assert!(
-        rotated
-            .prepare_point_classifier(&policy)
-            .unwrap()
-            .uses_native_fast_path()
-    );
+    assert!(rotated.query(&policy).unwrap().uses_native_fast_path());
     assert_eq!(
         rotated.classify_point(&p(15, 4), &policy).unwrap(),
         Classification::Decided(RegionPointLocation::Inside)
@@ -763,7 +758,7 @@ fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
             transformed.classify_point(&p(10, 5), &policy).unwrap(),
             Classification::Decided(expected)
         );
-        let prepared = transformed.prepare_point_classifier(&policy).unwrap();
+        let prepared = transformed.query(&policy).unwrap();
         assert!(prepared.uses_native_fast_path());
         assert_eq!(
             prepared.classify_point(&p(10, 5), &policy).unwrap(),
@@ -841,7 +836,7 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
                 Real::zero()
             })
         );
-        let prepared = region.prepare_point_classifier(&policy).unwrap();
+        let prepared = region.query(&policy).unwrap();
         assert!(!prepared.uses_native_fast_path());
         assert_eq!(
             prepared.classify_point(&p(0, 2), &policy).unwrap(),
@@ -921,7 +916,7 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
         region.signed_depth(&p(0, 5), &policy).unwrap(),
         Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
     );
-    let prepared = region.prepare_point_classifier(&policy).unwrap();
+    let prepared = region.query(&policy).unwrap();
     assert!(prepared.uses_native_fast_path());
     assert_eq!(
         prepared.signed_depth(&p(3, 3), &policy).unwrap(),
@@ -958,7 +953,7 @@ fn authored_line_arc_paths_retain_the_native_offset_engine() {
     )
     .unwrap();
 
-    let prepared = region.prepare_point_classifier(&policy).unwrap();
+    let prepared = region.query(&policy).unwrap();
     assert!(prepared.uses_native_fast_path());
     let expanded = decided(region.offset(Real::from(2), &policy).unwrap());
     let bounds = decided(expanded.bounds(&policy).unwrap());
@@ -988,12 +983,7 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
         region.classify_point(&p(5, 5), &policy).unwrap(),
         Classification::Decided(RegionPointLocation::Inside)
     );
-    assert!(
-        region
-            .prepare_point_classifier(&policy)
-            .unwrap()
-            .uses_native_fast_path()
-    );
+    assert!(region.query(&policy).unwrap().uses_native_fast_path());
 }
 #[test]
 fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
@@ -1047,12 +1037,7 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
         &[FillRule::NonZero],
     )
     .unwrap();
-    assert!(
-        !region
-            .prepare_point_classifier(&policy)
-            .unwrap()
-            .uses_native_fast_path()
-    );
+    assert!(!region.query(&policy).unwrap().uses_native_fast_path());
 
     let chamfered = decided(
         region
@@ -1150,6 +1135,10 @@ fn empty_region_promotion_is_decided_and_cached() {
     assert!(promoted.is_line_image_region_cached());
     assert!(decided(promoted.loop_roles(&policy).unwrap()).is_empty());
     assert!(decided(promoted.filled_side_is_left(&policy).unwrap()).is_empty());
-    assert!(decided(promoted.line_arc_region_fast_path(&policy).unwrap()).is_empty());
+    assert!(
+        decided(promoted.native_contours_fast_path(&policy).unwrap())
+            .material_contours()
+            .is_empty()
+    );
     assert_eq!(CurveRegion2::empty(), CurveRegion2::default());
 }

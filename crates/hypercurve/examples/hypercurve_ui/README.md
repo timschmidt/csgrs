@@ -36,4 +36,4 @@ The editor and plotting layers store coordinates as `f64` because egui, Geo,
 and rendering APIs require primitive floats. Core `hypercurve` operations lift
 finite UI coordinates into hyperreal-backed Real values before topology decisions;
 Geo boolean output is used only as an interactive display fallback when the
-exact curve kernel reports an unresolved case.
+exact curve kernel evidence an unresolved case.

@@ -53,9 +53,9 @@ fn second_vector_from_rational_curve(
     let tangent = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
         .ok()?;
-    BezierAlgebraicTangentVector2::from_endpoint_image(
-        &BezierEndpointTangentImage2::Rational(tangent),
-    )
+    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Rational(
+        tangent,
+    ))
     .vector
 }
 
@@ -111,11 +111,11 @@ fuzz_target!(|data: &[u8]| {
         return;
     };
 
-    if let Classification::Decided(report) =
+    if let Classification::Decided(evidence) =
         compare_algebraic_tangent_turn_from_base(&base, &first, &second, &policy)
     {
-        if report.status == BezierAlgebraicTangentOrderStatus::Ordered {
-            assert!(report.ordering.is_some());
+        if evidence.status == BezierAlgebraicTangentOrderStatus::Ordered {
+            assert!(evidence.ordering.is_some());
         }
     }
 

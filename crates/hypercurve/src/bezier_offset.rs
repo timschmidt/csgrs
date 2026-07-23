@@ -7,7 +7,7 @@
 //! cubics only as candidates, with a conservative same-parameter/Hausdorff
 //! verifier controlling acceptance. Connected smooth paths and `CurveRegion2`
 //! expose this lane while keeping corner joins and weaker chord fallback
-//! explicit in their reports.
+//! explicit in their evidence.
 //!
 //! Candidate construction follows Raph Levien's parallel-curve and path-
 //! simplification analyses and Blend2D's exact same-parameter degree-reduction

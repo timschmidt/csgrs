@@ -13,8 +13,8 @@ use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign
 use crate::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy,
     CurveResult, LineArcIntersection, LineArcOrder, LineArcRegion2, LineLineIntersection, LineSeg2,
-    LineSide, ParamRange, Point2, PreparedRegionView2, RegionPointLocation, Segment2,
-    SegmentIntersection, SegmentKind, UncertaintyReason,
+    LineSide, ParamRange, Point2, RegionPointLocation, RegionQuery2, Segment2, SegmentIntersection,
+    SegmentKind, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -40,7 +40,7 @@ pub struct CurveStringIntersection {
     pub relation: SegmentIntersection,
 }
 
-/// Endpoint selector for open curve-string editing reports.
+/// Endpoint selector for open curve-string editing evidence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveStringEndpoint2 {
     /// First point of the curve string.
@@ -314,11 +314,11 @@ impl CurveString2 {
     /// Merges adjacent same-direction line segments when collinearity is certified.
     ///
     /// This is an explicit editing utility, not constructor normalization:
-    /// source segment runs are retained in the report, mixed line/arc topology
+    /// source segment runs are retained in the evidence, mixed line/arc topology
     /// is preserved, and collinear reversals are not collapsed because they are
     /// real authored backtracking topology. If a line-line pair cannot be
     /// classified under the active policy, the operation returns an unresolved
-    /// report instead of guessing a merge boundary.
+    /// evidence instead of guessing a merge boundary.
     pub fn merge_adjacent_collinear_lines(
         &self,
         policy: &CurvePolicy,
@@ -356,7 +356,7 @@ impl CurveString2 {
     /// Same-support partial overlaps, same-direction repeats, and geometric
     /// coincidences with different segmentation remain intact for the
     /// arrangement pipeline. If every segment cancels, no empty `CurveString2`
-    /// is materialized and the report carries an explicit boundary blocker.
+    /// is materialized and the evidence carries an explicit boundary blocker.
     pub fn remove_adjacent_reversed_duplicates(&self) -> CurveResult<Classification<CurveString2>> {
         let mut retained = Vec::with_capacity(self.len());
 
@@ -481,9 +481,9 @@ impl CurveString2 {
         trim_curve_string_inside_region(self, region, policy)
     }
 
-    pub(crate) fn trim_inside_prepared_region(
+    pub(crate) fn trim_inside_region_query(
         &self,
-        region: &PreparedRegionView2<'_>,
+        region: &RegionQuery2<'_>,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Vec<CurveString2>>> {
         trim_curve_string_inside_prepared_region(self, region, policy)
@@ -1192,7 +1192,7 @@ fn trim_curve_string_inside_region(
 
 fn trim_curve_string_inside_prepared_region(
     curve_string: &CurveString2,
-    region: &PreparedRegionView2<'_>,
+    region: &RegionQuery2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Vec<CurveString2>>> {
     let mut boundary_hits = Vec::new();
@@ -1323,7 +1323,7 @@ fn collect_region_trim_boundary_hits(
 
 fn collect_prepared_region_trim_boundary_hits(
     curve_string: &CurveString2,
-    region: &PreparedRegionView2<'_>,
+    region: &RegionQuery2<'_>,
     policy: &CurvePolicy,
     hits: &mut Vec<RegionTrimHit2>,
 ) -> CurveResult<Option<UncertaintyReason>> {
@@ -1398,7 +1398,7 @@ fn collect_region_trim_contour_hits(
 fn collect_prepared_region_trim_contour_hits(
     curve_string: &CurveString2,
     source_segment_boxes: &[Option<crate::Aabb2>],
-    contour: &crate::PreparedContourView2<'_>,
+    contour: &crate::ContourQuery2<'_>,
     policy: &CurvePolicy,
     hits: &mut Vec<RegionTrimHit2>,
 ) -> CurveResult<Option<UncertaintyReason>> {

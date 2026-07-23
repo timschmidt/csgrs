@@ -77,16 +77,16 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
     let policy = CurvePolicy::certified();
     let prepared = cell
         .source
-        .try_prepare_boolean(&cell.rotated, &policy)
+        .retain_boolean(&cell.rotated, &policy)
         .expect("all-family pair reaches curved Boolean preparation");
     assert!(prepared.authored_carrier_pair_count() > 0);
     assert!(prepared.carrier_pair_count() > 0);
     #[cfg(feature = "predicates")]
     {
-        let report = prepared
-            .intersection_report()
-            .expect("all-family intersections are reportable");
-        assert!(report.blockers().is_empty());
+        let evidence = prepared
+            .intersection_result()
+            .expect("all-family intersections are evidenceable");
+        assert!(evidence.blockers().is_empty());
     }
 
     for operation in [

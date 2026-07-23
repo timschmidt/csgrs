@@ -130,7 +130,7 @@ fn benchmark_booleans(dataset: &NativeDataset) {
     let mut first_blocker = None;
 
     for cell in &dataset.cells {
-        match cell.source.try_prepare_boolean(&cell.rotated, &policy) {
+        match cell.source.retain_boolean(&cell.rotated, &policy) {
             Ok(prepared) => {
                 prepared_count += 1;
                 candidate_pair_count += prepared.carrier_pair_count();

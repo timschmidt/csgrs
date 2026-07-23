@@ -529,7 +529,7 @@ fn edge_preview_retains_rotated_arc_arc_event_regression() {
         .intersect_segment(&second.segments()[0], &policy)
         .unwrap();
     assert!(
-        relation_has_reportable_intersection(&direct),
+        relation_has_evidenceable_intersection(&direct),
         "direct arc-arc relation should retain the preview hit: {direct:?}"
     );
 
@@ -791,7 +791,7 @@ proptest! {
             .unwrap();
 
         prop_assert!(
-            relation_has_reportable_intersection(&direct),
+            relation_has_evidenceable_intersection(&direct),
             "mixed pair generator should place a direct segment hit: {direct:?}"
         );
 
@@ -841,7 +841,7 @@ proptest! {
             .unwrap();
 
         prop_assert!(
-            relation_has_reportable_intersection(&direct),
+            relation_has_evidenceable_intersection(&direct),
             "mixed self generator should place a direct segment hit: {direct:?}"
         );
 
@@ -1485,7 +1485,7 @@ fn event_on_pair(event: &ContourIntersection, first: usize, second: usize) -> bo
     }
 }
 
-fn relation_has_reportable_intersection(relation: &SegmentIntersection) -> bool {
+fn relation_has_evidenceable_intersection(relation: &SegmentIntersection) -> bool {
     match relation {
         SegmentIntersection::LineLine(LineLineIntersection::None)
         | SegmentIntersection::LineLine(LineLineIntersection::Uncertain { .. }) => false,

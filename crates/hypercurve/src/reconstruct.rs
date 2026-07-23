@@ -333,7 +333,7 @@ impl CurveRegion2 {
     /// This mirrors [`CurveRegion2::segment_to_finite_profiles`]. Material and
     /// hole bins are taken directly from the profile structure rather than
     /// inferred from sampled winding. General source curves cannot be recovered
-    /// losslessly from chords, so use the report-bearing variant when that
+    /// losslessly from chords, so use the evidence-bearing variant when that
     /// provenance boundary matters to the caller.
     pub fn recover_from_finite_profiles(
         profiles: &[FiniteRegionProfile2],

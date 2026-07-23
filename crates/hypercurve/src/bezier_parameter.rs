@@ -267,7 +267,7 @@ impl BezierParameterPolynomial {
             .map(BezierRootIsolationResult2::into_roots))
     }
 
-    /// Isolates every distinct root in `[0, 1]` and reports exact work counts.
+    /// Isolates every distinct root in `[0, 1]` and evidence exact work counts.
     pub fn isolate_unit_interval_roots_with_trace(
         &self,
         policy: &CurvePolicy,

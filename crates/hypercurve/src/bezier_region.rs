@@ -34,9 +34,9 @@ use crate::{
     Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2, CurveError, CurveFamily2,
     CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2,
     CurvePathIntersectionContact2, CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult,
-    FillRule, LineArcRegion2, LineSeg2, Point2, PreparedRegionView2, QuadraticBezier2,
-    RationalBezier2, RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
-    RegionArrangementReport2, RegionPointLocation, Segment2, UncertaintyReason,
+    FillRule, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
+    RegionArrangementEvidence2, RegionPointLocation, RegionQuery2, Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -142,16 +142,16 @@ impl Default for CurveRegion2 {
     }
 }
 
-/// Prepared borrowed point-classification facade for a [`CurveRegion2`].
+/// Borrowed repeated-query facade for a [`CurveRegion2`].
 ///
-/// Certified native line/arc regions reuse [`PreparedRegionView2`], including
+/// Certified native line/arc regions reuse [`RegionQuery2`], including
 /// its segment boxes and line winding index. Other retained curves precompute
 /// the clone-shared native bounds and algebraic evaluators owned by
 /// [`CurveRegion2`] and continue through its exact curved classifier.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedCurveRegionView2<'a> {
+pub struct CurveRegionQuery2<'a> {
     region: &'a CurveRegion2,
-    native_fast_path: Option<PreparedRegionView2<'a>>,
+    native_fast_path: Option<RegionQuery2<'a>>,
 }
 
 /// Borrowed native line/arc contour acceleration view for a [`CurveRegion2`].
@@ -191,22 +191,22 @@ impl<'a> CurveRegionNativeContourView2<'a> {
 #[derive(Clone, Debug)]
 pub struct CurveRegionArrangement2 {
     region: Option<CurveRegion2>,
-    report: RegionArrangementReport2,
+    evidence: RegionArrangementEvidence2,
 }
 
-/// Report-bearing native contour nesting with authoritative unified output.
+/// Evidence-bearing native contour nesting with authoritative unified output.
 ///
-/// The retained report is produced by the specialized line/arc nesting engine,
+/// The retained evidence is produced by the specialized line/arc nesting engine,
 /// while successful topology is promoted before it crosses this API boundary.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionBoundaryContourBuildResult2 {
     region: Option<CurveRegion2>,
-    report: crate::RegionBoundaryContourBuildReport2,
+    evidence: crate::RegionBoundaryContourBuildEvidence2,
 }
 
 /// Certified source-segmentation evidence for one region boundary loop used by an offset.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionSegmentationLoopReport2 {
+pub struct CurveRegionSegmentationLoopEvidence2 {
     role: CurveRegionLoopRole,
     fill_rule: FillRule,
     source_curve_count: usize,
@@ -217,9 +217,9 @@ pub struct CurveRegionSegmentationLoopReport2 {
 
 /// Exact-scalar chordization evidence for every unified region boundary loop.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionCertifiedSegmentationReport2 {
+pub struct CurveRegionCertifiedSegmentationEvidence2 {
     max_source_chord_error: Real,
-    loop_reports: Vec<CurveRegionSegmentationLoopReport2>,
+    loop_evidence: Vec<CurveRegionSegmentationLoopEvidence2>,
     lossy_boundary: bool,
 }
 
@@ -227,15 +227,15 @@ pub struct CurveRegionCertifiedSegmentationReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionCertifiedSegmentationResult2 {
     region: CurveRegion2,
-    report: CurveRegionCertifiedSegmentationReport2,
+    evidence: CurveRegionCertifiedSegmentationEvidence2,
 }
 
-/// Report for a general-curve offset routed through exact-scalar certified segmentation.
+/// Evidence for a general-curve offset routed through exact-scalar certified segmentation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionSegmentedOffsetReport2 {
+pub struct CurveRegionSegmentedOffsetEvidence2 {
     used_exact_native_fast_path: bool,
     max_source_chord_error: Real,
-    loop_reports: Vec<CurveRegionSegmentationLoopReport2>,
+    loop_evidence: Vec<CurveRegionSegmentationLoopEvidence2>,
     lossy_boundary: bool,
 }
 
@@ -243,12 +243,12 @@ pub struct CurveRegionSegmentedOffsetReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionSegmentedOffsetResult2 {
     region: CurveRegion2,
-    report: CurveRegionSegmentedOffsetReport2,
+    evidence: CurveRegionSegmentedOffsetEvidence2,
 }
 
 /// Per-loop evidence for a certified polynomial/rational parallel boundary.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionCertifiedParallelLoopReport2 {
+pub struct CurveRegionCertifiedParallelLoopEvidence2 {
     role: CurveRegionLoopRole,
     fill_rule: FillRule,
     signed_left_distance: Real,
@@ -261,7 +261,7 @@ pub struct CurveRegionCertifiedParallelLoopReport2 {
 
 /// Evidence for the strongest completed lane of a general curved-region offset.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionCertifiedParallelOffsetReport2 {
+pub struct CurveRegionCertifiedParallelOffsetEvidence2 {
     used_exact_native_fast_path: bool,
     used_certified_parallel_path: bool,
     used_segmented_source_fallback: bool,
@@ -269,15 +269,15 @@ pub struct CurveRegionCertifiedParallelOffsetReport2 {
     max_output_chord_error: Real,
     certified_pre_regularization_boundary_error: Option<Real>,
     final_boundary_hausdorff_certified: bool,
-    loop_reports: Vec<CurveRegionCertifiedParallelLoopReport2>,
-    fallback_report: Option<CurveRegionSegmentedOffsetReport2>,
+    loop_evidence: Vec<CurveRegionCertifiedParallelLoopEvidence2>,
+    fallback_evidence: Option<CurveRegionSegmentedOffsetEvidence2>,
 }
 
 /// Unified region produced by exact native, certified parallel, or explicit fallback offsetting.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionCertifiedParallelOffsetResult2 {
     region: CurveRegion2,
-    report: CurveRegionCertifiedParallelOffsetReport2,
+    evidence: CurveRegionCertifiedParallelOffsetEvidence2,
 }
 
 impl CurveRegionArrangement2 {
@@ -291,16 +291,16 @@ impl CurveRegionArrangement2 {
         match self.region() {
             Some(region) => Classification::Decided(region),
             None => Classification::Uncertain(
-                self.report
+                self.evidence
                     .blocker()
                     .unwrap_or(UncertaintyReason::Unsupported),
             ),
         }
     }
 
-    /// Returns the complete native arrangement report retained during promotion.
-    pub const fn report(&self) -> &RegionArrangementReport2 {
-        &self.report
+    /// Returns the complete native arrangement evidence retained during promotion.
+    pub const fn evidence(&self) -> &RegionArrangementEvidence2 {
+        &self.evidence
     }
 
     /// Consumes the result and returns its unified region, if materialized.
@@ -309,8 +309,8 @@ impl CurveRegionArrangement2 {
     }
 
     /// Consumes the result and preserves both output and arrangement evidence.
-    pub fn into_parts(self) -> (Option<CurveRegion2>, RegionArrangementReport2) {
-        (self.region, self.report)
+    pub fn into_parts(self) -> (Option<CurveRegion2>, RegionArrangementEvidence2) {
+        (self.region, self.evidence)
     }
 }
 
@@ -320,19 +320,19 @@ impl CurveRegionBoundaryContourBuildResult2 {
         self.region.as_ref()
     }
 
-    /// Returns the retained native nesting and role-assignment report.
-    pub const fn report(&self) -> &crate::RegionBoundaryContourBuildReport2 {
-        &self.report
+    /// Returns the retained native nesting and role-assignment evidence.
+    pub const fn evidence(&self) -> &crate::RegionBoundaryContourBuildEvidence2 {
+        &self.evidence
     }
 
     /// Returns the retained native construction status.
     pub const fn status(&self) -> crate::RetainedTopologyStatus {
-        self.report.status()
+        self.evidence.status()
     }
 
     /// Returns the exact blocker when no unified region was materialized.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.report.blocker()
+        self.evidence.blocker()
     }
 
     /// Returns the unified result as a classification without consuming evidence.
@@ -340,7 +340,7 @@ impl CurveRegionBoundaryContourBuildResult2 {
         match self.region() {
             Some(region) => Classification::Decided(region),
             None => Classification::Uncertain(
-                self.report
+                self.evidence
                     .blocker()
                     .unwrap_or(UncertaintyReason::Unsupported),
             ),
@@ -352,9 +352,9 @@ impl CurveRegionBoundaryContourBuildResult2 {
         self.region
     }
 
-    /// Consumes the result and returns its retained report.
-    pub fn into_report(self) -> crate::RegionBoundaryContourBuildReport2 {
-        self.report
+    /// Consumes the result and returns its retained evidence.
+    pub fn into_evidence(self) -> crate::RegionBoundaryContourBuildEvidence2 {
+        self.evidence
     }
 
     /// Consumes the unified output and retained native evidence together.
@@ -362,15 +362,15 @@ impl CurveRegionBoundaryContourBuildResult2 {
         self,
     ) -> (
         Option<CurveRegion2>,
-        crate::RegionBoundaryContourBuildReport2,
+        crate::RegionBoundaryContourBuildEvidence2,
     ) {
-        (self.region, self.report)
+        (self.region, self.evidence)
     }
 
     /// Consumes the unified output as a classification.
     pub fn into_region_classification(self) -> Classification<CurveRegion2> {
         let blocker = self
-            .report
+            .evidence
             .blocker()
             .unwrap_or(UncertaintyReason::Unsupported);
         match self.region {
@@ -380,7 +380,7 @@ impl CurveRegionBoundaryContourBuildResult2 {
     }
 }
 
-impl CurveRegionSegmentationLoopReport2 {
+impl CurveRegionSegmentationLoopEvidence2 {
     /// Returns the authoritative role retained for this source loop.
     pub const fn role(&self) -> CurveRegionLoopRole {
         self.role
@@ -412,15 +412,15 @@ impl CurveRegionSegmentationLoopReport2 {
     }
 }
 
-impl CurveRegionCertifiedSegmentationReport2 {
+impl CurveRegionCertifiedSegmentationEvidence2 {
     /// Returns the certified source-curve-to-chord error budget.
     pub const fn max_source_chord_error(&self) -> &Real {
         &self.max_source_chord_error
     }
 
     /// Returns one exact-scalar segmentation record per retained loop.
-    pub fn loop_reports(&self) -> &[CurveRegionSegmentationLoopReport2] {
-        &self.loop_reports
+    pub fn loop_evidence(&self) -> &[CurveRegionSegmentationLoopEvidence2] {
+        &self.loop_evidence
     }
 
     /// Returns true because replacing a non-line curve by chords is a lossy boundary.
@@ -436,8 +436,8 @@ impl CurveRegionCertifiedSegmentationResult2 {
     }
 
     /// Returns retained role, fill, and error-budget evidence.
-    pub const fn report(&self) -> &CurveRegionCertifiedSegmentationReport2 {
-        &self.report
+    pub const fn evidence(&self) -> &CurveRegionCertifiedSegmentationEvidence2 {
+        &self.evidence
     }
 
     /// Consumes the result and returns its line-only unified region.
@@ -446,12 +446,12 @@ impl CurveRegionCertifiedSegmentationResult2 {
     }
 
     /// Consumes the result into its line-only region and evidence.
-    pub fn into_parts(self) -> (CurveRegion2, CurveRegionCertifiedSegmentationReport2) {
-        (self.region, self.report)
+    pub fn into_parts(self) -> (CurveRegion2, CurveRegionCertifiedSegmentationEvidence2) {
+        (self.region, self.evidence)
     }
 }
 
-impl CurveRegionSegmentedOffsetReport2 {
+impl CurveRegionSegmentedOffsetEvidence2 {
     /// Returns true when no segmentation was needed because native offsetting succeeded exactly.
     pub const fn used_exact_native_fast_path(&self) -> bool {
         self.used_exact_native_fast_path
@@ -463,8 +463,8 @@ impl CurveRegionSegmentedOffsetReport2 {
     }
 
     /// Returns source-loop segmentation evidence.
-    pub fn loop_reports(&self) -> &[CurveRegionSegmentationLoopReport2] {
-        &self.loop_reports
+    pub fn loop_evidence(&self) -> &[CurveRegionSegmentationLoopEvidence2] {
+        &self.loop_evidence
     }
 
     /// Returns whether the operation crossed an explicitly lossy segmentation boundary.
@@ -480,8 +480,8 @@ impl CurveRegionSegmentedOffsetResult2 {
     }
 
     /// Returns the exact-fast-path or certified-segmentation evidence.
-    pub const fn report(&self) -> &CurveRegionSegmentedOffsetReport2 {
-        &self.report
+    pub const fn evidence(&self) -> &CurveRegionSegmentedOffsetEvidence2 {
+        &self.evidence
     }
 
     /// Consumes the result and returns the unified offset region.
@@ -490,12 +490,12 @@ impl CurveRegionSegmentedOffsetResult2 {
     }
 
     /// Consumes the result into geometry and evidence.
-    pub fn into_parts(self) -> (CurveRegion2, CurveRegionSegmentedOffsetReport2) {
-        (self.region, self.report)
+    pub fn into_parts(self) -> (CurveRegion2, CurveRegionSegmentedOffsetEvidence2) {
+        (self.region, self.evidence)
     }
 }
 
-impl CurveRegionCertifiedParallelLoopReport2 {
+impl CurveRegionCertifiedParallelLoopEvidence2 {
     /// Returns the retained material/hole role.
     pub const fn role(&self) -> CurveRegionLoopRole {
         self.role
@@ -537,7 +537,7 @@ impl CurveRegionCertifiedParallelLoopReport2 {
     }
 }
 
-impl CurveRegionCertifiedParallelOffsetReport2 {
+impl CurveRegionCertifiedParallelOffsetEvidence2 {
     /// Returns whether the exact native line/arc offset kernel completed the operation.
     pub const fn used_exact_native_fast_path(&self) -> bool {
         self.used_exact_native_fast_path
@@ -578,13 +578,13 @@ impl CurveRegionCertifiedParallelOffsetReport2 {
     }
 
     /// Returns per-loop exact/fitted construction evidence.
-    pub fn loop_reports(&self) -> &[CurveRegionCertifiedParallelLoopReport2] {
-        &self.loop_reports
+    pub fn loop_evidence(&self) -> &[CurveRegionCertifiedParallelLoopEvidence2] {
+        &self.loop_evidence
     }
 
     /// Returns the legacy fallback evidence when that lane was required.
-    pub const fn fallback_report(&self) -> Option<&CurveRegionSegmentedOffsetReport2> {
-        self.fallback_report.as_ref()
+    pub const fn fallback_evidence(&self) -> Option<&CurveRegionSegmentedOffsetEvidence2> {
+        self.fallback_evidence.as_ref()
     }
 }
 
@@ -595,8 +595,8 @@ impl CurveRegionCertifiedParallelOffsetResult2 {
     }
 
     /// Returns construction and certification evidence.
-    pub const fn report(&self) -> &CurveRegionCertifiedParallelOffsetReport2 {
-        &self.report
+    pub const fn evidence(&self) -> &CurveRegionCertifiedParallelOffsetEvidence2 {
+        &self.evidence
     }
 
     /// Consumes the result and returns its region.
@@ -605,28 +605,28 @@ impl CurveRegionCertifiedParallelOffsetResult2 {
     }
 
     /// Consumes the result into geometry and evidence.
-    pub fn into_parts(self) -> (CurveRegion2, CurveRegionCertifiedParallelOffsetReport2) {
-        (self.region, self.report)
+    pub fn into_parts(self) -> (CurveRegion2, CurveRegionCertifiedParallelOffsetEvidence2) {
+        (self.region, self.evidence)
     }
 }
 
-impl<'a> PreparedCurveRegionView2<'a> {
+impl<'a> CurveRegionQuery2<'a> {
     /// Returns the authoritative retained curved region.
     pub const fn region(&self) -> &'a CurveRegion2 {
         self.region
     }
 
-    /// Returns true when classification uses the prepared line/arc region path.
+    /// Returns true when classification uses the retained line/arc region path.
     pub const fn uses_native_fast_path(&self) -> bool {
         self.native_fast_path.is_some()
     }
 
-    /// Returns the prepared native fast path when one was certified.
-    pub const fn native_fast_path(&self) -> Option<&PreparedRegionView2<'a>> {
+    /// Returns the retained native fast path when one was certified.
+    pub const fn native_fast_path(&self) -> Option<&RegionQuery2<'a>> {
         self.native_fast_path.as_ref()
     }
 
-    /// Classifies a point through the strongest prepared exact path available.
+    /// Classifies a point through the strongest retained exact path available.
     pub fn classify_point(
         &self,
         point: &Point2,
@@ -640,9 +640,9 @@ impl<'a> PreparedCurveRegionView2<'a> {
 
     /// Returns signed material-minus-hole containment depth for a non-boundary point.
     ///
-    /// The prepared native carrier supplies this directly when available.
+    /// The retained native carrier supplies this directly when available.
     /// Higher-order regions reuse the exact per-loop caches populated during
-    /// preparation. As with [`LineArcRegion2::signed_depth`], a boundary point is
+    /// query construction. As with [`LineArcRegion2::signed_depth`], a boundary point is
     /// reported as `Uncertain(Boundary)`.
     pub fn signed_depth(
         &self,
@@ -721,7 +721,7 @@ impl<'a> CurveRegionProfile2<'a> {
 
 /// Exact role assignment for retained line-image Bezier boundary loops.
 ///
-/// This report is intentionally narrower than arbitrary retained Bezier role
+/// This evidence is intentionally narrower than arbitrary retained Bezier role
 /// assignment.  It accepts materialized Bezier/conic fragments only through a
 /// certified exact line-image fit, accepts algebraic endpoint-image fragments
 /// only when they provide exact endpoint witnesses, lowers those loops to
@@ -733,7 +733,7 @@ impl<'a> CurveRegionProfile2<'a> {
 /// step uses boundary-first point-in-contour classification as surveyed by
 /// boundary-first winding classification.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionLineRoleReport2 {
+pub struct CurveRegionLineRoleEvidence2 {
     roles: Vec<CurveRegionLoopRole>,
     nesting_depths: Vec<usize>,
     materialized_fragment_count: usize,
@@ -744,7 +744,7 @@ pub struct CurveRegionLineRoleReport2 {
 
 /// Exact orientation-derived role assignment for native retained Bezier loops.
 ///
-/// This report is broader than [`CurveRegionLineRoleReport2`]: it
+/// This evidence is broader than [`CurveRegionLineRoleEvidence2`]: it
 /// accepts native polynomial Bezier and rational quadratic conic loops whenever
 /// their exact Green-integral signed area is implemented and nonzero.  It is
 /// intentionally narrower than full curved-loop nesting: it assigns roles from
@@ -754,7 +754,7 @@ pub struct CurveRegionLineRoleReport2 {
 /// exact-computation discipline.  The signed-area evidence comes from Green's theorem
 /// and Bernstein/rational Bezier identities as described by the Bernstein and de Casteljau curve model.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionSignedAreaRoleReport2 {
+pub struct CurveRegionSignedAreaRoleEvidence2 {
     roles: Vec<CurveRegionLoopRole>,
     signed_areas: Vec<Real>,
     loop_fragment_counts: Option<Vec<usize>>,
@@ -763,9 +763,9 @@ pub struct CurveRegionSignedAreaRoleReport2 {
 
 /// Exact nesting-derived role assignment for native retained curved loops.
 ///
-/// Unlike [`CurveRegionLineRoleReport2`], this report does not lower
+/// Unlike [`CurveRegionLineRoleEvidence2`], this evidence does not lower
 /// nonlinear loops to line contours. Unlike
-/// [`CurveRegionSignedAreaRoleReport2`], it does not trust authored
+/// [`CurveRegionSignedAreaRoleEvidence2`], it does not trust authored
 /// orientation to distinguish material from holes. It chooses an exact
 /// representative point on each candidate loop and classifies it against every
 /// other native Bezier/conic loop by counting certified ray crossings. Boundary
@@ -775,7 +775,7 @@ pub struct CurveRegionSignedAreaRoleReport2 {
 /// point-in-polygon method surveyed by boundary-first winding classification
 /// 131-144; all branch decisions follow exact-computation discipline.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionNestingRoleReport2 {
+pub struct CurveRegionNestingRoleEvidence2 {
     roles: Vec<CurveRegionLoopRole>,
     nesting_depths: Vec<usize>,
     signed_areas: Vec<Real>,
@@ -784,8 +784,8 @@ pub struct CurveRegionNestingRoleReport2 {
     loop_arrangement_sources: Option<Vec<Option<Vec<CurveRegionFragmentSource2>>>>,
 }
 
-impl CurveRegionLineRoleReport2 {
-    /// Constructs a retained line-image role report.
+impl CurveRegionLineRoleEvidence2 {
+    /// Constructs a retained line-image role evidence.
     pub fn new(
         roles: Vec<CurveRegionLoopRole>,
         nesting_depths: Vec<usize>,
@@ -793,10 +793,10 @@ impl CurveRegionLineRoleReport2 {
         algebraic_fragment_count: usize,
         contours: Vec<Contour2>,
     ) -> CurveResult<Self> {
-        validate_report_length(roles.len(), "nesting depth", nesting_depths.len())?;
-        validate_report_length(roles.len(), "line contour", contours.len())?;
+        validate_evidence_length(roles.len(), "nesting depth", nesting_depths.len())?;
+        validate_evidence_length(roles.len(), "line contour", contours.len())?;
         validate_nesting_depth_roles(&roles, &nesting_depths)?;
-        validate_line_role_report_fragment_counts(
+        validate_line_role_evidence_fragment_counts(
             materialized_fragment_count,
             algebraic_fragment_count,
             &contours,
@@ -852,7 +852,7 @@ impl CurveRegionLineRoleReport2 {
         &self.contours
     }
 
-    /// Returns per-loop arrangement/source provenance when the report has it.
+    /// Returns per-loop arrangement/source provenance when the evidence has it.
     pub fn loop_arrangement_sources(&self) -> Option<&[Option<Vec<CurveRegionFragmentSource2>>]> {
         self.loop_arrangement_sources.as_deref()
     }
@@ -875,7 +875,7 @@ impl CurveRegionLineRoleReport2 {
             .collect()
     }
 
-    /// Builds the unified owned region represented by this exact role report.
+    /// Builds the unified owned region represented by this exact role evidence.
     pub fn try_to_curve_region(&self, policy: &CurvePolicy) -> ExactCurveResult<CurveRegion2> {
         let mut material = Vec::new();
         let mut holes = Vec::new();
@@ -894,10 +894,10 @@ impl CurveRegionLineRoleReport2 {
     }
 }
 
-impl CurveRegionSignedAreaRoleReport2 {
-    /// Constructs a retained signed-area role report.
+impl CurveRegionSignedAreaRoleEvidence2 {
+    /// Constructs a retained signed-area role evidence.
     pub fn new(roles: Vec<CurveRegionLoopRole>, signed_areas: Vec<Real>) -> CurveResult<Self> {
-        validate_report_length(roles.len(), "signed area", signed_areas.len())?;
+        validate_evidence_length(roles.len(), "signed area", signed_areas.len())?;
         validate_signed_area_roles(&roles, &signed_areas)?;
         Ok(Self {
             roles,
@@ -937,7 +937,7 @@ impl CurveRegionSignedAreaRoleReport2 {
         &self.signed_areas
     }
 
-    /// Returns per-loop arrangement/source provenance when the report has it.
+    /// Returns per-loop arrangement/source provenance when the evidence has it.
     pub fn loop_arrangement_sources(&self) -> Option<&[Option<Vec<CurveRegionFragmentSource2>>]> {
         self.loop_arrangement_sources.as_deref()
     }
@@ -961,17 +961,17 @@ impl CurveRegionSignedAreaRoleReport2 {
     }
 }
 
-impl CurveRegionNestingRoleReport2 {
-    /// Constructs a retained curved-loop nesting role report.
+impl CurveRegionNestingRoleEvidence2 {
+    /// Constructs a retained curved-loop nesting role evidence.
     pub fn new(
         roles: Vec<CurveRegionLoopRole>,
         nesting_depths: Vec<usize>,
         signed_areas: Vec<Real>,
         sample_points: Vec<Point2>,
     ) -> CurveResult<Self> {
-        validate_report_length(roles.len(), "nesting depth", nesting_depths.len())?;
-        validate_report_length(roles.len(), "signed area", signed_areas.len())?;
-        validate_report_length(roles.len(), "sample point", sample_points.len())?;
+        validate_evidence_length(roles.len(), "nesting depth", nesting_depths.len())?;
+        validate_evidence_length(roles.len(), "signed area", signed_areas.len())?;
+        validate_evidence_length(roles.len(), "sample point", sample_points.len())?;
         validate_nesting_depth_roles(&roles, &nesting_depths)?;
         validate_nonzero_signed_area_evidence(&signed_areas)?;
         Ok(Self {
@@ -1024,7 +1024,7 @@ impl CurveRegionNestingRoleReport2 {
         &self.sample_points
     }
 
-    /// Returns per-loop arrangement/source provenance when the report has it.
+    /// Returns per-loop arrangement/source provenance when the evidence has it.
     pub fn loop_arrangement_sources(&self) -> Option<&[Option<Vec<CurveRegionFragmentSource2>>]> {
         self.loop_arrangement_sources.as_deref()
     }
@@ -1171,7 +1171,7 @@ impl BezierRegion2 {
     /// uncertainty.  The split/refine/traverse evidence stays separate from
     /// region materialization in the exactness model's exact-computation sense.  The positive-dimensional overlap is consumed
     /// only after the degenerate-intersection clipping model degeneracy is recorded
-    /// as a resolved span on the refinement report.
+    /// as a resolved span on the refinement evidence.
     pub fn from_retained_linear_overlap_traversal(
         traversal: &BezierRetainedLinearOverlapTraversal2,
     ) -> Classification<Self> {
@@ -1814,12 +1814,12 @@ fn promote_native_region_arrangement(
     arrangement: RegionArrangement2,
     policy: &CurvePolicy,
 ) -> ExactCurveResult<CurveRegionArrangement2> {
-    let (region, report) = arrangement.into_region_with_report();
+    let (region, evidence) = arrangement.into_region_with_evidence();
     let region = region
         .as_ref()
         .map(|region| CurveRegion2::try_from_line_arc_region(region, policy))
         .transpose()?;
-    Ok(CurveRegionArrangement2 { region, report })
+    Ok(CurveRegionArrangement2 { region, evidence })
 }
 
 fn curve_region_edit_error(operation: CurveOperation2, cause: CurveError) -> ExactCurveError {
@@ -1833,24 +1833,25 @@ fn wrap_segmented_parallel_fallback(
 ) -> ExactCurveResult<Classification<CurveRegionCertifiedParallelOffsetResult2>> {
     match segmented {
         Classification::Decided(segmented) => {
-            let (region, fallback_report) = segmented.into_parts();
+            let (region, fallback_evidence) = segmented.into_parts();
             Ok(Classification::Decided(
                 CurveRegionCertifiedParallelOffsetResult2 {
                     region,
-                    report: CurveRegionCertifiedParallelOffsetReport2 {
-                        used_exact_native_fast_path: fallback_report.used_exact_native_fast_path(),
+                    evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
+                        used_exact_native_fast_path: fallback_evidence
+                            .used_exact_native_fast_path(),
                         used_certified_parallel_path: false,
-                        used_segmented_source_fallback: !fallback_report
+                        used_segmented_source_fallback: !fallback_evidence
                             .used_exact_native_fast_path(),
                         max_parallel_fit_error: max_parallel_fit_error.clone(),
                         max_output_chord_error: max_output_chord_error.clone(),
-                        certified_pre_regularization_boundary_error: fallback_report
+                        certified_pre_regularization_boundary_error: fallback_evidence
                             .used_exact_native_fast_path()
                             .then(Real::zero),
-                        final_boundary_hausdorff_certified: fallback_report
+                        final_boundary_hausdorff_certified: fallback_evidence
                             .used_exact_native_fast_path(),
-                        loop_reports: Vec::new(),
-                        fallback_report: Some(fallback_report),
+                        loop_evidence: Vec::new(),
+                        fallback_evidence: Some(fallback_evidence),
                     },
                 },
             ))
@@ -2074,7 +2075,7 @@ impl CurveRegion2 {
         contours: Vec<Contour2>,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<Classification<Self>> {
-        Self::try_from_native_boundary_contours_with_report(contours, policy)
+        Self::try_from_native_boundary_contours_with_evidence(contours, policy)
             .map(CurveRegionBoundaryContourBuildResult2::into_region_classification)
     }
 
@@ -2086,24 +2087,24 @@ impl CurveRegion2 {
         Self::try_from_native_boundary_contours(contours.to_vec(), policy)
     }
 
-    /// Nests native contours with report evidence and returns unified topology.
+    /// Nests native contours with evidence evidence and returns unified topology.
     ///
     /// The specialized line/arc engine performs intersection validation,
     /// containment-depth assignment, and material/hole binning. Any decided
     /// output is immediately promoted to `CurveRegion2`; callers never need to
     /// own or inspect the transient [`LineArcRegion2`] result.
-    pub(crate) fn try_from_native_boundary_contours_with_report(
+    pub(crate) fn try_from_native_boundary_contours_with_evidence(
         contours: Vec<Contour2>,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<CurveRegionBoundaryContourBuildResult2> {
-        let built = LineArcRegion2::from_boundary_contours_with_report(contours, policy)
+        let built = LineArcRegion2::from_boundary_contours_with_evidence(contours, policy)
             .map_err(curve_region_promotion_error)?;
-        let (region, report) = built.into_parts();
+        let (region, evidence) = built.into_parts();
         let region = region
             .as_ref()
             .map(|region| Self::try_from_line_arc_region(region, policy))
             .transpose()?;
-        Ok(CurveRegionBoundaryContourBuildResult2 { region, report })
+        Ok(CurveRegionBoundaryContourBuildResult2 { region, evidence })
     }
 
     /// Constructs unified filled topology from one possibly self-intersecting
@@ -2136,8 +2137,8 @@ impl CurveRegion2 {
     /// Material and hole roles come from the source region rather than being
     /// inferred again from loop nesting or authored orientation. The original
     /// native region is retained as the certified line/arc fast path, preserving
-    /// its contour fill rules and prepared-query behavior while callers migrate
-    /// to the canonical mixed-family API.
+    /// its contour fill rules and query behavior in the canonical mixed-family
+    /// API.
     #[doc(hidden)]
     pub fn try_from_line_arc_region(
         region: &LineArcRegion2,
@@ -2415,11 +2416,11 @@ impl CurveRegion2 {
             }
         }
 
-        match self.curved_nesting_role_report(policy)? {
-            Classification::Decided(report) => {
+        match self.curved_nesting_role_evidence(policy)? {
+            Classification::Decided(evidence) => {
                 return filled_sides_from_roles_and_areas(
-                    report.roles(),
-                    report.signed_areas(),
+                    evidence.roles(),
+                    evidence.signed_areas(),
                     policy,
                 )
                 .map(|sides| Classification::Decided(Rc::from(sides)));
@@ -2428,16 +2429,16 @@ impl CurveRegion2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
 
-        match self.line_image_role_report(policy)? {
-            Classification::Decided(report) => {
-                let mut areas = Vec::with_capacity(report.contours().len());
-                for contour in report.contours() {
+        match self.line_image_role_evidence(policy)? {
+            Classification::Decided(evidence) => {
+                let mut areas = Vec::with_capacity(evidence.contours().len());
+                for contour in evidence.contours() {
                     let Some(area) = contour.signed_area()? else {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                     };
                     areas.push(area);
                 }
-                filled_sides_from_roles_and_areas(report.roles(), &areas, policy)
+                filled_sides_from_roles_and_areas(evidence.roles(), &areas, policy)
                     .map(|sides| Classification::Decided(Rc::from(sides)))
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
@@ -2548,10 +2549,10 @@ impl CurveRegion2 {
     /// decisions.  It rejects conics, nonlinear Bezier arcs, algebraic
     /// endpoint-image carriers without exact rational endpoints, unresolved
     /// fragments, boundary-touching loops, and uncertain predicate signs.
-    pub fn line_image_role_report(
+    pub fn line_image_role_evidence(
         &self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<CurveRegionLineRoleReport2>> {
+    ) -> CurveResult<Classification<CurveRegionLineRoleEvidence2>> {
         let mut contours = Vec::with_capacity(self.boundary_loops.len());
         let mut materialized_fragment_count = 0_usize;
         let mut algebraic_fragment_count = 0_usize;
@@ -2569,7 +2570,7 @@ impl CurveRegion2 {
             Classification::Decided(roles) => roles,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let report = CurveRegionLineRoleReport2::new(
+        let evidence = CurveRegionLineRoleEvidence2::new(
             roles.roles,
             roles.nesting_depths,
             materialized_fragment_count,
@@ -2577,7 +2578,7 @@ impl CurveRegion2 {
             contours,
         )?
         .with_loop_arrangement_sources(retained_loop_arrangement_sources(&self.boundary_loops))?;
-        Ok(Classification::Decided(report))
+        Ok(Classification::Decided(evidence))
     }
 
     /// Assigns material/hole roles from exact native loop signed-area orientation.
@@ -2585,13 +2586,13 @@ impl CurveRegion2 {
     /// A negative signed area is treated as a material loop and a positive
     /// signed area as a hole loop, matching the current Bezier region boundary
     /// convention used by [`BezierRegion2::signed_area`].  This method is a
-    /// report-bearing orientation adapter: it does not infer nesting and it
-    /// does not sample nonlinear loops.  Use [`Self::line_image_role_report`]
+    /// evidence-bearing orientation adapter: it does not infer nesting and it
+    /// does not sample nonlinear loops.  Use [`Self::line_image_role_evidence`]
     /// when exact line-image nesting is required.
-    pub fn signed_area_role_report(
+    pub fn signed_area_role_evidence(
         &self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<CurveRegionSignedAreaRoleReport2>> {
+    ) -> CurveResult<Classification<CurveRegionSignedAreaRoleEvidence2>> {
         let mut roles = Vec::with_capacity(self.boundary_loops.len());
         let mut signed_areas = Vec::with_capacity(self.boundary_loops.len());
         for boundary_loop in &self.boundary_loops {
@@ -2609,12 +2610,12 @@ impl CurveRegion2 {
             roles.push(role);
             signed_areas.push(area);
         }
-        let report = CurveRegionSignedAreaRoleReport2::new(roles, signed_areas)?
+        let evidence = CurveRegionSignedAreaRoleEvidence2::new(roles, signed_areas)?
             .with_loop_fragment_counts(retained_loop_fragment_counts(&self.boundary_loops))?
             .with_loop_arrangement_sources(retained_loop_arrangement_sources(
                 &self.boundary_loops,
             ))?;
-        Ok(Classification::Decided(report))
+        Ok(Classification::Decided(evidence))
     }
 
     /// Assigns material/hole roles by exact curved-loop nesting.
@@ -2624,10 +2625,10 @@ impl CurveRegion2 {
     /// loops; role parity comes from exact containment depth. This makes
     /// same-orientation nested nonlinear loops classify as material/hole by
     /// topology instead of by their authored orientation.
-    pub fn curved_nesting_role_report(
+    pub fn curved_nesting_role_evidence(
         &self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<CurveRegionNestingRoleReport2>> {
+    ) -> CurveResult<Classification<CurveRegionNestingRoleEvidence2>> {
         let Some(native_loops) = self.native_boundary_loops() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -2688,20 +2689,22 @@ impl CurveRegion2 {
             });
         }
 
-        let report =
-            CurveRegionNestingRoleReport2::new(roles, nesting_depths, signed_areas, sample_points)?
-                .with_loop_fragment_counts(retained_loop_fragment_counts(&self.boundary_loops))?
-                .with_loop_arrangement_sources(retained_loop_arrangement_sources(
-                    &self.boundary_loops,
-                ))?;
-        Ok(Classification::Decided(report))
+        let evidence = CurveRegionNestingRoleEvidence2::new(
+            roles,
+            nesting_depths,
+            signed_areas,
+            sample_points,
+        )?
+        .with_loop_fragment_counts(retained_loop_fragment_counts(&self.boundary_loops))?
+        .with_loop_arrangement_sources(retained_loop_arrangement_sources(&self.boundary_loops))?;
+        Ok(Classification::Decided(evidence))
     }
 
     /// Returns one exact material/hole role per retained loop.
     ///
     /// The strongest curved nesting classifier is preferred. Exact signed-area
     /// orientation and line-image nesting are retained fallbacks for carrier
-    /// subsets that do not support the full curved report.
+    /// subsets that do not support the full curved evidence.
     pub fn loop_roles(
         &self,
         policy: &CurvePolicy,
@@ -2709,20 +2712,20 @@ impl CurveRegion2 {
         if let Some(roles) = &self.certified_loop_roles {
             return Ok(Classification::Decided(roles.to_vec()));
         }
-        match self.curved_nesting_role_report(policy)? {
-            Classification::Decided(report) => {
-                return Ok(Classification::Decided(report.roles().to_vec()));
+        match self.curved_nesting_role_evidence(policy)? {
+            Classification::Decided(evidence) => {
+                return Ok(Classification::Decided(evidence.roles().to_vec()));
             }
             Classification::Uncertain(_) => {}
         }
-        match self.signed_area_role_report(policy)? {
-            Classification::Decided(report) => {
-                return Ok(Classification::Decided(report.roles().to_vec()));
+        match self.signed_area_role_evidence(policy)? {
+            Classification::Decided(evidence) => {
+                return Ok(Classification::Decided(evidence.roles().to_vec()));
             }
             Classification::Uncertain(_) => {}
         }
-        self.line_image_role_report(policy)
-            .map(|roles| roles.map(|report| report.roles().to_vec()))
+        self.line_image_role_evidence(policy)
+            .map(|roles| roles.map(|evidence| evidence.roles().to_vec()))
     }
 
     /// Returns the number of material and hole loops in authoritative topology.
@@ -2893,16 +2896,13 @@ impl CurveRegion2 {
         self.signed_area_cache.get().is_some()
     }
 
-    /// Prepares this region for repeated exact point classification.
+    /// Builds a borrowed query for repeated exact point classification.
     ///
-    /// Preparation eagerly retains native loop bounds and algebraic source
+    /// Query construction eagerly retains native loop bounds and algebraic source
     /// evaluators. When all authoritative topology is already available as a
     /// native line/arc [`LineArcRegion2`], it additionally builds that carrier's
-    /// prepared winding and broad-phase indexes.
-    pub fn prepare_point_classifier(
-        &self,
-        policy: &CurvePolicy,
-    ) -> CurveResult<PreparedCurveRegionView2<'_>> {
+    /// retained winding and broad-phase indexes.
+    pub fn query(&self, policy: &CurvePolicy) -> CurveResult<CurveRegionQuery2<'_>> {
         let _ = self.native_boundary_loops();
         let _ = self.native_boundary_bounds(policy);
         let _ = self.retained_rational_evaluators()?;
@@ -2919,9 +2919,9 @@ impl CurveRegion2 {
                     Classification::Uncertain(_) => {}
                 }
             } else {
-                match self.line_image_role_report(policy)? {
-                    Classification::Decided(report) => {
-                        let region = self.region_from_line_role_report(&report)?;
+                match self.line_image_role_evidence(policy)? {
+                    Classification::Decided(evidence) => {
+                        let region = self.region_from_line_role_evidence(&evidence)?;
                         let _ = self.line_image_region.set(Some(region));
                     }
                     Classification::Uncertain(UncertaintyReason::Unsupported) => {
@@ -2935,26 +2935,19 @@ impl CurveRegion2 {
             .line_image_region
             .get()
             .and_then(Option::as_ref)
-            .map(|region| region.prepare_point_classifier(policy));
-        Ok(PreparedCurveRegionView2 {
+            .map(|region| region.query(policy));
+        Ok(CurveRegionQuery2 {
             region: self,
             native_fast_path,
         })
     }
 
     /// Returns the certified internal line/arc accelerator when this region has one.
-    ///
-    /// This low-level compatibility adapter is hidden from generated public
-    /// documentation; [`CurveRegion2`] remains the sole general region carrier.
-    /// Higher-order boundaries return `Uncertain(Unsupported)` rather than
-    /// being segmented or discarded. Prefer [`Self::native_contours_fast_path`]
-    /// when the accelerator's concrete ownership type is unnecessary.
-    #[doc(hidden)]
-    pub fn line_arc_region_fast_path(
+    pub(crate) fn native_line_arc_region(
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<&LineArcRegion2>> {
-        let _ = self.prepare_point_classifier(policy)?;
+        let _ = self.query(policy)?;
         Ok(
             match self.line_image_region.get().and_then(Option::as_ref) {
                 Some(region) => Classification::Decided(region),
@@ -2965,14 +2958,14 @@ impl CurveRegion2 {
 
     /// Returns borrowed native line/arc contours without exposing `LineArcRegion2` ownership.
     ///
-    /// This is the preferred compatibility and acceleration boundary for
-    /// consumers that genuinely need native primitives. Higher-order topology
+    /// This is the public acceleration boundary for consumers that genuinely
+    /// need native primitives. Higher-order topology
     /// remains explicit `Unsupported` uncertainty and is never segmented.
     pub fn native_contours_fast_path(
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<CurveRegionNativeContourView2<'_>>> {
-        self.line_arc_region_fast_path(policy).map(|native| {
+        self.native_line_arc_region(policy).map(|native| {
             native.map(|native| CurveRegionNativeContourView2 {
                 material_contours: native.material_contours(),
                 hole_contours: native.hole_contours(),
@@ -3213,7 +3206,7 @@ impl CurveRegion2 {
 
         let mut material = Vec::new();
         let mut holes = Vec::new();
-        let mut loop_reports = Vec::with_capacity(paths.len());
+        let mut loop_evidence = Vec::with_capacity(paths.len());
         for ((path, role), fill_rule) in paths.iter().zip(roles).zip(fill_rules) {
             let segmented = match path.segment_certified(options, policy)? {
                 Classification::Decided(segmented) => segmented,
@@ -3231,7 +3224,7 @@ impl CurveRegion2 {
             }
             let contour = Contour2::try_new_with_fill_rule(segments, fill_rule)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Subdivision, cause))?;
-            loop_reports.push(CurveRegionSegmentationLoopReport2 {
+            loop_evidence.push(CurveRegionSegmentationLoopEvidence2 {
                 role,
                 fill_rule,
                 source_curve_count: path.curves().len(),
@@ -3249,9 +3242,9 @@ impl CurveRegion2 {
         Ok(Classification::Decided(
             CurveRegionCertifiedSegmentationResult2 {
                 region,
-                report: CurveRegionCertifiedSegmentationReport2 {
+                evidence: CurveRegionCertifiedSegmentationEvidence2 {
                     max_source_chord_error: options.max_error().clone(),
-                    loop_reports,
+                    loop_evidence,
                     lossy_boundary: true,
                 },
             },
@@ -3291,7 +3284,7 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
             }
         };
-        self.prepare_point_classifier(policy)
+        self.query(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
         let Some(region) = self.line_image_region.get().and_then(Option::as_ref) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -3511,11 +3504,11 @@ impl CurveRegion2 {
     /// Offsets arbitrary materialized curve families through certified exact-scalar segmentation.
     ///
     /// Native line/arc topology first uses [`Self::offset`] with no loss. When
-    /// that exact fast path reports `Unsupported`, each retained Bezier or
+    /// that exact fast path evidence `Unsupported`, each retained Bezier or
     /// rational span is subdivided until its control hull certifies the
     /// requested source-curve chord error. The emitted vertices remain
     /// [`Real`] values, and the resulting line topology is offset and
-    /// regularized by the exact native kernel. The report explicitly marks
+    /// regularized by the exact native kernel. The evidence explicitly marks
     /// this as a lossy boundary: the certificate bounds source-to-chord error,
     /// not Hausdorff error of the final parallel curve.
     pub fn offset_with_certified_segmentation(
@@ -3528,10 +3521,10 @@ impl CurveRegion2 {
             Classification::Decided(region) => {
                 return Ok(Classification::Decided(CurveRegionSegmentedOffsetResult2 {
                     region,
-                    report: CurveRegionSegmentedOffsetReport2 {
+                    evidence: CurveRegionSegmentedOffsetEvidence2 {
                         used_exact_native_fast_path: true,
                         max_source_chord_error: options.max_error().clone(),
-                        loop_reports: Vec::new(),
+                        loop_evidence: Vec::new(),
                         lossy_boundary: false,
                     },
                 }));
@@ -3548,7 +3541,7 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let (segmented_source, segmentation_report) = segmented.into_parts();
+        let (segmented_source, segmentation_evidence) = segmented.into_parts();
         let region = match segmented_source.offset(distance, policy)? {
             Classification::Decided(region) => region,
             Classification::Uncertain(reason) => {
@@ -3557,11 +3550,11 @@ impl CurveRegion2 {
         };
         Ok(Classification::Decided(CurveRegionSegmentedOffsetResult2 {
             region,
-            report: CurveRegionSegmentedOffsetReport2 {
+            evidence: CurveRegionSegmentedOffsetEvidence2 {
                 used_exact_native_fast_path: false,
-                max_source_chord_error: segmentation_report.max_source_chord_error,
-                loop_reports: segmentation_report.loop_reports,
-                lossy_boundary: segmentation_report.lossy_boundary,
+                max_source_chord_error: segmentation_evidence.max_source_chord_error,
+                loop_evidence: segmentation_evidence.loop_evidence,
+                lossy_boundary: segmentation_evidence.lossy_boundary,
             },
         }))
     }
@@ -3592,7 +3585,7 @@ impl CurveRegion2 {
                 return Ok(Classification::Decided(
                     CurveRegionCertifiedParallelOffsetResult2 {
                         region,
-                        report: CurveRegionCertifiedParallelOffsetReport2 {
+                        evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
                             used_exact_native_fast_path: true,
                             used_certified_parallel_path: false,
                             used_segmented_source_fallback: false,
@@ -3600,8 +3593,8 @@ impl CurveRegion2 {
                             max_output_chord_error: Real::zero(),
                             certified_pre_regularization_boundary_error: Some(Real::zero()),
                             final_boundary_hausdorff_certified: true,
-                            loop_reports: Vec::new(),
-                            fallback_report: None,
+                            loop_evidence: Vec::new(),
+                            fallback_evidence: None,
                         },
                     },
                 ));
@@ -3652,7 +3645,7 @@ impl CurveRegion2 {
         }
 
         let mut parallel_paths = Vec::with_capacity(paths.len());
-        let mut loop_reports = Vec::with_capacity(paths.len());
+        let mut loop_evidence = Vec::with_capacity(paths.len());
         let mut needs_fallback = false;
         for (((path, role), filled_side_is_left), fill_rule) in paths
             .iter()
@@ -3681,7 +3674,7 @@ impl CurveRegion2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            loop_reports.push(CurveRegionCertifiedParallelLoopReport2 {
+            loop_evidence.push(CurveRegionCertifiedParallelLoopEvidence2 {
                 role: *role,
                 fill_rule: *fill_rule,
                 signed_left_distance,
@@ -3764,7 +3757,7 @@ impl CurveRegion2 {
         Ok(Classification::Decided(
             CurveRegionCertifiedParallelOffsetResult2 {
                 region,
-                report: CurveRegionCertifiedParallelOffsetReport2 {
+                evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
                     used_exact_native_fast_path: false,
                     used_certified_parallel_path: true,
                     used_segmented_source_fallback: false,
@@ -3774,8 +3767,8 @@ impl CurveRegion2 {
                         certified_pre_regularization_boundary_error,
                     ),
                     final_boundary_hausdorff_certified: false,
-                    loop_reports,
-                    fallback_report: None,
+                    loop_evidence,
+                    fallback_evidence: None,
                 },
             },
         ))
@@ -3793,7 +3786,7 @@ impl CurveRegion2 {
                 CurveError::InvalidCurveRange,
             ));
         }
-        self.prepare_point_classifier(policy)
+        self.query(policy)
             .map_err(|cause| curve_region_edit_error(operation, cause))?;
         let Some(region) = self.line_image_region.get().and_then(Option::as_ref) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -3815,15 +3808,15 @@ impl CurveRegion2 {
         Ok(Classification::Decided((region.clone(), role, ordinal)))
     }
 
-    fn region_from_line_role_report(
+    fn region_from_line_role_evidence(
         &self,
-        report: &CurveRegionLineRoleReport2,
+        evidence: &CurveRegionLineRoleEvidence2,
     ) -> CurveResult<LineArcRegion2> {
         let roles = self
             .certified_loop_roles
             .as_deref()
-            .unwrap_or_else(|| report.roles());
-        self.region_from_line_contours(report.contours(), roles)
+            .unwrap_or_else(|| evidence.roles());
+        self.region_from_line_contours(evidence.contours(), roles)
     }
 
     fn certified_line_image_region(
@@ -3936,9 +3929,9 @@ impl CurveRegion2 {
                     ),
                 };
             }
-            return match self.line_image_role_report(policy)? {
-                Classification::Decided(report) => {
-                    let region = self.region_from_line_role_report(&report)?;
+            return match self.line_image_role_evidence(policy)? {
+                Classification::Decided(evidence) => {
+                    let region = self.region_from_line_role_evidence(&evidence)?;
                     let _ = self.line_image_region.set(Some(region));
                     Ok(self
                         .line_image_region
@@ -4039,8 +4032,7 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<i32>> {
-        self.prepare_point_classifier(policy)?
-            .signed_depth(point, policy)
+        self.query(policy)?.signed_depth(point, policy)
     }
 
     fn signed_depth_after_preparation(
@@ -4397,22 +4389,22 @@ fn materialized_boundary_loop_is_simple(
             return Ok(Classification::Uncertain(blocker.reason()));
         }
     };
-    let prepared = match path.try_prepare_intersection(&path, policy) {
+    let prepared = match path.retain_intersection(&path, policy) {
         Ok(prepared) => prepared,
         Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
         Err(ExactCurveError::Blocked(blocker)) => {
             return Ok(Classification::Uncertain(blocker.reason()));
         }
     };
-    let report = match prepared.report_view() {
-        Ok(report) => report,
+    let evidence = match prepared.result_view() {
+        Ok(evidence) => evidence,
         Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
         Err(ExactCurveError::Blocked(blocker)) => {
             return Ok(Classification::Uncertain(blocker.reason()));
         }
     };
 
-    if let Some(blocker) = report
+    if let Some(blocker) = evidence
         .blockers()
         .iter()
         .find(|blocker| blocker.first_curve_index() < blocker.second_curve_index())
@@ -4426,14 +4418,14 @@ fn materialized_boundary_loop_is_simple(
         };
         return Ok(Classification::Uncertain(reason));
     }
-    if report
+    if evidence
         .overlaps()
         .iter()
         .any(|overlap| overlap.first_curve_index() < overlap.second_curve_index())
     {
         return Ok(Classification::Decided(false));
     }
-    for contact in report
+    for contact in evidence
         .contacts()
         .iter()
         .filter(|contact| contact.first_curve_index() < contact.second_curve_index())
@@ -4720,14 +4712,14 @@ fn validate_loop_fragment_counts(
     loop_count: usize,
     loop_fragment_counts: &[usize],
 ) -> CurveResult<()> {
-    validate_report_length(
+    validate_evidence_length(
         loop_count,
         "loop fragment count",
         loop_fragment_counts.len(),
     )?;
     if loop_fragment_counts.contains(&0) {
         return Err(CurveError::Topology(
-            "retained role report loop fragment counts must be nonzero".into(),
+            "retained role evidence loop fragment counts must be nonzero".into(),
         ));
     }
     Ok(())
@@ -4737,14 +4729,14 @@ fn validate_loop_arrangement_sources(
     loop_count: usize,
     loop_arrangement_sources: &[Option<Vec<CurveRegionFragmentSource2>>],
 ) -> CurveResult<()> {
-    validate_report_length(
+    validate_evidence_length(
         loop_count,
         "loop arrangement source",
         loop_arrangement_sources.len(),
     )?;
     if loop_arrangement_sources.iter().flatten().any(Vec::is_empty) {
         return Err(CurveError::Topology(
-            "retained role report present loop arrangement sources must be nonempty".into(),
+            "retained role evidence present loop arrangement sources must be nonempty".into(),
         ));
     }
     let indices = loop_arrangement_sources
@@ -4758,7 +4750,7 @@ fn validate_loop_arrangement_sources(
         .collect::<Vec<_>>();
     validate_unique_arrangement_source_indices(
         indices,
-        "retained role report loop arrangement sources must not reuse arrangement fragments",
+        "retained role evidence loop arrangement sources must not reuse arrangement fragments",
     )
 }
 
@@ -4769,7 +4761,7 @@ fn validate_counted_loop_arrangement_source_counts(
     let Some(loop_fragment_counts) = loop_fragment_counts else {
         if loop_arrangement_sources.iter().any(Option::is_some) {
             return Err(CurveError::Topology(
-                "retained role report present loop arrangement sources require loop fragment count evidence"
+                "retained role evidence present loop arrangement sources require loop fragment count evidence"
                     .into(),
             ));
         }
@@ -4781,7 +4773,8 @@ fn validate_counted_loop_arrangement_source_counts(
             && sources.len() != *fragment_count
         {
             return Err(CurveError::Topology(
-                "retained role report loop source count does not match loop fragment count".into(),
+                "retained role evidence loop source count does not match loop fragment count"
+                    .into(),
             ));
         }
     }
@@ -4799,19 +4792,19 @@ fn validate_unique_arrangement_source_indices(
     Ok(())
 }
 
-fn validate_report_length(
+fn validate_evidence_length(
     loop_count: usize,
     evidence_name: &str,
     evidence_count: usize,
 ) -> CurveResult<()> {
     if loop_count == 0 {
         return Err(CurveError::Topology(
-            "retained role report must carry at least one loop".into(),
+            "retained role evidence must carry at least one loop".into(),
         ));
     }
     if loop_count != evidence_count {
         return Err(CurveError::Topology(format!(
-            "retained role report {evidence_name} count does not match loop count"
+            "retained role evidence {evidence_name} count does not match loop count"
         )));
     }
     Ok(())
@@ -4829,7 +4822,7 @@ fn validate_nesting_depth_roles(
         };
         if *role != expected {
             return Err(CurveError::Topology(
-                "retained nesting role report role does not match certified nesting depth".into(),
+                "retained nesting role evidence role does not match certified nesting depth".into(),
             ));
         }
     }
@@ -4847,14 +4840,15 @@ fn validate_signed_area_roles(
             Some(RealSign::Positive) => CurveRegionLoopRole::Hole,
             Some(RealSign::Zero) | None => {
                 return Err(CurveError::Topology(
-                    "retained signed-area role report must carry certified nonzero area evidence"
+                    "retained signed-area role evidence must carry certified nonzero area evidence"
                         .into(),
                 ));
             }
         };
         if *role != expected {
             return Err(CurveError::Topology(
-                "retained signed-area role report role does not match signed-area evidence".into(),
+                "retained signed-area role evidence role does not match signed-area evidence"
+                    .into(),
             ));
         }
     }
@@ -4868,7 +4862,7 @@ fn validate_nonzero_signed_area_evidence(signed_areas: &[Real]) -> CurveResult<(
             Some(RealSign::Positive | RealSign::Negative) => {}
             Some(RealSign::Zero) | None => {
                 return Err(CurveError::Topology(
-                    "retained curved nesting role report must carry certified nonzero signed-area evidence"
+                    "retained curved nesting role evidence must carry certified nonzero signed-area evidence"
                         .into(),
                 ));
             }
@@ -4877,7 +4871,7 @@ fn validate_nonzero_signed_area_evidence(signed_areas: &[Real]) -> CurveResult<(
     Ok(())
 }
 
-fn validate_line_role_report_fragment_counts(
+fn validate_line_role_evidence_fragment_counts(
     materialized_fragment_count: usize,
     algebraic_fragment_count: usize,
     contours: &[Contour2],
@@ -4886,7 +4880,7 @@ fn validate_line_role_report_fragment_counts(
         .checked_add(algebraic_fragment_count)
         .ok_or_else(|| {
             CurveError::Topology(
-                "retained line role report source fragment count overflowed".into(),
+                "retained line role evidence source fragment count overflowed".into(),
             )
         })?;
     let contour_fragment_count = contours
@@ -4894,12 +4888,12 @@ fn validate_line_role_report_fragment_counts(
         .try_fold(0_usize, |count, contour| count.checked_add(contour.len()))
         .ok_or_else(|| {
             CurveError::Topology(
-                "retained line role report contour fragment count overflowed".into(),
+                "retained line role evidence contour fragment count overflowed".into(),
             )
         })?;
     if source_fragment_count != contour_fragment_count {
         return Err(CurveError::Topology(
-            "retained line role report source fragment count does not match line contour evidence"
+            "retained line role evidence source fragment count does not match line contour evidence"
                 .into(),
         ));
     }
@@ -4915,7 +4909,7 @@ fn validate_line_loop_arrangement_source_counts(
             && sources.len() != contour.len()
         {
             return Err(CurveError::Topology(
-                "retained line role report loop source count does not match contour fragment count"
+                "retained line role evidence loop source count does not match contour fragment count"
                     .into(),
             ));
         }

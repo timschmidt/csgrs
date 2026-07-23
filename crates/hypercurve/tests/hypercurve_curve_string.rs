@@ -1,8 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringEndpoint2, CurveStringTrimPoint2, LineArcIntersection, LineArcOrder, LineArcRegion2,
-    LineSeg2, Point2, Real, Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts,
-    UncertaintyReason,
+    LineSeg2, Point2, Real, Segment2, SegmentIntersection, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -96,32 +95,19 @@ fn curve_string_endpoint_connection_classifies_exactly() {
     );
 }
 #[test]
-fn prepared_curve_string_reports_cached_segment_box_counts() {
+fn prepared_curve_string_evidence_cached_segment_box_counts() {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 2, 0),
         line_segment(2, 0, 2, 3),
         line_segment(2, 3, 5, 3),
     ])
     .unwrap();
-    let prepared = curve.prepare_topology_queries(&policy());
+    let prepared = curve.query(&policy());
 
-    assert_eq!(prepared.prepared_segment_count(), 3);
+    assert_eq!(prepared.segment_count(), 3);
+    assert_eq!(prepared.segment_count(), prepared.segment_boxes().len());
     assert_eq!(
-        prepared.prepared_segment_count(),
-        prepared.segment_boxes().len()
-    );
-    assert_eq!(
-        prepared.prepared_segment_count(),
-        prepared.prepared_segments().len()
-    );
-    assert!(
-        prepared
-            .prepared_segments()
-            .iter()
-            .all(|segment| segment.segment_kind() == SegmentKind::Line)
-    );
-    assert_eq!(
-        prepared.prepared_segment_kind_counts(),
+        prepared.segment_kind_counts(),
         SegmentKindCounts { lines: 3, arcs: 0 }
     );
     assert_eq!(prepared.decided_segment_box_count(), 3);
@@ -130,7 +116,7 @@ fn prepared_curve_string_reports_cached_segment_box_counts() {
 }
 
 #[test]
-fn prepared_contour_reports_cached_segment_box_counts() {
+fn prepared_contour_evidence_cached_segment_box_counts() {
     let contour = Contour2::from_bulge_vertices(&[
         BulgeVertex2::new(p(0, 0), s(0)),
         BulgeVertex2::new(p(4, 0), s(0)),
@@ -138,25 +124,12 @@ fn prepared_contour_reports_cached_segment_box_counts() {
         BulgeVertex2::new(p(0, 3), s(0)),
     ])
     .unwrap();
-    let prepared = contour.prepare_topology_queries(&policy());
+    let prepared = contour.query(&policy());
 
-    assert_eq!(prepared.prepared_segment_count(), 4);
+    assert_eq!(prepared.segment_count(), 4);
+    assert_eq!(prepared.segment_count(), prepared.segment_boxes().len());
     assert_eq!(
-        prepared.prepared_segment_count(),
-        prepared.segment_boxes().len()
-    );
-    assert_eq!(
-        prepared.prepared_segment_count(),
-        prepared.prepared_segments().len()
-    );
-    assert!(
-        prepared
-            .prepared_segments()
-            .iter()
-            .all(|segment| segment.segment_kind() == SegmentKind::Line)
-    );
-    assert_eq!(
-        prepared.prepared_segment_kind_counts(),
+        prepared.segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
     assert_eq!(prepared.decided_segment_box_count(), 4);
@@ -274,7 +247,7 @@ fn curve_string_remove_adjacent_reversed_duplicates_handles_mixed_segment_kinds(
 }
 
 #[test]
-fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_as_boundary() {
+fn curve_string_remove_adjacent_reversed_duplicates_evidence_empty_output_as_boundary() {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 1, 0),
         line_segment(1, 0, 2, 0),
@@ -361,7 +334,7 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
 }
 
 #[test]
-fn curve_string_ordered_link_reports_disconnected_step() {
+fn curve_string_ordered_link_evidence_disconnected_step() {
     let curves = vec![
         CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap(),
         CurveString2::try_new(vec![line_segment(2, 0, 3, 0)]).unwrap(),
@@ -391,7 +364,7 @@ fn curve_string_connect_materializes_connector_and_preserves_geometry() {
 }
 
 #[test]
-fn curve_string_connect_nearest_endpoints_reports_tie_boundary() {
+fn curve_string_connect_nearest_endpoints_evidence_tie_boundary() {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 2, 0)]).unwrap();
     let second = CurveString2::try_new(vec![line_segment(1, 3, 1, 5)]).unwrap();
     assert_eq!(
@@ -456,7 +429,7 @@ fn curve_string_extend_line_start_to_exact_target() {
 }
 
 #[test]
-fn curve_string_extend_line_reports_interior_target_boundary() {
+fn curve_string_extend_line_evidence_interior_target_boundary() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
     assert_eq!(
         curve
@@ -467,7 +440,7 @@ fn curve_string_extend_line_reports_interior_target_boundary() {
 }
 
 #[test]
-fn curve_string_extend_line_reports_off_support_boundary() {
+fn curve_string_extend_line_evidence_off_support_boundary() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
     assert_eq!(
         curve
@@ -477,7 +450,7 @@ fn curve_string_extend_line_reports_off_support_boundary() {
     );
 }
 #[test]
-fn curve_string_extend_arc_endpoint_reports_off_circle_boundary() {
+fn curve_string_extend_arc_endpoint_evidence_off_circle_boundary() {
     let curve = CurveString2::try_new(vec![Segment2::Arc(
         CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
     )])
@@ -504,7 +477,7 @@ fn curve_string_extend_arc_endpoint_blocks_existing_arc_point() {
     );
 }
 #[test]
-fn curve_string_chamfer_vertex_by_points_reports_off_segment_boundary() {
+fn curve_string_chamfer_vertex_by_points_evidence_off_segment_boundary() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
@@ -517,7 +490,7 @@ fn curve_string_chamfer_vertex_by_points_reports_off_segment_boundary() {
 }
 
 #[test]
-fn curve_string_chamfer_vertex_reports_boundary_parameters() {
+fn curve_string_chamfer_vertex_evidence_boundary_parameters() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
@@ -669,7 +642,7 @@ fn curve_string_fillet_arc_arc_vertex_certifies_distinct_circle_tangents() {
 }
 
 #[test]
-fn curve_string_fillet_reports_radius_mismatch_boundary() {
+fn curve_string_fillet_evidence_radius_mismatch_boundary() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
@@ -682,7 +655,7 @@ fn curve_string_fillet_reports_radius_mismatch_boundary() {
 }
 
 #[test]
-fn curve_string_fillet_reports_wrong_orientation_boundary() {
+fn curve_string_fillet_evidence_wrong_orientation_boundary() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
@@ -695,7 +668,7 @@ fn curve_string_fillet_reports_wrong_orientation_boundary() {
 }
 
 #[test]
-fn curve_string_fillet_reports_boundary_parameters() {
+fn curve_string_fillet_evidence_boundary_parameters() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
@@ -945,7 +918,7 @@ fn curve_string_trim_between_points_accepts_shared_vertex_once() {
 }
 
 #[test]
-fn curve_string_trim_between_points_reports_repeated_nonadjacent_point_boundary() {
+fn curve_string_trim_between_points_evidence_repeated_nonadjacent_point_boundary() {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 1, 0),
         line_segment(1, 0, 0, 0),
@@ -961,7 +934,7 @@ fn curve_string_trim_between_points_reports_repeated_nonadjacent_point_boundary(
     );
 }
 #[test]
-fn curve_string_trim_between_curve_intersections_reports_ambiguous_cutter_hits() {
+fn curve_string_trim_between_curve_intersections_evidence_ambiguous_cutter_hits() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)]).unwrap();
     let ambiguous_cutter = CurveString2::try_new(vec![
         line_segment(2, -1, 2, 1),
@@ -980,7 +953,7 @@ fn curve_string_trim_between_curve_intersections_reports_ambiguous_cutter_hits()
 }
 
 #[test]
-fn curve_string_trim_between_curve_intersections_reports_overlap_blocker() {
+fn curve_string_trim_between_curve_intersections_evidence_overlap_blocker() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)]).unwrap();
     let overlapping_cutter = CurveString2::try_new(vec![line_segment(2, 0, 4, 0)]).unwrap();
     let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)]).unwrap();
@@ -1029,7 +1002,7 @@ fn curve_string_trim_inside_region_respects_holes() {
 }
 
 #[test]
-fn curve_string_trim_inside_region_reports_boundary_overlap_blocker() {
+fn curve_string_trim_inside_region_evidence_boundary_overlap_blocker() {
     let region = rectangle_region(0, 0, 4, 4);
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
 
@@ -1044,8 +1017,8 @@ fn prepared_curve_string_intersections_match_plain_sparse_scan() {
     let curve = sparse_zigzag(80);
     let cutter = CurveString2::try_new(vec![line_segment(121, -2, 121, 3)]).unwrap();
     let policy = policy();
-    let prepared_curve = curve.prepare_topology_queries(&policy);
-    let prepared_cutter = cutter.prepare_topology_queries(&policy);
+    let prepared_curve = curve.query(&policy);
+    let prepared_cutter = cutter.query(&policy);
 
     assert_eq!(prepared_curve.curve_string(), &curve);
     assert!(prepared_curve.curve_box().is_some());
@@ -1053,7 +1026,7 @@ fn prepared_curve_string_intersections_match_plain_sparse_scan() {
 
     let plain_events = curve.intersect_curve_string(&cutter, &policy).unwrap();
     let prepared_events = prepared_curve
-        .intersect_prepared_curve_string(&prepared_cutter, &policy)
+        .intersect_query(&prepared_cutter, &policy)
         .unwrap();
     let mixed_events = prepared_curve
         .intersect_curve_string(&cutter, &policy)
@@ -1071,14 +1044,14 @@ fn prepared_curve_string_intersections_preserve_line_arc_hits() {
     )])
     .unwrap();
     let policy = policy();
-    let prepared_line = line_curve.prepare_topology_queries(&policy);
-    let prepared_arc = arc_curve.prepare_topology_queries(&policy);
+    let prepared_line = line_curve.query(&policy);
+    let prepared_arc = arc_curve.query(&policy);
 
     let plain_events = line_curve
         .intersect_curve_string(&arc_curve, &policy)
         .unwrap();
     let prepared_events = prepared_line
-        .intersect_prepared_curve_string(&prepared_arc, &policy)
+        .intersect_query(&prepared_arc, &policy)
         .unwrap();
 
     assert_eq!(prepared_events, plain_events);
@@ -1095,30 +1068,6 @@ fn prepared_curve_string_intersections_preserve_line_arc_hits() {
 }
 
 #[test]
-fn prepared_segment_pair_intersection_matches_plain_segment_relation() {
-    let line = Segment2::Line(LineSeg2::try_new(p(1, -2), p(1, 2)).unwrap());
-    let arc = Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap());
-    let prepared_line = hypercurve::PreparedSegment2::from_segment(&line);
-    let prepared_arc = hypercurve::PreparedSegment2::from_segment(&arc);
-    let policy = policy();
-
-    let plain = line.intersect_segment(&arc, &policy).unwrap();
-    let prepared = prepared_line
-        .intersect_prepared_segment(&prepared_arc, &policy)
-        .unwrap();
-
-    assert_eq!(prepared, plain);
-    let SegmentIntersection::LineArc {
-        order: LineArcOrder::LineThenArc,
-        result: LineArcIntersection::Point(hit),
-    } = prepared
-    else {
-        panic!("expected prepared line-arc pair to preserve point relation");
-    };
-    assert_eq!(hit.point, p(1, -1));
-}
-
-#[test]
 fn prepared_curve_string_intersections_skip_decided_disjoint_boxes() {
     let first = CurveString2::from_bulge_vertices(&[
         BulgeVertex2::new(p(0, 0), s(0)),
@@ -1131,12 +1080,12 @@ fn prepared_curve_string_intersections_skip_decided_disjoint_boxes() {
     ])
     .unwrap();
     let policy = policy();
-    let prepared_first = first.prepare_topology_queries(&policy);
-    let prepared_second = second.prepare_topology_queries(&policy);
+    let prepared_first = first.query(&policy);
+    let prepared_second = second.query(&policy);
 
     assert!(
         prepared_first
-            .intersect_prepared_curve_string(&prepared_second, &policy)
+            .intersect_query(&prepared_second, &policy)
             .unwrap()
             .is_empty()
     );

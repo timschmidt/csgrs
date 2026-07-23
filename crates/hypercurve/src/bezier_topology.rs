@@ -710,7 +710,7 @@ impl CubicBezier2 {
     /// Classifies graph order against another cubic over a shared monotone axis.
     ///
     /// See [`BezierMonotoneGraphOrder`] for the exactness contract and
-    /// citations. The predicate reports explicit root candidates instead of
+    /// citations. The predicate evidence explicit root candidates instead of
     /// resolving topology through samples.
     pub fn graph_order_to_cubic_over_axis(
         &self,

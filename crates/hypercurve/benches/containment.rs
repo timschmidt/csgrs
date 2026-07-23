@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, ContourPointLocation, CurvePolicy,
-    CurveResult, LineArcRegion2, LineSeg2, LineSide, Point2, Real, RegionPointLocation,
+    BulgeVertex2, Classification, Contour2, ContourPointLocation, CurvePolicy, CurveResult,
+    LineArcRegion2, Point2, Real, RegionPointLocation,
 };
 
 fn s(value: i32) -> Real {
@@ -65,7 +65,7 @@ fn bench_prepared_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
     let contour = rectangle(0, 0, 10, 10);
     let point = p(100, 100);
     let policy = CurvePolicy::certified();
-    let prepared = contour.prepare_topology_queries(&policy);
+    let prepared = contour.query(&policy);
     let started = Instant::now();
     let mut outside_count = 0_usize;
 
@@ -81,56 +81,6 @@ fn bench_prepared_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "prepared_contour_bbox_miss_classify: {iterations} iterations in {elapsed:?} ({:?}/iter), outside={outside_count}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_prepared_line_segment_classify(iterations: u32) -> CurveResult<()> {
-    let line = LineSeg2::try_new(p(0, 0), p(997, 311))?;
-    let prepared = line.prepare_topology_queries();
-    let point = p(401, 971);
-    let policy = CurvePolicy::certified();
-    let started = Instant::now();
-    let mut left_count = 0_usize;
-
-    for _ in 0..iterations {
-        match prepared.classify_point(&point, &policy) {
-            Classification::Decided(LineSide::Left) => {
-                left_count += black_box(1);
-            }
-            other => panic!("prepared line classify benchmark expected left, got {other:?}"),
-        }
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "prepared_line_segment_classify: {iterations} iterations in {elapsed:?} ({:?}/iter), left={left_count}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_prepared_circular_arc_contains(iterations: u32) -> CurveResult<()> {
-    let arc = CircularArc2::from_bulge(p(-100, 0), p(100, 0), s(1))?;
-    let prepared = arc.prepare_topology_queries();
-    let point = p(0, -100);
-    let policy = CurvePolicy::certified();
-    let started = Instant::now();
-    let mut hit_count = 0_usize;
-
-    for _ in 0..iterations {
-        match prepared.contains_point(&point, &policy) {
-            Classification::Decided(true) => {
-                hit_count += black_box(1);
-            }
-            other => panic!("prepared circular arc benchmark expected hit, got {other:?}"),
-        }
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "prepared_circular_arc_contains: {iterations} iterations in {elapsed:?} ({:?}/iter), hits={hit_count}",
         elapsed / iterations
     );
     Ok(())
@@ -164,7 +114,7 @@ fn bench_prepared_sparse_region_outside(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
     let point = p(5_000, 5_000);
     let policy = CurvePolicy::certified();
-    let prepared = region.prepare_point_classifier(&policy);
+    let prepared = region.query(&policy);
     let started = Instant::now();
     let mut outside_count = 0_usize;
 
@@ -236,7 +186,7 @@ fn bench_prepared_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
     let point = p(612, 2);
     let policy = CurvePolicy::certified();
-    let prepared = region.prepare_point_classifier(&policy);
+    let prepared = region.query(&policy);
     let started = Instant::now();
     let mut inside_count = 0_usize;
 
@@ -258,8 +208,6 @@ fn bench_prepared_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
 }
 
 fn main() -> CurveResult<()> {
-    bench_prepared_line_segment_classify(100_000)?;
-    bench_prepared_circular_arc_contains(100_000)?;
     bench_contour_bbox_miss(100_000)?;
     bench_prepared_contour_bbox_miss(100_000)?;
     bench_sparse_region_outside(10_000)?;

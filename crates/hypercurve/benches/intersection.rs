@@ -175,7 +175,7 @@ fn bench_prepared_sparse_curve_self_contacts(
 
     let curve = CurveString2::try_new(segments)?;
     let policy = CurvePolicy::certified();
-    let prepared = curve.prepare_topology_queries(&policy);
+    let prepared = curve.query(&policy);
     let started = Instant::now();
     let mut decided_false_count = 0_usize;
 
@@ -249,13 +249,13 @@ fn bench_prepared_sparse_curve_string_intersections(
     let curve = CurveString2::try_new(segments)?;
     let cutter = CurveString2::try_new(vec![line_segment(p(241, -2), p(241, 3))])?;
     let policy = CurvePolicy::certified();
-    let prepared_curve = curve.prepare_topology_queries(&policy);
-    let prepared_cutter = cutter.prepare_topology_queries(&policy);
+    let prepared_curve = curve.query(&policy);
+    let prepared_cutter = cutter.query(&policy);
     let started = Instant::now();
     let mut total_events = 0_usize;
 
     for _ in 0..iterations {
-        let events = prepared_curve.intersect_prepared_curve_string(&prepared_cutter, &policy)?;
+        let events = prepared_curve.intersect_query(&prepared_cutter, &policy)?;
         if events.len() != 1 {
             panic!("prepared sparse curve-string benchmark expected one segment-pair event");
         }
@@ -307,14 +307,14 @@ fn bench_prepared_sparse_region_events(contour_count: i32, iterations: u32) -> C
     let region = LineArcRegion2::from_material_contours(contours);
     let cutter = LineArcRegion2::from_material_contours(vec![rectangle(12, -1, 18, 5)]);
     let policy = CurvePolicy::certified();
-    let prepared_region = region.prepare_topology_queries(&policy);
-    let prepared_cutter = cutter.prepare_topology_queries(&policy);
+    let prepared_region = region.query(&policy);
+    let prepared_cutter = cutter.query(&policy);
     let started = Instant::now();
     let mut total_pairs = 0_usize;
     let mut total_events = 0_usize;
 
     for _ in 0..iterations {
-        let events = prepared_region.intersect_prepared_region(&prepared_cutter, &policy)?;
+        let events = prepared_region.intersect_query(&prepared_cutter, &policy)?;
         if events.len() != 1 {
             panic!("prepared sparse region benchmark expected one contour-pair event set");
         }

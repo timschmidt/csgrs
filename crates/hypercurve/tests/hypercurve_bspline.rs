@@ -1,10 +1,10 @@
 use hypercurve::{
     Aabb2, BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError,
     CurvePolicy, Point2, PolynomialBSplineCurve2, QuadraticBezier2, RationalBSplineCurve2,
-    RationalBSplineNativeTopologyReport2, RationalBezier2, RationalBezierSpanTopologyPath2,
-    RationalBezierSpanTopologyReport2, RationalQuadraticBSplineCurve2, Real,
-    RetainedBSplineSpanFactReport2, RetainedBSplineSpanFacts2, RetainedSpanAxisMonotonicity,
-    RetainedSpanWeightDomainReport2, RetainedTopologyStatus,
+    RationalBSplineNativeTopologyEvidence2, RationalBezier2, RationalBezierSpanTopologyEvidence2,
+    RationalBezierSpanTopologyPath2, RationalQuadraticBSplineCurve2, Real,
+    RetainedBSplineSpanFactEvidence2, RetainedBSplineSpanFacts2, RetainedSpanAxisMonotonicity,
+    RetainedSpanWeightDomainEvidence2, RetainedTopologyStatus,
 };
 
 fn r(value: i32) -> Real {
@@ -34,7 +34,7 @@ fn assert_topology_error<T>(result: Result<T, CurveError>) {
     assert!(matches!(result, Err(CurveError::Topology(_))));
 }
 
-fn span_topology_report(
+fn span_topology_evidence(
     span_index: usize,
     degree: usize,
     knot_start: Real,
@@ -42,8 +42,8 @@ fn span_topology_report(
     status: RetainedTopologyStatus,
     decision_path: RationalBezierSpanTopologyPath2,
     native_subcurve: Option<BezierSubcurve2>,
-) -> Result<RationalBezierSpanTopologyReport2, CurveError> {
-    RationalBezierSpanTopologyReport2::new(
+) -> Result<RationalBezierSpanTopologyEvidence2, CurveError> {
+    RationalBezierSpanTopologyEvidence2::new(
         span_index,
         degree,
         knot_start,
@@ -111,15 +111,15 @@ fn rational_linear_span_preserves_homogeneous_parameterization() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let report = decided(extraction.native_topology_report(&policy()).unwrap());
+    let evidence = decided(extraction.native_topology_evidence(&policy()).unwrap());
 
-    assert_eq!(report.span_reports().len(), 1);
+    assert_eq!(evidence.span_evidence().len(), 1);
     assert_eq!(
-        report.span_reports()[0].decision_path(),
+        evidence.span_evidence()[0].decision_path(),
         RationalBezierSpanTopologyPath2::NativeRationalLinearSpan
     );
     let Some(BezierSubcurve2::RationalQuadratic(curve)) =
-        report.span_reports()[0].native_subcurve()
+        evidence.span_evidence()[0].native_subcurve()
     else {
         panic!("linear NURBS span was not elevated homogeneously");
     };
@@ -140,10 +140,10 @@ fn singular_rational_linear_elevation_stays_retained() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let report = decided(extraction.native_topology_report(&policy()).unwrap());
+    let evidence = decided(extraction.native_topology_evidence(&policy()).unwrap());
 
     assert_eq!(
-        report.span_reports()[0].decision_path(),
+        evidence.span_evidence()[0].decision_path(),
         RationalBezierSpanTopologyPath2::RetainedSingularLinearSpan
     );
     assert_eq!(
@@ -275,7 +275,7 @@ fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
     assert_eq!(first.start(), &Point2::new(r(1), r(2)));
     assert_eq!(second.end(), &Point2::new(r(5), r(2)));
 
-    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
     assert_eq!(facts.span_facts().len(), 2);
     assert_eq!(facts.span_facts()[0].knot_interval(), (&r(2), &r(3)));
     assert_eq!(facts.span_facts()[1].knot_interval(), (&r(3), &r(4)));
@@ -290,7 +290,7 @@ fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
         .unwrap(),
     );
     let rational_extraction = decided(rational.extract_bezier_spans(&policy()).unwrap());
-    let rational_facts = decided(rational_extraction.span_fact_report(&policy()).unwrap());
+    let rational_facts = decided(rational_extraction.span_fact_evidence(&policy()).unwrap());
     assert_eq!(rational_facts.span_facts().len(), 2);
     assert_eq!(
         rational_facts.span_facts()[0].knot_interval(),
@@ -418,7 +418,7 @@ fn equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans() {
 }
 
 #[test]
-fn retained_rational_cubic_bspline_extracts_bezier_span_reports() {
+fn retained_rational_cubic_bspline_extracts_bezier_span_evidence() {
     let spline = decided(
         RationalBSplineCurve2::try_new(
             3,
@@ -494,12 +494,12 @@ fn retained_rational_quadratic_spans_promote_to_native_conic_topology() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let report = decided(extraction.native_topology_report(&policy()).unwrap());
+    let evidence = decided(extraction.native_topology_evidence(&policy()).unwrap());
     let native = decided(extraction.native_subcurves(&policy()).unwrap());
 
-    assert_eq!(report.span_reports().len(), 1);
+    assert_eq!(evidence.span_evidence().len(), 1);
     assert_eq!(
-        report.span_reports()[0].decision_path(),
+        evidence.span_evidence()[0].decision_path(),
         RationalBezierSpanTopologyPath2::NativeRationalQuadraticSpan
     );
     assert_eq!(native.len(), 1);
@@ -564,11 +564,11 @@ fn nonuniform_rational_cubic_spans_promote_without_degree_reduction() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let report = decided(extraction.native_topology_report(&policy()).unwrap());
+    let evidence = decided(extraction.native_topology_evidence(&policy()).unwrap());
 
-    assert!(report.is_fully_native_exact());
-    assert_eq!(report.span_reports().len(), extraction.spans().len());
-    assert!(report.span_reports().iter().all(|span| {
+    assert!(evidence.is_fully_native_exact());
+    assert_eq!(evidence.span_evidence().len(), extraction.spans().len());
+    assert!(evidence.span_evidence().iter().all(|span| {
         span.degree() == 3
             && span.status() == RetainedTopologyStatus::NativeExact
             && span.decision_path() == RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan
@@ -585,7 +585,7 @@ fn nonuniform_rational_cubic_spans_promote_without_degree_reduction() {
 }
 
 #[test]
-fn equal_weight_rational_cubic_topology_report_names_native_exact_spans() {
+fn equal_weight_rational_cubic_topology_evidence_names_native_exact_spans() {
     let spline = decided(
         RationalBSplineCurve2::try_new(
             3,
@@ -597,11 +597,11 @@ fn equal_weight_rational_cubic_topology_report_names_native_exact_spans() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let report = decided(extraction.native_topology_report(&policy()).unwrap());
+    let evidence = decided(extraction.native_topology_evidence(&policy()).unwrap());
 
-    assert!(report.is_fully_native_exact());
-    assert_eq!(report.span_reports().len(), 2);
-    for (index, span) in report.span_reports().iter().enumerate() {
+    assert!(evidence.is_fully_native_exact());
+    assert_eq!(evidence.span_evidence().len(), 2);
+    for (index, span) in evidence.span_evidence().iter().enumerate() {
         assert_eq!(span.span_index(), index);
         assert_eq!(span.degree(), 3);
         assert_eq!(span.status(), RetainedTopologyStatus::NativeExact);
@@ -616,21 +616,21 @@ fn equal_weight_rational_cubic_topology_report_names_native_exact_spans() {
     }
 
     let native = decided(extraction.native_subcurves(&policy()).unwrap());
-    assert_eq!(native.len(), report.span_reports().len());
+    assert_eq!(native.len(), evidence.span_evidence().len());
 }
 #[test]
-fn retained_span_weight_report_rejects_inconsistent_counts() {
-    assert_topology_error(RetainedSpanWeightDomainReport2::new(0, 0, true));
-    assert_topology_error(RetainedSpanWeightDomainReport2::new(3, 4, false));
-    assert_topology_error(RetainedSpanWeightDomainReport2::new(3, 2, true));
-    assert_topology_error(RetainedSpanWeightDomainReport2::new(3, 3, false));
+fn retained_span_weight_evidence_rejects_inconsistent_counts() {
+    assert_topology_error(RetainedSpanWeightDomainEvidence2::new(0, 0, true));
+    assert_topology_error(RetainedSpanWeightDomainEvidence2::new(3, 4, false));
+    assert_topology_error(RetainedSpanWeightDomainEvidence2::new(3, 2, true));
+    assert_topology_error(RetainedSpanWeightDomainEvidence2::new(3, 3, false));
 }
 
 #[test]
 fn retained_span_fact_constructors_reject_forged_evidence() {
     let bounds = Aabb2::from_point(p(0, 0));
 
-    assert_topology_error(RetainedBSplineSpanFactReport2::new(Vec::new()));
+    assert_topology_error(RetainedBSplineSpanFactEvidence2::new(Vec::new()));
     assert_topology_error(RetainedBSplineSpanFacts2::new(
         0,
         r(0),
@@ -639,7 +639,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedSpanAxisMonotonicity::CertifiedMonotone,
         RetainedSpanAxisMonotonicity::Unsupported,
         RetainedTopologyStatus::Unsupported,
-        Some(RetainedSpanWeightDomainReport2::new(3, 3, true).unwrap()),
+        Some(RetainedSpanWeightDomainEvidence2::new(3, 3, true).unwrap()),
     ));
     assert_topology_error(RetainedBSplineSpanFacts2::new(
         0,
@@ -649,7 +649,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedSpanAxisMonotonicity::CertifiedMonotone,
         RetainedSpanAxisMonotonicity::Unsupported,
         RetainedTopologyStatus::Unresolved,
-        Some(RetainedSpanWeightDomainReport2::new(3, 2, false).unwrap()),
+        Some(RetainedSpanWeightDomainEvidence2::new(3, 2, false).unwrap()),
     ));
     assert_topology_error(RetainedBSplineSpanFacts2::new(
         0,
@@ -684,7 +684,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
             RetainedSpanAxisMonotonicity::Unsupported,
             RetainedSpanAxisMonotonicity::Unsupported,
             topology_status,
-            Some(RetainedSpanWeightDomainReport2::new(3, 3, true).unwrap()),
+            Some(RetainedSpanWeightDomainEvidence2::new(3, 3, true).unwrap()),
         ));
     }
     assert_topology_error(RetainedBSplineSpanFacts2::new(
@@ -705,7 +705,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedSpanAxisMonotonicity::CertifiedMonotone,
         RetainedSpanAxisMonotonicity::Unsupported,
         RetainedTopologyStatus::NativeExact,
-        Some(RetainedSpanWeightDomainReport2::new(3, 3, true).unwrap()),
+        Some(RetainedSpanWeightDomainEvidence2::new(3, 3, true).unwrap()),
     ));
     assert_topology_error(RetainedBSplineSpanFacts2::new(
         0,
@@ -715,7 +715,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedSpanAxisMonotonicity::CertifiedMonotone,
         RetainedSpanAxisMonotonicity::CertifiedMonotone,
         RetainedTopologyStatus::NativeExact,
-        Some(RetainedSpanWeightDomainReport2::new(3, 2, false).unwrap()),
+        Some(RetainedSpanWeightDomainEvidence2::new(3, 2, false).unwrap()),
     ));
     assert_topology_error(RetainedBSplineSpanFacts2::new(
         0,
@@ -770,7 +770,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         None,
     )
     .unwrap();
-    assert_topology_error(RetainedBSplineSpanFactReport2::new(vec![
+    assert_topology_error(RetainedBSplineSpanFactEvidence2::new(vec![
         first_fact,
         gapped_fact,
     ]));
@@ -786,13 +786,13 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         None,
     )
     .unwrap();
-    assert_topology_error(RetainedBSplineSpanFactReport2::new(vec![skipped_index]));
+    assert_topology_error(RetainedBSplineSpanFactEvidence2::new(vec![skipped_index]));
 }
 
 #[test]
-fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
-    assert_topology_error(RationalBSplineNativeTopologyReport2::new(Vec::new()));
-    assert_topology_error(span_topology_report(
+fn retained_rational_span_topology_evidence_reject_forged_native_evidence() {
+    assert_topology_error(RationalBSplineNativeTopologyEvidence2::new(Vec::new()));
+    assert_topology_error(span_topology_evidence(
         0,
         1,
         r(0),
@@ -801,7 +801,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan,
         None,
     ));
-    assert_topology_error(span_topology_report(
+    assert_topology_error(span_topology_evidence(
         0,
         2,
         r(1),
@@ -810,7 +810,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
         None,
     ));
-    assert_topology_error(span_topology_report(
+    assert_topology_error(span_topology_evidence(
         0,
         2,
         r(2),
@@ -819,7 +819,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
         None,
     ));
-    assert_topology_error(span_topology_report(
+    assert_topology_error(span_topology_evidence(
         0,
         2,
         r(0),
@@ -828,7 +828,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         RationalBezierSpanTopologyPath2::NativeRationalQuadraticSpan,
         None,
     ));
-    assert_topology_error(span_topology_report(
+    assert_topology_error(span_topology_evidence(
         0,
         2,
         r(0),
@@ -841,7 +841,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
             p(2, 0),
         ))),
     ));
-    assert_topology_error(span_topology_report(
+    assert_topology_error(span_topology_evidence(
         0,
         3,
         r(0),
@@ -856,7 +856,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         RetainedTopologyStatus::DisplayOrExport,
         RetainedTopologyStatus::ImportedLossy,
     ] {
-        assert_topology_error(span_topology_report(
+        assert_topology_error(span_topology_evidence(
             0,
             3,
             r(0),
@@ -867,7 +867,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         ));
     }
 
-    let skipped_index = span_topology_report(
+    let skipped_index = span_topology_evidence(
         1,
         3,
         r(0),
@@ -877,11 +877,11 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         Some(general_rational_cubic()),
     )
     .unwrap();
-    assert_topology_error(RationalBSplineNativeTopologyReport2::new(vec![
+    assert_topology_error(RationalBSplineNativeTopologyEvidence2::new(vec![
         skipped_index,
     ]));
 
-    let first_report = span_topology_report(
+    let first_evidence = span_topology_evidence(
         0,
         2,
         r(0),
@@ -891,7 +891,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         None,
     )
     .unwrap();
-    let gapped_report = span_topology_report(
+    let gapped_evidence = span_topology_evidence(
         1,
         2,
         r(2),
@@ -901,12 +901,12 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         None,
     )
     .unwrap();
-    assert_topology_error(RationalBSplineNativeTopologyReport2::new(vec![
-        first_report.clone(),
-        gapped_report,
+    assert_topology_error(RationalBSplineNativeTopologyEvidence2::new(vec![
+        first_evidence.clone(),
+        gapped_evidence,
     ]));
 
-    let mixed_degree_report = span_topology_report(
+    let mixed_degree_evidence = span_topology_evidence(
         1,
         3,
         r(1),
@@ -916,14 +916,14 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         Some(general_rational_cubic()),
     )
     .unwrap();
-    assert_topology_error(RationalBSplineNativeTopologyReport2::new(vec![
-        first_report,
-        mixed_degree_report,
+    assert_topology_error(RationalBSplineNativeTopologyEvidence2::new(vec![
+        first_evidence,
+        mixed_degree_evidence,
     ]));
 }
 
 #[test]
-fn retained_bspline_span_facts_report_native_bounds_and_monotonicity() {
+fn retained_bspline_span_facts_evidence_native_bounds_and_monotonicity() {
     let spline = decided(
         PolynomialBSplineCurve2::try_new(
             2,
@@ -934,7 +934,7 @@ fn retained_bspline_span_facts_report_native_bounds_and_monotonicity() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
 
     assert_eq!(facts.span_facts().len(), 1);
     let span = &facts.span_facts()[0];
@@ -965,10 +965,10 @@ fn retained_rational_quadratic_span_facts_include_weight_domain() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
     let weight_domain = facts.span_facts()[0]
         .weight_domain()
-        .expect("rational span reports weights");
+        .expect("rational span evidence weights");
 
     assert_eq!(weight_domain.weight_count(), 3);
     assert_eq!(weight_domain.certified_nonzero_count(), 3);
@@ -991,7 +991,7 @@ fn retained_rational_quadratic_span_facts_follow_refined_knot_windows() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
 
     assert_eq!(facts.span_facts().len(), 2);
     assert_eq!(facts.span_facts()[0].knot_interval(), (&r(0), &r(1)));
@@ -1021,7 +1021,7 @@ fn retained_rational_cubic_span_facts_certify_control_hull_and_monotonicity() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
 
     assert_eq!(facts.span_facts().len(), 2);
     assert!(facts.span_facts().iter().all(|span| {
@@ -1058,11 +1058,11 @@ fn retained_degree_four_nurbs_span_certifies_stationary_monotone_axis() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
-    let topology = decided(extraction.native_topology_report(&policy()).unwrap());
-    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+    let topology = decided(extraction.native_topology_evidence(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
 
     assert_eq!(
-        topology.span_reports()[0].decision_path(),
+        topology.span_evidence()[0].decision_path(),
         RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan
     );
     assert_eq!(

@@ -756,21 +756,21 @@ fn curve_region_uses_certified_parallel_then_regularizes_output_chords() {
         Classification::Decided(result) => result,
         Classification::Uncertain(reason) => panic!("certified region offset failed: {reason:?}"),
     };
-    assert!(result.report().used_certified_parallel_path());
-    assert!(!result.report().used_segmented_source_fallback());
-    assert_eq!(result.report().loop_reports().len(), 1);
+    assert!(result.evidence().used_certified_parallel_path());
+    assert!(!result.evidence().used_segmented_source_fallback());
+    assert_eq!(result.evidence().loop_evidence().len(), 1);
     assert_eq!(
         result
-            .report()
+            .evidence()
             .certified_pre_regularization_boundary_error(),
         Some(&q(1, 10))
     );
-    assert!(!result.report().final_boundary_hausdorff_certified());
+    assert!(!result.evidence().final_boundary_hausdorff_certified());
     assert!(!result.region().boundary_loops().is_empty());
 }
 
 #[test]
-fn curve_region_reports_weaker_source_chord_fallback_for_authored_corner() {
+fn curve_region_evidence_weaker_source_chord_fallback_for_authored_corner() {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, -1), p(2, 0))),
         Curve2::from(QuadraticBezier2::new(p(2, 0), p(2, 1), p(2, 2))),
@@ -800,16 +800,16 @@ fn curve_region_reports_weaker_source_chord_fallback_for_authored_corner() {
         Classification::Decided(result) => result,
         Classification::Uncertain(reason) => panic!("corner fallback failed: {reason:?}"),
     };
-    assert!(!result.report().used_certified_parallel_path());
-    assert!(result.report().used_segmented_source_fallback());
+    assert!(!result.evidence().used_certified_parallel_path());
+    assert!(result.evidence().used_segmented_source_fallback());
     assert!(
         result
-            .report()
+            .evidence()
             .certified_pre_regularization_boundary_error()
             .is_none()
     );
-    assert!(!result.report().final_boundary_hausdorff_certified());
-    assert!(result.report().fallback_report().is_some());
+    assert!(!result.evidence().final_boundary_hausdorff_certified());
+    assert!(result.evidence().fallback_evidence().is_some());
 }
 
 proptest! {

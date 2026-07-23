@@ -71,6 +71,8 @@ mod self_intersect;
 mod spline_periodic;
 mod split;
 mod straight_skeleton;
+#[cfg(feature = "svg")]
+mod svg;
 mod transform;
 mod translation_obstacle;
 #[cfg(feature = "triangulation")]
@@ -116,13 +118,13 @@ pub use bezier_parameter::{
 pub use bezier_region::{
     BezierBoundaryLoop2, BezierRegion2, CurveRegion2, CurveRegionArrangement2,
     CurveRegionBoundaryContourBuildResult2, CurveRegionBoundaryLoop2,
-    CurveRegionCertifiedParallelLoopReport2, CurveRegionCertifiedParallelOffsetReport2,
-    CurveRegionCertifiedParallelOffsetResult2, CurveRegionCertifiedSegmentationReport2,
+    CurveRegionCertifiedParallelLoopEvidence2, CurveRegionCertifiedParallelOffsetEvidence2,
+    CurveRegionCertifiedParallelOffsetResult2, CurveRegionCertifiedSegmentationEvidence2,
     CurveRegionCertifiedSegmentationResult2, CurveRegionFragmentSource2,
-    CurveRegionLineRoleReport2, CurveRegionLoopRole, CurveRegionNativeContourView2,
-    CurveRegionNestingRoleReport2, CurveRegionProfile2, CurveRegionSegmentationLoopReport2,
-    CurveRegionSegmentedOffsetReport2, CurveRegionSegmentedOffsetResult2,
-    CurveRegionSignedAreaRoleReport2, PreparedCurveRegionView2,
+    CurveRegionLineRoleEvidence2, CurveRegionLoopRole, CurveRegionNativeContourView2,
+    CurveRegionNestingRoleEvidence2, CurveRegionProfile2, CurveRegionQuery2,
+    CurveRegionSegmentationLoopEvidence2, CurveRegionSegmentedOffsetEvidence2,
+    CurveRegionSegmentedOffsetResult2, CurveRegionSignedAreaRoleEvidence2,
 };
 pub use bezier_retained_measure::{
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
@@ -130,9 +132,9 @@ pub use bezier_retained_measure::{
 pub use bezier_retained_overlap::{
     BezierRetainedLineOverlapSplit2, BezierRetainedLinearOverlapSplit2,
     BezierRetainedLinearOverlapSplitGraph2, BezierRetainedLinearOverlapTraversal2,
-    BezierRetainedOverlap2, BezierRetainedOverlapExtent2, BezierRetainedOverlapOrientation2,
-    BezierRetainedOverlapRefinedFragment2, BezierRetainedOverlapRelation2,
-    BezierRetainedOverlapReport2, BezierRetainedOverlapTraversal2,
+    BezierRetainedOverlap2, BezierRetainedOverlapEvidence2, BezierRetainedOverlapExtent2,
+    BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
+    BezierRetainedOverlapRelation2, BezierRetainedOverlapTraversal2,
     BezierRetainedRationalOverlapSplit2, BezierRetainedRationalOverlapSplitGraph2,
     BezierRetainedRationalOverlapTraversal2, BezierRetainedResolvedLinearOverlap2,
     BezierRetainedResolvedRationalOverlap2,
@@ -142,10 +144,10 @@ pub use bezier_split_endpoint::{
     BezierAlgebraicEndpointImage2, BezierEndpointPointImage2, BezierEndpointTangentImage2,
 };
 pub use bezier_tangent_order::{
-    BezierAlgebraicSameTangentOrderReport, BezierAlgebraicSameTangentOrderStatus,
-    BezierAlgebraicScalarSignReport, BezierAlgebraicTangentOrderReport,
+    BezierAlgebraicSameTangentOrderEvidence, BezierAlgebraicSameTangentOrderStatus,
+    BezierAlgebraicScalarSignEvidence, BezierAlgebraicTangentOrderEvidence,
     BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
-    BezierAlgebraicTangentVectorReport, BezierAlgebraicTangentVectorStatus,
+    BezierAlgebraicTangentVectorEvidence, BezierAlgebraicTangentVectorStatus,
     BezierTangentTurnOrdering2, compare_algebraic_same_tangent_second_order,
     compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
@@ -157,28 +159,19 @@ pub use bezier_topology::{
     BezierMonotoneGraphOrder, BezierMonotoneSpan,
 };
 pub use boolean::{
-    BooleanBoundaryFragmentEmissionReport2, BooleanBoundaryFragmentEmissionResult2,
-    BooleanBoundaryFragmentEmissionStage2, BooleanDirectedFragmentReport2, BooleanFragmentAction,
-    BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionReport2,
-    BooleanFragmentSelectionResult2, BooleanFragmentSelectionStage2, BooleanOp,
+    BooleanFragmentAction, BooleanFragmentClassification, BooleanFragmentSelection, BooleanOp,
 };
 pub use boolean_boundary::{
-    BooleanBoundaryChain, BooleanBoundaryChainAssemblyReport2, BooleanBoundaryChainAssemblyResult2,
-    BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
-    BooleanBoundaryContourTransferReport2, BooleanBoundaryContourTransferResult2,
-    BooleanBoundaryContourTransferStage2, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
-    BooleanBoundaryLoopConstructionReport2, BooleanBoundaryLoopConstructionResult2,
-    BooleanBoundaryLoopConstructionStage2, BooleanBoundaryLoopExtractionReport2,
-    BooleanBoundaryLoopExtractionResult2, BooleanBoundaryLoopExtractionStage2,
-    BooleanBoundaryLoopSet, BooleanBoundaryOutputFragmentReport2, DirectedBooleanFragment,
+    BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
+    BooleanBoundaryLoopSet, DirectedBooleanFragment,
 };
 pub use bspline::{
     PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBSplineBezierExtraction2,
-    RationalBSplineCurve2, RationalBSplineNativeTopologyReport2, RationalBezierSpan2,
-    RationalBezierSpanTopologyPath2, RationalBezierSpanTopologyReport2,
+    RationalBSplineCurve2, RationalBSplineNativeTopologyEvidence2, RationalBezierSpan2,
+    RationalBezierSpanTopologyEvidence2, RationalBezierSpanTopologyPath2,
     RationalQuadraticBSplineBezierExtraction2, RationalQuadraticBSplineCurve2,
-    RetainedBSplineSpanFactReport2, RetainedBSplineSpanFacts2, RetainedSpanAxisMonotonicity,
-    RetainedSpanWeightDomainReport2,
+    RetainedBSplineSpanFactEvidence2, RetainedBSplineSpanFacts2, RetainedSpanAxisMonotonicity,
+    RetainedSpanWeightDomainEvidence2,
 };
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
@@ -190,19 +183,19 @@ pub use curve::{
 };
 pub use curve_intersection::{
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
-    CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveIntersectionReport2,
-    CurveIntersectionTopology2, PreparedCurveIntersection2,
+    CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveIntersectionResult2,
+    CurveIntersectionTopology2, RetainedCurveIntersection2,
 };
 pub use curve_path_intersection::{
     CurveBoundaryInteriorSide2, CurvePathBooleanFragment2, CurvePathBooleanFragmentAction2,
     CurvePathBooleanOperand2, CurvePathBooleanSelection2, CurvePathIntersectionBlocker2,
-    CurvePathIntersectionContact2, CurvePathIntersectionOverlap2, CurvePathIntersectionReport2,
+    CurvePathIntersectionContact2, CurvePathIntersectionOverlap2, CurvePathIntersectionResult2,
     CurvePathIntersectionTopology2, CurvePathOverlapAction2, CurvePathOverlapResolution2,
-    CurvePathSplit2, PreparedCurvePathIntersection2,
+    CurvePathSplit2, RetainedCurvePathIntersection2,
 };
 pub use curve_region_boolean::{
     CurveRegionCarrierRef2, CurveRegionIntersectionBlocker2, CurveRegionIntersectionContact2,
-    CurveRegionIntersectionOverlap2, CurveRegionIntersectionReport2, PreparedCurveRegionBoolean2,
+    CurveRegionIntersectionOverlap2, CurveRegionIntersectionResult2, RetainedCurveRegionBoolean2,
 };
 pub use curve_string::{
     CurveString2, CurveStringEndpoint2, CurveStringIntersection, CurveStringLinkKind2,
@@ -240,49 +233,38 @@ pub use policy::{CurvePolicy, NumericMode, Tolerance};
 pub use polynomial_spline::{
     PolynomialSplineBezierDecomposition2, PolynomialSplineBezierSpanView2, PolynomialSplineCurve2,
 };
-pub use prepared::{
-    PreparedCircularArc2, PreparedContourView2, PreparedCurveStringView2, PreparedLineSeg2,
-    PreparedRegionView2, PreparedSegment2,
-};
+pub use prepared::{ContourQuery2, CurveStringQuery2, RegionQuery2};
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use rational_bezier_general::{
-    PreparedRationalBezierIntersection2, RationalBezier2, RationalBezierIntersectionCandidates2,
-    RationalBezierIntersectionContact2, RationalBezierIntersectionContacts2,
-    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierIntersectionTopology2, RationalBezierOverlapOrientation2,
-    RationalBezierPointIncidence2,
+    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
+    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierIntersectionTopology2,
+    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2,
+    RetainedRationalBezierIntersection2,
 };
 pub use reconstruct::PolylineReconstructionOptions;
 #[doc(hidden)]
 pub use region::LineArcRegion2;
 pub use region::{RegionContourProfile, RegionPointLocation, RegionView2};
-pub use region_boolean::{
-    RegionBooleanBoundaryContourSourcePath2, RegionBooleanBoundaryPredicatePath2,
-    RegionBooleanPipelineReport2, RegionBooleanQueryPath2, RegionBooleanReport2,
-    RegionBooleanResult2, RegionBooleanSharedBoundaryResolution2, RegionBooleanStage2,
-};
 pub use region_events::{
     RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
     RegionSide,
 };
-pub use region_fragments::{
-    RegionContourFragmentReport2, RegionContourFragments, RegionContourOutputFragmentReport2,
-    RegionFragmentBuildPredicatePath2, RegionFragmentBuildReport2, RegionFragmentBuildResult2,
-    RegionFragmentBuildStage2, RegionFragmentSet,
-};
+pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
 pub use region_nesting::{
     ExactCurveArrangementArrangedEndpointDegree2, ExactCurveArrangementArrangedFragment2,
     ExactCurveArrangementOutputRoleAssignment2, ExactCurveArrangementSourceAabbStatus2,
     ExactCurveArrangementSourceEndpoint2, ExactCurveArrangementSourceSegmentFact2,
     ExactCurveArrangementSplitCandidateAabbStatus2, ExactCurveArrangementSplitCandidatePair2,
     ExactCurveArrangementSplitRelationClass2, ExactCurveArrangementSummary2, RegionArrangement2,
-    RegionArrangementReport2, RegionBoundaryContourBuildPredicatePath2,
-    RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildResult2,
-    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,
-    RegionLineSegmentArrangedEndpoint2, RegionLineSegmentArrangedSourceReport2,
-    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
-    RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentRingSourceReport2,
-    RegionLineSegmentSplitIntersectionReport2, RegionLineSegmentSplitPredicatePath2,
+    RegionArrangementEvidence2, RegionBoundaryContourBuildEvidence2,
+    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildResult2,
+    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
+    RegionBoundaryContourRoleEvidence2, RegionLineSegmentArrangedEndpoint2,
+    RegionLineSegmentArrangedSourceEvidence2, RegionLineSegmentEndpointGraphPredicatePath2,
+    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
+    RegionLineSegmentRingSourceEvidence2, RegionLineSegmentSplitIntersectionEvidence2,
+    RegionLineSegmentSplitPredicatePath2,
 };
 pub use retained_status::RetainedTopologyStatus;
 pub use segment::{CircularArc2, LineSeg2, Segment2};
@@ -295,15 +277,21 @@ pub use straight_skeleton::{
     StraightSkeletonGeneratedBisector2, StraightSkeletonGlobalContactEvent2,
     StraightSkeletonGlobalContactKind2, StraightSkeletonImplicitConic2,
     StraightSkeletonLocalArcEvent2, StraightSkeletonLocalArcEventKind2, StraightSkeletonNode2,
-    StraightSkeletonNodeKind2, StraightSkeletonReport2, StraightSkeletonSpliceEvent2,
+    StraightSkeletonNodeKind2, StraightSkeletonResult2, StraightSkeletonSpliceEvent2,
     StraightSkeletonStage2, StraightSkeletonSupportProvenance2,
     StraightSkeletonTrajectoryGeometry2, StraightSkeletonTrajectoryKind2,
     StraightSkeletonVertexTrajectory2,
 };
+#[cfg(feature = "svg")]
+pub use svg::{
+    SvgError, SvgGeometry2, SvgOptions, SvgResult, SvgSubpath2, export_svg_document,
+    export_svg_document_with_options, import_svg_document, import_svg_document_with_options,
+    parse_svg_path_data,
+};
 pub use transform::Similarity2;
 pub use translation_obstacle::{
-    TranslationObstacle2, TranslationObstacleBlocker2, TranslationObstacleOperand2,
-    TranslationObstacleReport2, translation_obstacle_convex,
+    TranslationObstacle2, TranslationObstacleBlocker2, TranslationObstacleEvidence2,
+    TranslationObstacleOperand2, translation_obstacle_convex,
 };
 #[cfg(feature = "triangulation")]
 pub use triangulation::{FiniteTriangle2, triangulate_finite_rings};
@@ -850,7 +838,7 @@ mod tests {
     }
 
     #[test]
-    fn arc_arc_intersection_reports_same_circle_overlap() {
+    fn arc_arc_intersection_evidence_same_circle_overlap() {
         let a = CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap();
         let b = CircularArc2::try_from_center(p(0, 5), p(0, -5), p(0, 0), false).unwrap();
 
@@ -873,7 +861,7 @@ mod tests {
     }
 
     #[test]
-    fn arc_arc_intersection_reports_reversed_same_circle_overlap() {
+    fn arc_arc_intersection_evidence_reversed_same_circle_overlap() {
         let a = CircularArc2::try_from_center(p(0, 0), p(2, 0), p(1, 0), false).unwrap();
         let b = CircularArc2::try_from_center(p(2, 0), p(0, 0), p(1, 0), true).unwrap();
 
@@ -896,7 +884,7 @@ mod tests {
     }
 
     #[test]
-    fn arc_arc_intersection_reports_same_circle_endpoint_only_pair() {
+    fn arc_arc_intersection_evidence_same_circle_endpoint_only_pair() {
         let a = CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap();
         let b = CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), true).unwrap();
 

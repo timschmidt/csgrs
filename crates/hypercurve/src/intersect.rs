@@ -727,7 +727,7 @@ impl LineSeg2 {
     /// It returns affine parameters on the line support so callers can perform
     /// those object-level filters without recomputing the line-circle
     /// quadratic. Structural-dispatch note: exact-rational line and circle
-    /// facts carried by prepared curve objects can later select specialized
+    /// facts carried by curve query objects can later select specialized
     /// discriminant reducers here while preserving this public relation shape.
     pub fn supporting_line_circle_relation(
         &self,

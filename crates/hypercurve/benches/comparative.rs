@@ -16,7 +16,7 @@ use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
     Classification, Contour2, CubicBezier2, Curve2, CurvePolicy, CurveString2, FillRule,
-    LineArcRegion2, LineSeg2, NurbsCurve2, Point2, PreparedRegionView2, Real, Segment2,
+    LineArcRegion2, LineSeg2, NurbsCurve2, Point2, Real, RegionQuery2, Segment2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -262,8 +262,8 @@ fn hypercurve_boundary_loop_result_size(
 }
 
 fn hypercurve_prepared_boolean_result_size(
-    first: &PreparedRegionView2<'_>,
-    second: &PreparedRegionView2<'_>,
+    first: &RegionQuery2<'_>,
+    second: &RegionQuery2<'_>,
     operation: CommonBooleanOp,
     policy: &CurvePolicy,
 ) -> usize {
@@ -283,8 +283,8 @@ fn hypercurve_prepared_boolean_result_size(
 }
 
 fn hypercurve_prepared_boundary_contour_result_size(
-    first: &PreparedRegionView2<'_>,
-    second: &PreparedRegionView2<'_>,
+    first: &RegionQuery2<'_>,
+    second: &RegionQuery2<'_>,
     operation: CommonBooleanOp,
     policy: &CurvePolicy,
 ) -> usize {
@@ -299,8 +299,8 @@ fn hypercurve_prepared_boundary_contour_result_size(
 }
 
 fn hypercurve_prepared_boundary_loop_result_size(
-    first: &PreparedRegionView2<'_>,
-    second: &PreparedRegionView2<'_>,
+    first: &RegionQuery2<'_>,
+    second: &RegionQuery2<'_>,
     operation: CommonBooleanOp,
     policy: &CurvePolicy,
 ) -> usize {
@@ -394,8 +394,8 @@ fn benchmark_boolean_case(
     let geo_first = geo_polygon(&first_points);
     let geo_second = geo_polygon(&second_points);
     let policy = CurvePolicy::certified();
-    let prepared_first = hypercurve_first.prepare_topology_queries(&policy);
-    let prepared_second = hypercurve_second.prepare_topology_queries(&policy);
+    let prepared_first = hypercurve_first.query(&policy);
+    let prepared_second = hypercurve_second.query(&policy);
 
     let hypercurve_result_size =
         hypercurve_boolean_result_size(&hypercurve_first, &hypercurve_second, operation, &policy);

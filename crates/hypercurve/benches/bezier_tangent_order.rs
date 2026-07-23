@@ -110,10 +110,10 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut ordered = 0_usize;
     for _ in 0..iterations {
-        let report = decided(compare_algebraic_tangent_turn_from_base(
+        let evidence = decided(compare_algebraic_tangent_turn_from_base(
             &base, &first, &second, &policy,
         ));
-        ordered += black_box(usize::from(report.ordering.is_some()));
+        ordered += black_box(usize::from(evidence.ordering.is_some()));
     }
     let elapsed = started.elapsed();
     println!(
@@ -129,14 +129,14 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut same_tangent_ordered = 0_usize;
     for _ in 0..iterations {
-        let report = decided(compare_algebraic_same_tangent_second_order(
+        let evidence = decided(compare_algebraic_same_tangent_second_order(
             &same_tangent,
             &upward_second,
             &same_tangent,
             &downward_second,
             &policy,
         ));
-        same_tangent_ordered += black_box(usize::from(report.ordering.is_some()));
+        same_tangent_ordered += black_box(usize::from(evidence.ordering.is_some()));
     }
     let elapsed = started.elapsed();
     println!(
@@ -176,14 +176,14 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut rational_same_tangent_ordered = 0_usize;
     for _ in 0..iterations {
-        let report = decided(compare_algebraic_same_tangent_second_order(
+        let evidence = decided(compare_algebraic_same_tangent_second_order(
             &rational_tangent,
             &rational_upward_second,
             &rational_tangent,
             &rational_downward_second,
             &policy,
         ));
-        rational_same_tangent_ordered += black_box(usize::from(report.ordering.is_some()));
+        rational_same_tangent_ordered += black_box(usize::from(evidence.ordering.is_some()));
     }
     let elapsed = started.elapsed();
     println!(
@@ -194,14 +194,14 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut third_tangent_ordered = 0_usize;
     for _ in 0..iterations {
-        let report = decided(compare_algebraic_same_tangent_third_order(
+        let evidence = decided(compare_algebraic_same_tangent_third_order(
             &same_tangent,
             &upward_second,
             &same_tangent,
             &downward_second,
             &policy,
         ));
-        third_tangent_ordered += black_box(usize::from(report.ordering.is_some()));
+        third_tangent_ordered += black_box(usize::from(evidence.ordering.is_some()));
     }
     let elapsed = started.elapsed();
     println!(

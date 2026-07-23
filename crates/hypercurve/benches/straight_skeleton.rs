@@ -128,19 +128,19 @@ fn main() {
         events.len()
     });
     measure("straight_skeleton/concave/contour", 100, || {
-        let report = concave
+        let evidence = concave
             .straight_skeleton(black_box(&policy))
             .expect("contour construction is exact");
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        let skeleton = report.skeleton().expect("construction completes");
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        let skeleton = evidence.skeleton().expect("construction completes");
         skeleton.nodes().len() + skeleton.arcs().len()
     });
     measure("straight_skeleton/concave/curve_path", 100, || {
-        let report = concave_path
+        let evidence = concave_path
             .straight_skeleton(black_box(&policy))
             .expect("path dispatch is exact");
-        assert_eq!(report.stage(), StraightSkeletonStage2::Complete);
-        let skeleton = report.skeleton().expect("construction completes");
+        assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
+        let skeleton = evidence.skeleton().expect("construction completes");
         skeleton.nodes().len() + skeleton.arcs().len()
     });
 
@@ -152,17 +152,17 @@ fn main() {
             _ => 10,
         };
         measure(
-            &format!("straight_skeleton/comb_{}/report", source.len()),
+            &format!("straight_skeleton/comb_{}/evidence", source.len()),
             iterations,
             || {
-                let report = source
+                let evidence = source
                     .straight_skeleton(black_box(&policy))
-                    .expect("comb construction report is exact");
-                report.event_count()
-                    + report
+                    .expect("comb construction evidence is exact");
+                evidence.event_count()
+                    + evidence
                         .skeleton()
                         .map_or(0, |skeleton| skeleton.nodes().len() + skeleton.arcs().len())
-                    + usize::from(report.blocker().is_some())
+                    + usize::from(evidence.blocker().is_some())
             },
         );
     }

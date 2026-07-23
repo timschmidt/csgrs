@@ -9,7 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-hypercurve = { path = ".." }
+hypercurve = { path = "..", features = ["svg"] }
 
 [[bin]]
 name = "bezier_algebraic_parameter"
@@ -84,6 +84,13 @@ bench = false
 [[bin]]
 name = "straight_skeleton"
 path = "fuzz_targets/straight_skeleton.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "svg"
+path = "fuzz_targets/svg.rs"
 test = false
 doc = false
 bench = false

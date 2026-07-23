@@ -184,6 +184,15 @@ impl PolynomialSplineCurve2 {
         Ok(curve)
     }
 
+    pub(crate) fn try_new_expanded_with_periodicity(
+        degree: usize,
+        control_points: Vec<Point2>,
+        knots: Vec<Real>,
+        periodicity: SplinePeriodicity2,
+    ) -> ExactCurveResult<Self> {
+        Self::try_new_expanded(degree, control_points, knots, periodicity)
+    }
+
     /// Returns the polynomial degree.
     pub fn degree(&self) -> usize {
         self.data.retained.degree()

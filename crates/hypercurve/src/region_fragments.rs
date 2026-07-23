@@ -2,7 +2,7 @@
 //!
 //! Region booleans operate on all material and hole contours from both
 //! operands. This module applies the contour-level intersection-insertion pass
-//! to each keyed contour, matching the split-boundary preparation used before
+//! to each keyed contour, matching the split-boundary construction used before
 //! entry/exit or fill-state classification in polygon clipping traversal.
 
 use crate::fragment::{
@@ -11,9 +11,8 @@ use crate::fragment::{
 use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
 use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,
-    CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey, RegionContourRole,
-    RegionIntersectionSet, RegionSide, RegionView2, RetainedTopologyStatus, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    CurvePolicy, CurveResult, RegionContourKey, RegionContourRole, RegionIntersectionSet,
+    RegionSide, RegionView2, UncertaintyReason,
 };
 
 /// Fragments for one keyed contour in a region-pair query.
@@ -59,93 +58,6 @@ impl CompactLineRegionFragmentSet {
                 .all(|fragment| fragment.parameter_is_materialized(contour.key, crossing_windings))
         })
     }
-}
-
-/// Fragment materialization report for one keyed source contour.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RegionContourFragmentReport2 {
-    key: RegionContourKey,
-    source_segment_count: usize,
-    source_segment_kind_counts: SegmentKindCounts,
-    contributing_pair_count: usize,
-    intersection_event_count: usize,
-    output_fragment_count: usize,
-    output_fragment_kind_counts: SegmentKindCounts,
-    output_fragments: Vec<RegionContourOutputFragmentReport2>,
-    status: RetainedTopologyStatus,
-}
-
-/// Source provenance for one output fragment produced from a keyed contour.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RegionContourOutputFragmentReport2 {
-    source_segment_index: usize,
-    source_segment_kind: SegmentKind,
-    source_segment_start_point: Point2,
-    source_segment_end_point: Point2,
-    source_range: ParamRange,
-    output_fragment_index: usize,
-    output_fragment_kind: SegmentKind,
-}
-
-/// Exact predicate family used by the retained region-intersection evidence.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RegionFragmentBuildPredicatePath2 {
-    /// Region contour pairs were filtered by AABB before exact contour intersection predicates.
-    AabbFilteredContourIntersection,
-}
-
-/// Report for splitting two region views at retained intersection evidence.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RegionFragmentBuildReport2 {
-    stage: RegionFragmentBuildStage2,
-    first_source_contour_count: usize,
-    second_source_contour_count: usize,
-    first_material_source_segment_count: usize,
-    first_hole_source_segment_count: usize,
-    second_material_source_segment_count: usize,
-    second_hole_source_segment_count: usize,
-    first_source_segment_count: usize,
-    second_source_segment_count: usize,
-    predicate_path: RegionFragmentBuildPredicatePath2,
-    intersection_pair_count: usize,
-    intersection_event_count: usize,
-    point_event_count: usize,
-    overlap_event_count: usize,
-    uncertain_event_count: usize,
-    first_event_segment_kind_counts: crate::SegmentKindCounts,
-    second_event_segment_kind_counts: crate::SegmentKindCounts,
-    candidate_pair_count: usize,
-    skipped_aabb_pair_count: usize,
-    tested_pair_count: usize,
-    output_contour_count: Option<usize>,
-    output_fragment_count: Option<usize>,
-    first_output_contour_count: Option<usize>,
-    second_output_contour_count: Option<usize>,
-    first_output_fragment_count: Option<usize>,
-    second_output_fragment_count: Option<usize>,
-    first_material_output_fragment_count: Option<usize>,
-    first_hole_output_fragment_count: Option<usize>,
-    second_material_output_fragment_count: Option<usize>,
-    second_hole_output_fragment_count: Option<usize>,
-    contour_reports: Vec<RegionContourFragmentReport2>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Furthest exact stage reached by region-fragment construction.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RegionFragmentBuildStage2 {
-    /// Supplied region/intersection evidence was being validated.
-    IntersectionEvidenceValidation,
-    /// Keyed contours were being split at retained intersection parameters.
-    ContourSplitting,
-}
-
-/// Result of report-bearing region-fragment construction.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RegionFragmentBuildResult2 {
-    fragments: Option<RegionFragmentSet>,
-    report: RegionFragmentBuildReport2,
 }
 
 /// Fragment inventory for both regions in a region-pair query.
@@ -197,7 +109,7 @@ pub(crate) fn split_region_views_at_intersections(
 
     let mut out = Vec::new();
     if let Classification::Uncertain(reason) =
-        append_all_region_contours(&mut out, None, first, second, intersections, policy)?
+        append_all_region_contours(&mut out, first, second, intersections, policy)?
     {
         return Ok(Classification::Uncertain(reason));
     }
@@ -250,519 +162,6 @@ pub(crate) fn split_single_material_line_regions_compact(
     Ok(Classification::Decided(CompactLineRegionFragmentSet {
         contours,
     }))
-}
-
-pub(crate) fn split_region_views_at_intersections_with_report(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    intersections: &RegionIntersectionSet,
-    policy: &CurvePolicy,
-) -> CurveResult<RegionFragmentBuildResult2> {
-    validate_region_intersection_evidence_against_views(first, second, intersections)?;
-
-    let first_source_contour_count = first.material_contours().len() + first.hole_contours().len();
-    let second_source_contour_count =
-        second.material_contours().len() + second.hole_contours().len();
-    let first_material_source_segment_count =
-        source_segment_count_for_contours(first.material_contours());
-    let first_hole_source_segment_count = source_segment_count_for_contours(first.hole_contours());
-    let second_material_source_segment_count =
-        source_segment_count_for_contours(second.material_contours());
-    let second_hole_source_segment_count =
-        source_segment_count_for_contours(second.hole_contours());
-    let first_source_segment_count = source_segment_count(first);
-    let second_source_segment_count = source_segment_count(second);
-    let mut contours = Vec::new();
-    let mut contour_reports = Vec::new();
-
-    if let Classification::Uncertain(reason) = append_all_region_contours(
-        &mut contours,
-        Some(&mut contour_reports),
-        first,
-        second,
-        intersections,
-        policy,
-    )? {
-        return Ok(blocked_region_fragment_build_result(
-            first_source_contour_count,
-            second_source_contour_count,
-            first_material_source_segment_count,
-            first_hole_source_segment_count,
-            second_material_source_segment_count,
-            second_hole_source_segment_count,
-            first_source_segment_count,
-            second_source_segment_count,
-            intersections,
-            contour_reports,
-            reason,
-        ));
-    }
-
-    let output_contour_count = contours.len();
-    let output_fragment_count = contour_reports
-        .iter()
-        .map(RegionContourFragmentReport2::output_fragment_count)
-        .sum();
-    let first_output_contour_count =
-        contour_reports_for_side(&contour_reports, RegionSide::First).count();
-    let second_output_contour_count =
-        contour_reports_for_side(&contour_reports, RegionSide::Second).count();
-    let first_output_fragment_count =
-        output_fragment_count_for_side(&contour_reports, RegionSide::First);
-    let second_output_fragment_count =
-        output_fragment_count_for_side(&contour_reports, RegionSide::Second);
-    let first_material_output_fragment_count = output_fragment_count_for_side_role(
-        &contour_reports,
-        RegionSide::First,
-        RegionContourRole::Material,
-    );
-    let first_hole_output_fragment_count = output_fragment_count_for_side_role(
-        &contour_reports,
-        RegionSide::First,
-        RegionContourRole::Hole,
-    );
-    let second_material_output_fragment_count = output_fragment_count_for_side_role(
-        &contour_reports,
-        RegionSide::Second,
-        RegionContourRole::Material,
-    );
-    let second_hole_output_fragment_count = output_fragment_count_for_side_role(
-        &contour_reports,
-        RegionSide::Second,
-        RegionContourRole::Hole,
-    );
-    Ok(RegionFragmentBuildResult2 {
-        fragments: Some(RegionFragmentSet::new(contours)?),
-        report: RegionFragmentBuildReport2 {
-            stage: RegionFragmentBuildStage2::ContourSplitting,
-            first_source_contour_count,
-            second_source_contour_count,
-            first_material_source_segment_count,
-            first_hole_source_segment_count,
-            second_material_source_segment_count,
-            second_hole_source_segment_count,
-            first_source_segment_count,
-            second_source_segment_count,
-            predicate_path: RegionFragmentBuildPredicatePath2::AabbFilteredContourIntersection,
-            intersection_pair_count: intersections.intersecting_pair_count(),
-            intersection_event_count: intersections.event_count(),
-            point_event_count: intersections.point_event_count(),
-            overlap_event_count: intersections.overlap_event_count(),
-            uncertain_event_count: intersections.uncertain_event_count(),
-            first_event_segment_kind_counts: intersections.first_event_segment_kind_counts(),
-            second_event_segment_kind_counts: intersections.second_event_segment_kind_counts(),
-            candidate_pair_count: intersections.candidate_pair_count(),
-            skipped_aabb_pair_count: intersections.skipped_aabb_pair_count(),
-            tested_pair_count: intersections.tested_pair_count(),
-            output_contour_count: Some(output_contour_count),
-            output_fragment_count: Some(output_fragment_count),
-            first_output_contour_count: Some(first_output_contour_count),
-            second_output_contour_count: Some(second_output_contour_count),
-            first_output_fragment_count: Some(first_output_fragment_count),
-            second_output_fragment_count: Some(second_output_fragment_count),
-            first_material_output_fragment_count: Some(first_material_output_fragment_count),
-            first_hole_output_fragment_count: Some(first_hole_output_fragment_count),
-            second_material_output_fragment_count: Some(second_material_output_fragment_count),
-            second_hole_output_fragment_count: Some(second_hole_output_fragment_count),
-            contour_reports,
-            status: RetainedTopologyStatus::NativeExact,
-            blocker: None,
-        },
-    })
-}
-
-impl RegionContourFragmentReport2 {
-    /// Returns the keyed source contour represented by this report.
-    pub const fn key(&self) -> RegionContourKey {
-        self.key
-    }
-
-    /// Returns the number of source contour segments before splitting.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns primitive-family counts for the source contour before splitting.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
-    }
-
-    /// Returns the number of contour-pair event reports that contributed split evidence.
-    pub const fn contributing_pair_count(&self) -> usize {
-        self.contributing_pair_count
-    }
-
-    /// Returns normalized intersection events consumed while splitting this contour.
-    pub const fn intersection_event_count(&self) -> usize {
-        self.intersection_event_count
-    }
-
-    /// Returns the number of retained fragments emitted for this contour.
-    pub const fn output_fragment_count(&self) -> usize {
-        self.output_fragment_count
-    }
-
-    /// Returns primitive-family counts for retained output fragments.
-    pub const fn output_fragment_kind_counts(&self) -> SegmentKindCounts {
-        self.output_fragment_kind_counts
-    }
-
-    /// Returns per-output-fragment source provenance.
-    pub fn output_fragments(&self) -> &[RegionContourOutputFragmentReport2] {
-        &self.output_fragments
-    }
-
-    /// Returns retained topology status for this contour split.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-}
-
-impl RegionContourOutputFragmentReport2 {
-    /// Returns the source segment index in the original contour.
-    pub const fn source_segment_index(&self) -> usize {
-        self.source_segment_index
-    }
-
-    /// Returns the source segment primitive kind in the original contour.
-    pub const fn source_segment_kind(&self) -> SegmentKind {
-        self.source_segment_kind
-    }
-
-    /// Returns the exact start point of the original source segment.
-    pub const fn source_segment_start_point(&self) -> &Point2 {
-        &self.source_segment_start_point
-    }
-
-    /// Returns the exact end point of the original source segment.
-    pub const fn source_segment_end_point(&self) -> &Point2 {
-        &self.source_segment_end_point
-    }
-
-    /// Returns the retained parameter range on the source segment.
-    pub const fn source_range(&self) -> &ParamRange {
-        &self.source_range
-    }
-
-    /// Returns the output fragment index in contour traversal order.
-    pub const fn output_fragment_index(&self) -> usize {
-        self.output_fragment_index
-    }
-
-    /// Returns the output fragment kind.
-    pub const fn output_fragment_kind(&self) -> SegmentKind {
-        self.output_fragment_kind
-    }
-}
-
-impl RegionFragmentBuildReport2 {
-    /// Returns the furthest exact fragment-build stage reached.
-    pub const fn stage(&self) -> RegionFragmentBuildStage2 {
-        self.stage
-    }
-
-    /// Returns the number of source contours in the first region view.
-    pub const fn first_source_contour_count(&self) -> usize {
-        self.first_source_contour_count
-    }
-
-    /// Returns the number of source contours in the second region view.
-    pub const fn second_source_contour_count(&self) -> usize {
-        self.second_source_contour_count
-    }
-
-    /// Returns the number of source material boundary segments in the first region view.
-    pub const fn first_material_source_segment_count(&self) -> usize {
-        self.first_material_source_segment_count
-    }
-
-    /// Returns the number of source hole boundary segments in the first region view.
-    pub const fn first_hole_source_segment_count(&self) -> usize {
-        self.first_hole_source_segment_count
-    }
-
-    /// Returns the number of source material boundary segments in the second region view.
-    pub const fn second_material_source_segment_count(&self) -> usize {
-        self.second_material_source_segment_count
-    }
-
-    /// Returns the number of source hole boundary segments in the second region view.
-    pub const fn second_hole_source_segment_count(&self) -> usize {
-        self.second_hole_source_segment_count
-    }
-
-    /// Returns the number of source contour segments in the first region view.
-    pub const fn first_source_segment_count(&self) -> usize {
-        self.first_source_segment_count
-    }
-
-    /// Returns the number of source contour segments in the second region view.
-    pub const fn second_source_segment_count(&self) -> usize {
-        self.second_source_segment_count
-    }
-
-    /// Returns the exact predicate/filter path used by the retained intersection evidence.
-    pub const fn predicate_path(&self) -> RegionFragmentBuildPredicatePath2 {
-        self.predicate_path
-    }
-
-    /// Returns the number of keyed contour pairs that retained intersections.
-    pub const fn intersection_pair_count(&self) -> usize {
-        self.intersection_pair_count
-    }
-
-    /// Returns normalized contour-level intersection events consumed by this build.
-    pub const fn intersection_event_count(&self) -> usize {
-        self.intersection_event_count
-    }
-
-    /// Returns retained point intersection events consumed by this build.
-    pub const fn point_event_count(&self) -> usize {
-        self.point_event_count
-    }
-
-    /// Returns retained overlap intersection events consumed by this build.
-    pub const fn overlap_event_count(&self) -> usize {
-        self.overlap_event_count
-    }
-
-    /// Returns retained unresolved intersection events consumed by this build.
-    pub const fn uncertain_event_count(&self) -> usize {
-        self.uncertain_event_count
-    }
-
-    /// Returns primitive families touched by retained first-region event segments.
-    pub const fn first_event_segment_kind_counts(&self) -> crate::SegmentKindCounts {
-        self.first_event_segment_kind_counts
-    }
-
-    /// Returns primitive families touched by retained second-region event segments.
-    pub const fn second_event_segment_kind_counts(&self) -> crate::SegmentKindCounts {
-        self.second_event_segment_kind_counts
-    }
-
-    /// Returns all contour-pair candidates considered by the source event set.
-    pub const fn candidate_pair_count(&self) -> usize {
-        self.candidate_pair_count
-    }
-
-    /// Returns contour-pair candidates skipped by decided disjoint AABBs.
-    pub const fn skipped_aabb_pair_count(&self) -> usize {
-        self.skipped_aabb_pair_count
-    }
-
-    /// Returns contour-pair candidates that reached exact contour intersection.
-    pub const fn tested_pair_count(&self) -> usize {
-        self.tested_pair_count
-    }
-
-    /// Returns output keyed contour count when splitting materialized.
-    pub const fn output_contour_count(&self) -> Option<usize> {
-        self.output_contour_count
-    }
-
-    /// Returns output fragment count when splitting materialized.
-    pub const fn output_fragment_count(&self) -> Option<usize> {
-        self.output_fragment_count
-    }
-
-    /// Returns first-operand keyed contour count when splitting materialized.
-    pub const fn first_output_contour_count(&self) -> Option<usize> {
-        self.first_output_contour_count
-    }
-
-    /// Returns second-operand keyed contour count when splitting materialized.
-    pub const fn second_output_contour_count(&self) -> Option<usize> {
-        self.second_output_contour_count
-    }
-
-    /// Returns first-operand output fragment count when splitting materialized.
-    pub const fn first_output_fragment_count(&self) -> Option<usize> {
-        self.first_output_fragment_count
-    }
-
-    /// Returns second-operand output fragment count when splitting materialized.
-    pub const fn second_output_fragment_count(&self) -> Option<usize> {
-        self.second_output_fragment_count
-    }
-
-    /// Returns first-operand material output fragment count when splitting materialized.
-    pub const fn first_material_output_fragment_count(&self) -> Option<usize> {
-        self.first_material_output_fragment_count
-    }
-
-    /// Returns first-operand hole output fragment count when splitting materialized.
-    pub const fn first_hole_output_fragment_count(&self) -> Option<usize> {
-        self.first_hole_output_fragment_count
-    }
-
-    /// Returns second-operand material output fragment count when splitting materialized.
-    pub const fn second_material_output_fragment_count(&self) -> Option<usize> {
-        self.second_material_output_fragment_count
-    }
-
-    /// Returns second-operand hole output fragment count when splitting materialized.
-    pub const fn second_hole_output_fragment_count(&self) -> Option<usize> {
-        self.second_hole_output_fragment_count
-    }
-
-    /// Returns per-contour split provenance.
-    pub fn contour_reports(&self) -> &[RegionContourFragmentReport2] {
-        &self.contour_reports
-    }
-
-    /// Returns retained topology status for fragment construction.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized fragment construction.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl RegionFragmentBuildResult2 {
-    /// Returns materialized region fragments, if splitting succeeded.
-    pub const fn fragments(&self) -> Option<&RegionFragmentSet> {
-        self.fragments.as_ref()
-    }
-
-    /// Consumes this result and returns materialized region fragments, if any.
-    pub fn into_fragments(self) -> Option<RegionFragmentSet> {
-        self.fragments
-    }
-
-    /// Consumes this result and returns retained fragment-build evidence.
-    pub fn into_report(self) -> RegionFragmentBuildReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns materialized fragments with their report.
-    pub fn into_parts(self) -> (Option<RegionFragmentSet>, RegionFragmentBuildReport2) {
-        (self.fragments, self.report)
-    }
-
-    /// Returns retained fragment-build evidence.
-    pub const fn report(&self) -> &RegionFragmentBuildReport2 {
-        &self.report
-    }
-
-    /// Returns materialized fragments as a classification while retaining this result.
-    pub fn fragments_classification(&self) -> Classification<&RegionFragmentSet> {
-        match self.fragments() {
-            Some(fragments) => Classification::Decided(fragments),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns materialized fragments as a classification.
-    pub fn into_fragments_classification(self) -> Classification<RegionFragmentSet> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_fragments() {
-            Some(fragments) => Classification::Decided(fragments),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
-fn blocked_region_fragment_build_result(
-    first_source_contour_count: usize,
-    second_source_contour_count: usize,
-    first_material_source_segment_count: usize,
-    first_hole_source_segment_count: usize,
-    second_material_source_segment_count: usize,
-    second_hole_source_segment_count: usize,
-    first_source_segment_count: usize,
-    second_source_segment_count: usize,
-    intersections: &RegionIntersectionSet,
-    contour_reports: Vec<RegionContourFragmentReport2>,
-    blocker: UncertaintyReason,
-) -> RegionFragmentBuildResult2 {
-    RegionFragmentBuildResult2 {
-        fragments: None,
-        report: RegionFragmentBuildReport2 {
-            stage: RegionFragmentBuildStage2::ContourSplitting,
-            first_source_contour_count,
-            second_source_contour_count,
-            first_material_source_segment_count,
-            first_hole_source_segment_count,
-            second_material_source_segment_count,
-            second_hole_source_segment_count,
-            first_source_segment_count,
-            second_source_segment_count,
-            predicate_path: RegionFragmentBuildPredicatePath2::AabbFilteredContourIntersection,
-            intersection_pair_count: intersections.intersecting_pair_count(),
-            intersection_event_count: intersections.event_count(),
-            point_event_count: intersections.point_event_count(),
-            overlap_event_count: intersections.overlap_event_count(),
-            uncertain_event_count: intersections.uncertain_event_count(),
-            first_event_segment_kind_counts: intersections.first_event_segment_kind_counts(),
-            second_event_segment_kind_counts: intersections.second_event_segment_kind_counts(),
-            candidate_pair_count: intersections.candidate_pair_count(),
-            skipped_aabb_pair_count: intersections.skipped_aabb_pair_count(),
-            tested_pair_count: intersections.tested_pair_count(),
-            output_contour_count: None,
-            output_fragment_count: None,
-            first_output_contour_count: None,
-            second_output_contour_count: None,
-            first_output_fragment_count: None,
-            second_output_fragment_count: None,
-            first_material_output_fragment_count: None,
-            first_hole_output_fragment_count: None,
-            second_material_output_fragment_count: None,
-            second_hole_output_fragment_count: None,
-            contour_reports,
-            status: RetainedTopologyStatus::Unresolved,
-            blocker: Some(blocker),
-        },
-    }
-}
-
-fn contour_reports_for_side(
-    contour_reports: &[RegionContourFragmentReport2],
-    side: RegionSide,
-) -> impl Iterator<Item = &RegionContourFragmentReport2> {
-    contour_reports
-        .iter()
-        .filter(move |report| report.key.side == side)
-}
-
-fn output_fragment_count_for_side(
-    contour_reports: &[RegionContourFragmentReport2],
-    side: RegionSide,
-) -> usize {
-    contour_reports_for_side(contour_reports, side)
-        .map(RegionContourFragmentReport2::output_fragment_count)
-        .sum()
-}
-
-fn output_fragment_count_for_side_role(
-    contour_reports: &[RegionContourFragmentReport2],
-    side: RegionSide,
-    role: RegionContourRole,
-) -> usize {
-    contour_reports
-        .iter()
-        .filter(|report| report.key.side == side && report.key.role == role)
-        .map(RegionContourFragmentReport2::output_fragment_count)
-        .sum()
-}
-
-fn source_segment_count(view: &RegionView2<'_>) -> usize {
-    source_segment_count_for_contours(view.material_contours())
-        + source_segment_count_for_contours(view.hole_contours())
-}
-
-fn source_segment_count_for_contours(contours: &[&Contour2]) -> usize {
-    contours.iter().map(|contour| contour.len()).sum()
 }
 
 fn validate_region_fragment_keys(contours: &[RegionContourFragments]) -> CurveResult<()> {
@@ -863,7 +262,6 @@ fn validate_event_segment_index(
 
 fn append_region_contours(
     out: &mut Vec<RegionContourFragments>,
-    mut reports: Option<&mut Vec<RegionContourFragmentReport2>>,
     side: RegionSide,
     contours: &[&Contour2],
     role: RegionContourRole,
@@ -876,22 +274,6 @@ fn append_region_contours(
             Classification::Decided(fragments) => fragments,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        if let Some(reports) = reports.as_deref_mut() {
-            reports.push(RegionContourFragmentReport2 {
-                key,
-                source_segment_count: contour.len(),
-                source_segment_kind_counts: contour_segment_kind_counts(contour),
-                contributing_pair_count: intersections.pairs_for_contour(key).count(),
-                intersection_event_count: intersections
-                    .pairs_for_contour(key)
-                    .map(|pair| pair.intersections.events().len())
-                    .sum(),
-                output_fragment_count: fragments.len(),
-                output_fragment_kind_counts: fragment_set_segment_kind_counts(&fragments),
-                output_fragments: region_contour_output_fragment_reports(&fragments),
-                status: RetainedTopologyStatus::NativeExact,
-            });
-        }
         out.push(RegionContourFragments { key, fragments });
     }
 
@@ -900,7 +282,6 @@ fn append_region_contours(
 
 fn append_all_region_contours(
     out: &mut Vec<RegionContourFragments>,
-    mut reports: Option<&mut Vec<RegionContourFragmentReport2>>,
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     intersections: &RegionIntersectionSet,
@@ -928,15 +309,7 @@ fn append_all_region_contours(
             RegionContourRole::Hole,
         ),
     ] {
-        match append_region_contours(
-            out,
-            reports.as_deref_mut(),
-            side,
-            contours,
-            role,
-            intersections,
-            policy,
-        )? {
+        match append_region_contours(out, side, contours, role, intersections, policy)? {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -944,49 +317,6 @@ fn append_all_region_contours(
         }
     }
     Ok(Classification::Decided(()))
-}
-
-fn region_contour_output_fragment_reports(
-    fragments: &ContourFragmentSet,
-) -> Vec<RegionContourOutputFragmentReport2> {
-    fragments
-        .fragments()
-        .iter()
-        .enumerate()
-        .map(
-            |(output_fragment_index, fragment)| RegionContourOutputFragmentReport2 {
-                source_segment_index: fragment.source_segment_index,
-                source_segment_kind: fragment.segment.kind(),
-                source_segment_start_point: fragment.source_segment_start_point.clone(),
-                source_segment_end_point: fragment.source_segment_end_point.clone(),
-                source_range: fragment.source_range.clone(),
-                output_fragment_index,
-                output_fragment_kind: fragment.segment.kind(),
-            },
-        )
-        .collect()
-}
-
-fn contour_segment_kind_counts(contour: &Contour2) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for segment in contour.segments() {
-        match segment.kind() {
-            SegmentKind::Line => counts.lines += 1,
-            SegmentKind::Arc => counts.arcs += 1,
-        }
-    }
-    counts
-}
-
-fn fragment_set_segment_kind_counts(fragments: &ContourFragmentSet) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for fragment in fragments.fragments() {
-        match fragment.segment.kind() {
-            SegmentKind::Line => counts.lines += 1,
-            SegmentKind::Arc => counts.arcs += 1,
-        }
-    }
-    counts
 }
 
 fn split_keyed_contour(

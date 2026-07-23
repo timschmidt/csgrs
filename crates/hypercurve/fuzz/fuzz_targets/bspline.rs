@@ -2,7 +2,7 @@
 
 use hypercurve::{
     Classification, CurvePolicy, Point2, PolynomialBSplineCurve2, RationalBSplineCurve2,
-    RationalQuadraticBSplineCurve2, Real, RetainedBSplineSpanFactReport2,
+    RationalQuadraticBSplineCurve2, Real, RetainedBSplineSpanFactEvidence2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -14,8 +14,8 @@ fn point(x: u8, y: u8) -> Point2 {
     Point2::new(r(x as i32 - 128), r(y as i32 - 128))
 }
 
-fn touch_span_fact_report(report: &RetainedBSplineSpanFactReport2) {
-    for span in report.span_facts() {
+fn touch_span_fact_evidence(evidence: &RetainedBSplineSpanFactEvidence2) {
+    for span in evidence.span_facts() {
         let _ = span.span_index();
         let _ = span.knot_interval();
         let _ = span.bounds();
@@ -55,12 +55,14 @@ fuzz_target!(|data: &[u8]| {
             let Classification::Decided(extraction) = classification else {
                 return;
             };
-            let _ = extraction.span_fact_report(&policy).map(|classification| {
-                let Classification::Decided(report) = classification else {
-                    return;
-                };
-                touch_span_fact_report(&report);
-            });
+            let _ = extraction
+                .span_fact_evidence(&policy)
+                .map(|classification| {
+                    let Classification::Decided(evidence) = classification else {
+                        return;
+                    };
+                    touch_span_fact_evidence(&evidence);
+                });
         });
     }
     let weights = controls
@@ -76,26 +78,28 @@ fuzz_target!(|data: &[u8]| {
         &policy,
     ) {
         if let Ok(Classification::Decided(extraction)) = spline.extract_bezier_spans(&policy) {
-            let _ = extraction.span_fact_report(&policy).map(|classification| {
-                let Classification::Decided(report) = classification else {
-                    return;
-                };
-                touch_span_fact_report(&report);
-            });
             let _ = extraction
-                .native_topology_report(&policy)
+                .span_fact_evidence(&policy)
                 .map(|classification| {
-                    let Classification::Decided(report) = classification else {
+                    let Classification::Decided(evidence) = classification else {
                         return;
                     };
-                    for span in report.span_reports() {
+                    touch_span_fact_evidence(&evidence);
+                });
+            let _ = extraction
+                .native_topology_evidence(&policy)
+                .map(|classification| {
+                    let Classification::Decided(evidence) = classification else {
+                        return;
+                    };
+                    for span in evidence.span_evidence() {
                         let _ = span.span_index();
                         let _ = span.degree();
                         let _ = span.knot_interval();
                         let _ = span.status();
                         let _ = span.native_subcurve();
                     }
-                    let _ = report.is_fully_native_exact();
+                    let _ = evidence.is_fully_native_exact();
                 });
             let _ = extraction.native_subcurves(&policy);
         }
@@ -108,12 +112,14 @@ fuzz_target!(|data: &[u8]| {
             let Classification::Decided(extraction) = classification else {
                 return;
             };
-            let _ = extraction.span_fact_report(&policy).map(|classification| {
-                let Classification::Decided(report) = classification else {
-                    return;
-                };
-                touch_span_fact_report(&report);
-            });
+            let _ = extraction
+                .span_fact_evidence(&policy)
+                .map(|classification| {
+                    let Classification::Decided(evidence) = classification else {
+                        return;
+                    };
+                    touch_span_fact_evidence(&evidence);
+                });
         });
     }
 });

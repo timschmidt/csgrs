@@ -1,7 +1,6 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2, FillRule,
-    LineLineIntersection, LineSeg2, LineSide, Point2, Real, Segment2, SegmentKind,
-    SymbolicDependencyMask,
+    BulgeVertex2, Classification, Contour2, CurvePolicy, CurveString2, FillRule,
+    LineLineIntersection, LineSeg2, Point2, Real, Segment2, SegmentKind, SymbolicDependencyMask,
 };
 
 fn r(value: i32) -> Real {
@@ -60,36 +59,7 @@ fn line_segment_facts_certify_axis_alignment_without_float_predicates() {
 }
 
 #[test]
-fn prepared_line_segment_reuses_exact_predicate_endpoint_facts() {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
-    let line = LineSeg2::try_new(
-        Point2::new(third.clone(), two_thirds.clone()),
-        Point2::new(third.clone() + Real::from(3_i8), two_thirds.clone()),
-    )
-    .unwrap();
-    let prepared = line.prepare_topology_queries();
-
-    assert_eq!(prepared.line_segment(), &line);
-    assert!(prepared.facts().coordinate_exact.all_exact_rational);
-    assert!(prepared.facts().coordinate_exact.shared_denominator);
-    assert!(prepared.facts().is_axis_aligned());
-
-    let on = Point2::new(third + Real::one(), two_thirds);
-    let above = Point2::new(on.x().clone(), on.y() + Real::one());
-
-    assert_eq!(
-        prepared.classify_point(&on, &policy()),
-        Classification::Decided(LineSide::On)
-    );
-    assert_eq!(
-        prepared.classify_point(&above, &policy()),
-        line.classify_point(&above, &policy())
-    );
-}
-
-#[test]
-fn prepared_curve_facts_summarize_segment_families_and_dependencies() {
+fn curve_query_facts_summarize_segment_families_and_dependencies() {
     let line = Segment2::Line(
         LineSeg2::try_new(
             Point2::new(Real::pi(), Real::zero()),
@@ -105,21 +75,11 @@ fn prepared_curve_facts_summarize_segment_families_and_dependencies() {
     .unwrap();
     let curve = CurveString2::try_new(vec![line, arc]).unwrap();
 
-    let prepared = curve.prepare_topology_queries(&policy());
+    let prepared = curve.query(&policy());
     let facts = prepared.facts();
 
-    assert_eq!(prepared.prepared_segments().len(), 2);
-    assert!(prepared.prepared_segments()[0].is_line());
-    assert!(prepared.prepared_segments()[1].is_arc());
-    assert_eq!(
-        prepared.prepared_segments()[0].segment_kind(),
-        SegmentKind::Line
-    );
-    assert_eq!(
-        prepared.prepared_segments()[1].segment_kind(),
-        SegmentKind::Arc
-    );
-    assert_eq!(prepared.prepared_segment_kind_counts(), facts.segment_kinds);
+    assert_eq!(prepared.segment_count(), 2);
+    assert_eq!(prepared.segment_kind_counts(), facts.segment_kinds);
     assert_eq!(facts.segment_kinds.lines, 1);
     assert_eq!(facts.segment_kinds.arcs, 1);
     assert_eq!(facts.segment_kinds.total(), 2);
@@ -146,15 +106,10 @@ fn prepared_region_facts_preserve_all_line_exact_grid_shape() {
     )
     .unwrap();
     let region = hypercurve::LineArcRegion2::from_material_contours(vec![contour]);
-    let prepared = region.prepare_topology_queries(&policy());
+    let prepared = region.query(&policy());
     let facts = prepared.facts();
 
-    assert_eq!(
-        prepared.prepared_material_contours()[0]
-            .prepared_segments()
-            .len(),
-        4
-    );
+    assert_eq!(prepared.material_segment_count(), 4);
     assert_eq!(facts.material_contour_count, 1);
     assert_eq!(facts.hole_contour_count, 0);
     assert_eq!(facts.segment_kinds.lines, 4);
@@ -171,7 +126,7 @@ fn prepared_region_facts_preserve_all_line_exact_grid_shape() {
 }
 
 #[test]
-fn native_segment_facts_report_kind_specific_shape() {
+fn native_segment_facts_evidence_kind_specific_shape() {
     let line = Segment2::Line(LineSeg2::try_new(p(0, 0), p(0, 5)).unwrap());
     let line_facts = line.structural_facts();
     assert_eq!(line_facts.kind, SegmentKind::Line);
@@ -181,37 +136,6 @@ fn native_segment_facts_report_kind_specific_shape() {
     let arc_facts = arc.structural_facts();
     assert_eq!(arc_facts.kind, SegmentKind::Arc);
     assert!(arc_facts.exact_rational_arc_radius);
-}
-
-#[test]
-fn prepared_circular_arc_reuses_radial_sweep_predicates() {
-    let arc = CircularArc2::from_bulge(p(-2, 0), p(2, 0), r(1)).unwrap();
-    let prepared = arc.prepare_topology_queries();
-
-    assert_eq!(prepared.circular_arc(), &arc);
-    assert!(prepared.facts().scalar_exact.all_exact_rational);
-    assert!(prepared.facts().radius_squared_exact_rational);
-
-    let on_arc = p(0, -2);
-    let on_circle_outside_sweep = p(0, 2);
-    let off_circle_inside_sweep = p(0, -1);
-
-    assert_eq!(
-        prepared.contains_sweep_point(&on_arc, &policy()),
-        arc.contains_sweep_point(&on_arc, &policy())
-    );
-    assert_eq!(
-        prepared.contains_point(&on_arc, &policy()),
-        Classification::Decided(true)
-    );
-    assert_eq!(
-        prepared.contains_point(&on_circle_outside_sweep, &policy()),
-        Classification::Decided(false)
-    );
-    assert_eq!(
-        prepared.contains_point(&off_circle_inside_sweep, &policy()),
-        Classification::Decided(false)
-    );
 }
 
 #[test]

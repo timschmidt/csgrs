@@ -261,7 +261,7 @@ fn polynomial_spline_knot_insertion_split_and_subcurve_are_exact() {
 }
 
 #[test]
-fn invalid_polynomial_spline_reports_context_and_source() {
+fn invalid_polynomial_spline_evidence_context_and_source() {
     let error = PolynomialSplineCurve2::try_new(
         4,
         vec![p(0, 0), p(1, 1), p(2, 1), p(3, 1), p(4, 0)],
@@ -348,7 +348,7 @@ fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
 }
 
 #[test]
-fn periodic_polynomial_spline_reports_layout_and_wrapping_errors() {
+fn periodic_polynomial_spline_evidence_layout_and_wrapping_errors() {
     let invalid = PolynomialSplineCurve2::try_new_periodic(
         3,
         vec![p(0, 0), p(1, 0), p(1, 1)],

@@ -46,9 +46,9 @@ impl BezierAlgebraicTangentVector2 {
     /// Extracts a represented vector from a transformed endpoint tangent image.
     pub fn from_endpoint_image(
         image: &BezierEndpointTangentImage2,
-    ) -> BezierAlgebraicTangentVectorReport {
+    ) -> BezierAlgebraicTangentVectorEvidence {
         if image.status() != BezierAlgebraicImageStatus::Transformed {
-            return BezierAlgebraicTangentVectorReport {
+            return BezierAlgebraicTangentVectorEvidence {
                 status: BezierAlgebraicTangentVectorStatus::ImageNotTransformed,
                 vector: None,
                 message: Some("endpoint tangent image was not transformed".to_owned()),
@@ -76,14 +76,14 @@ impl BezierAlgebraicTangentVector2 {
             }
         };
         let (Some(dx), Some(dy)) = (dx, dy) else {
-            return BezierAlgebraicTangentVectorReport {
+            return BezierAlgebraicTangentVectorEvidence {
                 status: BezierAlgebraicTangentVectorStatus::MissingCoordinateImage,
                 vector: None,
                 message: Some("endpoint tangent image omitted a represented coordinate".to_owned()),
             };
         };
 
-        BezierAlgebraicTangentVectorReport {
+        BezierAlgebraicTangentVectorEvidence {
             status: BezierAlgebraicTangentVectorStatus::Extracted,
             vector: Some(Self::new(dx.clone(), dy.clone())),
             message: None,
@@ -112,9 +112,9 @@ pub enum BezierAlgebraicTangentVectorStatus {
     MissingCoordinateImage,
 }
 
-/// Extraction report for a represented tangent vector.
+/// Extraction evidence for a represented tangent vector.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicTangentVectorReport {
+pub struct BezierAlgebraicTangentVectorEvidence {
     /// Extraction status.
     pub status: BezierAlgebraicTangentVectorStatus,
     /// Represented tangent vector when extraction succeeds.
@@ -163,11 +163,10 @@ pub enum BezierAlgebraicSameTangentOrderStatus {
     SignUndecided,
 }
 
-/// Sign construction report for a cross, dot, or norm-squared scalar.
+/// Sign construction evidence for a cross, dot, or norm-squared scalar.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicScalarSignReport {
-    /// Arithmetic reports produced while constructing the scalar.
-    pub arithmetic: Vec<AlgebraicRootArithmeticReport>,
+pub struct BezierAlgebraicScalarSignEvidence {
+    arithmetic: Vec<AlgebraicRootArithmeticReport>,
     /// Represented scalar when construction succeeds.
     pub scalar: Option<AlgebraicRootRepresentation>,
     /// Certified sign relative to zero.
@@ -176,37 +175,37 @@ pub struct BezierAlgebraicScalarSignReport {
     pub message: Option<String>,
 }
 
-/// Report for a certified algebraic tangent-order predicate.
+/// Evidence for a certified algebraic tangent-order predicate.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicTangentOrderReport {
+pub struct BezierAlgebraicTangentOrderEvidence {
     /// Final predicate status.
     pub status: BezierAlgebraicTangentOrderStatus,
     /// Certified ordering when `status == Ordered`.
     pub ordering: Option<BezierTangentTurnOrdering2>,
     /// Base/first cross-product sign evidence.
-    pub base_first_cross: Option<BezierAlgebraicScalarSignReport>,
+    pub base_first_cross: Option<BezierAlgebraicScalarSignEvidence>,
     /// Base/second cross-product sign evidence.
-    pub base_second_cross: Option<BezierAlgebraicScalarSignReport>,
+    pub base_second_cross: Option<BezierAlgebraicScalarSignEvidence>,
     /// First/second cross-product sign evidence.
-    pub first_second_cross: Option<BezierAlgebraicScalarSignReport>,
+    pub first_second_cross: Option<BezierAlgebraicScalarSignEvidence>,
     /// Compact diagnostic for unresolved predicates.
     pub message: Option<String>,
 }
 
-/// Report for a certified algebraic same-tangent higher-order predicate.
+/// Evidence for a certified algebraic same-tangent higher-order predicate.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicSameTangentOrderReport {
+pub struct BezierAlgebraicSameTangentOrderEvidence {
     /// Final predicate status.
     pub status: BezierAlgebraicSameTangentOrderStatus,
     /// Certified ordering when `status == Ordered`.
     pub ordering: Option<BezierTangentTurnOrdering2>,
     /// First candidate `cross(B'(t), B''(t))` sign evidence.
-    pub first_curvature_cross: Option<BezierAlgebraicScalarSignReport>,
+    pub first_curvature_cross: Option<BezierAlgebraicScalarSignEvidence>,
     /// Second candidate `cross(B'(t), B''(t))` sign evidence.
-    pub second_curvature_cross: Option<BezierAlgebraicScalarSignReport>,
+    pub second_curvature_cross: Option<BezierAlgebraicScalarSignEvidence>,
     /// Same-side curvature-magnitude difference after clearing speed
     /// denominators.
-    pub magnitude_difference: Option<BezierAlgebraicScalarSignReport>,
+    pub magnitude_difference: Option<BezierAlgebraicScalarSignEvidence>,
     /// Compact diagnostic for unresolved predicates.
     pub message: Option<String>,
 }
@@ -223,38 +222,38 @@ pub fn compare_algebraic_tangent_turn_from_base(
     first: &BezierAlgebraicTangentVector2,
     second: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
-) -> Classification<BezierAlgebraicTangentOrderReport> {
+) -> Classification<BezierAlgebraicTangentOrderEvidence> {
     for tangent in [base, first, second] {
         match tangent_nonzero(tangent, policy) {
             AlgebraicTangentNonzero::Nonzero => {}
-            AlgebraicTangentNonzero::Zero(report) => {
-                return Classification::Decided(order_report(
+            AlgebraicTangentNonzero::Zero(evidence) => {
+                return Classification::Decided(order_evidence(
                     BezierAlgebraicTangentOrderStatus::ZeroTangent,
                     None,
                     None,
                     None,
                     None,
-                    Some(format!("zero tangent certified by {:?}", report.sign)),
+                    Some(format!("zero tangent certified by {:?}", evidence.sign)),
                 ));
             }
-            AlgebraicTangentNonzero::Undecided(report) => {
-                return Classification::Decided(order_report(
+            AlgebraicTangentNonzero::Undecided(evidence) => {
+                return Classification::Decided(order_evidence(
                     BezierAlgebraicTangentOrderStatus::SignUndecided,
                     None,
                     None,
                     None,
                     None,
-                    report.message,
+                    evidence.message,
                 ));
             }
-            AlgebraicTangentNonzero::ArithmeticFailed(report) => {
-                return Classification::Decided(order_report(
+            AlgebraicTangentNonzero::ArithmeticFailed(evidence) => {
+                return Classification::Decided(order_evidence(
                     BezierAlgebraicTangentOrderStatus::ArithmeticFailed,
                     None,
                     None,
                     None,
                     None,
-                    report.message,
+                    evidence.message,
                 ));
             }
         }
@@ -263,7 +262,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
     let (first_half, base_first_cross) = match turn_half(base, first, policy) {
         AlgebraicHalfTurn::Half(half, cross) => (half, cross),
         AlgebraicHalfTurn::ZeroTangent(cross, dot) => {
-            return Classification::Decided(order_report(
+            return Classification::Decided(order_evidence(
                 BezierAlgebraicTangentOrderStatus::ZeroTangent,
                 None,
                 Some(cross),
@@ -273,7 +272,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
             ));
         }
         AlgebraicHalfTurn::Undecided(cross, dot) => {
-            return Classification::Decided(order_report(
+            return Classification::Decided(order_evidence(
                 BezierAlgebraicTangentOrderStatus::SignUndecided,
                 None,
                 Some(cross),
@@ -283,7 +282,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
             ));
         }
         AlgebraicHalfTurn::ArithmeticFailed(cross, dot) => {
-            return Classification::Decided(order_report(
+            return Classification::Decided(order_evidence(
                 BezierAlgebraicTangentOrderStatus::ArithmeticFailed,
                 None,
                 Some(cross),
@@ -296,7 +295,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
     let (second_half, base_second_cross) = match turn_half(base, second, policy) {
         AlgebraicHalfTurn::Half(half, cross) => (half, cross),
         AlgebraicHalfTurn::ZeroTangent(cross, dot) => {
-            return Classification::Decided(order_report(
+            return Classification::Decided(order_evidence(
                 BezierAlgebraicTangentOrderStatus::ZeroTangent,
                 None,
                 Some(base_first_cross),
@@ -306,7 +305,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
             ));
         }
         AlgebraicHalfTurn::Undecided(cross, dot) => {
-            return Classification::Decided(order_report(
+            return Classification::Decided(order_evidence(
                 BezierAlgebraicTangentOrderStatus::SignUndecided,
                 None,
                 Some(base_first_cross),
@@ -316,7 +315,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
             ));
         }
         AlgebraicHalfTurn::ArithmeticFailed(cross, dot) => {
-            return Classification::Decided(order_report(
+            return Classification::Decided(order_evidence(
                 BezierAlgebraicTangentOrderStatus::ArithmeticFailed,
                 None,
                 Some(base_first_cross),
@@ -328,7 +327,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
     };
 
     if first_half != second_half {
-        return Classification::Decided(order_report(
+        return Classification::Decided(order_evidence(
             BezierAlgebraicTangentOrderStatus::Ordered,
             Some(if first_half < second_half {
                 BezierTangentTurnOrdering2::FirstBeforeSecond
@@ -344,7 +343,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
 
     let first_second_cross = cross_sign(first, second, policy);
     match sign_status(&first_second_cross) {
-        ScalarSignStatus::Positive => Classification::Decided(order_report(
+        ScalarSignStatus::Positive => Classification::Decided(order_evidence(
             BezierAlgebraicTangentOrderStatus::Ordered,
             Some(BezierTangentTurnOrdering2::FirstBeforeSecond),
             Some(base_first_cross),
@@ -352,7 +351,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
             Some(first_second_cross),
             None,
         )),
-        ScalarSignStatus::Negative => Classification::Decided(order_report(
+        ScalarSignStatus::Negative => Classification::Decided(order_evidence(
             BezierAlgebraicTangentOrderStatus::Ordered,
             Some(BezierTangentTurnOrdering2::SecondBeforeFirst),
             Some(base_first_cross),
@@ -360,7 +359,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
             Some(first_second_cross),
             None,
         )),
-        ScalarSignStatus::Zero => Classification::Decided(order_report(
+        ScalarSignStatus::Zero => Classification::Decided(order_evidence(
             BezierAlgebraicTangentOrderStatus::SameDirection,
             None,
             Some(base_first_cross),
@@ -368,7 +367,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
             Some(first_second_cross),
             Some("candidate tangent directions are collinear with the same half-turn".to_owned()),
         )),
-        ScalarSignStatus::Undecided => Classification::Decided(order_report(
+        ScalarSignStatus::Undecided => Classification::Decided(order_evidence(
             BezierAlgebraicTangentOrderStatus::SignUndecided,
             None,
             Some(base_first_cross),
@@ -376,7 +375,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
             Some(first_second_cross),
             Some("could not certify candidate tangent order sign".to_owned()),
         )),
-        ScalarSignStatus::ArithmeticFailed => Classification::Decided(order_report(
+        ScalarSignStatus::ArithmeticFailed => Classification::Decided(order_evidence(
             BezierAlgebraicTangentOrderStatus::ArithmeticFailed,
             None,
             Some(base_first_cross),
@@ -404,38 +403,38 @@ pub fn compare_algebraic_same_tangent_second_order(
     second_tangent: &BezierAlgebraicTangentVector2,
     second_second_derivative: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
-) -> Classification<BezierAlgebraicSameTangentOrderReport> {
+) -> Classification<BezierAlgebraicSameTangentOrderEvidence> {
     for tangent in [first_tangent, second_tangent] {
         match tangent_nonzero(tangent, policy) {
             AlgebraicTangentNonzero::Nonzero => {}
-            AlgebraicTangentNonzero::Zero(report) => {
-                return Classification::Decided(same_tangent_report(
+            AlgebraicTangentNonzero::Zero(evidence) => {
+                return Classification::Decided(same_tangent_evidence(
                     BezierAlgebraicSameTangentOrderStatus::ZeroTangent,
                     None,
                     None,
                     None,
                     None,
-                    Some(format!("zero tangent certified by {:?}", report.sign)),
+                    Some(format!("zero tangent certified by {:?}", evidence.sign)),
                 ));
             }
-            AlgebraicTangentNonzero::Undecided(report) => {
-                return Classification::Decided(same_tangent_report(
+            AlgebraicTangentNonzero::Undecided(evidence) => {
+                return Classification::Decided(same_tangent_evidence(
                     BezierAlgebraicSameTangentOrderStatus::SignUndecided,
                     None,
                     None,
                     None,
                     None,
-                    report.message,
+                    evidence.message,
                 ));
             }
-            AlgebraicTangentNonzero::ArithmeticFailed(report) => {
-                return Classification::Decided(same_tangent_report(
+            AlgebraicTangentNonzero::ArithmeticFailed(evidence) => {
+                return Classification::Decided(same_tangent_evidence(
                     BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed,
                     None,
                     None,
                     None,
                     None,
-                    report.message,
+                    evidence.message,
                 ));
             }
         }
@@ -445,7 +444,7 @@ pub fn compare_algebraic_same_tangent_second_order(
     let second_cross = cross_sign(second_tangent, second_second_derivative, policy);
     match (sign_status(&first_cross), sign_status(&second_cross)) {
         (ScalarSignStatus::ArithmeticFailed, _) | (_, ScalarSignStatus::ArithmeticFailed) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed,
                 None,
                 Some(first_cross),
@@ -455,7 +454,7 @@ pub fn compare_algebraic_same_tangent_second_order(
             ))
         }
         (ScalarSignStatus::Undecided, _) | (_, ScalarSignStatus::Undecided) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::SignUndecided,
                 None,
                 Some(first_cross),
@@ -465,7 +464,7 @@ pub fn compare_algebraic_same_tangent_second_order(
             ))
         }
         (ScalarSignStatus::Zero, ScalarSignStatus::Zero) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::SameDirection,
                 None,
                 Some(first_cross),
@@ -475,7 +474,7 @@ pub fn compare_algebraic_same_tangent_second_order(
             ))
         }
         (ScalarSignStatus::Zero, _) | (_, ScalarSignStatus::Zero) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::SameDirection,
                 None,
                 Some(first_cross),
@@ -485,7 +484,7 @@ pub fn compare_algebraic_same_tangent_second_order(
             ))
         }
         (ScalarSignStatus::Positive, ScalarSignStatus::Negative) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::Ordered,
                 Some(BezierTangentTurnOrdering2::FirstBeforeSecond),
                 Some(first_cross),
@@ -495,7 +494,7 @@ pub fn compare_algebraic_same_tangent_second_order(
             ))
         }
         (ScalarSignStatus::Negative, ScalarSignStatus::Positive) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::Ordered,
                 Some(BezierTangentTurnOrdering2::SecondBeforeFirst),
                 Some(first_cross),
@@ -533,38 +532,38 @@ pub fn compare_algebraic_same_tangent_third_order(
     second_tangent: &BezierAlgebraicTangentVector2,
     second_third_derivative: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
-) -> Classification<BezierAlgebraicSameTangentOrderReport> {
+) -> Classification<BezierAlgebraicSameTangentOrderEvidence> {
     for tangent in [first_tangent, second_tangent] {
         match tangent_nonzero(tangent, policy) {
             AlgebraicTangentNonzero::Nonzero => {}
-            AlgebraicTangentNonzero::Zero(report) => {
-                return Classification::Decided(same_tangent_report(
+            AlgebraicTangentNonzero::Zero(evidence) => {
+                return Classification::Decided(same_tangent_evidence(
                     BezierAlgebraicSameTangentOrderStatus::ZeroTangent,
                     None,
                     None,
                     None,
                     None,
-                    Some(format!("zero tangent certified by {:?}", report.sign)),
+                    Some(format!("zero tangent certified by {:?}", evidence.sign)),
                 ));
             }
-            AlgebraicTangentNonzero::Undecided(report) => {
-                return Classification::Decided(same_tangent_report(
+            AlgebraicTangentNonzero::Undecided(evidence) => {
+                return Classification::Decided(same_tangent_evidence(
                     BezierAlgebraicSameTangentOrderStatus::SignUndecided,
                     None,
                     None,
                     None,
                     None,
-                    report.message,
+                    evidence.message,
                 ));
             }
-            AlgebraicTangentNonzero::ArithmeticFailed(report) => {
-                return Classification::Decided(same_tangent_report(
+            AlgebraicTangentNonzero::ArithmeticFailed(evidence) => {
+                return Classification::Decided(same_tangent_evidence(
                     BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed,
                     None,
                     None,
                     None,
                     None,
-                    report.message,
+                    evidence.message,
                 ));
             }
         }
@@ -574,7 +573,7 @@ pub fn compare_algebraic_same_tangent_third_order(
     let second_cross = cross_sign(second_tangent, second_third_derivative, policy);
     match (sign_status(&first_cross), sign_status(&second_cross)) {
         (ScalarSignStatus::ArithmeticFailed, _) | (_, ScalarSignStatus::ArithmeticFailed) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed,
                 None,
                 Some(first_cross),
@@ -584,7 +583,7 @@ pub fn compare_algebraic_same_tangent_third_order(
             ))
         }
         (ScalarSignStatus::Undecided, _) | (_, ScalarSignStatus::Undecided) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::SignUndecided,
                 None,
                 Some(first_cross),
@@ -594,7 +593,7 @@ pub fn compare_algebraic_same_tangent_third_order(
             ))
         }
         (ScalarSignStatus::Zero, _) | (_, ScalarSignStatus::Zero) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::SameDirection,
                 None,
                 Some(first_cross),
@@ -604,7 +603,7 @@ pub fn compare_algebraic_same_tangent_third_order(
             ))
         }
         (ScalarSignStatus::Positive, ScalarSignStatus::Negative) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::Ordered,
                 Some(BezierTangentTurnOrdering2::FirstBeforeSecond),
                 Some(first_cross),
@@ -614,7 +613,7 @@ pub fn compare_algebraic_same_tangent_third_order(
             ))
         }
         (ScalarSignStatus::Negative, ScalarSignStatus::Positive) => {
-            Classification::Decided(same_tangent_report(
+            Classification::Decided(same_tangent_evidence(
                 BezierAlgebraicSameTangentOrderStatus::Ordered,
                 Some(BezierTangentTurnOrdering2::SecondBeforeFirst),
                 Some(first_cross),
@@ -649,24 +648,24 @@ enum ScalarSignStatus {
 
 enum AlgebraicTangentNonzero {
     Nonzero,
-    Zero(BezierAlgebraicScalarSignReport),
-    Undecided(BezierAlgebraicScalarSignReport),
-    ArithmeticFailed(BezierAlgebraicScalarSignReport),
+    Zero(BezierAlgebraicScalarSignEvidence),
+    Undecided(BezierAlgebraicScalarSignEvidence),
+    ArithmeticFailed(BezierAlgebraicScalarSignEvidence),
 }
 
 enum AlgebraicHalfTurn {
-    Half(u8, BezierAlgebraicScalarSignReport),
+    Half(u8, BezierAlgebraicScalarSignEvidence),
     ZeroTangent(
-        BezierAlgebraicScalarSignReport,
-        BezierAlgebraicScalarSignReport,
+        BezierAlgebraicScalarSignEvidence,
+        BezierAlgebraicScalarSignEvidence,
     ),
     Undecided(
-        BezierAlgebraicScalarSignReport,
-        Option<BezierAlgebraicScalarSignReport>,
+        BezierAlgebraicScalarSignEvidence,
+        Option<BezierAlgebraicScalarSignEvidence>,
     ),
     ArithmeticFailed(
-        BezierAlgebraicScalarSignReport,
-        Option<BezierAlgebraicScalarSignReport>,
+        BezierAlgebraicScalarSignEvidence,
+        Option<BezierAlgebraicScalarSignEvidence>,
     ),
 }
 
@@ -715,7 +714,7 @@ fn cross_sign(
     left: &BezierAlgebraicTangentVector2,
     right: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
-) -> BezierAlgebraicScalarSignReport {
+) -> BezierAlgebraicScalarSignEvidence {
     let left_x_right_y = multiply(left.dx(), right.dy());
     let left_y_right_x = multiply(left.dy(), right.dx());
     let scalar = subtract(
@@ -724,23 +723,23 @@ fn cross_sign(
         left_y_right_x.result_representation.as_ref(),
         left_y_right_x.exact_result.as_ref(),
     );
-    let mut report = scalar_sign_report(vec![left_x_right_y, left_y_right_x, scalar], policy);
-    if report.sign.is_none() {
-        report.sign =
+    let mut evidence = scalar_sign_evidence(vec![left_x_right_y, left_y_right_x, scalar], policy);
+    if evidence.sign.is_none() {
+        evidence.sign =
             interval_bilinear_sign(left.dx(), right.dy(), left.dy(), right.dx(), false, policy);
-        if report.sign.is_some() {
-            report.message =
+        if evidence.sign.is_some() {
+            evidence.message =
                 Some("cross-product sign certified from rational root enclosures".to_owned());
         }
     }
-    report
+    evidence
 }
 
 fn dot_sign(
     left: &BezierAlgebraicTangentVector2,
     right: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
-) -> BezierAlgebraicScalarSignReport {
+) -> BezierAlgebraicScalarSignEvidence {
     let left_x_right_x = multiply(left.dx(), right.dx());
     let left_y_right_y = multiply(left.dy(), right.dy());
     let scalar = add(
@@ -749,22 +748,22 @@ fn dot_sign(
         left_y_right_y.result_representation.as_ref(),
         left_y_right_y.exact_result.as_ref(),
     );
-    let mut report = scalar_sign_report(vec![left_x_right_x, left_y_right_y, scalar], policy);
-    if report.sign.is_none() {
-        report.sign =
+    let mut evidence = scalar_sign_evidence(vec![left_x_right_x, left_y_right_y, scalar], policy);
+    if evidence.sign.is_none() {
+        evidence.sign =
             interval_bilinear_sign(left.dx(), right.dx(), left.dy(), right.dy(), true, policy);
-        if report.sign.is_some() {
-            report.message =
+        if evidence.sign.is_some() {
+            evidence.message =
                 Some("dot-product sign certified from rational root enclosures".to_owned());
         }
     }
-    report
+    evidence
 }
 
 fn norm_squared_sign(
     vector: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
-) -> BezierAlgebraicScalarSignReport {
+) -> BezierAlgebraicScalarSignEvidence {
     let dx_squared = multiply(vector.dx(), vector.dx());
     let dy_squared = multiply(vector.dy(), vector.dy());
     let scalar = add(
@@ -773,9 +772,9 @@ fn norm_squared_sign(
         dy_squared.result_representation.as_ref(),
         dy_squared.exact_result.as_ref(),
     );
-    let mut report = scalar_sign_report(vec![dx_squared, dy_squared, scalar], policy);
-    if report.sign.is_none() {
-        report.sign = interval_bilinear_sign(
+    let mut evidence = scalar_sign_evidence(vec![dx_squared, dy_squared, scalar], policy);
+    if evidence.sign.is_none() {
+        evidence.sign = interval_bilinear_sign(
             vector.dx(),
             vector.dx(),
             vector.dy(),
@@ -783,12 +782,12 @@ fn norm_squared_sign(
             true,
             policy,
         );
-        if report.sign.is_some() {
-            report.message =
+        if evidence.sign.is_some() {
+            evidence.message =
                 Some("squared-norm sign certified from rational root enclosures".to_owned());
         }
     }
-    report
+    evidence
 }
 
 fn interval_bilinear_sign(
@@ -855,11 +854,11 @@ fn interval_sign(lower: &Real, upper: &Real, policy: &CurvePolicy) -> Option<Ord
 
 fn compare_algebraic_same_side_curvature_magnitude(
     first_tangent: &BezierAlgebraicTangentVector2,
-    first_cross: BezierAlgebraicScalarSignReport,
+    first_cross: BezierAlgebraicScalarSignEvidence,
     second_tangent: &BezierAlgebraicTangentVector2,
-    second_cross: BezierAlgebraicScalarSignReport,
+    second_cross: BezierAlgebraicScalarSignEvidence,
     policy: &CurvePolicy,
-) -> Classification<BezierAlgebraicSameTangentOrderReport> {
+) -> Classification<BezierAlgebraicSameTangentOrderEvidence> {
     compare_algebraic_same_side_magnitude(
         first_tangent,
         first_cross,
@@ -873,19 +872,19 @@ fn compare_algebraic_same_side_curvature_magnitude(
 
 fn compare_algebraic_same_side_magnitude(
     first_tangent: &BezierAlgebraicTangentVector2,
-    first_cross: BezierAlgebraicScalarSignReport,
+    first_cross: BezierAlgebraicScalarSignEvidence,
     second_tangent: &BezierAlgebraicTangentVector2,
-    second_cross: BezierAlgebraicScalarSignReport,
+    second_cross: BezierAlgebraicScalarSignEvidence,
     speed_power: usize,
     witness_name: &str,
     policy: &CurvePolicy,
-) -> Classification<BezierAlgebraicSameTangentOrderReport> {
+) -> Classification<BezierAlgebraicSameTangentOrderEvidence> {
     let first_speed = norm_squared_sign(first_tangent, policy);
     let second_speed = norm_squared_sign(second_tangent, policy);
     if !matches!(sign_status(&first_speed), ScalarSignStatus::Positive)
         || !matches!(sign_status(&second_speed), ScalarSignStatus::Positive)
     {
-        return Classification::Decided(same_tangent_report(
+        return Classification::Decided(same_tangent_evidence(
             BezierAlgebraicSameTangentOrderStatus::SignUndecided,
             None,
             Some(first_cross),
@@ -904,7 +903,7 @@ fn compare_algebraic_same_side_magnitude(
         policy,
     );
     match sign_status(&magnitude) {
-        ScalarSignStatus::Negative => Classification::Decided(same_tangent_report(
+        ScalarSignStatus::Negative => Classification::Decided(same_tangent_evidence(
             BezierAlgebraicSameTangentOrderStatus::Ordered,
             Some(BezierTangentTurnOrdering2::FirstBeforeSecond),
             Some(first_cross),
@@ -912,7 +911,7 @@ fn compare_algebraic_same_side_magnitude(
             Some(magnitude),
             None,
         )),
-        ScalarSignStatus::Positive => Classification::Decided(same_tangent_report(
+        ScalarSignStatus::Positive => Classification::Decided(same_tangent_evidence(
             BezierAlgebraicSameTangentOrderStatus::Ordered,
             Some(BezierTangentTurnOrdering2::SecondBeforeFirst),
             Some(first_cross),
@@ -920,7 +919,7 @@ fn compare_algebraic_same_side_magnitude(
             Some(magnitude),
             None,
         )),
-        ScalarSignStatus::Zero => Classification::Decided(same_tangent_report(
+        ScalarSignStatus::Zero => Classification::Decided(same_tangent_evidence(
             BezierAlgebraicSameTangentOrderStatus::SameDirection,
             None,
             Some(first_cross),
@@ -930,7 +929,7 @@ fn compare_algebraic_same_side_magnitude(
                 "same-side algebraic {witness_name} magnitudes are equal"
             )),
         )),
-        ScalarSignStatus::Undecided => Classification::Decided(same_tangent_report(
+        ScalarSignStatus::Undecided => Classification::Decided(same_tangent_evidence(
             BezierAlgebraicSameTangentOrderStatus::SignUndecided,
             None,
             Some(first_cross),
@@ -940,7 +939,7 @@ fn compare_algebraic_same_side_magnitude(
                 "could not certify same-side algebraic {witness_name} magnitude"
             )),
         )),
-        ScalarSignStatus::ArithmeticFailed => Classification::Decided(same_tangent_report(
+        ScalarSignStatus::ArithmeticFailed => Classification::Decided(same_tangent_evidence(
             BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed,
             None,
             Some(first_cross),
@@ -954,16 +953,16 @@ fn compare_algebraic_same_side_magnitude(
 }
 
 fn same_side_magnitude_difference(
-    first_cross: &BezierAlgebraicScalarSignReport,
-    second_cross: &BezierAlgebraicScalarSignReport,
-    first_speed: &BezierAlgebraicScalarSignReport,
-    second_speed: &BezierAlgebraicScalarSignReport,
+    first_cross: &BezierAlgebraicScalarSignEvidence,
+    second_cross: &BezierAlgebraicScalarSignEvidence,
+    first_speed: &BezierAlgebraicScalarSignEvidence,
+    second_speed: &BezierAlgebraicScalarSignEvidence,
     speed_power: usize,
     policy: &CurvePolicy,
-) -> BezierAlgebraicScalarSignReport {
+) -> BezierAlgebraicScalarSignEvidence {
     let Some(first_cross_scalar) = first_cross.scalar.as_ref() else {
-        return scalar_sign_report(
-            vec![missing_operand_report(
+        return scalar_sign_evidence(
+            vec![missing_operand_evidence(
                 AlgebraicRootArithmeticOp::Multiply,
                 "first curvature cross scalar was absent",
             )],
@@ -971,8 +970,8 @@ fn same_side_magnitude_difference(
         );
     };
     let Some(second_cross_scalar) = second_cross.scalar.as_ref() else {
-        return scalar_sign_report(
-            vec![missing_operand_report(
+        return scalar_sign_evidence(
+            vec![missing_operand_evidence(
                 AlgebraicRootArithmeticOp::Multiply,
                 "second curvature cross scalar was absent",
             )],
@@ -980,8 +979,8 @@ fn same_side_magnitude_difference(
         );
     };
     let Some(first_speed_scalar) = first_speed.scalar.as_ref() else {
-        return scalar_sign_report(
-            vec![missing_operand_report(
+        return scalar_sign_evidence(
+            vec![missing_operand_evidence(
                 AlgebraicRootArithmeticOp::Multiply,
                 "first speed scalar was absent",
             )],
@@ -989,8 +988,8 @@ fn same_side_magnitude_difference(
         );
     };
     let Some(second_speed_scalar) = second_speed.scalar.as_ref() else {
-        return scalar_sign_report(
-            vec![missing_operand_report(
+        return scalar_sign_evidence(
+            vec![missing_operand_evidence(
                 AlgebraicRootArithmeticOp::Multiply,
                 "second speed scalar was absent",
             )],
@@ -1002,8 +1001,8 @@ fn same_side_magnitude_difference(
     let second_cross_squared = multiply(second_cross_scalar, second_cross_scalar);
     let first_speed_power = power_representation(first_speed_scalar, speed_power);
     let second_speed_power = power_representation(second_speed_scalar, speed_power);
-    let first_scaled = multiply_report_results(&first_cross_squared, &second_speed_power);
-    let second_scaled = multiply_report_results(&second_cross_squared, &first_speed_power);
+    let first_scaled = multiply_evidence_results(&first_cross_squared, &second_speed_power);
+    let second_scaled = multiply_evidence_results(&second_cross_squared, &first_speed_power);
     let difference = subtract(
         first_scaled.result_representation.as_ref(),
         first_scaled.exact_result.as_ref(),
@@ -1019,22 +1018,25 @@ fn same_side_magnitude_difference(
     arithmetic.push(first_scaled);
     arithmetic.push(second_scaled);
     arithmetic.push(difference);
-    scalar_sign_report(arithmetic, policy)
+    scalar_sign_evidence(arithmetic, policy)
 }
 
-struct AlgebraicPowerReport {
+struct AlgebraicPowerEvidence {
     arithmetic: Vec<AlgebraicRootArithmeticReport>,
     representation: Option<AlgebraicRootRepresentation>,
     exact: Option<Real>,
 }
 
-fn power_representation(value: &AlgebraicRootRepresentation, power: usize) -> AlgebraicPowerReport {
+fn power_representation(
+    value: &AlgebraicRootRepresentation,
+    power: usize,
+) -> AlgebraicPowerEvidence {
     assert!(power >= 1, "algebraic power must be positive");
     let mut arithmetic = Vec::new();
     let mut representation = Some(value.clone());
     let mut exact = None;
     for _ in 1..power {
-        let product = binary_from_report_values(
+        let product = binary_from_evidence_values(
             representation.as_ref(),
             exact.as_ref(),
             Some(value),
@@ -1045,18 +1047,18 @@ fn power_representation(value: &AlgebraicRootRepresentation, power: usize) -> Al
         exact = product.exact_result.clone();
         arithmetic.push(product);
     }
-    AlgebraicPowerReport {
+    AlgebraicPowerEvidence {
         arithmetic,
         representation,
         exact,
     }
 }
 
-fn multiply_report_results(
+fn multiply_evidence_results(
     left: &AlgebraicRootArithmeticReport,
-    right: &AlgebraicPowerReport,
+    right: &AlgebraicPowerEvidence,
 ) -> AlgebraicRootArithmeticReport {
-    binary_from_report_values(
+    binary_from_evidence_values(
         left.result_representation.as_ref(),
         left.exact_result.as_ref(),
         right.representation.as_ref(),
@@ -1082,7 +1084,7 @@ fn add(
     right_representation: Option<&AlgebraicRootRepresentation>,
     right_exact: Option<&Real>,
 ) -> AlgebraicRootArithmeticReport {
-    binary_from_report_values(
+    binary_from_evidence_values(
         left_representation,
         left_exact,
         right_representation,
@@ -1097,7 +1099,7 @@ fn subtract(
     right_representation: Option<&AlgebraicRootRepresentation>,
     right_exact: Option<&Real>,
 ) -> AlgebraicRootArithmeticReport {
-    binary_from_report_values(
+    binary_from_evidence_values(
         left_representation,
         left_exact,
         right_representation,
@@ -1106,7 +1108,7 @@ fn subtract(
     )
 }
 
-fn binary_from_report_values(
+fn binary_from_evidence_values(
     left_representation: Option<&AlgebraicRootRepresentation>,
     left_exact: Option<&Real>,
     right_representation: Option<&AlgebraicRootRepresentation>,
@@ -1115,11 +1117,11 @@ fn binary_from_report_values(
 ) -> AlgebraicRootArithmeticReport {
     let left = match representation_or_exact(left_representation, left_exact) {
         Some(value) => value,
-        None => return missing_operand_report(op, "left arithmetic operand was absent"),
+        None => return missing_operand_evidence(op, "left arithmetic operand was absent"),
     };
     let right = match representation_or_exact(right_representation, right_exact) {
         Some(value) => value,
-        None => return missing_operand_report(op, "right arithmetic operand was absent"),
+        None => return missing_operand_evidence(op, "right arithmetic operand was absent"),
     };
     arithmetic_algebraic_root_representations(&left, Some(&right), op)
 }
@@ -1153,7 +1155,7 @@ fn exact_value_representation(value: &Real) -> AlgebraicRootRepresentation {
     }
 }
 
-fn missing_operand_report(
+fn missing_operand_evidence(
     operation: AlgebraicRootArithmeticOp,
     message: impl Into<String>,
 ) -> AlgebraicRootArithmeticReport {
@@ -1166,16 +1168,16 @@ fn missing_operand_report(
     }
 }
 
-fn scalar_sign_report(
+fn scalar_sign_evidence(
     arithmetic: Vec<AlgebraicRootArithmeticReport>,
     policy: &CurvePolicy,
-) -> BezierAlgebraicScalarSignReport {
+) -> BezierAlgebraicScalarSignEvidence {
     let Some(last) = arithmetic.last() else {
-        return BezierAlgebraicScalarSignReport {
+        return BezierAlgebraicScalarSignEvidence {
             arithmetic,
             scalar: None,
             sign: None,
-            message: Some("scalar construction produced no arithmetic reports".to_owned()),
+            message: Some("scalar construction produced no arithmetic evidence".to_owned()),
         };
     };
     if !matches!(
@@ -1183,7 +1185,7 @@ fn scalar_sign_report(
         AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
             | AlgebraicRootArithmeticStatus::ComputedRepresentation
     ) {
-        return BezierAlgebraicScalarSignReport {
+        return BezierAlgebraicScalarSignEvidence {
             message: last.message.clone(),
             arithmetic,
             scalar: None,
@@ -1196,7 +1198,7 @@ fn scalar_sign_report(
     ) {
         Some(scalar) => scalar,
         None => {
-            return BezierAlgebraicScalarSignReport {
+            return BezierAlgebraicScalarSignEvidence {
                 arithmetic,
                 scalar: None,
                 sign: None,
@@ -1208,7 +1210,7 @@ fn scalar_sign_report(
     let message = sign.is_none().then(|| {
         "represented scalar isolating interval did not certify sign relative to zero".to_owned()
     });
-    BezierAlgebraicScalarSignReport {
+    BezierAlgebraicScalarSignEvidence {
         arithmetic,
         scalar: Some(scalar),
         sign,
@@ -1237,7 +1239,7 @@ fn refined_represented_sign(
     policy: &CurvePolicy,
 ) -> Option<Ordering> {
     let zero = exact_value_representation(&Real::zero());
-    let report = compare_algebraic_root_representations_by_difference(
+    let evidence = compare_algebraic_root_representations_by_difference(
         value,
         &zero,
         AlgebraicRootRefinementComparisonConfig {
@@ -1245,8 +1247,8 @@ fn refined_represented_sign(
             ..AlgebraicRootRefinementComparisonConfig::default()
         },
     );
-    (report.comparison.status == AlgebraicRootComparisonStatus::Compared)
-        .then_some(report.comparison.ordering)
+    (evidence.comparison.status == AlgebraicRootComparisonStatus::Compared)
+        .then_some(evidence.comparison.ordering)
         .flatten()
 }
 
@@ -1258,25 +1260,25 @@ fn refined_represented_sign(
     None
 }
 
-fn sign_status(report: &BezierAlgebraicScalarSignReport) -> ScalarSignStatus {
-    match report.sign {
+fn sign_status(evidence: &BezierAlgebraicScalarSignEvidence) -> ScalarSignStatus {
+    match evidence.sign {
         Some(Ordering::Greater) => ScalarSignStatus::Positive,
         Some(Ordering::Less) => ScalarSignStatus::Negative,
         Some(Ordering::Equal) => ScalarSignStatus::Zero,
-        None if report.scalar.is_none() => ScalarSignStatus::ArithmeticFailed,
+        None if evidence.scalar.is_none() => ScalarSignStatus::ArithmeticFailed,
         None => ScalarSignStatus::Undecided,
     }
 }
 
-fn order_report(
+fn order_evidence(
     status: BezierAlgebraicTangentOrderStatus,
     ordering: Option<BezierTangentTurnOrdering2>,
-    base_first_cross: Option<BezierAlgebraicScalarSignReport>,
-    base_second_cross: Option<BezierAlgebraicScalarSignReport>,
-    first_second_cross: Option<BezierAlgebraicScalarSignReport>,
+    base_first_cross: Option<BezierAlgebraicScalarSignEvidence>,
+    base_second_cross: Option<BezierAlgebraicScalarSignEvidence>,
+    first_second_cross: Option<BezierAlgebraicScalarSignEvidence>,
     message: Option<String>,
-) -> BezierAlgebraicTangentOrderReport {
-    BezierAlgebraicTangentOrderReport {
+) -> BezierAlgebraicTangentOrderEvidence {
+    BezierAlgebraicTangentOrderEvidence {
         status,
         ordering,
         base_first_cross,
@@ -1286,15 +1288,15 @@ fn order_report(
     }
 }
 
-fn same_tangent_report(
+fn same_tangent_evidence(
     status: BezierAlgebraicSameTangentOrderStatus,
     ordering: Option<BezierTangentTurnOrdering2>,
-    first_curvature_cross: Option<BezierAlgebraicScalarSignReport>,
-    second_curvature_cross: Option<BezierAlgebraicScalarSignReport>,
-    magnitude_difference: Option<BezierAlgebraicScalarSignReport>,
+    first_curvature_cross: Option<BezierAlgebraicScalarSignEvidence>,
+    second_curvature_cross: Option<BezierAlgebraicScalarSignEvidence>,
+    magnitude_difference: Option<BezierAlgebraicScalarSignEvidence>,
     message: Option<String>,
-) -> BezierAlgebraicSameTangentOrderReport {
-    BezierAlgebraicSameTangentOrderReport {
+) -> BezierAlgebraicSameTangentOrderEvidence {
+    BezierAlgebraicSameTangentOrderEvidence {
         status,
         ordering,
         first_curvature_cross,

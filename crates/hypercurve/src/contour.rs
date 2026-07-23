@@ -333,7 +333,7 @@ impl Contour2 {
     /// This is the closed-boundary counterpart to
     /// [`CurveString2::merge_adjacent_collinear_lines`]. It inspects the
     /// wraparound adjacency as well as interior adjacencies, preserves corners,
-    /// arcs, and collinear reversals, and reports source segment indices for
+    /// arcs, and collinear reversals, and evidence source segment indices for
     /// every output contour segment. If any line-line support or direction
     /// predicate is unresolved, no contour is materialized.
     pub fn merge_adjacent_collinear_lines(

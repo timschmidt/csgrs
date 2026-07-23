@@ -9,147 +9,13 @@ use crate::classify::compare_reals;
 use crate::region_crossing_winding::RegionLineCrossingWindingIndex;
 use crate::region_fragments::split_single_material_line_regions_compact;
 use crate::{
-    Aabb2, BooleanBoundaryChainAssemblyReport2, BooleanBoundaryContourTransferReport2,
-    BooleanBoundaryFragmentEmissionReport2, BooleanBoundaryLoopExtractionReport2,
-    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
-    BooleanFragmentSelection, BooleanFragmentSelectionReport2, BooleanOp, BulgeVertex2,
-    Classification, Contour2, ContourIntersection, CurveError, CurvePolicy, CurveResult, FillRule,
-    IntersectionKind, LineArcRegion2, Point2, Real, RegionBoundaryContourBuildPredicatePath2,
-    RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildStage2,
-    RegionBoundaryContourRoleReport2, RegionFragmentBuildReport2, RegionFragmentSet,
-    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, RetainedTopologyStatus,
-    Segment2, SegmentKindCounts, UncertaintyReason,
+    Aabb2, BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
+    BooleanFragmentSelection, BooleanOp, BulgeVertex2, Classification, Contour2,
+    ContourIntersection, CurveError, CurvePolicy, CurveResult, FillRule, IntersectionKind,
+    LineArcRegion2, Point2, Real, RegionFragmentSet, RegionIntersectionSet, RegionPointLocation,
+    RegionSide, RegionView2, Segment2, UncertaintyReason,
 };
 use std::cmp::Ordering;
-
-/// Report for a closed region boolean materialization.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RegionBooleanReport2 {
-    op: BooleanOp,
-    fill_rule: FillRule,
-    query_path: RegionBooleanQueryPath2,
-    stage: RegionBooleanStage2,
-    first_material_contour_count: usize,
-    first_hole_contour_count: usize,
-    first_boundary_segment_count: usize,
-    first_boundary_segment_kind_counts: SegmentKindCounts,
-    second_material_contour_count: usize,
-    second_hole_contour_count: usize,
-    second_boundary_segment_count: usize,
-    second_boundary_segment_kind_counts: SegmentKindCounts,
-    boundary_first_contour_count: Option<usize>,
-    boundary_second_contour_count: Option<usize>,
-    boundary_predicate_path: Option<RegionBooleanBoundaryPredicatePath2>,
-    boundary_contour_source_path: Option<RegionBooleanBoundaryContourSourcePath2>,
-    boundary_candidate_pair_count: usize,
-    boundary_skipped_aabb_pair_count: usize,
-    boundary_tested_pair_count: usize,
-    boundary_intersecting_pair_count: usize,
-    boundary_intersection_event_count: usize,
-    boundary_point_event_count: usize,
-    boundary_overlap_event_count: usize,
-    boundary_uncertain_event_count: usize,
-    boundary_first_event_segment_kind_counts: SegmentKindCounts,
-    boundary_second_event_segment_kind_counts: SegmentKindCounts,
-    boundary_contour_count: Option<usize>,
-    result_material_contour_count: Option<usize>,
-    result_hole_contour_count: Option<usize>,
-    result_boundary_segment_count: Option<usize>,
-    result_boundary_source_segment_kind_counts: Option<SegmentKindCounts>,
-    result_boundary_segment_kind_counts: Option<SegmentKindCounts>,
-    pipeline_report: Option<RegionBooleanPipelineReport2>,
-    boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
-    status: RetainedTopologyStatus,
-    blocker: Option<UncertaintyReason>,
-}
-
-/// Arrangement-first evidence consumed by a closed region boolean.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RegionBooleanPipelineReport2 {
-    fragment_build_report: RegionFragmentBuildReport2,
-    fragment_selection_report: BooleanFragmentSelectionReport2,
-    shared_boundary_resolutions: Vec<RegionBooleanSharedBoundaryResolution2>,
-    boundary_fragment_emission_report: BooleanBoundaryFragmentEmissionReport2,
-    chain_assembly_report: BooleanBoundaryChainAssemblyReport2,
-    loop_extraction_report: BooleanBoundaryLoopExtractionReport2,
-    contour_transfer_report: BooleanBoundaryContourTransferReport2,
-    boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
-}
-
-/// Exact ownership decision for one pair of coincident Boolean fragments.
-///
-/// Fragment keys and indices refer directly to the source-provenance entries in
-/// [`RegionBooleanPipelineReport2::fragment_build_report`]. Fill-side values are
-/// expressed in each source contour's traversal direction. The relative
-/// direction flag records the normalization used before applying the Boolean
-/// operation's local fill-state truth table.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct RegionBooleanSharedBoundaryResolution2 {
-    first_key: crate::RegionContourKey,
-    first_fragment_index: usize,
-    second_key: crate::RegionContourKey,
-    second_fragment_index: usize,
-    same_direction: bool,
-    first_filled_side_is_left: bool,
-    second_filled_side_is_left: bool,
-    first_action: BooleanFragmentAction,
-    second_action: BooleanFragmentAction,
-}
-
-/// Query path used by a report-bearing closed region boolean.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RegionBooleanQueryPath2 {
-    /// Boolean materialization used transient region views and direct queries.
-    Direct,
-    /// Boolean materialization used caller-supplied prepared region views.
-    Prepared,
-}
-
-/// Exact predicate family used while collecting boolean boundary events.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RegionBooleanBoundaryPredicatePath2 {
-    /// Region contour pairs were filtered by AABB before exact contour intersection predicates.
-    AabbFilteredContourIntersection,
-}
-
-/// Provenance path used to produce checked boolean boundary contours.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RegionBooleanBoundaryContourSourcePath2 {
-    /// Output contours came from an identical-operand set identity.
-    IdenticalOperandShortcut,
-    /// Output contours came from an empty-operand set identity.
-    EmptyOperandShortcut,
-    /// Output contours came from a certified coextensive axis-aligned rectangle shortcut.
-    CoextensiveAxisRectShortcut,
-    /// Output contours came from a boundary-only contact shortcut.
-    BoundaryContactShortcut,
-    /// Output contours came from a certified containment shortcut.
-    ContainmentShortcut,
-    /// Output contours came from a containment-with-overlap difference shortcut.
-    ContainmentDifferenceOverlapShortcut,
-    /// Output contours came from a shared-boundary union shortcut.
-    BoundaryOverlapUnionShortcut,
-    /// Output contours came from difference/union composition for XOR.
-    XorDifferenceUnionShortcut,
-    /// Output contours came from the generic split/classify/chain/loop pipeline.
-    ArrangementPipeline,
-}
-
-/// Furthest exact materialization stage reached by a region boolean report.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RegionBooleanStage2 {
-    /// The attempt stopped while extracting checked boolean boundary contours.
-    BoundaryExtraction,
-    /// Checked boundary contours were built and role-assigned into a region.
-    RegionRoleAssignment,
-}
-
-/// Result of report-bearing closed region boolean materialization.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RegionBooleanResult2 {
-    region: Option<LineArcRegion2>,
-    report: RegionBooleanReport2,
-}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum BoundaryContactKind {
@@ -645,652 +511,23 @@ impl RegionView2<'_> {
     }
 }
 
-impl RegionBooleanReport2 {
-    /// Returns the requested boolean operation.
-    pub const fn op(&self) -> BooleanOp {
-        self.op
-    }
-
-    /// Returns the fill rule used to materialize boolean boundary contours.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.fill_rule
-    }
-
-    /// Returns whether this report used direct or prepared region queries.
-    pub const fn query_path(&self) -> RegionBooleanQueryPath2 {
-        self.query_path
-    }
-
-    /// Returns the furthest exact materialization stage reached.
-    pub const fn stage(&self) -> RegionBooleanStage2 {
-        self.stage
-    }
-
-    /// Returns the first operand material contour count.
-    pub const fn first_material_contour_count(&self) -> usize {
-        self.first_material_contour_count
-    }
-
-    /// Returns the first operand hole contour count.
-    pub const fn first_hole_contour_count(&self) -> usize {
-        self.first_hole_contour_count
-    }
-
-    /// Returns total boundary segment count in the first operand.
-    pub const fn first_boundary_segment_count(&self) -> usize {
-        self.first_boundary_segment_count
-    }
-
-    /// Returns line/arc boundary segment counts in the first operand.
-    pub const fn first_boundary_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.first_boundary_segment_kind_counts
-    }
-
-    /// Returns the second operand material contour count.
-    pub const fn second_material_contour_count(&self) -> usize {
-        self.second_material_contour_count
-    }
-
-    /// Returns the second operand hole contour count.
-    pub const fn second_hole_contour_count(&self) -> usize {
-        self.second_hole_contour_count
-    }
-
-    /// Returns total boundary segment count in the second operand.
-    pub const fn second_boundary_segment_count(&self) -> usize {
-        self.second_boundary_segment_count
-    }
-
-    /// Returns line/arc boundary segment counts in the second operand.
-    pub const fn second_boundary_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.second_boundary_segment_kind_counts
-    }
-
-    /// Returns the first operand contour count reported by boundary events.
-    pub const fn boundary_first_contour_count(&self) -> Option<usize> {
-        self.boundary_first_contour_count
-    }
-
-    /// Returns the second operand contour count reported by boundary events.
-    pub const fn boundary_second_contour_count(&self) -> Option<usize> {
-        self.boundary_second_contour_count
-    }
-
-    /// Returns the exact predicate/filter path used for boolean boundary events.
-    pub const fn boundary_predicate_path(&self) -> Option<RegionBooleanBoundaryPredicatePath2> {
-        self.boundary_predicate_path
-    }
-
-    /// Returns the exact path that produced checked boolean boundary contours.
-    pub const fn boundary_contour_source_path(
-        &self,
-    ) -> Option<RegionBooleanBoundaryContourSourcePath2> {
-        self.boundary_contour_source_path
-    }
-
-    /// Returns region contour-pair candidates considered before boolean splitting.
-    pub const fn boundary_candidate_pair_count(&self) -> usize {
-        self.boundary_candidate_pair_count
-    }
-
-    /// Returns contour-pair candidates skipped by decided disjoint boundary AABBs.
-    pub const fn boundary_skipped_aabb_pair_count(&self) -> usize {
-        self.boundary_skipped_aabb_pair_count
-    }
-
-    /// Returns contour-pair candidates that reached exact boundary intersection.
-    pub const fn boundary_tested_pair_count(&self) -> usize {
-        self.boundary_tested_pair_count
-    }
-
-    /// Returns contour pairs with nonempty retained boundary-intersection evidence.
-    pub const fn boundary_intersecting_pair_count(&self) -> usize {
-        self.boundary_intersecting_pair_count
-    }
-
-    /// Returns retained boundary-intersection events consumed by boolean splitting.
-    pub const fn boundary_intersection_event_count(&self) -> usize {
-        self.boundary_intersection_event_count
-    }
-
-    /// Returns retained point boundary-intersection events consumed by boolean splitting.
-    pub const fn boundary_point_event_count(&self) -> usize {
-        self.boundary_point_event_count
-    }
-
-    /// Returns retained overlap boundary-intersection events consumed by boolean splitting.
-    pub const fn boundary_overlap_event_count(&self) -> usize {
-        self.boundary_overlap_event_count
-    }
-
-    /// Returns retained unresolved boundary-intersection events consumed by boolean splitting.
-    pub const fn boundary_uncertain_event_count(&self) -> usize {
-        self.boundary_uncertain_event_count
-    }
-
-    /// Returns primitive families touched by retained first-region boundary events.
-    pub const fn boundary_first_event_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.boundary_first_event_segment_kind_counts
-    }
-
-    /// Returns primitive families touched by retained second-region boundary events.
-    pub const fn boundary_second_event_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.boundary_second_event_segment_kind_counts
-    }
-
-    /// Returns checked output boundary contour count when available.
-    pub const fn boundary_contour_count(&self) -> Option<usize> {
-        self.boundary_contour_count
-    }
-
-    /// Returns material contour count when a boolean region materialized.
-    pub const fn result_material_contour_count(&self) -> Option<usize> {
-        self.result_material_contour_count
-    }
-
-    /// Returns hole contour count when a boolean region materialized.
-    pub const fn result_hole_contour_count(&self) -> Option<usize> {
-        self.result_hole_contour_count
-    }
-
-    /// Returns total result contour count when role assignment was reached.
-    pub const fn result_contour_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.output_contour_count(),
-            None => None,
-        }
-    }
-
-    /// Returns total result boundary segment count when a boolean region materialized.
-    pub const fn result_boundary_segment_count(&self) -> Option<usize> {
-        self.result_boundary_segment_count
-    }
-
-    /// Returns material boundary segment count when role assignment was reached.
-    pub const fn result_material_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.material_segment_count(),
-            None => None,
-        }
-    }
-
-    /// Returns hole boundary segment count when role assignment was reached.
-    pub const fn result_hole_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.hole_segment_count(),
-            None => None,
-        }
-    }
-
-    /// Returns source primitive-family counts for result boundary segments when available.
-    pub const fn result_boundary_source_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.result_boundary_source_segment_kind_counts
-    }
-
-    /// Returns line/arc boundary segment counts in the result region when available.
-    pub const fn result_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.result_boundary_segment_kind_counts
-    }
-
-    /// Returns arrangement-first split/classify/traverse evidence, if used.
-    pub const fn pipeline_report(&self) -> Option<&RegionBooleanPipelineReport2> {
-        self.pipeline_report.as_ref()
-    }
-
-    /// Returns final boundary-contour role assignment evidence, if available.
-    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.boundary_build_report.as_ref()
-    }
-
-    /// Returns final boundary-role assignment stage, if reached.
-    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.stage()),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-role assignment predicate path, if reached.
-    pub const fn boundary_build_predicate_path(
-        &self,
-    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.predicate_path()),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-role assignment retained status, if reached.
-    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.status()),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-role assignment blocker, if present.
-    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker(),
-            None => None,
-        }
-    }
-
-    /// Returns source contour count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.source_contour_count()),
-            None => None,
-        }
-    }
-
-    /// Returns source boundary segment count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.source_segment_count()),
-            None => None,
-        }
-    }
-
-    /// Returns contour-pair validation schedule size from final role assignment, if reached.
-    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_candidate_pair_count()),
-            None => None,
-        }
-    }
-
-    /// Returns contour-pair validation test count from final role assignment, if reached.
-    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_tested_pair_count()),
-            None => None,
-        }
-    }
-
-    /// Returns exact validation intersection event count from final role assignment, if reached.
-    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_intersection_event_count()),
-            None => None,
-        }
-    }
-
-    /// Returns containment classification count from final role assignment, if reached.
-    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.nesting_classification_count()),
-            None => None,
-        }
-    }
-
-    /// Returns first blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker_first_contour_index(),
-            None => None,
-        }
-    }
-
-    /// Returns second blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker_second_contour_index(),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-contour role reports, if role assignment was reached.
-    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.boundary_build_report()
-            .map(RegionBoundaryContourBuildReport2::role_reports)
-    }
-
-    /// Returns final boundary-contour role report count, if role assignment was reached.
-    pub fn role_report_count(&self) -> Option<usize> {
-        self.role_reports().map(<[_]>::len)
-    }
-
-    /// Returns boolean-region materialization status.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns the exact blocker for non-materialized boolean attempts.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
-}
-
-impl RegionBooleanPipelineReport2 {
-    /// Builds a retained boolean pipeline report from stage reports.
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) const fn new(
-        fragment_build_report: RegionFragmentBuildReport2,
-        fragment_selection_report: BooleanFragmentSelectionReport2,
-        shared_boundary_resolutions: Vec<RegionBooleanSharedBoundaryResolution2>,
-        boundary_fragment_emission_report: BooleanBoundaryFragmentEmissionReport2,
-        chain_assembly_report: BooleanBoundaryChainAssemblyReport2,
-        loop_extraction_report: BooleanBoundaryLoopExtractionReport2,
-        contour_transfer_report: BooleanBoundaryContourTransferReport2,
-    ) -> Self {
-        Self {
-            fragment_build_report,
-            fragment_selection_report,
-            shared_boundary_resolutions,
-            boundary_fragment_emission_report,
-            chain_assembly_report,
-            loop_extraction_report,
-            contour_transfer_report,
-            boundary_build_report: None,
-        }
-    }
-
-    /// Returns retained region-fragment split evidence.
-    pub const fn fragment_build_report(&self) -> &RegionFragmentBuildReport2 {
-        &self.fragment_build_report
-    }
-
-    /// Returns retained boolean fragment classification evidence.
-    pub const fn fragment_selection_report(&self) -> &BooleanFragmentSelectionReport2 {
-        &self.fragment_selection_report
-    }
-
-    /// Returns exact coincident-fragment ownership decisions.
-    pub fn shared_boundary_resolutions(&self) -> &[RegionBooleanSharedBoundaryResolution2] {
-        &self.shared_boundary_resolutions
-    }
-
-    /// Returns the number of coincident-fragment pairs resolved by local fill state.
-    pub const fn shared_boundary_resolution_count(&self) -> usize {
-        self.shared_boundary_resolutions.len()
-    }
-
-    /// Returns retained boundary-fragment emission evidence.
-    pub const fn boundary_fragment_emission_report(
-        &self,
-    ) -> &BooleanBoundaryFragmentEmissionReport2 {
-        &self.boundary_fragment_emission_report
-    }
-
-    /// Returns retained directed-fragment chain assembly evidence.
-    pub const fn chain_assembly_report(&self) -> &BooleanBoundaryChainAssemblyReport2 {
-        &self.chain_assembly_report
-    }
-
-    /// Returns retained closed-loop extraction evidence.
-    pub const fn loop_extraction_report(&self) -> &BooleanBoundaryLoopExtractionReport2 {
-        &self.loop_extraction_report
-    }
-
-    /// Returns retained contour transfer evidence.
-    pub const fn contour_transfer_report(&self) -> &BooleanBoundaryContourTransferReport2 {
-        &self.contour_transfer_report
-    }
-
-    /// Returns final boundary-contour role assignment evidence, if available.
-    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.boundary_build_report.as_ref()
-    }
-
-    /// Returns final boundary-role assignment stage, if reached.
-    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.stage()),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-role assignment predicate path, if reached.
-    pub const fn boundary_build_predicate_path(
-        &self,
-    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.predicate_path()),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-role assignment retained status, if reached.
-    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.status()),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-role assignment blocker, if present.
-    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker(),
-            None => None,
-        }
-    }
-
-    /// Returns source contour count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.source_contour_count()),
-            None => None,
-        }
-    }
-
-    /// Returns source boundary segment count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.source_segment_count()),
-            None => None,
-        }
-    }
-
-    /// Returns contour-pair validation schedule size from final role assignment, if reached.
-    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_candidate_pair_count()),
-            None => None,
-        }
-    }
-
-    /// Returns contour-pair validation test count from final role assignment, if reached.
-    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_tested_pair_count()),
-            None => None,
-        }
-    }
-
-    /// Returns exact validation intersection event count from final role assignment, if reached.
-    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_intersection_event_count()),
-            None => None,
-        }
-    }
-
-    /// Returns containment classification count from final role assignment, if reached.
-    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.nesting_classification_count()),
-            None => None,
-        }
-    }
-
-    /// Returns first blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker_first_contour_index(),
-            None => None,
-        }
-    }
-
-    /// Returns second blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker_second_contour_index(),
-            None => None,
-        }
-    }
-
-    /// Returns final output contour count when role assignment was reached.
-    pub const fn output_contour_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.output_contour_count(),
-            None => None,
-        }
-    }
-
-    /// Returns final output boundary segment count when role assignment was reached.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.output_segment_count(),
-            None => None,
-        }
-    }
-
-    /// Returns material boundary segment count when role assignment was reached.
-    pub const fn material_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.material_segment_count(),
-            None => None,
-        }
-    }
-
-    /// Returns hole boundary segment count when role assignment was reached.
-    pub const fn hole_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.hole_segment_count(),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-contour role reports, if role assignment was reached.
-    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.boundary_build_report()
-            .map(RegionBoundaryContourBuildReport2::role_reports)
-    }
-
-    /// Returns final boundary-contour role report count, if role assignment was reached.
-    pub fn role_report_count(&self) -> Option<usize> {
-        self.role_reports().map(<[_]>::len)
-    }
-}
-
-impl RegionBooleanSharedBoundaryResolution2 {
-    /// Returns the first-operand contour key.
-    pub const fn first_key(&self) -> crate::RegionContourKey {
-        self.first_key
-    }
-
-    /// Returns the first-operand fragment index within its split contour.
-    pub const fn first_fragment_index(&self) -> usize {
-        self.first_fragment_index
-    }
-
-    /// Returns the second-operand contour key.
-    pub const fn second_key(&self) -> crate::RegionContourKey {
-        self.second_key
-    }
-
-    /// Returns the second-operand fragment index within its split contour.
-    pub const fn second_fragment_index(&self) -> usize {
-        self.second_fragment_index
-    }
-
-    /// Returns whether both source fragments traverse the shared image identically.
-    pub const fn same_direction(&self) -> bool {
-        self.same_direction
-    }
-
-    /// Returns whether the first region is filled left of its source fragment.
-    pub const fn first_filled_side_is_left(&self) -> bool {
-        self.first_filled_side_is_left
-    }
-
-    /// Returns whether the second region is filled left of its source fragment.
-    pub const fn second_filled_side_is_left(&self) -> bool {
-        self.second_filled_side_is_left
-    }
-
-    /// Returns the resolved action for the first fragment copy.
-    pub const fn first_action(&self) -> BooleanFragmentAction {
-        self.first_action
-    }
-
-    /// Returns the resolved action for the second fragment copy.
-    pub const fn second_action(&self) -> BooleanFragmentAction {
-        self.second_action
-    }
-}
-
-impl RegionBooleanResult2 {
-    /// Returns the materialized boolean region, if construction succeeded.
-    pub const fn region(&self) -> Option<&LineArcRegion2> {
-        self.region.as_ref()
-    }
-
-    /// Consumes this result and returns the materialized boolean region.
-    pub fn into_region(self) -> Option<LineArcRegion2> {
-        self.region
-    }
-
-    /// Consumes this result and returns retained boolean materialization evidence.
-    pub fn into_report(self) -> RegionBooleanReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized boolean region with its report.
-    pub fn into_parts(self) -> (Option<LineArcRegion2>, RegionBooleanReport2) {
-        (self.region, self.report)
-    }
-
-    /// Returns retained boolean materialization evidence.
-    pub const fn report(&self) -> &RegionBooleanReport2 {
-        &self.report
-    }
-
-    /// Returns the materialized boolean region as a classification while retaining this result.
-    pub fn region_classification(&self) -> Classification<&LineArcRegion2> {
-        match self.region() {
-            Some(region) => Classification::Decided(region),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the materialized boolean region as a classification.
-    pub fn into_region_classification(self) -> Classification<LineArcRegion2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_region() {
-            Some(region) => Classification::Decided(region),
-            None => Classification::Uncertain(blocker),
-        }
-    }
-}
-
 pub(crate) fn boolean_boundary_loops_between(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
-    match boolean_boundary_between_with_pipeline_report(
+    match boolean_boundary_between(
         first,
         second,
         op,
         FillRule::NonZero,
         None,
         policy,
-        false,
         BooleanBoundaryOutputKind::Loops,
         None,
     )? {
-        Classification::Decided((output, _, _)) => Ok(Classification::Decided(
+        Classification::Decided(output) => Ok(Classification::Decided(
             output
                 .into_loops()
                 .expect("boundary-loop query requests loop output"),
@@ -1306,18 +543,17 @@ pub(crate) fn boolean_boundary_contours_between(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
-    match boolean_boundary_between_with_pipeline_report(
+    match boolean_boundary_between(
         first,
         second,
         op,
         fill_rule,
         None,
         policy,
-        false,
         BooleanBoundaryOutputKind::Contours,
         None,
     )? {
-        Classification::Decided((output, _, _)) => Ok(Classification::Decided(
+        Classification::Decided(output) => Ok(Classification::Decided(
             output
                 .into_contours()
                 .expect("boundary-contour query requests contour output"),
@@ -1352,10 +588,7 @@ pub(crate) fn boolean_region_between(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<LineArcRegion2>> {
-    Ok(
-        boolean_region_between_impl(first, second, op, fill_rule, policy, false)?
-            .into_region_classification(),
-    )
+    boolean_region_between_impl(first, second, op, fill_rule, policy)
 }
 
 fn boolean_region_between_impl(
@@ -1364,124 +597,36 @@ fn boolean_region_between_impl(
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-    retain_pipeline_report: bool,
-) -> CurveResult<RegionBooleanResult2> {
-    let boundary_events = if retain_pipeline_report {
-        first.intersect_region(second, policy)?
-    } else {
-        crate::region_events::intersect_region_views_point_only(first, second, policy)?
-    };
+) -> CurveResult<Classification<LineArcRegion2>> {
+    let boundary_events =
+        crate::region_events::intersect_region_views_point_only(first, second, policy)?;
     if let Some(region) = retained_offset_region_boolean(first, second, op, policy) {
-        return Ok(region_boolean_result_from_role_assigned_shortcut_region(
-            first,
-            second,
-            op,
-            fill_rule,
-            RegionBooleanQueryPath2::Direct,
-            &boundary_events,
-            region,
-            RegionBooleanBoundaryContourSourcePath2::ContainmentShortcut,
-        ));
+        return Ok(Classification::Decided(region));
     }
     if op == BooleanOp::Xor {
-        return match xor_region_by_difference_union(first, second, fill_rule, policy)? {
-            Classification::Decided(region) => {
-                Ok(region_boolean_result_from_role_assigned_shortcut_region(
-                    first,
-                    second,
-                    op,
-                    fill_rule,
-                    RegionBooleanQueryPath2::Direct,
-                    &boundary_events,
-                    region,
-                    RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut,
-                ))
-            }
-            Classification::Uncertain(reason) => Ok(blocked_region_boolean_result(
-                first,
-                second,
-                op,
-                fill_rule,
-                RegionBooleanQueryPath2::Direct,
-                &boundary_events,
-                retained_status_for_boolean_blocker(reason),
-                reason,
-            )),
-        };
+        return xor_region_by_difference_union(first, second, fill_rule, policy);
     }
-    let (boundary_output, boundary_contour_source_path, pipeline_report) =
-        match boolean_boundary_between_with_pipeline_report(
-            first,
-            second,
-            op,
-            fill_rule,
-            Some(&boundary_events),
-            policy,
-            retain_pipeline_report,
-            BooleanBoundaryOutputKind::Contours,
-            None,
-        )? {
-            Classification::Decided(result) => result,
-            Classification::Uncertain(reason) => {
-                return Ok(blocked_region_boolean_result(
-                    first,
-                    second,
-                    op,
-                    fill_rule,
-                    RegionBooleanQueryPath2::Direct,
-                    &boundary_events,
-                    retained_status_for_boolean_blocker(reason),
-                    reason,
-                ));
-            }
-        };
-    let contours = boundary_output
-        .into_contours()
-        .expect("region Boolean requests contour boundary output");
-    if !retain_pipeline_report {
-        return Ok(
-            match if boundary_events.overlap_event_count() == 0 {
-                LineArcRegion2::from_directed_boolean_boundary_contours(contours, policy)?
-            } else {
-                LineArcRegion2::from_validated_boundary_contours(contours, policy)?
-            } {
-                Classification::Decided(region) => {
-                    region_boolean_result_from_role_assigned_shortcut_region(
-                        first,
-                        second,
-                        op,
-                        fill_rule,
-                        RegionBooleanQueryPath2::Direct,
-                        &boundary_events,
-                        region,
-                        boundary_contour_source_path,
-                    )
-                }
-                Classification::Uncertain(reason) => blocked_region_boolean_result(
-                    first,
-                    second,
-                    op,
-                    fill_rule,
-                    RegionBooleanQueryPath2::Direct,
-                    &boundary_events,
-                    retained_status_for_boolean_blocker(reason),
-                    reason,
-                ),
-            },
-        );
-    }
-    region_boolean_result_from_boundary_contours_with_pipeline_report(
+    let boundary_output = match boolean_boundary_between(
         first,
         second,
         op,
         fill_rule,
-        RegionBooleanQueryPath2::Direct,
-        &boundary_events,
-        contours,
-        boundary_contour_source_path,
-        pipeline_report,
+        Some(&boundary_events),
         policy,
-    )
+        BooleanBoundaryOutputKind::Contours,
+        None,
+    )? {
+        Classification::Decided(result) => result,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let contours = boundary_output
+        .into_contours()
+        .expect("region Boolean requests contour boundary output");
+    if boundary_events.overlap_event_count() == 0 {
+        LineArcRegion2::from_directed_boolean_boundary_contours(contours, policy)
+    } else {
+        LineArcRegion2::from_validated_boundary_contours(contours, policy)
+    }
 }
 
 pub(crate) fn retained_offset_region_boolean(
@@ -1575,28 +720,18 @@ impl BooleanBoundaryOutput {
     }
 }
 
-pub(crate) fn boolean_boundary_between_with_pipeline_report(
+pub(crate) fn boolean_boundary_between(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     known_boundary_events: Option<&RegionIntersectionSet>,
     policy: &CurvePolicy,
-    retain_pipeline_report: bool,
     output_kind: BooleanBoundaryOutputKind,
-    prepared: Option<(
-        &crate::PreparedRegionView2<'_>,
-        &crate::PreparedRegionView2<'_>,
-    )>,
-) -> CurveResult<
-    Classification<(
-        BooleanBoundaryOutput,
-        RegionBooleanBoundaryContourSourcePath2,
-        Option<RegionBooleanPipelineReport2>,
-    )>,
-> {
+    prepared: Option<(&crate::RegionQuery2<'_>, &crate::RegionQuery2<'_>)>,
+) -> CurveResult<Classification<BooleanBoundaryOutput>> {
     if same_region_view(first, second) {
-        return Ok(Classification::Decided((
+        return Ok(Classification::Decided(
             BooleanBoundaryOutput::from_contours(
                 match op {
                     BooleanOp::Union | BooleanOp::Intersection => clone_boundary_contours(first),
@@ -1604,30 +739,24 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                 },
                 output_kind,
             )?,
-            RegionBooleanBoundaryContourSourcePath2::IdenticalOperandShortcut,
-            None,
-        )));
+        ));
     }
     if first.is_empty() || second.is_empty() {
-        return Ok(Classification::Decided((
+        return Ok(Classification::Decided(
             BooleanBoundaryOutput::from_contours(
                 empty_operand_boundary_contours(first, second, op),
                 output_kind,
             )?,
-            RegionBooleanBoundaryContourSourcePath2::EmptyOperandShortcut,
-            None,
-        )));
+        ));
     }
     match coextensive_axis_rect_region_boolean(first, second, op, policy)? {
         Classification::Decided(Some(region)) => {
-            return Ok(Classification::Decided((
+            return Ok(Classification::Decided(
                 BooleanBoundaryOutput::from_contours(
                     clone_boundary_contours(&region.as_view()),
                     output_kind,
                 )?,
-                RegionBooleanBoundaryContourSourcePath2::CoextensiveAxisRectShortcut,
-                None,
-            )));
+            ));
         }
         Classification::Decided(None) => {}
         Classification::Uncertain(reason) => {
@@ -1638,15 +767,14 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
     let boundary_events = match known_boundary_events {
         Some(boundary_events) => boundary_events,
         None => {
-            owned_boundary_events =
-                if retain_pipeline_report || output_kind == BooleanBoundaryOutputKind::Loops {
-                    match prepared {
-                        Some((first, second)) => first.intersect_prepared_region(second, policy)?,
-                        None => first.intersect_region(second, policy)?,
-                    }
-                } else {
-                    crate::region_events::intersect_region_views_point_only(first, second, policy)?
-                };
+            owned_boundary_events = if output_kind == BooleanBoundaryOutputKind::Loops {
+                match prepared {
+                    Some((first, second)) => first.intersect_query(second, policy)?,
+                    None => first.intersect_region(second, policy)?,
+                }
+            } else {
+                crate::region_events::intersect_region_views_point_only(first, second, policy)?
+            };
             &owned_boundary_events
         }
     };
@@ -1655,11 +783,9 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
             return match boundary_contact_boundary_contours(
                 first, second, op, fill_rule, policy, kind,
             )? {
-                Classification::Decided(contours) => Ok(Classification::Decided((
+                Classification::Decided(contours) => Ok(Classification::Decided(
                     BooleanBoundaryOutput::from_contours(contours, output_kind)?,
-                    RegionBooleanBoundaryContourSourcePath2::BoundaryContactShortcut,
-                    None,
-                ))),
+                )),
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             };
         }
@@ -1668,11 +794,9 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
             contact,
         })) => {
             if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
-                return Ok(Classification::Decided((
+                return Ok(Classification::Decided(
                     BooleanBoundaryOutput::from_contours(contours, output_kind)?,
-                    RegionBooleanBoundaryContourSourcePath2::ContainmentShortcut,
-                    None,
-                )));
+                ));
             }
             if relation == BoundaryContainmentRelation::FirstContainsSecond
                 && contact == BoundaryContactKind::Overlap
@@ -1681,11 +805,9 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                 return match containment_difference_boundary_contours(
                     first, second, fill_rule, policy,
                 )? {
-                    Classification::Decided(contours) => Ok(Classification::Decided((
+                    Classification::Decided(contours) => Ok(Classification::Decided(
                         BooleanBoundaryOutput::from_contours(contours, output_kind)?,
-                        RegionBooleanBoundaryContourSourcePath2::ContainmentDifferenceOverlapShortcut,
-                        None,
-                    ))),
+                    )),
                     Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                 };
             }
@@ -1694,11 +816,9 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
             if op == BooleanOp::Union && region_boundary_has_overlap_in(boundary_events) {
                 return match boundary_overlap_union_contours(first, second, op, fill_rule, policy)?
                 {
-                    Classification::Decided(contours) => Ok(Classification::Decided((
+                    Classification::Decided(contours) => Ok(Classification::Decided(
                         BooleanBoundaryOutput::from_contours(contours, output_kind)?,
-                        RegionBooleanBoundaryContourSourcePath2::BoundaryOverlapUnionShortcut,
-                        None,
-                    ))),
+                    )),
                     Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                 };
             }
@@ -1707,11 +827,9 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
     }
     if op == BooleanOp::Xor {
         return match xor_boundary_contours_by_region(first, second, fill_rule, policy)? {
-            Classification::Decided(contours) => Ok(Classification::Decided((
+            Classification::Decided(contours) => Ok(Classification::Decided(
                 BooleanBoundaryOutput::from_contours(contours, output_kind)?,
-                RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut,
-                None,
-            ))),
+            )),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         };
     }
@@ -1722,8 +840,7 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
     // samples therefore cannot lie on that boundary.
     let split_interiors_are_off_opposite_boundary =
         boundary_events.overlap_event_count() == 0 && boundary_events.uncertain_event_count() == 0;
-    let crossing_windings = if !retain_pipeline_report
-        && split_interiors_are_off_opposite_boundary
+    let crossing_windings = if split_interiors_are_off_opposite_boundary
         && RegionLineCrossingWindingIndex::event_set_may_support_propagation(boundary_events)
     {
         RegionLineCrossingWindingIndex::from_intersections(first, second, boundary_events, policy)
@@ -1808,10 +925,8 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                                     return Ok(Classification::Uncertain(reason));
                                 }
                             };
-                            return Ok(Classification::Decided((
-                                BooleanBoundaryOutput::Contours(contours),
-                                RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
-                                None,
+                            return Ok(Classification::Decided(BooleanBoundaryOutput::Contours(
+                                contours,
                             )));
                         }
                         Classification::Decided(None) => {}
@@ -1855,41 +970,15 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
                         }
                     }
                 };
-                return Ok(Classification::Decided((
-                    output,
-                    RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
-                    None,
-                )));
+                return Ok(Classification::Decided(output));
             }
         }
     }
 
-    let fragment_result = retain_pipeline_report
-        .then(|| boundary_events.split_regions_with_report(first, second, policy))
-        .transpose()?;
-    let mut lean_fragments = None;
-    let fragments = match fragment_result.as_ref() {
-        Some(fragment_result) => match fragment_result.fragments() {
-            Some(fragments) => fragments,
-            None => {
-                return Ok(Classification::Uncertain(
-                    fragment_result
-                        .report()
-                        .blocker()
-                        .unwrap_or(UncertaintyReason::Unsupported),
-                ));
-            }
-        },
-        None => {
-            lean_fragments = Some(
-                match boundary_events.split_regions(first, second, policy)? {
-                    Classification::Decided(fragments) => fragments,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                },
-            );
-            lean_fragments.as_ref().unwrap()
+    let fragments = match boundary_events.split_regions(first, second, policy)? {
+        Classification::Decided(fragments) => fragments,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
         }
     };
     let endpoint_contacts = split_interiors_are_off_opposite_boundary.then(|| {
@@ -1907,7 +996,7 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
     };
     let crossing_selection_result = match (&endpoint_contacts, &crossing_windings) {
         (Some(endpoint_contacts), Some(crossing_windings)) => fragments
-            .classify_for_boolean_with_line_crossing_winding_with_report(
+            .classify_for_boolean_with_line_crossing_winding(
                 first,
                 second,
                 op,
@@ -1949,12 +1038,12 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
             let (first_prepared, second_prepared) = match prepared {
                 Some(prepared) => prepared,
                 None => {
-                    first_transient = crate::PreparedRegionView2::from_region_view(first, policy);
-                    second_transient = crate::PreparedRegionView2::from_region_view(second, policy);
+                    first_transient = crate::RegionQuery2::from_region_view(first, policy);
+                    second_transient = crate::RegionQuery2::from_region_view(second, policy);
                     (&first_transient, &second_transient)
                 }
             };
-            fragments.classify_for_boolean_with_contacts_and_point_classifier_with_report(
+            fragments.classify_for_boolean_with_contacts_and_point_classifier(
                 first,
                 second,
                 op,
@@ -1974,447 +1063,63 @@ pub(crate) fn boolean_boundary_between_with_pipeline_report(
             )?
         }
     };
-    if !retain_pipeline_report {
-        let blocker = selection_result
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        let selection = match selection_result.into_selection() {
-            Some(selection) => selection,
-            None => return Ok(Classification::Uncertain(blocker)),
-        };
-        let selection = match resolve_owned_shared_boundary_selection(fragments, selection, op)? {
-            Classification::Decided(selection) => selection,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        if output_kind == BooleanBoundaryOutputKind::Contours {
-            match selection.endpoint_chain_indices_from_certified_split(fragments, policy)? {
-                Classification::Decided(Some(chain_indices)) => {
-                    let contours = match selection.emit_contours_from_owned_certified_split(
-                        lean_fragments
-                            .take()
-                            .expect("lean Boolean traversal owns its split fragments"),
-                        chain_indices,
-                        fill_rule,
-                    )? {
-                        Classification::Decided(contours) => contours,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    return Ok(Classification::Decided((
-                        BooleanBoundaryOutput::Contours(contours),
-                        RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
-                        None,
-                    )));
+    let selection = match selection_result {
+        Classification::Decided(selection) => selection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let selection = match resolve_owned_shared_boundary_selection(&fragments, selection, op)? {
+        Classification::Decided(selection) => selection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    if output_kind == BooleanBoundaryOutputKind::Contours {
+        match selection.endpoint_chain_indices_from_certified_split(&fragments, policy)? {
+            Classification::Decided(Some(chain_indices)) => {
+                let contours = match selection.emit_contours_from_owned_certified_split(
+                    fragments,
+                    chain_indices,
+                    fill_rule,
+                )? {
+                    Classification::Decided(contours) => contours,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                return Ok(Classification::Decided(BooleanBoundaryOutput::Contours(
+                    contours,
+                )));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    let emitted = selection.emit_boundary_fragments_from_owned_certified_split(fragments)?;
+    let output = match output_kind {
+        BooleanBoundaryOutputKind::Loops => {
+            let chains = match emitted.into_assembled_chains(policy) {
+                Classification::Decided(chains) => chains,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
-                Classification::Decided(None) => {}
+            };
+            match chains.into_closed_loops() {
+                Classification::Decided(loops) => BooleanBoundaryOutput::Loops(loops),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
         }
-        let emitted = selection.emit_boundary_fragments_from_owned_certified_split(
-            lean_fragments.expect("lean Boolean traversal owns its split fragments"),
-        )?;
-        let output = match output_kind {
-            BooleanBoundaryOutputKind::Loops => {
-                let chains = match emitted.into_assembled_chains(policy) {
-                    Classification::Decided(chains) => chains,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                match chains.into_closed_loops() {
-                    Classification::Decided(loops) => BooleanBoundaryOutput::Loops(loops),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
+        BooleanBoundaryOutputKind::Contours => {
+            match emitted.into_assembled_contours(fill_rule, policy)? {
+                Classification::Decided(contours) => BooleanBoundaryOutput::Contours(contours),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
             }
-            BooleanBoundaryOutputKind::Contours => {
-                match emitted.into_assembled_contours(fill_rule, policy)? {
-                    Classification::Decided(contours) => BooleanBoundaryOutput::Contours(contours),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-        };
-        return Ok(Classification::Decided((
-            output,
-            RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
-            None,
-        )));
-    }
-    let selection = match selection_result.selection() {
-        Some(selection) => selection,
-        None => {
-            return Ok(Classification::Uncertain(
-                selection_result
-                    .report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ));
         }
     };
-    let (selection, shared_boundary_resolutions) =
-        match resolve_shared_boundary_selection_with_report(fragments, selection, op)? {
-            Classification::Decided(resolved) => resolved,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-    let emission_result =
-        selection.emit_boundary_fragments_from_certified_split_with_report(fragments)?;
-    let (emitted, emission_report) = emission_result.into_parts();
-    let emitted = match emitted {
-        Some(emitted) => emitted,
-        None => {
-            return Ok(Classification::Uncertain(
-                emission_report
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ));
-        }
-    };
-    let chain_result = emitted.assemble_chains_with_report(policy);
-    let (chains, chain_report) = chain_result.into_parts();
-    let chains = match chains {
-        Some(chains) => chains,
-        None => {
-            return Ok(Classification::Uncertain(
-                chain_report
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ));
-        }
-    };
-    let loop_result = chains.into_closed_loops_with_report();
-    let (loops, loop_report) = loop_result.into_parts();
-    let loops = match loops {
-        Some(loops) => loops,
-        None => {
-            return Ok(Classification::Uncertain(
-                loop_report
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ));
-        }
-    };
-    let contour_result = loops.into_contours_with_report(fill_rule);
-    let (contours, contour_report) = contour_result.into_parts();
-    let contours = match contours {
-        Some(contours) => contours,
-        None => {
-            return Ok(Classification::Uncertain(
-                contour_report
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ));
-        }
-    };
-    let pipeline_report = RegionBooleanPipelineReport2::new(
-        fragment_result
-            .expect("retained pipeline report keeps fragment evidence")
-            .into_report(),
-        selection_result.into_report(),
-        shared_boundary_resolutions,
-        emission_report,
-        chain_report,
-        loop_report,
-        contour_report,
-    );
-    Ok(Classification::Decided((
-        BooleanBoundaryOutput::Contours(contours),
-        RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
-        Some(pipeline_report),
-    )))
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn region_boolean_result_from_boundary_contours_with_pipeline_report(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    query_path: RegionBooleanQueryPath2,
-    boundary_events: &RegionIntersectionSet,
-    contours: Vec<Contour2>,
-    boundary_contour_source_path: RegionBooleanBoundaryContourSourcePath2,
-    pipeline_report: Option<RegionBooleanPipelineReport2>,
-    policy: &CurvePolicy,
-) -> CurveResult<RegionBooleanResult2> {
-    region_boolean_result_from_boundary_contours_with_prepared_cache_and_pipeline_report(
-        first,
-        second,
-        op,
-        fill_rule,
-        query_path,
-        boundary_events,
-        contours,
-        boundary_contour_source_path,
-        pipeline_report,
-        policy,
-    )
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn region_boolean_result_from_role_assigned_shortcut_region(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    query_path: RegionBooleanQueryPath2,
-    boundary_events: &RegionIntersectionSet,
-    region: LineArcRegion2,
-    boundary_contour_source_path: RegionBooleanBoundaryContourSourcePath2,
-) -> RegionBooleanResult2 {
-    let result_view = region.as_view();
-    let result_material_contour_count = result_view.material_contours().len();
-    let result_hole_contour_count = result_view.hole_contours().len();
-    let result_boundary_segment_count = region_view_boundary_segment_count(&result_view);
-    let result_boundary_segment_kind_counts =
-        region_view_boundary_segment_kind_counts(&result_view);
-    RegionBooleanResult2 {
-        region: Some(region),
-        report: RegionBooleanReport2 {
-            op,
-            fill_rule,
-            query_path,
-            stage: RegionBooleanStage2::RegionRoleAssignment,
-            first_material_contour_count: first.material_contours().len(),
-            first_hole_contour_count: first.hole_contours().len(),
-            first_boundary_segment_count: region_view_boundary_segment_count(first),
-            first_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(first),
-            second_material_contour_count: second.material_contours().len(),
-            second_hole_contour_count: second.hole_contours().len(),
-            second_boundary_segment_count: region_view_boundary_segment_count(second),
-            second_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(second),
-            boundary_first_contour_count: boundary_events.first_contour_count(),
-            boundary_second_contour_count: boundary_events.second_contour_count(),
-            boundary_predicate_path: Some(
-                RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection,
-            ),
-            boundary_contour_source_path: Some(boundary_contour_source_path),
-            boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
-            boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
-            boundary_tested_pair_count: boundary_events.tested_pair_count(),
-            boundary_intersecting_pair_count: boundary_events.intersecting_pair_count(),
-            boundary_intersection_event_count: boundary_events.event_count(),
-            boundary_point_event_count: boundary_events.point_event_count(),
-            boundary_overlap_event_count: boundary_events.overlap_event_count(),
-            boundary_uncertain_event_count: boundary_events.uncertain_event_count(),
-            boundary_first_event_segment_kind_counts: boundary_events
-                .first_event_segment_kind_counts(),
-            boundary_second_event_segment_kind_counts: boundary_events
-                .second_event_segment_kind_counts(),
-            boundary_contour_count: Some(result_material_contour_count + result_hole_contour_count),
-            result_material_contour_count: Some(result_material_contour_count),
-            result_hole_contour_count: Some(result_hole_contour_count),
-            result_boundary_segment_count: Some(result_boundary_segment_count),
-            result_boundary_source_segment_kind_counts: None,
-            result_boundary_segment_kind_counts: Some(result_boundary_segment_kind_counts),
-            pipeline_report: None,
-            boundary_build_report: None,
-            status: RetainedTopologyStatus::NativeExact,
-            blocker: None,
-        },
-    }
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_and_pipeline_report(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    query_path: RegionBooleanQueryPath2,
-    boundary_events: &RegionIntersectionSet,
-    contours: Vec<Contour2>,
-    boundary_contour_source_path: RegionBooleanBoundaryContourSourcePath2,
-    pipeline_report: Option<RegionBooleanPipelineReport2>,
-    policy: &CurvePolicy,
-) -> CurveResult<RegionBooleanResult2> {
-    let boundary_contour_count = contours.len();
-    let built = LineArcRegion2::from_boundary_contours_with_report(contours, policy)?;
-    let status = built.status();
-    let blocker = built.blocker();
-    let result_material_contour_count = built.material_contour_count();
-    let result_hole_contour_count = built.hole_contour_count();
-    let result_boundary_segment_count = built.output_segment_count();
-    let result_boundary_segment_kind_counts = built
-        .region()
-        .map(|region| region_view_boundary_segment_kind_counts(&region.as_view()));
-    let (region, boundary_build_report) = built.into_parts();
-    let result_boundary_source_segment_kind_counts = pipeline_report.as_ref().and_then(|report| {
-        report
-            .contour_transfer_report()
-            .output_source_segment_kind_counts()
-    });
-    let pipeline_report = pipeline_report.map(|mut report| {
-        report.boundary_build_report = Some(boundary_build_report.clone());
-        report
-    });
-    Ok(RegionBooleanResult2 {
-        region,
-        report: RegionBooleanReport2 {
-            op,
-            fill_rule,
-            query_path,
-            stage: RegionBooleanStage2::RegionRoleAssignment,
-            first_material_contour_count: first.material_contours().len(),
-            first_hole_contour_count: first.hole_contours().len(),
-            first_boundary_segment_count: region_view_boundary_segment_count(first),
-            first_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(first),
-            second_material_contour_count: second.material_contours().len(),
-            second_hole_contour_count: second.hole_contours().len(),
-            second_boundary_segment_count: region_view_boundary_segment_count(second),
-            second_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(second),
-            boundary_first_contour_count: boundary_events.first_contour_count(),
-            boundary_second_contour_count: boundary_events.second_contour_count(),
-            boundary_predicate_path: Some(
-                RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection,
-            ),
-            boundary_contour_source_path: Some(boundary_contour_source_path),
-            boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
-            boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
-            boundary_tested_pair_count: boundary_events.tested_pair_count(),
-            boundary_intersecting_pair_count: boundary_events.intersecting_pair_count(),
-            boundary_intersection_event_count: boundary_events.event_count(),
-            boundary_point_event_count: boundary_events.point_event_count(),
-            boundary_overlap_event_count: boundary_events.overlap_event_count(),
-            boundary_uncertain_event_count: boundary_events.uncertain_event_count(),
-            boundary_first_event_segment_kind_counts: boundary_events
-                .first_event_segment_kind_counts(),
-            boundary_second_event_segment_kind_counts: boundary_events
-                .second_event_segment_kind_counts(),
-            boundary_contour_count: Some(boundary_contour_count),
-            result_material_contour_count,
-            result_hole_contour_count,
-            result_boundary_segment_count,
-            result_boundary_source_segment_kind_counts,
-            result_boundary_segment_kind_counts,
-            pipeline_report,
-            boundary_build_report: Some(boundary_build_report),
-            status,
-            blocker,
-        },
-    })
-}
-
-pub(crate) fn blocked_region_boolean_result(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    query_path: RegionBooleanQueryPath2,
-    boundary_events: &RegionIntersectionSet,
-    status: RetainedTopologyStatus,
-    blocker: UncertaintyReason,
-) -> RegionBooleanResult2 {
-    blocked_region_boolean_result_with_prepared_cache(
-        first,
-        second,
-        op,
-        fill_rule,
-        query_path,
-        boundary_events,
-        status,
-        blocker,
-    )
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    query_path: RegionBooleanQueryPath2,
-    boundary_events: &RegionIntersectionSet,
-    status: RetainedTopologyStatus,
-    blocker: UncertaintyReason,
-) -> RegionBooleanResult2 {
-    RegionBooleanResult2 {
-        region: None,
-        report: RegionBooleanReport2 {
-            op,
-            fill_rule,
-            query_path,
-            stage: RegionBooleanStage2::BoundaryExtraction,
-            first_material_contour_count: first.material_contours().len(),
-            first_hole_contour_count: first.hole_contours().len(),
-            first_boundary_segment_count: region_view_boundary_segment_count(first),
-            first_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(first),
-            second_material_contour_count: second.material_contours().len(),
-            second_hole_contour_count: second.hole_contours().len(),
-            second_boundary_segment_count: region_view_boundary_segment_count(second),
-            second_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(second),
-            boundary_first_contour_count: boundary_events.first_contour_count(),
-            boundary_second_contour_count: boundary_events.second_contour_count(),
-            boundary_predicate_path: Some(
-                RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection,
-            ),
-            boundary_contour_source_path: None,
-            boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
-            boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
-            boundary_tested_pair_count: boundary_events.tested_pair_count(),
-            boundary_intersecting_pair_count: boundary_events.intersecting_pair_count(),
-            boundary_intersection_event_count: boundary_events.event_count(),
-            boundary_point_event_count: boundary_events.point_event_count(),
-            boundary_overlap_event_count: boundary_events.overlap_event_count(),
-            boundary_uncertain_event_count: boundary_events.uncertain_event_count(),
-            boundary_first_event_segment_kind_counts: boundary_events
-                .first_event_segment_kind_counts(),
-            boundary_second_event_segment_kind_counts: boundary_events
-                .second_event_segment_kind_counts(),
-            boundary_contour_count: None,
-            result_material_contour_count: None,
-            result_hole_contour_count: None,
-            result_boundary_segment_count: None,
-            result_boundary_source_segment_kind_counts: None,
-            result_boundary_segment_kind_counts: None,
-            pipeline_report: None,
-            boundary_build_report: None,
-            status,
-            blocker: Some(blocker),
-        },
-    }
-}
-
-fn region_view_boundary_segment_count(region: &RegionView2<'_>) -> usize {
-    region
-        .material_contours()
-        .iter()
-        .chain(region.hole_contours().iter())
-        .map(|contour| contour.segments().len())
-        .sum()
-}
-
-fn region_view_boundary_segment_kind_counts(region: &RegionView2<'_>) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for segment in region
-        .material_contours()
-        .iter()
-        .chain(region.hole_contours().iter())
-        .flat_map(|contour| contour.segments())
-    {
-        match segment {
-            Segment2::Line(_) => counts.lines += 1,
-            Segment2::Arc(_) => counts.arcs += 1,
-        }
-    }
-    counts
-}
-
-pub(crate) fn retained_status_for_boolean_blocker(
-    reason: UncertaintyReason,
-) -> RetainedTopologyStatus {
-    match reason {
-        UncertaintyReason::Boundary | UncertaintyReason::Unsupported => {
-            RetainedTopologyStatus::Unsupported
-        }
-        _ => RetainedTopologyStatus::Unresolved,
-    }
+    Ok(Classification::Decided(output))
 }
 
 fn boundary_contact_resolution_from_intersections(
@@ -2905,41 +1610,11 @@ pub(crate) fn resolve_shared_boundary_selection(
     selection: &BooleanFragmentSelection,
     op: BooleanOp,
 ) -> CurveResult<Classification<BooleanFragmentSelection>> {
-    Ok(
-        match resolve_shared_boundary_selection_with_report(fragments, selection, op)? {
-            Classification::Decided((selection, _)) => Classification::Decided(selection),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
-    )
-}
-
-fn resolve_owned_shared_boundary_selection(
-    fragments: &RegionFragmentSet,
-    selection: BooleanFragmentSelection,
-    op: BooleanOp,
-) -> CurveResult<Classification<BooleanFragmentSelection>> {
-    if selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution) == 0 {
-        return Ok(Classification::Decided(selection));
-    }
-    resolve_shared_boundary_selection(fragments, &selection, op)
-}
-
-pub(crate) fn resolve_shared_boundary_selection_with_report(
-    fragments: &RegionFragmentSet,
-    selection: &BooleanFragmentSelection,
-    op: BooleanOp,
-) -> CurveResult<
-    Classification<(
-        BooleanFragmentSelection,
-        Vec<RegionBooleanSharedBoundaryResolution2>,
-    )>,
-> {
     let pairs = match unresolved_boundary_pairs(fragments, selection)? {
         Classification::Decided(pairs) => pairs,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let mut resolutions = Vec::with_capacity(pairs.len() * 2);
-    let mut resolution_reports = Vec::with_capacity(pairs.len());
     for (left_index, right_index) in pairs {
         let left = &selection.classifications()[left_index];
         let right = &selection.classifications()[right_index];
@@ -2983,21 +1658,21 @@ pub(crate) fn resolve_shared_boundary_selection_with_report(
             second_classification.fragment_index,
             BooleanFragmentAction::Discard,
         ));
-        resolution_reports.push(RegionBooleanSharedBoundaryResolution2 {
-            first_key: first_classification.key,
-            first_fragment_index: first_classification.fragment_index,
-            second_key: second_classification.key,
-            second_fragment_index: second_classification.fragment_index,
-            same_direction,
-            first_filled_side_is_left: first_left,
-            second_filled_side_is_left: second_left,
-            first_action: action,
-            second_action: BooleanFragmentAction::Discard,
-        });
     }
     selection
         .resolve_boundary_actions(&resolutions)
-        .map(|selection| Classification::Decided((selection, resolution_reports)))
+        .map(Classification::Decided)
+}
+
+fn resolve_owned_shared_boundary_selection(
+    fragments: &RegionFragmentSet,
+    selection: BooleanFragmentSelection,
+    op: BooleanOp,
+) -> CurveResult<Classification<BooleanFragmentSelection>> {
+    if selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution) == 0 {
+        return Ok(Classification::Decided(selection));
+    }
+    resolve_shared_boundary_selection(fragments, &selection, op)
 }
 
 fn unresolved_boundary_pairs(
@@ -3328,7 +2003,7 @@ mod tests {
     }
 
     #[test]
-    fn strip_boolean_reports_degenerate_required_rectangle_as_uncertainty() {
+    fn strip_boolean_evidence_degenerate_required_rectangle_as_uncertainty() {
         assert_eq!(
             strip_boolean_region(
                 real(0),
@@ -3342,147 +2017,6 @@ mod tests {
                 &CurvePolicy::certified(),
             ),
             Classification::Uncertain(UncertaintyReason::Unsupported)
-        );
-    }
-
-    #[test]
-    fn blocked_region_boolean_report_names_boundary_extraction_stage() {
-        let first = LineArcRegion2::from_material_contours(vec![
-            Contour2::from_bulge_vertices(&[
-                BulgeVertex2::new(point(0, 0), Real::zero()),
-                BulgeVertex2::new(point(1, 0), Real::zero()),
-                BulgeVertex2::new(point(1, 1), Real::zero()),
-                BulgeVertex2::new(point(0, 1), Real::zero()),
-            ])
-            .unwrap(),
-        ]);
-        let second = LineArcRegion2::from_material_contours(vec![
-            Contour2::from_bulge_vertices(&[
-                BulgeVertex2::new(point(2, 0), Real::zero()),
-                BulgeVertex2::new(point(3, 0), Real::zero()),
-                BulgeVertex2::new(point(3, 1), Real::zero()),
-                BulgeVertex2::new(point(2, 1), Real::zero()),
-            ])
-            .unwrap(),
-        ]);
-        let boundary_events =
-            RegionIntersectionSet::from_parts(Vec::new(), Some(1), Some(1), 1, 1, 0).unwrap();
-
-        let result = blocked_region_boolean_result(
-            &first.as_view(),
-            &second.as_view(),
-            BooleanOp::Union,
-            FillRule::NonZero,
-            RegionBooleanQueryPath2::Direct,
-            &boundary_events,
-            RetainedTopologyStatus::Unsupported,
-            UncertaintyReason::Unsupported,
-        );
-
-        assert!(result.region().is_none());
-        assert_eq!(
-            result.report().stage(),
-            RegionBooleanStage2::BoundaryExtraction
-        );
-        assert_eq!(result.report().boundary_contour_count(), None);
-        assert_eq!(result.report().boundary_contour_source_path(), None);
-        assert_eq!(result.report().result_boundary_segment_count(), None);
-        assert_eq!(
-            result.report().blocker(),
-            Some(UncertaintyReason::Unsupported)
-        );
-    }
-
-    #[test]
-    fn region_boolean_report_retains_boundary_role_blocker_pair() {
-        let first = LineArcRegion2::from_material_contours(vec![
-            Contour2::from_bulge_vertices(&[
-                BulgeVertex2::new(point(0, 0), Real::zero()),
-                BulgeVertex2::new(point(4, 0), Real::zero()),
-                BulgeVertex2::new(point(4, 4), Real::zero()),
-                BulgeVertex2::new(point(0, 4), Real::zero()),
-            ])
-            .unwrap(),
-        ]);
-        let second = LineArcRegion2::from_material_contours(vec![
-            Contour2::from_bulge_vertices(&[
-                BulgeVertex2::new(point(10, 0), Real::zero()),
-                BulgeVertex2::new(point(14, 0), Real::zero()),
-                BulgeVertex2::new(point(14, 4), Real::zero()),
-                BulgeVertex2::new(point(10, 4), Real::zero()),
-            ])
-            .unwrap(),
-        ]);
-        let boundary_events =
-            RegionIntersectionSet::from_parts(Vec::new(), Some(1), Some(1), 1, 1, 0).unwrap();
-        let crossing_contours = vec![
-            Contour2::from_bulge_vertices(&[
-                BulgeVertex2::new(point(0, 0), Real::zero()),
-                BulgeVertex2::new(point(4, 0), Real::zero()),
-                BulgeVertex2::new(point(4, 4), Real::zero()),
-                BulgeVertex2::new(point(0, 4), Real::zero()),
-            ])
-            .unwrap(),
-            Contour2::from_bulge_vertices(&[
-                BulgeVertex2::new(point(2, -1), Real::zero()),
-                BulgeVertex2::new(point(6, -1), Real::zero()),
-                BulgeVertex2::new(point(6, 3), Real::zero()),
-                BulgeVertex2::new(point(2, 3), Real::zero()),
-            ])
-            .unwrap(),
-        ];
-
-        let result = region_boolean_result_from_boundary_contours_with_pipeline_report(
-            &first.as_view(),
-            &second.as_view(),
-            BooleanOp::Union,
-            FillRule::NonZero,
-            RegionBooleanQueryPath2::Direct,
-            &boundary_events,
-            crossing_contours,
-            RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
-            None,
-            &CurvePolicy::certified(),
-        )
-        .unwrap();
-
-        assert!(result.region().is_none());
-        assert_eq!(
-            result.report().stage(),
-            RegionBooleanStage2::RegionRoleAssignment
-        );
-        assert_eq!(result.report().blocker(), Some(UncertaintyReason::Boundary));
-        assert_eq!(
-            result
-                .report()
-                .boundary_build_validation_candidate_pair_count(),
-            Some(1)
-        );
-        assert_eq!(
-            result
-                .report()
-                .boundary_build_validation_tested_pair_count(),
-            Some(1)
-        );
-        assert_eq!(
-            result
-                .report()
-                .boundary_build_nesting_classification_count(),
-            Some(0)
-        );
-        assert_eq!(
-            result.report().boundary_build_blocker_first_contour_index(),
-            Some(0)
-        );
-        assert_eq!(
-            result
-                .report()
-                .boundary_build_blocker_second_contour_index(),
-            Some(1)
-        );
-        assert_eq!(
-            result.report().boundary_build_stage(),
-            Some(crate::RegionBoundaryContourBuildStage2::NestingValidation)
         );
     }
 }

@@ -1,4 +1,4 @@
-//! Exact overlap reports for retained Bezier arrangement fragments.
+//! Exact overlap evidence for retained Bezier arrangement fragments.
 //!
 //! Full overlap-aware traversal needs exact artifacts that say which retained
 //! fragments share positive-dimensional geometry before a loop walker decides
@@ -11,7 +11,7 @@
 //! The boundary is intentionally conservative in the exact-geometric-
 //! computation sense:  Same polynomial images are
 //! certified with Bernstein degree-normalization identities from the Bernstein and de Casteljau curve model.  Separating overlap
-//! reporting from traversal follows the degenerate-intersection clipping
+//! classification from traversal follows the degenerate-intersection clipping
 //! model: an overlap is a
 //! first-class event, not an arbitrary successor choice.
 
@@ -205,9 +205,9 @@ fn validate_line_overlap_segment_geometry(segment: &LineSeg2) -> CurveResult<()>
     }
 }
 
-/// Exact overlap report for materialized retained Bezier arrangement fragments.
+/// Exact overlap evidence for materialized retained Bezier arrangement fragments.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct BezierRetainedOverlapReport2 {
+pub struct BezierRetainedOverlapEvidence2 {
     overlaps: Vec<BezierRetainedOverlap2>,
 }
 
@@ -215,7 +215,7 @@ pub struct BezierRetainedOverlapReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedOverlapTraversal2 {
     traversal: BezierArrangementTraversal2,
-    overlap_report: BezierRetainedOverlapReport2,
+    overlap_evidence: BezierRetainedOverlapEvidence2,
     shadowed_fragment_indices: Vec<usize>,
 }
 
@@ -245,7 +245,7 @@ pub enum BezierRetainedOverlapOrientation2 {
 ///
 /// The stored ranges are the affine parameters of the certified line-segment
 /// images, not arbitrary sampled Bezier parameters.  This is the next overlap
-/// ownership artifact after pair reporting: future graph splitting can consume
+/// ownership artifact after pair classification: future graph splitting can consume
 /// the overlap segment endpoints and exact affine ranges while still refusing
 /// to conflate them with curve parameters for non-affine line-image Beziers.
 /// That distinction is the exactness model exact-object boundary in practice; see the exactness model
@@ -298,19 +298,19 @@ pub struct BezierRetainedOverlapRefinedFragment2 {
 
 /// Graph refined at all certified linearly-parameterized overlap endpoints.
 ///
-/// This is an ownership-preparation artifact.  It does not decide which side
+/// This is an ownership-refinement artifact. It does not decide which side
 /// owns an overlap and it does not traverse through positive-dimensional
 /// degeneracies.  It only turns exact split evidence into a new retained graph
 /// whose fragment boundaries include the overlap endpoints.  Per the exactness model,
-/// that keeps the constructed subcurves exact and report-bearing before any
+/// that keeps the constructed subcurves exact and evidence-bearing before any
 /// topology consumer chooses ownership.  The subcurves are materialized by de
-/// Casteljau subdivision, de Casteljau subdivision, using the Bernstein identities
+/// Casteljau subdivision using the Bernstein identities
 /// summarized by the Bernstein curve model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedLinearOverlapSplitGraph2 {
     graph: BezierArrangementGraph2,
     refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
-    overlap_report: BezierRetainedOverlapReport2,
+    overlap_evidence: BezierRetainedOverlapEvidence2,
     split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
     resolved_overlaps: Vec<BezierRetainedResolvedLinearOverlap2>,
 }
@@ -321,7 +321,7 @@ pub struct BezierRetainedLinearOverlapSplitGraph2 {
 /// two refined graph-fragment indices that cover the same positive-dimensional
 /// image, keeps their original graph provenance and exact local parameter
 /// ranges, and records same/opposite orientation.  It is intentionally a
-/// report object rather than an ownership decision. The exactness model requires this
+/// evidence object rather than an ownership decision. The exactness model requires this
 /// sort of constructed evidence to remain explicit before a later topological
 /// consumer decides which boundary copy, if any, owns the shared span.
 #[derive(Clone, Debug, PartialEq)]
@@ -340,7 +340,7 @@ pub struct BezierRetainedResolvedLinearOverlap2 {
 /// Traversal through a graph whose certified linear overlaps were refined.
 ///
 /// This is the first positive-dimensional overlap consumer beyond exact
-/// duplicate shadowing.  It runs in two report-bearing stages: first
+/// duplicate shadowing.  It runs in two evidence-bearing stages: first
 /// [`BezierArrangementGraph2::split_retained_linear_overlaps`] creates exact
 /// subfragments at overlap endpoints, then
 /// [`BezierArrangementGraph2::traverse_retained_deduplicating_materialized_overlaps`]
@@ -373,7 +373,7 @@ pub struct BezierRetainedRationalOverlapSplit2 {
 pub struct BezierRetainedRationalOverlapSplitGraph2 {
     graph: BezierArrangementGraph2,
     refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
-    overlap_report: BezierRetainedOverlapReport2,
+    overlap_evidence: BezierRetainedOverlapEvidence2,
     split_plan: Vec<BezierRetainedRationalOverlapSplit2>,
     resolved_overlaps: Vec<BezierRetainedResolvedRationalOverlap2>,
 }
@@ -531,7 +531,7 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
     pub fn new(
         graph: BezierArrangementGraph2,
         refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
-        overlap_report: BezierRetainedOverlapReport2,
+        overlap_evidence: BezierRetainedOverlapEvidence2,
         split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
         resolved_overlaps: Vec<BezierRetainedResolvedLinearOverlap2>,
     ) -> CurveResult<Self> {
@@ -544,14 +544,14 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
         validate_linear_overlap_refinement_provenance(
             &graph,
             &refined_fragments,
-            &overlap_report,
+            &overlap_evidence,
             &split_plan,
             &resolved_overlaps,
         )?;
         Ok(Self {
             graph,
             refined_fragments,
-            overlap_report,
+            overlap_evidence,
             split_plan,
             resolved_overlaps,
         })
@@ -567,9 +567,9 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
         &self.refined_fragments
     }
 
-    /// Returns the overlap report consumed to build the split plan.
-    pub const fn overlap_report(&self) -> &BezierRetainedOverlapReport2 {
-        &self.overlap_report
+    /// Returns the overlap evidence consumed to build the split plan.
+    pub const fn overlap_evidence(&self) -> &BezierRetainedOverlapEvidence2 {
+        &self.overlap_evidence
     }
 
     /// Returns the certified linear-overlap splits used for refinement.
@@ -588,14 +588,14 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
     ) -> (
         BezierArrangementGraph2,
         Vec<BezierRetainedOverlapRefinedFragment2>,
-        BezierRetainedOverlapReport2,
+        BezierRetainedOverlapEvidence2,
         Vec<BezierRetainedLinearOverlapSplit2>,
         Vec<BezierRetainedResolvedLinearOverlap2>,
     ) {
         (
             self.graph,
             self.refined_fragments,
-            self.overlap_report,
+            self.overlap_evidence,
             self.split_plan,
             self.resolved_overlaps,
         )
@@ -607,7 +607,7 @@ impl BezierRetainedRationalOverlapSplitGraph2 {
     pub fn new(
         graph: BezierArrangementGraph2,
         refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
-        overlap_report: BezierRetainedOverlapReport2,
+        overlap_evidence: BezierRetainedOverlapEvidence2,
         split_plan: Vec<BezierRetainedRationalOverlapSplit2>,
         resolved_overlaps: Vec<BezierRetainedResolvedRationalOverlap2>,
     ) -> CurveResult<Self> {
@@ -620,14 +620,14 @@ impl BezierRetainedRationalOverlapSplitGraph2 {
         validate_rational_overlap_refinement_provenance(
             &graph,
             &refined_fragments,
-            &overlap_report,
+            &overlap_evidence,
             &split_plan,
             &resolved_overlaps,
         )?;
         Ok(Self {
             graph,
             refined_fragments,
-            overlap_report,
+            overlap_evidence,
             split_plan,
             resolved_overlaps,
         })
@@ -643,9 +643,9 @@ impl BezierRetainedRationalOverlapSplitGraph2 {
         &self.refined_fragments
     }
 
-    /// Returns the overlap report consumed to build this refinement.
-    pub const fn overlap_report(&self) -> &BezierRetainedOverlapReport2 {
-        &self.overlap_report
+    /// Returns the overlap evidence consumed to build this refinement.
+    pub const fn overlap_evidence(&self) -> &BezierRetainedOverlapEvidence2 {
+        &self.overlap_evidence
     }
 
     /// Returns represented strict rational-overlap split evidence.
@@ -664,14 +664,14 @@ impl BezierRetainedRationalOverlapSplitGraph2 {
     ) -> (
         BezierArrangementGraph2,
         Vec<BezierRetainedOverlapRefinedFragment2>,
-        BezierRetainedOverlapReport2,
+        BezierRetainedOverlapEvidence2,
         Vec<BezierRetainedRationalOverlapSplit2>,
         Vec<BezierRetainedResolvedRationalOverlap2>,
     ) {
         (
             self.graph,
             self.refined_fragments,
-            self.overlap_report,
+            self.overlap_evidence,
             self.split_plan,
             self.resolved_overlaps,
         )
@@ -681,7 +681,7 @@ impl BezierRetainedRationalOverlapSplitGraph2 {
 fn validate_linear_overlap_refinement_provenance(
     graph: &BezierArrangementGraph2,
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
-    overlap_report: &BezierRetainedOverlapReport2,
+    overlap_evidence: &BezierRetainedOverlapEvidence2,
     split_plan: &[BezierRetainedLinearOverlapSplit2],
     resolved_overlaps: &[BezierRetainedResolvedLinearOverlap2],
 ) -> CurveResult<()> {
@@ -692,9 +692,9 @@ fn validate_linear_overlap_refinement_provenance(
     }
 
     for split in split_plan {
-        if !overlap_report_has_linear_split(overlap_report, split) {
+        if !overlap_evidence_has_linear_split(overlap_evidence, split) {
             return Err(CurveError::Topology(
-                "retained linear-overlap split does not match source overlap report evidence"
+                "retained linear-overlap split does not match source overlap evidence evidence"
                     .to_owned(),
             ));
         }
@@ -771,7 +771,7 @@ fn validate_linear_overlap_refinement_provenance(
 fn validate_rational_overlap_refinement_provenance(
     graph: &BezierArrangementGraph2,
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
-    overlap_report: &BezierRetainedOverlapReport2,
+    overlap_evidence: &BezierRetainedOverlapEvidence2,
     split_plan: &[BezierRetainedRationalOverlapSplit2],
     resolved_overlaps: &[BezierRetainedResolvedRationalOverlap2],
 ) -> CurveResult<()> {
@@ -782,7 +782,7 @@ fn validate_rational_overlap_refinement_provenance(
     }
 
     for split in split_plan {
-        if !overlap_report_has_rational_split(overlap_report, split) {
+        if !overlap_evidence_has_rational_split(overlap_evidence, split) {
             return Err(CurveError::Topology(
                 "retained rational-overlap split does not match source overlap evidence".to_owned(),
             ));
@@ -833,11 +833,11 @@ fn validate_rational_overlap_refinement_provenance(
     Ok(())
 }
 
-fn overlap_report_has_linear_split(
-    overlap_report: &BezierRetainedOverlapReport2,
+fn overlap_evidence_has_linear_split(
+    overlap_evidence: &BezierRetainedOverlapEvidence2,
     split: &BezierRetainedLinearOverlapSplit2,
 ) -> bool {
-    overlap_report.overlaps().iter().any(|overlap| {
+    overlap_evidence.overlaps().iter().any(|overlap| {
         let BezierRetainedOverlapRelation2::LineSegmentOverlap { intersection } =
             overlap.relation()
         else {
@@ -862,11 +862,11 @@ fn overlap_report_has_linear_split(
     })
 }
 
-fn overlap_report_has_rational_split(
-    overlap_report: &BezierRetainedOverlapReport2,
+fn overlap_evidence_has_rational_split(
+    overlap_evidence: &BezierRetainedOverlapEvidence2,
     split: &BezierRetainedRationalOverlapSplit2,
 ) -> bool {
-    overlap_report.overlaps().iter().any(|overlap| {
+    overlap_evidence.overlaps().iter().any(|overlap| {
         let BezierRetainedOverlapRelation2::RationalBezierOverlap { overlap: rational } =
             overlap.relation()
         else {
@@ -1344,12 +1344,12 @@ impl BezierArrangementGraph2 {
         &self,
         policy: &CurvePolicy,
     ) -> Classification<BezierRetainedOverlapTraversal2> {
-        let overlap_report = match BezierRetainedOverlapReport2::from_graph(self, policy) {
-            Classification::Decided(report) => report,
+        let overlap_evidence = match BezierRetainedOverlapEvidence2::from_graph(self, policy) {
+            Classification::Decided(evidence) => evidence,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         let shadowed_fragment_indices =
-            match duplicate_shadow_indices(self, &overlap_report, policy) {
+            match duplicate_shadow_indices(self, &overlap_evidence, policy) {
                 Classification::Decided(indices) => indices,
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             };
@@ -1380,7 +1380,7 @@ impl BezierArrangementGraph2 {
 
         Classification::Decided(BezierRetainedOverlapTraversal2 {
             traversal,
-            overlap_report,
+            overlap_evidence,
             shadowed_fragment_indices,
         })
     }
@@ -1388,8 +1388,8 @@ impl BezierArrangementGraph2 {
     /// Splits retained materialized fragments at certified linear-overlap endpoints.
     ///
     /// The method is deliberately narrower than a full overlap walker: it
-    /// requires all line-image overlaps in the report to have exact Bezier
-    /// parameter ranges from [`BezierRetainedOverlapReport2::linear_bezier_overlap_splits`].
+    /// requires all line-image overlaps in the evidence to have exact Bezier
+    /// parameter ranges from [`BezierRetainedOverlapEvidence2::linear_bezier_overlap_splits`].
     /// It then inserts the range endpoints into the affected fragments and
     /// materializes exact subcurves with de Casteljau subdivision.  Same-image
     /// duplicate overlaps are reported but do not add boundaries; nonlinear
@@ -1399,11 +1399,11 @@ impl BezierArrangementGraph2 {
         &self,
         policy: &CurvePolicy,
     ) -> Classification<BezierRetainedLinearOverlapSplitGraph2> {
-        let overlap_report = match BezierRetainedOverlapReport2::from_graph(self, policy) {
-            Classification::Decided(report) => report,
+        let overlap_evidence = match BezierRetainedOverlapEvidence2::from_graph(self, policy) {
+            Classification::Decided(evidence) => evidence,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        let split_plan = match overlap_report.linear_bezier_overlap_splits(self, policy) {
+        let split_plan = match overlap_evidence.linear_bezier_overlap_splits(self, policy) {
             Classification::Decided(split_plan) => split_plan,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -1425,7 +1425,7 @@ impl BezierArrangementGraph2 {
         match BezierRetainedLinearOverlapSplitGraph2::new(
             graph,
             refined_fragments,
-            overlap_report,
+            overlap_evidence,
             split_plan,
             resolved_overlaps,
         ) {
@@ -1484,11 +1484,11 @@ impl BezierArrangementGraph2 {
         &self,
         policy: &CurvePolicy,
     ) -> Classification<BezierRetainedRationalOverlapSplitGraph2> {
-        let overlap_report = match BezierRetainedOverlapReport2::from_graph(self, policy) {
-            Classification::Decided(report) => report,
+        let overlap_evidence = match BezierRetainedOverlapEvidence2::from_graph(self, policy) {
+            Classification::Decided(evidence) => evidence,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        let split_plan = match overlap_report.rational_bezier_overlap_splits(policy) {
+        let split_plan = match overlap_evidence.rational_bezier_overlap_splits(policy) {
             Classification::Decided(split_plan) => split_plan,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -1509,7 +1509,7 @@ impl BezierArrangementGraph2 {
         match BezierRetainedRationalOverlapSplitGraph2::new(
             graph,
             refined_fragments,
-            overlap_report,
+            overlap_evidence,
             split_plan,
             resolved_overlaps,
         ) {
@@ -1521,7 +1521,7 @@ impl BezierArrangementGraph2 {
     /// Traverses after refining represented strict rational-Bezier overlaps.
     ///
     /// Same-oriented overlap spans retain one copy, while reversed spans cancel
-    /// both copies. The returned object preserves the source overlap report,
+    /// both copies. The returned object preserves the source overlap evidence,
     /// every split range, and the refined-fragment ownership decisions.
     pub fn traverse_retained_splitting_rational_overlaps(
         &self,
@@ -1532,7 +1532,7 @@ impl BezierArrangementGraph2 {
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         let fully_resolved = !refinement.resolved_overlaps().is_empty()
-            && refinement.overlap_report().len() == refinement.resolved_overlaps().len();
+            && refinement.overlap_evidence().len() == refinement.resolved_overlaps().len();
         let refined_traversal = if fully_resolved {
             match traverse_consuming_resolved_rational_overlaps(&refinement, policy) {
                 Classification::Decided(traversal) => traversal,
@@ -1547,7 +1547,7 @@ impl BezierArrangementGraph2 {
                 Classification::Uncertain(UncertaintyReason::Boundary) => {
                     match traverse_consuming_scanned_overlaps(
                         refinement.graph(),
-                        refinement.overlap_report(),
+                        refinement.overlap_evidence(),
                         policy,
                     ) {
                         Classification::Decided(traversal) => traversal,
@@ -1572,9 +1572,9 @@ impl BezierRetainedOverlapTraversal2 {
         &self.traversal
     }
 
-    /// Returns the exact overlap report consumed by this traversal stage.
-    pub const fn overlap_report(&self) -> &BezierRetainedOverlapReport2 {
-        &self.overlap_report
+    /// Returns the exact overlap evidence consumed by this traversal stage.
+    pub const fn overlap_evidence(&self) -> &BezierRetainedOverlapEvidence2 {
+        &self.overlap_evidence
     }
 
     /// Returns original graph-fragment indices shadowed as exact duplicates.
@@ -1582,23 +1582,23 @@ impl BezierRetainedOverlapTraversal2 {
         &self.shadowed_fragment_indices
     }
 
-    /// Consumes the report and returns its parts.
+    /// Consumes the evidence and returns its parts.
     pub fn into_parts(
         self,
     ) -> (
         BezierArrangementTraversal2,
-        BezierRetainedOverlapReport2,
+        BezierRetainedOverlapEvidence2,
         Vec<usize>,
     ) {
         (
             self.traversal,
-            self.overlap_report,
+            self.overlap_evidence,
             self.shadowed_fragment_indices,
         )
     }
 }
 
-impl BezierRetainedOverlapReport2 {
+impl BezierRetainedOverlapEvidence2 {
     /// Scans a retained arrangement graph for certified materialized overlaps.
     ///
     /// Algebraic endpoint-image and unresolved fragments are not overlap-
@@ -1681,9 +1681,9 @@ impl BezierRetainedOverlapReport2 {
         Classification::Decided(Self { overlaps })
     }
 
-    /// Constructs a report from already-certified overlaps.
+    /// Constructs a evidence from already-certified overlaps.
     pub fn new(overlaps: Vec<BezierRetainedOverlap2>) -> CurveResult<Self> {
-        validate_overlap_report_order(&overlaps)?;
+        validate_overlap_evidence_order(&overlaps)?;
         Ok(Self { overlaps })
     }
 
@@ -1692,7 +1692,7 @@ impl BezierRetainedOverlapReport2 {
         &self.overlaps
     }
 
-    /// Consumes the report and returns certified overlap pairs.
+    /// Consumes the evidence and returns certified overlap pairs.
     pub fn into_overlaps(self) -> Vec<BezierRetainedOverlap2> {
         self.overlaps
     }
@@ -1707,7 +1707,7 @@ impl BezierRetainedOverlapReport2 {
         self.overlaps.len()
     }
 
-    /// Extracts exact line-image overlap split evidence from this report.
+    /// Extracts exact line-image overlap split evidence from this evidence.
     ///
     /// Same-control, same-curve-image, and rational-Bezier overlaps do not have
     /// line affine ranges here. Only
@@ -1753,7 +1753,7 @@ impl BezierRetainedOverlapReport2 {
 
     /// Promotes exact line-image overlaps to Bezier-parameter split evidence.
     ///
-    /// This succeeds only when every line-image overlap in the report is backed
+    /// This succeeds only when every line-image overlap in the evidence is backed
     /// by materialized polynomial Bezier fragments with certified linear
     /// parameterization.  A single nonlinear line image makes the result
     /// unsupported rather than partially emitted, because callers use this
@@ -1904,7 +1904,7 @@ fn rational_overlap_exact_ranges(
     )))
 }
 
-fn validate_overlap_report_order(overlaps: &[BezierRetainedOverlap2]) -> CurveResult<()> {
+fn validate_overlap_evidence_order(overlaps: &[BezierRetainedOverlap2]) -> CurveResult<()> {
     let mut previous_pair = None;
     for overlap in overlaps {
         let pair = (
@@ -1913,7 +1913,7 @@ fn validate_overlap_report_order(overlaps: &[BezierRetainedOverlap2]) -> CurveRe
         );
         if previous_pair.is_some_and(|previous| previous >= pair) {
             return Err(CurveError::Topology(
-                "retained overlap report pairs must be strictly increasing".to_owned(),
+                "retained overlap evidence pairs must be strictly increasing".to_owned(),
             ));
         }
         previous_pair = Some(pair);
@@ -2518,11 +2518,11 @@ fn unit_range(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> {
 
 fn duplicate_shadow_indices(
     graph: &BezierArrangementGraph2,
-    report: &BezierRetainedOverlapReport2,
+    evidence: &BezierRetainedOverlapEvidence2,
     policy: &CurvePolicy,
 ) -> Classification<Vec<usize>> {
     let mut shadowed = vec![false; graph.len()];
-    for overlap in report.overlaps() {
+    for overlap in evidence.overlaps() {
         if !overlap_relation_can_shadow_duplicate(overlap.relation()) {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         }
@@ -2556,24 +2556,24 @@ fn traverse_consuming_resolved_linear_overlaps(
     refinement: &BezierRetainedLinearOverlapSplitGraph2,
     policy: &CurvePolicy,
 ) -> Classification<BezierRetainedOverlapTraversal2> {
-    traverse_consuming_scanned_overlaps(refinement.graph(), refinement.overlap_report(), policy)
+    traverse_consuming_scanned_overlaps(refinement.graph(), refinement.overlap_evidence(), policy)
 }
 
 fn traverse_consuming_scanned_overlaps(
     graph: &BezierArrangementGraph2,
-    overlap_report: &BezierRetainedOverlapReport2,
+    overlap_evidence: &BezierRetainedOverlapEvidence2,
     policy: &CurvePolicy,
 ) -> Classification<BezierRetainedOverlapTraversal2> {
     let consumed_fragment_indices = match refined_overlap_consumed_indices(graph, policy) {
         Classification::Decided(indices) => indices,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
-    traverse_after_consuming_indices(graph, overlap_report, consumed_fragment_indices, policy)
+    traverse_after_consuming_indices(graph, overlap_evidence, consumed_fragment_indices, policy)
 }
 
 fn traverse_after_consuming_indices(
     graph: &BezierArrangementGraph2,
-    overlap_report: &BezierRetainedOverlapReport2,
+    overlap_evidence: &BezierRetainedOverlapEvidence2,
     consumed_fragment_indices: Vec<usize>,
     policy: &CurvePolicy,
 ) -> Classification<BezierRetainedOverlapTraversal2> {
@@ -2597,7 +2597,7 @@ fn traverse_after_consuming_indices(
     };
     Classification::Decided(BezierRetainedOverlapTraversal2 {
         traversal,
-        overlap_report: overlap_report.clone(),
+        overlap_evidence: overlap_evidence.clone(),
         shadowed_fragment_indices: consumed_fragment_indices,
     })
 }
@@ -2625,7 +2625,7 @@ fn traverse_consuming_resolved_rational_overlaps(
         .collect();
     traverse_after_consuming_indices(
         refinement.graph(),
-        refinement.overlap_report(),
+        refinement.overlap_evidence(),
         consumed_fragment_indices,
         policy,
     )
@@ -2635,12 +2635,12 @@ fn refined_overlap_consumed_indices(
     graph: &BezierArrangementGraph2,
     policy: &CurvePolicy,
 ) -> Classification<Vec<usize>> {
-    let report = match BezierRetainedOverlapReport2::from_graph(graph, policy) {
-        Classification::Decided(report) => report,
+    let evidence = match BezierRetainedOverlapEvidence2::from_graph(graph, policy) {
+        Classification::Decided(evidence) => evidence,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
     let mut consumed = vec![false; graph.len()];
-    for overlap in report.overlaps() {
+    for overlap in evidence.overlaps() {
         if !overlap_relation_can_shadow_duplicate(overlap.relation()) {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         }

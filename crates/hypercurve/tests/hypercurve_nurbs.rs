@@ -581,7 +581,7 @@ fn nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping() {
 }
 
 #[test]
-fn invalid_nurbs_split_and_trim_ranges_report_subdivision_context() {
+fn invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context() {
     let curve = quadratic_nurbs();
     for error in [
         curve.split_at(r(0)).unwrap_err(),

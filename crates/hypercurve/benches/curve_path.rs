@@ -145,24 +145,25 @@ fn main() {
     );
 
     let prepared = first
-        .try_prepare_intersection(&second, &policy)
+        .retain_intersection(&second, &policy)
         .expect("benchmark path pair prepares exactly");
     prepared
-        .report_view()
-        .expect("benchmark path report is complete");
+        .result_view()
+        .expect("benchmark path evidence is complete");
     let replay_iterations = 20_000_u32;
     let started = Instant::now();
     let mut replay_checksum = 0_usize;
     for _ in 0..replay_iterations {
-        let report = prepared
-            .report_view()
-            .expect("cached path report remains complete");
-        replay_checksum ^=
-            black_box(report.contacts().len() + report.overlaps().len() + report.blockers().len());
+        let evidence = prepared
+            .result_view()
+            .expect("cached path evidence remains complete");
+        replay_checksum ^= black_box(
+            evidence.contacts().len() + evidence.overlaps().len() + evidence.blockers().len(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_cached_intersection_report: {replay_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={replay_checksum}",
+        "curve_path_cached_intersection_evidence: {replay_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={replay_checksum}",
         elapsed / replay_iterations
     );
 
@@ -171,21 +172,21 @@ fn main() {
     let mut preparation_checksum = 0_usize;
     for _ in 0..preparation_iterations {
         let candidate = first
-            .try_prepare_intersection(&second, &policy)
+            .retain_intersection(&second, &policy)
             .expect("benchmark path pair prepares exactly");
-        let report = candidate
-            .report_view()
-            .expect("benchmark path report remains complete");
+        let evidence = candidate
+            .result_view()
+            .expect("benchmark path evidence remains complete");
         preparation_checksum ^= black_box(
             candidate.candidate_curve_pair_count()
-                + report.contacts().len()
-                + report.overlaps().len()
-                + report.blockers().len(),
+                + evidence.contacts().len()
+                + evidence.overlaps().len()
+                + evidence.blockers().len(),
         );
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_prepare_intersection_report: {preparation_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={preparation_checksum}",
+        "curve_path_prepare_intersection_evidence: {preparation_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={preparation_checksum}",
         elapsed / preparation_iterations
     );
 
@@ -216,7 +217,7 @@ fn main() {
     let partial_first = rectangle(0, 0, 2, 4);
     let partial_second = rectangle(2, 1, 4, 3);
     let prepared_partial = partial_first
-        .try_prepare_intersection(&partial_second, &policy)
+        .retain_intersection(&partial_second, &policy)
         .expect("partial-overlap path pair prepares exactly");
     let partial_union = prepared_partial
         .boolean_selection_view(
@@ -262,7 +263,7 @@ fn main() {
     ])
     .expect("benchmark circular-segment path is connected");
     let prepared_partial_arc = partial_arc_first
-        .try_prepare_intersection(&partial_arc_second, &policy)
+        .retain_intersection(&partial_arc_second, &policy)
         .expect("partial-arc path pair prepares exactly");
     let partial_arc_union = prepared_partial_arc
         .boolean_selection_view(
@@ -303,7 +304,7 @@ fn main() {
         -6,
     );
     let prepared_nonlinear = nonlinear_first
-        .try_prepare_intersection(&nonlinear_second, &policy)
+        .retain_intersection(&nonlinear_second, &policy)
         .expect("partial nonlinear-overlap path pair prepares exactly");
     let nonlinear_union = prepared_nonlinear
         .boolean_selection_view(
@@ -342,12 +343,12 @@ fn main() {
     let mut lineage_checksum = 0_usize;
     for _ in 0..lineage_iterations {
         let prepared = lineage_first
-            .try_prepare_intersection(&lineage_second, &policy)
+            .retain_intersection(&lineage_second, &policy)
             .expect("retained-lineage pair prepares exactly");
         lineage_checksum ^= black_box(
             prepared
-                .report_view()
-                .expect("retained-lineage report is exact")
+                .result_view()
+                .expect("retained-lineage evidence is exact")
                 .overlaps()
                 .len(),
         );
@@ -365,12 +366,12 @@ fn main() {
     let mut native_checksum = 0_usize;
     for _ in 0..native_iterations {
         let prepared = first_circle
-            .try_prepare_intersection(&second_circle, &policy)
+            .retain_intersection(&second_circle, &policy)
             .expect("native circle pair prepares exactly");
-        let report = prepared
-            .report_view()
-            .expect("native circle report is complete");
-        native_checksum ^= black_box(report.contacts().len() + prepared.span_pair_count());
+        let evidence = prepared
+            .result_view()
+            .expect("native circle evidence is complete");
+        native_checksum ^= black_box(evidence.contacts().len() + prepared.span_pair_count());
     }
     let elapsed = started.elapsed();
     println!(
@@ -383,7 +384,7 @@ fn main() {
     let second_circle_path =
         CurvePath2::try_new(vec![second_circle]).expect("benchmark circle path is connected");
     let prepared_circles = first_circle_path
-        .try_prepare_intersection(&second_circle_path, &policy)
+        .retain_intersection(&second_circle_path, &policy)
         .expect("benchmark circle paths prepare exactly");
     let circle_union = prepared_circles
         .boolean_selection_view(

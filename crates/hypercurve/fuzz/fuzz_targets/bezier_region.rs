@@ -3,9 +3,9 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierRegion2,
-    CurveRegionBoundaryLoop2, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
-    CurveRegion2, BezierSplitFragment2, Classification, CurvePolicy, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierSplitFragment2,
+    Classification, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -171,31 +171,31 @@ fuzz_target!(|data: &[u8]| {
         if let Classification::Decided(traversal) =
             graph.traverse_retained_with_tangent_order(&policy)
         {
-            let _ = CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal)
-                .map(|region| {
+            let _ = CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal).map(
+                |region| {
                     let _ = region.signed_area();
-                    let _ = region.line_image_role_report(&policy);
-                    let _ = region.signed_area_role_report(&policy);
-                    let _ = region.curved_nesting_role_report(&policy);
+                    let _ = region.line_image_role_evidence(&policy);
+                    let _ = region.signed_area_role_evidence(&policy);
+                    let _ = region.curved_nesting_role_evidence(&policy);
                     let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                     let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
-                });
+                },
+            );
         }
         if let Classification::Decided(traversal) =
             graph.traverse_retained_splitting_linear_overlaps(&policy)
         {
             let _ = BezierRegion2::from_retained_linear_overlap_traversal(&traversal)
                 .map(|region| region.signed_area());
-            let _ = CurveRegion2::from_retained_linear_overlap_traversal(&traversal).map(
-                |region| {
+            let _ =
+                CurveRegion2::from_retained_linear_overlap_traversal(&traversal).map(|region| {
                     let _ = region.signed_area();
-                    let _ = region.line_image_role_report(&policy);
-                    let _ = region.signed_area_role_report(&policy);
-                    let _ = region.curved_nesting_role_report(&policy);
+                    let _ = region.line_image_role_evidence(&policy);
+                    let _ = region.signed_area_role_evidence(&policy);
+                    let _ = region.curved_nesting_role_evidence(&policy);
                     let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                     let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
-                },
-            );
+                });
         }
     }
 
@@ -249,7 +249,7 @@ fuzz_target!(|data: &[u8]| {
             CurveRegionBoundaryLoop2::new(inner),
         ) {
             if let Ok(region) = CurveRegion2::new(vec![outer, inner]) {
-                let _ = region.line_image_role_report(&policy);
+                let _ = region.line_image_role_evidence(&policy);
             }
         }
     }

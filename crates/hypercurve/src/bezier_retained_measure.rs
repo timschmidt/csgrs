@@ -39,7 +39,7 @@ impl CurveRegion2 {
     /// evidence without segmentation. Empty regions and carriers lacking
     /// sufficient exact interior evidence return explicit uncertainty.
     pub fn bounds(&self, policy: &CurvePolicy) -> CurveResult<Classification<Aabb2>> {
-        match self.line_arc_region_fast_path(policy)? {
+        match self.native_line_arc_region(policy)? {
             Classification::Decided(native) => Aabb2::from_region(native, policy),
             Classification::Uncertain(_) => {
                 Ok(BezierRetainedCurveEnvelope2::from_region(self, policy)

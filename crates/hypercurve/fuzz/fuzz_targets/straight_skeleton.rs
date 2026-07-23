@@ -93,11 +93,11 @@ fuzz_target!(|data: &[u8]| {
         Classification::Decided(_)
     ));
 
-    let contour_report = contour
+    let contour_evidence = contour
         .straight_skeleton(&policy)
         .expect("fixture construction remains exact");
-    assert_eq!(contour_report.stage(), StraightSkeletonStage2::Complete);
-    let skeleton = contour_report
+    assert_eq!(contour_evidence.stage(), StraightSkeletonStage2::Complete);
+    let skeleton = contour_evidence
         .skeleton()
         .expect("fixture construction remains complete");
     assert_eq!(skeleton.source_edge_count(), contour.len());
@@ -122,6 +122,6 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(
         path.straight_skeleton(&policy)
             .expect("native path dispatch remains exact"),
-        contour_report,
+        contour_evidence,
     );
 });

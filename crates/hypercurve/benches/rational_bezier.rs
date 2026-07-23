@@ -451,9 +451,7 @@ fn main() {
         elapsed / exact_derivative_iterations
     );
 
-    let prepared = parabola
-        .try_prepare_intersection(&horizontal, &policy)
-        .unwrap();
+    let prepared = parabola.retain_intersection(&horizontal, &policy).unwrap();
     prepared.try_contact_view().unwrap();
     let prepared_iterations = 20_000_u32;
     let started = Instant::now();

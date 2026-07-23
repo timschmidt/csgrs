@@ -48,15 +48,15 @@ fn curved_regions_boolean_and_reuse_prepared_pair() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
     let prepared = first
-        .try_prepare_boolean(&second, &CurvePolicy::certified())
+        .retain_boolean(&second, &CurvePolicy::certified())
         .unwrap();
     assert_eq!(prepared.authored_carrier_pair_count(), 16);
     assert!(prepared.carrier_pair_count() < prepared.authored_carrier_pair_count());
     assert!(!prepared.is_boolean_region_cached(BooleanOp::Union));
-    assert!(!prepared.is_intersection_report_cached());
+    assert!(!prepared.is_intersection_result_cached());
 
-    let contacts = prepared.intersection_report().unwrap();
-    assert!(prepared.is_intersection_report_cached());
+    let contacts = prepared.intersection_result().unwrap();
+    assert!(prepared.is_intersection_result_cached());
     assert!(contacts.is_complete());
     assert!(!contacts.is_disjoint());
     assert_eq!(
@@ -234,7 +234,7 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
         .unwrap();
     assert!(narrow.has_algebraic_fragments());
     assert!(wide.has_algebraic_fragments());
-    let prepared = narrow.try_prepare_boolean(&wide, &policy).unwrap();
+    let prepared = narrow.retain_boolean(&wide, &policy).unwrap();
     let union = prepared.boolean_region(BooleanOp::Union).unwrap();
     assert_location(&union, point(0, 1), RegionPointLocation::Inside);
     assert_location(&union, point(0, 3), RegionPointLocation::Boundary);

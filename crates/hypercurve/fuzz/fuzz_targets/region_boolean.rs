@@ -58,8 +58,8 @@ fuzz_target!(|data: &[u8]| {
     let policy = CurvePolicy::certified();
     let first_view = first.as_view();
     let second_view = second.as_view();
-    let first_prepared = first.prepare_topology_queries(&policy);
-    let second_prepared = second.prepare_topology_queries(&policy);
+    let first_prepared = first.query(&policy);
+    let second_prepared = second.query(&policy);
     let query = Point2::new(r(data[8] as i32 - 128), r(data[9] as i32 - 128));
     let first_location = first_view.classify_point(&query, &policy);
     let second_location = second_view.classify_point(&query, &policy);

@@ -11,7 +11,7 @@ use crate::{
     CurveGeometry2, CurveIntersectionContact2, CurveIntersectionOverlap2,
     CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2,
     CurvePolicy, CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
-    PreparedCurveIntersection2, RationalBezierOverlapOrientation2, UncertaintyReason,
+    RationalBezierOverlapOrientation2, RetainedCurveIntersection2, UncertaintyReason,
 };
 
 /// Filled side of an oriented closed curve path.
@@ -44,7 +44,7 @@ pub struct CurvePathOverlapResolution2 {
     action: CurvePathOverlapAction2,
 }
 
-/// Operand that owns one fragment in a top-level curved Boolean report.
+/// Operand that owns one fragment in a top-level curved Boolean result.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurvePathBooleanOperand2 {
     /// Fragment originates in the first path.
@@ -115,7 +115,7 @@ pub struct CurvePathIntersectionOverlap2 {
     overlap: CurveIntersectionOverlap2,
 }
 
-/// One incomplete authored curve pair in a path-pair report.
+/// One incomplete authored curve pair in a path-pair result.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurvePathIntersectionBlocker2 {
     first_curve_index: usize,
@@ -123,14 +123,14 @@ pub struct CurvePathIntersectionBlocker2 {
     blocker: CurveIntersectionPairBlocker2,
 }
 
-/// Clone-shared complete replay report for a prepared path pair.
+/// Clone-shared complete replay result for a retained path pair.
 #[derive(Clone, Debug)]
-pub struct CurvePathIntersectionReport2 {
-    data: Rc<CurvePathIntersectionReportData>,
+pub struct CurvePathIntersectionResult2 {
+    data: Rc<CurvePathIntersectionResultData>,
 }
 
 #[derive(Debug)]
-struct CurvePathIntersectionReportData {
+struct CurvePathIntersectionResultData {
     contacts: Rc<[CurvePathIntersectionContact2]>,
     overlaps: Rc<[CurvePathIntersectionOverlap2]>,
     blockers: Rc<[CurvePathIntersectionBlocker2]>,
@@ -151,15 +151,15 @@ pub struct CurvePathIntersectionTopology2 {
 
 #[derive(Debug)]
 struct CurvePathIntersectionTopologyData {
-    report: CurvePathIntersectionReport2,
+    result: CurvePathIntersectionResult2,
     first: Rc<[CurvePathSplit2]>,
     second: Rc<[CurvePathSplit2]>,
     arrangement: OnceCell<CurveResult<BezierArrangementGraph2>>,
 }
 
-/// Prepared path-pair intersection whose curve-pair resultants are computed once.
+/// Retained path-pair intersection whose curve-pair resultants are computed once.
 #[derive(Clone, Debug)]
-pub struct PreparedCurvePathIntersection2 {
+pub struct RetainedCurvePathIntersection2 {
     data: Rc<PreparedCurvePathIntersectionData>,
 }
 
@@ -170,7 +170,7 @@ struct PreparedCurvePathIntersectionData {
     policy: CurvePolicy,
     authored_curve_pair_count: usize,
     pairs: Vec<PreparedCurvePathPair>,
-    report: OnceCell<ExactCurveResult<CurvePathIntersectionReport2>>,
+    result: OnceCell<ExactCurveResult<CurvePathIntersectionResult2>>,
     topology: OnceCell<ExactCurveResult<CurvePathIntersectionTopology2>>,
     boolean_selections: [OnceCell<ExactCurveResult<CurvePathBooleanSelection2>>; 16],
 }
@@ -179,7 +179,7 @@ struct PreparedCurvePathIntersectionData {
 struct PreparedCurvePathPair {
     first_curve_index: usize,
     second_curve_index: usize,
-    prepared: PreparedCurveIntersection2,
+    prepared: RetainedCurveIntersection2,
 }
 
 fn curve_pair_bounds_decided_disjoint(
@@ -198,11 +198,11 @@ fn curve_pair_bounds_decided_disjoint(
 
 impl CurvePath2 {
     /// Prepares every authored curve pair once for exact path topology.
-    pub fn try_prepare_intersection(
+    pub fn retain_intersection(
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> ExactCurveResult<PreparedCurvePathIntersection2> {
+    ) -> ExactCurveResult<RetainedCurvePathIntersection2> {
         let authored_curve_pair_count = self.curves().len().saturating_mul(other.curves().len());
         let candidate_capacity = self
             .curves()
@@ -220,18 +220,18 @@ impl CurvePath2 {
                 pairs.push(PreparedCurvePathPair {
                     first_curve_index,
                     second_curve_index,
-                    prepared: first.try_prepare_intersection(second, policy)?,
+                    prepared: first.retain_intersection(second, policy)?,
                 });
             }
         }
-        Ok(PreparedCurvePathIntersection2 {
+        Ok(RetainedCurvePathIntersection2 {
             data: Rc::new(PreparedCurvePathIntersectionData {
                 first: self.clone(),
                 second: other.clone(),
                 policy: policy.clone(),
                 authored_curve_pair_count,
                 pairs,
-                report: OnceCell::new(),
+                result: OnceCell::new(),
                 topology: OnceCell::new(),
                 boolean_selections: std::array::from_fn(|_| OnceCell::new()),
             }),
@@ -240,7 +240,7 @@ impl CurvePath2 {
 
     /// Computes one exact regularized Boolean region.
     ///
-    /// Use [`Self::try_prepare_intersection`] when several operations or side
+    /// Use [`Self::retain_intersection`] when several operations or side
     /// policies will be evaluated for the same path pair.
     pub fn boolean_region(
         &self,
@@ -250,12 +250,15 @@ impl CurvePath2 {
         second_interior_side: CurveBoundaryInteriorSide2,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<CurveRegion2> {
-        self.try_prepare_intersection(other, policy)?
-            .boolean_region(operation, first_interior_side, second_interior_side)
+        self.retain_intersection(other, policy)?.boolean_region(
+            operation,
+            first_interior_side,
+            second_interior_side,
+        )
     }
 }
 
-impl PreparedCurvePathIntersection2 {
+impl RetainedCurvePathIntersection2 {
     /// Returns the retained first path.
     pub fn first(&self) -> &CurvePath2 {
         &self.data.first
@@ -266,7 +269,7 @@ impl PreparedCurvePathIntersection2 {
         &self.data.second
     }
 
-    /// Returns the exact policy captured by preparation.
+    /// Returns the exact policy captured when the path pair was retained.
     pub fn policy(&self) -> &CurvePolicy {
         &self.data.policy
     }
@@ -281,20 +284,20 @@ impl PreparedCurvePathIntersection2 {
         self.data.pairs.len()
     }
 
-    /// Returns whether the combined report has already been retained.
-    pub fn is_report_cached(&self) -> bool {
-        self.data.report.get().is_some()
+    /// Returns whether the combined result has already been retained.
+    pub fn is_result_cached(&self) -> bool {
+        self.data.result.get().is_some()
     }
 
-    /// Returns a clone-shared combined path-pair report.
-    pub fn report(&self) -> ExactCurveResult<CurvePathIntersectionReport2> {
-        self.report_view().cloned()
+    /// Returns a clone-shared combined path-pair result.
+    pub fn result(&self) -> ExactCurveResult<CurvePathIntersectionResult2> {
+        self.result_view().cloned()
     }
 
-    /// Borrows the combined path-pair report without copying its records.
-    pub fn report_view(&self) -> ExactCurveResult<&CurvePathIntersectionReport2> {
-        match self.data.report.get_or_init(|| self.build_report()) {
-            Ok(report) => Ok(report),
+    /// Borrows the combined path-pair result without copying its records.
+    pub fn result_view(&self) -> ExactCurveResult<&CurvePathIntersectionResult2> {
+        match self.data.result.get_or_init(|| self.build_evidence()) {
+            Ok(result) => Ok(result),
             Err(error) => Err(error.clone()),
         }
     }
@@ -380,28 +383,28 @@ impl PreparedCurvePathIntersection2 {
             .region_view()
     }
 
-    fn build_report(&self) -> ExactCurveResult<CurvePathIntersectionReport2> {
+    fn build_evidence(&self) -> ExactCurveResult<CurvePathIntersectionResult2> {
         let pair_count = self.data.pairs.len();
         let mut contacts = Vec::with_capacity(pair_count);
         let mut overlaps = Vec::with_capacity(pair_count);
         let mut blockers = Vec::with_capacity(pair_count);
         for pair in &self.data.pairs {
-            let report = pair.prepared.report_view()?;
-            contacts.extend(report.contacts().iter().cloned().map(|contact| {
+            let result = pair.prepared.result_view()?;
+            contacts.extend(result.contacts().iter().cloned().map(|contact| {
                 CurvePathIntersectionContact2 {
                     first_curve_index: pair.first_curve_index,
                     second_curve_index: pair.second_curve_index,
                     contact,
                 }
             }));
-            overlaps.extend(report.overlaps().iter().cloned().map(|overlap| {
+            overlaps.extend(result.overlaps().iter().cloned().map(|overlap| {
                 CurvePathIntersectionOverlap2 {
                     first_curve_index: pair.first_curve_index,
                     second_curve_index: pair.second_curve_index,
                     overlap,
                 }
             }));
-            blockers.extend(report.blockers().iter().cloned().map(|blocker| {
+            blockers.extend(result.blockers().iter().cloned().map(|blocker| {
                 CurvePathIntersectionBlocker2 {
                     first_curve_index: pair.first_curve_index,
                     second_curve_index: pair.second_curve_index,
@@ -409,8 +412,8 @@ impl PreparedCurvePathIntersection2 {
                 }
             }));
         }
-        Ok(CurvePathIntersectionReport2 {
-            data: Rc::new(CurvePathIntersectionReportData {
+        Ok(CurvePathIntersectionResult2 {
+            data: Rc::new(CurvePathIntersectionResultData {
                 contacts: contacts.into(),
                 overlaps: overlaps.into(),
                 blockers: blockers.into(),
@@ -419,8 +422,8 @@ impl PreparedCurvePathIntersection2 {
     }
 
     fn build_topology(&self) -> ExactCurveResult<CurvePathIntersectionTopology2> {
-        let report = self.report_view()?.clone();
-        if let Some(blocker) = report.blockers().first() {
+        let result = self.result_view()?.clone();
+        if let Some(blocker) = result.blockers().first() {
             let reason = match blocker.blocker().kind() {
                 CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
                 CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
@@ -436,7 +439,7 @@ impl PreparedCurvePathIntersection2 {
         }
         let first = split_path(
             &self.data.first,
-            report
+            result
                 .contacts()
                 .iter()
                 .map(|contact| {
@@ -446,7 +449,7 @@ impl PreparedCurvePathIntersection2 {
                         contact.contact().first().local_parameter().clone(),
                     )
                 })
-                .chain(report.overlaps().iter().flat_map(|overlap| {
+                .chain(result.overlaps().iter().flat_map(|overlap| {
                     [
                         (
                             overlap.first_curve_index(),
@@ -464,7 +467,7 @@ impl PreparedCurvePathIntersection2 {
         )?;
         let second = split_path(
             &self.data.second,
-            report
+            result
                 .contacts()
                 .iter()
                 .map(|contact| {
@@ -474,7 +477,7 @@ impl PreparedCurvePathIntersection2 {
                         contact.contact().second().local_parameter().clone(),
                     )
                 })
-                .chain(report.overlaps().iter().flat_map(|overlap| {
+                .chain(result.overlaps().iter().flat_map(|overlap| {
                     [
                         (
                             overlap.second_curve_index(),
@@ -492,7 +495,7 @@ impl PreparedCurvePathIntersection2 {
         )?;
         Ok(CurvePathIntersectionTopology2 {
             data: Rc::new(CurvePathIntersectionTopologyData {
-                report,
+                result,
                 first: first.into(),
                 second: second.into(),
                 arrangement: OnceCell::new(),
@@ -507,7 +510,7 @@ impl PreparedCurvePathIntersection2 {
         second_interior_side: CurveBoundaryInteriorSide2,
     ) -> ExactCurveResult<CurvePathBooleanSelection2> {
         let topology = self.topology_view()?;
-        let overlap_resolutions = topology.report().resolve_overlap_ownership(
+        let overlap_resolutions = topology.result().resolve_overlap_ownership(
             operation,
             first_interior_side,
             second_interior_side,
@@ -537,7 +540,7 @@ impl PreparedCurvePathIntersection2 {
             &self.data.first,
             topology.first(),
             &self.data.second,
-            topology.report(),
+            topology.result(),
             CurvePathBooleanOperand2::First,
             operation,
             first_interior_side,
@@ -553,7 +556,7 @@ impl PreparedCurvePathIntersection2 {
             &self.data.second,
             topology.second(),
             &self.data.first,
-            topology.report(),
+            topology.result(),
             CurvePathBooleanOperand2::Second,
             operation,
             first_interior_side,
@@ -683,7 +686,7 @@ impl CurvePathIntersectionBlocker2 {
     }
 }
 
-impl CurvePathIntersectionReport2 {
+impl CurvePathIntersectionResult2 {
     /// Returns contacts in deterministic authored curve-pair order.
     pub fn contacts(&self) -> &[CurvePathIntersectionContact2] {
         &self.data.contacts
@@ -983,9 +986,9 @@ impl CurvePathSplit2 {
 }
 
 impl CurvePathIntersectionTopology2 {
-    /// Returns the complete report that generated this topology.
-    pub fn report(&self) -> &CurvePathIntersectionReport2 {
-        &self.data.report
+    /// Returns the complete result that generated this topology.
+    pub fn result(&self) -> &CurvePathIntersectionResult2 {
+        &self.data.result
     }
 
     /// Returns split topology for authored curves in the first path.
@@ -1055,7 +1058,7 @@ fn append_boolean_fragments(
     path: &CurvePath2,
     splits: &[CurvePathSplit2],
     other_path: &CurvePath2,
-    report: &CurvePathIntersectionReport2,
+    result: &CurvePathIntersectionResult2,
     operand: CurvePathBooleanOperand2,
     operation: BooleanOp,
     first_interior_side: CurveBoundaryInteriorSide2,
@@ -1184,14 +1187,14 @@ fn append_boolean_fragments(
                     arrangement_source_index: source_offset + local_source_index,
                     fragment: fragment.clone(),
                     start_topology_vertex: topology_vertex_for_parameter(
-                        report,
+                        result,
                         operand,
                         split.curve_index(),
                         promoted_span_index,
                         start,
                     ),
                     end_topology_vertex: topology_vertex_for_parameter(
-                        report,
+                        result,
                         operand,
                         split.curve_index(),
                         promoted_span_index,
@@ -1266,13 +1269,13 @@ fn split_fragment_parameter_range(
 }
 
 fn topology_vertex_for_parameter(
-    report: &CurvePathIntersectionReport2,
+    result: &CurvePathIntersectionResult2,
     operand: CurvePathBooleanOperand2,
     curve_index: usize,
     promoted_span_index: usize,
     parameter: &BezierParameter2,
 ) -> Option<usize> {
-    if let Some((_, matched)) = report.contacts().iter().enumerate().find(|(_, contact)| {
+    if let Some((_, matched)) = result.contacts().iter().enumerate().find(|(_, contact)| {
         let (contact_curve_index, contact_parameter) = match operand {
             CurvePathBooleanOperand2::First => {
                 (contact.first_curve_index(), contact.contact().first())
@@ -1286,13 +1289,13 @@ fn topology_vertex_for_parameter(
             && contact_parameter.local_parameter() == parameter
     }) {
         let point = matched.contact().point();
-        return report
+        return result
             .contacts()
             .iter()
             .position(|candidate| candidate.contact().point() == point);
     }
 
-    for (overlap_index, overlap) in report.overlaps().iter().enumerate() {
+    for (overlap_index, overlap) in result.overlaps().iter().enumerate() {
         let (matches_source, range) = match operand {
             CurvePathBooleanOperand2::First => (
                 overlap.first_curve_index() == curve_index
@@ -1316,7 +1319,7 @@ fn topology_vertex_for_parameter(
             None
         };
         if let Some(endpoint_index) = endpoint_index {
-            return Some(report.contacts().len() + overlap_index * 2 + endpoint_index);
+            return Some(result.contacts().len() + overlap_index * 2 + endpoint_index);
         }
     }
     None

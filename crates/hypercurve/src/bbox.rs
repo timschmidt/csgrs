@@ -246,7 +246,7 @@ impl Aabb2 {
 
     /// Constructs the bounding box of a borrowed region view.
     ///
-    /// Empty regions report unsupported because there is no finite closed box
+    /// Empty regions evidence unsupported because there is no finite closed box
     /// that represents the absence of geometry. Callers that need empty-region
     /// fast paths should handle emptiness before asking for a box.
     pub fn from_region_view(

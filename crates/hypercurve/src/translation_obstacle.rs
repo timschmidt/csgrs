@@ -102,9 +102,9 @@ impl TranslationObstacle2 {
     }
 }
 
-/// Report for exact translation-obstacle construction.
+/// Evidence for exact translation-obstacle construction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct TranslationObstacleReport2 {
+pub struct TranslationObstacleEvidence2 {
     source_fixed_segment_count: usize,
     source_moving_segment_count: usize,
     normalized_fixed_vertex_count: Option<usize>,
@@ -113,7 +113,7 @@ pub struct TranslationObstacleReport2 {
     blocker: Option<TranslationObstacleBlocker2>,
 }
 
-impl TranslationObstacleReport2 {
+impl TranslationObstacleEvidence2 {
     /// Return the source fixed-contour segment count.
     pub const fn source_fixed_segment_count(&self) -> usize {
         self.source_fixed_segment_count
@@ -144,7 +144,7 @@ impl TranslationObstacleReport2 {
         self.blocker.as_ref()
     }
 
-    /// Consume the report and return the completed obstacle.
+    /// Consume the evidence and return the completed obstacle.
     pub fn into_obstacle(self) -> Option<TranslationObstacle2> {
         self.obstacle
     }
@@ -155,10 +155,10 @@ pub fn translation_obstacle_convex(
     fixed: &Contour2,
     moving: &Contour2,
     policy: &CurvePolicy,
-) -> CurveResult<TranslationObstacleReport2> {
+) -> CurveResult<TranslationObstacleEvidence2> {
     let source_fixed_segment_count = fixed.segments().len();
     let source_moving_segment_count = moving.segments().len();
-    let blocked = |fixed_count, moving_count, blocker| TranslationObstacleReport2 {
+    let blocked = |fixed_count, moving_count, blocker| TranslationObstacleEvidence2 {
         source_fixed_segment_count,
         source_moving_segment_count,
         normalized_fixed_vertex_count: fixed_count,
@@ -192,7 +192,7 @@ pub fn translation_obstacle_convex(
         }
     };
     let boundary = contour_from_points(&obstacle_points)?;
-    Ok(TranslationObstacleReport2 {
+    Ok(TranslationObstacleEvidence2 {
         source_fixed_segment_count,
         source_moving_segment_count,
         normalized_fixed_vertex_count: Some(fixed_count),
@@ -433,9 +433,9 @@ mod tests {
     fn rectangle_translation_obstacle_is_exact_expanded_rectangle() {
         let fixed = contour(&[(0, 0), (2, 0), (2, 2), (0, 2)]);
         let moving = contour(&[(0, 0), (1, 0), (1, 1), (0, 1)]);
-        let report =
+        let evidence =
             translation_obstacle_convex(&fixed, &moving, &CurvePolicy::certified()).unwrap();
-        let obstacle = report.obstacle().unwrap();
+        let obstacle = evidence.obstacle().unwrap();
         assert_eq!(obstacle.merged_edge_count(), 4);
         assert_eq!(
             decided(
@@ -468,10 +468,15 @@ mod tests {
     fn clockwise_inputs_normalize_without_changing_forbidden_set() {
         let fixed = contour(&[(0, 0), (0, 2), (2, 2), (2, 0)]);
         let moving = contour(&[(0, 0), (0, 1), (1, 1), (1, 0)]);
-        let report =
+        let evidence =
             translation_obstacle_convex(&fixed, &moving, &CurvePolicy::certified()).unwrap();
         assert_eq!(
-            report.obstacle().unwrap().boundary().signed_area().unwrap(),
+            evidence
+                .obstacle()
+                .unwrap()
+                .boundary()
+                .signed_area()
+                .unwrap(),
             Some(r(9))
         );
     }
@@ -480,11 +485,11 @@ mod tests {
     fn concave_operand_requires_exact_convex_decomposition() {
         let fixed = contour(&[(0, 0), (3, 0), (3, 1), (1, 1), (1, 3), (0, 3)]);
         let moving = contour(&[(0, 0), (1, 0), (1, 1), (0, 1)]);
-        let report =
+        let evidence =
             translation_obstacle_convex(&fixed, &moving, &CurvePolicy::certified()).unwrap();
-        assert!(report.obstacle().is_none());
+        assert!(evidence.obstacle().is_none());
         assert!(matches!(
-            report.blocker(),
+            evidence.blocker(),
             Some(TranslationObstacleBlocker2::ConvexDecompositionRequired {
                 operand: TranslationObstacleOperand2::Fixed,
                 ..

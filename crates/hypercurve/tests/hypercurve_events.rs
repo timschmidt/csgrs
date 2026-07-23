@@ -378,17 +378,15 @@ fn prepared_contour_events_match_plain_events_for_shared_edges() {
     let a = rectangle(0, 0, 4, 4);
     let b = rectangle(4, 1, 6, 3);
     let policy = policy();
-    let prepared_a = a.prepare_topology_queries(&policy);
-    let prepared_b = b.prepare_topology_queries(&policy);
+    let prepared_a = a.query(&policy);
+    let prepared_b = b.query(&policy);
 
     assert_eq!(prepared_a.contour(), &a);
     assert!(prepared_a.contour_box().is_some());
     assert_eq!(prepared_a.segment_boxes().len(), a.segments().len());
 
     let plain_events = a.intersect_contour(&b, &policy).unwrap();
-    let prepared_events = prepared_a
-        .intersect_prepared_contour(&prepared_b, &policy)
-        .unwrap();
+    let prepared_events = prepared_a.intersect_query(&prepared_b, &policy).unwrap();
     let mixed_events = prepared_a.intersect_contour(&b, &policy).unwrap();
 
     assert_eq!(prepared_events, plain_events);
@@ -407,13 +405,11 @@ fn prepared_contour_events_match_plain_events_for_arc_overlap() {
     let a = contour(&[vertex(0, 0, 1), vertex(2, 0, 1)]);
     let b = arc_overlap_cutter();
     let policy = policy();
-    let prepared_a = a.prepare_topology_queries(&policy);
-    let prepared_b = b.prepare_topology_queries(&policy);
+    let prepared_a = a.query(&policy);
+    let prepared_b = b.query(&policy);
 
     let plain_events = a.intersect_contour(&b, &policy).unwrap();
-    let prepared_events = prepared_a
-        .intersect_prepared_contour(&prepared_b, &policy)
-        .unwrap();
+    let prepared_events = prepared_a.intersect_query(&prepared_b, &policy).unwrap();
 
     assert_eq!(prepared_events, plain_events);
     assert!(prepared_events.events().iter().any(|event| {
@@ -436,7 +432,7 @@ fn prepared_contour_self_events_match_plain_events() {
         vertex(-1, -3, 0),
     ]);
     let policy = policy();
-    let prepared = contour.prepare_topology_queries(&policy);
+    let prepared = contour.query(&policy);
 
     assert_eq!(
         prepared.intersect_self(&policy).unwrap(),

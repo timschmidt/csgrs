@@ -2,7 +2,7 @@
 //!
 //! Region event collection lifts contour-pair events into material/hole keyed
 //! operands. It keeps broad-phase pruning conservative for the same reason as
-//! sweep-line scheduling intersection reporting work: candidate generation may
+//! sweep-line scheduling intersection enumeration work: candidate generation may
 //! be optimized, but topology still depends on the exact segment relation.
 
 use std::cell::OnceCell;
@@ -359,18 +359,6 @@ impl RegionIntersectionSet {
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<crate::RegionFragmentSet>> {
         crate::region_fragments::split_region_views_at_intersections(first, second, self, policy)
-    }
-
-    /// Splits every contour in both region views at this event set and retains a report.
-    pub(crate) fn split_regions_with_report(
-        &self,
-        first: &RegionView2<'_>,
-        second: &RegionView2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<crate::RegionFragmentBuildResult2> {
-        crate::region_fragments::split_region_views_at_intersections_with_report(
-            first, second, self, policy,
-        )
     }
 }
 

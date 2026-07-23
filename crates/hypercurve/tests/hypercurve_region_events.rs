@@ -243,29 +243,31 @@ fn prepared_region_events_match_owned_region_events() {
     );
     let cutter = LineArcRegion2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
     let policy = policy();
-    let prepared_region = region.prepare_topology_queries(&policy);
-    let prepared_cutter = cutter.prepare_topology_queries(&policy);
+    let prepared_region = region.query(&policy);
+    let prepared_cutter = cutter.query(&policy);
 
     assert!(prepared_region.region_box().is_some());
-    assert_eq!(prepared_region.prepared_material_contours().len(), 2);
-    assert_eq!(prepared_region.prepared_hole_contours().len(), 1);
+    assert_eq!(prepared_region.material_contours().len(), 2);
+    assert_eq!(prepared_region.hole_contours().len(), 1);
     assert_eq!(
-        prepared_region.prepared_material_contours()[0]
-            .segment_boxes()
-            .len(),
-        region.material_contours()[0].segments().len()
+        prepared_region.material_segment_count(),
+        region
+            .material_contours()
+            .iter()
+            .map(|contour| contour.segments().len())
+            .sum::<usize>()
     );
 
     let owned_events = region.intersect_region(&cutter, &policy).unwrap();
     let prepared_events = prepared_region
-        .intersect_prepared_region(&prepared_cutter, &policy)
+        .intersect_query(&prepared_cutter, &policy)
         .unwrap();
     let mixed_events = prepared_region
         .intersect_region(&cutter.as_view(), &policy)
         .unwrap();
     let right_prepared_events = region
         .as_view()
-        .intersect_prepared_region(&prepared_cutter, &policy)
+        .intersect_query(&prepared_cutter, &policy)
         .unwrap();
 
     assert_eq!(prepared_events, owned_events);
@@ -283,11 +285,11 @@ fn prepared_region_events_keep_boundary_touching_contours() {
     let region = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let cutter = LineArcRegion2::from_material_contours(vec![rectangle(4, 1, 6, 3)]);
     let policy = policy();
-    let prepared_region = region.prepare_topology_queries(&policy);
-    let prepared_cutter = cutter.prepare_topology_queries(&policy);
+    let prepared_region = region.query(&policy);
+    let prepared_cutter = cutter.query(&policy);
 
     let events = prepared_region
-        .intersect_prepared_region(&prepared_cutter, &policy)
+        .intersect_query(&prepared_cutter, &policy)
         .unwrap();
 
     assert_eq!(events.len(), 1);

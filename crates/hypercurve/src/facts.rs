@@ -2,7 +2,7 @@
 //!
 //! These fact packages are not topology certificates. They are conservative
 //! summaries that let higher curve algorithms choose cheaper exact kernels,
-//! broad-phase layouts, or prepared predicate batches without probing each
+//! broad-phase layouts, or retained predicate batches without probing each
 //! [`Real`](hyperreal::Real) repeatedly. This follows the exact-geometric-
 //! computation model: carry object-level numerical structure forward and select
 //! arithmetic packages from that structure, while certified predicates still
@@ -242,7 +242,7 @@ pub struct Segment2Facts {
     pub exact_rational_arc_radius: bool,
 }
 
-/// Counts of native segment families in a prepared object.
+/// Counts of native segment families in a query object.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct SegmentKindCounts {
     /// Number of line segments.
@@ -277,9 +277,9 @@ pub struct CurveStringFacts {
     pub scalar_exact: RealExactSetFacts,
     /// Coarse symbolic dependency families present in carried scalars.
     pub symbolic_dependencies: SymbolicDependencyMask,
-    /// Number of decided per-segment broad-phase boxes in the prepared view.
+    /// Number of decided per-segment broad-phase boxes in the query.
     pub decided_segment_box_count: usize,
-    /// Whether the whole curve/contour box was decided in the prepared view.
+    /// Whether the whole curve/contour box was decided in the query.
     pub has_decided_curve_box: bool,
 }
 
@@ -295,7 +295,7 @@ impl CurveStringFacts {
     }
 }
 
-/// Structural facts for a region prepared from material and hole contours.
+/// Structural facts for a region query over material and hole contours.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RegionFacts {
     /// Number of material contours.

@@ -121,13 +121,13 @@ fn bench_direct(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
 fn bench_prepared(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
     let first = zigzag(segment_count, 0);
     let second = zigzag_with_remote_tail(segment_count, 100);
-    let first = first.prepare_topology_queries(policy);
-    let second = second.prepare_topology_queries(policy);
+    let first = first.query(policy);
+    let second = second.query(policy);
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let result = black_box(&first)
-            .intersect_prepared_curve_string(black_box(&second), black_box(policy))
+            .intersect_query(black_box(&second), black_box(policy))
             .expect("separated prepared paths should be decidable");
         assert!(result.is_empty());
         checksum = checksum.wrapping_add(black_box(result.len()));
@@ -176,12 +176,12 @@ fn bench_sparse_contours(rung_count: usize, iterations: u32, policy: &CurvePolic
         elapsed / iterations
     );
 
-    let first = first.prepare_topology_queries(policy);
-    let second = second.prepare_topology_queries(policy);
+    let first = first.query(policy);
+    let second = second.query(policy);
     let started = Instant::now();
     for _ in 0..iterations {
         let intersections = black_box(&first)
-            .intersect_prepared_contour(black_box(&second), black_box(policy))
+            .intersect_query(black_box(&second), black_box(policy))
             .expect("separated prepared contours should be decidable");
         assert!(intersections.is_empty());
         checksum += black_box(intersections.len());
