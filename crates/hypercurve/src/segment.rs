@@ -19,6 +19,9 @@ pub struct LineSeg2 {
     end: Point2,
     endpoints_decided_distinct: bool,
     support: Option<Rc<LineSupport2>>,
+    // Shared supports retain source orientation; this bit recovers the
+    // fragment's directed tangent without subtracting its wide endpoints.
+    support_direction_reversed: bool,
     support_range: Option<ParamRange>,
     offset_provenance: Option<Rc<LineOffsetProvenance2>>,
 }
@@ -64,6 +67,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct,
             support: None,
+            support_direction_reversed: false,
             support_range: None,
             offset_provenance: None,
         })
@@ -76,6 +80,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct: false,
             support: None,
+            support_direction_reversed: false,
             support_range: None,
             offset_provenance: None,
         }
@@ -101,6 +106,16 @@ impl LineSeg2 {
             || self.delta(),
             |support| support.end.delta_from(&support.start),
         )
+    }
+
+    /// Returns a support vector oriented with this segment's traversal.
+    pub(crate) fn directed_support_delta(&self) -> (Real, Real) {
+        let (x, y) = self.support_delta();
+        if self.support_direction_reversed {
+            (-x, -y)
+        } else {
+            (x, y)
+        }
     }
 
     pub(crate) const fn has_retained_support(&self) -> bool {
@@ -131,6 +146,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct,
             support: Some(self.fragment_support()),
+            support_direction_reversed: self.support_direction_reversed,
             support_range: None,
             offset_provenance: self.offset_provenance.clone(),
         })
@@ -158,6 +174,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct: true,
             support: Some(support),
+            support_direction_reversed: self.support_direction_reversed,
             support_range: Some(support_range),
             offset_provenance: self.offset_provenance.clone(),
         }
@@ -305,6 +322,7 @@ impl LineSeg2 {
             end,
             endpoints_decided_distinct,
             support,
+            support_direction_reversed: self.support_direction_reversed,
             support_range: self.support_range.clone(),
             // An arbitrary point map need not preserve signed offset distance.
             offset_provenance: None,
@@ -337,6 +355,7 @@ impl LineSeg2 {
             end: self.start.clone(),
             endpoints_decided_distinct: self.endpoints_decided_distinct,
             support: self.support.clone(),
+            support_direction_reversed: self.support.is_some() && !self.support_direction_reversed,
             support_range: self
                 .support_range
                 .as_ref()
@@ -350,6 +369,9 @@ impl LineSeg2 {
             return self.reversed();
         }
         std::mem::swap(&mut self.start, &mut self.end);
+        if self.support.is_some() {
+            self.support_direction_reversed = !self.support_direction_reversed;
+        }
         self.support_range = self.support_range.map(ParamRange::into_reversed);
         self
     }

@@ -1765,6 +1765,37 @@ AddressSanitizer region-Boolean differential fuzz pass completed 1,299 execution
 5,638 coverage points and 16,904 feature edges without a failure; LeakSanitizer alone
 remained disabled under ptrace.
 
+Directed all-line Boolean contours now recover material/hole orientation from the
+exact winding of their tangent directions around the origin. For a simple closed
+polyline this tangent-map rotation index is exactly the contour orientation.
+Previously the role shortcut found a lexicographically extreme output vertex by
+comparing every wide rational intersection coordinate, then tested its local turn.
+Split lines already retain their source support, so the new path performs the same
+once-visiting proof over the much smaller exact source directions. One reversal bit
+keeps shared supports oriented with emitted fragments; it occupies existing
+`LineSeg2` padding, leaving the type at 328 bytes. Mixed curves, undecidable signs,
+exact half turns, and winding counts other than positive or negative one retain the
+extreme-vertex proof and general nesting fallbacks.
+
+Stage timing on star1024 reduced exact role assignment and result construction from
+about 8.6 to 1.1 ms. In the clean seven-sample release comparison, ordinary and
+prepared exact region output measured 15.206 and 14.818 ms/iter, down from 22.754
+and 22.491 ms. Exact contour and loop output measured 13.772 and 14.359 ms.
+`cavalier_contours`, `i_overlay`, and `geo` measured 19.205, 9.879, and 9.954 ms.
+Complete exact star1024 region output is therefore 33.2% faster than the preceding
+checkpoint and now completes 1.26 times faster than Cavalier. Star64 exact region
+output measured 135.817 us and star256 measured 1.195 ms, both within the recent
+small- and medium-fixture run range. A standalone star1024 run peaked at 31,336 KiB
+RSS, effectively unchanged from the preceding 31,200 KiB checkpoint.
+
+Default and all-feature tests, all-target/all-feature warnings-as-errors Clippy, and
+warnings-as-errors rustdoc passed. Direction-winding regressions cover both
+orientations of simple concave contours, reversed retained fragments, equivalence
+with the prior exact extreme-vertex proof, and exact half-turn rejection. The final
+AddressSanitizer region-Boolean differential fuzz pass completed 1,305 executions at
+5,674 coverage points and 16,991 feature edges without a failure; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

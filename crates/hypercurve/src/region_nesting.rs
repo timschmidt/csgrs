@@ -1690,7 +1690,7 @@ impl LineArcRegion2 {
         let Some(material_roles) = contours
             .iter()
             .map(|contour| {
-                line_contour_extreme_turn_orientation(contour, policy)
+                line_contour_directed_orientation(contour, policy)
                     .map(|orientation| orientation == RealSign::Positive)
             })
             .collect::<Option<Vec<_>>>()
@@ -12919,7 +12919,12 @@ fn retained_status_for_boundary_contour_blocker(
     }
 }
 
-fn line_contour_extreme_turn_orientation(
+fn line_contour_directed_orientation(contour: &Contour2, policy: &CurvePolicy) -> Option<RealSign> {
+    line_contour_direction_winding_orientation(contour, policy)
+        .or_else(|| line_contour_extreme_vertex_orientation(contour, policy))
+}
+
+fn line_contour_extreme_vertex_orientation(
     contour: &Contour2,
     policy: &CurvePolicy,
 ) -> Option<RealSign> {
@@ -12959,6 +12964,90 @@ fn line_contour_extreme_turn_orientation(
         RealSign::Positive => Some(RealSign::Positive),
         RealSign::Negative => Some(RealSign::Negative),
         RealSign::Zero => None,
+    }
+}
+
+fn line_contour_direction_winding_orientation(
+    contour: &Contour2,
+    policy: &CurvePolicy,
+) -> Option<RealSign> {
+    // The tangent map of a simple closed polyline has rotation index +1 or -1,
+    // matching the contour orientation. Connecting consecutive nonzero edge
+    // directions by their shorter angular turn preserves that index, so an
+    // exact ray-crossing winding count around the origin recovers the role.
+    // Retained line supports are collinear with each fragment; the explicit
+    // reversal bit preserves their directed angle while avoiding arithmetic on
+    // wide intersection endpoints.
+    let mut segments = contour.segments().iter();
+    let Segment2::Line(first_line) = segments.next()? else {
+        return None;
+    };
+    let first_direction = first_line.directed_support_delta();
+    let mut previous_direction = first_direction.clone();
+    let mut winding = 0_i32;
+    for segment in segments {
+        let Segment2::Line(line) = segment else {
+            return None;
+        };
+        let direction = line.directed_support_delta();
+        accumulate_direction_winding(&previous_direction, &direction, &mut winding, policy)?;
+        previous_direction = direction;
+    }
+    accumulate_direction_winding(&previous_direction, &first_direction, &mut winding, policy)?;
+
+    match winding {
+        1 => Some(RealSign::Positive),
+        -1 => Some(RealSign::Negative),
+        _ => None,
+    }
+}
+
+fn accumulate_direction_winding(
+    previous: &(Real, Real),
+    next: &(Real, Real),
+    winding: &mut i32,
+    policy: &CurvePolicy,
+) -> Option<()> {
+    let previous_y = real_sign(&previous.1, policy)?;
+    let next_y = real_sign(&next.1, policy)?;
+    let previous_x = if previous_y == RealSign::Zero {
+        Some(real_sign(&previous.0, policy)?)
+    } else {
+        None
+    };
+    let next_x = if next_y == RealSign::Zero {
+        Some(real_sign(&next.0, policy)?)
+    } else {
+        None
+    };
+    let previous_is_zero = previous_y == RealSign::Zero && previous_x == Some(RealSign::Zero);
+    let next_is_zero = next_y == RealSign::Zero && next_x == Some(RealSign::Zero);
+    let horizontal_half_turn =
+        previous_y == RealSign::Zero && next_y == RealSign::Zero && previous_x != next_x;
+    if previous_is_zero || next_is_zero || horizontal_half_turn {
+        return None;
+    }
+    let upward = previous_y != RealSign::Positive && next_y == RealSign::Positive;
+    let downward = previous_y == RealSign::Positive && next_y != RealSign::Positive;
+    if !upward && !downward {
+        return Some(());
+    }
+
+    let turn = real_sign(
+        &Real::diff_of_products(&previous.0, &next.1, &previous.1, &next.0),
+        policy,
+    )?;
+    match (upward, turn) {
+        (_, RealSign::Zero) => None,
+        (true, RealSign::Positive) => {
+            *winding = winding.checked_add(1)?;
+            Some(())
+        }
+        (false, RealSign::Negative) => {
+            *winding = winding.checked_sub(1)?;
+            Some(())
+        }
+        _ => Some(()),
     }
 }
 
@@ -13339,11 +13428,15 @@ fn contour_intersection_blocker(
 
 #[cfg(test)]
 mod tests {
-    use super::{contour_intersection_blocker, line_contour_extreme_turn_orientation};
+    use super::{
+        accumulate_direction_winding, contour_intersection_blocker,
+        line_contour_directed_orientation, line_contour_direction_winding_orientation,
+        line_contour_extreme_vertex_orientation,
+    };
     use crate::{
         BulgeVertex2, Contour2, ContourIntersection, ContourIntersectionSet,
         ContourPointIntersection, ContourUncertainIntersection, CurvePolicy, IntersectionKind,
-        Point2, SegmentKind, UncertaintyReason,
+        LineSeg2, ParamRange, Point2, Segment2, SegmentKind, UncertaintyReason,
     };
     use hyperreal::{Real, RealSign};
 
@@ -13357,6 +13450,49 @@ mod tests {
         Contour2::from_bulge_vertices(&vertices).unwrap()
     }
 
+    fn retained_split_line_contour(points: &[(i64, i64)], reversed: bool) -> Contour2 {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let mut segments = Vec::with_capacity(points.len() * 2);
+        for index in 0..points.len() {
+            let (start_x, start_y) = points[index];
+            let (end_x, end_y) = points[(index + 1) % points.len()];
+            let source = LineSeg2::try_new(
+                Point2::new(Real::from(start_x), Real::from(start_y)),
+                Point2::new(Real::from(end_x), Real::from(end_y)),
+            )
+            .unwrap();
+            let midpoint = source.point_at(half.clone());
+            let support = source.fragment_support();
+            segments.push(Segment2::Line(
+                source.fragment_between_with_source_range_after_distinct_endpoints(
+                    source.start().clone(),
+                    midpoint.clone(),
+                    ParamRange::new(Real::zero(), half.clone()),
+                    support.clone(),
+                ),
+            ));
+            segments.push(Segment2::Line(
+                source.fragment_between_with_source_range_after_distinct_endpoints(
+                    midpoint,
+                    source.end().clone(),
+                    ParamRange::new(half.clone(), Real::one()),
+                    support,
+                ),
+            ));
+        }
+        if reversed {
+            segments = segments
+                .into_iter()
+                .rev()
+                .map(|segment| match segment {
+                    Segment2::Line(line) => Segment2::Line(line.into_reversed()),
+                    Segment2::Arc(_) => unreachable!(),
+                })
+                .collect();
+        }
+        Contour2::try_new(segments).unwrap()
+    }
+
     #[test]
     fn extreme_turn_recovers_concave_line_contour_orientation() {
         let points = [(0, 0), (4, 0), (4, 4), (2, 2), (0, 4)];
@@ -13365,12 +13501,84 @@ mod tests {
         let policy = CurvePolicy::certified();
 
         assert_eq!(
-            line_contour_extreme_turn_orientation(&forward, &policy),
+            line_contour_directed_orientation(&forward, &policy),
             Some(RealSign::Positive)
         );
         assert_eq!(
-            line_contour_extreme_turn_orientation(&reverse, &policy),
+            line_contour_directed_orientation(&reverse, &policy),
             Some(RealSign::Negative)
+        );
+    }
+
+    #[test]
+    fn direction_winding_matches_extreme_vertex_on_simple_concave_contours() {
+        let policy = CurvePolicy::certified();
+        for points in [
+            vec![(0, 0), (8, 0), (8, 8), (4, 4), (0, 8)],
+            vec![
+                (0, 0),
+                (10, 0),
+                (10, 10),
+                (8, 10),
+                (8, 2),
+                (6, 2),
+                (6, 8),
+                (4, 8),
+                (4, 2),
+                (2, 2),
+                (2, 10),
+                (0, 10),
+            ],
+        ] {
+            for ordered in [
+                points.clone(),
+                points.iter().copied().rev().collect::<Vec<_>>(),
+            ] {
+                let contour = line_contour(&ordered);
+                assert_eq!(
+                    line_contour_direction_winding_orientation(&contour, &policy),
+                    line_contour_extreme_vertex_orientation(&contour, &policy)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn direction_winding_tracks_reversed_retained_fragment_supports() {
+        let points = [(0, 0), (8, 0), (8, 8), (4, 4), (0, 8)];
+        let policy = CurvePolicy::certified();
+        let forward = retained_split_line_contour(&points, false);
+        let reverse = retained_split_line_contour(&points, true);
+
+        assert_eq!(
+            line_contour_direction_winding_orientation(&forward, &policy),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(
+            line_contour_direction_winding_orientation(&reverse, &policy),
+            Some(RealSign::Negative)
+        );
+        assert_eq!(
+            line_contour_directed_orientation(&forward, &policy),
+            line_contour_extreme_vertex_orientation(&forward, &policy)
+        );
+        assert_eq!(
+            line_contour_directed_orientation(&reverse, &policy),
+            line_contour_extreme_vertex_orientation(&reverse, &policy)
+        );
+    }
+
+    #[test]
+    fn direction_winding_rejects_an_exact_half_turn() {
+        let mut winding = 0;
+        assert_eq!(
+            accumulate_direction_winding(
+                &(Real::one(), Real::zero()),
+                &(-Real::one(), Real::zero()),
+                &mut winding,
+                &CurvePolicy::certified(),
+            ),
+            None
         );
     }
 
@@ -13384,7 +13592,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            line_contour_extreme_turn_orientation(&contour, &CurvePolicy::certified()),
+            line_contour_directed_orientation(&contour, &CurvePolicy::certified()),
             None
         );
     }
