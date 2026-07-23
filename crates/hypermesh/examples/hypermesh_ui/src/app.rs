@@ -310,6 +310,8 @@ struct RenderResources {
     result_wire: GpuColoredMesh,
 }
 
+const RESULT_FACE_ALPHA: f32 = 0.92;
+
 impl RenderResources {
     unsafe fn new(gl: &eframe::glow::Context) -> hypergraphics::Result<Self> {
         unsafe {
@@ -375,7 +377,12 @@ impl RenderResources {
                 draw_mesh(gl, &self.program, &self.input_b_faces, 0.24)?;
                 draw_mesh(gl, &self.program, &self.input_b_wire, 1.0)?;
             }
-            draw_mesh(gl, &self.program, &self.result_faces, 0.92)?;
+            draw_depth_prepassed_mesh(
+                gl,
+                &self.program,
+                &self.result_faces,
+                RESULT_FACE_ALPHA,
+            )?;
             if show_wireframe {
                 draw_mesh(gl, &self.program, &self.result_wire, 1.0)?;
             }
@@ -416,6 +423,31 @@ fn render_hypergraphics(
         gl.disable(eframe::glow::BLEND);
     }
     Ok(())
+}
+
+unsafe fn draw_depth_prepassed_mesh(
+    gl: &eframe::glow::Context,
+    program: &UnlitProgram,
+    mesh: &GpuColoredMesh,
+    alpha: f32,
+) -> hypergraphics::Result<()> {
+    unsafe {
+        // Blending translucent triangles in mesh order accumulates different
+        // layers at different pixels. Populate depth first, then shade only
+        // the nearest result surface exactly once.
+        gl.color_mask(false, false, false, false);
+        gl.depth_mask(true);
+        gl.depth_func(eframe::glow::LEQUAL);
+        mesh.draw(gl);
+
+        gl.color_mask(true, true, true, true);
+        gl.depth_mask(false);
+        gl.depth_func(eframe::glow::EQUAL);
+        let result = draw_mesh(gl, program, mesh, alpha);
+        gl.depth_mask(true);
+        gl.depth_func(eframe::glow::LEQUAL);
+        result
+    }
 }
 
 unsafe fn draw_mesh(
@@ -774,6 +806,102 @@ mod tests {
         assert_ne!(
             flat_shaded_color(base, [&origin, &x, &y]),
             flat_shaded_color(base, [&origin, &y, &z])
+        );
+    }
+
+    #[test]
+    fn default_union_contains_only_exterior_boundary_triangles() {
+        let cube_a = cube_mesh(-1, 1);
+        let cube_b = shifted_cube_mesh(4);
+        let result = run_boolean(
+            &[cube_a.as_ref(), cube_b.as_ref()],
+            BooleanOp::Union,
+            EmberConfig { max_depth: 8 },
+        )
+        .unwrap();
+
+        for triangle in &result.triangles {
+            let vertices = triangle.map(|index| &result.vertices[index]);
+            let on_boundary = [
+                vertices.iter().all(|vertex| vertex.x == r(-1)),
+                vertices.iter().all(|vertex| vertex.x == r(2)),
+                vertices.iter().all(|vertex| vertex.y == r(-1)),
+                vertices.iter().all(|vertex| vertex.y == r(1)),
+                vertices.iter().all(|vertex| vertex.z == r(-1)),
+                vertices.iter().all(|vertex| vertex.z == r(1)),
+            ];
+            assert!(
+                on_boundary.into_iter().any(|is_boundary| is_boundary),
+                "union emitted an internal triangle: {vertices:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn default_union_shades_each_exterior_plane_consistently() {
+        let cube_a = cube_mesh(-1, 1);
+        let cube_b = shifted_cube_mesh(4);
+        let result = run_boolean(
+            &[cube_a.as_ref(), cube_b.as_ref()],
+            BooleanOp::Union,
+            EmberConfig { max_depth: 8 },
+        )
+        .unwrap();
+        let green = Color3::new(0.41, 0.86, 0.60).unwrap();
+        let faces = triangle_soup_faces(&result, green);
+        let mut plane_colors = [None; 6];
+
+        for (triangle, rendered) in result
+            .triangles
+            .iter()
+            .zip(faces.vertices().chunks_exact(3))
+        {
+            assert!(rendered.iter().all(|vertex| vertex.color == rendered[0].color));
+            let vertices = triangle.map(|index| &result.vertices[index]);
+            let plane = [
+                vertices.iter().all(|vertex| vertex.x == r(-1)),
+                vertices.iter().all(|vertex| vertex.x == r(2)),
+                vertices.iter().all(|vertex| vertex.y == r(-1)),
+                vertices.iter().all(|vertex| vertex.y == r(1)),
+                vertices.iter().all(|vertex| vertex.z == r(-1)),
+                vertices.iter().all(|vertex| vertex.z == r(1)),
+            ]
+            .into_iter()
+            .position(|is_boundary| is_boundary)
+            .expect("every union triangle should be on one exterior plane");
+            match plane_colors[plane] {
+                Some(color) => assert_eq!(rendered[0].color, color),
+                None => plane_colors[plane] = Some(rendered[0].color),
+            }
+        }
+        assert!(plane_colors.into_iter().all(|color| color.is_some()));
+    }
+
+    #[test]
+    fn result_depth_prepass_preserves_alpha_without_accumulating_hidden_faces() {
+        fn blend(source: f32, destination: f32) -> f32 {
+            source * RESULT_FACE_ALPHA + destination * (1.0 - RESULT_FACE_ALPHA)
+        }
+        fn depth_prepass(draw_order: [(f32, f32); 2], background: f32) -> f32 {
+            let (_, visible_color) = draw_order
+                .into_iter()
+                .min_by(|left, right| left.0.total_cmp(&right.0))
+                .unwrap();
+            blend(visible_color, background)
+        }
+
+        let background = 0.1;
+        let hidden = (0.8, 0.28);
+        let visible = (0.2, 0.94);
+        let mesh_order_blend = blend(visible.1, blend(hidden.1, background));
+        let depth_prepass_blend = depth_prepass([hidden, visible], background);
+
+        assert_eq!(RESULT_FACE_ALPHA, 0.92);
+        assert_ne!(mesh_order_blend, depth_prepass_blend);
+        assert_eq!(
+            depth_prepass_blend,
+            depth_prepass([visible, hidden], background),
+            "nearest-surface color should be independent of triangle order"
         );
     }
 }
