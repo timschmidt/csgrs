@@ -3,6 +3,65 @@ mod tests {
     use super::*;
     use std::mem::size_of;
 
+    fn limbs_to_biguint(limbs: &[u64]) -> BigUint {
+        limbs.iter().rev().fold(BigUint::ZERO, |value, limb| {
+            (value << 64) + BigUint::from(*limb)
+        })
+    }
+
+    #[test]
+    fn direct_shifted_stack_products_match_biguint_boundaries() {
+        let cases = [
+            (1_u128, 1_u128, 0_u64),
+            (u128::MAX, u128::MAX, 1),
+            (u128::MAX, u128::MAX - 1, 63),
+            (u128::MAX - 1, u128::MAX, 64),
+            (u128::MAX, (1_u128 << 127) + 1, 127),
+            (u128::MAX, u128::MAX, 128),
+        ];
+        for (left, right, shift) in cases {
+            let mut actual = DyadicStackAccumulator::default();
+            assert_eq!(
+                actual.add_product(left, right, shift),
+                Some(()),
+                "left={left} right={right} shift={shift}"
+            );
+            let expected =
+                (BigUint::from(left) * BigUint::from(right)) << usize::try_from(shift).unwrap();
+            assert_eq!(limbs_to_biguint(&actual.0), expected);
+        }
+
+        let mut carry = DyadicStackAccumulator::default();
+        carry.0[0] = u64::MAX;
+        assert_eq!(carry.add_product(1, 1, 0), Some(()));
+        assert_eq!(&carry.0[..2], &[0, 1]);
+
+        let mut overflow = DyadicStackAccumulator([u64::MAX; DYADIC_STACK_LIMBS]);
+        assert_eq!(overflow.add_product(1, 1, 0), None);
+        let mut shifted_overflow = DyadicStackAccumulator::default();
+        assert_eq!(
+            shifted_overflow.add_product(u128::MAX, u128::MAX, 129),
+            None
+        );
+    }
+
+    #[test]
+    fn direct_shifted_wide_narrow_product_matches_biguint() {
+        let left = [u64::MAX, u64::MAX - 1, 1, 0];
+        let right = u128::MAX - 17;
+        for shift in [0_u64, 1, 63, 64, 127] {
+            let mut actual = DyadicStackAccumulator::default();
+            assert_eq!(
+                actual.add_wide_word_product(left, right, shift),
+                Some(()),
+                "shift={shift}"
+            );
+            let expected = (limbs_to_biguint(&left) * BigUint::from(right))
+                << usize::try_from(shift).unwrap();
+            assert_eq!(limbs_to_biguint(&actual.0), expected);
+        }
+    }
+
     #[test]
     fn rational_data_layout_stays_bounded() {
         assert!(

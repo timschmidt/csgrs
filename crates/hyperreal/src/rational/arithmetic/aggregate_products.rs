@@ -477,6 +477,55 @@ impl ExactDyadicWideLineParameters2 {
 }
 
 impl DyadicStackAccumulator {
+    /// Add a precomputed magnitude after binary alignment without building a
+    /// second full-width stack value. Product bits occupy disjoint portions of
+    /// adjacent shifted limbs; arithmetic carries are then propagated only as
+    /// far as the occupied result requires.
+    #[inline]
+    fn add_shifted_limbs<const N: usize>(
+        &mut self,
+        product: [u64; N],
+        shift: u64,
+    ) -> Option<()> {
+        let Some(last_source) = product.iter().rposition(|limb| *limb != 0) else {
+            return Some(());
+        };
+        let word_shift = usize::try_from(shift / 64).ok()?;
+        let bit_shift = u32::try_from(shift % 64).expect("limb bit shift fits u32");
+        let has_high_limb =
+            bit_shift != 0 && product[last_source] >> (64 - bit_shift) != 0;
+        let last_offset = last_source + usize::from(has_high_limb);
+        let last_target = word_shift.checked_add(last_offset)?;
+        if last_target >= DYADIC_STACK_LIMBS {
+            return None;
+        }
+
+        let mut carry = false;
+        for offset in 0..=last_offset {
+            let mut addend = product.get(offset).copied().unwrap_or(0) << bit_shift;
+            if bit_shift != 0 && offset != 0 {
+                addend |= product[offset - 1] >> (64 - bit_shift);
+            }
+            let target = word_shift + offset;
+            let (sum, first_carry) = self.0[target].overflowing_add(addend);
+            let (sum, second_carry) = sum.overflowing_add(u64::from(carry));
+            self.0[target] = sum;
+            carry = first_carry || second_carry;
+        }
+
+        let mut target = last_target + 1;
+        while carry {
+            if target == DYADIC_STACK_LIMBS {
+                return None;
+            }
+            let (sum, next_carry) = self.0[target].overflowing_add(1);
+            self.0[target] = sum;
+            carry = next_carry;
+            target += 1;
+        }
+        Some(())
+    }
+
     fn add_product(&mut self, left: u128, right: u128, shift: u64) -> Option<()> {
         let left = [left as u64, (left >> 64) as u64];
         let right = [right as u64, (right >> 64) as u64];
@@ -496,39 +545,7 @@ impl DyadicStackAccumulator {
             product[index] = total as u64;
             debug_assert_eq!(total >> 64, 0);
         }
-
-        let word_shift = usize::try_from(shift / 64).ok()?;
-        let bit_shift = u32::try_from(shift % 64).expect("limb bit shift fits u32");
-        let mut aligned = Self::default();
-        for (index, limb) in product.into_iter().enumerate() {
-            if limb == 0 {
-                continue;
-            }
-            let target = word_shift.checked_add(index)?;
-            if target >= DYADIC_STACK_LIMBS {
-                return None;
-            }
-            aligned.0[target] |= limb << bit_shift;
-            if bit_shift != 0 {
-                let high = limb >> (64 - bit_shift);
-                if high != 0 {
-                    let target = target.checked_add(1)?;
-                    if target >= DYADIC_STACK_LIMBS {
-                        return None;
-                    }
-                    aligned.0[target] |= high;
-                }
-            }
-        }
-
-        let mut carry = false;
-        for (value, addend) in self.0.iter_mut().zip(aligned.0) {
-            let (sum, first_carry) = value.overflowing_add(addend);
-            let (sum, second_carry) = sum.overflowing_add(u64::from(carry));
-            *value = sum;
-            carry = first_carry || second_carry;
-        }
-        (!carry).then_some(())
+        self.add_shifted_limbs(product, shift)
     }
 
     fn add_wide_word_product(
@@ -556,39 +573,7 @@ impl DyadicStackAccumulator {
                 return None;
             }
         }
-
-        let word_shift = usize::try_from(shift / 64).ok()?;
-        let bit_shift = u32::try_from(shift % 64).expect("limb bit shift fits u32");
-        let mut aligned = Self::default();
-        for (index, limb) in product.into_iter().enumerate() {
-            if limb == 0 {
-                continue;
-            }
-            let target = word_shift.checked_add(index)?;
-            if target >= DYADIC_STACK_LIMBS {
-                return None;
-            }
-            aligned.0[target] |= limb << bit_shift;
-            if bit_shift != 0 {
-                let high = limb >> (64 - bit_shift);
-                if high != 0 {
-                    let target = target.checked_add(1)?;
-                    if target >= DYADIC_STACK_LIMBS {
-                        return None;
-                    }
-                    aligned.0[target] |= high;
-                }
-            }
-        }
-
-        let mut carry = false;
-        for (value, addend) in self.0.iter_mut().zip(aligned.0) {
-            let (sum, first_carry) = value.overflowing_add(addend);
-            let (sum, second_carry) = sum.overflowing_add(u64::from(carry));
-            *value = sum;
-            carry = first_carry || second_carry;
-        }
-        (!carry).then_some(())
+        self.add_shifted_limbs(product, shift)
     }
 
     fn difference(positive: Self, negative: Self) -> Option<(Sign, Self)> {

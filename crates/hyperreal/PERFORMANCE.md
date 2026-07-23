@@ -1221,6 +1221,32 @@ form until the event consumer actually needs independent canonical rationals.
 Any such representation must preserve exact equality, ordering, and public
 standalone `Rational` output; GMP remains benchmark/oracle-only.
 
+### Direct fixed-stack product accumulation
+
+Dyadic determinant, dot-product, parameter-ordering, and affine-point kernels
+previously shifted every native or wide product into a zeroed six-limb temporary
+and then added all six limbs into the destination. The shared accumulator now
+checks the occupied shifted range first, synthesizes each aligned limb directly
+at its destination, and propagates an arithmetic carry only while it remains
+live. This removes one full stack temporary and one unconditional six-limb pass
+without changing the fixed-width admission boundary or arbitrary-precision
+fallback.
+
+Matched downstream Hypercurve contour trials measured star64 at 53.849 versus
+55.065 us/iteration (2.2% faster), star256 at 448.589 versus 467.143
+us/iteration (4.0%), and star1024 at 7.203 versus 7.550 ms/iteration (4.6%).
+In the 500-operation star1024 profile, accumulator self-time fell from 17.46% to
+12.64%. The star64 heaptrack workload remained exactly 59,096 allocations and
+697.47 KiB peak heap; eleven standalone star1024 runs moved median process RSS
+from 24,172 to 23,928 KiB, within the expected process-layout variance and with
+no memory regression.
+
+Boundary tests compare narrow and wide-narrow aligned products, carry
+propagation, and overflow fallback with `BigUint`. The 561-test all-feature
+Hyperreal suite, the complete downstream Hypercurve all-feature suite, strict
+Clippy, warning-denied rustdoc, and a 10,000-run AddressSanitizer region-Boolean
+campaign (5,902 coverage points and 18,712 feature edges) passed.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
