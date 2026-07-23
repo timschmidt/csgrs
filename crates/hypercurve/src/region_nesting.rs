@@ -6,13 +6,13 @@
 
 use std::{cell::OnceCell, cmp::Ordering, rc::Rc};
 
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 
 use crate::bbox::{
     Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_contour_aabb,
     decided_segment_aabb,
 };
-use crate::classify::compare_reals;
+use crate::classify::{compare_reals, real_sign};
 use crate::{
     ArcArcIntersection, CircularArc2, Classification, Contour2, ContourPointLocation, CurveError,
     CurvePolicy, CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineArcRegion2,
@@ -1676,6 +1676,40 @@ impl LineArcRegion2 {
                 }
             },
         )
+    }
+
+    pub(crate) fn from_directed_boolean_boundary_contours(
+        contours: Vec<Contour2>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        if contours.len() <= 1 {
+            return Ok(Classification::Decided(Self::from_material_contours(
+                contours,
+            )));
+        }
+        let Some(material_roles) = contours
+            .iter()
+            .map(|contour| {
+                line_contour_extreme_turn_orientation(contour, policy)
+                    .map(|orientation| orientation == RealSign::Positive)
+            })
+            .collect::<Option<Vec<_>>>()
+        else {
+            return Self::from_validated_boundary_contours(contours, policy);
+        };
+        let mut material_contours = Vec::new();
+        let mut hole_contours = Vec::new();
+        for (contour, material) in contours.into_iter().zip(material_roles) {
+            if material {
+                material_contours.push(contour);
+            } else {
+                hole_contours.push(contour);
+            }
+        }
+        Ok(Classification::Decided(Self::new(
+            material_contours,
+            hole_contours,
+        )))
     }
 
     /// Builds a region by nesting borrowed closed boundary contours.
@@ -12885,6 +12919,49 @@ fn retained_status_for_boundary_contour_blocker(
     }
 }
 
+fn line_contour_extreme_turn_orientation(
+    contour: &Contour2,
+    policy: &CurvePolicy,
+) -> Option<RealSign> {
+    let segments = contour.segments();
+    let Segment2::Line(first) = segments.first()? else {
+        return None;
+    };
+    let mut minimum_index = 0;
+    let mut minimum = first.start();
+    for (index, segment) in segments.iter().enumerate().skip(1) {
+        let Segment2::Line(line) = segment else {
+            return None;
+        };
+        let current = line.start();
+        let order = compare_reals(current.x(), minimum.x(), policy)?;
+        if order == Ordering::Less
+            || order == Ordering::Equal
+                && compare_reals(current.y(), minimum.y(), policy)? == Ordering::Less
+        {
+            minimum_index = index;
+            minimum = current;
+        }
+    }
+    let Segment2::Line(incoming) = &segments[(minimum_index + segments.len() - 1) % segments.len()]
+    else {
+        return None;
+    };
+    let Segment2::Line(outgoing) = &segments[minimum_index] else {
+        return None;
+    };
+    let (incoming_x, incoming_y) = incoming.delta();
+    let (outgoing_x, outgoing_y) = outgoing.delta();
+    match real_sign(
+        &Real::diff_of_products(&incoming_x, &outgoing_y, &incoming_y, &outgoing_x),
+        policy,
+    )? {
+        RealSign::Positive => Some(RealSign::Positive),
+        RealSign::Negative => Some(RealSign::Negative),
+        RealSign::Zero => None,
+    }
+}
+
 fn contour_aabb_overlap_neighbors(
     contour_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
@@ -13045,6 +13122,9 @@ fn contour_nesting_depths_impl(
     let segment_boxes = (0..contours.len())
         .map(|_| OnceCell::<Vec<Option<Aabb2>>>::new())
         .collect::<Vec<_>>();
+    let prepared_contours = (0..contours.len())
+        .map(|_| OnceCell::<crate::PreparedContourView2<'_>>::new())
+        .collect::<Vec<_>>();
     let aabb_overlap_neighbors = contour_aabb_overlap_neighbors(&contour_boxes, policy);
 
     if validate_intersections {
@@ -13138,12 +13218,12 @@ fn contour_nesting_depths_impl(
             (Real::one() / Real::from(3_i8))?,
             (Real::from(2_i8) / Real::from(3_i8))?,
         ];
-        // The exact intersection pass above proves that every point on this
-        // candidate boundary is off every other contour boundary. In the
-        // ordinary decided path its existing first endpoint is therefore a
-        // sufficient nesting sample. Retain the interior samples as exact
-        // fallbacks for an undecided point-containment predicate, but do not
-        // eagerly interpolate them when the first endpoint already decides.
+        // The exact validation pass above, or the trusted Boolean assembly
+        // supplying this internal path, proves that every point on this
+        // candidate boundary is off every other contour boundary. Its first
+        // endpoint is therefore a sufficient nesting sample. Retain interior
+        // samples as exact fallbacks for an undecided containment predicate,
+        // but do not eagerly interpolate them when that endpoint decides.
         let fallback_samples = candidate.segments().iter().flat_map(|segment| {
             fractions
                 .iter()
@@ -13187,20 +13267,9 @@ fn contour_nesting_depths_impl(
                 {
                     continue;
                 }
-                let container_segment_boxes = segment_boxes[container_index].get_or_init(|| {
-                    container
-                        .segments()
-                        .iter()
-                        .map(|segment| decided_segment_aabb(segment, policy))
-                        .collect()
-                });
-                match crate::contour::classify_contour_point_with_cached_aabbs(
-                    container,
-                    &sample,
-                    contour_boxes[container_index].as_ref(),
-                    container_segment_boxes,
-                    policy,
-                ) {
+                let prepared = prepared_contours[container_index]
+                    .get_or_init(|| crate::PreparedContourView2::from_contour(container, policy));
+                match prepared.classify_point_assuming_off_boundary(&sample, policy) {
                     Classification::Decided(ContourPointLocation::Inside) => {
                         containing_contour_indices.push(container_index);
                     }
@@ -13270,12 +13339,55 @@ fn contour_intersection_blocker(
 
 #[cfg(test)]
 mod tests {
-    use super::contour_intersection_blocker;
+    use super::{contour_intersection_blocker, line_contour_extreme_turn_orientation};
     use crate::{
-        ContourIntersection, ContourIntersectionSet, ContourPointIntersection,
-        ContourUncertainIntersection, IntersectionKind, Point2, SegmentKind, UncertaintyReason,
+        BulgeVertex2, Contour2, ContourIntersection, ContourIntersectionSet,
+        ContourPointIntersection, ContourUncertainIntersection, CurvePolicy, IntersectionKind,
+        Point2, SegmentKind, UncertaintyReason,
     };
-    use hyperreal::Real;
+    use hyperreal::{Real, RealSign};
+
+    fn line_contour(points: &[(i64, i64)]) -> Contour2 {
+        let vertices = points
+            .iter()
+            .map(|&(x, y)| {
+                BulgeVertex2::new(Point2::new(Real::from(x), Real::from(y)), Real::zero())
+            })
+            .collect::<Vec<_>>();
+        Contour2::from_bulge_vertices(&vertices).unwrap()
+    }
+
+    #[test]
+    fn extreme_turn_recovers_concave_line_contour_orientation() {
+        let points = [(0, 0), (4, 0), (4, 4), (2, 2), (0, 4)];
+        let forward = line_contour(&points);
+        let reverse = line_contour(&points.into_iter().rev().collect::<Vec<_>>());
+        let policy = CurvePolicy::certified();
+
+        assert_eq!(
+            line_contour_extreme_turn_orientation(&forward, &policy),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(
+            line_contour_extreme_turn_orientation(&reverse, &policy),
+            Some(RealSign::Negative)
+        );
+    }
+
+    #[test]
+    fn extreme_turn_defers_mixed_line_arc_contours_to_nesting() {
+        let contour = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(Point2::new(Real::from(0), Real::from(0)), Real::zero()),
+            BulgeVertex2::new(Point2::new(Real::from(4), Real::from(0)), Real::one()),
+            BulgeVertex2::new(Point2::new(Real::from(0), Real::from(4)), Real::zero()),
+        ])
+        .unwrap();
+
+        assert_eq!(
+            line_contour_extreme_turn_orientation(&contour, &CurvePolicy::certified()),
+            None
+        );
+    }
 
     #[test]
     fn contour_nesting_preserves_uncertain_intersection_reason() {

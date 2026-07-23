@@ -26,6 +26,8 @@ struct RegionLineCrossing<'a> {
 pub(crate) struct RegionLineCrossingWindingIndex<'a> {
     first: Vec<RegionLineCrossing<'a>>,
     second: Vec<RegionLineCrossing<'a>>,
+    first_segment_offsets: Vec<usize>,
+    second_segment_offsets: Vec<usize>,
 }
 
 impl<'a> RegionLineCrossingWindingIndex<'a> {
@@ -63,6 +65,8 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         let mut index = Self {
             first: Vec::with_capacity(crossing_capacity),
             second: Vec::with_capacity(crossing_capacity),
+            first_segment_offsets: Vec::new(),
+            second_segment_offsets: Vec::new(),
         };
         let mut crossing_count = 0_usize;
         for (event_index, event) in pair.intersections().events().iter().enumerate() {
@@ -134,6 +138,9 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         {
             return None;
         }
+        index.first_segment_offsets = segment_crossing_offsets(&index.first, first_contour.len())?;
+        index.second_segment_offsets =
+            segment_crossing_offsets(&index.second, second_contour.len())?;
 
         (crossing_count != 0
             && index.crossing_count(pair.first()) == crossing_count
@@ -168,10 +175,13 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         if previous_segment_index != current_segment_index {
             return Some(0);
         }
-        if previous_end != current_start {
+        if !std::ptr::eq(previous_end, current_start) && previous_end != current_start {
             return None;
         }
         let crossings = self.crossings(key, previous_segment_index)?;
+        if let [crossing] = crossings {
+            return Some(crossing.winding_delta);
+        }
         let mut matched = crossings
             .iter()
             .filter(|crossing| crossing.parameter == previous_end);
@@ -195,16 +205,33 @@ impl<'a> RegionLineCrossingWindingIndex<'a> {
         segment_index: usize,
     ) -> Option<&[RegionLineCrossing<'a>]> {
         let crossings = self.crossings_for_key(key)?;
-        let start = crossings.partition_point(|crossing| crossing.segment_index < segment_index);
-        let mut end = start;
-        while crossings
-            .get(end)
-            .is_some_and(|crossing| crossing.segment_index == segment_index)
-        {
-            end += 1;
-        }
+        let offsets = match key.side {
+            RegionSide::First => &self.first_segment_offsets,
+            RegionSide::Second => &self.second_segment_offsets,
+        };
+        let start = *offsets.get(segment_index)?;
+        let end = *offsets.get(segment_index + 1)?;
         Some(&crossings[start..end])
     }
+}
+
+fn segment_crossing_offsets(
+    crossings: &[RegionLineCrossing<'_>],
+    segment_count: usize,
+) -> Option<Vec<usize>> {
+    let mut offsets = Vec::with_capacity(segment_count + 1);
+    let mut crossing_index = 0;
+    for segment_index in 0..segment_count {
+        offsets.push(crossing_index);
+        while crossings
+            .get(crossing_index)
+            .is_some_and(|crossing| crossing.segment_index == segment_index)
+        {
+            crossing_index += 1;
+        }
+    }
+    offsets.push(crossing_index);
+    (crossing_index == crossings.len()).then_some(offsets)
 }
 
 fn sort_and_validate_unique(

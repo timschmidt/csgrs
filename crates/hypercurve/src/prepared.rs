@@ -749,15 +749,39 @@ impl<'a> PreparedContourView2<'a> {
         })
     }
 
+    // Callers of this internal path must already have certified that the
+    // sample cannot lie on the contour. It deliberately skips the boundary
+    // scan while retaining the same exact winding and fill-rule decision.
+    pub(crate) fn classify_point_assuming_off_boundary(
+        &self,
+        point: &Point2,
+        policy: &CurvePolicy,
+    ) -> Classification<ContourPointLocation> {
+        if self
+            .contour_box
+            .as_ref()
+            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
+        {
+            return Classification::Decided(ContourPointLocation::Outside);
+        }
+        let winding = match prepared_contour_winding_number_unchecked(self, point, policy) {
+            Classification::Decided(winding) => winding,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let inside = match self.contour.fill_rule() {
+            FillRule::NonZero => winding != 0,
+            FillRule::EvenOdd => winding.rem_euclid(2) != 0,
+        };
+        Classification::Decided(if inside {
+            ContourPointLocation::Inside
+        } else {
+            ContourPointLocation::Outside
+        })
+    }
+
     /// Returns true when the point lies on this prepared contour boundary.
     pub fn point_on_boundary(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
-        crate::contour::point_on_contour_boundary_with_cached_aabbs(
-            self.contour,
-            point,
-            self.contour_box(),
-            &self.segment_boxes,
-            policy,
-        )
+        prepared_point_on_contour_boundary(self, point, policy)
     }
 
     /// Computes the winding number for a point not on this prepared boundary.
@@ -1359,9 +1383,9 @@ impl<'a> RegionView2<'a> {
     /// Computes a role-assigned boolean region against a prepared right
     /// operand.
     ///
-    /// The prepared path still returns to the ordinary nesting classifier for
-    /// material/hole assignment, so boundary-first winding boundary-first point
-    /// classification remains the final arbiter for resolved output contours.
+    /// Non-overlap line output reuses its certified Boolean direction for role
+    /// assignment; overlap or unsupported primitive cases retain the exact
+    /// nesting-classifier fallback.
     pub fn boolean_region_against_prepared_region(
         &self,
         other: &PreparedRegionView2<'_>,
@@ -1415,8 +1439,39 @@ fn prepared_point_on_contour_boundary(
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Classification<bool> {
+    if let Some(index) = contour.segment_x_index.as_ref() {
+        let mut candidates = Vec::new();
+        index.collect_overlapping(
+            &contour.segment_boxes,
+            &Aabb2::from_point(point.clone()),
+            policy,
+            &mut candidates,
+        );
+        candidates.sort_unstable();
+        return prepared_point_on_contour_boundary_candidates(
+            contour,
+            candidates.into_iter(),
+            point,
+            policy,
+        );
+    }
+    prepared_point_on_contour_boundary_candidates(
+        contour,
+        0..contour.prepared_segments.len(),
+        point,
+        policy,
+    )
+}
+
+fn prepared_point_on_contour_boundary_candidates(
+    contour: &PreparedContourView2<'_>,
+    candidates: impl Iterator<Item = usize>,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<bool> {
     let mut blocker = None;
-    for (index, segment) in contour.prepared_segments.iter().enumerate() {
+    for index in candidates {
+        let segment = &contour.prepared_segments[index];
         if contour
             .segment_boxes
             .get(index)
@@ -1559,26 +1614,20 @@ fn prepared_line_winding_index(
 fn segment_indices_sorted_by_box_coordinate(
     segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
-    coordinate: for<'a> fn(&'a Aabb2) -> &'a crate::Real,
+    coordinate: crate::events::BoxCoordinate,
 ) -> Option<Vec<usize>> {
     if segment_boxes.iter().any(Option::is_none) {
         return None;
     }
-    let mut order_decided = true;
     let mut indices: Vec<_> = (0..segment_boxes.len()).collect();
-    indices.sort_by(|left, right| {
-        let left_box = segment_boxes[*left].as_ref().expect("checked above");
-        let right_box = segment_boxes[*right].as_ref().expect("checked above");
-        match crate::classify::compare_reals(coordinate(left_box), coordinate(right_box), policy) {
-            Some(Ordering::Equal) => left.cmp(right),
-            Some(ordering) => ordering,
-            None => {
-                order_decided = false;
-                Ordering::Equal
-            }
-        }
-    });
-    order_decided.then_some(indices)
+    crate::events::sort_segment_indices_by_certified_box_coordinate(
+        &mut indices,
+        segment_boxes,
+        segment_boxes.len(),
+        policy,
+        coordinate,
+    )
+    .then_some(indices)
 }
 
 fn sorted_segment_ranks(indices: &[usize]) -> Vec<usize> {
@@ -1630,6 +1679,43 @@ fn sorted_box_coordinate_partition(
     coordinate: for<'a> fn(&'a Aabb2) -> &'a crate::Real,
     include_equal_in_lower_partition: bool,
 ) -> Option<usize> {
+    if !matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+        && let Some(query_preview) = query.to_f64_lossy().filter(|value| value.is_finite())
+    {
+        let mut preview_start = 0;
+        let mut preview_end = indices.len();
+        let mut preview_succeeded = true;
+        while preview_start < preview_end {
+            let middle = preview_start + (preview_end - preview_start) / 2;
+            let bbox = segment_boxes[indices[middle]].as_ref()?;
+            let Some(value) = coordinate(bbox)
+                .to_f64_lossy()
+                .filter(|value| value.is_finite())
+            else {
+                preview_succeeded = false;
+                break;
+            };
+            if value < query_preview || include_equal_in_lower_partition && value == query_preview {
+                preview_start = middle + 1;
+            } else {
+                preview_end = middle;
+            }
+        }
+        if preview_succeeded
+            && partition_boundary_is_certified(
+                indices,
+                segment_boxes,
+                query,
+                policy,
+                coordinate,
+                include_equal_in_lower_partition,
+                preview_start,
+            )
+        {
+            return Some(preview_start);
+        }
+    }
+
     let mut start = 0;
     let mut end = indices.len();
     while start < end {
@@ -1642,6 +1728,38 @@ fn sorted_box_coordinate_partition(
         }
     }
     Some(start)
+}
+
+fn partition_boundary_is_certified(
+    indices: &[usize],
+    segment_boxes: &[Option<Aabb2>],
+    query: &crate::Real,
+    policy: &CurvePolicy,
+    coordinate: for<'a> fn(&'a Aabb2) -> &'a crate::Real,
+    include_equal_in_lower_partition: bool,
+    partition: usize,
+) -> bool {
+    let lower_is_valid = partition == 0 || {
+        let Some(bbox) = segment_boxes[indices[partition - 1]].as_ref() else {
+            return false;
+        };
+        match crate::classify::compare_reals(coordinate(bbox), query, policy) {
+            Some(Ordering::Less) => true,
+            Some(Ordering::Equal) => include_equal_in_lower_partition,
+            Some(Ordering::Greater) | None => false,
+        }
+    };
+    let upper_is_valid = partition == indices.len() || {
+        let Some(bbox) = segment_boxes[indices[partition]].as_ref() else {
+            return false;
+        };
+        match crate::classify::compare_reals(coordinate(bbox), query, policy) {
+            Some(Ordering::Greater) => true,
+            Some(Ordering::Equal) => !include_equal_in_lower_partition,
+            Some(Ordering::Less) | None => false,
+        }
+    };
+    lower_is_valid && upper_is_valid
 }
 
 fn sorted_winding_candidate_indices<'a>(

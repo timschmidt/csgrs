@@ -1695,6 +1695,43 @@ Clippy, and warnings-as-errors rustdoc passed. The AddressSanitizer region-Boole
 differential fuzzer completed 1,138 runs at 5,472 coverage points and 16,159 feature
 edges without a failure; LeakSanitizer alone remained disabled under ptrace.
 
+Large exact-dyadic line pairs now retain the certified binary64 candidate filter and
+fused exact crossing kernel through a bounded 4,194,304-pair Cartesian product,
+provided both contour indices fit the compact event record. Previously the dispatcher
+returned to the generic exact segment kernel above 16,384 pairs even though both
+paths perform the same conservative x sweep. A binary64 decision still only rejects
+or certifies a proper crossing under its error bound; any inconclusive relation
+restarts the unchanged exact fallback. The bound caps worst-case temporary candidate
+storage while admitting the 256- and 1,024-edge scaling fixtures.
+
+Prepared contour boundary queries now collect only x-interval candidates. Prepared
+winding schedules share the event module's binary64-sort/exact-adjacency
+certification, and their binary partitions may use a lossy position only after the
+exact predecessor and successor certify it. Boolean role assignment reuses the
+validated off-boundary winding path instead of rescanning every container boundary.
+For non-overlap all-line Boolean output, the exact turn at the lexicographically
+minimum vertex recovers the already-directed material/hole role; mixed line/arc,
+zero-turn, unresolved, and overlap cases retain exact nesting. Strict-crossing
+winding propagation also keeps direct per-segment offsets rather than repeating a
+binary search for every adjacent fragment.
+
+In the final seven-sample release comparison, star256 exact region and contour output
+measured 1.435 and 1.216 ms/iter, down from 3.296 and 2.239 ms at the preceding
+large-curve checkpoint. Star1024 exact region, contour, and loop output measured
+31.582, 22.219, and 23.059 ms/iter; the preceding checkpoint measured 183.2, 38.26,
+and 38.55 ms. Prepared region and contour output measured 31.462 and 22.219 ms.
+`cavalier_contours`, `i_overlay`, and `geo` measured 19.218, 9.922, and 10.027 ms.
+Thus exact boundary output is now 1.16 times the Cavalier time instead of 1.94
+times, while complete role-assigned output is 5.80 times faster than the preceding
+exact checkpoint. A one-operation star1024 region run peaked at 31,388 KiB process
+RSS (30.7 MiB), versus 38.1 MiB at the preceding checkpoint.
+
+The complete all-feature test matrix, all-target/all-feature warnings-as-errors
+Clippy, and warnings-as-errors rustdoc passed on the integrated change. The final
+AddressSanitizer region-Boolean differential fuzz pass completed 1,295 executions at
+5,626 coverage points and 16,867 feature edges without a failure; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

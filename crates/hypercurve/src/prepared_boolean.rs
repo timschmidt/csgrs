@@ -170,7 +170,11 @@ fn boolean_region_between_prepared_impl(
         .expect("prepared region Boolean requests contour boundary output");
     if !retain_pipeline_report {
         return Ok(
-            match LineArcRegion2::from_validated_boundary_contours(contours, policy)? {
+            match if boundary_events.overlap_event_count() == 0 {
+                LineArcRegion2::from_directed_boolean_boundary_contours(contours, policy)?
+            } else {
+                LineArcRegion2::from_validated_boundary_contours(contours, policy)?
+            } {
                 Classification::Decided(region) => {
                     crate::region_boolean::region_boolean_result_from_role_assigned_shortcut_region(
                         &first_view,

@@ -465,10 +465,12 @@ pub(crate) fn intersect_contours_with_exact_dyadic_line_aabbs(
     policy: &CurvePolicy,
 ) -> CurveResult<ContourIntersectionSet> {
     const MIN_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 256;
-    const MAX_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 16_384;
+    const MAX_RETAINED_CERTIFICATE_PAIR_COUNT: usize = 4_194_304;
     let pair_count = a.len().saturating_mul(b.len());
     if (MIN_RETAINED_CERTIFICATE_PAIR_COUNT..=MAX_RETAINED_CERTIFICATE_PAIR_COUNT)
         .contains(&pair_count)
+        && a.len() <= usize::from(u16::MAX) + 1
+        && b.len() <= usize::from(u16::MAX) + 1
     {
         intersect_contours_with_retained_line_candidates(a, b, a_boxes, b_boxes, policy)
     } else {
@@ -595,8 +597,8 @@ fn intersect_contours_with_retained_line_candidates(
                     if candidates.is_empty() {
                         candidates.reserve_exact(a.len().min(b.len()).min(64));
                     }
-                    // The dispatcher caps nonempty Cartesian products at
-                    // 16,384 pairs, so every participating index fits `u16`.
+                    // The dispatcher admits this path only when both contour
+                    // lengths fit the compact candidate index.
                     candidates.push(Candidate {
                         a_segment_index: a_segment_index as u16,
                         b_segment_index: b_segment_index as u16,
@@ -832,6 +834,23 @@ impl SegmentAabbXIndex {
         self.collect_range(boxes, 0, self.ordered.len(), query, policy, candidates);
     }
 
+    pub(crate) fn collect_overlapping(
+        &self,
+        boxes: &[Option<Aabb2>],
+        query: &Aabb2,
+        policy: &CurvePolicy,
+        candidates: &mut Vec<usize>,
+    ) {
+        candidates.extend(self.unknown.iter().copied());
+        if self.supports_interval_queries() {
+            self.collect(boxes, query, policy, candidates);
+        } else {
+            candidates.extend(self.ordered.iter().copied().filter(|&index| {
+                !aabbs_decided_disjoint(query, boxes[index].as_ref().unwrap(), policy)
+            }));
+        }
+    }
+
     fn collect_range(
         &self,
         boxes: &[Option<Aabb2>],
@@ -876,7 +895,7 @@ impl SegmentAabbXIndex {
     }
 }
 
-type BoxCoordinate = for<'a> fn(&'a Aabb2) -> &'a Real;
+pub(crate) type BoxCoordinate = for<'a> fn(&'a Aabb2) -> &'a Real;
 
 fn compare_box(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Ordering> {
     if std::ptr::eq(left, right) {
@@ -902,7 +921,7 @@ fn compare_box(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Orderi
     compare_reals(left, right, policy)
 }
 
-fn sort_segment_indices_by_certified_box_coordinate(
+pub(crate) fn sort_segment_indices_by_certified_box_coordinate(
     ordered: &mut [usize],
     boxes: &[Option<Aabb2>],
     segment_count: usize,
