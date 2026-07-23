@@ -2334,6 +2334,33 @@ all-feature suites, strict Clippy, and warning-denied rustdoc pass. The
 10,000-run AddressSanitizer differential Boolean campaign completed without
 failure at 5,892 coverage points and 18,786 feature edges.
 
+The next exact-point checkpoint prepares each source segment's compact dyadic
+endpoint words and exact delta once for its A-major candidate group. Compact
+and wide determinant plans reuse that first line while still deriving the
+second line, all three exact determinants, and both rational coordinates per
+crossing. A source line outside the fixed-word envelope immediately returns to
+the unchanged exact collector, so the optimization neither widens an
+approximate predicate nor narrows supported geometry.
+
+Two alternating 21-sample star1024 contour trials measured
+5.733--5.737 ms versus 5.865--5.880 ms at the preceding predicate-reuse
+checkpoint, another 2.2--2.5% improvement. Star64 measured 53.155 us versus
+53.560 us, and a reversed 41-sample star256 rerun measured 0.423 ms versus
+0.434 ms. Ordinary rectangle contours measured 5.339 us versus 5.487 us.
+
+The complete star1024 comparison measured ordinary exact contours at
+5.816 ms; a dedicated prepared-contour rerun measured 5.863 ms. The competitor
+rows were 19.590 ms for Cavalier, 10.316 ms for `i_overlay`, and 10.275 ms for
+`geo`. Heaptrack remains exactly 1,104,312 allocations, 2,192 temporaries, and
+16.58 MiB peak heap across ten contour operations.
+
+Hyperreal's compact and wide randomized exact-arithmetic oracles now compare
+one-shot and prepared parameters and points for every admitted case. The
+retained collector equality test covers the downstream grouping and fallback.
+Both complete all-feature suites, strict Clippy, and warning-denied rustdoc
+pass. The 10,000-run AddressSanitizer differential Boolean campaign completed
+without failure at 5,892 coverage points and 18,825 feature edges.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
