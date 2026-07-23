@@ -19,7 +19,8 @@ use crate::classify::{
     in_closed_unit_interval, is_zero, min_real,
 };
 use crate::intersect::{
-    CertifiedLineSegmentSupportRelation, certified_line_segment_support_relation,
+    CertifiedLineSegmentSupportRelation,
+    certified_line_segment_support_relation_with_exact_dyadic_f64,
 };
 use crate::{
     ArcArcIntersection, Classification, Contour2, CurveError, CurvePolicy, CurveResult,
@@ -564,6 +565,10 @@ fn intersect_contours_with_retained_line_candidates(
 
     let mut candidates = Vec::new();
     for (a_segment_index, a_box) in a_boxes.segments.iter().copied().enumerate() {
+        let a_endpoints = a_boxes.segment_endpoints(a_segment_index);
+        let Segment2::Line(a_line) = &a.segments()[a_segment_index] else {
+            unreachable!("exact dyadic line bounds contain only line segments");
+        };
         for &b_segment_index in b_order {
             let b_segment_index = b_segment_index as usize;
             let b_box = b_boxes.segments[b_segment_index];
@@ -573,12 +578,17 @@ fn intersect_contours_with_retained_line_candidates(
             if a_box.is_disjoint(b_box) {
                 continue;
             }
-            let a_segment = &a.segments()[a_segment_index];
             let b_segment = &b.segments()[b_segment_index];
-            let (Segment2::Line(a_line), Segment2::Line(b_line)) = (a_segment, b_segment) else {
+            let Segment2::Line(b_line) = b_segment else {
                 unreachable!("exact dyadic line bounds contain only line segments");
             };
-            let relation = certified_line_segment_support_relation(a_line, b_line);
+            let b_endpoints = b_boxes.segment_endpoints(b_segment_index);
+            let relation = certified_line_segment_support_relation_with_exact_dyadic_f64(
+                a_line,
+                b_line,
+                a_endpoints,
+                b_endpoints,
+            );
             match relation {
                 CertifiedLineSegmentSupportRelation::Separated => {}
                 CertifiedLineSegmentSupportRelation::ProperCrossing(sign) => {

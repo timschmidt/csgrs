@@ -7,7 +7,7 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::{Real, RealSign};
+use hyperreal::{PreparedAffineDet2PairFilter, Real, RealSign};
 
 use crate::classify::{
     at_unit_interval_endpoint, compare_reals, in_closed_unit_interval, is_zero, max_real, min_real,
@@ -903,6 +903,33 @@ pub(crate) fn certified_line_segment_support_relation(
     first: &LineSeg2,
     second: &LineSeg2,
 ) -> CertifiedLineSegmentSupportRelation {
+    let floating = Real::prepare_affine_det2_pair_filter(
+        [first.start().x(), first.start().y()],
+        [first.end().x(), first.end().y()],
+        [second.start().x(), second.start().y()],
+        [second.end().x(), second.end().y()],
+    );
+    certified_line_segment_support_relation_with_filter(first, second, floating)
+}
+
+pub(crate) fn certified_line_segment_support_relation_with_exact_dyadic_f64(
+    first: &LineSeg2,
+    second: &LineSeg2,
+    first_endpoints: [[f64; 2]; 2],
+    second_endpoints: [[f64; 2]; 2],
+) -> CertifiedLineSegmentSupportRelation {
+    let floating = Real::prepare_affine_det2_pair_filter_from_exact_dyadic_f64(
+        first_endpoints,
+        second_endpoints,
+    );
+    certified_line_segment_support_relation_with_filter(first, second, Some(floating))
+}
+
+fn certified_line_segment_support_relation_with_filter(
+    first: &LineSeg2,
+    second: &LineSeg2,
+    floating: Option<PreparedAffineDet2PairFilter>,
+) -> CertifiedLineSegmentSupportRelation {
     fn orientations(
         line: &LineSeg2,
         first: &Point2,
@@ -943,12 +970,6 @@ pub(crate) fn certified_line_segment_support_relation(
         )
     }
 
-    let floating = Real::prepare_affine_det2_pair_filter(
-        [first.start().x(), first.start().y()],
-        [first.end().x(), first.end().y()],
-        [second.start().x(), second.start().y()],
-        [second.end().x(), second.end().y()],
-    );
     let (second_start, second_end) = orientations(
         first,
         second.start(),

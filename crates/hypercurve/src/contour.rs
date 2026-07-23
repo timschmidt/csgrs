@@ -67,9 +67,32 @@ impl ExactF64Aabb {
 pub(crate) struct ExactDyadicLineAabbs {
     pub(crate) contour: ExactF64Aabb,
     pub(crate) segments: Vec<ExactF64Aabb>,
+    // Bit 0 selects max x for the source start; bit 1 selects max y. Together
+    // with the exact bounds this reconstructs both directed endpoints without
+    // retaining four duplicate binary64 coordinates per segment.
+    start_at_max: Vec<u8>,
     /// Segment indices ordered by exact dyadic minimum x. Contours exceeding
     /// the compact index range retain their bounds and use the exact fallback.
     pub(crate) min_x_order: Option<Vec<u32>>,
+}
+
+impl ExactDyadicLineAabbs {
+    pub(crate) fn segment_endpoints(&self, index: usize) -> [[f64; 2]; 2] {
+        debug_assert_eq!(self.segments.len(), self.start_at_max.len());
+        let bounds = self.segments[index];
+        let start_at_max = self.start_at_max[index];
+        let (start_x, end_x) = if start_at_max & 1 == 0 {
+            (bounds.min_x, bounds.max_x)
+        } else {
+            (bounds.max_x, bounds.min_x)
+        };
+        let (start_y, end_y) = if start_at_max & 2 == 0 {
+            (bounds.min_y, bounds.max_y)
+        } else {
+            (bounds.max_y, bounds.min_y)
+        };
+        [[start_x, start_y], [end_x, end_y]]
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -822,30 +845,31 @@ fn decided_segment_boxes(segments: &[Segment2], policy: &CurvePolicy) -> Vec<Opt
 }
 
 fn exact_dyadic_line_aabbs(segments: &[Segment2]) -> Option<ExactDyadicLineAabbs> {
-    let segments = segments
-        .iter()
-        .map(|segment| {
-            let Segment2::Line(line) = segment else {
-                return None;
-            };
-            let start_x = line.start().x().to_f64_exact_dyadic()?;
-            let start_y = line.start().y().to_f64_exact_dyadic()?;
-            let end_x = line.end().x().to_f64_exact_dyadic()?;
-            let end_y = line.end().y().to_f64_exact_dyadic()?;
-            if ![start_x, start_y, end_x, end_y]
-                .into_iter()
-                .all(f64::is_finite)
-            {
-                return None;
-            }
-            Some(ExactF64Aabb {
-                min_x: start_x.min(end_x),
-                min_y: start_y.min(end_y),
-                max_x: start_x.max(end_x),
-                max_y: start_y.max(end_y),
-            })
-        })
-        .collect::<Option<Vec<_>>>()?;
+    let mut bounds = Vec::with_capacity(segments.len());
+    let mut start_at_max = Vec::with_capacity(segments.len());
+    for segment in segments {
+        let Segment2::Line(line) = segment else {
+            return None;
+        };
+        let start_x = line.start().x().to_f64_exact_dyadic()?;
+        let start_y = line.start().y().to_f64_exact_dyadic()?;
+        let end_x = line.end().x().to_f64_exact_dyadic()?;
+        let end_y = line.end().y().to_f64_exact_dyadic()?;
+        if ![start_x, start_y, end_x, end_y]
+            .into_iter()
+            .all(f64::is_finite)
+        {
+            return None;
+        }
+        bounds.push(ExactF64Aabb {
+            min_x: start_x.min(end_x),
+            min_y: start_y.min(end_y),
+            max_x: start_x.max(end_x),
+            max_y: start_y.max(end_y),
+        });
+        start_at_max.push(u8::from(start_x > end_x) | (u8::from(start_y > end_y) << 1));
+    }
+    let segments = bounds;
     let mut boxes = segments.iter().copied();
     let first = boxes.next()?;
     let contour = boxes.fold(first, |bounds, segment| ExactF64Aabb {
@@ -867,6 +891,7 @@ fn exact_dyadic_line_aabbs(segments: &[Segment2]) -> Option<ExactDyadicLineAabbs
     Some(ExactDyadicLineAabbs {
         contour,
         segments,
+        start_at_max,
         min_x_order,
     })
 }
@@ -1353,6 +1378,9 @@ mod tests {
         assert_eq!(bounds.contour.max_x, 3.0);
         assert_eq!(bounds.contour.max_y, 4.0);
         assert_eq!(bounds.min_x_order.as_deref(), Some(&[0, 2, 3, 1][..]));
+        assert_eq!(bounds.segment_endpoints(0), [[-2.0, 0.0], [3.0, 0.0]]);
+        assert_eq!(bounds.segment_endpoints(2), [[3.0, 4.0], [-2.0, 4.0]]);
+        assert_eq!(bounds.segment_endpoints(3), [[-2.0, 4.0], [-2.0, 0.0]]);
         let clone = contour.clone();
         let replay = clone
             .exact_dyadic_line_aabbs(&CurvePolicy::certified())

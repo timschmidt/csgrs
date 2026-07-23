@@ -1669,6 +1669,27 @@ CPU-pinned 11-sample paired release run measured ordinary exact region output at
 us/iter in that run, leaving the exact path 5.11 times behind the fastest approximate
 competitor.
 
+The shared exact-dyadic contour cache now retains two endpoint-direction bits per
+line. Together with its existing exact binary64 AABB, those bits reconstruct the
+directed endpoints without storing four duplicate coordinates. The dense candidate
+scan passes these already-proved dyadic views to Hyperreal's paired determinant
+filter, avoiding eight repeated scalar-cache loads per candidate. Every floating
+sign still uses the conservative determinant error bound; an inconclusive result
+continues through the exact homogeneous-word or arbitrary-precision fallback.
+
+Against the shared-marker checkpoint, the 5,000-operation star64 hardware-counter
+run fell from 8,274,445,706 to 8,038,736,058 retired instructions (2.85%). The new
+twenty-operation DHAT run allocated 6,213,997 bytes in 39,323 blocks, down 0.06% and
+six blocks; peak live heap rose by only 176 bytes to 780,001 bytes. Reads rose 0.17%
+and writes fell 0.04%. In the post-change profile,
+`Real::exact_dyadic_f64_cached` disappeared from the functions above 0.2% self-time.
+
+A 15-sample, 1,000-iteration comparison measured ordinary exact region, contour,
+and loop output at 143.792, 136.661, and 176.869 us/iter. Prepared variants measured
+138.004, 135.744, and 179.380 us/iter. `cavalier_contours`, `i_overlay`, and `geo`
+measured 27.348, 34.722, and 36.379 us/iter. The exact region path therefore remains
+5.26 times slower than the fastest approximate competitor.
+
 Both complete feature-mode test matrices, all-target/all-feature warnings-as-errors
 Clippy, and warnings-as-errors rustdoc passed. The AddressSanitizer region-Boolean
 differential fuzzer completed 1,138 runs at 5,472 coverage points and 16,159 feature
