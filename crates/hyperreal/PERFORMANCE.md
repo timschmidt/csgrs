@@ -1346,6 +1346,40 @@ fallback. Both complete all-feature suites, strict Clippy, and warning-denied
 rustdoc pass. The 10,000-run AddressSanitizer differential Boolean campaign
 completed without failure at 5,892 coverage points and 18,825 feature edges.
 
+### Direct binary64 dyadic word plans
+
+The exact line AABB cache already retains each endpoint as an exact finite
+binary64 value, but crossing construction still traversed and canonicalized
+four retained `Rational` values to recover the same dyadic words. The direct
+path now decodes sign, significand, and exponent from the IEEE-754 bits,
+normalizes the power-of-two denominator, and enters the unchanged compact or
+wide determinant plan. Non-finite values and endpoints outside the native-word
+envelope return `None` for the existing exact fallback.
+
+Two alternating 21-sample star1024 contour comparisons measured
+5.634 and 5.542 ms/iteration on the direct path versus 5.769 and 5.686 ms at
+the prepared-rational checkpoint, a 2.3--2.5% improvement. Seven-run hardware
+counters for 320 fixed iterations fell from 8.247 to 8.080 billion cycles,
+26.274 to 25.969 billion instructions, and 4.443 to 4.345 billion branches.
+Matched star64 and star256 trials measured 51.242 us and 0.416 ms versus
+52.424 us and 0.435 ms.
+
+The complete star1024 matrix measured ordinary/prepared exact contours at
+5.656/5.445 ms, versus 19.809 ms for Cavalier, 10.139 ms for `i_overlay`, and
+10.074 ms for `geo`. Per-operation heap behavior and the 16.58 MiB peak are
+unchanged. The profiled process has one additional 240-byte startup temporary,
+so its ten-operation totals are 1,104,313 allocations and 2,193 temporaries
+versus 1,104,312 and 2,192 at the preceding binary.
+
+A 20,000-pattern randomized test proves that direct finite-binary64 decoding
+matches the canonical rational word and rejection envelope. The compact
+512-case crossing oracle exercises the direct plan too; a separate
+approximately 200-bit determinant case covers the wide direct plan, along with
+non-finite and oversized-endpoint fallback. Both complete all-feature suites,
+strict Clippy, and warning-denied rustdoc pass. The 10,000-run AddressSanitizer
+differential Boolean campaign completed without failure at 5,891 coverage
+points and 18,881 feature edges.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

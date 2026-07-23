@@ -309,6 +309,15 @@ impl Real {
         )
     }
 
+    /// Prepare one exact binary64 line without traversing retained rationals.
+    #[doc(hidden)]
+    pub fn prepare_exact_dyadic_f64_line2(
+        start: [f64; 2],
+        end: [f64; 2],
+    ) -> Option<crate::PreparedExactDyadicLine2> {
+        Rational::prepare_line_intersection2_first_exact_dyadic_f64(start, end)
+    }
+
     /// Solve a certified proper crossing against one prepared dyadic line.
     #[doc(hidden)]
     pub fn exact_rational_line_intersection2_point_with_prepared_first(
@@ -320,6 +329,21 @@ impl Real {
             first,
             second_start.map(|value| &value.rational),
             second_end.map(|value| &value.rational),
+        )
+        .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
+    /// Solve a crossing against prepared and exact binary64 source lines.
+    #[doc(hidden)]
+    pub fn exact_dyadic_f64_line_intersection2_point_with_prepared_first(
+        first: &crate::PreparedExactDyadicLine2,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(crate::ExactDyadicLineParameters2, [Real; 2])> {
+        Rational::line_intersection2_point_with_prepared_first_exact_dyadic_f64(
+            first,
+            second_start,
+            second_end,
         )
         .map(|(parameters, point)| (parameters, point.map(Real::new)))
     }
@@ -353,6 +377,21 @@ impl Real {
             first,
             second_start.map(|value| &value.rational),
             second_end.map(|value| &value.rational),
+        )
+        .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
+    /// Solve a wide crossing against prepared and exact binary64 source lines.
+    #[doc(hidden)]
+    pub fn exact_dyadic_f64_line_intersection2_point_wide_with_prepared_first(
+        first: &crate::PreparedExactDyadicLine2,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(crate::ExactDyadicWideLineParameters2, [Real; 2])> {
+        Rational::line_intersection2_point_wide_with_prepared_first_exact_dyadic_f64(
+            first,
+            second_start,
+            second_end,
         )
         .map(|(parameters, point)| (parameters, point.map(Real::new)))
     }

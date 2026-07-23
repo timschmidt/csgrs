@@ -1451,6 +1451,36 @@ mod tests {
     }
 
     #[test]
+    fn direct_binary64_words_match_canonical_rational_words() {
+        let mut state = 0x3c6e_f372_fe94_f82b_u64;
+        for _ in 0..20_000 {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let value = f64::from_bits(state);
+            let direct = Rational::exact_dyadic_f64_word(value);
+            let canonical = value
+                .is_finite()
+                .then(|| Rational::try_from(value).unwrap())
+                .and_then(|value| Rational::known_dyadic_word(&value));
+            match (direct, canonical) {
+                (Some(direct), Some(canonical)) => {
+                    assert_eq!(direct.sign, canonical.sign, "value={value:?}");
+                    assert_eq!(direct.magnitude, canonical.magnitude, "value={value:?}");
+                    assert_eq!(
+                        direct.denominator_shift, canonical.denominator_shift,
+                        "value={value:?}"
+                    );
+                }
+                (None, None) => {}
+                (direct, canonical) => {
+                    panic!("binary64 word envelope differs for {value:?}: direct={direct:?} canonical={canonical:?}")
+                }
+            }
+        }
+    }
+
+    #[test]
     fn exact_dyadic_f64_view_rejects_unrepresentable_values() {
         let too_precise = Rational::new((1_i64 << 54) + 1);
         let exactly_representable = Rational::new((1_i64 << 54) + 4);

@@ -2833,6 +2833,28 @@ mod tests {
                     [&second_end[0], &second_end[1]],
                 )
                 .expect("prepared and one-shot compact paths share bounds");
+            let exact_f64_point = |point: &[Real; 2]| {
+                [
+                    point[0]
+                        .to_f64_exact_dyadic()
+                        .expect("the compact oracle coordinates fit binary64"),
+                    point[1]
+                        .to_f64_exact_dyadic()
+                        .expect("the compact oracle coordinates fit binary64"),
+                ]
+            };
+            let f64_prepared = Real::prepare_exact_dyadic_f64_line2(
+                exact_f64_point(first_start),
+                exact_f64_point(first_end),
+            )
+            .expect("the compact binary64 line should prepare directly");
+            let (f64_parameters, f64_point) =
+                Real::exact_dyadic_f64_line_intersection2_point_with_prepared_first(
+                    &f64_prepared,
+                    exact_f64_point(second_start),
+                    exact_f64_point(second_end),
+                )
+                .expect("direct binary64 and retained-rational paths share bounds");
             fused_cases += 1;
             let first_numerator = Real::diff_of_products(
                 &start_delta[0],
@@ -2867,12 +2889,18 @@ mod tests {
             );
             assert_eq!(point_only, point);
             assert_eq!(prepared_point, point);
+            assert_eq!(f64_point, point);
             assert_eq!(
                 prepared_parameters.materialize_first_parameter(),
                 expected_first
             );
             assert_eq!(
                 prepared_parameters.materialize_second_parameter(),
+                expected_second
+            );
+            assert_eq!(f64_parameters.materialize_first_parameter(), expected_first);
+            assert_eq!(
+                f64_parameters.materialize_second_parameter(),
                 expected_second
             );
             retained_cases.push((retained_parameters, expected_first, expected_second));
@@ -3011,6 +3039,47 @@ mod tests {
         assert_eq!(
             parameters.compare_first_parameter(&parameters),
             std::cmp::Ordering::Equal
+        );
+
+        let binary64_extent = 2_f64.powi(100);
+        let binary64_near_extent = f64::from_bits(binary64_extent.to_bits() - 1);
+        let binary64_prepared = Real::prepare_exact_dyadic_f64_line2(
+            [0.0, 0.0],
+            [binary64_extent, binary64_near_extent],
+        )
+        .expect("word-sized binary64 endpoints should prepare");
+        assert!(
+            Real::exact_dyadic_f64_line_intersection2_point_with_prepared_first(
+                &binary64_prepared,
+                [0.0, binary64_near_extent],
+                [binary64_extent, 0.0],
+            )
+            .is_none(),
+            "the native determinant carrier should reject the 200-bit product"
+        );
+        let (binary64_parameters, binary64_point) =
+            Real::exact_dyadic_f64_line_intersection2_point_wide_with_prepared_first(
+                &binary64_prepared,
+                [0.0, binary64_near_extent],
+                [binary64_extent, 0.0],
+            )
+            .expect("the fixed wide carrier should retain the binary64 crossing");
+        assert_eq!(binary64_parameters.materialize_first_parameter(), half);
+        assert_eq!(binary64_parameters.materialize_second_parameter(), half);
+        assert_eq!(
+            binary64_point,
+            [
+                Real::try_from(binary64_extent / 2.0).unwrap(),
+                Real::try_from(binary64_near_extent / 2.0).unwrap(),
+            ]
+        );
+        assert!(
+            Real::prepare_exact_dyadic_f64_line2([f64::INFINITY, 0.0], [binary64_extent, 0.0],)
+                .is_none()
+        );
+        assert!(
+            Real::prepare_exact_dyadic_f64_line2([2_f64.powi(200), 0.0], [binary64_extent, 0.0],)
+                .is_none()
         );
     }
 
