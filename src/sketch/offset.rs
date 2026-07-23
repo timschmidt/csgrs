@@ -33,7 +33,7 @@ use crate::hyper_math::{Real, hreal_abs, hreal_try_cmp};
 use crate::sketch::Profile;
 use hypercurve::{
     BezierFlatteningOptions, Classification, CurvePolicy, CurveRegion2, CurveString2,
-    FiniteRegionProfile2, LineSeg2, OffsetCap, Segment2, StraightSkeletonReport2,
+    FiniteRegionProfile2, LineSeg2, OffsetCap, Segment2, StraightSkeletonResult2,
 };
 
 impl Profile {
@@ -318,14 +318,14 @@ impl Profile {
         sketch
     }
 
-    /// Return Hypercurve's report for the exact interior straight skeleton.
+    /// Return Hypercurve's exact interior straight-skeleton result.
     ///
     /// The current exact kernel accepts one simple, convex, line-only material
     /// contour without holes or open wires. Concave inputs retain Hypercurve's
     /// typed split-event blocker instead of falling back to diagnostic rays.
-    pub fn straight_skeleton_report(
+    pub fn straight_skeleton_result(
         &self,
-    ) -> Result<StraightSkeletonReport2, ProfileStraightSkeletonError> {
+    ) -> Result<StraightSkeletonResult2, ProfileStraightSkeletonError> {
         if !self.wires().is_empty() || !self.curve_paths().is_empty() {
             return Err(ProfileStraightSkeletonError::UnsupportedTopology {
                 requirement: "one filled contour without open wires",
@@ -350,13 +350,13 @@ impl Profile {
 
     /// Construct exact straight-skeleton arcs as native Hypercurve wires.
     pub fn try_straight_skeleton(&self) -> Result<Profile, ProfileStraightSkeletonError> {
-        let report = self.straight_skeleton_report()?;
-        if let Some(blocker) = report.blocker().cloned() {
+        let result = self.straight_skeleton_result()?;
+        if let Some(blocker) = result.blocker().cloned() {
             return Err(ProfileStraightSkeletonError::Blocked(blocker));
         }
-        let skeleton = report
+        let skeleton = result
             .skeleton()
-            .expect("a blocker-free complete straight-skeleton report has a graph");
+            .expect("a blocker-free complete straight-skeleton result has a graph");
         let mut wires = Vec::with_capacity(skeleton.arcs().len());
         for arc in skeleton.arcs() {
             let start = skeleton.nodes()[arc.start_node()].point().clone();

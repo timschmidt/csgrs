@@ -33,7 +33,7 @@ fuzz_target!(|bytes: &[u8]| {
         points.push([x, y]);
     }
 
-    let sketch: Profile = Profile::polygon(&points );
+    let sketch: Profile = Profile::polygon(&points);
     for triangle in sketch.triangulate() {
         for point in triangle {
             assert!(point.x.is_finite());

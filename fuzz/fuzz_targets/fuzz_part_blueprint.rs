@@ -6,8 +6,8 @@ use csgrs::{
     csg::CSG,
     mesh::Mesh,
     parts::{
-        AssemblyDocumentation, BlueprintEdgeStyle, BlueprintProjection, CsgPartInterface, ExactVector3,
-        InstallationVector, PartMetadata, PartSource, blueprint_from_aabb_parts,
+        AssemblyDocumentation, BlueprintEdgeStyle, BlueprintProjection, CsgPartInterface,
+        ExactVector3, InstallationVector, PartMetadata, PartSource, blueprint_from_aabb_parts,
     },
 };
 use hyperlattice::Real;
@@ -31,11 +31,10 @@ fn metadata(handle: String, offset: ExactVector3, include_install: bool) -> Part
         },
     );
     interface.documentation = AssemblyDocumentation {
-        installation: include_install
-            .then(|| {
-                InstallationVector::new(vec3(0, 0, 1), offset, false, false)
-                    .expect("fixed fuzz install direction is nonzero")
-            }),
+        installation: include_install.then(|| {
+            InstallationVector::new(vec3(0, 0, 1), offset, false, false)
+                .expect("fixed fuzz install direction is nonzero")
+        }),
         pose_hint: None,
         flags: Vec::new(),
     };

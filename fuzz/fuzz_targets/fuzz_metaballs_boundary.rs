@@ -92,5 +92,5 @@ fuzz_target!(|bytes: &[u8]| {
 
     assert_mesh_finite(&mesh);
     assert_diagnostics_consistent(&diagnostics);
-    assert_eq!(diagnostics.emitted_triangle_count, mesh.polygons.len());
+    assert_eq!(diagnostics.emitted_triangle_count, mesh.triangles().len());
 });

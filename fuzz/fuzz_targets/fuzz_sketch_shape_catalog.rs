@@ -120,7 +120,11 @@ fuzz_target!(|bytes: &[u8]| {
         25 => Profile::circle_with_flat(a, segments, b),
         26 => Profile::circle_with_two_flats(a, segments, b),
         27 => Profile::bezier(&curve_control, segments),
-        28 => Profile::bspline(&curve_control, bytes[idx % bytes.len()] as usize % 5, segments),
+        28 => Profile::bspline(
+            &curve_control,
+            bytes[idx % bytes.len()] as usize % 5,
+            segments,
+        ),
         29 => Profile::supershape(
             positive_a,
             positive_b,

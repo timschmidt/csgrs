@@ -13,9 +13,10 @@ use crate::io::svg::ToSVG;
 #[cfg(feature = "offset")]
 use hypercurve::{BezierFlatteningOptions, BooleanOp};
 use hypercurve::{
-    Classification, Contour2, CubicBezier2, Curve2, CurveFamily2, CurvePath2, CurvePolicy,
-    CurveRegion2, CurveString2, FiniteProjectionOptions, LineSeg2, NurbsCurve2, Point2,
-    RationalBezier2, RationalQuadraticBezier2, finite_ring_signed_area,
+    BezierSplitFragment2, BezierSubcurve2, Classification, Contour2, CubicBezier2, Curve2,
+    CurveFamily2, CurvePath2, CurvePolicy, CurveRegion2, CurveString2,
+    FiniteProjectionOptions, LineSeg2, NurbsCurve2, Point2, RationalBezier2,
+    RationalQuadraticBezier2, finite_ring_signed_area,
 };
 
 #[cfg(feature = "offset")]
@@ -102,10 +103,16 @@ fn profile_preserves_higher_order_region_and_path_carriers() {
     assert!(
         profile
             .as_curve_region()
-            .fragment_provenance()
-            .unwrap()
+            .boundary_loops()
             .iter()
-            .any(|source| source.family() == CurveFamily2::CubicBezier)
+            .flat_map(|boundary| boundary.fragments())
+            .any(|fragment| matches!(
+                fragment,
+                BezierSplitFragment2::Materialized {
+                    curve: BezierSubcurve2::Cubic(_),
+                    ..
+                }
+            ))
     );
 
     #[cfg(feature = "svg-io")]

@@ -9,11 +9,12 @@ use crate::csg::CSG;
 use crate::io::{IoError, finite_f64};
 use crate::sketch::Profile;
 use hypercurve::{
-    Classification, CurvePolicy, CurveRegion2, CurveString2, FillRule,
-    FiniteProjectionOptions, import_svg_path_data_with_report,
-    import_svg_region_path_data_with_report,
+    CircularArc2, Classification, CubicBezier2, Curve2, CurveGeometry2, CurvePath2,
+    CurvePolicy, CurveRegion2, CurveString2, FillRule, FiniteProjectionOptions, LineSeg2,
+    Point2, QuadraticBezier2, Segment2,
 };
 use hyperlattice::{Matrix4, Real};
+use hyperreal::RealSign;
 use std::fmt::Debug;
 
 /// Controls finite approximation at the SVG boundary.
@@ -355,34 +356,425 @@ fn points(value: &str) -> Result<Vec<[Real; 2]>, IoError> {
 fn imported_path(
     data: &str,
     context: StyleContext,
-    source_index: u64,
+    _source_index: u64,
 ) -> Result<Profile, IoError> {
+    let subpaths = parse_path_data(data)?;
     let mut region = CurveRegion2::empty();
     let mut wires = Vec::new();
     if context.fills() {
-        let result = import_svg_region_path_data_with_report(
-            data,
-            context.fill_rule,
-            source_index,
-            1,
-            None,
-            &CurvePolicy::certified(),
-        );
-        let blocker = result.report().blocker();
-        region = result.into_region().ok_or_else(|| IoError::Geometry {
+        if subpaths.iter().any(|subpath| !subpath.closed) {
+            return Err(IoError::Geometry {
+                format: "SVG",
+                detail: "filled path contains an explicitly open subpath".into(),
+            });
+        }
+        let paths = subpaths
+            .iter()
+            .map(|subpath| subpath.path.clone())
+            .collect::<Vec<_>>();
+        let policy = CurvePolicy::certified();
+        let preliminary = CurveRegion2::try_from_boundary_paths(&paths).map_err(|error| {
+            IoError::Geometry {
+                format: "SVG",
+                detail: error.to_string(),
+            }
+        })?;
+        let roles =
+            match preliminary
+                .loop_roles(&policy)
+                .map_err(|error| IoError::Geometry {
+                    format: "SVG",
+                    detail: error.to_string(),
+                })? {
+                Classification::Decided(roles) => roles,
+                Classification::Uncertain(reason) => {
+                    return Err(IoError::Geometry {
+                        format: "SVG",
+                        detail: format!("path loop roles were not certified: {reason:?}"),
+                    });
+                },
+            };
+        let fill_rules = vec![context.fill_rule; paths.len()];
+        region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &paths,
+            &roles,
+            &fill_rules,
+        )
+        .map_err(|error| IoError::Geometry {
             format: "SVG",
-            detail: format!("path region was not certified: {blocker:?}"),
+            detail: error.to_string(),
         })?;
     }
     if context.strokes() {
-        let result = import_svg_path_data_with_report(data, source_index, 1, None);
-        let blocker = result.report().blocker();
-        wires.push(result.into_curve_string().ok_or_else(|| IoError::Geometry {
-            format: "SVG",
-            detail: format!("stroked path was not retained: {blocker:?}"),
-        })?);
+        for subpath in &subpaths {
+            let segments = subpath
+                .path
+                .curves()
+                .iter()
+                .map(|curve| match curve.geometry() {
+                    CurveGeometry2::Line(line) => Ok(Segment2::Line(line.clone())),
+                    CurveGeometry2::CircularArc(arc) => Ok(Segment2::Arc(arc.clone())),
+                    _ => Err(IoError::Unsupported {
+                        format: "SVG",
+                        detail: "non-line/arc stroked path".into(),
+                    }),
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            wires.push(CurveString2::try_new(segments).map_err(|error| {
+                IoError::Geometry {
+                    format: "SVG",
+                    detail: error.to_string(),
+                }
+            })?);
+        }
     }
     Ok(Profile::from_curve_region_and_wires(region, wires))
+}
+
+#[derive(Clone, Debug)]
+struct ParsedSvgSubpath {
+    path: CurvePath2,
+    closed: bool,
+}
+
+fn parse_path_data(data: &str) -> Result<Vec<ParsedSvgSubpath>, IoError> {
+    use svgtypes::PathSegment;
+
+    let mut output = Vec::new();
+    let mut curves = Vec::new();
+    let mut current = None::<Point2>;
+    let mut start = None::<Point2>;
+    let mut previous_cubic_control = None::<Point2>;
+    let mut previous_quadratic_control = None::<Point2>;
+
+    for segment in svgtypes::PathParser::from(data) {
+        let segment = segment
+            .map_err(|error| IoError::MalformedInput(format!("invalid SVG path: {error}")))?;
+        match segment {
+            PathSegment::MoveTo { abs, x, y } => {
+                finish_svg_subpath(&mut output, &mut curves, false)?;
+                let point = svg_path_point(abs, x, y, current.as_ref())?;
+                current = Some(point.clone());
+                start = Some(point);
+                previous_cubic_control = None;
+                previous_quadratic_control = None;
+            },
+            PathSegment::LineTo { abs, x, y } => {
+                let end = svg_path_point(abs, x, y, current.as_ref())?;
+                push_svg_line(&mut curves, &mut current, end)?;
+                previous_cubic_control = None;
+                previous_quadratic_control = None;
+            },
+            PathSegment::HorizontalLineTo { abs, x } => {
+                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
+                let x = real(x, "path x")?;
+                let end = Point2::new(if abs { x } else { from.x() + x }, from.y().clone());
+                push_svg_line(&mut curves, &mut current, end)?;
+                previous_cubic_control = None;
+                previous_quadratic_control = None;
+            },
+            PathSegment::VerticalLineTo { abs, y } => {
+                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
+                let y = real(y, "path y")?;
+                let end = Point2::new(from.x().clone(), if abs { y } else { from.y() + y });
+                push_svg_line(&mut curves, &mut current, end)?;
+                previous_cubic_control = None;
+                previous_quadratic_control = None;
+            },
+            PathSegment::CurveTo {
+                abs,
+                x1,
+                y1,
+                x2,
+                y2,
+                x,
+                y,
+            } => {
+                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
+                let control1 = svg_path_point(abs, x1, y1, Some(from))?;
+                let control2 = svg_path_point(abs, x2, y2, Some(from))?;
+                let end = svg_path_point(abs, x, y, Some(from))?;
+                curves.push(Curve2::from(CubicBezier2::new(
+                    from.clone(),
+                    control1,
+                    control2.clone(),
+                    end.clone(),
+                )));
+                current = Some(end);
+                previous_cubic_control = Some(control2);
+                previous_quadratic_control = None;
+            },
+            PathSegment::SmoothCurveTo { abs, x2, y2, x, y } => {
+                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
+                let control1 = previous_cubic_control
+                    .as_ref()
+                    .map(|control| {
+                        Point2::new(
+                            Real::from(2) * from.x() - control.x(),
+                            Real::from(2) * from.y() - control.y(),
+                        )
+                    })
+                    .unwrap_or_else(|| from.clone());
+                let control2 = svg_path_point(abs, x2, y2, Some(from))?;
+                let end = svg_path_point(abs, x, y, Some(from))?;
+                curves.push(Curve2::from(CubicBezier2::new(
+                    from.clone(),
+                    control1,
+                    control2.clone(),
+                    end.clone(),
+                )));
+                current = Some(end);
+                previous_cubic_control = Some(control2);
+                previous_quadratic_control = None;
+            },
+            PathSegment::Quadratic { abs, x1, y1, x, y } => {
+                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
+                let control = svg_path_point(abs, x1, y1, Some(from))?;
+                let end = svg_path_point(abs, x, y, Some(from))?;
+                curves.push(Curve2::from(QuadraticBezier2::new(
+                    from.clone(),
+                    control.clone(),
+                    end.clone(),
+                )));
+                current = Some(end);
+                previous_cubic_control = None;
+                previous_quadratic_control = Some(control);
+            },
+            PathSegment::SmoothQuadratic { abs, x, y } => {
+                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
+                let control = previous_quadratic_control
+                    .as_ref()
+                    .map(|control| {
+                        Point2::new(
+                            Real::from(2) * from.x() - control.x(),
+                            Real::from(2) * from.y() - control.y(),
+                        )
+                    })
+                    .unwrap_or_else(|| from.clone());
+                let end = svg_path_point(abs, x, y, Some(from))?;
+                curves.push(Curve2::from(QuadraticBezier2::new(
+                    from.clone(),
+                    control.clone(),
+                    end.clone(),
+                )));
+                current = Some(end);
+                previous_cubic_control = None;
+                previous_quadratic_control = Some(control);
+            },
+            PathSegment::EllipticalArc {
+                abs,
+                rx,
+                ry,
+                x_axis_rotation,
+                large_arc,
+                sweep,
+                x,
+                y,
+            } => {
+                let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
+                let end = svg_path_point(abs, x, y, Some(from))?;
+                let rx = real(rx, "path arc rx")?;
+                let ry = real(ry, "path arc ry")?;
+                let rotation = real(x_axis_rotation, "path arc rotation")?;
+                if let Some(arc) = svg_circular_arc(
+                    from.clone(),
+                    end.clone(),
+                    rx,
+                    ry,
+                    rotation,
+                    large_arc,
+                    sweep,
+                )? {
+                    curves.push(Curve2::from(arc));
+                }
+                current = Some(end);
+                previous_cubic_control = None;
+                previous_quadratic_control = None;
+            },
+            PathSegment::ClosePath { .. } => {
+                let first = start.as_ref().ok_or_else(svg_path_requires_move)?.clone();
+                push_svg_line(&mut curves, &mut current, first)?;
+                finish_svg_subpath(&mut output, &mut curves, true)?;
+                current = start.clone();
+                previous_cubic_control = None;
+                previous_quadratic_control = None;
+            },
+        }
+    }
+    finish_svg_subpath(&mut output, &mut curves, false)?;
+    if output.is_empty() {
+        return Err(IoError::MalformedInput(
+            "SVG path contains no drawable subpath".into(),
+        ));
+    }
+    Ok(output)
+}
+
+fn svg_path_point(
+    absolute: bool,
+    x: f64,
+    y: f64,
+    current: Option<&Point2>,
+) -> Result<Point2, IoError> {
+    let x = real(x, "path x")?;
+    let y = real(y, "path y")?;
+    if absolute {
+        Ok(Point2::new(x, y))
+    } else if let Some(current) = current {
+        Ok(Point2::new(current.x() + x, current.y() + y))
+    } else {
+        Ok(Point2::new(x, y))
+    }
+}
+
+fn svg_circular_arc(
+    start: Point2,
+    end: Point2,
+    rx: Real,
+    ry: Real,
+    _rotation: Real,
+    large_arc: bool,
+    sweep: bool,
+) -> Result<Option<CircularArc2>, IoError> {
+    if rx != ry {
+        return Err(IoError::Unsupported {
+            format: "SVG",
+            detail: "non-circular elliptical path arc".into(),
+        });
+    }
+    if rx.refine_sign_until(-128) != Some(RealSign::Positive) {
+        return Err(IoError::MalformedInput(
+            "SVG path arc radius must be positive".into(),
+        ));
+    }
+    if start == end {
+        return Ok(None);
+    }
+
+    let chord_squared = start.distance_squared(&end);
+    let radius_squared = &rx * &rx;
+    let four = Real::from(4);
+    let quarter_chord_squared =
+        (&chord_squared / &four).map_err(|error| IoError::Geometry {
+            format: "SVG",
+            detail: error.to_string(),
+        })?;
+    let center_offset_squared = &radius_squared - quarter_chord_squared;
+    let center_offset_scale = match center_offset_squared.refine_sign_until(-128) {
+        Some(RealSign::Negative) => {
+            return Err(IoError::Geometry {
+                format: "SVG",
+                detail: "circular path arc radius is smaller than half its chord".into(),
+            });
+        },
+        Some(RealSign::Zero) => Real::zero(),
+        Some(RealSign::Positive) => {
+            let ratio = (center_offset_squared / &chord_squared).map_err(|error| {
+                IoError::Geometry {
+                    format: "SVG",
+                    detail: error.to_string(),
+                }
+            })?;
+            ratio.sqrt().map_err(|error| IoError::Geometry {
+                format: "SVG",
+                detail: error.to_string(),
+            })?
+        },
+        None => {
+            return Err(IoError::Geometry {
+                format: "SVG",
+                detail: "circular path arc center sign is undecidable".into(),
+            });
+        },
+    };
+    let two = Real::from(2);
+    let midpoint = Point2::new(
+        ((start.x() + end.x()) / &two).map_err(|error| IoError::Geometry {
+            format: "SVG",
+            detail: error.to_string(),
+        })?,
+        ((start.y() + end.y()) / &two).map_err(|error| IoError::Geometry {
+            format: "SVG",
+            detail: error.to_string(),
+        })?,
+    );
+    let dx = end.x() - start.x();
+    let dy = end.y() - start.y();
+    let offset_x = -(&dy * &center_offset_scale);
+    let offset_y = &dx * &center_offset_scale;
+    let centers = [
+        Point2::new(midpoint.x() + &offset_x, midpoint.y() + &offset_y),
+        Point2::new(midpoint.x() - &offset_x, midpoint.y() - &offset_y),
+    ];
+    for center in centers {
+        let start_x = start.x() - center.x();
+        let start_y = start.y() - center.y();
+        let end_x = end.x() - center.x();
+        let end_y = end.y() - center.y();
+        let cross = start_x * end_y - start_y * end_x;
+        let cross_sign = cross.refine_sign_until(-128);
+        let is_major = match cross_sign {
+            Some(RealSign::Zero) => false,
+            Some(RealSign::Positive) => sweep,
+            Some(RealSign::Negative) => !sweep,
+            None => continue,
+        };
+        if is_major == large_arc || cross_sign == Some(RealSign::Zero) {
+            let arc =
+                CircularArc2::try_from_center(start, end, center, sweep).map_err(|error| {
+                    IoError::Geometry {
+                        format: "SVG",
+                        detail: error.to_string(),
+                    }
+                })?;
+            return Ok(Some(arc));
+        }
+    }
+    Err(IoError::Geometry {
+        format: "SVG",
+        detail: "circular path arc flags do not select a certified center".into(),
+    })
+}
+
+fn push_svg_line(
+    curves: &mut Vec<Curve2>,
+    current: &mut Option<Point2>,
+    end: Point2,
+) -> Result<(), IoError> {
+    let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
+    if from != &end {
+        curves.push(Curve2::from(
+            LineSeg2::try_new(from.clone(), end.clone()).map_err(|error| {
+                IoError::Geometry {
+                    format: "SVG",
+                    detail: error.to_string(),
+                }
+            })?,
+        ));
+    }
+    *current = Some(end);
+    Ok(())
+}
+
+fn finish_svg_subpath(
+    output: &mut Vec<ParsedSvgSubpath>,
+    curves: &mut Vec<Curve2>,
+    closed: bool,
+) -> Result<(), IoError> {
+    if curves.is_empty() {
+        return Ok(());
+    }
+    let path =
+        CurvePath2::try_new(std::mem::take(curves)).map_err(|error| IoError::Geometry {
+            format: "SVG",
+            detail: error.to_string(),
+        })?;
+    output.push(ParsedSvgSubpath { path, closed });
+    Ok(())
+}
+
+fn svg_path_requires_move() -> IoError {
+    IoError::MalformedInput("SVG path drawing command precedes move-to".into())
 }
 
 fn styled_shape(shape: Profile, context: StyleContext) -> Profile {
@@ -784,11 +1176,31 @@ mod tests {
         assert!(
             profile
                 .as_curve_region()
-                .line_arc_region_fast_path(&CurvePolicy::certified())
-                .unwrap()
-                .is_uncertain()
+                .boundary_loops()
+                .iter()
+                .flat_map(|boundary| boundary.fragments())
+                .any(|fragment| matches!(
+                    fragment,
+                    hypercurve::BezierSplitFragment2::Materialized {
+                        curve: hypercurve::BezierSubcurve2::Cubic(_),
+                        ..
+                    }
+                ))
         );
         assert_eq!(profile.contains_xy(Real::one(), Real::one()), Some(true));
+    }
+
+    #[test]
+    fn imports_the_exact_circular_subset_and_rejects_true_ellipses() {
+        let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><path d="M 1 0 A 1 1 0 0 1 -1 0 A 1 1 0 0 1 1 0 Z"/></svg>"#;
+        let profile = Profile::from_svg(document).unwrap();
+        assert_eq!(profile.contains_xy(Real::zero(), Real::zero()), Some(true));
+
+        let ellipse = r#"<svg xmlns="http://www.w3.org/2000/svg"><path d="M 2 0 A 2 1 0 0 1 -2 0 Z"/></svg>"#;
+        assert!(matches!(
+            Profile::from_svg(ellipse),
+            Err(IoError::Unsupported { format: "SVG", .. })
+        ));
     }
 
     #[test]
