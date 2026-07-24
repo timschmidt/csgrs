@@ -3480,6 +3480,44 @@ WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 executions at 5,896 coverage points and 19,157 feature
 edges with no finding; LeakSanitizer alone remained disabled under ptrace.
 
+### Direct integer quotient resultants and interpolation
+
+Hypersolve's quotient-ring resultant path now converts exact coefficients to
+`BigInt` before pseudo-reduction and retains that representation through the
+sampled Bareiss determinants. One determinant matrix is overwritten for every
+sample, and one quotient-product buffer is reused across columns with reduced
+coefficients moved into the multiplication matrix. Exact division remainders
+are still checked, and inputs outside the exact integer boundary still select
+the existing Sylvester fallback.
+
+Newton interpolation now updates integer forward differences and its
+falling-factorial basis in place, uses an arbitrary-size factorial scale, and
+removes coefficient content once before constructing output `Real` values.
+Algebraic-image callers therefore avoid an immediate duplicate rational
+normalization pass. The arbitrary-size scale also removes the former `i64`
+factorial ceiling; a degree-22 regression covers that extended exact range.
+Fixed and generated determinant, quotient/Sylvester, polynomial-image,
+rational-image, and binary algebraic-image suites cover the complete dispatch.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 61,647,633 to 57,499,110 (6.73%), 82.07% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 98,024 to 87,084;
+temporary events rose from 6,461 to 7,847 as direct integer products are
+released promptly, peak heap remained 1.41 MiB, and peak RSS measured
+12.51 MiB.
+
+Eleven ordinary runs had a 5.736 ms complete median, a 3.794 ms preparation
+median, and a 0.331 ms exact-polyline projection median. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete Hypersolve and Hypercurve all-feature and no-default-feature
+suites, formatting, warning-denied all-target Clippy and rustdoc, and
+supported default and no-default release WASM library builds passed. The
+AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,899
+coverage points and 19,166 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
