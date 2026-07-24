@@ -101,6 +101,9 @@ matrix/vector kernels, where repeated rational reduction can dominate runtime.
 - shared-denominator dot products and signed product sums accumulate related
   terms before the final reduction; word-sized dyadic accumulators avoid one
   arbitrary-precision allocation per dense vector lane
+- scale-invariant polynomial kernels can clear denominators and integer content
+  directly into mutable `BigInt` coefficients with `primitive_bigint_ratio`,
+  avoiding an intermediate vector of `Rational` wrappers
 - all-zero and single-term exits avoid building denominators that will be
   discarded immediately
 - reducers should use already-known signs, zero checks, and denominator facts

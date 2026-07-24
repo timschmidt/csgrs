@@ -1353,6 +1353,27 @@ mod tests {
     }
 
     #[test]
+    fn primitive_bigint_ratio_matches_rational_components() {
+        let values = [
+            Rational::fraction(2, 3).unwrap(),
+            Rational::fraction(-4, 3).unwrap(),
+            Rational::zero(),
+        ];
+        assert_eq!(
+            Rational::primitive_bigint_ratio(&[&values[0], &values[1], &values[2]]),
+            vec![BigInt::one(), BigInt::from(-2), BigInt::ZERO]
+        );
+        assert_eq!(
+            Rational::primitive_bigint_ratio(&[
+                &Rational::fraction(3, 10).unwrap(),
+                &Rational::fraction(9, 14).unwrap(),
+            ]),
+            vec![BigInt::from(7), BigInt::from(15)]
+        );
+        assert!(Rational::primitive_bigint_ratio(&[]).is_empty());
+    }
+
+    #[test]
     fn checked_exact_integer_quotient_requires_divisible_integers() {
         assert_eq!(
             Rational::new(-84).checked_exact_integer_quotient(&Rational::new(7)),

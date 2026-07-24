@@ -64,6 +64,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "is_exact_dyadic_rational",
     "is_nonempty_exact_rational",
     "is_rational",
+    "primitive_bigint_ratio",
     "primitive_integer_ratio",
     "shared_denominator_kind",
     "sign_pattern",

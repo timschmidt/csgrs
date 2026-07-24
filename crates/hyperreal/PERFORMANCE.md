@@ -1576,6 +1576,42 @@ AddressSanitizer region-Boolean replay completed the requested 2,509-run
 budget after 2,513 executions at 5,900 coverage points and 19,165 feature
 edges; LeakSanitizer alone remained disabled under ptrace.
 
+### Direct primitive big-integer ratios
+
+`primitive_bigint_ratio` applies the same positive common scale and content
+removal as `primitive_integer_ratio`, but writes the result directly as
+`BigInt` coefficients. Scale-invariant polynomial and elimination kernels no
+longer construct a temporary vector of `Rational` wrappers only to unpack
+those integers immediately. Fixed disparate-denominator, sign, zero, and
+empty cases compare the direct output with the retained rational components;
+the API audit classifies both projective normalization schedules as having no
+one-call GMP analogue.
+
+Downstream Hypercurve now uses this representation for a primitive
+pseudo-remainder sequence in rational GCD and Sturm work. Its rational Horner
+evaluation uses the retained fixed two-product accumulator. Ordinary
+value-preserving polynomial reduction and every symbolic-coefficient case
+retain field division. A direct regression compares positive-scaled
+pseudo-remainders with ordinary field remainders, including negative leading
+coefficients and exact division.
+
+On Hypercurve's one-cell all-family exact Boolean sentinel, the ten-run
+instruction median fell from 64,678,125 to 61,647,633 (4.7%), 80.8% below the
+original 320,660,631 baseline. Heaptrack allocation events rose from 96,817
+to 98,024 and temporary events from 6,165 to 6,461, while peak heap fell from
+1.49 to 1.41 MiB; peak RSS measured 12.45 MiB. Eleven ordinary runs had a
+6.229 ms complete median, a 4.193 ms preparation median, and a 0.332 ms
+exact-polyline projection median. Every run retained 9 candidate pairs,
+48 fragments, 2 classifications, 4 decided operations, no blockers, and
+checksum 6.
+
+The complete Hyperreal, Hypersolve, and Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy,
+all-feature and no-default-feature rustdoc, and default and no-default release
+WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 executions at 5,896 coverage points and 19,157 feature
+edges with no finding; LeakSanitizer alone remained disabled under ptrace.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

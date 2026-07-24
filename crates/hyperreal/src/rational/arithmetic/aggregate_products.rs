@@ -1844,6 +1844,55 @@ impl Rational {
         integers
     }
 
+    /// Normalize an exact-rational ratio directly to primitive big integers.
+    ///
+    /// This has the same positive projective scale as
+    /// [`Self::primitive_integer_ratio`], but avoids constructing temporary
+    /// [`Rational`] wrappers when an integer polynomial or elimination kernel
+    /// immediately needs mutable [`BigInt`] coefficients.
+    pub fn primitive_bigint_ratio(values: &[&Self]) -> Vec<BigInt> {
+        if values.is_empty() {
+            return Vec::new();
+        }
+        let common_denominator = Self::common_denominator(values);
+        crate::trace_dispatch!("rational", "common-scale", "primitive-bigint-ratio");
+        let mut integers = values
+            .iter()
+            .map(|value| {
+                if value.sign == NoSign {
+                    return BigInt::ZERO;
+                }
+                let scale = &common_denominator / &value.denominator;
+                BigInt::from_biguint(value.sign, &value.numerator * scale)
+            })
+            .collect::<Vec<_>>();
+
+        let mut content = BigUint::ZERO;
+        for value in &integers {
+            if value.is_zero() {
+                continue;
+            }
+            content = if content.is_zero() {
+                value.magnitude().clone()
+            } else {
+                Self::gcd_magnitudes_with_mixed_width_fast_path(&content, value.magnitude())
+            };
+            if content.is_one() {
+                return integers;
+            }
+        }
+        if content.is_zero() || content.is_one() {
+            return integers;
+        }
+        let content = BigInt::from_biguint(Plus, content);
+        for value in &mut integers {
+            if !value.is_zero() {
+                *value /= &content;
+            }
+        }
+        integers
+    }
+
     /// Multiply a fixed set of rationals by one positive common denominator.
     ///
     /// Vector normalization is invariant under this shared scale. Clearing it
