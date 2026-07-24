@@ -14,7 +14,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::distance::polygon_boundary_distance_scalar;
-use super::impedance::{ImpedanceModel, estimate_single_ended_impedance};
+use super::impedance::{
+    DifferentialImpedanceModel, ImpedanceModel, estimate_equal_width_differential_impedance,
+    estimate_single_ended_impedance,
+};
 use super::net_class::resolve_net_classes;
 use super::net_scope::{matching_class_indexes_for_feature, net_class_region_diagnostics};
 use crate::PcbSketchExt;
@@ -715,6 +718,9 @@ fn has_custom_capability(capability: &FabricationCapabilityConfig) -> bool {
         || capability.min_tg_c.is_some()
 }
 
+/// Stable check identity for target-impedance metadata, applicability, and mismatch findings.
+pub const NET_IMPEDANCE_TARGET_READINESS_CHECK: &str = "net-impedance-target-readiness";
+
 /// Run the `net_constraint_readiness` design-readiness check or report helper.
 pub fn net_constraint_readiness(
     net_classes: &[NetClassConfig],
@@ -1220,7 +1226,7 @@ fn net_impedance_target_constraints(
             Some(target) if target > &Scalar::zero() => Some(target.clone()),
             Some(target) => {
                 violations.push(Violation::new(
-                    "net-constraint-readiness",
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
                     Severity::Warning,
                     usage.layers.iter().cloned().collect(),
                     None,
@@ -1235,7 +1241,7 @@ fn net_impedance_target_constraints(
             }
             None => {
                 violations.push(Violation::new(
-                    "net-constraint-readiness",
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
                     Severity::Warning,
                     usage.layers.iter().cloned().collect(),
                     None,
@@ -1254,7 +1260,7 @@ fn net_impedance_target_constraints(
             Some(tolerance) if tolerance > &Scalar::zero() => Some(tolerance.clone()),
             Some(tolerance) => {
                 violations.push(Violation::new(
-                    "net-constraint-readiness",
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
                     Severity::Warning,
                     usage.layers.iter().cloned().collect(),
                     None,
@@ -1269,7 +1275,7 @@ fn net_impedance_target_constraints(
             }
             None => {
                 violations.push(Violation::new(
-                    "net-constraint-readiness",
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
                     Severity::Warning,
                     usage.layers.iter().cloned().collect(),
                     None,
@@ -1291,10 +1297,6 @@ fn net_impedance_target_constraints(
         };
         if class.differential_pair.is_some() {
             differential_target_classes += 1;
-            // Differential impedance targets need coupled-line geometry and
-            // spacing. The first-pass Hammerstad-Jensen estimate in this
-            // module is single-ended only, so keep differential classes at
-            // metadata-readiness until a coupled solver lands.
             continue;
         }
 
@@ -1313,16 +1315,28 @@ fn net_impedance_target_constraints(
             single_ended_candidates += 1;
             let trace_width = minimum_bounding_dimension(&feature.sketch);
             let Some(estimate) =
-                estimate_single_ended_impedance(stackup, &feature.layer, trace_width)
+                estimate_single_ended_impedance(stackup, &feature.layer, trace_width.clone())
             else {
                 unsupported_segments += 1;
+                violations.push(Violation::new(
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                    Severity::Warning,
+                    vec![feature.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![feature.location_f64_compatibility_required()],
+                    Some(format!(
+                        "net {net} in class {} has parsed width {trace_width:#.6}, but its layer/stackup geometry is outside the supported outer-microstrip and centered-stripline analytical models",
+                        class_name(class)
+                    )),
+                ));
                 continue;
             };
             estimated_segments += 1;
             let delta = (&estimate.impedance_ohms - &target_impedance_ohms).abs();
             if delta > impedance_tolerance_ohms {
                 violations.push(Violation::new(
-                    "net-constraint-readiness",
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
                     Severity::Warning,
                     vec![feature.layer.clone()],
                     None,
@@ -1343,6 +1357,10 @@ fn net_impedance_target_constraints(
             }
         }
     }
+    let differential = differential_impedance_target_violations(net_classes, stackup, features);
+    estimated_segments += differential.estimated_segments;
+    unsupported_segments += differential.unsupported_segments;
+    violations.extend(differential.violations);
 
     log::trace!(
         "net-constraint impedance target readiness: features={} single_ended_candidates={} estimated_segments={} unsupported_segments={} differential_target_classes={} violations={}",
@@ -1356,10 +1374,294 @@ fn net_impedance_target_constraints(
     violations
 }
 
+#[derive(Default)]
+struct DifferentialImpedanceTargetReport {
+    violations: Vec<Violation>,
+    estimated_segments: usize,
+    unsupported_segments: usize,
+}
+
+#[derive(Default)]
+struct DifferentialImpedancePairUse<'a> {
+    positive: DifferentialImpedanceSideUse<'a>,
+    negative: DifferentialImpedanceSideUse<'a>,
+}
+
+impl<'a> DifferentialImpedancePairUse<'a> {
+    fn side_mut(&mut self, role: DifferentialRole) -> &mut DifferentialImpedanceSideUse<'a> {
+        match role {
+            DifferentialRole::Positive => &mut self.positive,
+            DifferentialRole::Negative => &mut self.negative,
+        }
+    }
+
+    fn features(&self) -> impl Iterator<Item = &&'a CopperFeature> {
+        self.positive
+            .features
+            .iter()
+            .chain(self.negative.features.iter())
+    }
+
+    fn layers(&self) -> Vec<String> {
+        self.features()
+            .map(|feature| feature.layer.clone())
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect()
+    }
+
+    fn locations(&self) -> Vec<[f64; 2]> {
+        self.features()
+            .map(|feature| feature.location_f64_compatibility_required())
+            .collect()
+    }
+}
+
+#[derive(Default)]
+struct DifferentialImpedanceSideUse<'a> {
+    features: Vec<&'a CopperFeature>,
+    class_indexes: BTreeSet<usize>,
+}
+
+fn differential_impedance_target_violations(
+    net_classes: &[NetClassConfig],
+    stackup: Option<&StackupConfig>,
+    features: &[&CopperFeature],
+) -> DifferentialImpedanceTargetReport {
+    let mut pairs = BTreeMap::<String, DifferentialImpedancePairUse<'_>>::new();
+    for feature in features {
+        if feature.kind != CopperKind::Segment {
+            continue;
+        }
+        if feature.net.is_none() {
+            continue;
+        }
+        for class_index in matching_class_indexes_for_feature(net_classes, feature) {
+            let class = &net_classes[class_index];
+            let (Some(pair), Some(role)) = (&class.differential_pair, class.differential_role)
+            else {
+                continue;
+            };
+            if class.requires_impedance_control != Some(true) {
+                continue;
+            }
+            let side = pairs.entry(pair.clone()).or_default().side_mut(role);
+            side.features.push(*feature);
+            side.class_indexes.insert(class_index);
+        }
+    }
+
+    let mut report = DifferentialImpedanceTargetReport::default();
+    for (pair, pair_use) in pairs {
+        if pair_use.positive.features.is_empty() || pair_use.negative.features.is_empty() {
+            report.unsupported_segments += 1;
+            report.violations.push(Violation::new(
+                NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                Severity::Warning,
+                pair_use.layers(),
+                None,
+                Vec::new(),
+                pair_use.locations(),
+                Some(format!(
+                    "differential pair {pair} has target impedance intent but both routed member sides are required for coupled-line estimation"
+                )),
+            ));
+            continue;
+        }
+
+        let Some((target_impedance_ohms, impedance_tolerance_ohms)) =
+            consistent_differential_impedance_spec(net_classes, &pair_use)
+        else {
+            report.unsupported_segments += 1;
+            report.violations.push(Violation::new(
+                NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                Severity::Warning,
+                pair_use.layers(),
+                None,
+                Vec::new(),
+                pair_use.locations(),
+                Some(format!(
+                    "differential pair {pair} does not have one consistent positive target_impedance_ohms and impedance_tolerance_ohms across both member classes"
+                )),
+            ));
+            continue;
+        };
+
+        let Some(stackup) = stackup.filter(|stackup| stackup.impedance_controlled == Some(true))
+        else {
+            report.unsupported_segments += 1;
+            report.violations.push(Violation::new(
+                NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                Severity::Warning,
+                pair_use.layers(),
+                None,
+                Vec::new(),
+                pair_use.locations(),
+                Some(format!(
+                    "differential pair {pair} has target impedance intent but no impedance-controlled stackup was supplied"
+                )),
+            ));
+            continue;
+        };
+
+        for positive in &pair_use.positive.features {
+            let positive_width = minimum_bounding_dimension(&positive.sketch);
+            let closest = pair_use
+                .negative
+                .features
+                .iter()
+                .copied()
+                .filter(|negative| negative.layer == positive.layer)
+                .filter_map(|negative| {
+                    polygon_boundary_distance_scalar(
+                        &positive.sketch.to_multipolygon(),
+                        &negative.sketch.to_multipolygon(),
+                    )
+                    .map(|gap| (negative, gap))
+                })
+                .min_by(|(_, left), (_, right)| {
+                    left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal)
+                });
+            let Some((negative, gap)) = closest else {
+                report.unsupported_segments += 1;
+                report.violations.push(Violation::new(
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                    Severity::Warning,
+                    vec![positive.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![positive.location_f64_compatibility_required()],
+                    Some(format!(
+                        "differential pair {pair} has no opposite-side segment on layer {} for coupled-line estimation",
+                        positive.layer
+                    )),
+                ));
+                continue;
+            };
+            let negative_width = minimum_bounding_dimension(&negative.sketch);
+            let width_delta = (&positive_width - &negative_width).abs();
+            let maximum_width = if positive_width >= negative_width {
+                positive_width.clone()
+            } else {
+                negative_width.clone()
+            };
+            let parsed_width_tolerance = maximum_width * scalar("0.000001") + scalar("0.000000001");
+            if width_delta > parsed_width_tolerance {
+                report.unsupported_segments += 1;
+                report.violations.push(Violation::new(
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                    Severity::Warning,
+                    vec![positive.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![
+                        positive.location_f64_compatibility_required(),
+                        negative.location_f64_compatibility_required(),
+                    ],
+                    Some(format!(
+                        "differential pair {pair} has unequal parsed member widths {positive_width:#.6} and {negative_width:#.6}; the supported coupled-line screen requires equal widths"
+                    )),
+                ));
+                continue;
+            }
+            let trace_width = ((&positive_width + &negative_width) / scalar("2"))
+                .expect("two is a nonzero exact denominator");
+            let Some(estimate) = estimate_equal_width_differential_impedance(
+                stackup,
+                &positive.layer,
+                trace_width,
+                gap.clone(),
+            ) else {
+                report.unsupported_segments += 1;
+                report.violations.push(Violation::new(
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                    Severity::Warning,
+                    vec![positive.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![
+                        positive.location_f64_compatibility_required(),
+                        negative.location_f64_compatibility_required(),
+                    ],
+                    Some(format!(
+                        "differential pair {pair} has parsed width {positive_width:#.6} and edge gap {gap:#.6}, but its equal-width layer/stackup geometry is outside the supported edge-coupled outer-microstrip and centered-stripline analytical models"
+                    )),
+                ));
+                continue;
+            };
+            report.estimated_segments += 1;
+            let delta = (&estimate.impedance_ohms - &target_impedance_ohms).abs();
+            if delta > impedance_tolerance_ohms {
+                report.violations.push(Violation::new(
+                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                    Severity::Warning,
+                    vec![positive.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![
+                        positive.location_f64_compatibility_required(),
+                        negative.location_f64_compatibility_required(),
+                    ],
+                    Some(format!(
+                        "differential pair {pair} has estimated {} impedance {:#.3} ohm from equal parsed width {:#.6}, edge gap {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm",
+                        differential_impedance_model_label(estimate.model),
+                        estimate.impedance_ohms,
+                        estimate.trace_width,
+                        estimate.pair_gap,
+                        estimate.dielectric_height,
+                        estimate.dielectric_constant,
+                        target_impedance_ohms,
+                        impedance_tolerance_ohms
+                    )),
+                ));
+            }
+        }
+    }
+    report
+}
+
+fn consistent_differential_impedance_spec(
+    net_classes: &[NetClassConfig],
+    pair_use: &DifferentialImpedancePairUse<'_>,
+) -> Option<(Scalar, Scalar)> {
+    let indexes = pair_use
+        .positive
+        .class_indexes
+        .iter()
+        .chain(pair_use.negative.class_indexes.iter());
+    let mut specifications = indexes.map(|index| &net_classes[*index]).map(|class| {
+        (
+            class.target_impedance_ohms.as_ref(),
+            class.impedance_tolerance_ohms.as_ref(),
+        )
+    });
+    let (Some(target), Some(tolerance)) = specifications.next()? else {
+        return None;
+    };
+    if target <= &Scalar::zero() || tolerance <= &Scalar::zero() {
+        return None;
+    }
+    if specifications.any(|(candidate_target, candidate_tolerance)| {
+        candidate_target != Some(target) || candidate_tolerance != Some(tolerance)
+    }) {
+        return None;
+    }
+    Some((target.clone(), tolerance.clone()))
+}
+
 fn impedance_model_label(model: ImpedanceModel) -> &'static str {
     match model {
         ImpedanceModel::OuterMicrostrip => "outer microstrip",
         ImpedanceModel::CenteredStripline => "centered stripline",
+    }
+}
+
+fn differential_impedance_model_label(model: DifferentialImpedanceModel) -> &'static str {
+    match model {
+        DifferentialImpedanceModel::EdgeCoupledOuterMicrostrip => "edge-coupled outer microstrip",
+        DifferentialImpedanceModel::EdgeCoupledCenteredStripline => {
+            "edge-coupled centered stripline"
+        }
     }
 }
 
@@ -2005,7 +2307,7 @@ fn estimated_feature_length(feature: &CopperFeature) -> Scalar {
             }
         }
         CopperKind::Via => Scalar::zero(),
-        CopperKind::Pad | CopperKind::Zone => Scalar::zero(),
+        CopperKind::Pad | CopperKind::Zone | CopperKind::Artwork => Scalar::zero(),
     }
 }
 
@@ -2143,7 +2445,9 @@ mod tests {
     use crate::geometry::{circle_polygon, line_polygon, polygons_to_profile, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 
-    use super::{net_constraint_readiness, stackup_readiness};
+    use super::{
+        NET_IMPEDANCE_TARGET_READINESS_CHECK, net_constraint_readiness, stackup_readiness,
+    };
 
     #[test]
     fn stackup_readiness_reports_layer_count_and_missing_metadata() {
@@ -2870,7 +3174,7 @@ mod tests {
             min_voltage_clearance: Some(crate::scalar::scalar("0.2")),
             requires_reference_plane: Some(true),
             requires_impedance_control: Some(true),
-            target_impedance_ohms: Some(crate::scalar::scalar("90.0")),
+            target_impedance_ohms: Some(crate::scalar::scalar("50.0")),
             impedance_tolerance_ohms: Some(crate::scalar::scalar("10.0")),
             ..NetClassConfig::default()
         }];
@@ -2897,13 +3201,19 @@ mod tests {
                     name: "Core".to_string(),
                     kind: StackupLayerKind::Core,
                     copper_weight_oz: None,
-                    dielectric_thickness: Some(crate::scalar::scalar("1.5")),
+                    dielectric_thickness: Some(crate::scalar::scalar("0.18")),
+                },
+                StackupLayerConfig {
+                    name: "B.Cu".to_string(),
+                    kind: StackupLayerKind::Copper,
+                    copper_weight_oz: Some(crate::scalar::scalar("1.0")),
+                    dielectric_thickness: None,
                 },
             ],
             ..StackupConfig::default()
         };
         let board = board_with_features(vec![
-            feature("F.Cu", "USB_D+", CopperKind::Segment, [0.0, 0.0], 1.0, 0.3),
+            feature("F.Cu", "USB_D+", CopperKind::Segment, [0.0, 0.0], 0.32, 1.0),
             feature("F.Cu", "SIG", CopperKind::Segment, [1.0, 0.0], 0.1, 0.1),
             feature("F.Cu", "GND", CopperKind::Zone, [0.0, -1.0], 4.0, 0.2),
         ]);
@@ -2931,14 +3241,46 @@ mod tests {
             1.0,
         )]);
 
-        let messages = net_constraint_readiness(&classes, Some(&stackup), &[board], &[])
-            .into_iter()
-            .filter_map(|violation| violation.message)
-            .collect::<Vec<_>>();
+        let violations = net_constraint_readiness(&classes, Some(&stackup), &[board], &[]);
 
-        assert!(messages.iter().any(|message| {
-            message.contains("estimated outer microstrip impedance")
-                && message.contains("outside target")
+        assert!(violations.iter().any(|violation| {
+            violation.check == NET_IMPEDANCE_TARGET_READINESS_CHECK
+                && violation.message.as_deref().is_some_and(|message| {
+                    message.contains("estimated outer microstrip impedance")
+                        && message.contains("outside target")
+                })
+        }));
+    }
+
+    #[test]
+    fn net_constraint_readiness_reports_unsupported_impedance_geometry() {
+        let classes = vec![NetClassConfig {
+            name: "rf".to_string(),
+            nets: vec!["RF".to_string()],
+            requires_impedance_control: Some(true),
+            target_impedance_ohms: Some(crate::scalar::scalar("50.0")),
+            impedance_tolerance_ohms: Some(crate::scalar::scalar("5.0")),
+            ..NetClassConfig::default()
+        }];
+        let mut stackup = controlled_microstrip_stackup();
+        stackup.layers.retain(|layer| layer.name.as_str() != "B.Cu");
+        let board = board_with_features(vec![feature(
+            "F.Cu",
+            "RF",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            0.32,
+            1.0,
+        )]);
+
+        let violations = net_constraint_readiness(&classes, Some(&stackup), &[board], &[]);
+
+        assert!(violations.iter().any(|violation| {
+            violation.check == NET_IMPEDANCE_TARGET_READINESS_CHECK
+                && violation
+                    .message
+                    .as_deref()
+                    .is_some_and(|message| message.contains("outside the supported"))
         }));
     }
 
@@ -3020,7 +3362,7 @@ mod tests {
     }
 
     #[test]
-    fn net_constraint_readiness_skips_differential_targets_for_single_ended_estimate() {
+    fn net_constraint_readiness_estimates_supported_differential_target() {
         let classes = vec![
             NetClassConfig {
                 name: "usb positive".to_string(),
@@ -3049,7 +3391,45 @@ mod tests {
             feature("F.Cu", "USB_D-", CopperKind::Segment, [0.5, 0.0], 0.32, 1.0),
         ]);
 
-        assert!(net_constraint_readiness(&classes, Some(&stackup), &[board], &[]).is_empty());
+        let violations = net_constraint_readiness(&classes, Some(&stackup), &[board], &[]);
+        assert!(
+            violations
+                .iter()
+                .all(|violation| violation.check != NET_IMPEDANCE_TARGET_READINESS_CHECK),
+            "{violations:?}"
+        );
+
+        let mut mismatched_classes = classes.clone();
+        for class in &mut mismatched_classes {
+            class.target_impedance_ohms = Some(crate::scalar::scalar("110.0"));
+            class.impedance_tolerance_ohms = Some(crate::scalar::scalar("2.0"));
+        }
+        let board = board_with_features(vec![
+            feature("F.Cu", "USB_D+", CopperKind::Segment, [0.0, 0.0], 0.32, 1.0),
+            feature("F.Cu", "USB_D-", CopperKind::Segment, [0.5, 0.0], 0.32, 1.0),
+        ]);
+        let violations =
+            net_constraint_readiness(&mismatched_classes, Some(&stackup), &[board], &[]);
+        assert!(violations.iter().any(|violation| {
+            violation.check == NET_IMPEDANCE_TARGET_READINESS_CHECK
+                && violation.message.as_deref().is_some_and(|message| {
+                    message.contains("estimated edge-coupled outer microstrip impedance")
+                        && message.contains("outside target 110")
+                })
+        }));
+
+        let board = board_with_features(vec![
+            feature("F.Cu", "USB_D+", CopperKind::Segment, [0.0, 0.0], 0.32, 1.0),
+            feature("F.Cu", "USB_D-", CopperKind::Segment, [0.5, 0.0], 0.20, 1.0),
+        ]);
+        let violations = net_constraint_readiness(&classes, Some(&stackup), &[board], &[]);
+        assert!(violations.iter().any(|violation| {
+            violation.check == NET_IMPEDANCE_TARGET_READINESS_CHECK
+                && violation
+                    .message
+                    .as_deref()
+                    .is_some_and(|message| message.contains("requires equal widths"))
+        }));
     }
 
     #[test]

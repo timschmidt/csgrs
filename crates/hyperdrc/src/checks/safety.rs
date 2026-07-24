@@ -14,6 +14,7 @@ use geo::BoundingRect;
 use crate::PcbSketchExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
+use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature};
@@ -39,7 +40,15 @@ pub fn high_voltage_edge_readiness(
     };
     let outline_rect = axis_aligned_outline_rect(outline);
     let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
-    let allowed = outline.offset(-edge_clearance.clone());
+    let allowed = match offset_for_check(
+        outline,
+        -edge_clearance.clone(),
+        "high-voltage-edge-readiness",
+        vec!["KiCad Edge.Cuts".into()],
+    ) {
+        Ok(allowed) => allowed,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
     let mut exact_difference_count = 0_usize;
@@ -152,10 +161,16 @@ pub fn voltage_clearance_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = left
-                .sketch
-                .offset(clearance.clone())
-                .intersection(&right.sketch);
+            let expanded = match offset_for_check(
+                &left.sketch,
+                clearance.clone(),
+                "voltage-clearance-readiness",
+                vec![left.layer.clone()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let overlap = expanded.intersection(&right.sketch);
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -257,7 +272,16 @@ pub fn protective_earth_spacing_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = hv.sketch.offset(clearance.clone()).intersection(&pe.sketch);
+            let expanded = match offset_for_check(
+                &hv.sketch,
+                clearance.clone(),
+                "protective-earth-spacing-readiness",
+                vec![hv.layer.clone()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let overlap = expanded.intersection(&pe.sketch);
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -360,10 +384,16 @@ pub fn surge_protection_keepout_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = source
-                .sketch
-                .offset(keepout.clone())
-                .intersection(&neighbor.sketch);
+            let expanded = match offset_for_check(
+                &source.sketch,
+                keepout.clone(),
+                "surge-protection-keepout-readiness",
+                vec![source.layer.clone()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let overlap = expanded.intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(

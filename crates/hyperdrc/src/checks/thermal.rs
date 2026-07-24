@@ -12,6 +12,7 @@ use csgrs::{csg::CSG, sketch::Profile};
 use geo::BoundingRect;
 
 use crate::checks::distance::{polygon_boundaries_within_scalar, polygon_boundary_distance_scalar};
+use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::spread::maximum_point_spread;
 use crate::geometry::multipolygon_to_shapes_scalar;
@@ -488,10 +489,16 @@ pub fn hot_component_spacing_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = hot
-                .sketch
-                .offset(spacing.clone())
-                .intersection(&neighbor.sketch);
+            let expanded = match offset_for_check(
+                &hot.sketch,
+                spacing.clone(),
+                "hot-component-spacing-readiness",
+                vec![hot.layer.clone()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let overlap = expanded.intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(

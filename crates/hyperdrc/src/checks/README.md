@@ -44,9 +44,9 @@ signoff. They should be deterministic, explainable, and conservative:
 - [`constraints.rs`](constraints.rs) contains config-driven stackup and
   net-class checks that compare parsed KiCad copper against explicit project
   constraints.
-- [`impedance.rs`](impedance.rs) contains first-pass single-ended outer-layer
-  microstrip and centered stripline estimates used by config-driven
-  impedance-readiness checks.
+- [`impedance.rs`](impedance.rs) contains first-pass single-ended and equal-width
+  edge-coupled outer-layer microstrip and centered stripline estimates used by
+  config-driven impedance-readiness checks.
 - [`net_class.rs`](net_class.rs) resolves inherited `net_classes` policy
   defaults before config-driven checks consume the flat rule set.
 - [`net_scope.rs`](net_scope.rs) evaluates exact-name, wildcard, and optional
@@ -606,8 +606,11 @@ single-ended outer-layer microstrip impedance when the stackup has a positive
 laminate Dk plus an adjacent copper reference separated by configured
 dielectric/core/prepreg thickness. It also estimates centered single-ended
 stripline when the trace layer has adjacent copper references above and below
-with symmetric dielectric spacing. Unsupported asymmetric stripline, coupled,
-coplanar, or underdefined stackups are skipped rather than guessed.
+with symmetric dielectric spacing. Declared differential classes use exact
+parsed edge gap plus equal member width with the Lattice HB1011/TI SLLA311
+edge-coupling screens for those same two stackup forms. Unequal-width,
+asymmetric, coplanar, mask/thickness/roughness/frequency-dependent, or
+underdefined geometries are reported as unsupported rather than guessed.
 Differential-pair checks use nearest same-layer side-to-side copper
 spacing; length and skew checks use the longest exterior edge from parsed
 KiCad segment copper, so full routed path reconstruction remains a deeper

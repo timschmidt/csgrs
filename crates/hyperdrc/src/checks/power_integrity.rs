@@ -250,7 +250,7 @@ fn local_pad_support(
                     support.maximum_segment_width = width;
                 }
             }
-            CopperKind::Pad => {}
+            CopperKind::Pad | CopperKind::Artwork => {}
         }
     }
 

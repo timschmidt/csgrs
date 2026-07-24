@@ -70,6 +70,8 @@ pub enum CopperKind {
     Segment,
     /// Variant `Zone`.
     Zone,
+    /// Source-addressable copper artwork that is neither a pad, route, via, nor zone.
+    Artwork,
 }
 
 #[derive(Clone, Debug)]

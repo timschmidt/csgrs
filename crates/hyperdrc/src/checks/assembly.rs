@@ -17,6 +17,7 @@ use crate::checks::distance::{
     exact_point_polygon_boundary_within_scalar, polygon_boundaries_within_scalar,
     polygon_boundary_distance_scalar,
 };
+use crate::checks::offset_for_check;
 use crate::checks::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
 use crate::checks::spatial::{CopperSpatialIndex, PointSpatialIndex};
 use crate::geometry::{multipolygon_area_scalar, multipolygon_to_shapes_scalar};
@@ -1437,7 +1438,15 @@ pub fn fiducial_keepout_readiness(
     );
 
     for fiducial in fiducials {
-        let keepout = fiducial.sketch.offset(clearance.clone());
+        let keepout = match offset_for_check(
+            &fiducial.sketch,
+            clearance.clone(),
+            "fiducial-keepout-readiness",
+            vec![fiducial.layer.clone()],
+        ) {
+            Ok(keepout) => keepout,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         for blocker_index in blocker_index.near_circle(
             fiducial.location_f64_compatibility_required(),
             feature_query_radius(fiducial, broad_phase_clearance),
@@ -1657,7 +1666,15 @@ pub fn conformal_coating_keepout_readiness(
     let mut exact_pair_count = 0usize;
 
     for &no_coat in &no_coat_features {
-        let keepout_sketch = no_coat.sketch.offset(keepout.clone());
+        let keepout_sketch = match offset_for_check(
+            &no_coat.sketch,
+            keepout.clone(),
+            "conformal-coating-keepout-readiness",
+            vec![no_coat.layer.clone()],
+        ) {
+            Ok(keepout) => keepout,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         let query_radius = feature_query_radius(no_coat, broad_phase_keepout);
         for neighbor_index in
             pad_index.near_circle(no_coat.location_f64_compatibility_required(), query_radius)

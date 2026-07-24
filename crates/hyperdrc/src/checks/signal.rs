@@ -14,6 +14,7 @@ use geo::BoundingRect;
 use crate::PcbSketchExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
+use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature};
@@ -81,10 +82,16 @@ pub fn sensitive_net_spacing_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = sensitive
-                .sketch
-                .offset(clearance.clone())
-                .intersection(&noisy.sketch);
+            let expanded = match offset_for_check(
+                &sensitive.sketch,
+                clearance.clone(),
+                "sensitive-net-spacing-readiness",
+                vec![sensitive.layer.clone()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let overlap = expanded.intersection(&noisy.sketch);
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -301,10 +308,16 @@ pub fn mixed_signal_partition_readiness(
                 continue;
             }
 
-            let overlap = sensitive
-                .sketch
-                .offset(separation.clone())
-                .intersection(&digital.sketch);
+            let expanded = match offset_for_check(
+                &sensitive.sketch,
+                separation.clone(),
+                "mixed-signal-partition-readiness",
+                vec![sensitive.layer.clone()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let overlap = expanded.intersection(&digital.sketch);
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(

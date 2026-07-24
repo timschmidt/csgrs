@@ -57,6 +57,12 @@ reports should keep that boundary visible. Decimal/source-grid facts should be r
 at import, finite geometry should be lifted into Hyper crates where practical, and
 lossy `geo`/`csgrs` adapters should remain explicit.
 
+`PcbSketch::offset` returns `PcbGeometryUncertainty` when the geometry engine cannot
+certify exact profile topology. Readiness checks convert that result into an
+error-severity `geometry-uncertainty` finding carrying the requested check and source
+layers. They do not unwind, silently skip the rule, or substitute an approximate
+offset; callers can inspect the completed report while release remains blocked.
+
 Numerical explosion is controlled by carrying source-grid facts, parser diagnostics,
 file-role evidence, hashes, waiver state, baselines, and sidecar provenance instead of
 eagerly expanding every CAM primitive into exact booleans. Exact comparisons are
@@ -107,8 +113,11 @@ without rebuilding every derived artifact.
   boards/rules, IPC-D-356, GenCAD, and IPC-2581.
 
 Known limits: findings are conservative preflight evidence, not a replacement for a
-fabricator DFM/DRC pass. Routed-slot geometry, full ODB++/IPC-2581 import,
-glyph-accurate text, custom pad booleans, rich impedance solving, and several
+fabricator DFM/DRC pass. Native authoring handoffs retain exact routed-slot
+centerlines/widths plus side-aware component courtyard/body envelopes for
+coverage, collision, and component-keepout readiness; full ODB++/IPC-2581 import,
+glyph-accurate text, custom pad booleans, general field solving beyond the
+audited single-ended/equal-width edge-coupled impedance screens, and several
 format-specific dialects remain incomplete.
 
 ## Installation

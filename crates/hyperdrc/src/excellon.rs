@@ -26,6 +26,15 @@ pub enum ExcellonUnits {
     Inch,
 }
 
+/// Fixed coordinate field width declared by a `FILE_FORMAT=i:d` comment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ExcellonCoordinateFormat {
+    /// Digits before the implied decimal point.
+    pub integer_digits: u8,
+    /// Digits after the implied decimal point.
+    pub decimal_digits: u8,
+}
+
 /// Plating intent inferred from common Excellon drill-file names.
 ///
 /// CAM exporters commonly split plated through-hole and non-plated through-hole
@@ -74,6 +83,9 @@ pub struct ExcellonUnitSummary {
     pub zero_suppression_declarations: usize,
     /// Whether a missing-unit diagnostic was emitted for parsed drill data.
     pub missing_unit_diagnostic: bool,
+    /// Explicit fixed-coordinate format recovered from a `FILE_FORMAT=i:d`
+    /// header comment.
+    pub coordinate_format: Option<ExcellonCoordinateFormat>,
 }
 
 /// Summary of Excellon tool-table evidence.
@@ -107,6 +119,10 @@ pub struct ExcellonRoutingSummary {
     pub linear_moves: usize,
     /// Routed slot commands such as `G85`.
     pub slot_commands: usize,
+    /// Router tool-down commands (`M15`).
+    pub tool_down_commands: usize,
+    /// Router tool-up commands (`M16`).
+    pub tool_up_commands: usize,
 }
 
 /// Summary of Excellon drill-hit parsing outcomes.
@@ -388,6 +404,10 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
     for (index, raw_line) in input.lines().enumerate() {
         let line_number = index + 1;
         let stripped = raw_line.trim();
+        if let Some(format) = parse_coordinate_format_comment(stripped) {
+            unit_summary.coordinate_format.get_or_insert(format);
+            continue;
+        }
         if stripped.is_empty() || stripped.starts_with(';') {
             continue;
         }
@@ -417,7 +437,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
             continue;
         }
 
-        if matches!(normalized, "M47" | "M95") {
+        if matches!(normalized, "M47" | "M95" | "G90" | "G91" | "G05" | "G5") {
             continue;
         }
 
@@ -547,7 +567,12 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
 
         if let Some((line_tool, has_coordinate)) = parse_tool_with_optional_hit(normalized) {
             if has_coordinate {
-                match parse_coordinate_source(normalized) {
+                match parse_coordinate_source(
+                    normalized,
+                    unit_summary
+                        .coordinate_format
+                        .map(|format| format.decimal_digits),
+                ) {
                     Some(coordinate) => {
                         let Some(diameter) = tool_diameter.get(&line_tool) else {
                             hits.hits_with_unknown_tool += 1;
@@ -625,7 +650,12 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
             continue;
         }
 
-        if let Some(coordinate) = parse_coordinate_source(normalized) {
+        if let Some(coordinate) = parse_coordinate_source(
+            normalized,
+            unit_summary
+                .coordinate_format
+                .map(|format| format.decimal_digits),
+        ) {
             let Some(tool) = current_tool.clone() else {
                 hits.hits_without_active_tool += 1;
                 issues.push(ExcellonIssue {
@@ -702,7 +732,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
     drill_summary.unique_diameters = unique_diameters.len();
 
     log::trace!(
-        "excellon parse: drills={} issues={} units={} supported_unit_declarations={} metric_unit_declarations={} inch_unit_declarations={} unsupported_unit_declarations={} unit_conflicts={} zero_suppression_declarations={} missing_unit_diagnostic={} drill_summary_drills={} plated_drills={} non_plated_drills={} unique_diameters={} min_diameter_mm={:?} max_diameter_mm={:?} tools={} duplicate_tools={} redefined_tools={} non_positive_tools={} invalid_tool_records={} parsed_hits={} active_tool_hits={} inline_tool_hits={} hits_without_active_tool={} hits_with_unknown_tool={} hits_without_diameter={} invalid_coordinate_records={} route_commands={} route_rapid_moves={} route_linear_moves={} route_slot_commands={} header_start={} header_end={} end_of_program={}",
+        "excellon parse: drills={} issues={} units={} supported_unit_declarations={} metric_unit_declarations={} inch_unit_declarations={} unsupported_unit_declarations={} unit_conflicts={} zero_suppression_declarations={} missing_unit_diagnostic={} drill_summary_drills={} plated_drills={} non_plated_drills={} unique_diameters={} min_diameter_mm={:?} max_diameter_mm={:?} tools={} duplicate_tools={} redefined_tools={} non_positive_tools={} invalid_tool_records={} parsed_hits={} active_tool_hits={} inline_tool_hits={} hits_without_active_tool={} hits_with_unknown_tool={} hits_without_diameter={} invalid_coordinate_records={} route_commands={} route_rapid_moves={} route_linear_moves={} route_slot_commands={} route_tool_down={} route_tool_up={} header_start={} header_end={} end_of_program={}",
         drills.len(),
         issues.len(),
         declared_unit.is_some(),
@@ -735,6 +765,8 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
         routing.rapid_moves,
         routing.linear_moves,
         routing.slot_commands,
+        routing.tool_down_commands,
+        routing.tool_up_commands,
         program.header_start_line.is_some(),
         program.header_end_line.is_some(),
         program.end_of_program_line.is_some()
@@ -813,6 +845,8 @@ impl ExcellonRoutingSummary {
             "G00" | "G0" => self.rapid_moves += 1,
             "G01" | "G1" => self.linear_moves += 1,
             "G85" => self.slot_commands += 1,
+            "M15" => self.tool_down_commands += 1,
+            "M16" => self.tool_up_commands += 1,
             _ => {}
         }
     }
@@ -877,6 +911,9 @@ fn parse_zero_suppression(line: &str) -> Option<String> {
 }
 
 fn parse_routed_slot_command(line: &str) -> Option<String> {
+    if matches!(line, "M15" | "M16") {
+        return Some(line.to_string());
+    }
     let mut chars = line.chars();
     if chars.next()? != 'G' {
         return None;
@@ -936,7 +973,10 @@ struct ExcellonCoordinate {
     grid: SourceGridFacts,
 }
 
-fn parse_coordinate_source(line: &str) -> Option<ExcellonCoordinate> {
+fn parse_coordinate_source(
+    line: &str,
+    declared_decimal_digits: Option<u8>,
+) -> Option<ExcellonCoordinate> {
     let x_index = line.find('X')?;
     let y_index = line.find('Y')?;
     let x_end = if x_index < y_index {
@@ -950,8 +990,12 @@ fn parse_coordinate_source(line: &str) -> Option<ExcellonCoordinate> {
         line.len()
     };
 
-    let x = parse_number_source(&line[x_index + 1..x_end])?;
-    let y = parse_number_source(&line[y_index + 1..y_end])?;
+    let parse_axis = |raw| match declared_decimal_digits {
+        Some(decimal_digits) => parse_fixed_coordinate_source(raw, decimal_digits),
+        None => parse_number_source(raw),
+    };
+    let x = parse_axis(&line[x_index + 1..x_end])?;
+    let y = parse_axis(&line[y_index + 1..y_end])?;
     Some(ExcellonCoordinate {
         value: [x.value, y.value],
         grid: x.grid.combine(y.grid),
@@ -993,6 +1037,51 @@ fn parse_number_source(raw: &str) -> Option<SourceScalar> {
     normalized.push('.');
     normalized.push_str(&digits[split..]);
     SourceScalar::parse(SourceUnit::Excellon, &normalized)
+}
+
+fn parse_fixed_coordinate_source(raw: &str, decimal_digits: u8) -> Option<SourceScalar> {
+    let trimmed = raw.trim();
+    if trimmed.contains('.') {
+        return SourceScalar::parse(SourceUnit::Excellon, trimmed);
+    }
+    let sign = trimmed.starts_with('-');
+    let digits = trimmed.trim_start_matches(['+', '-']);
+    if digits.is_empty() || !digits.chars().all(|ch| ch.is_ascii_digit()) {
+        return None;
+    }
+    let decimal_digits = usize::from(decimal_digits);
+    let mut normalized = String::new();
+    if sign {
+        normalized.push('-');
+    }
+    if digits.len() <= decimal_digits {
+        normalized.push_str("0.");
+        normalized.extend(std::iter::repeat_n('0', decimal_digits - digits.len()));
+        normalized.push_str(digits);
+    } else {
+        let split = digits.len() - decimal_digits;
+        normalized.push_str(&digits[..split]);
+        normalized.push('.');
+        normalized.push_str(&digits[split..]);
+    }
+    SourceScalar::parse(SourceUnit::Excellon, &normalized)
+}
+
+fn parse_coordinate_format_comment(line: &str) -> Option<ExcellonCoordinateFormat> {
+    let value = line
+        .strip_prefix(';')?
+        .trim()
+        .strip_prefix("FILE_FORMAT=")?;
+    let (integer_digits, decimal_digits) = value.split_once(':')?;
+    let integer_digits = integer_digits.trim().parse::<u8>().ok()?;
+    let decimal_digits = decimal_digits.trim().parse::<u8>().ok()?;
+    if integer_digits == 0 || decimal_digits == 0 {
+        return None;
+    }
+    Some(ExcellonCoordinateFormat {
+        integer_digits,
+        decimal_digits,
+    })
 }
 
 fn is_supported_axis_line(line: &str) -> bool {
@@ -1042,6 +1131,71 @@ mod tests {
             report.drill_summary.coordinate_grid,
             SourceGridFacts::source_grid(SourceUnit::Excellon, 1_000)
         );
+    }
+
+    #[test]
+    fn declared_six_decimal_coordinate_format_controls_integer_hit_scaling() {
+        let report = parse_excellon_report(
+            r#"
+            M48
+            ;FILE_FORMAT=4:6
+            METRIC,TZ
+            T01C0.600000
+            %
+            T01
+            X0010000000Y0005000000
+            M30
+            "#,
+            std::path::Path::new("hypercircuit-PTH.drl"),
+        );
+
+        assert_eq!(
+            report.unit_summary.coordinate_format,
+            Some(super::ExcellonCoordinateFormat {
+                integer_digits: 4,
+                decimal_digits: 6,
+            })
+        );
+        assert_eq!(
+            report.drills[0].location,
+            [crate::scalar::scalar("10"), crate::scalar::scalar("5")]
+        );
+        assert_eq!(
+            report.drill_summary.coordinate_grid,
+            SourceGridFacts::source_grid(SourceUnit::Excellon, 1_000_000)
+        );
+    }
+
+    #[test]
+    fn hypercircuit_style_routed_slot_program_retains_structure_without_false_tool_errors() {
+        let report = parse_excellon_report(
+            r#"
+            M48
+            ;FILE_FORMAT=4:6
+            METRIC,TZ
+            T01C1.000000
+            %
+            G90
+            G05
+            T01
+            G00X0004000000Y0005000000
+            M15
+            G01X0006000000Y0005000000
+            M16
+            G05
+            M30
+            "#,
+            std::path::Path::new("board-NPTH.drl"),
+        );
+
+        assert_eq!(report.routing.rapid_moves, 1);
+        assert_eq!(report.routing.linear_moves, 1);
+        assert_eq!(report.routing.tool_down_commands, 1);
+        assert_eq!(report.routing.tool_up_commands, 1);
+        assert_eq!(report.tool_table.invalid_definitions, 0);
+        assert!(!report.issues.iter().any(|issue| {
+            matches!(issue.kind, ExcellonIssueKind::InvalidToolDefinition { .. })
+        }));
     }
 
     #[test]

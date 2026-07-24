@@ -16,6 +16,7 @@ use geo::BoundingRect;
 use crate::PcbSketchExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
+use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
@@ -81,10 +82,16 @@ pub fn rf_keepout_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = rf
-                .sketch
-                .offset(clearance.clone())
-                .intersection(&neighbor.sketch);
+            let expanded = match offset_for_check(
+                &rf.sketch,
+                clearance.clone(),
+                "rf-keepout-readiness",
+                vec![rf.layer.clone()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let overlap = expanded.intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -185,10 +192,16 @@ pub fn antenna_copper_keepout_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = antenna
-                .sketch
-                .offset(keepout.clone())
-                .intersection(&neighbor.sketch);
+            let expanded = match offset_for_check(
+                &antenna.sketch,
+                keepout.clone(),
+                "antenna-copper-keepout-readiness",
+                vec![antenna.layer.clone()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let overlap = expanded.intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(

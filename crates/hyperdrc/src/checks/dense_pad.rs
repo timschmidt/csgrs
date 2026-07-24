@@ -11,6 +11,7 @@ use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::checks::distance::polygon_boundary_distance_scalar;
+use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
@@ -254,7 +255,15 @@ pub fn dense_pad_via_spacing_readiness(
                 continue;
             }
 
-            let keepout = via.sketch.offset(min_via_clearance.clone());
+            let keepout = match offset_for_check(
+                &via.sketch,
+                min_via_clearance.clone(),
+                "dense-pad-via-spacing-readiness",
+                vec![layer.clone(), via.layer.clone()],
+            ) {
+                Ok(keepout) => keepout,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(
                 &keepout.intersection(&pad.sketch).to_multipolygon(),
                 min_area,
@@ -395,7 +404,7 @@ fn dense_pad_inputs<'a>(
                 .or_default()
                 .push(feature),
             CopperKind::Via => vias.push(feature),
-            CopperKind::Segment | CopperKind::Zone => {}
+            CopperKind::Segment | CopperKind::Zone | CopperKind::Artwork => {}
         }
     }
 

@@ -2,8 +2,9 @@
 //!
 //! This module intentionally implements only narrow, auditable subsets of
 //! impedance review: single-ended outer-layer microstrip over the next copper
-//! reference layer and centered single-ended stripline between adjacent copper
-//! references. It is a readiness screen for obvious width/stackup mismatch, not
+//! reference layer, centered single-ended stripline between adjacent copper
+//! references, and equal-width edge-coupled differential forms over those two
+//! geometries. It is a readiness screen for obvious width/stackup mismatch, not
 //! a substitute for field solving, fabricator stackup tuning, or frequency-
 //! dependent roughness/loss review.
 
@@ -37,6 +38,32 @@ pub(super) enum ImpedanceModel {
     OuterMicrostrip,
     /// Centered single-ended stripline between adjacent copper reference layers.
     CenteredStripline,
+}
+
+/// Summary of a supported equal-width differential-pair estimate.
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct DifferentialImpedanceEstimate {
+    /// Estimated odd-mode differential impedance in ohms.
+    pub(super) impedance_ohms: Scalar,
+    /// Analytical model used for the estimate.
+    pub(super) model: DifferentialImpedanceModel,
+    /// Equal parsed width of each member conductor.
+    pub(super) trace_width: Scalar,
+    /// Edge-to-edge spacing between member conductors.
+    pub(super) pair_gap: Scalar,
+    /// Reference dielectric height used to normalize width and gap.
+    pub(super) dielectric_height: Scalar,
+    /// Relative dielectric constant used by the estimate.
+    pub(super) dielectric_constant: Scalar,
+}
+
+/// Analytical coupled-line model used by [`DifferentialImpedanceEstimate`].
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub(super) enum DifferentialImpedanceModel {
+    /// Equal-width edge-coupled microstrip over the adjacent reference plane.
+    EdgeCoupledOuterMicrostrip,
+    /// Equal-width edge-coupled centered stripline between reference planes.
+    EdgeCoupledCenteredStripline,
 }
 
 /// Estimate single-ended impedance for supported stackup/layer combinations.
@@ -117,6 +144,72 @@ pub(super) fn estimate_single_ended_impedance(
         trace_width,
         dielectric_height,
         dielectric_constant: dielectric_constant.clone(),
+    })
+}
+
+/// Estimate equal-width edge-coupled differential impedance.
+///
+/// The retained width/gap/height ratios are restricted to the normalized
+/// geometry range used by coupled-line compact models (`0.1..=10`) and Dk is
+/// restricted to `1..=18`. The zero-thickness single-line estimate supplies
+/// the uncoupled impedance. The edge-coupling corrections are the differential
+/// microstrip and stripline screening equations documented by Lattice in
+/// *PCB Layout Recommendations for BGA Packages* (HB1011, equations 6 and 7)
+/// and by Texas Instruments in *High-Speed Layout Guidelines* (SLLA311). For
+/// centered stripline, their `H` is the trace-to-plane height rather than the
+/// total reference-plane spacing retained by the single-ended model.
+///
+/// This remains a static release-readiness estimate; conductor thickness,
+/// mask, roughness, frequency dispersion, weave, and fabricator tuning are
+/// intentionally not inferred.
+pub(super) fn estimate_equal_width_differential_impedance(
+    stackup: &StackupConfig,
+    layer_name: &str,
+    trace_width: Scalar,
+    pair_gap: Scalar,
+) -> Option<DifferentialImpedanceEstimate> {
+    if pair_gap <= Scalar::zero() {
+        return None;
+    }
+    let single = estimate_single_ended_impedance(stackup, layer_name, trace_width.clone())?;
+    let (model, dielectric_height, amplitude, decay) = match single.model {
+        ImpedanceModel::OuterMicrostrip => (
+            DifferentialImpedanceModel::EdgeCoupledOuterMicrostrip,
+            single.dielectric_height.clone(),
+            scalar("0.48"),
+            scalar("0.96"),
+        ),
+        ImpedanceModel::CenteredStripline => (
+            DifferentialImpedanceModel::EdgeCoupledCenteredStripline,
+            (&single.dielectric_height / scalar("2")).ok()?,
+            scalar("0.347"),
+            scalar("2.9"),
+        ),
+    };
+    let width_ratio = (&trace_width / &dielectric_height).ok()?;
+    let gap_ratio = (&pair_gap / &dielectric_height).ok()?;
+    if width_ratio < scalar("0.1")
+        || width_ratio > scalar("10")
+        || gap_ratio < scalar("0.1")
+        || gap_ratio > scalar("10")
+        || single.dielectric_constant < Scalar::one()
+        || single.dielectric_constant > scalar("18")
+    {
+        return None;
+    }
+
+    let coupling = Scalar::one() - amplitude * (-decay * gap_ratio).exp().ok()?;
+    if coupling <= Scalar::zero() || coupling >= Scalar::one() {
+        return None;
+    }
+    let impedance_ohms = scalar("2") * single.impedance_ohms * coupling;
+    (impedance_ohms > Scalar::zero()).then_some(DifferentialImpedanceEstimate {
+        impedance_ohms,
+        model,
+        trace_width,
+        pair_gap,
+        dielectric_height,
+        dielectric_constant: single.dielectric_constant,
     })
 }
 
@@ -387,5 +480,95 @@ mod tests {
             ..StackupConfig::default()
         };
         assert!(estimate_single_ended_impedance(&inner_layer, "In1.Cu", scalar("0.3")).is_none());
+    }
+
+    #[test]
+    fn equal_width_outer_microstrip_pair_estimate_tracks_gap_coupling() {
+        let stackup = StackupConfig {
+            material_dielectric_constant: Some(scalar("4.2")),
+            layers: vec![
+                layer("F.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+                layer(
+                    "Prepreg",
+                    StackupLayerKind::Prepreg,
+                    None,
+                    Some(scalar("0.18")),
+                ),
+                layer("B.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+            ],
+            ..StackupConfig::default()
+        };
+
+        let estimate = estimate_equal_width_differential_impedance(
+            &stackup,
+            "F.Cu",
+            scalar("0.32"),
+            scalar("0.18"),
+        )
+        .expect("ordinary equal-width FR-4 pair should be supported");
+        assert_eq!(
+            estimate.model,
+            DifferentialImpedanceModel::EdgeCoupledOuterMicrostrip
+        );
+        assert_eq!(estimate.pair_gap, scalar("0.18"));
+        assert!(
+            estimate.impedance_ohms >= scalar("82") && estimate.impedance_ohms <= scalar("92"),
+            "estimated differential impedance {} should stay in a plausible USB range",
+            estimate.impedance_ohms
+        );
+
+        assert!(
+            estimate_equal_width_differential_impedance(
+                &stackup,
+                "F.Cu",
+                scalar("0.32"),
+                scalar("0.001"),
+            )
+            .is_none(),
+            "geometry outside the declared normalized model range must remain unsupported"
+        );
+    }
+
+    #[test]
+    fn equal_width_centered_stripline_pair_estimate_uses_trace_to_plane_height() {
+        let stackup = StackupConfig {
+            material_dielectric_constant: Some(scalar("4.2")),
+            layers: vec![
+                layer("F.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+                layer(
+                    "Prepreg",
+                    StackupLayerKind::Prepreg,
+                    None,
+                    Some(scalar("0.18")),
+                ),
+                layer(
+                    "In1.Cu",
+                    StackupLayerKind::Copper,
+                    Some(scalar("1.0")),
+                    None,
+                ),
+                layer("Core", StackupLayerKind::Core, None, Some(scalar("0.18"))),
+                layer("B.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+            ],
+            ..StackupConfig::default()
+        };
+
+        let estimate = estimate_equal_width_differential_impedance(
+            &stackup,
+            "In1.Cu",
+            scalar("0.17"),
+            scalar("0.18"),
+        )
+        .expect("centered equal-width stripline pair should be supported");
+        assert_eq!(
+            estimate.model,
+            DifferentialImpedanceModel::EdgeCoupledCenteredStripline
+        );
+        assert_eq!(estimate.dielectric_height, scalar("0.18"));
+        assert!(
+            estimate.impedance_ohms >= scalar("96") && estimate.impedance_ohms <= scalar("105"),
+            "estimated differential stripline impedance {} should stay plausible",
+            estimate.impedance_ohms
+        );
     }
 }

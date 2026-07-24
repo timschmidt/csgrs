@@ -18,6 +18,7 @@ use geo::{
 use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, Sign, compare_reals_with_policy};
 
 use crate::checks::distance::polygon_boundary_distance_scalar_with_grid;
+use crate::checks::offset_for_check;
 use crate::checks::spatial::LayerPolygonSpatialIndex;
 use crate::geometry::{
     RuleGeometryProvenance, SourceGridFacts, multipolygon_area_scalar,
@@ -74,9 +75,22 @@ pub fn mask_island_keepout(
                 polygon_to_profile(polygons[island_index].clone(), Some(metadata(layer_name)));
             let neighbor =
                 polygon_to_profile(polygons[neighbor_index].clone(), Some(metadata(layer_name)));
-            let overlap = island
-                .offset(keepout.clone())
-                .intersection(&neighbor.offset(keepout.clone()));
+            let layers = vec![layer_name.to_string()];
+            let expanded_island = match offset_for_check(
+                &island,
+                keepout.clone(),
+                "mask-island-keepout",
+                layers.clone(),
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let expanded_neighbor =
+                match offset_for_check(&neighbor, keepout.clone(), "mask-island-keepout", layers) {
+                    Ok(expanded) => expanded,
+                    Err(uncertainty) => return vec![*uncertainty],
+                };
+            let overlap = expanded_island.intersection(&expanded_neighbor);
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
 
             if !shapes.is_empty() {
@@ -210,7 +224,15 @@ pub fn board_edge_clearance(
     clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let allowed = board.offset(-clearance.clone());
+    let allowed = match offset_for_check(
+        board,
+        -clearance.clone(),
+        "copper-to-board-edge-clearance",
+        vec![copper_name.to_string(), board_name.to_string()],
+    ) {
+        Ok(allowed) => allowed,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let intrusion = copper.difference(&allowed);
     let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
 
@@ -270,7 +292,15 @@ pub fn board_outline_cutout_clearance_with_grid(
     for cutout in board_outline_cutouts(&outline_polygons) {
         let cutout = polygon_to_profile(cutout, Some(metadata("board cutout")));
         let clearance_band = if clearance > &Scalar::zero() {
-            cutout.offset(clearance.clone())
+            match offset_for_check(
+                &cutout,
+                clearance.clone(),
+                "board-outline-cutout-clearance",
+                vec![subject_name.to_string(), outline_name.to_string()],
+            ) {
+                Ok(clearance_band) => clearance_band,
+                Err(uncertainty) => return vec![*uncertainty],
+            }
         } else {
             cutout.clone()
         };
@@ -358,7 +388,15 @@ pub fn silkscreen_board_edge_clearance(
     clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let allowed = board.offset(-clearance.clone());
+    let allowed = match offset_for_check(
+        board,
+        -clearance.clone(),
+        "silkscreen-to-board-edge-clearance",
+        vec![silk_name.to_string(), board_name.to_string()],
+    ) {
+        Ok(allowed) => allowed,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let intrusion = silk.difference(&allowed);
     shapes_violation_scalar(
         "silkscreen-to-board-edge-clearance",
@@ -379,7 +417,15 @@ pub fn solder_mask_board_edge_clearance(
     clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let allowed = board.offset(-clearance.clone());
+    let allowed = match offset_for_check(
+        board,
+        -clearance.clone(),
+        "solder-mask-to-board-edge-clearance",
+        vec![mask_name.to_string(), board_name.to_string()],
+    ) {
+        Ok(allowed) => allowed,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let intrusion = mask.difference(&allowed);
     shapes_violation_scalar(
         "solder-mask-to-board-edge-clearance",
@@ -407,14 +453,18 @@ pub fn paste_overhang(
     tolerance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let overhang = indexed_difference(
+    let overhang = match indexed_difference(
+        "paste-aperture-overhang",
         paste_name,
         paste,
         copper_name,
         copper,
         scalar_broad_phase_radius(tolerance),
         IndexedDifferenceMode::CoverOffset(tolerance.clone()),
-    );
+    ) {
+        Ok(overhang) => overhang,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation(
         "paste-aperture-overhang",
         Severity::Warning,
@@ -437,14 +487,18 @@ pub fn paste_aperture_coverage(
     copper: &PcbSketch,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let uncovered_copper = indexed_difference(
+    let uncovered_copper = match indexed_difference(
+        "paste-aperture-coverage",
         copper_name,
         copper,
         paste_name,
         paste,
         0.0,
         IndexedDifferenceMode::CoverAsIs,
-    );
+    ) {
+        Ok(uncovered) => uncovered,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation_scalar(
         "paste-aperture-coverage",
         Severity::Warning,
@@ -468,14 +522,18 @@ pub fn solder_mask_overlap_clearance(
     clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let vulnerable_copper = indexed_intersection_with_mode(
+    let vulnerable_copper = match indexed_intersection_with_mode(
+        "solder-mask-overlap-clearance",
         copper_name,
         copper,
         mask_name,
         mask,
         scalar_broad_phase_radius(clearance),
         IndexedCoverMode::OffsetRing(clearance.clone()),
-    );
+    ) {
+        Ok(vulnerable) => vulnerable,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation(
         "solder-mask-overlap-clearance",
         Severity::Warning,
@@ -647,9 +705,25 @@ pub fn paste_aperture_spacing(
             .map(|index| polygons[index].clone())
             .collect::<Vec<_>>();
         let remaining = polygons_to_profile(candidate_polygons, Some(metadata(paste_name)));
-        let overlap = island
-            .offset(expansion.clone())
-            .intersection(&remaining.offset(expansion.clone()));
+        let expanded_island = match offset_for_check(
+            &island,
+            expansion.clone(),
+            "paste-aperture-spacing",
+            vec![paste_name.to_string()],
+        ) {
+            Ok(expanded) => expanded,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
+        let expanded_remaining = match offset_for_check(
+            &remaining,
+            expansion.clone(),
+            "paste-aperture-spacing",
+            vec![paste_name.to_string()],
+        ) {
+            Ok(expanded) => expanded,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
+        let overlap = expanded_island.intersection(&expanded_remaining);
         let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
@@ -689,14 +763,18 @@ pub fn paste_mask_alignment(
     mask: &PcbSketch,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let outside_mask_opening = indexed_difference(
+    let outside_mask_opening = match indexed_difference(
+        "paste-mask-alignment",
         paste_name,
         paste,
         mask_name,
         mask,
         0.0,
         IndexedDifferenceMode::CoverAsIs,
-    );
+    ) {
+        Ok(outside) => outside,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation_scalar(
         "paste-mask-alignment",
         Severity::Warning,
@@ -719,7 +797,17 @@ pub fn exposed_copper(
     mask_openings: &PcbSketch,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let overlap = indexed_intersection(copper_name, copper, mask_name, mask_openings, 0.0);
+    let overlap = match indexed_intersection(
+        "exposed-copper",
+        copper_name,
+        copper,
+        mask_name,
+        mask_openings,
+        0.0,
+    ) {
+        Ok(overlap) => overlap,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation_scalar(
         "exposed-copper",
         Severity::Warning,
@@ -743,14 +831,18 @@ pub fn solder_mask_opening_coverage(
     mask_openings: &PcbSketch,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let covered_copper = indexed_difference(
+    let covered_copper = match indexed_difference(
+        "solder-mask-opening-coverage",
         copper_name,
         copper,
         mask_name,
         mask_openings,
         0.0,
         IndexedDifferenceMode::CoverAsIs,
-    );
+    ) {
+        Ok(covered) => covered,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation_scalar(
         "solder-mask-opening-coverage",
         Severity::Error,
@@ -892,8 +984,16 @@ pub fn solder_mask_annular_ring_readiness(
 
         let candidates = mask_index.candidates_near_polygon(&copper_polygon, broad_phase_ring);
         candidate_openings += candidates.len();
-        let required_opening = polygon_to_profile(copper_polygon, Some(metadata(copper_name)))
-            .offset(min_mask_annular_ring.clone());
+        let copper_island = polygon_to_profile(copper_polygon, Some(metadata(copper_name)));
+        let required_opening = match offset_for_check(
+            &copper_island,
+            min_mask_annular_ring.clone(),
+            "solder-mask-annular-ring-readiness",
+            vec![copper_name.to_string(), mask_name.to_string()],
+        ) {
+            Ok(required_opening) => required_opening,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         let missing_relief = if candidates.is_empty() {
             required_opening
         } else {
@@ -944,14 +1044,18 @@ pub fn solder_mask_expansion(
     max_expansion: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let excessive_opening = indexed_difference(
+    let excessive_opening = match indexed_difference(
+        "solder-mask-expansion",
         mask_name,
         mask_openings,
         copper_name,
         copper,
         scalar_broad_phase_radius(max_expansion),
         IndexedDifferenceMode::CoverOffset(max_expansion.clone()),
-    );
+    ) {
+        Ok(excessive) => excessive,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation(
         "solder-mask-expansion",
         Severity::Warning,
@@ -974,14 +1078,18 @@ pub fn silkscreen_overlap(
     blocker: &PcbSketch,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let overlap = indexed_intersection_with_mode(
+    let overlap = match indexed_intersection_with_mode(
+        "silkscreen-overlap",
         silk_name,
         silk,
         blocker_name,
         blocker,
         0.0,
         IndexedCoverMode::AsIs,
-    );
+    ) {
+        Ok(overlap) => overlap,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation_scalar(
         "silkscreen-overlap",
         Severity::Warning,
@@ -1005,14 +1113,18 @@ pub fn silkscreen_clearance(
     clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let intrusion = indexed_intersection_with_mode(
+    let intrusion = match indexed_intersection_with_mode(
+        "silkscreen-clearance",
         silk_name,
         silk,
         blocker_name,
         blocker,
         scalar_broad_phase_radius(clearance),
         IndexedCoverMode::Offset(clearance.clone()),
-    );
+    ) {
+        Ok(intrusion) => intrusion,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation(
         "silkscreen-clearance",
         Severity::Warning,
@@ -1049,21 +1161,23 @@ pub fn silkscreen_min_width(
             .is_some_and(|dimension| dimension > Scalar::zero() && &dimension < min_width);
         let area_above_gate = polygon_area_scalar(&polygon).is_some_and(|area| &area > min_area);
         let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
-        let reconstructed = match island
-            .try_offset(-radius.clone())
-            .and_then(|eroded| eroded.try_offset(radius.clone()))
-        {
+        let eroded = match offset_for_check(
+            &island,
+            -radius.clone(),
+            "silkscreen-min-width",
+            vec![silk_name.to_string()],
+        ) {
+            Ok(eroded) => eroded,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
+        let reconstructed = match offset_for_check(
+            &eroded,
+            radius.clone(),
+            "silkscreen-min-width",
+            vec![silk_name.to_string()],
+        ) {
             Ok(reconstructed) => reconstructed,
-            Err(error) => {
-                log::warn!(
-                    "silkscreen-min-width retained an island after uncertified morphology: {error}"
-                );
-                shapes.extend(multipolygon_to_shapes_scalar(
-                    &island.to_multipolygon(),
-                    min_area,
-                ));
-                continue;
-            }
+            Err(uncertainty) => return vec![*uncertainty],
         };
         let thin_features = island.difference(&reconstructed);
         let mut island_shapes =
@@ -1245,19 +1359,23 @@ pub fn min_copper_neck_width(
             continue;
         }
         let island = polygon_to_profile(polygon.clone(), Some(metadata(copper_name)));
-        let reconstructed = match island
-            .try_offset(-radius.clone())
-            .and_then(|eroded| eroded.try_offset(radius.clone()))
-        {
+        let eroded = match offset_for_check(
+            &island,
+            -radius.clone(),
+            "minimum-copper-neck-width",
+            vec![copper_name.to_string()],
+        ) {
+            Ok(eroded) => eroded,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
+        let reconstructed = match offset_for_check(
+            &eroded,
+            radius.clone(),
+            "minimum-copper-neck-width",
+            vec![copper_name.to_string()],
+        ) {
             Ok(reconstructed) => reconstructed,
-            Err(error) => {
-                log::warn!(
-                    "min-copper-neck retained island {island_index} on layer {copper_name} after uncertified morphology: {error}"
-                );
-                uncertain_difference_count += 1;
-                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
-                continue;
-            }
+            Err(uncertainty) => return vec![*uncertainty],
         };
         let thin = match island.try_difference(&reconstructed) {
             Ok(thin_features) => thin_features.to_multipolygon(),
@@ -1358,22 +1476,23 @@ pub fn solder_mask_sliver(
     // Same opening operation as the copper neck-width check, applied to residual
     // mask geometry. The result is the geometry that is too thin to survive the
     // configured web width.
-    let reconstructed = match mask
-        .try_offset(-radius.clone())
-        .and_then(|eroded| eroded.try_offset(radius))
-    {
+    let eroded = match offset_for_check(
+        mask,
+        -radius.clone(),
+        "solder-mask-sliver",
+        vec![mask_name.to_string()],
+    ) {
+        Ok(eroded) => eroded,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
+    let reconstructed = match offset_for_check(
+        &eroded,
+        radius,
+        "solder-mask-sliver",
+        vec![mask_name.to_string()],
+    ) {
         Ok(reconstructed) => reconstructed,
-        Err(error) => {
-            log::warn!("solder-mask-sliver retained mask after uncertified morphology: {error}");
-            return shapes_violation_scalar(
-                "solder-mask-sliver",
-                Severity::Warning,
-                vec![mask_name.to_string()],
-                mask.clone(),
-                min_area,
-                format!("solder mask geometry may be removed by opening with width {min_width}"),
-            );
-        }
+        Err(uncertainty) => return vec![*uncertainty],
     };
     let slivers = mask.difference(&reconstructed);
     let mut violations = shapes_violation_scalar(
@@ -1497,9 +1616,25 @@ pub fn solder_mask_opening_spacing(
                 polygon_to_profile(openings[opening_index].clone(), Some(metadata(mask_name)));
             let neighbor =
                 polygon_to_profile(openings[neighbor_index].clone(), Some(metadata(mask_name)));
-            let bridge_conflict = opening
-                .offset(expansion.clone())
-                .intersection(&neighbor.offset(expansion.clone()));
+            let expanded_opening = match offset_for_check(
+                &opening,
+                expansion.clone(),
+                "solder-mask-opening-spacing",
+                vec![mask_name.to_string()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let expanded_neighbor = match offset_for_check(
+                &neighbor,
+                expansion.clone(),
+                "solder-mask-opening-spacing",
+                vec![mask_name.to_string()],
+            ) {
+                Ok(expanded) => expanded,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            let bridge_conflict = expanded_opening.intersection(&expanded_neighbor);
             let shapes =
                 multipolygon_to_shapes_scalar(&bridge_conflict.to_multipolygon(), min_area);
             if shapes.is_empty() {
@@ -3460,13 +3595,14 @@ enum IndexedCoverMode {
 }
 
 fn indexed_difference(
+    requested_check: &str,
     subject_name: &str,
     subject: &PcbSketch,
     cover_name: &str,
     cover: &PcbSketch,
     search_radius: f64,
     mode: IndexedDifferenceMode,
-) -> PcbSketch {
+) -> Result<PcbSketch, Box<Violation>> {
     let subject_polygons = subject.to_multipolygon().0;
     let subject_count = subject_polygons.len();
     let cover_polygons = cover.to_multipolygon().0;
@@ -3492,9 +3628,12 @@ fn indexed_difference(
         let cover_sketch = polygons_to_profile(cover_candidates, Some(metadata(cover_name)));
         let cover_sketch = match mode {
             IndexedDifferenceMode::CoverAsIs => cover_sketch,
-            IndexedDifferenceMode::CoverOffset(ref distance) => {
-                cover_sketch.offset(distance.clone())
-            }
+            IndexedDifferenceMode::CoverOffset(ref distance) => offset_for_check(
+                &cover_sketch,
+                distance.clone(),
+                requested_check,
+                vec![subject_name.to_string(), cover_name.to_string()],
+            )?,
         };
         remainder_polygons.extend(subject_island.difference(&cover_sketch).to_multipolygon().0);
     }
@@ -3507,17 +3646,22 @@ fn indexed_difference(
         candidate_polygons
     );
 
-    polygons_to_profile(remainder_polygons, Some(metadata(subject_name)))
+    Ok(polygons_to_profile(
+        remainder_polygons,
+        Some(metadata(subject_name)),
+    ))
 }
 
 fn indexed_intersection(
+    requested_check: &str,
     subject_name: &str,
     subject: &PcbSketch,
     cover_name: &str,
     cover: &PcbSketch,
     search_radius: f64,
-) -> PcbSketch {
+) -> Result<PcbSketch, Box<Violation>> {
     indexed_intersection_with_mode(
+        requested_check,
         subject_name,
         subject,
         cover_name,
@@ -3528,13 +3672,14 @@ fn indexed_intersection(
 }
 
 fn indexed_intersection_with_mode(
+    requested_check: &str,
     subject_name: &str,
     subject: &PcbSketch,
     cover_name: &str,
     cover: &PcbSketch,
     search_radius: f64,
     mode: IndexedCoverMode,
-) -> PcbSketch {
+) -> Result<PcbSketch, Box<Violation>> {
     let subject_polygons = subject.to_multipolygon().0;
     let subject_count = subject_polygons.len();
     let cover_polygons = cover.to_multipolygon().0;
@@ -3557,9 +3702,19 @@ fn indexed_intersection_with_mode(
         let cover_sketch = polygons_to_profile(cover_candidates, Some(metadata(cover_name)));
         let cover_sketch = match mode {
             IndexedCoverMode::AsIs => cover_sketch,
-            IndexedCoverMode::Offset(ref distance) => cover_sketch.offset(distance.clone()),
+            IndexedCoverMode::Offset(ref distance) => offset_for_check(
+                &cover_sketch,
+                distance.clone(),
+                requested_check,
+                vec![subject_name.to_string(), cover_name.to_string()],
+            )?,
             IndexedCoverMode::OffsetRing(ref distance) => {
-                let expanded = cover_sketch.offset(distance.clone());
+                let expanded = offset_for_check(
+                    &cover_sketch,
+                    distance.clone(),
+                    requested_check,
+                    vec![subject_name.to_string(), cover_name.to_string()],
+                )?;
                 match expanded.try_difference(&cover_sketch) {
                     Ok(ring) => ring,
                     Err(error) => {
@@ -3597,7 +3752,10 @@ fn indexed_intersection_with_mode(
         candidate_polygons
     );
 
-    polygons_to_profile(overlap_polygons, Some(metadata(subject_name)))
+    Ok(polygons_to_profile(
+        overlap_polygons,
+        Some(metadata(subject_name)),
+    ))
 }
 
 struct PairCheck<'a> {

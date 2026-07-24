@@ -70,3 +70,39 @@ pub use safety::*;
 pub use signal::*;
 pub use stencil::*;
 pub use thermal::*;
+
+use crate::report::{Severity, Violation};
+use crate::{PcbGeometryUncertainty, PcbSketch, Scalar};
+
+pub(crate) fn offset_for_check(
+    sketch: &PcbSketch,
+    distance: Scalar,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<PcbSketch, Box<Violation>> {
+    sketch.offset(distance).map_err(|uncertainty| {
+        Box::new(geometry_uncertainty_violation(
+            requested_check,
+            layers,
+            uncertainty,
+        ))
+    })
+}
+
+fn geometry_uncertainty_violation(
+    requested_check: &str,
+    layers: Vec<String>,
+    uncertainty: PcbGeometryUncertainty,
+) -> Violation {
+    Violation::new(
+        "geometry-uncertainty",
+        Severity::Error,
+        layers,
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "{requested_check} could not certify required geometry: {uncertainty}"
+        )),
+    )
+}

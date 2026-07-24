@@ -54,6 +54,7 @@
 pub mod app;
 pub mod arrow_report;
 pub mod assembly_policy;
+pub mod authoring_intent;
 pub mod baseline;
 pub mod checks;
 #[doc(hidden)]
@@ -104,6 +105,7 @@ use csgrs::sketch::Profile;
 use csgrs::{csg::CSG, io::gerber::FromGerber};
 use geo::{Coord, LineString, MultiPolygon, Polygon};
 use hyperlattice::{Aabb, Matrix4};
+use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 
 /// PCB geometry sketch tagged with layer/source metadata.
@@ -118,6 +120,36 @@ pub struct PcbSketch {
     exact_bounds: Option<[Scalar; 4]>,
     had_non_finite_input: bool,
 }
+
+/// Exact geometry operation that could not be certified for a PCB check.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PcbGeometryUncertainty {
+    /// Stable operation family.
+    pub operation: String,
+    /// Caller-owned layer or source name, when attached to the sketch.
+    pub source: Option<String>,
+    /// Geometry-engine explanation retained for review.
+    pub detail: String,
+}
+
+impl Display for PcbGeometryUncertainty {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self.source {
+            Some(source) => write!(
+                formatter,
+                "{} for {source} could not be certified: {}",
+                self.operation, self.detail
+            ),
+            None => write!(
+                formatter,
+                "{} could not be certified: {}",
+                self.operation, self.detail
+            ),
+        }
+    }
+}
+
+impl std::error::Error for PcbGeometryUncertainty {}
 
 impl PcbSketch {
     /// Attach PCB layer metadata to metadata-free profile geometry.
@@ -166,16 +198,10 @@ impl PcbSketch {
     }
 
     /// Offset the profile while retaining its PCB layer metadata.
-    pub fn offset(&self, distance: hyperreal::Real) -> Self {
-        self.try_offset(distance)
-            .unwrap_or_else(|error| panic!("PCB profile offset failed: {error}"))
-    }
-
-    /// Try to offset the profile while retaining its PCB layer metadata.
-    pub fn try_offset(
-        &self,
-        distance: hyperreal::Real,
-    ) -> Result<Self, csgrs::errors::ProfileOffsetError> {
+    ///
+    /// Exact topology indeterminacy is returned to the check rather than
+    /// unwinding or substituting approximate geometry.
+    pub fn offset(&self, distance: hyperreal::Real) -> Result<Self, PcbGeometryUncertainty> {
         let exact_bounds = self.exact_bounds.as_ref().map(|bounds| {
             [
                 &bounds[0] - &distance,
@@ -185,7 +211,13 @@ impl PcbSketch {
             ]
         });
         Ok(Self::new_with_exact_bounds(
-            self.profile.try_offset(distance)?,
+            self.profile
+                .try_offset(distance)
+                .map_err(|error| PcbGeometryUncertainty {
+                    operation: "profile-offset".into(),
+                    source: self.metadata.as_ref().map(|metadata| metadata.name.clone()),
+                    detail: error.to_string(),
+                })?,
             self.metadata.clone(),
             exact_bounds,
             self.had_non_finite_input,

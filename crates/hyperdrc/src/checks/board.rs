@@ -16,6 +16,7 @@ use super::distance::{
     exact_point_polygon_boundary_within_scalar, polygon_boundaries_within_scalar,
     polygon_boundary_distance_scalar,
 };
+use super::offset_for_check;
 use super::outline::{
     axis_aligned_outline_rect_with_grid, feature_bounds_inside_rect_margin_with_grid,
     feature_bounds_inside_rect_with_grid,
@@ -473,7 +474,15 @@ pub fn high_speed_edge_readiness_with_grid(
     };
     let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
     let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
-    let allowed = outline.offset(-edge_clearance.clone());
+    let allowed = match offset_for_check(
+        outline,
+        -edge_clearance.clone(),
+        "high-speed-edge-readiness",
+        vec!["KiCad Edge.Cuts".into()],
+    ) {
+        Ok(allowed) => allowed,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
     let mut exact_difference_count = 0_usize;
@@ -558,7 +567,15 @@ pub fn edge_copper_pullback_readiness_with_grid(
     };
     let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
     let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
-    let allowed = outline.offset(-edge_clearance.clone());
+    let allowed = match offset_for_check(
+        outline,
+        -edge_clearance.clone(),
+        "edge-copper-pullback-readiness",
+        vec!["KiCad Edge.Cuts".into()],
+    ) {
+        Ok(allowed) => allowed,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
     let mut exact_difference_count = 0_usize;
@@ -659,7 +676,15 @@ pub fn edge_stitching_readiness_with_grid(
     let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
     let broad_phase_edge_clearance = scalar_broad_phase_radius(edge_clearance);
     let broad_phase_stitching_distance = scalar_broad_phase_radius(stitching_distance);
-    let allowed = outline.offset(-edge_clearance.clone());
+    let allowed = match offset_for_check(
+        outline,
+        -edge_clearance.clone(),
+        "edge-stitching-readiness",
+        vec!["KiCad Edge.Cuts".into()],
+    ) {
+        Ok(allowed) => allowed,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let features = selected_copper_features(board, selected_layers);
     let ground_vias = features
         .iter()
@@ -3515,6 +3540,7 @@ impl CopperKind {
             CopperKind::Via => "via",
             CopperKind::Segment => "segment",
             CopperKind::Zone => "zone",
+            CopperKind::Artwork => "artwork",
         }
     }
 }

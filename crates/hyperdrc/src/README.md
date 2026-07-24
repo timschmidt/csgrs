@@ -59,6 +59,16 @@ The source tree follows a few explicit boundaries:
   and impedance handoff. Net classes can carry width, clearance, current-width,
   voltage-clearance, reference-plane, via-count, layer-count, differential-pair,
   approximate length/skew, and impedance-control target/tolerance intent.
+  Target metadata failures, unsupported analytical applicability, and
+  out-of-tolerance single-ended or equal-width edge-coupled
+  outer-microstrip/centered-stripline estimates use the stable
+  `net-impedance-target-readiness` check identity so consuming release
+  orchestrators can apply severity policy without matching diagnostic text.
+- [`authoring_intent.rs`](authoring_intent.rs) accepts source-addressable native
+  CAD keepout profiles, exact routed-slot centerlines/widths, and side-aware
+  placed courtyard/body envelopes when parsed board or drill formats would
+  otherwise flatten that authoring intent; missing envelopes, same-side
+  collisions, and component-keepout intersections fail readiness explicitly.
 - [`package_policy.rs`](package_policy.rs) defines named package profiles
   (`full-production`, `fabrication-only`, `assembly-only`, and
   `electrical-test`) and resolves those profiles with `required_artifacts` and

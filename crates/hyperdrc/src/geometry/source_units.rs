@@ -6,12 +6,6 @@
 
 use hyperreal::{Rational, Real};
 
-/// Source grid type owned by `hyperpath` and reused by DRC path rules.
-pub type PathSourceGrid = hyperpath::SourceGrid;
-
-/// Source length-unit type owned by `hyperpath` and reused by DRC path rules.
-pub type PathSourceLengthUnit = hyperpath::SourceLengthUnit;
-
 /// Unit family attached to coordinates parsed from an EDA or fabrication file.
 ///
 /// The value is advisory scheduling metadata. It lets repeated DRC predicates
@@ -150,25 +144,6 @@ impl SourceGridFacts {
     pub fn lift_f64(self, value: f64) -> Option<Real> {
         let _ = self;
         Real::try_from(value).ok()
-    }
-
-    /// Converts retained grid facts into the path-domain source grid when
-    /// denominator and unit mapping are available.
-    pub fn to_path_source_grid(self) -> Option<PathSourceGrid> {
-        let denominator = self.denominator_per_unit?;
-        PathSourceGrid::with_unit(denominator, self.unit.to_path_length_unit())
-    }
-}
-
-impl SourceUnit {
-    /// Converts this DRC source unit to the shared path length-unit vocabulary.
-    pub const fn to_path_length_unit(self) -> PathSourceLengthUnit {
-        match self {
-            Self::KiCadMillimeter | Self::Gerber | Self::Excellon => {
-                PathSourceLengthUnit::Millimeter
-            }
-            Self::Unknown | Self::PrimitiveFloat => PathSourceLengthUnit::Unspecified,
-        }
     }
 }
 
