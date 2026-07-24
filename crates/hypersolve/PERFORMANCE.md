@@ -46,6 +46,7 @@ are regression evidence for these workloads, not portable absolute claims.
 | Sparse arrowhead solve, 32 x 32 | 4.901 ms authored | 0.790 ms minimum degree | 83.9% faster |
 | Sparse tridiagonal solve, 32 x 32 | 315.46 us authored | 388.12 us minimum degree | 23.0% slower |
 | Exact roots of `x^2 - 2`, Hypersolve versus CGAL 6.0.3 | 428.90 ns CGAL median | 270.97 ns Hypersolve estimate | 36.8% faster |
+| Hypercurve all-family exact Boolean instructions | 320,660,631 | 189,533,986 | 40.9% fewer |
 
 The exact-quadratic competitor row compares Hypersolve's public prepared-row
 solver with CGAL's exact `Gmpq`
@@ -78,6 +79,24 @@ on both paths; the shared API reduces the 2-by-2 two-coordinate solve from
 interpolation benefits more because it replaces a determinant-per-coordinate
 Cramer construction: its five-run median falls from 19.276 us to 13.098 us
 (32.1%).
+
+Rational algebraic images now clear the source polynomial to primitive integer
+coefficients and clear the numerator/denominator pair with one shared scale
+before resultant construction. Scaling either Sylvester input only scales its
+determinant by a nonzero constant, so the represented image roots and their
+isolating interval are unchanged. The original rational coefficients still
+own domain evaluation and endpoint image bounds. Bareiss elimination then
+uses a checked exactly-divisible integer quotient in every dense, multi-RHS,
+and sparse recurrence, falling back to general `Real` division whenever the
+integer preconditions do not hold.
+
+On Hypercurve's one-cell all-family exact Boolean sentinel, denominator
+clearing alone reduced instructions from 320,660,631 to 229,530,874; direct
+integer Bareiss division reduced them to 192,745,230, and primitive content
+removal reached 189,533,986. Five ordinary runs had an 18.154 ms complete
+median and 9.016 ms pair-preparation median, versus 26.628 and 16.830 ms before
+the cross-crate change. All runs retained 9 candidate pairs, 48 fragments,
+2 point classifications, 4 decided operations, and checksum 6.
 
 ## Dispatch-path coverage
 

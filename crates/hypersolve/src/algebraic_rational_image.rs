@@ -21,7 +21,7 @@ use std::cmp::Ordering;
 
 use hyperlimit::PredicatePolicy;
 use hyperlimit::compare_reals_with_policy;
-use hyperreal::Real;
+use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
@@ -414,10 +414,13 @@ fn direct_rational_image_representation(
     if source_degree + rational_degree.max(1) > MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION {
         return None;
     }
+    let source_polynomial = clear_rational_polynomial_denominators(&root.polynomial_coefficients)?;
+    let (resultant_numerator, resultant_denominator) =
+        clear_rational_map_denominators(&numerator, &denominator)?;
     let polynomial_coefficients = resultant_polynomial_for_rational_image(
-        &root.polynomial_coefficients,
-        &numerator,
-        &denominator,
+        &source_polynomial,
+        &resultant_numerator,
+        &resultant_denominator,
         source_degree,
         policy,
     )?;
@@ -439,6 +442,36 @@ fn direct_rational_image_representation(
     }
     representation.validation = validate_algebraic_root_representation(&representation, policy);
     Some(representation)
+}
+
+fn clear_rational_polynomial_denominators(polynomial: &[Real]) -> Option<Vec<Real>> {
+    let rationals = polynomial
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    Some(
+        Rational::primitive_integer_ratio(&rationals)
+            .into_iter()
+            .map(Real::from)
+            .collect(),
+    )
+}
+
+fn clear_rational_map_denominators(
+    numerator: &[Real],
+    denominator: &[Real],
+) -> Option<(Vec<Real>, Vec<Real>)> {
+    let rationals = numerator
+        .iter()
+        .chain(denominator)
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let mut integers = Rational::primitive_integer_ratio(&rationals)
+        .into_iter()
+        .map(Real::from);
+    let numerator = integers.by_ref().take(numerator.len()).collect();
+    let denominator = integers.collect();
+    Some((numerator, denominator))
 }
 
 fn resultant_polynomial_for_rational_image(
@@ -793,6 +826,10 @@ mod tests {
         Real::from(value)
     }
 
+    fn fraction(numerator: i64, denominator: u64) -> Real {
+        Real::from(Rational::fraction(numerator, denominator).unwrap())
+    }
+
     fn sqrt_two_positive() -> AlgebraicRootRepresentation {
         AlgebraicRootRepresentation {
             constraint_index: 0,
@@ -889,6 +926,39 @@ mod tests {
         assert!(report.numerator_image.is_none());
         assert!(report.denominator_image.is_none());
         assert!(report.representation.as_ref().unwrap().is_valid());
+    }
+
+    #[test]
+    fn rational_image_clears_disparate_denominators_before_elimination() {
+        let represented = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![fraction(-2, 3), Real::zero(), fraction(1, 3)],
+            ..sqrt_two_positive()
+        };
+        let numerator = [fraction(1, 5), fraction(1, 7)];
+        let denominator = [fraction(2, 11), fraction(1, 13)];
+        let report = transform_algebraic_root_rational_image(
+            &represented,
+            &numerator,
+            &denominator,
+            PredicatePolicy,
+        );
+
+        assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
+        let image = report.representation.as_ref().unwrap();
+        assert!(image.is_valid());
+        assert_eq!(
+            image.interval.lower,
+            evaluate_rational_polynomial(&numerator, &denominator, &real(1)).unwrap()
+        );
+        assert_eq!(
+            image.interval.upper,
+            evaluate_rational_polynomial(&numerator, &denominator, &real(2)).unwrap()
+        );
+        assert!(image.polynomial_coefficients.iter().all(|coefficient| {
+            coefficient
+                .exact_rational_ref()
+                .is_some_and(Rational::is_integer)
+        }));
     }
 
     #[test]

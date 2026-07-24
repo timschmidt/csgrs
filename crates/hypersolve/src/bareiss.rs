@@ -220,6 +220,17 @@ pub struct SparseMinimumDegreeBareissSolveReport {
     pub source_residual_replay: SparseResidualReplayReport,
 }
 
+fn bareiss_quotient(numerator: Real, previous_pivot: &Real) -> Option<Real> {
+    if let (Some(numerator), Some(previous_pivot)) = (
+        numerator.exact_rational_ref(),
+        previous_pivot.exact_rational_ref(),
+    ) && let Some(quotient) = numerator.checked_exact_integer_quotient(previous_pivot)
+    {
+        return Some(Real::from(quotient));
+    }
+    (numerator / previous_pivot.clone()).ok()
+}
+
 /// Computes an exact determinant with Bareiss fraction-free elimination.
 ///
 /// Pivot choices are certified through [`Real::certified_sign_until`]. A
@@ -283,8 +294,8 @@ pub fn determinant_bareiss(
             for column in (pivot + 1)..n {
                 let numerator = pivot_value.clone() * row[column].clone()
                     - row[pivot].clone() * pivot_work_row[column].clone();
-                row[column] = (numerator / previous_pivot.clone())
-                    .map_err(|_| BareissError::UnsupportedDivision { pivot })?;
+                row[column] = bareiss_quotient(numerator, &previous_pivot)
+                    .ok_or(BareissError::UnsupportedDivision { pivot })?;
             }
         }
 
@@ -357,14 +368,14 @@ pub fn solve_dense_linear_system_bareiss(
             for column in (pivot + 1)..n {
                 let numerator = pivot_value.clone() * work[row][column].clone()
                     - eliminand.clone() * pivot_work_row[column].clone();
-                work[row][column] = (numerator / previous_pivot.clone())
-                    .map_err(|_| BareissError::UnsupportedDivision { pivot })?;
+                work[row][column] = bareiss_quotient(numerator, &previous_pivot)
+                    .ok_or(BareissError::UnsupportedDivision { pivot })?;
             }
             let numerator =
                 pivot_value.clone() * rhs_work[row].clone() - eliminand * pivot_rhs.clone();
-            rhs_work[row] = match numerator / previous_pivot.clone() {
-                Ok(value) => value,
-                Err(_) => {
+            rhs_work[row] = match bareiss_quotient(numerator, &previous_pivot) {
+                Some(value) => value,
+                None => {
                     return solve_dense_linear_system_bareiss_cramer(matrix, rhs, min_precision);
                 }
             };
@@ -487,15 +498,15 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
             for column in (pivot + 1)..n {
                 let numerator = pivot_value.clone() * work[row][column].clone()
                     - eliminand.clone() * pivot_work_row[column].clone();
-                work[row][column] = (numerator / previous_pivot.clone())
-                    .map_err(|_| BareissError::UnsupportedDivision { pivot })?;
+                work[row][column] = bareiss_quotient(numerator, &previous_pivot)
+                    .ok_or(BareissError::UnsupportedDivision { pivot })?;
             }
             for (rhs_index, rhs) in rhs_work.iter_mut().enumerate() {
                 let numerator = pivot_value.clone() * rhs[row].clone()
                     - eliminand.clone() * pivot_rhs[rhs_index].clone();
-                rhs[row] = match numerator / previous_pivot.clone() {
-                    Ok(value) => value,
-                    Err(_) => {
+                rhs[row] = match bareiss_quotient(numerator, &previous_pivot) {
+                    Some(value) => value,
+                    None => {
                         return solve_dense_linear_system_bareiss_multi_rhs_cramer(
                             matrix,
                             right_hand_sides,
@@ -830,8 +841,8 @@ pub fn solve_sparse_linear_system_bareiss_pattern_preserving(
                     .unwrap_or_else(Real::zero);
                 let numerator =
                     pivot_value.clone() * row_value - eliminand.clone() * pivot_column_value;
-                let updated = (numerator / previous_pivot.clone())
-                    .map_err(|_| SparseBareissError::UnsupportedDivision { pivot })?;
+                let updated = bareiss_quotient(numerator, &previous_pivot)
+                    .ok_or(SparseBareissError::UnsupportedDivision { pivot })?;
                 if is_certified_zero(&updated, min_precision)? {
                     rows[row_index].remove(&column);
                 } else {
@@ -843,8 +854,8 @@ pub fn solve_sparse_linear_system_bareiss_pattern_preserving(
             }
             let rhs_numerator =
                 pivot_value.clone() * rhs_work[row_index].clone() - eliminand * pivot_rhs.clone();
-            rhs_work[row_index] = (rhs_numerator / previous_pivot.clone())
-                .map_err(|_| SparseBareissError::UnsupportedDivision { pivot })?;
+            rhs_work[row_index] = bareiss_quotient(rhs_numerator, &previous_pivot)
+                .ok_or(SparseBareissError::UnsupportedDivision { pivot })?;
         }
         previous_pivot = pivot_value;
     }
