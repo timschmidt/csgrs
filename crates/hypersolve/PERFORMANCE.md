@@ -216,6 +216,28 @@ AddressSanitizer region-Boolean fuzz replay completed all 2,509 executions at
 5,895 coverage points and 19,165 feature edges; LeakSanitizer alone remained
 disabled under ptrace.
 
+Hyperreal's binary linear cache now requires arithmetic observation rather
+than treating an ownership clone as proof that an exact sum or difference will
+recur. Hypersolve's elimination and image coefficients are frequently cloned
+into immutable matrices and polynomials but paired only once, so this avoids
+speculative cache boxes without changing any exact operation or branch.
+Existing product/linear evidence still admits immediately, and the known-repeat
+self-dot path primes its sum intermediates explicitly.
+
+On the same Hypercurve sentinel, the ten-run instruction median fell from
+77,532,932 to 76,301,712 (1.6%), 76.2% below the original baseline.
+Heaptrack allocations fell from 115,778 to 114,193, `retain_linear`-descended
+allocations from 7,971 to 3,718, and peak heap from 1.96 to 1.53 MiB.
+Temporary allocations measured 6,833. Eleven ordinary runs had an 8.840 ms
+complete median, a 6.630 ms preparation median, and a 0.376 ms exact-polyline
+projection median, with identical topology and checksum.
+
+The complete Hyperreal, Hypersolve, and downstream Hypercurve feature
+matrices, formatting, warning-denied all-target Clippy and rustdoc, and release
+WASM library builds passed. The requested AddressSanitizer region-Boolean fuzz
+replay completed all 2,509 executions at 5,903 coverage points and 19,183
+feature edges; LeakSanitizer alone remained disabled under ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
