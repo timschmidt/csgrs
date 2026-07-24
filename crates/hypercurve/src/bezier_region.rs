@@ -5733,12 +5733,12 @@ fn native_loop_bounds(
     let Some(first) = boundary_loop.fragments().first() else {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
-    let mut bounds = match subcurve_bounds(first, policy) {
+    let mut bounds = match subcurve_query_bounds(first, policy) {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
     for fragment in &boundary_loop.fragments()[1..] {
-        let fragment_bounds = match subcurve_bounds(fragment, policy) {
+        let fragment_bounds = match subcurve_query_bounds(fragment, policy) {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -6103,10 +6103,20 @@ fn ray_candidates(point: &Point2) -> Vec<BezierRay2> {
         .collect()
 }
 
-fn subcurve_bounds(curve: &BezierSubcurve2, policy: &CurvePolicy) -> Classification<Aabb2> {
+/// Returns a conservative outer box for point-query rejection.
+///
+/// Tight extrema are unnecessary here: polynomial control hulls contain their
+/// entire curves, as do rational control hulls after a common nonzero weight
+/// sign is certified.
+fn subcurve_query_bounds(curve: &BezierSubcurve2, policy: &CurvePolicy) -> Classification<Aabb2> {
     match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(policy),
-        BezierSubcurve2::Cubic(curve) => curve.certified_bounds(policy),
+        BezierSubcurve2::Quadratic(curve) => Aabb2::from_points(curve.control_points(), policy),
+        BezierSubcurve2::Cubic(curve) => Aabb2::from_points(curve.control_points(), policy),
+        BezierSubcurve2::RationalQuadratic(curve)
+            if curve.common_nonzero_weight_sign(policy).is_some() =>
+        {
+            Aabb2::from_points(curve.control_points(), policy)
+        }
         BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
         BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
     }
@@ -6238,7 +6248,11 @@ fn rational_line_signed_area_contribution(curve: &RationalBezier2) -> CurveResul
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CircularArc2, Curve2, CurvePath2, QuadraticBezier2, RationalQuadraticBezier2};
+    use std::cmp::Ordering;
+
+    use crate::{
+        CircularArc2, CubicBezier2, Curve2, CurvePath2, QuadraticBezier2, RationalQuadraticBezier2,
+    };
 
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -6322,6 +6336,44 @@ mod tests {
                 Ok(Classification::Decided(sides)) if sides == [expected]
             ));
             assert!(region.native_boundary_bounds.get().is_none());
+        }
+    }
+
+    #[test]
+    fn native_query_bounds_use_exact_conservative_control_hulls() {
+        let policy = CurvePolicy::certified();
+        let cubic = CubicBezier2::new(p(0, 0), p(0, 6), p(4, 6), p(4, 0));
+        let curve = BezierSubcurve2::Cubic(cubic.clone());
+        let query_bounds = match subcurve_query_bounds(&curve, &policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                panic!("polynomial control hull unexpectedly uncertain: {reason:?}")
+            }
+        };
+        let control_hull = match Aabb2::from_points(cubic.control_points(), &policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                panic!("polynomial control hull unexpectedly uncertain: {reason:?}")
+            }
+        };
+        let tight_bounds = match cubic.certified_bounds(&policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                panic!("cubic tight bounds unexpectedly uncertain: {reason:?}")
+            }
+        };
+
+        assert_eq!(query_bounds, control_hull);
+        assert_eq!(
+            compare_reals(query_bounds.max().y(), tight_bounds.max().y(), &policy),
+            Some(Ordering::Greater)
+        );
+        for numerator in 0_i32..=8 {
+            let parameter = (Real::from(numerator) / Real::from(8_i32)).unwrap();
+            assert_eq!(
+                query_bounds.contains_point(&cubic.point_at(parameter), &policy),
+                Classification::Decided(true)
+            );
         }
     }
 

@@ -4050,6 +4050,41 @@ library builds passed. AddressSanitizer region-Boolean replay completed all
 2,509 executions at 5,899 coverage points and 19,192 feature edges with no
 finding; LeakSanitizer remained disabled under ptrace.
 
+### Conservative native-region query hulls
+
+Repeated point classification retains one exact outer box for each native
+Bezier boundary loop. These boxes are used only to reject points that are
+provably outside a loop; no consumer requires a tight extrema envelope.
+Polynomial fragments therefore now contribute their exact control hulls
+instead of isolating derivative roots and evaluating interior extrema.
+Rational-quadratic fragments take the same route only after certifying that
+all homogeneous weights have one nonzero sign, which supplies the rational
+Bezier convex-hull guarantee. Mixed-sign conics keep the existing extrema
+fallback, and general rational fragments retain their existing certified
+same-sign control-hull classifier.
+
+A focused regression uses a cubic whose control hull is strictly wider than
+its tight extrema box, verifies that the query bound equals that hull, and
+checks exact containment of points across the parameter domain. Existing
+native/retained point classification, boundary, nesting, Boolean, rational
+projective-denominator, and unified-region bounds suites cover the consuming
+queries and the fallback boundary.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 35,779,537 to 33,781,716 (5.58%), 89.47% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 52,252 to 49,025
+and temporary events from 3,759 to 3,540; peak heap fell from 1.15 to 1.14 MiB
+and peak RSS from 11.32 to 11.18 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. The requested 2,509-case AddressSanitizer region-Boolean
+replay completed at 5,897 coverage points and 19,147 feature edges with no
+finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
