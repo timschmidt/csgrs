@@ -2814,6 +2814,30 @@ AddressSanitizer campaigns covering algebraic parameters and images, split
 materialization, tangent ordering, arrangements, retained regions, and region
 Booleans completed at least 1,000 executions without a finding.
 
+### Batched square-free contact certification
+
+The retained crossing proof initially classified every isolated contact root
+independently. Algebraic roots of one implicit substitution share the same
+defining polynomial, so this repeated the exact derivative construction and
+`gcd(P, P')` calculation for every root. Multiplicity classification now
+builds that square-free evidence once per polynomial. A constant GCD certifies
+the whole batch as simple; if repeated roots exist, one Sturm sequence for the
+repeated factor is reused across the disjoint root isolators. Represented roots
+still validate the polynomial and derivative directly, and any undecidable
+GCD, sign, or interval count remains uncertified.
+
+A controlled release comparison rebuilt the committed and batched sources
+against the same dependency state. On the one-cell all-family workload, ten
+`perf stat` process runs reduced exact benchmark instructions from 653,107,010
+to 650,584,843 (0.39%). Median complete Boolean time fell from 52.778 ms to
+52.030 ms (1.42%), while median pair preparation fell from 42.168 ms to
+41.783 ms (0.91%). All runs retained 9 candidate pairs, 48 fragments, 2 exact
+point classifications, 4 decided operations, and checksum 6. The optimization
+does not change the roughly two-orders-of-magnitude gap to the exact polyline
+projection, so the native line/arc accelerator remains justified. Focused
+AddressSanitizer campaigns completed 1,000 algebraic-parameter executions and
+2,509 region-Boolean corpus executions without a library finding.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

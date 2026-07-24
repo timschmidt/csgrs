@@ -374,19 +374,71 @@ impl BezierParameterPolynomial {
         }
     }
 
-    pub(crate) fn is_simple_root(
+    /// Classifies root multiplicity while sharing square-free work across roots.
+    ///
+    /// Algebraic roots from one isolation pass have the same defining
+    /// polynomial. Computing `gcd(P, P')` once proves every root simple when
+    /// the GCD is constant; when repeated roots exist, one retained Sturm
+    /// sequence classifies all of their disjoint isolating intervals.
+    pub(crate) fn simple_root_classifications(
         &self,
-        parameter: &BezierParameter2,
+        parameters: &[BezierParameter2],
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<bool>> {
-        match parameter {
-            BezierParameter2::Exact(root) => {
-                if real_sign(&self.evaluate(root), policy) != Some(RealSign::Zero) {
-                    return Err(CurveError::InvalidBezierParameter);
+    ) -> CurveResult<Vec<Classification<bool>>> {
+        enum RepeatedRootEvidence {
+            NoDerivative,
+            SquareFree,
+            Repeated {
+                polynomial: BezierParameterPolynomial,
+                sturm_sequence: Vec<Vec<Real>>,
+            },
+            Uncertain(UncertaintyReason),
+        }
+
+        let derivative_coefficients = derivative_coefficients(&self.coefficients);
+        let has_algebraic = parameters
+            .iter()
+            .any(|parameter| matches!(parameter, BezierParameter2::Algebraic(_)));
+        let repeated_evidence = if has_algebraic {
+            match Self::try_new_power_basis(derivative_coefficients.clone(), policy) {
+                Ok(Classification::Decided(derivative)) => {
+                    match self.greatest_common_divisor(&derivative, policy)? {
+                        Classification::Decided(Some(polynomial)) => {
+                            match sturm_sequence(polynomial.coefficients(), policy)? {
+                                Classification::Decided(sturm_sequence) => {
+                                    RepeatedRootEvidence::Repeated {
+                                        polynomial,
+                                        sturm_sequence,
+                                    }
+                                }
+                                Classification::Uncertain(reason) => {
+                                    RepeatedRootEvidence::Uncertain(reason)
+                                }
+                            }
+                        }
+                        Classification::Decided(None) => RepeatedRootEvidence::SquareFree,
+                        Classification::Uncertain(reason) => {
+                            RepeatedRootEvidence::Uncertain(reason)
+                        }
+                    }
                 }
-                Ok(
+                Err(CurveError::InvalidBezierPolynomial) => RepeatedRootEvidence::NoDerivative,
+                Ok(Classification::Uncertain(reason)) => RepeatedRootEvidence::Uncertain(reason),
+                Err(error) => return Err(error),
+            }
+        } else {
+            RepeatedRootEvidence::SquareFree
+        };
+
+        let mut classifications = Vec::with_capacity(parameters.len());
+        for parameter in parameters {
+            let classification = match parameter {
+                BezierParameter2::Exact(root) => {
+                    if real_sign(&self.evaluate(root), policy) != Some(RealSign::Zero) {
+                        return Err(CurveError::InvalidBezierParameter);
+                    }
                     match real_sign(
-                        &evaluate_coefficients(&derivative_coefficients(&self.coefficients), root),
+                        &evaluate_coefficients(&derivative_coefficients, root),
                         policy,
                     ) {
                         Some(RealSign::Positive | RealSign::Negative) => {
@@ -394,40 +446,34 @@ impl BezierParameterPolynomial {
                         }
                         Some(RealSign::Zero) => Classification::Decided(false),
                         None => Classification::Uncertain(UncertaintyReason::RealSign),
-                    },
-                )
-            }
-            BezierParameter2::Algebraic(parameter) => {
-                if parameter.polynomial() != self {
-                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    }
                 }
-                let derivative = match Self::try_new_power_basis(
-                    derivative_coefficients(&self.coefficients),
-                    policy,
-                ) {
-                    Ok(Classification::Decided(derivative)) => derivative,
-                    Err(CurveError::InvalidBezierPolynomial) => {
-                        return Ok(Classification::Decided(false));
+                BezierParameter2::Algebraic(parameter) => {
+                    if parameter.polynomial() != self {
+                        return Err(CurveError::InvalidBezierAlgebraicParameter);
                     }
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Ok(Classification::Uncertain(reason));
+                    match &repeated_evidence {
+                        RepeatedRootEvidence::NoDerivative => Classification::Decided(false),
+                        RepeatedRootEvidence::SquareFree => Classification::Decided(true),
+                        RepeatedRootEvidence::Repeated {
+                            polynomial,
+                            sturm_sequence,
+                        } => polynomial
+                            .root_count_in_interval_with_sequence(
+                                parameter.interval(),
+                                sturm_sequence,
+                                policy,
+                            )?
+                            .map(|count| count == 0),
+                        RepeatedRootEvidence::Uncertain(reason) => {
+                            Classification::Uncertain(*reason)
+                        }
                     }
-                    Err(error) => return Err(error),
-                };
-                let repeated = match self.greatest_common_divisor(&derivative, policy)? {
-                    Classification::Decided(Some(repeated)) => repeated,
-                    Classification::Decided(None) => {
-                        return Ok(Classification::Decided(true));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                repeated
-                    .root_count_in_interval(parameter.interval(), policy)
-                    .map(|count| count.map(|count| count == 0))
-            }
+                }
+            };
+            classifications.push(classification);
         }
+        Ok(classifications)
     }
 
     /// Returns the sign immediately after an odd-multiplicity root.
@@ -2259,19 +2305,29 @@ mod conversion_tests {
         }
     }
 
+    fn simple_root_classification(
+        polynomial: &BezierParameterPolynomial,
+        parameter: &BezierParameter2,
+        policy: &CurvePolicy,
+    ) -> Classification<bool> {
+        polynomial
+            .simple_root_classifications(std::slice::from_ref(parameter), policy)
+            .unwrap()
+            .pop()
+            .expect("one parameter produces one classification")
+    }
+
     #[test]
     fn simple_root_certificate_distinguishes_exact_multiplicity() {
         let policy = CurvePolicy::certified();
         let root = BezierParameter2::Exact(rational(1, 2));
 
         assert_eq!(
-            polynomial(&[-1, 2]).is_simple_root(&root, &policy).unwrap(),
+            simple_root_classification(&polynomial(&[-1, 2]), &root, &policy),
             Classification::Decided(true)
         );
         assert_eq!(
-            polynomial(&[1, -4, 4])
-                .is_simple_root(&root, &policy)
-                .unwrap(),
+            simple_root_classification(&polynomial(&[1, -4, 4]), &root, &policy),
             Classification::Decided(false)
         );
     }
@@ -2285,12 +2341,42 @@ mod conversion_tests {
         let repeated_root = algebraic_parameter(&repeated);
 
         assert_eq!(
-            simple.is_simple_root(&simple_root, &policy).unwrap(),
+            simple_root_classification(&simple, &simple_root, &policy),
             Classification::Decided(true)
         );
         assert_eq!(
-            repeated.is_simple_root(&repeated_root, &policy).unwrap(),
+            simple_root_classification(&repeated, &repeated_root, &policy),
             Classification::Decided(false)
+        );
+    }
+
+    #[test]
+    fn simple_root_certificates_classify_one_polynomial_batch() {
+        let policy = CurvePolicy::certified();
+        // (2t² - 1)²(8t² - 1) has one simple and one repeated root in
+        // the unit interval, neither representable as a rational scalar.
+        let polynomial = polynomial(&[-1, 0, 12, 0, -36, 0, 32]);
+        let roots = match polynomial.isolate_unit_interval_roots(&policy).unwrap() {
+            Classification::Decided(roots) => roots,
+            Classification::Uncertain(reason) => {
+                panic!("roots unexpectedly uncertain: {reason:?}")
+            }
+        };
+
+        assert_eq!(roots.len(), 2);
+        assert!(
+            roots
+                .iter()
+                .all(|root| matches!(root, BezierParameter2::Algebraic(_)))
+        );
+        assert_eq!(
+            polynomial
+                .simple_root_classifications(&roots, &policy)
+                .unwrap(),
+            vec![
+                Classification::Decided(true),
+                Classification::Decided(false)
+            ]
         );
     }
 

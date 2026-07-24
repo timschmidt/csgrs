@@ -1456,18 +1456,16 @@ impl RationalBezier2 {
                 RationalBezierIntersectionContacts2::NoIntersection,
             )));
         }
+        let simple_roots = polynomial.simple_root_classifications(&other_parameters, policy)?;
         let mut contacts = Vec::with_capacity(other_parameters.len());
-        for parameter in &other_parameters {
+        for (parameter, simple_root) in other_parameters.iter().zip(simple_roots) {
             // The quadratic frame is nonsingular and both rational
             // denominators have a certified common sign. Consequently a
             // simple root of the cleared implicit substitution has nonzero
             // directional derivative, which is exactly transversality of the
             // two regular affine images. Multiple or undecided roots retain
             // the existing tangent-based fallback.
-            let certified_transverse = matches!(
-                polynomial.is_simple_root(parameter, policy)?,
-                Classification::Decided(true)
-            );
+            let certified_transverse = matches!(simple_root, Classification::Decided(true));
             let mapped = conic_parameter_from_curve_parameter(self, other, parameter, policy)?;
             match mapped {
                 Classification::Decided(Some(conic_parameter)) => {
