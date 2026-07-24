@@ -22,6 +22,7 @@ use hyperreal::{Real, RealSign};
 use hypersolve::AlgebraicRootRepresentation;
 
 use crate::bezier_arrangement::represented_roots_equal;
+use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
@@ -1088,8 +1089,11 @@ impl BezierBoundaryLoop2 {
         }
 
         let mut total = Real::zero();
+        let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
         for fragment in &self.fragments {
-            let Some(contribution) = fragment.signed_area_contribution()? else {
+            let Some(contribution) =
+                fragment.signed_area_contribution_with_cache(&mut rational_quadratic_cache)?
+            else {
                 return Ok(None);
             };
             total = &total + &contribution;
@@ -1370,11 +1374,14 @@ impl CurveRegionBoundaryLoop2 {
         }
 
         let mut total = Real::zero();
+        let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
         for fragment in &self.fragments {
             let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
                 return Ok(None);
             };
-            let Some(contribution) = curve.signed_area_contribution()? else {
+            let Some(contribution) =
+                curve.signed_area_contribution_with_cache(&mut rational_quadratic_cache)?
+            else {
                 return Ok(None);
             };
             total = &total + &contribution;
@@ -6171,22 +6178,37 @@ impl BezierSubcurve2 {
             Self::Quadratic(curve) => curve.signed_area_contribution().map(Some),
             Self::Cubic(curve) => curve.signed_area_contribution().map(Some),
             Self::RationalQuadratic(curve) => curve.signed_area_contribution(),
-            Self::Rational(curve) => {
-                let Ok(line) = LineSeg2::try_new(curve.start().clone(), curve.end().clone()) else {
-                    return Ok(None);
-                };
-                if !matches!(
-                    curve.relation_to_line_with_contacts(&line, &CurvePolicy::certified()),
-                    Classification::Decided(BezierLineContactRelation::OnSupportingLine)
-                ) {
-                    return Ok(None);
-                }
-                let twice_area =
-                    curve.start().x() * curve.end().y() - curve.start().y() * curve.end().x();
-                Ok(Some((twice_area / Real::from(2_i8))?))
-            }
+            Self::Rational(curve) => rational_line_signed_area_contribution(curve),
         }
     }
+
+    fn signed_area_contribution_with_cache(
+        &self,
+        rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
+    ) -> CurveResult<Option<Real>> {
+        match self {
+            Self::Quadratic(curve) => curve.signed_area_contribution().map(Some),
+            Self::Cubic(curve) => curve.signed_area_contribution().map(Some),
+            Self::RationalQuadratic(curve) => {
+                curve.signed_area_contribution_with_cache(rational_quadratic_cache)
+            }
+            Self::Rational(curve) => rational_line_signed_area_contribution(curve),
+        }
+    }
+}
+
+fn rational_line_signed_area_contribution(curve: &RationalBezier2) -> CurveResult<Option<Real>> {
+    let Ok(line) = LineSeg2::try_new(curve.start().clone(), curve.end().clone()) else {
+        return Ok(None);
+    };
+    if !matches!(
+        curve.relation_to_line_with_contacts(&line, &CurvePolicy::certified()),
+        Classification::Decided(BezierLineContactRelation::OnSupportingLine)
+    ) {
+        return Ok(None);
+    }
+    let twice_area = curve.start().x() * curve.end().y() - curve.start().y() * curve.end().x();
+    Ok(Some((twice_area / Real::from(2_i8))?))
 }
 
 #[cfg(test)]

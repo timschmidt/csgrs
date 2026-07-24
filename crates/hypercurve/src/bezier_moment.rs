@@ -23,6 +23,36 @@ use crate::{
     RationalQuadraticBezier2, UncertaintyReason,
 };
 
+#[derive(Default)]
+pub(crate) struct RationalQuadraticAreaIntegralCache {
+    inverse_quadratic_integrals: Vec<([Real; 3], Real)>,
+}
+
+impl RationalQuadraticAreaIntegralCache {
+    fn inverse_quadratic_integral(
+        &mut self,
+        denominator: &[Real; 3],
+        delta: &Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Option<Real>> {
+        if let Some((_, integral)) = self
+            .inverse_quadratic_integrals
+            .iter()
+            .find(|(cached_denominator, _)| cached_denominator == denominator)
+        {
+            return Ok(Some(integral.clone()));
+        }
+        let Some(integral) =
+            integrate_inverse_quadratic(&denominator[2], &denominator[1], delta, policy)?
+        else {
+            return Ok(None);
+        };
+        self.inverse_quadratic_integrals
+            .push((denominator.clone(), integral.clone()));
+        Ok(Some(integral))
+    }
+}
+
 /// Exact Green's-theorem area and first-moment boundary contributions.
 ///
 /// The `signed_area` component is `1/2 * integral(x dy - y dx)`. The
@@ -323,7 +353,14 @@ impl RationalQuadraticBezier2 {
     /// nonzero sign, or when a symbolic transcendental branch evidence a domain
     /// boundary.  It is deliberately not a sampled fallback.
     pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
-        rational_quadratic_signed_area_contribution(self)
+        rational_quadratic_signed_area_contribution(self, None)
+    }
+
+    pub(crate) fn signed_area_contribution_with_cache(
+        &self,
+        cache: &mut RationalQuadraticAreaIntegralCache,
+    ) -> CurveResult<Option<Real>> {
+        rational_quadratic_signed_area_contribution(self, Some(cache))
     }
 }
 
@@ -434,6 +471,7 @@ fn signed_area_for_power_coordinates(
 
 fn rational_quadratic_signed_area_contribution(
     curve: &RationalQuadraticBezier2,
+    cache: Option<&mut RationalQuadraticAreaIntegralCache>,
 ) -> CurveResult<Option<Real>> {
     let policy = CurvePolicy::certified();
     if curve.common_nonzero_weight_sign(&policy).is_none() {
@@ -457,7 +495,8 @@ fn rational_quadratic_signed_area_contribution(
         weights[2].clone(),
     ]);
 
-    let Some(integral) = integrate_quadratic_over_quadratic_square(&numerator, &w, &policy)? else {
+    let Some(integral) = integrate_quadratic_over_quadratic_square(&numerator, &w, &policy, cache)?
+    else {
         return Ok(None);
     };
     Ok(Some(integral))
@@ -475,6 +514,7 @@ fn integrate_quadratic_over_quadratic_square(
     numerator: &[Real],
     denominator: &[Real; 3],
     policy: &CurvePolicy,
+    cache: Option<&mut RationalQuadraticAreaIntegralCache>,
 ) -> CurveResult<Option<Real>> {
     let m0 = coefficient(numerator, 0);
     let m1 = coefficient(numerator, 1);
@@ -517,7 +557,12 @@ fn integrate_quadratic_over_quadratic_square(
     };
     let derivative_part = rational_linear_over_quadratic_at(&u, &v, a, b, c, &Real::one())?
         - rational_linear_over_quadratic_at(&u, &v, a, b, c, &Real::zero())?;
-    let Some(inverse_integral) = integrate_inverse_quadratic(a, b, &delta, policy)? else {
+    let inverse_integral = if let Some(cache) = cache {
+        cache.inverse_quadratic_integral(denominator, &delta, policy)?
+    } else {
+        integrate_inverse_quadratic(a, b, &delta, policy)?
+    };
+    let Some(inverse_integral) = inverse_integral else {
         return Ok(None);
     };
     Ok(Some(derivative_part + k * inverse_integral))
@@ -908,5 +953,48 @@ mod tests {
                 area_moments_for_controls(&controls).unwrap().signed_area
             );
         }
+    }
+
+    #[test]
+    fn rational_quadratic_area_cache_reuses_equal_weight_integrals() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let first = RationalQuadraticBezier2::try_new(
+            point(0, 0),
+            point(1, 2),
+            point(3, 0),
+            Real::one(),
+            half.clone(),
+            Real::one(),
+        )
+        .unwrap();
+        let second = RationalQuadraticBezier2::try_new(
+            point(3, 0),
+            point(5, -4),
+            point(8, 1),
+            Real::one(),
+            half,
+            Real::one(),
+        )
+        .unwrap();
+        let expected = [
+            first.signed_area_contribution().unwrap(),
+            second.signed_area_contribution().unwrap(),
+        ];
+        let mut cache = RationalQuadraticAreaIntegralCache::default();
+
+        assert_eq!(
+            first
+                .signed_area_contribution_with_cache(&mut cache)
+                .unwrap(),
+            expected[0]
+        );
+        assert_eq!(cache.inverse_quadratic_integrals.len(), 1);
+        assert_eq!(
+            second
+                .signed_area_contribution_with_cache(&mut cache)
+                .unwrap(),
+            expected[1]
+        );
+        assert_eq!(cache.inverse_quadratic_integrals.len(), 1);
     }
 }

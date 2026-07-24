@@ -3947,6 +3947,42 @@ library builds passed. AddressSanitizer region-Boolean replay completed all
 2,509 executions at 5,895 coverage points and 19,155 feature edges with no
 finding; LeakSanitizer alone remained disabled under ptrace.
 
+### Loop-local rational-conic area kernels
+
+Exact loop orientation formerly reconstructed the same weight-only
+inverse-quadratic integral for every rational-quadratic fragment. Circular-arc
+decomposition in particular produces several conics with identical weight
+denominators but different geometric cross-product numerators, so each segment
+repeated the same exact square root and arctangent construction. Native and
+retained Bezier loop accumulation now keep a small local cache keyed by the
+exact Bernstein-to-power denominator polynomial. A successfully constructed
+inverse-quadratic definite integral is reused only for an exactly equal
+denominator; the remaining numerator-dependent rational terms are still
+evaluated independently. Standalone segment queries retain the uncached path,
+and unsupported or degenerate integral branches are not cached.
+
+A focused regression evaluates two geometrically different conics with equal
+weights through both paths, verifies exact equality with their independently
+constructed uncached results, and confirms that only one denominator integral
+is retained. Existing polynomial/conic area, negative projective scale,
+quarter-circle sector, split/reversal, region-orientation, and Boolean suites
+cover the consuming loop paths.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 37,185,392 to 36,366,179 (2.20%), 88.66% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 55,571 to 53,735
+and temporary events from 4,764 to 4,159; peak heap remained 1.15 MiB and peak
+RSS moved from 11.44 to 11.45 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. AddressSanitizer region-Boolean replay completed all
+2,509 executions at 5,892 coverage points and 19,133 feature edges with no
+finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
