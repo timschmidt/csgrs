@@ -42,7 +42,8 @@ before downstream crates accept the path as ready.
   `hyperpath`.
 - Specctra import/export records provide a text/grid route handoff surface,
   including retained route envelopes, quoted aliases, vias, and multi-segment
-  path wires.
+  path wires. The in-memory route carrier also retains exact circular arcs and
+  cubic Beziers for higher-level routing workflows.
 
 ## Precision Model
 

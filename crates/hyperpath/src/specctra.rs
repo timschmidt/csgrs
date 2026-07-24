@@ -16,6 +16,7 @@ use std::borrow::Cow;
 use std::fmt::Write;
 
 use crate::arc::{ArcDirection, ExplicitCircularArc};
+use crate::bezier::CubicBezier;
 use crate::pcb::{NetId, PcbTrace, PcbViaStack, TraceLayer, ViaDrillIntent};
 use crate::routing::{MeanderError, MeanderKeepout, MeanderObstacle, validate_meander_keepouts};
 use crate::segment::LinePathSegment;
@@ -292,12 +293,26 @@ pub struct SpecctraRouteArc {
     pub width: Real,
 }
 
-/// Exact route made of validated trace, via, and retained arc records.
+/// Imported exact cubic-Bezier route segment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraRouteBezier {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Exact retained polynomial centerline.
+    pub bezier: CubicBezier,
+    /// Exact route width.
+    pub width: Real,
+}
+
+/// Exact route made of validated trace, via, arc, and Bezier records.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SpecctraRoute {
     traces: Vec<PcbTrace>,
     vias: Vec<PcbViaStack>,
     arcs: Vec<SpecctraRouteArc>,
+    beziers: Vec<SpecctraRouteBezier>,
 }
 
 impl SpecctraRoute {
@@ -307,6 +322,7 @@ impl SpecctraRoute {
             traces,
             vias: Vec::new(),
             arcs: Vec::new(),
+            beziers: Vec::new(),
         }
     }
 
@@ -316,6 +332,7 @@ impl SpecctraRoute {
             traces,
             vias,
             arcs: Vec::new(),
+            beziers: Vec::new(),
         }
     }
 
@@ -325,7 +342,27 @@ impl SpecctraRoute {
         vias: Vec<PcbViaStack>,
         arcs: Vec<SpecctraRouteArc>,
     ) -> Self {
-        Self { traces, vias, arcs }
+        Self {
+            traces,
+            vias,
+            arcs,
+            beziers: Vec::new(),
+        }
+    }
+
+    /// Construct a route from validated traces, vias, arcs, and cubic Beziers.
+    pub fn with_curves(
+        traces: Vec<PcbTrace>,
+        vias: Vec<PcbViaStack>,
+        arcs: Vec<SpecctraRouteArc>,
+        beziers: Vec<SpecctraRouteBezier>,
+    ) -> Self {
+        Self {
+            traces,
+            vias,
+            arcs,
+            beziers,
+        }
     }
 
     /// Return the validated trace list.
@@ -341,6 +378,11 @@ impl SpecctraRoute {
     /// Return retained exact circular-arc route segments.
     pub fn arcs(&self) -> &[SpecctraRouteArc] {
         &self.arcs
+    }
+
+    /// Return retained exact cubic-Bezier route segments.
+    pub fn beziers(&self) -> &[SpecctraRouteBezier] {
+        &self.beziers
     }
 
     /// Import exact trace records, stopping at the first invalid record.
