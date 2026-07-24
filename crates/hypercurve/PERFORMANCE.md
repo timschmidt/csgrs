@@ -3268,6 +3268,34 @@ region-Boolean replay completed its 2,509-run budget after 2,513 executions at
 5,900 coverage points and 19,165 feature edges; LeakSanitizer alone remained
 disabled under ptrace.
 
+### Fused quotient-basis pseudo-reduction
+
+Hypersolve now evaluates every affected pseudo-reduction coefficient as one
+checked exact integer cross difference,
+`leading*value - source*eliminand`. Only the untouched low-degree prefix is
+scaled separately, and a unit source leading coefficient leaves that prefix
+unchanged. Shifted relation coefficients are cloned directly instead of being
+added to zero. A failed integer check still returns `None` and preserves the
+Sylvester-resultant fallback.
+
+The generated quotient-ring/Sylvester property covers the complete schedule.
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 72,479,577 to 71,182,596 (1.8%), 77.8% below the original
+320,660,631 baseline. Heaptrack allocations fell from 107,461 to 105,140;
+temporary allocations rose from 6,236 to 6,409, peak heap remained 1.53 MiB,
+and peak RSS fell from 12.65 to 12.37 MiB.
+
+Eleven ordinary runs had a 7.446 ms complete median, a 5.430 ms preparation
+median, and a 0.343 ms exact-polyline projection median. Every run retained
+9 candidate pairs, 48 fragments, 2 classifications, 4 decided operations,
+no blockers, and checksum 6.
+
+The complete Hypersolve and Hypercurve all-feature and no-default-feature
+suites, formatting, warning-denied all-target Clippy and rustdoc, and release
+WASM library builds passed. The requested AddressSanitizer region-Boolean
+replay completed all 2,509 executions at 5,893 coverage points and 19,125
+feature edges; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
