@@ -430,8 +430,19 @@ fn pseudo_quotient_multiplication_matrix(
         return None;
     }
 
-    let product_len = degree.checked_add(relation_degree)?;
     let mut matrix = vec![BigInt::zero(); degree.checked_mul(degree)?];
+    if relation.len() == 1 {
+        let mut diagonal = relation[0].clone();
+        for _ in 0..relation_degree {
+            diagonal *= leading;
+        }
+        for index in 0..degree {
+            matrix[index * degree + index] = diagonal.clone();
+        }
+        return Some(matrix);
+    }
+
+    let product_len = degree.checked_add(relation_degree)?;
     let mut product = vec![BigInt::zero(); product_len];
     for column in 0..degree {
         for (power, coefficient) in relation.iter().enumerate() {
@@ -889,6 +900,27 @@ mod tests {
                 sylvester.clone() * quotient_samples[pivot].clone()
             );
         }
+    }
+
+    #[test]
+    fn constant_quotient_relation_retains_padded_pseudo_scale() {
+        let source = [2, -3, 0, 2].map(BigInt::from);
+        let relation = [BigInt::from(3)];
+
+        assert_eq!(
+            pseudo_quotient_multiplication_matrix(&source, &relation, 2),
+            Some(vec![
+                BigInt::from(12),
+                BigInt::zero(),
+                BigInt::zero(),
+                BigInt::zero(),
+                BigInt::from(12),
+                BigInt::zero(),
+                BigInt::zero(),
+                BigInt::zero(),
+                BigInt::from(12),
+            ])
+        );
     }
 
     #[test]
