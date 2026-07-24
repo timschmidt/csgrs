@@ -55,16 +55,30 @@ fn public_rust_vocabulary_does_not_reintroduce_circuit_or_pcb_types() {
 }
 
 #[test]
-fn the_only_electronics_markers_are_the_two_deprecated_compatibility_variants() {
+fn public_part_metadata_has_no_electronics_compatibility_vocabulary() {
     let metadata = include_str!("../parts/metadata.rs");
-    assert_eq!(
-        metadata
-            .matches("compatibility marker scheduled for removal in csgrs 0.25.0")
-            .count(),
-        2
-    );
-    assert_eq!(metadata.matches("\n    Package,").count(), 1);
-    assert_eq!(metadata.matches("\n    Electrical,").count(), 1);
+    for retired in [
+        "\n    Package,",
+        "\n    Electrical,",
+        "role = \"pin\"",
+        "role = \"pad\"",
+        "`hypercircuit::DevicePin`",
+        "`hypercircuit::LandPatternPad`",
+    ] {
+        assert!(
+            !metadata.contains(retired),
+            "geometry metadata still contains retired electronics vocabulary `{retired}`"
+        );
+    }
+}
+
+#[test]
+fn completed_migration_names_the_external_reader_removal_release() {
+    let migration = include_str!("../../PCB_MIGRATION.md");
+    assert!(migration.contains("LEGACY_CSGRS_ELECTRONICS_REMOVAL_VERSION"));
+    assert!(migration.contains("HyperCircuit 0.4.0"));
+    assert!(migration.contains("csgrs has no compatibility API"));
+    assert!(migration.contains("live markers and electrical terminal roles are already gone"));
 }
 
 fn collect_rust_sources(directory: &Path, output: &mut Vec<std::path::PathBuf>) {
