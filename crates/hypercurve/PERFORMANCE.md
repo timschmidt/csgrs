@@ -3641,6 +3641,38 @@ AddressSanitizer region-Boolean replay completed all 2,516 executions at 5,897
 coverage points and 19,105 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Single-loop roles and unique conic extrema
+
+A retained region with one boundary loop has containment depth zero by
+construction. When no authored role is attached, filled-side classification
+now uses that loop's exact nonzero signed-area orientation directly instead of
+constructing sample-point nesting evidence. Multi-loop regions retain the full
+curved containment classifier, and unsupported or zero-area single loops keep
+their existing explicit uncertainty.
+
+Rational-quadratic bounds split one sorted parameter sequence into consecutive
+monotone windows. The bounds evaluator formerly sampled each interior split
+twice, once as a window end and again as the next window start. It now samples
+only non-unit window ends, which visits every interior extremum exactly once.
+A focused single-loop regression covers both orientations and verifies that
+filled-side classification does not populate nesting bounds; the complete
+rational evaluation/bounds and region suites cover the monotone-window change.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 49,357,412 to 48,952,778 (0.82%), 84.73% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 76,840 to 76,363
+and temporary events from 7,334 to 7,332; peak heap remained 1.32 MiB and peak
+RSS fell from 12.07 to 12.02 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and supported default/no-default release WASM library builds passed.
+AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,899
+coverage points and 19,138 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -498,13 +498,10 @@ impl RationalQuadraticBezier2 {
             Classification::Decided(spans) => spans,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
+        // The spans are consecutive windows of one sorted split-parameter
+        // sequence, so every interior extremum is the end of exactly one span.
+        // Evaluating starts as well would materialize each exact point twice.
         for span in spans {
-            if !is_unit_endpoint(span.start(), policy) {
-                match self.point_at(span.start().clone(), policy) {
-                    Classification::Decided(point) => samples.push(point),
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-            }
             if !is_unit_endpoint(span.end(), policy) {
                 match self.point_at(span.end().clone(), policy) {
                     Classification::Decided(point) => samples.push(point),

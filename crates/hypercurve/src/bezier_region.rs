@@ -2431,6 +2431,16 @@ impl CurveRegion2 {
                     .map(|sides| Classification::Decided(Rc::from(sides)));
             }
         }
+        if self.boundary_loops.len() == 1
+            && let Some(area) = self.boundary_loops[0].signed_area()?
+        {
+            return Ok(match real_sign(&area, policy) {
+                Some(RealSign::Positive) => Classification::Decided(Rc::from([true].as_slice())),
+                Some(RealSign::Negative) => Classification::Decided(Rc::from([false].as_slice())),
+                Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
+                None => Classification::Uncertain(UncertaintyReason::RealSign),
+            });
+        }
 
         match self.curved_nesting_role_evidence(policy)? {
             Classification::Decided(evidence) => {
@@ -6182,10 +6192,54 @@ impl BezierSubcurve2 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CircularArc2, Curve2, CurvePath2, RationalQuadraticBezier2};
+    use crate::{CircularArc2, Curve2, CurvePath2, QuadraticBezier2, RationalQuadraticBezier2};
 
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn quadratic_fragment(start: Point2, control: Point2, end: Point2) -> BezierSplitFragment2 {
+        BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
+        }
+    }
+
+    fn single_quadratic_loop_region(clockwise: bool) -> CurveRegion2 {
+        let fragments = if clockwise {
+            vec![
+                quadratic_fragment(p(0, 0), p(0, 1), p(0, 2)),
+                quadratic_fragment(p(0, 2), p(1, 2), p(2, 2)),
+                quadratic_fragment(p(2, 2), p(2, 1), p(2, 0)),
+                quadratic_fragment(p(2, 0), p(1, 0), p(0, 0)),
+            ]
+        } else {
+            vec![
+                quadratic_fragment(p(0, 0), p(1, 0), p(2, 0)),
+                quadratic_fragment(p(2, 0), p(2, 1), p(2, 2)),
+                quadratic_fragment(p(2, 2), p(1, 2), p(0, 2)),
+                quadratic_fragment(p(0, 2), p(0, 1), p(0, 0)),
+            ]
+        };
+        CurveRegion2::new(vec![
+            CurveRegionBoundaryLoop2::new(fragments).expect("closed retained quadratic loop"),
+        ])
+        .expect("one retained loop")
+    }
+
+    #[test]
+    fn single_loop_filled_side_uses_area_without_constructing_nesting_bounds() {
+        let policy = CurvePolicy::certified();
+        for (clockwise, expected) in [(false, true), (true, false)] {
+            let region = single_quadratic_loop_region(clockwise);
+            assert!(region.native_boundary_bounds.get().is_none());
+            assert!(matches!(
+                region.filled_side_is_left(&policy),
+                Ok(Classification::Decided(sides)) if sides == [expected]
+            ));
+            assert!(region.native_boundary_bounds.get().is_none());
+        }
     }
 
     #[test]
