@@ -3874,6 +3874,43 @@ region-Boolean replay completed all 2,509 executions at 5,897 coverage points
 and 19,176 feature edges with no finding; LeakSanitizer alone remained disabled
 under ptrace.
 
+### Direct quotient-ring determinant polynomials
+
+Algebraic polynomial and rational images formerly evaluated their quotient-ring
+matrix pencil at `degree + 1` integer image values, ran a separate
+fraction-free Bareiss determinant for every sample, and interpolated the
+resultant polynomial afterward. Hypersolve now expands the determinant of the
+linear polynomial matrix directly with an exact subset dynamic program. Each
+partial assigns one source-basis row to a distinct column, retains its
+permutation sign, and accumulates integer coefficients in ascending image
+power. Structurally zero constant or linear matrix entries are skipped. The
+result remains the same elimination polynomial up to the shared nonzero scale
+introduced by the quotient-ring basis; the existing Sylvester path remains the
+fallback when integer matrix construction is unavailable.
+
+A fixed nonmonic cubic-source regression and generated monic cubic cases
+evaluate the new coefficient form at every old sample point and compare it
+both to the retained flat-Bareiss reference and to independently constructed
+Sylvester resultants up to one scale. Existing polynomial-image,
+rational-image, algebraic-parameter, curve-intersection, and Boolean suites
+cover the two consuming construction paths.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 42,877,040 to 40,252,053 (6.12%), 87.45% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 65,679 to 61,157
+and temporary events from 7,008 to 5,376; peak heap remained 1.28 MiB and peak
+RSS fell from 11.78 to 11.76 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature test suites passed in both
+hypersolve and hypercurve, together with formatting, warning-denied all-target
+Clippy, warning-denied all-feature and no-default-feature rustdoc, and
+supported default/no-default release WASM library builds. AddressSanitizer
+region-Boolean replay completed all 2,509 executions at 5,898 coverage points
+and 19,139 feature edges with no finding; LeakSanitizer alone remained disabled
+under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
