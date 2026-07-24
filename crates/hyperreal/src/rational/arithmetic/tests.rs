@@ -2722,6 +2722,41 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn word_reduction_trace_classifies_odd_denominator_shapes() {
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            for denominator in [
+                25_u128,
+                27,
+                49,
+                75,
+                11,
+                65_537,
+                (1_u128 << 65) + 1,
+            ] {
+                let _ = Rational::from_word_magnitude_difference(1, 0, denominator);
+            }
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        for path in [
+            "power-of-five-denominator",
+            "power-of-three-denominator",
+            "power-of-seven-denominator",
+            "mixed-357-smooth-denominator",
+            "other-small-odd-denominator",
+            "other-word-odd-denominator",
+            "other-wide-odd-denominator",
+        ] {
+            assert_eq!(
+                trace.path_count("rational", "word-reduction", path),
+                1,
+                "missing {path}"
+            );
+        }
+    }
+
     #[test]
     fn magnitude_at_least_power_of_two_handles_threshold_boundaries() {
         assert!(

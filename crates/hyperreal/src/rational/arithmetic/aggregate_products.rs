@@ -1,3 +1,21 @@
+#[cfg(feature = "dispatch-trace")]
+fn word_is_power_of(mut value: u128, factor: u128) -> bool {
+    while value.is_multiple_of(factor) {
+        value /= factor;
+    }
+    value == 1
+}
+
+#[cfg(feature = "dispatch-trace")]
+fn word_is_smooth_357(mut value: u128) -> bool {
+    for factor in [3_u128, 5, 7] {
+        while value.is_multiple_of(factor) {
+            value /= factor;
+        }
+    }
+    value == 1
+}
+
 #[derive(Clone, Debug)]
 struct HalfGcdMatrix {
     u00: BigUint,
@@ -1970,11 +1988,29 @@ impl Rational {
             .binary_search(&odd_denominator)
             .is_ok()
         {
+            crate::trace_dispatch!("rational", "word-reduction", "power-of-five-denominator");
             while denominator.is_multiple_of(5) && magnitude.is_multiple_of(5) {
                 denominator /= 5;
                 magnitude /= 5;
             }
         } else {
+            #[cfg(feature = "dispatch-trace")]
+            {
+                let path = if word_is_power_of(odd_denominator, 3) {
+                    "power-of-three-denominator"
+                } else if word_is_power_of(odd_denominator, 7) {
+                    "power-of-seven-denominator"
+                } else if word_is_smooth_357(odd_denominator) {
+                    "mixed-357-smooth-denominator"
+                } else if odd_denominator <= u128::from(u16::MAX) {
+                    "other-small-odd-denominator"
+                } else if odd_denominator <= u128::from(u64::MAX) {
+                    "other-word-odd-denominator"
+                } else {
+                    "other-wide-odd-denominator"
+                };
+                crate::trace_dispatch!("rational", "word-reduction", path);
+            }
             let divisor = Self::gcd_word(magnitude, denominator);
             magnitude /= divisor;
             denominator /= divisor;

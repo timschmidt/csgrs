@@ -1678,6 +1678,25 @@ replay completed the requested 2,509-run budget after 2,519 executions at
 5,894 coverage points and 19,153 feature edges with no finding; LeakSanitizer
 alone remained disabled under ptrace.
 
+### Word-reduction denominator-shape tracing
+
+The optional dispatch trace now classifies native odd-denominator reduction
+into powers of three, five, or seven; mixed 3/5/7-smooth values; other small
+odd values; other `u64` values; and wider values. This does not execute in
+ordinary builds. Hypercurve's pathological benchmark can place its complete
+mixed-family retained Boolean workload in one shared recording window and
+print these raw counts with the existing rational reducer summary.
+
+The one-cell trace recorded 3,027 odd-denominator reductions: 1,030 powers of
+five, 56 powers of three, 93 powers of seven, 1,574 mixed 3/5/7-smooth
+denominators, 72 other small denominators, 144 other `u64` denominators, and 8
+wider denominators. Replacing the tuned binary GCD for the smooth group with
+repeated exact divisibility loops was rejected: the ten-run instruction median
+rose from 31,154,077 to approximately 31.316 million (0.52%) with unchanged
+topology. Expanding canonical dyadic storage from odd magnitudes 63 through
+127 was also rejected after it removed no allocations, retained seven extra
+static rationals, and moved the median slightly upward.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
