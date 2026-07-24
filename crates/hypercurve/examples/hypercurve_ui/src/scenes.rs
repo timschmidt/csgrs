@@ -12,6 +12,7 @@ use crate::geometry::{
 };
 use crate::plotting::{draw_points, draw_polyline, draw_shape, find_near_vertex};
 use crate::theme::Theme;
+use crate::torture_scene::{TortureScene, TortureSceneState};
 
 const DEFAULT_SHARE_STATE: &str = "_Td6WFoAAATm1rRGAgAhARwAAAAQz1jM4DpvBzZdAD2IisaUU5CGpmN9JTsoyCLgCC9eAQQ27Q7WqXNVd1y0-wb6C1ZgWGQnHCWS18V4qXLh9BwxxVau-JTy2x52gCslzqlWcvTnvroRR15N7jOzVVKyl9y2jv_M52lTtD-auC6XkxvB1uahKO3gEPYUyEv6Gz_MtxPx9VmO4SWWxTvjiLar2l_sqU_RXR2jG_u8ckoi6XsMR4Ypa1_H3UgTxdY1Mw1vVzb03gcFA6p644S5WfbZk6vYaSrOPWgCqmTmvytc3SFWzLb4J14ulU_EaDmga_jUJm7IFOQYHd4BlE7dqpJdM6LeRDGuffyga2fw9t6Ia75wfsjHtwv-nX2EkT4ynH5ftPgW5rXpy5_QFZJ6bXF1csuEPDJOXku8sXjrfiYaLiruWVnSJF2223Y1kml1-fQlOM9ffefyN6IDMvqviF_AiqNkiWIcbISOkWt4bMcU1ukFUpAKq1rJH9UHHZMVfKbNgufEQOHAgpjD2jyFo2QgML-rfFOE_Z2heRMVwNs3TgWO4b4gJqivtckylIX4FKlBdk6vWzNa9mWmWMmNJJRi7Ua2gAAihbBdUjwe9Qg1pYls0TdAX6wl77uxtNfsUE9jsWVykb-A4FK2xtgia3Qftm5ZyOq6Ne-qrvNig0GDmfvD39trEh8IrmXS5HamvtQ-ykAxhEhdRlAa5Z00o7qnOriQ1LVwLjUMfCeVV_qnDfffktSxpcXizohgii-18Ya0KcjSBtuGXkZJspigsiclxxq1BN7_QvzrRXu2fyvGC4lg9aBIDfqVdbjIqec1EPCNBmYdZLENv2Gl__XzrpJZSMq9Br7RtiJDuFeBH0FpE7N4ZXE9uxgYPQ_YmvFoltQBxixjYzsD4xkqrBgwdroopPH3VRhtvhsEHRRtzvpDcW9akf-p1P9XCEKVIqx5tWpILNz3FceiWZ1yXd_aU5csv2HORALO9DzITMTJVtS9XWKsaAnKaKiAgkmygfOJccAOaY34nPhKuoEyQ5N5goJaCCQc1r-EyzsHx2W5JAAvQWxrohY7mPjqS4YNwQJfwVecQ2IpRrlYiJZhx4GGdkyspvtqpNpT60MN3tejmUwo7Vf5ORdM7bdMSUFF1AYcJmp9Qe69FP8srOe-t56Ko343cIaj6wsBwpuMC9TjznzorbaxKNrgrV5uERkmmY9WhEVml5aU5wNfynTUyrLWQnFLIu7TMoUbI1DEizED2yGHVDK1nuULgS5IgXF78UvoLLPPOevuwVAH92wBDhU-VOGNNjh5XOGUtOJWqbAB9YsfYOUQOmUUZCgrqk4ddDuEslYuq0IxEqvHCL_lkpGfMDsjMSDZwPwD18h51w63uWLvrcxDeDK0__IQDUWLbFcpH4up_vSjz-o6ZH42uCS1BJJvaSUCH7pq1BLXPXfpC3N8PdCDD-uzsd0JTWUmOxzVRRKFdzI-CVY0t7-IaQ3IoqOxAqhzRf0aRJiqs6Fngh_Q1UfGVg5M7V2t2GlZhV7egkTiebB35_Q9lwx6hd5sj_FYMkErLxlDb8VDqN8e50BlIO6gbJVyOQZPkIZ61NSLM1K0f-WKisquSNQDWHlM1_bT19tskwgtv7NcNTacTU9krJeELOs0HuZ7QpRKUW7C6EXeUlLLRP7I8phHC2ohj0kL7FkcBSn5yYzz-vyJK0Nng4nsmuqsTXXea8mzrasJv_rzFbyjDS-TYtI-Rb_4gJD77Ky0l6Md3Lc2H9Ybpg8xXwQYKcdK5ZfATErySZwI2cUXriPIQ3oo5kNA-c6g8LW-ubiEPX9bZbstnq399FVV2-d1QerKnoRk-OaNSt-6lYZUAr_DUQwjWBZTIHdjZlV729bgItkLp3E15HLdfYBuzaPt0nTc5V3_MYrbjPP1GqBe0gsIJanMnkImcivePNoZkP3U9vSwPns7TdP0S8fY7oiI8qHYa6ccEnaYkNeSsMva35J_adLKl1nsEEfAISNkpxUu9j0pvwLhQun7FtDStB08iwlgGQwqbt0_dWnYhSNz4DWhnslYJ5iR5QGmfwp-Cjn4FbvmHU0Kg8bfvi0H8iGdcO-wi1y62cXAMXT29ttcq4JhAQjDBiAIln-b1OcUz2gDepJ_cVM2Pw2804zM-PzfDOqVLEGKtWvn8A9o6hUxvfthzJ22G2BU0i-NtwVUlPGoFEOtuDynRckWPik1IUEvHCD13CdFv5-oDMkkPOMPCIItHsFfhQoYoe1XNrHTAynvp8i9UJFPsQT6rpXkyQDIL9uuNPnwiV6OaM4YPIJ_rhuP7Io3TE2SZDbQZY4GQHnEi_UAKfY6RdCCWGSdDaZu1k79aOFpGlGOcKFewbI4eQivTPTSYLl_FETVMzahSO-EfEUiGfREAKMEx51zQMsWOFZGhsRDnjZ7O56rEZO_eNTTKewzw3CSD2z5E7rJQQ9vrsLLEoPDelZs7uH5VNb24eETW5l05USIdpa461PKssUAAAClYjLYKsxz0gAB0g7wdAAAswEN9rHEZ_sCAAAAAARZWg";
 
@@ -23,6 +24,7 @@ pub struct DemoScenes {
     multi_offset: MultiPlineOffsetScene,
     fillet: CornerScene,
     chamfer: CornerScene,
+    torture: TortureScene,
     #[cfg(target_arch = "wasm32")]
     share_status: Option<String>,
 }
@@ -63,6 +65,7 @@ impl DemoScenes {
             multi_offset: MultiPlineOffsetScene::default(),
             fillet: CornerScene::new(CornerOperation::Fillet, default_fillet_radius()),
             chamfer: CornerScene::new(CornerOperation::Chamfer, default_chamfer_setback()),
+            torture: TortureScene::default(),
             #[cfg(target_arch = "wasm32")]
             share_status: None,
         }
@@ -96,6 +99,7 @@ impl DemoScenes {
                     "Multi Polyline Offset",
                     "Fillets",
                     "Chamfers",
+                    "Torture",
                 ]
                 .into_iter()
                 .enumerate()
@@ -133,7 +137,8 @@ impl DemoScenes {
             2 => self.multi_boolean.ui(ctx, &theme),
             3 => self.multi_offset.ui(ctx, &theme),
             4 => self.fillet.ui(ctx, &theme),
-            _ => self.chamfer.ui(ctx, &theme),
+            5 => self.chamfer.ui(ctx, &theme),
+            _ => self.torture.ui(ctx, &theme),
         }
     }
 
@@ -142,13 +147,14 @@ impl DemoScenes {
             return Err(format!("unsupported state version {}", state.version));
         }
         let mut scenes = Self::fallback_default();
-        scenes.active = state.active.min(5);
+        scenes.active = state.active.min(6);
         scenes.pline_boolean.apply_state(state.pline_boolean)?;
         scenes.pline_offset.apply_state(state.pline_offset)?;
         scenes.multi_boolean.apply_state(state.multi_boolean)?;
         scenes.multi_offset.apply_state(state.multi_offset)?;
         scenes.fillet.apply_amount(state.fillet_radius)?;
         scenes.chamfer.apply_amount(state.chamfer_setback)?;
+        scenes.torture = TortureScene::from_state(state.torture);
         Ok(scenes)
     }
 
@@ -163,6 +169,7 @@ impl DemoScenes {
             multi_offset: self.multi_offset.state(),
             fillet_radius: self.fillet.amount(),
             chamfer_setback: self.chamfer.amount(),
+            torture: self.torture.state(),
         }
     }
 }
@@ -179,6 +186,8 @@ struct DemoScenesState {
     fillet_radius: f64,
     #[serde(default = "default_chamfer_setback")]
     chamfer_setback: f64,
+    #[serde(default)]
+    torture: TortureSceneState,
 }
 
 const fn default_fillet_radius() -> f64 {
@@ -1134,12 +1143,7 @@ mod tests {
     }
 
     fn assert_no_zero_length_lines(shape: &Shape, op: BooleanMode) {
-        for (loop_index, polyline) in shape
-            .materials
-            .iter()
-            .chain(shape.holes.iter())
-            .enumerate()
-        {
+        for (loop_index, polyline) in shape.materials.iter().chain(shape.holes.iter()).enumerate() {
             for (curve_index, curve) in polyline.curve_data.iter().enumerate() {
                 if let CurvePrimitive::Line { start, end } = curve {
                     assert!(
@@ -1158,12 +1162,18 @@ mod tests {
             .chain(shape.holes.iter())
             .flat_map(|polyline| polyline.sample_points(0.04))
             .collect::<Vec<_>>();
-        let min_x = points.iter().map(|point| point[0]).fold(f64::INFINITY, f64::min);
+        let min_x = points
+            .iter()
+            .map(|point| point[0])
+            .fold(f64::INFINITY, f64::min);
         let max_x = points
             .iter()
             .map(|point| point[0])
             .fold(f64::NEG_INFINITY, f64::max);
-        let min_y = points.iter().map(|point| point[1]).fold(f64::INFINITY, f64::min);
+        let min_y = points
+            .iter()
+            .map(|point| point[1])
+            .fold(f64::INFINITY, f64::min);
         let max_y = points
             .iter()
             .map(|point| point[1])
@@ -1227,13 +1237,9 @@ mod tests {
             }
         }
 
-        let union = boolean_polylines(
-            &scene.polylines[0],
-            &scene.polylines[1],
-            BooleanMode::Union,
-        )
-        .unwrap()
-        .expect("default union should resolve");
+        let union = boolean_polylines(&scene.polylines[0], &scene.polylines[1], BooleanMode::Union)
+            .unwrap()
+            .expect("default union should resolve");
         assert!(
             has_higher_order_curve(&union),
             "boolean union should preserve native higher-order curves"

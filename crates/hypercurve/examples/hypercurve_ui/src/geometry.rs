@@ -5,10 +5,9 @@ use geo::{BooleanOps, Buffer, Coord, LineString, MultiPolygon, Polygon};
 use hypercurve::{
     BooleanOp as HBooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2,
     ContourFragmentSet, ContourIntersection, ContourIntersectionSet, ContourOperand,
-    ContourSplitMarkers, CubicBezier2, Curve2, CurveGeometry2, CurvePath2, CurvePolicy,
-    CurveIntersectionPairBlockerKind2, CurveRegion2, CurveRegionLoopRole, CurveString2, FillRule,
-    LineSeg2, OffsetCap, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, Segment2,
-    Tolerance,
+    ContourSplitMarkers, CubicBezier2, Curve2, CurveGeometry2, CurveIntersectionPairBlockerKind2,
+    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, CurveString2, FillRule, LineSeg2,
+    OffsetCap, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, Segment2, Tolerance,
 };
 use serde::{Deserialize, Serialize};
 
@@ -311,29 +310,21 @@ impl CurvePrimitive {
 
     fn to_curve(&self) -> Result<Curve2, String> {
         match *self {
-            Self::Line { start, end } => LineSeg2::try_new(
-                point_from_vertex(start),
-                point_from_vertex(end),
-            )
-            .map(Curve2::from)
-            .map_err(|error| error.to_string()),
+            Self::Line { start, end } => {
+                LineSeg2::try_new(point_from_vertex(start), point_from_vertex(end))
+                    .map(Curve2::from)
+                    .map_err(|error| error.to_string())
+            }
             Self::CircularArc { start, end, bulge } => {
                 let bulge = real_checked(bulge, "circular arc bulge")?;
                 if bulge == Real::zero() {
-                    return LineSeg2::try_new(
-                        point_from_vertex(start),
-                        point_from_vertex(end),
-                    )
-                    .map(Curve2::from)
-                    .map_err(|error| error.to_string());
+                    return LineSeg2::try_new(point_from_vertex(start), point_from_vertex(end))
+                        .map(Curve2::from)
+                        .map_err(|error| error.to_string());
                 }
-                CircularArc2::from_bulge(
-                    point_from_vertex(start),
-                    point_from_vertex(end),
-                    bulge,
-                )
-                .map(Curve2::from)
-                .map_err(|error| error.to_string())
+                CircularArc2::from_bulge(point_from_vertex(start), point_from_vertex(end), bulge)
+                    .map(Curve2::from)
+                    .map_err(|error| error.to_string())
             }
             Self::QuadraticBezier {
                 start,
@@ -923,11 +914,7 @@ pub fn curve_boolean_clip_contour(origin_x: f64, origin_y: f64, scale: f64) -> P
     )
 }
 
-pub fn curve_boolean_lower_clip_contour(
-    origin_x: f64,
-    origin_y: f64,
-    scale: f64,
-) -> Polyline {
+pub fn curve_boolean_lower_clip_contour(origin_x: f64, origin_y: f64, scale: f64) -> Polyline {
     let lower_left = demo_vertex(origin_x, origin_y, scale, -4.0, -3.0, 0.0);
     let lower_right = demo_vertex(origin_x, origin_y, scale, 4.0, -3.0, 0.0);
     let upper_right = demo_vertex(origin_x, origin_y, scale, 4.0, 1.3, 0.0);
@@ -1042,12 +1029,8 @@ impl Shape {
             roles.push(CurveRegionLoopRole::Hole);
         }
         let fill_rules = vec![FillRule::NonZero; paths.len()];
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &paths,
-            &roles,
-            &fill_rules,
-        )
-        .map_err(|error| error.to_string())
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(&paths, &roles, &fill_rules)
+            .map_err(|error| error.to_string())
     }
 
     pub fn from_curve_region(region: &CurveRegion2) -> Result<Option<Self>, String> {

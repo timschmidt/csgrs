@@ -765,10 +765,7 @@ fn line_curve(start: Point2, end: Point2) -> Result<Curve2, String> {
 }
 
 fn point(x: i32, y: i32) -> Point2 {
-    Point2::new(
-        Real::from(REGION_SCALE * x),
-        Real::from(REGION_SCALE * y),
-    )
+    Point2::new(Real::from(REGION_SCALE * x), Real::from(REGION_SCALE * y))
 }
 
 fn local_point(origin: (i32, i32), x: i32, y: i32) -> Point2 {

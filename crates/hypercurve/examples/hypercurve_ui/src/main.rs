@@ -8,6 +8,7 @@ mod plotting;
 mod scenes;
 mod share;
 mod theme;
+mod torture_scene;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result {
