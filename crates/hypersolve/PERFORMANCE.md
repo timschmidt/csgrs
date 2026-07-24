@@ -238,6 +238,33 @@ WASM library builds passed. The requested AddressSanitizer region-Boolean fuzz
 replay completed all 2,509 executions at 5,903 coverage points and 19,183
 feature edges; LeakSanitizer alone remained disabled under ptrace.
 
+The quotient-ring image path now evaluates its already-flat exact-integer
+multiplication matrices with a private flat Bareiss kernel. This avoids
+rebuilding nested `Real` rows and constructing the public determinant report
+for each interpolation sample. The recurrence still uses Hyperreal's checked
+exact integer cross-difference quotient; a failed shape check or exact division
+returns `None` and preserves the established Sylvester-resultant fallback.
+Fixed zero-, one-, two-, and three-dimensional cases plus generated four-by-four
+integer matrices compare the private result with the public report-bearing
+determinant, while the existing generated quotient-ring/Sylvester comparison
+continues to cover the caller.
+
+On the same Hypercurve sentinel, the ten-run instruction median fell from
+76,301,712 to 74,732,427 (2.1%), 76.7% below the original baseline. Heaptrack
+allocations fell from 114,193 to 112,178; temporary allocations remained
+6,833, peak heap remained 1.53 MiB, and peak RSS was 12.51 MiB. Eleven ordinary
+runs had an 8.004 ms complete median, a 5.749 ms preparation median, and a
+0.379 ms exact-polyline projection median. Exact topology remained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete Hypersolve and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The requested AddressSanitizer
+region-Boolean fuzz replay completed all 2,509 executions at 5,890 coverage
+points and 19,156 feature edges; LeakSanitizer alone remained disabled under
+ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate

@@ -251,21 +251,66 @@ pub(crate) fn quotient_ring_resultant_samples(
     for sample in 0..=degree {
         let image_value = Rational::new(i64::try_from(sample).ok()?);
         let matrix = numerator_entries
-            .chunks_exact(degree)
-            .zip(denominator_entries.chunks_exact(degree))
-            .map(|(numerator_row, denominator_row)| {
-                numerator_row
-                    .iter()
-                    .zip(denominator_row)
-                    .map(|(numerator, denominator)| {
-                        Real::from(numerator - &(denominator * &image_value))
-                    })
-                    .collect::<Vec<_>>()
-            })
+            .iter()
+            .zip(&denominator_entries)
+            .map(|(numerator, denominator)| numerator - &(denominator * &image_value))
             .collect::<Vec<_>>();
-        samples.push(determinant_bareiss(&matrix, -64).ok()?.determinant);
+        samples.push(Real::from(determinant_integer_bareiss_flat(
+            matrix, degree,
+        )?));
     }
     Some(samples)
+}
+
+fn determinant_integer_bareiss_flat(
+    mut matrix: Vec<Rational>,
+    dimension: usize,
+) -> Option<Rational> {
+    if matrix.len() != dimension.checked_mul(dimension)? {
+        return None;
+    }
+    if dimension == 0 {
+        return Some(Rational::one());
+    }
+    let mut swaps = 0;
+    let mut previous_pivot = Rational::one();
+    for pivot in 0..dimension.saturating_sub(1) {
+        let pivot_row = (pivot..dimension).find(|row| !matrix[row * dimension + pivot].is_zero());
+        let Some(pivot_row) = pivot_row else {
+            return Some(Rational::zero());
+        };
+        if pivot_row != pivot {
+            for column in 0..dimension {
+                matrix.swap(pivot * dimension + column, pivot_row * dimension + column);
+            }
+            swaps += 1;
+        }
+
+        let pivot_value = matrix[pivot * dimension + pivot].clone();
+        for row in (pivot + 1)..dimension {
+            let eliminand = matrix[row * dimension + pivot].clone();
+            for column in (pivot + 1)..dimension {
+                let value = matrix[row * dimension + column].clone();
+                let pivot_row_value = &matrix[pivot * dimension + column];
+                matrix[row * dimension + column] = pivot_value
+                    .checked_exact_integer_cross_difference_quotient(
+                        &value,
+                        &eliminand,
+                        pivot_row_value,
+                        &previous_pivot,
+                    )?;
+            }
+            matrix[row * dimension + pivot] = Rational::zero();
+        }
+        previous_pivot = pivot_value;
+    }
+
+    let determinant = matrix[dimension * dimension - 1].clone();
+    Some(if swaps % 2 == 0 {
+        determinant
+    } else {
+        -determinant
+    })
 }
 
 fn pseudo_quotient_multiplication_matrix(
@@ -290,7 +335,7 @@ fn pseudo_quotient_multiplication_matrix(
         return None;
     }
     let leading = source.last()?;
-    if **leading == Rational::zero() {
+    if leading.is_zero() {
         return None;
     }
 
@@ -739,6 +784,38 @@ mod tests {
     }
 
     #[test]
+    fn flat_integer_bareiss_matches_reported_determinants() {
+        let cases = [
+            (0, vec![]),
+            (1, vec![5]),
+            (2, vec![0, 2, 3, 4]),
+            (2, vec![1, 2, 2, 4]),
+            (3, vec![2, -1, 3, 4, 0, 1, -2, 5, 2]),
+        ];
+        for (dimension, entries) in cases {
+            let flat = entries
+                .iter()
+                .copied()
+                .map(Rational::new)
+                .collect::<Vec<_>>();
+            let matrix = entries
+                .chunks(dimension.max(1))
+                .map(|row| row.iter().copied().map(real).collect::<Vec<_>>())
+                .collect::<Vec<_>>();
+            let expected = determinant_bareiss(&matrix, -64).unwrap().determinant;
+
+            assert_eq!(
+                determinant_integer_bareiss_flat(flat, dimension).map(Real::from),
+                Some(expected)
+            );
+        }
+        assert_eq!(
+            determinant_integer_bareiss_flat(vec![Rational::one()], 2),
+            None
+        );
+    }
+
+    #[test]
     fn resultant_validates_empty_and_zero_polynomials() {
         assert_eq!(
             resultant_univariate_polynomials(&[], &[real(1)], -64).unwrap_err(),
@@ -839,6 +916,32 @@ mod tests {
     }
 
     proptest! {
+        #[test]
+        fn generated_flat_integer_bareiss_matches_reported_four_by_four(
+            entries in prop::collection::vec(-8_i16..=8, 16),
+        ) {
+            let flat = entries
+                .iter()
+                .copied()
+                .map(|value| Rational::new(i64::from(value)))
+                .collect::<Vec<_>>();
+            let matrix = entries
+                .chunks_exact(4)
+                .map(|row| {
+                    row.iter()
+                        .copied()
+                        .map(|value| real(i64::from(value)))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+            let expected = determinant_bareiss(&matrix, -64).unwrap().determinant;
+
+            prop_assert_eq!(
+                determinant_integer_bareiss_flat(flat, 4).map(Real::from),
+                Some(expected)
+            );
+        }
+
         #[test]
         fn generated_monic_quotient_ring_samples_match_sylvester_up_to_scale(
             source_constant in -4_i16..=4,
