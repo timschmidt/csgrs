@@ -4258,6 +4258,40 @@ region-Boolean replay completed with libFuzzer reporting 2,511 executions at
 5,898 coverage points and 19,152 feature edges with no finding; LeakSanitizer
 remained disabled under ptrace.
 
+### Retained native endpoint evaluation
+
+Top-level native-curve evaluation formerly validated a parameter against both
+ends of the unit interval and then discarded whether either comparison proved
+equality. Exact endpoint queries consequently evaluated a full polynomial
+Bezier, built and projected a rational power basis, or promoted and searched a
+circular-arc decomposition even though every geometry already retains its
+authored endpoints.
+
+Closed-unit-interval classification now returns a typed
+start/interior/end/outside location while preserving the former Boolean helper
+for its other consumers. `Curve2` reuses that classification to clone retained
+native endpoints directly. Rational quadratic and general rational curves take
+the shortcut only after the selected endpoint weight is certified nonzero;
+unknown or zero projective weights retain the former evaluator and typed
+boundary behavior. Interior queries and authored spline-domain evaluation are
+unchanged. A focused all-family regression covers both endpoints and verifies
+that rational endpoint queries do not construct the homogeneous power basis.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 32,813,991 to 32,588,978 (0.69%), 89.84% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+47,301 to 47,057 and temporary events from 2,982 to 2,960; peak heap fell from
+1.14 to 1.13 MiB and peak RSS remained 11.12 MiB. Every measured run retained
+9 candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. The requested `-runs=2509` AddressSanitizer
+region-Boolean replay completed at 5,898 coverage points and 19,147 feature
+edges with no finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

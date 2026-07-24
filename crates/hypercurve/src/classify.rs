@@ -266,7 +266,18 @@ pub(crate) fn min_real(a: Real, b: Real, policy: &CurvePolicy) -> Option<Real> {
     }
 }
 
-pub(crate) fn in_closed_unit_interval(value: &Real, policy: &CurvePolicy) -> Option<bool> {
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ClosedUnitIntervalLocation {
+    Outside,
+    Start,
+    Interior,
+    End,
+}
+
+pub(crate) fn closed_unit_interval_location(
+    value: &Real,
+    policy: &CurvePolicy,
+) -> Option<ClosedUnitIntervalLocation> {
     // Edge-preview f64 parameters are candidate filters only: decisively
     // out-of-range values cannot represent finite segment hits, while
     // near-boundary values still fall through to exact comparison.
@@ -278,7 +289,7 @@ pub(crate) fn in_closed_unit_interval(value: &Real, policy: &CurvePolicy) -> Opt
             .map(|tolerance| tolerance.absolute.max(tolerance.relative))
             .unwrap_or(1e-12);
         if approx.is_finite() && (approx < -tolerance || approx > 1.0 + tolerance) {
-            return Some(false);
+            return Some(ClosedUnitIntervalLocation::Outside);
         }
     }
 
@@ -286,15 +297,31 @@ pub(crate) fn in_closed_unit_interval(value: &Real, policy: &CurvePolicy) -> Opt
     let one = Real::one();
     let lower = compare_reals(value, &zero, policy)?;
     let upper = compare_reals(value, &one, policy)?;
-    Some(!matches!(lower, Ordering::Less) && !matches!(upper, Ordering::Greater))
+    Some(
+        if matches!(lower, Ordering::Less) || matches!(upper, Ordering::Greater) {
+            ClosedUnitIntervalLocation::Outside
+        } else if matches!(lower, Ordering::Equal) {
+            ClosedUnitIntervalLocation::Start
+        } else if matches!(upper, Ordering::Equal) {
+            ClosedUnitIntervalLocation::End
+        } else {
+            ClosedUnitIntervalLocation::Interior
+        },
+    )
+}
+
+pub(crate) fn in_closed_unit_interval(value: &Real, policy: &CurvePolicy) -> Option<bool> {
+    closed_unit_interval_location(value, policy)
+        .map(|location| location != ClosedUnitIntervalLocation::Outside)
 }
 
 pub(crate) fn at_unit_interval_endpoint(value: &Real, policy: &CurvePolicy) -> Option<bool> {
-    let zero = Real::zero();
-    let one = Real::one();
-    let at_zero = compare_reals(value, &zero, policy)? == Ordering::Equal;
-    let at_one = compare_reals(value, &one, policy)? == Ordering::Equal;
-    Some(at_zero || at_one)
+    closed_unit_interval_location(value, policy).map(|location| {
+        matches!(
+            location,
+            ClosedUnitIntervalLocation::Start | ClosedUnitIntervalLocation::End
+        )
+    })
 }
 
 #[cfg(feature = "predicates")]

@@ -740,7 +740,11 @@ impl Curve2 {
             CurveGeometry2::PolynomialBSpline(curve) => curve.point_at_side(parameter, side),
             CurveGeometry2::Nurbs(curve) => curve.point_at_side(parameter, side),
             geometry => {
-                validate_unit_parameter(parameter, geometry.family())?;
+                let policy = CurvePolicy::certified();
+                let location = validate_unit_parameter(parameter, geometry.family(), &policy)?;
+                if let Some(endpoint) = retained_native_endpoint(geometry, location, &policy) {
+                    return Ok(endpoint);
+                }
                 match geometry {
                     CurveGeometry2::Line(curve) => Ok(curve.point_at(parameter.clone())),
                     CurveGeometry2::CircularArc(_) => {
@@ -749,7 +753,7 @@ impl Curve2 {
                     CurveGeometry2::QuadraticBezier(curve) => Ok(curve.point_at(parameter.clone())),
                     CurveGeometry2::CubicBezier(curve) => Ok(curve.point_at(parameter.clone())),
                     CurveGeometry2::RationalQuadraticBezier(curve) => {
-                        match curve.point_at(parameter.clone(), &crate::CurvePolicy::certified()) {
+                        match curve.point_at(parameter.clone(), &policy) {
                             Classification::Decided(point) => Ok(point),
                             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                                 CurveOperation2::Evaluation,
@@ -759,8 +763,7 @@ impl Curve2 {
                         }
                     }
                     CurveGeometry2::RationalBezier(curve) => {
-                        match curve.point_at_classified(parameter, &crate::CurvePolicy::certified())
-                        {
+                        match curve.point_at_classified(parameter, &policy) {
                             Classification::Decided(point) => Ok(point),
                             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                                 CurveOperation2::Evaluation,
@@ -2151,19 +2154,58 @@ fn evaluate_promoted_arc(
     ))
 }
 
-fn validate_unit_parameter(parameter: &Real, family: CurveFamily2) -> ExactCurveResult<()> {
-    match crate::classify::in_closed_unit_interval(parameter, &crate::CurvePolicy::certified()) {
-        Some(true) => Ok(()),
-        Some(false) => Err(ExactCurveError::invalid(
+fn validate_unit_parameter(
+    parameter: &Real,
+    family: CurveFamily2,
+    policy: &CurvePolicy,
+) -> ExactCurveResult<crate::classify::ClosedUnitIntervalLocation> {
+    use crate::classify::ClosedUnitIntervalLocation;
+
+    match crate::classify::closed_unit_interval_location(parameter, policy) {
+        Some(ClosedUnitIntervalLocation::Outside) => Err(ExactCurveError::invalid(
             CurveOperation2::Evaluation,
             family,
             CurveError::InvalidCurveParameter,
         )),
+        Some(location) => Ok(location),
         None => Err(ExactCurveError::blocked(
             CurveOperation2::Evaluation,
             family,
             crate::UncertaintyReason::Ordering,
         )),
+    }
+}
+
+fn retained_native_endpoint(
+    geometry: &CurveGeometry2,
+    location: crate::classify::ClosedUnitIntervalLocation,
+    policy: &CurvePolicy,
+) -> Option<Point2> {
+    use crate::classify::ClosedUnitIntervalLocation;
+
+    let (endpoint, weight) = match (geometry, location) {
+        (_, ClosedUnitIntervalLocation::Outside | ClosedUnitIntervalLocation::Interior) => {
+            return None;
+        }
+        (CurveGeometry2::RationalQuadraticBezier(curve), ClosedUnitIntervalLocation::Start) => {
+            (curve.start(), Some(curve.start_weight()))
+        }
+        (CurveGeometry2::RationalQuadraticBezier(curve), ClosedUnitIntervalLocation::End) => {
+            (curve.end(), Some(curve.end_weight()))
+        }
+        (CurveGeometry2::RationalBezier(curve), ClosedUnitIntervalLocation::Start) => {
+            (curve.start(), curve.weights().first())
+        }
+        (CurveGeometry2::RationalBezier(curve), ClosedUnitIntervalLocation::End) => {
+            (curve.end(), curve.weights().last())
+        }
+        (geometry, ClosedUnitIntervalLocation::Start) => (geometry.start(), None),
+        (geometry, ClosedUnitIntervalLocation::End) => (geometry.end(), None),
+    };
+    if weight.is_none_or(|weight| crate::classify::is_zero(weight, policy) == Some(false)) {
+        Some(endpoint.clone())
+    } else {
+        None
     }
 }
 

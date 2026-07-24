@@ -208,6 +208,28 @@ fn top_level_curve_evaluates_native_and_spline_parameters() {
 }
 
 #[test]
+fn top_level_curve_reuses_retained_native_endpoints() {
+    for curve in every_family_open_chain() {
+        assert_eq!(
+            curve.point_at(curve.parameter_domain().start()).unwrap(),
+            curve.start().clone()
+        );
+        assert_eq!(
+            curve.point_at(curve.parameter_domain().end()).unwrap(),
+            curve.end().clone()
+        );
+    }
+
+    let rational =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 2), p(2, 0)], vec![r(1), r(2), r(3)]).unwrap();
+    let top_level = Curve2::from(rational.clone());
+    assert!(!rational.is_homogeneous_power_basis_cached());
+    assert_eq!(top_level.point_at(&r(0)).unwrap(), p(0, 0));
+    assert_eq!(top_level.point_at(&r(1)).unwrap(), p(2, 0));
+    assert!(!rational.is_homogeneous_power_basis_cached());
+}
+
+#[test]
 fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators() {
     let half = (r(1) / r(2)).unwrap();
     let line = Curve2::from(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap());
