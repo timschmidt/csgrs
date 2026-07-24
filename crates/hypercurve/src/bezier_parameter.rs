@@ -875,12 +875,13 @@ impl BezierAlgebraicParameter2 {
     /// Returns the represented root when this isolator contains an exact rational root.
     ///
     /// Exact-rational coefficients are cleared to a primitive integer
-    /// polynomial. The rational-root theorem bounds the reduced denominator by
-    /// the leading coefficient. The retained Sturm isolator is then refined
-    /// until rational reconstruction is unique under that bound. Continued-
-    /// fraction candidates are accepted only after exact polynomial replay.
-    /// Nonrational coefficients and irrational roots return `None` without
-    /// demoting the algebraic carrier.
+    /// polynomial. Small-prime reductions first reject polynomials that cannot
+    /// have any rational root. Otherwise the rational-root theorem bounds the
+    /// reduced denominator by the leading coefficient, and the retained Sturm
+    /// isolator is refined until rational reconstruction is unique under that
+    /// bound. Continued-fraction candidates are accepted only after exact
+    /// polynomial replay. Nonrational coefficients and irrational roots return
+    /// `None` without demoting the algebraic carrier.
     pub fn represented_rational_root(
         &self,
         policy: &CurvePolicy,
@@ -994,6 +995,7 @@ impl BezierAlgebraicParameter2 {
     fn represented_rational_root_with_cached_sequence(
         &self,
         policy: &CurvePolicy,
+        denominator_bound: Option<&BigUint>,
         sequence: &[Vec<Real>],
         trace: Option<&mut BezierRootIsolationTrace2>,
     ) -> CurveResult<Classification<Option<Real>>> {
@@ -1004,12 +1006,12 @@ impl BezierAlgebraicParameter2 {
             let result = self.represented_linear_root(policy)?;
             return self.cache_decided_represented_rational_root(result);
         }
-        let Some(denominator_bound) = rational_root_denominator_bound(&self.data.polynomial) else {
+        let Some(denominator_bound) = denominator_bound else {
             return self.cache_represented_rational_root(None);
         };
         let result = self.represented_rational_root_with_sequence(
             policy,
-            denominator_bound,
+            denominator_bound.clone(),
             sequence,
             trace,
         )?;
@@ -1798,7 +1800,7 @@ fn rational_root_denominator_bound(polynomial: &BezierParameterPolynomial) -> Op
         common.lcm(value.denominator())
     });
     let mut content = BigUint::zero();
-    let mut leading_magnitude = BigUint::zero();
+    let mut integer_coefficients = Vec::with_capacity(rationals.len());
     for rational in rationals {
         let magnitude = rational.numerator() * (&common_denominator / rational.denominator());
         if !magnitude.is_zero() {
@@ -1808,12 +1810,63 @@ fn rational_root_denominator_bound(polynomial: &BezierParameterPolynomial) -> Op
                 content.gcd(&magnitude)
             };
         }
-        leading_magnitude = magnitude;
+        integer_coefficients.push(BigInt::from_biguint(rational.sign(), magnitude));
     }
+    let leading_magnitude = integer_coefficients.last()?.magnitude().clone();
     if content.is_zero() || leading_magnitude.is_zero() {
         return None;
     }
+    let content_integer = BigInt::from(content.clone());
+    for coefficient in &mut integer_coefficients {
+        *coefficient /= &content_integer;
+    }
+    if !could_have_rational_root_modulo_small_primes(&integer_coefficients) {
+        return None;
+    }
     Some(leading_magnitude / content)
+}
+
+/// Rejects rational roots by reduction modulo primes not dividing the lead.
+///
+/// A reduced rational root `a/b` of a primitive integer polynomial has
+/// `b` dividing the leading coefficient. For a prime that does not divide
+/// that coefficient, `b` is invertible in the finite field, so `a/b` must
+/// appear as a root of the reduced polynomial. One rootless reduction is
+/// therefore a complete exact rejection; surviving every small prime merely
+/// falls through to bounded rational reconstruction.
+fn could_have_rational_root_modulo_small_primes(coefficients: &[BigInt]) -> bool {
+    const PRIMES: [u32; 11] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31];
+    let leading = coefficients
+        .last()
+        .expect("nonempty polynomial has a leading coefficient");
+    for prime in PRIMES {
+        let modulus = BigInt::from(prime);
+        let leading_residue = leading
+            .mod_floor(&modulus)
+            .to_u32()
+            .expect("residue fits its small prime");
+        if leading_residue == 0 {
+            continue;
+        }
+        let residues = coefficients
+            .iter()
+            .map(|coefficient| {
+                coefficient
+                    .mod_floor(&modulus)
+                    .to_u32()
+                    .expect("residue fits its small prime")
+            })
+            .collect::<Vec<_>>();
+        let has_root = (0..prime).any(|candidate| {
+            residues.iter().rev().fold(0_u64, |value, coefficient| {
+                (value * u64::from(candidate) + u64::from(*coefficient)) % u64::from(prime)
+            }) == 0
+        });
+        if !has_root {
+            return false;
+        }
+    }
+    true
 }
 
 fn real_as_big_rational(value: &Real) -> Option<BigRational> {
@@ -2097,6 +2150,7 @@ fn search_unit_roots(
         Classification::Decided(sequence) => sequence,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
+    let rational_root_denominator_bound = rational_root_denominator_bound(polynomial);
     trace.sturm_sequence_builds += 1;
     let mut boundaries = vec![Real::zero()];
     for root in represented_roots {
@@ -2167,6 +2221,7 @@ fn search_unit_roots(
                 BezierAlgebraicParameter2::from_certified_singleton(polynomial.clone(), interval);
             match parameter.represented_rational_root_with_cached_sequence(
                 policy,
+                rational_root_denominator_bound.as_ref(),
                 &sequence,
                 Some(trace),
             )? {
@@ -2378,6 +2433,43 @@ mod conversion_tests {
                 Classification::Decided(false)
             ]
         );
+    }
+
+    #[test]
+    fn modular_sieve_rejects_only_rootless_rational_reductions() {
+        assert_eq!(
+            rational_root_denominator_bound(&polynomial(&[-1, 0, 2])),
+            None
+        );
+        assert_eq!(
+            rational_root_denominator_bound(&polynomial(&[1, -4, 4])),
+            Some(BigUint::from(4_u8))
+        );
+        // (2t - 1)(2t² - 1) retains reconstruction because one of its
+        // three roots is rational.
+        assert_eq!(
+            rational_root_denominator_bound(&polynomial(&[1, -2, -2, 4])),
+            Some(BigUint::from(4_u8))
+        );
+    }
+
+    #[test]
+    fn modular_sieve_retains_polynomials_with_known_rational_roots() {
+        for denominator in 1_i32..=8 {
+            for numerator in 0_i32..=denominator {
+                for quotient in [[3, -5, 2].as_slice(), &[-7, 0, 4], &[1]] {
+                    let mut coefficients = vec![0_i32; quotient.len() + 1];
+                    for (degree, coefficient) in quotient.iter().enumerate() {
+                        coefficients[degree] -= numerator * coefficient;
+                        coefficients[degree + 1] += denominator * coefficient;
+                    }
+                    assert!(
+                        rational_root_denominator_bound(&polynomial(&coefficients)).is_some(),
+                        "known root {numerator}/{denominator} was rejected for {coefficients:?}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]

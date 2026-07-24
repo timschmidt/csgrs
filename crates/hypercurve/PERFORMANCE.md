@@ -2838,6 +2838,39 @@ projection, so the native line/arc accelerator remains justified. Focused
 AddressSanitizer campaigns completed 1,000 algebraic-parameter executions and
 2,509 region-Boolean corpus executions without a library finding.
 
+### Modular rejection of irrational parameter roots
+
+Exact root isolation promotes represented rational roots before returning its
+ordered parameter set. For an irrational root, the former path refined its
+Sturm isolator until the rational-root-theorem denominator bound made continued
+fraction reconstruction unique, only to replay and reject the candidate. This
+was useful work for rational roots but dominated implicit conic intersection
+preparation when every contact parameter was irrational.
+
+The rational-coefficient polynomial is already cleared to a primitive integer
+polynomial to derive that denominator bound. Root isolation now reduces those
+integer coefficients modulo a fixed set of small primes. For any prime that
+does not divide the primitive leading coefficient, a reduced rational root
+would have an invertible denominator and therefore appear as a finite-field
+root. A single rootless reduction is consequently an exact proof that the
+polynomial has no rational root. Polynomials that survive every tested prime
+run the unchanged bounded reconstruction and exact replay. The resulting
+denominator decision is also shared by all isolated roots of one polynomial.
+
+A controlled ten-run `perf stat` comparison against commit `abc2169`, using
+the same dependency build, reduced instructions from 650,584,843 to
+409,730,483 (37.0%). Median instrumented complete Boolean time fell from
+52.030 ms to 33.939 ms (34.8%), and median pair preparation fell from
+41.783 ms to 23.361 ms (44.1%). Five ordinary release runs had a 32.513 ms
+complete median and a 22.445 ms preparation median; the exact polyline
+projection median was 0.440 ms. Every run retained 9 candidate pairs,
+48 fragments, 2 exact point classifications, 4 decided operations, and
+checksum 6. The remaining roughly 74x native gap still justifies the line/arc
+accelerator. Complete default and all-feature tests, strict all-feature
+Clippy, warning-denied rustdoc, and the library WASM build passed. Focused
+AddressSanitizer campaigns completed 1,000 algebraic-parameter executions and
+2,509 region-Boolean corpus executions without a finding.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
