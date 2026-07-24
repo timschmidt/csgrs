@@ -1037,29 +1037,18 @@ impl RetainedCurveRegionBoolean2 {
         fragment: &BezierSplitFragment2,
     ) -> ExactCurveResult<RegionPointLocation> {
         let carrier = &self.data.carriers[carrier_index];
-        let representative = match fragment
-            .representative_point(&self.data.policy)
+        let (start, end) = fragment_range(fragment);
+        let parameter = match start
+            .strict_rational_between_ordered(end, &self.data.policy)
             .map_err(|cause| self.invalid(carrier_index, cause))?
         {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                let (start, end) = fragment_range(fragment);
-                let parameter = match start
-                    .strict_rational_between(end, &self.data.policy)
-                    .map_err(|cause| self.invalid(carrier_index, cause))?
-                {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Err(self.blocked(carrier_index, reason));
-                    }
-                };
-                match carrier.curve.point_at(&parameter, &self.data.policy) {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Err(self.blocked(carrier_index, reason));
-                    }
-                }
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(carrier_index, reason));
             }
+        };
+        let representative = match carrier.curve.point_at(&parameter, &self.data.policy) {
+            Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 return Err(self.blocked(carrier_index, reason));
             }

@@ -8,8 +8,9 @@ use std::rc::Rc;
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 #[cfg(feature = "predicates")]
 use hypersolve::{
-    AlgebraicPolynomialValueInterval, AlgebraicRootRationalImageStatus,
-    PreparedAlgebraicRootRationalMap,
+    AlgebraicPolynomialValueInterval, AlgebraicRootRationalEvaluationReport,
+    AlgebraicRootRationalImageStatus, PreparedAlgebraicRootRationalMap,
+    evaluate_rational_expression_at_algebraic_root,
 };
 #[cfg(feature = "predicates")]
 use hypersolve::{
@@ -482,6 +483,12 @@ struct CandidatePointReplay {
     evidence: RationalBezierIntersectionPointEvidence2,
     x: AlgebraicRootRepresentation,
     y: AlgebraicRootRepresentation,
+}
+
+#[cfg(feature = "predicates")]
+struct CandidatePointBounds {
+    x: AlgebraicPolynomialValueInterval,
+    y: AlgebraicPolynomialValueInterval,
 }
 
 #[derive(Debug)]
@@ -1328,13 +1335,7 @@ impl RationalBezier2 {
                     .implicit_conic_intersection_contacts(self, policy)?
                     .map(|contacts| contacts.map(reverse_rational_intersection_contacts))
             };
-        if let Some(special) = special {
-            let contacts = match special {
-                Classification::Decided(contacts) => contacts,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        if let Some(Classification::Decided(contacts)) = special {
             let candidates = intersection_candidates_from_contacts(&contacts);
             let retained_contacts = OnceCell::new();
             let _ = retained_contacts.set(Ok(Classification::Decided(contacts)));
@@ -1398,11 +1399,17 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
-        if let Some(contacts) = self.implicit_conic_intersection_contacts(other, policy)? {
-            return Ok(contacts);
+        if let Some(Classification::Decided(contacts)) =
+            self.implicit_conic_intersection_contacts(other, policy)?
+        {
+            return Ok(Classification::Decided(contacts));
         }
-        if let Some(contacts) = other.implicit_conic_intersection_contacts(self, policy)? {
-            return Ok(contacts.map(reverse_rational_intersection_contacts));
+        if let Some(Classification::Decided(contacts)) =
+            other.implicit_conic_intersection_contacts(self, policy)?
+        {
+            return Ok(Classification::Decided(
+                reverse_rational_intersection_contacts(contacts),
+            ));
         }
         if matches!(
             self.shares_implicit_quadratic_conic(other, policy),
@@ -2028,23 +2035,59 @@ impl RationalBezier2 {
         second_parameters: &[BezierParameter2],
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
-        let first_replays = first_parameters
+        let mut first_replays = (0..first_parameters.len())
+            .map(|_| None)
+            .collect::<Vec<Option<Option<CandidatePointReplay>>>>();
+        let mut second_replays = (0..second_parameters.len())
+            .map(|_| None)
+            .collect::<Vec<Option<Option<CandidatePointReplay>>>>();
+        #[cfg(feature = "predicates")]
+        let first_bounds = first_parameters
             .iter()
-            .map(|parameter| self.candidate_point_replay(parameter, policy))
+            .map(|parameter| self.refined_candidate_point_bounds(parameter, policy))
             .collect::<CurveResult<Vec<_>>>()?;
-        let second_replays = second_parameters
+        #[cfg(feature = "predicates")]
+        let second_bounds = second_parameters
             .iter()
-            .map(|parameter| other.candidate_point_replay(parameter, policy))
+            .map(|parameter| other.refined_candidate_point_bounds(parameter, policy))
             .collect::<CurveResult<Vec<_>>>()?;
-        let mut incomplete =
-            first_replays.iter().any(Option::is_none) || second_replays.iter().any(Option::is_none);
+        let first_simple_roots = first_parameters
+            .iter()
+            .map(|parameter| candidate_parameter_is_simple_root(parameter, policy))
+            .collect::<CurveResult<Vec<_>>>()?;
+        let second_simple_roots = second_parameters
+            .iter()
+            .map(|parameter| candidate_parameter_is_simple_root(parameter, policy))
+            .collect::<CurveResult<Vec<_>>>()?;
+        let mut incomplete = false;
         let mut contacts = Vec::new();
-        for (first_index, first_replay) in first_replays.iter().enumerate() {
-            let Some(first_replay) = first_replay else {
-                continue;
-            };
-            for (second_index, second_replay) in second_replays.iter().enumerate() {
-                let Some(second_replay) = second_replay else {
+        for first_index in 0..first_parameters.len() {
+            for second_index in 0..second_parameters.len() {
+                #[cfg(feature = "predicates")]
+                if matches!(
+                    (&first_bounds[first_index], &second_bounds[second_index]),
+                    (Some(first), Some(second))
+                        if algebraic_value_intervals_disjoint(&first.x, &second.x, policy)
+                            || algebraic_value_intervals_disjoint(&first.y, &second.y, policy)
+                ) {
+                    continue;
+                }
+                if first_replays[first_index].is_none() {
+                    first_replays[first_index] =
+                        Some(self.candidate_point_replay(&first_parameters[first_index], policy)?);
+                }
+                if second_replays[second_index].is_none() {
+                    second_replays[second_index] = Some(
+                        other.candidate_point_replay(&second_parameters[second_index], policy)?,
+                    );
+                }
+                let (Some(first_replay), Some(second_replay)) = (
+                    first_replays[first_index].as_ref().and_then(Option::as_ref),
+                    second_replays[second_index]
+                        .as_ref()
+                        .and_then(Option::as_ref),
+                ) else {
+                    incomplete = true;
                     continue;
                 };
                 match candidate_points_equal(first_replay, second_replay, policy) {
@@ -2052,7 +2095,11 @@ impl RationalBezier2 {
                         first_parameter: first_parameters[first_index].clone(),
                         second_parameter: second_parameters[second_index].clone(),
                         point: first_replay.evidence.clone(),
-                        certified_transverse: false,
+                        // A first-order root in both parameter projections
+                        // excludes tangency and singular projection at this
+                        // matched isolated contact.
+                        certified_transverse: first_simple_roots[first_index]
+                            && second_simple_roots[second_index],
                     }),
                     Some(false) => {}
                     None => match self.parameter_pair_same_point_by_incidence(
@@ -2066,7 +2113,8 @@ impl RationalBezier2 {
                                 first_parameter: first_parameters[first_index].clone(),
                                 second_parameter: second_parameters[second_index].clone(),
                                 point: first_replay.evidence.clone(),
-                                certified_transverse: false,
+                                certified_transverse: first_simple_roots[first_index]
+                                    && second_simple_roots[second_index],
                             });
                         }
                         Classification::Decided(false) => {}
@@ -2115,20 +2163,72 @@ impl RationalBezier2 {
                 }))
             }
             BezierParameter2::Algebraic(parameter) => {
-                let image = self.point_at_algebraic_parameter(parameter, policy)?;
-                let (Some(x), Some(y)) = (
-                    image.x().and_then(|coordinate| coordinate.representation()),
-                    image.y().and_then(|coordinate| coordinate.representation()),
-                ) else {
-                    return Ok(None);
-                };
-                Ok(Some(CandidatePointReplay {
-                    x: x.clone(),
-                    y: y.clone(),
-                    evidence: RationalBezierIntersectionPointEvidence2::Algebraic(image),
-                }))
+                for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
+                    let refined = BezierParameter2::Algebraic(parameter.clone())
+                        .refined_isolating_interval(refinement_steps, policy);
+                    let BezierParameter2::Algebraic(refined) = refined else {
+                        return self.candidate_point_replay(&refined, policy);
+                    };
+                    let image = self.point_at_algebraic_parameter(&refined, policy)?;
+                    let (Some(x), Some(y)) = (
+                        image.x().and_then(|coordinate| coordinate.representation()),
+                        image.y().and_then(|coordinate| coordinate.representation()),
+                    ) else {
+                        continue;
+                    };
+                    return Ok(Some(CandidatePointReplay {
+                        x: x.clone(),
+                        y: y.clone(),
+                        evidence: RationalBezierIntersectionPointEvidence2::Algebraic(image),
+                    }));
+                }
+                Ok(None)
             }
         }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn refined_candidate_point_bounds(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Option<CandidatePointBounds>> {
+        let parameter = parameter.clone().refined_isolating_interval(8, policy);
+        self.candidate_point_bounds(&parameter, policy)
+    }
+
+    #[cfg(feature = "predicates")]
+    fn candidate_point_bounds(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Option<CandidatePointBounds>> {
+        if let Some(parameter) = parameter.as_exact() {
+            let Classification::Decided(point) = self.point_at_classified(parameter, policy) else {
+                return Ok(None);
+            };
+            return Ok(Some(CandidatePointBounds {
+                x: singleton_algebraic_value_interval(point.x()),
+                y: singleton_algebraic_value_interval(point.y()),
+            }));
+        }
+        let root = parameter_root_representation(parameter, policy);
+        let basis = self.homogeneous_power_basis()?;
+        let x = evaluate_rational_expression_at_algebraic_root(
+            &root,
+            &basis.x_numerator,
+            &basis.weight,
+            policy.predicate_policy,
+        );
+        let y = evaluate_rational_expression_at_algebraic_root(
+            &root,
+            &basis.y_numerator,
+            &basis.weight,
+            policy.predicate_policy,
+        );
+        Ok(algebraic_rational_evaluation_interval(&x).and_then(|x| {
+            algebraic_rational_evaluation_interval(&y).map(|y| CandidatePointBounds { x, y })
+        }))
     }
 
     fn parameter_pair_same_point_by_incidence(
@@ -3826,6 +3926,51 @@ fn candidate_points_equal(
     algebraic_coordinates_equal(&first.y, &second.y, policy)
 }
 
+fn candidate_parameter_is_simple_root(
+    parameter: &BezierParameter2,
+    policy: &CurvePolicy,
+) -> CurveResult<bool> {
+    let BezierParameter2::Algebraic(algebraic) = parameter else {
+        return Ok(false);
+    };
+    let classifications = algebraic
+        .polynomial()
+        .simple_root_classifications(std::slice::from_ref(parameter), policy)?;
+    Ok(matches!(
+        classifications.first(),
+        Some(Classification::Decided(true))
+    ))
+}
+
+#[cfg(feature = "predicates")]
+fn singleton_algebraic_value_interval(value: &Real) -> AlgebraicPolynomialValueInterval {
+    AlgebraicPolynomialValueInterval {
+        lower: value.clone(),
+        upper: value.clone(),
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_rational_evaluation_interval(
+    evaluation: &AlgebraicRootRationalEvaluationReport,
+) -> Option<AlgebraicPolynomialValueInterval> {
+    evaluation
+        .exact_value
+        .as_ref()
+        .map(singleton_algebraic_value_interval)
+        .or_else(|| evaluation.interval_value.clone())
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_value_intervals_disjoint(
+    first: &AlgebraicPolynomialValueInterval,
+    second: &AlgebraicPolynomialValueInterval,
+    policy: &CurvePolicy,
+) -> bool {
+    compare_reals(&first.upper, &second.lower, policy).is_some_and(Ordering::is_lt)
+        || compare_reals(&second.upper, &first.lower, policy).is_some_and(Ordering::is_lt)
+}
+
 fn algebraic_coordinates_equal(
     first: &AlgebraicRootRepresentation,
     second: &AlgebraicRootRepresentation,
@@ -4137,6 +4282,80 @@ fn from_homogeneous(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn exact_f64(value: f64) -> Real {
+        Real::try_from(value).expect("finite binary rational")
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn shared_demo_conic_cubic_contacts_are_complete() {
+        let conic = RationalBezier2::try_new(
+            vec![
+                Point2::new(exact_f64(14.600491094738247), exact_f64(-20.78282692939043)),
+                Point2::new(exact_f64(18.91), exact_f64(6.2)),
+                Point2::new(exact_f64(20.150000000000002), exact_f64(6.820000000000001)),
+            ],
+            vec![Real::one(), exact_f64(0.36), Real::one()],
+        )
+        .unwrap();
+        let cubic = RationalBezier2::try_new(
+            vec![
+                Point2::new(exact_f64(-24.8), exact_f64(-18.6)),
+                Point2::new(exact_f64(-12.4), exact_f64(-20.77)),
+                Point2::new(exact_f64(12.4), exact_f64(-20.77)),
+                Point2::new(exact_f64(24.8), exact_f64(-18.6)),
+            ],
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        let policy = CurvePolicy::certified();
+
+        let contacts = conic
+            .implicit_conic_intersection_contacts(&cubic, &policy)
+            .unwrap();
+        assert!(
+            matches!(
+                contacts,
+                Some(Classification::Decided(
+                    RationalBezierIntersectionContacts2::Contacts(_)
+                        | RationalBezierIntersectionContacts2::NoIntersection
+                ))
+            ),
+            "{contacts:#?}"
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn shared_demo_cubic_pair_contacts_are_complete() {
+        let first = RationalBezier2::try_new(
+            vec![
+                Point2::new(exact_f64(4.03), exact_f64(-4.03)),
+                Point2::new(exact_f64(7.184295191466809), exact_f64(-46.13835323035717)),
+                Point2::new(exact_f64(10.85), exact_f64(5.89)),
+                Point2::new(exact_f64(14.600491094738247), exact_f64(-20.78282692939043)),
+            ],
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        let second = RationalBezier2::try_new(
+            vec![
+                Point2::new(exact_f64(-24.8), exact_f64(-18.6)),
+                Point2::new(exact_f64(-12.4), exact_f64(-20.77)),
+                Point2::new(exact_f64(12.4), exact_f64(-20.77)),
+                Point2::new(exact_f64(24.8), exact_f64(-18.6)),
+            ],
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        let policy = CurvePolicy::certified();
+        let contacts = first.intersection_contacts(&second, &policy).unwrap();
+        let RationalBezierIntersectionContacts2::Contacts(contacts) = contacts else {
+            panic!("shared cubic pair should produce complete contacts");
+        };
+        assert_eq!(contacts.len(), 3);
+    }
 
     #[test]
     fn clones_share_retained_axis_derivative_numerators() {

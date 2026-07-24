@@ -1039,7 +1039,13 @@ impl Shape {
             .map_err(|error| error.to_string())?
         {
             Classification::Decided(paths) => paths,
-            Classification::Uncertain(_) => return Ok(None),
+            Classification::Uncertain(_) => match region
+                .project_to_finite_curve_paths(&CurvePolicy::certified())
+                .map_err(|error| error.to_string())?
+            {
+                Classification::Decided(paths) => paths,
+                Classification::Uncertain(_) => return Ok(None),
+            },
         };
         if paths.is_empty() {
             return Ok(Some(Self::default()));
@@ -1048,16 +1054,45 @@ impl Shape {
             .loop_roles(&CurvePolicy::certified())
             .map_err(|error| error.to_string())?
         {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(_) => return Ok(None),
+            Classification::Decided(roles) => Some(roles),
+            Classification::Uncertain(_) => None,
         };
-        if paths.len() != roles.len() {
+        let filled_sides = if roles.is_none() {
+            match region
+                .filled_side_is_left(&CurvePolicy::certified())
+                .map_err(|error| error.to_string())?
+            {
+                Classification::Decided(sides) => Some(sides),
+                Classification::Uncertain(_) => return Ok(None),
+            }
+        } else {
+            None
+        };
+        if roles.as_ref().is_some_and(|roles| paths.len() != roles.len())
+            || filled_sides
+                .as_ref()
+                .is_some_and(|sides| paths.len() != sides.len())
+        {
             return Err("hypercurve returned mismatched boundary paths and loop roles".into());
         }
 
         let mut shape = Self::default();
-        for (path, role) in paths.iter().zip(roles) {
+        for (index, path) in paths.iter().enumerate() {
             let mut polyline = Polyline::from_curve_path(path, true)?;
+            let role = roles.as_ref().map_or_else(
+                || {
+                    if polyline.is_counter_clockwise()
+                        == filled_sides
+                            .as_ref()
+                            .expect("filled sides accompany projected roles")[index]
+                    {
+                        CurveRegionLoopRole::Material
+                    } else {
+                        CurveRegionLoopRole::Hole
+                    }
+                },
+                |roles| roles[index],
+            );
             match role {
                 CurveRegionLoopRole::Material => shape.materials.push(polyline),
                 CurveRegionLoopRole::Hole => {

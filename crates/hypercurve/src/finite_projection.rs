@@ -13,7 +13,7 @@ use std::f64::consts::PI;
 
 use crate::{
     BezierParameter2, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
-    Contour2, CurveError, CurvePath2, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2,
+    Contour2, Curve2, CurveError, CurvePath2, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2,
     CurveRegionLoopRole, CurveResult, CurveString2, LineArcRegion2, Point2, RegionContourProfile,
     RegionView2, Segment2,
 };
@@ -370,6 +370,28 @@ impl CurvePath2 {
 }
 
 impl CurveRegion2 {
+    /// Projects retained algebraic split parameters to finite rational
+    /// representatives while preserving each boundary curve family.
+    ///
+    /// This is a display/export boundary: Boolean topology remains owned by
+    /// this exact region, while the returned paths retain lines and native
+    /// Bezier curves instead of segmenting them into chords.
+    pub fn project_to_finite_curve_paths(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<CurvePath2>>> {
+        let mut paths = Vec::with_capacity(self.boundary_loops().len());
+        for boundary in self.boundary_loops() {
+            let Some(path) = project_curve_region_loop_to_curve_path(boundary, policy)? else {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            };
+            paths.push(path);
+        }
+        Ok(Classification::Decided(paths))
+    }
+
     /// Segments retained region boundaries into finite material/hole profiles.
     ///
     /// This is the mesh/extrusion-facing counterpart to
@@ -484,6 +506,126 @@ impl CurveRegion2 {
         }
         Ok(Classification::Decided(profiles))
     }
+}
+
+fn project_curve_region_loop_to_curve_path(
+    boundary: &CurveRegionBoundaryLoop2,
+    policy: &CurvePolicy,
+) -> CurveResult<Option<CurvePath2>> {
+    let mut subcurves = Vec::with_capacity(boundary.fragments().len());
+    for fragment in boundary.fragments() {
+        let curve = match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => curve.clone(),
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                reversed,
+                start,
+                end,
+                source_curve: Some(source),
+                ..
+            } => {
+                let (start, end) = finite_parameter_pair(start, end, policy)?;
+                let curve = match source.subcurve_between_exact(&start, &end, policy)? {
+                    Classification::Decided(curve) => curve,
+                    Classification::Uncertain(_) => return Ok(None),
+                };
+                if *reversed { curve.reversed() } else { curve }
+            }
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                source_curve: None, ..
+            }
+            | BezierSplitFragment2::Unresolved { .. } => return Ok(None),
+        };
+        subcurves.push(curve);
+    }
+    if subcurves.is_empty() {
+        return Ok(None);
+    }
+    let endpoints = subcurves
+        .iter()
+        .map(|curve| curve.end().clone())
+        .collect::<Vec<_>>();
+    let curve_count = subcurves.len();
+    let curves = subcurves
+        .into_iter()
+        .enumerate()
+        .map(|(index, curve)| {
+            projected_subcurve_with_endpoints(
+                curve,
+                endpoints[(index + curve_count - 1) % curve_count].clone(),
+                endpoints[index].clone(),
+            )
+            .map(Curve2::from)
+        })
+        .collect::<CurveResult<Vec<_>>>()?;
+    CurvePath2::try_new(curves)
+        .map(Some)
+        .map_err(|error| match error {
+            crate::ExactCurveError::Invalid { cause, .. } => cause,
+            crate::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
+                "finite curve projection was blocked by {:?}",
+                blocker.reason()
+            )),
+        })
+}
+
+fn finite_parameter_pair(
+    start: &BezierParameter2,
+    end: &BezierParameter2,
+    policy: &CurvePolicy,
+) -> CurveResult<(Real, Real)> {
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
+        let start = start
+            .clone()
+            .refined_isolating_interval(refinement_steps, policy);
+        let end = end
+            .clone()
+            .refined_isolating_interval(refinement_steps, policy);
+        let start = finite_parameter_representative(&start)?;
+        let end = finite_parameter_representative(&end)?;
+        if start < end {
+            return Ok((start, end));
+        }
+    }
+    Err(CurveError::InvalidBezierRange)
+}
+
+fn projected_subcurve_with_endpoints(
+    curve: BezierSubcurve2,
+    start: Point2,
+    end: Point2,
+) -> CurveResult<BezierSubcurve2> {
+    Ok(match curve {
+        BezierSubcurve2::Quadratic(curve) => BezierSubcurve2::Quadratic(
+            crate::QuadraticBezier2::new(start, curve.control().clone(), end),
+        ),
+        BezierSubcurve2::Cubic(curve) => BezierSubcurve2::Cubic(crate::CubicBezier2::new(
+            start,
+            curve.control1().clone(),
+            curve.control2().clone(),
+            end,
+        )),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            BezierSubcurve2::RationalQuadratic(crate::RationalQuadraticBezier2::try_new(
+                start,
+                curve.control().clone(),
+                end,
+                curve.start_weight().clone(),
+                curve.control_weight().clone(),
+                curve.end_weight().clone(),
+            )?)
+        }
+        BezierSubcurve2::Rational(curve) => {
+            let mut controls = curve.control_points().to_vec();
+            controls[0] = start;
+            *controls
+                .last_mut()
+                .expect("rational Bezier controls are nonempty") = end;
+            BezierSubcurve2::Rational(crate::RationalBezier2::try_new(
+                controls,
+                curve.weights().to_vec(),
+            )?)
+        }
+    })
 }
 
 impl Contour2 {

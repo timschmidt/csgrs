@@ -1156,13 +1156,6 @@ impl BezierParameter2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Real>> {
-        match self.cmp_by_refinement(other, policy)? {
-            Classification::Decided(Ordering::Less) => {}
-            Classification::Decided(Ordering::Equal | Ordering::Greater) => {
-                return Err(CurveError::InvalidBezierRange);
-            }
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
         let left = match self.known_interval(policy)? {
             Classification::Decided(interval) => interval,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -1174,19 +1167,74 @@ impl BezierParameter2 {
         if compare_reals(left.end(), right.start(), policy) == Some(Ordering::Less) {
             return midpoint_real(left.end(), right.start()).map(Classification::Decided);
         }
-        match (self, other) {
-            (Self::Algebraic(parameter), _) => {
-                refine_algebraic_upper_gap(parameter, right.start(), policy)
+        match self.cmp_by_refinement(other, policy)? {
+            Classification::Decided(Ordering::Less) => {}
+            Classification::Decided(Ordering::Equal | Ordering::Greater) => {
+                return Err(CurveError::InvalidBezierRange);
             }
-            (_, Self::Algebraic(parameter)) => {
-                refine_algebraic_lower_gap(parameter, left.end(), policy)
-            }
-            (Self::Exact(_), Self::Exact(_)) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Ordering))
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
+        strict_rational_between_known_order(self, other, &left, &right, policy)
     }
 
+    pub(crate) fn strict_rational_between_ordered(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Real>> {
+        let left = match self.known_interval(policy)? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let right = match other.known_interval(policy)? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if compare_reals(left.end(), right.start(), policy) == Some(Ordering::Less) {
+            return midpoint_real(left.end(), right.start()).map(Classification::Decided);
+        }
+        for refinement_steps in [1, 2, 4, 8] {
+            let refined_left = self
+                .clone()
+                .refined_isolating_interval(refinement_steps, policy);
+            let refined_right = other
+                .clone()
+                .refined_isolating_interval(refinement_steps, policy);
+            let Classification::Decided(left) = refined_left.known_interval(policy)? else {
+                continue;
+            };
+            let Classification::Decided(right) = refined_right.known_interval(policy)? else {
+                continue;
+            };
+            if compare_reals(left.end(), right.start(), policy) == Some(Ordering::Less) {
+                return midpoint_real(left.end(), right.start()).map(Classification::Decided);
+            }
+        }
+        strict_rational_between_known_order(self, other, &left, &right, policy)
+    }
+}
+
+fn strict_rational_between_known_order(
+    left_parameter: &BezierParameter2,
+    right_parameter: &BezierParameter2,
+    left: &BezierParameterInterval,
+    right: &BezierParameterInterval,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Real>> {
+    match (left_parameter, right_parameter) {
+        (BezierParameter2::Algebraic(parameter), _) => {
+            refine_algebraic_upper_gap(parameter, right.start(), policy)
+        }
+        (_, BezierParameter2::Algebraic(parameter)) => {
+            refine_algebraic_lower_gap(parameter, left.end(), policy)
+        }
+        (BezierParameter2::Exact(_), BezierParameter2::Exact(_)) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Ordering))
+        }
+    }
+}
+
+impl BezierParameter2 {
     #[cfg(feature = "predicates")]
     pub(crate) fn from_algebraic_root_representation(
         representation: &AlgebraicRootRepresentation,
@@ -1654,7 +1702,7 @@ fn refine_algebraic_upper_gap(
     upper_bound: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Real>> {
-    let sequence = match sturm_sequence(parameter.polynomial().coefficients(), policy)? {
+    let sequence = match parameter.retained_sturm_sequence(policy)? {
         Classification::Decided(sequence) => sequence,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -1681,7 +1729,7 @@ fn refine_algebraic_upper_gap(
         };
         match parameter
             .polynomial()
-            .root_count_in_interval_with_sequence(&left, &sequence, policy)?
+            .root_count_in_interval_with_sequence(&left, sequence.as_ref(), policy)?
         {
             Classification::Decided(1) => interval = left,
             Classification::Decided(0) => {
@@ -1709,7 +1757,7 @@ fn refine_algebraic_lower_gap(
     lower_bound: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Real>> {
-    let sequence = match sturm_sequence(parameter.polynomial().coefficients(), policy)? {
+    let sequence = match parameter.retained_sturm_sequence(policy)? {
         Classification::Decided(sequence) => sequence,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -1736,7 +1784,7 @@ fn refine_algebraic_lower_gap(
         };
         match parameter
             .polynomial()
-            .root_count_in_interval_with_sequence(&left, &sequence, policy)?
+            .root_count_in_interval_with_sequence(&left, sequence.as_ref(), policy)?
         {
             Classification::Decided(1) => interval = left,
             Classification::Decided(0) => {

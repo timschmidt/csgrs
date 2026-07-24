@@ -1146,6 +1146,30 @@ mod tests {
     use super::*;
     use crate::geometry::CurvePrimitive;
 
+    fn shared_blocker_polylines() -> Vec<Polyline> {
+        serde_json::from_str(
+            r#"[
+                {"curve_data":[
+                    {"kind":"line","start":{"x":-18.6,"y":-6.2,"bulge":0.0},"end":{"x":-14.20650382593274,"y":-19.07368476688862,"bulge":0.0}},
+                    {"kind":"circular_arc","start":{"x":-14.20650382593274,"y":-19.07368476688862,"bulge":0.0},"end":{"x":-6.4565038147568705,"y":-21.17386977761984,"bulge":0.0},"bulge":0.46},
+                    {"kind":"quadratic_bezier","start":{"x":-6.4565038147568705,"y":-21.17386977761984,"bulge":0.0},"control":{"x":-0.31000000000000005,"y":7.13,"bulge":0.0},"end":{"x":4.03,"y":-4.03,"bulge":0.0}},
+                    {"kind":"cubic_bezier","start":{"x":4.03,"y":-4.03,"bulge":0.0},"control1":{"x":7.184295191466809,"y":-46.13835323035717,"bulge":0.0},"control2":{"x":10.85,"y":5.89,"bulge":0.0},"end":{"x":14.600491094738247,"y":-20.78282692939043,"bulge":0.0}},
+                    {"kind":"rational_quadratic","start":{"x":14.600491094738247,"y":-20.78282692939043,"bulge":0.0},"control":{"x":18.91,"y":6.2,"bulge":0.0},"end":{"x":20.150000000000002,"y":6.820000000000001,"bulge":0.0},"start_weight":1.0,"control_weight":0.36,"end_weight":1.0},
+                    {"kind":"line","start":{"x":20.150000000000002,"y":6.820000000000001,"bulge":0.0},"end":{"x":7.4399999999999995,"y":10.85,"bulge":0.0}},
+                    {"kind":"line","start":{"x":7.4399999999999995,"y":10.85,"bulge":0.0},"end":{"x":-16.43,"y":7.13,"bulge":0.0}},
+                    {"kind":"line","start":{"x":-16.43,"y":7.13,"bulge":0.0},"end":{"x":-18.6,"y":-6.2,"bulge":0.0}}
+                ],"vertex_data":[],"is_closed":true,"is_hole":false},
+                {"curve_data":[
+                    {"kind":"cubic_bezier","start":{"x":-24.8,"y":-18.6,"bulge":0.0},"control1":{"x":-12.4,"y":-20.77,"bulge":0.0},"control2":{"x":12.4,"y":-20.77,"bulge":0.0},"end":{"x":24.8,"y":-18.6,"bulge":0.0}},
+                    {"kind":"line","start":{"x":24.8,"y":-18.6,"bulge":0.0},"end":{"x":24.8,"y":8.06,"bulge":0.0}},
+                    {"kind":"line","start":{"x":24.8,"y":8.06,"bulge":0.0},"end":{"x":-24.8,"y":8.06,"bulge":0.0}},
+                    {"kind":"line","start":{"x":-24.8,"y":8.06,"bulge":0.0},"end":{"x":-24.8,"y":-18.6,"bulge":0.0}}
+                ],"vertex_data":[],"is_closed":true,"is_hole":false}
+            ]"#,
+        )
+        .expect("shared Polyline Boolean state should deserialize")
+    }
+
     fn assert_native_boolean_curves(shape: &Shape, op: BooleanMode) {
         let polylines = shape
             .materials
@@ -1287,6 +1311,30 @@ mod tests {
                 }),
             "segmented display mode should project native curves to finite vertices"
         );
+    }
+
+    #[test]
+    fn shared_polyline_boolean_state_resolves_all_boolean_modes() {
+        let polylines = shared_blocker_polylines();
+        let mut failures = Vec::new();
+
+        for op in [
+            BooleanMode::Union,
+            BooleanMode::Intersection,
+            BooleanMode::Difference,
+            BooleanMode::Xor,
+        ] {
+            match boolean_polylines(&polylines[0], &polylines[1], op) {
+                Ok(Some(result)) => {
+                    assert_native_boolean_curves(&result, op);
+                    assert_no_zero_length_lines(&result, op);
+                }
+                Ok(None) => failures.push(format!("{op:?}: unresolved topology")),
+                Err(error) => failures.push(format!("{op:?}: {error}")),
+            }
+        }
+
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
 
     #[test]
