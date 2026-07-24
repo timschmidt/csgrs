@@ -2308,18 +2308,6 @@ fn search_unit_roots(
         if count == 0 {
             continue;
         }
-        let midpoint = ((&start + &end) / Real::from(2_i8))?;
-        let midpoint_variations = match sturm_point_evidence(&sequence, &midpoint, policy)? {
-            Classification::Decided(SturmPointEvidence::Root) => {
-                return Ok(Classification::Decided(UnitRootSearch::RepresentedRoot(
-                    midpoint,
-                )));
-            }
-            Classification::Decided(SturmPointEvidence::NonRoot(variations)) => variations,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
         let touches_represented_root = represented_roots.iter().any(|root| {
             compare_reals(root, &start, policy) == Some(Ordering::Equal)
                 || compare_reals(root, &end, policy) == Some(Ordering::Equal)
@@ -2356,6 +2344,18 @@ fn search_unit_roots(
             }
             continue;
         }
+        let midpoint = ((&start + &end) / Real::from(2_i8))?;
+        let midpoint_variations = match sturm_point_evidence(&sequence, &midpoint, policy)? {
+            Classification::Decided(SturmPointEvidence::Root) => {
+                return Ok(Classification::Decided(UnitRootSearch::RepresentedRoot(
+                    midpoint,
+                )));
+            }
+            Classification::Decided(SturmPointEvidence::NonRoot(variations)) => variations,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         if depth >= 256 {
             return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
         }

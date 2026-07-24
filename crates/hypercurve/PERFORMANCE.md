@@ -3353,6 +3353,35 @@ AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,894
 coverage points and 19,157 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Deferred singleton midpoint scans
+
+Root isolation now consumes a certified singleton interval before evaluating
+its midpoint's complete Sturm sequence. The retained carrier's rational-root
+reconstruction still replays any represented root exactly, including a root at
+the midpoint, while an irrational singleton avoids a scan that cannot affect
+its already-proved root count. Midpoint Sturm evidence remains mandatory for
+intervals that touch represented or unit-domain boundaries and therefore
+still require bisection.
+
+The mixed represented/algebraic isolation regression covers the exact
+midpoint reconstruction path. On the one-cell all-family exact Boolean
+sentinel, the ten-run instruction median fell from 66,871,601 to 66,350,069
+(0.78%), 79.3% below the original 320,660,631 baseline. Heaptrack allocations
+fell from 98,658 to 97,906 and temporary allocations from 6,389 to 6,367;
+peak heap remained 1.50 MiB and peak RSS remained 12.41 MiB.
+
+Eleven ordinary runs had a 6.776 ms complete median, a 4.755 ms preparation
+median, and a 0.328 ms exact-polyline projection median. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete Hypercurve all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and default and no-default release WASM library builds passed. The
+AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,899
+coverage points and 19,170 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
