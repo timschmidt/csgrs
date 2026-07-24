@@ -96,7 +96,9 @@ fi
 
 export CSGRS_BENCH_TEMPERATURE="${CSGRS_BENCH_TEMPERATURE:-warm}"
 cargo bench --bench kernel_comparison >"$output/csgrs-kernel.csv"
-cargo bench --bench feature_pipeline --features offset,bevymesh >"$output/csgrs-feature.csv"
+cargo bench --bench feature_pipeline \
+  --features bench-feature-pipeline \
+  >"$output/csgrs-feature.csv"
 
 csv_files=("$output/csgrs-kernel.csv" "$output/csgrs-feature.csv")
 if ((!csgrs_only)); then
