@@ -1908,24 +1908,18 @@ fn could_have_rational_root_modulo_small_primes(coefficients: &[BigInt]) -> bool
     let leading = coefficients
         .last()
         .expect("nonempty polynomial has a leading coefficient");
+    let mut residues = Vec::with_capacity(coefficients.len());
     for prime in PRIMES {
-        let modulus = BigInt::from(prime);
-        let leading_residue = leading
-            .mod_floor(&modulus)
-            .to_u32()
-            .expect("residue fits its small prime");
+        let leading_residue = bigint_modulo_u32(leading, prime);
         if leading_residue == 0 {
             continue;
         }
-        let residues = coefficients
-            .iter()
-            .map(|coefficient| {
-                coefficient
-                    .mod_floor(&modulus)
-                    .to_u32()
-                    .expect("residue fits its small prime")
-            })
-            .collect::<Vec<_>>();
+        residues.clear();
+        residues.extend(
+            coefficients
+                .iter()
+                .map(|coefficient| bigint_modulo_u32(coefficient, prime)),
+        );
         let has_root = (0..prime).any(|candidate| {
             residues.iter().rev().fold(0_u64, |value, coefficient| {
                 (value * u64::from(candidate) + u64::from(*coefficient)) % u64::from(prime)
@@ -1936,6 +1930,20 @@ fn could_have_rational_root_modulo_small_primes(coefficients: &[BigInt]) -> bool
         }
     }
     true
+}
+
+fn bigint_modulo_u32(value: &BigInt, modulus: u32) -> u32 {
+    debug_assert_ne!(modulus, 0);
+    let modulus = u64::from(modulus);
+    let radix = (u64::from(u32::MAX) + 1) % modulus;
+    let magnitude_residue = value.iter_u32_digits().rev().fold(0_u64, |residue, digit| {
+        (residue * radix + u64::from(digit) % modulus) % modulus
+    });
+    if value.sign() == num::bigint::Sign::Minus && magnitude_residue != 0 {
+        (modulus - magnitude_residue) as u32
+    } else {
+        magnitude_residue as u32
+    }
 }
 
 fn real_as_big_rational(value: &Real) -> Option<BigRational> {
@@ -3043,6 +3051,32 @@ mod conversion_tests {
             rational_root_denominator_bound(&polynomial(&[1, -2, -2, 4])),
             Some(BigUint::from(4_u8))
         );
+    }
+
+    #[test]
+    fn native_small_modulus_matches_bigint_floor_remainder() {
+        let wide = (BigInt::one() << 200_usize) + BigInt::from(123_456_789_u64);
+        let values = [
+            BigInt::zero(),
+            BigInt::from(1_i8),
+            BigInt::from(-1_i8),
+            BigInt::from(i128::MAX),
+            BigInt::from(i128::MIN),
+            wide.clone(),
+            -wide,
+        ];
+        for prime in [2_u32, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31] {
+            let modulus = BigInt::from(prime);
+            for value in &values {
+                assert_eq!(
+                    bigint_modulo_u32(value, prime),
+                    value
+                        .mod_floor(&modulus)
+                        .to_u32()
+                        .expect("small-prime residue fits u32")
+                );
+            }
+        }
     }
 
     #[test]

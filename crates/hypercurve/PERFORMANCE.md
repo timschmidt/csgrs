@@ -4384,6 +4384,39 @@ region-Boolean replay completed all 2,509 requested executions at 5,900
 coverage points and 19,225 feature edges with no finding; LeakSanitizer
 remained disabled under ptrace.
 
+### Allocation-free small-prime root sieve
+
+The exact rational-root rejection sieve reduces primitive `BigInt`
+coefficients modulo eleven fixed primes no larger than 31. It formerly created
+a `BigInt` modulus, one `BigInt` remainder per coefficient, and a fresh residue
+vector for each tested prime. Root isolation invokes this proof once for every
+implicit substitution polynomial even when the first useful prime rejects all
+rational roots.
+
+Small-prime residues now fold the existing magnitude limbs directly in native
+`u64` arithmetic and apply the signed floor-remainder adjustment explicitly.
+One residue buffer is reused across primes. This changes only how the exact
+finite-field coefficients are represented; candidate evaluation and the
+one-sided rejection rule are unchanged. A signed zero, boundary integer, and
+positive/negative 200-bit regression compares every native residue against
+`BigInt::mod_floor`, while the existing generated rational-root suite proves
+that roots with denominators through eight remain admitted.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 32,005,223 to 31,937,120 (0.21%), 90.04% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+45,821 to 45,504; recorder-level temporary events fell from 2,702 to 2,663 and
+the postprocessor count fell from 2,950 to 2,911. Peak heap remained 1.13 MiB
+and peak RSS measured 11.16 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy and rustdoc, and supported default/no-default
+release WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 requested executions at 5,896 coverage points and 19,168
+feature edges with no finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
