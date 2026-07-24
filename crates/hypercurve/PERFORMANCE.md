@@ -2996,6 +2996,45 @@ rustdoc, and release WASM library build passed. A 2,509-run AddressSanitizer
 region-Boolean campaign completed without failure at 5,894 coverage points and
 19,170 feature edges; LeakSanitizer alone remained disabled under ptrace.
 
+### Retained algebraic-root refinement
+
+Each curved split boundary previously re-entered Hypersolve's general isolated-
+root refinement API. That correctly rebuilt a square-free polynomial and Sturm
+sequence, but Hypercurve had already certified the defining polynomial and
+singleton interval. Algebraic parameters now retain one successful Sturm
+sequence across clones, carry the isolation-time sequence directly into every
+root produced by that pass, and bisect through Hypercurve's existing certified
+singleton refinement. A represented midpoint root is still promoted exactly;
+uncertain work retains the original isolator.
+
+Refined intervals share the source root's private identity. `same_value` uses
+that identity as an exact certificate when topology maps a refined split back
+to its original event. Structural `PartialEq` deliberately remains unchanged,
+preserving its transitivity for independently constructed equal isolators.
+Square-free and repeated-root regressions compare three local refinement steps
+with the former Hypersolve reference, prove the interval changed, and prove
+clone-shared value identity and Sturm retention.
+
+The same-clean-tree Callgrind A/B fell from 126,924,875 to 91,848,172
+instructions (27.6%). The final ten-run median was 91,844,448 instructions,
+30.1% below the preceding 131,393,603 checkpoint and 71.4% below the
+320,660,631 adaptive conic-image baseline. Eleven ordinary runs had a 9.517 ms
+complete median, a 6.354 ms preparation median, and a 0.392 ms exact-polyline
+projection median. Every run retained 9 candidate pairs, 48 fragments, 2 exact
+point classifications, 4 decided operations, and checksum 6.
+
+Clean matched Heaptrack runs fell from 155,590 to 138,889 allocations (10.7%)
+and from 11,438 to 9,916 temporary allocations (13.3%); peak heap fell from
+2.06 to 2.00 MiB. In the final repeated frame-pointer profile, pair
+intersection preparation accounts for 41.6%, resultant construction 20.3%,
+split carriers 15.6%, and remaining Sturm construction 6.4%. The roughly 24x
+native projection gap still retains the line/arc accelerator.
+The complete all-feature and no-default suites, strict all-target Clippy,
+warning-denied rustdoc, and release WASM library build passed. The requested
+2,509-run AddressSanitizer region-Boolean campaign completed without failure
+at 5,897 coverage points and 19,162 feature edges; LeakSanitizer alone remained
+disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

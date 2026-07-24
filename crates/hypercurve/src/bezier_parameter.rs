@@ -25,10 +25,7 @@ use std::rc::Rc;
 
 use hyperreal::{Rational as HyperRational, Real, RealSign};
 #[cfg(feature = "predicates")]
-use hypersolve::{
-    AlgebraicRootRepresentation, IsolatedRootInterval, RootIsolationConfig,
-    refine_isolated_univariate_polynomial_interval,
-};
+use hypersolve::AlgebraicRootRepresentation;
 use num::{BigInt, BigRational, BigUint, Integer, One, ToPrimitive, Zero};
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
@@ -103,6 +100,7 @@ struct BezierAlgebraicParameterData {
 #[derive(Debug, Default)]
 struct BezierAlgebraicParameterSharedData {
     represented_rational_root: OnceCell<Option<Real>>,
+    sturm_sequence: OnceCell<Rc<[Vec<Real>]>>,
     rational_images: RefCell<Vec<RetainedRationalBezierAlgebraicImages>>,
 }
 
@@ -666,6 +664,16 @@ impl BezierAlgebraicParameter2 {
         }
     }
 
+    fn from_certified_singleton_with_sturm_sequence(
+        polynomial: BezierParameterPolynomial,
+        interval: BezierParameterInterval,
+        sturm_sequence: Rc<[Vec<Real>]>,
+    ) -> Self {
+        let parameter = Self::from_certified_singleton(polynomial, interval);
+        let _ = parameter.data.shared.sturm_sequence.set(sturm_sequence);
+        parameter
+    }
+
     fn with_certified_interval(&self, interval: BezierParameterInterval) -> Self {
         Self {
             data: Rc::new(BezierAlgebraicParameterData {
@@ -696,6 +704,29 @@ impl BezierAlgebraicParameter2 {
     /// decided positive or negative result for this clone-shared parameter.
     pub fn is_represented_rational_root_cached(&self) -> bool {
         self.data.shared.represented_rational_root.get().is_some()
+    }
+
+    fn retained_sturm_sequence(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Rc<[Vec<Real>]>>> {
+        if let Some(sequence) = self.data.shared.sturm_sequence.get() {
+            return Ok(Classification::Decided(Rc::clone(sequence)));
+        }
+        let sequence = match sturm_sequence(self.polynomial().coefficients(), policy)? {
+            Classification::Decided(sequence) => Rc::<[Vec<Real>]>::from(sequence),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let _ = self.data.shared.sturm_sequence.set(Rc::clone(&sequence));
+        Ok(Classification::Decided(
+            self.data
+                .shared
+                .sturm_sequence
+                .get()
+                .map_or(sequence, Rc::clone),
+        ))
     }
 
     pub(crate) fn cached_rational_bezier_point_image(
@@ -1212,33 +1243,32 @@ impl BezierParameter2 {
         let Self::Algebraic(algebraic) = self else {
             return self;
         };
-        let interval = algebraic.interval();
-        let refinement = refine_isolated_univariate_polynomial_interval(
-            algebraic.polynomial().coefficients(),
-            &IsolatedRootInterval {
-                lower: interval.start().clone(),
-                upper: interval.end().clone(),
-                exact_root: None,
-                distinct_root_count: algebraic.root_count(),
-            },
-            RootIsolationConfig {
-                policy: policy.predicate_policy,
-                max_interval_width: None,
-                max_refinement_steps,
-            },
-        );
-        let Some(refined) = refinement.refined_interval else {
-            return Self::Algebraic(algebraic);
-        };
-        if let Some(exact) = refined.exact_root {
-            return Self::Exact(exact);
-        }
-        let interval = match BezierParameterInterval::try_new(refined.lower, refined.upper, policy)
-        {
-            Ok(Classification::Decided(interval)) => interval,
+        let sturm_sequence = match algebraic.retained_sturm_sequence(policy) {
+            Ok(Classification::Decided(sequence)) => sequence,
             Ok(Classification::Uncertain(_)) | Err(_) => return Self::Algebraic(algebraic),
         };
-        Self::Algebraic(algebraic.with_certified_interval(interval))
+        let mut refined = RefinedParameter::Algebraic {
+            parameter: &algebraic,
+            interval: algebraic.interval().clone(),
+            sturm_sequence,
+        };
+        for _ in 0..max_refinement_steps {
+            refined = match refined.refine_once(policy) {
+                Ok(Classification::Decided(refined)) => refined,
+                Ok(Classification::Uncertain(_)) | Err(_) => {
+                    return Self::Algebraic(algebraic);
+                }
+            };
+            if matches!(refined, RefinedParameter::Exact(_)) {
+                break;
+            }
+        }
+        match refined {
+            RefinedParameter::Exact(exact) => Self::Exact(exact),
+            RefinedParameter::Algebraic { interval, .. } => {
+                Self::Algebraic(algebraic.with_certified_interval(interval))
+            }
+        }
     }
 
     #[cfg(not(feature = "predicates"))]
@@ -1334,7 +1364,13 @@ impl BezierParameter2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<bool>> {
-        if self == other {
+        if self == other
+            || matches!(
+                (self, other),
+                (Self::Algebraic(left), Self::Algebraic(right))
+                    if Rc::ptr_eq(&left.data.shared, &right.data.shared)
+            )
+        {
             return Ok(Classification::Decided(true));
         }
         match (self, other) {
@@ -1420,7 +1456,7 @@ enum RefinedParameter<'a> {
     Algebraic {
         parameter: &'a BezierAlgebraicParameter2,
         interval: BezierParameterInterval,
-        sturm_sequence: Vec<Vec<Real>>,
+        sturm_sequence: Rc<[Vec<Real>]>,
     },
 }
 
@@ -1434,13 +1470,12 @@ impl<'a> RefinedParameter<'a> {
                 Ok(Classification::Decided(Self::Exact(value.clone())))
             }
             BezierParameter2::Algebraic(parameter) => {
-                let sturm_sequence =
-                    match sturm_sequence(parameter.polynomial().coefficients(), policy)? {
-                        Classification::Decided(sequence) => sequence,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let sturm_sequence = match parameter.retained_sturm_sequence(policy)? {
+                    Classification::Decided(sequence) => sequence,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 Ok(Classification::Decided(Self::Algebraic {
                     parameter,
                     interval: parameter.interval().clone(),
@@ -2147,7 +2182,7 @@ fn search_unit_roots(
     trace: &mut BezierRootIsolationTrace2,
 ) -> CurveResult<Classification<UnitRootSearch>> {
     let sequence = match sturm_sequence(polynomial.coefficients(), policy)? {
-        Classification::Decided(sequence) => sequence,
+        Classification::Decided(sequence) => Rc::<[Vec<Real>]>::from(sequence),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let rational_root_denominator_bound = rational_root_denominator_bound(polynomial);
@@ -2217,8 +2252,11 @@ fn search_unit_roots(
             // `count == 1` above was proved with the cached Sturm sequence.
             // Reusing that certificate avoids rebuilding the identical
             // sequence solely to construct the carrier.
-            let parameter =
-                BezierAlgebraicParameter2::from_certified_singleton(polynomial.clone(), interval);
+            let parameter = BezierAlgebraicParameter2::from_certified_singleton_with_sturm_sequence(
+                polynomial.clone(),
+                interval,
+                Rc::clone(&sequence),
+            );
             match parameter.represented_rational_root_with_cached_sequence(
                 policy,
                 rational_root_denominator_bound.as_ref(),
@@ -2433,6 +2471,64 @@ mod conversion_tests {
                 Classification::Decided(false)
             ]
         );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn retained_refinement_matches_square_free_reference_and_shares_sturm_work() {
+        let policy = CurvePolicy::certified();
+        for defining in [polynomial(&[-1, 0, 2]), polynomial(&[1, 0, -4, 0, 4])] {
+            let source = algebraic_parameter(&defining);
+            let BezierParameter2::Algebraic(source_algebraic) = &source else {
+                panic!("test helper always constructs an algebraic parameter");
+            };
+            assert!(source_algebraic.data.shared.sturm_sequence.get().is_none());
+
+            let reference = hypersolve::refine_isolated_univariate_polynomial_interval(
+                defining.coefficients(),
+                &hypersolve::IsolatedRootInterval {
+                    lower: source_algebraic.interval().start().clone(),
+                    upper: source_algebraic.interval().end().clone(),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                },
+                hypersolve::RootIsolationConfig {
+                    policy: policy.predicate_policy,
+                    max_interval_width: None,
+                    max_refinement_steps: 3,
+                },
+            )
+            .refined_interval
+            .expect("the reference refinement succeeds");
+            let refined = source.clone().refined_isolating_interval(3, &policy);
+            let BezierParameter2::Algebraic(refined) = refined else {
+                panic!("the irrational test roots remain algebraic");
+            };
+            assert_ne!(source_algebraic.interval(), refined.interval());
+            assert_ne!(source, BezierParameter2::Algebraic(refined.clone()));
+            assert_eq!(
+                source
+                    .same_value(&BezierParameter2::Algebraic(refined.clone()), &policy)
+                    .unwrap(),
+                Classification::Decided(true)
+            );
+            assert_eq!(refined.interval().start(), &reference.lower);
+            assert_eq!(refined.interval().end(), &reference.upper);
+
+            let source_sequence = source_algebraic
+                .data
+                .shared
+                .sturm_sequence
+                .get()
+                .expect("refinement retains one Sturm sequence");
+            let refined_sequence = refined
+                .data
+                .shared
+                .sturm_sequence
+                .get()
+                .expect("refined clones share retained Sturm work");
+            assert!(Rc::ptr_eq(source_sequence, refined_sequence));
+        }
     }
 
     #[test]
