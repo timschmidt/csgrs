@@ -674,6 +674,7 @@ impl BezierAlgebraicParameter2 {
         parameter
     }
 
+    #[cfg(feature = "predicates")]
     fn with_certified_interval(&self, interval: BezierParameterInterval) -> Self {
         Self {
             data: Rc::new(BezierAlgebraicParameterData {
@@ -1243,6 +1244,11 @@ impl BezierParameter2 {
         let Self::Algebraic(algebraic) = self else {
             return self;
         };
+        if let Some(refined) =
+            refine_algebraic_sign_change(&algebraic, max_refinement_steps, policy)
+        {
+            return refined;
+        }
         let sturm_sequence = match algebraic.retained_sturm_sequence(policy) {
             Ok(Classification::Decided(sequence)) => sequence,
             Ok(Classification::Uncertain(_)) | Err(_) => return Self::Algebraic(algebraic),
@@ -1449,6 +1455,47 @@ impl BezierParameter2 {
             }
         }
     }
+}
+
+#[cfg(feature = "predicates")]
+fn refine_algebraic_sign_change(
+    algebraic: &BezierAlgebraicParameter2,
+    max_refinement_steps: usize,
+    policy: &CurvePolicy,
+) -> Option<BezierParameter2> {
+    let polynomial = algebraic.polynomial();
+    let mut start = algebraic.interval().start().clone();
+    let mut end = algebraic.interval().end().clone();
+    let mut start_sign = real_sign(&polynomial.evaluate(&start), policy)?;
+    let end_sign = real_sign(&polynomial.evaluate(&end), policy)?;
+    if !matches!(start_sign, RealSign::Positive | RealSign::Negative)
+        || !matches!(end_sign, RealSign::Positive | RealSign::Negative)
+        || start_sign == end_sign
+    {
+        return None;
+    }
+    for _ in 0..max_refinement_steps {
+        let midpoint = midpoint_real(&start, &end).ok()?;
+        let midpoint_sign = real_sign(&polynomial.evaluate(&midpoint), policy)?;
+        if midpoint_sign == RealSign::Zero {
+            return Some(BezierParameter2::Exact(midpoint));
+        }
+        if midpoint_sign == start_sign {
+            start = midpoint;
+            start_sign = midpoint_sign;
+        } else if midpoint_sign == end_sign {
+            end = midpoint;
+        } else {
+            return None;
+        }
+    }
+    let interval = match BezierParameterInterval::try_new(start, end, policy).ok()? {
+        Classification::Decided(interval) => interval,
+        Classification::Uncertain(_) => return None,
+    };
+    Some(BezierParameter2::Algebraic(
+        algebraic.with_certified_interval(interval),
+    ))
 }
 
 enum RefinedParameter<'a> {
@@ -2477,7 +2524,10 @@ mod conversion_tests {
     #[test]
     fn retained_refinement_matches_square_free_reference_and_shares_sturm_work() {
         let policy = CurvePolicy::certified();
-        for defining in [polynomial(&[-1, 0, 2]), polynomial(&[1, 0, -4, 0, 4])] {
+        for (defining, expects_sturm_fallback) in [
+            (polynomial(&[-1, 0, 2]), false),
+            (polynomial(&[1, 0, -4, 0, 4]), true),
+        ] {
             let source = algebraic_parameter(&defining);
             let BezierParameter2::Algebraic(source_algebraic) = &source else {
                 panic!("test helper always constructs an algebraic parameter");
@@ -2515,19 +2565,17 @@ mod conversion_tests {
             assert_eq!(refined.interval().start(), &reference.lower);
             assert_eq!(refined.interval().end(), &reference.upper);
 
-            let source_sequence = source_algebraic
-                .data
-                .shared
-                .sturm_sequence
-                .get()
-                .expect("refinement retains one Sturm sequence");
-            let refined_sequence = refined
-                .data
-                .shared
-                .sturm_sequence
-                .get()
-                .expect("refined clones share retained Sturm work");
-            assert!(Rc::ptr_eq(source_sequence, refined_sequence));
+            let source_sequence = source_algebraic.data.shared.sturm_sequence.get();
+            let refined_sequence = refined.data.shared.sturm_sequence.get();
+            if expects_sturm_fallback {
+                assert!(Rc::ptr_eq(
+                    source_sequence.expect("even root refinement retains one Sturm sequence"),
+                    refined_sequence.expect("refined clones share retained Sturm work")
+                ));
+            } else {
+                assert!(source_sequence.is_none());
+                assert!(refined_sequence.is_none());
+            }
         }
     }
 

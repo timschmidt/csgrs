@@ -3035,6 +3035,36 @@ warning-denied rustdoc, and release WASM library build passed. The requested
 at 5,897 coverage points and 19,162 feature edges; LeakSanitizer alone remained
 disabled under ptrace.
 
+### Sign-certified odd-root refinement
+
+A singleton algebraic isolator whose defining polynomial has opposite nonzero
+signs at its endpoints contains an odd-multiplicity root. Exact midpoint
+evaluation therefore selects the unique sign-changing child without a Sturm
+count. Hypercurve now tries that continuous-polynomial certificate before its
+retained Sturm fallback. Midpoint roots still promote to represented exact
+parameters, while equal endpoint signs, undecided signs, and even-multiplicity
+roots retain the former path.
+
+The repeated-root reference regression now exercises both branches: the simple
+quadratic refines three times without constructing a Sturm sequence, while its
+squared companion reuses one retained sequence and matches Hypersolve's
+square-free reference interval exactly.
+
+The final ten-run instruction median fell from 91,844,448 to 85,201,993 (7.2%),
+73.4% below the 320,660,631 adaptive conic-image baseline. Eleven ordinary
+runs had an 8.606 ms complete median, a 6.084 ms preparation median, and a
+0.390 ms exact-polyline projection median. Every run retained 9 candidate
+pairs, 48 fragments, 2 exact point classifications, 4 decided operations, and
+checksum 6. Heaptrack fell from 138,889 to 133,767 allocations, from 9,916 to
+9,677 temporary allocations, and from 2.00 to 1.92 MiB peak heap. The remaining
+roughly 22x projection gap still retains the line/arc accelerator.
+
+The complete all-feature and no-default-feature suites, warning-denied Clippy
+and rustdoc, formatting, and the release WASM library build passed. The
+requested AddressSanitizer region-Boolean fuzz replay completed all 2,509 runs
+at 5,893 coverage points and 19,169 feature edges; LeakSanitizer alone remained
+disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
