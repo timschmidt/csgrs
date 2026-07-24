@@ -3179,6 +3179,36 @@ region-Boolean fuzz replay completed all 2,509 executions at 5,903 coverage
 points and 19,183 feature edges; LeakSanitizer alone remained disabled under
 ptrace.
 
+### Flat integer quotient determinants
+
+Hypersolve's quotient-ring image path now evaluates each already-flat
+exact-integer multiplication matrix with a private flat Bareiss kernel. It
+avoids rebuilding nested `Real` rows and constructing the public determinant
+report for every interpolation sample. The recurrence retains Hyperreal's
+checked exact integer cross-difference quotient. A failed shape check or exact
+division returns `None`, preserving the established Sylvester-resultant
+fallback.
+
+Fixed zero-, one-, two-, and three-dimensional cases plus generated
+four-by-four integer matrices compare the flat result with the public
+report-bearing determinant. The existing generated quotient-ring/Sylvester
+comparison continues to cover the caller. On the one-cell all-family exact
+Boolean sentinel, the ten-run instruction median fell from 76,301,712 to
+74,732,427 (2.1%), 76.7% below the original 320,660,631 baseline.
+
+Heaptrack allocations fell from 114,193 to 112,178; temporary allocations
+remained 6,833, peak heap remained 1.53 MiB, and peak RSS was 12.51 MiB.
+Eleven ordinary runs had an 8.004 ms complete median, a 5.749 ms preparation
+median, and a 0.379 ms exact-polyline projection median. Every run retained
+9 candidate pairs, 48 fragments, 2 classifications, 4 decided operations,
+no blockers, and checksum 6.
+
+The complete Hypersolve and Hypercurve all-feature and no-default-feature
+suites, formatting, warning-denied all-target Clippy and rustdoc, and release
+WASM library builds passed. The requested AddressSanitizer region-Boolean fuzz
+replay completed all 2,509 executions at 5,890 coverage points and 19,156
+feature edges; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
