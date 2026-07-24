@@ -55,8 +55,27 @@ fn main() {
         "each cell contains every curve family, every Real representation sample, and an exact 3-4-5 rotated/translated mate"
     );
 
+    #[cfg(feature = "dispatch-trace")]
+    if env::var_os("HYPERCURVE_PATHOLOGICAL_DISPATCH_TRACE").is_some() {
+        hyperreal::dispatch_trace::reset();
+        hyperreal::dispatch_trace::with_recording(|| run_tiers(&tiers, mode));
+        let snapshot = hyperreal::dispatch_trace::take_trace();
+        for entry in snapshot.dispatch {
+            println!(
+                "dispatch/{}/{}/{}={}",
+                entry.layer, entry.operation, entry.path, entry.count
+            );
+        }
+        println!("dispatch/rational_stats={:?}", snapshot.rational);
+        return;
+    }
+
+    run_tiers(&tiers, mode);
+}
+
+fn run_tiers(tiers: &[MemoryTier], mode: BenchmarkMode) {
     for tier in tiers {
-        run_tier(tier, mode);
+        run_tier(*tier, mode);
     }
 }
 

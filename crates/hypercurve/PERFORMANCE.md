@@ -42,12 +42,19 @@ rational-reducer evidence.
 ```bash
 cargo test --features dispatch-trace --test hypercurve_dispatch_trace
 cargo bench --features dispatch-trace --bench dispatch_trace
+HYPERCURVE_PATHOLOGICAL_MODE=boolean \
+HYPERCURVE_PATHOLOGICAL_CELL_LIMIT=1 \
+HYPERCURVE_PATHOLOGICAL_TIERS=100mb \
+HYPERCURVE_PATHOLOGICAL_DISPATCH_TRACE=1 \
+cargo bench --features dispatch-trace --bench pathological_regions
 ```
 
 The integration test protects the trace contract itself; the benchmark prints
 the per-operation summaries and cross-stack correlation counters used to relate
 performance observations to exact predicate, structural-fact, reducer, cache,
-refinement, and approximation paths.
+refinement, and approximation paths. The pathological opt-in records one
+complete mixed-family retained Boolean run in a shared window and prints every
+raw dispatch count plus the rational reducer summary.
 
 The complementary `api_surface` benchmark covers public adapter and authoring
 families that are not hot paths inside the topology workloads: checked and
