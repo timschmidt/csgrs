@@ -1469,8 +1469,11 @@ impl RationalBezier2 {
             let mapped = conic_parameter_from_curve_parameter(self, other, parameter, policy)?;
             match mapped {
                 Classification::Decided(Some(conic_parameter)) => {
-                    let point = exact_contact_point_evidence(self, &conic_parameter, policy)?
-                        .or(exact_contact_point_evidence(other, parameter, policy)?);
+                    let point = match exact_contact_point_evidence(self, &conic_parameter, policy)?
+                    {
+                        Some(point) => Some(point),
+                        None => exact_contact_point_evidence(other, parameter, policy)?,
+                    };
                     let Some(point) = point else {
                         return Ok(Some(Classification::Uncertain(
                             UncertaintyReason::Predicate,

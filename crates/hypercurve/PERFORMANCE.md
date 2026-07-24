@@ -2871,6 +2871,27 @@ Clippy, warning-denied rustdoc, and the library WASM build passed. Focused
 AddressSanitizer campaigns completed 1,000 algebraic-parameter executions and
 2,509 region-Boolean corpus executions without a finding.
 
+### Lazy alternate contact-point evidence
+
+Implicit-conic contact replay asks the conic operand for exact point evidence
+first and uses the general rational operand only when that construction cannot
+complete. The implementation expressed this priority with `Option::or`, whose
+argument is eager, so both algebraic point images and their resultant
+determinants were constructed even when the first was retained. Replay now
+evaluates the alternate operand only after a missing first result. The selected
+public evidence and fallback order are unchanged.
+
+A controlled ten-run `perf stat` comparison against commit `fa10383` reduced
+instructions from 409,730,483 to 383,444,180 (6.42%). Median instrumented
+complete Boolean time fell from 33.939 ms to 30.804 ms (9.24%), and median
+pair preparation fell from 23.361 ms to 20.410 ms (12.6%). Five ordinary
+release runs had a 30.524 ms complete median, a 20.414 ms preparation median,
+and a 0.428 ms exact-polyline projection median. All topology counts and the
+six-boundary checksum remained unchanged; the resulting roughly 71x native
+gap still retains the line/arc accelerator. The complete all-feature test
+matrix, strict all-feature Clippy, warning-denied rustdoc, and a 2,509-run
+AddressSanitizer region-Boolean campaign passed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
