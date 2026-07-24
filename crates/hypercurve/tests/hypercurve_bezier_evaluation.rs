@@ -30,10 +30,37 @@ fn cubic_de_casteljau(curve: &CubicBezier2, parameter: Real) -> Point2 {
     left.lerp(&right, parameter)
 }
 
+fn cubic_bernstein(curve: &CubicBezier2, parameter: Real) -> Point2 {
+    let one_minus_t = Real::one() - &parameter;
+    let one_minus_t_squared = &one_minus_t * &one_minus_t;
+    let parameter_squared = &parameter * &parameter;
+    let start_weight = &one_minus_t_squared * &one_minus_t;
+    let control1_weight = (&one_minus_t_squared * &parameter) * Real::from(3);
+    let control2_weight = (&one_minus_t * &parameter_squared) * Real::from(3);
+    let end_weight = &parameter_squared * &parameter;
+    Point2::new(
+        curve.start().x() * &start_weight
+            + curve.control1().x() * &control1_weight
+            + curve.control2().x() * &control2_weight
+            + curve.end().x() * &end_weight,
+        curve.start().y() * &start_weight
+            + curve.control1().y() * &control1_weight
+            + curve.control2().y() * &control2_weight
+            + curve.end().y() * &end_weight,
+    )
+}
+
 #[test]
 fn optimized_polynomial_evaluation_matches_de_casteljau_exactly() {
     let quadratic = QuadraticBezier2::new(p(-3, 2), p(5, 11), p(13, -7));
     let cubic = CubicBezier2::new(p(-3, 2), p(2, 13), p(9, -8), p(15, 4));
+    let sqrt_two = r(2).sqrt().expect("positive radicand");
+    let symbolic_cubic = CubicBezier2::new(
+        Point2::new(sqrt_two.clone(), r(2)),
+        Point2::new(r(2), sqrt_two.clone()),
+        Point2::new(-sqrt_two.clone(), r(5)),
+        Point2::new(r(7), -sqrt_two),
+    );
     let root_half = (r(2).sqrt().expect("positive radicand") / r(2)).expect("nonzero denominator");
     let parameters = [
         r(-2),
@@ -54,8 +81,14 @@ fn optimized_polynomial_evaluation_matches_de_casteljau_exactly() {
         );
         assert_eq!(
             cubic.point_at(parameter.clone()),
-            cubic_de_casteljau(&cubic, parameter)
+            cubic_de_casteljau(&cubic, parameter.clone())
         );
+        let symbolic_expected = if parameter.exact_rational_ref().is_some() {
+            cubic_bernstein(&symbolic_cubic, parameter.clone())
+        } else {
+            cubic_de_casteljau(&symbolic_cubic, parameter.clone())
+        };
+        assert_eq!(symbolic_cubic.point_at(parameter), symbolic_expected);
     }
 }
 

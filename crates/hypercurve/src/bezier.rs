@@ -338,15 +338,45 @@ impl CubicBezier2 {
         let control1_weight = (&one_minus_t_squared * &t) * Real::from(3);
         let control2_weight = (&one_minus_t * &t_squared) * Real::from(3);
         let end_weight = &t_squared * &t;
+        let exact_coordinates = self.control_points().iter().all(|point| {
+            point.x().exact_rational_ref().is_some() && point.y().exact_rational_ref().is_some()
+        });
+        if !exact_coordinates {
+            return Point2::new(
+                self.start.x() * &start_weight
+                    + self.control1.x() * &control1_weight
+                    + self.control2.x() * &control2_weight
+                    + self.end.x() * &end_weight,
+                self.start.y() * &start_weight
+                    + self.control1.y() * &control1_weight
+                    + self.control2.y() * &control2_weight
+                    + self.end.y() * &end_weight,
+            );
+        }
+        let evaluate_coordinate = |coordinates: [&Real; 4]| {
+            Real::exact_rational_signed_product_sum_known_exact(
+                [true; 4],
+                [
+                    [coordinates[0], &start_weight],
+                    [coordinates[1], &control1_weight],
+                    [coordinates[2], &control2_weight],
+                    [coordinates[3], &end_weight],
+                ],
+            )
+        };
         Point2::new(
-            self.start.x() * &start_weight
-                + self.control1.x() * &control1_weight
-                + self.control2.x() * &control2_weight
-                + self.end.x() * &end_weight,
-            self.start.y() * &start_weight
-                + self.control1.y() * &control1_weight
-                + self.control2.y() * &control2_weight
-                + self.end.y() * &end_weight,
+            evaluate_coordinate([
+                self.start.x(),
+                self.control1.x(),
+                self.control2.x(),
+                self.end.x(),
+            ]),
+            evaluate_coordinate([
+                self.start.y(),
+                self.control1.y(),
+                self.control2.y(),
+                self.end.y(),
+            ]),
         )
     }
 

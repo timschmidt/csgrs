@@ -4458,6 +4458,44 @@ release WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 requested executions at 5,897 coverage points and 19,144
 feature edges with no finding; LeakSanitizer remained disabled under ptrace.
 
+### Fixed exact cubic Bernstein sums
+
+Cubic Bezier evaluation at an exact rational parameter constructs four
+Bernstein weights and formerly evaluated each coordinate as four independent
+products joined by three pairwise additions. For exact rational control
+coordinates, that expression repeatedly normalized intermediate rationals even
+though the complete fixed product sum is already known to stay in the exact
+rational tower.
+
+The rational-parameter branch now sends each four-term coordinate through
+Hyperreal's fixed exact rational product-sum reducer. The fast path is selected
+only after all eight control coordinates prove exact rational. A symbolic
+control coordinate preserves the former Bernstein expression and operation
+order verbatim, while parameters outside the exact rational tower retain the
+former de Casteljau evaluation. A focused regression checks the fused result
+against exact de Casteljau evaluation across endpoints, interior and exterior
+rationals, and an algebraic parameter; it separately verifies that symbolic
+controls retain the established Bernstein representation at rational
+parameters and the established de Casteljau representation otherwise.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from the current dependency-qualified 31,154,077
+baseline to 30,417,147 (2.37%), 90.51% below the original 320,660,631
+baseline. Inclusive instruction cost beneath `CubicBezier2::point_at` fell
+from 1,175,419 to 590,316 (49.8%). Heaptrack allocation events fell from
+43,975 to 42,571; recorder-level temporary events remained 2,685 and the
+postprocessor count remained 2,933. Peak heap moved from 1.13 to 1.14 MiB,
+peak RSS measured 11.09 MiB, and retained memory moved from 96.57 to 100.03
+KiB. Every measured run retained 9 candidate pairs, 48 fragments, 2
+classifications, 4 decided operations, no blockers, and checksum 6.
+
+The complete all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy and rustdoc, and supported default/no-default
+release WASM library builds passed. The requested `-runs=2509`
+AddressSanitizer region-Boolean replay completed with libFuzzer reporting 2,513
+executions at 5,897 coverage points and 19,125 feature edges with no finding;
+LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
