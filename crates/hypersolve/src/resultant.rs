@@ -242,10 +242,8 @@ pub(crate) fn quotient_ring_resultant_polynomial(
     }
     let matrix_entries = degree.checked_mul(degree)?;
     let relation_degree = numerator.len().max(denominator.len()).checked_sub(1)?;
-    let numerator_entries =
-        pseudo_quotient_multiplication_matrix(source, numerator, relation_degree)?;
-    let denominator_entries =
-        pseudo_quotient_multiplication_matrix(source, denominator, relation_degree)?;
+    let (numerator_entries, denominator_entries) =
+        pseudo_quotient_multiplication_matrices(source, numerator, denominator, relation_degree)?;
     if numerator_entries.len() != matrix_entries || denominator_entries.len() != matrix_entries {
         return None;
     }
@@ -323,10 +321,8 @@ fn quotient_ring_resultant_samples(
     let degree = source.len().checked_sub(1)?;
     let matrix_entries = degree.checked_mul(degree)?;
     let relation_degree = numerator.len().max(denominator.len()).checked_sub(1)?;
-    let numerator_entries =
-        pseudo_quotient_multiplication_matrix(source, numerator, relation_degree)?;
-    let denominator_entries =
-        pseudo_quotient_multiplication_matrix(source, denominator, relation_degree)?;
+    let (numerator_entries, denominator_entries) =
+        pseudo_quotient_multiplication_matrices(source, numerator, denominator, relation_degree)?;
     let mut samples = Vec::with_capacity(degree + 1);
     let mut matrix = vec![BigInt::zero(); matrix_entries];
     for sample in 0..=degree {
@@ -399,20 +395,36 @@ fn determinant_integer_bareiss_flat(matrix: &mut [BigInt], dimension: usize) -> 
     })
 }
 
-fn pseudo_quotient_multiplication_matrix(
+fn pseudo_quotient_multiplication_matrices(
     source: &[Real],
-    relation: &[Real],
+    first_relation: &[Real],
+    second_relation: &[Real],
     relation_degree: usize,
-) -> Option<Vec<BigInt>> {
-    let degree = source.len().checked_sub(1)?;
+) -> Option<(Vec<BigInt>, Vec<BigInt>)> {
     let source = source
         .iter()
         .map(|value| value.exact_rational_ref()?.to_big_integer())
         .collect::<Option<Vec<_>>>()?;
-    let relation = relation
+    let first_relation = first_relation
         .iter()
         .map(|value| value.exact_rational_ref()?.to_big_integer())
         .collect::<Option<Vec<_>>>()?;
+    let second_relation = second_relation
+        .iter()
+        .map(|value| value.exact_rational_ref()?.to_big_integer())
+        .collect::<Option<Vec<_>>>()?;
+    Some((
+        pseudo_quotient_multiplication_matrix(&source, &first_relation, relation_degree)?,
+        pseudo_quotient_multiplication_matrix(&source, &second_relation, relation_degree)?,
+    ))
+}
+
+fn pseudo_quotient_multiplication_matrix(
+    source: &[BigInt],
+    relation: &[BigInt],
+    relation_degree: usize,
+) -> Option<Vec<BigInt>> {
+    let degree = source.len().checked_sub(1)?;
     let leading = source.last()?;
     if leading.is_zero() {
         return None;
