@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-use hyperreal::Real;
+use hyperreal::{Real, ZeroKnowledge};
 use hypersolve::{DenseResidualReplayError, replay_dense_linear_residuals};
 
 use crate::{BranchId, CircuitError, CircuitResult, ComponentId, NetId, PartRef};
@@ -17,6 +17,7 @@ pub enum MnaUnknown {
 }
 
 /// Linear circuit stamp.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum LinearStamp {
     /// Conductance between two nets. `None` means ground.
@@ -104,6 +105,15 @@ pub struct ResidualReplayReport {
     pub residuals: Vec<Real>,
     /// True when every residual was certified zero.
     pub accepted: bool,
+}
+
+/// Exact linear solve candidate together with mandatory residual certification.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LinearSolveReport {
+    /// Candidate values in [`LinearMnaSystem::unknowns`] order.
+    pub candidate: Vec<Real>,
+    /// Exact replay of `A*x - b` for the returned candidate.
+    pub replay: ResidualReplayReport,
 }
 
 impl LinearMnaSystem {
@@ -223,6 +233,79 @@ impl LinearMnaSystem {
         Ok(ResidualReplayReport {
             residuals: report.residuals,
             accepted: report.accepted,
+        })
+    }
+
+    /// Solves a square linear MNA system by exact-aware Gauss-Jordan elimination.
+    ///
+    /// A pivot must be certified nonzero; an unknown zero predicate is reported
+    /// rather than resolved by a floating tolerance. The result is replayed
+    /// through the original equations before it is returned.
+    pub fn solve_exact(&self) -> CircuitResult<LinearSolveReport> {
+        let dimension = self.unknowns.len();
+        if self.matrix.len() != dimension
+            || self.matrix.iter().any(|row| row.len() != dimension)
+            || self.rhs.len() != dimension
+        {
+            return Err(CircuitError::CandidateLengthMismatch);
+        }
+        let mut matrix = self.matrix.clone();
+        let mut rhs = self.rhs.clone();
+        for column in 0..dimension {
+            let mut pivot = None;
+            let mut unknown_pivot = false;
+            for (row, candidate) in matrix.iter().enumerate().skip(column) {
+                match candidate[column].zero_status() {
+                    ZeroKnowledge::NonZero => {
+                        pivot = Some(row);
+                        break;
+                    }
+                    ZeroKnowledge::Unknown => unknown_pivot = true,
+                    ZeroKnowledge::Zero => {}
+                }
+            }
+            let Some(pivot) = pivot else {
+                return Err(if unknown_pivot {
+                    CircuitError::IndeterminateLinearPivot
+                } else {
+                    CircuitError::SingularLinearSystem
+                });
+            };
+            matrix.swap(column, pivot);
+            rhs.swap(column, pivot);
+            let divisor = matrix[column][column].clone();
+            for entry in &mut matrix[column][column..] {
+                *entry = (entry.clone() / divisor.clone())
+                    .map_err(|_| CircuitError::LinearSolveArithmetic)?;
+            }
+            rhs[column] =
+                (rhs[column].clone() / divisor).map_err(|_| CircuitError::LinearSolveArithmetic)?;
+            let pivot_row = matrix[column].clone();
+            let pivot_rhs = rhs[column].clone();
+
+            for row in 0..dimension {
+                if row == column {
+                    continue;
+                }
+                let factor = matrix[row][column].clone();
+                if factor.zero_status() == ZeroKnowledge::Zero {
+                    continue;
+                }
+                for (entry, pivot_entry) in
+                    matrix[row][column..].iter_mut().zip(&pivot_row[column..])
+                {
+                    *entry = entry.clone() - factor.clone() * pivot_entry.clone();
+                }
+                rhs[row] = rhs[row].clone() - factor * pivot_rhs.clone();
+            }
+        }
+        let replay = self.replay_candidate(&rhs)?;
+        if !replay.accepted {
+            return Err(CircuitError::UnknownResidual);
+        }
+        Ok(LinearSolveReport {
+            candidate: rhs,
+            replay,
         })
     }
 }

@@ -12,17 +12,156 @@ categories = ["science", "simulation", "mathematics"]
 [features]
 default = []
 dispatch-trace = ["hyperreal/dispatch-trace"]
+layout = [
+    "dep:hypercurve",
+    "dep:hyperlattice",
+    "dep:hyperlimit",
+    "dep:hyperpath",
+    "dep:serde_json",
+]
+geometry = [
+    "layout",
+    "dep:csgrs",
+    "dep:serde",
+    "dep:serde_json",
+    "dep:sha2",
+]
+drc = ["geometry", "dep:hyperdrc", "dep:hyperphysics"]
+interchange = [
+    "layout",
+    "dep:serde",
+    "dep:serde_json",
+    "dep:sha2",
+    "dep:toml",
+    "hyperreal/serde",
+]
+lceda = ["interchange"]
 
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hyperreal = { path = "../hyperreal" }
 hypersolve = { path = "../hypersolve" }
+semver = { version = "1.0.28", features = ["serde"] }
+hyperlattice = { path = "../hyperlattice", optional = true }
+hyperlimit = { path = "../hyperlimit", optional = true }
+hyperpath = { path = "../hyperpath", optional = true }
+hypercurve = { path = "../hypercurve", optional = true }
+csgrs = { path = "../csgrs", default-features = false, features = ["sketch", "offset", "obj-io", "gltf-io", "vrml-io", "gerber-io", "truetype-text"], optional = true }
+hyperdrc = { path = "../hyperdrc", optional = true }
+hyperphysics = { path = "../hyperphysics", optional = true }
+serde = { version = "1.0.228", features = ["derive"], optional = true }
+serde_json = { version = "1.0.149", optional = true }
+sha2 = { version = "0.10.9", optional = true }
+toml = { version = "1.1.2", optional = true }
 # hyperreal = { version = "0.13.0" }
 # hypersolve = { version = "0.3.0" }
 [dev-dependencies]
 proptest = "1.7.0"
 
+# Keep transitive Hyper crates unified while developing against sibling checkouts.
+[patch.crates-io]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hyperreal = { path = "../hyperreal" }
+hypertri = { path = "../hypertri" }
+hypersolve = { path = "../hypersolve" }
+
+[[bin]]
+name = "hypercircuit"
+path = "src/bin/hypercircuit.rs"
+required-features = ["drc", "interchange"]
+
 [[bench]]
 name = "mna"
 harness = false
+
+[[bench]]
+name = "routing"
+harness = false
+required-features = ["layout"]
+
+[[example]]
+name = "declarative_board"
+required-features = ["layout"]
+
+[[example]]
+name = "fluent_design"
+required-features = ["layout"]
+
+[[example]]
+name = "reusable_parts"
+required-features = ["layout"]
+
+[[example]]
+name = "part_library"
+required-features = ["interchange"]
+
+[[example]]
+name = "source_diagnostics"
+required-features = ["layout"]
+
+[[example]]
+name = "kicad_roundtrip"
+required-features = ["layout"]
+
+[[example]]
+name = "kicad_stackup_rules"
+required-features = ["layout"]
+
+[[example]]
+name = "lceda_pro_export"
+required-features = ["lceda"]
+
+[[example]]
+name = "semantic_edit"
+required-features = ["interchange"]
+
+[[example]]
+name = "layout_module"
+required-features = ["layout"]
+
+[[example]]
+name = "parameterized_module"
+
+[[example]]
+name = "advanced_routing"
+required-features = ["layout"]
+
+[[example]]
+name = "phase_tuning"
+required-features = ["layout"]
+
+[[example]]
+name = "tscircuit_router_handoff"
+required-features = ["layout"]
+
+[[example]]
+name = "ac_sweep"
+required-features = ["layout"]
+
+[[example]]
+name = "nonlinear_ac"
+required-features = ["layout"]
+
+[[example]]
+name = "auto_schematic"
+required-features = ["layout"]
+
+[[example]]
+name = "kicad_schematic"
+
+[[example]]
+name = "kicad_library_import"
+required-features = ["interchange"]
+
+[[example]]
+name = "review_bundle"
+required-features = ["geometry"]
+
+[[example]]
+name = "curved_fabrication"
+required-features = ["drc"]
+
+[[example]]
+name = "diode_transient"
