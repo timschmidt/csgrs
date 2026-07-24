@@ -1673,7 +1673,7 @@ pub(crate) fn reserve_plane_ids(count: usize) -> u64 {
 }
 
 mod triangulation;
-#[cfg(feature = "obj-io")]
+#[cfg(any(feature = "obj-io", feature = "vrml-io"))]
 pub(crate) use triangulation::triangulate_indexed_positions_into;
 
 /// A triangle face used by [`super::Mesh`].

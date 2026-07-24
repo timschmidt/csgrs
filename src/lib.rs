@@ -12,6 +12,9 @@
 //! #### Default
 //! - [**stl-io**](https://en.wikipedia.org/wiki/STL_(file_format)): `.stl` import/export
 //! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
+//! - **obj-io**: Wavefront `.obj` mesh import/export
+//! - **gltf-io**: self-contained glTF/GLB triangle-scene import and glTF export
+//! - **vrml-io**: VRML 2.0 `.wrl` indexed-face scene import
 //! - **gerber-io**: Gerber/RS-274X import/export for 2D `Profile` geometry
 //! - Exact convex hull and Minkowski sum are always available through `hypermesh`.
 //! - **metaballs**: enables an implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)

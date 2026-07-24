@@ -10,8 +10,8 @@
 //! blueprint, or part handoff is useful only when it states which geometry facts
 //! were exact, which were preview-only, and which could not be decided.
 //!
-//! PCB/electrical ownership is explicitly outside this module. See the
-//! repository's `PCB_MIGRATION.md` for the compatibility-removal schedule.
+//! Circuit and PCB ownership is explicitly outside this module. See the
+//! repository's `PCB_MIGRATION.md` for the completed ownership migration.
 
 mod blueprint;
 mod metadata;

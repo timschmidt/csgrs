@@ -21,6 +21,9 @@ pub mod amf;
 #[cfg(feature = "gltf-io")]
 pub mod gltf;
 
+#[cfg(feature = "vrml-io")]
+pub mod vrml;
+
 #[cfg(feature = "gerber-io")]
 pub mod gerber;
 
