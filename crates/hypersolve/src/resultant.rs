@@ -357,7 +357,7 @@ fn pseudo_quotient_multiplication_matrix(
                     *coefficient = &*coefficient * *leading;
                 }
             }
-            for (source_power, coefficient) in source.iter().enumerate() {
+            for (source_power, coefficient) in source[..degree].iter().enumerate() {
                 let index = shift + source_power;
                 product[index] = leading.checked_exact_integer_cross_difference_quotient(
                     &product[index],
@@ -366,6 +366,7 @@ fn pseudo_quotient_multiplication_matrix(
                     &one,
                 )?;
             }
+            product[power] = Rational::zero();
         }
         for row in 0..degree {
             matrix[row * degree + column] = product[row].clone();
