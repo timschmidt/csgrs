@@ -1469,10 +1469,9 @@ impl RationalBezier2 {
             let mapped = conic_parameter_from_curve_parameter(self, other, parameter, policy)?;
             match mapped {
                 Classification::Decided(Some(conic_parameter)) => {
-                    let point = match exact_contact_point_evidence(self, &conic_parameter, policy)?
-                    {
+                    let point = match exact_contact_point_evidence(other, parameter, policy)? {
                         Some(point) => Some(point),
-                        None => exact_contact_point_evidence(other, parameter, policy)?,
+                        None => exact_contact_point_evidence(self, &conic_parameter, policy)?,
                     };
                     let Some(point) = point else {
                         return Ok(Some(Classification::Uncertain(
@@ -4055,6 +4054,61 @@ mod tests {
                 curve.affine_derivative_values_at(&parameter, 3, &policy)
             );
         }
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn implicit_conic_contacts_retain_source_parameter_point_image_first() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let two_thirds = Real::from(2_i8) * &third;
+        let conic = RationalBezier2::try_new(
+            vec![
+                Point2::new(0.into(), 0.into()),
+                Point2::new(half.clone(), 0.into()),
+                Point2::new(1.into(), 1.into()),
+            ],
+            vec![1.into(); 3],
+        )
+        .unwrap();
+        let line = RationalBezier2::try_new(
+            vec![
+                Point2::new(0.into(), half.clone()),
+                Point2::new(third, half.clone()),
+                Point2::new(two_thirds, half.clone()),
+                Point2::new(1.into(), half),
+            ],
+            vec![1.into(); 4],
+        )
+        .unwrap();
+
+        let retained = conic
+            .retain_intersection(&line, &CurvePolicy::certified())
+            .unwrap();
+        let RationalBezierIntersectionContacts2::Contacts(contacts) =
+            retained.try_contact_view().unwrap()
+        else {
+            panic!("parabola and horizontal line did not retain their algebraic contact");
+        };
+        let [contact] = contacts.as_ref() else {
+            panic!("parabola and horizontal line should have one finite contact");
+        };
+        let BezierParameter2::Algebraic(source_parameter) = contact.second_parameter() else {
+            panic!("horizontal-line contact parameter should remain algebraic");
+        };
+        assert!(
+            source_parameter
+                .cached_rational_bezier_point_image(&line)
+                .is_some()
+        );
+        let BezierParameter2::Algebraic(conic_parameter) = contact.first_parameter() else {
+            panic!("parabola contact parameter should remain algebraic");
+        };
+        assert!(
+            conic_parameter
+                .cached_rational_bezier_point_image(&conic)
+                .is_none()
+        );
     }
 
     #[test]

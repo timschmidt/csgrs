@@ -3580,6 +3580,35 @@ library builds passed. AddressSanitizer region-Boolean replay completed all
 2,509 executions at 5,897 coverage points and 19,144 feature edges with no
 finding; LeakSanitizer alone remained disabled under ptrace.
 
+### Source-root-first implicit-conic contact evidence
+
+The implicit-conic intersection route maps each retained source root into the
+quadratic conic's parameter space. It formerly constructed the exact contact
+point through that newly mapped parameter first, even though the original
+root and source curve already define the same certified incidence. Contact
+replay now constructs and retains the source-parameter point image first and
+keeps the mapped-conic construction as an exact fallback. This also warms the
+image cache consumed by later source splitting.
+
+An irrational parabola/line regression verifies that preparation retains the
+source point image without constructing the mapped conic image. Existing
+implicit-conic order, tangency, algebraic image, split, and Boolean suites
+cover the contact and topology semantics.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 52,759,597 to 51,224,737 (2.91%), 84.03% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 82,283 to 80,043
+and temporary events from 7,829 to 7,562; peak heap fell from 1.37 to 1.35
+MiB and peak RSS from 12.21 to 12.17 MiB. Every measured run retained 9
+candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+strict Clippy and rustdoc checks, and supported default/no-default WASM
+library builds passed. AddressSanitizer region-Boolean replay completed all
+2,509 executions at 5,897 coverage points and 19,156 feature edges with no
+finding; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
