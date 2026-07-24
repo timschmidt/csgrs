@@ -3117,6 +3117,35 @@ AddressSanitizer region-Boolean fuzz replay completed all 2,509 executions at
 5,895 coverage points and 19,157 feature edges; LeakSanitizer alone remained
 disabled under ptrace.
 
+### Homogeneous Horner Mobius images
+
+Hypersolve now constructs exact-rational Mobius image polynomials with a
+homogeneous Horner recurrence. For inverse linear forms `A(y) = d*y - b` and
+`B(y) = a - c*y`, it tracks the growing power of `B` while repeatedly forming
+`A*H + p_k*B^j`. This produces the same
+`B(y)^n P(A(y) / B(y))` as the retained power-sum construction without
+rebuilding every pair of powers. A dedicated two-diagonal convolution handles
+the known-linear multipliers. Non-exact-rational coefficients keep the former
+general `Real` path.
+
+A fixed degree-five regression and generated degree-zero-through-five
+exact-rational cases compare both construction schedules directly. On the
+one-cell all-family exact Boolean sentinel, the ten-run instruction median
+fell from 78,335,067 to 77,532,932 (1.0%), 75.8% below the original
+320,660,631 baseline. The specialized linear convolution contributed a further
+0.10% reduction from the generic Horner version. Eleven ordinary runs had an
+8.593 ms complete median, a 6.437 ms preparation median, and a 0.409 ms
+exact-polyline projection median. Heaptrack recorded 115,778 allocations,
+6,834 temporary allocations, 1.96 MiB peak heap, and 13.01 MiB peak RSS.
+Every run retained 9 candidate pairs, 48 fragments, 2 classifications,
+4 decided operations, no blockers, and checksum 6.
+
+The complete Hypersolve and Hypercurve all-feature and no-default-feature
+suites, formatting, warning-denied all-target Clippy and rustdoc, and release
+WASM library builds passed. The requested AddressSanitizer region-Boolean fuzz
+replay completed all 2,509 executions at 5,895 coverage points and 19,165
+feature edges; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
