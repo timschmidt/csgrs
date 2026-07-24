@@ -19,7 +19,7 @@ use crate::prepared::PreparedProblem;
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementReport, IsolatedRootRefinementStatus,
     RootIsolationConfig, RootIsolationStatus, UnivariateRootIsolationReport,
-    isolate_univariate_polynomial_roots_with_config,
+    isolate_univariate_polynomial_roots_with_config, polynomials_share_one_root_in_interval,
     refine_isolated_univariate_polynomial_interval,
 };
 use crate::symbolic::{Expr, SymbolId};
@@ -648,6 +648,22 @@ pub fn compare_algebraic_root_representations_by_difference(
 ) -> AlgebraicRootDifferenceComparisonReport {
     let refinement =
         compare_algebraic_root_representations_with_refinement(left, right, config.clone());
+    if represented_roots_share_isolated_common_root(
+        &refinement.refined_left,
+        &refinement.refined_right,
+        config.policy,
+    ) == Some(true)
+    {
+        return algebraic_difference_comparison_report(
+            algebraic_comparison_report(
+                AlgebraicRootComparisonStatus::Compared,
+                Some(Ordering::Equal),
+                Some("equality certified by a shared polynomial root in the overlapping isolating intervals".to_owned()),
+            ),
+            refinement,
+            None,
+        );
+    }
     if refinement.comparison.status != AlgebraicRootComparisonStatus::OverlappingIntervals {
         return algebraic_difference_comparison_report(
             refinement.comparison.clone(),
@@ -725,6 +741,39 @@ pub fn compare_algebraic_root_representations_by_difference(
         ),
     };
     algebraic_difference_comparison_report(comparison, refinement, Some(difference))
+}
+
+fn represented_roots_share_isolated_common_root(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if !left.is_valid()
+        || !right.is_valid()
+        || left.interval.distinct_root_count != 1
+        || right.interval.distinct_root_count != 1
+    {
+        return Some(false);
+    }
+    let lower = match compare_reals_with_policy(&left.interval.lower, &right.interval.lower, policy)
+        .value()?
+    {
+        Ordering::Less => &right.interval.lower,
+        Ordering::Equal | Ordering::Greater => &left.interval.lower,
+    };
+    let upper = match compare_reals_with_policy(&left.interval.upper, &right.interval.upper, policy)
+        .value()?
+    {
+        Ordering::Greater => &right.interval.upper,
+        Ordering::Equal | Ordering::Less => &left.interval.upper,
+    };
+    polynomials_share_one_root_in_interval(
+        &left.polynomial_coefficients,
+        &right.polynomial_coefficients,
+        lower,
+        upper,
+        policy,
+    )
 }
 
 /// Compute exact arithmetic for represented roots with rational witnesses.
@@ -2749,6 +2798,46 @@ mod tests {
         );
         let difference_root = difference.result_representation.as_ref().unwrap();
         assert!(difference_root.interval.upper < Real::zero());
+    }
+
+    #[test]
+    fn algebraic_root_difference_comparison_certifies_shared_polynomial_root() {
+        let sqrt_two = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-2), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: ratio(7, 5),
+                upper: ratio(3, 2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let same_root_with_extra_factor = AlgebraicRootRepresentation {
+            constraint_index: 1,
+            symbol: SymbolId(1),
+            polynomial_coefficients: vec![real(-6), real(-2), real(3), Real::one()],
+            ..sqrt_two.clone()
+        };
+
+        let report = compare_algebraic_root_representations_by_difference(
+            &sqrt_two,
+            &same_root_with_extra_factor,
+            AlgebraicRootRefinementComparisonConfig {
+                max_refinement_rounds: 0,
+                ..AlgebraicRootRefinementComparisonConfig::default()
+            },
+        );
+
+        assert_eq!(
+            report.comparison.status,
+            AlgebraicRootComparisonStatus::Compared
+        );
+        assert_eq!(report.comparison.ordering, Some(Ordering::Equal));
+        assert!(report.difference.is_none());
     }
 
     #[test]

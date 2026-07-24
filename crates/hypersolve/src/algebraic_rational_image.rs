@@ -46,7 +46,7 @@ use crate::integer_interpolation::{
 use crate::resultant::{quotient_ring_resultant_polynomial, resultant_univariate_polynomials};
 use crate::root_isolation::IsolatedRootInterval;
 
-const MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION: usize = 8;
+const MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION: usize = 12;
 
 /// Status for constructing a rational-function image of a represented root.
 #[derive(Clone, Debug, Eq, PartialEq)]

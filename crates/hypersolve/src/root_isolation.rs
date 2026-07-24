@@ -1757,6 +1757,29 @@ fn polynomial_gcd(
     gcd_monic_normalize(left, policy)
 }
 
+pub(crate) fn polynomials_share_one_root_in_interval(
+    left: &[Real],
+    right: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if compare_reals_with_policy(lower, upper, policy).value()? != Ordering::Less {
+        return Some(false);
+    }
+    let gcd = polynomial_gcd(left.to_vec(), right.to_vec(), policy)?;
+    if gcd.len() <= 1 {
+        return Some(false);
+    }
+    let square_free = square_free_part(gcd, policy)?;
+    let sturm = sturm_sequence(&square_free, policy)?;
+    match sturm_count(&sturm, lower, upper, policy)? {
+        0 => Some(false),
+        1 => Some(true),
+        _ => None,
+    }
+}
+
 fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     let polynomial = trim_polynomial(polynomial, policy)?;
     let gcd = polynomial_gcd(polynomial.clone(), derivative(&polynomial), policy)?;
