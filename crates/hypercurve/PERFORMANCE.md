@@ -4150,6 +4150,40 @@ library builds passed. AddressSanitizer region-Boolean replay completed all
 2,509 executions at 5,898 coverage points and 19,166 feature edges with no
 finding; LeakSanitizer remained disabled under ptrace.
 
+### Pair-scoped implicit-conic parameter maps
+
+Implicit conic/general-rational intersection first isolates every parameter
+root on the general curve and then transports each root into the conic's
+parameterization. The two rational transport maps depend only on the curve
+pair, but were formerly rebuilt for every isolated root. Their homogeneous
+conic frame, curve power basis, dual coordinates, and source-range
+localization are now prepared once per pair and borrowed by every root
+transformation and refinement retry.
+
+The retained transport contains only exact `Real` polynomial coefficients.
+Root-specific isolating-interval refinement, denominator certification,
+resultant construction, and represented-root validation remain unchanged.
+The sentinel profile now constructs 9 pair maps for 13 contact roots and
+reuses their localized coefficients across 16 exact transformation attempts.
+Focused implicit-conic source-image, degree-elevated line, tangent,
+transversality, and algebraic tangent-order regressions cover the prepared
+maps and both parameter formulas.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 33,658,227 to 33,192,889 (1.38%), 89.65% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+48,884 to 48,406 and temporary events from 3,238 to 3,226; peak heap remained
+1.14 MiB and peak RSS moved from 11.20 to 11.19 MiB. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. AddressSanitizer region-Boolean replay completed all
+2,509 executions at 5,900 coverage points and 19,131 feature edges with no
+finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

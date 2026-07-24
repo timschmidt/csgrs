@@ -1460,6 +1460,12 @@ impl RationalBezier2 {
             )));
         }
         let simple_roots = polynomial.simple_root_classifications(&other_parameters, policy)?;
+        let parameter_map = match conic_parameter_map(self, other, policy)? {
+            Classification::Decided(parameter_map) => parameter_map,
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
         let mut contacts = Vec::with_capacity(other_parameters.len());
         for (parameter, simple_root) in other_parameters.iter().zip(simple_roots) {
             // The quadratic frame is nonsingular and both rational
@@ -1469,7 +1475,7 @@ impl RationalBezier2 {
             // two regular affine images. Multiple or undecided roots retain
             // the existing tangent-based fallback.
             let certified_transverse = matches!(simple_root, Classification::Decided(true));
-            let mapped = conic_parameter_from_curve_parameter(self, other, parameter, policy)?;
+            let mapped = conic_parameter_from_curve_parameter(&parameter_map, parameter, policy)?;
             match mapped {
                 Classification::Decided(Some(conic_parameter)) => {
                     let point = match exact_contact_point_evidence(other, parameter, policy)? {
@@ -3314,12 +3320,15 @@ fn parameter_root_representation(
     }
 }
 
-fn conic_parameter_from_curve_parameter(
+struct ConicParameterMap2 {
+    candidates: [(Vec<Real>, Vec<Real>); 2],
+}
+
+fn conic_parameter_map(
     conic: &RationalBezier2,
     curve: &RationalBezier2,
-    curve_parameter: &BezierParameter2,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Option<BezierParameter2>>> {
+) -> CurveResult<Classification<ConicParameterMap2>> {
     let controls = quadratic_conic_parameter_frame(conic);
     let first = homogeneous_control_vector(&controls[0]);
     let middle = homogeneous_control_vector(&controls[1]);
@@ -3335,18 +3344,37 @@ fn conic_parameter_from_curve_parameter(
     let coordinate_1 = homogeneous_linear_form(basis, &lambda_1);
     let coordinate_2 = homogeneous_linear_form(basis, &lambda_2);
     let two = Real::from(2_i8);
-    let candidates = [
+    let twice_coordinate_0 = scale_power_polynomial(&coordinate_0, &two);
+    let twice_coordinate_2 = scale_power_polynomial(&coordinate_2, &two);
+    let root_candidates = [
         (
             coordinate_1.clone(),
-            add_power_polynomials(&scale_power_polynomial(&coordinate_0, &two), &coordinate_1),
+            add_power_polynomials(&twice_coordinate_0, &coordinate_1),
         ),
         (
-            scale_power_polynomial(&coordinate_2, &two),
-            add_power_polynomials(&coordinate_1, &scale_power_polynomial(&coordinate_2, &two)),
+            twice_coordinate_2.clone(),
+            add_power_polynomials(&coordinate_1, &twice_coordinate_2),
         ),
     ];
     let range = conic.source_parameter_range();
     let span = range.end() - range.start();
+    let candidates = root_candidates.map(|(numerator, denominator)| {
+        (
+            subtract_power_polynomials(
+                &numerator,
+                &scale_power_polynomial(&denominator, range.start()),
+            ),
+            scale_power_polynomial(&denominator, &span),
+        )
+    });
+    Ok(Classification::Decided(ConicParameterMap2 { candidates }))
+}
+
+fn conic_parameter_from_curve_parameter(
+    parameter_map: &ConicParameterMap2,
+    curve_parameter: &BezierParameter2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
     let refinement_steps: &[usize] = if matches!(curve_parameter, BezierParameter2::Exact(_)) {
         &[0]
     } else {
@@ -3357,13 +3385,8 @@ fn conic_parameter_from_curve_parameter(
             .clone()
             .refined_isolating_interval(max_refinement_steps, policy);
         let root = parameter_root_representation(&refined_curve_parameter, policy);
-        for (numerator, denominator) in &candidates {
-            let local_numerator = subtract_power_polynomials(
-                numerator,
-                &scale_power_polynomial(denominator, range.start()),
-            );
-            let local_denominator = scale_power_polynomial(denominator, &span);
-            match rational_image_parameter(&root, &local_numerator, &local_denominator, policy)? {
+        for (numerator, denominator) in &parameter_map.candidates {
+            match rational_image_parameter(&root, numerator, denominator, policy)? {
                 Classification::Decided(parameter) => {
                     return Ok(Classification::Decided(parameter));
                 }
