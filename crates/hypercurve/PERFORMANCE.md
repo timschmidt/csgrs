@@ -2892,6 +2892,31 @@ gap still retains the line/arc accelerator. The complete all-feature test
 matrix, strict all-feature Clippy, warning-denied rustdoc, and a 2,509-run
 AddressSanitizer region-Boolean campaign passed.
 
+### Adaptive conic-parameter isolation
+
+Mapping an implicit conic contact back to the conic's parameter requires a
+monotone rational image of the other curve's algebraic parameter. The former
+path bisected every source isolator eight times before attempting that proof.
+Those extra bisections can help difficult maps, but most contacts need much
+less separation. The mapping now tries two certified bisections first and
+escalates through four and the original eight only when the exact rational
+image remains undecided. Exact parameters still take the single direct path.
+No approximate parameter or sampled fallback is introduced.
+
+A controlled ten-run `perf stat` comparison against commit `6cb7ed9` reduced
+instructions from 383,444,180 to 320,660,631 (16.4%). Median instrumented
+complete Boolean time fell from 30.804 ms to 28.137 ms (8.66%), and median
+pair preparation fell from 20.410 ms to 18.095 ms (11.3%). Every run retained
+9 candidate pairs, 48 fragments, 2 exact point classifications, 4 decided
+operations, and checksum 6. A zero-refinement control correctly remained
+undecided on the same workload, while the escalating path preserves the former
+eight-step certification budget for such inputs. Five ordinary release runs
+had a 26.628 ms complete median, a 16.830 ms preparation median, and a
+0.442 ms exact-polyline projection median. The remaining roughly 60x native
+gap still justifies the line/arc accelerator. Complete default and all-feature
+tests, strict all-feature Clippy, warning-denied rustdoc, the library WASM
+build, and a 2,509-run AddressSanitizer region-Boolean campaign passed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

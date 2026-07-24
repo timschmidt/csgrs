@@ -3335,21 +3335,28 @@ fn conic_parameter_from_curve_parameter(
     ];
     let range = conic.source_parameter_range();
     let span = range.end() - range.start();
-    let refined_curve_parameter = curve_parameter
-        .clone()
-        .refined_isolating_interval(8, policy);
-    let root = parameter_root_representation(&refined_curve_parameter, policy);
-    for (numerator, denominator) in candidates {
-        let local_numerator = subtract_power_polynomials(
-            &numerator,
-            &scale_power_polynomial(&denominator, range.start()),
-        );
-        let local_denominator = scale_power_polynomial(&denominator, &span);
-        match rational_image_parameter(&root, &local_numerator, &local_denominator, policy)? {
-            Classification::Decided(parameter) => {
-                return Ok(Classification::Decided(parameter));
+    let refinement_steps: &[usize] = if matches!(curve_parameter, BezierParameter2::Exact(_)) {
+        &[0]
+    } else {
+        &[2, 4, 8]
+    };
+    for &max_refinement_steps in refinement_steps {
+        let refined_curve_parameter = curve_parameter
+            .clone()
+            .refined_isolating_interval(max_refinement_steps, policy);
+        let root = parameter_root_representation(&refined_curve_parameter, policy);
+        for (numerator, denominator) in &candidates {
+            let local_numerator = subtract_power_polynomials(
+                numerator,
+                &scale_power_polynomial(denominator, range.start()),
+            );
+            let local_denominator = scale_power_polynomial(denominator, &span);
+            match rational_image_parameter(&root, &local_numerator, &local_denominator, policy)? {
+                Classification::Decided(parameter) => {
+                    return Ok(Classification::Decided(parameter));
+                }
+                Classification::Uncertain(_) => {}
             }
-            Classification::Uncertain(_) => {}
         }
     }
     Ok(Classification::Uncertain(UncertaintyReason::Predicate))
