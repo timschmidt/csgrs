@@ -7,7 +7,8 @@ use crate::corner_scenes::{CornerOperation, CornerScene};
 use crate::editor::PolylineEditor;
 use crate::geometry::{
     BooleanMode, Polyline, Shape, boolean_polylines, contour_intersections, contour_slices,
-    curve_boolean_clip_contour, curve_showcase_contour, curve_showcase_polylines,
+    curve_boolean_clip_contour, curve_boolean_lower_clip_contour, curve_showcase_contour,
+    curve_showcase_polylines,
 };
 use crate::plotting::{draw_points, draw_polyline, draw_shape, find_near_vertex};
 use crate::theme::Theme;
@@ -245,7 +246,7 @@ pub struct PlineBooleanScene {
 impl Default for PlineBooleanScene {
     fn default() -> Self {
         let first = curve_showcase_contour(0.0, 0.0, 6.2);
-        let second = curve_boolean_clip_contour(0.0, 0.0, 6.2);
+        let second = curve_boolean_lower_clip_contour(0.0, 0.0, 6.2);
         let polylines = vec![first, second];
         let mut editor = PolylineEditor::dual("Polyline Editor");
         editor.initialize_with_polylines(polylines.clone());
@@ -386,7 +387,7 @@ impl PlineBooleanScene {
                                         &shape,
                                         theme.result,
                                         self.fill.then_some(theme.result.gamma_multiply(0.35)),
-                                        None,
+                                        vertex,
                                     ),
                                     Ok(None) => {
                                         self.last_error =
@@ -1132,6 +1133,47 @@ mod tests {
             })
     }
 
+    fn assert_no_zero_length_lines(shape: &Shape, op: BooleanMode) {
+        for (loop_index, polyline) in shape
+            .materials
+            .iter()
+            .chain(shape.holes.iter())
+            .enumerate()
+        {
+            for (curve_index, curve) in polyline.curve_data.iter().enumerate() {
+                if let CurvePrimitive::Line { start, end } = curve {
+                    assert!(
+                        start.x != end.x || start.y != end.y,
+                        "{op:?} returned a zero-length line in loop {loop_index}, curve {curve_index}"
+                    );
+                }
+            }
+        }
+    }
+
+    fn assert_visible_extent(shape: &Shape, op: BooleanMode) {
+        let points = shape
+            .materials
+            .iter()
+            .chain(shape.holes.iter())
+            .flat_map(|polyline| polyline.sample_points(0.04))
+            .collect::<Vec<_>>();
+        let min_x = points.iter().map(|point| point[0]).fold(f64::INFINITY, f64::min);
+        let max_x = points
+            .iter()
+            .map(|point| point[0])
+            .fold(f64::NEG_INFINITY, f64::max);
+        let min_y = points.iter().map(|point| point[1]).fold(f64::INFINITY, f64::min);
+        let max_y = points
+            .iter()
+            .map(|point| point[1])
+            .fold(f64::NEG_INFINITY, f64::max);
+        assert!(
+            max_x - min_x > 1.0 && max_y - min_y > 1.0,
+            "{op:?} collapsed to a non-visible extent: x={min_x}..{max_x}, y={min_y}..{max_y}"
+        );
+    }
+
     #[test]
     fn multi_defaults_are_sorted_into_material_and_hole_bins() {
         let shape = Shape::from_polylines(default_multi_boolean_plines());
@@ -1175,6 +1217,14 @@ mod tests {
                 .unwrap()
                 .unwrap_or_else(|| panic!("default polyline boolean was unresolved for {op:?}"));
             assert_native_boolean_curves(&result, op);
+            assert_no_zero_length_lines(&result, op);
+            assert_visible_extent(&result, op);
+            if op == BooleanMode::Intersection {
+                assert!(
+                    has_higher_order_curve(&result),
+                    "intersection should visibly retain native higher-order curves"
+                );
+            }
         }
 
         let union = boolean_polylines(

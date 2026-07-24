@@ -923,6 +923,40 @@ pub fn curve_boolean_clip_contour(origin_x: f64, origin_y: f64, scale: f64) -> P
     )
 }
 
+pub fn curve_boolean_lower_clip_contour(
+    origin_x: f64,
+    origin_y: f64,
+    scale: f64,
+) -> Polyline {
+    let lower_left = demo_vertex(origin_x, origin_y, scale, -4.0, -3.0, 0.0);
+    let lower_right = demo_vertex(origin_x, origin_y, scale, 4.0, -3.0, 0.0);
+    let upper_right = demo_vertex(origin_x, origin_y, scale, 4.0, 1.3, 0.0);
+    let upper_left = demo_vertex(origin_x, origin_y, scale, -4.0, 1.3, 0.0);
+    Polyline::from_curve_data(
+        vec![
+            CurvePrimitive::CubicBezier {
+                start: lower_left,
+                control1: demo_vertex(origin_x, origin_y, scale, -2.0, -3.35, 0.0),
+                control2: demo_vertex(origin_x, origin_y, scale, 2.0, -3.35, 0.0),
+                end: lower_right,
+            },
+            CurvePrimitive::Line {
+                start: lower_right,
+                end: upper_right,
+            },
+            CurvePrimitive::Line {
+                start: upper_right,
+                end: upper_left,
+            },
+            CurvePrimitive::Line {
+                start: upper_left,
+                end: lower_left,
+            },
+        ],
+        true,
+    )
+}
+
 pub fn curve_showcase_polylines(origin_x: f64, origin_y: f64, scale: f64) -> Vec<Polyline> {
     vec![
         curve_showcase_contour(origin_x, origin_y, scale),

@@ -14,6 +14,7 @@ const DISPLAY_STEPS: usize = 48;
 const FAMILY_COUNT: usize = 8;
 const HOLE_COUNT: usize = 4;
 const HOLE_SCALE: i32 = 3;
+const REGION_SCALE: i32 = 3;
 #[cfg(test)]
 const OUTER_CURVE_COUNT: usize = FAMILY_COUNT * 2;
 const HOLE_CURVE_COUNT: usize = FAMILY_COUNT;
@@ -53,8 +54,8 @@ impl CornerOperation {
 
     const fn amount_bounds(self) -> (f64, f64) {
         match self {
-            Self::Fillet => (0.25, 6.0),
-            Self::Chamfer => (0.25, 4.0),
+            Self::Fillet => (0.25, 18.0),
+            Self::Chamfer => (0.25, 12.0),
         }
     }
 }
@@ -764,7 +765,10 @@ fn line_curve(start: Point2, end: Point2) -> Result<Curve2, String> {
 }
 
 fn point(x: i32, y: i32) -> Point2 {
-    Point2::new(Real::from(x), Real::from(y))
+    Point2::new(
+        Real::from(REGION_SCALE * x),
+        Real::from(REGION_SCALE * y),
+    )
 }
 
 fn local_point(origin: (i32, i32), x: i32, y: i32) -> Point2 {
