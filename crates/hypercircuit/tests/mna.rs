@@ -47,6 +47,19 @@ fn voltage_source_and_resistor_stamp_replays_exact_candidate() {
 
     assert!(replay.accepted);
     assert!(replay.residuals.iter().all(|value| value == &Real::zero()));
+
+    let solved = system.solve_exact().unwrap();
+    assert_eq!(solved.candidate, vec![Real::from(5), Real::from(-10)]);
+    assert!(solved.replay.accepted);
+}
+
+#[test]
+fn exact_linear_solver_rejects_singular_systems_without_tolerance_guessing() {
+    let system = LinearMnaSystem::from_stamps(vec![net("floating")], &[]).unwrap();
+    assert_eq!(
+        system.solve_exact().unwrap_err(),
+        CircuitError::SingularLinearSystem
+    );
 }
 
 #[test]
@@ -107,6 +120,7 @@ fn exact_circuit_carriers_lower_to_mna_without_float_policy() {
     let resistor_model = DeviceModel {
         id: DeviceModelId::new("model:r").unwrap(),
         kind: DeviceModelKind::Resistor,
+        pins: Vec::new(),
         parameters: vec![CircuitParameter {
             name: "conductance".into(),
             value: Real::from(2),

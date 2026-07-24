@@ -3,6 +3,7 @@
 use hyperreal::Real;
 
 /// External adapter family.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AdapterKind {
     /// DC operating-point proposal.
