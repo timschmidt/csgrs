@@ -3736,6 +3736,39 @@ AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,898
 coverage points and 19,154 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Retained polynomial endpoint-tangent evidence
+
+Quadratic and cubic endpoint-tangent construction already computes a
+structural zero/nonzero classification from the exact squared norm.
+Arrangement endpoint extraction formerly cloned the two `Real` components,
+discarded that classification, and immediately rebuilt the same squared norm
+to reject zero tangents. Extraction now moves the owned components into the
+arrangement vector and carries the structural classification through the
+validation boundary. Only structurally unknown and rational-quotient tangents
+invoke the policy-driven exact fallback. That fallback also retains its first
+squared-norm expression instead of constructing it twice.
+
+A focused regression checks that exact zero and nonzero endpoint tangents keep
+their structural evidence through arrangement conversion. Existing
+quadratic/cubic branch traversal, zero-tangent rejection, equal-tangent
+higher-derivative ordering, rational tangent, and Boolean suites cover the
+downstream behavior.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 48,079,691 to 47,834,643 (0.51%), 85.08% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 74,759 to 74,515
+while temporary events remained 7,350; peak heap remained 1.33 MiB and peak
+RSS fell from 12.11 to 11.92 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and supported default/no-default release WASM library builds passed.
+AddressSanitizer region-Boolean replay completed all 2,514 executions at 5,895
+coverage points and 19,124 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

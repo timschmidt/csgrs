@@ -62,6 +62,10 @@ impl EndpointTangent2 {
     pub const fn zero_status(&self) -> ZeroStatus {
         self.zero_status
     }
+
+    pub(crate) fn into_components(self) -> (Real, Real, ZeroStatus) {
+        (self.dx, self.dy, self.zero_status)
+    }
 }
 
 /// A polynomial quadratic Bezier segment with three exact control points.

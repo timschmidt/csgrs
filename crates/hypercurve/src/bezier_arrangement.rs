@@ -2406,77 +2406,104 @@ impl BezierSubcurve2 {
 
     fn endpoint_data(&self, policy: &CurvePolicy) -> Classification<EndpointData> {
         let (start, end) = self.endpoints();
-        let (start_tangent, end_tangent, start_second_derivative, start_third_derivative) =
-            match self {
-                Self::Quadratic(curve) => {
-                    let second_derivative = quadratic_second_derivative(curve);
-                    (
-                        TangentVector::from_endpoint_tangent(
-                            curve.endpoint_tangent(BezierEndpoint::Start),
-                        ),
-                        TangentVector::from_endpoint_tangent(
-                            curve.endpoint_tangent(BezierEndpoint::End),
-                        ),
-                        Some(second_derivative),
-                        None,
-                    )
-                }
-                Self::Cubic(curve) => (
+        let (
+            start_tangent,
+            end_tangent,
+            start_second_derivative,
+            start_third_derivative,
+            start_tangent_zero_status,
+            end_tangent_zero_status,
+        ) = match self {
+            Self::Quadratic(curve) => {
+                let second_derivative = quadratic_second_derivative(curve);
+                let (start_tangent, start_tangent_zero_status) =
                     TangentVector::from_endpoint_tangent(
                         curve.endpoint_tangent(BezierEndpoint::Start),
-                    ),
+                    );
+                let (end_tangent, end_tangent_zero_status) = TangentVector::from_endpoint_tangent(
+                    curve.endpoint_tangent(BezierEndpoint::End),
+                );
+                (
+                    start_tangent,
+                    end_tangent,
+                    Some(second_derivative),
+                    None,
+                    Some(start_tangent_zero_status),
+                    Some(end_tangent_zero_status),
+                )
+            }
+            Self::Cubic(curve) => {
+                let (start_tangent, start_tangent_zero_status) =
                     TangentVector::from_endpoint_tangent(
-                        curve.endpoint_tangent(BezierEndpoint::End),
-                    ),
+                        curve.endpoint_tangent(BezierEndpoint::Start),
+                    );
+                let (end_tangent, end_tangent_zero_status) = TangentVector::from_endpoint_tangent(
+                    curve.endpoint_tangent(BezierEndpoint::End),
+                );
+                (
+                    start_tangent,
+                    end_tangent,
                     Some(cubic_start_second_derivative(curve)),
                     Some(cubic_third_derivative(curve)),
-                ),
-                Self::RationalQuadratic(curve) => {
-                    let start = match rational_quadratic_endpoint_derivative_jet(
-                        curve, false, true, policy,
-                    ) {
+                    Some(start_tangent_zero_status),
+                    Some(end_tangent_zero_status),
+                )
+            }
+            Self::RationalQuadratic(curve) => {
+                let start =
+                    match rational_quadratic_endpoint_derivative_jet(curve, false, true, policy) {
                         Classification::Decided(derivatives) => derivatives,
                         Classification::Uncertain(reason) => {
                             return Classification::Uncertain(reason);
                         }
                     };
-                    let end = match rational_quadratic_endpoint_derivative_jet(
-                        curve, true, false, policy,
-                    ) {
+                let end =
+                    match rational_quadratic_endpoint_derivative_jet(curve, true, false, policy) {
                         Classification::Decided(derivatives) => derivatives,
                         Classification::Uncertain(reason) => {
                             return Classification::Uncertain(reason);
                         }
                     };
-                    (start.first, end.first, start.second, start.third)
-                }
-                Self::Rational(curve) => {
-                    let start = match curve.endpoint_derivatives(false, 3, policy) {
-                        Classification::Decided(derivatives) => derivatives,
-                        Classification::Uncertain(reason) => {
-                            return Classification::Uncertain(reason);
-                        }
-                    };
-                    let end = match curve.endpoint_derivatives(true, 1, policy) {
-                        Classification::Decided(derivatives) => derivatives,
-                        Classification::Uncertain(reason) => {
-                            return Classification::Uncertain(reason);
-                        }
-                    };
-                    let vector = |derivative: &(Real, Real)| TangentVector {
-                        dx: derivative.0.clone(),
-                        dy: derivative.1.clone(),
-                    };
-                    (
-                        vector(&start[1]),
-                        vector(&end[1]),
-                        start.get(2).map(vector),
-                        start.get(3).map(vector),
-                    )
-                }
-            };
+                (
+                    start.first,
+                    end.first,
+                    start.second,
+                    start.third,
+                    None,
+                    None,
+                )
+            }
+            Self::Rational(curve) => {
+                let start = match curve.endpoint_derivatives(false, 3, policy) {
+                    Classification::Decided(derivatives) => derivatives,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+                let end = match curve.endpoint_derivatives(true, 1, policy) {
+                    Classification::Decided(derivatives) => derivatives,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+                let vector = |derivative: &(Real, Real)| TangentVector {
+                    dx: derivative.0.clone(),
+                    dy: derivative.1.clone(),
+                };
+                (
+                    vector(&start[1]),
+                    vector(&end[1]),
+                    start.get(2).map(vector),
+                    start.get(3).map(vector),
+                    None,
+                    None,
+                )
+            }
+        };
 
-        if !start_tangent.is_nonzero(policy) || !end_tangent.is_nonzero(policy) {
+        if !start_tangent.is_nonzero_with_status(start_tangent_zero_status, policy)
+            || !end_tangent.is_nonzero_with_status(end_tangent_zero_status, policy)
+        {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         }
 
@@ -2601,6 +2628,24 @@ mod rational_quadratic_endpoint_derivative_tests {
     use super::*;
 
     #[test]
+    fn polynomial_endpoint_tangent_keeps_its_structural_zero_evidence() {
+        let policy = CurvePolicy::certified();
+        for (dx, expected_status, expected_nonzero) in [
+            (Real::zero(), ZeroStatus::Zero, false),
+            (Real::from(7_i8), ZeroStatus::NonZero, true),
+        ] {
+            let endpoint = crate::EndpointTangent2::new(dx, Real::zero());
+            let (tangent, status) = TangentVector::from_endpoint_tangent(endpoint);
+
+            assert_eq!(status, expected_status);
+            assert_eq!(
+                tangent.is_nonzero_with_status(Some(status), &policy),
+                expected_nonzero
+            );
+        }
+    }
+
+    #[test]
     fn specialized_endpoint_jets_match_general_rational_quotient_derivatives() {
         let policy = CurvePolicy::certified();
 
@@ -2677,20 +2722,29 @@ mod rational_quadratic_endpoint_derivative_tests {
 }
 
 impl TangentVector {
-    fn from_endpoint_tangent(tangent: crate::EndpointTangent2) -> Self {
-        Self {
-            dx: tangent.dx().clone(),
-            dy: tangent.dy().clone(),
+    fn from_endpoint_tangent(tangent: crate::EndpointTangent2) -> (Self, ZeroStatus) {
+        let (dx, dy, zero_status) = tangent.into_components();
+        (Self { dx, dy }, zero_status)
+    }
+
+    fn is_nonzero_with_status(
+        &self,
+        zero_status: Option<ZeroStatus>,
+        policy: &CurvePolicy,
+    ) -> bool {
+        match zero_status {
+            Some(ZeroStatus::NonZero) => true,
+            Some(ZeroStatus::Zero) => false,
+            Some(ZeroStatus::Unknown) | None => self.is_nonzero(policy),
         }
     }
 
     fn is_nonzero(&self, policy: &CurvePolicy) -> bool {
-        match (&self.dx * &self.dx + &self.dy * &self.dy).zero_status() {
+        let length_squared = &self.dx * &self.dx + &self.dy * &self.dy;
+        match length_squared.zero_status() {
             ZeroStatus::NonZero => true,
             ZeroStatus::Zero => false,
-            ZeroStatus::Unknown => {
-                is_zero(&(&self.dx * &self.dx + &self.dy * &self.dy), policy) == Some(false)
-            }
+            ZeroStatus::Unknown => is_zero(&length_squared, policy) == Some(false),
         }
     }
 }
