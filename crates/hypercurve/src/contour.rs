@@ -936,11 +936,83 @@ fn line_doubled_signed_area_contribution(start: &Point2, end: &Point2) -> Real {
     Real::diff_of_products(start.x(), end.y(), end.x(), start.y())
 }
 
+fn exact_eight_line_doubled_signed_area(segments: &[Segment2]) -> Real {
+    debug_assert_eq!(segments.len(), 8);
+    let line = |index| {
+        let Segment2::Line(line) = &segments[index] else {
+            unreachable!("all-line contour was checked before exact accumulation")
+        };
+        line
+    };
+    let lines = [
+        line(0),
+        line(1),
+        line(2),
+        line(3),
+        line(4),
+        line(5),
+        line(6),
+        line(7),
+    ];
+    Real::exact_rational_signed_product_sum_known_exact(
+        [
+            true, false, true, false, true, false, true, false, true, false, true, false, true,
+            false, true, false,
+        ],
+        [
+            [lines[0].start().x(), lines[0].end().y()],
+            [lines[0].end().x(), lines[0].start().y()],
+            [lines[1].start().x(), lines[1].end().y()],
+            [lines[1].end().x(), lines[1].start().y()],
+            [lines[2].start().x(), lines[2].end().y()],
+            [lines[2].end().x(), lines[2].start().y()],
+            [lines[3].start().x(), lines[3].end().y()],
+            [lines[3].end().x(), lines[3].start().y()],
+            [lines[4].start().x(), lines[4].end().y()],
+            [lines[4].end().x(), lines[4].start().y()],
+            [lines[5].start().x(), lines[5].end().y()],
+            [lines[5].end().x(), lines[5].start().y()],
+            [lines[6].start().x(), lines[6].end().y()],
+            [lines[6].end().x(), lines[6].start().y()],
+            [lines[7].start().x(), lines[7].end().y()],
+            [lines[7].end().x(), lines[7].start().y()],
+        ],
+    )
+}
+
 fn compute_contour_signed_area(segments: &[Segment2]) -> CurveResult<Option<Real>> {
     if segments
         .iter()
         .all(|segment| matches!(segment, Segment2::Line(_)))
     {
+        if segments.iter().all(|segment| {
+            let Segment2::Line(line) = segment else {
+                unreachable!("all-line contour was checked before exact accumulation")
+            };
+            [
+                line.start().x(),
+                line.start().y(),
+                line.end().x(),
+                line.end().y(),
+            ]
+            .into_iter()
+            .all(|coordinate| coordinate.exact_rational_ref().is_some())
+        }) {
+            let mut doubled_area = Real::zero();
+            let mut chunks = segments.chunks_exact(8);
+            for chunk in &mut chunks {
+                doubled_area += exact_eight_line_doubled_signed_area(chunk);
+            }
+            for segment in chunks.remainder() {
+                let Segment2::Line(line) = segment else {
+                    unreachable!("all-line contour was checked before exact accumulation")
+                };
+                doubled_area += line_doubled_signed_area_contribution(line.start(), line.end());
+            }
+            return (doubled_area / Real::from(2_i8))
+                .map(Some)
+                .map_err(CurveError::from);
+        }
         let doubled_area = segments.iter().fold(Real::zero(), |area, segment| {
             let Segment2::Line(line) = segment else {
                 unreachable!("all-line contour was checked before accumulation")
@@ -1384,6 +1456,43 @@ mod tests {
         assert_eq!(
             line_doubled_signed_area_contribution(&symbolic_start, &symbolic_end),
             symbolic_start.x() * symbolic_end.y() - symbolic_end.x() * symbolic_start.y()
+        );
+    }
+
+    #[test]
+    fn line_area_batch_preserves_symbolic_contour_accumulation() {
+        let sqrt_two = Real::from(2).sqrt().unwrap();
+        let vertices = [
+            point(0, 0),
+            Point2::new(sqrt_two, Real::zero()),
+            point(2, 0),
+            point(2, 1),
+            point(2, 2),
+            point(1, 2),
+            point(0, 2),
+            point(0, 1),
+        ];
+        let segments = (0..vertices.len())
+            .map(|index| {
+                LineSeg2::try_new(
+                    vertices[index].clone(),
+                    vertices[(index + 1) % vertices.len()].clone(),
+                )
+                .map(Segment2::Line)
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
+        let former_doubled_area = segments.iter().fold(Real::zero(), |area, segment| {
+            let Segment2::Line(line) = segment else {
+                unreachable!()
+            };
+            area + line_doubled_signed_area_contribution(line.start(), line.end())
+        });
+        let former_area = (former_doubled_area / Real::from(2_i8)).unwrap();
+
+        assert_eq!(
+            compute_contour_signed_area(&segments).unwrap(),
+            Some(former_area)
         );
     }
 
