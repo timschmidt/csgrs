@@ -106,6 +106,7 @@ impl TortureScene {
         }
     }
 
+    #[cfg(any(target_arch = "wasm32", test))]
     pub const fn state(&self) -> TortureSceneState {
         TortureSceneState {
             regions_per_layer: self.requested_regions_per_layer,
@@ -275,7 +276,7 @@ impl TortureScene {
             return;
         };
         let end = (self.evaluated_pairs + BOOLEAN_BATCH_SIZE).min(self.pairs.len());
-        for pair in &self.pairs[self.evaluated_pairs..end] {
+        for (offset, pair) in self.pairs[self.evaluated_pairs..end].iter().enumerate() {
             match boolean_pair(pair, operation) {
                 Ok(Some((region, shape))) => {
                     let segmented = shape.segmented_for_display();
@@ -293,7 +294,7 @@ impl TortureScene {
                     if self.last_error.is_none() {
                         self.last_error = Some(format!(
                             "first blocked pair {}: {error}",
-                            self.evaluated_pairs
+                            self.evaluated_pairs + offset
                         ));
                     }
                 }
