@@ -1645,6 +1645,38 @@ replay completed all 2,509 executions at 5,892 coverage points and 19,115
 feature edges with no finding; LeakSanitizer alone remained disabled under
 ptrace.
 
+### One-limb reduced-word materialization
+
+The checked native rational kernels produce reduced `u128` numerator and
+denominator parts. Their final constructor always entered `BigUint` through
+its `u128` conversion, whose general implementation grows a digit vector in a
+loop even when the value fits one machine limb. Most geometric coefficients
+in the downstream trace fit `u64`.
+
+Reduced-word materialization now selects the direct `u64` `BigUint`
+constructor independently for each fitting part and retains the original
+`u128` conversion for wide values. This changes neither reduction nor cache
+admission. A boundary regression compares a near-`u64::MAX` fraction and a
+100-bit dyadic fraction with the arbitrary-precision rational constructor.
+
+On Hypercurve's one-cell all-family exact Boolean sentinel, the rounded
+ten-run instruction median fell from 31,293,247 to 31,154,077 (0.44%), 90.28%
+below the original 320,660,631 baseline. Inclusive instruction cost beneath
+`from_reduced_word_parts` fell from 4,754,793 to 4,617,528 (2.9%). Heaptrack
+allocation events remained 43,975; recorder-level temporary events remained
+2,685 and the postprocessor count remained 2,933. Peak heap remained 1.13 MiB,
+peak RSS fell from 11.26 to 11.12 MiB, and retained/leaked memory remained
+96.57 KiB. Every measured run retained 9 candidate pairs, 48 fragments, 2
+classifications, 4 decided operations, no blockers, and checksum 6.
+
+The complete Hyperreal, Hypersolve, and Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy,
+all-feature and no-default-feature rustdoc, and default and no-default release
+WASM library builds passed. The downstream AddressSanitizer region-Boolean
+replay completed the requested 2,509-run budget after 2,519 executions at
+5,894 coverage points and 19,153 feature edges with no finding; LeakSanitizer
+alone remained disabled under ptrace.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

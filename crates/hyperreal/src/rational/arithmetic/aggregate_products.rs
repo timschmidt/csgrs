@@ -2025,9 +2025,18 @@ impl Rational {
         }
         Self::from_parts_raw(
             sign,
-            BigUint::from(magnitude),
-            BigUint::from(denominator),
+            Self::biguint_from_word(magnitude),
+            Self::biguint_from_word(denominator),
         )
+    }
+
+    #[inline]
+    fn biguint_from_word(value: u128) -> BigUint {
+        if let Ok(value) = u64::try_from(value) {
+            BigUint::from(value)
+        } else {
+            BigUint::from(value)
+        }
     }
 
     fn product_term_words<const FACTORS: usize>(

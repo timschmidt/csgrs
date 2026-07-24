@@ -2702,6 +2702,27 @@ mod tests {
     }
 
     #[test]
+    fn reduced_word_construction_preserves_narrow_and_wide_parts() {
+        for (magnitude, denominator) in [
+            (
+                u128::from(u64::MAX),
+                u128::from(u64::MAX).saturating_sub(1),
+            ),
+            ((1_u128 << 100) + 3, 1_u128 << 99),
+        ] {
+            let expected = Rational::from_bigint_fraction(
+                BigInt::from(magnitude),
+                BigUint::from(denominator),
+            )
+            .unwrap();
+            assert_eq!(
+                Rational::from_reduced_word_parts(Plus, magnitude, denominator),
+                expected
+            );
+        }
+    }
+
+    #[test]
     fn magnitude_at_least_power_of_two_handles_threshold_boundaries() {
         assert!(
             !Rational::fraction(7, 1)
