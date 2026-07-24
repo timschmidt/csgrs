@@ -10,7 +10,7 @@
 //! residual/Jacobian layer with numerical Newton iteration, but makes the
 //! post-iteration trust boundary explicit.
 
-use hyperlimit::{PredicatePolicy, Sign, certified_ball_sign_report_with_policy};
+use hyperlimit::{PredicatePolicy, Sign, classify_ball_sign_with_policy};
 use hyperreal::{CertifiedRealSign, Real, RealSign, RealSignCertificate};
 
 use crate::diagnostics::{ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport};
@@ -323,8 +323,7 @@ pub fn certify_candidate_with_residual_balls(
         let Some(center) = row.signed_residual.as_ref() else {
             continue;
         };
-        let ball_report = certified_ball_sign_report_with_policy(center, &ball.radius, policy);
-        let status = match ball_report.outcome {
+        let status = match classify_ball_sign_with_policy(center, &ball.radius, policy) {
             hyperlimit::PredicateOutcome::Decided {
                 value: Sign::Zero, ..
             } => CertifiedCandidateStatus::BallCertified {
