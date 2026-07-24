@@ -128,9 +128,25 @@ impl Similarity2 {
 
     /// Transforms a point with hyperreal arithmetic.
     pub fn transform_point(&self, point: &Point2) -> Point2 {
+        let point_is_exact =
+            point.x().exact_rational_ref().is_some() && point.y().exact_rational_ref().is_some();
+        let one = Real::one();
+        let transform_coordinate = |first: &Real, second: &Real, offset: &Real| {
+            if point_is_exact
+                && first.exact_rational_ref().is_some()
+                && second.exact_rational_ref().is_some()
+                && offset.exact_rational_ref().is_some()
+            {
+                return Real::exact_rational_signed_product_sum_known_exact(
+                    [true; 3],
+                    [[first, point.x()], [second, point.y()], [offset, &one]],
+                );
+            }
+            (first * point.x()) + (second * point.y()) + offset.clone()
+        };
         Point2::new(
-            (&self.a * point.x()) + (&self.b * point.y()) + self.xoff.clone(),
-            (&self.d * point.x()) + (&self.e * point.y()) + self.yoff.clone(),
+            transform_coordinate(&self.a, &self.b, &self.xoff),
+            transform_coordinate(&self.d, &self.e, &self.yoff),
         )
     }
 }
@@ -315,6 +331,41 @@ mod tests {
                 Real::zero(),
             )
             .is_err()
+        );
+    }
+
+    #[test]
+    fn point_transform_fuses_exact_affine_sums_and_preserves_symbolic_expression() {
+        let exact = Similarity2::try_from_real_affine(
+            Real::from(3),
+            Real::from(-4),
+            Real::from(4),
+            Real::from(3),
+            Real::from(11),
+            Real::from(-13),
+        )
+        .unwrap();
+        let exact_point = Point2::from_values(5, -7);
+        let transformed = exact.transform_point(&exact_point);
+        assert_eq!(
+            transformed.x(),
+            &(&exact.a * exact_point.x() + &exact.b * exact_point.y() + exact.xoff.clone())
+        );
+        assert_eq!(
+            transformed.y(),
+            &(&exact.d * exact_point.x() + &exact.e * exact_point.y() + exact.yoff.clone())
+        );
+
+        let symbolic_point =
+            Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+        let transformed = exact.transform_point(&symbolic_point);
+        assert_eq!(
+            transformed.x(),
+            &(&exact.a * symbolic_point.x() + &exact.b * symbolic_point.y() + exact.xoff.clone())
+        );
+        assert_eq!(
+            transformed.y(),
+            &(&exact.d * symbolic_point.x() + &exact.e * symbolic_point.y() + exact.yoff.clone())
         );
     }
 }

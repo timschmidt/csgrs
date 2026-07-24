@@ -4558,6 +4558,36 @@ release WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 requested executions at 5,936 coverage points and 19,068
 feature edges with no finding; LeakSanitizer remained disabled under ptrace.
 
+### Fixed exact similarity point transforms
+
+Similarity point transformation evaluates two affine coordinates, each as two
+products plus a translation. The former implementation normalized both
+products and their first sum before adding the translation.
+
+When the point and the three coefficients for a coordinate are all exact
+rational, `Similarity2::transform_point` now reduces the complete affine
+coordinate as one fixed signed product sum, representing the translation as
+`offset * 1`. If any participating value is symbolic, it retains the former
+two-products-and-two-additions expression verbatim. A focused exact regression
+compares both fused coordinates against the former formula, while radical
+point coordinates verify that the symbolic expression stays unchanged.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 28,805,252 to 28,431,564 (1.30%), 91.13% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+39,952 to 39,349; recorder-level temporary events moved from 2,686 to 2,687
+and the postprocessor count from 2,934 to 2,935. Peak heap fell from 1.03 to
+1.02 MiB, peak RSS moved from 10.98 to 11.00 MiB, and retained memory fell
+from 101.49 to 96.06 KiB. Every measured run retained 9 candidate pairs, 48
+fragments, 2 classifications, 4 decided operations, no blockers, and checksum
+6.
+
+The complete all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy and rustdoc, and supported default/no-default
+release WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 requested executions at 5,927 coverage points and 19,037
+feature edges with no finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
