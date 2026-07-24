@@ -30,6 +30,7 @@ use hypersolve::{
     compare_algebraic_root_representations_by_difference,
 };
 
+use crate::bezier_tangent_order::compare_algebraic_tangent_turn_from_base_sign_only;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicSameTangentOrderStatus,
@@ -39,7 +40,6 @@ use crate::{
     BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurveError, CurvePolicy,
     CurveResult, Point2, UncertaintyReason, ZeroStatus,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
-    compare_algebraic_tangent_turn_from_base,
 };
 
 /// One retained Bezier arrangement fragment with source provenance.
@@ -336,7 +336,7 @@ impl BezierArrangementGraph2 {
     /// (or when a represented coordinate has an exact rational witness matching
     /// a native point). At a branch vertex it compares outgoing tangents with
     /// either the native exact cross/dot predicate or
-    /// [`compare_algebraic_tangent_turn_from_base`].
+    /// [`crate::compare_algebraic_tangent_turn_from_base`].
     ///
     /// The method deliberately does not materialize concrete Bezier regions
     /// from algebraic fragments. It only proves traversal order over retained
@@ -495,7 +495,7 @@ fn validate_arrangement_algebraic_endpoint_image(
                     parameter,
                     policy,
                 )?;
-                if &expected != image {
+                if !image.matches_required_source_evidence(&expected) {
                     return Err(CurveError::Topology(format!(
                         "algebraic {name} Bezier arrangement endpoint image does not match retained source curve"
                     )));
@@ -868,6 +868,7 @@ struct RetainedEndpointData {
     end_tangent: Option<RetainedTangentVector>,
     start_second_derivative: Option<RetainedTangentVector>,
     start_third_derivative: Option<RetainedTangentVector>,
+    start_derivative_source: Option<RetainedAlgebraicDerivativeSource>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -891,6 +892,14 @@ struct RetainedEndpointSideData {
     tangent: RetainedTangentVector,
     second_derivative: Option<RetainedTangentVector>,
     third_derivative: Option<RetainedTangentVector>,
+    derivative_source: Option<RetainedAlgebraicDerivativeSource>,
+}
+
+#[derive(Clone, Debug)]
+struct RetainedAlgebraicDerivativeSource {
+    curve: Box<BezierSubcurve2>,
+    parameter: crate::BezierAlgebraicParameter2,
+    reversed: bool,
 }
 
 fn materialized_endpoint_data(
@@ -926,6 +935,7 @@ fn retained_endpoint_data(
                     .start_third_derivative
                     .map(Box::new)
                     .map(RetainedTangentVector::Native),
+                start_derivative_source: None,
             })),
             Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
         },
@@ -972,9 +982,14 @@ fn retained_endpoint_data(
             } else {
                 (source_start, source_end)
             };
-            let (start, start_tangent, start_second_derivative, start_third_derivative) =
-                retained_endpoint_side_parts(start);
-            let (end, end_tangent, _, _) = retained_endpoint_side_parts(end);
+            let (
+                start,
+                start_tangent,
+                start_second_derivative,
+                start_third_derivative,
+                start_derivative_source,
+            ) = retained_endpoint_side_parts(start);
+            let (end, end_tangent, _, _, _) = retained_endpoint_side_parts(end);
             Some(Classification::Decided(RetainedEndpointData {
                 start,
                 end,
@@ -984,6 +999,7 @@ fn retained_endpoint_data(
                 end_tangent,
                 start_second_derivative,
                 start_third_derivative,
+                start_derivative_source,
             }))
         }
         BezierSplitFragment2::Unresolved { .. } => None,
@@ -1022,6 +1038,7 @@ fn retained_endpoint_side_data(
             tangent,
             second_derivative,
             third_derivative,
+            derivative_source: retained_rational_derivative_source(source_curve, image.parameter()),
         }));
     }
 
@@ -1069,6 +1086,7 @@ fn retained_exact_source_endpoint_side_data(
             .start_third_derivative
             .map(Box::new)
             .map(RetainedTangentVector::Native),
+        derivative_source: None,
     };
     if restore_source_orientation {
         match reversed_retained_endpoint_side(side) {
@@ -1087,6 +1105,7 @@ fn retained_endpoint_side_parts(
     Option<RetainedTangentVector>,
     Option<RetainedTangentVector>,
     Option<RetainedTangentVector>,
+    Option<RetainedAlgebraicDerivativeSource>,
 ) {
     match side {
         Some(side) => (
@@ -1094,8 +1113,9 @@ fn retained_endpoint_side_parts(
             Some(side.tangent),
             side.second_derivative,
             side.third_derivative,
+            side.derivative_source,
         ),
-        None => (None, None, None, None),
+        None => (None, None, None, None, None),
     }
 }
 
@@ -1116,7 +1136,26 @@ fn reversed_retained_endpoint_side(
         Some(derivative) => Some(negate_retained_tangent(derivative)?),
         None => None,
     };
+    if let Some(source) = &mut side.derivative_source {
+        source.reversed = !source.reversed;
+    }
     Some(side)
+}
+
+fn retained_rational_derivative_source(
+    source_curve: Option<&BezierSubcurve2>,
+    parameter: &crate::BezierAlgebraicParameter2,
+) -> Option<RetainedAlgebraicDerivativeSource> {
+    let source_curve = source_curve?;
+    matches!(
+        source_curve,
+        BezierSubcurve2::RationalQuadratic(_) | BezierSubcurve2::Rational(_)
+    )
+    .then(|| RetainedAlgebraicDerivativeSource {
+        curve: Box::new(source_curve.clone()),
+        parameter: parameter.clone(),
+        reversed: false,
+    })
 }
 
 fn retained_algebraic_point_key(point: &BezierEndpointPointImage2) -> Option<RetainedEndpointKey> {
@@ -1397,6 +1436,7 @@ mod endpoint_adjacency_tests {
             end_tangent: None,
             start_second_derivative: None,
             start_third_derivative: None,
+            start_derivative_source: None,
         }
     }
 
@@ -1674,7 +1714,8 @@ fn compare_retained_turn_from_base(
             let base = retained_tangent_as_algebraic(base);
             let first = retained_tangent_as_algebraic(first);
             let second = retained_tangent_as_algebraic(second);
-            match compare_algebraic_tangent_turn_from_base(&base, &first, &second, policy) {
+            match compare_algebraic_tangent_turn_from_base_sign_only(&base, &first, &second, policy)
+            {
                 Classification::Decided(evidence) => match evidence.status {
                     BezierAlgebraicTangentOrderStatus::Ordered => match evidence.ordering {
                         Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
@@ -1733,38 +1774,56 @@ fn compare_retained_same_tangent_second_order(
         (
             Some(RetainedTangentVector::Algebraic(first_tangent)),
             Some(RetainedTangentVector::Algebraic(second_tangent)),
-        ) => match (
-            retained_algebraic_vector(first.start_second_derivative.as_ref()),
-            retained_algebraic_vector(second.start_second_derivative.as_ref()),
-        ) {
-            (Some(first_second_derivative), Some(second_second_derivative)) => {
-                match compare_algebraic_same_tangent_second_order(
-                    first_tangent,
-                    first_second_derivative,
-                    second_tangent,
-                    second_second_derivative,
-                    policy,
-                ) {
-                    Classification::Decided(evidence) => {
-                        if evidence.status == BezierAlgebraicSameTangentOrderStatus::SameDirection {
-                            return compare_retained_algebraic_same_tangent_third_order(
-                                first,
-                                second,
-                                first_tangent,
-                                second_tangent,
-                                policy,
-                            );
-                        }
-                        retained_algebraic_same_tangent_evidence_to_turn(
-                            evidence.status,
-                            evidence.ordering,
-                        )
+        ) => {
+            let first_second_derivative =
+                match retained_algebraic_higher_derivative(first, 2, policy) {
+                    Classification::Decided(derivative) => derivative,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
                     }
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                };
+            let second_second_derivative =
+                match retained_algebraic_higher_derivative(second, 2, policy) {
+                    Classification::Decided(derivative) => derivative,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+            match (
+                retained_algebraic_vector(first_second_derivative.as_ref()),
+                retained_algebraic_vector(second_second_derivative.as_ref()),
+            ) {
+                (Some(first_second_derivative), Some(second_second_derivative)) => {
+                    match compare_algebraic_same_tangent_second_order(
+                        first_tangent,
+                        first_second_derivative,
+                        second_tangent,
+                        second_second_derivative,
+                        policy,
+                    ) {
+                        Classification::Decided(evidence) => {
+                            if evidence.status
+                                == BezierAlgebraicSameTangentOrderStatus::SameDirection
+                            {
+                                return compare_retained_algebraic_same_tangent_third_order(
+                                    first,
+                                    second,
+                                    first_tangent,
+                                    second_tangent,
+                                    policy,
+                                );
+                            }
+                            retained_algebraic_same_tangent_evidence_to_turn(
+                                evidence.status,
+                                evidence.ordering,
+                            )
+                        }
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    }
                 }
+                _ => Classification::Decided(TurnOrdering::SameDirection),
             }
-            _ => Classification::Decided(TurnOrdering::SameDirection),
-        },
+        }
         _ => Classification::Decided(TurnOrdering::SameDirection),
     }
 }
@@ -1776,9 +1835,17 @@ fn compare_retained_algebraic_same_tangent_third_order(
     second_tangent: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
 ) -> Classification<TurnOrdering> {
+    let first_third_derivative = match retained_algebraic_higher_derivative(first, 3, policy) {
+        Classification::Decided(derivative) => derivative,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let second_third_derivative = match retained_algebraic_higher_derivative(second, 3, policy) {
+        Classification::Decided(derivative) => derivative,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
     match (
-        retained_algebraic_vector(first.start_third_derivative.as_ref()),
-        retained_algebraic_vector(second.start_third_derivative.as_ref()),
+        retained_algebraic_vector(first_third_derivative.as_ref()),
+        retained_algebraic_vector(second_third_derivative.as_ref()),
     ) {
         (Some(first_third_derivative), Some(second_third_derivative)) => {
             match compare_algebraic_same_tangent_third_order(
@@ -1799,6 +1866,58 @@ fn compare_retained_algebraic_same_tangent_third_order(
         }
         _ => Classification::Decided(TurnOrdering::SameDirection),
     }
+}
+
+fn retained_algebraic_higher_derivative(
+    endpoint: &RetainedEndpointData,
+    order: usize,
+    policy: &CurvePolicy,
+) -> Classification<Option<RetainedTangentVector>> {
+    let retained = match order {
+        2 => &endpoint.start_second_derivative,
+        3 => &endpoint.start_third_derivative,
+        _ => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    if retained.is_some() {
+        return Classification::Decided(retained.clone());
+    }
+    let Some(source) = &endpoint.start_derivative_source else {
+        return Classification::Decided(None);
+    };
+    let derivatives = match source.curve.as_ref() {
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.derivatives_at_algebraic_parameter(&source.parameter, order, policy)
+        }
+        BezierSubcurve2::Rational(curve) => {
+            curve.derivatives_at_algebraic_parameter(&source.parameter, order, policy)
+        }
+        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => {
+            return Classification::Decided(None);
+        }
+    };
+    let mut derivative = match derivatives {
+        Ok(derivatives) => derivatives
+            .into_iter()
+            .nth(order - 1)
+            .and_then(transformed_rational_derivative_vector),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    if source.reversed && order % 2 == 1 {
+        derivative = match derivative {
+            Some(derivative) => match negate_retained_tangent(derivative) {
+                Some(derivative) => Some(derivative),
+                None => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            },
+            None => None,
+        };
+    }
+    Classification::Decided(derivative)
+}
+
+fn transformed_rational_derivative_vector(
+    derivative: crate::RationalBezierAlgebraicTangentImage2,
+) -> Option<RetainedTangentVector> {
+    retained_algebraic_tangent(&BezierEndpointTangentImage2::Rational(derivative))
 }
 
 fn retained_algebraic_same_tangent_evidence_to_turn(

@@ -19,7 +19,9 @@
 //! it keeps the exactness model's construction/decision separation, but it avoids retaining an
 //! algebraic wrapper when the exact root already lives in the scalar tower.
 
+use std::cell::OnceCell;
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 use hyperreal::{Rational as HyperRational, Real, RealSign};
 #[cfg(feature = "predicates")]
@@ -85,11 +87,26 @@ pub struct BezierParameterInterval {
 /// the bracket through API boundaries, and ask for ordering only when interval
 /// separation proves it. The `root_count` is stored explicitly so downstream
 /// code can assert that the object was validated as a singleton isolator.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct BezierAlgebraicParameter2 {
+    data: Rc<BezierAlgebraicParameterData>,
+}
+
+#[derive(Debug)]
+struct BezierAlgebraicParameterData {
     polynomial: BezierParameterPolynomial,
     interval: BezierParameterInterval,
     root_count: usize,
+    represented_rational_root: Rc<OnceCell<Option<Real>>>,
+}
+
+impl PartialEq for BezierAlgebraicParameter2 {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.data, &other.data)
+            || (self.data.polynomial == other.data.polynomial
+                && self.data.interval == other.data.interval
+                && self.data.root_count == other.data.root_count)
+    }
 }
 
 /// Exact Bezier parameter carrier.
@@ -505,9 +522,12 @@ impl BezierAlgebraicParameter2 {
         }
 
         Ok(Classification::Decided(Self {
-            polynomial,
-            interval,
-            root_count: count,
+            data: Rc::new(BezierAlgebraicParameterData {
+                polynomial,
+                interval,
+                root_count: count,
+                represented_rational_root: Rc::new(OnceCell::new()),
+            }),
         }))
     }
 
@@ -516,25 +536,45 @@ impl BezierAlgebraicParameter2 {
         interval: BezierParameterInterval,
     ) -> Self {
         Self {
-            polynomial,
-            interval,
-            root_count: 1,
+            data: Rc::new(BezierAlgebraicParameterData {
+                polynomial,
+                interval,
+                root_count: 1,
+                represented_rational_root: Rc::new(OnceCell::new()),
+            }),
+        }
+    }
+
+    fn with_certified_interval(&self, interval: BezierParameterInterval) -> Self {
+        Self {
+            data: Rc::new(BezierAlgebraicParameterData {
+                polynomial: self.data.polynomial.clone(),
+                interval,
+                root_count: self.data.root_count,
+                represented_rational_root: Rc::clone(&self.data.represented_rational_root),
+            }),
         }
     }
 
     /// Returns the defining polynomial.
-    pub const fn polynomial(&self) -> &BezierParameterPolynomial {
-        &self.polynomial
+    pub fn polynomial(&self) -> &BezierParameterPolynomial {
+        &self.data.polynomial
     }
 
     /// Returns the certified isolating interval.
-    pub const fn interval(&self) -> &BezierParameterInterval {
-        &self.interval
+    pub fn interval(&self) -> &BezierParameterInterval {
+        &self.data.interval
     }
 
     /// Returns the certified distinct-root count for the interval.
-    pub const fn root_count(&self) -> usize {
-        self.root_count
+    pub fn root_count(&self) -> usize {
+        self.data.root_count
+    }
+
+    /// Returns whether exact rational reconstruction has already produced a
+    /// decided positive or negative result for this clone-shared parameter.
+    pub fn is_represented_rational_root_cached(&self) -> bool {
+        self.data.represented_rational_root.get().is_some()
     }
 
     /// Returns the represented root when this isolator contains an exact rational root.
@@ -550,18 +590,30 @@ impl BezierAlgebraicParameter2 {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Option<Real>>> {
-        if self.polynomial.degree() == 1 {
-            return self.represented_linear_root(policy);
+        if let Some(root) = self.data.represented_rational_root.get() {
+            return Ok(Classification::Decided(root.clone()));
         }
-
-        let Some(denominator_bound) = rational_root_denominator_bound(&self.polynomial) else {
-            return Ok(Classification::Decided(None));
+        let result = if self.data.polynomial.degree() == 1 {
+            self.represented_linear_root(policy)?
+        } else {
+            let Some(denominator_bound) = rational_root_denominator_bound(&self.data.polynomial)
+            else {
+                return self.cache_represented_rational_root(None);
+            };
+            let sequence = match sturm_sequence(self.data.polynomial.coefficients(), policy)? {
+                Classification::Decided(sequence) => sequence,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            self.represented_rational_root_with_sequence(
+                policy,
+                denominator_bound,
+                &sequence,
+                None,
+            )?
         };
-        let sequence = match sturm_sequence(self.polynomial.coefficients(), policy)? {
-            Classification::Decided(sequence) => sequence,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        self.represented_rational_root_with_sequence(policy, denominator_bound, &sequence, None)
+        self.cache_decided_represented_rational_root(result)
     }
 
     fn represented_rational_root_with_sequence(
@@ -574,7 +626,7 @@ impl BezierAlgebraicParameter2 {
         let two = BigInt::from(2_u8);
         let bound = BigInt::from(denominator_bound);
         let target_width = BigRational::new(BigInt::one(), &two * &bound * &bound);
-        let mut interval = self.interval.clone();
+        let mut interval = self.data.interval.clone();
         loop {
             let Some(start) = real_as_big_rational(interval.start()) else {
                 return Ok(Classification::Decided(None));
@@ -584,7 +636,7 @@ impl BezierAlgebraicParameter2 {
             };
             if &end - &start < target_width {
                 return reconstruct_rational_root(
-                    &self.polynomial,
+                    &self.data.polynomial,
                     &interval,
                     (&start + &end) / &two,
                     &bound,
@@ -594,7 +646,7 @@ impl BezierAlgebraicParameter2 {
 
             let midpoint = (&start + &end) / &two;
             let midpoint_real = real_from_big_rational(&midpoint)?;
-            match real_sign(&self.polynomial.evaluate(&midpoint_real), policy) {
+            match real_sign(&self.data.polynomial.evaluate(&midpoint_real), policy) {
                 Some(RealSign::Zero) => {
                     return Ok(Classification::Decided(Some(midpoint_real)));
                 }
@@ -612,7 +664,7 @@ impl BezierAlgebraicParameter2 {
                 }
             };
             let left_count = match self
-                .polynomial
+                .polynomial()
                 .root_count_in_interval_with_sequence(&left, sequence, policy)?
             {
                 Classification::Decided(count) => count,
@@ -650,21 +702,49 @@ impl BezierAlgebraicParameter2 {
         sequence: &[Vec<Real>],
         trace: Option<&mut BezierRootIsolationTrace2>,
     ) -> CurveResult<Classification<Option<Real>>> {
-        if self.polynomial.degree() == 1 {
-            return self.represented_linear_root(policy);
+        if let Some(root) = self.data.represented_rational_root.get() {
+            return Ok(Classification::Decided(root.clone()));
         }
-        let Some(denominator_bound) = rational_root_denominator_bound(&self.polynomial) else {
-            return Ok(Classification::Decided(None));
+        if self.data.polynomial.degree() == 1 {
+            let result = self.represented_linear_root(policy)?;
+            return self.cache_decided_represented_rational_root(result);
+        }
+        let Some(denominator_bound) = rational_root_denominator_bound(&self.data.polynomial) else {
+            return self.cache_represented_rational_root(None);
         };
-        self.represented_rational_root_with_sequence(policy, denominator_bound, sequence, trace)
+        let result = self.represented_rational_root_with_sequence(
+            policy,
+            denominator_bound,
+            sequence,
+            trace,
+        )?;
+        self.cache_decided_represented_rational_root(result)
+    }
+
+    fn cache_decided_represented_rational_root(
+        &self,
+        result: Classification<Option<Real>>,
+    ) -> CurveResult<Classification<Option<Real>>> {
+        if let Classification::Decided(root) = &result {
+            let _ = self.data.represented_rational_root.set(root.clone());
+        }
+        Ok(result)
+    }
+
+    fn cache_represented_rational_root(
+        &self,
+        root: Option<Real>,
+    ) -> CurveResult<Classification<Option<Real>>> {
+        let _ = self.data.represented_rational_root.set(root.clone());
+        Ok(Classification::Decided(root))
     }
 
     fn represented_linear_root(
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Option<Real>>> {
-        let constant = &self.polynomial.coefficients()[0];
-        let slope = &self.polynomial.coefficients()[1];
+        let constant = &self.data.polynomial.coefficients()[0];
+        let slope = &self.data.polynomial.coefficients()[1];
         if is_zero(slope, policy) != Some(false) {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         }
@@ -675,8 +755,8 @@ impl BezierAlgebraicParameter2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
         match (
-            compare_reals(self.interval.start(), &root, policy),
-            compare_reals(&root, self.interval.end(), policy),
+            compare_reals(self.data.interval.start(), &root, policy),
+            compare_reals(&root, self.data.interval.end(), policy),
         ) {
             (Some(Ordering::Greater), _) | (_, Some(Ordering::Greater)) => {
                 return Ok(Classification::Decided(None));
@@ -684,7 +764,7 @@ impl BezierAlgebraicParameter2 {
             (Some(_), Some(_)) => {}
             _ => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
-        match real_sign(&self.polynomial.evaluate(&root), policy) {
+        match real_sign(&self.data.polynomial.evaluate(&root), policy) {
             Some(RealSign::Zero) => Ok(Classification::Decided(Some(root))),
             Some(_) => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
@@ -861,10 +941,7 @@ impl BezierParameter2 {
             Ok(Classification::Decided(interval)) => interval,
             Ok(Classification::Uncertain(_)) | Err(_) => return Self::Algebraic(algebraic),
         };
-        Self::Algebraic(BezierAlgebraicParameter2::from_certified_singleton(
-            algebraic.polynomial().clone(),
-            interval,
-        ))
+        Self::Algebraic(algebraic.with_certified_interval(interval))
     }
 
     #[cfg(not(feature = "predicates"))]
@@ -1061,7 +1138,7 @@ impl<'a> RefinedParameter<'a> {
             }
             BezierParameter2::Algebraic(parameter) => {
                 let sturm_sequence =
-                    match sturm_sequence(parameter.polynomial.coefficients(), policy)? {
+                    match sturm_sequence(parameter.polynomial().coefficients(), policy)? {
                         Classification::Decided(sequence) => sequence,
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
@@ -1093,7 +1170,7 @@ impl<'a> RefinedParameter<'a> {
             return Ok(Classification::Decided(self));
         };
         let midpoint = midpoint_real(interval.start(), interval.end())?;
-        match real_sign(&parameter.polynomial.evaluate(&midpoint), policy) {
+        match real_sign(&parameter.polynomial().evaluate(&midpoint), policy) {
             Some(RealSign::Zero) => return Ok(Classification::Decided(Self::Exact(midpoint))),
             Some(_) => {}
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
@@ -1106,11 +1183,10 @@ impl<'a> RefinedParameter<'a> {
             Classification::Decided(interval) => interval,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let interval = match parameter.polynomial.root_count_in_interval_with_sequence(
-            &left,
-            &sturm_sequence,
-            policy,
-        )? {
+        let interval = match parameter
+            .polynomial()
+            .root_count_in_interval_with_sequence(&left, &sturm_sequence, policy)?
+        {
             Classification::Decided(1) => left,
             Classification::Decided(0) => {
                 match BezierParameterInterval::try_new(midpoint, interval.end().clone(), policy)? {
@@ -1212,17 +1288,17 @@ fn refine_algebraic_upper_gap(
     upper_bound: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Real>> {
-    let sequence = match sturm_sequence(parameter.polynomial.coefficients(), policy)? {
+    let sequence = match sturm_sequence(parameter.polynomial().coefficients(), policy)? {
         Classification::Decided(sequence) => sequence,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let mut interval = parameter.interval.clone();
+    let mut interval = parameter.interval().clone();
     loop {
         if compare_reals(interval.end(), upper_bound, policy) == Some(Ordering::Less) {
             return midpoint_real(interval.end(), upper_bound).map(Classification::Decided);
         }
         let midpoint = midpoint_real(interval.start(), interval.end())?;
-        match real_sign(&parameter.polynomial.evaluate(&midpoint), policy) {
+        match real_sign(&parameter.polynomial().evaluate(&midpoint), policy) {
             Some(RealSign::Zero) => {
                 return midpoint_real(&midpoint, upper_bound).map(Classification::Decided);
             }
@@ -1238,7 +1314,7 @@ fn refine_algebraic_upper_gap(
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         match parameter
-            .polynomial
+            .polynomial()
             .root_count_in_interval_with_sequence(&left, &sequence, policy)?
         {
             Classification::Decided(1) => interval = left,
@@ -1267,17 +1343,17 @@ fn refine_algebraic_lower_gap(
     lower_bound: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Real>> {
-    let sequence = match sturm_sequence(parameter.polynomial.coefficients(), policy)? {
+    let sequence = match sturm_sequence(parameter.polynomial().coefficients(), policy)? {
         Classification::Decided(sequence) => sequence,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let mut interval = parameter.interval.clone();
+    let mut interval = parameter.interval().clone();
     loop {
         if compare_reals(lower_bound, interval.start(), policy) == Some(Ordering::Less) {
             return midpoint_real(lower_bound, interval.start()).map(Classification::Decided);
         }
         let midpoint = midpoint_real(interval.start(), interval.end())?;
-        match real_sign(&parameter.polynomial.evaluate(&midpoint), policy) {
+        match real_sign(&parameter.polynomial().evaluate(&midpoint), policy) {
             Some(RealSign::Zero) => {
                 return midpoint_real(lower_bound, &midpoint).map(Classification::Decided);
             }
@@ -1293,7 +1369,7 @@ fn refine_algebraic_lower_gap(
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         match parameter
-            .polynomial
+            .polynomial()
             .root_count_in_interval_with_sequence(&left, &sequence, policy)?
         {
             Classification::Decided(1) => interval = left,

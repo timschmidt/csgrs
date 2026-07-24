@@ -2657,6 +2657,53 @@ exact polyline projection measured 0.646 ms in the matched median run, so
 native all-family parity remains an optimization target rather than a completed
 claim.
 
+### Loop-wide exact Boolean classification
+
+The retained topology profile after commit `a19a50a` showed three kinds of
+operation-independent proof being recomputed eagerly:
+
+- tangent ordering constructed algebraic squared norms and cross products
+  before checking whether certified coordinate enclosures already decided
+  their signs;
+- every rational algebraic split endpoint constructed second- and
+  third-derivative images even though only a same-tangent branch needs them;
+- every split fragment independently ran a complete exact point-in-region ray
+  classification, despite the retained contact topology already proving where
+  a regular boundary crossing changes inside/outside state.
+
+Arrangement traversal now has a sign-only exact enclosure route while the
+public evidence API still constructs and returns represented scalar roots.
+Private refined rational splits retain point and first-derivative evidence and
+reconstruct higher derivatives from their retained source only at an actual
+same-tangent tie. Public endpoint constructors remain eager. Exact fragment
+classification starts once per connected boundary loop, remains unchanged
+across ordinary authored vertices, and toggles only across a unique strict-
+interior contact whose algebraic tangent cross is certified nonzero. Tangencies,
+multi-contact vertices, and overlap endpoints conservatively run the full
+classifier.
+
+The algebraic parameter certificate is also a one-word clone-shared immutable
+handle. Decided rational-root reconstruction, including a decided irrational
+result, is retained across parameter clones and certified interval refinement;
+uncertain policy-dependent results are not cached.
+
+The same one-cell all-family release workload changed as follows:
+
+| Exact all-family workload | `a19a50a` | Current | Change |
+| --- | ---: | ---: | ---: |
+| Prepare and materialize all four `CurveRegion2` Booleans | 551.721 ms | 126.015 ms | 77.2% faster |
+| Exact representative-point classifications / split fragments | 48 / 48 | 2 / 48 | 95.8% fewer |
+| Candidate pairs / decided operations / checksum | 9 / 4 / 6 | 9 / 4 / 6 | unchanged |
+
+The current value is the median of three complete process runs. Its median
+pair preparation was 43.486 ms; operation times were 80.907 ms, 0.218 ms,
+0.212 ms, and 0.879 ms. The matched exact polyline projection median was
+0.525 ms. This checkpoint is 97.1% faster than the earlier 4.315 s all-family
+baseline, but the remaining roughly 240x native gap still gates removal of the
+embedded line/arc accelerator. The next profile frontier is split endpoint
+point/tangent rational-image construction and initial retained-pair
+preparation.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

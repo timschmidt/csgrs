@@ -109,4 +109,12 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
             Ok(Classification::Decided(_))
         ));
     }
+    #[cfg(feature = "predicates")]
+    assert!(
+        prepared
+            .boolean_topology_point_classification_count()
+            .unwrap()
+            < prepared.boolean_topology_fragment_count().unwrap(),
+        "certified interior transversal contacts should reuse adjacent fragment classification"
+    );
 }

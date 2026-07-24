@@ -227,7 +227,9 @@ impl BezierSubcurve2 {
                     ))
                 },
                 |parameter| {
-                    BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, policy)
+                    BezierAlgebraicEndpointImage2::rational_quadratic_first_order(
+                        curve, parameter, policy,
+                    )
                 },
                 self.clone(),
             ),
@@ -247,7 +249,9 @@ impl BezierSubcurve2 {
                         "general rational Bezier exact split is uncertified: {reason:?}"
                     ))),
                 },
-                |parameter| BezierAlgebraicEndpointImage2::rational(curve, parameter, policy),
+                |parameter| {
+                    BezierAlgebraicEndpointImage2::rational_first_order(curve, parameter, policy)
+                },
                 self.clone(),
             ),
         }
@@ -583,7 +587,7 @@ fn validate_algebraic_endpoint_image_boundary(
             }
             let expected =
                 BezierAlgebraicEndpointImage2::from_source_curve(source_curve, parameter, policy)?;
-            if &expected != image {
+            if !image.matches_required_source_evidence(&expected) {
                 return Err(CurveError::Topology(format!(
                     "algebraic {name} Bezier split endpoint image does not match retained source curve"
                 )));

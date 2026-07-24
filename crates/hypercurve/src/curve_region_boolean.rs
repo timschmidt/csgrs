@@ -4,14 +4,16 @@ use std::cell::OnceCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
+use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
 use crate::{
-    BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
-    BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Curve2, CurveError,
-    CurveFamily2, CurveIntersectionContact2, CurveIntersectionOverlap2,
-    CurveIntersectionPairBlocker2, CurveOperation2, CurvePathBooleanOperand2, CurvePolicy,
-    CurveRegion2, ExactCurveError, ExactCurveResult, FillRule,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RegionPointLocation, RetainedCurveIntersection2, UncertaintyReason,
+    BezierAlgebraicEndpointImage2, BezierArrangementFragment2, BezierArrangementGraph2,
+    BezierEndpointTangentImage2, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
+    BezierSubcurve2, BooleanOp, Classification, Curve2, CurveError, CurveFamily2,
+    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
+    CurveOperation2, CurvePathBooleanOperand2, CurvePolicy, CurveRegion2, ExactCurveError,
+    ExactCurveResult, FillRule, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RegionPointLocation, RetainedCurveIntersection2,
+    UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -138,6 +140,7 @@ struct ClassifiedSplitCarrierFragment {
 struct PreparedCurveRegionBooleanTopology {
     split_fragments: Vec<Vec<ClassifiedSplitCarrierFragment>>,
     overlaps: Vec<CarrierOverlap>,
+    point_classification_count: usize,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -404,6 +407,27 @@ impl RetainedCurveRegionBoolean2 {
         self.data.topology.get().is_some()
     }
 
+    /// Returns the number of exact representative-point classifications used
+    /// to construct the retained Boolean topology.
+    pub fn boolean_topology_point_classification_count(&self) -> Option<usize> {
+        self.data
+            .topology
+            .get()?
+            .as_ref()
+            .ok()
+            .map(|topology| topology.point_classification_count)
+    }
+
+    /// Returns the number of retained split fragments in the Boolean topology.
+    pub fn boolean_topology_fragment_count(&self) -> Option<usize> {
+        self.data
+            .topology
+            .get()?
+            .as_ref()
+            .ok()
+            .map(|topology| topology.split_fragments.iter().map(Vec::len).sum::<usize>())
+    }
+
     /// Returns a clone-shared aggregate exact intersection result.
     pub fn intersection_result(&self) -> ExactCurveResult<CurveRegionIntersectionResult2> {
         self.intersection_result_view().cloned()
@@ -574,12 +598,18 @@ impl RetainedCurveRegionBoolean2 {
         let mut events = vec![Vec::new(); self.data.carriers.len()];
         let mut contact_points = Vec::<(RationalBezierIntersectionPointEvidence2, usize)>::new();
         let mut next_topology_vertex = 0_usize;
+        let mut contact_vertex_counts = Vec::<usize>::new();
+        let mut transition_candidates = Vec::<Option<(usize, usize)>>::new();
+        let mut reclassification_vertices = Vec::<bool>::new();
         seed_loop_topology_vertices(
             &self.data.carriers,
             &mut events,
             &mut next_topology_vertex,
             &self.data.policy,
         )?;
+        contact_vertex_counts.resize(next_topology_vertex, 0);
+        transition_candidates.resize(next_topology_vertex, None);
+        reclassification_vertices.resize(next_topology_vertex, false);
         let mut overlaps = Vec::new();
         for pair in &self.data.pairs {
             let result = pair.prepared.result_view()?;
@@ -623,6 +653,12 @@ impl RetainedCurveRegionBoolean2 {
                 let topology_vertex = match (first_existing, second_existing) {
                     (Some(first), Some(second)) if first != second => {
                         replace_topology_vertex(&mut events, &mut contact_points, second, first);
+                        contact_vertex_counts[first] += contact_vertex_counts[second];
+                        contact_vertex_counts[second] = 0;
+                        reclassification_vertices[first] |= reclassification_vertices[second];
+                        reclassification_vertices[second] = false;
+                        transition_candidates[first] = None;
+                        transition_candidates[second] = None;
                         first
                     }
                     (Some(vertex), _) | (_, Some(vertex)) => vertex,
@@ -644,6 +680,29 @@ impl RetainedCurveRegionBoolean2 {
                 {
                     contact_points.push((contact.point().clone(), topology_vertex));
                 }
+                if contact_vertex_counts.len() <= topology_vertex {
+                    contact_vertex_counts.resize(topology_vertex + 1, 0);
+                    transition_candidates.resize(topology_vertex + 1, None);
+                    reclassification_vertices.resize(topology_vertex + 1, false);
+                }
+                contact_vertex_counts[topology_vertex] += 1;
+                reclassification_vertices[topology_vertex] = true;
+                transition_candidates[topology_vertex] = if contact_vertex_counts[topology_vertex]
+                    == 1
+                    && parameter_strictly_inside_carrier(
+                        first_parameter,
+                        &self.data.carriers[pair.first_carrier_index],
+                        &self.data.policy,
+                    )
+                    && parameter_strictly_inside_carrier(
+                        second_parameter,
+                        &self.data.carriers[pair.second_carrier_index],
+                        &self.data.policy,
+                    ) {
+                    Some((pair.first_carrier_index, pair.second_carrier_index))
+                } else {
+                    None
+                };
                 push_carrier_event(
                     &mut events[pair.first_carrier_index],
                     first_parameter.clone(),
@@ -736,6 +795,22 @@ impl RetainedCurveRegionBoolean2 {
                 });
             }
         }
+        for overlap in &overlaps {
+            for (carrier_index, range) in [
+                (overlap.first_carrier_index, &overlap.first_range),
+                (overlap.second_carrier_index, &overlap.second_range),
+            ] {
+                for parameter in [range.start(), range.end()] {
+                    if let Some(vertex) =
+                        existing_event_vertex(&events[carrier_index], parameter, &self.data.policy)?
+                        && let Some(candidate) = transition_candidates.get_mut(vertex)
+                    {
+                        *candidate = None;
+                        reclassification_vertices[vertex] = true;
+                    }
+                }
+            }
+        }
 
         let split_fragments = self
             .data
@@ -747,24 +822,74 @@ impl RetainedCurveRegionBoolean2 {
                     .map_err(|cause| self.invalid(carrier_index, cause))
             })
             .collect::<ExactCurveResult<Vec<_>>>()?;
-        let split_fragments = split_fragments
-            .into_iter()
-            .enumerate()
-            .map(|(carrier_index, fragments)| {
-                fragments
-                    .into_iter()
-                    .map(|split| {
-                        Ok(ClassifiedSplitCarrierFragment {
-                            location: self.fragment_location(carrier_index, &split.fragment)?,
-                            split,
-                        })
-                    })
-                    .collect::<ExactCurveResult<Vec<_>>>()
-            })
-            .collect::<ExactCurveResult<Vec<_>>>()?;
+        let transverse_vertices = certified_transverse_contact_vertices(
+            &split_fragments,
+            &transition_candidates,
+            &self.data.policy,
+        );
+        let mut classified_split_fragments = Vec::with_capacity(split_fragments.len());
+        let mut point_classification_count = 0_usize;
+        let mut previous = None::<(
+            CurvePathBooleanOperand2,
+            usize,
+            Option<usize>,
+            RegionPointLocation,
+        )>;
+        for (carrier_index, fragments) in split_fragments.into_iter().enumerate() {
+            let carrier = &self.data.carriers[carrier_index];
+            let mut classified =
+                Vec::<ClassifiedSplitCarrierFragment>::with_capacity(fragments.len());
+            for split in fragments {
+                let propagated =
+                    previous.and_then(|(operand, loop_index, end_topology_vertex, location)| {
+                        (operand == carrier.operand
+                            && loop_index == carrier.loop_index
+                            && end_topology_vertex == split.start_topology_vertex)
+                            .then_some(split.start_topology_vertex)
+                            .flatten()
+                            .and_then(|vertex| {
+                                if transverse_vertices.get(vertex).copied().unwrap_or(false) {
+                                    match location {
+                                        RegionPointLocation::Inside => {
+                                            Some(RegionPointLocation::Outside)
+                                        }
+                                        RegionPointLocation::Outside => {
+                                            Some(RegionPointLocation::Inside)
+                                        }
+                                        RegionPointLocation::Boundary => None,
+                                    }
+                                } else if !reclassification_vertices
+                                    .get(vertex)
+                                    .copied()
+                                    .unwrap_or(false)
+                                {
+                                    Some(location)
+                                } else {
+                                    None
+                                }
+                            })
+                    });
+                let location = match propagated {
+                    Some(location) => location,
+                    None => {
+                        point_classification_count += 1;
+                        self.fragment_location(carrier_index, &split.fragment)?
+                    }
+                };
+                previous = Some((
+                    carrier.operand,
+                    carrier.loop_index,
+                    split.end_topology_vertex,
+                    location,
+                ));
+                classified.push(ClassifiedSplitCarrierFragment { split, location });
+            }
+            classified_split_fragments.push(classified);
+        }
         Ok(PreparedCurveRegionBooleanTopology {
-            split_fragments,
+            split_fragments: classified_split_fragments,
             overlaps,
+            point_classification_count,
         })
     }
 
@@ -1112,6 +1237,64 @@ fn split_carrier(
     Ok(output)
 }
 
+fn certified_transverse_contact_vertices(
+    split_fragments: &[Vec<SplitCarrierFragment>],
+    candidates: &[Option<(usize, usize)>],
+    policy: &CurvePolicy,
+) -> Vec<bool> {
+    candidates
+        .iter()
+        .enumerate()
+        .map(|(vertex, candidate)| {
+            let Some((first_carrier, second_carrier)) = candidate else {
+                return false;
+            };
+            let Some(first) =
+                algebraic_endpoint_tangent_at_vertex(&split_fragments[*first_carrier], vertex)
+            else {
+                return false;
+            };
+            let Some(second) =
+                algebraic_endpoint_tangent_at_vertex(&split_fragments[*second_carrier], vertex)
+            else {
+                return false;
+            };
+            matches!(
+                algebraic_endpoint_tangents_are_transverse(first, second, policy),
+                Classification::Decided(true)
+            )
+        })
+        .collect()
+}
+
+fn algebraic_endpoint_tangent_at_vertex(
+    fragments: &[SplitCarrierFragment],
+    vertex: usize,
+) -> Option<&BezierEndpointTangentImage2> {
+    fragments.iter().find_map(|split| {
+        let BezierSplitFragment2::AlgebraicEndpointImages {
+            reversed,
+            start_image,
+            end_image,
+            ..
+        } = &split.fragment
+        else {
+            return None;
+        };
+        if split.start_topology_vertex == Some(vertex) {
+            return if *reversed { end_image } else { start_image }
+                .as_ref()
+                .map(BezierAlgebraicEndpointImage2::tangent);
+        }
+        if split.end_topology_vertex == Some(vertex) {
+            return if *reversed { start_image } else { end_image }
+                .as_ref()
+                .map(BezierAlgebraicEndpointImage2::tangent);
+        }
+        None
+    })
+}
+
 fn push_carrier_event(
     events: &mut Vec<CarrierEvent>,
     parameter: BezierParameter2,
@@ -1294,6 +1477,20 @@ fn parameter_in_carrier(
     policy: &CurvePolicy,
 ) -> ExactCurveResult<bool> {
     parameter_between(parameter, &carrier.start, &carrier.end, policy)
+}
+
+fn parameter_strictly_inside_carrier(
+    parameter: &BezierParameter2,
+    carrier: &RegionCarrier,
+    policy: &CurvePolicy,
+) -> bool {
+    matches!(
+        (
+            decided_parameter_cmp(parameter, &carrier.start, policy),
+            decided_parameter_cmp(parameter, &carrier.end, policy),
+        ),
+        (Ok(Ordering::Greater), Ok(Ordering::Less))
+    )
 }
 
 fn parameter_between(

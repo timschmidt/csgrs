@@ -174,15 +174,26 @@ fn linear_midpoint_root_is_a_valid_algebraic_parameter() {
 }
 
 #[test]
+fn algebraic_parameter_is_a_clone_shared_handle() {
+    assert_eq!(
+        std::mem::size_of::<BezierAlgebraicParameter2>(),
+        std::mem::size_of::<usize>()
+    );
+}
+
+#[test]
 fn algebraic_parameter_recovers_represented_linear_root() {
     let parameter = isolate(polynomial(vec![r(-1), r(2)]), interval(q(2, 5), q(3, 5)));
+    let clone = parameter.clone();
 
+    assert!(!parameter.is_represented_rational_root_cached());
     assert_eq!(
         parameter.represented_rational_root(&policy()).unwrap(),
         Classification::Decided(Some(q(1, 2)))
     );
+    assert!(clone.is_represented_rational_root_cached());
     assert_eq!(
-        BezierParameter2::algebraic(parameter)
+        BezierParameter2::algebraic(clone)
             .promote_represented_rational_root(&policy())
             .unwrap(),
         Classification::Decided(BezierParameter2::Exact(q(1, 2)))

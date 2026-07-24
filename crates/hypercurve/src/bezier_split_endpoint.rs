@@ -177,6 +177,28 @@ impl BezierAlgebraicEndpointImage2 {
         })
     }
 
+    pub(crate) fn rational_quadratic_first_order(
+        curve: &RationalQuadraticBezier2,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Self> {
+        let tangent = curve
+            .derivatives_at_algebraic_parameter(parameter, 1, policy)?
+            .pop()
+            .expect("one requested rational derivative image");
+        Ok(Self {
+            data: Rc::new(BezierAlgebraicEndpointImageData {
+                parameter: parameter.clone(),
+                point: BezierEndpointPointImage2::Rational(
+                    curve.point_at_algebraic_parameter(parameter, policy)?,
+                ),
+                tangent: BezierEndpointTangentImage2::Rational(tangent),
+                second_derivative: None,
+                third_derivative: None,
+            }),
+        })
+    }
+
     /// Constructs endpoint evidence for an arbitrary-degree rational Bezier.
     pub fn rational(
         curve: &crate::RationalBezier2,
@@ -200,6 +222,28 @@ impl BezierAlgebraicEndpointImage2 {
                 tangent: BezierEndpointTangentImage2::Rational(tangent),
                 second_derivative,
                 third_derivative,
+            }),
+        })
+    }
+
+    pub(crate) fn rational_first_order(
+        curve: &crate::RationalBezier2,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Self> {
+        let tangent = curve
+            .derivatives_at_algebraic_parameter(parameter, 1, policy)?
+            .pop()
+            .expect("one requested rational derivative image");
+        Ok(Self {
+            data: Rc::new(BezierAlgebraicEndpointImageData {
+                parameter: parameter.clone(),
+                point: BezierEndpointPointImage2::Rational(
+                    curve.point_at_algebraic_parameter(parameter, policy)?,
+                ),
+                tangent: BezierEndpointTangentImage2::Rational(tangent),
+                second_derivative: None,
+                third_derivative: None,
             }),
         })
     }
@@ -233,6 +277,18 @@ impl BezierAlgebraicEndpointImage2 {
     /// Returns true when both point and tangent images were constructed.
     pub fn is_transformed(&self) -> bool {
         self.data.point.is_transformed() && self.data.tangent.is_transformed()
+    }
+
+    pub(crate) fn matches_required_source_evidence(&self, expected: &Self) -> bool {
+        self.parameter() == expected.parameter()
+            && self.point() == expected.point()
+            && self.tangent() == expected.tangent()
+            && self
+                .second_derivative()
+                .is_none_or(|derivative| Some(derivative) == expected.second_derivative())
+            && self
+                .third_derivative()
+                .is_none_or(|derivative| Some(derivative) == expected.third_derivative())
     }
 }
 

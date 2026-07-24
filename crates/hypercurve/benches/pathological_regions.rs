@@ -130,6 +130,8 @@ fn benchmark_booleans(dataset: &NativeDataset) {
     let mut first_blocker = None;
     let mut preparation_elapsed = Duration::ZERO;
     let mut operation_elapsed = [Duration::ZERO; 4];
+    let mut topology_fragment_count = 0_usize;
+    let mut topology_point_classification_count = 0_usize;
 
     for cell in &dataset.cells {
         let preparation_started = Instant::now();
@@ -161,6 +163,12 @@ fn benchmark_booleans(dataset: &NativeDataset) {
                     }
                     operation_elapsed[operation_index] += operation_started.elapsed();
                 }
+                topology_fragment_count += prepared
+                    .boolean_topology_fragment_count()
+                    .unwrap_or_default();
+                topology_point_classification_count += prepared
+                    .boolean_topology_point_classification_count()
+                    .unwrap_or_default();
             }
             Err(error) => {
                 blocked_count += 4;
@@ -170,11 +178,13 @@ fn benchmark_booleans(dataset: &NativeDataset) {
     }
 
     println!(
-        "pathological/{}/boolean_all_ops: cells={} prepared={} candidate_pairs={} decided={} blocked={} first_blocker={first_blocker:?} checksum={} preparation={preparation_elapsed:?} operations={operation_elapsed:?} elapsed={:?}",
+        "pathological/{}/boolean_all_ops: cells={} prepared={} candidate_pairs={} fragments={} point_classifications={} decided={} blocked={} first_blocker={first_blocker:?} checksum={} preparation={preparation_elapsed:?} operations={operation_elapsed:?} elapsed={:?}",
         dataset.tier.name(),
         dataset.cells.len(),
         prepared_count,
         candidate_pair_count,
+        topology_fragment_count,
+        topology_point_classification_count,
         decided_count,
         blocked_count,
         black_box(boundary_checksum),

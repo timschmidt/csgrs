@@ -223,6 +223,48 @@ pub fn compare_algebraic_tangent_turn_from_base(
     second: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
 ) -> Classification<BezierAlgebraicTangentOrderEvidence> {
+    compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, true)
+}
+
+pub(crate) fn compare_algebraic_tangent_turn_from_base_sign_only(
+    base: &BezierAlgebraicTangentVector2,
+    first: &BezierAlgebraicTangentVector2,
+    second: &BezierAlgebraicTangentVector2,
+    policy: &CurvePolicy,
+) -> Classification<BezierAlgebraicTangentOrderEvidence> {
+    compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, false)
+}
+
+pub(crate) fn algebraic_endpoint_tangents_are_transverse(
+    first: &BezierEndpointTangentImage2,
+    second: &BezierEndpointTangentImage2,
+    policy: &CurvePolicy,
+) -> Classification<bool> {
+    let first = BezierAlgebraicTangentVector2::from_endpoint_image(first);
+    let second = BezierAlgebraicTangentVector2::from_endpoint_image(second);
+    let (Some(first), Some(second)) = (first.vector, second.vector) else {
+        return Classification::Uncertain(crate::UncertaintyReason::Boundary);
+    };
+    let cross = cross_sign(&first, &second, policy, false);
+    match sign_status(&cross) {
+        ScalarSignStatus::Positive | ScalarSignStatus::Negative => Classification::Decided(true),
+        ScalarSignStatus::Zero => Classification::Decided(false),
+        ScalarSignStatus::Undecided => {
+            Classification::Uncertain(crate::UncertaintyReason::RealSign)
+        }
+        ScalarSignStatus::ArithmeticFailed => {
+            Classification::Uncertain(crate::UncertaintyReason::Unsupported)
+        }
+    }
+}
+
+fn compare_algebraic_tangent_turn_from_base_impl(
+    base: &BezierAlgebraicTangentVector2,
+    first: &BezierAlgebraicTangentVector2,
+    second: &BezierAlgebraicTangentVector2,
+    policy: &CurvePolicy,
+    retain_scalar: bool,
+) -> Classification<BezierAlgebraicTangentOrderEvidence> {
     for tangent in [base, first, second] {
         match tangent_nonzero(tangent, policy) {
             AlgebraicTangentNonzero::Nonzero => {}
@@ -259,7 +301,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
         }
     }
 
-    let (first_half, base_first_cross) = match turn_half(base, first, policy) {
+    let (first_half, base_first_cross) = match turn_half(base, first, policy, retain_scalar) {
         AlgebraicHalfTurn::Half(half, cross) => (half, cross),
         AlgebraicHalfTurn::ZeroTangent(cross, dot) => {
             return Classification::Decided(order_evidence(
@@ -292,7 +334,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
             ));
         }
     };
-    let (second_half, base_second_cross) = match turn_half(base, second, policy) {
+    let (second_half, base_second_cross) = match turn_half(base, second, policy, retain_scalar) {
         AlgebraicHalfTurn::Half(half, cross) => (half, cross),
         AlgebraicHalfTurn::ZeroTangent(cross, dot) => {
             return Classification::Decided(order_evidence(
@@ -341,7 +383,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
         ));
     }
 
-    let first_second_cross = cross_sign(first, second, policy);
+    let first_second_cross = cross_sign(first, second, policy, retain_scalar);
     match sign_status(&first_second_cross) {
         ScalarSignStatus::Positive => Classification::Decided(order_evidence(
             BezierAlgebraicTangentOrderStatus::Ordered,
@@ -440,8 +482,8 @@ pub fn compare_algebraic_same_tangent_second_order(
         }
     }
 
-    let first_cross = cross_sign(first_tangent, first_second_derivative, policy);
-    let second_cross = cross_sign(second_tangent, second_second_derivative, policy);
+    let first_cross = cross_sign(first_tangent, first_second_derivative, policy, true);
+    let second_cross = cross_sign(second_tangent, second_second_derivative, policy, true);
     match (sign_status(&first_cross), sign_status(&second_cross)) {
         (ScalarSignStatus::ArithmeticFailed, _) | (_, ScalarSignStatus::ArithmeticFailed) => {
             Classification::Decided(same_tangent_evidence(
@@ -569,8 +611,8 @@ pub fn compare_algebraic_same_tangent_third_order(
         }
     }
 
-    let first_cross = cross_sign(first_tangent, first_third_derivative, policy);
-    let second_cross = cross_sign(second_tangent, second_third_derivative, policy);
+    let first_cross = cross_sign(first_tangent, first_third_derivative, policy, true);
+    let second_cross = cross_sign(second_tangent, second_third_derivative, policy, true);
     match (sign_status(&first_cross), sign_status(&second_cross)) {
         (ScalarSignStatus::ArithmeticFailed, _) | (_, ScalarSignStatus::ArithmeticFailed) => {
             Classification::Decided(same_tangent_evidence(
@@ -673,6 +715,11 @@ fn tangent_nonzero(
     tangent: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
 ) -> AlgebraicTangentNonzero {
+    if [tangent.dx(), tangent.dy()].into_iter().any(|coordinate| {
+        representation_sign(coordinate, policy).is_some_and(|sign| sign != Ordering::Equal)
+    }) {
+        return AlgebraicTangentNonzero::Nonzero;
+    }
     let norm = norm_squared_sign(tangent, policy);
     match sign_status(&norm) {
         ScalarSignStatus::Positive => AlgebraicTangentNonzero::Nonzero,
@@ -688,13 +735,14 @@ fn turn_half(
     base: &BezierAlgebraicTangentVector2,
     candidate: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
+    retain_scalar: bool,
 ) -> AlgebraicHalfTurn {
-    let cross = cross_sign(base, candidate, policy);
+    let cross = cross_sign(base, candidate, policy, retain_scalar);
     match sign_status(&cross) {
         ScalarSignStatus::Positive => AlgebraicHalfTurn::Half(0, cross),
         ScalarSignStatus::Negative => AlgebraicHalfTurn::Half(1, cross),
         ScalarSignStatus::Zero => {
-            let dot = dot_sign(base, candidate, policy);
+            let dot = dot_sign(base, candidate, policy, retain_scalar);
             match sign_status(&dot) {
                 ScalarSignStatus::Positive => AlgebraicHalfTurn::Half(0, cross),
                 ScalarSignStatus::Negative => AlgebraicHalfTurn::Half(1, cross),
@@ -714,7 +762,17 @@ fn cross_sign(
     left: &BezierAlgebraicTangentVector2,
     right: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
+    retain_scalar: bool,
 ) -> BezierAlgebraicScalarSignEvidence {
+    if !retain_scalar
+        && let Some(sign) =
+            interval_bilinear_sign(left.dx(), right.dy(), left.dy(), right.dx(), false, policy)
+    {
+        return interval_scalar_sign_evidence(
+            sign,
+            "cross-product sign certified from rational root enclosures",
+        );
+    }
     let left_x_right_y = multiply(left.dx(), right.dy());
     let left_y_right_x = multiply(left.dy(), right.dx());
     let scalar = subtract(
@@ -739,7 +797,17 @@ fn dot_sign(
     left: &BezierAlgebraicTangentVector2,
     right: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
+    retain_scalar: bool,
 ) -> BezierAlgebraicScalarSignEvidence {
+    if !retain_scalar
+        && let Some(sign) =
+            interval_bilinear_sign(left.dx(), right.dx(), left.dy(), right.dy(), true, policy)
+    {
+        return interval_scalar_sign_evidence(
+            sign,
+            "dot-product sign certified from rational root enclosures",
+        );
+    }
     let left_x_right_x = multiply(left.dx(), right.dx());
     let left_y_right_y = multiply(left.dy(), right.dy());
     let scalar = add(
@@ -788,6 +856,32 @@ fn norm_squared_sign(
         }
     }
     evidence
+}
+
+fn interval_scalar_sign_evidence(
+    sign: Ordering,
+    message: &'static str,
+) -> BezierAlgebraicScalarSignEvidence {
+    BezierAlgebraicScalarSignEvidence {
+        arithmetic: Vec::new(),
+        scalar: None,
+        sign: Some(sign),
+        message: Some(message.to_owned()),
+    }
+}
+
+fn representation_sign(
+    representation: &AlgebraicRootRepresentation,
+    policy: &CurvePolicy,
+) -> Option<Ordering> {
+    if !representation.is_valid() {
+        return None;
+    }
+    interval_sign(
+        &representation.interval.lower,
+        &representation.interval.upper,
+        policy,
+    )
 }
 
 fn interval_bilinear_sign(
