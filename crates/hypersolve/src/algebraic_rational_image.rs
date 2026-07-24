@@ -124,8 +124,17 @@ pub struct PreparedAlgebraicRootRationalImage<'a> {
 
 #[derive(Clone, Copy, Default)]
 struct RationalImageRetention<'a> {
+    direct_map: Option<&'a OnceLock<Option<PreparedDirectRationalMap>>>,
     source_polynomial: Option<&'a OnceLock<Option<Vec<Real>>>>,
     resultant_polynomial: Option<&'a OnceLock<Option<Vec<Real>>>>,
+}
+
+struct PreparedDirectRationalMap {
+    numerator: Vec<Real>,
+    denominator: Vec<Real>,
+    constant_value: Option<Real>,
+    derivative_numerator: OnceLock<Option<Vec<Real>>>,
+    cleared_coefficients: OnceLock<Option<(Vec<Real>, Vec<Real>)>>,
 }
 
 impl<'a> PreparedAlgebraicRootRationalImage<'a> {
@@ -183,6 +192,7 @@ pub struct PreparedAlgebraicRootRationalMap {
     source_polynomial_coefficients: Vec<Real>,
     numerator_coefficients: Vec<Real>,
     denominator_coefficients: Vec<Real>,
+    direct_map: OnceLock<Option<PreparedDirectRationalMap>>,
     source_polynomial: OnceLock<Option<Vec<Real>>>,
     resultant_polynomial: OnceLock<Option<Vec<Real>>>,
     policy: PredicatePolicy,
@@ -200,6 +210,7 @@ impl PreparedAlgebraicRootRationalMap {
             source_polynomial_coefficients: source_polynomial_coefficients.to_vec(),
             numerator_coefficients: numerator_coefficients.to_vec(),
             denominator_coefficients: denominator_coefficients.to_vec(),
+            direct_map: OnceLock::new(),
             source_polynomial: OnceLock::new(),
             resultant_polynomial: OnceLock::new(),
             policy,
@@ -256,6 +267,7 @@ impl PreparedAlgebraicRootRationalMap {
             self.policy,
             evaluation,
             RationalImageRetention {
+                direct_map: Some(&self.direct_map),
                 source_polynomial: Some(&self.source_polynomial),
                 resultant_polynomial: Some(&self.resultant_polynomial),
             },
@@ -628,17 +640,33 @@ fn direct_rational_image_representation(
     if !has_exact_coefficients(&root.polynomial_coefficients) {
         return None;
     }
-    let numerator = trim_real_polynomial(numerator_coefficients.to_vec(), policy)?;
-    let denominator = trim_real_polynomial(denominator_coefficients.to_vec(), policy)?;
-    if !has_exact_coefficients(&numerator) || !has_exact_coefficients(&denominator) {
-        return None;
+    let owned_direct_map;
+    let direct_map = if let Some(retained) = retention.direct_map {
+        retained
+            .get_or_init(|| {
+                prepare_direct_rational_map(
+                    numerator_coefficients,
+                    denominator_coefficients,
+                    policy,
+                )
+            })
+            .as_ref()?
+    } else {
+        owned_direct_map =
+            prepare_direct_rational_map(numerator_coefficients, denominator_coefficients, policy)?;
+        &owned_direct_map
+    };
+    if let Some(value) = &direct_map.constant_value {
+        return Some(exact_constant_representation(root, value.clone(), policy));
     }
-    if let Some(value) = constant_rational_map_value(&numerator, &denominator, policy) {
-        return Some(exact_constant_representation(root, value, policy));
-    }
-    let derivative_numerator = rational_derivative_numerator(&numerator, &denominator, policy)?;
+    let derivative_numerator = direct_map
+        .derivative_numerator
+        .get_or_init(|| {
+            rational_derivative_numerator(&direct_map.numerator, &direct_map.denominator, policy)
+        })
+        .as_ref()?;
     let derivative_interval = evaluate_interval_polynomial(
-        &derivative_numerator,
+        derivative_numerator,
         &ValueInterval {
             lower: root.interval.lower.clone(),
             upper: root.interval.upper.clone(),
@@ -649,13 +677,21 @@ fn direct_rational_image_representation(
         return None;
     }
 
-    if numerator.len() <= 2 && denominator.len() <= 2 {
+    if direct_map.numerator.len() <= 2 && direct_map.denominator.len() <= 2 {
         let mobius = transform_algebraic_root_mobius(
             root,
-            numerator.get(1).cloned().unwrap_or_else(Real::zero),
-            numerator[0].clone(),
-            denominator.get(1).cloned().unwrap_or_else(Real::zero),
-            denominator[0].clone(),
+            direct_map
+                .numerator
+                .get(1)
+                .cloned()
+                .unwrap_or_else(Real::zero),
+            direct_map.numerator[0].clone(),
+            direct_map
+                .denominator
+                .get(1)
+                .cloned()
+                .unwrap_or_else(Real::zero),
+            direct_map.denominator[0].clone(),
             policy,
         );
         if mobius.status == AlgebraicRootMobiusTransformStatus::Transformed
@@ -671,7 +707,11 @@ fn direct_rational_image_representation(
     }
 
     let source_degree = root.polynomial_coefficients.len().checked_sub(1)?;
-    let rational_degree = numerator.len().max(denominator.len()).checked_sub(1)?;
+    let rational_degree = direct_map
+        .numerator
+        .len()
+        .max(direct_map.denominator.len())
+        .checked_sub(1)?;
     if source_degree + rational_degree.max(1) > MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION {
         return None;
     }
@@ -684,15 +724,19 @@ fn direct_rational_image_representation(
         owned_source_polynomial = primitive_integer_polynomial(&root.polynomial_coefficients)?;
         &owned_source_polynomial
     };
-    let (resultant_numerator, resultant_denominator) =
-        clear_rational_map_denominators(&numerator, &denominator)?;
+    let (resultant_numerator, resultant_denominator) = direct_map
+        .cleared_coefficients
+        .get_or_init(|| {
+            clear_rational_map_denominators(&direct_map.numerator, &direct_map.denominator)
+        })
+        .as_ref()?;
     let polynomial_coefficients = if let Some(retained) = retention.resultant_polynomial {
         retained
             .get_or_init(|| {
                 resultant_polynomial_for_rational_image(
                     source_polynomial,
-                    &resultant_numerator,
-                    &resultant_denominator,
+                    resultant_numerator,
+                    resultant_denominator,
                     source_degree,
                     policy,
                 )
@@ -701,13 +745,18 @@ fn direct_rational_image_representation(
     } else {
         resultant_polynomial_for_rational_image(
             source_polynomial,
-            &resultant_numerator,
-            &resultant_denominator,
+            resultant_numerator,
+            resultant_denominator,
             source_degree,
             policy,
         )?
     };
-    let interval = rational_image_interval(&root.interval, &numerator, &denominator, policy)?;
+    let interval = rational_image_interval(
+        &root.interval,
+        &direct_map.numerator,
+        &direct_map.denominator,
+        policy,
+    )?;
     let mut representation = AlgebraicRootRepresentation {
         constraint_index: root.constraint_index,
         symbol: root.symbol,
@@ -725,6 +774,26 @@ fn direct_rational_image_representation(
     }
     representation.validation = validate_algebraic_root_representation(&representation, policy);
     Some(representation)
+}
+
+fn prepare_direct_rational_map(
+    numerator_coefficients: &[Real],
+    denominator_coefficients: &[Real],
+    policy: PredicatePolicy,
+) -> Option<PreparedDirectRationalMap> {
+    let numerator = trim_real_polynomial(numerator_coefficients.to_vec(), policy)?;
+    let denominator = trim_real_polynomial(denominator_coefficients.to_vec(), policy)?;
+    if !has_exact_coefficients(&numerator) || !has_exact_coefficients(&denominator) {
+        return None;
+    }
+    let constant_value = constant_rational_map_value(&numerator, &denominator, policy);
+    Some(PreparedDirectRationalMap {
+        numerator,
+        denominator,
+        constant_value,
+        derivative_numerator: OnceLock::new(),
+        cleared_coefficients: OnceLock::new(),
+    })
 }
 
 fn clear_rational_map_denominators(
@@ -1179,6 +1248,7 @@ mod tests {
             PredicatePolicy,
         );
         assert!(!map.is_resultant_cached());
+        assert!(map.direct_map.get().is_none());
 
         for root in [&positive, &negative] {
             assert_eq!(
@@ -1191,7 +1261,47 @@ mod tests {
                 )
             );
             assert!(map.is_resultant_cached());
+            let prepared = map
+                .direct_map
+                .get()
+                .and_then(Option::as_ref)
+                .expect("direct map is retained after a transformed root");
+            assert!(prepared.derivative_numerator.get().is_some());
+            assert!(prepared.cleared_coefficients.get().is_some());
         }
+    }
+
+    #[test]
+    fn prepared_rational_map_falls_back_for_a_distinct_source_polynomial() {
+        let mut scaled = sqrt_two_positive();
+        scaled.polynomial_coefficients = scaled
+            .polynomial_coefficients
+            .iter()
+            .cloned()
+            .map(|value| value * real(2))
+            .collect();
+        scaled.validation = validate_algebraic_root_representation(&scaled, PredicatePolicy);
+        assert!(scaled.is_valid());
+        let numerator = [Real::zero(), Real::one(), Real::one()];
+        let denominator = [Real::one()];
+        let map = PreparedAlgebraicRootRationalMap::new(
+            &sqrt_two_positive().polynomial_coefficients,
+            &numerator,
+            &denominator,
+            PredicatePolicy,
+        );
+
+        assert_eq!(
+            map.transform(&scaled),
+            transform_algebraic_root_rational_image(
+                &scaled,
+                &numerator,
+                &denominator,
+                PredicatePolicy,
+            )
+        );
+        assert!(map.direct_map.get().is_none());
+        assert!(!map.is_resultant_cached());
     }
 
     #[test]

@@ -460,6 +460,40 @@ The requested AddressSanitizer region-Boolean replay completed with libFuzzer
 reporting 2,510 executions at 5,900 coverage points and 19,164 feature edges
 with no finding; LeakSanitizer remained disabled under ptrace.
 
+### Retained rational-map algebra
+
+Prepared cross-root maps initially retained only the final source resultant.
+Every represented root still trimmed and classified the same numerator and
+denominator, reconstructed the quotient-rule derivative polynomial, and
+cleared the same coefficient denominators before consulting that resultant.
+Those values depend only on the prepared map and its fixed predicate policy.
+
+The prepared carrier now retains normalized coefficients and constant-map
+classification when first needed. Derivative construction and common integer
+scaling each remain separately lazy, so disjoint target rejection, invalid
+source evidence, constant maps, and nonmonotone maps preserve their former
+short-circuit boundaries. Source-root interval evaluation, derivative interval
+evaluation, image bounds, root selection, and validation remain per call.
+Regressions compare complete reports across two roots, inspect each retained
+stage, and prove that a different but valid source polynomial takes the
+independent path without populating the caches.
+
+On the downstream one-cell all-family exact Boolean sentinel, the rounded
+ten-run instruction median fell from 32,120,772 to 32,005,223 (0.36%), 90.02%
+below the original 320,660,631 baseline. Heaptrack allocation events fell from
+46,054 to 45,821; recorder-level temporary events fell from 2,714 to 2,702 and
+the postprocessor count fell from 2,962 to 2,950. Peak heap remained 1.13 MiB
+and peak RSS fell from 11.25 to 11.15 MiB. Every measured run retained 9
+candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete Hypersolve and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and supported default/no-default release WASM library builds passed.
+The AddressSanitizer region-Boolean replay completed all 2,509 requested
+executions at 5,900 coverage points and 19,225 feature edges with no finding;
+LeakSanitizer remained disabled under ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
