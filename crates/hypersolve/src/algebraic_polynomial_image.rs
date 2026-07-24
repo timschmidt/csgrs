@@ -318,7 +318,6 @@ fn resultant_polynomial_for_image(
             *coefficient = -coefficient.clone();
         }
     }
-    let polynomial = primitive_integer_polynomial(&polynomial)?;
     trim_real_polynomial(polynomial, policy)
 }
 

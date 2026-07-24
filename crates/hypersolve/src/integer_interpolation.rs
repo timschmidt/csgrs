@@ -1,4 +1,5 @@
 use hyperreal::{Rational, Real};
+use num::{BigInt, Integer, One, Zero};
 
 pub(crate) fn primitive_integer_polynomial(polynomial: &[Real]) -> Option<Vec<Real>> {
     let rationals = polynomial
@@ -19,20 +20,16 @@ pub(crate) fn interpolate_integer_samples_up_to_scale(samples: &[Real]) -> Optio
     }
     let mut differences = samples
         .iter()
-        .map(|sample| {
-            sample
-                .exact_rational_ref()
-                .filter(|sample| sample.is_integer())
-                .cloned()
-        })
+        .map(|sample| sample.exact_rational_ref()?.to_big_integer())
         .collect::<Option<Vec<_>>>()?;
     let mut forward_differences = Vec::with_capacity(samples.len());
     while !differences.is_empty() {
         forward_differences.push(differences[0].clone());
-        differences = differences
-            .windows(2)
-            .map(|pair| &pair[1] - &pair[0])
-            .collect();
+        for index in 0..differences.len().saturating_sub(1) {
+            let (prefix, suffix) = differences.split_at_mut(index + 1);
+            prefix[index] = &suffix[0] - &prefix[index];
+        }
+        differences.pop();
     }
 
     // Newton interpolation is
@@ -40,27 +37,46 @@ pub(crate) fn interpolate_integer_samples_up_to_scale(samples: &[Real]) -> Optio
     // A defining polynomial is invariant under one nonzero scale, so build
     // n! * p(x) using integers throughout and remove its common content once.
     let degree = samples.len() - 1;
-    let mut result = vec![Rational::zero(); samples.len()];
-    let mut falling_factorial = vec![Rational::one()];
+    let mut result = vec![BigInt::zero(); samples.len()];
+    let mut falling_factorial = vec![BigInt::one()];
+    let mut factorial_scale = (1..=degree).map(BigInt::from).product::<BigInt>();
     for (order, difference) in forward_differences.into_iter().enumerate() {
-        let factorial_scale = ((order + 1)..=degree).try_fold(1_i64, |scale, factor| {
-            scale.checked_mul(i64::try_from(factor).ok()?)
-        })?;
-        let scale = difference * Rational::new(factorial_scale);
+        let scale = difference * &factorial_scale;
         for (coefficient, basis) in result.iter_mut().zip(&falling_factorial) {
-            *coefficient = &*coefficient + &(basis * &scale);
+            *coefficient += basis * &scale;
         }
         if order < degree {
-            let mut next = vec![Rational::zero(); falling_factorial.len() + 1];
-            let constant = Rational::new(-i64::try_from(order).ok()?);
-            for (power, coefficient) in falling_factorial.iter().enumerate() {
-                next[power] = &next[power] + &(coefficient * &constant);
-                next[power + 1] = &next[power + 1] + coefficient;
+            let order = BigInt::from(order);
+            let old_len = falling_factorial.len();
+            falling_factorial.push(BigInt::zero());
+            for power in (1..=old_len).rev() {
+                falling_factorial[power] =
+                    &falling_factorial[power - 1] - &order * &falling_factorial[power];
             }
-            falling_factorial = next;
+            falling_factorial[0] *= -&order;
+            factorial_scale /= BigInt::from(old_len);
         }
     }
-    Some(result.into_iter().map(Real::from).collect())
+    let content = result
+        .iter()
+        .filter(|coefficient| !coefficient.is_zero())
+        .fold(BigInt::zero(), |content, coefficient| {
+            content.gcd(coefficient)
+        });
+    if !content.is_zero() && !content.is_one() {
+        for coefficient in &mut result {
+            if !coefficient.is_zero() {
+                *coefficient /= &content;
+            }
+        }
+    }
+    Some(
+        result
+            .into_iter()
+            .map(Rational::from_bigint)
+            .map(Real::from)
+            .collect(),
+    )
 }
 
 #[cfg(test)]
@@ -75,16 +91,23 @@ mod tests {
     fn scaled_integer_interpolation_preserves_primitive_power_basis() {
         let samples = [real(5), real(4), real(15), real(50)];
         let scaled = interpolate_integer_samples_up_to_scale(&samples).unwrap();
-        assert_eq!(
-            primitive_integer_polynomial(&scaled).unwrap(),
-            vec![real(5), real(-3), Real::zero(), real(2)]
-        );
+        assert_eq!(scaled, vec![real(5), real(-3), Real::zero(), real(2)]);
 
         let integer_valued_samples = [Real::zero(), Real::zero(), Real::one()];
         let scaled = interpolate_integer_samples_up_to_scale(&integer_valued_samples).unwrap();
-        assert_eq!(
-            primitive_integer_polynomial(&scaled).unwrap(),
-            vec![Real::zero(), real(-1), Real::one()]
+        assert_eq!(scaled, vec![Real::zero(), real(-1), Real::one()]);
+    }
+
+    #[test]
+    fn scaled_integer_interpolation_supports_factorials_beyond_i64() {
+        let samples = vec![Real::one(); 23];
+        let scaled = interpolate_integer_samples_up_to_scale(&samples).unwrap();
+
+        assert_eq!(scaled[0], Real::one());
+        assert!(
+            scaled[1..]
+                .iter()
+                .all(|coefficient| coefficient == &Real::zero())
         );
     }
 

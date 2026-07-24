@@ -359,6 +359,39 @@ WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 executions at 5,892 coverage points and 19,170 feature
 edges with no finding; LeakSanitizer alone remained disabled under ptrace.
 
+Quotient-ring resultant construction now crosses into `BigInt` once, before
+pseudo-reduction, sampling, and Bareiss elimination. The two multiplication
+matrices and one sampled determinant buffer are reused directly; each quotient
+column also moves its reduced coefficients out of one reusable product buffer.
+This removes per-sample rational wrappers and vectors while retaining exact
+Bareiss divisibility checks and the Sylvester-resultant fallback boundary.
+
+Integer Newton interpolation likewise keeps forward differences, falling
+factorials, factorial scaling, coefficient accumulation, and final content
+removal in `BigInt`. Differences are updated in place, the falling-factorial
+basis grows in place, and callers no longer repeat primitive rational
+normalization. Arbitrary-size factorial scaling also removes the former `i64`
+degree ceiling; a degree-22 constant interpolation regression exercises that
+expanded exact range. Fixed and generated Bareiss, quotient/Sylvester,
+polynomial-image, rational-image, and binary algebraic-image tests cover the
+complete path.
+
+On the downstream one-cell all-family exact Boolean sentinel, the ten-run
+instruction median fell from 61,647,633 to 57,499,110 (6.73%), 82.07% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+98,024 to 87,084; temporary events rose from 6,461 to 7,847 because direct
+integer products are released promptly, peak heap remained 1.41 MiB, and peak
+RSS measured 12.51 MiB.
+
+Eleven ordinary runs had a 5.736 ms complete median, a 3.794 ms preparation
+median, and a 0.331 ms exact-polyline projection median, with unchanged
+topology and checksum. The complete Hypersolve and downstream Hypercurve
+all-feature and no-default-feature suites, formatting, warning-denied
+all-target Clippy and rustdoc, and supported default and no-default release
+WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 executions at 5,899 coverage points and 19,166 feature
+edges with no finding; LeakSanitizer alone remained disabled under ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate

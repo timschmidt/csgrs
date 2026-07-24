@@ -278,7 +278,7 @@ fn resultant_polynomial_for_binary_image(
         samples.push(resultant);
     }
     let polynomial = interpolate_integer_samples_up_to_scale(&samples)?;
-    trim_real_polynomial(primitive_integer_polynomial(&polynomial)?, policy)
+    trim_real_polynomial(polynomial, policy)
 }
 
 fn binary_image_interval(

@@ -9,6 +9,7 @@
 //! constructions remain exact and report uncertain pivot decisions.
 
 use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
+use num::{BigInt, Integer, One, Zero};
 
 use crate::bareiss::{BareissDeterminantReport, BareissError, determinant_bareiss};
 
@@ -248,38 +249,39 @@ pub(crate) fn quotient_ring_resultant_samples(
     }
 
     let mut samples = Vec::with_capacity(degree + 1);
+    let mut matrix = vec![BigInt::zero(); matrix_entries];
     for sample in 0..=degree {
         let image_value = i64::try_from(sample).ok()?;
-        let matrix = numerator_entries
-            .iter()
+        for ((entry, numerator), denominator) in matrix
+            .iter_mut()
+            .zip(&numerator_entries)
             .zip(&denominator_entries)
-            .map(|(numerator, denominator)| {
-                numerator.checked_exact_integer_scaled_difference(denominator, image_value)
-            })
-            .collect::<Option<Vec<_>>>()?;
-        samples.push(Real::from(determinant_integer_bareiss_flat(
-            matrix, degree,
-        )?));
+        {
+            entry.clone_from(numerator);
+            if image_value != 0 {
+                *entry -= denominator * image_value;
+            }
+        }
+        samples.push(Real::from(Rational::from_bigint(
+            determinant_integer_bareiss_flat(&mut matrix, degree)?,
+        )));
     }
     Some(samples)
 }
 
-fn determinant_integer_bareiss_flat(
-    mut matrix: Vec<Rational>,
-    dimension: usize,
-) -> Option<Rational> {
+fn determinant_integer_bareiss_flat(matrix: &mut [BigInt], dimension: usize) -> Option<BigInt> {
     if matrix.len() != dimension.checked_mul(dimension)? {
         return None;
     }
     if dimension == 0 {
-        return Some(Rational::one());
+        return Some(BigInt::one());
     }
     let mut swaps = 0;
-    let mut previous_pivot = Rational::one();
+    let mut previous_pivot = BigInt::one();
     for pivot in 0..dimension.saturating_sub(1) {
         let pivot_row = (pivot..dimension).find(|row| !matrix[row * dimension + pivot].is_zero());
         let Some(pivot_row) = pivot_row else {
-            return Some(Rational::zero());
+            return Some(BigInt::zero());
         };
         if pivot_row != pivot {
             for column in 0..dimension {
@@ -292,17 +294,19 @@ fn determinant_integer_bareiss_flat(
         for row in (pivot + 1)..dimension {
             let eliminand = matrix[row * dimension + pivot].clone();
             for column in (pivot + 1)..dimension {
-                let value = matrix[row * dimension + column].clone();
-                let pivot_row_value = &matrix[pivot * dimension + column];
-                matrix[row * dimension + column] = pivot_value
-                    .checked_exact_integer_cross_difference_quotient(
-                        &value,
-                        &eliminand,
-                        pivot_row_value,
-                        &previous_pivot,
-                    )?;
+                let mut numerator = &pivot_value * &matrix[row * dimension + column];
+                numerator -= &eliminand * &matrix[pivot * dimension + column];
+                matrix[row * dimension + column] = if previous_pivot.is_one() {
+                    numerator
+                } else {
+                    let (quotient, remainder) = numerator.div_rem(&previous_pivot);
+                    if !remainder.is_zero() {
+                        return None;
+                    }
+                    quotient
+                };
             }
-            matrix[row * dimension + pivot] = Rational::zero();
+            matrix[row * dimension + pivot] = BigInt::zero();
         }
         previous_pivot = pivot_value;
     }
@@ -319,57 +323,44 @@ fn pseudo_quotient_multiplication_matrix(
     source: &[Real],
     relation: &[Real],
     relation_degree: usize,
-) -> Option<Vec<Rational>> {
+) -> Option<Vec<BigInt>> {
     let degree = source.len().checked_sub(1)?;
     let source = source
         .iter()
-        .map(Real::exact_rational_ref)
+        .map(|value| value.exact_rational_ref()?.to_big_integer())
         .collect::<Option<Vec<_>>>()?;
     let relation = relation
         .iter()
-        .map(Real::exact_rational_ref)
+        .map(|value| value.exact_rational_ref()?.to_big_integer())
         .collect::<Option<Vec<_>>>()?;
-    if source
-        .iter()
-        .chain(&relation)
-        .any(|value| !value.is_integer())
-    {
-        return None;
-    }
     let leading = source.last()?;
     if leading.is_zero() {
         return None;
     }
 
     let product_len = degree.checked_add(relation_degree)?;
-    let mut matrix = vec![Rational::zero(); degree.checked_mul(degree)?];
-    let one = Rational::one();
+    let mut matrix = vec![BigInt::zero(); degree.checked_mul(degree)?];
+    let mut product = vec![BigInt::zero(); product_len];
     for column in 0..degree {
-        let mut product = vec![Rational::zero(); product_len];
         for (power, coefficient) in relation.iter().enumerate() {
-            product[column + power] = (*coefficient).clone();
+            product[column + power] = coefficient.clone();
         }
         for power in (degree..product_len).rev() {
             let eliminand = product[power].clone();
             let shift = power - degree;
             if !leading.is_one() {
                 for coefficient in &mut product[..shift] {
-                    *coefficient = &*coefficient * *leading;
+                    *coefficient *= leading;
                 }
             }
             for (source_power, coefficient) in source[..degree].iter().enumerate() {
                 let index = shift + source_power;
-                product[index] = leading.checked_exact_integer_cross_difference_quotient(
-                    &product[index],
-                    coefficient,
-                    &eliminand,
-                    &one,
-                )?;
+                product[index] = leading * &product[index] - coefficient * &eliminand;
             }
-            product[power] = Rational::zero();
+            product[power] = BigInt::zero();
         }
         for row in 0..degree {
-            matrix[row * degree + column] = product[row].clone();
+            matrix[row * degree + column] = std::mem::take(&mut product[row]);
         }
     }
     Some(matrix)
@@ -804,10 +795,10 @@ mod tests {
             (3, vec![2, -1, 3, 4, 0, 1, -2, 5, 2]),
         ];
         for (dimension, entries) in cases {
-            let flat = entries
+            let mut flat = entries
                 .iter()
                 .copied()
-                .map(Rational::new)
+                .map(BigInt::from)
                 .collect::<Vec<_>>();
             let matrix = entries
                 .chunks(dimension.max(1))
@@ -816,14 +807,14 @@ mod tests {
             let expected = determinant_bareiss(&matrix, -64).unwrap().determinant;
 
             assert_eq!(
-                determinant_integer_bareiss_flat(flat, dimension).map(Real::from),
+                determinant_integer_bareiss_flat(&mut flat, dimension)
+                    .map(Rational::from_bigint)
+                    .map(Real::from),
                 Some(expected)
             );
         }
-        assert_eq!(
-            determinant_integer_bareiss_flat(vec![Rational::one()], 2),
-            None
-        );
+        let mut wrong_size = vec![BigInt::one()];
+        assert_eq!(determinant_integer_bareiss_flat(&mut wrong_size, 2), None);
     }
 
     #[test]
@@ -931,10 +922,10 @@ mod tests {
         fn generated_flat_integer_bareiss_matches_reported_four_by_four(
             entries in prop::collection::vec(-8_i16..=8, 16),
         ) {
-            let flat = entries
+            let mut flat = entries
                 .iter()
                 .copied()
-                .map(|value| Rational::new(i64::from(value)))
+                .map(|value| BigInt::from(i64::from(value)))
                 .collect::<Vec<_>>();
             let matrix = entries
                 .chunks_exact(4)
@@ -948,7 +939,9 @@ mod tests {
             let expected = determinant_bareiss(&matrix, -64).unwrap().determinant;
 
             prop_assert_eq!(
-                determinant_integer_bareiss_flat(flat, 4).map(Real::from),
+                determinant_integer_bareiss_flat(&mut flat, 4)
+                    .map(Rational::from_bigint)
+                    .map(Real::from),
                 Some(expected)
             );
         }
