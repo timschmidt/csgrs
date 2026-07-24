@@ -3442,6 +3442,44 @@ WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 executions at 5,892 coverage points and 19,170 feature
 edges with no finding; LeakSanitizer alone remained disabled under ptrace.
 
+### Primitive integer Sturm pseudo-remainders
+
+Rational GCD and Sturm construction now clear each coefficient ratio directly
+to primitive `BigInt` values and use division-free pseudo-remainders. Each
+elimination step cancels its leading term in place. Because a negative divisor
+leading coefficient contributes one sign per step, the kernel corrects that
+parity before removing positive integer content; every retained Sturm member
+is therefore a positive multiple of the ordinary field remainder and has the
+same sign variations. The existing field-remainder kernel remains in place
+for value-preserving power-basis reduction and for any symbolic coefficient.
+
+Exact-rational polynomial evaluation now feeds Horner's two terms through
+Hyperreal's retained fixed product-sum accumulator. A direct regression
+compares the primitive result with field division for fractional inputs,
+negative leading coefficients, both step parities, and an exact zero
+remainder. The fixed and generated GCD, Sturm, root-count, root-isolation,
+algebraic-parameter, and downstream Boolean suites cover the complete
+dispatch.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 64,678,125 to 61,647,633 (4.7%), 80.8% below the original
+320,660,631 baseline. Root isolation's inclusive profile fell from about
+4.52 million to 2.22 million instructions. Heaptrack allocation events rose
+from 96,817 to 98,024 and temporary events from 6,165 to 6,461, while peak
+heap fell from 1.49 to 1.41 MiB; peak RSS measured 12.45 MiB.
+
+Eleven ordinary runs had a 6.229 ms complete median, a 4.193 ms preparation
+median, and a 0.332 ms exact-polyline projection median. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete Hyperreal, Hypersolve, and Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy,
+all-feature and no-default-feature rustdoc, and default and no-default release
+WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 executions at 5,896 coverage points and 19,157 feature
+edges with no finding; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -248,7 +248,7 @@ impl BezierParameterPolynomial {
         let mut first = self.coefficients.clone();
         let mut second = other.coefficients.clone();
         while !second.is_empty() {
-            let remainder = match polynomial_remainder(first, &second, policy)? {
+            let remainder = match scale_invariant_polynomial_remainder(first, &second, policy)? {
                 Classification::Decided(Some(remainder)) => remainder,
                 Classification::Decided(None) => Vec::new(),
                 Classification::Uncertain(reason) => {
@@ -2018,8 +2018,11 @@ fn sturm_sequence(
     let mut sequence = vec![p0, p1];
     while sequence.len() < 64 {
         let previous = sequence[sequence.len() - 2].clone();
-        let remainder = match polynomial_remainder(previous, &sequence[sequence.len() - 1], policy)?
-        {
+        let remainder = match scale_invariant_polynomial_remainder(
+            previous,
+            &sequence[sequence.len() - 1],
+            policy,
+        )? {
             Classification::Decided(Some(remainder)) => remainder,
             Classification::Decided(None) => break,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -2080,6 +2083,84 @@ fn sturm_point_evidence(
     Ok(Classification::Decided(SturmPointEvidence::NonRoot(
         variations,
     )))
+}
+
+fn scale_invariant_polynomial_remainder(
+    dividend: Vec<Real>,
+    divisor: &[Real],
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<Vec<Real>>>> {
+    if let Some(remainder) = primitive_integer_pseudo_remainder(&dividend, divisor) {
+        return Ok(Classification::Decided(
+            (!remainder.is_empty()).then_some(remainder),
+        ));
+    }
+    polynomial_remainder(dividend, divisor, policy)
+}
+
+/// Returns a positive multiple of the field remainder for rational inputs.
+///
+/// GCDs and Sturm chains are invariant under positive polynomial scaling, so
+/// they can avoid coefficient division by clearing denominators once and
+/// pseudo-dividing with integers. A negative divisor leading coefficient
+/// contributes one sign per elimination step; correcting that parity keeps
+/// every returned Sturm member a positive multiple of the ordinary remainder.
+fn primitive_integer_pseudo_remainder(dividend: &[Real], divisor: &[Real]) -> Option<Vec<Real>> {
+    let dividend = dividend
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let divisor = divisor
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let mut remainder = HyperRational::primitive_bigint_ratio(&dividend);
+    let divisor = HyperRational::primitive_bigint_ratio(&divisor);
+    let divisor_leading = divisor.last()?;
+    if divisor_leading.is_zero() {
+        return None;
+    }
+
+    let mut steps = 0_usize;
+    while remainder.len() >= divisor.len() {
+        let remainder_leading = remainder.last()?.clone();
+        let shift = remainder.len() - divisor.len();
+        for coefficient in &mut remainder[..shift] {
+            *coefficient *= divisor_leading;
+        }
+        for (index, divisor_coefficient) in divisor[..divisor.len() - 1].iter().enumerate() {
+            let target = shift + index;
+            remainder[target] *= divisor_leading;
+            remainder[target] -= &remainder_leading * divisor_coefficient;
+        }
+        remainder.pop();
+        while remainder.last().is_some_and(BigInt::is_zero) {
+            remainder.pop();
+        }
+        steps += 1;
+    }
+
+    if divisor_leading < &BigInt::zero() && !steps.is_multiple_of(2) {
+        for coefficient in &mut remainder {
+            *coefficient = -std::mem::take(coefficient);
+        }
+    }
+    let content = remainder
+        .iter()
+        .fold(BigInt::zero(), |content, coefficient| {
+            content.gcd(coefficient)
+        });
+    if !content.is_zero() && !content.is_one() {
+        for coefficient in &mut remainder {
+            *coefficient /= &content;
+        }
+    }
+    Some(
+        remainder
+            .into_iter()
+            .map(|coefficient| Real::new(HyperRational::from_bigint(coefficient)))
+            .collect(),
+    )
 }
 
 fn polynomial_remainder(
@@ -2149,6 +2230,35 @@ fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {
 }
 
 fn evaluate_coefficients(coefficients: &[Real], parameter: &Real) -> Real {
+    if let Some(parameter) = parameter.exact_rational_ref()
+        && coefficients
+            .iter()
+            .all(|coefficient| coefficient.exact_rational_ref().is_some())
+    {
+        let Some((leading, coefficients)) = coefficients.split_last() else {
+            return Real::zero();
+        };
+        let mut accumulator = leading
+            .exact_rational_ref()
+            .expect("all coefficients were checked")
+            .clone();
+        let one = HyperRational::one();
+        for coefficient in coefficients.iter().rev() {
+            accumulator = HyperRational::signed_product_sum2(
+                [true, true],
+                [
+                    [&accumulator, parameter],
+                    [
+                        coefficient
+                            .exact_rational_ref()
+                            .expect("all coefficients were checked"),
+                        &one,
+                    ],
+                ],
+            );
+        }
+        return Real::new(accumulator);
+    }
     coefficients
         .iter()
         .rev()
@@ -2507,6 +2617,65 @@ mod conversion_tests {
             .unwrap()
             .pop()
             .expect("one parameter produces one classification")
+    }
+
+    fn primitive_ratio(coefficients: &[Real]) -> Vec<Real> {
+        let rationals = coefficients
+            .iter()
+            .map(Real::exact_rational_ref)
+            .collect::<Option<Vec<_>>>()
+            .expect("test coefficients are rational");
+        HyperRational::primitive_integer_ratio(&rationals)
+            .into_iter()
+            .map(Real::from)
+            .collect()
+    }
+
+    #[test]
+    fn primitive_pseudo_remainder_is_positive_field_remainder_scale() {
+        let policy = CurvePolicy::certified();
+        for (dividend, divisor) in [
+            (
+                vec![
+                    rational(2, 3),
+                    rational(-5, 4),
+                    rational(3, 2),
+                    rational(-7, 3),
+                ],
+                vec![rational(1, 5), rational(-2, 3)],
+            ),
+            (
+                vec![
+                    rational(-3, 7),
+                    rational(4, 9),
+                    rational(5, 6),
+                    rational(-2, 5),
+                    rational(8, 3),
+                ],
+                vec![rational(2, 11), rational(3, 5), rational(-4, 7)],
+            ),
+            (
+                vec![rational(-2, 3), rational(1, 3), rational(1, 3)],
+                vec![rational(-1, 2), rational(1, 2)],
+            ),
+            (
+                vec![rational(1, 3), rational(2, 5), rational(3, 7)],
+                vec![rational(2, 9), rational(-1, 4)],
+            ),
+        ] {
+            let expected = match polynomial_remainder(dividend.clone(), &divisor, &policy).unwrap()
+            {
+                Classification::Decided(Some(remainder)) => primitive_ratio(&remainder),
+                Classification::Decided(None) => Vec::new(),
+                Classification::Uncertain(reason) => {
+                    panic!("field remainder unexpectedly uncertain: {reason:?}")
+                }
+            };
+            assert_eq!(
+                primitive_integer_pseudo_remainder(&dividend, &divisor),
+                Some(expected)
+            );
+        }
     }
 
     #[test]
