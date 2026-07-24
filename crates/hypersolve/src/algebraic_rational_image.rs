@@ -31,6 +31,9 @@ use crate::algebraic::{
     arithmetic_algebraic_root_representations, evaluate_rational_expression_at_algebraic_root,
     validate_algebraic_root_representation,
 };
+use crate::algebraic_mobius::{
+    AlgebraicRootMobiusTransformStatus, transform_algebraic_root_mobius,
+};
 use crate::algebraic_polynomial_image::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
     transform_algebraic_root_polynomial_image,
@@ -38,7 +41,7 @@ use crate::algebraic_polynomial_image::{
 use crate::integer_interpolation::{
     interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
 };
-use crate::resultant::resultant_univariate_polynomials;
+use crate::resultant::{quotient_ring_resultant_samples, resultant_univariate_polynomials};
 use crate::root_isolation::IsolatedRootInterval;
 
 const MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION: usize = 8;
@@ -412,6 +415,27 @@ fn direct_rational_image_representation(
         return None;
     }
 
+    if numerator.len() <= 2 && denominator.len() <= 2 {
+        let mobius = transform_algebraic_root_mobius(
+            root,
+            numerator.get(1).cloned().unwrap_or_else(Real::zero),
+            numerator[0].clone(),
+            denominator.get(1).cloned().unwrap_or_else(Real::zero),
+            denominator[0].clone(),
+            policy,
+        );
+        if mobius.status == AlgebraicRootMobiusTransformStatus::Transformed
+            && let Some(mut representation) = mobius.representation
+            && let Some(polynomial) =
+                primitive_integer_polynomial(&representation.polynomial_coefficients)
+        {
+            representation.polynomial_coefficients = polynomial;
+            representation.validation =
+                validate_algebraic_root_representation(&representation, policy);
+            return representation.is_valid().then_some(representation);
+        }
+    }
+
     let source_degree = root.polynomial_coefficients.len().checked_sub(1)?;
     let rational_degree = numerator.len().max(denominator.len()).checked_sub(1)?;
     if source_degree + rational_degree.max(1) > MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION {
@@ -471,15 +495,19 @@ fn resultant_polynomial_for_rational_image(
     source_degree: usize,
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
-    let mut samples = Vec::with_capacity(source_degree + 1);
-    for sample in 0..=source_degree {
-        let y = Real::from(sample as i64);
-        let relation = polynomial_sub(numerator, &polynomial_scale(denominator, &y));
-        let resultant = resultant_univariate_polynomials(source_polynomial, &relation, -64)
-            .ok()?
-            .resultant;
-        samples.push(resultant);
-    }
+    let samples = quotient_ring_resultant_samples(source_polynomial, numerator, denominator)
+        .or_else(|| {
+            let mut samples = Vec::with_capacity(source_degree + 1);
+            for sample in 0..=source_degree {
+                let y = Real::from(sample as i64);
+                let relation = polynomial_sub(numerator, &polynomial_scale(denominator, &y));
+                let resultant = resultant_univariate_polynomials(source_polynomial, &relation, -64)
+                    .ok()?
+                    .resultant;
+                samples.push(resultant);
+            }
+            Some(samples)
+        })?;
     let polynomial = interpolate_integer_samples_up_to_scale(&samples)?;
     trim_real_polynomial(primitive_integer_polynomial(&polynomial)?, policy)
 }
@@ -921,6 +949,28 @@ mod tests {
                 .exact_rational_ref()
                 .is_some_and(Rational::is_integer)
         }));
+    }
+
+    #[test]
+    fn rational_image_norm_keeps_a_shared_scale_when_sample_degree_drops() {
+        let represented = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![real(-4), Real::zero(), real(2)],
+            ..sqrt_two_positive()
+        };
+        let report = transform_algebraic_root_rational_image(
+            &represented,
+            &[Real::zero(), Real::one(), Real::one()],
+            &[Real::one(), Real::zero(), Real::one()],
+            PredicatePolicy,
+        );
+
+        assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
+        let image = report.representation.as_ref().unwrap();
+        assert_eq!(
+            image.polynomial_coefficients,
+            vec![real(2), real(-12), real(9)]
+        );
+        assert!(image.is_valid());
     }
 
     #[test]

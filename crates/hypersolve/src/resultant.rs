@@ -8,7 +8,7 @@
 //! pseudo-remainder chain for the subresultant scheduling boundary. Both
 //! constructions remain exact and report uncertain pivot decisions.
 
-use hyperreal::{CertifiedRealSign, Real, RealSign};
+use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
 
 use crate::bareiss::{BareissDeterminantReport, BareissError, determinant_bareiss};
 
@@ -218,6 +218,101 @@ pub fn resultant_univariate_polynomials(
         determinant.determinant.clone(),
         Some(determinant),
     ))
+}
+
+/// Samples `Res_x(P(x), N(x) - y D(x))` up to one shared nonzero scale.
+///
+/// Multiplication by the relation in `Q[x] / (P)` has dimension `deg(P)`,
+/// independent of the relation degree. Its determinant is the relation norm
+/// and differs from the Sylvester resultant only by a source-leading-
+/// coefficient power that is constant across `y`. Clearing all entries of the
+/// two multiplication matrices with one shared scale keeps every sample
+/// integral and preserves exact interpolation up to that same harmless scale.
+pub(crate) fn quotient_ring_resultant_samples(
+    source: &[Real],
+    numerator: &[Real],
+    denominator: &[Real],
+) -> Option<Vec<Real>> {
+    let degree = source.len().checked_sub(1)?;
+    if degree == 0 || numerator.is_empty() || denominator.is_empty() {
+        return None;
+    }
+    let numerator_matrix = quotient_multiplication_matrix(source, numerator)?;
+    let denominator_matrix = quotient_multiplication_matrix(source, denominator)?;
+    let entries = numerator_matrix
+        .iter()
+        .flatten()
+        .chain(denominator_matrix.iter().flatten())
+        .collect::<Vec<_>>();
+    let integer_entries = Rational::primitive_integer_ratio(&entries);
+    let matrix_entries = degree.checked_mul(degree)?;
+    if integer_entries.len() != matrix_entries.checked_mul(2)? {
+        return None;
+    }
+    let (numerator_entries, denominator_entries) = integer_entries.split_at(matrix_entries);
+
+    let mut samples = Vec::with_capacity(degree + 1);
+    for sample in 0..=degree {
+        let image_value = Rational::new(i64::try_from(sample).ok()?);
+        let matrix = numerator_entries
+            .chunks_exact(degree)
+            .zip(denominator_entries.chunks_exact(degree))
+            .map(|(numerator_row, denominator_row)| {
+                numerator_row
+                    .iter()
+                    .zip(denominator_row)
+                    .map(|(numerator, denominator)| {
+                        Real::from(numerator - &(denominator * &image_value))
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        samples.push(determinant_bareiss(&matrix, -64).ok()?.determinant);
+    }
+    Some(samples)
+}
+
+fn quotient_multiplication_matrix(
+    source: &[Real],
+    relation: &[Real],
+) -> Option<Vec<Vec<Rational>>> {
+    let degree = source.len().checked_sub(1)?;
+    let source = source
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let relation = relation
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let leading = source.last()?;
+    if **leading == Rational::zero() {
+        return None;
+    }
+
+    let mut matrix = vec![vec![Rational::zero(); degree]; degree];
+    for column in 0..degree {
+        let mut product = vec![Rational::zero(); relation.len().checked_add(column)?];
+        for (power, coefficient) in relation.iter().enumerate() {
+            product[column + power] = &product[column + power] + coefficient;
+        }
+        product.resize(product.len().max(degree), Rational::zero());
+        for power in (degree..product.len()).rev() {
+            if product[power] == Rational::zero() {
+                continue;
+            }
+            let factor = &product[power] / *leading;
+            let shift = power - degree;
+            for (source_power, coefficient) in source.iter().enumerate() {
+                let index = shift + source_power;
+                product[index] = &product[index] - &(*coefficient * &factor);
+            }
+        }
+        for row in 0..degree {
+            matrix[row][column] = product[row].clone();
+        }
+    }
+    Some(matrix)
 }
 
 /// Builds an exact fraction-free pseudo-remainder chain.
@@ -603,6 +698,43 @@ mod tests {
     }
 
     #[test]
+    fn quotient_ring_samples_match_sylvester_resultants_up_to_one_scale() {
+        let source = [real(2), real(-3), Real::zero(), real(2)];
+        let numerator = [real(1), real(2), real(3)];
+        let denominator = [real(2), real(-1)];
+        let quotient_samples =
+            quotient_ring_resultant_samples(&source, &numerator, &denominator).unwrap();
+        let sylvester_samples = (0..source.len())
+            .map(|sample| {
+                let image = real(i64::try_from(sample).unwrap());
+                let mut relation = numerator.to_vec();
+                for (coefficient, denominator_coefficient) in relation.iter_mut().zip(&denominator)
+                {
+                    *coefficient =
+                        coefficient.clone() - denominator_coefficient.clone() * image.clone();
+                }
+                resultant_univariate_polynomials(&source, &relation, -64)
+                    .unwrap()
+                    .resultant
+            })
+            .collect::<Vec<_>>();
+        let pivot = quotient_samples
+            .iter()
+            .zip(&sylvester_samples)
+            .position(|(quotient, sylvester)| {
+                quotient != &Real::zero() && sylvester != &Real::zero()
+            })
+            .unwrap();
+
+        for (quotient, sylvester) in quotient_samples.iter().zip(&sylvester_samples) {
+            assert_eq!(
+                quotient.clone() * sylvester_samples[pivot].clone(),
+                sylvester.clone() * quotient_samples[pivot].clone()
+            );
+        }
+    }
+
+    #[test]
     fn resultant_validates_empty_and_zero_polynomials() {
         assert_eq!(
             resultant_univariate_polynomials(&[], &[real(1)], -64).unwrap_err(),
@@ -703,6 +835,70 @@ mod tests {
     }
 
     proptest! {
+        #[test]
+        fn generated_monic_quotient_ring_samples_match_sylvester_up_to_scale(
+            source_constant in -4_i16..=4,
+            source_linear in -4_i16..=4,
+            source_quadratic in -4_i16..=4,
+            numerator_constant in -4_i16..=4,
+            numerator_linear in -4_i16..=4,
+            numerator_quadratic in 1_i16..=4,
+            denominator_linear in -4_i16..=4,
+        ) {
+            let source = [
+                real(i64::from(source_constant)),
+                real(i64::from(source_linear)),
+                real(i64::from(source_quadratic)),
+                Real::one(),
+            ];
+            let numerator = [
+                real(i64::from(numerator_constant)),
+                real(i64::from(numerator_linear)),
+                real(i64::from(numerator_quadratic)),
+            ];
+            let denominator = [Real::one(), real(i64::from(denominator_linear))];
+            let samples =
+                quotient_ring_resultant_samples(&source, &numerator, &denominator).unwrap();
+
+            let sylvester_samples = (0..source.len())
+                .map(|sample| {
+                    let image = real(i64::try_from(sample).unwrap());
+                    let mut relation = numerator.to_vec();
+                    for (coefficient, denominator_coefficient) in
+                        relation.iter_mut().zip(&denominator)
+                    {
+                        *coefficient =
+                            coefficient.clone() - denominator_coefficient.clone() * image.clone();
+                    }
+                    resultant_univariate_polynomials(&source, &relation, -64)
+                        .unwrap()
+                        .resultant
+                })
+                .collect::<Vec<_>>();
+            let pivot = samples
+                .iter()
+                .zip(&sylvester_samples)
+                .position(|(quotient, sylvester)| {
+                    quotient != &Real::zero() && sylvester != &Real::zero()
+                });
+
+            if let Some(pivot) = pivot {
+                for (quotient, sylvester) in samples.iter().zip(&sylvester_samples) {
+                    prop_assert_eq!(
+                        quotient.clone() * sylvester_samples[pivot].clone(),
+                        sylvester.clone() * samples[pivot].clone()
+                    );
+                }
+            } else {
+                prop_assert!(samples.iter().all(|sample| sample == &Real::zero()));
+                prop_assert!(
+                    sylvester_samples
+                        .iter()
+                        .all(|sample| sample == &Real::zero())
+                );
+            }
+        }
+
         #[test]
         fn generated_linear_resultants_match_root_difference(
             left_root in -64_i16..=64,

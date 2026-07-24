@@ -24,10 +24,13 @@ use crate::algebraic::{
     AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
     AlgebraicRootValidationStatus, validate_algebraic_root_representation,
 };
+use crate::algebraic_mobius::{
+    AlgebraicRootMobiusTransformStatus, transform_algebraic_root_mobius,
+};
 use crate::integer_interpolation::{
     interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
 };
-use crate::resultant::resultant_univariate_polynomials;
+use crate::resultant::{quotient_ring_resultant_samples, resultant_univariate_polynomials};
 use crate::root_isolation::IsolatedRootInterval;
 
 const MAX_SYLVESTER_DIMENSION: usize = 8;
@@ -154,6 +157,34 @@ pub fn transform_algebraic_root_polynomial_image(
         );
     }
 
+    if image.len() == 2 {
+        let affine = transform_algebraic_root_mobius(
+            root,
+            image[1].clone(),
+            image[0].clone(),
+            Real::zero(),
+            Real::one(),
+            policy,
+        );
+        if affine.status == AlgebraicRootMobiusTransformStatus::Transformed
+            && let Some(mut representation) = affine.representation
+            && let Some(polynomial) =
+                primitive_integer_polynomial(&representation.polynomial_coefficients)
+        {
+            representation.polynomial_coefficients = polynomial;
+            representation.validation =
+                validate_algebraic_root_representation(&representation, policy);
+            if representation.is_valid() {
+                return polynomial_image_report(
+                    AlgebraicRootPolynomialImageStatus::Transformed,
+                    image,
+                    Some(representation),
+                    None,
+                );
+            }
+        }
+    }
+
     let source_degree = root.polynomial_coefficients.len() - 1;
     let image_degree = image.len() - 1;
     let sylvester_dimension = source_degree + image_degree.max(1);
@@ -262,16 +293,25 @@ fn resultant_polynomial_for_image(
     let source_degree = source_polynomial.len() - 1;
     let source_polynomial = primitive_integer_polynomial(source_polynomial)?;
     let (image_polynomial, image_scale) = primitive_integer_image_relation(image_polynomial)?;
-    let mut samples = Vec::with_capacity(source_degree + 1);
-    for sample in 0..=source_degree {
-        let y = Real::from(sample as i64) * image_scale.clone();
-        let mut shifted_image = image_polynomial.to_vec();
-        shifted_image[0] = shifted_image[0].clone() - y;
-        let resultant = resultant_univariate_polynomials(&source_polynomial, &shifted_image, -64)
-            .ok()?
-            .resultant;
-        samples.push(resultant);
-    }
+    let samples = quotient_ring_resultant_samples(
+        &source_polynomial,
+        &image_polynomial,
+        std::slice::from_ref(&image_scale),
+    )
+    .or_else(|| {
+        let mut samples = Vec::with_capacity(source_degree + 1);
+        for sample in 0..=source_degree {
+            let y = Real::from(sample as i64) * image_scale.clone();
+            let mut shifted_image = image_polynomial.to_vec();
+            shifted_image[0] = shifted_image[0].clone() - y;
+            let resultant =
+                resultant_univariate_polynomials(&source_polynomial, &shifted_image, -64)
+                    .ok()?
+                    .resultant;
+            samples.push(resultant);
+        }
+        Some(samples)
+    })?;
     let mut polynomial = interpolate_integer_samples_up_to_scale(&samples)?;
     if source_degree % 2 == 1 {
         for coefficient in &mut polynomial {

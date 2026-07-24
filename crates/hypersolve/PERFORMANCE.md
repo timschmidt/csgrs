@@ -133,6 +133,38 @@ classifications, 4 decided operations, and checksum 6.
 The complete all-feature unit, property, smoke, and doctest suites, strict
 all-target Clippy, and warning-denied rustdoc passed.
 
+Algebraic polynomial and rational images now reuse the direct Mobius
+substitution for affine and linear-fractional maps. General maps build the
+multiplication matrices of their numerator and denominator once in
+`Q[x] / (P)`, clear both matrices with one shared exact scale, and sample the
+relation norm with `deg(P)`-dimensional Bareiss determinants. The norm differs
+from the corresponding Sylvester resultant only by a nonzero source-leading
+coefficient power shared by every image sample, so primitive interpolation
+retains the same defining roots. Unsupported exact inputs keep the former
+Sylvester construction as a fallback.
+
+The generated regression compares quotient-ring and Sylvester samples across
+small cubic sources and quadratic-over-linear maps, including nonmonic source
+evidence. A separate rational-image regression cancels the relation's leading
+coefficient at an interpolation sample and verifies that the shared norm scale
+still produces the expected primitive polynomial. On Hypercurve's
+quartic-source sentinel, the hot determinant dimension falls from six or seven
+to four. The ten-run instruction median
+fell from 85,201,993 to 79,151,572 (7.1%), 75.3% below the original
+320,660,631 baseline. Eleven ordinary runs had an 8.625 ms complete median,
+a 6.272 ms preparation median, and a 0.393 ms exact-polyline projection
+median. Every run retained 9 candidate pairs, 48 fragments, 2 point
+classifications, 4 decided operations, no blockers, and checksum 6. Heaptrack
+fell from 133,767 to 119,861 allocations and from 9,677 to 7,949 temporary
+allocations; measured peak heap moved from 1.92 to 1.97 MiB.
+
+The complete Hypersolve and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied Clippy and rustdoc, and
+release WASM library builds passed. The requested downstream AddressSanitizer
+region-Boolean fuzz replay completed at 2,512 executions with 5,897 coverage
+points and 19,158 feature edges; LeakSanitizer alone remained disabled under
+ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
