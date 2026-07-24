@@ -2917,6 +2917,30 @@ gap still justifies the line/arc accelerator. Complete default and all-feature
 tests, strict all-feature Clippy, warning-denied rustdoc, the library WASM
 build, and a 2,509-run AddressSanitizer region-Boolean campaign passed.
 
+### Primitive integer rational-image elimination
+
+Algebraic rational images were feeding exact fractional coefficients directly
+into every sampled Sylvester determinant. A resultant's roots are invariant
+when either input polynomial is multiplied by a nonzero constant, so
+Hypersolve now clears the source polynomial to primitive integers and clears
+the rational map's numerator and denominator with one shared primitive integer
+scale. The original rational map still supplies its denominator-domain proof
+and exact interval endpoints. Hyperreal also provides a checked exactly
+divisible integer quotient for Bareiss' fraction-free recurrence, with the
+former general exact division retained as fallback.
+
+The combined cross-crate change reduced ten-run instructions from 320,660,631
+to 189,533,986 (40.9%). Denominator clearing accounted for the first reduction
+to 229,530,874, checked integer Bareiss division reached 192,745,230, and
+primitive content removal supplied the remainder. Five ordinary release runs
+had an 18.154 ms complete median, a 9.016 ms preparation median, and a
+0.429 ms exact-polyline projection median. Every run retained 9 candidate
+pairs, 48 fragments, 2 exact point classifications, 4 decided operations, and
+checksum 6. The remaining roughly 42x native gap still justifies the line/arc
+accelerator. Complete all-feature tests, strict all-feature Clippy,
+warning-denied rustdoc, the release library WASM build, and a 2,509-run
+AddressSanitizer region-Boolean campaign passed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
