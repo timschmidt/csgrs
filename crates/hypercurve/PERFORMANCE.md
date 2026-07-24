@@ -3673,6 +3673,37 @@ AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,899
 coverage points and 19,138 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Representation-aware rational-quadratic point evaluation
+
+Unit-end-weight rational quadratics use a conjugate expression to eliminate a
+non-rational middle weight from the affine quotient. That expression formerly
+ran for rational middle weights too, where it added a second denominator
+product without eliminating anything. Conjugation is now limited to genuinely
+non-rational weights. For an exact-rational parameter, the remaining path
+evaluates the weighted coordinate and denominator quadratics directly in
+power-basis Horner form; non-rational parameters retain the homogeneous
+Bernstein evaluator.
+
+A direct unequal-weight regression checks the exact rational midpoint produced
+by the power quotient. Existing irrational circular-arc, rational evaluation,
+subdivision, bounds, contact, and generated intersection suites cover both the
+conjugate and Bernstein fallbacks.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 48,952,778 to 48,246,452 (1.44%), 84.95% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 76,363 to 75,087
+and temporary events from 7,332 to 7,330; peak heap fell from 1.32 to 1.31 MiB
+and peak RSS from 12.02 to 11.96 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and supported default/no-default release WASM library builds passed.
+AddressSanitizer region-Boolean replay completed all 2,515 executions at 5,893
+coverage points and 19,125 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

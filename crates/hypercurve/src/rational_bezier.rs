@@ -189,12 +189,35 @@ impl RationalQuadraticBezier2 {
     pub fn point_at(&self, t: Real, policy: &CurvePolicy) -> Classification<Point2> {
         let one_minus_t = Real::one() - &t;
         let two = Real::from(2_i8);
+        // Conjugating can eliminate a non-rational middle weight. When that
+        // weight is already rational it only lengthens the exact quotient.
         if self.start_weight == Real::one()
             && self.end_weight == Real::one()
+            && self.control_weight.exact_rational_ref().is_none()
             && let Some(point) =
                 self.point_at_unit_end_weights_rationalized(&t, &one_minus_t, &two, policy)
         {
             return point;
+        }
+        if t.exact_rational_ref().is_some() {
+            let evaluate = |(constant, linear, quadratic): (Real, Real, Real)| {
+                ((&quadratic * &t) + linear) * &t + constant
+            };
+            let denominator = evaluate(self.weight_power_basis());
+            match is_zero(&denominator, policy) {
+                Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
+                Some(false) => {}
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+            let numerator_x = evaluate(self.weighted_coordinate_power_basis(Axis2::X));
+            let numerator_y = evaluate(self.weighted_coordinate_power_basis(Axis2::Y));
+            let Ok(x) = numerator_x / &denominator else {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            };
+            let Ok(y) = numerator_y / denominator else {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            };
+            return Classification::Decided(Point2::new(x, y));
         }
         let b0 = &one_minus_t * &one_minus_t * &self.start_weight;
         let b1 = &two * &one_minus_t * &t * &self.control_weight;
