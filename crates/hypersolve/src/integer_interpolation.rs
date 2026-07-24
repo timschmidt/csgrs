@@ -14,6 +14,95 @@ pub(crate) fn primitive_integer_polynomial(polynomial: &[Real]) -> Option<Vec<Re
     )
 }
 
+pub(crate) fn primitive_integer_polynomial_gcd(left: &[Real], right: &[Real]) -> Option<Vec<Real>> {
+    let mut left = primitive_integer_coefficients(left)?;
+    let mut right = primitive_integer_coefficients(right)?;
+    if left.len() < right.len() {
+        std::mem::swap(&mut left, &mut right);
+    }
+    while !is_zero_integer_polynomial(&right) {
+        let remainder = primitive_pseudo_remainder(&left, &right)?;
+        left = right;
+        right = remainder;
+    }
+    Some(
+        primitive_integer_part(left)
+            .into_iter()
+            .map(Rational::from_bigint)
+            .map(Real::from)
+            .collect(),
+    )
+}
+
+fn primitive_integer_coefficients(polynomial: &[Real]) -> Option<Vec<BigInt>> {
+    let rationals = polynomial
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    Some(primitive_integer_part(
+        Rational::primitive_integer_ratio(&rationals)
+            .into_iter()
+            .map(|coefficient| coefficient.to_big_integer())
+            .collect::<Option<Vec<_>>>()?,
+    ))
+}
+
+fn primitive_pseudo_remainder(dividend: &[BigInt], divisor: &[BigInt]) -> Option<Vec<BigInt>> {
+    let divisor = primitive_integer_part(divisor.to_vec());
+    if is_zero_integer_polynomial(&divisor) {
+        return None;
+    }
+    let divisor_degree = divisor.len() - 1;
+    let divisor_leading = divisor[divisor_degree].clone();
+    let mut remainder = primitive_integer_part(dividend.to_vec());
+    while !is_zero_integer_polynomial(&remainder) && remainder.len() > divisor_degree {
+        let remainder_degree = remainder.len() - 1;
+        let shift = remainder_degree - divisor_degree;
+        let remainder_leading = remainder[remainder_degree].clone();
+        for coefficient in &mut remainder {
+            *coefficient *= &divisor_leading;
+        }
+        for (index, coefficient) in divisor.iter().enumerate() {
+            remainder[index + shift] -= &remainder_leading * coefficient;
+        }
+        remainder = primitive_integer_part(remainder);
+    }
+    Some(remainder)
+}
+
+fn primitive_integer_part(mut polynomial: Vec<BigInt>) -> Vec<BigInt> {
+    while polynomial.len() > 1 && polynomial.last().is_some_and(BigInt::is_zero) {
+        polynomial.pop();
+    }
+    if polynomial.is_empty() {
+        return vec![BigInt::zero()];
+    }
+    let content = polynomial
+        .iter()
+        .filter(|coefficient| !coefficient.is_zero())
+        .fold(BigInt::zero(), |content, coefficient| {
+            content.gcd(coefficient)
+        });
+    if !content.is_zero() && !content.is_one() {
+        for coefficient in &mut polynomial {
+            *coefficient /= &content;
+        }
+    }
+    if polynomial
+        .last()
+        .is_some_and(|coefficient| coefficient < &BigInt::zero())
+    {
+        for coefficient in &mut polynomial {
+            *coefficient = -std::mem::take(coefficient);
+        }
+    }
+    polynomial
+}
+
+fn is_zero_integer_polynomial(polynomial: &[BigInt]) -> bool {
+    polynomial.iter().all(BigInt::is_zero)
+}
+
 pub(crate) fn interpolate_integer_samples_up_to_scale(samples: &[Real]) -> Option<Vec<Real>> {
     if samples.is_empty() {
         return Some(Vec::new());
@@ -82,9 +171,78 @@ pub(crate) fn interpolate_integer_samples_up_to_scale(samples: &[Real]) -> Optio
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    fn rational(numerator: i64, denominator: u64) -> Real {
+        Real::from(Rational::fraction(numerator, denominator).unwrap())
+    }
+
+    #[test]
+    fn primitive_integer_gcd_avoids_rational_coefficient_growth() {
+        // (x - 2)(x + 3) and (x - 2)(x² + 1), with unrelated rational
+        // scales, have the primitive gcd x - 2.
+        let left = [rational(-3, 1), rational(1, 2), rational(1, 2)];
+        let right = [
+            rational(-2, 3),
+            rational(1, 3),
+            rational(-2, 3),
+            rational(1, 3),
+        ];
+
+        assert_eq!(
+            primitive_integer_polynomial_gcd(&left, &right),
+            Some(vec![real(-2), real(1)])
+        );
+    }
+
+    fn multiply_integer_polynomials(left: &[BigInt], right: &[BigInt]) -> Vec<BigInt> {
+        let mut product = vec![BigInt::zero(); left.len() + right.len() - 1];
+        for (left_index, left_coefficient) in left.iter().enumerate() {
+            for (right_index, right_coefficient) in right.iter().enumerate() {
+                product[left_index + right_index] += left_coefficient * right_coefficient;
+            }
+        }
+        product
+    }
+
+    proptest! {
+        #[test]
+        fn generated_primitive_integer_gcd_recovers_shared_factor(
+            factor in prop::collection::vec(-5_i64..=5, 1..=4),
+            left_root in -5_i64..=5,
+            right_root in -5_i64..=5,
+        ) {
+            prop_assume!(factor.last().is_some_and(|coefficient| *coefficient != 0));
+            prop_assume!(left_root != right_root);
+            let factor = primitive_integer_part(
+                factor.into_iter().map(BigInt::from).collect()
+            );
+            let left = multiply_integer_polynomials(
+                &factor,
+                &[BigInt::from(-left_root), BigInt::one()],
+            );
+            let right = multiply_integer_polynomials(
+                &factor,
+                &[BigInt::from(-right_root), BigInt::one()],
+            );
+            let as_reals = |polynomial: Vec<BigInt>| {
+                polynomial
+                    .into_iter()
+                    .map(Rational::from_bigint)
+                    .map(Real::from)
+                    .collect::<Vec<_>>()
+            };
+            let expected = as_reals(factor);
+
+            prop_assert_eq!(
+                primitive_integer_polynomial_gcd(&as_reals(left), &as_reals(right)),
+                Some(expected),
+            );
+        }
     }
 
     #[test]

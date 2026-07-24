@@ -17,6 +17,7 @@ use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
 };
 use crate::eval::EvaluationContext;
+use crate::integer_interpolation::primitive_integer_polynomial_gcd;
 use crate::model::{ConstraintKind, Problem};
 use crate::prepared::PreparedProblem;
 use crate::symbolic::{Expr, SymbolId};
@@ -1749,6 +1750,9 @@ fn polynomial_gcd(
 ) -> Option<Vec<Real>> {
     left = trim_polynomial(left, policy)?;
     right = trim_polynomial(right, policy)?;
+    if let Some(gcd) = primitive_integer_polynomial_gcd(&left, &right) {
+        return gcd_monic_normalize(gcd, policy);
+    }
     while !is_zero_polynomial(&right, policy)? {
         let (_, remainder) = polynomial_div_rem(left, &right, policy)?;
         left = right;
@@ -1767,7 +1771,11 @@ pub(crate) fn polynomials_share_one_root_in_interval(
     if compare_reals_with_policy(lower, upper, policy).value()? != Ordering::Less {
         return Some(false);
     }
-    let gcd = polynomial_gcd(left.to_vec(), right.to_vec(), policy)?;
+    let gcd = if left == right {
+        left.to_vec()
+    } else {
+        polynomial_gcd(left.to_vec(), right.to_vec(), policy)?
+    };
     if gcd.len() <= 1 {
         return Some(false);
     }

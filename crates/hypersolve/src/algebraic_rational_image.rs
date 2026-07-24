@@ -833,7 +833,7 @@ fn resultant_polynomial_for_rational_image(
             }
             interpolate_integer_samples_up_to_scale(&samples)
         })?;
-    trim_real_polynomial(polynomial, policy)
+    trim_real_polynomial(primitive_integer_polynomial(&polynomial)?, policy)
 }
 
 fn rational_image_interval(

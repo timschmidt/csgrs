@@ -646,6 +646,25 @@ pub fn compare_algebraic_root_representations_by_difference(
     right: &AlgebraicRootRepresentation,
     config: AlgebraicRootRefinementComparisonConfig,
 ) -> AlgebraicRootDifferenceComparisonReport {
+    if represented_roots_share_isolated_common_root(left, right, config.policy) == Some(true) {
+        let comparison = algebraic_comparison_report(
+            AlgebraicRootComparisonStatus::Compared,
+            Some(Ordering::Equal),
+            Some(
+                "equality certified by a shared polynomial root in the overlapping isolating intervals"
+                    .to_owned(),
+            ),
+        );
+        let refinement = algebraic_refinement_comparison_report(
+            comparison.clone(),
+            left.clone(),
+            right.clone(),
+            Vec::new(),
+            Vec::new(),
+            0,
+        );
+        return algebraic_difference_comparison_report(comparison, refinement, None);
+    }
     let refinement =
         compare_algebraic_root_representations_with_refinement(left, right, config.clone());
     if represented_roots_share_isolated_common_root(
@@ -2826,10 +2845,7 @@ mod tests {
         let report = compare_algebraic_root_representations_by_difference(
             &sqrt_two,
             &same_root_with_extra_factor,
-            AlgebraicRootRefinementComparisonConfig {
-                max_refinement_rounds: 0,
-                ..AlgebraicRootRefinementComparisonConfig::default()
-            },
+            AlgebraicRootRefinementComparisonConfig::default(),
         );
 
         assert_eq!(
@@ -2837,6 +2853,7 @@ mod tests {
             AlgebraicRootComparisonStatus::Compared
         );
         assert_eq!(report.comparison.ordering, Some(Ordering::Equal));
+        assert_eq!(report.refinement.refinement_rounds, 0);
         assert!(report.difference.is_none());
     }
 
