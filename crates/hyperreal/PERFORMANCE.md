@@ -1734,6 +1734,31 @@ ptrace. The downstream Hypercurve region-Boolean replay completed the same
 requested budget after 2,706 executions at 5,989 coverage points and 19,311
 feature edges with no finding.
 
+### Tiny word-GCD table
+
+The native binary GCD still spent 798,546 self instructions in the same
+downstream profile. Operand tracing found 2,238 calls with both values at most
+63, the largest individual shape bucket. A compile-time 64-by-64 `u8` table
+now resolves that bucket before the subtraction loop. It occupies 4 KiB of
+read-only data, performs no initialization or heap allocation, and is
+exhaustively cross-checked against Euclidean reduction for all 4,096 entries;
+the existing two-limb randomized suite covers the unchanged fallback.
+
+The final ten-run Hypercurve instruction median fell from 26,883,298 to
+26,798,608 (0.32%), or 91.64% below the original 320,660,631 baseline.
+`gcd_word` self cost fell to 713,411 instructions (10.7%). Exact topology and
+checksum remained unchanged. Heaptrack remained at 34,370 allocations, 2,702
+recorder temporaries, 2,950 postprocessed temporaries, 936.80 KiB peak heap,
+and 167.77 KiB retained memory; peak RSS measured 10.91 MiB.
+
+The complete Hyperreal all-feature and no-default-feature suites, formatting,
+strict all-target Clippy, warning-denied rustdoc, and both release WASM builds
+passed, as did Hypercurve's all-feature suite. The Hyperreal ASAN rational
+replay completed 2,509 executions at 1,838 coverage points and 4,663 feature
+edges; the downstream region-Boolean replay completed the requested budget
+after 2,716 executions at 5,998 coverage points and 19,363 feature edges.
+Neither found an error; LeakSanitizer alone remained disabled under ptrace.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

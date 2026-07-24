@@ -927,6 +927,11 @@ mod tests {
         for (left, right) in edge_cases {
             assert_eq!(Rational::gcd_word(left, right), reference(left, right));
         }
+        for left in 0..64 {
+            for right in 0..64 {
+                assert_eq!(Rational::gcd_word(left, right), reference(left, right));
+            }
+        }
 
         let mut left = 0x243f_6a88_85a3_08d3_1319_8a2e_0370_7344_u128;
         let mut right = 0xa409_3822_299f_31d0_082e_fa98_ec4e_6c89_u128;

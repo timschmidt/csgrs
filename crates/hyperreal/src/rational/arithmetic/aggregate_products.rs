@@ -1224,6 +1224,28 @@ impl Rational {
         powers
     };
 
+    const SMALL_GCD_SIDE: usize = 64;
+    const SMALL_GCD_TABLE: [u8; Self::SMALL_GCD_SIDE * Self::SMALL_GCD_SIDE] = {
+        let mut table = [0_u8; Self::SMALL_GCD_SIDE * Self::SMALL_GCD_SIDE];
+        let mut left = 0;
+        while left < Self::SMALL_GCD_SIDE {
+            let mut right = 0;
+            while right < Self::SMALL_GCD_SIDE {
+                let mut larger = left;
+                let mut smaller = right;
+                while smaller != 0 {
+                    let remainder = larger % smaller;
+                    larger = smaller;
+                    smaller = remainder;
+                }
+                table[left * Self::SMALL_GCD_SIDE + right] = larger as u8;
+                right += 1;
+            }
+            left += 1;
+        }
+        table
+    };
+
     #[inline]
     fn gcd_u64(left: u64, right: u64) -> u64 {
         if left == 0 {
@@ -1231,6 +1253,10 @@ impl Rational {
         }
         if right == 0 {
             return left;
+        }
+        if left < Self::SMALL_GCD_SIDE as u64 && right < Self::SMALL_GCD_SIDE as u64 {
+            let index = left as usize * Self::SMALL_GCD_SIDE + right as usize;
+            return u64::from(Self::SMALL_GCD_TABLE[index]);
         }
 
         let common_shift = left.trailing_zeros().min(right.trailing_zeros());
