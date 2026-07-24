@@ -1465,6 +1465,21 @@ pair preparation from 16.830 ms to 9.016 ms. Exhaustive small signed quotient
 tests, disparate-denominator image replay, and the full downstream topology
 suite retain the same exact results.
 
+`checked_exact_integer_cross_difference_quotient` extends that boundary to the
+whole fraction-free recurrence. It computes `(a*b - c*d)/e` directly from
+integer magnitudes, verifies the final divisibility, and returns `None` for
+fractional operands, a zero divisor, or a remainder. Hypersolve retains its
+general exact-arithmetic fallback for every rejected input. Exhaustive small
+signed cross differences cover all sign, zero, divisible, and remainder cases.
+
+Using the fused primitive in every dense, multi-right-hand-side, and sparse
+Bareiss update reduced the same downstream Hypercurve sentinel from
+151,620,313 to 131,393,603 instructions (13.3%). Its eleven-run ordinary
+complete median fell from 14.994 ms to 12.985 ms and pair preparation from
+8.682 ms to 7.844 ms, with identical exact topology.
+The complete all-feature test and API-coverage suites, strict all-target
+Clippy, and warning-denied rustdoc passed.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

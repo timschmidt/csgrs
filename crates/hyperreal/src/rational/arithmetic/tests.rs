@@ -1388,6 +1388,64 @@ mod tests {
     }
 
     #[test]
+    fn checked_exact_integer_cross_difference_quotient_matches_small_integers() {
+        for left in -3_i64..=3 {
+            for right in -3_i64..=3 {
+                for subtract_left in -3_i64..=3 {
+                    for subtract_right in -3_i64..=3 {
+                        for divisor in (-8_i64..=8).filter(|divisor| *divisor != 0) {
+                            let numerator = left * right - subtract_left * subtract_right;
+                            let expected = (numerator % divisor == 0)
+                                .then(|| Rational::new(numerator / divisor));
+                            assert_eq!(
+                                Rational::new(left)
+                                    .checked_exact_integer_cross_difference_quotient(
+                                        &Rational::new(right),
+                                        &Rational::new(subtract_left),
+                                        &Rational::new(subtract_right),
+                                        &Rational::new(divisor),
+                                    ),
+                                expected
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(
+            Rational::fraction(1, 2)
+                .unwrap()
+                .checked_exact_integer_cross_difference_quotient(
+                    &Rational::new(2),
+                    &Rational::new(1),
+                    &Rational::new(1),
+                    &Rational::new(1),
+                ),
+            None
+        );
+        assert_eq!(
+            Rational::new(1).checked_exact_integer_cross_difference_quotient(
+                &Rational::new(1),
+                &Rational::new(1),
+                &Rational::new(1),
+                &Rational::zero(),
+            ),
+            None
+        );
+        let wide =
+            Rational::from_unsigned_integer((BigUint::one() << 191_usize) + BigUint::from(17_u8));
+        assert_eq!(
+            wide.checked_exact_integer_cross_difference_quotient(
+                &Rational::new(7),
+                &wide,
+                &Rational::new(4),
+                &Rational::new(3),
+            ),
+            Some(wide.clone())
+        );
+    }
+
+    #[test]
     fn word_multiplication_cross_cancellation_stays_reduced() {
         let dyadic = Rational::try_from(0.123_456_789_f64).unwrap();
         let scaled = &dyadic * Rational::new(10);

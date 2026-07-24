@@ -1,6 +1,84 @@
 use core::ops::*;
 
 impl Rational {
+    /// Evaluate an exactly divisible integer cross difference.
+    ///
+    /// Computes `(self * right - subtract_left * subtract_right) / divisor`
+    /// without constructing intermediate rationals. Returns `None` unless all
+    /// five operands are exact integers, the divisor is nonzero, and the
+    /// resulting integer numerator is exactly divisible by it.
+    pub fn checked_exact_integer_cross_difference_quotient(
+        &self,
+        right: &Self,
+        subtract_left: &Self,
+        subtract_right: &Self,
+        divisor: &Self,
+    ) -> Option<Self> {
+        let left = self.canonicalized_ref();
+        let right = right.canonicalized_ref();
+        let subtract_left = subtract_left.canonicalized_ref();
+        let subtract_right = subtract_right.canonicalized_ref();
+        let divisor = divisor.canonicalized_ref();
+        if left.denominator != *ONE.deref()
+            || right.denominator != *ONE.deref()
+            || subtract_left.denominator != *ONE.deref()
+            || subtract_right.denominator != *ONE.deref()
+            || divisor.denominator != *ONE.deref()
+            || divisor.sign == NoSign
+        {
+            return None;
+        }
+
+        let first_sign = left.sign * right.sign;
+        let second_sign = subtract_left.sign * subtract_right.sign;
+        let first = if first_sign == NoSign {
+            BigUint::ZERO
+        } else {
+            Self::multiply_magnitudes(
+                "integer-cross-difference-first",
+                &left.numerator,
+                &right.numerator,
+            )
+        };
+        let second = if second_sign == NoSign {
+            BigUint::ZERO
+        } else {
+            Self::multiply_magnitudes(
+                "integer-cross-difference-second",
+                &subtract_left.numerator,
+                &subtract_right.numerator,
+            )
+        };
+        let (sign, numerator) = if first_sign == NoSign {
+            (-second_sign, second)
+        } else if second_sign == NoSign {
+            (first_sign, first)
+        } else if first_sign != second_sign {
+            (first_sign, first + second)
+        } else {
+            match first.cmp(&second) {
+                core::cmp::Ordering::Greater => (first_sign, first - second),
+                core::cmp::Ordering::Equal => return Some(Self::zero()),
+                core::cmp::Ordering::Less => (-first_sign, second - first),
+            }
+        };
+        if sign == NoSign {
+            return Some(Self::zero());
+        }
+        use num::Integer as _;
+        let (quotient, remainder) = numerator.div_rem(&divisor.numerator);
+        if !remainder.is_zero() {
+            return None;
+        }
+        let sign = sign * divisor.sign;
+        crate::trace_dispatch!(
+            "rational",
+            "integer-cross-difference",
+            "exact-divisible"
+        );
+        Some(Self::from_integer_magnitude(sign, quotient))
+    }
+
     /// Divide two integers when their quotient is also an integer.
     ///
     /// Returns `None` for fractional inputs, a zero divisor, or a nonzero
