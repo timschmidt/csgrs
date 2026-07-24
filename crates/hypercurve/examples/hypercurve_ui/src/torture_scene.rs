@@ -156,7 +156,17 @@ impl TortureScene {
                     }
                     ui.separator();
                     operation_combo(ui, &mut self.operation);
-                    ui.checkbox(&mut self.segmented, "Segmented");
+                    ui.checkbox(&mut self.segmented, "Segmented projection")
+                        .on_hover_text(
+                            "Sample buffered Boolean boundaries into line segments for comparison.",
+                        );
+                    if self.operation.is_some() {
+                        ui.small(if self.segmented {
+                            "Displaying sampled line projections."
+                        } else {
+                            "Displaying buffered native curve results."
+                        });
+                    }
                     ui.small("Pairwise operation: layer A[i] op layer B[i].");
                     ui.small(
                         "Centroid-grid placement keeps neighbors sparse while paired regions overlap moderately.",
@@ -442,17 +452,18 @@ fn boolean_pair(
     pair: &TorturePair,
     operation: BooleanMode,
 ) -> Result<Option<(CurveRegion2, Shape)>, String> {
-    let retained = pair
+    let region = pair
         .first
-        .retain_boolean(&pair.second, &CurvePolicy::certified())
-        .map_err(|error| error.to_string())?;
-    let region = retained
-        .boolean_region(match operation {
-            BooleanMode::Union => BooleanOp::Union,
-            BooleanMode::Intersection => BooleanOp::Intersection,
-            BooleanMode::Difference => BooleanOp::Difference,
-            BooleanMode::Xor => BooleanOp::Xor,
-        })
+        .boolean_region(
+            &pair.second,
+            match operation {
+                BooleanMode::Union => BooleanOp::Union,
+                BooleanMode::Intersection => BooleanOp::Intersection,
+                BooleanMode::Difference => BooleanOp::Difference,
+                BooleanMode::Xor => BooleanOp::Xor,
+            },
+            &CurvePolicy::certified(),
+        )
         .map_err(|error| error.to_string())?;
     Shape::from_curve_region(&region).map(|display| display.map(|display| (region, display)))
 }

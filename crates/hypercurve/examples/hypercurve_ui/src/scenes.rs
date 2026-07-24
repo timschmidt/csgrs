@@ -311,7 +311,17 @@ impl PlineBooleanScene {
                     mode_combo(ui, "pline_boolean_mode", &mut self.mode);
                     ui.checkbox(&mut self.fill, "Fill");
                     ui.checkbox(&mut self.show_vertices, "Show vertices");
-                    ui.checkbox(&mut self.segmented, "Segmented");
+                    ui.checkbox(&mut self.segmented, "Segmented projection")
+                        .on_hover_text(
+                            "Sample the Boolean boundary into line segments for comparison.",
+                        );
+                    if self.mode.boolean_mode().is_some() {
+                        ui.small(if self.segmented {
+                            "Displaying a sampled line projection."
+                        } else {
+                            "Displaying native line, arc, and Bézier curves."
+                        });
+                    }
                     if ui.button("Edit Polylines").clicked() {
                         self.editor.show_window();
                     }
@@ -679,7 +689,17 @@ impl MultiPlineBooleanScene {
                     ui.radio_value(&mut self.op, Some(BooleanMode::Intersection), "And");
                     ui.radio_value(&mut self.op, Some(BooleanMode::Difference), "Not");
                     ui.radio_value(&mut self.op, Some(BooleanMode::Xor), "Xor");
-                    ui.checkbox(&mut self.segmented, "Segmented");
+                    ui.checkbox(&mut self.segmented, "Segmented projection")
+                        .on_hover_text(
+                            "Sample the Boolean boundary into line segments for comparison.",
+                        );
+                    if self.op.is_some() {
+                        ui.small(if self.segmented {
+                            "Displaying a sampled line projection."
+                        } else {
+                            "Displaying native line, arc, and Bézier curves."
+                        });
+                    }
                     if let Some(error) = &self.last_error {
                         ui.separator();
                         ui.colored_label(theme.error, error);

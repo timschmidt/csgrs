@@ -1068,7 +1068,9 @@ impl Shape {
         } else {
             None
         };
-        if roles.as_ref().is_some_and(|roles| paths.len() != roles.len())
+        if roles
+            .as_ref()
+            .is_some_and(|roles| paths.len() != roles.len())
             || filled_sides
                 .as_ref()
                 .is_some_and(|sides| paths.len() != sides.len())
@@ -1116,12 +1118,10 @@ impl Shape {
 
         let first = self.to_curve_region()?;
         let second = other.to_curve_region()?;
-        let retained = first
-            .retain_boolean(&second, &CurvePolicy::certified())
-            .map_err(|error| error.to_string())?;
-        let result = retained.boolean_region(op).map_err(|error| {
-            retained
-                .intersection_result()
+        let policy = CurvePolicy::certified();
+        let result = first.boolean_region(&second, op, &policy).map_err(|error| {
+            first
+                .intersect_region(&second, &policy)
                 .ok()
                 .and_then(|result| result.blockers().first().cloned())
                 .map_or_else(
