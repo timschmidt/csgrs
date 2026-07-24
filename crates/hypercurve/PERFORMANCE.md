@@ -3769,6 +3769,42 @@ AddressSanitizer region-Boolean replay completed all 2,514 executions at 5,895
 coverage points and 19,124 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Demand-driven arrangement higher-order jets
+
+Retained traversal formerly constructed second- and third-order endpoint
+derivatives for every materialized fragment before it knew whether a tangent
+tie existed. Boolean topology already supplies certified successors for
+crossing branches, so most of those exact quotient and polynomial jets were
+never observed. Traversal now builds endpoint points and first tangents first,
+constructs adjacency, and checks whether every multi-successor vertex has
+usable certified evidence. Higher derivatives are omitted when that evidence
+fully determines traversal; if any branch is uncovered, endpoint data is
+rebuilt with the original exact higher-order path before comparison. The
+ordinary public tangent-order traversal still requests complete jets
+immediately.
+
+The deferral applies equally to native polynomial, rational-quadratic, general
+rational, and retained algebraic endpoint images. A focused partial-evidence
+regression forces the fallback at an equal-tangent quadratic branch and
+verifies that it exactly matches ordinary retained tangent traversal. Existing
+second-/third-order, rational/algebraic, overlap, and Boolean suites cover the
+certified and fallback paths.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 47,834,643 to 45,626,071 (4.62%), 85.77% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 74,515 to 71,365
+while temporary events remained 7,350; peak heap fell from 1.33 to 1.30 MiB
+and peak RSS from 11.92 to 11.69 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and supported default/no-default release WASM library builds passed.
+AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,894
+coverage points and 19,160 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

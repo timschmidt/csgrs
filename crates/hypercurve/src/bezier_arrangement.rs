@@ -355,15 +355,17 @@ impl BezierArrangementGraph2 {
         certified_successors: &[Option<usize>],
         policy: &CurvePolicy,
     ) -> Classification<BezierArrangementTraversal2> {
+        let defer_higher_derivatives = !certified_successors.is_empty();
         let mut endpoints = Vec::with_capacity(self.fragments.len());
         for fragment in &self.fragments {
-            let endpoints_for_fragment = match retained_endpoint_data(fragment, policy) {
-                Some(Classification::Decided(endpoints)) => endpoints,
-                Some(Classification::Uncertain(reason)) => {
-                    return Classification::Uncertain(reason);
-                }
-                None => return Classification::Uncertain(UncertaintyReason::Boundary),
-            };
+            let endpoints_for_fragment =
+                match retained_endpoint_data(fragment, !defer_higher_derivatives, policy) {
+                    Some(Classification::Decided(endpoints)) => endpoints,
+                    Some(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    None => return Classification::Uncertain(UncertaintyReason::Boundary),
+                };
             endpoints.push(endpoints_for_fragment);
         }
 
@@ -371,6 +373,28 @@ impl BezierArrangementGraph2 {
             Classification::Decided(adjacency) => adjacency,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
+        if defer_higher_derivatives
+            && outgoing.iter().enumerate().any(|(index, candidates)| {
+                candidates.len() > 1
+                    && !certified_successors
+                        .get(index)
+                        .copied()
+                        .flatten()
+                        .is_some_and(|successor| candidates.contains(&successor))
+            })
+        {
+            endpoints.clear();
+            for fragment in &self.fragments {
+                let endpoints_for_fragment = match retained_endpoint_data(fragment, true, policy) {
+                    Some(Classification::Decided(endpoints)) => endpoints,
+                    Some(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    None => return Classification::Uncertain(UncertaintyReason::Boundary),
+                };
+                endpoints.push(endpoints_for_fragment);
+            }
+        }
 
         let mut used = vec![false; self.fragments.len()];
         let mut chains = Vec::new();
@@ -940,11 +964,14 @@ fn materialized_endpoint_data(
 
 fn retained_endpoint_data(
     arrangement_fragment: &BezierArrangementFragment2,
+    include_higher_derivatives: bool,
     policy: &CurvePolicy,
 ) -> Option<Classification<RetainedEndpointData>> {
     let fragment = arrangement_fragment.fragment();
     match fragment {
-        BezierSplitFragment2::Materialized { curve, .. } => match curve.endpoint_data(policy) {
+        BezierSplitFragment2::Materialized { curve, .. } => match curve
+            .endpoint_data_with_higher_derivatives(policy, include_higher_derivatives)
+        {
             Classification::Decided(data) => Some(Classification::Decided(RetainedEndpointData {
                 start: Some(RetainedEndpointKey::Exact(Box::new(data.start))),
                 end: Some(RetainedEndpointKey::Exact(Box::new(data.end))),
@@ -988,6 +1015,7 @@ fn retained_endpoint_data(
                 start_image.as_ref(),
                 source_curve.as_ref(),
                 source_start_topology_vertex,
+                include_higher_derivatives,
                 policy,
             ) {
                 Classification::Decided(data) => data,
@@ -1000,6 +1028,7 @@ fn retained_endpoint_data(
                 end_image.as_ref(),
                 source_curve.as_ref(),
                 source_end_topology_vertex,
+                include_higher_derivatives,
                 policy,
             ) {
                 Classification::Decided(data) => data,
@@ -1050,6 +1079,7 @@ fn retained_endpoint_side_data(
     image: Option<&BezierAlgebraicEndpointImage2>,
     source_curve: Option<&BezierSubcurve2>,
     topology_vertex: Option<usize>,
+    include_higher_derivatives: bool,
     policy: &CurvePolicy,
 ) -> Classification<Option<RetainedEndpointSideData>> {
     if let Some(image) = image {
@@ -1079,19 +1109,27 @@ fn retained_endpoint_side_data(
         let Some(tangent) = retained_algebraic_tangent(tangent_image) else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
-        let second_derivative = match image.second_derivative() {
-            Some(image) => match retained_algebraic_tangent(image) {
-                Some(tangent) => Some(tangent),
-                None => return Classification::Uncertain(UncertaintyReason::Boundary),
-            },
-            None => None,
+        let second_derivative = if include_higher_derivatives {
+            match image.second_derivative() {
+                Some(image) => match retained_algebraic_tangent(image) {
+                    Some(tangent) => Some(tangent),
+                    None => return Classification::Uncertain(UncertaintyReason::Boundary),
+                },
+                None => None,
+            }
+        } else {
+            None
         };
-        let third_derivative = match image.third_derivative() {
-            Some(image) => match retained_algebraic_tangent(image) {
-                Some(tangent) => Some(tangent),
-                None => return Classification::Uncertain(UncertaintyReason::Boundary),
-            },
-            None => None,
+        let third_derivative = if include_higher_derivatives {
+            match image.third_derivative() {
+                Some(image) => match retained_algebraic_tangent(image) {
+                    Some(tangent) => Some(tangent),
+                    None => return Classification::Uncertain(UncertaintyReason::Boundary),
+                },
+                None => None,
+            }
+        } else {
+            None
         };
         return Classification::Decided(Some(RetainedEndpointSideData {
             point: Some(point),
@@ -1105,12 +1143,19 @@ fn retained_endpoint_side_data(
     let (BezierParameter2::Exact(parameter), Some(source_curve)) = (parameter, source_curve) else {
         return Classification::Decided(None);
     };
-    retained_exact_source_endpoint_side_data(source_curve, parameter, policy).map(Some)
+    retained_exact_source_endpoint_side_data(
+        source_curve,
+        parameter,
+        include_higher_derivatives,
+        policy,
+    )
+    .map(Some)
 }
 
 fn retained_exact_source_endpoint_side_data(
     source_curve: &BezierSubcurve2,
     parameter: &Real,
+    include_higher_derivatives: bool,
     policy: &CurvePolicy,
 ) -> Classification<RetainedEndpointSideData> {
     let at_source_end = match compare_reals(parameter, &Real::one(), policy) {
@@ -1118,7 +1163,10 @@ fn retained_exact_source_endpoint_side_data(
         None => return Classification::Uncertain(UncertaintyReason::Ordering),
     };
     let (data, restore_source_orientation) = if at_source_end {
-        match source_curve.reversed().endpoint_data(policy) {
+        match source_curve
+            .reversed()
+            .endpoint_data_with_higher_derivatives(policy, include_higher_derivatives)
+        {
             Classification::Decided(data) => (data, true),
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
@@ -1130,7 +1178,7 @@ fn retained_exact_source_endpoint_side_data(
             }
             Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
         };
-        match subcurve.endpoint_data(policy) {
+        match subcurve.endpoint_data_with_higher_derivatives(policy, include_higher_derivatives) {
             Classification::Decided(data) => (data, false),
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
@@ -1526,6 +1574,43 @@ mod endpoint_adjacency_tests {
         assert_eq!(predecessors[1], 1);
         assert_eq!(predecessors[2], 1);
         assert_eq!(predecessors[4], 1);
+    }
+
+    #[test]
+    fn partial_successor_evidence_rebuilds_higher_order_tangents() {
+        let point2 = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let fragment = |source_curve_index, curve| {
+            BezierArrangementFragment2::new(
+                source_curve_index,
+                0,
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(curve),
+                },
+            )
+        };
+        let graph = BezierArrangementGraph2::new(vec![
+            fragment(
+                0,
+                crate::QuadraticBezier2::new(point2(0, 0), point2(1, 0), point2(2, 0)),
+            ),
+            fragment(
+                1,
+                crate::QuadraticBezier2::new(point2(2, 0), point2(3, 1), point2(4, 0)),
+            ),
+            fragment(
+                2,
+                crate::QuadraticBezier2::new(point2(2, 0), point2(4, 2), point2(5, 0)),
+            ),
+        ])
+        .expect("valid branch graph");
+        let policy = CurvePolicy::certified();
+
+        assert_eq!(
+            graph.traverse_retained_with_certified_successors(&[None], &policy),
+            graph.traverse_retained_with_tangent_order(&policy)
+        );
     }
 }
 
@@ -2405,6 +2490,14 @@ impl BezierSubcurve2 {
     }
 
     fn endpoint_data(&self, policy: &CurvePolicy) -> Classification<EndpointData> {
+        self.endpoint_data_with_higher_derivatives(policy, true)
+    }
+
+    fn endpoint_data_with_higher_derivatives(
+        &self,
+        policy: &CurvePolicy,
+        include_higher_derivatives: bool,
+    ) -> Classification<EndpointData> {
         let (start, end) = self.endpoints();
         let (
             start_tangent,
@@ -2415,7 +2508,6 @@ impl BezierSubcurve2 {
             end_tangent_zero_status,
         ) = match self {
             Self::Quadratic(curve) => {
-                let second_derivative = quadratic_second_derivative(curve);
                 let (start_tangent, start_tangent_zero_status) =
                     TangentVector::from_endpoint_tangent(
                         curve.endpoint_tangent(BezierEndpoint::Start),
@@ -2426,7 +2518,7 @@ impl BezierSubcurve2 {
                 (
                     start_tangent,
                     end_tangent,
-                    Some(second_derivative),
+                    include_higher_derivatives.then(|| quadratic_second_derivative(curve)),
                     None,
                     Some(start_tangent_zero_status),
                     Some(end_tangent_zero_status),
@@ -2443,20 +2535,24 @@ impl BezierSubcurve2 {
                 (
                     start_tangent,
                     end_tangent,
-                    Some(cubic_start_second_derivative(curve)),
-                    Some(cubic_third_derivative(curve)),
+                    include_higher_derivatives.then(|| cubic_start_second_derivative(curve)),
+                    include_higher_derivatives.then(|| cubic_third_derivative(curve)),
                     Some(start_tangent_zero_status),
                     Some(end_tangent_zero_status),
                 )
             }
             Self::RationalQuadratic(curve) => {
-                let start =
-                    match rational_quadratic_endpoint_derivative_jet(curve, false, true, policy) {
-                        Classification::Decided(derivatives) => derivatives,
-                        Classification::Uncertain(reason) => {
-                            return Classification::Uncertain(reason);
-                        }
-                    };
+                let start = match rational_quadratic_endpoint_derivative_jet(
+                    curve,
+                    false,
+                    include_higher_derivatives,
+                    policy,
+                ) {
+                    Classification::Decided(derivatives) => derivatives,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
                 let end =
                     match rational_quadratic_endpoint_derivative_jet(curve, true, false, policy) {
                         Classification::Decided(derivatives) => derivatives,
@@ -2474,7 +2570,11 @@ impl BezierSubcurve2 {
                 )
             }
             Self::Rational(curve) => {
-                let start = match curve.endpoint_derivatives(false, 3, policy) {
+                let start = match curve.endpoint_derivatives(
+                    false,
+                    if include_higher_derivatives { 3 } else { 1 },
+                    policy,
+                ) {
                     Classification::Decided(derivatives) => derivatives,
                     Classification::Uncertain(reason) => {
                         return Classification::Uncertain(reason);
