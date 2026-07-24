@@ -3323,6 +3323,36 @@ build passed. The requested AddressSanitizer region-Boolean replay completed
 its 2,509-run budget after 2,514 executions at 5,893 coverage points and
 19,173 feature edges; LeakSanitizer alone remained disabled under ptrace.
 
+### Carried Sturm boundary variations
+
+Unit-interval root isolation now evaluates each initial boundary's complete
+Sturm evidence once and carries the resulting variation counts with every
+pending interval. A non-root midpoint is likewise scanned once, then its
+variation count is shared by both child intervals. The interval root count is
+therefore the carried endpoint difference instead of two repeated sequence
+evaluations. A midpoint that is itself a root remains distinguished and is
+still returned as an exactly represented parameter.
+
+A fixed partition test compares carried variation differences with independent
+interval root counts and checks the exact-midpoint-root case. On the one-cell
+all-family exact Boolean sentinel, the ten-run instruction median fell from
+69,867,161 to 66,871,601 (4.3%), 79.1% below the original 320,660,631
+baseline. Heaptrack allocations fell from 103,004 to 98,658, temporary
+allocations from 6,409 to 6,389, peak heap from 1.53 to 1.50 MiB, and peak RSS
+from 12.66 to 12.41 MiB.
+
+Eleven ordinary runs had a 6.781 ms complete median, a 4.797 ms preparation
+median, and a 0.332 ms exact-polyline projection median. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete Hypercurve all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and default and no-default release WASM library builds passed. The
+AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,894
+coverage points and 19,157 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

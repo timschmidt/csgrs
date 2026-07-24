@@ -2035,6 +2035,27 @@ fn sign_variations_at(
     parameter: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<usize>> {
+    match sturm_point_evidence(sequence, parameter, policy)? {
+        Classification::Decided(SturmPointEvidence::Root) => {
+            Err(CurveError::InvalidBezierAlgebraicParameter)
+        }
+        Classification::Decided(SturmPointEvidence::NonRoot(variations)) => {
+            Ok(Classification::Decided(variations))
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+enum SturmPointEvidence {
+    Root,
+    NonRoot(usize),
+}
+
+fn sturm_point_evidence(
+    sequence: &[Vec<Real>],
+    parameter: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<SturmPointEvidence>> {
     let mut previous = None;
     let mut variations = 0_usize;
 
@@ -2042,7 +2063,7 @@ fn sign_variations_at(
         let value = evaluate_coefficients(polynomial, parameter);
         let sign = match real_sign(&value, policy) {
             Some(RealSign::Zero) if index == 0 => {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
+                return Ok(Classification::Decided(SturmPointEvidence::Root));
             }
             Some(RealSign::Zero) => continue,
             Some(sign) => sign,
@@ -2056,7 +2077,9 @@ fn sign_variations_at(
         previous = Some(sign);
     }
 
-    Ok(Classification::Decided(variations))
+    Ok(Classification::Decided(SturmPointEvidence::NonRoot(
+        variations,
+    )))
 }
 
 fn polynomial_remainder(
@@ -2243,13 +2266,36 @@ fn search_unit_roots(
         }
     }
     boundaries.push(Real::one());
+    let mut boundary_variations = Vec::with_capacity(boundaries.len());
+    for boundary in &boundaries {
+        match sturm_point_evidence(&sequence, boundary, policy)? {
+            Classification::Decided(SturmPointEvidence::Root) => {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            Classification::Decided(SturmPointEvidence::NonRoot(variations)) => {
+                boundary_variations.push(variations);
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
     let mut pending = boundaries
         .windows(2)
+        .zip(boundary_variations.windows(2))
         .rev()
-        .map(|pair| (pair[0].clone(), pair[1].clone(), 0_usize))
+        .map(|(pair, variations)| {
+            (
+                pair[0].clone(),
+                pair[1].clone(),
+                variations[0],
+                variations[1],
+                0_usize,
+            )
+        })
         .collect::<Vec<_>>();
     let mut isolated = Vec::new();
-    while let Some((start, end, depth)) = pending.pop() {
+    while let Some((start, end, start_variations, end_variations, depth)) = pending.pop() {
         trace.maximum_depth = trace.maximum_depth.max(depth);
         let interval = match BezierParameterInterval::try_new(start.clone(), end.clone(), policy)? {
             Classification::Decided(interval) => interval,
@@ -2257,27 +2303,23 @@ fn search_unit_roots(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let count =
-            match polynomial.root_count_in_interval_with_sequence(&interval, &sequence, policy)? {
-                Classification::Decided(count) => count,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let count = start_variations.saturating_sub(end_variations);
         trace.interval_root_counts += 1;
         if count == 0 {
             continue;
         }
         let midpoint = ((&start + &end) / Real::from(2_i8))?;
-        match real_sign(&polynomial.evaluate(&midpoint), policy) {
-            Some(RealSign::Zero) => {
+        let midpoint_variations = match sturm_point_evidence(&sequence, &midpoint, policy)? {
+            Classification::Decided(SturmPointEvidence::Root) => {
                 return Ok(Classification::Decided(UnitRootSearch::RepresentedRoot(
                     midpoint,
                 )));
             }
-            Some(_) => {}
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
+            Classification::Decided(SturmPointEvidence::NonRoot(variations)) => variations,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let touches_represented_root = represented_roots.iter().any(|root| {
             compare_reals(root, &start, policy) == Some(Ordering::Equal)
                 || compare_reals(root, &end, policy) == Some(Ordering::Equal)
@@ -2318,8 +2360,20 @@ fn search_unit_roots(
             return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
         }
         trace.bisections += 1;
-        pending.push((midpoint.clone(), end, depth + 1));
-        pending.push((start, midpoint, depth + 1));
+        pending.push((
+            midpoint.clone(),
+            end,
+            midpoint_variations,
+            end_variations,
+            depth + 1,
+        ));
+        pending.push((
+            start,
+            midpoint,
+            start_variations,
+            midpoint_variations,
+            depth + 1,
+        ));
     }
     Ok(Classification::Decided(UnitRootSearch::Isolated(isolated)))
 }
@@ -2445,6 +2499,67 @@ mod conversion_tests {
             .unwrap()
             .pop()
             .expect("one parameter produces one classification")
+    }
+
+    #[test]
+    fn carried_sturm_variations_match_partition_root_counts() {
+        let policy = CurvePolicy::certified();
+        // (2t² - 1)(3t² - 1) has two irrational roots in (1/2, 3/4).
+        let defining = polynomial(&[1, 0, -5, 0, 6]);
+        let sequence = match sturm_sequence(defining.coefficients(), &policy).unwrap() {
+            Classification::Decided(sequence) => sequence,
+            Classification::Uncertain(reason) => {
+                panic!("Sturm sequence unexpectedly uncertain: {reason:?}")
+            }
+        };
+        let boundaries = [Real::zero(), rational(1, 2), rational(3, 4), Real::one()];
+        let variations = boundaries
+            .iter()
+            .map(
+                |boundary| match sturm_point_evidence(&sequence, boundary, &policy).unwrap() {
+                    Classification::Decided(SturmPointEvidence::NonRoot(variations)) => variations,
+                    Classification::Decided(SturmPointEvidence::Root) => {
+                        panic!("partition boundary unexpectedly is a root")
+                    }
+                    Classification::Uncertain(reason) => {
+                        panic!("Sturm evidence unexpectedly uncertain: {reason:?}")
+                    }
+                },
+            )
+            .collect::<Vec<_>>();
+
+        for (partition, endpoint_variations) in boundaries.windows(2).zip(variations.windows(2)) {
+            let interval = match BezierParameterInterval::try_new(
+                partition[0].clone(),
+                partition[1].clone(),
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(reason) => {
+                    panic!("partition interval unexpectedly uncertain: {reason:?}")
+                }
+            };
+            assert_eq!(
+                defining.root_count_in_interval(&interval, &policy).unwrap(),
+                Classification::Decided(
+                    endpoint_variations[0].saturating_sub(endpoint_variations[1])
+                )
+            );
+        }
+
+        let linear = polynomial(&[-1, 2]);
+        let linear_sequence = match sturm_sequence(linear.coefficients(), &policy).unwrap() {
+            Classification::Decided(sequence) => sequence,
+            Classification::Uncertain(reason) => {
+                panic!("linear Sturm sequence unexpectedly uncertain: {reason:?}")
+            }
+        };
+        assert!(matches!(
+            sturm_point_evidence(&linear_sequence, &rational(1, 2), &policy).unwrap(),
+            Classification::Decided(SturmPointEvidence::Root)
+        ));
     }
 
     #[test]
