@@ -165,6 +165,27 @@ region-Boolean fuzz replay completed at 2,512 executions with 5,897 coverage
 points and 19,158 feature edges; LeakSanitizer alone remained disabled under
 ptrace.
 
+The quotient basis now uses a fraction-free pseudo-reduction when the source
+and map coefficients are already primitive integers. Every column is scaled
+by the same fixed power of the source leading coefficient, so numerator and
+denominator multiplication matrices retain one common nonzero scale.
+Noninteger callers remain unsupported by this private fast path and continue
+through the retained Sylvester fallback. The nonmonic and interpolation-degree
+cancellation regressions exercise the scale invariant.
+
+On the same Hypercurve sentinel, the ten-run instruction median fell from
+79,151,572 to 78,335,067 (1.0%), 75.6% below the original baseline. Eleven
+ordinary runs had an 8.458 ms complete median, a 6.073 ms preparation median,
+and a 0.430 ms exact-polyline projection median. Heaptrack fell from 119,861
+to 116,469 allocations and from 7,949 to 6,834 temporary allocations while
+peak heap remained 1.97 MiB. Exact topology and checksum were unchanged.
+
+The complete Hypersolve and downstream Hypercurve feature matrices,
+warning-denied Clippy and rustdoc, formatting, and release WASM library builds
+passed. The requested AddressSanitizer region-Boolean fuzz replay completed
+all 2,509 executions at 5,895 coverage points and 19,157 feature edges;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate

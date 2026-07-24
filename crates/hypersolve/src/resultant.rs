@@ -237,19 +237,15 @@ pub(crate) fn quotient_ring_resultant_samples(
     if degree == 0 || numerator.is_empty() || denominator.is_empty() {
         return None;
     }
-    let numerator_matrix = quotient_multiplication_matrix(source, numerator)?;
-    let denominator_matrix = quotient_multiplication_matrix(source, denominator)?;
-    let entries = numerator_matrix
-        .iter()
-        .flatten()
-        .chain(denominator_matrix.iter().flatten())
-        .collect::<Vec<_>>();
-    let integer_entries = Rational::primitive_integer_ratio(&entries);
     let matrix_entries = degree.checked_mul(degree)?;
-    if integer_entries.len() != matrix_entries.checked_mul(2)? {
+    let relation_degree = numerator.len().max(denominator.len()).checked_sub(1)?;
+    let numerator_entries =
+        pseudo_quotient_multiplication_matrix(source, numerator, relation_degree)?;
+    let denominator_entries =
+        pseudo_quotient_multiplication_matrix(source, denominator, relation_degree)?;
+    if numerator_entries.len() != matrix_entries || denominator_entries.len() != matrix_entries {
         return None;
     }
-    let (numerator_entries, denominator_entries) = integer_entries.split_at(matrix_entries);
 
     let mut samples = Vec::with_capacity(degree + 1);
     for sample in 0..=degree {
@@ -272,10 +268,11 @@ pub(crate) fn quotient_ring_resultant_samples(
     Some(samples)
 }
 
-fn quotient_multiplication_matrix(
+fn pseudo_quotient_multiplication_matrix(
     source: &[Real],
     relation: &[Real],
-) -> Option<Vec<Vec<Rational>>> {
+    relation_degree: usize,
+) -> Option<Vec<Rational>> {
     let degree = source.len().checked_sub(1)?;
     let source = source
         .iter()
@@ -285,31 +282,38 @@ fn quotient_multiplication_matrix(
         .iter()
         .map(Real::exact_rational_ref)
         .collect::<Option<Vec<_>>>()?;
+    if source
+        .iter()
+        .chain(&relation)
+        .any(|value| !value.is_integer())
+    {
+        return None;
+    }
     let leading = source.last()?;
     if **leading == Rational::zero() {
         return None;
     }
 
-    let mut matrix = vec![vec![Rational::zero(); degree]; degree];
+    let product_len = degree.checked_add(relation_degree)?;
+    let mut matrix = vec![Rational::zero(); degree.checked_mul(degree)?];
     for column in 0..degree {
-        let mut product = vec![Rational::zero(); relation.len().checked_add(column)?];
+        let mut product = vec![Rational::zero(); product_len];
         for (power, coefficient) in relation.iter().enumerate() {
             product[column + power] = &product[column + power] + coefficient;
         }
-        product.resize(product.len().max(degree), Rational::zero());
-        for power in (degree..product.len()).rev() {
-            if product[power] == Rational::zero() {
-                continue;
+        for power in (degree..product_len).rev() {
+            let eliminand = product[power].clone();
+            for coefficient in &mut product[..=power] {
+                *coefficient = &*coefficient * *leading;
             }
-            let factor = &product[power] / *leading;
             let shift = power - degree;
             for (source_power, coefficient) in source.iter().enumerate() {
                 let index = shift + source_power;
-                product[index] = &product[index] - &(*coefficient * &factor);
+                product[index] = &product[index] - &(*coefficient * &eliminand);
             }
         }
         for row in 0..degree {
-            matrix[row][column] = product[row].clone();
+            matrix[row * degree + column] = product[row].clone();
         }
     }
     Some(matrix)
