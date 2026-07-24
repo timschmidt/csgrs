@@ -315,7 +315,7 @@ impl ClosedTriangleMesh3 {
             triangles.push(hypermesh::Triangle::new(base, base + 1, base + 2));
         }
         let mesh = hypermesh::InputMesh::new(positions, triangles);
-        hypermesh::prepare_input(&[mesh.as_ref()])?;
+        hypermesh::build_polygon_soup(&[mesh.as_ref()])?;
         Ok(mesh)
     }
 }
