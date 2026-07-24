@@ -143,9 +143,10 @@ Relevant path notes:
   same alternating-input profile to 1.22--1.26 s (roughly 3--4%).
 - Reduced dyadics with odd magnitude at most 63 and denominator through `2^63`
   share canonical immutable storage.
-- Each immutable rational retains one exact multiplication result under weak operand
-  keys in both commutative directions. The cache is bounded, cycle-free, and ignored
-  by serialization; misses continue through the same exact word/BigUint kernels.
+- Each product pair retains one exact multiplication result under a weak operand
+  key that is queried in both commutative directions. The cache is bounded,
+  cycle-free, and ignored by serialization; misses continue through the same exact
+  word/BigUint kernels.
 - Linear-result admission is adaptive. Storage sharing alone is not arithmetic
   reuse: a one-byte relaxed hint records the first borrowed observation, the
   second result is admitted, and later calls reuse it. An existing product or
