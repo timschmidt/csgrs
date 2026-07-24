@@ -335,6 +335,30 @@ rustdoc, and release WASM library builds passed. The requested AddressSanitizer
 region-Boolean replay completed all 2,509 executions at 5,893 coverage points
 and 19,125 feature edges; LeakSanitizer alone remained disabled under ptrace.
 
+Quotient-ring multiplication now omits the highest coefficient update in each
+pseudo-reduction step. The chosen quotient coefficient makes that slot exactly
+`leading*eliminand - leading*eliminand`, so assigning exact zero avoids a
+redundant big-integer multiply, subtraction, and checked division. All lower
+coefficients still use the checked integer cross-difference primitive, and any
+failure there still selects the retained Sylvester fallback. Fixed and
+generated quotient-ring/Sylvester comparisons cover the complete schedule.
+
+Together with downstream Hypercurve's borrowed polynomial-remainder divisor,
+the one-cell all-family exact Boolean sentinel's ten-run instruction median
+fell from 64,966,544 to 64,678,125 (0.44%), 79.8% below the original
+320,660,631 baseline. Heaptrack allocations fell from 97,195 to 96,817 and
+temporary allocations from 6,331 to 6,165; peak heap remained 1.49 MiB and
+peak RSS remained 12.39 MiB. Eleven ordinary runs had a 6.967 ms complete
+median, a 4.841 ms preparation median, and a 0.337 ms exact-polyline projection
+median, with unchanged topology and checksum.
+
+The complete Hypersolve and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy,
+all-feature and no-default-feature rustdoc, and default and no-default release
+WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 executions at 5,892 coverage points and 19,170 feature
+edges with no finding; LeakSanitizer alone remained disabled under ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
