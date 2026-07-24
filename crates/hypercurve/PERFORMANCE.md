@@ -3296,6 +3296,33 @@ WASM library builds passed. The requested AddressSanitizer region-Boolean
 replay completed all 2,509 executions at 5,893 coverage points and 19,125
 feature edges; LeakSanitizer alone remained disabled under ptrace.
 
+### Single-pass Sturm endpoint validation
+
+Each interval root count formerly evaluated the defining polynomial at both
+endpoints to reject endpoint roots, then evaluated it again as the first member
+of the Sturm variation scan. The first sequence member is the defining
+polynomial in every caller, so the scan now rejects a zero first-member sign
+itself and reuses that evaluation for variation counting. Later zero sequence
+members retain the standard Sturm skip rule.
+
+Fixed endpoint-root rejection and generated interval-count tests preserve the
+carrier boundary. On the one-cell all-family exact Boolean sentinel, the
+ten-run instruction median fell from 71,182,596 to 69,867,161 (1.8%), 78.2%
+below the original 320,660,631 baseline. Heaptrack allocations fell from
+105,140 to 103,004; temporary allocations remained 6,409, peak heap remained
+1.53 MiB, and peak RSS measured 12.66 MiB.
+
+Eleven ordinary runs had a 7.038 ms complete median, a 5.052 ms preparation
+median, and a 0.334 ms exact-polyline projection median. Every run retained
+9 candidate pairs, 48 fragments, 2 classifications, 4 decided operations,
+no blockers, and checksum 6.
+
+The complete Hypercurve all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy and rustdoc, and the release WASM library
+build passed. The requested AddressSanitizer region-Boolean replay completed
+its 2,509-run budget after 2,514 executions at 5,893 coverage points and
+19,173 feature edges; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

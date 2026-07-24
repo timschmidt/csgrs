@@ -227,19 +227,6 @@ impl BezierParameterPolynomial {
         sequence: &[Vec<Real>],
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<usize>> {
-        let start_value = self.evaluate(interval.start());
-        let end_value = self.evaluate(interval.end());
-        match (
-            real_sign(&start_value, policy),
-            real_sign(&end_value, policy),
-        ) {
-            (Some(RealSign::Zero), _) | (_, Some(RealSign::Zero)) => {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
-            }
-            (Some(_), Some(_)) => {}
-            _ => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-
         let start_variations = sign_variations_at(sequence, interval.start(), policy)?;
         let end_variations = sign_variations_at(sequence, interval.end(), policy)?;
         match (start_variations, end_variations) {
@@ -2051,9 +2038,12 @@ fn sign_variations_at(
     let mut previous = None;
     let mut variations = 0_usize;
 
-    for polynomial in sequence {
+    for (index, polynomial) in sequence.iter().enumerate() {
         let value = evaluate_coefficients(polynomial, parameter);
         let sign = match real_sign(&value, policy) {
+            Some(RealSign::Zero) if index == 0 => {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
             Some(RealSign::Zero) => continue,
             Some(sign) => sign,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
