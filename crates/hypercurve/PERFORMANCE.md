@@ -2580,6 +2580,46 @@ previous complete-scan timings. The arrangement integration suite includes a
 16-fragment symbolic-endpoint case so the indexed crossover cannot silently
 drop unkeyed equality candidates.
 
+### Retained exact overlap classification
+
+The next retained-workflow profile showed the same exact overlap scan being
+rebuilt by evidence inspection, duplicate consumption, linear refinement, and
+the refined traversal. A graph now retains the complete certified-policy
+classification after its first scan. The retained value includes uncertainty
+as well as decided evidence, so reuse cannot turn an undecided predicate into a
+decision. Other policies continue to scan independently. Graph equality and
+debug output remain functions of fragments alone, while clones preserve the
+cache because their fragment indices and exact geometry are unchanged.
+Overlap-evidence clones share their immutable record vector.
+
+When an exact overlap scan produces no split boundaries, linear and rational
+refinement now preserve the graph directly and emit one exact unit-range
+provenance record per fragment. This avoids rebuilding every fragment,
+resorting `[0, 1]` boundaries, and then rescanning the identical refined graph.
+Nonempty split plans still run the complete existing construction and
+validation path.
+
+Same-machine release A/B measurements against commit `95e10c5`, with 1,024
+curves and 20 iterations, were:
+
+| Exact arrangement workload | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Materialized tangent traversal | 4.251 ms/iter | 3.848 ms/iter | 9.5% faster |
+| Complete retained-overlap workflow | 280.502 ms/iter | 17.750 ms/iter | 93.7% faster |
+| Reversed overlap cancellation | 217.594 us/iter | 20.244 us/iter | 90.7% faster |
+
+A separate one-iteration run, which includes the cold classification, reduced
+the complete workflow from 302.255 to 95.639 ms. In the isolated scan lane the
+first 1,024-curve classification took 55.115 ms and immediate retained access
+took 60 ns. The tangent row confirms that retaining overlap evidence does not
+regress the endpoint index. Relative to the original 682.674 ms arrangement
+checkpoint, the repeated complete workflow is cumulatively 97.4% faster.
+
+The benchmark supports isolated profiling through
+`HYPERCURVE_BENCH_ARRANGEMENT_GROUP`: `overlap-scan`,
+`cold-splitting-overlap`, `tangent-order`, and `full-overlap`. With no group it
+retains the complete original benchmark sequence.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

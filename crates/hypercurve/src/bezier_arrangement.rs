@@ -17,7 +17,7 @@
 //! model: when local
 //! order is not certified, traversal stops instead of guessing.
 
-use std::{cmp::Ordering, collections::HashMap};
+use std::{cmp::Ordering, collections::HashMap, fmt, sync::OnceLock};
 
 use hyperreal::{Rational, Real, RealSign};
 use hypersolve::{
@@ -34,9 +34,10 @@ use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicSameTangentOrderStatus,
     BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
-    BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2, BezierSplitFragment2,
-    BezierSplitMaterialization2, BezierSubcurve2, BezierTangentTurnOrdering2, Classification,
-    CurveError, CurvePolicy, CurveResult, Point2, UncertaintyReason, ZeroStatus,
+    BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2,
+    BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSplitMaterialization2,
+    BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurveError, CurvePolicy,
+    CurveResult, Point2, UncertaintyReason, ZeroStatus,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
     compare_algebraic_tangent_turn_from_base,
 };
@@ -52,9 +53,9 @@ pub struct BezierArrangementFragment2 {
 }
 
 /// Branch-free retained Bezier arrangement graph.
-#[derive(Clone, Debug, Default, PartialEq)]
 pub struct BezierArrangementGraph2 {
     fragments: Vec<BezierArrangementFragment2>,
+    certified_overlap_evidence: OnceLock<Box<Classification<BezierRetainedOverlapEvidence2>>>,
 }
 
 /// One endpoint-connected traversal chain through retained Bezier fragments.
@@ -120,6 +121,43 @@ impl BezierArrangementFragment2 {
     }
 }
 
+impl Clone for BezierArrangementGraph2 {
+    fn clone(&self) -> Self {
+        let clone = Self {
+            fragments: self.fragments.clone(),
+            certified_overlap_evidence: OnceLock::new(),
+        };
+        if let Some(evidence) = self.cached_certified_overlap_evidence() {
+            clone.cache_certified_overlap_evidence(evidence);
+        }
+        clone
+    }
+}
+
+impl fmt::Debug for BezierArrangementGraph2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("BezierArrangementGraph2")
+            .field("fragments", &self.fragments)
+            .finish()
+    }
+}
+
+impl Default for BezierArrangementGraph2 {
+    fn default() -> Self {
+        Self {
+            fragments: Vec::new(),
+            certified_overlap_evidence: OnceLock::new(),
+        }
+    }
+}
+
+impl PartialEq for BezierArrangementGraph2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.fragments == other.fragments
+    }
+}
+
 impl BezierArrangementGraph2 {
     /// Constructs a retained graph from split materializations in source order.
     pub fn from_split_materializations(
@@ -146,7 +184,31 @@ impl BezierArrangementGraph2 {
     /// Constructs a graph from already-retained fragments.
     pub fn new(fragments: Vec<BezierArrangementFragment2>) -> CurveResult<Self> {
         validate_arrangement_fragment_provenance(&fragments)?;
-        Ok(Self { fragments })
+        Ok(Self {
+            fragments,
+            certified_overlap_evidence: OnceLock::new(),
+        })
+    }
+
+    pub(crate) fn cached_certified_overlap_evidence(
+        &self,
+    ) -> Option<Classification<BezierRetainedOverlapEvidence2>> {
+        self.certified_overlap_evidence
+            .get()
+            .map(|evidence| evidence.as_ref().clone())
+    }
+
+    pub(crate) fn cache_certified_overlap_evidence(
+        &self,
+        evidence: Classification<BezierRetainedOverlapEvidence2>,
+    ) {
+        let _ = self.certified_overlap_evidence.set(Box::new(evidence));
+    }
+
+    /// Returns whether exact retained-overlap evidence has been cached for the
+    /// certified policy.
+    pub fn is_certified_overlap_evidence_cached(&self) -> bool {
+        self.certified_overlap_evidence.get().is_some()
     }
 
     /// Returns retained fragments.

@@ -37,6 +37,10 @@ fn benchmark_curve_count() -> i32 {
         .clamp(1, i32::MAX / 2)
 }
 
+fn benchmark_group() -> Option<String> {
+    std::env::var("HYPERCURVE_BENCH_ARRANGEMENT_GROUP").ok()
+}
+
 fn decided<T>(classification: Classification<T>) -> T {
     match classification {
         Classification::Decided(value) => value,
@@ -78,72 +82,125 @@ fn main() -> CurveResult<()> {
     let graph = BezierArrangementGraph2::from_split_materializations(&materializations)?;
 
     let iterations = benchmark_iterations();
-    let started = Instant::now();
-    let mut traversal_total = 0_usize;
-    for _ in 0..iterations {
-        let traversal = decided(graph.traverse_with_tangent_order(&policy));
-        traversal_total += black_box(traversal.len());
+    let group = benchmark_group();
+    if group.as_deref() == Some("overlap-scan") {
+        let started = Instant::now();
+        let cold_scan = BezierRetainedOverlapEvidence2::from_graph(&graph, &policy);
+        let cold_scan_elapsed = started.elapsed();
+        let cold_scan_count = match cold_scan {
+            Classification::Decided(evidence) => evidence.len(),
+            Classification::Uncertain(_) => 0,
+        };
+        let started = Instant::now();
+        let retained_scan = BezierRetainedOverlapEvidence2::from_graph(&graph, &policy);
+        let retained_scan_elapsed = started.elapsed();
+        let retained_scan_count = match retained_scan {
+            Classification::Decided(evidence) => evidence.len(),
+            Classification::Uncertain(_) => 0,
+        };
+        println!(
+            "bezier_arrangement_cold_overlap_scan_{curve_count}_curves: one iteration in {cold_scan_elapsed:?}, total={cold_scan_count}"
+        );
+        println!(
+            "bezier_arrangement_retained_overlap_scan_{curve_count}_curves: one iteration in {retained_scan_elapsed:?}, total={retained_scan_count}"
+        );
+        return Ok(());
     }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_arrangement_materialized_tangent_order_{curve_count}_curves: {iterations} iterations in {elapsed:?} ({:?}/iter), total={traversal_total}",
-        elapsed / iterations
-    );
 
-    let started = Instant::now();
-    let mut total = 0_usize;
-    for _ in 0..iterations {
-        let traversal = decided(graph.traverse_with_tangent_order(&policy));
-        total += black_box(traversal.len());
-        total += black_box(
-            match BezierRetainedOverlapEvidence2::from_graph(&graph, &policy) {
-                Classification::Decided(evidence) => {
-                    let split_count = match evidence.line_overlap_splits(&policy) {
-                        Classification::Decided(splits) => splits.len(),
-                        Classification::Uncertain(_) => 0,
-                    };
-                    let bezier_split_count =
-                        match evidence.linear_bezier_overlap_splits(&graph, &policy) {
+    if group.as_deref() == Some("cold-splitting-overlap") {
+        let started = Instant::now();
+        let cold_workflow = decided(graph.traverse_retained_splitting_linear_overlaps(&policy));
+        let cold_workflow_total = black_box(
+            cold_workflow.traversal().len()
+                + cold_workflow
+                    .refined_traversal()
+                    .shadowed_fragment_indices()
+                    .len(),
+        );
+        let cold_workflow_elapsed = started.elapsed();
+        println!(
+            "bezier_arrangement_cold_splitting_overlap_workflow_{curve_count}_curves: one iteration in {cold_workflow_elapsed:?}, total={cold_workflow_total}"
+        );
+        return Ok(());
+    }
+
+    if group
+        .as_deref()
+        .is_none_or(|value| value == "tangent-order")
+    {
+        let started = Instant::now();
+        let mut traversal_total = 0_usize;
+        for _ in 0..iterations {
+            let traversal = decided(graph.traverse_with_tangent_order(&policy));
+            traversal_total += black_box(traversal.len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "bezier_arrangement_materialized_tangent_order_{curve_count}_curves: {iterations} iterations in {elapsed:?} ({:?}/iter), total={traversal_total}",
+            elapsed / iterations
+        );
+    }
+
+    if group.as_deref().is_none_or(|value| value == "full-overlap") {
+        let started = Instant::now();
+        let mut total = 0_usize;
+        for _ in 0..iterations {
+            let traversal = decided(graph.traverse_with_tangent_order(&policy));
+            total += black_box(traversal.len());
+            total += black_box(
+                match BezierRetainedOverlapEvidence2::from_graph(&graph, &policy) {
+                    Classification::Decided(evidence) => {
+                        let split_count = match evidence.line_overlap_splits(&policy) {
                             Classification::Decided(splits) => splits.len(),
                             Classification::Uncertain(_) => 0,
                         };
-                    evidence.len() + split_count + bezier_split_count
+                        let bezier_split_count =
+                            match evidence.linear_bezier_overlap_splits(&graph, &policy) {
+                                Classification::Decided(splits) => splits.len(),
+                                Classification::Uncertain(_) => 0,
+                            };
+                        evidence.len() + split_count + bezier_split_count
+                    }
+                    Classification::Uncertain(_) => 0,
+                },
+            );
+            total += black_box(
+                match graph.traverse_retained_deduplicating_materialized_overlaps(&policy) {
+                    Classification::Decided(evidence) => evidence.shadowed_fragment_indices().len(),
+                    Classification::Uncertain(_) => 0,
+                },
+            );
+            total += black_box(match graph.split_retained_linear_overlaps(&policy) {
+                Classification::Decided(refinement) => {
+                    refinement.graph().len()
+                        + refinement.refined_fragments().len()
+                        + refinement.resolved_overlaps().len()
                 }
                 Classification::Uncertain(_) => 0,
-            },
-        );
-        total += black_box(
-            match graph.traverse_retained_deduplicating_materialized_overlaps(&policy) {
-                Classification::Decided(evidence) => evidence.shadowed_fragment_indices().len(),
-                Classification::Uncertain(_) => 0,
-            },
-        );
-        total += black_box(match graph.split_retained_linear_overlaps(&policy) {
-            Classification::Decided(refinement) => {
-                refinement.graph().len()
-                    + refinement.refined_fragments().len()
-                    + refinement.resolved_overlaps().len()
-            }
-            Classification::Uncertain(_) => 0,
-        });
-        total += black_box(
-            match graph.traverse_retained_splitting_linear_overlaps(&policy) {
-                Classification::Decided(traversal) => {
-                    traversal.traversal().len()
-                        + traversal
-                            .refined_traversal()
-                            .shadowed_fragment_indices()
-                            .len()
-                }
-                Classification::Uncertain(_) => 0,
-            },
+            });
+            total += black_box(
+                match graph.traverse_retained_splitting_linear_overlaps(&policy) {
+                    Classification::Decided(traversal) => {
+                        traversal.traversal().len()
+                            + traversal
+                                .refined_traversal()
+                                .shadowed_fragment_indices()
+                                .len()
+                    }
+                    Classification::Uncertain(_) => 0,
+                },
+            );
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "bezier_arrangement_full_overlap_workflow_{curve_count}_curves: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
+            elapsed / iterations
         );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_arrangement_full_overlap_workflow_{curve_count}_curves: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
-        elapsed / iterations
-    );
+
+    if group.is_some() {
+        return Ok(());
+    }
 
     let reversed_internal_overlap_graph = BezierArrangementGraph2::new(vec![
         line_fragment(0, 0, p(0, 0), p(1, 0), p(2, 0)),

@@ -15,7 +15,7 @@
 //! model: an overlap is a
 //! first-class event, not an arbitrary successor choice.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, rc::Rc};
 
 use hyperreal::Real;
 
@@ -208,7 +208,7 @@ fn validate_line_overlap_segment_geometry(segment: &LineSeg2) -> CurveResult<()>
 /// Exact overlap evidence for materialized retained Bezier arrangement fragments.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct BezierRetainedOverlapEvidence2 {
-    overlaps: Vec<BezierRetainedOverlap2>,
+    overlaps: Rc<Vec<BezierRetainedOverlap2>>,
 }
 
 /// Retained traversal after consuming certified duplicate materialized overlaps.
@@ -1407,6 +1407,22 @@ impl BezierArrangementGraph2 {
             Classification::Decided(split_plan) => split_plan,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
+        if split_plan.is_empty() {
+            let refined_fragments = match unchanged_refined_fragments(self.len()) {
+                Ok(fragments) => fragments,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+            return match BezierRetainedLinearOverlapSplitGraph2::new(
+                self.clone(),
+                refined_fragments,
+                overlap_evidence,
+                Vec::new(),
+                Vec::new(),
+            ) {
+                Ok(refinement) => Classification::Decided(refinement),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+        }
         let boundaries = match linear_overlap_boundaries(self.len(), &split_plan, policy) {
             Classification::Decided(boundaries) => boundaries,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -1492,6 +1508,22 @@ impl BezierArrangementGraph2 {
             Classification::Decided(split_plan) => split_plan,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
+        if split_plan.is_empty() {
+            let refined_fragments = match unchanged_refined_fragments(self.len()) {
+                Ok(fragments) => fragments,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+            return match BezierRetainedRationalOverlapSplitGraph2::new(
+                self.clone(),
+                refined_fragments,
+                overlap_evidence,
+                Vec::new(),
+                Vec::new(),
+            ) {
+                Ok(refinement) => Classification::Decided(refinement),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+        }
         let boundaries = match rational_overlap_boundaries(self.len(), &split_plan, policy) {
             Classification::Decided(boundaries) => boundaries,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -1610,6 +1642,18 @@ impl BezierRetainedOverlapEvidence2 {
         graph: &BezierArrangementGraph2,
         policy: &CurvePolicy,
     ) -> Classification<Self> {
+        let cacheable = *policy == CurvePolicy::certified();
+        if cacheable && let Some(evidence) = graph.cached_certified_overlap_evidence() {
+            return evidence;
+        }
+        let evidence = Self::scan_graph(graph, policy);
+        if cacheable {
+            graph.cache_certified_overlap_evidence(evidence.clone());
+        }
+        evidence
+    }
+
+    fn scan_graph(graph: &BezierArrangementGraph2, policy: &CurvePolicy) -> Classification<Self> {
         let needs_rational_dispatch = graph.fragments().iter().any(|fragment| {
             matches!(
                 fragment.fragment(),
@@ -1678,23 +1722,27 @@ impl BezierRetainedOverlapEvidence2 {
                 }
             }
         }
-        Classification::Decided(Self { overlaps })
+        Classification::Decided(Self {
+            overlaps: Rc::new(overlaps),
+        })
     }
 
-    /// Constructs a evidence from already-certified overlaps.
+    /// Constructs evidence from already-certified overlaps.
     pub fn new(overlaps: Vec<BezierRetainedOverlap2>) -> CurveResult<Self> {
         validate_overlap_evidence_order(&overlaps)?;
-        Ok(Self { overlaps })
+        Ok(Self {
+            overlaps: Rc::new(overlaps),
+        })
     }
 
     /// Returns certified overlap pairs.
     pub fn overlaps(&self) -> &[BezierRetainedOverlap2] {
-        &self.overlaps
+        self.overlaps.as_slice()
     }
 
     /// Consumes the evidence and returns certified overlap pairs.
     pub fn into_overlaps(self) -> Vec<BezierRetainedOverlap2> {
-        self.overlaps
+        Rc::try_unwrap(self.overlaps).unwrap_or_else(|overlaps| (*overlaps).clone())
     }
 
     /// Returns true when the scan found no certified materialized overlaps.
@@ -1717,7 +1765,7 @@ impl BezierRetainedOverlapEvidence2 {
         policy: &CurvePolicy,
     ) -> Classification<Vec<BezierRetainedLineOverlapSplit2>> {
         let mut splits = Vec::new();
-        for overlap in &self.overlaps {
+        for overlap in self.overlaps.iter() {
             let BezierRetainedOverlapRelation2::LineSegmentOverlap { intersection } =
                 overlap.relation()
             else {
@@ -1835,7 +1883,7 @@ impl BezierRetainedOverlapEvidence2 {
         policy: &CurvePolicy,
     ) -> Classification<Vec<BezierRetainedRationalOverlapSplit2>> {
         let mut splits = Vec::new();
-        for retained in &self.overlaps {
+        for retained in self.overlaps.iter() {
             let BezierRetainedOverlapRelation2::RationalBezierOverlap { overlap } =
                 retained.relation()
             else {
@@ -2094,6 +2142,19 @@ fn linear_overlap_boundaries(
         }
     }
     Classification::Decided(boundaries)
+}
+
+fn unchanged_refined_fragments(
+    fragment_count: usize,
+) -> CurveResult<Vec<BezierRetainedOverlapRefinedFragment2>> {
+    (0..fragment_count)
+        .map(|original_fragment_index| {
+            BezierRetainedOverlapRefinedFragment2::new(
+                original_fragment_index,
+                ParamRange::new(Real::zero(), Real::one()),
+            )
+        })
+        .collect()
 }
 
 fn rational_overlap_boundaries(
