@@ -470,12 +470,34 @@ impl RationalQuadraticBezier2 {
         axis: Axis2,
         policy: &CurvePolicy,
     ) -> Classification<Vec<Real>> {
-        let (n0, n1, n2) = self.weighted_coordinate_power_basis(axis);
-        let (d0, d1, d2) = self.weight_power_basis();
-        let two = Real::from(2_i8);
-        let c0 = (&n1 * &d0) - (&n0 * &d1);
-        let c1 = &two * &((&n2 * &d0) - (&n0 * &d2));
-        let c2 = (&n2 * &d1) - (&n1 * &d2);
+        let weight_products = self.derivative_weight_products();
+        let denominator = self.weight_power_basis();
+        self.axis_monotone_parameters_with_basis(axis, &weight_products, &denominator, policy)
+    }
+
+    fn axis_monotone_parameters_with_basis(
+        &self,
+        axis: Axis2,
+        weight_products: &(Real, Real, Real),
+        denominator: &(Real, Real, Real),
+        policy: &CurvePolicy,
+    ) -> Classification<Vec<Real>> {
+        // After removing the irrelevant common factor two, the quotient
+        // derivative has these quadratic Bernstein controls:
+        //
+        //   w0 w1 (p1 - p0), w0 w2 (p2 - p0), w1 w2 (p2 - p1).
+        //
+        // Forming them directly avoids separately expanding N, D, N', and D'
+        // and then cancelling their cubic terms.
+        let a = &weight_products.0
+            * &(coordinate(self.control(), axis) - coordinate(self.start(), axis));
+        let b =
+            &weight_products.1 * &(coordinate(self.end(), axis) - coordinate(self.start(), axis));
+        let c =
+            &weight_products.2 * &(coordinate(self.end(), axis) - coordinate(self.control(), axis));
+        let c0 = a.clone();
+        let c1 = &b - &(Real::from(2_i8) * &a);
+        let c2 = &a - &b + c;
         let roots = match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
             Classification::Decided(roots) => roots,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -483,7 +505,9 @@ impl RationalQuadraticBezier2 {
 
         let mut retained_roots = Vec::new();
         for root in roots {
-            match is_zero(&self.denominator_at(root.clone()), policy) {
+            let denominator_at_root =
+                ((&denominator.2 * &root) + &denominator.1) * &root + &denominator.0;
+            match is_zero(&denominator_at_root, policy) {
                 Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
                 Some(false) => retained_roots.push(root),
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
@@ -494,10 +518,22 @@ impl RationalQuadraticBezier2 {
 
     /// Decomposes the conic at all certified x/y quotient-derivative roots.
     pub fn monotone_spans(&self, policy: &CurvePolicy) -> Classification<Vec<BezierMonotoneSpan>> {
+        let weight_products = self.derivative_weight_products();
+        let denominator = self.weight_power_basis();
         crate::bezier_topology::monotone_spans_from_parameters(
             [
-                self.axis_monotone_parameters(Axis2::X, policy),
-                self.axis_monotone_parameters(Axis2::Y, policy),
+                self.axis_monotone_parameters_with_basis(
+                    Axis2::X,
+                    &weight_products,
+                    &denominator,
+                    policy,
+                ),
+                self.axis_monotone_parameters_with_basis(
+                    Axis2::Y,
+                    &weight_products,
+                    &denominator,
+                    policy,
+                ),
             ],
             policy,
         )
@@ -877,6 +913,14 @@ impl RationalQuadraticBezier2 {
             coordinate(self.control(), axis) * &self.control_weight,
             coordinate(self.end(), axis) * &self.end_weight,
         ])
+    }
+
+    fn derivative_weight_products(&self) -> (Real, Real, Real) {
+        (
+            &self.start_weight * &self.control_weight,
+            &self.start_weight * &self.end_weight,
+            &self.control_weight * &self.end_weight,
+        )
     }
 
     fn weight_power_basis(&self) -> (Real, Real, Real) {

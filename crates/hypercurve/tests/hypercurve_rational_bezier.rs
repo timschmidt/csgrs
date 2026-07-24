@@ -71,6 +71,24 @@ fn rational_quadratic_rational_parameter_uses_exact_power_quotient() {
 }
 
 #[test]
+fn rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative() {
+    let curve = RationalQuadraticBezier2::try_new(
+        p(0, 0),
+        p(1, 2),
+        Point2::new(q(4, 9), r(5)),
+        r(1),
+        r(2),
+        r(3),
+    )
+    .unwrap();
+
+    assert_eq!(
+        decided(curve.axis_monotone_parameters(Axis2::X, &CurvePolicy::certified())),
+        vec![q(1, 2)]
+    );
+}
+
+#[test]
 fn general_rational_derivative_is_exact_and_reuses_power_basis() {
     let curve = RationalBezier2::try_new(vec![p(0, 0), p(4, 0)], vec![r(1), r(3)]).unwrap();
     let clone = curve.clone();

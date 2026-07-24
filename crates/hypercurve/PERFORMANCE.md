@@ -3704,6 +3704,38 @@ AddressSanitizer region-Boolean replay completed all 2,515 executions at 5,893
 coverage points and 19,125 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Direct rational-conic quotient derivatives
+
+Rational-quadratic extrema formerly expanded each weighted coordinate
+numerator and the homogeneous denominator into power form, multiplied out
+`N'D - ND'`, and relied on the cubic terms cancelling. The quotient derivative
+is now formed directly from its three quadratic Bernstein controls:
+`w0*w1*(p1-p0)`, `w0*w2*(p2-p0)`, and `w1*w2*(p2-p1)`. The x and y solves
+share their three weight products and denominator power basis, and finite-root
+validation evaluates that denominator with Horner's rule. The general
+quadratic root helper also classifies its leading coefficient once instead of
+repeating the same exact-zero predicate.
+
+An unequal-weight regression constructs a conic whose x quotient derivative
+has the exact root `1/2`. Existing rational bounds, subdivision, conic
+intersection, topology, and Boolean suites cover algebraic roots, projective
+denominator boundaries, negative weights, and downstream extrema use.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 48,246,452 to 48,079,691 (0.35%), 85.01% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 75,087 to 74,759
+while temporary events moved from 7,330 to 7,350; peak heap moved from 1.31 to
+1.33 MiB and peak RSS from 11.96 to 12.11 MiB. Every measured run retained 9
+candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and supported default/no-default release WASM library builds passed.
+AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,898
+coverage points and 19,154 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -3669,11 +3669,10 @@ pub(crate) fn polynomial_roots_in_unit_interval(
     c2: Real,
     policy: &CurvePolicy,
 ) -> Classification<Vec<Real>> {
-    if is_zero(&c2, policy) == Some(true) {
-        return linear_roots_in_unit_interval(c0, c1, policy);
-    }
-    if is_zero(&c2, policy).is_none() {
-        return Classification::Uncertain(UncertaintyReason::RealSign);
+    match is_zero(&c2, policy) {
+        Some(true) => return linear_roots_in_unit_interval(c0, c1, policy),
+        Some(false) => {}
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
     }
 
     let four = Real::from(4_i8);
