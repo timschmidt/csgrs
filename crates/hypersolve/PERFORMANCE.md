@@ -290,6 +290,28 @@ region-Boolean fuzz replay completed all 2,509 executions at 5,895 coverage
 points and 19,144 feature edges; LeakSanitizer alone remained disabled under
 ptrace.
 
+Hyperreal's checked integer cross-difference quotient now recognizes a divisor
+with magnitude one after all exact-integer and nonzero guards. Applying only
+the divisor sign avoids big-integer division in the first Bareiss stage.
+A matched fresh 192-bit Criterion sentinel measured 625.27 ns for the composed
+multiply/subtract/divide and 190.15 ns for the fused unit-divisor path, a 69.6%
+reduction.
+
+On the same downstream sentinel, the ten-run instruction median fell from
+72,782,675 to 72,479,577 (0.4%), 77.4% below the original baseline. Heaptrack
+allocations fell from 108,842 to 107,461; temporary allocations remained
+6,236, peak heap remained 1.53 MiB, and peak RSS was 12.65 MiB. Eleven ordinary
+runs had a 7.552 ms complete median, a 5.446 ms preparation median, and a
+0.353 ms exact-polyline projection median, with unchanged topology and
+checksum.
+
+The complete Hyperreal, Hypersolve, and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The requested AddressSanitizer
+region-Boolean replay completed its 2,509-run budget after 2,513 executions at
+5,900 coverage points and 19,165 feature edges; LeakSanitizer alone remained
+disabled under ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
