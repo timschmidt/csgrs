@@ -259,6 +259,44 @@ fn mobius_transformed_polynomial(
     denominator_offset: &Real,
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
+    if polynomial
+        .iter()
+        .chain([
+            numerator_scale,
+            numerator_offset,
+            denominator_scale,
+            denominator_offset,
+        ])
+        .all(|coefficient| coefficient.exact_rational_ref().is_some())
+    {
+        return mobius_transformed_polynomial_horner(
+            polynomial,
+            numerator_scale,
+            numerator_offset,
+            denominator_scale,
+            denominator_offset,
+            policy,
+        );
+    }
+
+    mobius_transformed_polynomial_power_sum(
+        polynomial,
+        numerator_scale,
+        numerator_offset,
+        denominator_scale,
+        denominator_offset,
+        policy,
+    )
+}
+
+fn mobius_transformed_polynomial_power_sum(
+    polynomial: &[Real],
+    numerator_scale: &Real,
+    numerator_offset: &Real,
+    denominator_scale: &Real,
+    denominator_offset: &Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
     let degree = polynomial.len().checked_sub(1)?;
     let inverse_numerator = vec![-numerator_offset.clone(), denominator_offset.clone()];
     let inverse_denominator = vec![numerator_scale.clone(), -denominator_scale.clone()];
@@ -273,6 +311,40 @@ fn mobius_transformed_polynomial(
         polynomial_accumulate(&mut transformed, &term);
     }
     trim_polynomial(transformed, policy)
+}
+
+fn mobius_transformed_polynomial_horner(
+    polynomial: &[Real],
+    numerator_scale: &Real,
+    numerator_offset: &Real,
+    denominator_scale: &Real,
+    denominator_offset: &Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let inverse_numerator = vec![-numerator_offset.clone(), denominator_offset.clone()];
+    let inverse_denominator = vec![numerator_scale.clone(), -denominator_scale.clone()];
+    let mut transformed = vec![polynomial.last()?.clone()];
+    let mut denominator_power = vec![Real::one()];
+    for coefficient in polynomial[..polynomial.len() - 1].iter().rev() {
+        transformed = polynomial_mul_linear(&transformed, &inverse_numerator);
+        denominator_power = polynomial_mul_linear(&denominator_power, &inverse_denominator);
+        for (target, basis) in transformed.iter_mut().zip(&denominator_power) {
+            *target = target.clone() + coefficient.clone() * basis.clone();
+        }
+    }
+    trim_polynomial(transformed, policy)
+}
+
+fn polynomial_mul_linear(polynomial: &[Real], linear: &[Real]) -> Vec<Real> {
+    let mut product = Vec::with_capacity(polynomial.len() + 1);
+    product.push(polynomial[0].clone() * linear[0].clone());
+    product.extend(
+        polynomial
+            .windows(2)
+            .map(|pair| pair[1].clone() * linear[0].clone() + pair[0].clone() * linear[1].clone()),
+    );
+    product.push(polynomial[polynomial.len() - 1].clone() * linear[1].clone());
+    product
 }
 
 fn mobius_transformed_interval(
@@ -584,7 +656,72 @@ mod tests {
         assert!(root.is_valid());
     }
 
+    #[test]
+    fn rational_homogeneous_horner_matches_retained_power_sum() {
+        let polynomial = [real(-7), real(3), Real::zero(), real(-2), real(5), real(1)];
+        let numerator_scale = real(2);
+        let numerator_offset = real(-1);
+        let denominator_scale = real(1);
+        let denominator_offset = real(3);
+
+        let horner = mobius_transformed_polynomial_horner(
+            &polynomial,
+            &numerator_scale,
+            &numerator_offset,
+            &denominator_scale,
+            &denominator_offset,
+            PredicatePolicy,
+        )
+        .unwrap();
+        let power_sum = mobius_transformed_polynomial_power_sum(
+            &polynomial,
+            &numerator_scale,
+            &numerator_offset,
+            &denominator_scale,
+            &denominator_offset,
+            PredicatePolicy,
+        )
+        .unwrap();
+
+        assert_eq!(horner, power_sum);
+    }
+
     proptest! {
+        #[test]
+        fn generated_rational_homogeneous_horner_matches_retained_power_sum(
+            coefficients in prop::collection::vec(-8_i16..=8, 1..7),
+            numerator_scale in -5_i16..=5,
+            numerator_offset in -5_i16..=5,
+            denominator_scale in -5_i16..=5,
+            denominator_offset in -5_i16..=5,
+        ) {
+            let polynomial: Vec<Real> =
+                coefficients.into_iter().map(|coefficient| real(i64::from(coefficient))).collect();
+            let numerator_scale = real(i64::from(numerator_scale));
+            let numerator_offset = real(i64::from(numerator_offset));
+            let denominator_scale = real(i64::from(denominator_scale));
+            let denominator_offset = real(i64::from(denominator_offset));
+
+            let horner = mobius_transformed_polynomial_horner(
+                &polynomial,
+                &numerator_scale,
+                &numerator_offset,
+                &denominator_scale,
+                &denominator_offset,
+                PredicatePolicy,
+            );
+            let power_sum = mobius_transformed_polynomial_power_sum(
+                &polynomial,
+                &numerator_scale,
+                &numerator_offset,
+                &denominator_scale,
+                &denominator_offset,
+                PredicatePolicy,
+            );
+
+            prop_assert_eq!(horner, power_sum);
+        }
+
         #[test]
         fn generated_rational_witness_mobius_matches_exact_fraction(
             root in -24_i16..=24,

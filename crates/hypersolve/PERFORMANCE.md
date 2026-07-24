@@ -186,6 +186,36 @@ passed. The requested AddressSanitizer region-Boolean fuzz replay completed
 all 2,509 executions at 5,895 coverage points and 19,157 feature edges;
 LeakSanitizer alone remained disabled under ptrace.
 
+Exact-rational Mobius polynomial images now evaluate the homogeneous
+substitution by Horner recurrence. For inverse linear forms
+`A(y) = d*y - b` and `B(y) = a - c*y`, the recurrence starts with the leading
+source coefficient and repeatedly forms `A*H + p_k*B^j`. It tracks `B^j`
+alongside `H`, so it constructs exactly the same
+`B(y)^n P(A(y) / B(y))` as the retained sum of independently expanded powers.
+Both multiplications are by a linear polynomial and use a dedicated
+two-diagonal convolution. The fast path is guarded by exact-rational source
+and transform coefficients; every other `Real` representation keeps the
+former power-sum construction.
+
+A fixed degree-five regression and generated exact-rational polynomials of
+degrees zero through five compare the Horner result directly with the retained
+power-sum result. On Hypercurve's same all-family exact Boolean sentinel, the
+ten-run instruction median fell from 78,335,067 to 77,532,932 (1.0%), 75.8%
+below the original 320,660,631 baseline. Specializing the linear convolution
+accounted for a further 0.10% reduction from the generic Horner implementation.
+Eleven ordinary runs had an 8.593 ms complete median, a 6.437 ms preparation
+median, and a 0.409 ms exact-polyline projection median. Heaptrack recorded
+115,778 allocations, 6,834 temporary allocations, 1.96 MiB peak heap, and
+13.01 MiB peak RSS. Exact topology remained 9 candidate pairs, 48 fragments,
+2 classifications, 4 decided operations, no blockers, and checksum 6.
+
+The complete Hypersolve and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The requested downstream
+AddressSanitizer region-Boolean fuzz replay completed all 2,509 executions at
+5,895 coverage points and 19,165 feature edges; LeakSanitizer alone remained
+disabled under ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
