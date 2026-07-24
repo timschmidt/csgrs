@@ -265,6 +265,31 @@ region-Boolean fuzz replay completed all 2,509 executions at 5,890 coverage
 points and 19,156 feature edges; LeakSanitizer alone remained disabled under
 ptrace.
 
+Flat quotient-ring interpolation now forms every sampled matrix entry with
+Hyperreal's checked exact integer scaled difference. The new primitive computes
+`N - y*D` directly on integer magnitudes instead of materializing a general
+rational product and subtraction. Any unexpected noninteger input returns
+`None`, preserving this caller's established Sylvester-resultant fallback.
+Exhaustive small signed, fractional-rejection, and wide-integer scalar tests
+supplement the fixed and generated determinant/resultant comparisons.
+
+Matched fresh 192-bit Hyperreal Criterion sentinels measured the composed
+operation at 310.13 ns and the fused operation at 102.50 ns, a 67.0% reduction.
+On the same Hypercurve sentinel, the ten-run instruction median fell from
+74,732,427 to 72,782,675 (2.6%), 77.3% below the original baseline. Heaptrack
+allocations fell from 112,178 to 108,842 and temporary allocations from 6,833
+to 6,236; peak heap remained 1.53 MiB and peak RSS was 12.55 MiB. Eleven
+ordinary runs had a 7.672 ms complete median, a 5.501 ms preparation median,
+and a 0.339 ms exact-polyline projection median, with identical topology and
+checksum.
+
+The complete Hyperreal, Hypersolve, and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The requested AddressSanitizer
+region-Boolean fuzz replay completed all 2,509 executions at 5,895 coverage
+points and 19,144 feature edges; LeakSanitizer alone remained disabled under
+ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate

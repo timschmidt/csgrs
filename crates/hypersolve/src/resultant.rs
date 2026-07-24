@@ -249,12 +249,14 @@ pub(crate) fn quotient_ring_resultant_samples(
 
     let mut samples = Vec::with_capacity(degree + 1);
     for sample in 0..=degree {
-        let image_value = Rational::new(i64::try_from(sample).ok()?);
+        let image_value = i64::try_from(sample).ok()?;
         let matrix = numerator_entries
             .iter()
             .zip(&denominator_entries)
-            .map(|(numerator, denominator)| numerator - &(denominator * &image_value))
-            .collect::<Vec<_>>();
+            .map(|(numerator, denominator)| {
+                numerator.checked_exact_integer_scaled_difference(denominator, image_value)
+            })
+            .collect::<Option<Vec<_>>>()?;
         samples.push(Real::from(determinant_integer_bareiss_flat(
             matrix, degree,
         )?));
