@@ -2007,6 +2007,9 @@ fn sturm_sequence(
     coefficients: &[Real],
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Vec<Vec<Real>>>> {
+    if let Some(sequence) = primitive_integer_sturm_sequence(coefficients) {
+        return Ok(Classification::Decided(sequence));
+    }
     let p0 = coefficients.to_vec();
     let p1 = derivative_coefficients(coefficients);
     let p1 = match normalize_coefficients(p1, policy)? {
@@ -2031,6 +2034,50 @@ fn sturm_sequence(
     }
 
     Ok(Classification::Decided(sequence))
+}
+
+fn primitive_integer_sturm_sequence(coefficients: &[Real]) -> Option<Vec<Vec<Real>>> {
+    let rationals = coefficients
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let p0 = HyperRational::primitive_bigint_ratio(&rationals);
+    let p1 = primitive_bigint_coefficients(
+        p0.iter()
+            .enumerate()
+            .skip(1)
+            .map(|(degree, coefficient)| coefficient * BigInt::from(degree))
+            .collect(),
+    );
+    let mut integer_sequence = vec![p0];
+    if !p1.is_empty() {
+        integer_sequence.push(p1);
+    }
+    while integer_sequence.len() >= 2 && integer_sequence.len() < 64 {
+        let previous = integer_sequence[integer_sequence.len() - 2].clone();
+        let mut remainder = primitive_integer_pseudo_remainder_bigint(
+            previous,
+            &integer_sequence[integer_sequence.len() - 1],
+        )?;
+        if remainder.is_empty() {
+            break;
+        }
+        for coefficient in &mut remainder {
+            *coefficient = -std::mem::take(coefficient);
+        }
+        integer_sequence.push(remainder);
+    }
+    Some(
+        integer_sequence
+            .into_iter()
+            .map(|polynomial| {
+                polynomial
+                    .into_iter()
+                    .map(|coefficient| Real::new(HyperRational::from_bigint(coefficient)))
+                    .collect()
+            })
+            .collect(),
+    )
 }
 
 fn sign_variations_at(
@@ -2114,8 +2161,20 @@ fn primitive_integer_pseudo_remainder(dividend: &[Real], divisor: &[Real]) -> Op
         .iter()
         .map(Real::exact_rational_ref)
         .collect::<Option<Vec<_>>>()?;
-    let mut remainder = HyperRational::primitive_bigint_ratio(&dividend);
+    let remainder = HyperRational::primitive_bigint_ratio(&dividend);
     let divisor = HyperRational::primitive_bigint_ratio(&divisor);
+    primitive_integer_pseudo_remainder_bigint(remainder, &divisor).map(|remainder| {
+        remainder
+            .into_iter()
+            .map(|coefficient| Real::new(HyperRational::from_bigint(coefficient)))
+            .collect()
+    })
+}
+
+fn primitive_integer_pseudo_remainder_bigint(
+    mut remainder: Vec<BigInt>,
+    divisor: &[BigInt],
+) -> Option<Vec<BigInt>> {
     let divisor_leading = divisor.last()?;
     if divisor_leading.is_zero() {
         return None;
@@ -2145,22 +2204,21 @@ fn primitive_integer_pseudo_remainder(dividend: &[Real], divisor: &[Real]) -> Op
             *coefficient = -std::mem::take(coefficient);
         }
     }
-    let content = remainder
+    Some(primitive_bigint_coefficients(remainder))
+}
+
+fn primitive_bigint_coefficients(mut coefficients: Vec<BigInt>) -> Vec<BigInt> {
+    let content = coefficients
         .iter()
         .fold(BigInt::zero(), |content, coefficient| {
             content.gcd(coefficient)
         });
     if !content.is_zero() && !content.is_one() {
-        for coefficient in &mut remainder {
+        for coefficient in &mut coefficients {
             *coefficient /= &content;
         }
     }
-    Some(
-        remainder
-            .into_iter()
-            .map(|coefficient| Real::new(HyperRational::from_bigint(coefficient)))
-            .collect(),
-    )
+    coefficients
 }
 
 fn polynomial_remainder(
@@ -2631,6 +2689,56 @@ mod conversion_tests {
             .collect()
     }
 
+    fn ordinary_field_sturm_sequence(
+        coefficients: &[Real],
+        policy: &CurvePolicy,
+    ) -> Vec<Vec<Real>> {
+        let p0 = coefficients.to_vec();
+        let p1 =
+            match normalize_coefficients(derivative_coefficients(coefficients), policy).unwrap() {
+                Classification::Decided(Some(coefficients)) => coefficients,
+                Classification::Decided(None) => return vec![p0],
+                Classification::Uncertain(reason) => {
+                    panic!("field Sturm derivative unexpectedly uncertain: {reason:?}")
+                }
+            };
+        let mut sequence = vec![p0, p1];
+        while sequence.len() < 64 {
+            let previous = sequence[sequence.len() - 2].clone();
+            let remainder = match polynomial_remainder(
+                previous,
+                &sequence[sequence.len() - 1],
+                policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(Some(remainder)) => remainder,
+                Classification::Decided(None) => break,
+                Classification::Uncertain(reason) => {
+                    panic!("field Sturm remainder unexpectedly uncertain: {reason:?}")
+                }
+            };
+            sequence.push(negate_coefficients(remainder));
+        }
+        sequence
+    }
+
+    fn sturm_evidence_key(evidence: SturmPointEvidence) -> Option<usize> {
+        match evidence {
+            SturmPointEvidence::Root => None,
+            SturmPointEvidence::NonRoot(variations) => Some(variations),
+        }
+    }
+
+    fn decided<T>(classification: Classification<T>, context: &str) -> T {
+        match classification {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                panic!("{context} unexpectedly uncertain: {reason:?}")
+            }
+        }
+    }
+
     #[test]
     fn primitive_pseudo_remainder_is_positive_field_remainder_scale() {
         let policy = CurvePolicy::certified();
@@ -2675,6 +2783,64 @@ mod conversion_tests {
                 primitive_integer_pseudo_remainder(&dividend, &divisor),
                 Some(expected)
             );
+        }
+    }
+
+    #[test]
+    fn primitive_integer_sturm_matches_field_sequence_variations() {
+        let policy = CurvePolicy::certified();
+        let polynomials = [
+            vec![rational(-1, 3), rational(0, 1), rational(2, 5)],
+            vec![
+                rational(1, 2),
+                rational(-7, 3),
+                rational(4, 5),
+                rational(9, 7),
+            ],
+            vec![
+                rational(-5, 11),
+                rational(0, 1),
+                rational(13, 6),
+                rational(0, 1),
+                rational(-3, 2),
+            ],
+            vec![
+                rational(1, 4),
+                rational(-1, 1),
+                rational(3, 2),
+                rational(-1, 1),
+                rational(1, 4),
+            ],
+        ];
+        let samples = [
+            rational(0, 1),
+            rational(1, 8),
+            rational(1, 3),
+            rational(1, 2),
+            rational(5, 7),
+            rational(1, 1),
+        ];
+        for coefficients in polynomials {
+            let optimized = decided(
+                sturm_sequence(&coefficients, &policy).unwrap(),
+                "rational Sturm sequence",
+            );
+            let field = ordinary_field_sturm_sequence(&coefficients, &policy);
+            for sample in &samples {
+                let optimized = decided(
+                    sturm_point_evidence(&optimized, sample, &policy).unwrap(),
+                    "integer Sturm evidence",
+                );
+                let field = decided(
+                    sturm_point_evidence(&field, sample, &policy).unwrap(),
+                    "field Sturm evidence",
+                );
+                assert_eq!(
+                    sturm_evidence_key(optimized),
+                    sturm_evidence_key(field),
+                    "different variation evidence for {coefficients:?} at {sample:?}"
+                );
+            }
         }
     }
 

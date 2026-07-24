@@ -4016,6 +4016,40 @@ library builds passed. AddressSanitizer region-Boolean replay completed all
 2,509 executions at 5,895 coverage points and 19,144 feature edges with no
 finding; LeakSanitizer remained disabled under ptrace.
 
+### Single-conversion rational Sturm chains
+
+Exact Bezier parameter isolation uses scale-invariant Sturm sequences. For
+rational defining polynomials, every pseudo-remainder step formerly converted
+both of its already-rational operands back to primitive integer coefficient
+vectors. The rational path now clears denominators once, derives and
+content-reduces the integer derivative, and builds the complete signed
+pseudo-remainder chain in the integer domain. Only the completed chain is
+converted back to `Real` coefficients for the existing retained certificate
+and point-variation APIs. Nonrational polynomials continue through the
+unchanged field-arithmetic fallback.
+
+A focused equivalence regression compares variation and exact-root evidence
+from the integer chain with an ordinary field-division Sturm construction for
+rational quadratic through quartic polynomials, including sparse, mixed-sign,
+fractional, and repeated-root inputs. Existing rational reconstruction,
+multiplicity, refinement, algebraic ordering, and five-root isolation suites
+cover the downstream certificate consumers.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 35,910,812 to 35,779,537 (0.37%), 88.84% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 52,711 to 52,252
+and temporary events from 3,825 to 3,759; peak heap remained 1.15 MiB and peak
+RSS fell from 11.35 to 11.32 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. AddressSanitizer region-Boolean replay completed all
+2,509 executions at 5,899 coverage points and 19,192 feature edges with no
+finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
