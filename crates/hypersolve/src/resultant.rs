@@ -343,20 +343,28 @@ fn pseudo_quotient_multiplication_matrix(
 
     let product_len = degree.checked_add(relation_degree)?;
     let mut matrix = vec![Rational::zero(); degree.checked_mul(degree)?];
+    let one = Rational::one();
     for column in 0..degree {
         let mut product = vec![Rational::zero(); product_len];
         for (power, coefficient) in relation.iter().enumerate() {
-            product[column + power] = &product[column + power] + coefficient;
+            product[column + power] = (*coefficient).clone();
         }
         for power in (degree..product_len).rev() {
             let eliminand = product[power].clone();
-            for coefficient in &mut product[..=power] {
-                *coefficient = &*coefficient * *leading;
-            }
             let shift = power - degree;
+            if !leading.is_one() {
+                for coefficient in &mut product[..shift] {
+                    *coefficient = &*coefficient * *leading;
+                }
+            }
             for (source_power, coefficient) in source.iter().enumerate() {
                 let index = shift + source_power;
-                product[index] = &product[index] - &(*coefficient * &eliminand);
+                product[index] = leading.checked_exact_integer_cross_difference_quotient(
+                    &product[index],
+                    coefficient,
+                    &eliminand,
+                    &one,
+                )?;
             }
         }
         for row in 0..degree {

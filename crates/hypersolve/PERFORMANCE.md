@@ -312,6 +312,29 @@ region-Boolean replay completed its 2,509-run budget after 2,513 executions at
 5,900 coverage points and 19,165 feature edges; LeakSanitizer alone remained
 disabled under ptrace.
 
+Quotient-basis pseudo-reduction now evaluates each affected coefficient as one
+checked exact integer cross difference, `leading*value - source*eliminand`.
+Only the untouched low-degree prefix is scaled separately, and a unit source
+leading coefficient leaves that prefix unchanged. Initial shifted relation
+coefficients are cloned directly instead of being added to zero. Any failed
+integer check still returns `None` from the quotient-ring path and preserves
+the established Sylvester-resultant fallback; the generated
+quotient-ring/Sylvester property covers the complete schedule.
+
+On the same downstream sentinel, the ten-run instruction median fell from
+72,479,577 to 71,182,596 (1.8%), 77.8% below the original baseline. Heaptrack
+allocations fell from 107,461 to 105,140; temporary allocations rose from
+6,236 to 6,409, peak heap remained 1.53 MiB, and peak RSS fell from 12.65 to
+12.37 MiB. Eleven ordinary runs had a 7.446 ms complete median, a 5.430 ms
+preparation median, and a 0.343 ms exact-polyline projection median, with
+unchanged topology and checksum.
+
+The complete Hypersolve and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The requested AddressSanitizer
+region-Boolean replay completed all 2,509 executions at 5,893 coverage points
+and 19,125 feature edges; LeakSanitizer alone remained disabled under ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
