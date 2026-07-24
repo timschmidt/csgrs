@@ -4886,6 +4886,9 @@ impl Rational {
         }
 
         let products = values.map(|value| value * value);
+        for product in &products {
+            let _ = product.has_arithmetic_reuse_evidence();
+        }
         let sum = if N == 4 {
             let left = &products[0] + &products[1];
             let right = &products[2] + &products[3];

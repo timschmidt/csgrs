@@ -146,11 +146,12 @@ Relevant path notes:
 - Each immutable rational retains one exact multiplication result under weak operand
   keys in both commutative directions. The cache is bounded, cycle-free, and ignored
   by serialization; misses continue through the same exact word/BigUint kernels.
-- Linear-result admission is adaptive. Shared storage on either operand retains
-  immediately; otherwise a one-byte relaxed reuse hint records the first borrowed
-  observation, the second result is admitted, and later calls reuse it. This keeps
-  one-shot operands allocation-light while making retained outer carriers visible
-  without cloning their scalar fields. The hint fits existing `RationalData` padding,
+- Linear-result admission is adaptive. Storage sharing alone is not arithmetic
+  reuse: a one-byte relaxed hint records the first borrowed observation, the
+  second result is admitted, and later calls reuse it. An existing product or
+  linear cache remains immediate reuse evidence. This keeps cloned one-shot
+  operands allocation-light while preserving repeated-pair reuse. The hint fits
+  existing `RationalData` padding,
   keeping that allocation at 88 bytes. The lazily allocated arithmetic cache holds
   up to three weak-keyed binary results (sums, directed differences, or secondary
   products) and, for shared values, one reciprocal and one
@@ -1479,6 +1480,45 @@ complete median fell from 14.994 ms to 12.985 ms and pair preparation from
 8.682 ms to 7.844 ms, with identical exact topology.
 The complete all-feature test and API-coverage suites, strict all-target
 Clippy, and warning-denied rustdoc passed.
+
+### Two-observation linear cache admission
+
+The former linear-result policy treated `Arc::strong_count() > 1` as evidence
+that an exact sum or directed difference would recur. Ownership clones are
+common in immutable geometry carriers, however, and do not imply that the same
+operand pair will be evaluated again. Those one-shot pairs allocated a bounded
+arithmetic cache and retained a result that was never queried.
+
+Binary linear admission now depends on an arithmetic observation, an existing
+product cache, or an existing linear cache. A first isolated operation records
+the existing one-byte fact, a second operation admits its result, and later
+calls reuse that exact identity. Product, inverse, negation, and square-reduction
+caches retain their established policies. The dense self-dot helper already
+knows that its schedule is recurring, so it explicitly primes the intermediate
+products before its sum tree; its second and later results retain the same
+identity behavior.
+
+Matched 100-sample Criterion runs add explicit fresh-but-cloned sentinels. The
+one-shot add fell from 111.87 ns to 93.85 ns (16.1%), and subtraction from
+116.40 ns to 97.04 ns (17.1%). Existing retained add/sub rows measured
+8.37/8.94 ns, while the fresh unshared wide-dyadic controls remained within
+their noise threshold.
+
+On Hypercurve's one-cell all-family exact Boolean sentinel, the ten-run
+instruction median fell from 77,532,932 to 76,301,712 (1.6%), 76.2% below the
+original 320,660,631 baseline. Heaptrack allocations fell from 115,778 to
+114,193, allocations beneath `retain_linear` from 7,971 to 3,718, and peak
+heap from 1.96 to 1.53 MiB; temporary allocations measured 6,833. Eleven
+ordinary runs had an 8.840 ms complete median, a 6.630 ms preparation median,
+and a 0.376 ms exact-polyline projection median. Exact topology and checksum
+were unchanged.
+
+The complete Hyperreal, Hypersolve, and Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The downstream
+AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,903
+coverage points and 19,183 feature edges; LeakSanitizer alone remained
+disabled under ptrace.
 
 ### Architecture and measurement triggers
 

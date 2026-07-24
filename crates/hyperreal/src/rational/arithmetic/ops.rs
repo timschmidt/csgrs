@@ -808,8 +808,10 @@ impl Rational {
 
     #[inline]
     pub(crate) fn has_arithmetic_reuse_evidence(&self) -> bool {
-        if Arc::strong_count(&self.0) > 1
-            || self.product_cache.get().is_some()
+        // A shared value may have been cloned only for ownership. Admit a
+        // binary linear cache after an arithmetic observation, or immediately
+        // when another retained arithmetic result already proves reuse.
+        if self.product_cache.get().is_some()
             || self.linear_cache.get().is_some()
             || self.retained_fact(RETAINED_LINEAR_REUSE_SEEN)
         {

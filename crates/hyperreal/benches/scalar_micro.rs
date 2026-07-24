@@ -272,6 +272,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Subtracts fresh integer and wide-dyadic operands without retained work.",
             },
             BenchDoc {
+                name: "rational_add_shared_cold",
+                description: "Adds fresh operands whose storage is cloned but whose arithmetic pair is not yet observed.",
+            },
+            BenchDoc {
+                name: "rational_sub_shared_cold",
+                description: "Subtracts fresh operands whose storage is cloned but whose arithmetic pair is not yet observed.",
+            },
+            BenchDoc {
                 name: "rational_mul",
                 description: "Multiplies two nontrivial rational values.",
             },
@@ -1306,6 +1314,40 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
                 )
             },
             |(left, right)| black_box(black_box(&left) - black_box(&right)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("rational_add_shared_cold", |b| {
+        b.iter_batched(
+            || {
+                let left = Rational::new(1_000_000_000);
+                let right = Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly");
+                let shared_left = left.clone();
+                let shared_right = right.clone();
+                (left, right, shared_left, shared_right)
+            },
+            |(left, right, shared_left, shared_right)| {
+                let result = black_box(&left) + black_box(&right);
+                black_box((&shared_left, &shared_right));
+                black_box(result)
+            },
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("rational_sub_shared_cold", |b| {
+        b.iter_batched(
+            || {
+                let left = Rational::new(1_000_000_000);
+                let right = Rational::try_from(1.0e-9_f64).expect("finite f64 imports exactly");
+                let shared_left = left.clone();
+                let shared_right = right.clone();
+                (left, right, shared_left, shared_right)
+            },
+            |(left, right, shared_left, shared_right)| {
+                let result = black_box(&left) - black_box(&right);
+                black_box((&shared_left, &shared_right));
+                black_box(result)
+            },
             BatchSize::SmallInput,
         )
     });

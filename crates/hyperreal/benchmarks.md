@@ -267,6 +267,8 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | `pure_scalar_algorithm_speed/rational_sub` | 9.05 ns | 9.04 ns - 9.07 ns | Subtracts two nontrivial rational values. |
 | `pure_scalar_algorithm_speed/rational_add_wide_dyadic_cold` | 87.69 ns | 86.15 ns - 89.49 ns | Adds fresh integer and wide-dyadic operands without retained work. |
 | `pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold` | 86.42 ns | 85.48 ns - 87.30 ns | Subtracts fresh integer and wide-dyadic operands without retained work. |
+| `pure_scalar_algorithm_speed/rational_add_shared_cold` | 93.85 ns | 93.06 ns - 94.87 ns | Adds fresh operands whose storage is cloned but whose arithmetic pair is not yet observed. |
+| `pure_scalar_algorithm_speed/rational_sub_shared_cold` | 97.04 ns | 96.30 ns - 97.88 ns | Subtracts fresh operands whose storage is cloned but whose arithmetic pair is not yet observed. |
 | `pure_scalar_algorithm_speed/rational_mul` | not run | not run | Multiplies two nontrivial rational values. |
 | `pure_scalar_algorithm_speed/rational_mul_retained_general` | 10.40 ns | 10.38 ns - 10.42 ns | Reuses one retained exact product for an immutable rational operand pair. |
 | `pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold` | 153.72 ns | 149.82 ns - 160.30 ns | Multiplies fresh wide-denominator dyadics whose numerators fit `u128`. |

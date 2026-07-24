@@ -2338,17 +2338,18 @@ mod tests {
     }
 
     #[test]
-    fn linear_operations_retain_exact_results_without_competing_for_one_slot() {
+    fn observed_linear_operations_retain_exact_results_without_competing_for_one_slot() {
         let left = Rational::new(1_000_000_000);
         let right = Rational::try_from(1.0e-9_f64).unwrap();
         let _retained_left = left.clone();
         let _retained_right = right.clone();
 
-        let sum = &left + &right;
+        let cold_sum = &left + &right;
         let retained_sum = &left + &right;
         let reversed_sum = &right + &left;
-        assert!(Arc::ptr_eq(&sum.0, &retained_sum.0));
-        assert!(Arc::ptr_eq(&sum.0, &reversed_sum.0));
+        assert_eq!(cold_sum, retained_sum);
+        assert!(!Arc::ptr_eq(&cold_sum.0, &retained_sum.0));
+        assert!(Arc::ptr_eq(&retained_sum.0, &reversed_sum.0));
 
         let difference = &left - &right;
         let retained_difference = &left - &right;
@@ -2388,18 +2389,21 @@ mod tests {
     }
 
     #[test]
-    fn shared_right_operand_can_retain_a_directed_difference() {
+    fn observed_right_operand_can_retain_a_directed_difference() {
         let left = Rational::new(3_000_000_000);
         let right = Rational::try_from(7.0e-9_f64).unwrap();
         let _shared_right = right.clone();
 
-        let difference = &left - &right;
+        let cold = &left - &right;
+        let retained = &left - &right;
         let reused = &left - &right;
-        assert!(Arc::ptr_eq(&difference.0, &reused.0));
+        assert_eq!(cold, retained);
+        assert!(!Arc::ptr_eq(&cold.0, &retained.0));
+        assert!(Arc::ptr_eq(&retained.0, &reused.0));
     }
 
     #[test]
-    fn shared_operand_retains_two_distinct_linear_results() {
+    fn observed_operand_retains_two_distinct_linear_results() {
         let left = Rational::new(5_000_000_000);
         let _shared_left = left.clone();
         let first_right = Rational::try_from(11.0e-9_f64).unwrap();
@@ -2409,8 +2413,11 @@ mod tests {
         let second = &left + &second_right;
         let first_reused = &left + &first_right;
         let second_reused = &left + &second_right;
+        let first_retained = &left + &first_right;
 
-        assert!(Arc::ptr_eq(&first.0, &first_reused.0));
+        assert_eq!(first, first_reused);
+        assert!(!Arc::ptr_eq(&first.0, &first_reused.0));
+        assert!(Arc::ptr_eq(&first_reused.0, &first_retained.0));
         assert!(Arc::ptr_eq(&second.0, &second_reused.0));
     }
 
