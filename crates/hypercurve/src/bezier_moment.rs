@@ -51,6 +51,11 @@ impl RationalQuadraticAreaIntegralCache {
             .push((denominator.clone(), integral.clone()));
         Ok(Some(integral))
     }
+
+    #[cfg(test)]
+    pub(crate) fn retained_integral_count(&self) -> usize {
+        self.inverse_quadratic_integrals.len()
+    }
 }
 
 /// Exact Green's-theorem area and first-moment boundary contributions.

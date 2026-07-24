@@ -5,6 +5,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
 use crate::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
@@ -334,13 +335,20 @@ impl RetainedCurveRegionBoolean2 {
         second: &CurveRegion2,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<Self> {
-        let first_carriers = build_region_carriers(first, CurvePathBooleanOperand2::First, policy)?;
+        let mut rational_quadratic_area_cache = RationalQuadraticAreaIntegralCache::default();
+        let first_carriers = build_region_carriers(
+            first,
+            CurvePathBooleanOperand2::First,
+            policy,
+            &mut rational_quadratic_area_cache,
+        )?;
         let first_carrier_count = first_carriers.len();
         let mut carriers = first_carriers;
         carriers.extend(build_region_carriers(
             second,
             CurvePathBooleanOperand2::Second,
             policy,
+            &mut rational_quadratic_area_cache,
         )?);
 
         let authored_carrier_pair_count =
@@ -1160,13 +1168,16 @@ fn build_region_carriers(
     region: &CurveRegion2,
     operand: CurvePathBooleanOperand2,
     policy: &CurvePolicy,
+    rational_quadratic_area_cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> ExactCurveResult<Vec<RegionCarrier>> {
     if region.is_empty() {
         return Ok(Vec::new());
     }
-    let filled_sides = match region.filled_side_is_left(policy).map_err(|cause| {
-        ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause)
-    })? {
+    let filled_sides = match region
+        .filled_side_is_left_with_area_cache(policy, rational_quadratic_area_cache)
+        .map_err(|cause| {
+            ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause)
+        })? {
         Classification::Decided(sides) => sides,
         Classification::Uncertain(reason) => {
             return Err(ExactCurveError::blocked(

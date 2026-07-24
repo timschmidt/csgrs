@@ -3983,6 +3983,39 @@ library builds passed. AddressSanitizer region-Boolean replay completed all
 2,509 executions at 5,892 coverage points and 19,133 feature edges with no
 finding; LeakSanitizer remained disabled under ptrace.
 
+### Cross-operand conic area evidence
+
+Retained Boolean preparation asks both input regions for their exact filled
+side before constructing carrier pairs. Similarity-transformed or independently
+authored operands commonly preserve rational-conic weights, but each region
+formerly owned a separate loop-local area cache. Boolean carrier preparation
+now passes one short-lived exact area-integral cache through both orientation
+queries. The regions continue to retain only their decided filled-side result;
+the shared cache does not become persistent region state and standalone region
+queries retain their existing local lifetime.
+
+A focused regression constructs two independent rational-quadratic regions
+with equal denominator weights, decides both orientations through one cache,
+and verifies that the second region does not add another inverse-quadratic
+integral. Existing clone-sharing, transformed-region, filled-side, conic-area,
+and Boolean suites cover cached and already-decided operands.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 36,366,179 to 35,910,812 (1.25%), 88.80% below the original
+320,660,631 baseline. Together, the two area-kernel checkpoints reduce the
+preceding 37,185,392 median by 3.43%. Heaptrack allocation events fell from
+53,735 to 52,711 and temporary events from 4,159 to 3,825; peak heap remained
+1.15 MiB and peak RSS fell from 11.45 to 11.35 MiB. Every measured run retained
+9 candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. AddressSanitizer region-Boolean replay completed all
+2,509 executions at 5,895 coverage points and 19,144 feature edges with no
+finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

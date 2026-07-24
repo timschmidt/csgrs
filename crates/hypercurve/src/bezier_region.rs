@@ -1082,6 +1082,14 @@ impl BezierBoundaryLoop2 {
     /// quadratics use the homogeneous rational Green integral when their
     /// denominator is certified nonzero on the affine parameter interval.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+        let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
+        self.signed_area_with_cache(&mut rational_quadratic_cache)
+    }
+
+    fn signed_area_with_cache(
+        &self,
+        rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
+    ) -> CurveResult<Option<Real>> {
         if self.fragments.is_empty() {
             return Err(CurveError::Topology(
                 "Bezier boundary loop signed area requires nonempty fragments".to_owned(),
@@ -1089,10 +1097,9 @@ impl BezierBoundaryLoop2 {
         }
 
         let mut total = Real::zero();
-        let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
         for fragment in &self.fragments {
             let Some(contribution) =
-                fragment.signed_area_contribution_with_cache(&mut rational_quadratic_cache)?
+                fragment.signed_area_contribution_with_cache(rational_quadratic_cache)?
             else {
                 return Ok(None);
             };
@@ -1367,6 +1374,14 @@ impl CurveRegionBoundaryLoop2 {
 
     /// Returns exact signed area only for fully native loops with implemented integrals.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+        let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
+        self.signed_area_with_cache(&mut rational_quadratic_cache)
+    }
+
+    fn signed_area_with_cache(
+        &self,
+        rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
+    ) -> CurveResult<Option<Real>> {
         if self.fragments.is_empty() {
             return Err(CurveError::Topology(
                 "retained Bezier boundary loop signed area requires nonempty fragments".to_owned(),
@@ -1374,13 +1389,12 @@ impl CurveRegionBoundaryLoop2 {
         }
 
         let mut total = Real::zero();
-        let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
         for fragment in &self.fragments {
             let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
                 return Ok(None);
             };
             let Some(contribution) =
-                curve.signed_area_contribution_with_cache(&mut rational_quadratic_cache)?
+                curve.signed_area_contribution_with_cache(rational_quadratic_cache)?
             else {
                 return Ok(None);
             };
@@ -2411,25 +2425,34 @@ impl CurveRegion2 {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<&[bool]>> {
-        match self
-            .filled_side_is_left
-            .get_or_init(|| self.compute_filled_side_is_left(policy))
-        {
+        let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
+        self.filled_side_is_left_with_area_cache(policy, &mut rational_quadratic_cache)
+    }
+
+    pub(crate) fn filled_side_is_left_with_area_cache(
+        &self,
+        policy: &CurvePolicy,
+        rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
+    ) -> CurveResult<Classification<&[bool]>> {
+        match self.filled_side_is_left.get_or_init(|| {
+            self.compute_filled_side_is_left_with_area_cache(policy, rational_quadratic_cache)
+        }) {
             Ok(Classification::Decided(sides)) => Ok(Classification::Decided(sides.as_ref())),
             Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(*reason)),
             Err(error) => Err(error.clone()),
         }
     }
 
-    fn compute_filled_side_is_left(
+    fn compute_filled_side_is_left_with_area_cache(
         &self,
         policy: &CurvePolicy,
+        rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
     ) -> CurveResult<Classification<Rc<[bool]>>> {
         if let Some(roles) = self.certified_loop_roles.as_deref() {
             let signed_areas = self
                 .boundary_loops
                 .iter()
-                .map(CurveRegionBoundaryLoop2::signed_area)
+                .map(|boundary_loop| boundary_loop.signed_area_with_cache(rational_quadratic_cache))
                 .collect::<CurveResult<Vec<_>>>()?
                 .into_iter()
                 .collect::<Option<Vec<_>>>();
@@ -2439,7 +2462,8 @@ impl CurveRegion2 {
             }
         }
         if self.boundary_loops.len() == 1
-            && let Some(area) = self.boundary_loops[0].signed_area()?
+            && let Some(area) =
+                self.boundary_loops[0].signed_area_with_cache(rational_quadratic_cache)?
         {
             return Ok(match real_sign(&area, policy) {
                 Some(RealSign::Positive) => Classification::Decided(Rc::from([true].as_slice())),
@@ -6228,6 +6252,43 @@ mod tests {
         }
     }
 
+    fn rational_quadratic_fragment(
+        start: Point2,
+        control: Point2,
+        end: Point2,
+    ) -> BezierSplitFragment2 {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::RationalQuadratic(
+                RationalQuadraticBezier2::try_new(
+                    start,
+                    control,
+                    end,
+                    Real::one(),
+                    half,
+                    Real::one(),
+                )
+                .unwrap(),
+            ),
+        }
+    }
+
+    fn single_rational_quadratic_loop_region() -> CurveRegion2 {
+        let fragments = vec![
+            rational_quadratic_fragment(p(0, 0), p(1, 0), p(2, 0)),
+            rational_quadratic_fragment(p(2, 0), p(2, 1), p(2, 2)),
+            rational_quadratic_fragment(p(2, 2), p(1, 2), p(0, 2)),
+            rational_quadratic_fragment(p(0, 2), p(0, 1), p(0, 0)),
+        ];
+        CurveRegion2::new(vec![
+            CurveRegionBoundaryLoop2::new(fragments)
+                .expect("closed retained rational-quadratic loop"),
+        ])
+        .expect("one retained rational-quadratic loop")
+    }
+
     fn single_quadratic_loop_region(clockwise: bool) -> CurveRegion2 {
         let fragments = if clockwise {
             vec![
@@ -6262,6 +6323,25 @@ mod tests {
             ));
             assert!(region.native_boundary_bounds.get().is_none());
         }
+    }
+
+    #[test]
+    fn independent_region_orientations_share_equal_conic_area_kernels() {
+        let policy = CurvePolicy::certified();
+        let first = single_rational_quadratic_loop_region();
+        let second = single_rational_quadratic_loop_region();
+        let mut cache = RationalQuadraticAreaIntegralCache::default();
+
+        assert!(matches!(
+            first.filled_side_is_left_with_area_cache(&policy, &mut cache),
+            Ok(Classification::Decided([true]))
+        ));
+        assert_eq!(cache.retained_integral_count(), 1);
+        assert!(matches!(
+            second.filled_side_is_left_with_area_cache(&policy, &mut cache),
+            Ok(Classification::Decided([true]))
+        ));
+        assert_eq!(cache.retained_integral_count(), 1);
     }
 
     #[test]
