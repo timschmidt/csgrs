@@ -1521,6 +1521,24 @@ pub fn evaluate_rational_expression_at_algebraic_root(
 ) -> AlgebraicRootRationalEvaluationReport {
     let numerator = evaluate_polynomial_at_algebraic_root(root, numerator_coefficients, policy);
     let denominator = evaluate_polynomial_at_algebraic_root(root, denominator_coefficients, policy);
+    rational_expression_evaluation_from_polynomial_reports(numerator, denominator, policy)
+}
+
+pub(crate) fn evaluate_rational_expression_with_denominator_evaluation(
+    root: &AlgebraicRootRepresentation,
+    numerator_coefficients: &[Real],
+    denominator: AlgebraicRootPolynomialEvaluationReport,
+    policy: PredicatePolicy,
+) -> AlgebraicRootRationalEvaluationReport {
+    let numerator = evaluate_polynomial_at_algebraic_root(root, numerator_coefficients, policy);
+    rational_expression_evaluation_from_polynomial_reports(numerator, denominator, policy)
+}
+
+fn rational_expression_evaluation_from_polynomial_reports(
+    numerator: AlgebraicRootPolynomialEvaluationReport,
+    denominator: AlgebraicRootPolynomialEvaluationReport,
+    policy: PredicatePolicy,
+) -> AlgebraicRootRationalEvaluationReport {
     if matches!(
         numerator.status,
         AlgebraicRootPolynomialEvaluationStatus::InvalidEvidence

@@ -392,6 +392,40 @@ WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 executions at 5,899 coverage points and 19,166 feature
 edges with no finding; LeakSanitizer alone remained disabled under ptrace.
 
+### Prepared shared-denominator rational images
+
+Projective point and derivative coordinates transform several rational
+expressions at the same represented root with one homogeneous denominator.
+Independent calls formerly repeated the denominator polynomial evaluation and
+the source-polynomial rational-to-primitive-integer conversion before building
+each coordinate's distinct exact resultant.
+
+`PreparedAlgebraicRootRationalImage` now evaluates and retains the denominator
+certificate once. Its sequential `transform` calls preserve the complete
+per-coordinate reports and existing short-circuit boundary, while lazily
+converting and retaining the common source polynomial only when the direct
+resultant route reaches that stage. Numerator evaluation, rational-map
+monotonicity proof, coordinate-specific resultant, isolating interval, fallback
+images, validation, and uncertainty statuses remain unchanged. A direct
+prepared-versus-independent report equality regression covers two nonlinear
+numerators over one denominator.
+
+On the downstream one-cell all-family exact Boolean sentinel, reuse by
+Hypercurve's rational point and derivative images reduced the rounded ten-run
+instruction median from 32,588,978 to 32,508,278 (0.25%), 89.86% below the
+original 320,660,631 baseline. Heaptrack allocation events fell from 47,057 to
+46,869 and temporary events from 2,960 to 2,930; peak heap remained 1.13 MiB
+and peak RSS measured 11.17 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete Hypersolve and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and supported default/no-default release WASM library builds passed.
+The requested AddressSanitizer region-Boolean replay completed with libFuzzer
+reporting 2,515 executions at 5,893 coverage points and 19,142 feature edges
+with no finding; LeakSanitizer remained disabled under ptrace.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate

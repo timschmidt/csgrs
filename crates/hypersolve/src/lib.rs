@@ -103,7 +103,8 @@ pub use algebraic_polynomial_image::{
 };
 pub use algebraic_rational_image::{
     AlgebraicRootRationalImageReport, AlgebraicRootRationalImageStatus,
-    transform_algebraic_root_rational_image, transform_algebraic_root_rational_image_in_interval,
+    PreparedAlgebraicRootRationalImage, transform_algebraic_root_rational_image,
+    transform_algebraic_root_rational_image_in_interval,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,

@@ -18,6 +18,7 @@
 //! report-bearing instead of replacing it with primitive sampling.
 
 use std::cmp::Ordering;
+use std::sync::OnceLock;
 
 use hyperlimit::PredicatePolicy;
 use hyperlimit::compare_reals_with_policy;
@@ -25,10 +26,11 @@ use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
     AlgebraicPolynomialValueInterval, AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport,
-    AlgebraicRootArithmeticStatus, AlgebraicRootKind, AlgebraicRootRationalEvaluationReport,
-    AlgebraicRootRationalEvaluationStatus, AlgebraicRootRepresentation,
-    AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
+    AlgebraicRootArithmeticStatus, AlgebraicRootKind, AlgebraicRootPolynomialEvaluationReport,
+    AlgebraicRootRationalEvaluationReport, AlgebraicRootRationalEvaluationStatus,
+    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     arithmetic_algebraic_root_representations, evaluate_rational_expression_at_algebraic_root,
+    evaluate_rational_expression_with_denominator_evaluation,
     validate_algebraic_root_representation,
 };
 use crate::algebraic_mobius::{
@@ -104,6 +106,62 @@ pub struct AlgebraicRootRationalImageReport {
     pub message: Option<String>,
 }
 
+/// Reusable rational-image transform for expressions with one denominator.
+///
+/// Construction evaluates and retains the denominator at the represented
+/// source root. Each call to [`Self::transform`] evaluates only its numerator,
+/// then follows the same resultant and fallback paths as
+/// [`transform_algebraic_root_rational_image`]. This is useful for projective
+/// coordinate vectors and derivative vectors whose components share a
+/// denominator.
+pub struct PreparedAlgebraicRootRationalImage<'a> {
+    root: &'a AlgebraicRootRepresentation,
+    denominator_coefficients: &'a [Real],
+    denominator_evaluation: AlgebraicRootPolynomialEvaluationReport,
+    source_polynomial: OnceLock<Option<Vec<Real>>>,
+    policy: PredicatePolicy,
+}
+
+impl<'a> PreparedAlgebraicRootRationalImage<'a> {
+    /// Prepares a shared-denominator transform at `root`.
+    pub fn new(
+        root: &'a AlgebraicRootRepresentation,
+        denominator_coefficients: &'a [Real],
+        policy: PredicatePolicy,
+    ) -> Self {
+        Self {
+            root,
+            denominator_coefficients,
+            denominator_evaluation: crate::algebraic::evaluate_polynomial_at_algebraic_root(
+                root,
+                denominator_coefficients,
+                policy,
+            ),
+            source_polynomial: OnceLock::new(),
+            policy,
+        }
+    }
+
+    /// Constructs exact evidence for one numerator over the retained denominator.
+    pub fn transform(&self, numerator_coefficients: &[Real]) -> AlgebraicRootRationalImageReport {
+        let evaluation = evaluate_rational_expression_with_denominator_evaluation(
+            self.root,
+            numerator_coefficients,
+            self.denominator_evaluation.clone(),
+            self.policy,
+        );
+        transform_algebraic_root_rational_image_with_evaluation(
+            self.root,
+            numerator_coefficients,
+            self.denominator_coefficients,
+            None,
+            self.policy,
+            evaluation,
+            Some(&self.source_polynomial),
+        )
+    }
+}
+
 /// Construct exact algebraic evidence for `p(alpha) / q(alpha)`.
 ///
 /// Coefficients are supplied in ascending power order.  The denominator is
@@ -164,6 +222,26 @@ fn transform_algebraic_root_rational_image_with_target(
         denominator_coefficients,
         policy,
     );
+    transform_algebraic_root_rational_image_with_evaluation(
+        root,
+        numerator_coefficients,
+        denominator_coefficients,
+        target,
+        policy,
+        evaluation,
+        None,
+    )
+}
+
+fn transform_algebraic_root_rational_image_with_evaluation(
+    root: &AlgebraicRootRepresentation,
+    numerator_coefficients: &[Real],
+    denominator_coefficients: &[Real],
+    target: Option<&AlgebraicPolynomialValueInterval>,
+    policy: PredicatePolicy,
+    evaluation: AlgebraicRootRationalEvaluationReport,
+    retained_source_polynomial: Option<&OnceLock<Option<Vec<Real>>>>,
+) -> AlgebraicRootRationalImageReport {
     if target.is_some_and(|target| rational_evaluation_is_disjoint(&evaluation, target, policy)) {
         return rational_image_report(
             AlgebraicRootRationalImageStatus::ImageIntervalDisjoint,
@@ -273,6 +351,7 @@ fn transform_algebraic_root_rational_image_with_target(
         numerator_coefficients,
         denominator_coefficients,
         policy,
+        retained_source_polynomial,
     ) {
         let status = if representation.is_valid() {
             AlgebraicRootRationalImageStatus::Transformed
@@ -443,6 +522,7 @@ fn direct_rational_image_representation(
     numerator_coefficients: &[Real],
     denominator_coefficients: &[Real],
     policy: PredicatePolicy,
+    retained_source_polynomial: Option<&OnceLock<Option<Vec<Real>>>>,
 ) -> Option<AlgebraicRootRepresentation> {
     if !has_exact_coefficients(&root.polynomial_coefficients) {
         return None;
@@ -494,11 +574,19 @@ fn direct_rational_image_representation(
     if source_degree + rational_degree.max(1) > MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION {
         return None;
     }
-    let source_polynomial = primitive_integer_polynomial(&root.polynomial_coefficients)?;
+    let owned_source_polynomial;
+    let source_polynomial = if let Some(retained) = retained_source_polynomial {
+        retained
+            .get_or_init(|| primitive_integer_polynomial(&root.polynomial_coefficients))
+            .as_deref()?
+    } else {
+        owned_source_polynomial = primitive_integer_polynomial(&root.polynomial_coefficients)?;
+        &owned_source_polynomial
+    };
     let (resultant_numerator, resultant_denominator) =
         clear_rational_map_denominators(&numerator, &denominator)?;
     let polynomial_coefficients = resultant_polynomial_for_rational_image(
-        &source_polynomial,
+        source_polynomial,
         &resultant_numerator,
         &resultant_denominator,
         source_degree,
@@ -928,6 +1016,30 @@ mod tests {
         assert!(root.is_valid());
         assert_eq!(root.interval.lower, (real(1) / real(2)).unwrap());
         assert_eq!(root.interval.upper, (real(2) / real(3)).unwrap());
+    }
+
+    #[test]
+    fn prepared_rational_images_match_independent_shared_denominator_transforms() {
+        let root = sqrt_two_positive();
+        let denominator = [real(3), Real::one()];
+        let numerators = [
+            [real(1), real(2), Real::one()],
+            [real(-2), Real::one(), Real::one()],
+        ];
+        let prepared =
+            PreparedAlgebraicRootRationalImage::new(&root, &denominator, PredicatePolicy);
+
+        for numerator in numerators {
+            assert_eq!(
+                prepared.transform(&numerator),
+                transform_algebraic_root_rational_image(
+                    &root,
+                    &numerator,
+                    &denominator,
+                    PredicatePolicy,
+                )
+            );
+        }
     }
 
     #[test]
