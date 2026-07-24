@@ -9,7 +9,7 @@ use hyperreal::{Real, RealSign, ZeroKnowledge};
 #[cfg(feature = "predicates")]
 use hypersolve::{
     AlgebraicPolynomialValueInterval, AlgebraicRootRationalImageStatus,
-    transform_algebraic_root_rational_image_in_interval,
+    PreparedAlgebraicRootRationalMap,
 };
 #[cfg(feature = "predicates")]
 use hypersolve::{
@@ -1466,6 +1466,16 @@ impl RationalBezier2 {
                 return Ok(Some(Classification::Uncertain(reason)));
             }
         };
+        let primary_parameter_candidate = match prepare_conic_parameter_candidate(
+            polynomial.coefficients(),
+            &parameter_map.primary,
+            policy,
+        )? {
+            Classification::Decided(candidate) => candidate,
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
         let mut contacts = Vec::with_capacity(other_parameters.len());
         for (parameter, simple_root) in other_parameters.iter().zip(simple_roots) {
             // The quadratic frame is nonsingular and both rational
@@ -1475,7 +1485,13 @@ impl RationalBezier2 {
             // two regular affine images. Multiple or undecided roots retain
             // the existing tangent-based fallback.
             let certified_transverse = matches!(simple_root, Classification::Decided(true));
-            let mapped = conic_parameter_from_curve_parameter(&parameter_map, parameter, policy)?;
+            let mapped = conic_parameter_from_curve_parameter(
+                &parameter_map,
+                &primary_parameter_candidate,
+                polynomial.coefficients(),
+                parameter,
+                policy,
+            )?;
             match mapped {
                 Classification::Decided(Some(conic_parameter)) => {
                     let point = match exact_contact_point_evidence(other, parameter, policy)? {
@@ -3327,6 +3343,11 @@ struct ConicParameterMap2 {
     range_span: Real,
 }
 
+struct PreparedConicParameterCandidate2 {
+    #[cfg(feature = "predicates")]
+    map: PreparedAlgebraicRootRationalMap,
+}
+
 fn conic_parameter_map(
     conic: &RationalBezier2,
     curve: &RationalBezier2,
@@ -3372,11 +3393,13 @@ fn conic_parameter_map(
 
 fn conic_parameter_from_curve_parameter(
     parameter_map: &ConicParameterMap2,
+    primary_candidate: &PreparedConicParameterCandidate2,
+    source_polynomial: &[Real],
     curve_parameter: &BezierParameter2,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     if let Classification::Decided(parameter) = conic_parameter_from_candidates(
-        std::slice::from_ref(&parameter_map.primary),
+        std::slice::from_ref(primary_candidate),
         curve_parameter,
         policy,
     )? {
@@ -3387,7 +3410,7 @@ fn conic_parameter_from_curve_parameter(
     let two = Real::from(2_i8);
     let twice_coordinate_0 = scale_power_polynomial(coordinate_0, &two);
     let twice_coordinate_2 = scale_power_polynomial(coordinate_2, &two);
-    let fallback_candidates = [
+    let fallback_candidate_polynomials = [
         localize_conic_parameter_candidate(
             coordinate_1.clone(),
             add_power_polynomials(&twice_coordinate_0, coordinate_1),
@@ -3401,6 +3424,15 @@ fn conic_parameter_from_curve_parameter(
             &parameter_map.range_span,
         ),
     ];
+    let mut fallback_candidates = Vec::with_capacity(fallback_candidate_polynomials.len());
+    for candidate in &fallback_candidate_polynomials {
+        match prepare_conic_parameter_candidate(source_polynomial, candidate, policy)? {
+            Classification::Decided(candidate) => fallback_candidates.push(candidate),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
     conic_parameter_from_candidates(&fallback_candidates, curve_parameter, policy)
 }
 
@@ -3420,7 +3452,7 @@ fn localize_conic_parameter_candidate(
 }
 
 fn conic_parameter_from_candidates(
-    candidates: &[(Vec<Real>, Vec<Real>)],
+    candidates: &[PreparedConicParameterCandidate2],
     curve_parameter: &BezierParameter2,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
@@ -3434,8 +3466,8 @@ fn conic_parameter_from_candidates(
             .clone()
             .refined_isolating_interval(max_refinement_steps, policy);
         let root = parameter_root_representation(&refined_curve_parameter, policy);
-        for (numerator, denominator) in candidates {
-            match rational_image_parameter(&root, numerator, denominator, policy)? {
+        for candidate in candidates {
+            match rational_image_parameter(&root, candidate, policy)? {
                 Classification::Decided(parameter) => {
                     return Ok(Classification::Decided(parameter));
                 }
@@ -3475,20 +3507,18 @@ fn exact_contact_point_evidence(
     }
 }
 
-#[cfg(feature = "predicates")]
-fn rational_image_parameter(
-    source: &AlgebraicRootRepresentation,
-    numerator: &[Real],
-    denominator: &[Real],
+fn prepare_conic_parameter_candidate(
+    source_polynomial: &[Real],
+    candidate: &(Vec<Real>, Vec<Real>),
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    let mut numerator = match trim_power_polynomial(numerator.to_vec(), policy) {
+) -> CurveResult<Classification<PreparedConicParameterCandidate2>> {
+    let mut numerator = match trim_power_polynomial(candidate.0.clone(), policy) {
         Classification::Decided(numerator) => numerator,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let mut denominator = match trim_power_polynomial(denominator.to_vec(), policy) {
+    let mut denominator = match trim_power_polynomial(candidate.1.clone(), policy) {
         Classification::Decided(denominator) => denominator,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -3521,17 +3551,38 @@ fn rational_image_parameter(
             denominator = normalized_denominator;
         }
     }
+    #[cfg(feature = "predicates")]
+    {
+        Ok(Classification::Decided(PreparedConicParameterCandidate2 {
+            map: PreparedAlgebraicRootRationalMap::new(
+                source_polynomial,
+                &numerator,
+                &denominator,
+                policy.predicate_policy,
+            ),
+        }))
+    }
+    #[cfg(not(feature = "predicates"))]
+    {
+        let _ = (source_polynomial, numerator, denominator);
+        Ok(Classification::Decided(PreparedConicParameterCandidate2 {}))
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn rational_image_parameter(
+    source: &AlgebraicRootRepresentation,
+    candidate: &PreparedConicParameterCandidate2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
     let zero = Real::zero();
     let one = Real::one();
-    let evidence = transform_algebraic_root_rational_image_in_interval(
+    let evidence = candidate.map.transform_in_interval(
         source,
-        &numerator,
-        &denominator,
         &AlgebraicPolynomialValueInterval {
             lower: zero.clone(),
             upper: one.clone(),
         },
-        policy.predicate_policy,
     );
     if evidence.status == AlgebraicRootRationalImageStatus::ImageIntervalDisjoint {
         return Ok(Classification::Decided(None));
@@ -3570,8 +3621,7 @@ fn rational_image_parameter(
 #[cfg(not(feature = "predicates"))]
 fn rational_image_parameter(
     _source: &AlgebraicRootRepresentation,
-    _numerator: &[Real],
-    _denominator: &[Real],
+    _candidate: &PreparedConicParameterCandidate2,
     _policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))

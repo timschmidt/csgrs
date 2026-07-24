@@ -4325,6 +4325,39 @@ AddressSanitizer region-Boolean replay completed with libFuzzer reporting 2,515
 executions at 5,893 coverage points and 19,142 feature edges with no finding;
 LeakSanitizer remained disabled under ptrace.
 
+### Shared conic-map elimination across contact roots
+
+One implicit conic substitution produces a single exact polynomial whose
+isolated roots are all transported through the same conic-parameter map. The
+map's direct rational-image resultant depends on that source polynomial and
+the map coefficients, not on the individual isolating interval. The former
+contact loop nevertheless normalized the same map and rebuilt its identical
+resultant for each represented root and refinement attempt.
+
+The primary conic-parameter candidate is now normalized and prepared once per
+substitution polynomial. Its exact primitive source and direct resultant are
+retained lazily across every contact root and adaptive refinement. Root-local
+denominator, monotonicity, image-interval, selection, and validation evidence
+is still reconstructed independently. The two endpoint-oriented fallback maps
+remain lazy: they are normalized and prepared only if the pole-free primary
+map exhausts its refinement budget.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 32,508,278 to 32,120,772 (1.19%), 89.98% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+46,869 to 46,054; recorder-level temporary allocation events fell from 2,930
+to 2,714, while the postprocessor's broader temporary count was 2,962. Peak
+heap remained 1.13 MiB and peak RSS measured 11.25 MiB. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete Hypersolve and Hypercurve all-feature and no-default-feature
+suites, formatting, warning-denied all-target Clippy and rustdoc, and supported
+default/no-default release WASM library builds passed. The requested
+AddressSanitizer region-Boolean replay completed with libFuzzer reporting 2,510
+executions at 5,900 coverage points and 19,164 feature edges with no finding;
+LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
