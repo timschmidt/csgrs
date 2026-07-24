@@ -206,7 +206,11 @@ impl Rational {
     }
 
     fn small_integer(sign: Sign, magnitude: u128) -> Option<Self> {
-        let index = usize::try_from(magnitude.checked_sub(2)?).ok()?;
+        debug_assert!(magnitude >= 2);
+        if magnitude > 64 {
+            return None;
+        }
+        let index = magnitude as usize - 2;
         let values = match sign {
             Plus => &SMALL_POSITIVE_RATIONALS,
             Minus => &SMALL_NEGATIVE_RATIONALS,
@@ -223,16 +227,17 @@ impl Rational {
         Some(value.clone())
     }
 
-    fn small_dyadic(sign: Sign, magnitude: u128, denominator: u128) -> Option<Self> {
-        if magnitude == 0 || magnitude > 63 || magnitude & 1 == 0 || !denominator.is_power_of_two()
-        {
+    fn small_reduced_dyadic(sign: Sign, magnitude: u128, denominator: u128) -> Option<Self> {
+        debug_assert_ne!(magnitude, 0);
+        debug_assert!(denominator > 1 && denominator.is_power_of_two());
+        if magnitude > 63 || magnitude & 1 == 0 {
             return None;
         }
-        let shift = usize::try_from(denominator.trailing_zeros()).ok()?;
-        if shift == 0 || shift > SMALL_DYADIC_MAX_SHIFT {
+        let shift = denominator.trailing_zeros() as usize;
+        if shift > SMALL_DYADIC_MAX_SHIFT {
             return None;
         }
-        let magnitude_index = usize::try_from(magnitude >> 1).ok()?;
+        let magnitude_index = (magnitude >> 1) as usize;
         let index = (shift - 1) * SMALL_DYADIC_ODD_MAGNITUDES + magnitude_index;
         let values = match sign {
             Plus => &SMALL_POSITIVE_DYADICS,
@@ -250,14 +255,20 @@ impl Rational {
         Some(value.clone())
     }
 
-    fn small_general_fraction(sign: Sign, magnitude: u128, denominator: u128) -> Option<Self> {
-        let magnitude_index = usize::try_from(magnitude.checked_sub(1)?).ok()?;
-        let denominator_index = usize::try_from(denominator.checked_sub(1)?).ok()?;
-        if magnitude_index >= SMALL_GENERAL_MAX_MAGNITUDE
-            || denominator_index >= SMALL_GENERAL_MAX_DENOMINATOR
+    fn small_reduced_general_fraction(
+        sign: Sign,
+        magnitude: u128,
+        denominator: u128,
+    ) -> Option<Self> {
+        debug_assert_ne!(magnitude, 0);
+        debug_assert!(denominator > 1 && !denominator.is_power_of_two());
+        if magnitude > SMALL_GENERAL_MAX_MAGNITUDE as u128
+            || denominator > SMALL_GENERAL_MAX_DENOMINATOR as u128
         {
             return None;
         }
+        let magnitude_index = magnitude as usize - 1;
+        let denominator_index = denominator as usize - 1;
         let index = denominator_index * SMALL_GENERAL_MAX_MAGNITUDE + magnitude_index;
         let values = match sign {
             Plus => &SMALL_POSITIVE_GENERAL_RATIONALS,

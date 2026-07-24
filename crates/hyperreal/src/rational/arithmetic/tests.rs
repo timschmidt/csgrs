@@ -2241,6 +2241,21 @@ mod tests {
         assert!(Arc::ptr_eq(&negative_i8.0, &negative_i128.0));
         assert!(Arc::ptr_eq(&negative_i8.0, &negative_new.0));
         assert!(!Arc::ptr_eq(&positive_u8.0, &negative_i8.0));
+
+        let upper_boundary = Rational::from(64_u128);
+        let repeated_upper_boundary = Rational::new(64);
+        assert!(Arc::ptr_eq(
+            &upper_boundary.0,
+            &repeated_upper_boundary.0
+        ));
+
+        let outside_boundary = Rational::from(65_u128);
+        let repeated_outside_boundary = Rational::new(65);
+        assert_eq!(outside_boundary, repeated_outside_boundary);
+        assert!(!Arc::ptr_eq(
+            &outside_boundary.0,
+            &repeated_outside_boundary.0
+        ));
     }
 
     #[test]

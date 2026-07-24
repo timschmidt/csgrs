@@ -2056,21 +2056,11 @@ impl Rational {
                 Self::one()
             };
         }
-        if denominator == 1
-            && let Some(value) = Self::small_integer(sign, magnitude)
-        {
-            crate::trace_dispatch!("rational", "word-result", "cached-small-integer");
-            return value;
-        }
-        if let Some(value) = Self::small_dyadic(sign, magnitude, denominator) {
-            crate::trace_dispatch!("rational", "word-result", "cached-small-dyadic");
-            return value;
-        }
-        if let Some(value) = Self::small_general_fraction(sign, magnitude, denominator) {
-            crate::trace_dispatch!("rational", "word-result", "cached-small-general-fraction");
-            return value;
-        }
         if denominator == 1 {
+            if let Some(value) = Self::small_integer(sign, magnitude) {
+                crate::trace_dispatch!("rational", "word-result", "cached-small-integer");
+                return value;
+            }
             #[cfg(feature = "dispatch-trace")]
             {
                 let path = match magnitude {
@@ -2083,11 +2073,23 @@ impl Rational {
                 crate::trace_dispatch!("rational", "word-result", path);
             }
         } else if denominator.is_power_of_two() {
+            if let Some(value) = Self::small_reduced_dyadic(sign, magnitude, denominator) {
+                crate::trace_dispatch!("rational", "word-result", "cached-small-dyadic");
+                return value;
+            }
             crate::trace_dispatch!("rational", "word-result", "dyadic-fraction");
-        } else if magnitude <= u128::from(u64::MAX) && denominator <= u128::from(u64::MAX) {
-            crate::trace_dispatch!("rational", "word-result", "small-general-fraction");
         } else {
-            crate::trace_dispatch!("rational", "word-result", "wide-general-fraction");
+            if let Some(value) =
+                Self::small_reduced_general_fraction(sign, magnitude, denominator)
+            {
+                crate::trace_dispatch!("rational", "word-result", "cached-small-general-fraction");
+                return value;
+            }
+            if magnitude <= u128::from(u64::MAX) && denominator <= u128::from(u64::MAX) {
+                crate::trace_dispatch!("rational", "word-result", "small-general-fraction");
+            } else {
+                crate::trace_dispatch!("rational", "word-result", "wide-general-fraction");
+            }
         }
         Self::from_parts_raw(
             sign,

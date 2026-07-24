@@ -1759,6 +1759,39 @@ edges; the downstream region-Boolean replay completed the requested budget
 after 2,716 executions at 5,998 coverage points and 19,363 feature edges.
 Neither found an error; LeakSanitizer alone remained disabled under ptrace.
 
+### Partitioned reduced-word canonical construction
+
+Reduced native-word results previously probed the integer, dyadic, and
+general-fraction canonical caches in sequence. Those result classes are
+disjoint once the already-reduced denominator is known. Construction now
+branches once on denominator one, power-of-two, or general form and consults
+only the applicable cache. The private cache helpers consume those established
+preconditions and use direct bounded indexing, avoiding repeated checked
+subtraction, integer conversion, and denominator-shape tests. Small-integer
+construction likewise checks its inclusive 64 boundary before direct indexing.
+Tests cover the cached 64 boundary and uncached 65 neighbor in addition to the
+existing dyadic and general-fraction identity checks.
+
+On the one-cell all-family Hypercurve Boolean sentinel, successive ten-run
+medians were 26,754,422 after denominator partitioning, 26,705,293 after
+specializing the reduced cache helpers, and 26,664,017 after direct integer
+indexing. The final result is 0.502% below the committed 26,798,608 checkpoint
+and 91.68% below the original 320,660,631 baseline. Every run retained 9
+candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The control-flow change leaves heap behavior unchanged at 34,370 allocation
+events, 2,702 recorder temporaries, 2,950 postprocessed temporaries, 936.80 KiB
+peak heap, 167.77 KiB process-lifetime retained memory, and 10.91 MiB peak RSS.
+The complete Hyperreal and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and default/no-default release WASM builds passed. AddressSanitizer
+completed the requested 2,509 rational-arithmetic executions at 1,829 coverage
+points and 4,629 feature edges. The downstream region-Boolean replay completed
+the requested budget after 2,706 executions at 5,985 coverage points and
+19,266 feature edges. Neither found an error; LeakSanitizer alone remained
+disabled under ptrace.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
