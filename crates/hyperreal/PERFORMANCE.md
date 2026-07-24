@@ -1612,6 +1612,39 @@ WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 executions at 5,896 coverage points and 19,157 feature
 edges with no finding; LeakSanitizer alone remained disabled under ptrace.
 
+### Single-owner product retention
+
+Commutative product lookup probes both operands, but fresh results were
+installed redundantly in both primary product slots. One retained edge is
+sufficient to serve either operand order. Product retention now returns after
+the first available canonical operand accepts the edge, tries the other
+operand only when that slot is unavailable, and retains the established
+secondary linear entry only when both primary slots are occupied. This leaves
+the unused primary slot available for a distinct product and preserves the
+existing repeated-power product chain.
+
+An identity regression verifies that one fresh pair occupies exactly one
+primary slot and that reversed multiplication returns the same retained
+result. The existing direct/reversed, occupied-primary fallback, and repeated
+small-power identity suites continue to cover the other cache schedules.
+
+On Hypercurve's one-cell all-family exact Boolean sentinel, the rounded
+ten-run instruction median fell from 31,366,779 to 31,293,247 (0.23%), 90.24%
+below the original 320,660,631 baseline. Heaptrack allocation events fell
+from 43,984 to 43,975; recorder-level temporary events remained 2,685 and the
+postprocessor count remained 2,933. Peak heap remained 1.13 MiB, peak RSS
+measured 11.26 MiB, and retained/leaked memory fell from 101.92 to 96.57 KiB.
+Every measured run retained 9 candidate pairs, 48 fragments, 2
+classifications, 4 decided operations, no blockers, and checksum 6.
+
+The complete Hyperreal, Hypersolve, and Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy,
+all-feature and no-default-feature rustdoc, and default and no-default release
+WASM library builds passed. The downstream AddressSanitizer region-Boolean
+replay completed all 2,509 executions at 5,892 coverage points and 19,115
+feature edges with no finding; LeakSanitizer alone remained disabled under
+ptrace.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

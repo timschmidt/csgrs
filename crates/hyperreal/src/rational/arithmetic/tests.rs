@@ -2394,6 +2394,17 @@ mod tests {
     }
 
     #[test]
+    fn product_retention_occupies_only_one_primary_slot() {
+        let left = Rational::fraction(1_000_000_007, 1_000_000_009).unwrap();
+        let right = Rational::fraction(1_000_000_021, 1_000_000_033).unwrap();
+        let product = &left * &right;
+
+        assert!(left.product_cache.get().is_some());
+        assert!(right.product_cache.get().is_none());
+        assert!(Arc::ptr_eq(&product.0, &(&right * &left).0));
+    }
+
+    #[test]
     fn secondary_product_retention_handles_two_occupied_primary_slots() {
         let left = Rational::fraction(123_456_789_012_345_i64, 1_u64 << 50).unwrap();
         let right = Rational::fraction(234_567_890_123_457_i64, 1_u64 << 49).unwrap();

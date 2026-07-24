@@ -734,29 +734,29 @@ impl Rational {
     }
 
     fn retain_product_pair(&self, other: &Self, result: &Self) {
-        let retained_by_self = if self.is_internally_unreduced() {
-            false
-        } else {
-            self.product_cache
+        if !self.is_internally_unreduced()
+            && self
+                .product_cache
                 .set(CachedRationalProduct {
                     other: Some(Arc::downgrade(&other.0)),
                     result: result.clone(),
                 })
                 .is_ok()
-        };
-        let retained_by_other = if other.is_internally_unreduced() {
-            false
-        } else {
-            other
+        {
+            return;
+        }
+        if !other.is_internally_unreduced()
+            && other
                 .product_cache
                 .set(CachedRationalProduct {
                     other: Some(Arc::downgrade(&self.0)),
                     result: result.clone(),
                 })
                 .is_ok()
-        };
-        if !retained_by_self && !retained_by_other
-            && !Self::retain_linear(self, other, CachedRationalLinearKind::Product, result)
+        {
+            return;
+        }
+        if !Self::retain_linear(self, other, CachedRationalLinearKind::Product, result)
         {
             let _ = Self::retain_linear(
                 other,
