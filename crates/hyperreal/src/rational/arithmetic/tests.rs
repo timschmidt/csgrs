@@ -1443,6 +1443,15 @@ mod tests {
             ),
             Some(wide.clone())
         );
+        assert_eq!(
+            wide.checked_exact_integer_cross_difference_quotient(
+                &Rational::new(7),
+                &wide,
+                &Rational::new(4),
+                &Rational::minus_one(),
+            ),
+            Some(-(&wide * Rational::new(3)))
+        );
     }
 
     #[test]

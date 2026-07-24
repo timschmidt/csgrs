@@ -288,6 +288,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Computes the same fresh wide-integer scaled difference with the fused integer kernel.",
             },
             BenchDoc {
+                name: "rational_cross_difference_unit_divisor_composed_cold",
+                description: "Computes a fresh wide-integer cross difference and divides it by negative one through general operations.",
+            },
+            BenchDoc {
+                name: "rational_cross_difference_unit_divisor_fused_cold",
+                description: "Computes the same cross difference through the checked fused unit-divisor path.",
+            },
+            BenchDoc {
                 name: "rational_mul",
                 description: "Multiplies two nontrivial rational values.",
             },
@@ -1394,6 +1402,58 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
                     black_box(&left)
                         .checked_exact_integer_scaled_difference(black_box(&subtractand), 3),
                 )
+            },
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function(
+        "rational_cross_difference_unit_divisor_composed_cold",
+        |b| {
+            b.iter_batched(
+                || {
+                    (
+                        Rational::from_bigint(BigInt::from(
+                            (BigUint::from(1_u8) << 191_usize) + BigUint::from(17_u8),
+                        )),
+                        Rational::new(7),
+                        Rational::from_bigint(BigInt::from(
+                            (BigUint::from(1_u8) << 159_usize) + BigUint::from(29_u8),
+                        )),
+                        Rational::new(4),
+                    )
+                },
+                |(left, right, subtract_left, subtract_right)| {
+                    black_box(
+                        &(black_box(&left) * black_box(&right)
+                            - &(black_box(&subtract_left) * black_box(&subtract_right)))
+                            / Rational::new(-1),
+                    )
+                },
+                BatchSize::SmallInput,
+            )
+        },
+    );
+    group.bench_function("rational_cross_difference_unit_divisor_fused_cold", |b| {
+        b.iter_batched(
+            || {
+                (
+                    Rational::from_bigint(BigInt::from(
+                        (BigUint::from(1_u8) << 191_usize) + BigUint::from(17_u8),
+                    )),
+                    Rational::new(7),
+                    Rational::from_bigint(BigInt::from(
+                        (BigUint::from(1_u8) << 159_usize) + BigUint::from(29_u8),
+                    )),
+                    Rational::new(4),
+                )
+            },
+            |(left, right, subtract_left, subtract_right)| {
+                black_box(left.checked_exact_integer_cross_difference_quotient(
+                    black_box(&right),
+                    black_box(&subtract_left),
+                    black_box(&subtract_right),
+                    &Rational::new(-1),
+                ))
             },
             BatchSize::SmallInput,
         )

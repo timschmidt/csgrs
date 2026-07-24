@@ -1553,6 +1553,29 @@ AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,895
 coverage points and 19,144 feature edges; LeakSanitizer alone remained
 disabled under ptrace.
 
+The checked integer cross-difference quotient now returns directly after sign
+application when the divisor magnitude is one. This preserves every integer,
+nonzero-divisor, and sign guard while avoiding a big-integer `div_rem` during
+the first Bareiss stage. Positive and negative unit divisors are covered
+alongside the existing exhaustive signed/divisibility cases.
+
+A matched fresh 192-bit Criterion sentinel measured the composed
+multiply/subtract/divide at 625.27 ns and the fused unit-divisor path at
+190.15 ns, a 69.6% reduction. On the downstream Hypercurve sentinel, the
+ten-run instruction median fell from 72,782,675 to 72,479,577 (0.4%), 77.4%
+below the original baseline. Heaptrack allocations fell from 108,842 to
+107,461; temporary allocations remained 6,236, peak heap remained 1.53 MiB,
+and peak RSS was 12.65 MiB. Eleven ordinary runs had a 7.552 ms complete
+median, a 5.446 ms preparation median, and a 0.353 ms exact-polyline projection
+median, with unchanged topology and checksum.
+
+The complete Hyperreal, Hypersolve, and Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The downstream
+AddressSanitizer region-Boolean replay completed the requested 2,509-run
+budget after 2,513 executions at 5,900 coverage points and 19,165 feature
+edges; LeakSanitizer alone remained disabled under ptrace.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

@@ -65,6 +65,17 @@ impl Rational {
         if sign == NoSign {
             return Some(Self::zero());
         }
+        if divisor.numerator.is_one() {
+            crate::trace_dispatch!(
+                "rational",
+                "integer-cross-difference",
+                "unit-divisor"
+            );
+            return Some(Self::from_integer_magnitude(
+                sign * divisor.sign,
+                numerator,
+            ));
+        }
         use num::Integer as _;
         let (quotient, remainder) = numerator.div_rem(&divisor.numerator);
         if !remainder.is_zero() {
