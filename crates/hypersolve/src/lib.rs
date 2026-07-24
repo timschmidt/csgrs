@@ -25,6 +25,7 @@ pub mod domain;
 pub mod domain_certification;
 pub mod eval;
 pub mod failed_constraints;
+mod integer_interpolation;
 pub mod interval;
 pub mod jacobian;
 pub mod linalg;

@@ -24,6 +24,9 @@ use crate::algebraic::{
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     validate_algebraic_root_representation,
 };
+use crate::integer_interpolation::{
+    interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
+};
 use crate::resultant::resultant_univariate_polynomials;
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig,
@@ -251,28 +254,31 @@ fn resultant_polynomial_for_binary_image(
     resultant_degree: usize,
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
+    let left_polynomial = primitive_integer_polynomial(left_polynomial)?;
+    let right_polynomial = primitive_integer_polynomial(right_polynomial)?;
     let mut samples = Vec::with_capacity(resultant_degree + 1);
     for sample in 0..=resultant_degree {
         let y = Real::from(sample as i64);
         let right_in_x = match operation {
             AlgebraicRootArithmeticOp::Add => {
-                compose_with_linear(right_polynomial, y, -Real::one())
+                compose_with_linear(&right_polynomial, y, -Real::one())
             }
             AlgebraicRootArithmeticOp::Subtract => {
-                compose_with_linear(right_polynomial, -y, Real::one())
+                compose_with_linear(&right_polynomial, -y, Real::one())
             }
             AlgebraicRootArithmeticOp::Multiply => {
-                reciprocal_product_polynomial(right_polynomial, &y)
+                reciprocal_product_polynomial(&right_polynomial, &y)
             }
-            AlgebraicRootArithmeticOp::Divide => quotient_product_polynomial(right_polynomial, &y),
+            AlgebraicRootArithmeticOp::Divide => quotient_product_polynomial(&right_polynomial, &y),
             AlgebraicRootArithmeticOp::Negate => return None,
         };
-        let resultant = resultant_univariate_polynomials(left_polynomial, &right_in_x, -64)
+        let resultant = resultant_univariate_polynomials(&left_polynomial, &right_in_x, -64)
             .ok()?
             .resultant;
         samples.push(resultant);
     }
-    trim_real_polynomial(interpolate_integer_samples(&samples)?, policy)
+    let polynomial = interpolate_integer_samples_up_to_scale(&samples)?;
+    trim_real_polynomial(primitive_integer_polynomial(&polynomial)?, policy)
 }
 
 fn binary_image_interval(
@@ -366,26 +372,6 @@ fn multiply_by_linear_factor(polynomial: &[Real], constant: Real, linear: Real) 
         result[degree + 1] = result[degree + 1].clone() + coefficient.clone() * linear.clone();
     }
     result
-}
-
-fn interpolate_integer_samples(samples: &[Real]) -> Option<Vec<Real>> {
-    let mut result = vec![Real::zero(); samples.len()];
-    for (index, value) in samples.iter().enumerate() {
-        let mut basis = vec![Real::one()];
-        let mut denominator = Real::one();
-        for other in 0..samples.len() {
-            if other == index {
-                continue;
-            }
-            basis = multiply_by_linear_factor(&basis, -Real::from(other as i64), Real::one());
-            denominator *= Real::from(index as i64 - other as i64);
-        }
-        let scale = (value.clone() / denominator).ok()?;
-        for (degree, coefficient) in basis.into_iter().enumerate() {
-            result[degree] = result[degree].clone() + coefficient * scale.clone();
-        }
-    }
-    Some(result)
 }
 
 fn interval_mul(
@@ -522,6 +508,10 @@ mod tests {
         Real::from(value)
     }
 
+    fn fraction(numerator: i64, denominator: u64) -> Real {
+        Real::from(hyperreal::Rational::fraction(numerator, denominator).unwrap())
+    }
+
     fn sqrt_root(square: i64, lower: i64, upper: i64) -> AlgebraicRootRepresentation {
         AlgebraicRootRepresentation {
             constraint_index: square as usize,
@@ -567,6 +557,39 @@ mod tests {
             ]
         );
         assert!(root.is_valid());
+    }
+
+    #[test]
+    fn binary_resultant_clears_source_denominators_before_elimination() {
+        let left = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![fraction(-2, 3), Real::zero(), fraction(1, 3)],
+            ..sqrt_root(2, 1, 2)
+        };
+        let right = AlgebraicRootRepresentation {
+            polynomial_coefficients: vec![fraction(-3, 5), Real::zero(), fraction(1, 5)],
+            ..sqrt_root(3, 1, 2)
+        };
+        let report = transform_algebraic_roots_binary(
+            &left,
+            &right,
+            AlgebraicRootArithmeticOp::Add,
+            PredicatePolicy,
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootBinaryTransformStatus::Transformed
+        );
+        assert_eq!(
+            report.representation.unwrap().polynomial_coefficients,
+            vec![
+                Real::one(),
+                Real::zero(),
+                real(-10),
+                Real::zero(),
+                Real::one()
+            ]
+        );
     }
 
     #[test]

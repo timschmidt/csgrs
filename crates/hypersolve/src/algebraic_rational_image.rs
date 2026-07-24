@@ -35,6 +35,9 @@ use crate::algebraic_polynomial_image::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
     transform_algebraic_root_polynomial_image,
 };
+use crate::integer_interpolation::{
+    interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
+};
 use crate::resultant::resultant_univariate_polynomials;
 use crate::root_isolation::IsolatedRootInterval;
 
@@ -414,7 +417,7 @@ fn direct_rational_image_representation(
     if source_degree + rational_degree.max(1) > MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION {
         return None;
     }
-    let source_polynomial = clear_rational_polynomial_denominators(&root.polynomial_coefficients)?;
+    let source_polynomial = primitive_integer_polynomial(&root.polynomial_coefficients)?;
     let (resultant_numerator, resultant_denominator) =
         clear_rational_map_denominators(&numerator, &denominator)?;
     let polynomial_coefficients = resultant_polynomial_for_rational_image(
@@ -442,19 +445,6 @@ fn direct_rational_image_representation(
     }
     representation.validation = validate_algebraic_root_representation(&representation, policy);
     Some(representation)
-}
-
-fn clear_rational_polynomial_denominators(polynomial: &[Real]) -> Option<Vec<Real>> {
-    let rationals = polynomial
-        .iter()
-        .map(Real::exact_rational_ref)
-        .collect::<Option<Vec<_>>>()?;
-    Some(
-        Rational::primitive_integer_ratio(&rationals)
-            .into_iter()
-            .map(Real::from)
-            .collect(),
-    )
 }
 
 fn clear_rational_map_denominators(
@@ -490,7 +480,8 @@ fn resultant_polynomial_for_rational_image(
             .resultant;
         samples.push(resultant);
     }
-    trim_real_polynomial(interpolate_integer_samples(&samples)?, policy)
+    let polynomial = interpolate_integer_samples_up_to_scale(&samples)?;
+    trim_real_polynomial(primitive_integer_polynomial(&polynomial)?, policy)
 }
 
 fn rational_image_interval(
@@ -672,35 +663,6 @@ fn polynomial_mul(left: &[Real], right: &[Real]) -> Vec<Real> {
         }
     }
     product
-}
-
-fn interpolate_integer_samples(samples: &[Real]) -> Option<Vec<Real>> {
-    let mut result = vec![Real::zero(); samples.len()];
-    for (index, value) in samples.iter().enumerate() {
-        let mut basis = vec![Real::one()];
-        let mut denominator = Real::one();
-        for other in 0..samples.len() {
-            if other == index {
-                continue;
-            }
-            basis = multiply_by_linear_factor(&basis, -Real::from(other as i64), Real::one());
-            denominator *= Real::from(index as i64 - other as i64);
-        }
-        let scale = (value.clone() / denominator).ok()?;
-        for (degree, coefficient) in basis.into_iter().enumerate() {
-            result[degree] = result[degree].clone() + coefficient * scale.clone();
-        }
-    }
-    Some(result)
-}
-
-fn multiply_by_linear_factor(polynomial: &[Real], constant: Real, linear: Real) -> Vec<Real> {
-    let mut result = vec![Real::zero(); polynomial.len() + 1];
-    for (degree, coefficient) in polynomial.iter().enumerate() {
-        result[degree] = result[degree].clone() + coefficient.clone() * constant.clone();
-        result[degree + 1] = result[degree + 1].clone() + coefficient.clone() * linear.clone();
-    }
-    result
 }
 
 fn trim_real_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {

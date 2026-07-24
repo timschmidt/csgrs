@@ -98,6 +98,25 @@ median and 9.016 ms pair-preparation median, versus 26.628 and 16.830 ms before
 the cross-crate change. All runs retained 9 candidate pairs, 48 fragments,
 2 point classifications, 4 decided operations, and checksum 6.
 
+Sampled polynomial, rational, and binary algebraic resultants now normalize
+every defining polynomial to primitive integers before elimination. Polynomial
+images include the symbolic `y` coefficient in their one shared scale, so
+sampling still represents exactly `q(x) - y`; rational maps continue to scale
+their numerator and denominator together. The resulting integer samples use
+forward-difference Newton interpolation multiplied by the common `n!` scale,
+avoiding per-basis rational division before one final primitive-content
+normalization. This changes only a defining polynomial's nonzero global scale.
+
+On the same Hypercurve sentinel, primitive polynomial-image relations reduced
+instructions from 189,533,986 to 176,631,590. Integer-scaled interpolation
+shared by polynomial and rational images reached 165,927,095, a combined 12.5%
+reduction. Binary independent-root arithmetic uses the same path and has
+fractionally scaled source-polynomial regression coverage. The downstream
+workload retained all 9 candidate pairs, 48 fragments, 2 point
+classifications, 4 decided operations, and checksum 6. The complete
+all-feature test suite, strict all-target Clippy, and warning-denied rustdoc
+passed.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
