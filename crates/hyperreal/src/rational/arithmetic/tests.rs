@@ -1446,6 +1446,48 @@ mod tests {
     }
 
     #[test]
+    fn checked_exact_integer_scaled_difference_matches_small_integers() {
+        for left in -8_i64..=8 {
+            for subtractand in -8_i64..=8 {
+                for scale in -8_i64..=8 {
+                    assert_eq!(
+                        Rational::new(left)
+                            .checked_exact_integer_scaled_difference(
+                                &Rational::new(subtractand),
+                                scale,
+                            ),
+                        Some(Rational::new(left - subtractand * scale))
+                    );
+                }
+            }
+        }
+        assert_eq!(
+            Rational::fraction(1, 2)
+                .unwrap()
+                .checked_exact_integer_scaled_difference(&Rational::new(2), 3),
+            None
+        );
+        assert_eq!(
+            Rational::new(2).checked_exact_integer_scaled_difference(
+                &Rational::fraction(1, 3).unwrap(),
+                3,
+            ),
+            None
+        );
+        let wide =
+            Rational::from_unsigned_integer((BigUint::one() << 191_usize) + BigUint::from(17_u8));
+        assert_eq!(
+            wide.checked_exact_integer_scaled_difference(&wide, -3),
+            Some(&wide * Rational::new(4))
+        );
+        assert_eq!(
+            Rational::new(1)
+                .checked_exact_integer_scaled_difference(&Rational::new(2), i64::MIN),
+            Some(&Rational::new(1) - &(&Rational::new(2) * Rational::new(i64::MIN)))
+        );
+    }
+
+    #[test]
     fn word_multiplication_cross_cancellation_stays_reduced() {
         let dyadic = Rational::try_from(0.123_456_789_f64).unwrap();
         let scaled = &dyadic * Rational::new(10);

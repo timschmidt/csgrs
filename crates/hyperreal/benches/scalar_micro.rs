@@ -280,6 +280,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Subtracts fresh operands whose storage is cloned but whose arithmetic pair is not yet observed.",
             },
             BenchDoc {
+                name: "rational_scaled_difference_composed_cold",
+                description: "Computes a fresh wide-integer scaled difference through multiply then subtract.",
+            },
+            BenchDoc {
+                name: "rational_scaled_difference_fused_cold",
+                description: "Computes the same fresh wide-integer scaled difference with the fused integer kernel.",
+            },
+            BenchDoc {
                 name: "rational_mul",
                 description: "Multiplies two nontrivial rational values.",
             },
@@ -1347,6 +1355,45 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
                 let result = black_box(&left) - black_box(&right);
                 black_box((&shared_left, &shared_right));
                 black_box(result)
+            },
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("rational_scaled_difference_composed_cold", |b| {
+        b.iter_batched(
+            || {
+                (
+                    Rational::from_bigint(BigInt::from(
+                        (BigUint::from(1_u8) << 191_usize) + BigUint::from(17_u8),
+                    )),
+                    Rational::from_bigint(BigInt::from(
+                        (BigUint::from(1_u8) << 159_usize) + BigUint::from(29_u8),
+                    )),
+                )
+            },
+            |(left, subtractand)| {
+                black_box(black_box(&left) - &(black_box(&subtractand) * Rational::new(3)))
+            },
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("rational_scaled_difference_fused_cold", |b| {
+        b.iter_batched(
+            || {
+                (
+                    Rational::from_bigint(BigInt::from(
+                        (BigUint::from(1_u8) << 191_usize) + BigUint::from(17_u8),
+                    )),
+                    Rational::from_bigint(BigInt::from(
+                        (BigUint::from(1_u8) << 159_usize) + BigUint::from(29_u8),
+                    )),
+                )
+            },
+            |(left, subtractand)| {
+                black_box(
+                    black_box(&left)
+                        .checked_exact_integer_scaled_difference(black_box(&subtractand), 3),
+                )
             },
             BatchSize::SmallInput,
         )

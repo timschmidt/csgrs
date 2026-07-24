@@ -1520,6 +1520,39 @@ AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,903
 coverage points and 19,183 feature edges; LeakSanitizer alone remained
 disabled under ptrace.
 
+### Fused exact integer scaled differences
+
+`checked_exact_integer_scaled_difference` computes `a - b*k` directly from
+the two integer magnitudes and a signed `i64` scale. It avoids constructing,
+reducing, caching, and then discarding the intermediate rational product.
+Fractional operands return `None`, allowing callers to preserve their general
+exact-arithmetic fallback. Exhaustive small signed cases cover every sign and
+zero arrangement; fractional rejection and a 192-bit case cover the remaining
+representation boundaries.
+
+Matched fresh 192-bit Criterion sentinels measured the composed multiply then
+subtract at 310.13 ns and the fused operation at 102.50 ns, a 67.0% reduction.
+Hypersolve now uses the fused primitive for every flat quotient-ring sample
+entry `N - y*D`; failure preserves its established Sylvester-resultant
+fallback. A zero scale or zero subtractand returns the already-immutable left
+operand directly.
+
+On Hypercurve's one-cell all-family exact Boolean sentinel, the ten-run
+instruction median fell from 74,732,427 to 72,782,675 (2.6%), 77.3% below the
+original 320,660,631 baseline. Heaptrack allocations fell from 112,178 to
+108,842; temporary allocations fell from 6,833 to 6,236, peak heap remained
+1.53 MiB, and peak RSS was 12.55 MiB. Eleven ordinary runs had a 7.672 ms
+complete median, a 5.501 ms preparation median, and a 0.339 ms exact-polyline
+projection median. Exact topology remained 9 candidate pairs, 48 fragments,
+2 classifications, 4 decided operations, no blockers, and checksum 6.
+
+The complete Hyperreal, Hypersolve, and Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The downstream
+AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,895
+coverage points and 19,144 feature edges; LeakSanitizer alone remained
+disabled under ptrace.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

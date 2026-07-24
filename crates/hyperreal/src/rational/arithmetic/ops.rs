@@ -79,6 +79,53 @@ impl Rational {
         Some(Self::from_integer_magnitude(sign, quotient))
     }
 
+    /// Subtract an integer scaled by a signed machine word.
+    ///
+    /// Computes `self - subtractand * scale` directly on integer magnitudes,
+    /// without constructing and reducing an intermediate rational product.
+    /// Returns `None` unless both rational operands are exact integers.
+    pub fn checked_exact_integer_scaled_difference(
+        &self,
+        subtractand: &Self,
+        scale: i64,
+    ) -> Option<Self> {
+        let left = self.canonicalized_ref();
+        let subtractand = subtractand.canonicalized_ref();
+        if left.denominator != *ONE.deref() || subtractand.denominator != *ONE.deref() {
+            return None;
+        }
+
+        let scale_sign = match scale.cmp(&0) {
+            core::cmp::Ordering::Less => Minus,
+            core::cmp::Ordering::Equal => NoSign,
+            core::cmp::Ordering::Greater => Plus,
+        };
+        let right_sign = subtractand.sign * scale_sign;
+        if right_sign == NoSign {
+            return Some(self.clone());
+        }
+        let right = &subtractand.numerator * scale.unsigned_abs();
+        let (sign, numerator) = if left.sign == NoSign {
+            (-right_sign, right)
+        } else if left.sign != right_sign {
+            (left.sign, left.numerator.clone() + right)
+        } else {
+            match left.numerator.cmp(&right) {
+                core::cmp::Ordering::Greater => {
+                    (left.sign, left.numerator.clone() - right)
+                }
+                core::cmp::Ordering::Equal => return Some(Self::zero()),
+                core::cmp::Ordering::Less => (-right_sign, right - &left.numerator),
+            }
+        };
+        crate::trace_dispatch!(
+            "rational",
+            "integer-scaled-difference",
+            "signed-word-scale"
+        );
+        Some(Self::from_integer_magnitude(sign, numerator))
+    }
+
     /// Divide two integers when their quotient is also an integer.
     ///
     /// Returns `None` for fractional inputs, a zero divisor, or a nonzero

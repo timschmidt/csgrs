@@ -33,6 +33,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     // Structural facts, retained exact values, and exact-set schedules.
     "best_sign",
     "checked_exact_integer_cross_difference_quotient",
+    "checked_exact_integer_scaled_difference",
     "checked_exact_integer_quotient",
     "clear_common_denominator_slice",
     "definitely_not_equal",
