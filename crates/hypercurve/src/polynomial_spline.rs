@@ -423,22 +423,24 @@ impl PolynomialSplineCurve2 {
     ) -> ExactCurveResult<Point2> {
         let decomposition = self.bezier_decomposition()?;
         let (first, last) = select_span_indices(decomposition.intervals(), parameter)?;
-        let first_interval = &decomposition.intervals()[first];
+        let first_interval = &decomposition.intervals()[first.index];
         let first_point = evaluate_span(
-            &decomposition.spans()[first],
+            &decomposition.spans()[first.index],
             &first_interval.0,
             &first_interval.1,
             parameter,
+            first.location,
         )?;
-        if first == last || side == CurveParameterSide2::Left {
+        if first.index == last.index || side == CurveParameterSide2::Left {
             return Ok(first_point);
         }
-        let last_interval = &decomposition.intervals()[last];
+        let last_interval = &decomposition.intervals()[last.index];
         let last_point = evaluate_span(
-            &decomposition.spans()[last],
+            &decomposition.spans()[last.index],
             &last_interval.0,
             &last_interval.1,
             parameter,
+            last.location,
         )?;
         if side == CurveParameterSide2::Right {
             return Ok(last_point);
@@ -551,11 +553,13 @@ impl PolynomialSplineCurve2 {
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition = self.bezier_decomposition()?;
         let (first, last) = select_span_indices(decomposition.intervals(), parameter)?;
-        let first_derivatives = self.derivatives_on_span(first, parameter, max_order)?;
-        if first == last || side == CurveParameterSide2::Left {
+        let first_derivatives =
+            self.derivatives_on_span(first.index, parameter, max_order, first.location)?;
+        if first.index == last.index || side == CurveParameterSide2::Left {
             return Ok(first_derivatives);
         }
-        let last_derivatives = self.derivatives_on_span(last, parameter, max_order)?;
+        let last_derivatives =
+            self.derivatives_on_span(last.index, parameter, max_order, last.location)?;
         if side == CurveParameterSide2::Right {
             return Ok(last_derivatives);
         }
@@ -567,9 +571,14 @@ impl PolynomialSplineCurve2 {
         span_index: usize,
         parameter: &Real,
         max_order: usize,
+        location: SpanParameterLocation,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let interval = &self.bezier_decomposition()?.intervals()[span_index];
-        let local = local_span_parameter(interval, parameter)?;
+        let local = match location {
+            SpanParameterLocation::Start => Real::zero(),
+            SpanParameterLocation::End => Real::one(),
+            SpanParameterLocation::Interior => local_span_parameter(interval, parameter)?,
+        };
         let evaluator = &self.rational_spans()?[span_index];
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(evaluator.derivative_at_classified(
@@ -805,7 +814,13 @@ fn evaluate_span(
     start: &Real,
     end: &Real,
     parameter: &Real,
+    location: SpanParameterLocation,
 ) -> ExactCurveResult<Point2> {
+    match location {
+        SpanParameterLocation::Start => return Ok(span.start().clone()),
+        SpanParameterLocation::End => return Ok(span.end().clone()),
+        SpanParameterLocation::Interior => {}
+    }
     let local = ((parameter - start) / (end - start)).map_err(|cause| {
         ExactCurveError::invalid(
             CurveOperation2::Evaluation,
@@ -864,21 +879,43 @@ fn rationalize_subcurve(curve: &BezierSubcurve2) -> Cached<RationalBezier2> {
     })
 }
 
+#[derive(Clone, Copy)]
+struct SelectedSpan {
+    index: usize,
+    location: SpanParameterLocation,
+}
+
+#[derive(Clone, Copy)]
+enum SpanParameterLocation {
+    Start,
+    Interior,
+    End,
+}
+
 fn select_span_indices(
     intervals: &[(Real, Real)],
     parameter: &Real,
-) -> ExactCurveResult<(usize, usize)> {
+) -> ExactCurveResult<(SelectedSpan, SelectedSpan)> {
     let policy = CurvePolicy::certified();
     let mut first = None;
     let mut last = None;
     for (span_index, (start, end)) in intervals.iter().enumerate() {
-        match (
-            crate::classify::compare_reals(start, parameter, &policy),
-            crate::classify::compare_reals(parameter, end, &policy),
-        ) {
+        let lower = crate::classify::compare_reals(start, parameter, &policy);
+        let upper = crate::classify::compare_reals(parameter, end, &policy);
+        match (lower, upper) {
             (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less | Ordering::Equal)) => {
-                first.get_or_insert(span_index);
-                last = Some(span_index);
+                let selected = SelectedSpan {
+                    index: span_index,
+                    location: if lower == Some(Ordering::Equal) {
+                        SpanParameterLocation::Start
+                    } else if upper == Some(Ordering::Equal) {
+                        SpanParameterLocation::End
+                    } else {
+                        SpanParameterLocation::Interior
+                    },
+                };
+                first.get_or_insert(selected);
+                last = Some(selected);
             }
             (Some(_), Some(_)) => {}
             _ => {

@@ -911,21 +911,31 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<Point2> {
         let decomposition = self.bezier_decomposition()?;
         let (first, last) = select_span_indices(decomposition.spans(), parameter)?;
-        let first_point = self.point_on_span(first, parameter)?;
-        if first == last || side == CurveParameterSide2::Left {
+        let first_point = self.point_on_span(first.index, parameter, first.location)?;
+        if first.index == last.index || side == CurveParameterSide2::Left {
             return Ok(first_point);
         }
-        let last_point = self.point_on_span(last, parameter)?;
+        let last_point = self.point_on_span(last.index, parameter, last.location)?;
         if side == CurveParameterSide2::Right {
             return Ok(last_point);
         }
         matching_nurbs_point(first_point, last_point)
     }
 
-    fn point_on_span(&self, span_index: usize, parameter: &Real) -> ExactCurveResult<Point2> {
+    fn point_on_span(
+        &self,
+        span_index: usize,
+        parameter: &Real,
+        location: NurbsSpanParameterLocation,
+    ) -> ExactCurveResult<Point2> {
+        let curve = &self.rational_spans()?[span_index];
+        match location {
+            NurbsSpanParameterLocation::Start => return Ok(curve.start().clone()),
+            NurbsSpanParameterLocation::End => return Ok(curve.end().clone()),
+            NurbsSpanParameterLocation::Interior => {}
+        }
         let decomposition = self.bezier_decomposition()?;
         let local = local_span_parameter(&decomposition.spans()[span_index], parameter)?;
-        let curve = &self.rational_spans()?[span_index];
         exact_classification(
             curve.point_at_classified(&local, &CurvePolicy::certified()),
             CurveOperation2::Evaluation,
@@ -1041,11 +1051,13 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition = self.bezier_decomposition()?;
         let (first, last) = select_span_indices(decomposition.spans(), parameter)?;
-        let first_derivatives = self.derivatives_on_span(first, parameter, max_order)?;
-        if first == last || side == CurveParameterSide2::Left {
+        let first_derivatives =
+            self.derivatives_on_span(first.index, parameter, max_order, first.location)?;
+        if first.index == last.index || side == CurveParameterSide2::Left {
             return Ok(first_derivatives);
         }
-        let last_derivatives = self.derivatives_on_span(last, parameter, max_order)?;
+        let last_derivatives =
+            self.derivatives_on_span(last.index, parameter, max_order, last.location)?;
         if side == CurveParameterSide2::Right {
             return Ok(last_derivatives);
         }
@@ -1057,10 +1069,15 @@ impl NurbsCurve2 {
         span_index: usize,
         parameter: &Real,
         max_order: usize,
+        location: NurbsSpanParameterLocation,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition = self.bezier_decomposition()?;
         let span = &decomposition.spans()[span_index];
-        let local = local_span_parameter(span, parameter)?;
+        let local = match location {
+            NurbsSpanParameterLocation::Start => Real::zero(),
+            NurbsSpanParameterLocation::End => Real::one(),
+            NurbsSpanParameterLocation::Interior => local_span_parameter(span, parameter)?,
+        };
         let rational_span = &self.rational_spans()?[span_index];
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(
@@ -1464,10 +1481,23 @@ fn remap_nurbs_operation(error: ExactCurveError, operation: CurveOperation2) -> 
     }
 }
 
+#[derive(Clone, Copy)]
+struct SelectedNurbsSpan {
+    index: usize,
+    location: NurbsSpanParameterLocation,
+}
+
+#[derive(Clone, Copy)]
+enum NurbsSpanParameterLocation {
+    Start,
+    Interior,
+    End,
+}
+
 fn select_span_indices(
     spans: &[RationalBezierSpan2],
     parameter: &Real,
-) -> ExactCurveResult<(usize, usize)> {
+) -> ExactCurveResult<(SelectedNurbsSpan, SelectedNurbsSpan)> {
     let policy = CurvePolicy::certified();
     let mut first = None;
     let mut last = None;
@@ -1480,8 +1510,18 @@ fn select_span_indices(
                 Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
                 Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
             ) => {
-                first.get_or_insert(span_index);
-                last = Some(span_index);
+                let selected = SelectedNurbsSpan {
+                    index: span_index,
+                    location: if lower == Some(std::cmp::Ordering::Equal) {
+                        NurbsSpanParameterLocation::Start
+                    } else if upper == Some(std::cmp::Ordering::Equal) {
+                        NurbsSpanParameterLocation::End
+                    } else {
+                        NurbsSpanParameterLocation::Interior
+                    },
+                };
+                first.get_or_insert(selected);
+                last = Some(selected);
             }
             (Some(_), Some(_)) => {}
             _ => {

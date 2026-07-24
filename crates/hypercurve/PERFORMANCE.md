@@ -4222,6 +4222,42 @@ region-Boolean replay completed with libFuzzer reporting 2,515 executions at
 5,896 coverage points and 19,148 feature edges with no finding; LeakSanitizer
 remained disabled under ptrace.
 
+### Retained spline span-boundary classification
+
+Polynomial-spline and NURBS evaluation first scan retained Bezier span
+intervals to select every span containing the authored parameter. That scan
+already proves whether the parameter equals the selected span's start or end,
+but the result formerly retained only span indices. Point and derivative
+evaluation then repeated exact subtraction and division to reconstruct local
+parameter zero or one and evaluated the full rational or polynomial Bezier
+span.
+
+Both selectors now retain a typed start/interior/end location beside each
+selected index. Point queries at certified boundaries clone the exact retained
+span endpoint, while derivative queries reuse exact local zero or one before
+applying the existing authored-knot chain scale. Interior parameters follow
+the unchanged normalization and evaluator paths. At discontinuous knots the
+first and last selected spans retain their own end and start locations, so
+automatic, left, and right side behavior is unchanged. The polynomial-spline
+and NURBS endpoint, interior-knot, discontinuity, periodic-seam, derivative,
+higher-derivative, reversal, and editing suites cover these paths.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 32,852,557 to 32,813,991 (0.12%), 89.77% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+47,321 to 47,301 and temporary events from 2,988 to 2,982; peak heap remained
+1.14 MiB and peak RSS fell from 11.13 to 11.12 MiB. Every measured run retained
+9 candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. The requested `-runs=2509` AddressSanitizer
+region-Boolean replay completed with libFuzzer reporting 2,511 executions at
+5,898 coverage points and 19,152 feature edges with no finding; LeakSanitizer
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
