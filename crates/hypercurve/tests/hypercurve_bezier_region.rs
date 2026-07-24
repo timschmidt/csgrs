@@ -298,6 +298,26 @@ fn equal_weight_rational_quadratic_area_matches_polynomial_exactly() {
 }
 
 #[test]
+fn rational_quadratic_area_is_invariant_under_negative_projective_scale() {
+    let positive =
+        RationalQuadraticBezier2::try_new(p(-1, 2), p(3, 5), p(7, -2), r(1), r(2), r(3)).unwrap();
+    let negative =
+        RationalQuadraticBezier2::try_new(p(-1, 2), p(3, 5), p(7, -2), r(-1), r(-2), r(-3))
+            .unwrap();
+
+    assert_real_eq(
+        &positive
+            .signed_area_contribution()
+            .unwrap()
+            .expect("positive same-sign weights have a finite area"),
+        &negative
+            .signed_area_contribution()
+            .unwrap()
+            .expect("negative same-sign weights have the same finite area"),
+    );
+}
+
+#[test]
 fn conic_region_boundary_materializes_with_exact_area() {
     let upper =
         RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(2, 2), p(4, 0), q(1, 2)).unwrap();

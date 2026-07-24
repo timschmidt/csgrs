@@ -3805,6 +3805,40 @@ AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,894
 coverage points and 19,160 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Direct rational-conic Green numerators
+
+Rational-quadratic signed area formerly expanded the weighted x and y
+coordinates into power form, differentiated both, multiplied the two
+coordinate/derivative pairs, and subtracted them before their cubic terms
+cancelled. The homogeneous Green numerator is now formed directly from its
+three quadratic Bernstein controls:
+`w0*w1*(P0 cross P1)`, `w0*w2*(P0 cross P2)`, and
+`w1*w2*(P1 cross P2)`. Its common factor two cancels the Green integral's
+one-half factor before integration. The denominator, affine-boundary
+certification, and exact inverse-quadratic integration branches are unchanged.
+The now-unused generic polynomial-difference layer was removed.
+
+A focused unequal-weight regression verifies invariance under a uniformly
+negative projective weight scale. Existing exact polynomial-equivalence,
+irrational quarter-circle, split/reversal, same-sign conic-region, and
+projective-boundary tests cover polynomial, elliptic, subdivision, orientation,
+and unsupported-denominator behavior.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 45,626,071 to 45,347,329 (0.61%), 85.86% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 71,365 to 71,190
+and temporary events from 7,350 to 7,342; peak heap fell from 1.30 to 1.28 MiB
+while peak RSS moved from 11.69 to 11.78 MiB. Every measured run retained 9
+candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and supported default/no-default release WASM library builds passed.
+AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,898
+coverage points and 19,135 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

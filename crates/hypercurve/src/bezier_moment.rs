@@ -442,34 +442,25 @@ fn rational_quadratic_signed_area_contribution(
 
     let weights = curve.weights();
     let controls = curve.control_points();
-    let x_weighted = [
-        controls[0].x() * weights[0],
-        controls[1].x() * weights[1],
-        controls[2].x() * weights[2],
-    ];
-    let y_weighted = [
-        controls[0].y() * weights[0],
-        controls[1].y() * weights[1],
-        controls[2].y() * weights[2],
-    ];
+    // After cancelling the Green integral's factor one half against the
+    // homogeneous cross product's factor two, the numerator has these
+    // quadratic Bernstein controls. Forming them directly avoids expanding
+    // two weighted coordinates, differentiating both, and cancelling the
+    // resulting cubic terms.
+    let a = weights[0] * weights[1] * point_cross_product(controls[0], controls[1]);
+    let b = weights[0] * weights[2] * point_cross_product(controls[0], controls[2]);
+    let c = weights[1] * weights[2] * point_cross_product(controls[1], controls[2]);
+    let numerator = [a.clone(), &b - &(Real::from(2_i8) * &a), &a - &b + c];
     let w = quadratic_bernstein_power_coefficients([
         weights[0].clone(),
         weights[1].clone(),
         weights[2].clone(),
     ]);
-    let nx = quadratic_bernstein_power_coefficients(x_weighted);
-    let ny = quadratic_bernstein_power_coefficients(y_weighted);
-    let dnx = derivative_coefficients(&nx)?;
-    let dny = derivative_coefficients(&ny)?;
-    let numerator = polynomial_difference(
-        &polynomial_product(&nx, &dny),
-        &polynomial_product(&ny, &dnx),
-    );
 
     let Some(integral) = integrate_quadratic_over_quadratic_square(&numerator, &w, &policy)? else {
         return Ok(None);
     };
-    Ok(Some((integral / Real::from(2_i8))?))
+    Ok(Some(integral))
 }
 
 fn quadratic_bernstein_power_coefficients(values: [Real; 3]) -> [Real; 3] {
@@ -478,15 +469,6 @@ fn quadratic_bernstein_power_coefficients(values: [Real; 3]) -> [Real; 3] {
     let b = &two * &(&values[1] - &values[0]);
     let a = &values[0] - &(&two * &values[1]) + &values[2];
     [c, b, a]
-}
-
-fn polynomial_difference(first: &[Real], second: &[Real]) -> Vec<Real> {
-    (0..first.len().max(second.len()))
-        .map(|degree| {
-            first.get(degree).cloned().unwrap_or_else(Real::zero)
-                - second.get(degree).cloned().unwrap_or_else(Real::zero)
-        })
-        .collect()
 }
 
 fn integrate_quadratic_over_quadratic_square(
