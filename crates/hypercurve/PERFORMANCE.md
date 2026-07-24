@@ -3065,6 +3065,35 @@ requested AddressSanitizer region-Boolean fuzz replay completed all 2,509 runs
 at 5,893 coverage points and 19,169 feature edges; LeakSanitizer alone remained
 disabled under ptrace.
 
+### Quotient-ring algebraic image resultants
+
+Hypersolve now handles affine and linear-fractional algebraic images through
+its exact Mobius substitution. General polynomial and rational maps construct
+the numerator and denominator multiplication matrices once in `Q[x] / (P)`,
+clear them with one shared scale, and interpolate exact relation norms from
+`deg(P)`-dimensional Bareiss determinants. This replaces repeated six- or
+seven-dimensional Sylvester determinants with four-dimensional determinants
+for the sentinel's quartic parameter evidence. The defining polynomial changes
+only by a nonzero global scale; a generated test compares the new samples with
+the retained Sylvester fallback for cubic sources and quadratic-over-linear
+maps.
+
+The ten-run instruction median fell from 85,201,993 to 79,151,572 (7.1%),
+75.3% below the original 320,660,631 baseline. Eleven ordinary runs had an
+8.625 ms complete median, a 6.272 ms preparation median, and a 0.393 ms
+exact-polyline projection median. All runs retained 9 candidate pairs,
+48 fragments, 2 exact point classifications, 4 decided operations, no
+blockers, and checksum 6. Heaptrack fell from 133,767 to 119,861 allocations
+and from 9,677 to 7,949 temporary allocations; measured peak heap moved from
+1.92 to 1.97 MiB. The roughly 22x projection gap still retains the line/arc
+accelerator.
+
+The complete Hypersolve and Hypercurve all-feature and no-default-feature
+suites, formatting, warning-denied Clippy and rustdoc, and release WASM library
+builds passed. The requested AddressSanitizer region-Boolean fuzz replay
+completed at 2,512 executions with 5,897 coverage points and 19,158 feature
+edges; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
