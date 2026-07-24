@@ -2432,37 +2432,23 @@ impl BezierSubcurve2 {
                     Some(cubic_third_derivative(curve)),
                 ),
                 Self::RationalQuadratic(curve) => {
-                    let general = match crate::RationalBezier2::try_new(
-                        curve.control_points().into_iter().cloned().collect(),
-                        curve.weights().into_iter().cloned().collect(),
+                    let start = match rational_quadratic_endpoint_derivative_jet(
+                        curve, false, true, policy,
                     ) {
-                        Ok(curve) => curve,
-                        Err(_) => {
-                            return Classification::Uncertain(UncertaintyReason::Unsupported);
-                        }
-                    };
-                    let start = match general.endpoint_derivatives(false, 3, policy) {
                         Classification::Decided(derivatives) => derivatives,
                         Classification::Uncertain(reason) => {
                             return Classification::Uncertain(reason);
                         }
                     };
-                    let end = match general.endpoint_derivatives(true, 1, policy) {
+                    let end = match rational_quadratic_endpoint_derivative_jet(
+                        curve, true, false, policy,
+                    ) {
                         Classification::Decided(derivatives) => derivatives,
                         Classification::Uncertain(reason) => {
                             return Classification::Uncertain(reason);
                         }
                     };
-                    let vector = |derivative: &(Real, Real)| TangentVector {
-                        dx: derivative.0.clone(),
-                        dy: derivative.1.clone(),
-                    };
-                    (
-                        vector(&start[1]),
-                        vector(&end[1]),
-                        start.get(2).map(vector),
-                        start.get(3).map(vector),
-                    )
+                    (start.first, end.first, start.second, start.third)
                 }
                 Self::Rational(curve) => {
                     let start = match curve.endpoint_derivatives(false, 3, policy) {
@@ -2502,6 +2488,191 @@ impl BezierSubcurve2 {
             start_second_derivative,
             start_third_derivative,
         })
+    }
+}
+
+struct RationalQuadraticEndpointDerivativeJet {
+    first: TangentVector,
+    second: Option<TangentVector>,
+    third: Option<TangentVector>,
+}
+
+fn rational_quadratic_endpoint_derivative_jet(
+    curve: &crate::RationalQuadraticBezier2,
+    at_end: bool,
+    higher_orders: bool,
+    policy: &CurvePolicy,
+) -> Classification<RationalQuadraticEndpointDerivativeJet> {
+    let (point0, point1, point2, weight0, weight1, weight2) = if at_end {
+        (
+            curve.end(),
+            curve.control(),
+            curve.start(),
+            curve.end_weight(),
+            curve.control_weight(),
+            curve.start_weight(),
+        )
+    } else {
+        (
+            curve.start(),
+            curve.control(),
+            curve.end(),
+            curve.start_weight(),
+            curve.control_weight(),
+            curve.end_weight(),
+        )
+    };
+    match is_zero(weight0, policy) {
+        Some(false) => {}
+        Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+    let Ok(weight_ratio1) = weight1 / weight0 else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let difference1 = TangentVector {
+        dx: point1.x() - point0.x(),
+        dy: point1.y() - point0.y(),
+    };
+    let two = Real::from(2_i8);
+    let first_scale = &two * &weight_ratio1;
+    let first_in_reversed_parameter = TangentVector {
+        dx: &first_scale * &difference1.dx,
+        dy: &first_scale * &difference1.dy,
+    };
+    if !higher_orders {
+        let first = if at_end {
+            TangentVector {
+                dx: -first_in_reversed_parameter.dx,
+                dy: -first_in_reversed_parameter.dy,
+            }
+        } else {
+            first_in_reversed_parameter
+        };
+        return Classification::Decided(RationalQuadraticEndpointDerivativeJet {
+            first,
+            second: None,
+            third: None,
+        });
+    }
+
+    let Ok(weight_ratio2) = weight2 / weight0 else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let difference2 = TangentVector {
+        dx: point2.x() - point0.x(),
+        dy: point2.y() - point0.y(),
+    };
+    let second_scale1 = Real::from(4_i8) * &weight_ratio1 * (Real::one() - (&two * &weight_ratio1));
+    let second_scale2 = &two * &weight_ratio2;
+    let second = TangentVector {
+        dx: (&second_scale1 * &difference1.dx) + (&second_scale2 * &difference2.dx),
+        dy: (&second_scale1 * &difference1.dy) + (&second_scale2 * &difference2.dy),
+    };
+    let denominator_first = &two * (&weight_ratio1 - Real::one());
+    let denominator_second = &two * ((Real::one() - (&two * &weight_ratio1)) + &weight_ratio2);
+    let mut third = TangentVector {
+        dx: -(Real::from(3_i8)
+            * ((&denominator_first * &second.dx)
+                + (&denominator_second * &first_in_reversed_parameter.dx))),
+        dy: -(Real::from(3_i8)
+            * ((&denominator_first * &second.dy)
+                + (&denominator_second * &first_in_reversed_parameter.dy))),
+    };
+    let first = if at_end {
+        third.dx = -third.dx;
+        third.dy = -third.dy;
+        TangentVector {
+            dx: -first_in_reversed_parameter.dx,
+            dy: -first_in_reversed_parameter.dy,
+        }
+    } else {
+        first_in_reversed_parameter
+    };
+    Classification::Decided(RationalQuadraticEndpointDerivativeJet {
+        first,
+        second: Some(second),
+        third: Some(third),
+    })
+}
+
+#[cfg(test)]
+mod rational_quadratic_endpoint_derivative_tests {
+    use super::*;
+
+    #[test]
+    fn specialized_endpoint_jets_match_general_rational_quotient_derivatives() {
+        let policy = CurvePolicy::certified();
+
+        for (weight_case, (start_weight, control_weight, end_weight)) in [
+            (Real::one(), Real::one(), Real::one()),
+            (Real::from(2_i8), Real::from(3_i8), Real::from(5_i8)),
+            (Real::from(-7_i8), Real::from(-2_i8), Real::from(-3_i8)),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let curve = crate::RationalQuadraticBezier2::try_new(
+                Point2::new(Real::from(-3_i8), Real::from(2_i8)),
+                Point2::new(Real::from(5_i8), Real::from(11_i8)),
+                Point2::new(Real::from(17_i8), Real::from(-7_i8)),
+                start_weight,
+                control_weight,
+                end_weight,
+            )
+            .expect("nonzero rational weights");
+            let general = crate::RationalBezier2::try_new(
+                curve.control_points().into_iter().cloned().collect(),
+                curve.weights().into_iter().cloned().collect(),
+            )
+            .expect("valid general rational curve");
+
+            for at_end in [false, true] {
+                let Classification::Decided(specialized) =
+                    rational_quadratic_endpoint_derivative_jet(&curve, at_end, true, &policy)
+                else {
+                    panic!("specialized endpoint jet should be exact");
+                };
+                let Classification::Decided(general) =
+                    general.endpoint_derivatives(at_end, 3, &policy)
+                else {
+                    panic!("general endpoint jet should be exact");
+                };
+                for (derivative_order, (specialized, general)) in [
+                    (&specialized.first, &general[1]),
+                    (
+                        specialized
+                            .second
+                            .as_ref()
+                            .expect("second derivative requested"),
+                        &general[2],
+                    ),
+                    (
+                        specialized
+                            .third
+                            .as_ref()
+                            .expect("third derivative requested"),
+                        &general[3],
+                    ),
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    assert_eq!(
+                        compare_reals(&specialized.dx, &general.0, &policy),
+                        Some(Ordering::Equal),
+                        "weight case {weight_case}, at_end={at_end}, derivative order {} x",
+                        derivative_order + 1
+                    );
+                    assert_eq!(
+                        compare_reals(&specialized.dy, &general.1, &policy),
+                        Some(Ordering::Equal),
+                        "weight case {weight_case}, at_end={at_end}, derivative order {} y",
+                        derivative_order + 1
+                    );
+                }
+            }
+        }
     }
 }
 

@@ -3609,6 +3609,38 @@ library builds passed. AddressSanitizer region-Boolean replay completed all
 2,509 executions at 5,897 coverage points and 19,156 feature edges with no
 finding; LeakSanitizer alone remained disabled under ptrace.
 
+### Closed-form rational-quadratic endpoint jets
+
+Retained arrangement traversal formerly promoted every rational quadratic to
+a general rational Bezier before asking the homogeneous power-basis quotient
+recurrence for its endpoint derivatives. Rational quadratics now evaluate
+their first three affine derivatives directly from the two endpoint-relative
+weight ratios and control-point differences. End traversal uses the same
+identity in the reversed parameter and restores the odd-derivative signs. The
+zero-denominator and exact-sign decisions remain routed through the active
+curve policy.
+
+A direct regression compares first-, second-, and third-order derivatives at
+both ends with the general rational evaluator for polynomial, unequal
+positive-weight, and unequal negative-weight cases. Existing irrational-conic,
+rational same-tangent, retained traversal, and region-Boolean suites cover the
+downstream topology use.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 51,224,737 to 49,357,412 (3.65%), 84.61% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 80,043 to 76,840
+and temporary events from 7,562 to 7,334; peak heap fell from 1.35 to 1.32
+MiB and peak RSS from 12.17 to 12.07 MiB. Every measured run retained 9
+candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and supported default/no-default release WASM library builds passed.
+AddressSanitizer region-Boolean replay completed all 2,516 executions at 5,897
+coverage points and 19,105 feature edges with no finding; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
