@@ -26,6 +26,30 @@ jobs:
           repository: ${{ github.repository_owner }}/hyperreal
           path: hyperreal
 
+      - name: Check out patched hyperlattice sibling
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperlattice
+          path: hyperlattice
+
+      - name: Check out patched hyperlimit sibling
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperlimit
+          path: hyperlimit
+
+      - name: Check out patched hypersolve sibling
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository_owner }}/hypersolve
+          path: hypersolve
+
+      - name: Check out patched hypertri sibling
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository_owner }}/hypertri
+          path: hypertri
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
