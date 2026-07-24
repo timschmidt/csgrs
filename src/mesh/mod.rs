@@ -2343,8 +2343,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
         if let Some((mins, maxs)) = bounds {
             let bounds = Aabb::new(mins, maxs);
-            let _ = mesh.bounding_box.set(bounds.clone());
-            mesh.polygons.retain_axis_aligned_box_fact(bounds);
+            let _ = mesh.bounding_box.set(bounds);
         }
         Ok(mesh)
     }
@@ -4694,9 +4693,12 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 bounding_box: OnceLock::new(),
             });
         }
-        let mesh = if let Some(transform_layout) =
-            self.polygons.retained_transform_layout().cloned()
-        {
+        let transform_layout = self
+            .polygons
+            .retained_transform_layout()
+            .cloned()
+            .unwrap_or_else(|| Arc::new(TransformLayout::from_polygons(&self.polygons)));
+        let mesh = {
             let converted_positions = transform_layout
                 .position_representatives
                 .iter()
@@ -4796,36 +4798,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             ));
             mesh.polygons.retain_transform_layout(Arc::new(output_layout));
             mesh
-        } else {
-            let polygons = self
-                .polygons
-                .iter()
-                .map(|polygon| {
-                    let vertices = polygon
-                        .vertices
-                        .iter()
-                        .map(|vertex| {
-                            Some(Vertex::new(
-                                Point3::new(
-                                    Real::try_from(vertex.position.x.to_f64_lossy()?).ok()?,
-                                    Real::try_from(vertex.position.y.to_f64_lossy()?).ok()?,
-                                    Real::try_from(vertex.position.z.to_f64_lossy()?).ok()?,
-                                ),
-                                Vector3::new([
-                                    Real::try_from(vertex.normal.0[0].to_f64_lossy()?).ok()?,
-                                    Real::try_from(vertex.normal.0[1].to_f64_lossy()?).ok()?,
-                                    Real::try_from(vertex.normal.0[2].to_f64_lossy()?).ok()?,
-                                ]),
-                            ))
-                        })
-                        .collect::<Option<Vec<_>>>()?;
-                    Some(Polygon::from_planar_vertices(
-                        vertices,
-                        polygon.metadata.clone(),
-                    ))
-                })
-                .collect::<Option<Vec<_>>>()?;
-            Self::from_polygons(polygons)
         };
         self.polygons
             .retain_materialized_finite(mesh.polygons.clone());
@@ -7154,6 +7126,10 @@ mod tests {
         assert_eq!(
             mesh.bounding_box(),
             Aabb::new(p3(0.0, 0.0, 0.0), p3(2.0, 3.0, 0.0))
+        );
+        assert!(
+            mesh.polygons.axis_aligned_box_fact().is_none(),
+            "an imported mesh's bounds do not prove that its surface is a box"
         );
         assert_eq!(mesh.build_graphics_mesh().vertices.len(), 6);
     }
