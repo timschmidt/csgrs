@@ -20,9 +20,8 @@ use hypersolve::{
 #[cfg(feature = "predicates")]
 use hypersolve::{
     AlgebraicRootRationalImageStatus, AlgebraicRootRefinementComparisonConfig,
-    compare_algebraic_root_representations_by_difference,
-    transform_algebraic_root_polynomial_image, transform_algebraic_root_rational_image,
-    validate_algebraic_root_representation,
+    PreparedAlgebraicRootRationalImage, compare_algebraic_root_representations_by_difference,
+    transform_algebraic_root_polynomial_image, validate_algebraic_root_representation,
 };
 
 use crate::classify::compare_reals;
@@ -649,12 +648,14 @@ fn rational_point_image(
             Some("Bezier algebraic parameter evidence did not validate".to_owned()),
         ));
     }
-    let Some(x) = rational_coordinate_image(
+    let (x, y) = rational_coordinate_image_pair(
         &parameter_root,
         coefficients.x_numerator,
-        coefficients.denominator.clone(),
+        coefficients.y_numerator,
+        coefficients.denominator,
         policy,
-    ) else {
+    );
+    let Some(x) = x else {
         return Ok(RationalBezierAlgebraicPointImage2::new(
             BezierAlgebraicImageStatus::XImageFailed,
             parameter_root,
@@ -663,12 +664,7 @@ fn rational_point_image(
             Some("x rational coordinate image failed".to_owned()),
         ));
     };
-    let Some(y) = rational_coordinate_image(
-        &parameter_root,
-        coefficients.y_numerator,
-        coefficients.denominator,
-        policy,
-    ) else {
+    let Some(y) = y else {
         return Ok(RationalBezierAlgebraicPointImage2::new(
             BezierAlgebraicImageStatus::YImageFailed,
             parameter_root,
@@ -825,12 +821,14 @@ fn rational_tangent_image(
             Some("Bezier algebraic parameter evidence did not validate".to_owned()),
         ));
     }
-    let Some(dx) = rational_coordinate_image(
+    let (dx, dy) = rational_coordinate_image_pair(
         &parameter_root,
         coefficients.dx_numerator,
-        coefficients.denominator.clone(),
+        coefficients.dy_numerator,
+        coefficients.denominator,
         policy,
-    ) else {
+    );
+    let Some(dx) = dx else {
         return Ok(RationalBezierAlgebraicTangentImage2::new(
             BezierAlgebraicImageStatus::XImageFailed,
             parameter_root,
@@ -839,12 +837,7 @@ fn rational_tangent_image(
             Some("dx rational coordinate image failed".to_owned()),
         ));
     };
-    let Some(dy) = rational_coordinate_image(
-        &parameter_root,
-        coefficients.dy_numerator,
-        coefficients.denominator,
-        policy,
-    ) else {
+    let Some(dy) = dy else {
         return Ok(RationalBezierAlgebraicTangentImage2::new(
             BezierAlgebraicImageStatus::YImageFailed,
             parameter_root,
@@ -895,18 +888,54 @@ fn coordinate_image(
     coordinate_image_from_replay(parameter, coefficients, policy)
 }
 
-fn rational_coordinate_image(
+#[cfg(feature = "predicates")]
+fn rational_coordinate_image_pair(
     parameter: &AlgebraicRootRepresentation,
-    numerator_coefficients: Vec<Real>,
+    first_numerator_coefficients: Vec<Real>,
+    second_numerator_coefficients: Vec<Real>,
     denominator_coefficients: Vec<Real>,
     policy: &CurvePolicy,
-) -> Option<BezierAlgebraicRationalCoordinateImage> {
-    rational_coordinate_image_from_replay(
+) -> (
+    Option<BezierAlgebraicRationalCoordinateImage>,
+    Option<BezierAlgebraicRationalCoordinateImage>,
+) {
+    let prepared = PreparedAlgebraicRootRationalImage::new(
         parameter,
-        numerator_coefficients,
-        denominator_coefficients,
-        policy,
-    )
+        &denominator_coefficients,
+        policy.predicate_policy,
+    );
+    let first_evidence = prepared.transform(&first_numerator_coefficients);
+    if first_evidence.status != AlgebraicRootRationalImageStatus::Transformed {
+        return (None, None);
+    }
+    let second_evidence = prepared.transform(&second_numerator_coefficients);
+    drop(prepared);
+    let first = BezierAlgebraicRationalCoordinateImage {
+        numerator_coefficients: first_numerator_coefficients,
+        denominator_coefficients: denominator_coefficients.clone(),
+        evidence: first_evidence,
+    };
+    let second = (second_evidence.status == AlgebraicRootRationalImageStatus::Transformed)
+        .then_some(BezierAlgebraicRationalCoordinateImage {
+            numerator_coefficients: second_numerator_coefficients,
+            denominator_coefficients,
+            evidence: second_evidence,
+        });
+    (Some(first), second)
+}
+
+#[cfg(not(feature = "predicates"))]
+fn rational_coordinate_image_pair(
+    _parameter: &AlgebraicRootRepresentation,
+    _first_numerator_coefficients: Vec<Real>,
+    _second_numerator_coefficients: Vec<Real>,
+    _denominator_coefficients: Vec<Real>,
+    _policy: &CurvePolicy,
+) -> (
+    Option<BezierAlgebraicRationalCoordinateImage>,
+    Option<BezierAlgebraicRationalCoordinateImage>,
+) {
+    (None, None)
 }
 
 #[cfg(feature = "predicates")]
@@ -934,38 +963,6 @@ fn coordinate_image_from_replay(
     _coefficients: Vec<Real>,
     _policy: &CurvePolicy,
 ) -> Option<BezierAlgebraicCoordinateImage> {
-    None
-}
-
-#[cfg(feature = "predicates")]
-fn rational_coordinate_image_from_replay(
-    parameter: &AlgebraicRootRepresentation,
-    numerator_coefficients: Vec<Real>,
-    denominator_coefficients: Vec<Real>,
-    policy: &CurvePolicy,
-) -> Option<BezierAlgebraicRationalCoordinateImage> {
-    let evidence = transform_algebraic_root_rational_image(
-        parameter,
-        &numerator_coefficients,
-        &denominator_coefficients,
-        policy.predicate_policy,
-    );
-    (evidence.status == AlgebraicRootRationalImageStatus::Transformed).then_some(
-        BezierAlgebraicRationalCoordinateImage {
-            numerator_coefficients,
-            denominator_coefficients,
-            evidence,
-        },
-    )
-}
-
-#[cfg(not(feature = "predicates"))]
-fn rational_coordinate_image_from_replay(
-    _parameter: &AlgebraicRootRepresentation,
-    _numerator_coefficients: Vec<Real>,
-    _denominator_coefficients: Vec<Real>,
-    _policy: &CurvePolicy,
-) -> Option<BezierAlgebraicRationalCoordinateImage> {
     None
 }
 

@@ -4292,6 +4292,39 @@ library builds passed. The requested `-runs=2509` AddressSanitizer
 region-Boolean replay completed at 5,898 coverage points and 19,147 feature
 edges with no finding; LeakSanitizer remained disabled under ptrace.
 
+### Shared projective coordinate transforms
+
+Exact algebraic rational-point and derivative images transform two coordinate
+numerators at one represented parameter over the same homogeneous denominator.
+The coordinate wrapper formerly invoked the complete rational-image package
+independently for x and y, repeating denominator evaluation and source
+polynomial conversion before each coordinate-specific resultant.
+
+Point and tangent construction now prepare one shared-denominator Hypersolve
+transform and consume it sequentially. This retains the original x-first
+failure boundary: y is still skipped when x cannot be represented. Successful
+coordinates preserve their complete independent evaluation, resultant,
+isolating-interval, validation, and fallback reports; only the denominator
+certificate and lazily converted source polynomial are shared. Rational
+quadratic and general rational point, tangent, higher-derivative, intersection,
+algebraic split, and typed projective-boundary suites cover both the successful
+and blocked paths.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 32,588,978 to 32,508,278 (0.25%), 89.86% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+47,057 to 46,869 and temporary events from 2,960 to 2,930; peak heap remained
+1.13 MiB and peak RSS moved from 11.12 to 11.17 MiB. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete Hypersolve and Hypercurve all-feature and no-default-feature
+suites, formatting, warning-denied all-target Clippy and rustdoc, and supported
+default/no-default release WASM library builds passed. The requested
+AddressSanitizer region-Boolean replay completed with libFuzzer reporting 2,515
+executions at 5,893 coverage points and 19,142 feature edges with no finding;
+LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
