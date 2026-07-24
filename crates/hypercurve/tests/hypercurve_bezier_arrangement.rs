@@ -164,6 +164,59 @@ fn arrangement_graph_accepts_adjacent_reused_source_fragment_ranges() {
 }
 
 #[test]
+fn exact_endpoint_buckets_retain_symbolic_matches() {
+    let symbolic = Real::pi();
+    assert!(symbolic.exact_rational_ref().is_none());
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            Point2::new(&symbolic - r(2), r(0)),
+            Point2::new(&symbolic - r(1), r(0)),
+            Point2::new(symbolic.clone(), r(0)),
+        )),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            Point2::new(symbolic.clone(), r(0)),
+            Point2::new(&symbolic + r(1), r(0)),
+            Point2::new(&symbolic + r(2), r(0)),
+        )),
+    };
+    let mut fragments = vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ];
+    for index in 0..14 {
+        let x = 100 + index * 3;
+        fragments.push(hypercurve::BezierArrangementFragment2::new(
+            usize::try_from(index + 2).unwrap(),
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    p(x, 0),
+                    p(x + 1, 0),
+                    p(x + 2, 0),
+                )),
+            },
+        ));
+    }
+    let graph = graph(fragments);
+
+    let branch_free = decided(graph.traverse_branch_free(&policy()));
+    assert_eq!(branch_free.len(), 15);
+    assert_eq!(branch_free.chains()[0].fragment_indices(), &[0, 1]);
+
+    let tangent_ordered = decided(graph.traverse_with_tangent_order(&policy()));
+    assert_eq!(tangent_ordered.len(), 15);
+    assert_eq!(tangent_ordered.chains()[0].fragment_indices(), &[0, 1]);
+}
+
+#[test]
 fn arrangement_graph_rejects_overlapping_reused_source_fragment_ranges() {
     let first = BezierSplitFragment2::Materialized {
         start: exact(r(0)),

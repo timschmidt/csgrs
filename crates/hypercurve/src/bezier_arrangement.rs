@@ -17,9 +17,9 @@
 //! model: when local
 //! order is not certified, traversal stops instead of guessing.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashMap};
 
-use hyperreal::{Real, RealSign};
+use hyperreal::{Rational, Real, RealSign};
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootRepresentation,
     arithmetic_algebraic_root_representations,
@@ -624,6 +624,168 @@ struct EndpointData {
     start_third_derivative: Option<TangentVector>,
 }
 
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct ExactRationalPointKey([Rational; 2]);
+
+impl ExactRationalPointKey {
+    fn from_point(point: &Point2) -> Option<Self> {
+        Some(Self([
+            point.x().exact_rational_ref()?.clone(),
+            point.y().exact_rational_ref()?.clone(),
+        ]))
+    }
+}
+
+#[derive(Debug, Default)]
+struct EndpointStartBuckets {
+    exact: HashMap<ExactRationalPointKey, Vec<usize>>,
+    unkeyed: Vec<usize>,
+}
+
+const EXACT_ENDPOINT_BUCKET_MIN_COUNT: usize = 16;
+
+impl EndpointStartBuckets {
+    fn from_points<'a>(points: impl IntoIterator<Item = &'a Point2>) -> Self {
+        let mut buckets = Self::default();
+        for (index, point) in points.into_iter().enumerate() {
+            match ExactRationalPointKey::from_point(point) {
+                Some(key) => buckets.exact.entry(key).or_default().push(index),
+                None => buckets.unkeyed.push(index),
+            }
+        }
+        buckets
+    }
+
+    fn try_for_each_candidate<E>(
+        &self,
+        key: Option<&ExactRationalPointKey>,
+        endpoint_count: usize,
+        mut visit: impl FnMut(usize) -> Result<(), E>,
+    ) -> Result<(), E> {
+        let Some(key) = key else {
+            return (0..endpoint_count).try_for_each(visit);
+        };
+        self.exact
+            .get(key)
+            .into_iter()
+            .flatten()
+            .chain(&self.unkeyed)
+            .copied()
+            .try_for_each(&mut visit)
+    }
+}
+
+fn try_for_each_endpoint_candidate<E>(
+    indexed: Option<(&EndpointStartBuckets, Option<&ExactRationalPointKey>)>,
+    endpoint_count: usize,
+    visit: impl FnMut(usize) -> Result<(), E>,
+) -> Result<(), E> {
+    match indexed {
+        Some((buckets, key)) => buckets.try_for_each_candidate(key, endpoint_count, visit),
+        None => (0..endpoint_count).try_for_each(visit),
+    }
+}
+
+#[derive(Debug, Default)]
+struct RetainedEndpointStartIndex {
+    by_vertex: HashMap<usize, Vec<usize>>,
+    with_vertex_exact: HashMap<ExactRationalPointKey, Vec<usize>>,
+    with_vertex_unkeyed: Vec<usize>,
+    without_vertex_exact: HashMap<ExactRationalPointKey, Vec<usize>>,
+    without_vertex_unkeyed: Vec<usize>,
+}
+
+impl RetainedEndpointStartIndex {
+    fn new(endpoints: &[RetainedEndpointData]) -> Self {
+        let mut index = Self::default();
+        for (endpoint_index, endpoint) in endpoints.iter().enumerate() {
+            if let Some(vertex) = endpoint.start_topology_vertex {
+                index
+                    .by_vertex
+                    .entry(vertex)
+                    .or_default()
+                    .push(endpoint_index);
+            }
+            match endpoint
+                .start
+                .as_ref()
+                .and_then(exact_retained_endpoint_key)
+            {
+                Some(key) => {
+                    if endpoint.start_topology_vertex.is_some() {
+                        index
+                            .with_vertex_exact
+                            .entry(key)
+                            .or_default()
+                            .push(endpoint_index);
+                    } else {
+                        index
+                            .without_vertex_exact
+                            .entry(key)
+                            .or_default()
+                            .push(endpoint_index);
+                    }
+                }
+                None => {
+                    if endpoint.start_topology_vertex.is_some() {
+                        index.with_vertex_unkeyed.push(endpoint_index);
+                    } else {
+                        index.without_vertex_unkeyed.push(endpoint_index);
+                    }
+                }
+            }
+        }
+        index
+    }
+
+    fn try_for_each_candidate<E>(
+        &self,
+        vertex: Option<usize>,
+        key: Option<&ExactRationalPointKey>,
+        endpoint_count: usize,
+        mut visit: impl FnMut(usize) -> Result<(), E>,
+    ) -> Result<(), E> {
+        if let Some(vertex) = vertex {
+            let Some(key) = key else {
+                return (0..endpoint_count).try_for_each(visit);
+            };
+            self.by_vertex
+                .get(&vertex)
+                .into_iter()
+                .flatten()
+                .copied()
+                .try_for_each(&mut visit)?;
+            return self
+                .without_vertex_exact
+                .get(key)
+                .into_iter()
+                .flatten()
+                .chain(&self.without_vertex_unkeyed)
+                .copied()
+                .try_for_each(visit);
+        }
+        let Some(key) = key else {
+            return (0..endpoint_count).try_for_each(visit);
+        };
+        self.with_vertex_exact
+            .get(key)
+            .into_iter()
+            .flatten()
+            .chain(self.without_vertex_exact.get(key).into_iter().flatten())
+            .chain(&self.with_vertex_unkeyed)
+            .chain(&self.without_vertex_unkeyed)
+            .copied()
+            .try_for_each(visit)
+    }
+}
+
+fn exact_retained_endpoint_key(endpoint: &RetainedEndpointKey) -> Option<ExactRationalPointKey> {
+    match endpoint {
+        RetainedEndpointKey::Exact(point) => ExactRationalPointKey::from_point(point),
+        RetainedEndpointKey::Algebraic { .. } => None,
+    }
+}
+
 #[derive(Clone, Debug)]
 struct TangentVector {
     dx: Real,
@@ -983,23 +1145,36 @@ fn endpoint_adjacency(
 ) -> Classification<EndpointAdjacency> {
     let mut successors = vec![None; endpoints.len()];
     let mut predecessors = vec![None; endpoints.len()];
+    let indexed = (endpoints.len() >= EXACT_ENDPOINT_BUCKET_MIN_COUNT)
+        .then(|| EndpointStartBuckets::from_points(endpoints.iter().map(|(start, _)| start)));
 
     for (left_index, (_, left_end)) in endpoints.iter().enumerate() {
-        for (right_index, (right_start, _)) in endpoints.iter().enumerate() {
-            if left_index == right_index {
-                continue;
-            }
-            match points_equal(left_end, right_start, policy) {
-                Some(true) => {
-                    if successors[left_index].replace(right_index).is_some()
-                        || predecessors[right_index].replace(left_index).is_some()
-                    {
-                        return Classification::Uncertain(UncertaintyReason::Boundary);
-                    }
+        let left_key = indexed
+            .as_ref()
+            .and_then(|_| ExactRationalPointKey::from_point(left_end));
+        let result = try_for_each_endpoint_candidate(
+            indexed.as_ref().map(|buckets| (buckets, left_key.as_ref())),
+            endpoints.len(),
+            |right_index| {
+                if left_index == right_index {
+                    return Ok(());
                 }
-                Some(false) => {}
-                None => return Classification::Uncertain(UncertaintyReason::RealSign),
-            }
+                match points_equal(left_end, &endpoints[right_index].0, policy) {
+                    Some(true) => {
+                        if successors[left_index].replace(right_index).is_some()
+                            || predecessors[right_index].replace(left_index).is_some()
+                        {
+                            return Err(UncertaintyReason::Boundary);
+                        }
+                    }
+                    Some(false) => {}
+                    None => return Err(UncertaintyReason::RealSign),
+                }
+                Ok(())
+            },
+        );
+        if let Err(reason) = result {
+            return Classification::Uncertain(reason);
         }
     }
 
@@ -1048,19 +1223,34 @@ fn tangent_adjacency(
 ) -> Classification<TangentAdjacency> {
     let mut outgoing = vec![Vec::new(); endpoints.len()];
     let mut predecessors = vec![0_usize; endpoints.len()];
+    let indexed = (endpoints.len() >= EXACT_ENDPOINT_BUCKET_MIN_COUNT).then(|| {
+        EndpointStartBuckets::from_points(endpoints.iter().map(|endpoint| &endpoint.start))
+    });
+
     for (left_index, left) in endpoints.iter().enumerate() {
-        for (right_index, right) in endpoints.iter().enumerate() {
-            if left_index == right_index {
-                continue;
-            }
-            match points_equal(&left.end, &right.start, policy) {
-                Some(true) => {
-                    outgoing[left_index].push(right_index);
-                    predecessors[right_index] += 1;
+        let left_key = indexed
+            .as_ref()
+            .and_then(|_| ExactRationalPointKey::from_point(&left.end));
+        let result = try_for_each_endpoint_candidate(
+            indexed.as_ref().map(|buckets| (buckets, left_key.as_ref())),
+            endpoints.len(),
+            |right_index| {
+                if left_index == right_index {
+                    return Ok(());
                 }
-                Some(false) => {}
-                None => return Classification::Uncertain(UncertaintyReason::RealSign),
-            }
+                match points_equal(&left.end, &endpoints[right_index].start, policy) {
+                    Some(true) => {
+                        outgoing[left_index].push(right_index);
+                        predecessors[right_index] += 1;
+                    }
+                    Some(false) => {}
+                    None => return Err(UncertaintyReason::RealSign),
+                }
+                Ok(())
+            },
+        );
+        if let Err(reason) = result {
+            return Classification::Uncertain(reason);
         }
     }
     Classification::Decided((outgoing, predecessors))
@@ -1072,16 +1262,20 @@ fn retained_tangent_adjacency(
 ) -> Classification<TangentAdjacency> {
     let mut outgoing = vec![Vec::new(); endpoints.len()];
     let mut predecessors = vec![0_usize; endpoints.len()];
+    let start_index = (endpoints.len() >= EXACT_ENDPOINT_BUCKET_MIN_COUNT)
+        .then(|| RetainedEndpointStartIndex::new(endpoints));
     for (left_index, left) in endpoints.iter().enumerate() {
         let Some(left_end) = left.end.as_ref() else {
             continue;
         };
-        for (right_index, right) in endpoints.iter().enumerate() {
+        let left_key = exact_retained_endpoint_key(left_end);
+        let mut visit = |right_index: usize| {
             if left_index == right_index {
-                continue;
+                return Ok(());
             }
+            let right = &endpoints[right_index];
             let Some(right_start) = right.start.as_ref() else {
-                continue;
+                return Ok(());
             };
             match retained_endpoints_equal(
                 left.end_topology_vertex,
@@ -1095,11 +1289,74 @@ fn retained_tangent_adjacency(
                     predecessors[right_index] += 1;
                 }
                 Some(false) => {}
-                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+                None => return Err(UncertaintyReason::RealSign),
             }
+            Ok(())
+        };
+        let result = match &start_index {
+            Some(index) => index.try_for_each_candidate(
+                left.end_topology_vertex,
+                left_key.as_ref(),
+                endpoints.len(),
+                &mut visit,
+            ),
+            None => (0..endpoints.len()).try_for_each(visit),
+        };
+        if let Err(reason) = result {
+            return Classification::Uncertain(reason);
         }
     }
     Classification::Decided((outgoing, predecessors))
+}
+
+#[cfg(test)]
+mod endpoint_adjacency_tests {
+    use super::*;
+
+    fn point(x: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::zero())
+    }
+
+    fn endpoint(index: i32) -> RetainedEndpointData {
+        RetainedEndpointData {
+            start: Some(RetainedEndpointKey::Exact(Box::new(point(
+                1_000 + index * 3,
+            )))),
+            end: Some(RetainedEndpointKey::Exact(Box::new(point(
+                1_001 + index * 3,
+            )))),
+            start_topology_vertex: None,
+            end_topology_vertex: None,
+            start_tangent: None,
+            end_tangent: None,
+            start_second_derivative: None,
+            start_third_derivative: None,
+        }
+    }
+
+    #[test]
+    fn retained_index_combines_topology_vertices_and_exact_coordinate_fallback() {
+        let mut endpoints = (0..16).map(endpoint).collect::<Vec<_>>();
+        endpoints[0].end = Some(RetainedEndpointKey::Exact(Box::new(point(10))));
+        endpoints[0].end_topology_vertex = Some(7);
+        endpoints[1].start = Some(RetainedEndpointKey::Exact(Box::new(point(999))));
+        endpoints[1].start_topology_vertex = Some(7);
+        endpoints[2].start = Some(RetainedEndpointKey::Exact(Box::new(point(10))));
+        endpoints[3].end = Some(RetainedEndpointKey::Exact(Box::new(point(20))));
+        endpoints[4].start = Some(RetainedEndpointKey::Exact(Box::new(point(20))));
+        endpoints[4].start_topology_vertex = Some(9);
+
+        let Classification::Decided((outgoing, predecessors)) =
+            retained_tangent_adjacency(&endpoints, &CurvePolicy::certified())
+        else {
+            panic!("indexed retained adjacency should remain exact");
+        };
+        assert_eq!(outgoing[0], [1, 2]);
+        assert_eq!(outgoing[3], [4]);
+        assert_eq!(predecessors[1], 1);
+        assert_eq!(predecessors[2], 1);
+        assert_eq!(predecessors[4], 1);
+    }
 }
 
 fn follow_retained_tangent_ordered_chain(

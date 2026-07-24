@@ -2544,6 +2544,42 @@ projection decides all four operations in about 1.4 ms. The arc containment
 fix removes one instance of that blocker class but does not claim that the
 mixed-region gap is closed.
 
+### Exact endpoint adjacency indexing
+
+The next arrangement profile showed that traversal still compared every
+fragment end with every fragment start, even though exact-rational endpoints
+provide a canonical hash key. Materialized, branch-free, tangent-ordered, and
+retained tangent traversal now build one start index once the graph reaches 16
+fragments. Retained traversal combines exact coordinate buckets with topology
+vertex buckets: two carried vertex identifiers remain authoritative, while a
+missing identifier still falls through to exact coordinate equality.
+
+This is a candidate scheduler only. Every selected pair still passes through
+the existing exact equality predicate. Symbolic or algebraic endpoints are
+kept in an unkeyed bucket and compared wherever they could equal a keyed
+endpoint; an entirely unkeyed query retains the complete scan. The
+large-exact-rational case therefore changes from a quadratic candidate scan to
+linear indexing plus actual endpoint multiplicity, without approximating a
+coordinate or rejecting a supported representation. End keys are created only
+for the current query instead of being retained in a second graph-sized array.
+Graphs below the measured crossover retain the allocation-free complete scan.
+
+Same-machine release A/B measurements against commit `6065ecd` were:
+
+| Exact arrangement workload | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| 256-curve materialized tangent traversal | 4.229 ms | 0.728 ms | 82.8% faster |
+| 256-curve complete retained-overlap workflow | 79.781 ms | 66.814 ms | 16.3% faster |
+| 1024-curve materialized tangent traversal | 113.818 ms | 4.928 ms | 95.7% faster |
+| 1024-curve complete retained-overlap workflow | 682.674 ms | 283.142 ms | 58.5% faster |
+
+The 256-curve after values are medians of three 30-iteration runs. The
+1024-curve rows are sequential three-iteration runs of the baseline and
+optimized binaries. Tiny three-curve tangent-order sentinels remain at their
+previous complete-scan timings. The arrangement integration suite includes a
+16-fragment symbolic-endpoint case so the indexed crossover cannot silently
+drop unkeyed equality candidates.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
