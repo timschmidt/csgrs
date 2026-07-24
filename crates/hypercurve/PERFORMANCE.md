@@ -2973,6 +2973,29 @@ all-feature tests, strict all-feature Clippy, warning-denied rustdoc, the
 release library WASM build, and a 2,509-run AddressSanitizer region-Boolean
 campaign passed.
 
+### Fused integer Bareiss updates
+
+Primitive integer Sylvester matrices still passed every Bareiss recurrence
+through three separate rational operations: two products, a subtraction, and
+then the checked quotient. Hyperreal now provides one checked integer
+cross-difference quotient, and Hypersolve uses it across determinant, dense,
+multi-right-hand-side, and sparse elimination. The operation constructs only
+the signed integer cross difference and its exactly divisible quotient.
+Fractional operands and any failed divisibility proof retain the former general
+exact `Real` fallback.
+
+Ten-run instructions fell from 151,620,313 to 131,393,603 (13.3%), or 59.0%
+below the 320,660,631 adaptive conic-image baseline. Eleven ordinary release
+runs had a 12.985 ms complete median, a 7.844 ms preparation median, and a
+0.407 ms exact-polyline projection median. Every run retained 9 candidate
+pairs, 48 fragments, 2 exact point classifications, 4 decided operations, and
+checksum 6. The remaining roughly 32x native gap still retains the line/arc
+accelerator.
+The complete all-feature suite, strict all-target Clippy, warning-denied
+rustdoc, and release WASM library build passed. A 2,509-run AddressSanitizer
+region-Boolean campaign completed without failure at 5,894 coverage points and
+19,170 feature edges; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
