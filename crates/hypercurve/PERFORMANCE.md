@@ -3518,6 +3518,37 @@ AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,899
 coverage points and 19,166 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Specialized rational endpoint derivative jets
+
+General rational Bezier endpoint topology formerly evaluated homogeneous
+numerator and denominator derivative jets through the full power-basis Horner
+recurrence at parameters exactly zero and one. Start jets now select each
+factorial-scaled power coefficient directly. End jets retain the same reverse
+recurrence and exact addition order while omitting multiplications by one.
+Interior derivative evaluation remains on the general Horner path.
+
+A direct regression compares third-order start and end results against the
+general evaluator for an unequal-weight cubic. The existing rational tangent
+ordering, retained traversal, conic, and higher-derivative suites cover the
+downstream use.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 57,499,110 to 56,559,931 (1.63%), 82.36% below the original
+320,660,631 baseline. Heaptrack retained 87,084 allocation events and 7,847
+temporary events, peak heap remained 1.41 MiB, and peak RSS fell from 12.51 to
+12.43 MiB.
+
+Eleven ordinary runs had a 5.732 ms complete median, a 3.910 ms preparation
+median, and a 0.312 ms exact-polyline projection median. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+strict Clippy and rustdoc checks, and supported default/no-default WASM library
+builds passed. AddressSanitizer region-Boolean replay completed all 2,509
+executions at 5,892 coverage points and 19,098 feature edges with no finding;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

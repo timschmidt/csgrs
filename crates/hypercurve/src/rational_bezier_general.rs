@@ -1778,7 +1778,7 @@ impl RationalBezier2 {
         policy: &CurvePolicy,
     ) -> Classification<Vec<(Real, Real)>> {
         let parameter = if at_end { Real::one() } else { Real::zero() };
-        self.affine_derivative_values_at(&parameter, max_order, policy)
+        self.affine_derivative_values_at_with_endpoint(&parameter, max_order, Some(at_end), policy)
     }
 
     fn affine_derivative_values_at(
@@ -1787,25 +1787,35 @@ impl RationalBezier2 {
         max_order: usize,
         policy: &CurvePolicy,
     ) -> Classification<Vec<(Real, Real)>> {
+        self.affine_derivative_values_at_with_endpoint(parameter, max_order, None, policy)
+    }
+
+    fn affine_derivative_values_at_with_endpoint(
+        &self,
+        parameter: &Real,
+        max_order: usize,
+        endpoint: Option<bool>,
+        policy: &CurvePolicy,
+    ) -> Classification<Vec<(Real, Real)>> {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         }
         let Ok(power_basis) = self.homogeneous_power_basis() else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
-        let Some(numerator_x) =
-            evaluate_power_polynomial_derivatives(&power_basis.x_numerator, parameter, max_order)
-        else {
+        let evaluate = |coefficients: &[Real]| match endpoint {
+            Some(at_end) => {
+                evaluate_power_polynomial_endpoint_derivatives(coefficients, at_end, max_order)
+            }
+            None => evaluate_power_polynomial_derivatives(coefficients, parameter, max_order),
+        };
+        let Some(numerator_x) = evaluate(&power_basis.x_numerator) else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
-        let Some(numerator_y) =
-            evaluate_power_polynomial_derivatives(&power_basis.y_numerator, parameter, max_order)
-        else {
+        let Some(numerator_y) = evaluate(&power_basis.y_numerator) else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
-        let Some(denominator) =
-            evaluate_power_polynomial_derivatives(&power_basis.weight, parameter, max_order)
-        else {
+        let Some(denominator) = evaluate(&power_basis.weight) else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
         match is_zero(&denominator[0], policy) {
@@ -3809,6 +3819,40 @@ fn evaluate_power_polynomial_derivatives(
     Some(derivatives)
 }
 
+fn evaluate_power_polynomial_endpoint_derivatives(
+    coefficients: &[Real],
+    at_end: bool,
+    max_order: usize,
+) -> Option<Vec<Real>> {
+    let value_count = max_order.checked_add(1)?;
+    let mut derivatives = vec![Real::zero(); value_count];
+    if !at_end {
+        let mut factorial = 1_u64;
+        for (order, derivative) in derivatives.iter_mut().enumerate() {
+            if order > 1 {
+                factorial = factorial.checked_mul(u64::try_from(order).ok()?)?;
+            }
+            if let Some(coefficient) = coefficients.get(order) {
+                *derivative = if factorial == 1 {
+                    coefficient.clone()
+                } else {
+                    Real::from(factorial) * coefficient
+                };
+            }
+        }
+        return Some(derivatives);
+    }
+
+    for coefficient in coefficients.iter().rev() {
+        for order in (1..=max_order).rev() {
+            let scale = Real::from(u64::try_from(order).ok()?);
+            derivatives[order] = &derivatives[order] + &scale * &derivatives[order - 1];
+        }
+        derivatives[0] = &derivatives[0] + coefficient;
+    }
+    Some(derivatives)
+}
+
 fn evaluate_power_polynomial_value_and_derivative(
     coefficients: &[Real],
     parameter: &Real,
@@ -3989,6 +4033,28 @@ mod tests {
         assert_eq!(clone.data.x_axis_monotonicity.get(), Some(&true));
         assert!(curve.data.y_derivative_numerator_bernstein.get().is_none());
         assert!(curve.data.y_axis_monotonicity.get().is_none());
+    }
+
+    #[test]
+    fn endpoint_derivative_specialization_matches_general_horner_recurrence() {
+        let curve = RationalBezier2::try_new(
+            vec![
+                Point2::new(0.into(), 1.into()),
+                Point2::new(2.into(), 4.into()),
+                Point2::new(5.into(), (-1).into()),
+                Point2::new(7.into(), 3.into()),
+            ],
+            vec![2.into(), 3.into(), 5.into(), 7.into()],
+        )
+        .unwrap();
+        let policy = CurvePolicy::certified();
+
+        for (at_end, parameter) in [(false, Real::zero()), (true, Real::one())] {
+            assert_eq!(
+                curve.endpoint_derivatives(at_end, 3, &policy),
+                curve.affine_derivative_values_at(&parameter, 3, &policy)
+            );
+        }
     }
 
     #[test]
