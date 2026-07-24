@@ -4085,6 +4085,38 @@ library builds passed. The requested 2,509-case AddressSanitizer region-Boolean
 replay completed at 5,897 coverage points and 19,147 feature edges with no
 finding; LeakSanitizer remained disabled under ptrace.
 
+### Shared quotient-ring source conversion
+
+Algebraic rational images construct numerator and denominator multiplication
+matrices in the same quotient ring. Each matrix formerly converted the common
+source polynomial from exact rational `Real` coefficients to integer
+coefficients independently. The paired construction now performs that source
+conversion once, converts each relation separately, and reuses the integer
+source for both existing pseudo-reduction passes.
+
+The pseudo-reduction scaling itself remains unchanged. In particular, even a
+constant relation must retain the zero high-degree reduction steps because
+they apply the source-leading scale shared by the numerator and denominator
+matrices when the source polynomial is nonmonic. The algebraic tangent-order
+regression exercises this invariant, while the algebraic rational-image and
+resultant suites cover the paired construction and downstream root evidence.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 33,781,716 to 33,700,629 (0.24%), 89.49% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 49,025 to 48,920;
+temporary events remained 3,540, peak heap remained 1.14 MiB, and peak RSS
+fell from 11.18 to 11.10 MiB. Every measured run retained 9 candidate pairs,
+48 fragments, 2 classifications, 4 decided operations, no blockers, and
+checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. The requested `-runs=2509` AddressSanitizer
+region-Boolean replay completed with libFuzzer reporting 2,512 executions at
+5,896 coverage points and 19,164 feature edges with no finding; LeakSanitizer
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
