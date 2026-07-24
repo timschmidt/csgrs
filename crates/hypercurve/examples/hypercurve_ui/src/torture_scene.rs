@@ -27,6 +27,8 @@ pub struct TortureSceneState {
     pub curves_per_region: usize,
     pub operation: Option<BooleanMode>,
     pub seed: u64,
+    #[serde(default)]
+    pub segmented: bool,
 }
 
 impl Default for TortureSceneState {
@@ -36,6 +38,7 @@ impl Default for TortureSceneState {
             curves_per_region: DEFAULT_CURVES_PER_REGION,
             operation: None,
             seed: 0x6a09_e667_f3bc_c909,
+            segmented: false,
         }
     }
 }
@@ -55,6 +58,8 @@ pub struct TortureScene {
     second_display: Shape,
     result_regions: Vec<CurveRegion2>,
     result_display: Shape,
+    segmented_result_display: Shape,
+    segmented: bool,
     generated_curves_per_region: usize,
     evaluated_operation: Option<BooleanMode>,
     evaluated_pairs: usize,
@@ -89,6 +94,8 @@ impl TortureScene {
             second_display: Shape::default(),
             result_regions: Vec::new(),
             result_display: Shape::default(),
+            segmented_result_display: Shape::default(),
+            segmented: state.segmented,
             generated_curves_per_region: 0,
             evaluated_operation: None,
             evaluated_pairs: 0,
@@ -105,6 +112,7 @@ impl TortureScene {
             curves_per_region: self.requested_curves_per_region,
             operation: self.operation,
             seed: self.seed,
+            segmented: self.segmented,
         }
     }
 
@@ -147,6 +155,7 @@ impl TortureScene {
                     }
                     ui.separator();
                     operation_combo(ui, &mut self.operation);
+                    ui.checkbox(&mut self.segmented, "Segmented");
                     ui.small("Pairwise operation: layer A[i] op layer B[i].");
                     ui.small(
                         "Centroid-grid placement keeps neighbors sparse while paired regions overlap moderately.",
@@ -187,10 +196,15 @@ impl TortureScene {
                         self.fit_pending = false;
                     }
                     if self.operation.is_some() {
+                        let result = if self.segmented {
+                            &self.segmented_result_display
+                        } else {
+                            &self.result_display
+                        };
                         draw_shape(
                             plot_ui,
                             "torture boolean results",
-                            &self.result_display,
+                            result,
                             theme.result,
                             Some(theme.result.gamma_multiply(0.28)),
                             None,
@@ -246,6 +260,7 @@ impl TortureScene {
     fn restart_boolean(&mut self) {
         self.result_regions.clear();
         self.result_display = Shape::default();
+        self.segmented_result_display = Shape::default();
         self.evaluated_operation = self.operation;
         self.evaluated_pairs = 0;
         self.blocked_pairs = 0;
@@ -263,9 +278,14 @@ impl TortureScene {
         for pair in &self.pairs[self.evaluated_pairs..end] {
             match boolean_pair(pair, operation) {
                 Ok(Some((region, shape))) => {
+                    let segmented = shape.segmented_for_display();
                     self.result_regions.push(region);
                     self.result_display.materials.extend(shape.materials);
                     self.result_display.holes.extend(shape.holes);
+                    self.segmented_result_display
+                        .materials
+                        .extend(segmented.materials);
+                    self.segmented_result_display.holes.extend(segmented.holes);
                 }
                 Ok(None) => self.blocked_pairs += 1,
                 Err(error) => {
@@ -560,6 +580,7 @@ mod tests {
             curves_per_region: 5,
             operation: Some(BooleanMode::Union),
             seed: 99,
+            segmented: false,
         });
         scene.ensure_generated();
         let context = egui::Context::default();
@@ -569,6 +590,17 @@ mod tests {
         scene.advance_boolean(&context);
         assert_eq!(scene.evaluated_pairs, MIN_REGIONS_PER_LAYER);
         assert_eq!(scene.result_regions.len(), MIN_REGIONS_PER_LAYER);
+        assert_eq!(
+            scene.segmented_result_display.materials.len(),
+            scene.result_display.materials.len()
+        );
+        assert!(
+            scene
+                .segmented_result_display
+                .materials
+                .iter()
+                .all(|polyline| polyline.curve_data.is_empty())
+        );
         scene.advance_boolean(&context);
         assert_eq!(scene.result_regions.len(), MIN_REGIONS_PER_LAYER);
     }

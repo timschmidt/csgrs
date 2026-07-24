@@ -204,6 +204,8 @@ struct PlineBooleanSceneState {
     mode: BooleanSceneMode,
     fill: bool,
     show_vertices: bool,
+    #[serde(default)]
+    segmented: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
@@ -247,6 +249,7 @@ pub struct PlineBooleanScene {
     mode: BooleanSceneMode,
     fill: bool,
     show_vertices: bool,
+    segmented: bool,
     drag: DragState,
     editor: PolylineEditor,
     last_error: Option<String>,
@@ -264,6 +267,7 @@ impl Default for PlineBooleanScene {
             mode: BooleanSceneMode::default(),
             fill: true,
             show_vertices: true,
+            segmented: false,
             drag: DragState::default(),
             editor,
             last_error: None,
@@ -279,6 +283,7 @@ impl PlineBooleanScene {
             mode: self.mode,
             fill: self.fill,
             show_vertices: self.show_vertices,
+            segmented: self.segmented,
         }
     }
 
@@ -289,6 +294,7 @@ impl PlineBooleanScene {
         self.mode = state.mode;
         self.fill = state.fill;
         self.show_vertices = state.show_vertices;
+        self.segmented = state.segmented;
         self.drag = DragState::default();
         self.editor
             .initialize_with_polylines(self.polylines.clone());
@@ -305,6 +311,7 @@ impl PlineBooleanScene {
                     mode_combo(ui, "pline_boolean_mode", &mut self.mode);
                     ui.checkbox(&mut self.fill, "Fill");
                     ui.checkbox(&mut self.show_vertices, "Show vertices");
+                    ui.checkbox(&mut self.segmented, "Segmented");
                     if ui.button("Edit Polylines").clicked() {
                         self.editor.show_window();
                     }
@@ -390,14 +397,23 @@ impl PlineBooleanScene {
                             if let Some(op) = mode.boolean_mode() {
                                 match boolean_polylines(&self.polylines[0], &self.polylines[1], op)
                                 {
-                                    Ok(Some(shape)) => draw_shape(
-                                        plot_ui,
-                                        "boolean result",
-                                        &shape,
-                                        theme.result,
-                                        self.fill.then_some(theme.result.gamma_multiply(0.35)),
-                                        vertex,
-                                    ),
+                                    Ok(Some(shape)) => {
+                                        let segmented;
+                                        let display = if self.segmented {
+                                            segmented = shape.segmented_for_display();
+                                            &segmented
+                                        } else {
+                                            &shape
+                                        };
+                                        draw_shape(
+                                            plot_ui,
+                                            "boolean result",
+                                            display,
+                                            theme.result,
+                                            self.fill.then_some(theme.result.gamma_multiply(0.35)),
+                                            vertex,
+                                        );
+                                    }
                                     Ok(None) => {
                                         self.last_error =
                                             Some("hypercurve reported unresolved topology".into());
@@ -602,12 +618,15 @@ struct MultiPlineBooleanSceneState {
     first: Shape,
     second: Shape,
     op: Option<BooleanMode>,
+    #[serde(default)]
+    segmented: bool,
 }
 
 pub struct MultiPlineBooleanScene {
     first: Shape,
     second: Shape,
     op: Option<BooleanMode>,
+    segmented: bool,
     drag: ShapeDragState,
     last_error: Option<String>,
 }
@@ -619,6 +638,7 @@ impl Default for MultiPlineBooleanScene {
             first: Shape::from_polylines(plines),
             second: Shape::from_materials(vec![curve_boolean_clip_contour(0.0, 0.0, 6.2)]),
             op: None,
+            segmented: false,
             drag: ShapeDragState::default(),
             last_error: None,
         }
@@ -632,6 +652,7 @@ impl MultiPlineBooleanScene {
             first: self.first.clone(),
             second: self.second.clone(),
             op: self.op,
+            segmented: self.segmented,
         }
     }
 
@@ -641,6 +662,7 @@ impl MultiPlineBooleanScene {
         self.first = state.first;
         self.second = state.second;
         self.op = state.op;
+        self.segmented = state.segmented;
         self.drag = ShapeDragState::default();
         self.last_error = None;
         Ok(())
@@ -657,6 +679,7 @@ impl MultiPlineBooleanScene {
                     ui.radio_value(&mut self.op, Some(BooleanMode::Intersection), "And");
                     ui.radio_value(&mut self.op, Some(BooleanMode::Difference), "Not");
                     ui.radio_value(&mut self.op, Some(BooleanMode::Xor), "Xor");
+                    ui.checkbox(&mut self.segmented, "Segmented");
                     if let Some(error) = &self.last_error {
                         ui.separator();
                         ui.colored_label(theme.error, error);
@@ -672,14 +695,23 @@ impl MultiPlineBooleanScene {
                     self.last_error = None;
                     if let Some(op) = self.op {
                         match self.first.boolean(&self.second, op) {
-                            Ok(Some(result)) => draw_shape(
-                                plot_ui,
-                                "multi boolean result",
-                                &result,
-                                theme.result,
-                                Some(theme.result.gamma_multiply(0.35)),
-                                Some(theme.vertex),
-                            ),
+                            Ok(Some(result)) => {
+                                let segmented;
+                                let display = if self.segmented {
+                                    segmented = result.segmented_for_display();
+                                    &segmented
+                                } else {
+                                    &result
+                                };
+                                draw_shape(
+                                    plot_ui,
+                                    "multi boolean result",
+                                    display,
+                                    theme.result,
+                                    Some(theme.result.gamma_multiply(0.35)),
+                                    Some(theme.vertex),
+                                );
+                            }
                             Ok(None) => {
                                 self.last_error =
                                     Some("hypercurve reported unresolved topology".into());
@@ -1243,6 +1275,17 @@ mod tests {
         assert!(
             has_higher_order_curve(&union),
             "boolean union should preserve native higher-order curves"
+        );
+        let segmented = union.segmented_for_display();
+        assert!(
+            segmented
+                .materials
+                .iter()
+                .chain(segmented.holes.iter())
+                .all(|polyline| {
+                    polyline.curve_data.is_empty() && !polyline.vertex_data.is_empty()
+                }),
+            "segmented display mode should project native curves to finite vertices"
         );
     }
 

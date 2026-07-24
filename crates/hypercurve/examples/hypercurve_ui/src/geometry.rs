@@ -1125,6 +1125,21 @@ impl Shape {
     pub fn into_polylines(self) -> Vec<Polyline> {
         self.materials.into_iter().chain(self.holes).collect()
     }
+
+    pub fn segmented_for_display(&self) -> Self {
+        Self {
+            materials: self
+                .materials
+                .iter()
+                .map(|polyline| polyline.to_sampled_polyline(0.04))
+                .collect(),
+            holes: self
+                .holes
+                .iter()
+                .map(|polyline| polyline.to_sampled_polyline(0.04))
+                .collect(),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
