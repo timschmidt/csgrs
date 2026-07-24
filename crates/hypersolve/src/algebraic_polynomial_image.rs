@@ -30,7 +30,7 @@ use crate::algebraic_mobius::{
 use crate::integer_interpolation::{
     interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
 };
-use crate::resultant::{quotient_ring_resultant_samples, resultant_univariate_polynomials};
+use crate::resultant::{quotient_ring_resultant_polynomial, resultant_univariate_polynomials};
 use crate::root_isolation::IsolatedRootInterval;
 
 const MAX_SYLVESTER_DIMENSION: usize = 8;
@@ -293,7 +293,7 @@ fn resultant_polynomial_for_image(
     let source_degree = source_polynomial.len() - 1;
     let source_polynomial = primitive_integer_polynomial(source_polynomial)?;
     let (image_polynomial, image_scale) = primitive_integer_image_relation(image_polynomial)?;
-    let samples = quotient_ring_resultant_samples(
+    let mut polynomial = quotient_ring_resultant_polynomial(
         &source_polynomial,
         &image_polynomial,
         std::slice::from_ref(&image_scale),
@@ -310,9 +310,8 @@ fn resultant_polynomial_for_image(
                     .resultant;
             samples.push(resultant);
         }
-        Some(samples)
+        interpolate_integer_samples_up_to_scale(&samples)
     })?;
-    let mut polynomial = interpolate_integer_samples_up_to_scale(&samples)?;
     if source_degree % 2 == 1 {
         for coefficient in &mut polynomial {
             *coefficient = -coefficient.clone();

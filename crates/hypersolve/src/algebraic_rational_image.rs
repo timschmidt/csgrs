@@ -41,7 +41,7 @@ use crate::algebraic_polynomial_image::{
 use crate::integer_interpolation::{
     interpolate_integer_samples_up_to_scale, primitive_integer_polynomial,
 };
-use crate::resultant::{quotient_ring_resultant_samples, resultant_univariate_polynomials};
+use crate::resultant::{quotient_ring_resultant_polynomial, resultant_univariate_polynomials};
 use crate::root_isolation::IsolatedRootInterval;
 
 const MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION: usize = 8;
@@ -548,7 +548,7 @@ fn resultant_polynomial_for_rational_image(
     source_degree: usize,
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
-    let samples = quotient_ring_resultant_samples(source_polynomial, numerator, denominator)
+    let polynomial = quotient_ring_resultant_polynomial(source_polynomial, numerator, denominator)
         .or_else(|| {
             let mut samples = Vec::with_capacity(source_degree + 1);
             for sample in 0..=source_degree {
@@ -559,9 +559,8 @@ fn resultant_polynomial_for_rational_image(
                     .resultant;
                 samples.push(resultant);
             }
-            Some(samples)
+            interpolate_integer_samples_up_to_scale(&samples)
         })?;
-    let polynomial = interpolate_integer_samples_up_to_scale(&samples)?;
     trim_real_polynomial(polynomial, policy)
 }
 

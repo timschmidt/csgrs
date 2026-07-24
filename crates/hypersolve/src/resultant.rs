@@ -9,7 +9,9 @@
 //! constructions remain exact and report uncertain pivot decisions.
 
 use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
-use num::{BigInt, Integer, One, Zero};
+#[cfg(test)]
+use num::Integer;
+use num::{BigInt, One, Zero};
 
 use crate::bareiss::{BareissDeterminantReport, BareissError, determinant_bareiss};
 
@@ -221,15 +223,15 @@ pub fn resultant_univariate_polynomials(
     ))
 }
 
-/// Samples `Res_x(P(x), N(x) - y D(x))` up to one shared nonzero scale.
+/// Constructs `Res_x(P(x), N(x) - y D(x))` up to one shared nonzero scale.
 ///
 /// Multiplication by the relation in `Q[x] / (P)` has dimension `deg(P)`,
 /// independent of the relation degree. Its determinant is the relation norm
 /// and differs from the Sylvester resultant only by a source-leading-
 /// coefficient power that is constant across `y`. Clearing all entries of the
-/// two multiplication matrices with one shared scale keeps every sample
-/// integral and preserves exact interpolation up to that same harmless scale.
-pub(crate) fn quotient_ring_resultant_samples(
+/// two multiplication matrices with one shared scale keeps the determinant
+/// polynomial integral and preserves its roots.
+pub(crate) fn quotient_ring_resultant_polynomial(
     source: &[Real],
     numerator: &[Real],
     denominator: &[Real],
@@ -248,6 +250,83 @@ pub(crate) fn quotient_ring_resultant_samples(
         return None;
     }
 
+    determinant_linear_polynomial_matrix(&numerator_entries, &denominator_entries, degree).map(
+        |coefficients| {
+            coefficients
+                .into_iter()
+                .map(Rational::from_bigint)
+                .map(Real::from)
+                .collect()
+        },
+    )
+}
+
+fn determinant_linear_polynomial_matrix(
+    constants: &[BigInt],
+    negative_linear_coefficients: &[BigInt],
+    dimension: usize,
+) -> Option<Vec<BigInt>> {
+    let matrix_entries = dimension.checked_mul(dimension)?;
+    if constants.len() != matrix_entries || negative_linear_coefficients.len() != matrix_entries {
+        return None;
+    }
+    let state_count = 1usize.checked_shl(u32::try_from(dimension).ok()?)?;
+    let mut partials = vec![None; state_count];
+    partials[0] = Some(vec![BigInt::one()]);
+    for mask in 0..state_count {
+        let row = usize::try_from(mask.count_ones()).ok()?;
+        if row == dimension {
+            continue;
+        }
+        let Some(partial) = partials[mask].clone() else {
+            continue;
+        };
+        for column in 0..dimension {
+            let column_bit = 1usize.checked_shl(u32::try_from(column).ok()?)?;
+            if mask & column_bit != 0 {
+                continue;
+            }
+            let entry_index = row * dimension + column;
+            let sign_is_negative = (mask >> (column + 1)).count_ones() % 2 != 0;
+            let next_mask = mask | column_bit;
+            let next =
+                partials[next_mask].get_or_insert_with(|| vec![BigInt::zero(); partial.len() + 1]);
+            for (power, coefficient) in partial.iter().enumerate() {
+                if !constants[entry_index].is_zero() {
+                    let term = coefficient * &constants[entry_index];
+                    if sign_is_negative {
+                        next[power] -= term;
+                    } else {
+                        next[power] += term;
+                    }
+                }
+                if !negative_linear_coefficients[entry_index].is_zero() {
+                    let term = coefficient * &negative_linear_coefficients[entry_index];
+                    if sign_is_negative {
+                        next[power + 1] += term;
+                    } else {
+                        next[power + 1] -= term;
+                    }
+                }
+            }
+        }
+    }
+    partials.pop()?
+}
+
+#[cfg(test)]
+fn quotient_ring_resultant_samples(
+    source: &[Real],
+    numerator: &[Real],
+    denominator: &[Real],
+) -> Option<Vec<Real>> {
+    let degree = source.len().checked_sub(1)?;
+    let matrix_entries = degree.checked_mul(degree)?;
+    let relation_degree = numerator.len().max(denominator.len()).checked_sub(1)?;
+    let numerator_entries =
+        pseudo_quotient_multiplication_matrix(source, numerator, relation_degree)?;
+    let denominator_entries =
+        pseudo_quotient_multiplication_matrix(source, denominator, relation_degree)?;
     let mut samples = Vec::with_capacity(degree + 1);
     let mut matrix = vec![BigInt::zero(); matrix_entries];
     for sample in 0..=degree {
@@ -269,6 +348,7 @@ pub(crate) fn quotient_ring_resultant_samples(
     Some(samples)
 }
 
+#[cfg(test)]
 fn determinant_integer_bareiss_flat(matrix: &mut [BigInt], dimension: usize) -> Option<BigInt> {
     if matrix.len() != dimension.checked_mul(dimension)? {
         return None;
@@ -755,6 +835,20 @@ mod tests {
         let denominator = [real(2), real(-1)];
         let quotient_samples =
             quotient_ring_resultant_samples(&source, &numerator, &denominator).unwrap();
+        let quotient_polynomial =
+            quotient_ring_resultant_polynomial(&source, &numerator, &denominator).unwrap();
+        let polynomial_samples = (0..source.len())
+            .map(|sample| {
+                let image = real(i64::try_from(sample).unwrap());
+                quotient_polynomial
+                    .iter()
+                    .rev()
+                    .fold(Real::zero(), |value, coefficient| {
+                        value * image.clone() + coefficient.clone()
+                    })
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(polynomial_samples, quotient_samples);
         let sylvester_samples = (0..source.len())
             .map(|sample| {
                 let image = real(i64::try_from(sample).unwrap());
@@ -970,6 +1064,20 @@ mod tests {
             let denominator = [Real::one(), real(i64::from(denominator_linear))];
             let samples =
                 quotient_ring_resultant_samples(&source, &numerator, &denominator).unwrap();
+            let polynomial =
+                quotient_ring_resultant_polynomial(&source, &numerator, &denominator).unwrap();
+            let polynomial_samples = (0..source.len())
+                .map(|sample| {
+                    let image = real(i64::try_from(sample).unwrap());
+                    polynomial
+                        .iter()
+                        .rev()
+                        .fold(Real::zero(), |value, coefficient| {
+                            value * image.clone() + coefficient.clone()
+                        })
+                })
+                .collect::<Vec<_>>();
+            prop_assert_eq!(&polynomial_samples, &samples);
 
             let sylvester_samples = (0..source.len())
                 .map(|sample| {
