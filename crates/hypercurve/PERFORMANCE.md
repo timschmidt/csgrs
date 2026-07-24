@@ -3839,6 +3839,41 @@ AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,898
 coverage points and 19,135 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Target-bounded algebraic rational images
+
+Mapping an algebraic curve-intersection parameter back to a rational-conic
+parameter formerly constructed a full exact resultant before checking whether
+the mapped root lay in the Bezier parameter domain. The rational-expression
+domain check had already produced a conservative exact value enclosure, but
+that evidence was only used to certify the denominator. Hypersolve now offers
+a target-bounded rational-image transform that returns retained disjointness
+evidence before elimination when the enclosure is wholly outside a requested
+closed interval. Hypercurve requests `[0, 1]` for conic parameters and keeps
+the existing exact construction for overlapping, boundary-touching, or
+inconclusive enclosures. Nine of the sentinel's sixteen conic parameter maps
+now avoid their unused resultants.
+
+Focused hypersolve regressions cover certified disjointness and ensure that a
+boundary-touching enclosure still constructs the represented image. Existing
+implicit-conic contact, parameterization-invariance, curved-intersection, and
+Boolean suites cover the consuming path and preserve its exact topology.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 45,347,329 to 42,877,040 (5.45%), 86.63% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 71,190 to 65,679
+and temporary events from 7,342 to 7,008; peak heap remained 1.28 MiB and peak
+RSS remained 11.78 MiB. Every measured run retained 9 candidate pairs, 48
+fragments, 2 classifications, 4 decided operations, no blockers, and checksum
+6.
+
+The complete all-feature and no-default-feature test suites passed in both
+hypersolve and hypercurve, together with formatting, warning-denied all-target
+Clippy, warning-denied all-feature and no-default-feature rustdoc, and
+supported default/no-default release WASM library builds. AddressSanitizer
+region-Boolean replay completed all 2,509 executions at 5,897 coverage points
+and 19,176 feature edges with no finding; LeakSanitizer alone remained disabled
+under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

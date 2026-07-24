@@ -7,7 +7,10 @@ use std::rc::Rc;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 #[cfg(feature = "predicates")]
-use hypersolve::{AlgebraicRootRationalImageStatus, transform_algebraic_root_rational_image};
+use hypersolve::{
+    AlgebraicPolynomialValueInterval, AlgebraicRootRationalImageStatus,
+    transform_algebraic_root_rational_image_in_interval,
+};
 #[cfg(feature = "predicates")]
 use hypersolve::{
     AlgebraicRootRefinementComparisonConfig, compare_algebraic_root_representations_by_difference,
@@ -3446,20 +3449,27 @@ fn rational_image_parameter(
             denominator = normalized_denominator;
         }
     }
-    let evidence = transform_algebraic_root_rational_image(
+    let zero = Real::zero();
+    let one = Real::one();
+    let evidence = transform_algebraic_root_rational_image_in_interval(
         source,
         &numerator,
         &denominator,
+        &AlgebraicPolynomialValueInterval {
+            lower: zero.clone(),
+            upper: one.clone(),
+        },
         policy.predicate_policy,
     );
+    if evidence.status == AlgebraicRootRationalImageStatus::ImageIntervalDisjoint {
+        return Ok(Classification::Decided(None));
+    }
     if evidence.status != AlgebraicRootRationalImageStatus::Transformed {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
     let Some(representation) = evidence.representation.as_ref() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     };
-    let zero = Real::zero();
-    let one = Real::one();
     let lower_zero = compare_reals(&representation.interval.lower, &zero, policy);
     let upper_zero = compare_reals(&representation.interval.upper, &zero, policy);
     let lower_one = compare_reals(&representation.interval.lower, &one, policy);
