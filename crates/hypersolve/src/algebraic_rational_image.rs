@@ -24,8 +24,8 @@ use hyperlimit::compare_reals_with_policy;
 use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
-    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
-    AlgebraicRootKind, AlgebraicRootRationalEvaluationReport,
+    AlgebraicPolynomialValueInterval, AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport,
+    AlgebraicRootArithmeticStatus, AlgebraicRootKind, AlgebraicRootRationalEvaluationReport,
     AlgebraicRootRationalEvaluationStatus, AlgebraicRootRepresentation,
     AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     arithmetic_algebraic_root_representations, evaluate_rational_expression_at_algebraic_root,
@@ -51,6 +51,9 @@ const MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION: usize = 8;
 pub enum AlgebraicRootRationalImageStatus {
     /// The rational image was represented exactly.
     Transformed,
+    /// Evaluation certified that the image is disjoint from a requested
+    /// closed target interval, so no representation was constructed.
+    ImageIntervalDisjoint,
     /// The input represented root failed structural validation.
     InvalidEvidence,
     /// The numerator polynomial is empty or unsupported.
@@ -115,12 +118,62 @@ pub fn transform_algebraic_root_rational_image(
     denominator_coefficients: &[Real],
     policy: PredicatePolicy,
 ) -> AlgebraicRootRationalImageReport {
+    transform_algebraic_root_rational_image_with_target(
+        root,
+        numerator_coefficients,
+        denominator_coefficients,
+        None,
+        policy,
+    )
+}
+
+/// Construct exact algebraic evidence for `p(alpha) / q(alpha)` only when its
+/// evaluation may intersect a closed target interval.
+///
+/// A conservative rational evaluation enclosure is formed before elimination.
+/// When that enclosure is provably disjoint from `target`, the report returns
+/// [`AlgebraicRootRationalImageStatus::ImageIntervalDisjoint`] without building
+/// a resultant. Inconclusive or boundary-touching enclosures continue through
+/// the ordinary exact construction.
+pub fn transform_algebraic_root_rational_image_in_interval(
+    root: &AlgebraicRootRepresentation,
+    numerator_coefficients: &[Real],
+    denominator_coefficients: &[Real],
+    target: &AlgebraicPolynomialValueInterval,
+    policy: PredicatePolicy,
+) -> AlgebraicRootRationalImageReport {
+    transform_algebraic_root_rational_image_with_target(
+        root,
+        numerator_coefficients,
+        denominator_coefficients,
+        Some(target),
+        policy,
+    )
+}
+
+fn transform_algebraic_root_rational_image_with_target(
+    root: &AlgebraicRootRepresentation,
+    numerator_coefficients: &[Real],
+    denominator_coefficients: &[Real],
+    target: Option<&AlgebraicPolynomialValueInterval>,
+    policy: PredicatePolicy,
+) -> AlgebraicRootRationalImageReport {
     let evaluation = evaluate_rational_expression_at_algebraic_root(
         root,
         numerator_coefficients,
         denominator_coefficients,
         policy,
     );
+    if target.is_some_and(|target| rational_evaluation_is_disjoint(&evaluation, target, policy)) {
+        return rational_image_report(
+            AlgebraicRootRationalImageStatus::ImageIntervalDisjoint,
+            numerator_coefficients,
+            denominator_coefficients,
+            evaluation,
+            RationalImageArtifacts::default(),
+            Some("rational image evaluation is disjoint from the target interval".into()),
+        );
+    }
     match evaluation.status {
         AlgebraicRootRationalEvaluationStatus::InvalidEvidence => {
             return rational_image_report(
@@ -732,6 +785,28 @@ fn has_exact_coefficients(polynomial: &[Real]) -> bool {
             .all(|coefficient| coefficient.exact_rational_ref().is_some())
 }
 
+fn rational_evaluation_is_disjoint(
+    evaluation: &AlgebraicRootRationalEvaluationReport,
+    target: &AlgebraicPolynomialValueInterval,
+    policy: PredicatePolicy,
+) -> bool {
+    let value_interval = match evaluation.status {
+        AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness => {
+            evaluation.exact_value.as_ref().map(|value| (value, value))
+        }
+        AlgebraicRootRationalEvaluationStatus::IntervalEvaluated => evaluation
+            .interval_value
+            .as_ref()
+            .map(|interval| (&interval.lower, &interval.upper)),
+        _ => None,
+    };
+    value_interval.is_some_and(|(lower, upper)| {
+        compare_reals_with_policy(upper, &target.lower, policy).value() == Some(Ordering::Less)
+            || compare_reals_with_policy(lower, &target.upper, policy).value()
+                == Some(Ordering::Greater)
+    })
+}
+
 fn polynomial_image_failure_status(
     status: AlgebraicRootPolynomialImageStatus,
     fallback: AlgebraicRootRationalImageStatus,
@@ -854,6 +929,46 @@ mod tests {
         assert!(root.is_valid());
         assert_eq!(root.interval.lower, (real(1) / real(2)).unwrap());
         assert_eq!(root.interval.upper, (real(2) / real(3)).unwrap());
+    }
+
+    #[test]
+    fn bounded_rational_image_skips_disjoint_elimination() {
+        let report = transform_algebraic_root_rational_image_in_interval(
+            &sqrt_two_positive(),
+            &[real(2), Real::one()],
+            &[Real::one()],
+            &AlgebraicPolynomialValueInterval {
+                lower: Real::zero(),
+                upper: Real::one(),
+            },
+            PredicatePolicy,
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootRationalImageStatus::ImageIntervalDisjoint
+        );
+        assert!(report.representation.is_none());
+        assert!(report.numerator_image.is_none());
+        assert!(report.denominator_image.is_none());
+        assert!(report.quotient.is_none());
+    }
+
+    #[test]
+    fn bounded_rational_image_retains_boundary_touching_enclosures() {
+        let report = transform_algebraic_root_rational_image_in_interval(
+            &sqrt_two_positive(),
+            &[real(-1), Real::one()],
+            &[Real::one()],
+            &AlgebraicPolynomialValueInterval {
+                lower: Real::zero(),
+                upper: Real::one(),
+            },
+            PredicatePolicy,
+        );
+
+        assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
+        assert!(report.representation.as_ref().unwrap().is_valid());
     }
 
     #[test]
