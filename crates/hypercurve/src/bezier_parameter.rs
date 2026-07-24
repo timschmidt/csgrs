@@ -2118,8 +2118,9 @@ fn sturm_point_evidence(
     let mut variations = 0_usize;
 
     for (index, polynomial) in sequence.iter().enumerate() {
-        let value = evaluate_coefficients(polynomial, parameter);
-        let sign = match real_sign(&value, policy) {
+        let sign = match exact_integer_polynomial_sign(polynomial, parameter)
+            .or_else(|| real_sign(&evaluate_coefficients(polynomial, parameter), policy))
+        {
             Some(RealSign::Zero) if index == 0 => {
                 return Ok(Classification::Decided(SturmPointEvidence::Root));
             }
@@ -2138,6 +2139,79 @@ fn sturm_point_evidence(
     Ok(Classification::Decided(SturmPointEvidence::NonRoot(
         variations,
     )))
+}
+
+fn exact_integer_polynomial_sign(coefficients: &[Real], parameter: &Real) -> Option<RealSign> {
+    let parameter = parameter.exact_rational_ref()?;
+    let (leading, coefficients) = coefficients.split_last()?;
+    let leading = leading.exact_rational_ref()?;
+    if !leading.denominator().is_one()
+        || !coefficients.iter().all(|coefficient| {
+            coefficient
+                .exact_rational_ref()
+                .is_some_and(|coefficient| coefficient.denominator().is_one())
+        })
+    {
+        return None;
+    }
+    if let Some(sign) = exact_integer_polynomial_sign_i128(coefficients, leading, parameter) {
+        return Some(sign);
+    }
+    let parameter_numerator = BigInt::from_biguint(parameter.sign(), parameter.numerator().clone());
+    let parameter_denominator = BigInt::from(parameter.denominator().clone());
+    let mut denominator_power = BigInt::one();
+    let mut accumulator = BigInt::from_biguint(leading.sign(), leading.numerator().clone());
+    for coefficient in coefficients.iter().rev() {
+        let coefficient = coefficient
+            .exact_rational_ref()
+            .expect("integer coefficients were checked");
+        denominator_power *= &parameter_denominator;
+        accumulator *= &parameter_numerator;
+        accumulator += BigInt::from_biguint(coefficient.sign(), coefficient.numerator().clone())
+            * &denominator_power;
+    }
+    Some(match accumulator.sign() {
+        num::bigint::Sign::Minus => RealSign::Negative,
+        num::bigint::Sign::NoSign => RealSign::Zero,
+        num::bigint::Sign::Plus => RealSign::Positive,
+    })
+}
+
+fn exact_integer_polynomial_sign_i128(
+    coefficients: &[Real],
+    leading: &HyperRational,
+    parameter: &HyperRational,
+) -> Option<RealSign> {
+    let parameter_numerator = rational_signed_numerator_i128(parameter)?;
+    let parameter_denominator = i128::try_from(parameter.denominator().to_u128()?).ok()?;
+    let mut denominator_power = 1_i128;
+    let mut accumulator = rational_signed_numerator_i128(leading)?;
+    for coefficient in coefficients.iter().rev() {
+        denominator_power = denominator_power.checked_mul(parameter_denominator)?;
+        accumulator = accumulator.checked_mul(parameter_numerator)?.checked_add(
+            rational_signed_numerator_i128(
+                coefficient
+                    .exact_rational_ref()
+                    .expect("integer coefficients were checked"),
+            )?
+            .checked_mul(denominator_power)?,
+        )?;
+    }
+    Some(match accumulator.cmp(&0) {
+        Ordering::Less => RealSign::Negative,
+        Ordering::Equal => RealSign::Zero,
+        Ordering::Greater => RealSign::Positive,
+    })
+}
+
+fn rational_signed_numerator_i128(value: &HyperRational) -> Option<i128> {
+    let magnitude = value.numerator().to_u128()?;
+    match value.sign() {
+        num::bigint::Sign::NoSign => Some(0),
+        num::bigint::Sign::Plus => i128::try_from(magnitude).ok(),
+        num::bigint::Sign::Minus if magnitude == 1_u128 << 127 => Some(i128::MIN),
+        num::bigint::Sign::Minus => i128::try_from(magnitude).ok()?.checked_neg(),
+    }
 }
 
 fn scale_invariant_polynomial_remainder(
@@ -2372,15 +2446,15 @@ fn isolate_unit_roots(
     }
 
     loop {
-        let polynomial =
-            match BezierParameterPolynomial::try_new_power_basis(coefficients.clone(), policy) {
-                Ok(Classification::Decided(polynomial)) => polynomial,
-                Err(CurveError::InvalidBezierPolynomial) => break,
-                Ok(Classification::Uncertain(reason)) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-                Err(error) => return Err(error),
-            };
+        let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)
+        {
+            Ok(Classification::Decided(polynomial)) => polynomial,
+            Err(CurveError::InvalidBezierPolynomial) => break,
+            Ok(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+            Err(error) => return Err(error),
+        };
         let represented_boundaries = represented
             .iter()
             .filter_map(BezierParameter2::as_exact)
@@ -2393,6 +2467,7 @@ fn isolate_unit_roots(
             }
             Classification::Decided(UnitRootSearch::RepresentedRoot(root)) => {
                 represented.push(BezierParameter2::Exact(root.clone()));
+                coefficients = polynomial.coefficients;
                 loop {
                     if coefficients.len() <= 1
                         || real_sign(&evaluate_coefficients(&coefficients, &root), policy)
@@ -3077,6 +3152,39 @@ mod conversion_tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn integer_polynomial_sign_matches_exact_rational_evaluation() {
+        let policy = CurvePolicy::certified();
+        let wide = (BigInt::one() << 200_usize) + BigInt::from(123_456_789_u64);
+        let polynomials = [
+            vec![rational(-2, 1), rational(0, 1), rational(1, 1)],
+            vec![
+                Real::new(HyperRational::from_bigint(-wide.clone())),
+                rational(7, 1),
+                Real::new(HyperRational::from_bigint(wide)),
+            ],
+            vec![rational(0, 1)],
+        ];
+        let parameters = [
+            rational(-3, 7),
+            rational(0, 1),
+            rational(1, 2),
+            rational(5, 3),
+        ];
+        for polynomial in &polynomials {
+            for parameter in &parameters {
+                assert_eq!(
+                    exact_integer_polynomial_sign(polynomial, parameter),
+                    real_sign(&evaluate_coefficients(polynomial, parameter), &policy)
+                );
+            }
+        }
+        assert_eq!(
+            exact_integer_polynomial_sign(&[rational(1, 2)], &Real::zero()),
+            None
+        );
     }
 
     #[test]

@@ -4417,6 +4417,40 @@ release WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 requested executions at 5,896 coverage points and 19,168
 feature edges with no finding; LeakSanitizer remained disabled under ptrace.
 
+### Native integer Sturm sign evaluation
+
+Sturm point evidence needs only the sign of each sequence member at a rational
+boundary. The primitive Sturm chain already has exact integer coefficients, but
+the generic evaluator formerly constructed and normalized a `Rational` value
+at every Horner step before discarding everything except its sign.
+
+The sign scan now evaluates the homogeneous integer numerator directly. A
+checked `i128` path covers the common small-coefficient chain without allocating;
+overflow or wider exact integers fall back to the same recurrence in `BigInt`.
+Noninteger coefficients and parameters outside the exact rational tower retain
+the generic `Real` evaluation and predicate path. Root isolation also transfers
+its coefficient vector into the parameter polynomial and recovers it only when
+a represented rational root requires another division pass, removing the
+unconditional clone. Ordinary rational samples, zero, and signed 200-bit
+coefficients are checked against exact rational evaluation, while a noninteger
+coefficient verifies the generic fallback remains selected.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 31,937,120 to 31,366,779 (1.79%), 90.22% below
+the original 320,660,631 baseline. Inclusive instruction cost beneath
+`sturm_point_evidence` fell from 769,824 to 193,338 (74.9%). Heaptrack
+allocation events fell from 45,504 to 43,984; recorder-level temporary events
+rose from 2,663 to 2,685 and the postprocessor count rose from 2,911 to 2,933.
+Peak heap remained 1.13 MiB and peak RSS measured 11.18 MiB. Every measured
+run retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy and rustdoc, and supported default/no-default
+release WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 requested executions at 5,897 coverage points and 19,144
+feature edges with no finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
