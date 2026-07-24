@@ -250,6 +250,31 @@ impl Rational {
         Some(value.clone())
     }
 
+    fn small_general_fraction(sign: Sign, magnitude: u128, denominator: u128) -> Option<Self> {
+        let magnitude_index = usize::try_from(magnitude.checked_sub(1)?).ok()?;
+        let denominator_index = usize::try_from(denominator.checked_sub(1)?).ok()?;
+        if magnitude_index >= SMALL_GENERAL_MAX_MAGNITUDE
+            || denominator_index >= SMALL_GENERAL_MAX_DENOMINATOR
+        {
+            return None;
+        }
+        let index = denominator_index * SMALL_GENERAL_MAX_MAGNITUDE + magnitude_index;
+        let values = match sign {
+            Plus => &SMALL_POSITIVE_GENERAL_RATIONALS,
+            Minus => &SMALL_NEGATIVE_GENERAL_RATIONALS,
+            NoSign => return Some(Self::zero()),
+        };
+        let value = values[index].get_or_init(|| {
+            Self::from_parts_raw(
+                sign,
+                BigUint::from(magnitude),
+                BigUint::from(denominator),
+            )
+        });
+        trace_rational_temporary!();
+        Some(value.clone())
+    }
+
     /// The non-negative Rational corresponding to the provided [`i64`].
     pub fn new(n: i64) -> Self {
         // Small scalar constructors are hot. Rational is stored as

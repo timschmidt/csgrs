@@ -300,6 +300,17 @@ static SMALL_POSITIVE_DYADICS: [OnceLock<Rational>; SMALL_DYADIC_CACHE_LEN] =
     [const { OnceLock::new() }; SMALL_DYADIC_CACHE_LEN];
 static SMALL_NEGATIVE_DYADICS: [OnceLock<Rational>; SMALL_DYADIC_CACHE_LEN] =
     [const { OnceLock::new() }; SMALL_DYADIC_CACHE_LEN];
+// Geometry repeatedly produces reduced word-sized fractions with small
+// non-dyadic parts. Keep the same inclusive 63 boundary as the scalar and
+// dyadic caches; lazy slots retain only values that a process actually uses.
+const SMALL_GENERAL_MAX_MAGNITUDE: usize = 63;
+const SMALL_GENERAL_MAX_DENOMINATOR: usize = 63;
+const SMALL_GENERAL_CACHE_LEN: usize =
+    SMALL_GENERAL_MAX_MAGNITUDE * SMALL_GENERAL_MAX_DENOMINATOR;
+static SMALL_POSITIVE_GENERAL_RATIONALS: [OnceLock<Rational>; SMALL_GENERAL_CACHE_LEN] =
+    [const { OnceLock::new() }; SMALL_GENERAL_CACHE_LEN];
+static SMALL_NEGATIVE_GENERAL_RATIONALS: [OnceLock<Rational>; SMALL_GENERAL_CACHE_LEN] =
+    [const { OnceLock::new() }; SMALL_GENERAL_CACHE_LEN];
 
 impl Rational {
     #[inline]

@@ -2040,6 +2040,10 @@ impl Rational {
             crate::trace_dispatch!("rational", "word-result", "cached-small-dyadic");
             return value;
         }
+        if let Some(value) = Self::small_general_fraction(sign, magnitude, denominator) {
+            crate::trace_dispatch!("rational", "word-result", "cached-small-general-fraction");
+            return value;
+        }
         if denominator == 1 {
             #[cfg(feature = "dispatch-trace")]
             {

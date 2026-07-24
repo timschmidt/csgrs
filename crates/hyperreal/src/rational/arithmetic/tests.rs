@@ -2378,6 +2378,30 @@ mod tests {
     }
 
     #[test]
+    fn small_general_products_share_canonical_storage() {
+        let first =
+            Rational::fraction(7, 3).unwrap() * Rational::fraction(3, 5).unwrap();
+        let second =
+            Rational::fraction(14, 3).unwrap() * Rational::fraction(3, 10).unwrap();
+        assert_eq!(first, Rational::fraction(7, 5).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+
+        let first =
+            Rational::fraction(-5, 3).unwrap() * Rational::fraction(3, 7).unwrap();
+        let second =
+            Rational::fraction(-5, 2).unwrap() * Rational::fraction(2, 7).unwrap();
+        assert_eq!(first, Rational::fraction(-5, 7).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+
+        let first =
+            Rational::fraction(63, 5).unwrap() * Rational::fraction(5, 62).unwrap();
+        let second =
+            Rational::fraction(63, 2).unwrap() * Rational::fraction(2, 62).unwrap();
+        assert_eq!(first, Rational::fraction(63, 62).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+    }
+
+    #[test]
     fn products_retain_exact_results_in_both_operand_orders() {
         let value = Rational::try_from(1.0e-12_f64).unwrap();
         let positive = &value * &value;

@@ -1697,6 +1697,43 @@ topology. Expanding canonical dyadic storage from odd magnitudes 63 through
 127 was also rejected after it removed no allocations, retained seven extra
 static rationals, and moved the median slightly upward.
 
+### Lazy small general-fraction canonicals
+
+Reduced native-word arithmetic formerly materialized every non-dyadic
+fraction as a fresh `RationalData`, even when geometry produced the same small
+coefficient many times. Positive and negative reduced fractions whose
+magnitude and denominator are both at most 63 now use fixed arrays of lazy
+canonical slots. This matches the established inclusive scalar and dyadic
+boundary, adds no hash or lock allocation, and retains only entries a process
+actually reaches. Integer and dyadic results still take their earlier, denser
+caches first; larger fractions preserve direct one-limb materialization.
+
+Independent product schedules cover positive, negative, and upper-bound
+results and verify pointer identity as well as exact value. Bound sweeps on
+Hypercurve's one-cell all-family Boolean sentinel measured ten-run instruction
+medians of 27,614,683 at 7, 27,372,850 at 15, 27,205,906 at 31, and 26,882,288
+at 63; the final retained build measured 26,883,298, compared with the
+committed 27,757,309 baseline. The retained 63 bound
+is 3.15% faster at this checkpoint and 91.62% below the original 320,660,631
+baseline. Every run retained 9 candidate pairs, 48 fragments, 2
+classifications, 4 decided operations, no blockers, and checksum 6.
+
+Heaptrack allocation events fell from 37,651 to 34,370 and peak heap from
+987.31 to 936.80 KiB. Process-lifetime retained memory rose from 89.49 to
+167.77 KiB as the lazy canonicals populated, while peak RSS remained
+effectively flat at 10.97 MiB. The increase is a fixed cache cost rather than
+curve-size-proportional storage; the lower allocation count and working-set
+peak therefore improve the large-curve limit.
+
+The complete all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy and rustdoc, and default and no-default
+release WASM builds passed. The AddressSanitizer rational-arithmetic replay
+completed all 2,509 requested executions at 1,834 coverage points and 4,646
+feature edges with no finding; LeakSanitizer alone remained disabled under
+ptrace. The downstream Hypercurve region-Boolean replay completed the same
+requested budget after 2,706 executions at 5,989 coverage points and 19,311
+feature edges with no finding.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
