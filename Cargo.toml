@@ -56,24 +56,7 @@ harness = false
 [[bench]]
 name = "feature_pipeline"
 harness = false
-required-features = [
-  "mesh",
-  "sketch",
-  "stl-io",
-  "dxf-io",
-  "obj-io",
-  "ply-io",
-  "amf-io",
-  "gltf-io",
-  "svg-io",
-  "image-io",
-  "metaballs",
-  "sdf",
-  "offset",
-  "truetype-text",
-  "hershey-text",
-  "bevymesh",
-]
+required-features = ["bench-feature-pipeline"]
 
 [[bench]]
 name = "profile_primitives"
@@ -154,6 +137,26 @@ hypersolve = { path = "../hypersolve" }
 
 [features]
 default = ["mesh", "polygon-mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "vrml-io", "gerber-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
+bench-feature-pipeline = [
+  "mesh",
+  "polygon-mesh",
+  "sketch",
+  "stl-io",
+  "dxf-io",
+  "obj-io",
+  "ply-io",
+  "amf-io",
+  "gltf-io",
+  "gerber-io",
+  "svg-io",
+  "image-io",
+  "metaballs",
+  "sdf",
+  "offset",
+  "truetype-text",
+  "hershey-text",
+  "bevymesh",
+]
 dispatch-trace = [
   "hypercurve/dispatch-trace",
   "hypermesh/dispatch-trace",
