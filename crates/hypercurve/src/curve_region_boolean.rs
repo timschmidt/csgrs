@@ -1225,13 +1225,32 @@ fn split_carrier(
     events: &[CarrierEvent],
     policy: &CurvePolicy,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
+    // Most retained events need very little isolator separation. Preserve the
+    // former eight-step proof budget for close roots or endpoint images whose
+    // complete topology replay needs a narrower interval.
+    for max_refinement_steps in [1, 2, 4] {
+        if let Ok(fragments) =
+            split_carrier_with_refinement(carrier, events, max_refinement_steps, policy)
+        {
+            return Ok(fragments);
+        }
+    }
+    split_carrier_with_refinement(carrier, events, 8, policy)
+}
+
+fn split_carrier_with_refinement(
+    carrier: &RegionCarrier,
+    events: &[CarrierEvent],
+    max_refinement_steps: usize,
+    policy: &CurvePolicy,
+) -> Result<Vec<SplitCarrierFragment>, CurveError> {
     let parameters = events
         .iter()
         .map(|event| {
             event
                 .parameter
                 .clone()
-                .refined_isolating_interval(8, policy)
+                .refined_isolating_interval(max_refinement_steps, policy)
         })
         .collect::<Vec<_>>();
     let materialization = match carrier

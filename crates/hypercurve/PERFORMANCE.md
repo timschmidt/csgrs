@@ -2941,6 +2941,38 @@ accelerator. Complete all-feature tests, strict all-feature Clippy,
 warning-denied rustdoc, the release library WASM build, and a 2,509-run
 AddressSanitizer region-Boolean campaign passed.
 
+### Integer-scaled images and adaptive split refinement
+
+The sibling polynomial-image path still formed fractional Sylvester matrices,
+and every sampled resultant path reconstructed its power basis with rational
+Lagrange divisions. Hypersolve now normalizes polynomial, rational, and binary
+algebraic inputs to primitive integers. It interpolates their integer
+resultant samples through forward differences while retaining one harmless
+common factorial scale, then removes content once. Polynomial images scale the
+symbolic image variable together with the mapped coefficients, while rational
+images retain one shared numerator/denominator scale, so neither transformation
+changes the represented algebraic value.
+
+Split-carrier construction also no longer refines every algebraic boundary
+eight times before attempting exact materialization. It first tries one
+certified refinement step, then escalates through two, four, and the original
+eight whenever the complete split, endpoint-image, or topology-vertex replay
+does not succeed. Successful evidence is still exact, and difficult inputs
+retain the former proof budget and final error behavior.
+
+Primitive polynomial-image relations reduced ten-run instructions from
+189,533,986 to 176,631,590, and shared integer-scaled interpolation reached
+165,927,095. Adaptive carrier refinement then reached 151,620,313: 20.0% below
+the preceding committed checkpoint and 52.7% below the 320,660,631 adaptive
+conic-image baseline. Eleven ordinary release runs had a 14.994 ms complete
+median, an 8.682 ms preparation median, and a 0.427 ms exact-polyline
+projection median. Every run retained 9 candidate pairs, 48 fragments, 2 exact
+point classifications, 4 decided operations, and checksum 6. The remaining
+roughly 35x native gap still justifies the line/arc accelerator. Complete
+all-feature tests, strict all-feature Clippy, warning-denied rustdoc, the
+release library WASM build, and a 2,509-run AddressSanitizer region-Boolean
+campaign passed.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
