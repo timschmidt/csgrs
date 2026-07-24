@@ -3,10 +3,12 @@ use std::ops::{Index, IndexMut};
 
 use geo::{BooleanOps, Buffer, Coord, LineString, MultiPolygon, Polygon};
 use hypercurve::{
-    BooleanOp as HBooleanOp, BulgeVertex2, Classification, Contour2, ContourFragmentSet,
-    ContourIntersection, ContourIntersectionSet, ContourOperand, ContourSplitMarkers, CubicBezier2,
-    CurvePolicy, CurveString2, FillRule, OffsetCap, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, LineArcRegion2, Segment2, Tolerance,
+    BooleanOp as HBooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2,
+    ContourFragmentSet, ContourIntersection, ContourIntersectionSet, ContourOperand,
+    ContourSplitMarkers, CubicBezier2, Curve2, CurveGeometry2, CurvePath2, CurvePolicy,
+    CurveIntersectionPairBlockerKind2, CurveRegion2, CurveRegionLoopRole, CurveString2, FillRule,
+    LineSeg2, OffsetCap, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, Segment2,
+    Tolerance,
 };
 use serde::{Deserialize, Serialize};
 
@@ -68,8 +70,16 @@ pub enum CurvePrimitive {
         start: Vertex,
         control: Vertex,
         end: Vertex,
+        #[serde(default = "unit_weight")]
+        start_weight: f64,
         control_weight: f64,
+        #[serde(default = "unit_weight")]
+        end_weight: f64,
     },
+}
+
+const fn unit_weight() -> f64 {
+    1.0
 }
 
 impl CurvePrimitive {
@@ -158,23 +168,24 @@ impl CurvePrimitive {
         }
     }
 
-    fn translate_mut(&mut self, dx: f64, dy: f64) {
-        for index in 0..self.handle_count() {
-            if let Some(vertex) = self.handles().get(index).copied() {
-                self.set_handle(index, vertex.x + dx, vertex.y + dy);
-            }
-        }
-    }
-
     fn validate_finite(&self, index: usize) -> Result<(), String> {
         for (handle_index, handle) in self.handles().into_iter().enumerate() {
             handle.validate_finite(handle_index)?;
         }
-        if let Self::RationalQuadratic { control_weight, .. } = self {
-            validate_finite(
-                *control_weight,
-                &format!("primitive {index} control weight"),
-            )?;
+        if let Self::RationalQuadratic {
+            start_weight,
+            control_weight,
+            end_weight,
+            ..
+        } = self
+        {
+            for (label, weight) in [
+                ("start", *start_weight),
+                ("control", *control_weight),
+                ("end", *end_weight),
+            ] {
+                validate_finite(weight, &format!("primitive {index} {label} weight"))?;
+            }
         }
         Ok(())
     }
@@ -228,13 +239,17 @@ impl CurvePrimitive {
                 start,
                 control,
                 end,
+                start_weight,
                 control_weight,
+                end_weight,
             } => {
-                let Ok(curve) = RationalQuadraticBezier2::try_unit_end_weights(
+                let Ok(curve) = RationalQuadraticBezier2::try_new(
                     point_from_vertex(start),
                     point_from_vertex(control),
                     point_from_vertex(end),
+                    Real::try_from(start_weight).unwrap_or_else(|_| Real::one()),
                     Real::try_from(control_weight).unwrap_or_else(|_| Real::one()),
+                    Real::try_from(end_weight).unwrap_or_else(|_| Real::one()),
                 ) else {
                     return;
                 };
@@ -280,13 +295,129 @@ impl CurvePrimitive {
                 start,
                 control,
                 end,
+                start_weight,
                 control_weight,
+                end_weight,
             } => Self::RationalQuadratic {
                 start: end,
                 control,
                 end: start,
+                start_weight: end_weight,
                 control_weight,
+                end_weight: start_weight,
             },
+        }
+    }
+
+    fn to_curve(&self) -> Result<Curve2, String> {
+        match *self {
+            Self::Line { start, end } => LineSeg2::try_new(
+                point_from_vertex(start),
+                point_from_vertex(end),
+            )
+            .map(Curve2::from)
+            .map_err(|error| error.to_string()),
+            Self::CircularArc { start, end, bulge } => {
+                let bulge = real_checked(bulge, "circular arc bulge")?;
+                if bulge == Real::zero() {
+                    return LineSeg2::try_new(
+                        point_from_vertex(start),
+                        point_from_vertex(end),
+                    )
+                    .map(Curve2::from)
+                    .map_err(|error| error.to_string());
+                }
+                CircularArc2::from_bulge(
+                    point_from_vertex(start),
+                    point_from_vertex(end),
+                    bulge,
+                )
+                .map(Curve2::from)
+                .map_err(|error| error.to_string())
+            }
+            Self::QuadraticBezier {
+                start,
+                control,
+                end,
+            } => Ok(Curve2::from(QuadraticBezier2::new(
+                point_from_vertex(start),
+                point_from_vertex(control),
+                point_from_vertex(end),
+            ))),
+            Self::CubicBezier {
+                start,
+                control1,
+                control2,
+                end,
+            } => Ok(Curve2::from(CubicBezier2::new(
+                point_from_vertex(start),
+                point_from_vertex(control1),
+                point_from_vertex(control2),
+                point_from_vertex(end),
+            ))),
+            Self::RationalQuadratic {
+                start,
+                control,
+                end,
+                start_weight,
+                control_weight,
+                end_weight,
+            } => RationalQuadraticBezier2::try_new(
+                point_from_vertex(start),
+                point_from_vertex(control),
+                point_from_vertex(end),
+                real_checked(start_weight, "rational quadratic start weight")?,
+                real_checked(control_weight, "rational quadratic control weight")?,
+                real_checked(end_weight, "rational quadratic end weight")?,
+            )
+            .map(Curve2::from)
+            .map_err(|error| error.to_string()),
+        }
+    }
+
+    fn from_curve(curve: &Curve2) -> Result<Self, String> {
+        match curve.geometry() {
+            CurveGeometry2::Line(line) => Ok(Self::Line {
+                start: vertex_from_point(line.start().clone()),
+                end: vertex_from_point(line.end().clone()),
+            }),
+            CurveGeometry2::CircularArc(arc) => Ok(Self::CircularArc {
+                start: vertex_from_point(arc.start().clone()),
+                end: vertex_from_point(arc.end().clone()),
+                bulge: bulge_for_arc(arc),
+            }),
+            CurveGeometry2::QuadraticBezier(curve) => {
+                let [start, control, end] = curve.control_points();
+                Ok(Self::QuadraticBezier {
+                    start: vertex_from_point(start.clone()),
+                    control: vertex_from_point(control.clone()),
+                    end: vertex_from_point(end.clone()),
+                })
+            }
+            CurveGeometry2::CubicBezier(curve) => {
+                let [start, control1, control2, end] = curve.control_points();
+                Ok(Self::CubicBezier {
+                    start: vertex_from_point(start.clone()),
+                    control1: vertex_from_point(control1.clone()),
+                    control2: vertex_from_point(control2.clone()),
+                    end: vertex_from_point(end.clone()),
+                })
+            }
+            CurveGeometry2::RationalQuadraticBezier(curve) => {
+                let [start, control, end] = curve.control_points();
+                Ok(Self::RationalQuadratic {
+                    start: vertex_from_point(start.clone()),
+                    control: vertex_from_point(control.clone()),
+                    end: vertex_from_point(end.clone()),
+                    start_weight: real_to_f64(curve.start_weight()),
+                    control_weight: real_to_f64(curve.control_weight()),
+                    end_weight: real_to_f64(curve.end_weight()),
+                })
+            }
+            geometry => Err(format!(
+                "the demo cannot yet display a native {:?} boolean fragment",
+                geometry.family()
+            )),
         }
     }
 }
@@ -443,19 +574,6 @@ impl Polyline {
         segments
     }
 
-    pub fn translate_mut(&mut self, dx: f64, dy: f64) {
-        if !self.curve_data.is_empty() {
-            for primitive in &mut self.curve_data {
-                primitive.translate_mut(dx, dy);
-            }
-            return;
-        }
-        for vertex in &mut self.vertex_data {
-            vertex.x += dx;
-            vertex.y += dy;
-        }
-    }
-
     pub fn sample_points(&self, max_angle_step: f64) -> Vec<[f64; 2]> {
         if !self.curve_data.is_empty() {
             let mut points = Vec::new();
@@ -535,6 +653,25 @@ impl Polyline {
         let vertices = self.hyper_vertices()?;
         Contour2::from_bulge_vertices_with_fill_rule(&vertices[..], FillRule::NonZero)
             .map_err(|e| e.to_string())
+    }
+
+    pub fn to_curve_path(&self) -> Result<CurvePath2, String> {
+        let curves = if self.curve_data.is_empty() {
+            self.to_contour()?
+                .segments()
+                .iter()
+                .map(|segment| match segment {
+                    Segment2::Line(line) => Curve2::from(line.clone()),
+                    Segment2::Arc(arc) => Curve2::from(arc.clone()),
+                })
+                .collect()
+        } else {
+            self.curve_data
+                .iter()
+                .map(CurvePrimitive::to_curve)
+                .collect::<Result<Vec<_>, _>>()?
+        };
+        CurvePath2::try_new(curves).map_err(|error| error.to_string())
     }
 
     #[cfg(test)]
@@ -646,6 +783,20 @@ impl Polyline {
         }
     }
 
+    pub fn from_curve_path(path: &CurvePath2, closed: bool) -> Result<Self, String> {
+        let curve_data = path
+            .curves()
+            .iter()
+            .map(CurvePrimitive::from_curve)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self {
+            curve_data,
+            vertex_data: Vec::new(),
+            is_closed: closed,
+            is_hole: false,
+        })
+    }
+
     fn to_sampled_polyline(&self, max_angle_step: f64) -> Self {
         Self {
             curve_data: Vec::new(),
@@ -730,11 +881,43 @@ pub fn curve_showcase_contour(origin_x: f64, origin_y: f64, scale: f64) -> Polyl
                 start: e,
                 control: demo_vertex(origin_x, origin_y, scale, 3.05, 1.0, 0.0),
                 end: f,
+                start_weight: 1.0,
                 control_weight: 0.36,
+                end_weight: 1.0,
             },
             CurvePrimitive::Line { start: f, end: g },
             CurvePrimitive::Line { start: g, end: h },
             CurvePrimitive::Line { start: h, end: a },
+        ],
+        true,
+    )
+}
+
+pub fn curve_boolean_clip_contour(origin_x: f64, origin_y: f64, scale: f64) -> Polyline {
+    let lower_left = demo_vertex(origin_x, origin_y, scale, -1.0, 0.9, 0.0);
+    let lower_right = demo_vertex(origin_x, origin_y, scale, 1.0, 0.9, 0.0);
+    let upper_right = demo_vertex(origin_x, origin_y, scale, 1.0, 2.3, 0.0);
+    let upper_left = demo_vertex(origin_x, origin_y, scale, -1.0, 2.3, 0.0);
+    Polyline::from_curve_data(
+        vec![
+            CurvePrimitive::Line {
+                start: lower_left,
+                end: lower_right,
+            },
+            CurvePrimitive::Line {
+                start: lower_right,
+                end: upper_right,
+            },
+            CurvePrimitive::CubicBezier {
+                start: upper_right,
+                control1: demo_vertex(origin_x, origin_y, scale, 0.55, 2.7, 0.0),
+                control2: demo_vertex(origin_x, origin_y, scale, -0.55, 2.7, 0.0),
+                end: upper_left,
+            },
+            CurvePrimitive::Line {
+                start: upper_left,
+                end: lower_left,
+            },
         ],
         true,
     )
@@ -799,28 +982,6 @@ impl Shape {
         Self { materials, holes }
     }
 
-    pub fn from_region(region: &LineArcRegion2) -> Self {
-        Self {
-            materials: region
-                .material_contours()
-                .iter()
-                .map(Polyline::from_contour)
-                .collect(),
-            holes: region
-                .hole_contours()
-                .iter()
-                .map(Polyline::from_contour)
-                .collect(),
-        }
-    }
-
-    pub fn translated(mut self, dx: f64, dy: f64) -> Self {
-        for pline in self.materials.iter_mut().chain(self.holes.iter_mut()) {
-            pline.translate_mut(dx, dy);
-        }
-        self
-    }
-
     pub fn validate_finite(&self) -> Result<(), String> {
         for (index, material) in self.materials.iter().enumerate() {
             material
@@ -834,30 +995,61 @@ impl Shape {
         Ok(())
     }
 
-    pub fn to_region(&self) -> Result<LineArcRegion2, String> {
+    pub fn to_curve_region(&self) -> Result<CurveRegion2, String> {
         self.validate_finite()?;
-        let materials = self
-            .materials
-            .iter()
-            .map(Polyline::to_contour)
-            .collect::<Result<Vec<_>, _>>()?;
-        let holes = self
-            .holes
-            .iter()
-            .map(Polyline::to_contour)
-            .collect::<Result<Vec<_>, _>>()?;
-        let mut contours = Vec::with_capacity(materials.len() + holes.len());
-        contours.extend(materials.iter().cloned());
-        contours.extend(holes.iter().cloned());
+        let mut paths = Vec::with_capacity(self.materials.len() + self.holes.len());
+        let mut roles = Vec::with_capacity(paths.capacity());
+        for material in &self.materials {
+            paths.push(material.to_curve_path()?);
+            roles.push(CurveRegionLoopRole::Material);
+        }
+        for hole in &self.holes {
+            paths.push(hole.to_curve_path()?);
+            roles.push(CurveRegionLoopRole::Hole);
+        }
+        let fill_rules = vec![FillRule::NonZero; paths.len()];
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &paths,
+            &roles,
+            &fill_rules,
+        )
+        .map_err(|error| error.to_string())
+    }
 
-        if let Some(region) = regularized_region(&materials, &holes)? {
-            return Ok(region);
+    pub fn from_curve_region(region: &CurveRegion2) -> Result<Option<Self>, String> {
+        let paths = match region
+            .materialized_boundary_paths()
+            .map_err(|error| error.to_string())?
+        {
+            Classification::Decided(paths) => paths,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        if paths.is_empty() {
+            return Ok(Some(Self::default()));
+        }
+        let roles = match region
+            .loop_roles(&CurvePolicy::certified())
+            .map_err(|error| error.to_string())?
+        {
+            Classification::Decided(roles) => roles,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        if paths.len() != roles.len() {
+            return Err("hypercurve returned mismatched boundary paths and loop roles".into());
         }
 
-        match LineArcRegion2::from_boundary_contours(contours, &policy()).map_err(|e| e.to_string())? {
-            Classification::Decided(region) => Ok(region),
-            Classification::Uncertain(_) => Ok(LineArcRegion2::new(materials, holes)),
+        let mut shape = Self::default();
+        for (path, role) in paths.iter().zip(roles) {
+            let mut polyline = Polyline::from_curve_path(path, true)?;
+            match role {
+                CurveRegionLoopRole::Material => shape.materials.push(polyline),
+                CurveRegionLoopRole::Hole => {
+                    polyline.is_hole = true;
+                    shape.holes.push(polyline);
+                }
+            }
         }
+        Ok(Some(shape))
     }
 
     pub fn boolean(&self, other: &Self, op: BooleanMode) -> Result<Option<Self>, String> {
@@ -870,14 +1062,43 @@ impl Shape {
             BooleanMode::Xor => HBooleanOp::Xor,
         };
 
-        if let (Ok(first), Ok(second)) = (self.to_region(), other.to_region()) {
-            match first.boolean_region(&second, op, FillRule::NonZero, &policy()) {
-                Ok(Classification::Decided(region)) => return Ok(Some(Self::from_region(&region))),
-                Ok(Classification::Uncertain(_)) | Err(_) => {}
-            }
-        }
-
-        Ok(Some(geo_boolean_fallback(self, other, op)?))
+        let first = self.to_curve_region()?;
+        let second = other.to_curve_region()?;
+        let retained = first
+            .retain_boolean(&second, &CurvePolicy::certified())
+            .map_err(|error| error.to_string())?;
+        let result = retained.boolean_region(op).map_err(|error| {
+            retained
+                .intersection_result()
+                .ok()
+                .and_then(|result| result.blockers().first().cloned())
+                .map_or_else(
+                    || error.to_string(),
+                    |blocker| {
+                        let kind = match blocker.blocker().kind() {
+                            CurveIntersectionPairBlockerKind2::Uncertain(_) => {
+                                "uncertain predicate"
+                            }
+                            CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                                "incomplete contact replay"
+                            }
+                            CurveIntersectionPairBlockerKind2::SharedComponent => {
+                                "shared algebraic component"
+                            }
+                        };
+                        format!(
+                            "{error}; {kind} between {:?} loop {} fragment {} and {:?} loop {} fragment {}",
+                            blocker.first().family(),
+                            blocker.first().loop_index(),
+                            blocker.first().fragment_index(),
+                            blocker.second().family(),
+                            blocker.second().loop_index(),
+                            blocker.second().fragment_index(),
+                        )
+                    },
+                )
+        })?;
+        Self::from_curve_region(&result)
     }
 
     pub fn offset_once(&self, distance: f64) -> Self {
@@ -1060,52 +1281,6 @@ fn signed_area_of_coords(coords: &[Coord<f64>]) -> f64 {
         twice_area += current.x * next.y - next.x * current.y;
     }
     0.5 * twice_area
-}
-
-fn regularized_region(
-    materials: &[HContour],
-    holes: &[HContour],
-) -> Result<Option<LineArcRegion2>, String> {
-    let mut region = LineArcRegion2::empty();
-
-    for contour in materials {
-        let next = LineArcRegion2::from_material_contours(vec![contour.clone()]);
-        region = match region
-            .boolean_region(&next, HBooleanOp::Union, FillRule::NonZero, &policy())
-            .map_err(|e| e.to_string())?
-        {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(_) => return Ok(None),
-        };
-    }
-
-    for contour in holes {
-        let next = LineArcRegion2::from_material_contours(vec![contour.clone()]);
-        region = match region
-            .boolean_region(&next, HBooleanOp::Difference, FillRule::NonZero, &policy())
-            .map_err(|e| e.to_string())?
-        {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(_) => return Ok(None),
-        };
-    }
-
-    Ok(Some(region))
-}
-
-fn geo_boolean_fallback(first: &Shape, second: &Shape, op: HBooleanOp) -> Result<Shape, String> {
-    // UI fallback only: this keeps the demo interactive for topology cases that
-    // hypercurve evidence as uncertain. The result is a lossy display artifact,
-    // not a replacement for exact hypercurve boolean semantics.
-    let first = shape_to_geo(first);
-    let second = shape_to_geo(second);
-    let result = match op {
-        HBooleanOp::Union => first.union(&second),
-        HBooleanOp::Intersection => first.intersection(&second),
-        HBooleanOp::Difference => first.difference(&second),
-        HBooleanOp::Xor => first.xor(&second),
-    };
-    Ok(shape_from_geo(&result))
 }
 
 fn shape_to_geo(shape: &Shape) -> MultiPolygon<f64> {
@@ -1334,7 +1509,9 @@ fn rational_lens(origin_x: f64, origin_y: f64, scale: f64, ccw: bool) -> Polylin
                 start: a,
                 control: demo_vertex(origin_x, origin_y, scale, 0.0, 1.1, 0.0),
                 end: b,
+                start_weight: 1.0,
                 control_weight: 0.34,
+                end_weight: 1.0,
             },
             CurvePrimitive::Line { start: b, end: c },
             CurvePrimitive::Line { start: c, end: d },

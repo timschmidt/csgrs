@@ -7,7 +7,7 @@ use crate::corner_scenes::{CornerOperation, CornerScene};
 use crate::editor::PolylineEditor;
 use crate::geometry::{
     BooleanMode, Polyline, Shape, boolean_polylines, contour_intersections, contour_slices,
-    curve_showcase_contour, curve_showcase_polylines,
+    curve_boolean_clip_contour, curve_showcase_contour, curve_showcase_polylines,
 };
 use crate::plotting::{draw_points, draw_polyline, draw_shape, find_near_vertex};
 use crate::theme::Theme;
@@ -28,12 +28,13 @@ pub struct DemoScenes {
 
 impl Default for DemoScenes {
     fn default() -> Self {
-        Self::shared_url_default()
+        Self::fallback_default()
     }
 }
 
 impl DemoScenes {
     /// No-query startup state decoded from the requested shared demo URL.
+    #[allow(dead_code)]
     fn shared_url_default() -> Self {
         match crate::share::decode_state::<DemoScenesState>(DEFAULT_SHARE_STATE) {
             Ok(mut state) => {
@@ -244,7 +245,7 @@ pub struct PlineBooleanScene {
 impl Default for PlineBooleanScene {
     fn default() -> Self {
         let first = curve_showcase_contour(0.0, 0.0, 6.2);
-        let second = curve_showcase_contour(3.5, 1.8, 4.2);
+        let second = curve_boolean_clip_contour(0.0, 0.0, 6.2);
         let polylines = vec![first, second];
         let mut editor = PolylineEditor::dual("Polyline Editor");
         editor.initialize_with_polylines(polylines.clone());
@@ -605,8 +606,8 @@ impl Default for MultiPlineBooleanScene {
     fn default() -> Self {
         let plines = default_multi_boolean_plines();
         Self {
-            first: Shape::from_polylines(plines.clone()).translated(-20.0, -20.0),
-            second: Shape::from_polylines(plines).translated(20.0, 20.0),
+            first: Shape::from_polylines(plines),
+            second: Shape::from_materials(vec![curve_boolean_clip_contour(0.0, 0.0, 6.2)]),
             op: None,
             drag: ShapeDragState::default(),
             last_error: None,
@@ -1077,7 +1078,7 @@ fn mode_combo(ui: &mut egui::Ui, id: &str, mode: &mut BooleanSceneMode) {
 }
 
 fn default_multi_boolean_plines() -> Vec<Polyline> {
-    curve_showcase_polylines(0.0, 0.0, 55.0)
+    curve_showcase_polylines(0.0, 0.0, 6.2)
 }
 
 fn default_multi_offset_plines() -> Vec<Polyline> {
@@ -1101,6 +1102,35 @@ fn multi_color(index: usize) -> egui::Color32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::geometry::CurvePrimitive;
+
+    fn assert_native_boolean_curves(shape: &Shape, op: BooleanMode) {
+        let polylines = shape
+            .materials
+            .iter()
+            .chain(shape.holes.iter())
+            .collect::<Vec<_>>();
+        assert!(!polylines.is_empty(), "{op:?} should retain boundary loops");
+        assert!(
+            polylines.iter().all(|polyline| {
+                polyline.vertex_data.is_empty() && !polyline.curve_data.is_empty()
+            }),
+            "{op:?} lowered a boolean boundary to bulge/polyline vertices"
+        );
+    }
+
+    fn has_higher_order_curve(shape: &Shape) -> bool {
+        shape
+            .materials
+            .iter()
+            .chain(shape.holes.iter())
+            .any(|polyline| {
+                polyline
+                    .curve_data
+                    .iter()
+                    .any(|curve| !matches!(curve, CurvePrimitive::Line { .. }))
+            })
+    }
 
     #[test]
     fn multi_defaults_are_sorted_into_material_and_hole_bins() {
@@ -1112,9 +1142,7 @@ mod tests {
 
     #[test]
     fn multi_boolean_defaults_resolve_all_boolean_modes() {
-        let plines = default_multi_boolean_plines();
-        let first = Shape::from_polylines(plines.clone()).translated(-20.0, -20.0);
-        let second = Shape::from_polylines(plines).translated(20.0, 20.0);
+        let scene = MultiPlineBooleanScene::default();
 
         for op in [
             BooleanMode::Union,
@@ -1122,11 +1150,14 @@ mod tests {
             BooleanMode::Difference,
             BooleanMode::Xor,
         ] {
-            let result = first.boolean(&second, op).unwrap();
-            assert!(
-                result.is_some(),
-                "default multi-polyline boolean returned unresolved topology for {op:?}"
-            );
+            let result = scene
+                .first
+                .boolean(&scene.second, op)
+                .unwrap()
+                .unwrap_or_else(|| {
+                    panic!("default multi-polyline boolean was unresolved for {op:?}")
+                });
+            assert_native_boolean_curves(&result, op);
         }
     }
 
@@ -1140,13 +1171,23 @@ mod tests {
             BooleanMode::Difference,
             BooleanMode::Xor,
         ] {
-            assert!(
-                boolean_polylines(&scene.polylines[0], &scene.polylines[1], op)
-                    .unwrap()
-                    .is_some(),
-                "default polyline boolean returned unresolved topology for {op:?}"
-            );
+            let result = boolean_polylines(&scene.polylines[0], &scene.polylines[1], op)
+                .unwrap()
+                .unwrap_or_else(|| panic!("default polyline boolean was unresolved for {op:?}"));
+            assert_native_boolean_curves(&result, op);
         }
+
+        let union = boolean_polylines(
+            &scene.polylines[0],
+            &scene.polylines[1],
+            BooleanMode::Union,
+        )
+        .unwrap()
+        .expect("default union should resolve");
+        assert!(
+            has_higher_order_curve(&union),
+            "boolean union should preserve native higher-order curves"
+        );
     }
 
     #[test]
@@ -1195,15 +1236,15 @@ mod tests {
         assert_eq!(state.active, 0);
         assert_eq!(state.pline_boolean.polylines.len(), 2);
         assert_eq!(state.pline_boolean.polylines[0].curve_data.len(), 8);
-        assert_eq!(state.pline_boolean.polylines[1].curve_data.len(), 8);
+        assert_eq!(state.pline_boolean.polylines[1].curve_data.len(), 4);
         assert_eq!(state.pline_offset.polylines.len(), 1);
         assert_eq!(state.pline_offset.polylines[0].curve_data.len(), 8);
         assert_eq!(state.fillet_radius, default_fillet_radius());
         assert_eq!(state.chamfer_setback, default_chamfer_setback());
         assert_eq!(state.multi_boolean.first.materials.len(), 2);
         assert_eq!(state.multi_boolean.first.holes.len(), 3);
-        assert_eq!(state.multi_boolean.second.materials.len(), 2);
-        assert_eq!(state.multi_boolean.second.holes.len(), 3);
+        assert_eq!(state.multi_boolean.second.materials.len(), 1);
+        assert_eq!(state.multi_boolean.second.holes.len(), 0);
         assert_eq!(
             state
                 .multi_offset
