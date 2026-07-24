@@ -225,7 +225,7 @@ impl QuadraticBezier2 {
     /// This is the Green's-theorem integral over the oriented curve segment,
     /// not an area of the control polygon and not a sampled approximation.
     pub fn signed_area_contribution(&self) -> CurveResult<Real> {
-        Ok(area_moments_for_controls(&self.control_points())?.signed_area)
+        signed_area_for_controls(&self.control_points())
     }
 
     /// Returns this quadratic's exact signed area and first moment contributions.
@@ -272,7 +272,7 @@ impl QuadraticBezier2 {
 impl CubicBezier2 {
     /// Returns this cubic's exact signed area boundary contribution.
     pub fn signed_area_contribution(&self) -> CurveResult<Real> {
-        Ok(area_moments_for_controls(&self.control_points())?.signed_area)
+        signed_area_for_controls(&self.control_points())
     }
 
     /// Returns this cubic's exact signed area and first moment contributions.
@@ -339,7 +339,7 @@ fn prefix_signed_area_for_controls(
     }
     let (prefix, _) = subdivide_controls_at(&controls, t)?;
     let refs = prefix.iter().collect::<Vec<_>>();
-    area_moments_for_controls(&refs).map(|moments| Classification::Decided(moments.signed_area))
+    signed_area_for_controls(&refs).map(Classification::Decided)
 }
 
 fn prefix_area_moments_for_controls(
@@ -358,6 +358,51 @@ fn prefix_area_moments_for_controls(
 }
 
 fn area_moments_for_controls(controls: &[&Point2]) -> CurveResult<BezierAreaMoments2> {
+    let (x, y, dx, dy) = coordinate_power_derivatives(controls)?;
+    let signed_area = signed_area_for_power_coordinates(&x, &y, &dx, &dy)?;
+    let x_squared = polynomial_product(&x, &x);
+    let y_squared = polynomial_product(&y, &y);
+    let x_moment_integral = integrate_polynomial(&polynomial_product(&x_squared, &dy))?;
+    let y_moment_integral = integrate_polynomial(&polynomial_product(&y_squared, &dx))?;
+
+    Ok(BezierAreaMoments2 {
+        signed_area,
+        x_moment: (x_moment_integral / Real::from(2_i8))?,
+        y_moment: (Real::zero() - (y_moment_integral / Real::from(2_i8))?),
+    })
+}
+
+fn signed_area_for_controls(controls: &[&Point2]) -> CurveResult<Real> {
+    match controls {
+        [first, middle, last] => {
+            let adjacent = point_cross_product(first, middle) + point_cross_product(middle, last);
+            let numerator = Real::from(2_i8) * adjacent + point_cross_product(first, last);
+            return Ok((numerator / Real::from(6_i8))?);
+        }
+        [first, first_middle, second_middle, last] => {
+            let outer =
+                point_cross_product(first, first_middle) + point_cross_product(second_middle, last);
+            let inner = point_cross_product(first, second_middle)
+                + point_cross_product(first_middle, second_middle)
+                + point_cross_product(first_middle, last);
+            let numerator = Real::from(6_i8) * outer
+                + Real::from(3_i8) * inner
+                + point_cross_product(first, last);
+            return Ok((numerator / Real::from(20_i8))?);
+        }
+        _ => {}
+    }
+    let (x, y, dx, dy) = coordinate_power_derivatives(controls)?;
+    signed_area_for_power_coordinates(&x, &y, &dx, &dy)
+}
+
+fn point_cross_product(first: &Point2, second: &Point2) -> Real {
+    first.x() * second.y() - first.y() * second.x()
+}
+
+fn coordinate_power_derivatives(
+    controls: &[&Point2],
+) -> CurveResult<(Vec<Real>, Vec<Real>, Vec<Real>, Vec<Real>)> {
     let x = bernstein_to_power(
         controls
             .iter()
@@ -372,19 +417,19 @@ fn area_moments_for_controls(controls: &[&Point2]) -> CurveResult<BezierAreaMome
     )?;
     let dx = derivative_coefficients(&x)?;
     let dy = derivative_coefficients(&y)?;
-    let first = polynomial_product(&x, &dy);
-    let second = polynomial_product(&y, &dx);
-    let signed_area_integral = integrate_polynomial_difference(&first, &second)?;
-    let x_squared = polynomial_product(&x, &x);
-    let y_squared = polynomial_product(&y, &y);
-    let x_moment_integral = integrate_polynomial(&polynomial_product(&x_squared, &dy))?;
-    let y_moment_integral = integrate_polynomial(&polynomial_product(&y_squared, &dx))?;
+    Ok((x, y, dx, dy))
+}
 
-    Ok(BezierAreaMoments2 {
-        signed_area: (signed_area_integral / Real::from(2_i8))?,
-        x_moment: (x_moment_integral / Real::from(2_i8))?,
-        y_moment: (Real::zero() - (y_moment_integral / Real::from(2_i8))?),
-    })
+fn signed_area_for_power_coordinates(
+    x: &[Real],
+    y: &[Real],
+    dx: &[Real],
+    dy: &[Real],
+) -> CurveResult<Real> {
+    let first = polynomial_product(x, dy);
+    let second = polynomial_product(y, dx);
+    let signed_area_integral = integrate_polynomial_difference(&first, &second)?;
+    Ok((signed_area_integral / Real::from(2_i8))?)
 }
 
 fn rational_quadratic_signed_area_contribution(
@@ -867,5 +912,19 @@ mod tests {
             area_moments_for_controls(&controls).unwrap(),
             BezierAreaMoments2::zero()
         );
+    }
+
+    #[test]
+    fn specialized_signed_area_matches_full_moment_evaluation() {
+        let quadratic = [point(-2, 3), point(5, 11), point(13, -7)];
+        let cubic = [point(-2, 3), point(5, 11), point(13, -7), point(17, 2)];
+
+        for controls in [&quadratic[..], &cubic[..]] {
+            let controls = controls.iter().collect::<Vec<_>>();
+            assert_eq!(
+                signed_area_for_controls(&controls).unwrap(),
+                area_moments_for_controls(&controls).unwrap().signed_area
+            );
+        }
     }
 }

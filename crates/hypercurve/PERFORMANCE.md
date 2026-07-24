@@ -3549,6 +3549,37 @@ builds passed. AddressSanitizer region-Boolean replay completed all 2,509
 executions at 5,892 coverage points and 19,098 feature edges with no finding;
 LeakSanitizer alone remained disabled under ptrace.
 
+### Area-only polynomial Bezier Green integrals
+
+Polynomial quadratic and cubic signed-area queries formerly delegated to the
+full area-and-first-moments evaluator, constructing and integrating the
+unused `x^2 dy` and `y^2 dx` products. Area-only queries now evaluate the
+quadratic and cubic Green integrals directly from grouped control-point cross
+products. Prefix area queries reuse the same path after exact subdivision;
+the complete moment API and its general power-basis evaluator remain
+unchanged.
+
+A direct regression compares both specialized formulas with the complete
+moment evaluator. Existing exact area, moment, prefix, fitting, region-role,
+and generated Boolean suites cover their public and downstream use.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 56,559,931 to 52,759,597 (6.72%), 83.55% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 87,084 to 82,283
+and temporary events from 7,847 to 7,829; peak heap fell from 1.41 to 1.37
+MiB and peak RSS from 12.43 to 12.21 MiB.
+
+Across twenty-two ordinary runs, the complete median was 5.671 ms,
+preparation was 3.768 ms, and exact-polyline projection was 0.368 ms. Every
+measured run retained 9 candidate pairs, 48 fragments, 2 classifications, 4
+decided operations, no blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+strict Clippy and rustdoc checks, and supported default/no-default WASM
+library builds passed. AddressSanitizer region-Boolean replay completed all
+2,509 executions at 5,897 coverage points and 19,144 feature edges with no
+finding; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
