@@ -3410,6 +3410,38 @@ AddressSanitizer region-Boolean replay completed after 2,523 executions at
 5,896 coverage points and 19,157 feature edges with no finding; LeakSanitizer
 alone remained disabled under ptrace.
 
+### Borrowed polynomial divisors and quotient leading cancellation
+
+The private polynomial-remainder kernel now borrows its divisor from the
+parameter polynomial, GCD loop, or Sturm sequence. It scans trailing
+coefficients in that slice with the same exact zero classifier instead of
+cloning and normalizing an owned vector, and divides borrowed leading
+coefficients. The coupled Hypersolve quotient-ring multiplication likewise
+omits its highest pseudo-reduction update: the chosen quotient coefficient
+makes that term identically `leading*eliminand - leading*eliminand`, so it is
+assigned exact zero directly. Lower coefficients, integer guards, and the
+Sylvester fallback remain unchanged.
+
+The fixed and generated Sturm, GCD, root-count, algebraic-parameter, and
+quotient-ring/Sylvester comparisons cover both changes. On the one-cell
+all-family exact Boolean sentinel, the ten-run instruction median fell from
+64,966,544 to 64,678,125 (0.44%), 79.8% below the original 320,660,631
+baseline. Heaptrack allocations fell from 97,195 to 96,817 and temporary
+allocations from 6,331 to 6,165; peak heap remained 1.49 MiB and peak RSS
+remained 12.39 MiB.
+
+Eleven ordinary runs had a 6.967 ms complete median, a 4.841 ms preparation
+median, and a 0.337 ms exact-polyline projection median. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete Hypersolve and downstream Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy,
+all-feature and no-default-feature rustdoc, and default and no-default release
+WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 executions at 5,892 coverage points and 19,170 feature
+edges with no finding; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

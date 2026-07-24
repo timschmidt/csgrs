@@ -196,7 +196,7 @@ impl BezierParameterPolynomial {
         coefficients: Vec<Real>,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Vec<Real>>> {
-        match polynomial_remainder(coefficients, self.coefficients.clone(), policy)? {
+        match polynomial_remainder(coefficients, &self.coefficients, policy)? {
             Classification::Decided(Some(remainder)) => Ok(Classification::Decided(remainder)),
             Classification::Decided(None) => Ok(Classification::Decided(vec![Real::zero()])),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
@@ -248,7 +248,7 @@ impl BezierParameterPolynomial {
         let mut first = self.coefficients.clone();
         let mut second = other.coefficients.clone();
         while !second.is_empty() {
-            let remainder = match polynomial_remainder(first, second.clone(), policy)? {
+            let remainder = match polynomial_remainder(first, &second, policy)? {
                 Classification::Decided(Some(remainder)) => remainder,
                 Classification::Decided(None) => Vec::new(),
                 Classification::Uncertain(reason) => {
@@ -2017,9 +2017,9 @@ fn sturm_sequence(
 
     let mut sequence = vec![p0, p1];
     while sequence.len() < 64 {
-        let last = sequence[sequence.len() - 1].clone();
         let previous = sequence[sequence.len() - 2].clone();
-        let remainder = match polynomial_remainder(previous, last, policy)? {
+        let remainder = match polynomial_remainder(previous, &sequence[sequence.len() - 1], policy)?
+        {
             Classification::Decided(Some(remainder)) => remainder,
             Classification::Decided(None) => break,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -2084,16 +2084,23 @@ fn sturm_point_evidence(
 
 fn polynomial_remainder(
     mut remainder: Vec<Real>,
-    divisor: Vec<Real>,
+    divisor: &[Real],
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<Vec<Real>>>> {
-    let divisor = match normalize_coefficients(divisor, policy)? {
-        Classification::Decided(Some(coefficients)) => coefficients,
-        Classification::Decided(None) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    let mut divisor_len = divisor.len();
+    while divisor_len != 0 {
+        match is_zero(&divisor[divisor_len - 1], policy) {
+            Some(true) => divisor_len -= 1,
+            Some(false) => break,
+            None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+            }
         }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    }
+    if divisor_len == 0 {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    }
+    let divisor = &divisor[..divisor_len];
 
     loop {
         remainder = match normalize_coefficients(remainder, policy)? {
@@ -2106,7 +2113,7 @@ fn polynomial_remainder(
         }
 
         let shift = remainder.len() - divisor.len();
-        let factor = (remainder[remainder.len() - 1].clone() / divisor[divisor.len() - 1].clone())?;
+        let factor = (&remainder[remainder.len() - 1] / &divisor[divisor.len() - 1])?;
         for (index, divisor_coefficient) in divisor[..divisor.len() - 1].iter().enumerate() {
             let product = &factor * divisor_coefficient;
             remainder[shift + index] = &remainder[shift + index] - &product;
