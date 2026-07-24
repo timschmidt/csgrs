@@ -3240,6 +3240,34 @@ region-Boolean fuzz replay completed all 2,509 executions at 5,895 coverage
 points and 19,144 feature edges; LeakSanitizer alone remained disabled under
 ptrace.
 
+### Unit-divisor Bareiss updates
+
+Hyperreal's checked integer cross-difference quotient now applies the sign and
+returns directly when the divisor magnitude is one. All exact-integer and
+nonzero-divisor guards remain in force, but the first Bareiss stage no longer
+invokes big-integer division. Positive and negative unit-divisor tests
+supplement the existing exhaustive signed/divisibility coverage.
+
+A matched fresh 192-bit Criterion sentinel measured the composed
+multiply/subtract/divide at 625.27 ns and the fused unit-divisor path at
+190.15 ns, a 69.6% reduction. On the one-cell all-family exact Boolean
+sentinel, the ten-run instruction median fell from 72,782,675 to 72,479,577
+(0.4%), 77.4% below the original 320,660,631 baseline.
+
+Heaptrack allocations fell from 108,842 to 107,461; temporary allocations
+remained 6,236, peak heap remained 1.53 MiB, and peak RSS was 12.65 MiB.
+Eleven ordinary runs had a 7.552 ms complete median, a 5.446 ms preparation
+median, and a 0.353 ms exact-polyline projection median. Every run retained
+9 candidate pairs, 48 fragments, 2 classifications, 4 decided operations,
+no blockers, and checksum 6.
+
+The complete Hyperreal, Hypersolve, and Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The requested AddressSanitizer
+region-Boolean replay completed its 2,509-run budget after 2,513 executions at
+5,900 coverage points and 19,165 feature edges; LeakSanitizer alone remained
+disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
