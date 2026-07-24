@@ -3,7 +3,7 @@ use hypercurve::CubicBezier2;
 use hypercurve::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, CurvePolicy, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real,
+    RationalBezier2, RationalQuadraticBezier2, Real,
 };
 #[cfg(feature = "predicates")]
 use hypersolve::AlgebraicRootKind;
@@ -145,6 +145,13 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
         .second_derivative_at_algebraic_parameter(&parameter, &policy())
         .unwrap();
 
+    assert_eq!(std::mem::size_of_val(&point), std::mem::size_of::<usize>());
+    assert_eq!(
+        std::mem::size_of_val(&tangent),
+        std::mem::size_of::<usize>()
+    );
+    assert_eq!(point.clone(), point);
+    assert_eq!(tangent.clone(), tangent);
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
     assert_eq!(
         point.x().unwrap().numerator_coefficients(),
@@ -191,6 +198,40 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
             .representation()
             .unwrap()
             .is_valid()
+    );
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn rational_image_cache_keeps_curve_family_certificate_shapes_distinct() {
+    let controls = vec![p(0, 0), p(2, 4), p(6, 0)];
+    let weights = vec![r(1), r(2), r(3)];
+    let general = RationalBezier2::try_new(controls.clone(), weights.clone()).unwrap();
+    let conic = RationalQuadraticBezier2::try_new(
+        controls[0].clone(),
+        controls[1].clone(),
+        controls[2].clone(),
+        weights[0].clone(),
+        weights[1].clone(),
+        weights[2].clone(),
+    )
+    .unwrap();
+    let parameter = sqrt_half_parameter();
+
+    let general_tangent = general
+        .tangent_at_algebraic_parameter(&parameter, &policy())
+        .unwrap();
+    let conic_tangent = conic
+        .tangent_at_algebraic_parameter(&parameter, &policy())
+        .unwrap();
+
+    assert_eq!(
+        general_tangent.dx().unwrap().denominator_coefficients(),
+        &[r(3), r(4)]
+    );
+    assert_eq!(
+        conic_tangent.dx().unwrap().denominator_coefficients(),
+        &[r(1), r(4), r(4), r(0), r(0)]
     );
 }
 

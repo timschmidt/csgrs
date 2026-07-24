@@ -21,7 +21,6 @@ use hypersolve::{
 use crate::bezier_algebraic_image::{
     exact_real_algebraic_representation, parameter_representation,
     rational_derivative_images_from_power_basis, rational_point_image_from_power_basis,
-    rational_tangent_image_from_power_basis,
 };
 use crate::bezier_parameter::bernstein_to_power_coefficients;
 use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
@@ -909,14 +908,21 @@ impl RationalBezier2 {
         parameter: &crate::BezierAlgebraicParameter2,
         policy: &CurvePolicy,
     ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
+        if let Some(image) = parameter.cached_rational_bezier_point_image(self) {
+            return Ok(image);
+        }
         let power_basis = self.homogeneous_power_basis()?;
-        rational_point_image_from_power_basis(
+        let image = rational_point_image_from_power_basis(
             parameter,
             power_basis.x_numerator.clone(),
             power_basis.y_numerator.clone(),
             power_basis.weight.clone(),
             policy,
-        )
+        )?;
+        if image.status() == crate::BezierAlgebraicImageStatus::Transformed {
+            parameter.retain_rational_bezier_point_image(self, image.clone());
+        }
+        Ok(image)
     }
 
     /// Evaluates the affine tangent at an isolated algebraic parameter.
@@ -925,14 +931,10 @@ impl RationalBezier2 {
         parameter: &crate::BezierAlgebraicParameter2,
         policy: &CurvePolicy,
     ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
-        let power_basis = self.homogeneous_power_basis()?;
-        rational_tangent_image_from_power_basis(
-            parameter,
-            power_basis.x_numerator.clone(),
-            power_basis.y_numerator.clone(),
-            power_basis.weight.clone(),
-            policy,
-        )
+        Ok(self
+            .derivatives_at_algebraic_parameter(parameter, 1, policy)?
+            .pop()
+            .expect("one requested rational derivative image"))
     }
 
     /// Evaluates exact affine derivative images through `max_order` at an
@@ -948,15 +950,25 @@ impl RationalBezier2 {
         max_order: usize,
         policy: &CurvePolicy,
     ) -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {
+        if let Some(images) = parameter.cached_rational_bezier_derivative_images(self, max_order) {
+            return Ok(images);
+        }
         let power_basis = self.homogeneous_power_basis()?;
-        rational_derivative_images_from_power_basis(
+        let images = rational_derivative_images_from_power_basis(
             parameter,
             power_basis.x_numerator.clone(),
             power_basis.y_numerator.clone(),
             power_basis.weight.clone(),
             policy,
             max_order,
-        )
+        )?;
+        if images
+            .iter()
+            .all(|image| image.status() == crate::BezierAlgebraicImageStatus::Transformed)
+        {
+            parameter.retain_rational_bezier_derivative_images(self, images.clone());
+        }
+        Ok(images)
     }
 
     /// Returns a conservative exact control-hull bound when all weights share a sign.

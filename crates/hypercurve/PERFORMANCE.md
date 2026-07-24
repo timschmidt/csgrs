@@ -2704,6 +2704,66 @@ embedded line/arc accelerator. The next profile frontier is split endpoint
 point/tangent rational-image construction and initial retained-pair
 preparation.
 
+### Lazy retained algebraic endpoint evidence
+
+The next frame-pointer profile attributed 59.7% of the complete workload to
+refined split construction. Rational point and derivative image resultants
+accounted for 43.7% of the process even though most endpoint coordinates were
+used only to reconnect fragments whose exact topology vertex identities were
+already retained. Refined splitting also spent about one third of the complete
+run trying to reconstruct nonlinear algebraic roots as represented rationals
+before putting the irrational roots back into algebraic carriers.
+
+Private rational split endpoints now retain the source curve, algebraic
+parameter, and policy, and construct point or first-derivative images on first
+observation. Public endpoint constructors and public `is_transformed`
+observation remain eager and validate the same exact evidence. Retained
+arrangement traversal treats its internal topology vertex identity as the
+primary connectivity certificate; exact coordinate keys remain the fallback
+for public or untagged fragments. Tangents are reconstructed from the retained
+source only at a genuine multi-successor branch or at a unique contact whose
+transversality proof is needed for loop-wide classification. Reversal carries
+the derivative source and applies the existing odd-derivative sign rule.
+
+The private Boolean split path also leaves nonlinear algebraic roots
+algebraic. It no longer pays an exhaustive rational-root reconstruction merely
+to discover that an intersection parameter is irrational. Public split APIs
+retain their existing promotion behavior, including exact materialization of
+represented nonlinear rational roots. Rational point and derivative image
+results are clone-shared one-word handles and are cached with their algebraic
+parameter. General rational and rational-quadratic caches remain distinct
+because the two public curve families intentionally expose different
+coefficient certificates for the same affine derivative.
+
+The same one-cell all-family release workload changed as follows:
+
+| Exact all-family workload | Previous | Current | Change |
+| --- | ---: | ---: | ---: |
+| Prepare and materialize all four `CurveRegion2` Booleans | 126.015 ms | 85.632 ms | 32.0% faster |
+| First complete union, including shared-topology construction | 80.907 ms | 37.256 ms | 53.9% faster |
+| Exact representative-point classifications / split fragments | 2 / 48 | 2 / 48 | unchanged |
+| Candidate pairs / decided operations / checksum | 9 / 4 / 6 | 9 / 4 / 6 | unchanged |
+
+The current value is the median of three sequential complete process runs
+(88.625, 85.632, and 81.441 ms). Pair preparation remained around 43--47 ms;
+the other three operations were each below 1 ms. The matched exact polyline
+projection median was 0.525 ms, leaving a roughly 163x complete native gap.
+Relative to the earlier 4.315 s all-family baseline, the cumulative reduction
+is 98.0%.
+
+The post-change profile puts initial retained-pair preparation at 50.4% and
+the two required algebraic contact-tangent constructions at 34.0%; refined
+split construction is down to 4.9%. These are the next exact-work frontiers,
+and the native line/arc accelerator therefore remains justified. All feature
+and default test matrices, strict all-feature Clippy, warning-denied rustdoc,
+library and UI WASM builds, and UI tests/Clippy passed. Six AddressSanitizer
+fuzz targets covering algebraic parameters, algebraic images, split
+materialization, arrangement, retained regions, and region Booleans completed
+at least 1,000 executions without a library failure. The image campaign found
+and corrected an overstrong fuzz assertion: a positive rational denominator
+does not imply that an irrational coordinate image is monotone enough to
+transform, so `XImageFailed` or `YImageFailed` remains valid exact evidence.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

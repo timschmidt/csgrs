@@ -19,7 +19,7 @@
 //! it keeps the exactness model's construction/decision separation, but it avoids retaining an
 //! algebraic wrapper when the exact root already lives in the scalar tower.
 
-use std::cell::OnceCell;
+use std::cell::{OnceCell, RefCell};
 use std::cmp::Ordering;
 use std::rc::Rc;
 
@@ -97,7 +97,26 @@ struct BezierAlgebraicParameterData {
     polynomial: BezierParameterPolynomial,
     interval: BezierParameterInterval,
     root_count: usize,
-    represented_rational_root: Rc<OnceCell<Option<Real>>>,
+    shared: Rc<BezierAlgebraicParameterSharedData>,
+}
+
+#[derive(Debug, Default)]
+struct BezierAlgebraicParameterSharedData {
+    represented_rational_root: OnceCell<Option<Real>>,
+    rational_images: RefCell<Vec<RetainedRationalBezierAlgebraicImages>>,
+}
+
+#[derive(Debug)]
+struct RetainedRationalBezierAlgebraicImages {
+    curve: RetainedRationalBezierAlgebraicImageCurve,
+    point: Option<crate::RationalBezierAlgebraicPointImage2>,
+    derivatives: Rc<[crate::RationalBezierAlgebraicTangentImage2]>,
+}
+
+#[derive(Debug)]
+enum RetainedRationalBezierAlgebraicImageCurve {
+    Rational(crate::RationalBezier2),
+    RationalQuadratic(crate::RationalQuadraticBezier2),
 }
 
 impl PartialEq for BezierAlgebraicParameter2 {
@@ -526,7 +545,7 @@ impl BezierAlgebraicParameter2 {
                 polynomial,
                 interval,
                 root_count: count,
-                represented_rational_root: Rc::new(OnceCell::new()),
+                shared: Rc::new(BezierAlgebraicParameterSharedData::default()),
             }),
         }))
     }
@@ -540,7 +559,7 @@ impl BezierAlgebraicParameter2 {
                 polynomial,
                 interval,
                 root_count: 1,
-                represented_rational_root: Rc::new(OnceCell::new()),
+                shared: Rc::new(BezierAlgebraicParameterSharedData::default()),
             }),
         }
     }
@@ -551,7 +570,7 @@ impl BezierAlgebraicParameter2 {
                 polynomial: self.data.polynomial.clone(),
                 interval,
                 root_count: self.data.root_count,
-                represented_rational_root: Rc::clone(&self.data.represented_rational_root),
+                shared: Rc::clone(&self.data.shared),
             }),
         }
     }
@@ -574,7 +593,181 @@ impl BezierAlgebraicParameter2 {
     /// Returns whether exact rational reconstruction has already produced a
     /// decided positive or negative result for this clone-shared parameter.
     pub fn is_represented_rational_root_cached(&self) -> bool {
-        self.data.represented_rational_root.get().is_some()
+        self.data.shared.represented_rational_root.get().is_some()
+    }
+
+    pub(crate) fn cached_rational_bezier_point_image(
+        &self,
+        curve: &crate::RationalBezier2,
+    ) -> Option<crate::RationalBezierAlgebraicPointImage2> {
+        self.data
+            .shared
+            .rational_images
+            .borrow()
+            .iter()
+            .find(|images| {
+                matches!(
+                    &images.curve,
+                    RetainedRationalBezierAlgebraicImageCurve::Rational(cached)
+                        if cached == curve
+                )
+            })
+            .and_then(|images| images.point.clone())
+    }
+
+    pub(crate) fn retain_rational_bezier_point_image(
+        &self,
+        curve: &crate::RationalBezier2,
+        image: crate::RationalBezierAlgebraicPointImage2,
+    ) {
+        let mut cache = self.data.shared.rational_images.borrow_mut();
+        if let Some(images) = cache.iter_mut().find(|images| {
+            matches!(
+                &images.curve,
+                RetainedRationalBezierAlgebraicImageCurve::Rational(cached)
+                    if cached == curve
+            )
+        }) {
+            images.point = Some(image);
+            return;
+        }
+        cache.push(RetainedRationalBezierAlgebraicImages {
+            curve: RetainedRationalBezierAlgebraicImageCurve::Rational(curve.clone()),
+            point: Some(image),
+            derivatives: Rc::from([]),
+        });
+    }
+
+    pub(crate) fn cached_rational_bezier_derivative_images(
+        &self,
+        curve: &crate::RationalBezier2,
+        max_order: usize,
+    ) -> Option<Vec<crate::RationalBezierAlgebraicTangentImage2>> {
+        self.data
+            .shared
+            .rational_images
+            .borrow()
+            .iter()
+            .find(|images| {
+                matches!(
+                    &images.curve,
+                    RetainedRationalBezierAlgebraicImageCurve::Rational(cached)
+                        if cached == curve
+                ) && images.derivatives.len() >= max_order
+            })
+            .map(|images| images.derivatives[..max_order].to_vec())
+    }
+
+    pub(crate) fn retain_rational_bezier_derivative_images(
+        &self,
+        curve: &crate::RationalBezier2,
+        images: Vec<crate::RationalBezierAlgebraicTangentImage2>,
+    ) {
+        let mut cache = self.data.shared.rational_images.borrow_mut();
+        if let Some(cached) = cache.iter_mut().find(|cached| {
+            matches!(
+                &cached.curve,
+                RetainedRationalBezierAlgebraicImageCurve::Rational(cached_curve)
+                    if cached_curve == curve
+            )
+        }) {
+            if cached.derivatives.len() < images.len() {
+                cached.derivatives = Rc::from(images);
+            }
+            return;
+        }
+        cache.push(RetainedRationalBezierAlgebraicImages {
+            curve: RetainedRationalBezierAlgebraicImageCurve::Rational(curve.clone()),
+            point: None,
+            derivatives: Rc::from(images),
+        });
+    }
+
+    pub(crate) fn cached_rational_quadratic_point_image(
+        &self,
+        curve: &crate::RationalQuadraticBezier2,
+    ) -> Option<crate::RationalBezierAlgebraicPointImage2> {
+        self.data
+            .shared
+            .rational_images
+            .borrow()
+            .iter()
+            .find(|images| {
+                matches!(
+                    &images.curve,
+                    RetainedRationalBezierAlgebraicImageCurve::RationalQuadratic(cached)
+                        if cached == curve
+                )
+            })
+            .and_then(|images| images.point.clone())
+    }
+
+    pub(crate) fn retain_rational_quadratic_point_image(
+        &self,
+        curve: &crate::RationalQuadraticBezier2,
+        image: crate::RationalBezierAlgebraicPointImage2,
+    ) {
+        let mut cache = self.data.shared.rational_images.borrow_mut();
+        if let Some(images) = cache.iter_mut().find(|images| {
+            matches!(
+                &images.curve,
+                RetainedRationalBezierAlgebraicImageCurve::RationalQuadratic(cached)
+                    if cached == curve
+            )
+        }) {
+            images.point = Some(image);
+            return;
+        }
+        cache.push(RetainedRationalBezierAlgebraicImages {
+            curve: RetainedRationalBezierAlgebraicImageCurve::RationalQuadratic(curve.clone()),
+            point: Some(image),
+            derivatives: Rc::from([]),
+        });
+    }
+
+    pub(crate) fn cached_rational_quadratic_derivative_images(
+        &self,
+        curve: &crate::RationalQuadraticBezier2,
+        max_order: usize,
+    ) -> Option<Vec<crate::RationalBezierAlgebraicTangentImage2>> {
+        self.data
+            .shared
+            .rational_images
+            .borrow()
+            .iter()
+            .find(|images| {
+                matches!(
+                    &images.curve,
+                    RetainedRationalBezierAlgebraicImageCurve::RationalQuadratic(cached)
+                        if cached == curve
+                ) && images.derivatives.len() >= max_order
+            })
+            .map(|images| images.derivatives[..max_order].to_vec())
+    }
+
+    pub(crate) fn retain_rational_quadratic_derivative_images(
+        &self,
+        curve: &crate::RationalQuadraticBezier2,
+        images: Vec<crate::RationalBezierAlgebraicTangentImage2>,
+    ) {
+        let mut cache = self.data.shared.rational_images.borrow_mut();
+        if let Some(cached) = cache.iter_mut().find(|cached| {
+            matches!(
+                &cached.curve,
+                RetainedRationalBezierAlgebraicImageCurve::RationalQuadratic(cached_curve)
+                    if cached_curve == curve
+            )
+        }) {
+            if cached.derivatives.len() < images.len() {
+                cached.derivatives = Rc::from(images);
+            }
+            return;
+        }
+        cache.push(RetainedRationalBezierAlgebraicImages {
+            curve: RetainedRationalBezierAlgebraicImageCurve::RationalQuadratic(curve.clone()),
+            point: None,
+            derivatives: Rc::from(images),
+        });
     }
 
     /// Returns the represented root when this isolator contains an exact rational root.
@@ -590,7 +783,7 @@ impl BezierAlgebraicParameter2 {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Option<Real>>> {
-        if let Some(root) = self.data.represented_rational_root.get() {
+        if let Some(root) = self.data.shared.represented_rational_root.get() {
             return Ok(Classification::Decided(root.clone()));
         }
         let result = if self.data.polynomial.degree() == 1 {
@@ -702,7 +895,7 @@ impl BezierAlgebraicParameter2 {
         sequence: &[Vec<Real>],
         trace: Option<&mut BezierRootIsolationTrace2>,
     ) -> CurveResult<Classification<Option<Real>>> {
-        if let Some(root) = self.data.represented_rational_root.get() {
+        if let Some(root) = self.data.shared.represented_rational_root.get() {
             return Ok(Classification::Decided(root.clone()));
         }
         if self.data.polynomial.degree() == 1 {
@@ -726,7 +919,7 @@ impl BezierAlgebraicParameter2 {
         result: Classification<Option<Real>>,
     ) -> CurveResult<Classification<Option<Real>>> {
         if let Classification::Decided(root) = &result {
-            let _ = self.data.represented_rational_root.set(root.clone());
+            let _ = self.data.shared.represented_rational_root.set(root.clone());
         }
         Ok(result)
     }
@@ -735,7 +928,7 @@ impl BezierAlgebraicParameter2 {
         &self,
         root: Option<Real>,
     ) -> CurveResult<Classification<Option<Real>>> {
-        let _ = self.data.represented_rational_root.set(root.clone());
+        let _ = self.data.shared.represented_rational_root.set(root.clone());
         Ok(Classification::Decided(root))
     }
 

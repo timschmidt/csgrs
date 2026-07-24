@@ -111,7 +111,7 @@ fuzz_target!(|data: &[u8]| {
                 rational_point.status(),
                 BezierAlgebraicImageStatus::XImageFailed
             );
-        } else {
+        } else if mode == 0 {
             assert_eq!(
                 rational_point.status(),
                 BezierAlgebraicImageStatus::Transformed

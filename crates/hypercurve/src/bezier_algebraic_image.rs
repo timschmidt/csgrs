@@ -31,6 +31,7 @@ use crate::{
     RationalQuadraticBezier2,
 };
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 /// Status for a Bezier algebraic point or tangent image.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -224,8 +225,13 @@ pub struct BezierAlgebraicTangentImage2 {
 }
 
 /// Exact algebraic image of a rational quadratic Bezier affine point.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct RationalBezierAlgebraicPointImage2 {
+    data: Rc<RationalBezierAlgebraicPointImageData>,
+}
+
+#[derive(Debug, PartialEq)]
+struct RationalBezierAlgebraicPointImageData {
     status: BezierAlgebraicImageStatus,
     parameter: AlgebraicRootRepresentation,
     x: Option<BezierAlgebraicRationalCoordinateImage>,
@@ -233,36 +239,65 @@ pub struct RationalBezierAlgebraicPointImage2 {
     message: Option<String>,
 }
 
+impl PartialEq for RationalBezierAlgebraicPointImage2 {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.data, &other.data) || self.data == other.data
+    }
+}
+
 impl RationalBezierAlgebraicPointImage2 {
+    fn new(
+        status: BezierAlgebraicImageStatus,
+        parameter: AlgebraicRootRepresentation,
+        x: Option<BezierAlgebraicRationalCoordinateImage>,
+        y: Option<BezierAlgebraicRationalCoordinateImage>,
+        message: Option<String>,
+    ) -> Self {
+        Self {
+            data: Rc::new(RationalBezierAlgebraicPointImageData {
+                status,
+                parameter,
+                x,
+                y,
+                message,
+            }),
+        }
+    }
+
     /// Returns the final construction status.
-    pub const fn status(&self) -> BezierAlgebraicImageStatus {
-        self.status
+    pub fn status(&self) -> BezierAlgebraicImageStatus {
+        self.data.status
     }
 
     /// Returns the represented Bezier parameter used as the source root.
-    pub const fn parameter(&self) -> &AlgebraicRootRepresentation {
-        &self.parameter
+    pub fn parameter(&self) -> &AlgebraicRootRepresentation {
+        &self.data.parameter
     }
 
     /// Returns the x coordinate rational image when construction reached it.
-    pub const fn x(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
-        self.x.as_ref()
+    pub fn x(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
+        self.data.x.as_ref()
     }
 
     /// Returns the y coordinate rational image when construction reached it.
-    pub const fn y(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
-        self.y.as_ref()
+    pub fn y(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
+        self.data.y.as_ref()
     }
 
     /// Returns a compact diagnostic message for failed construction.
     pub fn message(&self) -> Option<&str> {
-        self.message.as_deref()
+        self.data.message.as_deref()
     }
 }
 
 /// Exact algebraic image of a rational Bezier derivative vector.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct RationalBezierAlgebraicTangentImage2 {
+    data: Rc<RationalBezierAlgebraicTangentImageData>,
+}
+
+#[derive(Debug, PartialEq)]
+struct RationalBezierAlgebraicTangentImageData {
     status: BezierAlgebraicImageStatus,
     parameter: AlgebraicRootRepresentation,
     dx: Option<BezierAlgebraicRationalCoordinateImage>,
@@ -270,30 +305,54 @@ pub struct RationalBezierAlgebraicTangentImage2 {
     message: Option<String>,
 }
 
+impl PartialEq for RationalBezierAlgebraicTangentImage2 {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.data, &other.data) || self.data == other.data
+    }
+}
+
 impl RationalBezierAlgebraicTangentImage2 {
+    fn new(
+        status: BezierAlgebraicImageStatus,
+        parameter: AlgebraicRootRepresentation,
+        dx: Option<BezierAlgebraicRationalCoordinateImage>,
+        dy: Option<BezierAlgebraicRationalCoordinateImage>,
+        message: Option<String>,
+    ) -> Self {
+        Self {
+            data: Rc::new(RationalBezierAlgebraicTangentImageData {
+                status,
+                parameter,
+                dx,
+                dy,
+                message,
+            }),
+        }
+    }
+
     /// Returns the final construction status.
-    pub const fn status(&self) -> BezierAlgebraicImageStatus {
-        self.status
+    pub fn status(&self) -> BezierAlgebraicImageStatus {
+        self.data.status
     }
 
     /// Returns the represented Bezier parameter used as the source root.
-    pub const fn parameter(&self) -> &AlgebraicRootRepresentation {
-        &self.parameter
+    pub fn parameter(&self) -> &AlgebraicRootRepresentation {
+        &self.data.parameter
     }
 
     /// Returns the derivative x rational image when construction reached it.
-    pub const fn dx(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
-        self.dx.as_ref()
+    pub fn dx(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
+        self.data.dx.as_ref()
     }
 
     /// Returns the derivative y rational image when construction reached it.
-    pub const fn dy(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
-        self.dy.as_ref()
+    pub fn dy(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
+        self.data.dy.as_ref()
     }
 
     /// Returns a compact diagnostic message for failed construction.
     pub fn message(&self) -> Option<&str> {
-        self.message.as_deref()
+        self.data.message.as_deref()
     }
 }
 
@@ -454,7 +513,14 @@ impl RationalQuadraticBezier2 {
         parameter: &BezierAlgebraicParameter2,
         policy: &CurvePolicy,
     ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
-        rational_point_image(parameter, rational_point_coefficients(self), policy)
+        if let Some(image) = parameter.cached_rational_quadratic_point_image(self) {
+            return Ok(image);
+        }
+        let image = rational_point_image(parameter, rational_point_coefficients(self), policy)?;
+        if image.status() == BezierAlgebraicImageStatus::Transformed {
+            parameter.retain_rational_quadratic_point_image(self, image.clone());
+        }
+        Ok(image)
     }
 
     /// Evaluates this rational quadratic's affine derivative vector at an
@@ -503,15 +569,26 @@ impl RationalQuadraticBezier2 {
         max_order: usize,
         policy: &CurvePolicy,
     ) -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {
+        if let Some(images) = parameter.cached_rational_quadratic_derivative_images(self, max_order)
+        {
+            return Ok(images);
+        }
         let point = rational_point_coefficients(self);
-        rational_derivative_images_from_power_basis(
+        let images = rational_derivative_images_from_power_basis(
             parameter,
             point.x_numerator,
             point.y_numerator,
             point.denominator,
             policy,
             max_order,
-        )
+        )?;
+        if images
+            .iter()
+            .all(|image| image.status() == BezierAlgebraicImageStatus::Transformed)
+        {
+            parameter.retain_rational_quadratic_derivative_images(self, images.clone());
+        }
+        Ok(images)
     }
 }
 
@@ -564,13 +641,13 @@ fn rational_point_image(
 ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
     let parameter_root = parameter_representation(parameter, policy);
     if !parameter_root.is_valid() {
-        return Ok(RationalBezierAlgebraicPointImage2 {
-            status: BezierAlgebraicImageStatus::InvalidParameterEvidence,
-            parameter: parameter_root,
-            x: None,
-            y: None,
-            message: Some("Bezier algebraic parameter evidence did not validate".to_owned()),
-        });
+        return Ok(RationalBezierAlgebraicPointImage2::new(
+            BezierAlgebraicImageStatus::InvalidParameterEvidence,
+            parameter_root,
+            None,
+            None,
+            Some("Bezier algebraic parameter evidence did not validate".to_owned()),
+        ));
     }
     let Some(x) = rational_coordinate_image(
         &parameter_root,
@@ -578,13 +655,13 @@ fn rational_point_image(
         coefficients.denominator.clone(),
         policy,
     ) else {
-        return Ok(RationalBezierAlgebraicPointImage2 {
-            status: BezierAlgebraicImageStatus::XImageFailed,
-            parameter: parameter_root,
-            x: None,
-            y: None,
-            message: Some("x rational coordinate image failed".to_owned()),
-        });
+        return Ok(RationalBezierAlgebraicPointImage2::new(
+            BezierAlgebraicImageStatus::XImageFailed,
+            parameter_root,
+            None,
+            None,
+            Some("x rational coordinate image failed".to_owned()),
+        ));
     };
     let Some(y) = rational_coordinate_image(
         &parameter_root,
@@ -592,21 +669,21 @@ fn rational_point_image(
         coefficients.denominator,
         policy,
     ) else {
-        return Ok(RationalBezierAlgebraicPointImage2 {
-            status: BezierAlgebraicImageStatus::YImageFailed,
-            parameter: parameter_root,
-            x: Some(x),
-            y: None,
-            message: Some("y rational coordinate image failed".to_owned()),
-        });
+        return Ok(RationalBezierAlgebraicPointImage2::new(
+            BezierAlgebraicImageStatus::YImageFailed,
+            parameter_root,
+            Some(x),
+            None,
+            Some("y rational coordinate image failed".to_owned()),
+        ));
     };
-    Ok(RationalBezierAlgebraicPointImage2 {
-        status: BezierAlgebraicImageStatus::Transformed,
-        parameter: parameter_root,
-        x: Some(x),
-        y: Some(y),
-        message: None,
-    })
+    Ok(RationalBezierAlgebraicPointImage2::new(
+        BezierAlgebraicImageStatus::Transformed,
+        parameter_root,
+        Some(x),
+        Some(y),
+        None,
+    ))
 }
 
 pub(crate) fn rational_point_image_from_power_basis(
@@ -628,25 +705,6 @@ pub(crate) fn rational_point_image_from_power_basis(
         },
         policy,
     )
-}
-
-pub(crate) fn rational_tangent_image_from_power_basis(
-    parameter: &BezierAlgebraicParameter2,
-    x_numerator: Vec<Real>,
-    y_numerator: Vec<Real>,
-    denominator: Vec<Real>,
-    policy: &CurvePolicy,
-) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
-    Ok(rational_derivative_images_from_power_basis(
-        parameter,
-        x_numerator,
-        y_numerator,
-        denominator,
-        policy,
-        1,
-    )?
-    .pop()
-    .expect("one requested rational derivative image"))
 }
 
 pub(crate) fn rational_derivative_images_from_power_basis(
@@ -759,13 +817,13 @@ fn rational_tangent_image(
 ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
     let parameter_root = parameter_representation(parameter, policy);
     if !parameter_root.is_valid() {
-        return Ok(RationalBezierAlgebraicTangentImage2 {
-            status: BezierAlgebraicImageStatus::InvalidParameterEvidence,
-            parameter: parameter_root,
-            dx: None,
-            dy: None,
-            message: Some("Bezier algebraic parameter evidence did not validate".to_owned()),
-        });
+        return Ok(RationalBezierAlgebraicTangentImage2::new(
+            BezierAlgebraicImageStatus::InvalidParameterEvidence,
+            parameter_root,
+            None,
+            None,
+            Some("Bezier algebraic parameter evidence did not validate".to_owned()),
+        ));
     }
     let Some(dx) = rational_coordinate_image(
         &parameter_root,
@@ -773,13 +831,13 @@ fn rational_tangent_image(
         coefficients.denominator.clone(),
         policy,
     ) else {
-        return Ok(RationalBezierAlgebraicTangentImage2 {
-            status: BezierAlgebraicImageStatus::XImageFailed,
-            parameter: parameter_root,
-            dx: None,
-            dy: None,
-            message: Some("dx rational coordinate image failed".to_owned()),
-        });
+        return Ok(RationalBezierAlgebraicTangentImage2::new(
+            BezierAlgebraicImageStatus::XImageFailed,
+            parameter_root,
+            None,
+            None,
+            Some("dx rational coordinate image failed".to_owned()),
+        ));
     };
     let Some(dy) = rational_coordinate_image(
         &parameter_root,
@@ -787,21 +845,21 @@ fn rational_tangent_image(
         coefficients.denominator,
         policy,
     ) else {
-        return Ok(RationalBezierAlgebraicTangentImage2 {
-            status: BezierAlgebraicImageStatus::YImageFailed,
-            parameter: parameter_root,
-            dx: Some(dx),
-            dy: None,
-            message: Some("dy rational coordinate image failed".to_owned()),
-        });
+        return Ok(RationalBezierAlgebraicTangentImage2::new(
+            BezierAlgebraicImageStatus::YImageFailed,
+            parameter_root,
+            Some(dx),
+            None,
+            Some("dy rational coordinate image failed".to_owned()),
+        ));
     };
-    Ok(RationalBezierAlgebraicTangentImage2 {
-        status: BezierAlgebraicImageStatus::Transformed,
-        parameter: parameter_root,
-        dx: Some(dx),
-        dy: Some(dy),
-        message: None,
-    })
+    Ok(RationalBezierAlgebraicTangentImage2::new(
+        BezierAlgebraicImageStatus::Transformed,
+        parameter_root,
+        Some(dx),
+        Some(dy),
+        None,
+    ))
 }
 
 fn coordinate_image(

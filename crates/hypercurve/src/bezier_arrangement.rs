@@ -813,7 +813,13 @@ impl RetainedEndpointStartIndex {
     ) -> Result<(), E> {
         if let Some(vertex) = vertex {
             let Some(key) = key else {
-                return (0..endpoint_count).try_for_each(visit);
+                return self
+                    .by_vertex
+                    .get(&vertex)
+                    .into_iter()
+                    .flatten()
+                    .copied()
+                    .try_for_each(visit);
             };
             self.by_vertex
                 .get(&vertex)
@@ -869,6 +875,7 @@ struct RetainedEndpointData {
     start_second_derivative: Option<RetainedTangentVector>,
     start_third_derivative: Option<RetainedTangentVector>,
     start_derivative_source: Option<RetainedAlgebraicDerivativeSource>,
+    end_derivative_source: Option<RetainedAlgebraicDerivativeSource>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -888,8 +895,8 @@ enum RetainedTangentVector {
 
 #[derive(Clone, Debug)]
 struct RetainedEndpointSideData {
-    point: RetainedEndpointKey,
-    tangent: RetainedTangentVector,
+    point: Option<RetainedEndpointKey>,
+    tangent: Option<RetainedTangentVector>,
     second_derivative: Option<RetainedTangentVector>,
     third_derivative: Option<RetainedTangentVector>,
     derivative_source: Option<RetainedAlgebraicDerivativeSource>,
@@ -936,6 +943,7 @@ fn retained_endpoint_data(
                     .map(Box::new)
                     .map(RetainedTangentVector::Native),
                 start_derivative_source: None,
+                end_derivative_source: None,
             })),
             Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
         },
@@ -947,10 +955,21 @@ fn retained_endpoint_data(
             start_image,
             end_image,
         } => {
+            let source_start_topology_vertex = if *reversed {
+                arrangement_fragment.end_topology_vertex()
+            } else {
+                arrangement_fragment.start_topology_vertex()
+            };
+            let source_end_topology_vertex = if *reversed {
+                arrangement_fragment.start_topology_vertex()
+            } else {
+                arrangement_fragment.end_topology_vertex()
+            };
             let source_start = match retained_endpoint_side_data(
                 start,
                 start_image.as_ref(),
                 source_curve.as_ref(),
+                source_start_topology_vertex,
                 policy,
             ) {
                 Classification::Decided(data) => data,
@@ -962,6 +981,7 @@ fn retained_endpoint_data(
                 end,
                 end_image.as_ref(),
                 source_curve.as_ref(),
+                source_end_topology_vertex,
                 policy,
             ) {
                 Classification::Decided(data) => data,
@@ -989,7 +1009,7 @@ fn retained_endpoint_data(
                 start_third_derivative,
                 start_derivative_source,
             ) = retained_endpoint_side_parts(start);
-            let (end, end_tangent, _, _, _) = retained_endpoint_side_parts(end);
+            let (end, end_tangent, _, _, end_derivative_source) = retained_endpoint_side_parts(end);
             Some(Classification::Decided(RetainedEndpointData {
                 start,
                 end,
@@ -1000,6 +1020,7 @@ fn retained_endpoint_data(
                 start_second_derivative,
                 start_third_derivative,
                 start_derivative_source,
+                end_derivative_source,
             }))
         }
         BezierSplitFragment2::Unresolved { .. } => None,
@@ -1010,13 +1031,34 @@ fn retained_endpoint_side_data(
     parameter: &BezierParameter2,
     image: Option<&BezierAlgebraicEndpointImage2>,
     source_curve: Option<&BezierSubcurve2>,
+    topology_vertex: Option<usize>,
     policy: &CurvePolicy,
 ) -> Classification<Option<RetainedEndpointSideData>> {
     if let Some(image) = image {
-        let Some(point) = retained_algebraic_point_key(image.point()) else {
+        let derivative_source =
+            retained_rational_derivative_source(source_curve, image.parameter());
+        if topology_vertex.is_some()
+            && image.is_lazy_rational_first_order()
+            && derivative_source.is_some()
+        {
+            return Classification::Decided(Some(RetainedEndpointSideData {
+                point: None,
+                tangent: None,
+                second_derivative: None,
+                third_derivative: None,
+                derivative_source,
+            }));
+        }
+        let Ok(point_image) = image.try_point() else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
-        let Some(tangent) = retained_algebraic_tangent(image.tangent()) else {
+        let Some(point) = retained_algebraic_point_key(point_image) else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
+        let Ok(tangent_image) = image.try_tangent() else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
+        let Some(tangent) = retained_algebraic_tangent(tangent_image) else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
         let second_derivative = match image.second_derivative() {
@@ -1034,11 +1076,11 @@ fn retained_endpoint_side_data(
             None => None,
         };
         return Classification::Decided(Some(RetainedEndpointSideData {
-            point,
-            tangent,
+            point: Some(point),
+            tangent: Some(tangent),
             second_derivative,
             third_derivative,
-            derivative_source: retained_rational_derivative_source(source_curve, image.parameter()),
+            derivative_source,
         }));
     }
 
@@ -1076,8 +1118,8 @@ fn retained_exact_source_endpoint_side_data(
         }
     };
     let side = RetainedEndpointSideData {
-        point: RetainedEndpointKey::Exact(Box::new(data.start)),
-        tangent: RetainedTangentVector::Native(Box::new(data.start_tangent)),
+        point: Some(RetainedEndpointKey::Exact(Box::new(data.start))),
+        tangent: Some(RetainedTangentVector::Native(Box::new(data.start_tangent))),
         second_derivative: data
             .start_second_derivative
             .map(Box::new)
@@ -1109,8 +1151,8 @@ fn retained_endpoint_side_parts(
 ) {
     match side {
         Some(side) => (
-            Some(side.point),
-            Some(side.tangent),
+            side.point,
+            side.tangent,
             side.second_derivative,
             side.third_derivative,
             side.derivative_source,
@@ -1131,7 +1173,10 @@ fn reverse_retained_endpoint_side_option(
 fn reversed_retained_endpoint_side(
     mut side: RetainedEndpointSideData,
 ) -> Option<RetainedEndpointSideData> {
-    side.tangent = negate_retained_tangent(side.tangent)?;
+    side.tangent = match side.tangent {
+        Some(tangent) => Some(negate_retained_tangent(tangent)?),
+        None => None,
+    };
     side.third_derivative = match side.third_derivative {
         Some(derivative) => Some(negate_retained_tangent(derivative)?),
         None => None,
@@ -1370,23 +1415,23 @@ fn retained_tangent_adjacency(
     let start_index = (endpoints.len() >= EXACT_ENDPOINT_BUCKET_MIN_COUNT)
         .then(|| RetainedEndpointStartIndex::new(endpoints));
     for (left_index, left) in endpoints.iter().enumerate() {
-        let Some(left_end) = left.end.as_ref() else {
+        if left.end.is_none() && left.end_topology_vertex.is_none() {
             continue;
-        };
-        let left_key = exact_retained_endpoint_key(left_end);
+        }
+        let left_key = left.end.as_ref().and_then(exact_retained_endpoint_key);
         let mut visit = |right_index: usize| {
             if left_index == right_index {
                 return Ok(());
             }
             let right = &endpoints[right_index];
-            let Some(right_start) = right.start.as_ref() else {
+            if right.start.is_none() && right.start_topology_vertex.is_none() {
                 return Ok(());
-            };
+            }
             match retained_endpoints_equal(
                 left.end_topology_vertex,
-                left_end,
+                left.end.as_ref(),
                 right.start_topology_vertex,
-                right_start,
+                right.start.as_ref(),
                 policy,
             ) {
                 Some(true) => {
@@ -1437,6 +1482,7 @@ mod endpoint_adjacency_tests {
             start_second_derivative: None,
             start_third_derivative: None,
             start_derivative_source: None,
+            end_derivative_source: None,
         }
     }
 
@@ -1491,18 +1537,15 @@ fn follow_retained_tangent_ordered_chain(
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             };
         let Some(next) = next else {
-            let closed = match (&endpoints[current].end, &first_start) {
-                (Some(end), Some(start)) => match retained_endpoints_equal(
-                    endpoints[current].end_topology_vertex,
-                    end,
-                    first_start_topology_vertex,
-                    start,
-                    policy,
-                ) {
-                    Some(value) => value,
-                    None => return Classification::Uncertain(UncertaintyReason::RealSign),
-                },
-                _ => false,
+            let closed = match retained_endpoints_equal(
+                endpoints[current].end_topology_vertex,
+                endpoints[current].end.as_ref(),
+                first_start_topology_vertex,
+                first_start.as_ref(),
+                policy,
+            ) {
+                Some(value) => value,
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
             };
             return decided_arrangement_chain(indices, closed);
         };
@@ -1529,19 +1572,46 @@ fn choose_retained_tangent_successor(
         return Classification::Decided(Some(candidates[0]));
     }
 
-    let Some(base) = endpoints[current].end_tangent.as_ref() else {
-        return Classification::Uncertain(UncertaintyReason::Boundary);
+    let base = match retained_algebraic_derivative(
+        endpoints[current].end_tangent.as_ref(),
+        endpoints[current].end_derivative_source.as_ref(),
+        1,
+        policy,
+    ) {
+        Classification::Decided(Some(tangent)) => tangent,
+        Classification::Decided(None) => {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
     let mut best = candidates[0];
 
     for candidate in candidates.iter().copied().skip(1) {
-        let Some(first) = endpoints[candidate].start_tangent.as_ref() else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
+        let first = match retained_algebraic_derivative(
+            endpoints[candidate].start_tangent.as_ref(),
+            endpoints[candidate].start_derivative_source.as_ref(),
+            1,
+            policy,
+        ) {
+            Classification::Decided(Some(tangent)) => tangent,
+            Classification::Decided(None) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        let Some(second) = endpoints[best].start_tangent.as_ref() else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
+        let second = match retained_algebraic_derivative(
+            endpoints[best].start_tangent.as_ref(),
+            endpoints[best].start_derivative_source.as_ref(),
+            1,
+            policy,
+        ) {
+            Classification::Decided(Some(tangent)) => tangent,
+            Classification::Decided(None) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        match compare_retained_turn_from_base(base, first, second, policy) {
+        match compare_retained_turn_from_base(&base, &first, &second, policy) {
             Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
             Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
             Classification::Decided(TurnOrdering::SameDirection) => {
@@ -1758,10 +1828,34 @@ fn compare_retained_same_tangent_second_order(
     second: &RetainedEndpointData,
     policy: &CurvePolicy,
 ) -> Classification<TurnOrdering> {
-    match (&first.start_tangent, &second.start_tangent) {
+    let first_tangent = match retained_algebraic_derivative(
+        first.start_tangent.as_ref(),
+        first.start_derivative_source.as_ref(),
+        1,
+        policy,
+    ) {
+        Classification::Decided(Some(tangent)) => tangent,
+        Classification::Decided(None) => {
+            return Classification::Decided(TurnOrdering::SameDirection);
+        }
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let second_tangent = match retained_algebraic_derivative(
+        second.start_tangent.as_ref(),
+        second.start_derivative_source.as_ref(),
+        1,
+        policy,
+    ) {
+        Classification::Decided(Some(tangent)) => tangent,
+        Classification::Decided(None) => {
+            return Classification::Decided(TurnOrdering::SameDirection);
+        }
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    match (&first_tangent, &second_tangent) {
         (
-            Some(RetainedTangentVector::Native(first_tangent)),
-            Some(RetainedTangentVector::Native(second_tangent)),
+            RetainedTangentVector::Native(first_tangent),
+            RetainedTangentVector::Native(second_tangent),
         ) => compare_same_tangent_second_order(
             first_tangent,
             retained_native_vector(first.start_second_derivative.as_ref()),
@@ -1772,8 +1866,8 @@ fn compare_retained_same_tangent_second_order(
             policy,
         ),
         (
-            Some(RetainedTangentVector::Algebraic(first_tangent)),
-            Some(RetainedTangentVector::Algebraic(second_tangent)),
+            RetainedTangentVector::Algebraic(first_tangent),
+            RetainedTangentVector::Algebraic(second_tangent),
         ) => {
             let first_second_derivative =
                 match retained_algebraic_higher_derivative(first, 2, policy) {
@@ -1878,10 +1972,24 @@ fn retained_algebraic_higher_derivative(
         3 => &endpoint.start_third_derivative,
         _ => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
+    retained_algebraic_derivative(
+        retained.as_ref(),
+        endpoint.start_derivative_source.as_ref(),
+        order,
+        policy,
+    )
+}
+
+fn retained_algebraic_derivative(
+    retained: Option<&RetainedTangentVector>,
+    source: Option<&RetainedAlgebraicDerivativeSource>,
+    order: usize,
+    policy: &CurvePolicy,
+) -> Classification<Option<RetainedTangentVector>> {
     if retained.is_some() {
-        return Classification::Decided(retained.clone());
+        return Classification::Decided(retained.cloned());
     }
-    let Some(source) = &endpoint.start_derivative_source else {
+    let Some(source) = source else {
         return Classification::Decided(None);
     };
     let derivatives = match source.curve.as_ref() {
@@ -2151,14 +2259,17 @@ fn points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<b
 
 fn retained_endpoints_equal(
     left_topology_vertex: Option<usize>,
-    left: &RetainedEndpointKey,
+    left: Option<&RetainedEndpointKey>,
     right_topology_vertex: Option<usize>,
-    right: &RetainedEndpointKey,
+    right: Option<&RetainedEndpointKey>,
     policy: &CurvePolicy,
 ) -> Option<bool> {
     if let (Some(left), Some(right)) = (left_topology_vertex, right_topology_vertex) {
         return Some(left == right);
     }
+    let (Some(left), Some(right)) = (left, right) else {
+        return Some(false);
+    };
     match (left, right) {
         (RetainedEndpointKey::Exact(left), RetainedEndpointKey::Exact(right)) => {
             points_equal(left, right, policy)

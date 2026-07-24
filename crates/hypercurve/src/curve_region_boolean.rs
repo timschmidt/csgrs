@@ -6,14 +6,13 @@ use std::rc::Rc;
 
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
 use crate::{
-    BezierAlgebraicEndpointImage2, BezierArrangementFragment2, BezierArrangementGraph2,
-    BezierEndpointTangentImage2, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
-    BezierSubcurve2, BooleanOp, Classification, Curve2, CurveError, CurveFamily2,
-    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
-    CurveOperation2, CurvePathBooleanOperand2, CurvePolicy, CurveRegion2, ExactCurveError,
-    ExactCurveResult, FillRule, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RegionPointLocation, RetainedCurveIntersection2,
-    UncertaintyReason,
+    BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
+    BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
+    Classification, Curve2, CurveError, CurveFamily2, CurveIntersectionContact2,
+    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2,
+    CurvePathBooleanOperand2, CurvePolicy, CurveRegion2, ExactCurveError, ExactCurveResult,
+    FillRule, RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    RegionPointLocation, RetainedCurveIntersection2, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -849,15 +848,7 @@ impl RetainedCurveRegionBoolean2 {
                             .flatten()
                             .and_then(|vertex| {
                                 if transverse_vertices.get(vertex).copied().unwrap_or(false) {
-                                    match location {
-                                        RegionPointLocation::Inside => {
-                                            Some(RegionPointLocation::Outside)
-                                        }
-                                        RegionPointLocation::Outside => {
-                                            Some(RegionPointLocation::Inside)
-                                        }
-                                        RegionPointLocation::Boundary => None,
-                                    }
+                                    toggled_region_location(location)
                                 } else if !reclassification_vertices
                                     .get(vertex)
                                     .copied()
@@ -1267,6 +1258,14 @@ fn certified_transverse_contact_vertices(
         .collect()
 }
 
+const fn toggled_region_location(location: RegionPointLocation) -> Option<RegionPointLocation> {
+    match location {
+        RegionPointLocation::Inside => Some(RegionPointLocation::Outside),
+        RegionPointLocation::Outside => Some(RegionPointLocation::Inside),
+        RegionPointLocation::Boundary => None,
+    }
+}
+
 fn algebraic_endpoint_tangent_at_vertex(
     fragments: &[SplitCarrierFragment],
     vertex: usize,
@@ -1284,12 +1283,12 @@ fn algebraic_endpoint_tangent_at_vertex(
         if split.start_topology_vertex == Some(vertex) {
             return if *reversed { end_image } else { start_image }
                 .as_ref()
-                .map(BezierAlgebraicEndpointImage2::tangent);
+                .and_then(|image| image.try_tangent().ok());
         }
         if split.end_topology_vertex == Some(vertex) {
             return if *reversed { start_image } else { end_image }
                 .as_ref()
-                .map(BezierAlgebraicEndpointImage2::tangent);
+                .and_then(|image| image.try_tangent().ok());
         }
         None
     })

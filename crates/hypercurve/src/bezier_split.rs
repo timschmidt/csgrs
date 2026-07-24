@@ -189,6 +189,7 @@ impl BezierSubcurve2 {
                 parameters,
                 policy,
                 true,
+                false,
                 |_| true,
                 |start, end| {
                     Ok(Self::Quadratic(
@@ -202,6 +203,7 @@ impl BezierSubcurve2 {
                 parameters,
                 policy,
                 true,
+                false,
                 |_| true,
                 |start, end| {
                     Ok(Self::Cubic(
@@ -215,6 +217,7 @@ impl BezierSubcurve2 {
                 parameters,
                 policy,
                 true,
+                false,
                 |parameter| {
                     matches!(
                         curve.point_at(parameter.clone(), policy),
@@ -237,6 +240,7 @@ impl BezierSubcurve2 {
                 parameters,
                 policy,
                 true,
+                false,
                 |parameter| {
                     matches!(
                         curve.point_at_classified(parameter, policy),
@@ -611,6 +615,7 @@ impl QuadraticBezier2 {
             parameters,
             policy,
             false,
+            true,
             |_| true,
             |start, end| {
                 Ok(BezierSubcurve2::Quadratic(
@@ -682,6 +687,7 @@ impl CubicBezier2 {
             parameters,
             policy,
             false,
+            true,
             |_| true,
             |start, end| {
                 Ok(BezierSubcurve2::Cubic(
@@ -763,6 +769,7 @@ impl RationalQuadraticBezier2 {
             parameters,
             policy,
             false,
+            true,
             |parameter| {
                 matches!(
                     self.point_at(parameter.clone(), policy),
@@ -870,6 +877,7 @@ impl RationalBezier2 {
             parameters,
             policy,
             false,
+            true,
             |parameter| {
                 matches!(
                     self.point_at_classified(parameter, policy),
@@ -892,6 +900,7 @@ fn split_curve_at_parameters<F, G, H>(
     parameters: &[BezierParameter2],
     policy: &CurvePolicy,
     refine_ordering: bool,
+    promote_rational_roots: bool,
     mut exact_boundary_is_regular: H,
     mut materialize: F,
     mut endpoint_image: G,
@@ -908,12 +917,16 @@ where
     ];
     for parameter in parameters {
         validate_parameter(parameter, policy)?;
-        let promoted = match parameter
-            .clone()
-            .promote_represented_rational_root(policy)?
-        {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        let promoted = if promote_rational_roots {
+            match parameter
+                .clone()
+                .promote_represented_rational_root(policy)?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        } else {
+            parameter.clone()
         };
         let parameter = match promoted.as_exact() {
             Some(exact) if !parameter.is_exact() && !exact_boundary_is_regular(exact) => {
@@ -944,13 +957,11 @@ where
             _ => {
                 let start_image = image_pair[0].clone();
                 let end_image = image_pair[1].clone();
-                if start_image
-                    .as_ref()
-                    .is_none_or(BezierAlgebraicEndpointImage2::is_transformed)
-                    && end_image
-                        .as_ref()
-                        .is_none_or(BezierAlgebraicEndpointImage2::is_transformed)
-                {
+                if start_image.as_ref().is_none_or(
+                    BezierAlgebraicEndpointImage2::is_transformed_or_lazy_rational_first_order,
+                ) && end_image.as_ref().is_none_or(
+                    BezierAlgebraicEndpointImage2::is_transformed_or_lazy_rational_first_order,
+                ) {
                     fragments.push(BezierSplitFragment2::AlgebraicEndpointImages {
                         reversed: false,
                         start,
