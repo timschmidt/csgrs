@@ -1084,11 +1084,8 @@ fn retained_endpoint_side_data(
 ) -> Classification<Option<RetainedEndpointSideData>> {
     if let Some(image) = image {
         let derivative_source =
-            retained_rational_derivative_source(source_curve, image.parameter());
-        if topology_vertex.is_some()
-            && image.is_lazy_rational_first_order()
-            && derivative_source.is_some()
-        {
+            retained_algebraic_derivative_source(source_curve, image.parameter());
+        if topology_vertex.is_some() && image.is_lazy_first_order() && derivative_source.is_some() {
             return Classification::Decided(Some(RetainedEndpointSideData {
                 point: None,
                 tangent: None,
@@ -1253,16 +1250,12 @@ fn reversed_retained_endpoint_side(
     Some(side)
 }
 
-fn retained_rational_derivative_source(
+fn retained_algebraic_derivative_source(
     source_curve: Option<&BezierSubcurve2>,
     parameter: &crate::BezierAlgebraicParameter2,
 ) -> Option<RetainedAlgebraicDerivativeSource> {
     let source_curve = source_curve?;
-    matches!(
-        source_curve,
-        BezierSubcurve2::RationalQuadratic(_) | BezierSubcurve2::Rational(_)
-    )
-    .then(|| RetainedAlgebraicDerivativeSource {
+    Some(RetainedAlgebraicDerivativeSource {
         curve: Box::new(source_curve.clone()),
         parameter: parameter.clone(),
         reversed: false,
@@ -1549,6 +1542,87 @@ mod endpoint_adjacency_tests {
             start_third_derivative: None,
             start_derivative_source: None,
             end_derivative_source: None,
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn sqrt_half_parameter() -> crate::BezierAlgebraicParameter2 {
+        let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis(
+            vec![Real::from(-1), Real::zero(), Real::from(2)],
+            &CurvePolicy::certified(),
+        )
+        .expect("valid parameter polynomial")
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                panic!("parameter polynomial unexpectedly uncertain: {reason:?}")
+            }
+        };
+        let interval = match crate::BezierParameterInterval::try_new(
+            Real::from(Rational::fraction(2, 3).expect("nonzero denominator")),
+            Real::from(Rational::fraction(3, 4).expect("nonzero denominator")),
+            &CurvePolicy::certified(),
+        )
+        .expect("valid parameter interval")
+        {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => {
+                panic!("parameter interval unexpectedly uncertain: {reason:?}")
+            }
+        };
+        match crate::BezierAlgebraicParameter2::try_isolate(
+            polynomial,
+            interval,
+            &CurvePolicy::certified(),
+        )
+        .expect("isolated parameter")
+        {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                panic!("parameter isolation unexpectedly uncertain: {reason:?}")
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn lazy_polynomial_endpoint_derivatives_match_eager_images() {
+        let policy = CurvePolicy::certified();
+        let parameter = sqrt_half_parameter();
+        let curve = crate::CubicBezier2::new(
+            point(0),
+            Point2::new(Real::from(1), Real::from(2)),
+            Point2::new(Real::from(3), Real::from(-1)),
+            point(4),
+        );
+        let lazy =
+            BezierAlgebraicEndpointImage2::cubic_first_order(&curve, &parameter, &policy).unwrap();
+        let eager = BezierAlgebraicEndpointImage2::cubic(&curve, &parameter, &policy).unwrap();
+
+        assert!(lazy.is_lazy_first_order());
+        assert!(lazy.second_derivative().is_none());
+        assert!(lazy.third_derivative().is_none());
+        assert_eq!(lazy.try_point(), eager.try_point());
+        assert_eq!(lazy.try_tangent(), eager.try_tangent());
+
+        let source =
+            retained_algebraic_derivative_source(Some(&BezierSubcurve2::Cubic(curve)), &parameter)
+                .expect("cubic derivative source");
+        for (order, expected) in [
+            (1, eager.try_tangent().ok()),
+            (2, eager.second_derivative()),
+            (3, eager.third_derivative()),
+        ] {
+            let Classification::Decided(Some(actual)) =
+                retained_algebraic_derivative(None, Some(&source), order, &policy)
+            else {
+                panic!("lazy derivative {order} should construct exactly");
+            };
+            let expected = expected.and_then(retained_algebraic_tangent);
+            assert_eq!(
+                retained_algebraic_vector(Some(&actual)),
+                retained_algebraic_vector(expected.as_ref())
+            );
         }
     }
 
@@ -2106,22 +2180,49 @@ fn retained_algebraic_derivative(
     let Some(source) = source else {
         return Classification::Decided(None);
     };
-    let derivatives = match source.curve.as_ref() {
-        BezierSubcurve2::RationalQuadratic(curve) => {
-            curve.derivatives_at_algebraic_parameter(&source.parameter, order, policy)
+    let derivative = match source.curve.as_ref() {
+        BezierSubcurve2::Quadratic(curve) => match order {
+            1 => curve
+                .tangent_at_algebraic_parameter(&source.parameter, policy)
+                .map(Some),
+            2 => curve
+                .second_derivative_at_algebraic_parameter(&source.parameter, policy)
+                .map(Some),
+            _ => Ok(None),
         }
-        BezierSubcurve2::Rational(curve) => {
-            curve.derivatives_at_algebraic_parameter(&source.parameter, order, policy)
+        .map(|derivative| derivative.map(BezierEndpointTangentImage2::Polynomial)),
+        BezierSubcurve2::Cubic(curve) => match order {
+            1 => curve
+                .tangent_at_algebraic_parameter(&source.parameter, policy)
+                .map(Some),
+            2 => curve
+                .second_derivative_at_algebraic_parameter(&source.parameter, policy)
+                .map(Some),
+            3 => curve
+                .third_derivative_at_algebraic_parameter(&source.parameter, policy)
+                .map(Some),
+            _ => Ok(None),
         }
-        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => {
-            return Classification::Decided(None);
-        }
+        .map(|derivative| derivative.map(BezierEndpointTangentImage2::Polynomial)),
+        BezierSubcurve2::RationalQuadratic(curve) => curve
+            .derivatives_at_algebraic_parameter(&source.parameter, order, policy)
+            .map(|derivatives| {
+                derivatives
+                    .into_iter()
+                    .nth(order - 1)
+                    .map(BezierEndpointTangentImage2::Rational)
+            }),
+        BezierSubcurve2::Rational(curve) => curve
+            .derivatives_at_algebraic_parameter(&source.parameter, order, policy)
+            .map(|derivatives| {
+                derivatives
+                    .into_iter()
+                    .nth(order - 1)
+                    .map(BezierEndpointTangentImage2::Rational)
+            }),
     };
-    let mut derivative = match derivatives {
-        Ok(derivatives) => derivatives
-            .into_iter()
-            .nth(order - 1)
-            .and_then(transformed_rational_derivative_vector),
+    let mut derivative = match derivative {
+        Ok(derivative) => derivative.as_ref().and_then(retained_algebraic_tangent),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
     if source.reversed && order % 2 == 1 {
@@ -2134,12 +2235,6 @@ fn retained_algebraic_derivative(
         };
     }
     Classification::Decided(derivative)
-}
-
-fn transformed_rational_derivative_vector(
-    derivative: crate::RationalBezierAlgebraicTangentImage2,
-) -> Option<RetainedTangentVector> {
-    retained_algebraic_tangent(&BezierEndpointTangentImage2::Rational(derivative))
 }
 
 fn retained_algebraic_same_tangent_evidence_to_turn(

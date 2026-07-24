@@ -85,7 +85,7 @@ enum BezierAlgebraicEndpointImageData {
         second_derivative: Option<Box<BezierEndpointTangentImage2>>,
         third_derivative: Option<Box<BezierEndpointTangentImage2>>,
     },
-    LazyRationalFirstOrder {
+    LazyFirstOrder {
         parameter: BezierAlgebraicParameter2,
         curve: Box<BezierSubcurve2>,
         policy: CurvePolicy,
@@ -203,7 +203,7 @@ impl BezierAlgebraicEndpointImage2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::LazyRationalFirstOrder {
+            data: Rc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::RationalQuadratic(curve.clone())),
                 policy: policy.clone(),
@@ -246,9 +246,41 @@ impl BezierAlgebraicEndpointImage2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::LazyRationalFirstOrder {
+            data: Rc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::Rational(curve.clone())),
+                policy: policy.clone(),
+                point: OnceCell::new(),
+                tangent: OnceCell::new(),
+            }),
+        })
+    }
+
+    pub(crate) fn quadratic_first_order(
+        curve: &QuadraticBezier2,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Self> {
+        Ok(Self {
+            data: Rc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
+                parameter: parameter.clone(),
+                curve: Box::new(BezierSubcurve2::Quadratic(curve.clone())),
+                policy: policy.clone(),
+                point: OnceCell::new(),
+                tangent: OnceCell::new(),
+            }),
+        })
+    }
+
+    pub(crate) fn cubic_first_order(
+        curve: &CubicBezier2,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Self> {
+        Ok(Self {
+            data: Rc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
+                parameter: parameter.clone(),
+                curve: Box::new(BezierSubcurve2::Cubic(curve.clone())),
                 policy: policy.clone(),
                 point: OnceCell::new(),
                 tangent: OnceCell::new(),
@@ -260,9 +292,7 @@ impl BezierAlgebraicEndpointImage2 {
     pub fn parameter(&self) -> &BezierAlgebraicParameter2 {
         match self.data.as_ref() {
             BezierAlgebraicEndpointImageData::Materialized { parameter, .. }
-            | BezierAlgebraicEndpointImageData::LazyRationalFirstOrder { parameter, .. } => {
-                parameter
-            }
+            | BezierAlgebraicEndpointImageData::LazyFirstOrder { parameter, .. } => parameter,
         }
     }
 
@@ -285,7 +315,7 @@ impl BezierAlgebraicEndpointImage2 {
             BezierAlgebraicEndpointImageData::Materialized {
                 second_derivative, ..
             } => second_derivative.as_deref(),
-            BezierAlgebraicEndpointImageData::LazyRationalFirstOrder { .. } => None,
+            BezierAlgebraicEndpointImageData::LazyFirstOrder { .. } => None,
         }
     }
 
@@ -295,7 +325,7 @@ impl BezierAlgebraicEndpointImage2 {
             BezierAlgebraicEndpointImageData::Materialized {
                 third_derivative, ..
             } => third_derivative.as_deref(),
-            BezierAlgebraicEndpointImageData::LazyRationalFirstOrder { .. } => None,
+            BezierAlgebraicEndpointImageData::LazyFirstOrder { .. } => None,
         }
     }
 
@@ -319,21 +349,21 @@ impl BezierAlgebraicEndpointImage2 {
                 .is_none_or(|derivative| Some(derivative) == expected.third_derivative())
     }
 
-    pub(crate) fn is_lazy_rational_first_order(&self) -> bool {
+    pub(crate) fn is_lazy_first_order(&self) -> bool {
         matches!(
             self.data.as_ref(),
-            BezierAlgebraicEndpointImageData::LazyRationalFirstOrder { .. }
+            BezierAlgebraicEndpointImageData::LazyFirstOrder { .. }
         )
     }
 
-    pub(crate) fn is_transformed_or_lazy_rational_first_order(&self) -> bool {
-        self.is_lazy_rational_first_order() || self.is_transformed()
+    pub(crate) fn is_transformed_or_lazy_first_order(&self) -> bool {
+        self.is_lazy_first_order() || self.is_transformed()
     }
 
     pub(crate) fn try_point(&self) -> CurveResult<&BezierEndpointPointImage2> {
         match self.data.as_ref() {
             BezierAlgebraicEndpointImageData::Materialized { point, .. } => Ok(point),
-            BezierAlgebraicEndpointImageData::LazyRationalFirstOrder {
+            BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter,
                 curve,
                 policy,
@@ -341,15 +371,18 @@ impl BezierAlgebraicEndpointImage2 {
                 ..
             } => point
                 .get_or_init(|| match curve.as_ref() {
+                    BezierSubcurve2::Quadratic(curve) => curve
+                        .point_at_algebraic_parameter(parameter, policy)
+                        .map(BezierEndpointPointImage2::Polynomial),
+                    BezierSubcurve2::Cubic(curve) => curve
+                        .point_at_algebraic_parameter(parameter, policy)
+                        .map(BezierEndpointPointImage2::Polynomial),
                     BezierSubcurve2::RationalQuadratic(curve) => curve
                         .point_at_algebraic_parameter(parameter, policy)
                         .map(BezierEndpointPointImage2::Rational),
                     BezierSubcurve2::Rational(curve) => curve
                         .point_at_algebraic_parameter(parameter, policy)
                         .map(BezierEndpointPointImage2::Rational),
-                    BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => unreachable!(
-                        "lazy rational endpoint evidence stores only rational source curves"
-                    ),
                 })
                 .as_ref()
                 .map_err(Clone::clone),
@@ -359,7 +392,7 @@ impl BezierAlgebraicEndpointImage2 {
     pub(crate) fn try_tangent(&self) -> CurveResult<&BezierEndpointTangentImage2> {
         match self.data.as_ref() {
             BezierAlgebraicEndpointImageData::Materialized { tangent, .. } => Ok(tangent),
-            BezierAlgebraicEndpointImageData::LazyRationalFirstOrder {
+            BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter,
                 curve,
                 policy,
@@ -368,15 +401,22 @@ impl BezierAlgebraicEndpointImage2 {
             } => tangent
                 .get_or_init(|| {
                     let tangent = match curve.as_ref() {
+                        BezierSubcurve2::Quadratic(curve) => {
+                            return curve
+                                .tangent_at_algebraic_parameter(parameter, policy)
+                                .map(BezierEndpointTangentImage2::Polynomial);
+                        }
+                        BezierSubcurve2::Cubic(curve) => {
+                            return curve
+                                .tangent_at_algebraic_parameter(parameter, policy)
+                                .map(BezierEndpointTangentImage2::Polynomial);
+                        }
                         BezierSubcurve2::RationalQuadratic(curve) => {
                             curve.derivatives_at_algebraic_parameter(parameter, 1, policy)
                         }
                         BezierSubcurve2::Rational(curve) => {
                             curve.derivatives_at_algebraic_parameter(parameter, 1, policy)
                         }
-                        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => unreachable!(
-                            "lazy rational endpoint evidence stores only rational source curves"
-                        ),
                     }?
                     .pop()
                     .expect("one requested rational derivative image");

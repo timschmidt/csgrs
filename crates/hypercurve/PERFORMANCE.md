@@ -3911,6 +3911,42 @@ region-Boolean replay completed all 2,509 executions at 5,898 coverage points
 and 19,139 feature edges with no finding; LeakSanitizer alone remained disabled
 under ptrace.
 
+### Lazy polynomial algebraic split endpoints
+
+Refined Boolean splitting already retained rational endpoint images as lazy
+first-order source evidence, but polynomial quadratic and cubic boundaries
+still constructed algebraic point, tangent, second-derivative, and
+third-derivative images immediately. Certified topology usually supplies both
+the endpoint vertex and branch successor, leaving every one of those
+polynomial images unused. The lazy endpoint carrier now supports all four
+Bezier source families. When a topology vertex is present, traversal retains
+only the source curve and algebraic parameter. Point, tangent, and
+higher-order polynomial images are constructed from that source only if
+coordinate fallback or an uncovered tangent branch observes them. Public split
+construction and validation retain their eager exact-evidence behavior.
+
+A focused irrational-parameter cubic regression compares lazy point and
+tangent observation with the eager endpoint image, then constructs first-,
+second-, and third-order derivatives through the retained source and verifies
+that every represented vector matches its eager counterpart. Existing partial
+certified-successor fallback, algebraic tangent-order, split validation, and
+Boolean suites cover demand-driven traversal and source validation.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 40,252,053 to 37,185,392 (7.62%), 88.40% below the original
+320,660,631 baseline. Heaptrack allocation events fell from 61,157 to 55,571
+and temporary events from 5,376 to 4,764; peak heap fell from 1.28 to 1.15 MiB
+and peak RSS from 11.76 to 11.44 MiB. Every measured run retained 9 candidate
+pairs, 48 fragments, 2 classifications, 4 decided operations, no blockers,
+and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. AddressSanitizer region-Boolean replay completed all
+2,509 executions at 5,895 coverage points and 19,155 feature edges with no
+finding; LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

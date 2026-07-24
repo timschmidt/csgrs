@@ -196,7 +196,9 @@ impl BezierSubcurve2 {
                         curve.subcurve_between_exact(start, end, policy)?,
                     ))
                 },
-                |parameter| BezierAlgebraicEndpointImage2::quadratic(curve, parameter, policy),
+                |parameter| {
+                    BezierAlgebraicEndpointImage2::quadratic_first_order(curve, parameter, policy)
+                },
                 self.clone(),
             ),
             Self::Cubic(curve) => split_curve_at_parameters(
@@ -210,7 +212,9 @@ impl BezierSubcurve2 {
                         curve.subcurve_between_exact(start, end, policy)?,
                     ))
                 },
-                |parameter| BezierAlgebraicEndpointImage2::cubic(curve, parameter, policy),
+                |parameter| {
+                    BezierAlgebraicEndpointImage2::cubic_first_order(curve, parameter, policy)
+                },
                 self.clone(),
             ),
             Self::RationalQuadratic(curve) => split_curve_at_parameters(
@@ -957,11 +961,13 @@ where
             _ => {
                 let start_image = image_pair[0].clone();
                 let end_image = image_pair[1].clone();
-                if start_image.as_ref().is_none_or(
-                    BezierAlgebraicEndpointImage2::is_transformed_or_lazy_rational_first_order,
-                ) && end_image.as_ref().is_none_or(
-                    BezierAlgebraicEndpointImage2::is_transformed_or_lazy_rational_first_order,
-                ) {
+                if start_image
+                    .as_ref()
+                    .is_none_or(BezierAlgebraicEndpointImage2::is_transformed_or_lazy_first_order)
+                    && end_image.as_ref().is_none_or(
+                        BezierAlgebraicEndpointImage2::is_transformed_or_lazy_first_order,
+                    )
+                {
                     fragments.push(BezierSplitFragment2::AlgebraicEndpointImages {
                         reversed: false,
                         start,
