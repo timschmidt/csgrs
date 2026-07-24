@@ -1784,13 +1784,88 @@ impl Rational {
         )
     }
 
+    /// Multiply a set of rationals by one positive common denominator.
+    ///
+    /// Every returned value is an integer and the same positive scale is
+    /// applied to every input. This is useful for projective coordinates and
+    /// polynomial coefficients whose common nonzero scale is immaterial.
+    ///
+    /// An empty input produces an empty output.
+    pub fn clear_common_denominator_slice(values: &[&Self]) -> Vec<Self> {
+        if values.is_empty() {
+            return Vec::new();
+        }
+        let common_denominator = Self::common_denominator(values);
+        crate::trace_dispatch!("rational", "common-scale", "clear-denominator-slice");
+        values
+            .iter()
+            .map(|value| {
+                if value.sign == NoSign {
+                    return Self::zero();
+                }
+                let scale = &common_denominator / &value.denominator;
+                Self::from_integer_magnitude(value.sign, &value.numerator * scale)
+            })
+            .collect()
+    }
+
+    /// Normalize an exact-rational ratio to primitive integer components.
+    ///
+    /// The returned vector differs from the input by one positive common
+    /// scale: denominators are cleared and the greatest common magnitude of
+    /// all nonzero integer components is removed. Empty and all-zero inputs
+    /// preserve their shape.
+    pub fn primitive_integer_ratio(values: &[&Self]) -> Vec<Self> {
+        let mut integers = Self::clear_common_denominator_slice(values);
+        let mut content = BigUint::ZERO;
+        for value in &integers {
+            if value.sign == NoSign {
+                continue;
+            }
+            content = if content.is_zero() {
+                value.numerator.clone()
+            } else {
+                Self::gcd_magnitudes_with_mixed_width_fast_path(&content, &value.numerator)
+            };
+            if content.is_one() {
+                return integers;
+            }
+        }
+        if content.is_zero() || content.is_one() {
+            return integers;
+        }
+        for value in &mut integers {
+            if value.sign != NoSign {
+                *value =
+                    Self::from_integer_magnitude(value.sign, &value.numerator / &content);
+            }
+        }
+        crate::trace_dispatch!("rational", "common-scale", "primitive-integer-ratio");
+        integers
+    }
+
     /// Multiply a fixed set of rationals by one positive common denominator.
     ///
     /// Vector normalization is invariant under this shared scale. Clearing it
     /// before the self-dot prevents the common denominator from passing through
     /// square extraction, reciprocal construction, and every output lane.
     pub(crate) fn clear_common_denominator<const N: usize>(values: [&Self; N]) -> [Self; N] {
-        let common_denominator = if values
+        let common_denominator = Self::common_denominator(&values);
+
+        crate::trace_dispatch!("rational", "common-scale", "clear-denominator");
+        core::array::from_fn(|index| {
+            let value = values[index];
+            if value.sign == NoSign {
+                return Self::zero();
+            }
+            let scale = &common_denominator / &value.denominator;
+            Self::from_integer_magnitude(value.sign, &value.numerator * scale)
+        })
+    }
+
+    fn common_denominator(values: &[&Self]) -> BigUint {
+        debug_assert!(!values.is_empty());
+        if values
             .iter()
             .all(|value| value.denominator == values[0].denominator)
         {
@@ -1813,17 +1888,7 @@ impl Rational {
                     (common / divisor) * &value.denominator
                 },
             )
-        };
-
-        crate::trace_dispatch!("rational", "common-scale", "clear-denominator");
-        core::array::from_fn(|index| {
-            let value = values[index];
-            if value.sign == NoSign {
-                return Self::zero();
-            }
-            let scale = &common_denominator / &value.denominator;
-            Self::from_integer_magnitude(value.sign, &value.numerator * scale)
-        })
+        }
     }
 
     fn from_word_magnitude_difference(

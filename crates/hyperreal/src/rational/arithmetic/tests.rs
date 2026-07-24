@@ -1319,6 +1319,72 @@ mod tests {
             Rational::clear_common_denominator([&values[0], &values[1], &values[2]]),
             [Rational::new(9), Rational::new(-10), Rational::zero()]
         );
+        assert_eq!(
+            Rational::clear_common_denominator_slice(&[
+                &values[0],
+                &values[1],
+                &values[2],
+            ]),
+            vec![Rational::new(9), Rational::new(-10), Rational::zero()]
+        );
+    }
+
+    #[test]
+    fn clear_common_denominator_slice_preserves_empty_input() {
+        assert!(Rational::clear_common_denominator_slice(&[]).is_empty());
+    }
+
+    #[test]
+    fn primitive_integer_ratio_clears_denominators_and_content() {
+        let values = [
+            Rational::fraction(2, 3).unwrap(),
+            Rational::fraction(-4, 3).unwrap(),
+            Rational::zero(),
+        ];
+        assert_eq!(
+            Rational::primitive_integer_ratio(&[&values[0], &values[1], &values[2]]),
+            vec![Rational::one(), Rational::new(-2), Rational::zero()]
+        );
+        assert_eq!(
+            Rational::primitive_integer_ratio(&[&Rational::zero(), &Rational::zero()]),
+            vec![Rational::zero(), Rational::zero()]
+        );
+        assert!(Rational::primitive_integer_ratio(&[]).is_empty());
+    }
+
+    #[test]
+    fn checked_exact_integer_quotient_requires_divisible_integers() {
+        assert_eq!(
+            Rational::new(-84).checked_exact_integer_quotient(&Rational::new(7)),
+            Some(Rational::new(-12))
+        );
+        assert_eq!(
+            Rational::zero().checked_exact_integer_quotient(&Rational::new(-3)),
+            Some(Rational::zero())
+        );
+        assert_eq!(
+            Rational::new(5).checked_exact_integer_quotient(&Rational::new(2)),
+            None
+        );
+        assert_eq!(
+            Rational::fraction(6, 5)
+                .unwrap()
+                .checked_exact_integer_quotient(&Rational::new(3)),
+            None
+        );
+        assert_eq!(
+            Rational::new(6).checked_exact_integer_quotient(&Rational::zero()),
+            None
+        );
+        for quotient in -32_i64..=32 {
+            for divisor in (-32_i64..=32).filter(|divisor| *divisor != 0) {
+                assert_eq!(
+                    Rational::new(quotient * divisor)
+                        .checked_exact_integer_quotient(&Rational::new(divisor)),
+                    Some(Rational::new(quotient))
+                );
+            }
+        }
     }
 
     #[test]

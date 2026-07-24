@@ -32,6 +32,8 @@ const NO_GMP_ANALOG: &[&str] = &[
     "div_rem_magnitudes_barrett_candidate",
     // Structural facts, retained exact values, and exact-set schedules.
     "best_sign",
+    "checked_exact_integer_quotient",
+    "clear_common_denominator_slice",
     "definitely_not_equal",
     "definitely_one",
     "definitely_zero",
@@ -60,6 +62,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "is_exact_dyadic_rational",
     "is_nonempty_exact_rational",
     "is_rational",
+    "primitive_integer_ratio",
     "shared_denominator_kind",
     "sign_pattern",
     "structural_facts",

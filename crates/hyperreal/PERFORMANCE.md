@@ -1441,6 +1441,30 @@ canonical rationals should continue to use the eager point functions. Further
 work is driven by whole-Hypercurve profiles, especially large complex
 polynomial/rational Bézier, arc, spline/NURBS, offset, and region workloads.
 
+### Primitive integer ratios and exact integer quotients
+
+Elimination polynomials and projective coordinate tuples are invariant under
+one shared nonzero scale. `Rational::clear_common_denominator_slice` now exposes
+the existing exact common-denominator machinery for dynamic coefficient sets,
+while `primitive_integer_ratio` additionally removes their integer content.
+Both retain every component and apply one positive common scale; empty and
+all-zero inputs remain shape-preserving.
+
+Fraction-free Bareiss elimination also guarantees that its integer numerator is
+exactly divisible by the previous integer pivot. The new
+`checked_exact_integer_quotient` primitive verifies that contract with one
+division/remainder operation and constructs the integer result directly. A
+noninteger operand, zero divisor, or nonzero remainder returns `None`, allowing
+callers to retain their general exact-division fallback.
+
+In Hypercurve's one-cell all-family exact `CurveRegion2` workload, normalizing
+rational-image resultants to primitive integer matrices and consuming the
+exact quotient reduced ten-run instructions from 320,660,631 to 189,533,986
+(40.9%). Median ordinary end-to-end time fell from 26.628 ms to 18.154 ms and
+pair preparation from 16.830 ms to 9.016 ms. Exhaustive small signed quotient
+tests, disparate-denominator image replay, and the full downstream topology
+suite retain the same exact results.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or

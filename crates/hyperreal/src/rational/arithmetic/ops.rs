@@ -1,6 +1,38 @@
 use core::ops::*;
 
 impl Rational {
+    /// Divide two integers when their quotient is also an integer.
+    ///
+    /// Returns `None` for fractional inputs, a zero divisor, or a nonzero
+    /// remainder. This avoids constructing and reducing an intermediate
+    /// rational in fraction-free elimination and other exactly-divisible
+    /// integer recurrences.
+    pub fn checked_exact_integer_quotient(&self, divisor: &Self) -> Option<Self> {
+        let dividend = self.canonicalized_ref();
+        let divisor = divisor.canonicalized_ref();
+        if dividend.denominator != *ONE.deref()
+            || divisor.denominator != *ONE.deref()
+            || divisor.sign == NoSign
+        {
+            return None;
+        }
+        if dividend.sign == NoSign {
+            return Some(Self::zero());
+        }
+        use num::Integer as _;
+        let (quotient, remainder) = dividend.numerator.div_rem(&divisor.numerator);
+        if !remainder.is_zero() {
+            return None;
+        }
+        let sign = if dividend.sign == divisor.sign {
+            Plus
+        } else {
+            Minus
+        };
+        crate::trace_dispatch!("rational", "integer-quotient", "exact-divisible");
+        Some(Self::from_integer_magnitude(sign, quotient))
+    }
+
     /// Return the exact arithmetic mean of two rationals.
     ///
     /// This delays canonical reduction until after both the addition and the
