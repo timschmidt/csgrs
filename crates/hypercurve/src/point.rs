@@ -254,6 +254,12 @@ impl Point2 {
     /// Returns squared Euclidean distance to another point.
     pub fn distance_squared(&self, other: &Self) -> Real {
         let (dx, dy) = self.delta_from(other);
+        if dx.exact_rational_ref().is_some() && dy.exact_rational_ref().is_some() {
+            return Real::exact_rational_signed_product_sum_known_exact(
+                [true; 2],
+                [[&dx, &dx], [&dy, &dy]],
+            );
+        }
         &dx * &dx + &dy * &dy
     }
 
@@ -401,5 +407,31 @@ mod tests {
         .join()
         .unwrap();
         assert_eq!(point, Point2::from_values(1_i8, 1_i8));
+    }
+
+    #[test]
+    fn distance_squared_fuses_exact_deltas_and_preserves_symbolic_expression() {
+        let exact_start = Point2::new(
+            (Real::from(-7) / Real::from(3)).unwrap(),
+            (Real::from(5) / Real::from(2)).unwrap(),
+        );
+        let exact_end = Point2::new(
+            (Real::from(11) / Real::from(5)).unwrap(),
+            (Real::from(-13) / Real::from(7)).unwrap(),
+        );
+        let (exact_dx, exact_dy) = exact_start.delta_from(&exact_end);
+        assert_eq!(
+            exact_start.distance_squared(&exact_end),
+            &exact_dx * &exact_dx + &exact_dy * &exact_dy
+        );
+
+        let sqrt_two = Real::from(2).sqrt().unwrap();
+        let symbolic_start = Point2::new(sqrt_two.clone(), Real::from(3));
+        let symbolic_end = Point2::new(Real::from(1), -sqrt_two);
+        let (symbolic_dx, symbolic_dy) = symbolic_start.delta_from(&symbolic_end);
+        assert_eq!(
+            symbolic_start.distance_squared(&symbolic_end),
+            &symbolic_dx * &symbolic_dx + &symbolic_dy * &symbolic_dy
+        );
     }
 }
