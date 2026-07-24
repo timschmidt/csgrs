@@ -4358,6 +4358,32 @@ AddressSanitizer region-Boolean replay completed with libFuzzer reporting 2,510
 executions at 5,900 coverage points and 19,164 feature edges with no finding;
 LeakSanitizer remained disabled under ptrace.
 
+### Retained conic-map algebra
+
+The prepared Hypersolve map now retains the conic transport's normalized
+numerator and denominator, constant-map classification, quotient-rule
+derivative polynomial, and common integer coefficient scaling as separately
+lazy stages. These values depend only on the pair-scoped transport, not on a
+particular implicit-conic contact root. Root-local interval evaluation,
+monotonicity certification, image bounds, selection, and exact validation are
+unchanged.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 32,120,772 to 32,005,223 (0.36%), 90.02% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+46,054 to 45,821; recorder-level temporary events fell from 2,714 to 2,702 and
+the postprocessor count fell from 2,962 to 2,950. Peak heap remained 1.13 MiB
+and peak RSS fell from 11.25 to 11.15 MiB. Every measured run retained 9
+candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete Hypersolve and Hypercurve all-feature and no-default-feature
+suites, formatting, warning-denied all-target Clippy and rustdoc, and supported
+default/no-default release WASM library builds passed. The AddressSanitizer
+region-Boolean replay completed all 2,509 requested executions at 5,900
+coverage points and 19,225 feature edges with no finding; LeakSanitizer
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
