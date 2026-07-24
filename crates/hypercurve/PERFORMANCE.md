@@ -4588,6 +4588,36 @@ release WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 requested executions at 5,927 coverage points and 19,037
 feature edges with no finding; LeakSanitizer remained disabled under ptrace.
 
+### Fixed exact rational-quadratic power evaluation
+
+Rational quadratic evaluation at a rational parameter uses a quadratic power
+basis for the denominator and both coordinate numerators. Its former Horner
+schedule normalized two products and two additions independently for each of
+those three polynomials.
+
+When the parameter and all three power coefficients are exact rational, the
+evaluator now reduces the constant, linear, and quadratic terms as one fixed
+signed product sum. A symbolic coefficient retains the former Horner
+expression verbatim. Focused regressions compare the fused exact result and
+the guarded radical-coefficient expression against explicit Horner replay.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 28,431,564 to 28,001,118 (1.51%), 91.27% below
+the original 320,660,631 baseline. Inclusive cost beneath
+`RationalQuadraticBezier2::point_at` fell from 1,328,719 to 960,107
+instructions (27.7%). Heaptrack allocation events fell from 39,349 to 38,467;
+recorder-level temporary events remained 2,687 and the postprocessor count
+remained 2,935. Peak heap fell from 1.02 MiB to 987.31 KiB, peak RSS remained
+11.00 MiB, and retained memory fell from 96.06 to 89.49 KiB. Every measured
+run retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy and rustdoc, and supported default/no-default
+release WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 requested executions at 5,932 coverage points and 19,036
+feature edges with no finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

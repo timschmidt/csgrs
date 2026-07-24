@@ -200,17 +200,16 @@ impl RationalQuadraticBezier2 {
             return point;
         }
         if t.exact_rational_ref().is_some() {
-            let evaluate = |(constant, linear, quadratic): (Real, Real, Real)| {
-                ((&quadratic * &t) + linear) * &t + constant
-            };
-            let denominator = evaluate(self.weight_power_basis());
+            let denominator = evaluate_quadratic_power_basis(self.weight_power_basis(), &t);
             match is_zero(&denominator, policy) {
                 Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
                 Some(false) => {}
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
             }
-            let numerator_x = evaluate(self.weighted_coordinate_power_basis(Axis2::X));
-            let numerator_y = evaluate(self.weighted_coordinate_power_basis(Axis2::Y));
+            let numerator_x =
+                evaluate_quadratic_power_basis(self.weighted_coordinate_power_basis(Axis2::X), &t);
+            let numerator_y =
+                evaluate_quadratic_power_basis(self.weighted_coordinate_power_basis(Axis2::Y), &t);
             let Ok(x) = numerator_x / &denominator else {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             };
@@ -1098,6 +1097,28 @@ fn quadratic_bernstein_to_power(values: [Real; 3]) -> (Real, Real, Real) {
     let c1 = &two * &(&values[1] - &values[0]);
     let c2 = &values[0] - &(&two * &values[1]) + &values[2];
     (c0, c1, c2)
+}
+
+fn evaluate_quadratic_power_basis(
+    (constant, linear, quadratic): (Real, Real, Real),
+    parameter: &Real,
+) -> Real {
+    if constant.exact_rational_ref().is_some()
+        && linear.exact_rational_ref().is_some()
+        && quadratic.exact_rational_ref().is_some()
+        && parameter.exact_rational_ref().is_some()
+    {
+        let one = Real::one();
+        return Real::exact_rational_signed_product_sum_known_exact(
+            [true; 3],
+            [
+                [&quadratic, parameter, parameter],
+                [&linear, parameter, &one],
+                [&constant, &one, &one],
+            ],
+        );
+    }
+    ((&quadratic * parameter) + linear) * parameter + constant
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -3721,6 +3742,30 @@ mod tests {
                 Real::one(),
                 Real::one()
             ]
+        );
+    }
+
+    #[test]
+    fn quadratic_power_evaluation_fuses_exact_terms_and_preserves_symbolic_horner_form() {
+        let parameter = (Real::one() / Real::from(3_i8)).unwrap();
+        let coefficients = (Real::from(5_i8), Real::from(-7_i8), Real::from(11_i8));
+        let expected = ((&coefficients.2 * &parameter) + coefficients.1.clone()) * &parameter
+            + coefficients.0.clone();
+        assert_eq!(
+            evaluate_quadratic_power_basis(coefficients, &parameter),
+            expected
+        );
+
+        let coefficients = (
+            Real::from(2_i8).sqrt().unwrap(),
+            Real::from(3_i8).sqrt().unwrap(),
+            Real::from(5_i8).sqrt().unwrap(),
+        );
+        let expected = ((&coefficients.2 * &parameter) + coefficients.1.clone()) * &parameter
+            + coefficients.0.clone();
+        assert_eq!(
+            evaluate_quadratic_power_basis(coefficients, &parameter),
+            expected
         );
     }
 
