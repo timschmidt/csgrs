@@ -231,6 +231,31 @@ fn bareiss_quotient(numerator: Real, previous_pivot: &Real) -> Option<Real> {
     (numerator / previous_pivot.clone()).ok()
 }
 
+fn bareiss_update(
+    pivot: &Real,
+    value: &Real,
+    eliminand: &Real,
+    pivot_value: &Real,
+    previous_pivot: &Real,
+) -> Option<Real> {
+    if let (Some(pivot), Some(value), Some(eliminand), Some(pivot_value), Some(previous_pivot)) = (
+        pivot.exact_rational_ref(),
+        value.exact_rational_ref(),
+        eliminand.exact_rational_ref(),
+        pivot_value.exact_rational_ref(),
+        previous_pivot.exact_rational_ref(),
+    ) && let Some(quotient) = pivot.checked_exact_integer_cross_difference_quotient(
+        value,
+        eliminand,
+        pivot_value,
+        previous_pivot,
+    ) {
+        return Some(Real::from(quotient));
+    }
+    let numerator = pivot.clone() * value.clone() - eliminand.clone() * pivot_value.clone();
+    bareiss_quotient(numerator, previous_pivot)
+}
+
 /// Computes an exact determinant with Bareiss fraction-free elimination.
 ///
 /// Pivot choices are certified through [`Real::certified_sign_until`]. A
@@ -292,10 +317,14 @@ pub fn determinant_bareiss(
 
         for row in work.iter_mut().take(n).skip(pivot + 1) {
             for column in (pivot + 1)..n {
-                let numerator = pivot_value.clone() * row[column].clone()
-                    - row[pivot].clone() * pivot_work_row[column].clone();
-                row[column] = bareiss_quotient(numerator, &previous_pivot)
-                    .ok_or(BareissError::UnsupportedDivision { pivot })?;
+                row[column] = bareiss_update(
+                    &pivot_value,
+                    &row[column],
+                    &row[pivot],
+                    &pivot_work_row[column],
+                    &previous_pivot,
+                )
+                .ok_or(BareissError::UnsupportedDivision { pivot })?;
             }
         }
 
@@ -366,14 +395,22 @@ pub fn solve_dense_linear_system_bareiss(
         for row in (pivot + 1)..n {
             let eliminand = work[row][pivot].clone();
             for column in (pivot + 1)..n {
-                let numerator = pivot_value.clone() * work[row][column].clone()
-                    - eliminand.clone() * pivot_work_row[column].clone();
-                work[row][column] = bareiss_quotient(numerator, &previous_pivot)
-                    .ok_or(BareissError::UnsupportedDivision { pivot })?;
+                work[row][column] = bareiss_update(
+                    &pivot_value,
+                    &work[row][column],
+                    &eliminand,
+                    &pivot_work_row[column],
+                    &previous_pivot,
+                )
+                .ok_or(BareissError::UnsupportedDivision { pivot })?;
             }
-            let numerator =
-                pivot_value.clone() * rhs_work[row].clone() - eliminand * pivot_rhs.clone();
-            rhs_work[row] = match bareiss_quotient(numerator, &previous_pivot) {
+            rhs_work[row] = match bareiss_update(
+                &pivot_value,
+                &rhs_work[row],
+                &eliminand,
+                &pivot_rhs,
+                &previous_pivot,
+            ) {
                 Some(value) => value,
                 None => {
                     return solve_dense_linear_system_bareiss_cramer(matrix, rhs, min_precision);
@@ -496,15 +533,23 @@ pub fn solve_dense_linear_system_bareiss_multi_rhs(
         for row in (pivot + 1)..n {
             let eliminand = work[row][pivot].clone();
             for column in (pivot + 1)..n {
-                let numerator = pivot_value.clone() * work[row][column].clone()
-                    - eliminand.clone() * pivot_work_row[column].clone();
-                work[row][column] = bareiss_quotient(numerator, &previous_pivot)
-                    .ok_or(BareissError::UnsupportedDivision { pivot })?;
+                work[row][column] = bareiss_update(
+                    &pivot_value,
+                    &work[row][column],
+                    &eliminand,
+                    &pivot_work_row[column],
+                    &previous_pivot,
+                )
+                .ok_or(BareissError::UnsupportedDivision { pivot })?;
             }
             for (rhs_index, rhs) in rhs_work.iter_mut().enumerate() {
-                let numerator = pivot_value.clone() * rhs[row].clone()
-                    - eliminand.clone() * pivot_rhs[rhs_index].clone();
-                rhs[row] = match bareiss_quotient(numerator, &previous_pivot) {
+                rhs[row] = match bareiss_update(
+                    &pivot_value,
+                    &rhs[row],
+                    &eliminand,
+                    &pivot_rhs[rhs_index],
+                    &previous_pivot,
+                ) {
                     Some(value) => value,
                     None => {
                         return solve_dense_linear_system_bareiss_multi_rhs_cramer(
@@ -839,10 +884,14 @@ pub fn solve_sparse_linear_system_bareiss_pattern_preserving(
                     .get(&column)
                     .cloned()
                     .unwrap_or_else(Real::zero);
-                let numerator =
-                    pivot_value.clone() * row_value - eliminand.clone() * pivot_column_value;
-                let updated = bareiss_quotient(numerator, &previous_pivot)
-                    .ok_or(SparseBareissError::UnsupportedDivision { pivot })?;
+                let updated = bareiss_update(
+                    &pivot_value,
+                    &row_value,
+                    &eliminand,
+                    &pivot_column_value,
+                    &previous_pivot,
+                )
+                .ok_or(SparseBareissError::UnsupportedDivision { pivot })?;
                 if is_certified_zero(&updated, min_precision)? {
                     rows[row_index].remove(&column);
                 } else {
@@ -852,10 +901,14 @@ pub fn solve_sparse_linear_system_bareiss_pattern_preserving(
                     rows[row_index].insert(column, updated);
                 }
             }
-            let rhs_numerator =
-                pivot_value.clone() * rhs_work[row_index].clone() - eliminand * pivot_rhs.clone();
-            rhs_work[row_index] = bareiss_quotient(rhs_numerator, &previous_pivot)
-                .ok_or(SparseBareissError::UnsupportedDivision { pivot })?;
+            rhs_work[row_index] = bareiss_update(
+                &pivot_value,
+                &rhs_work[row_index],
+                &eliminand,
+                &pivot_rhs,
+                &previous_pivot,
+            )
+            .ok_or(SparseBareissError::UnsupportedDivision { pivot })?;
         }
         previous_pivot = pivot_value;
     }
@@ -1149,6 +1202,10 @@ mod tests {
         Real::from(value)
     }
 
+    fn fraction(numerator: i64, denominator: u64) -> Real {
+        Real::from(hyperreal::Rational::fraction(numerator, denominator).unwrap())
+    }
+
     fn arrowhead_system(order: usize) -> (Vec<SparseResidualTerm>, Vec<Real>) {
         let mut terms = Vec::with_capacity(order.saturating_mul(3));
         terms.push(SparseResidualTerm {
@@ -1191,6 +1248,20 @@ mod tests {
         assert_eq!(report.swaps, 1);
         assert_eq!(report.pivots.len(), 1);
         assert_eq!(report.pivots[0].row, 1);
+    }
+
+    #[test]
+    fn bareiss_determinant_retains_general_rational_fallback() {
+        let report = determinant_bareiss(
+            &[
+                vec![fraction(1, 2), fraction(1, 3)],
+                vec![fraction(2, 5), fraction(3, 7)],
+            ],
+            -64,
+        )
+        .unwrap();
+
+        assert_eq!(report.determinant, fraction(17, 210));
     }
 
     #[test]

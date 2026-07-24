@@ -117,6 +117,22 @@ classifications, 4 decided operations, and checksum 6. The complete
 all-feature test suite, strict all-target Clippy, and warning-denied rustdoc
 passed.
 
+Bareiss updates on primitive integer matrices now fuse the full
+`(pivot * value - eliminand * pivot_value) / previous_pivot` recurrence through
+Hyperreal's checked integer cross-difference quotient. This avoids allocating
+and caching two intermediate rational products and their difference before
+the already guaranteed fraction-free division. Noninteger inputs or a failed
+divisibility check take the unchanged general `Real` path; a fractional-matrix
+regression exercises that fallback.
+
+On the Hypercurve sentinel, the fused recurrence reduced ten-run instructions
+from 151,620,313 to 131,393,603 (13.3%). Eleven ordinary runs had a 12.985 ms
+complete median and a 7.844 ms pair-preparation median, versus 14.994 and
+8.682 ms. Exact topology remained 9 candidate pairs, 48 fragments, 2 point
+classifications, 4 decided operations, and checksum 6.
+The complete all-feature unit, property, smoke, and doctest suites, strict
+all-target Clippy, and warning-denied rustdoc passed.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
