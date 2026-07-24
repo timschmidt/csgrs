@@ -439,7 +439,7 @@ fn signed_area_for_controls(controls: &[&Point2]) -> CurveResult<Real> {
 }
 
 fn point_cross_product(first: &Point2, second: &Point2) -> Real {
-    first.x() * second.y() - first.y() * second.x()
+    first.cross_product(second)
 }
 
 fn coordinate_power_derivatives(

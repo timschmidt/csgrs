@@ -933,7 +933,7 @@ fn line_signed_area_contribution(start: &Point2, end: &Point2) -> CurveResult<Re
 }
 
 fn line_doubled_signed_area_contribution(start: &Point2, end: &Point2) -> Real {
-    (start.x() * end.y()) - (end.x() * start.y())
+    Real::diff_of_products(start.x(), end.y(), end.x(), start.y())
 }
 
 fn compute_contour_signed_area(segments: &[Segment2]) -> CurveResult<Option<Real>> {
@@ -1367,6 +1367,24 @@ mod tests {
             ),
         ])
         .unwrap()
+    }
+
+    #[test]
+    fn line_area_fuses_exact_products_and_preserves_symbolic_operand_order() {
+        let exact_start = point(-7, 5);
+        let exact_end = point(11, -13);
+        assert_eq!(
+            line_doubled_signed_area_contribution(&exact_start, &exact_end),
+            exact_start.x() * exact_end.y() - exact_end.x() * exact_start.y()
+        );
+
+        let sqrt_two = Real::from(2).sqrt().unwrap();
+        let symbolic_start = Point2::new(sqrt_two.clone(), Real::from(3));
+        let symbolic_end = Point2::new(Real::from(5), -sqrt_two);
+        assert_eq!(
+            line_doubled_signed_area_contribution(&symbolic_start, &symbolic_end),
+            symbolic_start.x() * symbolic_end.y() - symbolic_end.x() * symbolic_start.y()
+        );
     }
 
     #[test]

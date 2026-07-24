@@ -263,6 +263,10 @@ impl Point2 {
         &dx * &dx + &dy * &dy
     }
 
+    pub(crate) fn cross_product(&self, other: &Self) -> Real {
+        Real::diff_of_products(self.x(), other.y(), self.y(), other.x())
+    }
+
     /// Linearly interpolates between two points.
     pub fn lerp(&self, other: &Self, t: Real) -> Self {
         let one_minus_t = Real::one() - &t;
@@ -432,6 +436,24 @@ mod tests {
         assert_eq!(
             symbolic_start.distance_squared(&symbolic_end),
             &symbolic_dx * &symbolic_dx + &symbolic_dy * &symbolic_dy
+        );
+    }
+
+    #[test]
+    fn cross_product_fuses_exact_coordinates_and_preserves_symbolic_expression() {
+        let exact_left = Point2::from_values(-7, 5);
+        let exact_right = Point2::from_values(11, -13);
+        assert_eq!(
+            exact_left.cross_product(&exact_right),
+            exact_left.x() * exact_right.y() - exact_left.y() * exact_right.x()
+        );
+
+        let sqrt_two = Real::from(2).sqrt().unwrap();
+        let symbolic_left = Point2::new(sqrt_two.clone(), Real::from(3));
+        let symbolic_right = Point2::new(Real::from(5), -sqrt_two);
+        assert_eq!(
+            symbolic_left.cross_product(&symbolic_right),
+            symbolic_left.x() * symbolic_right.y() - symbolic_left.y() * symbolic_right.x()
         );
     }
 }

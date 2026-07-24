@@ -4527,6 +4527,37 @@ release WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 requested executions at 5,935 coverage points and 19,233
 feature edges with no finding; LeakSanitizer remained disabled under ptrace.
 
+### Shared exact point determinants
+
+Line-contour area accumulation and polynomial Bezier moment formulas both
+evaluate the same point determinant `x0*y1 - y0*x1`. Each private helper
+formerly constructed and normalized the two products separately before
+subtracting them.
+
+Both consumers now route through Hyperreal's exact-aware
+difference-of-products reducer; the Bezier formula shares an internal
+`Point2` cross-product kernel, while the contour formula retains its historical
+negative-term operand order explicitly. Exact rational coordinates are reduced
+as one signed product sum; symbolic coordinates retain each caller's former
+two-products-and-subtraction expression. Focused exact and radical-coordinate
+regressions verify both operand-order contracts, while the contour and Bezier
+area suites exercise the downstream consumers.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 29,809,524 to 28,805,252 (3.37%), 91.02% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+41,714 to 39,952; recorder-level temporary events moved from 2,685 to 2,686
+and the postprocessor count from 2,933 to 2,934. Peak heap fell from 1.04 to
+1.03 MiB, peak RSS from 11.09 to 10.98 MiB, and retained memory from 103.18 to
+101.49 KiB. Every measured run retained 9 candidate pairs, 48 fragments, 2
+classifications, 4 decided operations, no blockers, and checksum 6.
+
+The complete all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy and rustdoc, and supported default/no-default
+release WASM library builds passed. The AddressSanitizer region-Boolean replay
+completed all 2,509 requested executions at 5,936 coverage points and 19,068
+feature edges with no finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
