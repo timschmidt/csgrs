@@ -4184,6 +4184,44 @@ library builds passed. AddressSanitizer region-Boolean replay completed all
 2,509 executions at 5,900 coverage points and 19,131 feature edges with no
 finding; LeakSanitizer remained disabled under ptrace.
 
+### Pole-free conic parameter transport
+
+The retained conic transport formerly used two dual-coordinate ratios. One
+ratio has a pole at the conic's final parameter and the other at its initial
+parameter, so endpoint and wide-interval contacts can force a second exact
+algebraic image construction. For dual coordinates
+`lambda_0, lambda_1, lambda_2`, the same parameter is
+`(lambda_1 + 2 lambda_2) / (2 (lambda_0 + lambda_1 + lambda_2))`. At a conic
+point the denominator is the certified nonzero frame determinant times the
+nonzero projective scale, so this primary map has no conic-parameter endpoint
+pole.
+
+The pair-scoped transport now prepares only that localized primary ratio.
+It retains the three coordinate polynomials and constructs the two former
+endpoint ratios lazily only if all existing primary-map refinement attempts
+remain uncertain. Thus adversarial decisiveness is preserved without paying
+for fallback maps on ordinary contacts. The sentinel's 13 roots now need 14
+image attempts instead of 16. A focused unequal-weight rational-quadratic
+regression proves the dual-coordinate identity at both endpoints and an
+interior parameter; the implicit-conic, tangent, transversality, and algebraic
+ordering suites cover the lazy fallback boundary and downstream evidence.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 33,192,889 to 32,852,557 (1.03%), 89.75% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+48,406 to 47,321 and temporary events from 3,226 to 2,988; peak heap remained
+1.14 MiB and peak RSS fell from 11.19 to 11.13 MiB. Every measured run retained
+9 candidate pairs, 48 fragments, 2 classifications, 4 decided operations, no
+blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. The requested `-runs=2509` AddressSanitizer
+region-Boolean replay completed with libFuzzer reporting 2,515 executions at
+5,896 coverage points and 19,148 feature edges with no finding; LeakSanitizer
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

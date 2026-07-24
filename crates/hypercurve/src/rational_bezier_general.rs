@@ -3321,7 +3321,10 @@ fn parameter_root_representation(
 }
 
 struct ConicParameterMap2 {
-    candidates: [(Vec<Real>, Vec<Real>); 2],
+    primary: (Vec<Real>, Vec<Real>),
+    coordinates: [Vec<Real>; 3],
+    range_start: Real,
+    range_span: Real,
 }
 
 fn conic_parameter_map(
@@ -3344,34 +3347,80 @@ fn conic_parameter_map(
     let coordinate_1 = homogeneous_linear_form(basis, &lambda_1);
     let coordinate_2 = homogeneous_linear_form(basis, &lambda_2);
     let two = Real::from(2_i8);
-    let twice_coordinate_0 = scale_power_polynomial(&coordinate_0, &two);
     let twice_coordinate_2 = scale_power_polynomial(&coordinate_2, &two);
-    let root_candidates = [
-        (
-            coordinate_1.clone(),
-            add_power_polynomials(&twice_coordinate_0, &coordinate_1),
-        ),
-        (
-            twice_coordinate_2.clone(),
-            add_power_polynomials(&coordinate_1, &twice_coordinate_2),
-        ),
-    ];
+    let coordinate_sum = add_power_polynomials(
+        &add_power_polynomials(&coordinate_0, &coordinate_1),
+        &coordinate_2,
+    );
+    let right_numerator = add_power_polynomials(&coordinate_1, &twice_coordinate_2);
     let range = conic.source_parameter_range();
+    let range_start = range.start().clone();
     let span = range.end() - range.start();
-    let candidates = root_candidates.map(|(numerator, denominator)| {
-        (
-            subtract_power_polynomials(
-                &numerator,
-                &scale_power_polynomial(&denominator, range.start()),
-            ),
-            scale_power_polynomial(&denominator, &span),
-        )
-    });
-    Ok(Classification::Decided(ConicParameterMap2 { candidates }))
+    let primary = localize_conic_parameter_candidate(
+        right_numerator,
+        scale_power_polynomial(&coordinate_sum, &two),
+        &range_start,
+        &span,
+    );
+    Ok(Classification::Decided(ConicParameterMap2 {
+        primary,
+        coordinates: [coordinate_0, coordinate_1, coordinate_2],
+        range_start,
+        range_span: span,
+    }))
 }
 
 fn conic_parameter_from_curve_parameter(
     parameter_map: &ConicParameterMap2,
+    curve_parameter: &BezierParameter2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    if let Classification::Decided(parameter) = conic_parameter_from_candidates(
+        std::slice::from_ref(&parameter_map.primary),
+        curve_parameter,
+        policy,
+    )? {
+        return Ok(Classification::Decided(parameter));
+    }
+
+    let [coordinate_0, coordinate_1, coordinate_2] = &parameter_map.coordinates;
+    let two = Real::from(2_i8);
+    let twice_coordinate_0 = scale_power_polynomial(coordinate_0, &two);
+    let twice_coordinate_2 = scale_power_polynomial(coordinate_2, &two);
+    let fallback_candidates = [
+        localize_conic_parameter_candidate(
+            coordinate_1.clone(),
+            add_power_polynomials(&twice_coordinate_0, coordinate_1),
+            &parameter_map.range_start,
+            &parameter_map.range_span,
+        ),
+        localize_conic_parameter_candidate(
+            twice_coordinate_2.clone(),
+            add_power_polynomials(coordinate_1, &twice_coordinate_2),
+            &parameter_map.range_start,
+            &parameter_map.range_span,
+        ),
+    ];
+    conic_parameter_from_candidates(&fallback_candidates, curve_parameter, policy)
+}
+
+fn localize_conic_parameter_candidate(
+    numerator: Vec<Real>,
+    denominator: Vec<Real>,
+    range_start: &Real,
+    range_span: &Real,
+) -> (Vec<Real>, Vec<Real>) {
+    (
+        subtract_power_polynomials(
+            &numerator,
+            &scale_power_polynomial(&denominator, range_start),
+        ),
+        scale_power_polynomial(&denominator, range_span),
+    )
+}
+
+fn conic_parameter_from_candidates(
+    candidates: &[(Vec<Real>, Vec<Real>)],
     curve_parameter: &BezierParameter2,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
@@ -3385,7 +3434,7 @@ fn conic_parameter_from_curve_parameter(
             .clone()
             .refined_isolating_interval(max_refinement_steps, policy);
         let root = parameter_root_representation(&refined_curve_parameter, policy);
-        for (numerator, denominator) in &parameter_map.candidates {
+        for (numerator, denominator) in candidates {
             match rational_image_parameter(&root, numerator, denominator, policy)? {
                 Classification::Decided(parameter) => {
                     return Ok(Classification::Decided(parameter));
@@ -4086,6 +4135,34 @@ mod tests {
                 curve.endpoint_derivatives(at_end, 3, &policy),
                 curve.affine_derivative_values_at(&parameter, 3, &policy)
             );
+        }
+    }
+
+    #[test]
+    fn conic_dual_coordinate_sum_maps_endpoints_without_a_pole() {
+        let curve = RationalBezier2::try_new(
+            vec![
+                Point2::new(0.into(), 0.into()),
+                Point2::new(1.into(), 2.into()),
+                Point2::new(3.into(), 0.into()),
+            ],
+            vec![2.into(), 3.into(), 5.into()],
+        )
+        .unwrap();
+        let policy = CurvePolicy::certified();
+        let Classification::Decided(parameter_map) =
+            conic_parameter_map(&curve, &curve, &policy).unwrap()
+        else {
+            panic!("nonsingular rational quadratic did not produce a parameter map");
+        };
+        let (numerator, denominator) = &parameter_map.primary;
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+
+        for parameter in [Real::zero(), third, Real::one()] {
+            let image = (evaluate_power_polynomial(numerator, &parameter)
+                / evaluate_power_polynomial(denominator, &parameter))
+            .unwrap();
+            assert_eq!(image, parameter);
         }
     }
 
