@@ -4117,6 +4117,39 @@ region-Boolean replay completed with libFuzzer reporting 2,512 executions at
 5,896 coverage points and 19,164 feature edges with no finding; LeakSanitizer
 remained disabled under ptrace.
 
+### Scale-preserving constant quotient operators
+
+The quotient-ring resultant pads numerator and denominator relations to one
+shared degree so that their multiplication matrices carry the same
+fraction-free source-leading scale. When one relation is constant, its padded
+pseudo-reduction is exactly a diagonal operator: the relation constant times
+the source-leading coefficient raised to the shared relation degree. The
+constant path now constructs that diagonal directly instead of allocating a
+product workspace and visiting zero high-degree coefficients for every
+column.
+
+A focused nonmonic regression verifies the retained source-leading power in
+the diagonal. This guards the scale that must be shared with the nonconstant
+matrix; omitting it changes the represented resultant and breaks downstream
+algebraic tangent ordering. The quotient/Sylvester comparison, rational-image
+suite, and that tangent-order regression cover the direct operator and its
+consumers.
+
+On the one-cell all-family exact Boolean sentinel, the rounded ten-run
+instruction median fell from 33,700,629 to 33,658,227 (0.13%), 89.50% below
+the original 320,660,631 baseline. Heaptrack allocation events fell from
+48,920 to 48,884 and temporary events from 3,540 to 3,238; peak heap remained
+1.14 MiB, while peak RSS moved from 11.10 to 11.20 MiB. Every measured run
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete all-feature and no-default-feature test suites, formatting,
+warning-denied all-target Clippy, warning-denied all-feature and
+no-default-feature rustdoc, and supported default/no-default release WASM
+library builds passed. AddressSanitizer region-Boolean replay completed all
+2,509 executions at 5,898 coverage points and 19,166 feature edges with no
+finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
