@@ -2107,10 +2107,11 @@ fn polynomial_remainder(
 
         let shift = remainder.len() - divisor.len();
         let factor = (remainder[remainder.len() - 1].clone() / divisor[divisor.len() - 1].clone())?;
-        for (index, divisor_coefficient) in divisor.iter().enumerate() {
+        for (index, divisor_coefficient) in divisor[..divisor.len() - 1].iter().enumerate() {
             let product = &factor * divisor_coefficient;
             remainder[shift + index] = &remainder[shift + index] - &product;
         }
+        remainder.pop();
     }
 }
 

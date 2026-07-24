@@ -3382,6 +3382,34 @@ AddressSanitizer region-Boolean replay completed all 2,509 executions at 5,899
 coverage points and 19,170 feature edges with no finding; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Direct polynomial-remainder leading cancellation
+
+Each long-division step chooses its factor from the current and divisor leading
+coefficients, so updating the aligned leading slot can only compute exact zero.
+Polynomial remainder now updates the strictly lower divisor coefficients and
+pops that algebraically canceled slot directly. The next normalization pass
+still classifies and removes any additional lower-order cancellation, so
+symbolic uncertainty behavior is unchanged.
+
+The fixed and generated Sturm, GCD, root-count, and algebraic-parameter suites
+cover the shared remainder kernel. On the one-cell all-family exact Boolean
+sentinel, the ten-run instruction median fell from 66,350,069 to 64,966,544
+(2.1%), 79.7% below the original 320,660,631 baseline. Heaptrack allocations
+fell from 97,906 to 97,195, temporary allocations from 6,367 to 6,331, peak
+heap from 1.50 to 1.49 MiB, and peak RSS from 12.41 to 12.39 MiB.
+
+The clean eleven-run ordinary replacement series had a 6.755 ms complete
+median, a 4.691 ms preparation median, and a 0.349 ms exact-polyline projection
+median. Every measured run retained 9 candidate pairs, 48 fragments, 2
+classifications, 4 decided operations, no blockers, and checksum 6.
+
+The complete Hypercurve all-feature and no-default-feature suites, formatting,
+warning-denied all-target Clippy, all-feature and no-default-feature rustdoc,
+and default and no-default release WASM library builds passed. The requested
+AddressSanitizer region-Boolean replay completed after 2,523 executions at
+5,896 coverage points and 19,157 feature edges with no finding; LeakSanitizer
+alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
