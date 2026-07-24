@@ -2537,12 +2537,12 @@ HYPERCURVE_BENCH_ARRANGEMENT_CURVES=1024 \
   HYPERCURVE_BENCH_ARRANGEMENT_ITERATIONS=1 cargo bench --bench bezier_arrangement
 ```
 
-The all-family pathological cell remains an explicit next target. It still
-prepares 84 candidate pairs in about 659 ms and blocks Boolean selection on a
-`RationalQuadraticBezier` `RealSign` classification, while its exact line/arc
-projection decides all four operations in about 1.4 ms. The arc containment
-fix removes one instance of that blocker class but does not claim that the
-mixed-region gap is closed.
+At this checkpoint the all-family pathological cell remained an explicit next
+target. It prepared 84 candidate pairs in about 659 ms and blocked Boolean
+selection on a `RationalQuadraticBezier` `RealSign` classification, while its
+exact line/arc projection decided all four operations in about 1.4 ms. The arc
+containment fix removed one instance of that blocker class without yet closing
+the mixed-region gap.
 
 ### Exact endpoint adjacency indexing
 
@@ -2619,6 +2619,43 @@ The benchmark supports isolated profiling through
 `HYPERCURVE_BENCH_ARRANGEMENT_GROUP`: `overlap-scan`,
 `cold-splitting-overlap`, `tangent-order`, and `full-overlap`. With no group it
 retains the complete original benchmark sequence.
+
+### Retained all-family Boolean topology
+
+The all-family pathological cell now decides every exact Boolean operation,
+but its rational-quadratic algebraic split endpoints exposed another retained-
+proof bottleneck. One endpoint image was constructed independently for both
+adjacent fragments, and the public split-materialization validator rebuilt it
+again. Each of the four Boolean operations then rebuilt the same events,
+splits, representative-point locations, and endpoint images. Generated graph
+and region carriers replayed the public endpoint-provenance validators yet
+again.
+
+Algebraic endpoint images are now one-word clone-shared immutable handles.
+Generated split boundaries construct each image once, while the public split,
+arrangement, loop, and region constructors retain their complete forged-
+evidence validation. The private Boolean pipeline transfers the proof from
+sorted split construction through arrangement traversal into its output region.
+Its operation-independent contact topology, split fragments, and exact
+inside/outside/boundary classifications are retained once and shared by union,
+intersection, difference, and XOR.
+
+The one-cell release benchmark against commit `dc0e884` changed as follows:
+
+| Exact all-family workload | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Prepare and materialize all four `CurveRegion2` Booleans | 4.315 s | 551.721 ms | 87.2% faster |
+| Candidate pairs / decided operations | 9 / 4 | 9 / 4 | unchanged |
+
+The after value is the median of three complete process runs; all runs produced
+the same six-boundary checksum with no blocker. One instrumented run separated
+42.7 ms of pair preparation from operation times of 341.3 ms, 0.315 ms,
+0.340 ms, and 155.1 ms. The first union includes construction of the shared
+topology; intersection and difference then consume it directly, while XOR
+retains more boundary and still performs the larger tangent traversal. The
+exact polyline projection measured 0.646 ms in the matched median run, so
+native all-family parity remains an optimization target rather than a completed
+claim.
 
 ## Optimization boundary
 

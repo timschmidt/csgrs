@@ -180,9 +180,12 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     assert_location(&chained, point(11, 1), RegionPointLocation::Inside);
 
     let crossing = square(-2, -1, 2, 1);
-    let crossed = algebraic
-        .boolean_region(&crossing, BooleanOp::Union, &policy)
-        .unwrap();
+    let prepared = algebraic.retain_boolean(&crossing, &policy).unwrap();
+    assert!(!prepared.is_boolean_topology_cached());
+    let crossed = prepared.boolean_region(BooleanOp::Union).unwrap();
+    assert!(prepared.is_boolean_topology_cached());
+    prepared.boolean_region(BooleanOp::Difference).unwrap();
+    assert!(prepared.is_boolean_topology_cached());
     assert!(crossed.has_algebraic_fragments());
     assert_location(&crossed, point(0, 0), RegionPointLocation::Inside);
     assert_location(&crossed, point(0, 1), RegionPointLocation::Inside);

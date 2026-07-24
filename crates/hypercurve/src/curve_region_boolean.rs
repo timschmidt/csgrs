@@ -82,6 +82,7 @@ struct PreparedCurveRegionBooleanData {
     authored_carrier_pair_count: usize,
     pairs: Vec<PreparedRegionCarrierPair>,
     intersection_result: OnceCell<ExactCurveResult<CurveRegionIntersectionResult2>>,
+    topology: OnceCell<ExactCurveResult<PreparedCurveRegionBooleanTopology>>,
     results: [OnceCell<ExactCurveResult<CurveRegion2>>; 4],
 }
 
@@ -125,6 +126,18 @@ struct SplitCarrierFragment {
     fragment: BezierSplitFragment2,
     start_topology_vertex: Option<usize>,
     end_topology_vertex: Option<usize>,
+}
+
+#[derive(Clone, Debug)]
+struct ClassifiedSplitCarrierFragment {
+    split: SplitCarrierFragment,
+    location: RegionPointLocation,
+}
+
+#[derive(Clone, Debug)]
+struct PreparedCurveRegionBooleanTopology {
+    split_fragments: Vec<Vec<ClassifiedSplitCarrierFragment>>,
+    overlaps: Vec<CarrierOverlap>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -349,6 +362,7 @@ impl RetainedCurveRegionBoolean2 {
                 authored_carrier_pair_count,
                 pairs,
                 intersection_result: OnceCell::new(),
+                topology: OnceCell::new(),
                 results: std::array::from_fn(|_| OnceCell::new()),
             }),
         })
@@ -382,6 +396,12 @@ impl RetainedCurveRegionBoolean2 {
     /// Returns whether the aggregate exact intersection result is cached.
     pub fn is_intersection_result_cached(&self) -> bool {
         self.data.intersection_result.get().is_some()
+    }
+
+    /// Returns whether operation-independent split topology and fragment
+    /// classifications have been retained.
+    pub fn is_boolean_topology_cached(&self) -> bool {
+        self.data.topology.get().is_some()
     }
 
     /// Returns a clone-shared aggregate exact intersection result.
@@ -539,41 +559,18 @@ impl RetainedCurveRegionBoolean2 {
         Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported))
     }
 
-    fn build_boolean_region(&self, operation: BooleanOp) -> ExactCurveResult<CurveRegion2> {
-        if self.data.first.is_empty() || self.data.second.is_empty() {
-            return empty_operand_result(&self.data.first, &self.data.second, operation);
+    fn boolean_topology(&self) -> ExactCurveResult<&PreparedCurveRegionBooleanTopology> {
+        match self
+            .data
+            .topology
+            .get_or_init(|| self.build_boolean_topology())
+        {
+            Ok(topology) => Ok(topology),
+            Err(error) => Err(error.clone()),
         }
-        if self.data.first == self.data.second {
-            return identical_operand_result(&self.data.first, operation);
-        }
+    }
 
-        // Keep the mature line/arc Boolean kernel as an implementation detail of
-        // the unified carrier. Promotion retains the exact source `LineArcRegion2`, so
-        // this dispatch neither segments curves nor gives ownership back to the
-        // caller. If native topology cannot decide the operation, continue into
-        // the general retained-Bezier pipeline below.
-        if let (Classification::Decided(first), Classification::Decided(second)) = (
-            self.data
-                .first
-                .native_line_arc_region(&self.data.policy)
-                .map_err(|cause| self.invalid(0, cause))?,
-            self.data
-                .second
-                .native_line_arc_region(&self.data.policy)
-                .map_err(|cause| self.invalid(0, cause))?,
-        ) {
-            match first
-                .boolean_region(second, operation, FillRule::NonZero, &self.data.policy)
-                .map_err(|cause| self.invalid(0, cause))?
-            {
-                Classification::Decided(region) => {
-                    return CurveRegion2::try_from_line_arc_region(&region, &self.data.policy)
-                        .map_err(|error| error.with_operation(CurveOperation2::Boolean));
-                }
-                Classification::Uncertain(_) => {}
-            }
-        }
-
+    fn build_boolean_topology(&self) -> ExactCurveResult<PreparedCurveRegionBooleanTopology> {
         let mut events = vec![Vec::new(); self.data.carriers.len()];
         let mut contact_points = Vec::<(RationalBezierIntersectionPointEvidence2, usize)>::new();
         let mut next_topology_vertex = 0_usize;
@@ -740,13 +737,88 @@ impl RetainedCurveRegionBoolean2 {
             }
         }
 
+        let split_fragments = self
+            .data
+            .carriers
+            .iter()
+            .enumerate()
+            .map(|(carrier_index, carrier)| {
+                split_carrier(carrier, &events[carrier_index], &self.data.policy)
+                    .map_err(|cause| self.invalid(carrier_index, cause))
+            })
+            .collect::<ExactCurveResult<Vec<_>>>()?;
+        let split_fragments = split_fragments
+            .into_iter()
+            .enumerate()
+            .map(|(carrier_index, fragments)| {
+                fragments
+                    .into_iter()
+                    .map(|split| {
+                        Ok(ClassifiedSplitCarrierFragment {
+                            location: self.fragment_location(carrier_index, &split.fragment)?,
+                            split,
+                        })
+                    })
+                    .collect::<ExactCurveResult<Vec<_>>>()
+            })
+            .collect::<ExactCurveResult<Vec<_>>>()?;
+        Ok(PreparedCurveRegionBooleanTopology {
+            split_fragments,
+            overlaps,
+        })
+    }
+
+    fn build_boolean_region(&self, operation: BooleanOp) -> ExactCurveResult<CurveRegion2> {
+        if self.data.first.is_empty() || self.data.second.is_empty() {
+            return empty_operand_result(&self.data.first, &self.data.second, operation);
+        }
+        if self.data.first == self.data.second {
+            return identical_operand_result(&self.data.first, operation);
+        }
+
+        // Keep the mature line/arc Boolean kernel as an implementation detail of
+        // the unified carrier. Promotion retains the exact source `LineArcRegion2`, so
+        // this dispatch neither segments curves nor gives ownership back to the
+        // caller. If native topology cannot decide the operation, continue into
+        // the general retained-Bezier pipeline below.
+        if let (Classification::Decided(first), Classification::Decided(second)) = (
+            self.data
+                .first
+                .native_line_arc_region(&self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?,
+            self.data
+                .second
+                .native_line_arc_region(&self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?,
+        ) {
+            match first
+                .boolean_region(second, operation, FillRule::NonZero, &self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?
+            {
+                Classification::Decided(region) => {
+                    return CurveRegion2::try_from_line_arc_region(&region, &self.data.policy)
+                        .map_err(|error| error.with_operation(CurveOperation2::Boolean));
+                }
+                Classification::Uncertain(_) => {}
+            }
+        }
+
+        let topology = self.boolean_topology()?;
         let mut arrangement_fragments = Vec::new();
-        for (carrier_index, carrier) in self.data.carriers.iter().enumerate() {
-            let split_fragments = split_carrier(carrier, &events[carrier_index], &self.data.policy)
-                .map_err(|cause| self.invalid(carrier_index, cause))?;
-            for (split_fragment_index, split) in split_fragments.into_iter().enumerate() {
-                let action =
-                    self.fragment_action(carrier_index, &split.fragment, &overlaps, operation)?;
+        for carrier_index in 0..self.data.carriers.len() {
+            for (split_fragment_index, classified) in topology.split_fragments[carrier_index]
+                .iter()
+                .cloned()
+                .enumerate()
+            {
+                let ClassifiedSplitCarrierFragment { split, location } = classified;
+                let action = self.fragment_action(
+                    carrier_index,
+                    &split.fragment,
+                    location,
+                    &topology.overlaps,
+                    operation,
+                )?;
                 if action == RegionFragmentAction::Discard {
                     continue;
                 }
@@ -774,30 +846,27 @@ impl RetainedCurveRegionBoolean2 {
             }
         }
 
-        let graph = BezierArrangementGraph2::new(arrangement_fragments)
-            .map_err(|cause| self.invalid(0, cause))?;
+        let graph = BezierArrangementGraph2::from_certified_fragments(arrangement_fragments);
         let traversal = match graph.traverse_retained_with_tangent_order(&self.data.policy) {
             Classification::Decided(traversal) => traversal,
             Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
         };
-        let mut region = match CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal)
-        {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
-        };
+        let mut region =
+            match CurveRegion2::from_certified_retained_arrangement_traversal(&graph, &traversal) {
+                Classification::Decided(region) => region,
+                Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
+            };
         region = region
             .with_certified_filled_side_is_left(vec![true; traversal.chains().len()])
             .map_err(|cause| self.invalid(0, cause))?;
         Ok(region)
     }
 
-    fn fragment_action(
+    fn fragment_location(
         &self,
         carrier_index: usize,
         fragment: &BezierSplitFragment2,
-        overlaps: &[CarrierOverlap],
-        operation: BooleanOp,
-    ) -> ExactCurveResult<RegionFragmentAction> {
+    ) -> ExactCurveResult<RegionPointLocation> {
         let carrier = &self.data.carriers[carrier_index];
         let representative = match fragment
             .representative_point(&self.data.policy)
@@ -830,15 +899,24 @@ impl RetainedCurveRegionBoolean2 {
             CurvePathBooleanOperand2::First => &self.data.second,
             CurvePathBooleanOperand2::Second => &self.data.first,
         };
-        let location = match other
+        match other
             .classify_point(&representative, &self.data.policy)
             .map_err(|cause| self.invalid(carrier_index, cause))?
         {
-            Classification::Decided(location) => location,
-            Classification::Uncertain(reason) => {
-                return Err(self.blocked(carrier_index, reason));
-            }
-        };
+            Classification::Decided(location) => Ok(location),
+            Classification::Uncertain(reason) => Err(self.blocked(carrier_index, reason)),
+        }
+    }
+
+    fn fragment_action(
+        &self,
+        carrier_index: usize,
+        fragment: &BezierSplitFragment2,
+        location: RegionPointLocation,
+        overlaps: &[CarrierOverlap],
+        operation: BooleanOp,
+    ) -> ExactCurveResult<RegionFragmentAction> {
+        let carrier = &self.data.carriers[carrier_index];
         match location {
             RegionPointLocation::Inside => Ok(action_for_sides(
                 operation,
@@ -986,7 +1064,7 @@ fn split_carrier(
     events: &[CarrierEvent],
     policy: &CurvePolicy,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
-    let mut parameters = events
+    let parameters = events
         .iter()
         .map(|event| {
             event
@@ -995,8 +1073,6 @@ fn split_carrier(
                 .refined_isolating_interval(8, policy)
         })
         .collect::<Vec<_>>();
-    parameters.push(carrier.start.clone());
-    parameters.push(carrier.end.clone());
     let materialization = match carrier
         .curve
         .split_at_parameters_refined(&parameters, policy)?

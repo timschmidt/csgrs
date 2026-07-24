@@ -606,6 +606,15 @@ fn algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal() {
 
 #[test]
 #[cfg(feature = "predicates")]
+fn algebraic_endpoint_image_is_a_clone_shared_handle() {
+    assert_eq!(
+        std::mem::size_of::<BezierAlgebraicEndpointImage2>(),
+        std::mem::size_of::<usize>()
+    );
+}
+
+#[test]
+#[cfg(feature = "predicates")]
 fn rational_algebraic_boundary_carries_conic_endpoint_images() {
     let curve =
         RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), q(1, 2)).unwrap();

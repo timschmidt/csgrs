@@ -99,6 +99,11 @@ impl BezierSplitMaterialization2 {
         Ok(Self { fragments })
     }
 
+    fn from_generated_fragments(fragments: Vec<BezierSplitFragment2>) -> Self {
+        debug_assert!(!fragments.is_empty());
+        Self { fragments }
+    }
+
     /// Returns fragments in increasing source-parameter order.
     pub fn fragments(&self) -> &[BezierSplitFragment2] {
         &self.fragments
@@ -919,8 +924,12 @@ where
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
 
+    let endpoint_images = boundaries
+        .iter()
+        .map(|boundary| endpoint_image_for(boundary, &mut endpoint_image))
+        .collect::<CurveResult<Vec<_>>>()?;
     let mut fragments = Vec::with_capacity(boundaries.len().saturating_sub(1));
-    for pair in boundaries.windows(2) {
+    for (pair, image_pair) in boundaries.windows(2).zip(endpoint_images.windows(2)) {
         let start = pair[0].clone();
         let end = pair[1].clone();
         match (start.as_exact(), end.as_exact()) {
@@ -929,8 +938,8 @@ where
                 fragments.push(BezierSplitFragment2::Materialized { start, end, curve });
             }
             _ => {
-                let start_image = endpoint_image_for(&start, &mut endpoint_image)?;
-                let end_image = endpoint_image_for(&end, &mut endpoint_image)?;
+                let start_image = image_pair[0].clone();
+                let end_image = image_pair[1].clone();
                 if start_image
                     .as_ref()
                     .is_none_or(BezierAlgebraicEndpointImage2::is_transformed)
@@ -953,9 +962,9 @@ where
         }
     }
 
-    Ok(Classification::Decided(BezierSplitMaterialization2::new(
-        fragments,
-    )?))
+    Ok(Classification::Decided(
+        BezierSplitMaterialization2::from_generated_fragments(fragments),
+    ))
 }
 
 fn endpoint_image_for<G>(

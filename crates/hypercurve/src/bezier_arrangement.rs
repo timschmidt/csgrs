@@ -184,10 +184,14 @@ impl BezierArrangementGraph2 {
     /// Constructs a graph from already-retained fragments.
     pub fn new(fragments: Vec<BezierArrangementFragment2>) -> CurveResult<Self> {
         validate_arrangement_fragment_provenance(&fragments)?;
-        Ok(Self {
+        Ok(Self::from_certified_fragments(fragments))
+    }
+
+    pub(crate) fn from_certified_fragments(fragments: Vec<BezierArrangementFragment2>) -> Self {
+        Self {
             fragments,
             certified_overlap_evidence: OnceLock::new(),
-        })
+        }
     }
 
     pub(crate) fn cached_certified_overlap_evidence(

@@ -3,7 +3,7 @@ mod pathological_fixture;
 
 use std::env;
 use std::hint::black_box;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use hypercurve::{BooleanOp, Classification, CurvePolicy, FillRule};
 
@@ -128,18 +128,27 @@ fn benchmark_booleans(dataset: &NativeDataset) {
     let mut blocked_count = 0_usize;
     let mut boundary_checksum = 0_usize;
     let mut first_blocker = None;
+    let mut preparation_elapsed = Duration::ZERO;
+    let mut operation_elapsed = [Duration::ZERO; 4];
 
     for cell in &dataset.cells {
-        match cell.source.retain_boolean(&cell.rotated, &policy) {
+        let preparation_started = Instant::now();
+        let prepared = cell.source.retain_boolean(&cell.rotated, &policy);
+        preparation_elapsed += preparation_started.elapsed();
+        match prepared {
             Ok(prepared) => {
                 prepared_count += 1;
                 candidate_pair_count += prepared.carrier_pair_count();
-                for operation in [
+                for (operation_index, operation) in [
                     BooleanOp::Union,
                     BooleanOp::Intersection,
                     BooleanOp::Difference,
                     BooleanOp::Xor,
-                ] {
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    let operation_started = Instant::now();
                     match prepared.boolean_region_view(operation) {
                         Ok(region) => {
                             decided_count += 1;
@@ -150,6 +159,7 @@ fn benchmark_booleans(dataset: &NativeDataset) {
                             first_blocker.get_or_insert_with(|| error.to_string());
                         }
                     }
+                    operation_elapsed[operation_index] += operation_started.elapsed();
                 }
             }
             Err(error) => {
@@ -160,7 +170,7 @@ fn benchmark_booleans(dataset: &NativeDataset) {
     }
 
     println!(
-        "pathological/{}/boolean_all_ops: cells={} prepared={} candidate_pairs={} decided={} blocked={} first_blocker={first_blocker:?} checksum={} elapsed={:?}",
+        "pathological/{}/boolean_all_ops: cells={} prepared={} candidate_pairs={} decided={} blocked={} first_blocker={first_blocker:?} checksum={} preparation={preparation_elapsed:?} operations={operation_elapsed:?} elapsed={:?}",
         dataset.tier.name(),
         dataset.cells.len(),
         prepared_count,

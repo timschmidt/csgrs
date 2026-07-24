@@ -1303,10 +1303,22 @@ impl CurveRegionBoundaryLoop2 {
             validate_retained_fragment_provenance(fragment, &policy)?;
         }
         validate_retained_boundary_loop_sources(&arrangement_sources)?;
-        Ok(Self {
+        Ok(Self::from_certified_arrangement_chain(
+            fragments,
+            arrangement_sources,
+        ))
+    }
+
+    fn from_certified_arrangement_chain(
+        fragments: Vec<BezierSplitFragment2>,
+        arrangement_sources: Vec<CurveRegionFragmentSource2>,
+    ) -> Self {
+        debug_assert!(!fragments.is_empty());
+        debug_assert_eq!(fragments.len(), arrangement_sources.len());
+        Self {
             fragments,
             arrangement_sources: Some(arrangement_sources),
-        })
+        }
     }
 
     /// Returns retained split fragments in loop order.
@@ -2356,7 +2368,11 @@ impl CurveRegion2 {
             return Ok(Self::default());
         }
         validate_retained_region_loops(&boundary_loops)?;
-        Ok(Self {
+        Ok(Self::from_certified_boundary_loops(boundary_loops))
+    }
+
+    fn from_certified_boundary_loops(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> Self {
+        Self {
             boundary_loops,
             certified_loop_roles: None,
             certified_loop_fill_rules: None,
@@ -2366,7 +2382,7 @@ impl CurveRegion2 {
             line_image_region: Rc::new(OnceCell::new()),
             retained_rational_evaluators: Rc::new(OnceCell::new()),
             signed_area_cache: Rc::new(OnceCell::new()),
-        })
+        }
     }
 
     pub(crate) fn with_certified_filled_side_is_left(
@@ -2456,6 +2472,21 @@ impl CurveRegion2 {
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
     ) -> Classification<Self> {
+        Self::from_retained_arrangement_traversal_impl(graph, traversal, true)
+    }
+
+    pub(crate) fn from_certified_retained_arrangement_traversal(
+        graph: &BezierArrangementGraph2,
+        traversal: &BezierArrangementTraversal2,
+    ) -> Classification<Self> {
+        Self::from_retained_arrangement_traversal_impl(graph, traversal, false)
+    }
+
+    fn from_retained_arrangement_traversal_impl(
+        graph: &BezierArrangementGraph2,
+        traversal: &BezierArrangementTraversal2,
+        validate_provenance: bool,
+    ) -> Classification<Self> {
         let mut loops = Vec::with_capacity(traversal.chains().len());
         for chain in traversal.chains() {
             if !chain.is_closed() {
@@ -2483,28 +2514,40 @@ impl CurveRegion2 {
                     fragment.source_fragment_index(),
                 ));
             }
-            if validate_retained_arrangement_chain_connectivity(
-                graph,
-                chain.fragment_indices(),
-                &CurvePolicy::certified(),
-            )
-            .is_err()
+            if validate_provenance
+                && validate_retained_arrangement_chain_connectivity(
+                    graph,
+                    chain.fragment_indices(),
+                    &CurvePolicy::certified(),
+                )
+                .is_err()
             {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             }
-            let loop_ = match CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
-                fragments,
-                arrangement_sources,
-            ) {
-                Ok(loop_) => loop_,
-                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            let loop_ = if validate_provenance {
+                match CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
+                    fragments,
+                    arrangement_sources,
+                ) {
+                    Ok(loop_) => loop_,
+                    Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+                }
+            } else {
+                CurveRegionBoundaryLoop2::from_certified_arrangement_chain(
+                    fragments,
+                    arrangement_sources,
+                )
             };
             loops.push(loop_);
         }
 
-        match Self::new(loops) {
-            Ok(region) => Classification::Decided(region),
-            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        if validate_provenance {
+            match Self::new(loops) {
+                Ok(region) => Classification::Decided(region),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        } else {
+            Classification::Decided(Self::from_certified_boundary_loops(loops))
         }
     }
 
