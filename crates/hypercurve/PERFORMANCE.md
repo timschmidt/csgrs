@@ -3146,6 +3146,39 @@ WASM library builds passed. The requested AddressSanitizer region-Boolean fuzz
 replay completed all 2,509 executions at 5,895 coverage points and 19,165
 feature edges; LeakSanitizer alone remained disabled under ptrace.
 
+### Two-observation rational linear caches
+
+Hyperreal no longer treats an ownership clone by itself as proof that the same
+exact sum or directed difference will recur. A first arithmetic observation
+records the existing compact reuse fact, a second admits a bounded cache
+entry, and later calls reuse it. Existing product or linear caches remain
+immediate evidence. The known-repeat dense self-dot path explicitly primes its
+sum intermediates, preserving its retained-result behavior.
+
+This policy fits Hypercurve's immutable carriers: coefficient and endpoint
+values are often cloned into several owners but paired only once during
+elimination, root isolation, area construction, or topology replay. Hyperreal's
+matched fresh-but-cloned scalar sentinels improved add from 111.87 to 93.85 ns
+(16.1%) and subtract from 116.40 to 97.04 ns (17.1%); retained and fresh
+unshared controls did not regress.
+
+On the one-cell all-family exact Boolean sentinel, the ten-run instruction
+median fell from 77,532,932 to 76,301,712 (1.6%), 76.2% below the original
+320,660,631 baseline. Heaptrack allocations fell from 115,778 to 114,193,
+allocations beneath `retain_linear` from 7,971 to 3,718, and peak heap from
+1.96 to 1.53 MiB. Temporary allocations measured 6,833 and peak RSS was
+12.60 MiB. Eleven ordinary runs had an 8.840 ms complete median, a 6.630 ms
+preparation median, and a 0.376 ms exact-polyline projection median. All runs
+retained 9 candidate pairs, 48 fragments, 2 classifications, 4 decided
+operations, no blockers, and checksum 6.
+
+The complete Hyperreal, Hypersolve, and Hypercurve all-feature and
+no-default-feature suites, formatting, warning-denied all-target Clippy and
+rustdoc, and release WASM library builds passed. The requested AddressSanitizer
+region-Boolean fuzz replay completed all 2,509 executions at 5,903 coverage
+points and 19,183 feature edges; LeakSanitizer alone remained disabled under
+ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
