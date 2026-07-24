@@ -3094,6 +3094,29 @@ builds passed. The requested AddressSanitizer region-Boolean fuzz replay
 completed at 2,512 executions with 5,897 coverage points and 19,158 feature
 edges; LeakSanitizer alone remained disabled under ptrace.
 
+### Fraction-free quotient reduction
+
+Hypersolve's quotient-basis construction now pseudo-reduces primitive integer
+source and map polynomials without rational division. Scaling every quotient
+column by the same fixed power of the source leading coefficient preserves the
+numerator/denominator norm samples up to one common nonzero factor. The
+nonmonic and interpolation-degree-cancellation regressions exercise that
+invariant; unsupported coefficient forms retain the Sylvester fallback.
+
+The ten-run instruction median fell from 79,151,572 to 78,335,067 (1.0%),
+75.6% below the original baseline. Eleven ordinary runs had an 8.458 ms
+complete median, a 6.073 ms preparation median, and a 0.430 ms exact-polyline
+projection median. Every run retained the same 9 candidate pairs, 48
+fragments, 2 classifications, 4 decided operations, no blockers, and checksum
+6. Heaptrack fell from 119,861 to 116,469 allocations and from 7,949 to 6,834
+temporary allocations while peak heap remained 1.97 MiB.
+
+The complete Hypersolve and Hypercurve feature matrices, warning-denied Clippy
+and rustdoc, formatting, and release WASM library builds passed. The requested
+AddressSanitizer region-Boolean fuzz replay completed all 2,509 executions at
+5,895 coverage points and 19,157 feature edges; LeakSanitizer alone remained
+disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
