@@ -347,6 +347,14 @@ impl BezierArrangementGraph2 {
         &self,
         policy: &CurvePolicy,
     ) -> Classification<BezierArrangementTraversal2> {
+        self.traverse_retained_with_certified_successors(&[], policy)
+    }
+
+    pub(crate) fn traverse_retained_with_certified_successors(
+        &self,
+        certified_successors: &[Option<usize>],
+        policy: &CurvePolicy,
+    ) -> Classification<BezierArrangementTraversal2> {
         let mut endpoints = Vec::with_capacity(self.fragments.len());
         for fragment in &self.fragments {
             let endpoints_for_fragment = match retained_endpoint_data(fragment, policy) {
@@ -369,7 +377,12 @@ impl BezierArrangementGraph2 {
         for index in 0..self.fragments.len() {
             if predecessors[index] == 0 && !used[index] {
                 match follow_retained_tangent_ordered_chain(
-                    index, &outgoing, &endpoints, &mut used, policy,
+                    index,
+                    &outgoing,
+                    &endpoints,
+                    certified_successors,
+                    &mut used,
+                    policy,
                 ) {
                     Classification::Decided(chain) => chains.push(chain),
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -379,7 +392,12 @@ impl BezierArrangementGraph2 {
         for index in 0..self.fragments.len() {
             if !used[index] {
                 match follow_retained_tangent_ordered_chain(
-                    index, &outgoing, &endpoints, &mut used, policy,
+                    index,
+                    &outgoing,
+                    &endpoints,
+                    certified_successors,
+                    &mut used,
+                    policy,
                 ) {
                     Classification::Decided(chain) => chains.push(chain),
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -1515,6 +1533,7 @@ fn follow_retained_tangent_ordered_chain(
     start: usize,
     outgoing: &[Vec<usize>],
     endpoints: &[RetainedEndpointData],
+    certified_successors: &[Option<usize>],
     used: &mut [bool],
     policy: &CurvePolicy,
 ) -> Classification<BezierArrangementChain2> {
@@ -1530,12 +1549,16 @@ fn follow_retained_tangent_ordered_chain(
         used[current] = true;
         indices.push(current);
 
-        let next =
-            match choose_retained_tangent_successor(current, &outgoing[current], endpoints, policy)
-            {
-                Classification::Decided(next) => next,
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            };
+        let next = match choose_retained_tangent_successor(
+            current,
+            &outgoing[current],
+            endpoints,
+            certified_successors.get(current).copied().flatten(),
+            policy,
+        ) {
+            Classification::Decided(next) => next,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
         let Some(next) = next else {
             let closed = match retained_endpoints_equal(
                 endpoints[current].end_topology_vertex,
@@ -1563,6 +1586,7 @@ fn choose_retained_tangent_successor(
     current: usize,
     candidates: &[usize],
     endpoints: &[RetainedEndpointData],
+    certified_successor: Option<usize>,
     policy: &CurvePolicy,
 ) -> Classification<Option<usize>> {
     if candidates.is_empty() {
@@ -1570,6 +1594,11 @@ fn choose_retained_tangent_successor(
     }
     if candidates.len() == 1 {
         return Classification::Decided(Some(candidates[0]));
+    }
+    if let Some(successor) = certified_successor
+        && candidates.contains(&successor)
+    {
+        return Classification::Decided(Some(successor));
     }
 
     let base = match retained_algebraic_derivative(

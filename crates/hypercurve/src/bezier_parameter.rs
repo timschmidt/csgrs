@@ -374,6 +374,62 @@ impl BezierParameterPolynomial {
         }
     }
 
+    pub(crate) fn is_simple_root(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<bool>> {
+        match parameter {
+            BezierParameter2::Exact(root) => {
+                if real_sign(&self.evaluate(root), policy) != Some(RealSign::Zero) {
+                    return Err(CurveError::InvalidBezierParameter);
+                }
+                Ok(
+                    match real_sign(
+                        &evaluate_coefficients(&derivative_coefficients(&self.coefficients), root),
+                        policy,
+                    ) {
+                        Some(RealSign::Positive | RealSign::Negative) => {
+                            Classification::Decided(true)
+                        }
+                        Some(RealSign::Zero) => Classification::Decided(false),
+                        None => Classification::Uncertain(UncertaintyReason::RealSign),
+                    },
+                )
+            }
+            BezierParameter2::Algebraic(parameter) => {
+                if parameter.polynomial() != self {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                let derivative = match Self::try_new_power_basis(
+                    derivative_coefficients(&self.coefficients),
+                    policy,
+                ) {
+                    Ok(Classification::Decided(derivative)) => derivative,
+                    Err(CurveError::InvalidBezierPolynomial) => {
+                        return Ok(Classification::Decided(false));
+                    }
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                    Err(error) => return Err(error),
+                };
+                let repeated = match self.greatest_common_divisor(&derivative, policy)? {
+                    Classification::Decided(Some(repeated)) => repeated,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Decided(true));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                repeated
+                    .root_count_in_interval(parameter.interval(), policy)
+                    .map(|count| count.map(|count| count == 0))
+            }
+        }
+    }
+
     /// Returns the sign immediately after an odd-multiplicity root.
     ///
     /// `None` denotes an even-multiplicity non-crossing root. Represented roots
@@ -2166,6 +2222,77 @@ pub(crate) fn exact_nonnegative_integer_real(value: &BigUint) -> CurveResult<Rea
 #[cfg(test)]
 mod conversion_tests {
     use super::*;
+
+    fn rational(numerator: i32, denominator: i32) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
+    fn polynomial(coefficients: &[i32]) -> BezierParameterPolynomial {
+        match BezierParameterPolynomial::try_new_power_basis(
+            coefficients.iter().copied().map(Real::from).collect(),
+            &CurvePolicy::certified(),
+        )
+        .unwrap()
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                panic!("polynomial unexpectedly uncertain: {reason:?}")
+            }
+        }
+    }
+
+    fn algebraic_parameter(polynomial: &BezierParameterPolynomial) -> BezierParameter2 {
+        let policy = CurvePolicy::certified();
+        let interval =
+            match BezierParameterInterval::try_new(rational(1, 2), Real::one(), &policy).unwrap() {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(reason) => {
+                    panic!("interval unexpectedly uncertain: {reason:?}")
+                }
+            };
+        match BezierAlgebraicParameter2::try_isolate(polynomial.clone(), interval, &policy).unwrap()
+        {
+            Classification::Decided(parameter) => BezierParameter2::Algebraic(parameter),
+            Classification::Uncertain(reason) => {
+                panic!("parameter unexpectedly uncertain: {reason:?}")
+            }
+        }
+    }
+
+    #[test]
+    fn simple_root_certificate_distinguishes_exact_multiplicity() {
+        let policy = CurvePolicy::certified();
+        let root = BezierParameter2::Exact(rational(1, 2));
+
+        assert_eq!(
+            polynomial(&[-1, 2]).is_simple_root(&root, &policy).unwrap(),
+            Classification::Decided(true)
+        );
+        assert_eq!(
+            polynomial(&[1, -4, 4])
+                .is_simple_root(&root, &policy)
+                .unwrap(),
+            Classification::Decided(false)
+        );
+    }
+
+    #[test]
+    fn simple_root_certificate_distinguishes_algebraic_multiplicity() {
+        let policy = CurvePolicy::certified();
+        let simple = polynomial(&[-1, 0, 2]);
+        let simple_root = algebraic_parameter(&simple);
+        let repeated = polynomial(&[1, 0, -4, 0, 4]);
+        let repeated_root = algebraic_parameter(&repeated);
+
+        assert_eq!(
+            simple.is_simple_root(&simple_root, &policy).unwrap(),
+            Classification::Decided(true)
+        );
+        assert_eq!(
+            repeated.is_simple_root(&repeated_root, &policy).unwrap(),
+            Classification::Decided(false)
+        );
+    }
 
     #[test]
     fn bernstein_to_power_remains_exact_beyond_u64_binomials() {

@@ -32,6 +32,7 @@ pub struct CurveIntersectionContact2 {
     first: CurveIntersectionParameter2,
     second: CurveIntersectionParameter2,
     point: RationalBezierIntersectionPointEvidence2,
+    certified_transverse: bool,
 }
 
 /// Certified positive-length overlap between two promoted top-level spans.
@@ -249,6 +250,7 @@ fn certified_singleton_aabb_endpoint_contact(
         first: first_parameter,
         second: second_parameter,
         point: RationalBezierIntersectionPointEvidence2::Exact(point),
+        certified_transverse: false,
     }))
 }
 
@@ -335,6 +337,7 @@ fn build_native_line_evidence(
                 local_parameter: BezierParameter2::Exact(second_parameter),
             },
             point: RationalBezierIntersectionPointEvidence2::Exact(point),
+            certified_transverse: false,
         };
     let (contacts, overlaps) = match relation {
         LineLineIntersection::None => (Vec::new(), Vec::new()),
@@ -517,6 +520,7 @@ fn append_native_line_arc_contact(
             first: first_parameter,
             second: second_parameter,
             point: RationalBezierIntersectionPointEvidence2::Exact(hit.point.clone()),
+            certified_transverse: false,
         };
         if !contacts
             .iter()
@@ -650,6 +654,7 @@ fn build_native_arc_evidence(
                         )?,
                     },
                     point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+                    certified_transverse: false,
                 };
                 if !contacts
                     .iter()
@@ -872,6 +877,7 @@ fn append_native_arc_span_contact(
             )?,
         },
         point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+        certified_transverse: false,
     };
     if !contacts
         .iter()
@@ -1428,6 +1434,11 @@ impl CurveIntersectionContact2 {
     pub const fn point(&self) -> &RationalBezierIntersectionPointEvidence2 {
         &self.point
     }
+
+    /// Returns whether retained exact evidence certifies a transverse contact.
+    pub const fn is_certified_transverse(&self) -> bool {
+        self.certified_transverse
+    }
 }
 
 impl CurveIntersectionPairBlocker2 {
@@ -1600,11 +1611,16 @@ fn append_unique_contacts(
                 local_parameter: contact.second_parameter().clone(),
             },
             point: contact.point().clone(),
+            certified_transverse: contact.is_certified_transverse(),
         };
-        if !output
-            .iter()
-            .any(|existing| same_contact(existing, &candidate, policy))
+        if let Some(existing) = output
+            .iter_mut()
+            .find(|existing| same_contact(existing, &candidate, policy))
         {
+            // A duplicate span-pair replay can contribute stronger evidence.
+            // Retain it even when the parameter pair is already present.
+            existing.certified_transverse |= candidate.certified_transverse;
+        } else {
             output.push(candidate);
         }
     }

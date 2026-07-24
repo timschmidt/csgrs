@@ -90,6 +90,34 @@ fn top_level_rational_intersection_retains_sources_and_shared_evidence() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
+fn top_level_intersection_retains_implicit_conic_transversality() {
+    let conic = Curve2::from(
+        RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap(),
+    );
+    let cubic_line = Curve2::from(
+        RationalBezier2::try_new(
+            vec![
+                Point2::new(q(3, 5), r(-1)),
+                Point2::new(q(3, 5), r(0)),
+                Point2::new(q(3, 5), r(1)),
+                Point2::new(q(3, 5), r(2)),
+            ],
+            vec![r(1); 4],
+        )
+        .unwrap(),
+    );
+
+    let result = conic
+        .retain_intersection(&cubic_line, &CurvePolicy::certified())
+        .unwrap()
+        .result()
+        .unwrap();
+    assert_eq!(result.contacts().len(), 1);
+    assert!(result.contacts()[0].is_certified_transverse());
+}
+
+#[test]
 fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
     let spline = Curve2::try_nurbs(
         1,

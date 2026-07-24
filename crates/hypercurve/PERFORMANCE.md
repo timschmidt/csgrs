@@ -2764,6 +2764,56 @@ and corrected an overstrong fuzz assertion: a positive rational denominator
 does not imply that an irrational coordinate image is monotone enough to
 transform, so `XImageFailed` or `YImageFailed` remains valid exact evidence.
 
+### Retained simple-crossing certificates
+
+The implicit-conic intersection route already isolates the roots of the
+cleared exact substitution polynomial. A simple root of that polynomial,
+together with the route's nonsingular conic frame and certified nonzero
+rational denominators, proves that the two affine curve images are transverse.
+That proof is now retained on rational-Bezier and top-level curve contacts.
+Multiple roots and undecided multiplicity remain on the existing exact tangent
+fallback; a degree-elevated tangent-line regression verifies that they are not
+misclassified.
+
+Curved-region topology consumes the retained proof in two places. It toggles
+the loop-wide inside/outside classification without constructing algebraic
+tangent coordinate images. For Boolean arrangement traversal, the already
+retained before/after region classifications and filled-side orientation
+recover the sign of the tangent cross product. Fragment reversal then supplies
+the remaining direction signs needed by the existing half-turn ordering.
+Only a unique strict-interior two-carrier crossing uses this shortcut; all
+tangencies, overlaps, multi-contact vertices, and incomplete local
+classifications retain tangent-order fallback. Start vertices are indexed once,
+so the shortcut adds linear rather than quadratic graph work.
+
+The same one-cell all-family release workload changed as follows:
+
+| Exact all-family workload | Previous | Current | Change |
+| --- | ---: | ---: | ---: |
+| Prepare and materialize all four `CurveRegion2` Booleans | 85.632 ms | 55.178 ms | 35.6% faster |
+| First complete union, including shared-topology construction | 37.256 ms | 9.657 ms | 74.1% faster |
+| Exact representative-point classifications / split fragments | 2 / 48 | 2 / 48 | unchanged |
+| Candidate pairs / decided operations / checksum | 9 / 4 / 6 | 9 / 4 / 6 | unchanged |
+
+The current values are medians of five sequential complete process runs. The
+complete runs were 55.178, 58.821, 55.089, 57.498, and 54.230 ms; median pair
+preparation was 44.420 ms. Median operation times were 9.657, 0.226, 0.228,
+and 0.460 ms for union, intersection, difference, and XOR. The matched exact
+polyline projection median was 0.484 ms, leaving a roughly 114x complete native
+gap. Relative to the earlier 4.315 s all-family baseline, the cumulative
+reduction is 98.7%.
+
+The fresh frame-pointer profile no longer shows algebraic contact-tangent
+construction as a material frontier. About four fifths of measured wall time
+is now pair preparation, with exact rational normalization dominating self
+cycles; initial topology construction accounts for most of the remainder.
+The native line/arc accelerator therefore remains justified. Complete default
+and all-feature tests, strict all-feature Clippy, warning-denied rustdoc,
+library and UI WASM builds, and the 32-test UI suite passed. Seven
+AddressSanitizer campaigns covering algebraic parameters and images, split
+materialization, tangent ordering, arrangements, retained regions, and region
+Booleans completed at least 1,000 executions without a finding.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -537,6 +537,7 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
         panic!("implicit conic route did not retain its exact contact");
     };
     assert_eq!(contacts.len(), 1);
+    assert!(contacts[0].is_certified_transverse());
     assert_eq!(contacts[0].first_parameter().as_exact(), Some(&q(1, 2)));
     assert_eq!(contacts[0].second_parameter().as_exact(), Some(&q(3, 5)));
     assert!(matches!(
@@ -551,6 +552,7 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
         panic!("reversed implicit conic route did not retain its exact contact");
     };
     assert_eq!(reversed.len(), 1);
+    assert!(reversed[0].is_certified_transverse());
     assert_eq!(
         reversed[0].first_parameter(),
         contacts[0].second_parameter()
@@ -559,6 +561,24 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
         reversed[0].second_parameter(),
         contacts[0].first_parameter()
     );
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn implicit_conic_route_does_not_certify_a_tangent_root_as_transverse() {
+    let policy = CurvePolicy::certified();
+    let conic =
+        RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
+    let tangent_line =
+        RationalBezier2::try_new(vec![p(1, -1), p(1, 0), p(1, 1), p(1, 2)], vec![r(1); 4]).unwrap();
+
+    let RationalBezierIntersectionContacts2::Contacts(contacts) =
+        conic.intersection_contacts(&tangent_line, &policy).unwrap()
+    else {
+        panic!("implicit conic route did not retain its tangent contact");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert!(!contacts[0].is_certified_transverse());
 }
 
 #[test]

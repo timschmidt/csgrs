@@ -2,6 +2,7 @@
 
 use std::cell::OnceCell;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
@@ -122,6 +123,13 @@ struct CarrierOverlap {
     orientation: RationalBezierOverlapOrientation2,
 }
 
+#[derive(Clone, Copy, Debug)]
+struct TransitionContactCandidate {
+    first_carrier: usize,
+    second_carrier: usize,
+    certified_transverse: bool,
+}
+
 #[derive(Clone, Debug)]
 struct SplitCarrierFragment {
     fragment: BezierSplitFragment2,
@@ -135,10 +143,17 @@ struct ClassifiedSplitCarrierFragment {
     location: RegionPointLocation,
 }
 
+#[derive(Clone, Copy, Debug)]
+struct BooleanArrangementFragmentDirection {
+    carrier_index: usize,
+    follows_carrier: bool,
+}
+
 #[derive(Clone, Debug)]
 struct PreparedCurveRegionBooleanTopology {
     split_fragments: Vec<Vec<ClassifiedSplitCarrierFragment>>,
     overlaps: Vec<CarrierOverlap>,
+    transverse_contacts: HashMap<usize, TransitionContactCandidate>,
     point_classification_count: usize,
 }
 
@@ -598,7 +613,7 @@ impl RetainedCurveRegionBoolean2 {
         let mut contact_points = Vec::<(RationalBezierIntersectionPointEvidence2, usize)>::new();
         let mut next_topology_vertex = 0_usize;
         let mut contact_vertex_counts = Vec::<usize>::new();
-        let mut transition_candidates = Vec::<Option<(usize, usize)>>::new();
+        let mut transition_candidates = Vec::<Option<TransitionContactCandidate>>::new();
         let mut reclassification_vertices = Vec::<bool>::new();
         seed_loop_topology_vertices(
             &self.data.carriers,
@@ -698,7 +713,11 @@ impl RetainedCurveRegionBoolean2 {
                         &self.data.carriers[pair.second_carrier_index],
                         &self.data.policy,
                     ) {
-                    Some((pair.first_carrier_index, pair.second_carrier_index))
+                    Some(TransitionContactCandidate {
+                        first_carrier: pair.first_carrier_index,
+                        second_carrier: pair.second_carrier_index,
+                        certified_transverse: contact.is_certified_transverse(),
+                    })
                 } else {
                     None
                 };
@@ -826,6 +845,18 @@ impl RetainedCurveRegionBoolean2 {
             &transition_candidates,
             &self.data.policy,
         );
+        let transverse_contacts = transition_candidates
+            .into_iter()
+            .zip(&transverse_vertices)
+            .enumerate()
+            .filter_map(|(vertex, (candidate, transverse))| {
+                if *transverse {
+                    candidate.map(|candidate| (vertex, candidate))
+                } else {
+                    None
+                }
+            })
+            .collect();
         let mut classified_split_fragments = Vec::with_capacity(split_fragments.len());
         let mut point_classification_count = 0_usize;
         let mut previous = None::<(
@@ -880,6 +911,7 @@ impl RetainedCurveRegionBoolean2 {
         Ok(PreparedCurveRegionBooleanTopology {
             split_fragments: classified_split_fragments,
             overlaps,
+            transverse_contacts,
             point_classification_count,
         })
     }
@@ -921,6 +953,7 @@ impl RetainedCurveRegionBoolean2 {
 
         let topology = self.boolean_topology()?;
         let mut arrangement_fragments = Vec::new();
+        let mut arrangement_directions = Vec::new();
         for carrier_index in 0..self.data.carriers.len() {
             for (split_fragment_index, classified) in topology.split_fragments[carrier_index]
                 .iter()
@@ -955,6 +988,10 @@ impl RetainedCurveRegionBoolean2 {
                     }
                     RegionFragmentAction::Discard => unreachable!(),
                 };
+                arrangement_directions.push(BooleanArrangementFragmentDirection {
+                    carrier_index,
+                    follows_carrier: action == RegionFragmentAction::Keep,
+                });
                 arrangement_fragments.push(
                     BezierArrangementFragment2::new(carrier_index, split_fragment_index, fragment)
                         .with_topology_vertices(start_topology_vertex, end_topology_vertex),
@@ -963,7 +1000,15 @@ impl RetainedCurveRegionBoolean2 {
         }
 
         let graph = BezierArrangementGraph2::from_certified_fragments(arrangement_fragments);
-        let traversal = match graph.traverse_retained_with_tangent_order(&self.data.policy) {
+        let certified_successors = certified_boolean_successors(
+            &graph,
+            &arrangement_directions,
+            topology,
+            &self.data.carriers,
+        );
+        let traversal = match graph
+            .traverse_retained_with_certified_successors(&certified_successors, &self.data.policy)
+        {
             Classification::Decided(traversal) => traversal,
             Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
         };
@@ -1228,26 +1273,193 @@ fn split_carrier(
     Ok(output)
 }
 
+fn certified_boolean_successors(
+    graph: &BezierArrangementGraph2,
+    directions: &[BooleanArrangementFragmentDirection],
+    topology: &PreparedCurveRegionBooleanTopology,
+    carriers: &[RegionCarrier],
+) -> Vec<Option<usize>> {
+    // Index starts once so retaining branch certificates stays linear in the
+    // emitted graph size even for large curved regions.
+    let mut starts_by_vertex = HashMap::<usize, Vec<usize>>::new();
+    for (fragment_index, fragment) in graph.fragments().iter().enumerate() {
+        if let Some(vertex) = fragment.start_topology_vertex()
+            && topology.transverse_contacts.contains_key(&vertex)
+        {
+            starts_by_vertex
+                .entry(vertex)
+                .or_default()
+                .push(fragment_index);
+        }
+    }
+    graph
+        .fragments()
+        .iter()
+        .enumerate()
+        .map(|(current_index, current)| {
+            let vertex = current.end_topology_vertex()?;
+            let contact = topology.transverse_contacts.get(&vertex)?;
+            let crossing_is_positive =
+                transverse_carrier_cross_is_positive(topology, contact, vertex, carriers)?;
+            let mut candidates = starts_by_vertex
+                .get(&vertex)?
+                .iter()
+                .copied()
+                .filter(|candidate_index| *candidate_index != current_index);
+            let first_index = candidates.next()?;
+            let second_index = candidates.next()?;
+            if candidates.next().is_some() {
+                return None;
+            }
+            let current = *directions.get(current_index)?;
+            let first = *directions.get(first_index)?;
+            let second = *directions.get(second_index)?;
+            if [current, first, second].into_iter().any(|direction| {
+                direction.carrier_index != contact.first_carrier
+                    && direction.carrier_index != contact.second_carrier
+            }) {
+                return None;
+            }
+            certified_turn_preference(current, first, second, contact, crossing_is_positive).map(
+                |first_before_second| {
+                    if first_before_second {
+                        first_index
+                    } else {
+                        second_index
+                    }
+                },
+            )
+        })
+        .collect()
+}
+
+fn transverse_carrier_cross_is_positive(
+    topology: &PreparedCurveRegionBooleanTopology,
+    contact: &TransitionContactCandidate,
+    vertex: usize,
+    carriers: &[RegionCarrier],
+) -> Option<bool> {
+    let fragments = topology.split_fragments.get(contact.second_carrier)?;
+    let before = fragments
+        .iter()
+        .find(|fragment| fragment.split.end_topology_vertex == Some(vertex))?
+        .location;
+    let after = fragments
+        .iter()
+        .find(|fragment| fragment.split.start_topology_vertex == Some(vertex))?
+        .location;
+    // For a regular crossing, whether the second oriented carrier enters the
+    // first region determines the sign of cross(first tangent, second
+    // tangent), after accounting for which side of the first carrier is
+    // filled. This reuses the exact region classifications already retained
+    // by topology construction.
+    transverse_cross_from_locations(
+        before,
+        after,
+        carriers.get(contact.first_carrier)?.filled_side_is_left,
+    )
+}
+
+const fn transverse_cross_from_locations(
+    before: RegionPointLocation,
+    after: RegionPointLocation,
+    first_filled_side_is_left: bool,
+) -> Option<bool> {
+    let enters_first_interior = match (before, after) {
+        (RegionPointLocation::Outside, RegionPointLocation::Inside) => true,
+        (RegionPointLocation::Inside, RegionPointLocation::Outside) => false,
+        _ => return None,
+    };
+    Some(enters_first_interior == first_filled_side_is_left)
+}
+
+fn certified_turn_preference(
+    base: BooleanArrangementFragmentDirection,
+    first: BooleanArrangementFragmentDirection,
+    second: BooleanArrangementFragmentDirection,
+    contact: &TransitionContactCandidate,
+    crossing_is_positive: bool,
+) -> Option<bool> {
+    let first_half = certified_turn_half(base, first, contact, crossing_is_positive)?;
+    let second_half = certified_turn_half(base, second, contact, crossing_is_positive)?;
+    if first_half != second_half {
+        return Some(first_half < second_half);
+    }
+    match certified_direction_cross(first, second, contact, crossing_is_positive)? {
+        1 => Some(true),
+        -1 => Some(false),
+        _ => None,
+    }
+}
+
+fn certified_turn_half(
+    base: BooleanArrangementFragmentDirection,
+    candidate: BooleanArrangementFragmentDirection,
+    contact: &TransitionContactCandidate,
+    crossing_is_positive: bool,
+) -> Option<u8> {
+    if base.carrier_index == candidate.carrier_index {
+        return Some(u8::from(base.follows_carrier != candidate.follows_carrier));
+    }
+    Some(
+        if certified_direction_cross(base, candidate, contact, crossing_is_positive)? > 0 {
+            0
+        } else {
+            1
+        },
+    )
+}
+
+fn certified_direction_cross(
+    first: BooleanArrangementFragmentDirection,
+    second: BooleanArrangementFragmentDirection,
+    contact: &TransitionContactCandidate,
+    crossing_is_positive: bool,
+) -> Option<i8> {
+    if first.carrier_index == second.carrier_index {
+        return Some(0);
+    }
+    let source_cross = if first.carrier_index == contact.first_carrier
+        && second.carrier_index == contact.second_carrier
+    {
+        if crossing_is_positive { 1 } else { -1 }
+    } else if first.carrier_index == contact.second_carrier
+        && second.carrier_index == contact.first_carrier
+    {
+        if crossing_is_positive { -1 } else { 1 }
+    } else {
+        return None;
+    };
+    let first_orientation = if first.follows_carrier { 1 } else { -1 };
+    let second_orientation = if second.follows_carrier { 1 } else { -1 };
+    Some(source_cross * first_orientation * second_orientation)
+}
+
 fn certified_transverse_contact_vertices(
     split_fragments: &[Vec<SplitCarrierFragment>],
-    candidates: &[Option<(usize, usize)>],
+    candidates: &[Option<TransitionContactCandidate>],
     policy: &CurvePolicy,
 ) -> Vec<bool> {
     candidates
         .iter()
         .enumerate()
         .map(|(vertex, candidate)| {
-            let Some((first_carrier, second_carrier)) = candidate else {
+            let Some(candidate) = candidate else {
                 return false;
             };
-            let Some(first) =
-                algebraic_endpoint_tangent_at_vertex(&split_fragments[*first_carrier], vertex)
-            else {
+            if candidate.certified_transverse {
+                return true;
+            }
+            let Some(first) = algebraic_endpoint_tangent_at_vertex(
+                &split_fragments[candidate.first_carrier],
+                vertex,
+            ) else {
                 return false;
             };
-            let Some(second) =
-                algebraic_endpoint_tangent_at_vertex(&split_fragments[*second_carrier], vertex)
-            else {
+            let Some(second) = algebraic_endpoint_tangent_at_vertex(
+                &split_fragments[candidate.second_carrier],
+                vertex,
+            ) else {
                 return false;
             };
             matches!(
@@ -1785,5 +1997,143 @@ const fn boolean_operation_index(operation: BooleanOp) -> usize {
         BooleanOp::Intersection => 1,
         BooleanOp::Difference => 2,
         BooleanOp::Xor => 3,
+    }
+}
+
+#[cfg(test)]
+mod certified_successor_tests {
+    use super::*;
+
+    fn direction(
+        carrier_index: usize,
+        follows_carrier: bool,
+    ) -> BooleanArrangementFragmentDirection {
+        BooleanArrangementFragmentDirection {
+            carrier_index,
+            follows_carrier,
+        }
+    }
+
+    fn vector(
+        direction: BooleanArrangementFragmentDirection,
+        crossing_is_positive: bool,
+    ) -> (i8, i8) {
+        let vector = if direction.carrier_index == 3 {
+            (1, 0)
+        } else if crossing_is_positive {
+            (0, 1)
+        } else {
+            (0, -1)
+        };
+        if direction.follows_carrier {
+            vector
+        } else {
+            (-vector.0, -vector.1)
+        }
+    }
+
+    fn numerical_turn_preference(
+        base: (i8, i8),
+        first: (i8, i8),
+        second: (i8, i8),
+    ) -> Option<bool> {
+        let half = |candidate: (i8, i8)| {
+            let cross = base.0 * candidate.1 - base.1 * candidate.0;
+            if cross > 0 {
+                0
+            } else if cross < 0 {
+                1
+            } else if base.0 * candidate.0 + base.1 * candidate.1 > 0 {
+                0
+            } else {
+                1
+            }
+        };
+        let first_half = half(first);
+        let second_half = half(second);
+        if first_half != second_half {
+            return Some(first_half < second_half);
+        }
+        match (first.0 * second.1 - first.1 * second.0).cmp(&0) {
+            Ordering::Greater => Some(true),
+            Ordering::Less => Some(false),
+            Ordering::Equal => None,
+        }
+    }
+
+    #[test]
+    fn classified_crossing_side_recovers_oriented_tangent_cross() {
+        assert_eq!(
+            transverse_cross_from_locations(
+                RegionPointLocation::Outside,
+                RegionPointLocation::Inside,
+                true,
+            ),
+            Some(true)
+        );
+        assert_eq!(
+            transverse_cross_from_locations(
+                RegionPointLocation::Inside,
+                RegionPointLocation::Outside,
+                true,
+            ),
+            Some(false)
+        );
+        assert_eq!(
+            transverse_cross_from_locations(
+                RegionPointLocation::Outside,
+                RegionPointLocation::Inside,
+                false,
+            ),
+            Some(false)
+        );
+        assert_eq!(
+            transverse_cross_from_locations(
+                RegionPointLocation::Inside,
+                RegionPointLocation::Outside,
+                false,
+            ),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn certified_branch_order_matches_exact_vector_order() {
+        let contact = TransitionContactCandidate {
+            first_carrier: 3,
+            second_carrier: 7,
+            certified_transverse: true,
+        };
+        for crossing_is_positive in [false, true] {
+            for base_carrier in [3, 7] {
+                for base_forward in [false, true] {
+                    for first_carrier in [3, 7] {
+                        for first_forward in [false, true] {
+                            for second_carrier in [3, 7] {
+                                for second_forward in [false, true] {
+                                    let base = direction(base_carrier, base_forward);
+                                    let first = direction(first_carrier, first_forward);
+                                    let second = direction(second_carrier, second_forward);
+                                    assert_eq!(
+                                        certified_turn_preference(
+                                            base,
+                                            first,
+                                            second,
+                                            &contact,
+                                            crossing_is_positive,
+                                        ),
+                                        numerical_turn_preference(
+                                            vector(base, crossing_is_positive),
+                                            vector(first, crossing_is_positive),
+                                            vector(second, crossing_is_positive),
+                                        ),
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

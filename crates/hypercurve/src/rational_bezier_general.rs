@@ -156,6 +156,7 @@ pub struct RationalBezierIntersectionContact2 {
     first_parameter: BezierParameter2,
     second_parameter: BezierParameter2,
     point: RationalBezierIntersectionPointEvidence2,
+    certified_transverse: bool,
 }
 
 /// Relative parameter orientation of a certified shared rational-Bezier image.
@@ -207,6 +208,11 @@ impl RationalBezierIntersectionContact2 {
     /// Returns retained affine point evidence from the first curve replay.
     pub const fn point(&self) -> &RationalBezierIntersectionPointEvidence2 {
         &self.point
+    }
+
+    /// Returns whether retained simple-root evidence certifies a transverse contact.
+    pub const fn is_certified_transverse(&self) -> bool {
+        self.certified_transverse
     }
 }
 
@@ -1452,6 +1458,16 @@ impl RationalBezier2 {
         }
         let mut contacts = Vec::with_capacity(other_parameters.len());
         for parameter in &other_parameters {
+            // The quadratic frame is nonsingular and both rational
+            // denominators have a certified common sign. Consequently a
+            // simple root of the cleared implicit substitution has nonzero
+            // directional derivative, which is exactly transversality of the
+            // two regular affine images. Multiple or undecided roots retain
+            // the existing tangent-based fallback.
+            let certified_transverse = matches!(
+                polynomial.is_simple_root(parameter, policy)?,
+                Classification::Decided(true)
+            );
             let mapped = conic_parameter_from_curve_parameter(self, other, parameter, policy)?;
             match mapped {
                 Classification::Decided(Some(conic_parameter)) => {
@@ -1466,6 +1482,7 @@ impl RationalBezier2 {
                         first_parameter: conic_parameter,
                         second_parameter: parameter.clone(),
                         point,
+                        certified_transverse,
                     });
                 }
                 Classification::Decided(None) => {}
@@ -1516,6 +1533,7 @@ impl RationalBezier2 {
                                 first_parameter: BezierParameter2::Exact(first_parameter),
                                 second_parameter: BezierParameter2::Exact(second_parameter),
                                 point: RationalBezierIntersectionPointEvidence2::Exact(point),
+                                certified_transverse: false,
                             });
                         }
                         Ok(Classification::Decided(if replayed.is_empty() {
@@ -1999,6 +2017,7 @@ impl RationalBezier2 {
                         first_parameter: first_parameters[first_index].clone(),
                         second_parameter: second_parameters[second_index].clone(),
                         point: first_replay.evidence.clone(),
+                        certified_transverse: false,
                     }),
                     Some(false) => {}
                     None => match self.parameter_pair_same_point_by_incidence(
@@ -2012,6 +2031,7 @@ impl RationalBezier2 {
                                 first_parameter: first_parameters[first_index].clone(),
                                 second_parameter: second_parameters[second_index].clone(),
                                 point: first_replay.evidence.clone(),
+                                certified_transverse: false,
                             });
                         }
                         Classification::Decided(false) => {}
@@ -3473,6 +3493,7 @@ fn reverse_rational_intersection_contacts(
                         first_parameter: contact.second_parameter.clone(),
                         second_parameter: contact.first_parameter.clone(),
                         point: contact.point.clone(),
+                        certified_transverse: contact.certified_transverse,
                     })
                     .collect::<Vec<_>>()
                     .into(),
@@ -3495,6 +3516,7 @@ fn reverse_rational_intersection_contacts(
                     first_parameter: contact.second_parameter.clone(),
                     second_parameter: contact.first_parameter.clone(),
                     point: contact.point.clone(),
+                    certified_transverse: contact.certified_transverse,
                 })
                 .collect::<Vec<_>>()
                 .into(),
