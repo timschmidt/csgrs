@@ -130,6 +130,53 @@ fn irrational_root_isolation_skips_rational_reconstruction_refinement() {
 }
 
 #[test]
+fn nonrational_quartic_uses_exact_bernstein_root_certificates() {
+    // pi(2t² - 1)(3t² - 1) has the two simple unit roots
+    // sqrt(1/3) and sqrt(1/2). The non-rational common factor exercises the
+    // exact Bernstein path that replaces four expensive field remainders.
+    let pi = Real::pi();
+    let polynomial = polynomial(vec![pi.clone(), r(0), &pi * r(-5), r(0), &pi * r(6)]);
+    let result = decided(
+        polynomial
+            .isolate_unit_interval_roots_with_trace(&policy())
+            .unwrap(),
+    );
+
+    assert_eq!(result.roots().len(), 2);
+    assert!(
+        result
+            .roots()
+            .iter()
+            .all(|root| matches!(root, BezierParameter2::Algebraic(_)))
+    );
+    assert_eq!(result.trace().sturm_sequence_builds(), 0);
+    assert!(result.trace().bisections() > 0);
+}
+
+#[test]
+fn repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation() {
+    // pi(2t - 1)²(t² + 1) has one repeated unit root. A sign-variation
+    // certificate cannot prove it simple, so completeness comes from the
+    // existing Sturm path.
+    let pi = Real::pi();
+    let polynomial = polynomial(vec![
+        pi.clone(),
+        &pi * r(-4),
+        &pi * r(5),
+        &pi * r(-4),
+        &pi * r(4),
+    ]);
+    let result = decided(
+        polynomial
+            .isolate_unit_interval_roots_with_trace(&policy())
+            .unwrap(),
+    );
+
+    assert_eq!(result.roots(), &[BezierParameter2::Exact(q(1, 2))]);
+    assert!(result.trace().sturm_sequence_builds() > 0);
+}
+
+#[test]
 fn cubic_distance_stationary_quintic_isolates_all_five_candidates() {
     // (B(t)-P) dot B'(t) for controls (0,0), (6,10), (-8,-8),
     // (-4,10) and query point (-3,3). All five roots lie in (0,1).

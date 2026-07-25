@@ -15,9 +15,8 @@
 //! with exact-scalar interval certification at the acceptance boundary.
 
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
-use num::{BigUint, One};
 
-use crate::bezier_parameter::{bernstein_to_power_coefficients, exact_nonnegative_integer_real};
+use crate::bezier_parameter::{bernstein_to_power_coefficients, power_to_bernstein_coefficients};
 use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::{
     BezierCuspClassification, BezierDegree, BezierEndpoint, BezierInflectionClassification,
@@ -2492,39 +2491,6 @@ fn polynomial_square_root(
         }
     }
     Ok(Classification::Decided(Some(root)))
-}
-
-fn power_to_bernstein_coefficients(coefficients: &[Real], degree: usize) -> CurveResult<Vec<Real>> {
-    if coefficients.len() > degree + 1 {
-        return Err(CurveError::InvalidDegreeElevation);
-    }
-    let mut degree_binomials = Vec::with_capacity(degree + 1);
-    let mut binomial = BigUint::one();
-    for index in 0..=degree {
-        degree_binomials.push(exact_nonnegative_integer_real(&binomial)?);
-        if index != degree {
-            binomial *= BigUint::from(degree - index);
-            binomial /= BigUint::from(index + 1);
-        }
-    }
-
-    let mut bernstein = Vec::with_capacity(degree + 1);
-    let mut row = vec![BigUint::one()];
-    for index in 0..=degree {
-        if index != 0 {
-            row.push(BigUint::one());
-            for power in (1..index).rev() {
-                row[power] = &row[power - 1] + &row[power];
-            }
-        }
-        let mut value = Real::zero();
-        for (power, coefficient) in coefficients.iter().enumerate().take(index + 1) {
-            let numerator = exact_nonnegative_integer_real(&row[power])?;
-            value = &value + coefficient * (numerator / &degree_binomials[power])?;
-        }
-        bernstein.push(value);
-    }
-    Ok(bernstein)
 }
 
 fn polynomial_from_coefficients(

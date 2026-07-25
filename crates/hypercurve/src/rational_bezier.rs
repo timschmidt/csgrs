@@ -12,6 +12,7 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
+use crate::bezier_parameter::subdivide_scalar_bernstein_half;
 use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
 use crate::bezier_topology::polynomial_roots_in_unit_interval_with_endpoints;
 use crate::classify::{
@@ -1739,7 +1740,8 @@ pub(crate) fn isolate_scalar_bernstein_roots(
     }
 
     let mid = ((&start + &end) / Real::from(2_i8)).map_err(|_| UncertaintyReason::Unsupported)?;
-    let (left, right) = subdivide_scalar_bernstein_half(&controls)?;
+    let (left, right) =
+        subdivide_scalar_bernstein_half(&controls).map_err(|_| UncertaintyReason::Unsupported)?;
     if is_zero(&left[left.len() - 1], policy) == Some(true) {
         push_unique_graph_parameter(exact_parameters, mid.clone(), policy)?;
     }
@@ -1763,30 +1765,6 @@ pub(crate) fn isolate_scalar_bernstein_roots(
         spans,
     )?;
     isolate_scalar_bernstein_roots(right, mid, end, depth + 1, policy, exact_parameters, spans)
-}
-
-fn subdivide_scalar_bernstein_half(
-    controls: &[Real],
-) -> Result<(Vec<Real>, Vec<Real>), UncertaintyReason> {
-    if controls.is_empty() {
-        return Err(UncertaintyReason::Unsupported);
-    }
-
-    let degree = controls.len() - 1;
-    let mut work = controls.to_vec();
-    let mut left = Vec::with_capacity(controls.len());
-    let mut right = Vec::with_capacity(controls.len());
-    left.push(work[0].clone());
-    right.push(work[degree].clone());
-    for level in 1..=degree {
-        for index in 0..=degree - level {
-            work[index] = midpoint_real(&work[index], &work[index + 1])?;
-        }
-        left.push(work[0].clone());
-        right.push(work[degree - level].clone());
-    }
-    right.reverse();
-    Ok((left, right))
 }
 
 fn strict_rational_graph_order_from_degree4_weighted_signs(
@@ -3786,7 +3764,7 @@ mod tests {
     fn rational_midpoint_subdivision_evidence_empty_controls() {
         assert_eq!(
             subdivide_scalar_bernstein_half(&[]),
-            Err(UncertaintyReason::Unsupported)
+            Err(CurveError::InvalidBezierPolynomial)
         );
     }
 

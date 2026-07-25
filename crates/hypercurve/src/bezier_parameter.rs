@@ -101,6 +101,7 @@ struct BezierAlgebraicParameterData {
 struct BezierAlgebraicParameterSharedData {
     represented_rational_root: OnceCell<Option<Real>>,
     sturm_sequence: OnceCell<Rc<[Vec<Real>]>>,
+    simple_root: OnceCell<bool>,
     rational_images: RefCell<Vec<RetainedRationalBezierAlgebraicImages>>,
 }
 
@@ -382,8 +383,12 @@ impl BezierParameterPolynomial {
 
         let derivative_coefficients = derivative_coefficients(&self.coefficients);
         let algebraic = parameters.iter().find_map(|parameter| match parameter {
-            BezierParameter2::Algebraic(parameter) => Some(parameter),
-            BezierParameter2::Exact(_) => None,
+            BezierParameter2::Algebraic(parameter)
+                if parameter.data.shared.simple_root.get() != Some(&true) =>
+            {
+                Some(parameter)
+            }
+            BezierParameter2::Exact(_) | BezierParameter2::Algebraic(_) => None,
         });
         let repeated_evidence = if let Some(algebraic) = algebraic {
             if algebraic.polynomial() != self {
@@ -477,6 +482,10 @@ impl BezierParameterPolynomial {
                 BezierParameter2::Algebraic(parameter) => {
                     if parameter.polynomial() != self {
                         return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    }
+                    if parameter.data.shared.simple_root.get() == Some(&true) {
+                        classifications.push(Classification::Decided(true));
+                        continue;
                     }
                     match &repeated_evidence {
                         RepeatedRootEvidence::NoDerivative => Classification::Decided(false),
@@ -690,6 +699,15 @@ impl BezierAlgebraicParameter2 {
                 shared: Rc::new(BezierAlgebraicParameterSharedData::default()),
             }),
         }
+    }
+
+    fn from_certified_simple_singleton(
+        polynomial: BezierParameterPolynomial,
+        interval: BezierParameterInterval,
+    ) -> Self {
+        let parameter = Self::from_certified_singleton(polynomial, interval);
+        let _ = parameter.data.shared.simple_root.set(true);
+        parameter
     }
 
     fn from_certified_singleton_with_sturm_sequence(
@@ -2508,6 +2526,78 @@ enum UnitRootSearch {
     RepresentedRoot(Real),
 }
 
+fn exact_nonrational_quartic_unit_roots(
+    polynomial: &BezierParameterPolynomial,
+    policy: &CurvePolicy,
+    trace: &mut BezierRootIsolationTrace2,
+) -> CurveResult<Option<Vec<BezierParameter2>>> {
+    if polynomial.degree() != 4
+        || polynomial
+            .coefficients()
+            .iter()
+            .all(|coefficient| coefficient.exact_rational_ref().is_some())
+    {
+        return Ok(None);
+    }
+
+    let controls = power_to_bernstein_coefficients(polynomial.coefficients(), 4)?;
+    let mut pending = vec![(controls, Real::zero(), Real::one(), 0_usize, true, true)];
+    let mut isolated = Vec::new();
+    while let Some((controls, start, end, depth, touches_start, touches_end)) = pending.pop() {
+        trace.maximum_depth = trace.maximum_depth.max(depth);
+        let signs = match controls
+            .iter()
+            .map(|coefficient| real_sign(coefficient, policy))
+            .collect::<Option<Vec<_>>>()
+        {
+            Some(signs) => signs,
+            None => return Ok(None),
+        };
+        // A zero endpoint control means subdivision landed exactly on a root.
+        // The existing Sturm path can materialize and deflate that represented
+        // root; mixing it into this all-or-fallback pass would risk duplicates.
+        if signs.first() == Some(&RealSign::Zero) || signs.last() == Some(&RealSign::Zero) {
+            return Ok(None);
+        }
+        let variations = signs
+            .into_iter()
+            .filter(|sign| *sign != RealSign::Zero)
+            .fold((None, 0_usize), |(previous, variations), sign| {
+                (
+                    Some(sign),
+                    variations + usize::from(previous.is_some_and(|value| value != sign)),
+                )
+            })
+            .1;
+        trace.interval_root_counts += 1;
+        if variations == 0 {
+            continue;
+        }
+        if variations == 1 && !touches_start && !touches_end {
+            let interval = match BezierParameterInterval::try_new(start, end, policy)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            isolated.push(BezierParameter2::Algebraic(
+                BezierAlgebraicParameter2::from_certified_simple_singleton(
+                    polynomial.clone(),
+                    interval,
+                ),
+            ));
+            continue;
+        }
+        if depth >= 64 {
+            return Ok(None);
+        }
+        let midpoint = midpoint_real(&start, &end)?;
+        let (left, right) = subdivide_scalar_bernstein_half(&controls)?;
+        trace.bisections += 1;
+        pending.push((right, midpoint.clone(), end, depth + 1, false, touches_end));
+        pending.push((left, start, midpoint, depth + 1, touches_start, false));
+    }
+    Ok(Some(isolated))
+}
+
 fn isolate_unit_roots(
     mut coefficients: Vec<Real>,
     policy: &CurvePolicy,
@@ -2549,6 +2639,17 @@ fn isolate_unit_roots(
             .filter_map(BezierParameter2::as_exact)
             .cloned()
             .collect::<Vec<_>>();
+        let has_interior_represented_root = represented_boundaries.iter().any(|root| {
+            compare_reals(root, &Real::zero(), policy) == Some(Ordering::Greater)
+                && compare_reals(root, &Real::one(), policy) == Some(Ordering::Less)
+        });
+        if !has_interior_represented_root
+            && let Some(mut algebraic) =
+                exact_nonrational_quartic_unit_roots(&polynomial, policy, &mut trace)?
+        {
+            represented.append(&mut algebraic);
+            break;
+        }
         match search_unit_roots(&polynomial, &represented_boundaries, policy, &mut trace)? {
             Classification::Decided(UnitRootSearch::Isolated(mut algebraic)) => {
                 represented.append(&mut algebraic);
@@ -2786,6 +2887,66 @@ pub(crate) fn bernstein_to_power_coefficients(values: Vec<Real>) -> CurveResult<
         coefficients.push(&differences[0] * exact_nonnegative_integer_real(&degree_binomial)?);
     }
     Ok(coefficients)
+}
+
+pub(crate) fn power_to_bernstein_coefficients(
+    coefficients: &[Real],
+    degree: usize,
+) -> CurveResult<Vec<Real>> {
+    if coefficients.len() > degree + 1 {
+        return Err(CurveError::InvalidDegreeElevation);
+    }
+    let mut degree_binomials = Vec::with_capacity(degree + 1);
+    let mut binomial = BigUint::one();
+    for index in 0..=degree {
+        degree_binomials.push(exact_nonnegative_integer_real(&binomial)?);
+        if index != degree {
+            binomial *= BigUint::from(degree - index);
+            binomial /= BigUint::from(index + 1);
+        }
+    }
+
+    let mut bernstein = Vec::with_capacity(degree + 1);
+    let mut row = vec![BigUint::one()];
+    for index in 0..=degree {
+        if index != 0 {
+            row.push(BigUint::one());
+            for power in (1..index).rev() {
+                row[power] = &row[power - 1] + &row[power];
+            }
+        }
+        let mut value = Real::zero();
+        for (power, coefficient) in coefficients.iter().enumerate().take(index + 1) {
+            let numerator = exact_nonnegative_integer_real(&row[power])?;
+            value = &value + coefficient * (numerator / &degree_binomials[power])?;
+        }
+        bernstein.push(value);
+    }
+    Ok(bernstein)
+}
+
+pub(crate) fn subdivide_scalar_bernstein_half(
+    controls: &[Real],
+) -> CurveResult<(Vec<Real>, Vec<Real>)> {
+    if controls.is_empty() {
+        return Err(CurveError::InvalidBezierPolynomial);
+    }
+
+    let degree = controls.len() - 1;
+    let mut work = controls.to_vec();
+    let mut left = Vec::with_capacity(controls.len());
+    let mut right = Vec::with_capacity(controls.len());
+    left.push(work[0].clone());
+    right.push(work[degree].clone());
+    for level in 1..=degree {
+        for index in 0..=degree - level {
+            work[index] = midpoint_real(&work[index], &work[index + 1])?;
+        }
+        left.push(work[0].clone());
+        right.push(work[degree - level].clone());
+    }
+    right.reverse();
+    Ok((left, right))
 }
 
 pub(crate) fn exact_nonnegative_integer_real(value: &BigUint) -> CurveResult<Real> {
@@ -3075,6 +3236,54 @@ mod conversion_tests {
             sturm_point_evidence(&linear_sequence, &rational(1, 2), &policy).unwrap(),
             Classification::Decided(SturmPointEvidence::Root)
         ));
+    }
+
+    #[test]
+    fn bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds() {
+        let policy = CurvePolicy::certified();
+        let pi = Real::pi();
+        let defining = BezierParameterPolynomial::try_new_power_basis(
+            vec![
+                pi.clone(),
+                Real::zero(),
+                &pi * Real::from(-5),
+                Real::zero(),
+                &pi * Real::from(6),
+            ],
+            &policy,
+        )
+        .unwrap();
+        let defining = decided(defining, "non-rational quartic");
+        let result = decided(
+            defining
+                .isolate_unit_interval_roots_with_trace(&policy)
+                .unwrap(),
+            "Bernstein isolation",
+        );
+        assert_eq!(result.trace().sturm_sequence_builds(), 0);
+        assert_eq!(result.roots().len(), 2);
+        for root in result.roots() {
+            let BezierParameter2::Algebraic(parameter) = root else {
+                panic!("Bernstein singleton should remain algebraic");
+            };
+            assert!(parameter.data.shared.sturm_sequence.get().is_none());
+        }
+
+        assert_eq!(
+            defining
+                .simple_root_classifications(result.roots(), &policy)
+                .unwrap(),
+            vec![Classification::Decided(true), Classification::Decided(true)]
+        );
+        for root in result.roots() {
+            let BezierParameter2::Algebraic(parameter) = root else {
+                unreachable!();
+            };
+            assert!(
+                parameter.data.shared.sturm_sequence.get().is_none(),
+                "the Descartes singleton certificate must carry simple-root evidence"
+            );
+        }
     }
 
     #[test]
