@@ -17,6 +17,7 @@ pub mod assembly;
 pub mod authoring;
 #[cfg(feature = "layout")]
 pub mod autoroute;
+pub mod behavior;
 pub mod coupling;
 #[cfg(feature = "drc")]
 pub mod drc;
@@ -24,12 +25,14 @@ pub mod drc;
 pub mod edit;
 pub mod erc;
 pub mod error;
+pub mod event_simulation;
 #[cfg(feature = "geometry")]
 pub mod fabrication;
 pub mod hierarchy;
 pub mod identity;
 #[cfg(feature = "interchange")]
 pub mod interchange;
+pub mod interface;
 #[cfg(feature = "layout")]
 pub mod kicad;
 #[cfg(feature = "layout")]
@@ -115,6 +118,12 @@ pub use autoroute::{
     NegotiatedRouteStatus, NegotiatedRouteWorkEvidence, NegotiatedRouterError,
     NegotiatedViaStyleEvidence,
 };
+#[cfg(feature = "behavior-async")]
+pub use behavior::{AsyncBehaviorRuntime, AsyncBehaviorStatus, AsyncCircuitBehavior};
+pub use behavior::{
+    BehaviorContext, BehaviorError, BehaviorQueue, BehaviorRuntime, CircuitEventHandler,
+    SelectiveEventMailbox,
+};
 pub use coupling::{
     CoupledResidualBlock, ElectromechanicalPort, ElectrothermalRcReport, PhysicalElectricalPort,
     ThermalPort,
@@ -139,6 +148,15 @@ pub use erc::{
     ErcSeverity,
 };
 pub use error::{CircuitError, CircuitResult};
+pub use event_simulation::{
+    CircuitEvent, CircuitEventAgenda, CircuitEventAgendaError, CircuitEventCause,
+    CircuitEventCounters, CircuitEventKind, CircuitEventLifecycleAction,
+    CircuitEventLifecycleRecord, CircuitEventPhase, CircuitEventReplayIssue,
+    CircuitEventReplayReport, CircuitEventRequest, CircuitEventTarget, CircuitEventValidationIssue,
+    CircuitEventValue, CircuitSimulationFingerprint, ExactBreakpointError, ExactBreakpointProvider,
+    ExactBreakpointSchedule, LogicValue, StochasticSample, StochasticStream, StochasticStreamError,
+    earliest_exact_breakpoint_after,
+};
 #[cfg(feature = "geometry")]
 pub use fabrication::{
     FABRICATION_MANIFEST_SCHEMA, FABRICATION_MANIFEST_VERSION, FabricationContourProjectionPolicy,
@@ -159,19 +177,25 @@ pub use hierarchy::{
 };
 pub use hyperreal::Real;
 pub use identity::{
-    AssemblyVariantId, BoardId, BranchId, BusId, BusSliceId, CircuitId, CircuitInstanceId,
-    CircuitPackageName, ComponentId, DesignEditId, DeviceModelId, DifferentialPairId,
-    EscapePolicyId, KeepoutId, LandPatternGraphicId, LandPatternId, LayoutModuleId,
-    LengthTuningPatternId, NetClassId, NetId, PadId, PartRef, PhaseTuningGroupId, PinRef,
-    PlacementConstraintId, PlacementGroupId, PortId, RouteConstraintRegionId, RouteId,
-    RouteRuleRegionId, SchematicLabelId, SchematicSheetId, SchematicSheetLinkId,
-    SchematicSheetPortId, SchematicSymbolDefinitionId, SchematicSymbolId, SchematicWireId,
-    SubcircuitInstanceId, ViaId, ViaStyleId, ZoneId,
+    AssemblyVariantId, BoardId, BranchId, BundleEndpointId, BundleMemberId, BusId, BusSliceId,
+    CircuitEventId, CircuitId, CircuitInstanceId, CircuitPackageName, ComponentId, DesignEditId,
+    DeviceModelId, DifferentialPairId, EscapePolicyId, KeepoutId, LandPatternGraphicId,
+    LandPatternId, LayoutModuleId, LengthTuningPatternId, ModportId, NetClassId, NetId, PadId,
+    PartRef, PhaseTuningGroupId, PinRef, PlacementConstraintId, PlacementGroupId, PortId,
+    RandomDrawId, RouteConstraintRegionId, RouteId, RouteRuleRegionId, SchematicLabelId,
+    SchematicSheetId, SchematicSheetLinkId, SchematicSheetPortId, SchematicSymbolDefinitionId,
+    SchematicSymbolId, SchematicWireId, SignalBundleId, SubcircuitInstanceId, ViaId, ViaStyleId,
+    ZoneId,
 };
 #[cfg(feature = "interchange")]
 pub use interchange::{
     SEMANTIC_SCHEMA, SEMANTIC_SCHEMA_MIN_MIGRATABLE_VERSION, SEMANTIC_SCHEMA_VERSION,
     SemanticDocument, SemanticInterchangeError, SemanticMigrationReport, SemanticMigrationStep,
+};
+pub use interface::{
+    BundlePortBinding, Modport, ModportMember, SignalBundle, SignalBundleBindingError,
+    SignalBundleEndpoint, SignalBundleLibrary, SignalBundleValidationIssue,
+    SignalBundleValidationReport,
 };
 #[cfg(feature = "layout")]
 pub use kicad::{
@@ -321,12 +345,14 @@ pub use schematic_auto::{
     SchematicAutoPlacementEvidence,
 };
 pub use simulation::{
-    DeviceLoweringError, DeviceLoweringIssue, DiodeTransientRunError, DiodeTransientRunReport,
-    DiodeTransientStepError, DiodeTransientStepEvidence, DiodeTransientStepReport,
-    LinearDeviceLoweringReport, ReactiveState, SourceWaveformEvaluationError, TransientAdaptation,
-    TransientHistory, TransientRunError, TransientRunPolicy, TransientRunReport,
-    TransientRunStatus, TransientSample, TransientStepDecision, TransientStepDecisionKind,
-    TransientStepError, TransientStepReport,
+    CircuitEventApplication, DeviceLoweringError, DeviceLoweringIssue, DiodeTransientRunError,
+    DiodeTransientRunReport, DiodeTransientStepError, DiodeTransientStepEvidence,
+    DiodeTransientStepReport, LinearDeviceLoweringReport, ReactiveState,
+    SourceWaveformEvaluationError, TransientAdaptation, TransientHistory, TransientRunError,
+    TransientRunPolicy, TransientRunReport, TransientRunStatus, TransientSample, TransientSession,
+    TransientSessionAuditReport, TransientSessionError, TransientSessionStatus,
+    TransientSessionStep, TransientStepDecision, TransientStepDecisionKind, TransientStepError,
+    TransientStepReport,
 };
 #[cfg(feature = "layout")]
 pub use stitching::{ZoneStitchingEvidence, ZoneStitchingRejectionCounts, ZoneStitchingReport};

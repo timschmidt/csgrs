@@ -8,15 +8,16 @@ use hyperreal::Real;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    BoardContour, BoardContourSegment, Circuit, DesignRevision, PcbLayout, PcbRouteSegment,
-    SchematicLayout,
+    BoardContour, BoardContourSegment, Circuit, CircuitEventAgenda, CircuitEventRequest,
+    CircuitLibrary, DesignRevision, PcbLayout, PcbRouteSegment, SchematicLayout,
+    SignalBundleLibrary,
 };
 
 /// Stable schema family emitted by this crate.
 pub const SEMANTIC_SCHEMA: &str = "org.hypercircuit.semantic";
 
 /// Latest schema version understood by this crate.
-pub const SEMANTIC_SCHEMA_VERSION: u32 = 26;
+pub const SEMANTIC_SCHEMA_VERSION: u32 = 27;
 
 /// Oldest schema revision upgraded by the built-in additive migrations.
 pub const SEMANTIC_SCHEMA_MIN_MIGRATABLE_VERSION: u32 = 8;
@@ -60,6 +61,8 @@ pub enum SemanticMigrationStep {
     PhaseTuningGroups,
     /// Version 26 added bounded reduced-width/spacing differential-pair fanout.
     DifferentialPairNeckdown,
+    /// Version 27 added signal-bundle contracts and exact authored event traces.
+    MixedSignalWorkflow,
 }
 
 /// Evidence describing an automatic semantic JSON upgrade.
@@ -90,6 +93,12 @@ pub struct SemanticDocument {
     pub design_revision: DesignRevision,
     /// Authoritative circuit graph and simulation intent.
     pub circuit: Circuit,
+    /// Optional nominal signal-bundle and directional modport contracts.
+    #[serde(default)]
+    pub signal_bundles: SignalBundleLibrary,
+    /// Preordered exact authored circuit-event trace.
+    #[serde(default)]
+    pub event_trace: Vec<CircuitEventRequest>,
     /// Optional circuit-bound schematic presentation.
     pub schematic: Option<SchematicLayout>,
     /// Optional circuit-bound PCB intent.
@@ -109,6 +118,10 @@ pub enum SemanticInterchangeError {
     InvalidSchematic { issue_count: usize },
     /// PCB identities, references, or structural intent are inconsistent.
     InvalidPcb { issue_count: usize },
+    /// Signal-bundle definitions or endpoint mappings are inconsistent.
+    InvalidSignalBundles { issue_count: usize },
+    /// Authored event trace ordering, payload, or addresses are inconsistent.
+    InvalidEventTrace { issue_count: usize },
 }
 
 impl Display for SemanticInterchangeError {
@@ -134,6 +147,14 @@ impl Display for SemanticInterchangeError {
                     "semantic PCB has {issue_count} validation issue(s)"
                 )
             }
+            Self::InvalidSignalBundles { issue_count } => write!(
+                formatter,
+                "semantic signal bundles have {issue_count} validation issue(s)"
+            ),
+            Self::InvalidEventTrace { issue_count } => write!(
+                formatter,
+                "semantic event trace has {issue_count} validation issue(s)"
+            ),
         }
     }
 }
@@ -151,6 +172,8 @@ impl SemanticDocument {
             version: SEMANTIC_SCHEMA_VERSION,
             design_revision: DesignRevision::default(),
             circuit,
+            signal_bundles: SignalBundleLibrary::default(),
+            event_trace: Vec::new(),
             schematic,
             pcb: None,
         };
@@ -161,6 +184,26 @@ impl SemanticDocument {
     /// Attaches and validates retained PCB intent against the circuit graph.
     pub fn with_pcb(mut self, pcb: PcbLayout) -> Result<Self, SemanticInterchangeError> {
         self.pcb = Some(pcb);
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Attaches and validates directional signal-bundle contracts.
+    pub fn with_signal_bundles(
+        mut self,
+        signal_bundles: SignalBundleLibrary,
+    ) -> Result<Self, SemanticInterchangeError> {
+        self.signal_bundles = signal_bundles;
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Attaches a preordered exact authored event trace.
+    pub fn with_event_trace(
+        mut self,
+        event_trace: Vec<CircuitEventRequest>,
+    ) -> Result<Self, SemanticInterchangeError> {
+        self.event_trace = event_trace;
         self.validate()?;
         Ok(self)
     }
@@ -261,6 +304,9 @@ impl SemanticDocument {
         if version < 26 {
             steps.push(SemanticMigrationStep::DifferentialPairNeckdown);
         }
+        if version < 27 {
+            steps.push(SemanticMigrationStep::MixedSignalWorkflow);
+        }
         value["version"] = serde_json::Value::from(SEMANTIC_SCHEMA_VERSION);
         let document = serde_json::from_value::<Self>(value)
             .map_err(|error| SemanticInterchangeError::Json(error.to_string()))?;
@@ -294,6 +340,39 @@ impl SemanticDocument {
         if !circuit.is_valid() {
             return Err(SemanticInterchangeError::InvalidCircuit {
                 issue_count: circuit.issues.len(),
+            });
+        }
+        let library = CircuitLibrary {
+            root: self.circuit.id.clone(),
+            circuits: vec![self.circuit.clone()],
+        };
+        let bundle_report = self.signal_bundles.validate(&library);
+        if !bundle_report.is_valid() {
+            return Err(SemanticInterchangeError::InvalidSignalBundles {
+                issue_count: bundle_report.issues.len(),
+            });
+        }
+        let mut event_issue_count = self
+            .event_trace
+            .iter()
+            .map(|event| {
+                event
+                    .validate_against(&self.circuit, Some(&self.signal_bundles))
+                    .len()
+            })
+            .sum::<usize>();
+        if let Some(first) = self.event_trace.first() {
+            let mut agenda = CircuitEventAgenda::new(first.time.clone());
+            if agenda
+                .schedule_preordered(self.event_trace.clone())
+                .is_err()
+            {
+                event_issue_count += 1;
+            }
+        }
+        if event_issue_count != 0 {
+            return Err(SemanticInterchangeError::InvalidEventTrace {
+                issue_count: event_issue_count,
             });
         }
         if let Some(schematic) = &self.schematic {

@@ -1,12 +1,13 @@
 #![cfg(feature = "interchange")]
 
 use hypercircuit::{
-    AdapterKind, BoardId, BoardOutline, Circuit, CircuitId, CircuitInstance, CircuitInstanceId,
-    ComponentId, DeviceModel, DeviceModelId, DeviceModelKind, DevicePin, DifferentialPair,
-    DifferentialPairId, DifferentialPairNeckdown, LandPattern, LandPatternId, LandPatternPad, Net,
-    NetId, PadId, PadShape, PcbDesignRules, PcbLayout, PcbStackup, PinBinding, PinElectricalKind,
-    PinRef, Plating, Real, SEMANTIC_SCHEMA_VERSION, SchematicEndpoint, SchematicLayout,
-    SchematicPinPlacement, SchematicPinSide, SchematicPoint, SchematicSymbol,
+    AdapterKind, BoardId, BoardOutline, Circuit, CircuitEventCause, CircuitEventKind,
+    CircuitEventPhase, CircuitEventRequest, CircuitEventTarget, CircuitId, CircuitInstance,
+    CircuitInstanceId, ComponentId, DeviceModel, DeviceModelId, DeviceModelKind, DevicePin,
+    DifferentialPair, DifferentialPairId, DifferentialPairNeckdown, LandPattern, LandPatternId,
+    LandPatternPad, Net, NetId, PadId, PadShape, PcbDesignRules, PcbLayout, PcbStackup, PinBinding,
+    PinElectricalKind, PinRef, Plating, Real, SEMANTIC_SCHEMA_VERSION, SchematicEndpoint,
+    SchematicLayout, SchematicPinPlacement, SchematicPinSide, SchematicPoint, SchematicSymbol,
     SchematicSymbolDefinition, SchematicSymbolDefinitionId, SchematicSymbolId, SchematicSymbolUnit,
     SchematicWire, SchematicWireId, SemanticDocument, SemanticInterchangeError,
     SemanticMigrationStep, SourceStimulus, SourceWaveform, StackupLayer, StackupLayerKind,
@@ -87,6 +88,28 @@ fn fixture() -> SemanticDocument {
 }
 
 #[test]
+fn exact_authored_event_trace_round_trips_and_validates() {
+    let document = fixture()
+        .with_event_trace(vec![CircuitEventRequest {
+            time: Real::one(),
+            phase: CircuitEventPhase::Stimulus,
+            source: Some(CircuitEventTarget::External("testbench".into())),
+            target: CircuitEventTarget::Circuit(CircuitId::new("json-round-trip").unwrap()),
+            kind: CircuitEventKind::Behavioral {
+                kind: "start".into(),
+                fields: Default::default(),
+            },
+            cause: CircuitEventCause::Authored {
+                provenance: "interchange-test".into(),
+            },
+        }])
+        .unwrap();
+    let restored = SemanticDocument::from_json(&document.to_json_pretty().unwrap()).unwrap();
+    assert_eq!(restored.event_trace, document.event_trace);
+    assert_eq!(restored.version, 27);
+}
+
+#[test]
 fn versioned_semantic_json_round_trips_exact_values() {
     let document = fixture();
     let json = document.to_json_pretty().unwrap();
@@ -158,6 +181,7 @@ fn version_eight_json_migrates_through_each_additive_schema_boundary() {
             SemanticMigrationStep::DifferentialPairImpedance,
             SemanticMigrationStep::PhaseTuningGroups,
             SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
         ]
     );
     assert_eq!(migrated, document);
@@ -221,6 +245,7 @@ fn version_twenty_three_defaults_new_differential_impedance_intent() {
             SemanticMigrationStep::DifferentialPairImpedance,
             SemanticMigrationStep::PhaseTuningGroups,
             SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
         ]
     );
     let pair = &migrated.pcb.unwrap().rules.differential_pairs[0];
@@ -245,6 +270,7 @@ fn version_twenty_four_defaults_new_phase_tuning_groups() {
         vec![
             SemanticMigrationStep::PhaseTuningGroups,
             SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
         ]
     );
     assert!(migrated.pcb.unwrap().rules.phase_tuning_groups.is_empty());
@@ -292,7 +318,10 @@ fn version_twenty_five_defaults_new_differential_pair_neckdown() {
         SemanticDocument::from_json_migrating(&serde_json::to_string(&value).unwrap()).unwrap();
     assert_eq!(
         report.steps,
-        vec![SemanticMigrationStep::DifferentialPairNeckdown]
+        vec![
+            SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
+        ]
     );
     assert!(
         migrated.pcb.unwrap().rules.differential_pairs[0]
@@ -393,6 +422,7 @@ fn version_nineteen_promotes_embedded_symbol_geometry_into_a_library() {
             SemanticMigrationStep::DifferentialPairImpedance,
             SemanticMigrationStep::PhaseTuningGroups,
             SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
         ]
     );
     let schematic = migrated.schematic.unwrap();

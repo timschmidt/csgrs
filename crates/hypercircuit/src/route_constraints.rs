@@ -8,6 +8,7 @@
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
+#[cfg(feature = "geometry")]
 use hypercurve::{Classification, CurvePolicy, RegionPointLocation};
 use hyperlattice::Point2;
 use hyperlimit::{

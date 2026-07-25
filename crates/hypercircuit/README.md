@@ -161,6 +161,73 @@ graphics separate from `SymbolUnitPlacement`, while `PartInstance` keeps
 reference/value/transform data separate from the reusable definition. See
 [`examples/reusable_parts.rs`](examples/reusable_parts.rs).
 
+## Signal bundles and modports
+
+`SignalBundleLibrary` adds nominal, ordered signal bundles and reusable
+directional `Modport` views without introducing a second connectivity model.
+A view assigns a `PortDirection` to every named member; `Modport::dual`
+derives the conjugate endpoint by flipping input/output and power direction
+while retaining symmetric bidirectional, passive, and ground roles.
+
+`SignalBundleEndpoint` binds a circuit module's selected view to its existing
+`CircuitPort` records. Validation rejects incomplete views, unknown or
+duplicated members and ports, and direction mismatches. Once two endpoints are
+shown to have the same nominal bundle and dual member directions,
+`SignalBundleLibrary::bind_subcircuit` lowers the connection into ordinary
+`SubcircuitPortBinding` records. Existing hierarchy validation, ERC, scope
+maps, and deterministic flattening therefore remain the semantic engine. See
+[`examples/signal_bundles.rs`](examples/signal_bundles.rs).
+
+## Exact mixed-signal sessions
+
+Mixed-signal activity is retained as `CircuitEventRequest` values with exact
+`Real` timestamps, typed source and target identities, closed domain payloads,
+and explicit causal provenance. `CircuitEventAgenda` executes them by
+`(time, phase, sequence)`: stimulus, topology, post-solve, detection, then
+observation. Scheduling, cancellation, and rescheduling are atomic; same-time
+callbacks cannot re-enter a phase that has already completed. Pending events,
+lifecycle records, counters, and deterministic fingerprints remain available
+for replay and review.
+
+`TransientSession` is the stateful façade over the existing pure transient
+kernels. It offers `step`, `steps`, `step_until`, `step_for`, and
+`run_until_quiescent`; all policy bounds apply to the whole session. Source
+waveforms, event agendas, and named `ExactBreakpointSchedule` values share the
+same `ExactBreakpointProvider` contract, so external traces, switches,
+protection devices, and future coupled domains can force exact endpoints
+without floating-point clocks or epsilon comparisons. The mixed diode runner
+accepts the same providers.
+
+`BehaviorRuntime` callbacks receive only a component-scoped `BehaviorContext`.
+They may emit typed causally linked events, set retained timers, cancel, or
+reschedule; they cannot mutate the circuit or simulation clock directly.
+`behavior-async` enables the cooperative `AsyncBehaviorRuntime`, while
+`SelectiveEventMailbox` and generic `BehaviorQueue<T>` support deterministic
+selective receive and typed queues outside retained circuit truth. Every
+circuit effect still passes through the agenda. Delta activity is explicitly
+bounded by the caller.
+
+`StochasticStream` is opt-in and reproducible. It retains the algorithm, seed,
+draw identity, raw bits, exact projected sample, and caller label; exhaustion
+is an error rather than a panic. `TransientSession::audit_report` combines
+analog samples and decisions with event lifecycle evidence, application
+results, final logic/switch states, and a deterministic run fingerprint. Its
+`certification` projection produces circuit-level release evidence.
+
+With `interchange`, semantic schema version 27 round-trips signal-bundle
+contracts and preordered authored event traces. Migration from older documents
+adds empty contracts and traces, and boundary validation checks event addresses,
+bundle members, payload text, and trace ordering. See
+[`examples/mixed_signal_session.rs`](examples/mixed_signal_session.rs).
+
+The runtime deliberately borrows SimCore's useful discrete-event ideas—an
+inspectable agenda, cancelable events, incremental stepping, process-scoped
+contexts, explicit seeded randomness, and run counters—without adopting its
+floating-point time comparisons, opaque dynamically typed payloads, shared
+mutable circuit state, or panic-oriented boundary checks. HyperCircuit keeps
+exact time and retained typed evidence authoritative; callbacks and cooperative
+tasks remain replaceable adapters.
+
 With `interchange`, `Design::export_part` and `Design::import_part` move that
 same retained definition through a `PortablePartDefinition`; they do not copy
 it into a package-specific circuit model. `PartLibraryArtifact` binds named

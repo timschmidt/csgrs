@@ -37,6 +37,10 @@ id_type!(PinRef);
 id_type!(DeviceModelId);
 id_type!(BusId);
 id_type!(BusSliceId);
+id_type!(SignalBundleId);
+id_type!(BundleMemberId);
+id_type!(ModportId);
+id_type!(BundleEndpointId);
 id_type!(PortId);
 id_type!(BoardId);
 id_type!(LandPatternId);
@@ -68,3 +72,37 @@ id_type!(RouteRuleRegionId);
 id_type!(EscapePolicyId);
 id_type!(LengthTuningPatternId);
 id_type!(PhaseTuningGroupId);
+
+/// Stable monotonically allocated identity of one scheduled circuit event.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CircuitEventId(u64);
+
+impl CircuitEventId {
+    /// Creates an event identity from its deterministic sequence number.
+    pub const fn new(value: u64) -> Self {
+        Self(value)
+    }
+
+    /// Returns the deterministic sequence number.
+    pub const fn get(self) -> u64 {
+        self.0
+    }
+}
+
+/// Stable identity of one deterministic stochastic-stream draw.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct RandomDrawId(u64);
+
+impl RandomDrawId {
+    /// Creates a draw identity from its deterministic sequence number.
+    pub const fn new(value: u64) -> Self {
+        Self(value)
+    }
+
+    /// Returns the deterministic sequence number.
+    pub const fn get(self) -> u64 {
+        self.0
+    }
+}

@@ -1,11 +1,15 @@
 use std::collections::BTreeMap;
 
 use hypercircuit::{
-    AdapterKind, Circuit, CircuitId, CircuitInstance, CircuitInstanceId, CircuitParameter,
-    ComponentId, DeviceModel, DeviceModelId, DeviceModelKind, DevicePin, DiodeNewtonPolicy,
-    MnaUnknown, Net, NetId, PinBinding, PinElectricalKind, PinRef, Real, SourceStimulus,
-    SourceWaveform, SourceWaveformPoint, TransientAdaptation, TransientPolicy, TransientRunError,
-    TransientRunPolicy, TransientRunStatus, TransientStepDecisionKind,
+    AdapterKind, BehaviorContext, BehaviorError, BehaviorRuntime, Circuit, CircuitEvent,
+    CircuitEventAgenda, CircuitEventCause, CircuitEventHandler, CircuitEventKind,
+    CircuitEventPhase, CircuitEventRequest, CircuitEventTarget, CircuitId, CircuitInstance,
+    CircuitInstanceId, CircuitParameter, ComponentId, DeviceModel, DeviceModelId, DeviceModelKind,
+    DevicePin, DiodeNewtonPolicy, ExactBreakpointSchedule, LogicValue, MnaUnknown, Net, NetId,
+    PinBinding, PinElectricalKind, PinRef, Real, SourceStimulus, SourceWaveform,
+    SourceWaveformPoint, TransientAdaptation, TransientPolicy, TransientRunError,
+    TransientRunPolicy, TransientRunStatus, TransientSession, TransientSessionStatus,
+    TransientStepDecisionKind,
 };
 
 fn parameter(name: &str, value: i64, unit: &str) -> CircuitParameter {
@@ -613,6 +617,164 @@ fn driven_transient_run_retains_source_and_response_waveforms() {
             .collect::<Vec<_>>(),
         vec![Real::one(), Real::from(3), Real::from(5)]
     );
+}
+
+#[test]
+fn incremental_session_honors_event_breakpoints_and_applies_source_overrides() {
+    let half = (Real::one() / Real::from(2)).unwrap();
+    let mut agenda = CircuitEventAgenda::new(Real::zero());
+    agenda
+        .schedule(CircuitEventRequest {
+            time: half.clone(),
+            phase: CircuitEventPhase::Stimulus,
+            source: Some(CircuitEventTarget::External("testbench".into())),
+            target: CircuitEventTarget::Component(ComponentId::new("S1").unwrap()),
+            kind: CircuitEventKind::SourceOverride {
+                value: Real::from(5),
+            },
+            cause: CircuitEventCause::Authored {
+                provenance: "session-test".into(),
+            },
+        })
+        .unwrap();
+    let policy = TransientRunPolicy {
+        start_time: Real::zero(),
+        stop_time: Real::from(2),
+        initial_timestep: Real::one(),
+        minimum_timestep: half.clone(),
+        maximum_timestep: Real::one(),
+        maximum_accepted_steps: 10,
+        maximum_rejected_steps: 1,
+        adaptation: TransientAdaptation::Fixed,
+    };
+    let mut session =
+        TransientSession::new(&driven_capacitor(), policy, Default::default(), agenda).unwrap();
+
+    let first = session.step().unwrap();
+    assert_eq!(first.sample.unwrap().time, half);
+    assert_eq!(first.events.len(), 1);
+    assert!(matches!(
+        first.applications.as_slice(),
+        [hypercircuit::CircuitEventApplication::SourceOverride { component, value }]
+            if component.as_str() == "S1" && value == &Real::from(5)
+    ));
+
+    session.step_until(Real::from(2)).unwrap();
+    assert_eq!(session.status(), TransientSessionStatus::Complete);
+    assert_eq!(session.report().samples.last().unwrap().time, Real::from(2));
+    assert_eq!(session.delivered_events().len(), 1);
+}
+
+struct EchoBehavior;
+
+impl CircuitEventHandler for EchoBehavior {
+    fn on_event(
+        &mut self,
+        event: &CircuitEvent,
+        context: &mut BehaviorContext<'_>,
+    ) -> Result<(), BehaviorError> {
+        context.emit_at(
+            event.time.clone(),
+            CircuitEventPhase::PostSolve,
+            CircuitEventTarget::Net(NetId::new("OUT").unwrap()),
+            CircuitEventKind::DigitalTransition {
+                value: LogicValue::High,
+            },
+        )?;
+        Ok(())
+    }
+}
+
+#[test]
+fn session_callbacks_emit_auditable_same_time_followups() {
+    let target = CircuitEventTarget::Component(ComponentId::new("S1").unwrap());
+    let mut agenda = CircuitEventAgenda::new(Real::zero());
+    agenda
+        .schedule(CircuitEventRequest {
+            time: Real::zero(),
+            phase: CircuitEventPhase::Stimulus,
+            source: None,
+            target: target.clone(),
+            kind: CircuitEventKind::SourceOverride {
+                value: Real::from(4),
+            },
+            cause: CircuitEventCause::Authored {
+                provenance: "callback-test".into(),
+            },
+        })
+        .unwrap();
+    agenda
+        .schedule(CircuitEventRequest {
+            time: Real::zero(),
+            phase: CircuitEventPhase::Observation,
+            source: None,
+            target: CircuitEventTarget::Net(NetId::new("OUT").unwrap()),
+            kind: CircuitEventKind::Timer {
+                key: "authored-observation".into(),
+            },
+            cause: CircuitEventCause::Authored {
+                provenance: "callback-test".into(),
+            },
+        })
+        .unwrap();
+    let mut runtime = BehaviorRuntime::new();
+    runtime.register(target, EchoBehavior);
+    let mut session = TransientSession::new(
+        &driven_capacitor(),
+        TransientRunPolicy {
+            stop_time: Real::one(),
+            initial_timestep: Real::one(),
+            minimum_timestep: Real::one(),
+            maximum_timestep: Real::one(),
+            maximum_accepted_steps: 2,
+            maximum_rejected_steps: 1,
+            adaptation: TransientAdaptation::Fixed,
+            ..TransientRunPolicy::default()
+        },
+        Default::default(),
+        agenda,
+    )
+    .unwrap();
+
+    let delta = session.step_with_runtime(&mut runtime, 8).unwrap();
+    assert_eq!(delta.events.len(), 3);
+    assert_eq!(
+        delta.events[1].cause,
+        CircuitEventCause::Event(delta.events[0].id)
+    );
+    assert_eq!(delta.events[1].phase, CircuitEventPhase::PostSolve);
+    assert_eq!(delta.events[2].phase, CircuitEventPhase::Observation);
+    session.step().unwrap();
+    let audit = session.audit_report();
+    assert_eq!(audit.event_counters.delivered, 3);
+    assert_eq!(audit.certification().status, "certified");
+    assert_eq!(audit.fingerprint.value.len(), 32);
+}
+
+#[test]
+fn session_honors_named_external_breakpoint_schedules() {
+    let half = (Real::one() / Real::from(2)).unwrap();
+    let mut session = TransientSession::new(
+        &driven_capacitor(),
+        TransientRunPolicy {
+            stop_time: Real::one(),
+            initial_timestep: Real::one(),
+            minimum_timestep: half.clone(),
+            maximum_timestep: Real::one(),
+            maximum_accepted_steps: 4,
+            maximum_rejected_steps: 1,
+            adaptation: TransientAdaptation::Fixed,
+            ..TransientRunPolicy::default()
+        },
+        Default::default(),
+        CircuitEventAgenda::new(Real::zero()),
+    )
+    .unwrap();
+    session.add_breakpoint_schedule(
+        ExactBreakpointSchedule::new("protection:fuse", vec![half.clone()]).unwrap(),
+    );
+    assert_eq!(session.step().unwrap().sample.unwrap().time, half);
+    assert_eq!(session.audit_report().breakpoint_schedules.len(), 1);
 }
 
 #[test]

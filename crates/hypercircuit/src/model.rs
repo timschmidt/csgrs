@@ -131,6 +131,29 @@ pub enum PortDirection {
     Ground,
 }
 
+impl PortDirection {
+    /// Returns the direction presented by the opposite endpoint of a connection.
+    ///
+    /// Signal and power producers/consumers exchange direction. Symmetric
+    /// electrical roles remain unchanged.
+    pub const fn dual(self) -> Self {
+        match self {
+            Self::Input => Self::Output,
+            Self::Output => Self::Input,
+            Self::PowerInput => Self::PowerOutput,
+            Self::PowerOutput => Self::PowerInput,
+            Self::Bidirectional => Self::Bidirectional,
+            Self::Passive => Self::Passive,
+            Self::Ground => Self::Ground,
+        }
+    }
+
+    /// True when `other` can occupy the opposite face of this direction.
+    pub fn is_dual_to(self, other: Self) -> bool {
+        self.dual() == other
+    }
+}
+
 /// Named circuit-boundary port tied to one retained net.
 #[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
