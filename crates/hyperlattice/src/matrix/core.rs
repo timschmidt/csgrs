@@ -14668,6 +14668,28 @@ impl Matrix4 {
 
     /// Constructs an affine rotation matrix from a checked axis and angle.
     pub fn rotation_axis_angle(axis: &Vector3, angle: Real) -> CheckedBlasResult<Self> {
+        // Preserve the named coordinate-axis construction when the axis is
+        // exactly sparse. Besides avoiding an unnecessary normalization, this
+        // retains the structural zeros and the shared sine/cosine objects that
+        // exact downstream predicates use as rotation certificates.
+        for coordinate in 0..3 {
+            if (0..3)
+                .filter(|&candidate| candidate != coordinate)
+                .all(|candidate| axis.0[candidate].definitely_zero())
+            {
+                let signed_angle = match axis.0[coordinate].refine_sign_until(128) {
+                    Some(RealSign::Positive) => angle,
+                    Some(RealSign::Negative) => -angle,
+                    Some(RealSign::Zero) | None => break,
+                };
+                return Ok(match coordinate {
+                    0 => Self::rotation_x(signed_angle),
+                    1 => Self::rotation_y(signed_angle),
+                    2 => Self::rotation_z(signed_angle),
+                    _ => unreachable!(),
+                });
+            }
+        }
         let axis = axis.normalize_checked()?;
         let sin = angle.clone().sin();
         let cos = angle.cos();

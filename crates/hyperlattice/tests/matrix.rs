@@ -28,6 +28,20 @@ fn matrix3_inverse_and_power() {
 }
 
 #[test]
+fn axis_angle_coordinate_axes_retain_named_rotation_structure() {
+    let angle = frac(1, 10_000).to_radians();
+
+    assert_eq!(
+        Matrix4::rotation_axis_angle(&Vector3::new([r(0), r(7), r(0)]), angle.clone()).unwrap(),
+        Matrix4::rotation_y(angle.clone())
+    );
+    assert_eq!(
+        Matrix4::rotation_axis_angle(&Vector3::new([r(0), r(-3), r(0)]), angle.clone()).unwrap(),
+        Matrix4::rotation_y(-angle)
+    );
+}
+
+#[test]
 fn matrix_exact_facts_expose_dyadic_and_shared_denominator_schedules() {
     let thirds = Matrix3::new([
         [frac(1, 3), frac(2, 3), frac(4, 3)],
