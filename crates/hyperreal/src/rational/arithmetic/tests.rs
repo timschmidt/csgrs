@@ -3318,8 +3318,23 @@ mod tests {
     #[test]
     fn signed_product_sum_ordering_matches_materialized_result_and_overflow_fallback() {
         let one = Rational::one();
+        let zero = Rational::zero();
         let two = Rational::new(2);
         let three = Rational::new(3);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(
+                [true, false],
+                [[&zero, &three], [&two, &zero]],
+            ),
+            Ordering::Equal,
+        );
+        assert_eq!(
+            Rational::signed_product_sum_ordering(
+                [true, false],
+                [[&zero, &three], [&two, &one]],
+            ),
+            Ordering::Less,
+        );
         assert_eq!(
             Rational::signed_product_sum_ordering(
                 [true, false],

@@ -4818,6 +4818,32 @@ impl Rational {
     ) -> Ordering {
         debug_assert!(FACTORS > 0);
         let signs = std::array::from_fn(|i| Self::product_term_sign(positive_terms[i], terms[i]));
+        let mut nonzero_count = 0_usize;
+        let mut nonzero_index = 0_usize;
+        for (index, sign) in signs.iter().copied().enumerate() {
+            if sign != NoSign {
+                nonzero_count += 1;
+                nonzero_index = index;
+            }
+            if nonzero_count == 2 {
+                break;
+            }
+        }
+        match nonzero_count {
+            0 => {
+                crate::trace_dispatch!("rational", "product_sum_ordering", "all-zero");
+                return Ordering::Equal;
+            }
+            1 => {
+                crate::trace_dispatch!("rational", "product_sum_ordering", "single-term-product");
+                return match signs[nonzero_index] {
+                    Minus => Ordering::Less,
+                    Plus => Ordering::Greater,
+                    NoSign => unreachable!("the retained product term is nonzero"),
+                };
+            }
+            _ => {}
+        }
         let dyadic_plan = Self::product_sum_dyadic_plan(terms, signs);
         let prefer_wide_dyadic = dyadic_plan
             .as_ref()
