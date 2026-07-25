@@ -5,6 +5,8 @@ use std::collections::HashSet;
 
 use hypercurve::{BooleanOp, Classification, CurveFamily2, CurvePolicy, FillRule};
 use pathological_fixture::build_native_cell;
+#[cfg(feature = "predicates")]
+use pathological_fixture::{MemoryTier, NativeDataset};
 
 #[test]
 fn pathological_cell_covers_every_curve_and_real_representation_family() {
@@ -147,4 +149,47 @@ fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
             .boolean_region(operation)
             .unwrap_or_else(|error| panic!("{operation:?} remained blocked: {error}"));
     }
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn full_pathological_native_workload_decides_all_268_exact_booleans() {
+    let dataset = NativeDataset::build(MemoryTier::Mib100);
+    let policy = CurvePolicy::certified();
+    let operations = [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::Xor,
+    ];
+    let mut decided = 0_usize;
+
+    for (cell_index, cell) in dataset.cells.iter().enumerate() {
+        let prepared = cell
+            .source
+            .retain_boolean(&cell.rotated, &policy)
+            .unwrap_or_else(|error| {
+                panic!("pathological cell {cell_index} failed exact preparation: {error}")
+            });
+        let evidence = prepared.intersection_result().unwrap_or_else(|error| {
+            panic!("pathological cell {cell_index} failed exact intersections: {error}")
+        });
+        assert!(
+            evidence.blockers().is_empty(),
+            "pathological cell {cell_index} retained blockers: {:#?}",
+            evidence.blockers()
+        );
+
+        for operation in operations {
+            let _exact_region = prepared.boolean_region_view(operation).unwrap_or_else(|error| {
+                panic!(
+                    "pathological cell {cell_index} {operation:?} remained blocked: {error}"
+                )
+            });
+            decided += 1;
+        }
+    }
+
+    assert_eq!(dataset.cells.len(), 67);
+    assert_eq!(decided, 268);
 }
