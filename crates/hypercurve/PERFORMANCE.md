@@ -4853,6 +4853,62 @@ replay completed 2,509 executions without a finding; the downstream
 and 19,309 feature edges without a finding. LeakSanitizer alone remained
 disabled under ptrace.
 
+### Exact quadratic-surd collapse certification
+
+A convex right-triangle erosion exposed a remaining supportable blocker at its
+exact collapse distance, `4 - 2 sqrt(2)`. The native offset constructed exact
+curves, but its final degeneracy predicate expanded to a quadratic-surd
+identity that ordinary structural cancellation did not recognize. The
+operation therefore returned `RealSign` uncertainty instead of the exact empty
+region.
+
+Hyperreal now has a bounded exact reducer for one quadratic field
+`a + b sqrt(d)`. It recognizes rational arithmetic, shared square-root
+constants, exact rational square roots, powers of two, products, squares,
+inverses, and fixed three-term linear combinations. Sign comparison squares
+the opposing rational magnitudes exactly; it never uses an approximation as a
+predicate. Parsing is capped at 256 expression nodes and memoizes shared DAG
+nodes in a lazy compact vector, so unrelated or larger expression families
+continue through the existing conservative path.
+
+The named Hypercurve regression now requires the inradius erosion to return a
+decided empty `CurveRegion2`. Hyperreal regressions independently cover the
+expanded collapse identity, conjugate inversion, nonzero surd ordering, and a
+previously unresolved opposite-sign sum. `BLOCKER_REGRESSIONS.md` links the
+downstream resolution to every scalar regression.
+
+On the identical three-cell Callgrind workload, instruction references moved
+from 261,496,219 to 262,166,772, a 0.26% correctness cost. In the complete
+67-cell native workload, the stronger exact signs eliminated 120 conservative
+candidate pairs, from 2,883 to 2,763. Every one of the 268 union,
+intersection, difference, and XOR operations still completed with exact native
+curve results, zero blockers, 3,248 fragments, 134 point classifications, and
+checksum 6.
+
+The current ten-run native median was 994.7 milliseconds, compared with 949.3
+milliseconds before the additional proof capability. The family-flattened
+exact-polyline comparison median was 17.43 milliseconds, so the native path
+remains about 57 times slower even though both decide all 268 operations.
+Consequently, the `LineArc` accelerator remains: its correctness replacement
+gate is satisfied for this fixture, but its performance-removal gate is not.
+
+Heaptrack recorded 13,717,229 allocation events, 2,495,405 temporary
+allocations, and 36.05 MiB peak heap. Relative to the prior exact-bound/shared-
+cancellation baseline, allocations increased 1.92%, temporary allocations
+fell 0.78%, and peak heap was effectively unchanged. The release benchmark
+grew by 9,560 bytes of text (0.20%), 8,168 bytes of total loadable size
+(0.17%), and 10,608 bytes on disk (0.17%).
+
+All 584 all-feature Hyperreal library tests passed. The complete all-feature
+and no-default-feature Hypercurve library/integration suites passed, and the
+final compact-memo representation was rechecked through the focused collapse
+test in both feature configurations. Strict all-target Clippy passed in both
+repositories. The `computable_approximation` AddressSanitizer replay completed
+2,509 executions at 5,410 coverage points and 19,539 feature edges; the
+downstream `region_boolean` replay completed 2,721 executions at 5,980 coverage
+points and 19,259 feature edges. Neither found an error; LeakSanitizer alone
+remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

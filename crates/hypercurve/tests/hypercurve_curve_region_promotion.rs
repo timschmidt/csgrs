@@ -459,7 +459,7 @@ fn unified_region_convex_erosion_handles_orientation_and_redundant_edges() {
 }
 
 #[test]
-fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_exact() {
+fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact() {
     let policy = CurvePolicy::certified();
     let source =
         CurveRegion2::try_from_native_material_contours(vec![right_isosceles_triangle()], &policy)
@@ -508,14 +508,9 @@ fn unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_exact() {
     );
 
     let collapse_distance = Real::from(4) - Real::from(2) * root_two;
-    #[cfg(feature = "predicates")]
-    let collapse_reason = hypercurve::UncertaintyReason::Predicate;
-    #[cfg(not(feature = "predicates"))]
-    let collapse_reason = hypercurve::UncertaintyReason::RealSign;
-    assert_eq!(
-        source.offset(-collapse_distance, &policy).unwrap(),
-        Classification::Uncertain(collapse_reason),
-        "hyperreal currently cannot certify the composed radical equality at the exact inradius"
+    assert!(
+        decided(source.offset(-collapse_distance, &policy).unwrap()).is_empty(),
+        "the exact radical inradius must collapse the triangle without a blocker"
     );
     assert!(decided(source.offset(Real::from(-2), &policy).unwrap()).is_empty());
 }
