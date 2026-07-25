@@ -1696,6 +1696,7 @@ impl Real {
     }
 
     /// Return `a * b - c * d`.
+    #[inline]
     pub fn diff_of_products(a: &Real, b: &Real, c: &Real, d: &Real) -> Real {
         if let (Some(a), Some(b), Some(c), Some(d)) = (
             a.exact_rational_ref(),
