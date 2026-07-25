@@ -73,6 +73,7 @@ pub struct HypermeshBuffers {
 
 pub(super) struct HypermeshAdapterInput {
     pub(super) buffers: HypermeshBuffers,
+    support_planes: Vec<::hypermesh::InputTrianglePlanes>,
     source_polygons: Vec<usize>,
     position_ids: HashMap<u64, usize>,
 }
@@ -175,10 +176,15 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let right = input_mesh_from_buffers(&right_input.buffers);
         let certified_convex_inputs =
             [self.has_convex_pwn_fact(), other.has_convex_pwn_fact()];
-        let soup = ::hypermesh::boolean_triangle_soup_with_certified_convex_inputs(
+        let support_planes = [
+            left_input.support_planes.as_slice(),
+            right_input.support_planes.as_slice(),
+        ];
+        let soup = ::hypermesh::boolean_triangle_soup_with_certified_convex_inputs_and_planes(
             &[left.as_ref(), right.as_ref()],
             operation.as_hypermesh(),
             &certified_convex_inputs,
+            &support_planes,
             EmberConfig::default(),
         )
         .map_err(HypermeshError::Boolean)?;
@@ -246,6 +252,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let mut position_ids = HashMap::<u64, usize>::new();
         let mut source_polygons =
             Vec::with_capacity(if retain_sources { triangle_capacity } else { 0 });
+        let polygon_supports =
+            retain_sources.then(|| Arc::clone(self.polygons.exact_supports()));
+        let mut support_planes = Vec::with_capacity(triangle_capacity);
 
         let mut push_triangle = |vertices: &[Vertex]| {
             for vertex in vertices {
@@ -282,6 +291,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         for (polygon_index, polygon) in self.polygons.iter().enumerate() {
             if polygon.vertices.len() == 3 {
                 push_triangle(&polygon.vertices);
+                if let Some(polygon_supports) = &polygon_supports {
+                    support_planes.push(polygon_supports[polygon_index].clone());
+                }
                 if retain_sources {
                     source_polygons.push(polygon_index);
                 }
@@ -289,6 +301,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             }
             for triangle in polygon.triangulate() {
                 push_triangle(&triangle);
+                if let Some(polygon_supports) = &polygon_supports {
+                    support_planes.push(polygon_supports[polygon_index].clone());
+                }
                 if retain_sources {
                     source_polygons.push(polygon_index);
                 }
@@ -302,6 +317,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
         HypermeshAdapterInput {
             buffers: HypermeshBuffers { positions, indices },
+            support_planes,
             source_polygons,
             position_ids,
         }
@@ -336,6 +352,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let mut indices = Vec::with_capacity(triangle_capacity * 3);
         let mut source_polygons =
             Vec::with_capacity(if retain_sources { triangle_capacity } else { 0 });
+        let polygon_supports =
+            retain_sources.then(|| Arc::clone(self.polygons.exact_supports()));
+        let mut support_planes = Vec::with_capacity(triangle_capacity);
         let mut corner_offset = 0usize;
         for polygon_index in 0..self.polygons.len() {
             let corner_count = layout
@@ -351,6 +370,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     polygon_slots[index],
                     polygon_slots[index + 1],
                 ]);
+                if let Some(polygon_supports) = &polygon_supports {
+                    support_planes.push(polygon_supports[polygon_index].clone());
+                }
                 if retain_sources {
                     source_polygons.push(polygon_index);
                 }
@@ -377,6 +399,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
         Some(HypermeshAdapterInput {
             buffers: HypermeshBuffers { positions, indices },
+            support_planes,
             source_polygons,
             position_ids,
         })
@@ -411,6 +434,17 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Ok(mesh)
     }
 
+    /// Exactly validates this mesh as a closed, outward-oriented convex PWN
+    /// and retains that reusable fact for accelerated Boolean operations.
+    pub fn try_certify_convex(self) -> Result<Self, HypermeshError> {
+        let input = self
+            .to_hypermesh_triangle_mesh()
+            .map_err(HypermeshError::Mesh)?;
+        ::hypermesh::certify_convex_mesh(input.as_ref()).map_err(HypermeshError::Mesh)?;
+        self.cache_convex_pwn_fact();
+        Ok(self)
+    }
+
     pub(super) fn to_hypermesh_connectivity_mesh(
         &self,
     ) -> ::hypermesh::HypermeshResult<(InputMesh, HashMap<u64, usize>)> {
@@ -428,6 +462,16 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     ) -> Result<Self, HypermeshError> {
         let mut vertices = Vec::with_capacity(soup.triangles.len().saturating_mul(3));
         let mut metadata = Vec::with_capacity(soup.triangles.len());
+        let topology_vertices = soup
+            .vertices
+            .iter()
+            .map(|point| {
+                Vertex::new(
+                    Point3::new(point.x.clone(), point.y.clone(), point.z.clone()),
+                    Vector3::zeros(),
+                )
+            })
+            .collect::<Vec<_>>();
 
         for (triangle, source) in soup.triangles.iter().zip(&soup.sources) {
             let source_index = usize::try_from(source.triangle).map_err(|_| {
@@ -450,13 +494,13 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 mesh: source.mesh,
                 triangle: source.triangle,
             })?;
-            let Some(a) = soup_vertex_position(soup, triangle[0]) else {
+            let Some(a) = topology_vertices.get(triangle[0]) else {
                 continue;
             };
-            let Some(b) = soup_vertex_position(soup, triangle[1]) else {
+            let Some(b) = topology_vertices.get(triangle[1]) else {
                 continue;
             };
-            let Some(c) = soup_vertex_position(soup, triangle[2]) else {
+            let Some(c) = topology_vertices.get(triangle[2]) else {
                 continue;
             };
             let normal = match (source.orientation, polygon.cached_new_normal()) {
@@ -466,12 +510,13 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     let normal = polygon.calculate_new_normal();
                     if orientation == 1 { normal } else { -normal }
                 },
-                _ => hyper_triangle_unit_normal(&a, &b, &c).unwrap_or_else(Vector3::z),
+                _ => hyper_triangle_unit_normal(&a.position, &b.position, &c.position)
+                    .unwrap_or_else(Vector3::z),
             };
             vertices.extend([
-                Vertex::new(a, normal.clone()),
-                Vertex::new(b, normal.clone()),
-                Vertex::new(c, normal),
+                a.clone().with_normal(normal.clone()),
+                b.clone().with_normal(normal.clone()),
+                c.clone().with_normal(normal),
             ]);
             metadata.push(polygon.metadata.clone());
         }
@@ -490,7 +535,26 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 )
             })
             .collect();
-        Ok(Self::from_polygons(polygons))
+        let mesh = Self::from_polygons(polygons);
+        let mut topology_slots = HashMap::new();
+        let corner_position_slots = soup
+            .triangles
+            .iter()
+            .flatten()
+            .map(|&vertex| {
+                let next = topology_slots.len();
+                *topology_slots.entry(vertex).or_insert(next)
+            })
+            .collect();
+        mesh.retain_shared_position_transform_layout(
+            corner_position_slots,
+            topology_slots.len(),
+            None,
+            None,
+            None,
+            false,
+        );
+        Ok(mesh)
     }
 }
 
@@ -622,12 +686,11 @@ impl IndexedTriangulated3D for TriangleSoup {
 }
 
 fn canonical_coordinate(value: &Real) -> Real {
-    let is_zero = value
-        .exact_rational_ref()
-        .is_some_and(|rational| rational.is_zero())
-        || (value.exact_rational_ref().is_none()
-            && matches!(value.refine_sign_until(-128), Some(hyperreal::RealSign::Zero)));
-    if is_zero { Real::zero() } else { value.clone() }
+    if value.definitely_zero() {
+        Real::zero()
+    } else {
+        value.clone()
+    }
 }
 
 fn canonical_position(position: &Point3) -> Point3 {

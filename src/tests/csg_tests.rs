@@ -98,6 +98,206 @@ fn finite_output_materialization_preserves_sampled_mesh_coordinates() {
     }
 }
 
+fn exact_ratio(numerator: i64, denominator: u64) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).expect("test denominator is nonzero")
+}
+
+#[test]
+fn exact_near_coincident_rotated_cylinder_difference_needs_no_finite_retry() {
+    let cylinder = Mesh::cylinder(r(8.0), r(40.0), 26, ());
+    let rotated = cylinder.rotate(Real::zero(), exact_ratio(1, 10_000), Real::zero());
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::reset();
+    #[cfg(feature = "dispatch-trace")]
+    let result =
+        hyperreal::dispatch_trace::with_recording(|| cylinder.try_difference(&rotated));
+    #[cfg(not(feature = "dispatch-trace"))]
+    let result = cylinder.try_difference(&rotated);
+    let output = result.unwrap_or_else(|error| {
+        #[cfg(feature = "dispatch-trace")]
+        panic!(
+            "the symbolic near-coincident difference should certify exactly: {error}; trace={:#?}",
+            hyperreal::dispatch_trace::take_trace()
+        );
+        #[cfg(not(feature = "dispatch-trace"))]
+        panic!("the symbolic near-coincident difference should certify exactly: {error}");
+    });
+    assert!(
+        !output.triangles().is_empty(),
+        "the symbolic near-coincident difference is empty"
+    );
+    let indexed = output.to_hypermesh_triangle_mesh().expect(
+        "the symbolic near-coincident difference should remain an exact triangle mesh",
+    );
+    assert!(
+        crate::mesh::hypermesh::hypermesh_is_closed_manifold(&indexed),
+        "the symbolic near-coincident difference should retain closed indexed topology"
+    );
+}
+
+fn assert_finite_materialization_preserves_closed_topology(label: &str, symbolic: &Mesh<()>) {
+    let symbolic_input = symbolic
+        .to_hypermesh_exact()
+        .unwrap_or_else(|error| panic!("{label}: symbolic mesh is not closed: {error}"));
+    let finite = symbolic
+        .materialize_finite_output()
+        .unwrap_or_else(|| panic!("{label}: symbolic mesh has no finite sample"));
+    let finite_input = finite
+        .to_hypermesh_exact()
+        .unwrap_or_else(|error| panic!("{label}: finite mesh is not closed: {error}"));
+    assert_eq!(
+        finite_input.triangles.len(),
+        symbolic_input.triangles.len(),
+        "{label}: finite materialization changed the triangle topology"
+    );
+
+    let mut sampled_positions = std::collections::HashMap::new();
+    for (symbolic_polygon, finite_polygon) in symbolic.polygons.iter().zip(&finite.polygons) {
+        assert_eq!(
+            symbolic_polygon.vertices.len(),
+            finite_polygon.vertices.len(),
+            "{label}: materialization changed a polygon's corner count"
+        );
+        for (symbolic_vertex, finite_vertex) in
+            symbolic_polygon.vertices.iter().zip(&finite_polygon.vertices)
+        {
+            if let Some(previous) =
+                sampled_positions.insert(symbolic_vertex.position_id, &finite_vertex.position)
+            {
+                assert_eq!(
+                    previous, &finite_vertex.position,
+                    "{label}: one topological vertex received multiple finite coordinates"
+                );
+            }
+        }
+    }
+
+    let cached = symbolic
+        .materialize_finite_output()
+        .expect("the cached finite mesh remains available");
+    assert_eq!(
+        cached.to_hypermesh_buffers(),
+        finite.to_hypermesh_buffers(),
+        "{label}: repeated materialization changed indexed geometry"
+    );
+}
+
+#[test]
+fn finite_output_materialization_preserves_closed_topology_across_symbolic_rotations() {
+    let tiny = exact_ratio(1, 10_000);
+    let medium = exact_ratio(173, 10);
+    let zero = Real::zero();
+    let rotations = vec![
+        ("tiny+x", [tiny.clone(), zero.clone(), zero.clone()]),
+        ("tiny-x", [-tiny.clone(), zero.clone(), zero.clone()]),
+        ("tiny+y", [zero.clone(), tiny.clone(), zero.clone()]),
+        ("tiny-y", [zero.clone(), -tiny.clone(), zero.clone()]),
+        ("tiny+z", [zero.clone(), zero.clone(), tiny.clone()]),
+        ("tiny-z", [zero.clone(), zero.clone(), -tiny.clone()]),
+        (
+            "tiny-compound",
+            [
+                tiny.clone(),
+                -tiny.clone() * Real::from(2_u8),
+                tiny.clone() * Real::from(3_u8),
+            ],
+        ),
+        (
+            "medium-compound",
+            [medium.clone(), exact_ratio(-173, 20), medium],
+        ),
+    ];
+    let sources = vec![
+        ("triangle-cylinder", Mesh::cylinder(r(8.0), r(40.0), 3, ())),
+        ("odd-cylinder", Mesh::cylinder(r(8.0), r(40.0), 5, ())),
+        ("reported-cylinder", Mesh::cylinder(r(8.0), r(40.0), 26, ())),
+        ("dense-cylinder", Mesh::cylinder(r(8.0), r(40.0), 64, ())),
+        (
+            "tapered-frustum",
+            Mesh::frustum(r(8.0), r(3.0), r(40.0), 17, ()),
+        ),
+        ("sphere", Mesh::sphere(r(8.0), 12, 6, ())),
+        ("cube", Mesh::cube(r(8.0), ())),
+        ("octahedron", Mesh::octahedron(r(8.0), ())),
+    ];
+
+    for (source_name, source) in sources {
+        for (rotation_name, [x, y, z]) in &rotations {
+            let symbolic = source.rotate(x.clone(), y.clone(), z.clone());
+            assert_finite_materialization_preserves_closed_topology(
+                &format!("{source_name}/{rotation_name}"),
+                &symbolic,
+            );
+        }
+    }
+}
+
+#[test]
+fn exact_near_coincident_cylinders_support_every_axis_sign_and_boolean() {
+    let tiny = exact_ratio(1, 10_000);
+    let zero = Real::zero();
+    let rotations = [
+        ("+x", [tiny.clone(), zero.clone(), zero.clone()]),
+        ("-x", [-tiny.clone(), zero.clone(), zero.clone()]),
+        ("+y", [zero.clone(), tiny.clone(), zero.clone()]),
+        ("-y", [zero.clone(), -tiny.clone(), zero.clone()]),
+        ("+z", [zero.clone(), zero.clone(), tiny.clone()]),
+        ("-z", [zero.clone(), zero, -tiny]),
+    ];
+    let left = Mesh::cylinder(r(8.0), r(40.0), 8, ());
+
+    for (label, [x, y, z]) in rotations {
+        let right = Mesh::cylinder(r(8.0), r(40.0), 8, ()).rotate(x, y, z);
+        for (operation, result) in [
+            ("union", left.try_union(&right)),
+            ("intersection", left.try_intersection(&right)),
+            ("difference", left.try_difference(&right)),
+        ] {
+            let output = result.unwrap_or_else(|error| {
+                panic!("{label}/{operation}: Boolean failed: {error}")
+            });
+            assert!(
+                !output.triangles().is_empty(),
+                "{label}/{operation}: Boolean output is empty"
+            );
+            let indexed = output.to_hypermesh_triangle_mesh().unwrap_or_else(|error| {
+                panic!("{label}/{operation}: exact output is invalid: {error}")
+            });
+            assert!(
+                crate::mesh::hypermesh::hypermesh_is_closed_manifold(&indexed),
+                "{label}/{operation}: exact output is not closed"
+            );
+        }
+    }
+}
+
+#[test]
+fn finite_materialization_does_not_hide_a_genuinely_open_boundary() {
+    let open = Mesh::from_polygons(vec![Polygon::from_planar_vertices(
+        vec![
+            Vertex::new(Point3::origin(), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
+        ],
+        (),
+    )])
+    .rotate(
+        exact_ratio(1, 10_000),
+        exact_ratio(-1, 20_000),
+        exact_ratio(3, 10_000),
+    );
+    let finite = open
+        .materialize_finite_output()
+        .expect("open triangle has finite samples");
+    let error = finite
+        .to_hypermesh_exact()
+        .expect_err("materialization must not repair a genuinely open mesh");
+    assert!(
+        error.to_string().contains("boundary edges"),
+        "unexpected open-input error: {error}"
+    );
+}
+
 #[test]
 fn test_csg_union() {
     let cube1: Mesh<()> = Mesh::cube(r(2.0), ()).translate(r(-1.0), r(-1.0), r(-1.0)); // from -1 to +1 in all coords

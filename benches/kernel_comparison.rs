@@ -671,10 +671,6 @@ fn run() {
         Measurement::new(12, 1, angle.to_f64_lossy().unwrap_or_default().to_bits())
     });
 
-    config.run("corpus", "from_obj", "yeahright_control_genus131", 1, || {
-        measurement(&black_box(import_obj(&yeahright_control_path())), 5_845)
-    });
-
     config.run(
         "corpus",
         "obj_import",

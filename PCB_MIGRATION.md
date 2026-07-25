@@ -15,24 +15,27 @@ The retained semantic owners are:
 | `PartTerminal { role: "pad" }` | `hypercircuit::LandPatternPad` / `PadId` | Source-addressable copper profile |
 | Gerber aperture/trace interpretation as circuit intent | `hypercircuit` PCB features on import | `csgrs` continues parsing/writing geometry |
 
-`InterfaceKind::Package` and `InterfaceKind::Electrical` remain temporarily as
-deprecated compatibility markers so existing geometry metadata can be read.
-Adapters should convert them at load time and must not create them for new
-designs. The generic `PartTerminal` carrier remains for mechanical, thermal and
-process attachment points; electrical `pin`/`pad` roles are legacy-only.
+Migration status: complete. `InterfaceKind::Package` and
+`InterfaceKind::Electrical` were removed immediately under the workspace's
+breaking-change policy instead of waiting for csgrs 0.25.0. The generic
+`PartTerminal` carrier now describes only mechanical, thermal, and process
+attachment points; `pin` and `pad` have no csgrs role semantics.
 
-Removal schedule: delete the two deprecated interface variants in `csgrs`
-0.25.0. `hypercircuit::LegacyCsgrsElectronicsImport` now provides the required
-versioned persisted handoff, and its representative fixture proves that marker
-and terminal claims cross the boundary with typed omissions instead of inferred
-semantics. At removal, the `pin` and `pad` spellings of generic terminal roles
-cease to carry electrical meaning. Gerber and other geometry I/O remain in
-csgrs; net, component, pad, via, zone, stackup and manufacturing-intent
+`hypercircuit::LegacyCsgrsElectronicsImport` remains only as the versioned
+reader for migration handoffs captured before live marker removal. It no longer
+constructs a handoff from csgrs metadata. Gerber and other geometry I/O remain
+in csgrs; net, component, pad, via, zone, stackup, and manufacturing-intent
 interpretation remains outside it.
+
+That HyperCircuit reader is scheduled for deletion in HyperCircuit 0.4.0,
+recorded by its exported `LEGACY_CSGRS_ELECTRONICS_REMOVAL_VERSION`. Before
+then, callers must explicitly author every reported omission and persist a
+current HyperCircuit semantic document. csgrs has no compatibility API to
+remove: the live markers and electrical terminal roles are already gone.
 
 No compatibility path may infer nets, connectivity, footprint identity,
 placement, layer policy, or manufacturing rules from geometry.
 
 `src/tests/ownership_tests.rs` guards this boundary by rejecting public
-circuit/PCB type declarations, a reverse dependency on hypercircuit, or any
-expansion of the two-marker compatibility exception.
+circuit/PCB type declarations, a reverse dependency on hypercircuit, and any
+return of the retired marker or electrical terminal-role vocabulary.

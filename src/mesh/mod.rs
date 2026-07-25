@@ -56,6 +56,7 @@ struct CachedRigidTransform {
     source_geometry_identity: u64,
     matrix: Matrix4,
     polygons: Vec<Polygon<()>>,
+    supports: Arc<Vec<::hypermesh::InputTrianglePlanes>>,
 }
 
 #[derive(Clone, Debug)]
@@ -71,6 +72,7 @@ struct CachedRotation {
     source_geometry_identity: u64,
     degrees: [Real; 3],
     polygons: Vec<Polygon<()>>,
+    supports: Arc<Vec<::hypermesh::InputTrianglePlanes>>,
 }
 
 #[derive(Clone, Debug)]
@@ -332,6 +334,39 @@ impl IndexedPositionKey {
     }
 }
 
+fn rigidly_transformed_supports(
+    supports: &[::hypermesh::InputTrianglePlanes],
+    matrix: &Matrix4,
+) -> Arc<Vec<::hypermesh::InputTrianglePlanes>> {
+    let prepared = matrix.prepare();
+    let translation = Vector3::new([
+        matrix[0][3].clone(),
+        matrix[1][3].clone(),
+        matrix[2][3].clone(),
+    ]);
+    let transform_plane = |plane: &::hypermesh::Plane| {
+        let normal = prepared.transform_direction3(&Vector3::new([
+            plane.normal.x.clone(),
+            plane.normal.y.clone(),
+            plane.normal.z.clone(),
+        ]));
+        let offset = &plane.offset - &normal.dot(&translation);
+        ::hypermesh::Plane::new(
+            Point3::new(normal.0[0].clone(), normal.0[1].clone(), normal.0[2].clone()),
+            offset,
+        )
+    };
+    Arc::new(
+        supports
+            .iter()
+            .map(|planes| ::hypermesh::InputTrianglePlanes {
+                support: transform_plane(&planes.support),
+                edges: std::array::from_fn(|index| transform_plane(&planes.edges[index])),
+            })
+            .collect(),
+    )
+}
+
 impl TransformLayout {
     fn from_polygons<M: Clone>(polygons: &[Polygon<M>]) -> Self {
         let corner_count = polygons.iter().map(|polygon| polygon.vertices.len()).sum();
@@ -520,6 +555,7 @@ struct MeshPolygonStorage<M: Clone> {
     connectivity_counts: OnceLock<(usize, usize)>,
     cuboid_vertex_pool: OnceLock<Arc<LazySubdivisionVertexPool>>,
     transform_layout: OnceLock<Arc<TransformLayout>>,
+    exact_supports: OnceLock<Arc<Vec<::hypermesh::InputTrianglePlanes>>>,
     manifold: OnceLock<bool>,
     nondegenerate_triangles: OnceLock<bool>,
     convex_pwn: OnceLock<()>,
@@ -558,6 +594,7 @@ impl<M: Clone> MeshPolygonStorage<M> {
             connectivity_counts: OnceLock::new(),
             cuboid_vertex_pool: OnceLock::new(),
             transform_layout: OnceLock::new(),
+            exact_supports: OnceLock::new(),
             manifold: OnceLock::new(),
             nondegenerate_triangles: OnceLock::new(),
             convex_pwn: OnceLock::new(),
@@ -671,6 +708,35 @@ impl<M: Clone> MeshPolygons<M> {
         let _ = self.0.transform_layout.set(layout);
     }
 
+    pub(crate) fn exact_supports(&self) -> &Arc<Vec<::hypermesh::InputTrianglePlanes>> {
+        self.0.exact_supports.get_or_init(|| {
+            let mut shared_supports = HashMap::new();
+            Arc::new(
+                self.0
+                    .polygons
+                    .iter()
+                    .map(|polygon| {
+                        let mut planes = ::hypermesh::InputTrianglePlanes::from_points(
+                            &polygon.vertices[0].position,
+                            &polygon.vertices[1].position,
+                            &polygon.vertices[2].position,
+                        );
+                        planes.support = shared_supports
+                            .entry(polygon.plane_id)
+                            .or_insert_with(|| planes.support.clone())
+                            .clone();
+                        planes
+                    })
+                    .collect(),
+            )
+        })
+    }
+
+    fn retain_exact_supports(&self, supports: Arc<Vec<::hypermesh::InputTrianglePlanes>>) {
+        debug_assert_eq!(supports.len(), self.0.polygons.len());
+        let _ = self.0.exact_supports.set(supports);
+    }
+
     pub(crate) fn cuboid_vertex_pool(&self) -> Option<&Arc<LazySubdivisionVertexPool>> {
         self.0.cuboid_vertex_pool.get()
     }
@@ -752,6 +818,33 @@ impl<M: Clone> MeshPolygons<M> {
     pub(crate) fn retain_materialized_finite(&self, polygons: Self) {
         let _ = self.0.materialized_finite.set(polygons);
     }
+
+    fn retain_metadata_independent_assets<NewM: Clone>(&self, target: &MeshPolygons<NewM>) {
+        if let Some(pool) = self.0.cuboid_vertex_pool.get() {
+            target.retain_cuboid_vertex_pool(Arc::clone(pool));
+        }
+        if let Some(layout) = self.0.transform_layout.get() {
+            target.retain_transform_layout(Arc::clone(layout));
+        }
+        if let Some(supports) = self.0.exact_supports.get() {
+            target.retain_exact_supports(Arc::clone(supports));
+        }
+        if let Some(&is_manifold) = self.0.manifold.get() {
+            target.retain_manifold_fact(is_manifold);
+        }
+        if let Some(&nondegenerate) = self.0.nondegenerate_triangles.get() {
+            target.retain_nondegenerate_triangles_fact(nondegenerate);
+        }
+        if self.has_convex_pwn_fact() {
+            target.retain_convex_pwn_fact();
+        }
+        if let Some(bounds) = self.0.axis_aligned_box.get() {
+            target.retain_axis_aligned_box_fact(bounds.clone());
+        }
+        if let Some(offset) = self.0.centering_offset.get() {
+            target.retain_centering_offset(offset.clone());
+        }
+    }
 }
 
 impl<M: Clone> Deref for MeshPolygons<M> {
@@ -772,6 +865,7 @@ impl<M: Clone> DerefMut for MeshPolygons<M> {
         storage.connectivity_counts = OnceLock::new();
         storage.cuboid_vertex_pool = OnceLock::new();
         storage.transform_layout = OnceLock::new();
+        storage.exact_supports = OnceLock::new();
         storage.manifold = OnceLock::new();
         storage.convex_pwn = OnceLock::new();
         storage.axis_aligned_box = OnceLock::new();
@@ -2343,8 +2437,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
         if let Some((mins, maxs)) = bounds {
             let bounds = Aabb::new(mins, maxs);
-            let _ = mesh.bounding_box.set(bounds.clone());
-            mesh.polygons.retain_axis_aligned_box_fact(bounds);
+            let _ = mesh.bounding_box.set(bounds);
         }
         Ok(mesh)
     }
@@ -2827,19 +2920,24 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     ) -> Self {
         let convex_pwn = self.has_convex_pwn_fact();
         let source_geometry_identity = self.polygons.storage_identity();
-        if let Some(cached_polygons) = LAST_RIGID_TRANSFORM.with_borrow(|cached| {
-            cached
-                .as_ref()
-                .filter(|cached| {
-                    cached.matrix == *matrix
-                        && cached.source_geometry_identity == source_geometry_identity
-                })
-                .map(|cached| cached.polygons.clone())
-        }) {
+        let transformed_supports =
+            rigidly_transformed_supports(self.polygons.exact_supports(), matrix);
+        if let Some((cached_polygons, cached_supports)) =
+            LAST_RIGID_TRANSFORM.with_borrow(|cached| {
+                cached
+                    .as_ref()
+                    .filter(|cached| {
+                        cached.matrix == *matrix
+                            && cached.source_geometry_identity == source_geometry_identity
+                    })
+                    .map(|cached| (cached.polygons.clone(), Arc::clone(&cached.supports)))
+            })
+        {
             for (polygon, cached) in self.polygons.iter_mut().zip(cached_polygons) {
                 let metadata = polygon.metadata.clone();
                 *polygon = cached.with_metadata(metadata);
             }
+            self.polygons.retain_exact_supports(cached_supports);
             self.bounding_box = OnceLock::new();
             if convex_pwn {
                 self.cache_convex_pwn_fact();
@@ -2899,6 +2997,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     Some(indexed_position_f64),
                     plane_ids,
                 ) {
+                    transformed
+                        .polygons
+                        .retain_exact_supports(Arc::clone(&transformed_supports));
                     if cache_on_completion {
                         LAST_RIGID_TRANSFORM.with_borrow_mut(|cached| {
                             *cached = Some(CachedRigidTransform {
@@ -2910,6 +3011,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                                     .cloned()
                                     .map(|polygon| polygon.with_metadata(()))
                                     .collect(),
+                                supports: Arc::clone(&transformed_supports),
                             });
                         });
                     }
@@ -2988,6 +3090,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 indexed_position_f64,
                 plane_ids,
             ) {
+                transformed
+                    .polygons
+                    .retain_exact_supports(Arc::clone(&transformed_supports));
                 if cache_on_completion {
                     LAST_RIGID_TRANSFORM.with_borrow_mut(|cached| {
                         *cached = Some(CachedRigidTransform {
@@ -2999,6 +3104,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                                 .cloned()
                                 .map(|polygon| polygon.with_metadata(()))
                                 .collect(),
+                            supports: Arc::clone(&transformed_supports),
                         });
                     });
                 }
@@ -3077,6 +3183,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             transformed
                 .polygons
                 .retain_transform_layout(Arc::new(transformed_layout));
+            transformed
+                .polygons
+                .retain_exact_supports(Arc::clone(&transformed_supports));
             if cache_on_completion {
                 LAST_RIGID_TRANSFORM.with_borrow_mut(|cached| {
                     *cached = Some(CachedRigidTransform {
@@ -3088,6 +3197,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                             .cloned()
                             .map(|polygon| polygon.with_metadata(()))
                             .collect(),
+                        supports: Arc::clone(&transformed_supports),
                     });
                 });
             }
@@ -3172,6 +3282,8 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             }
             polygon.invalidate_bounding_box();
         }
+        self.polygons
+            .retain_exact_supports(Arc::clone(&transformed_supports));
         self.bounding_box = OnceLock::new();
         if cache_on_completion {
             LAST_RIGID_TRANSFORM.with_borrow_mut(|cached| {
@@ -3184,6 +3296,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                         .cloned()
                         .map(|polygon| polygon.with_metadata(()))
                         .collect(),
+                    supports: Arc::clone(&transformed_supports),
                 });
             });
         }
@@ -4280,19 +4393,20 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let convex_pwn = self.has_convex_pwn_fact();
         let source_geometry_identity = self.polygons.storage_identity();
         let degrees = [x_deg, y_deg, z_deg];
-        if let Some(cached_polygons) = LAST_ROTATION.with_borrow(|cached| {
+        if let Some((cached_polygons, cached_supports)) = LAST_ROTATION.with_borrow(|cached| {
             cached
                 .as_ref()
                 .filter(|cached| {
                     cached.degrees == degrees
                         && cached.source_geometry_identity == source_geometry_identity
                 })
-                .map(|cached| cached.polygons.clone())
+                .map(|cached| (cached.polygons.clone(), Arc::clone(&cached.supports)))
         }) {
             for (polygon, cached) in self.polygons.iter_mut().zip(cached_polygons) {
                 let metadata = polygon.metadata.clone();
                 *polygon = cached.with_metadata(metadata);
             }
+            self.polygons.retain_exact_supports(cached_supports);
             self.bounding_box = OnceLock::new();
             if convex_pwn {
                 self.cache_convex_pwn_fact();
@@ -4355,10 +4469,21 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                         .cloned()
                         .map(|polygon| polygon.with_metadata(()))
                         .collect(),
+                    supports: Arc::clone(rotated.polygons.exact_supports()),
                 });
             });
         }
         rotated
+    }
+
+    /// Applies a caller-certified rigid affine transform while retaining exact
+    /// convexity and transformed support-plane facts.
+    ///
+    /// This is the object-aware counterpart to the general [`CSG::transform`]
+    /// API. Callers should use it only when `matrix` is known by construction
+    /// to be a rigid transform.
+    pub fn transform_rigid(&self, matrix: &Matrix4) -> Self {
+        self.clone().rigid_transform_owned(matrix)
     }
 
     /// Return this mesh with replacement metadata on the mesh and every polygon.
@@ -4368,18 +4493,18 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     ) -> Mesh<NewM> {
         let topology = self.polygons.topology();
         let geometry_lineage = self.polygons.geometry_lineage_identity();
-        let polygons = self
-            .polygons
-            .into_iter()
+        let source_polygons = self.polygons;
+        let polygons = source_polygons
+            .iter()
+            .cloned()
             .map(|polygon| polygon.with_metadata(metadata.clone()))
             .collect::<Vec<_>>();
+        let polygons =
+            MeshPolygons::new_with_geometry_lineage(polygons, topology, geometry_lineage);
+        source_polygons.retain_metadata_independent_assets(&polygons);
 
         Mesh {
-            polygons: MeshPolygons::new_with_geometry_lineage(
-                polygons,
-                topology,
-                geometry_lineage,
-            ),
+            polygons,
             bounding_box: OnceLock::new(),
         }
     }
@@ -4391,17 +4516,17 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     {
         let topology = self.polygons.topology();
         let geometry_lineage = self.polygons.geometry_lineage_identity();
-        let polygons = self
-            .polygons
-            .into_iter()
+        let source_polygons = self.polygons;
+        let polygons = source_polygons
+            .iter()
+            .cloned()
             .map(|polygon| polygon.map_metadata(&mut f))
             .collect::<Vec<_>>();
+        let polygons =
+            MeshPolygons::new_with_geometry_lineage(polygons, topology, geometry_lineage);
+        source_polygons.retain_metadata_independent_assets(&polygons);
         Mesh {
-            polygons: MeshPolygons::new_with_geometry_lineage(
-                polygons,
-                topology,
-                geometry_lineage,
-            ),
+            polygons,
             bounding_box: OnceLock::new(),
         }
     }
@@ -4681,12 +4806,11 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         source.retain_renormalized(self.polygons.clone());
     }
 
-    /// Sample every coordinate at an explicit finite application/output boundary.
+    /// Sample every coordinate at an explicit finite rendering/export boundary.
     ///
-    /// This is intended for callers whose source language or file format has
-    /// finite-number semantics and which want to retry an operation that could
-    /// not certify a symbolic predicate. Native mesh operations do not call it
-    /// implicitly.
+    /// This conversion is intentionally separate from geometry operations:
+    /// native mesh operations never call it, and a failed exact Boolean must be
+    /// reported instead of being retried on this finite representation.
     pub fn materialize_finite_output(&self) -> Option<Self> {
         if let Some(polygons) = self.polygons.materialized_finite().cloned() {
             return Some(Mesh {
@@ -4694,9 +4818,12 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 bounding_box: OnceLock::new(),
             });
         }
-        let mesh = if let Some(transform_layout) =
-            self.polygons.retained_transform_layout().cloned()
-        {
+        let transform_layout = self
+            .polygons
+            .retained_transform_layout()
+            .cloned()
+            .unwrap_or_else(|| Arc::new(TransformLayout::from_polygons(&self.polygons)));
+        let mesh = {
             let converted_positions = transform_layout
                 .position_representatives
                 .iter()
@@ -4796,36 +4923,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             ));
             mesh.polygons.retain_transform_layout(Arc::new(output_layout));
             mesh
-        } else {
-            let polygons = self
-                .polygons
-                .iter()
-                .map(|polygon| {
-                    let vertices = polygon
-                        .vertices
-                        .iter()
-                        .map(|vertex| {
-                            Some(Vertex::new(
-                                Point3::new(
-                                    Real::try_from(vertex.position.x.to_f64_lossy()?).ok()?,
-                                    Real::try_from(vertex.position.y.to_f64_lossy()?).ok()?,
-                                    Real::try_from(vertex.position.z.to_f64_lossy()?).ok()?,
-                                ),
-                                Vector3::new([
-                                    Real::try_from(vertex.normal.0[0].to_f64_lossy()?).ok()?,
-                                    Real::try_from(vertex.normal.0[1].to_f64_lossy()?).ok()?,
-                                    Real::try_from(vertex.normal.0[2].to_f64_lossy()?).ok()?,
-                                ]),
-                            ))
-                        })
-                        .collect::<Option<Vec<_>>>()?;
-                    Some(Polygon::from_planar_vertices(
-                        vertices,
-                        polygon.metadata.clone(),
-                    ))
-                })
-                .collect::<Option<Vec<_>>>()?;
-            Self::from_polygons(polygons)
         };
         self.polygons
             .retain_materialized_finite(mesh.polygons.clone());
@@ -6375,14 +6472,16 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 
     fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
         let degrees = [x_deg, y_deg, z_deg];
-        if let Some(cached) = LAST_ROTATION.with_borrow(|cached| {
+        if let Some((cached_polygons, cached_supports)) = LAST_ROTATION.with_borrow(|cached| {
             cached.as_ref().and_then(|cached| {
                 (cached.degrees == degrees
                     && self.polygons.storage_identity() == cached.source_geometry_identity)
-                    .then(|| self.with_cached_geometry(&cached.polygons))
+                    .then(|| (cached.polygons.clone(), Arc::clone(&cached.supports)))
             })
         }) {
-            return cached;
+            let mesh = self.with_cached_geometry(&cached_polygons);
+            mesh.polygons.retain_exact_supports(cached_supports);
+            return mesh;
         }
         let [x_deg, y_deg, z_deg] = degrees;
         self.clone().into_rotated(x_deg, y_deg, z_deg)
@@ -7154,6 +7253,10 @@ mod tests {
         assert_eq!(
             mesh.bounding_box(),
             Aabb::new(p3(0.0, 0.0, 0.0), p3(2.0, 3.0, 0.0))
+        );
+        assert!(
+            mesh.polygons.axis_aligned_box_fact().is_none(),
+            "an imported mesh's bounds do not prove that its surface is a box"
         );
         assert_eq!(mesh.build_graphics_mesh().vertices.len(), 6);
     }

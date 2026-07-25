@@ -117,6 +117,11 @@ enum ShapeCacheKey {
 struct CachedShape {
     key: ShapeCacheKey,
     polygons: Vec<Polygon<()>>,
+    topology: (usize, usize, bool),
+    supports: Arc<Vec<::hypermesh::InputTrianglePlanes>>,
+    manifold: Option<bool>,
+    nondegenerate_triangles: Option<bool>,
+    convex_pwn: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -144,14 +149,27 @@ fn cached_shape<M: Clone + Debug + Send + Sync>(
             .as_ref()
             .filter(|cached| cached.key == *key)
             .map(|cached| {
-                let mut mesh = Mesh::from_polygons(
+                let mut mesh = Mesh::from_polygons_with_topology(
                     cached
                         .polygons
                         .iter()
                         .cloned()
                         .map(|polygon| polygon.with_metadata(metadata.clone()))
                         .collect(),
+                    cached.topology,
                 );
+                mesh.polygons
+                    .retain_exact_supports(Arc::clone(&cached.supports));
+                if let Some(is_manifold) = cached.manifold {
+                    mesh.polygons.retain_manifold_fact(is_manifold);
+                }
+                if let Some(nondegenerate) = cached.nondegenerate_triangles {
+                    mesh.polygons
+                        .retain_nondegenerate_triangles_fact(nondegenerate);
+                }
+                if cached.convex_pwn {
+                    mesh.cache_convex_pwn_fact();
+                }
                 let cuboid_bounds = match key {
                     ShapeCacheKey::Cube(width) => Some(Aabb::new(
                         Point3::origin(),
@@ -197,6 +215,11 @@ fn retain_shape_cache<M: Clone + Debug + Send + Sync>(key: ShapeCacheKey, mesh: 
                 .cloned()
                 .map(|polygon| polygon.with_metadata(()))
                 .collect(),
+            topology: mesh.polygons.topology(),
+            supports: Arc::clone(mesh.polygons.exact_supports()),
+            manifold: mesh.polygons.manifold_fact(),
+            nondegenerate_triangles: mesh.polygons.nondegenerate_triangles_fact(),
+            convex_pwn: mesh.has_convex_pwn_fact(),
         });
     });
 }
