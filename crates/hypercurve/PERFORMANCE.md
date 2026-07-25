@@ -4787,6 +4787,34 @@ the downstream `region_boolean` replay completed 2,704 executions at 5,984
 coverage points and 19,292 feature edges. Neither found an error; LeakSanitizer
 alone remained disabled under ptrace.
 
+### Bounded exact GCD reduction
+
+The next three-cell profile attributed 9.34% of the complete workload to
+`num_bigint` right shifts inside balanced rational-operation GCDs. Hyperreal
+now extends its existing allocation-free fixed-limb binary reducer from 256 to
+512 bits while preserving the backend for larger operands. Its focused cold
+reduction improved 21.8%, from 6.396 to 5.000 microseconds.
+
+On the identical three-cell workload, instruction references fell from
+273,691,629 to 266,961,560 (2.46%). The complete 67-cell native Boolean
+ten-run median fell from 1.0095 seconds to 965.8 milliseconds (4.33%);
+preparation fell 3.95% and union fell 8.80%. All 268 operations remained
+decided with no blockers and unchanged candidate, fragment, classification,
+and checksum counts.
+
+Peak heap remained 36.00 MiB and recorder-inclusive peak RSS was 96.81 MiB.
+Allocation events increased 0.36%, while postprocessed temporary allocations
+fell by 67. The release benchmark gained 6,080 bytes of text (0.13%) and 4,096
+bytes of total loadable size.
+
+Validation passed across all-feature Hyperreal, Hyperlattice, Hyperlimit,
+Hypersolve, and Hypercurve suites, strict Hyperreal/Hypercurve/UI Clippy, all
+37 UI tests, and the release WASM demo build. The `rational_arithmetic`
+AddressSanitizer replay completed 2,509 executions at 1,830 coverage points
+and 4,630 feature edges; `region_boolean` completed 2,706 executions at 5,989
+coverage points and 19,320 feature edges. Neither found an error;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
