@@ -9,19 +9,111 @@ use hyperreal::{PreparedRationalLinearForm4Filter, PreparedRationalLinearForm4Qu
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Plane;
-use crate::storage_hash::StorageSequenceHashMap;
 
 const LINEAR_FORM_FILTER_CACHE_CAPACITY: usize = 8_192;
+const LINEAR_FORM_FILTER_SLOT_CAPACITY: usize = LINEAR_FORM_FILTER_CACHE_CAPACITY * 2;
+const INITIAL_LINEAR_FORM_FILTER_SLOT_CAPACITY: usize = 16;
+const EMPTY_LINEAR_FORM_FILTER_SLOT: u16 = u16::MAX;
 
 struct CachedLinearForm3Filter {
-    _owners: [Rational; 4],
+    owners: [Rational; 4],
     filter: Option<PreparedRationalLinearForm4Filter>,
 }
 
+struct LinearForm3FilterCache {
+    /// Open-addressed slots contain compact indices into `entries`. Keeping
+    /// storage owners only in the dense entry array avoids duplicating four
+    /// pointers in every hash-table entry.
+    slots: Vec<u16>,
+    entries: Vec<CachedLinearForm3Filter>,
+}
+
+impl Default for LinearForm3FilterCache {
+    fn default() -> Self {
+        Self {
+            slots: vec![EMPTY_LINEAR_FORM_FILTER_SLOT; INITIAL_LINEAR_FORM_FILTER_SLOT_CAPACITY],
+            entries: Vec::new(),
+        }
+    }
+}
+
+impl LinearForm3FilterCache {
+    #[inline]
+    fn slot_for(key: [usize; 4], slot_capacity: usize) -> usize {
+        let mut mixed = 4_u64.wrapping_mul(0x517c_c1b7_2722_0a95);
+        for word in key {
+            mixed = mixed.rotate_left(19).wrapping_add(word as u64);
+        }
+        mixed = (mixed ^ (mixed >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        mixed = (mixed ^ (mixed >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+        (mixed ^ (mixed >> 31)) as usize & (slot_capacity - 1)
+    }
+
+    #[inline]
+    fn entry_matches(entry: &CachedLinearForm3Filter, key: [usize; 4]) -> bool {
+        entry
+            .owners
+            .iter()
+            .zip(key)
+            .all(|(owner, identity)| owner.storage_identity() == identity)
+    }
+
+    #[inline]
+    fn find(&self, key: [usize; 4]) -> Option<Option<PreparedRationalLinearForm4Filter>> {
+        let mut slot = Self::slot_for(key, self.slots.len());
+        loop {
+            let entry_index = self.slots[slot];
+            if entry_index == EMPTY_LINEAR_FORM_FILTER_SLOT {
+                return None;
+            }
+            let entry = &self.entries[usize::from(entry_index)];
+            if Self::entry_matches(entry, key) {
+                return Some(entry.filter);
+            }
+            slot = (slot + 1) & (self.slots.len() - 1);
+        }
+    }
+
+    fn grow_slots(&mut self) {
+        let new_capacity = (self.slots.len() * 2).min(LINEAR_FORM_FILTER_SLOT_CAPACITY);
+        debug_assert!(new_capacity > self.slots.len());
+        self.slots = vec![EMPTY_LINEAR_FORM_FILTER_SLOT; new_capacity];
+        for (entry_index, entry) in self.entries.iter().enumerate() {
+            let key = entry
+                .owners
+                .each_ref()
+                .map(|owner| owner.storage_identity());
+            let mut slot = Self::slot_for(key, new_capacity);
+            while self.slots[slot] != EMPTY_LINEAR_FORM_FILTER_SLOT {
+                slot = (slot + 1) & (new_capacity - 1);
+            }
+            self.slots[slot] = entry_index as u16;
+        }
+    }
+
+    #[inline]
+    fn insert(&mut self, key: [usize; 4], entry: CachedLinearForm3Filter) {
+        if self.entries.len() >= LINEAR_FORM_FILTER_CACHE_CAPACITY {
+            self.entries.clear();
+            self.slots.fill(EMPTY_LINEAR_FORM_FILTER_SLOT);
+        }
+        if self.entries.len() >= self.slots.len() / 2 {
+            self.grow_slots();
+        }
+        let mut slot = Self::slot_for(key, self.slots.len());
+        while self.slots[slot] != EMPTY_LINEAR_FORM_FILTER_SLOT {
+            slot = (slot + 1) & (self.slots.len() - 1);
+        }
+        let entry_index = self.entries.len();
+        debug_assert!(entry_index < usize::from(EMPTY_LINEAR_FORM_FILTER_SLOT));
+        self.entries.push(entry);
+        self.slots[slot] = entry_index as u16;
+    }
+}
+
 thread_local! {
-    static LINEAR_FORM_FILTERS: RefCell<
-        StorageSequenceHashMap<[usize; 4], CachedLinearForm3Filter>
-    > = RefCell::new(StorageSequenceHashMap::default());
+    static LINEAR_FORM_FILTERS: RefCell<LinearForm3FilterCache> =
+        RefCell::new(LinearForm3FilterCache::default());
 }
 
 fn prepared_linear_form3_filter(
@@ -30,11 +122,8 @@ fn prepared_linear_form3_filter(
 ) -> Option<PreparedRationalLinearForm4Filter> {
     let key = coefficients.map(Rational::storage_identity);
     LINEAR_FORM_FILTERS.with_borrow_mut(|cache| {
-        if let Some(cached) = cache.get(&key) {
-            return cached.filter;
-        }
-        if cache.len() >= LINEAR_FORM_FILTER_CACHE_CAPACITY {
-            cache.clear();
+        if let Some(filter) = cache.find(key) {
+            return filter;
         }
         let filter = Real::prepare_rational_linear_form4_filter([
             &plane.normal.x,
@@ -45,7 +134,7 @@ fn prepared_linear_form3_filter(
         cache.insert(
             key,
             CachedLinearForm3Filter {
-                _owners: coefficients.map(Clone::clone),
+                owners: coefficients.map(Clone::clone),
                 filter,
             },
         );
@@ -329,6 +418,66 @@ mod tests {
 
     fn point(x: Real, y: Real, z: Real) -> Point3 {
         Point3::new(x, y, z)
+    }
+
+    #[test]
+    fn linear_form_filter_cache_retains_owners_and_probes_collisions() {
+        let mut cache = LinearForm3FilterCache::default();
+        let mut first_by_slot = std::collections::HashMap::new();
+        let (first, second) = (1_i64..20_000)
+            .find_map(|value| {
+                let owners = std::array::from_fn(|offset| Rational::new(value + offset as i64));
+                let key = owners.each_ref().map(|owner| owner.storage_identity());
+                let slot = LinearForm3FilterCache::slot_for(key, LINEAR_FORM_FILTER_SLOT_CAPACITY);
+                if let Some(first) = first_by_slot.remove(&slot) {
+                    Some((first, (key, owners)))
+                } else {
+                    first_by_slot.insert(slot, (key, owners));
+                    None
+                }
+            })
+            .expect("more candidates than slots must produce a collision");
+
+        let (first_key, first_owners) = first;
+        let (second_key, second_owners) = second;
+        cache.insert(
+            first_key,
+            CachedLinearForm3Filter {
+                owners: first_owners,
+                filter: None,
+            },
+        );
+        cache.insert(
+            second_key,
+            CachedLinearForm3Filter {
+                owners: second_owners,
+                filter: None,
+            },
+        );
+
+        assert!(matches!(cache.find(first_key), Some(None)));
+        assert!(matches!(cache.find(second_key), Some(None)));
+        assert_eq!(cache.entries.len(), 2);
+
+        let mut grown_keys = Vec::new();
+        for value in 30_000_i64..30_512 {
+            let owners = std::array::from_fn(|offset| Rational::new(value + offset as i64));
+            let key = owners.each_ref().map(|owner| owner.storage_identity());
+            cache.insert(
+                key,
+                CachedLinearForm3Filter {
+                    owners,
+                    filter: None,
+                },
+            );
+            grown_keys.push(key);
+        }
+        assert!(cache.slots.len() > INITIAL_LINEAR_FORM_FILTER_SLOT_CAPACITY);
+        assert!(
+            grown_keys
+                .into_iter()
+                .all(|key| matches!(cache.find(key), Some(None)))
+        );
     }
 
     #[test]
