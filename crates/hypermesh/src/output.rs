@@ -1186,7 +1186,7 @@ where
     for (polygon_index, polygon) in polygons.iter().enumerate() {
         let polygon = polygon.borrow();
         indexed_polygons.push(vec![0; polygon.vertex_count()]);
-        let vertex_identities = polygon.known_vertex_identities.as_deref();
+        let vertex_identities = polygon.known_vertex_identities();
         if let Some(points) = polygon.known_vertices.as_ref() {
             for (vertex_index, point) in points.iter().enumerate() {
                 positions.push((
@@ -1372,12 +1372,10 @@ where
     for (polygon, indexed) in polygons.iter().zip(indexed_polygons) {
         let polygon = polygon.borrow();
         let identities = polygon
-            .known_edge_identities
-            .as_ref()
+            .known_edge_identities()
             .ok_or(HypermeshError::UnknownClassification)?;
         let vertex_identities = polygon
-            .known_vertex_identities
-            .as_ref()
+            .known_vertex_identities()
             .ok_or(HypermeshError::UnknownClassification)?;
         if indexed.len() != identities.len() {
             return Err(HypermeshError::UnknownClassification);

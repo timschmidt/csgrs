@@ -14091,7 +14091,6 @@ fn support_only_polygon(support: Plane) -> ConvexPolygon {
         delta_w: Vec::new(),
         approx_bounds: None,
         known_vertices: None,
-        known_vertex_identities: None,
-        known_edge_identities: None,
+        known_identities: None,
     }
 }

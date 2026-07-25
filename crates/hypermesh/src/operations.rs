@@ -806,8 +806,7 @@ impl PointPlaneClassificationCache {
     ) -> HypermeshResult<(SourcePlaneRelation, Vec<usize>)> {
         if certifiably_same_unoriented_plane(&polygon.support, plane) {
             let on_source_vertices = polygon
-                .known_vertex_identities
-                .as_deref()
+                .known_vertex_identities()
                 .into_iter()
                 .flatten()
                 .filter_map(|identity| match identity {
@@ -820,7 +819,7 @@ impl PointPlaneClassificationCache {
         let mut has_negative = false;
         let mut has_positive = false;
         let mut on_source_vertices = Vec::new();
-        let edge_identities = polygon.known_edge_identities.as_deref();
+        let edge_identities = polygon.known_edge_identities();
         for (point_index, point) in polygon
             .known_vertices
             .as_ref()
@@ -1006,8 +1005,7 @@ impl ProjectiveCycle {
             .as_ref()
             .ok_or(crate::error::HypermeshError::UnknownClassification)?;
         let edge_identities = polygon
-            .known_edge_identities
-            .as_ref()
+            .known_edge_identities()
             .ok_or(crate::error::HypermeshError::UnknownClassification)?
             .to_vec();
         if edge_identities.len() != source_points.len() {
@@ -1685,7 +1683,7 @@ fn compute_two_convex_inputs_projectively(
     let mut source_vertex_points: StorageHashMap<ConstructionVertexIdentity, Point3> =
         StorageHashMap::default();
     for (polygon, support_identity) in polygons.iter().zip(&polygon_support_planes) {
-        if let Some(vertex_identities) = polygon.known_vertex_identities.as_ref() {
+        if let Some(vertex_identities) = polygon.known_vertex_identities() {
             let retained_vertices = polygon.known_vertices.as_ref();
             for (vertex_index, vertex_identity) in vertex_identities.iter().enumerate() {
                 if matches!(vertex_identity, ConstructionVertexIdentity::Source { .. }) {
@@ -1712,7 +1710,7 @@ fn compute_two_convex_inputs_projectively(
                 }
             }
         }
-        let Some(edge_identities) = polygon.known_edge_identities.as_ref() else {
+        let Some(edge_identities) = polygon.known_edge_identities() else {
             continue;
         };
         if edge_identities.len() != polygon.edges.len() {
@@ -1973,7 +1971,7 @@ fn compute_two_convex_inputs_projectively(
     projective_point_cache.resolve_vertex_coincidences();
     affine_cache.identities.clear();
     for fragment in &mut classified {
-        if let Some(vertex_identities) = fragment.polygon.known_vertex_identities.as_ref() {
+        if let Some(vertex_identities) = fragment.polygon.known_vertex_identities() {
             let canonical_identities = vertex_identities
                 .iter()
                 .map(|identity| projective_point_cache.canonical_vertex_identity(identity))
@@ -1998,8 +1996,7 @@ fn compute_two_convex_inputs_projectively(
                 .collect::<HypermeshResult<Vec<_>>>()?;
             let edge_identities = fragment
                 .polygon
-                .known_edge_identities
-                .as_deref()
+                .known_edge_identities()
                 .ok_or(crate::error::HypermeshError::UnknownClassification)?
                 .to_vec();
             fragment.polygon = fragment.polygon.with_known_vertex_cycle_and_edges(
@@ -2260,12 +2257,10 @@ fn collapse_certified_convex_faces(
         for &polygon_index in &polygon_indices {
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon
-                .known_edge_identities
-                .as_ref()
+                .known_edge_identities()
                 .ok_or(crate::error::HypermeshError::UnknownClassification)?;
             let vertex_identities = polygon
-                .known_vertex_identities
-                .as_ref()
+                .known_vertex_identities()
                 .ok_or(crate::error::HypermeshError::UnknownClassification)?;
             let points = polygon
                 .known_vertices
@@ -2298,14 +2293,8 @@ fn collapse_certified_convex_faces(
         > = std::collections::BTreeMap::new();
         for &polygon_index in &polygon_indices {
             let polygon = &polygons[polygon_index];
-            let edge_identities = polygon
-                .known_edge_identities
-                .as_ref()
-                .expect("validated above");
-            let vertex_identities = polygon
-                .known_vertex_identities
-                .as_ref()
-                .expect("validated above");
+            let edge_identities = polygon.known_edge_identities().expect("validated above");
+            let vertex_identities = polygon.known_vertex_identities().expect("validated above");
             let points = polygon.known_vertices.as_ref().expect("validated above");
             let rebuilt_planes = (polygon.edges.len() != edge_identities.len()).then(|| {
                 InputTrianglePlanes::from_points(

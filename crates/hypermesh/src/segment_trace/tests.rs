@@ -9183,8 +9183,7 @@ fn detour_trace_reports_unknown_when_fallback_surface_detour_is_skipped() {
         delta_w: Vec::new(),
         approx_bounds: None,
         known_vertices: None,
-        known_vertex_identities: None,
-        known_edge_identities: None,
+        known_identities: None,
     }];
 
     let err = trace_segment_via_detours_with_definitions_budget(
@@ -10890,8 +10889,7 @@ fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_surface_detour_is
         delta_w: Vec::new(),
         approx_bounds: None,
         known_vertices: None,
-        known_vertex_identities: None,
-        known_edge_identities: None,
+        known_identities: None,
     }];
     let mut trace_without_detours =
         |_from: &Point3,
@@ -12477,8 +12475,7 @@ fn probe_reachability_reports_unknown_when_fallback_surface_detour_is_skipped() 
         delta_w: Vec::new(),
         approx_bounds: None,
         known_vertices: None,
-        known_vertex_identities: None,
-        known_edge_identities: None,
+        known_identities: None,
     }];
     let mut trace_without_detours =
         |_from: &Point3,

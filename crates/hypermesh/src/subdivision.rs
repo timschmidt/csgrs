@@ -2671,8 +2671,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
         delta_w: polygon.delta_w.clone(),
         approx_bounds: None,
         known_vertices: None,
-        known_vertex_identities: None,
-        known_edge_identities: None,
+        known_identities: None,
     };
     let may_use_single_point = single_convex_interior_point
         && host_intersections.is_some_and(|intersections| {
