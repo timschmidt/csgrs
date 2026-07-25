@@ -1044,6 +1044,44 @@ fn output_triangle_is_nondegenerate(
     vertices: &[OutputVertex],
     support: &Plane,
 ) -> HypermeshResult<bool> {
+    // Boundary vertices lie on `support`. Their edge cross product is
+    // therefore parallel to its normal, so an exactly nonzero normal
+    // component certifies that the complementary 2D projection is degenerate
+    // exactly when the original triangle is degenerate.
+    let normal = [&support.normal.x, &support.normal.y, &support.normal.z];
+    if let Some(projection_axis) = normal.iter().position(|component| {
+        component
+            .exact_rational_ref()
+            .is_some_and(|value| !value.is_zero())
+    }) {
+        let (u_axis, v_axis) = match projection_axis {
+            0 => (1, 2),
+            1 => (0, 2),
+            2 => (0, 1),
+            _ => unreachable!("projection axis is in 0..3"),
+        };
+        let origin = &vertices[triangle[0]];
+        let left = &vertices[triangle[1]];
+        let right = &vertices[triangle[2]];
+        let left_u = vertex_axis(left, u_axis) - vertex_axis(origin, u_axis);
+        let left_v = vertex_axis(left, v_axis) - vertex_axis(origin, v_axis);
+        let right_u = vertex_axis(right, u_axis) - vertex_axis(origin, u_axis);
+        let right_v = vertex_axis(right, v_axis) - vertex_axis(origin, v_axis);
+        if let ([Some(left_u), Some(left_v)], [Some(right_u), Some(right_v)]) = (
+            [&left_u, &left_v].map(Real::exact_rational_ref),
+            [&right_u, &right_v].map(Real::exact_rational_ref),
+        ) {
+            return Ok(!Rational::signed_product_sum_ordering(
+                [true, false],
+                [[left_u, right_v], [left_v, right_u]],
+            )
+            .is_eq());
+        }
+        let projected_area =
+            Real::signed_product_sum([true, false], [[&left_u, &right_v], [&left_v, &right_u]]);
+        return Ok(crate::geometry::classify_real(&projected_area)? != Classification::On);
+    }
+
     let left = sub_vertex(&vertices[triangle[1]], &vertices[triangle[0]]);
     let right = sub_vertex(&vertices[triangle[2]], &vertices[triangle[0]]);
     if let Some(sign) = Real::exact_rational_det3_word_sign(
@@ -2691,6 +2729,36 @@ mod tests {
             Some(())
         );
         assert_eq!(triangles, vec![[0, 2, 3]]);
+    }
+
+    #[test]
+    fn output_triangle_nondegeneracy_projects_every_normal_axis_exactly() {
+        for points in [
+            [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0), p(2, 0, 0)],
+            [p(0, 0, 0), p(0, 1, 0), p(0, 0, 1), p(0, 2, 0)],
+            [p(0, 0, 0), p(1, 0, 0), p(0, 0, 1), p(2, 0, 0)],
+            [p(0, 0, 0), p(1, 0, -1), p(0, 1, -1), p(2, 0, -2)],
+        ] {
+            let support = Plane::from_points(&points[0], &points[1], &points[2]);
+            let vertices = points
+                .into_iter()
+                .map(|point| OutputVertex {
+                    x: point.x,
+                    y: point.y,
+                    z: point.z,
+                })
+                .collect::<Vec<_>>();
+            assert!(output_triangle_is_nondegenerate([0, 1, 2], &vertices, &support).unwrap());
+            assert!(!output_triangle_is_nondegenerate([0, 1, 3], &vertices, &support).unwrap());
+        }
+
+        let symbolic_support =
+            Plane::from_coefficients(Real::pi(), Real::zero(), Real::zero(), Real::zero());
+        let vertices = vec![ov(0, 0, 0), ov(0, 1, 0), ov(0, 0, 1), ov(0, 2, 0)];
+        assert!(output_triangle_is_nondegenerate([0, 1, 2], &vertices, &symbolic_support).unwrap());
+        assert!(
+            !output_triangle_is_nondegenerate([0, 1, 3], &vertices, &symbolic_support).unwrap()
+        );
     }
 
     #[test]
