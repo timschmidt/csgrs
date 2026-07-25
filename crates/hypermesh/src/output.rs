@@ -2483,25 +2483,27 @@ fn inexpensive_nonzero_segment_axis(
     start: &OutputVertex,
     end: &OutputVertex,
 ) -> HypermeshResult<usize> {
-    let approximate = (0..3)
-        .map(|axis| {
-            Some(
-                (vertex_axis(end, axis).to_f64_lossy()?
-                    - vertex_axis(start, axis).to_f64_lossy()?)
-                .abs(),
-            )
-        })
-        .collect::<Option<Vec<_>>>();
-    if let Some(approximate) = approximate
-        && let Some((axis, _)) = approximate
-            .iter()
-            .enumerate()
-            .filter(|(_, delta)| delta.is_finite() && **delta != 0.0)
-            .max_by(|(_, left), (_, right)| {
-                left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal)
-            })
-    {
-        return Ok(axis);
+    let approximate = (|| {
+        Some([
+            (end.x.to_f64_lossy()? - start.x.to_f64_lossy()?).abs(),
+            (end.y.to_f64_lossy()? - start.y.to_f64_lossy()?).abs(),
+            (end.z.to_f64_lossy()? - start.z.to_f64_lossy()?).abs(),
+        ])
+    })();
+    if let Some(approximate) = approximate {
+        let mut best = None;
+        for axis in 0..3 {
+            let delta = approximate[axis];
+            if delta.is_finite()
+                && delta != 0.0
+                && best.is_none_or(|best_axis| delta >= approximate[best_axis])
+            {
+                best = Some(axis);
+            }
+        }
+        if let Some(axis) = best {
+            return Ok(axis);
+        }
     }
     dominant_segment_axis(start, end)
 }
@@ -2986,6 +2988,22 @@ mod tests {
         assert_eq!(forward, vec![[0, 3], [3, 1]]);
         assert_eq!(reversed, forward);
         assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
+    fn inexpensive_segment_axis_uses_largest_finite_approximation() {
+        assert_eq!(
+            inexpensive_nonzero_segment_axis(&ov(0, 0, 0), &ov(1, 2, 3)).unwrap(),
+            2
+        );
+        assert_eq!(
+            inexpensive_nonzero_segment_axis(&ov(0, 0, 0), &ov(3, -3, 2)).unwrap(),
+            1
+        );
+        assert_eq!(
+            inexpensive_nonzero_segment_axis(&ov(1, 1, 1), &ov(1, 1, 1)).unwrap(),
+            0
+        );
     }
 
     #[test]
