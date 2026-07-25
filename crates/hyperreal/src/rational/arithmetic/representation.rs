@@ -181,18 +181,22 @@ struct CachedRationalArithmetic {
     square_reduction: OnceLock<CachedRationalSquareReduction>,
 }
 
-const RETAINED_LINEAR_REUSE_SEEN: u8 = 1 << 0;
-const RETAINED_POWER_REUSE_SEEN: u8 = 1 << 1;
-const RETAINED_SQUARE_REUSE_SEEN: u8 = 1 << 2;
-const RETAINED_EXACT_F64_VIEW: u8 = 1 << 3;
-const RETAINED_DYADIC_KNOWN: u8 = 1 << 4;
-const RETAINED_DYADIC_VALUE: u8 = 1 << 5;
-const RETAINED_SELF_DOT_CONFLICT_ATTEMPTED: u8 = 1 << 6;
-const RETAINED_UNREDUCED_INTERNAL: u8 = 1 << 7;
-const RETAINED_REUSE_MASK: u8 = RETAINED_LINEAR_REUSE_SEEN
+const RETAINED_LINEAR_REUSE_SEEN: u32 = 1 << 0;
+const RETAINED_POWER_REUSE_SEEN: u32 = 1 << 1;
+const RETAINED_SQUARE_REUSE_SEEN: u32 = 1 << 2;
+const RETAINED_EXACT_F64_VIEW: u32 = 1 << 3;
+const RETAINED_DYADIC_KNOWN: u32 = 1 << 4;
+const RETAINED_DYADIC_VALUE: u32 = 1 << 5;
+const RETAINED_SELF_DOT_CONFLICT_ATTEMPTED: u32 = 1 << 6;
+const RETAINED_UNREDUCED_INTERNAL: u32 = 1 << 7;
+const RETAINED_REUSE_MASK: u32 = RETAINED_LINEAR_REUSE_SEEN
     | RETAINED_POWER_REUSE_SEEN
     | RETAINED_SQUARE_REUSE_SEEN
     | RETAINED_SELF_DOT_CONFLICT_ATTEMPTED;
+const RETAINED_DYADIC_SHIFT_OFFSET: u32 = 8;
+const RETAINED_DYADIC_SHIFT_MASK: u32 = u32::MAX << RETAINED_DYADIC_SHIFT_OFFSET;
+const RETAINED_DYADIC_SHIFT_MAX: u64 =
+    ((RETAINED_DYADIC_SHIFT_MASK >> RETAINED_DYADIC_SHIFT_OFFSET) - 1) as u64;
 
 #[doc(hidden)]
 pub struct RationalData {
@@ -204,7 +208,7 @@ pub struct RationalData {
     /// Monotonic representation and reuse evidence retained by this immutable
     /// rational. Packing these facts keeps the node layout bounded while
     /// leaving room for additional benchmark-proven dispatch certificates.
-    retained_facts: std::sync::atomic::AtomicU8,
+    retained_facts: std::sync::atomic::AtomicU32,
 }
 
 impl std::fmt::Debug for Rational {
@@ -314,7 +318,7 @@ static SMALL_NEGATIVE_GENERAL_RATIONALS: [OnceLock<Rational>; SMALL_GENERAL_CACH
 
 impl Rational {
     #[inline]
-    fn retained_fact(&self, fact: u8) -> bool {
+    fn retained_fact(&self, fact: u32) -> bool {
         self.retained_facts
             .load(std::sync::atomic::Ordering::Relaxed)
             & fact
@@ -322,7 +326,7 @@ impl Rational {
     }
 
     #[inline]
-    fn retain_fact(&self, fact: u8) {
+    fn retain_fact(&self, fact: u32) {
         self.retained_facts
             .fetch_or(fact, std::sync::atomic::Ordering::Relaxed);
     }
@@ -331,7 +335,7 @@ impl Rational {
     /// retained. Racing observers may both take the cold path; subsequent
     /// calls see the evidence without locks or node growth.
     #[inline]
-    fn observe_retained_fact(&self, fact: u8) -> bool {
+    fn observe_retained_fact(&self, fact: u32) -> bool {
         self.retained_facts
             .fetch_or(fact, std::sync::atomic::Ordering::Relaxed)
             & fact

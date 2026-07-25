@@ -7,7 +7,7 @@ impl Rational {
             denominator,
             product_cache: OnceLock::new(),
             linear_cache: CompactOnceBox::new(),
-            retained_facts: std::sync::atomic::AtomicU8::new(0),
+            retained_facts: std::sync::atomic::AtomicU32::new(0),
         }))
     }
 
@@ -23,7 +23,7 @@ impl Rational {
             denominator,
             product_cache: OnceLock::new(),
             linear_cache: CompactOnceBox::new(),
-            retained_facts: std::sync::atomic::AtomicU8::new(RETAINED_UNREDUCED_INTERNAL),
+            retained_facts: std::sync::atomic::AtomicU32::new(RETAINED_UNREDUCED_INTERNAL),
         }))
     }
 
@@ -70,7 +70,7 @@ impl Rational {
             denominator: shared.denominator.clone(),
             product_cache: OnceLock::new(),
             linear_cache: CompactOnceBox::new(),
-            retained_facts: std::sync::atomic::AtomicU8::new(0),
+            retained_facts: std::sync::atomic::AtomicU32::new(0),
         });
         (sign, numerator, denominator)
     }
@@ -380,7 +380,11 @@ impl Rational {
             BigUint::from(numerator),
             BigUint::one() << denominator_shift,
         );
-        value.retain_fact(RETAINED_DYADIC_KNOWN | RETAINED_DYADIC_VALUE);
+        value.retain_fact(
+            RETAINED_DYADIC_KNOWN
+                | RETAINED_DYADIC_VALUE
+                | Self::encoded_dyadic_denominator_shift(u64::from(denominator_shift)),
+        );
         trace_rational_temporary!();
         value
     }
@@ -722,9 +726,15 @@ impl Rational {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().dyadic_denominator_shift();
         }
-        if self.retained_fact(RETAINED_DYADIC_KNOWN)
-            && !self.retained_fact(RETAINED_DYADIC_VALUE)
-        {
+        let retained = self
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        let encoded_shift =
+            (retained & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET;
+        if encoded_shift != 0 {
+            return Some(u64::from(encoded_shift - 1));
+        }
+        if retained & RETAINED_DYADIC_KNOWN != 0 && retained & RETAINED_DYADIC_VALUE == 0 {
             crate::trace_dispatch!("rational", "retained-facts", "non-dyadic-hit");
             return None;
         }
@@ -735,9 +745,22 @@ impl Rational {
                     RETAINED_DYADIC_VALUE
                 } else {
                     0
-                },
+                }
+                | shift
+                    .map(Self::encoded_dyadic_denominator_shift)
+                    .unwrap_or(0),
         );
         shift
+    }
+
+    #[inline]
+    fn encoded_dyadic_denominator_shift(shift: u64) -> u32 {
+        if shift <= RETAINED_DYADIC_SHIFT_MAX {
+            (u32::try_from(shift).expect("bounded dyadic shift fits u32") + 1)
+                << RETAINED_DYADIC_SHIFT_OFFSET
+        } else {
+            0
+        }
     }
 
     fn from_signed_magnitude_difference(

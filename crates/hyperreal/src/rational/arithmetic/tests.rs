@@ -2880,6 +2880,38 @@ mod tests {
     }
 
     #[test]
+    fn dyadic_denominator_shift_is_retained() {
+        let value =
+            Rational::from_parts_raw(Plus, BigUint::from(3_u8), BigUint::one() << 300usize);
+        assert_eq!(
+            value
+                .retained_facts
+                .load(std::sync::atomic::Ordering::Relaxed)
+                & RETAINED_DYADIC_SHIFT_MASK,
+            0
+        );
+
+        assert_eq!(value.dyadic_denominator_shift(), Some(300));
+        let retained = value
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        assert_eq!(
+            (retained & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            301
+        );
+        assert_eq!(value.dyadic_denominator_shift(), Some(300));
+
+        assert_eq!(
+            Rational::encoded_dyadic_denominator_shift(RETAINED_DYADIC_SHIFT_MAX),
+            RETAINED_DYADIC_SHIFT_MASK
+        );
+        assert_eq!(
+            Rational::encoded_dyadic_denominator_shift(RETAINED_DYADIC_SHIFT_MAX + 1),
+            0
+        );
+    }
+
+    #[test]
     fn dyadic_add_sub_stay_reduced() {
         let three_eighths = Rational::fraction(3, 8).unwrap();
         let five_sixteenths = Rational::fraction(5, 16).unwrap();
