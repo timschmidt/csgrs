@@ -2514,34 +2514,41 @@ fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {
 }
 
 fn evaluate_coefficients(coefficients: &[Real], parameter: &Real) -> Real {
-    if let Some(parameter) = parameter.exact_rational_ref()
-        && coefficients
+    if let Some(parameter) = parameter.exact_rational_ref() {
+        if parameter == &HyperRational::zero() {
+            return coefficients.first().cloned().unwrap_or_else(Real::zero);
+        }
+        if coefficients
             .iter()
             .all(|coefficient| coefficient.exact_rational_ref().is_some())
-    {
-        let Some((leading, coefficients)) = coefficients.split_last() else {
-            return Real::zero();
-        };
-        let mut accumulator = leading
-            .exact_rational_ref()
-            .expect("all coefficients were checked")
-            .clone();
-        let one = HyperRational::one();
-        for coefficient in coefficients.iter().rev() {
-            accumulator = HyperRational::signed_product_sum2(
-                [true, true],
-                [
-                    [&accumulator, parameter],
+        {
+            let Some((leading, coefficients)) = coefficients.split_last() else {
+                return Real::zero();
+            };
+            let mut accumulator = leading
+                .exact_rational_ref()
+                .expect("all coefficients were checked")
+                .clone();
+            let one = HyperRational::one();
+            for coefficient in coefficients.iter().rev() {
+                accumulator = HyperRational::signed_product_sum2(
+                    [true, true],
                     [
-                        coefficient
-                            .exact_rational_ref()
-                            .expect("all coefficients were checked"),
-                        &one,
+                        [&accumulator, parameter],
+                        [
+                            coefficient
+                                .exact_rational_ref()
+                                .expect("all coefficients were checked"),
+                            &one,
+                        ],
                     ],
-                ],
-            );
+                );
+            }
+            return Real::new(accumulator);
         }
-        return Real::new(accumulator);
+        if parameter == &HyperRational::one() {
+            return Real::sum_refs(coefficients);
+        }
     }
     coefficients
         .iter()
@@ -2563,15 +2570,15 @@ enum UnitRootSearch {
     RepresentedRoot(Real),
 }
 
-type QuarticBernsteinBasis = [[Real; 5]; 5];
+type QuarticBernsteinBasis = [[HyperRational; 5]; 5];
 
 fn quartic_power_to_bernstein_basis() -> QuarticBernsteinBasis {
-    let zero = Real::zero();
-    let one = Real::one();
-    let quarter = Real::new(HyperRational::fraction(1, 4).expect("four is nonzero"));
-    let half = Real::new(HyperRational::fraction(1, 2).expect("two is nonzero"));
-    let sixth = Real::new(HyperRational::fraction(1, 6).expect("six is nonzero"));
-    let three_quarters = Real::new(HyperRational::fraction(3, 4).expect("four is nonzero"));
+    let zero = HyperRational::zero();
+    let one = HyperRational::one();
+    let quarter = HyperRational::fraction(1, 4).expect("four is nonzero");
+    let half = HyperRational::fraction(1, 2).expect("two is nonzero");
+    let sixth = HyperRational::fraction(1, 6).expect("six is nonzero");
+    let three_quarters = HyperRational::fraction(3, 4).expect("four is nonzero");
     [
         [
             one.clone(),
@@ -2593,27 +2600,86 @@ fn quartic_power_to_bernstein_basis() -> QuarticBernsteinBasis {
     ]
 }
 
-fn quartic_bernstein_basis_value(coefficients: &[Real], weights: &[Real; 5]) -> Real {
+fn quartic_bernstein_basis_value(coefficients: &[Real], weights: &[HyperRational; 5]) -> Real {
     debug_assert_eq!(coefficients.len(), 5);
     // Keep subdivision controls as rational coordinates in the original
     // power-basis coefficient frame. Materializing a control through two
     // retained three-lane forms bounds the approximation DAG depth even after
     // many bisections; recursively averaging Real controls made each sign
     // refinement revisit an increasingly deep midpoint tree.
+    let real_weights = weights.clone().map(Real::new);
     let first = Real::active_linear_combination3_refs(
-        [&weights[0], &weights[1], &weights[2]],
+        [&real_weights[0], &real_weights[1], &real_weights[2]],
         [&coefficients[0], &coefficients[1], &coefficients[2]],
     );
     let zero = Real::zero();
     let second = Real::active_linear_combination3_refs(
-        [&weights[3], &weights[4], &zero],
+        [&real_weights[3], &real_weights[4], &zero],
         [&coefficients[3], &coefficients[4], &coefficients[0]],
     );
     &first + &second
 }
 
+type QuarticCoefficientIntervals = [[HyperRational; 2]; 5];
+// A single shared enclosure keeps coefficient approximation work reusable
+// across every subdivided control. This precision resolves the common path;
+// inconclusive interval signs still fall through to exact Real refinement.
+const QUARTIC_BERNSTEIN_COEFFICIENT_INTERVAL_PRECISION: i32 = -14;
+
+fn quartic_coefficient_intervals(
+    coefficients: &[Real],
+    precision: i32,
+) -> Option<QuarticCoefficientIntervals> {
+    debug_assert_eq!(coefficients.len(), 5);
+    Some([
+        coefficients[0].certified_dyadic_interval(precision)?,
+        coefficients[1].certified_dyadic_interval(precision)?,
+        coefficients[2].certified_dyadic_interval(precision)?,
+        coefficients[3].certified_dyadic_interval(precision)?,
+        coefficients[4].certified_dyadic_interval(precision)?,
+    ])
+}
+
+fn quartic_bernstein_basis_sign(
+    coefficients: &[Real],
+    coefficient_intervals: &QuarticCoefficientIntervals,
+    weights: &[HyperRational; 5],
+    policy: &CurvePolicy,
+) -> Option<RealSign> {
+    let zero = HyperRational::zero();
+    if weights.iter().any(|weight| weight < &zero) {
+        return real_sign(
+            &quartic_bernstein_basis_value(coefficients, weights),
+            policy,
+        );
+    }
+
+    let lower_order = HyperRational::signed_product_sum_ordering(
+        [true; 5],
+        std::array::from_fn(|index| [&weights[index], &coefficient_intervals[index][0]]),
+    );
+    if lower_order.is_gt() {
+        return Some(RealSign::Positive);
+    }
+    let upper_order = HyperRational::signed_product_sum_ordering(
+        [true; 5],
+        std::array::from_fn(|index| [&weights[index], &coefficient_intervals[index][1]]),
+    );
+    if upper_order.is_lt() {
+        return Some(RealSign::Negative);
+    }
+    if lower_order.is_eq() && upper_order.is_eq() {
+        return Some(RealSign::Zero);
+    }
+    real_sign(
+        &quartic_bernstein_basis_value(coefficients, weights),
+        policy,
+    )
+}
+
 fn quartic_bernstein_sign_variations(
     coefficients: &[Real],
+    coefficient_intervals: &QuarticCoefficientIntervals,
     controls: &QuarticBernsteinBasis,
     start_sign: RealSign,
     end_sign: RealSign,
@@ -2624,10 +2690,8 @@ fn quartic_bernstein_sign_variations(
     let mut previous = start_sign;
     let mut variations = 0_usize;
     for control in &controls[1..4] {
-        let sign = real_sign(
-            &quartic_bernstein_basis_value(coefficients, control),
-            policy,
-        )?;
+        let sign =
+            quartic_bernstein_basis_sign(coefficients, coefficient_intervals, control, policy)?;
         if sign != RealSign::Zero {
             variations += usize::from(previous != sign);
             previous = sign;
@@ -2637,36 +2701,36 @@ fn quartic_bernstein_sign_variations(
 }
 
 fn midpoint_quartic_bernstein_basis(
-    first: &[Real; 5],
-    second: &[Real; 5],
-) -> CurveResult<[Real; 5]> {
-    let mut midpoint = std::array::from_fn(|_| Real::zero());
+    first: &[HyperRational; 5],
+    second: &[HyperRational; 5],
+) -> [HyperRational; 5] {
+    let mut midpoint = std::array::from_fn(|_| HyperRational::zero());
     for index in 0..5 {
-        midpoint[index] = midpoint_real(&first[index], &second[index])?;
+        midpoint[index] = HyperRational::average_pair(&first[index], &second[index]);
     }
-    Ok(midpoint)
+    midpoint
 }
 
 fn subdivide_quartic_bernstein_half(
     controls: &QuarticBernsteinBasis,
-) -> CurveResult<(QuarticBernsteinBasis, QuarticBernsteinBasis)> {
+) -> (QuarticBernsteinBasis, QuarticBernsteinBasis) {
     let first = [
-        midpoint_quartic_bernstein_basis(&controls[0], &controls[1])?,
-        midpoint_quartic_bernstein_basis(&controls[1], &controls[2])?,
-        midpoint_quartic_bernstein_basis(&controls[2], &controls[3])?,
-        midpoint_quartic_bernstein_basis(&controls[3], &controls[4])?,
+        midpoint_quartic_bernstein_basis(&controls[0], &controls[1]),
+        midpoint_quartic_bernstein_basis(&controls[1], &controls[2]),
+        midpoint_quartic_bernstein_basis(&controls[2], &controls[3]),
+        midpoint_quartic_bernstein_basis(&controls[3], &controls[4]),
     ];
     let second = [
-        midpoint_quartic_bernstein_basis(&first[0], &first[1])?,
-        midpoint_quartic_bernstein_basis(&first[1], &first[2])?,
-        midpoint_quartic_bernstein_basis(&first[2], &first[3])?,
+        midpoint_quartic_bernstein_basis(&first[0], &first[1]),
+        midpoint_quartic_bernstein_basis(&first[1], &first[2]),
+        midpoint_quartic_bernstein_basis(&first[2], &first[3]),
     ];
     let third = [
-        midpoint_quartic_bernstein_basis(&second[0], &second[1])?,
-        midpoint_quartic_bernstein_basis(&second[1], &second[2])?,
+        midpoint_quartic_bernstein_basis(&second[0], &second[1]),
+        midpoint_quartic_bernstein_basis(&second[1], &second[2]),
     ];
-    let midpoint = midpoint_quartic_bernstein_basis(&third[0], &third[1])?;
-    Ok((
+    let midpoint = midpoint_quartic_bernstein_basis(&third[0], &third[1]);
+    (
         [
             controls[0].clone(),
             first[0].clone(),
@@ -2681,7 +2745,7 @@ fn subdivide_quartic_bernstein_half(
             first[3].clone(),
             controls[4].clone(),
         ],
-    ))
+    )
 }
 
 fn exact_nonrational_quartic_unit_roots(
@@ -2700,16 +2764,26 @@ fn exact_nonrational_quartic_unit_roots(
 
     let coefficients = polynomial.coefficients();
     let controls = quartic_power_to_bernstein_basis();
-    let start_sign = match real_sign(
-        &quartic_bernstein_basis_value(coefficients, &controls[0]),
+    let Some(coefficient_intervals) = quartic_coefficient_intervals(
+        coefficients,
+        QUARTIC_BERNSTEIN_COEFFICIENT_INTERVAL_PRECISION,
+    ) else {
+        return Ok(None);
+    };
+    let start_sign = match quartic_bernstein_basis_sign(
+        coefficients,
+        &coefficient_intervals,
+        &controls[0],
         policy,
     ) {
         Some(RealSign::Positive) => RealSign::Positive,
         Some(RealSign::Negative) => RealSign::Negative,
         Some(RealSign::Zero) | None => return Ok(None),
     };
-    let end_sign = match real_sign(
-        &quartic_bernstein_basis_value(coefficients, &controls[4]),
+    let end_sign = match quartic_bernstein_basis_sign(
+        coefficients,
+        &coefficient_intervals,
+        &controls[4],
         policy,
     ) {
         Some(RealSign::Positive) => RealSign::Positive,
@@ -2741,6 +2815,7 @@ fn exact_nonrational_quartic_unit_roots(
         trace.maximum_depth = trace.maximum_depth.max(depth);
         let variations = match quartic_bernstein_sign_variations(
             coefficients,
+            &coefficient_intervals,
             &controls,
             start_sign,
             end_sign,
@@ -2770,9 +2845,11 @@ fn exact_nonrational_quartic_unit_roots(
             return Ok(None);
         }
         let midpoint = midpoint_real(&start, &end)?;
-        let (left, right) = subdivide_quartic_bernstein_half(&controls)?;
-        let midpoint_sign = match real_sign(
-            &quartic_bernstein_basis_value(coefficients, &left[4]),
+        let (left, right) = subdivide_quartic_bernstein_half(&controls);
+        let midpoint_sign = match quartic_bernstein_basis_sign(
+            coefficients,
+            &coefficient_intervals,
+            &left[4],
             policy,
         ) {
             Some(RealSign::Positive) => RealSign::Positive,
@@ -2811,6 +2888,33 @@ fn isolate_unit_roots(
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<BezierRootIsolationResult2>> {
     let mut trace = BezierRootIsolationTrace2::default();
+    let mut tried_nonrational_quartic = false;
+    if coefficients.len() == 5
+        && coefficients
+            .iter()
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        let polynomial =
+            match BezierParameterPolynomial::try_new_power_basis(coefficients.clone(), policy) {
+                Ok(Classification::Decided(polynomial)) => Some(polynomial),
+                Err(CurveError::InvalidBezierPolynomial) => None,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                Err(error) => return Err(error),
+            };
+        if let Some(polynomial) = polynomial {
+            tried_nonrational_quartic = polynomial.degree() == 4;
+            if tried_nonrational_quartic
+                && let Some(algebraic) =
+                    exact_nonrational_quartic_unit_roots(&polynomial, policy, &mut trace)?
+            {
+                return ordered_root_isolation_result(algebraic, trace, policy);
+            }
+            coefficients = polynomial.coefficients;
+        }
+    }
+
     let mut represented = Vec::new();
     for endpoint in [Real::zero(), Real::one()] {
         let mut found = false;
@@ -2851,7 +2955,8 @@ fn isolate_unit_roots(
             compare_reals(root, &Real::zero(), policy) == Some(Ordering::Greater)
                 && compare_reals(root, &Real::one(), policy) == Some(Ordering::Less)
         });
-        if !has_interior_represented_root
+        if !tried_nonrational_quartic
+            && !has_interior_represented_root
             && let Some(mut algebraic) =
                 exact_nonrational_quartic_unit_roots(&polynomial, policy, &mut trace)?
         {
@@ -2882,6 +2987,14 @@ fn isolate_unit_roots(
         }
     }
 
+    ordered_root_isolation_result(represented, trace, policy)
+}
+
+fn ordered_root_isolation_result(
+    represented: Vec<BezierParameter2>,
+    trace: BezierRootIsolationTrace2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<BezierRootIsolationResult2>> {
     let mut ordered = Vec::with_capacity(represented.len());
     for parameter in represented {
         insert_parameter_ordered(&mut ordered, parameter, policy)?;
@@ -3522,7 +3635,7 @@ mod conversion_tests {
         let expected = subdivide_scalar_bernstein_half(&controls).unwrap();
         let coefficients = bernstein_to_power_coefficients(controls.to_vec()).unwrap();
         let basis = quartic_power_to_bernstein_basis();
-        let (left_basis, right_basis) = subdivide_quartic_bernstein_half(&basis).unwrap();
+        let (left_basis, right_basis) = subdivide_quartic_bernstein_half(&basis);
         let left: [Real; 5] = std::array::from_fn(|index| {
             quartic_bernstein_basis_value(&coefficients, &left_basis[index])
         });
@@ -3532,6 +3645,25 @@ mod conversion_tests {
 
         assert_eq!(left.as_slice(), expected.0);
         assert_eq!(right.as_slice(), expected.1);
+
+        let pi = Real::pi();
+        let nonrational_coefficients: [Real; 5] =
+            std::array::from_fn(|index| &pi * &coefficients[index]);
+        let intervals = quartic_coefficient_intervals(&nonrational_coefficients, -32).unwrap();
+        for control in basis {
+            assert_eq!(
+                quartic_bernstein_basis_sign(
+                    &nonrational_coefficients,
+                    &intervals,
+                    &control,
+                    &CurvePolicy::certified(),
+                ),
+                real_sign(
+                    &quartic_bernstein_basis_value(&nonrational_coefficients, &control),
+                    &CurvePolicy::certified(),
+                ),
+            );
+        }
     }
 
     #[test]
@@ -3749,6 +3881,26 @@ mod conversion_tests {
         assert_eq!(
             exact_integer_polynomial_sign(&[rational(1, 2)], &Real::zero()),
             None
+        );
+    }
+
+    #[test]
+    fn nonrational_power_evaluation_uses_exact_endpoint_identities() {
+        let coefficients = [
+            Real::pi(),
+            Real::e(),
+            Real::from(2_i32).sqrt().unwrap(),
+            Real::from(3_i32).ln().unwrap(),
+            Real::from(5_i32).sqrt().unwrap(),
+        ];
+
+        assert_eq!(
+            evaluate_coefficients(&coefficients, &Real::zero()),
+            coefficients[0]
+        );
+        assert_eq!(
+            evaluate_coefficients(&coefficients, &Real::one()),
+            Real::sum_refs(&coefficients)
         );
     }
 
