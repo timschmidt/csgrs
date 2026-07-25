@@ -500,6 +500,8 @@ enum ResultantParameterProjection {
 
 const MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE: usize = 128;
 const RATIONAL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
+#[cfg(feature = "predicates")]
+const MAX_QUOTIENT_RING_RATIONAL_IMAGE_DEGREE: usize = 12;
 const MAX_RETAINED_EVALUATION_POWER_DEGREE: usize = 256;
 
 impl PartialEq for RationalBezier2 {
@@ -3613,20 +3615,22 @@ fn conic_parameter_from_candidates(
                 Classification::Decided(parameter) => {
                     return Ok(Classification::Decided(parameter));
                 }
-                Classification::Uncertain(_) => {
-                    #[cfg(feature = "predicates")]
-                    {
-                        if let Classification::Decided(parameter) =
-                            real_coefficient_rational_image_parameter(
-                                &refined_curve_parameter,
-                                candidate,
-                                policy,
-                            )?
-                        {
-                            return Ok(Classification::Decided(parameter));
-                        }
-                    }
-                }
+                Classification::Uncertain(_) => {}
+            }
+        }
+    }
+    #[cfg(feature = "predicates")]
+    for &max_refinement_steps in refinement_steps {
+        let refined_curve_parameter = curve_parameter
+            .clone()
+            .refined_isolating_interval(max_refinement_steps, policy);
+        for candidate in candidates {
+            if let Classification::Decided(parameter) = real_coefficient_rational_image_parameter(
+                &refined_curve_parameter,
+                candidate,
+                policy,
+            )? {
+                return Ok(Classification::Decided(parameter));
             }
         }
     }
@@ -3640,6 +3644,28 @@ fn rational_map_image_polynomial(
     denominator: &[Real],
     policy: &CurvePolicy,
 ) -> Option<BezierParameterPolynomial> {
+    if let Some(coefficients) = quotient_ring_rational_map_image_polynomial(
+        source_polynomial,
+        numerator,
+        denominator,
+        policy,
+    ) && let Ok(Classification::Decided(polynomial)) =
+        BezierParameterPolynomial::try_new_power_basis(coefficients, policy)
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "conic-rational-image-fallback",
+            "quotient-ring-resultant",
+        );
+        return Some(polynomial);
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "conic-rational-image-fallback",
+        "sampled-bareiss-resultant",
+    );
     let source_degree = source_polynomial.len().checked_sub(1)?;
     let mut samples = Vec::with_capacity(source_degree + 1);
     for sample in 0..=source_degree {
@@ -3660,6 +3686,90 @@ fn rational_map_image_polynomial(
         Classification::Decided(polynomial) => Some(polynomial),
         Classification::Uncertain(_) => None,
     }
+}
+
+#[cfg(feature = "predicates")]
+fn quotient_ring_rational_map_image_polynomial(
+    source: &[Real],
+    numerator: &[Real],
+    denominator: &[Real],
+    policy: &CurvePolicy,
+) -> Option<Vec<Real>> {
+    let degree = source.len().checked_sub(1)?;
+    if degree == 0
+        || degree > MAX_QUOTIENT_RING_RATIONAL_IMAGE_DEGREE
+        || numerator.is_empty()
+        || denominator.is_empty()
+    {
+        return None;
+    }
+    let numerator_matrix = quotient_multiplication_matrix(source, numerator)?;
+    let denominator_matrix = quotient_multiplication_matrix(source, denominator)?;
+    // The determinant of multiplication by n(x) - y*d(x) in R[x]/(source)
+    // is its exact norm, hence the required resultant up to one nonzero scale.
+    // Subset expansion visits each partial column set once and keeps the matrix
+    // entries as linear polynomials in y.
+    let state_count = 1_usize.checked_shl(u32::try_from(degree).ok()?)?;
+    let mut partials = vec![None; state_count];
+    partials[0] = Some(vec![Real::one()]);
+    for mask in 0..state_count {
+        let row = usize::try_from(mask.count_ones()).ok()?;
+        if row == degree {
+            continue;
+        }
+        let Some(partial) = partials[mask].take() else {
+            continue;
+        };
+        for column in 0..degree {
+            let column_bit = 1_usize.checked_shl(u32::try_from(column).ok()?)?;
+            if mask & column_bit != 0 {
+                continue;
+            }
+            let entry_index = row * degree + column;
+            let negative = (mask >> (column + 1)).count_ones() % 2 != 0;
+            let next = partials[mask | column_bit]
+                .get_or_insert_with(|| vec![Real::zero(); partial.len() + 1]);
+            for (power, coefficient) in partial.iter().enumerate() {
+                let constant = coefficient * &numerator_matrix[entry_index];
+                let linear = coefficient * &denominator_matrix[entry_index];
+                if negative {
+                    next[power] -= constant;
+                    next[power + 1] += linear;
+                } else {
+                    next[power] += constant;
+                    next[power + 1] -= linear;
+                }
+            }
+        }
+    }
+    match trim_power_polynomial(partials.pop()??, policy) {
+        Classification::Decided(polynomial) => Some(polynomial),
+        Classification::Uncertain(_) => None,
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn quotient_multiplication_matrix(source: &[Real], relation: &[Real]) -> Option<Vec<Real>> {
+    let degree = source.len().checked_sub(1)?;
+    let leading = source.last()?;
+    let mut matrix = vec![Real::zero(); degree.checked_mul(degree)?];
+    for column in 0..degree {
+        let mut remainder = vec![Real::zero(); relation.len().checked_add(column)?];
+        remainder[column..].clone_from_slice(relation);
+        while remainder.len() > degree {
+            let coefficient = remainder.pop()?;
+            let shift = remainder.len().checked_sub(degree)?;
+            let factor = (coefficient / leading).ok()?;
+            for (index, source_coefficient) in source[..degree].iter().enumerate() {
+                remainder[shift + index] -= &factor * source_coefficient;
+            }
+        }
+        remainder.resize(degree, Real::zero());
+        for (row, coefficient) in remainder.into_iter().enumerate() {
+            matrix[row * degree + column] = coefficient;
+        }
+    }
+    Some(matrix)
 }
 
 #[cfg(feature = "predicates")]
@@ -3717,6 +3827,12 @@ fn real_coefficient_rational_image_parameter(
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     };
     let Some(image_polynomial) = candidate.image_polynomial.get_or_init(|| {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "conic-rational-image-fallback",
+            "construct-image-polynomial",
+        );
         rational_map_image_polynomial(
             source_algebraic.polynomial().coefficients(),
             &candidate.numerator,
@@ -4004,6 +4120,31 @@ fn rational_image_parameter(
         &AlgebraicPolynomialValueInterval {
             lower: zero.clone(),
             upper: one.clone(),
+        },
+    );
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "conic-rational-image",
+        match evidence.status {
+            AlgebraicRootRationalImageStatus::Transformed => "transformed",
+            AlgebraicRootRationalImageStatus::ImageIntervalDisjoint => "interval-disjoint",
+            AlgebraicRootRationalImageStatus::InvalidEvidence => "invalid-evidence",
+            AlgebraicRootRationalImageStatus::InvalidNumeratorPolynomial => "invalid-numerator",
+            AlgebraicRootRationalImageStatus::InvalidDenominatorPolynomial => "invalid-denominator",
+            AlgebraicRootRationalImageStatus::CertifiedZeroDenominator => "zero-denominator",
+            AlgebraicRootRationalImageStatus::DenominatorMayContainZero => {
+                "denominator-may-contain-zero"
+            }
+            AlgebraicRootRationalImageStatus::NumeratorImageFailed => "numerator-image-failed",
+            AlgebraicRootRationalImageStatus::DenominatorImageFailed => "denominator-image-failed",
+            AlgebraicRootRationalImageStatus::QuotientConstructionFailed => {
+                "quotient-construction-failed"
+            }
+            AlgebraicRootRationalImageStatus::InvalidTransformedEvidence => {
+                "invalid-transformed-evidence"
+            }
+            AlgebraicRootRationalImageStatus::Undecided => "undecided",
         },
     );
     if evidence.status == AlgebraicRootRationalImageStatus::ImageIntervalDisjoint {
@@ -4804,6 +4945,112 @@ mod tests {
             candidate.image_polynomial.get().is_none(),
             "the primary exact map must not construct its unused fallback polynomial"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn conic_parameter_refines_primary_map_before_constructing_fallback() {
+        let policy = CurvePolicy::certified();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![-half.clone(), Real::zero(), Real::one()],
+            &policy,
+        )
+        .unwrap() else {
+            panic!("quadratic source polynomial was not certified");
+        };
+        let Classification::Decided(interval) =
+            crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()
+        else {
+            panic!("unit interval was not certified");
+        };
+        let Classification::Decided(parameter) =
+            crate::BezierAlgebraicParameter2::try_isolate(polynomial.clone(), interval, &policy)
+                .unwrap()
+        else {
+            panic!("positive quadratic root was not isolated");
+        };
+        let Classification::Decided(candidate) = prepare_conic_parameter_candidate(
+            polynomial.coefficients(),
+            &(vec![-half, Real::one()], vec![Real::zero(), Real::one()]),
+            &policy,
+        )
+        .unwrap() else {
+            panic!("rational conic parameter map was not prepared");
+        };
+
+        assert!(candidate.image_polynomial.get().is_none());
+        assert!(matches!(
+            conic_parameter_from_candidates(
+                std::slice::from_ref(&candidate),
+                &BezierParameter2::Algebraic(parameter),
+                &policy,
+            )
+            .unwrap(),
+            Classification::Decided(Some(_))
+        ));
+        assert!(
+            candidate.image_polynomial.get().is_none(),
+            "source refinement must certify the primary map before constructing its fallback"
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn quotient_ring_rational_image_retains_nonrational_source_coefficients() {
+        let policy = CurvePolicy::certified();
+        let pi = Real::pi();
+        let coefficients = quotient_ring_rational_map_image_polynomial(
+            &[-pi.clone(), Real::zero(), Real::one()],
+            &[Real::zero(), Real::one()],
+            &[Real::one(), Real::one()],
+            &policy,
+        )
+        .expect("the quotient-ring image polynomial must be constructed exactly");
+        let expected = [-pi.clone(), Real::from(2_i8) * &pi, Real::one() - pi];
+
+        assert_eq!(coefficients.len(), expected.len());
+        for (coefficient, expected) in coefficients.iter().zip(expected) {
+            assert_eq!(
+                compare_reals(coefficient, &expected, &policy),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn quotient_ring_rational_image_matches_exact_resultant_samples() {
+        let policy = CurvePolicy::certified();
+        let source = [Real::from(-2_i8), Real::zero(), Real::zero(), Real::one()];
+        let numerator = [Real::one(), Real::zero(), Real::one()];
+        let denominator = [Real::from(2_i8), Real::one()];
+        let coefficients =
+            quotient_ring_rational_map_image_polynomial(&source, &numerator, &denominator, &policy)
+                .expect("the cubic quotient-ring image polynomial must be exact");
+
+        for sample in 0..=3 {
+            let value = Real::from(sample);
+            let relation = subtract_power_polynomials(
+                &numerator,
+                &scale_power_polynomial(&denominator, &value),
+            );
+            let sampled = resultant_univariate_polynomials(
+                &source,
+                &relation,
+                RATIONAL_INTERSECTION_RESULTANT_PRECISION,
+            )
+            .unwrap()
+            .resultant;
+            assert_eq!(
+                compare_reals(
+                    &evaluate_power_polynomial(&coefficients, &value),
+                    &sampled,
+                    &policy,
+                ),
+                Some(Ordering::Equal)
+            );
+        }
     }
 
     #[test]

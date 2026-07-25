@@ -5083,6 +5083,57 @@ narrowing the native exact-curve gap from roughly 44x to 34x; `LineArc` removal
 therefore remains performance-gated. The release pathological executable now
 contains 4,683,825 bytes of text and 4,945,497 total loadable bytes.
 
+### Refined quotient-ring conic parameter images
+
+The lazy conic parameter fallback still started too early. A coarse algebraic
+source interval can leave a rational-map denominator apparently containing
+zero even though the represented root is outside that zero set. The candidate
+loop immediately constructed the fallback image polynomial on that first
+answer, so its later exact interval refinements never had an opportunity to
+certify the already-prepared primary map.
+
+Primary rational maps now exhaust the retained `[0, 2, 4, 8]` refinement
+schedule before any real-coefficient image fallback is considered. The focused
+regression starts with a denominator interval containing zero, proves that
+refinement decides the exact image, and verifies that the fallback `OnceCell`
+remains empty. Full-workload dispatch records 67 initial
+`denominator-may-contain-zero` reports, followed by exact primary decisions
+without constructing a fallback for those coarse reports.
+
+The 114 genuinely non-rational defining equations that still require a
+fallback formerly evaluated and interpolated one Bareiss resultant per image
+degree. The replacement reduces the rational-map numerator and denominator
+once in the quotient ring of the source polynomial, then computes
+`det(M_n - y M_d)` directly over exact `Real` coefficients. Its subset
+determinant is bounded to source degree 12; higher degrees retain the existing
+sampled Bareiss path. The new non-rational regression eliminates
+`x² - pi` through `y = x / (x + 1)` and checks every exact coefficient of
+`y² - pi(1 - y)²`. No primitive approximation or projected curve participates.
+Dispatch confirms that all 114 workload fallbacks use the quotient-ring path
+and none use sampled Bareiss interpolation.
+
+On the identical three-cell exact-native Callgrind workload, instruction
+references fell from 147,498,172 to 122,760,480 (16.77%). Heaptrack allocation
+events fell from 220,100 to 173,956 (20.97%), and temporary allocations fell
+from 34,085 to 19,534 (42.69%). The complete debug blocker regression now
+finishes in 4.29--4.43 seconds while still returning all 268 exact results.
+
+The final seven-run complete-workload median fell from 574.3 to 432.0
+milliseconds (24.8%), with retained preparation falling from 519.4 to 379.9
+milliseconds (26.9%). Every run retained 603 carrier pairs, 3,248 fragments,
+134 point classifications, all 268 exact Boolean results, zero blockers, and
+checksum 6. The matched exact-polyline median was 17.88 milliseconds, narrowing
+the native exact-curve gap from about 34x to 24.2x; `LineArc` removal therefore
+remains performance-gated.
+
+The release pathological executable contains 4,696,565 bytes of text,
+4,957,789 total loadable bytes, and 6,234,776 bytes on disk. Relative to the
+preceding endpoint-root build, those are increases of 12,740, 12,292, and
+18,112 bytes respectively. Complete all-feature and no-default-feature
+library/integration suites passed, including the full 268-operation blocker
+sentinel and the new fallback regressions, as did strict all-target Clippy in
+both feature configurations.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
