@@ -126,9 +126,13 @@ fn exact_near_coincident_rotated_cylinder_difference_needs_no_finite_retry() {
         !output.triangles().is_empty(),
         "the symbolic near-coincident difference is empty"
     );
-    output
-        .to_hypermesh_exact()
-        .expect("the symbolic near-coincident difference should remain closed");
+    let indexed = output.to_hypermesh_triangle_mesh().expect(
+        "the symbolic near-coincident difference should remain an exact triangle mesh",
+    );
+    assert!(
+        crate::mesh::hypermesh::hypermesh_is_closed_manifold(&indexed),
+        "the symbolic near-coincident difference should retain closed indexed topology"
+    );
 }
 
 fn assert_finite_materialization_preserves_closed_topology(label: &str, symbolic: &Mesh<()>) {
@@ -229,7 +233,7 @@ fn finite_output_materialization_preserves_closed_topology_across_symbolic_rotat
 }
 
 #[test]
-fn finite_near_coincident_cylinders_support_every_axis_sign_and_boolean() {
+fn exact_near_coincident_cylinders_support_every_axis_sign_and_boolean() {
     let tiny = exact_ratio(1, 10_000);
     let zero = Real::zero();
     let rotations = [
@@ -240,15 +244,10 @@ fn finite_near_coincident_cylinders_support_every_axis_sign_and_boolean() {
         ("+z", [zero.clone(), zero.clone(), tiny.clone()]),
         ("-z", [zero.clone(), zero, -tiny]),
     ];
-    let left = Mesh::cylinder(r(8.0), r(40.0), 8, ())
-        .materialize_finite_output()
-        .expect("unrotated cylinder has finite samples");
+    let left = Mesh::cylinder(r(8.0), r(40.0), 8, ());
 
     for (label, [x, y, z]) in rotations {
-        let right = Mesh::cylinder(r(8.0), r(40.0), 8, ())
-            .rotate(x, y, z)
-            .materialize_finite_output()
-            .unwrap_or_else(|| panic!("{label}: rotated cylinder has no finite sample"));
+        let right = Mesh::cylinder(r(8.0), r(40.0), 8, ()).rotate(x, y, z);
         for (operation, result) in [
             ("union", left.try_union(&right)),
             ("intersection", left.try_intersection(&right)),
@@ -261,9 +260,13 @@ fn finite_near_coincident_cylinders_support_every_axis_sign_and_boolean() {
                 !output.triangles().is_empty(),
                 "{label}/{operation}: Boolean output is empty"
             );
-            output.to_hypermesh_exact().unwrap_or_else(|error| {
-                panic!("{label}/{operation}: Boolean output is not closed: {error}")
+            let indexed = output.to_hypermesh_triangle_mesh().unwrap_or_else(|error| {
+                panic!("{label}/{operation}: exact output is invalid: {error}")
             });
+            assert!(
+                crate::mesh::hypermesh::hypermesh_is_closed_manifold(&indexed),
+                "{label}/{operation}: exact output is not closed"
+            );
         }
     }
 }

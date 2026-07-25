@@ -1,11 +1,19 @@
 # csgrs benchmark suite
 
-This suite provides two complementary optimization anchors:
+This suite provides three complementary optimization anchors:
 
 - `kernel_comparison` runs the same named CAD scenarios in csgrs, CGAL, and
   OpenCascade (OCCT).
 - `feature_pipeline` covers csgrs-specific end-to-end paths and the underlying
   Hyper geometry stack, optional mesh/profile features, adapters, and I/O.
+- `competitive` compares the public csgrs mesh path against pinned `boolmesh`
+  and pure-Rust Manifold versions. Since `tri-mesh` is a topology carrier
+  rather than a Boolean kernel, it is compared on mesh import and half-edge
+  validation. A dedicated large workload runs union, intersection, and
+  difference on two 3,072-triangle closed meshes. Every competitor is also
+  wired to the public-domain YeahRight corpus: the Boolean engines clip a
+  deterministically subdivided 4,512-triangle hull, while all four libraries
+  construct their native mesh carrier from the same hull.
 
 Every runner emits the same CSV schema. Raw samples are intentionally retained;
 `summarize.py` validates them and reports median nanoseconds per operation plus
@@ -24,6 +32,9 @@ are discoverable, then run:
 ```sh
 benchmarks/run.sh
 ```
+
+The standard run includes the Rust-only competitive matrix, including its
+YeahRight rows, in `rust-competitive.csv` and the generated summary.
 
 For a one-sample build and corpus check:
 
@@ -51,6 +62,14 @@ To exercise only csgrs on a host without the native kernels:
 benchmarks/run.sh --quick --csgrs-only
 ```
 
+The Rust-only competitive correctness corpus and release benchmark need no
+native packages:
+
+```sh
+cargo test --test competitive
+cargo bench --bench competitive
+```
+
 Results are written below `benchmarks/results/` by default and ignored by Git.
 Pass `--output DIRECTORY` to select a durable result location. Native discovery
 honors normal CMake controls such as `CMAKE_PREFIX_PATH` and the package-specific
@@ -62,8 +81,8 @@ The runners share these environment variables:
 |---|---:|---|
 | `CSGRS_BENCH_SAMPLES` | 10 | Independently timed samples per case |
 | `CSGRS_BENCH_WARMUP` | 2 | Untimed warmup batches per case |
-| `CSGRS_BENCH_STRESS_SAMPLES` | 1 | Samples for `corpus`, `stress`, and `dangerous` cases |
-| `CSGRS_BENCH_STRESS_WARMUP` | 0 | Untimed warmup batches for `corpus`, `stress`, and `dangerous` cases |
+| `CSGRS_BENCH_STRESS_SAMPLES` | 1 | Samples for `corpus`, `competitive-large`, `competitive-yeahright`, `stress`, and `dangerous` cases |
+| `CSGRS_BENCH_STRESS_WARMUP` | 0 | Untimed warmup batches for `corpus`, `competitive-large`, `competitive-yeahright`, `stress`, and `dangerous` cases |
 | `CSGRS_BENCH_SCALE` | 1 | Multiplier for iterations within each sample |
 | `CSGRS_BENCH_ITERATIONS` | unset | Override iterations per sample; the cold runner sets this to 1 |
 | `CSGRS_BENCH_SAMPLE_OFFSET` | 0 | First emitted sample number |
