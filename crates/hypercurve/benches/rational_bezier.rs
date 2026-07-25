@@ -492,23 +492,23 @@ fn main() {
             .expect("benchmark disjoint cubic is valid");
     let conic = RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)])
         .expect("benchmark conic is valid");
-    let disjoint_prepare_iterations = 2_000_u32;
+    let disjoint_candidate_iterations = 2_000_u32;
     let started = Instant::now();
-    let mut disjoint_prepare_count = 0_usize;
-    for _ in 0..disjoint_prepare_iterations {
-        let prepared = black_box(&conic)
-            .retain_intersection(black_box(&disjoint_cubic), black_box(&policy))
-            .expect("disjoint conic/cubic preparation is exact");
-        disjoint_prepare_count =
-            disjoint_prepare_count.wrapping_add(black_box(usize::from(matches!(
-                prepared.try_contact_view().unwrap(),
-                RationalBezierIntersectionContacts2::NoIntersection
+    let mut disjoint_candidate_count = 0_usize;
+    for _ in 0..disjoint_candidate_iterations {
+        let candidates = black_box(&conic)
+            .intersection_candidates(black_box(&disjoint_cubic), black_box(&policy))
+            .expect("disjoint conic/cubic candidates are exact");
+        disjoint_candidate_count =
+            disjoint_candidate_count.wrapping_add(black_box(usize::from(matches!(
+                candidates,
+                RationalBezierIntersectionCandidates2::NoIntersection
             ))));
     }
     let elapsed = started.elapsed();
     println!(
-        "rational_bezier_disjoint_conic_cubic_cold_prepare: {disjoint_prepare_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={disjoint_prepare_count}",
-        elapsed / disjoint_prepare_iterations
+        "rational_bezier_disjoint_conic_cubic_candidates: {disjoint_candidate_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={disjoint_candidate_count}",
+        elapsed / disjoint_candidate_iterations
     );
 
     let disjoint_contacts_iterations = 2_000_u32;
@@ -530,14 +530,14 @@ fn main() {
         elapsed / disjoint_contacts_iterations
     );
 
-    let prepared = parabola.retain_intersection(&horizontal, &policy).unwrap();
-    prepared.try_contact_view().unwrap();
-    let prepared_iterations = 20_000_u32;
+    let immediate_iterations = 250_u32;
     let started = Instant::now();
-    let mut prepared_count = 0_usize;
-    for _ in 0..prepared_iterations {
-        let contacts = prepared.try_contact_view().unwrap();
-        prepared_count = prepared_count.wrapping_add(black_box(match contacts {
+    let mut immediate_count = 0_usize;
+    for _ in 0..immediate_iterations {
+        let contacts = black_box(&parabola)
+            .intersection_contacts(black_box(&horizontal), black_box(&policy))
+            .unwrap();
+        immediate_count = immediate_count.wrapping_add(black_box(match contacts {
             RationalBezierIntersectionContacts2::NoIntersection => 0,
             RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
             RationalBezierIntersectionContacts2::Overlap(_) => 1,
@@ -547,18 +547,16 @@ fn main() {
     }
     let elapsed = started.elapsed();
     println!(
-        "rational_bezier_prepared_contact_view: {prepared_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={prepared_count}",
-        elapsed / prepared_iterations
+        "rational_bezier_immediate_contacts: {immediate_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={immediate_count}",
+        elapsed / immediate_iterations
     );
 
-    let topology = prepared.try_topology_view().unwrap();
-    topology
-        .arrangement_graph_view()
-        .expect("prepared topology assembles an arrangement");
     let started = Instant::now();
     let mut topology_count = 0_usize;
-    for _ in 0..prepared_iterations {
-        let topology = prepared.try_topology_view().unwrap();
+    for _ in 0..immediate_iterations {
+        let topology = black_box(&parabola)
+            .intersection_topology(black_box(&horizontal), black_box(&policy))
+            .unwrap();
         topology_count = topology_count.wrapping_add(black_box(
             topology.first().fragments().len()
                 + topology.second().fragments().len()
@@ -567,8 +565,8 @@ fn main() {
     }
     let elapsed = started.elapsed();
     println!(
-        "rational_bezier_prepared_topology_view: {prepared_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={topology_count}",
-        elapsed / prepared_iterations
+        "rational_bezier_immediate_topology: {immediate_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={topology_count}",
+        elapsed / immediate_iterations
     );
 
     let elevation_inputs = (0..1_000)

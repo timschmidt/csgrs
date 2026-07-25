@@ -7,6 +7,7 @@ use hyperreal::Real;
 
 use crate::classify::compare_reals;
 use crate::intersect::oriented_param_range_overlap;
+use crate::rational_bezier_general::RationalBezierIntersectionContext;
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
@@ -15,7 +16,7 @@ use crate::{
     LineLineIntersection, ParamRange, Point2, RationalBezier2,
     RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
     RationalBezierIntersectionContacts2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierOverlapOrientation2, RetainedRationalBezierIntersection2, UncertaintyReason,
+    RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
 /// Exact source parameter retained for one top-level curve contact.
@@ -137,7 +138,7 @@ struct CurveSpanPair {
 
 #[derive(Debug)]
 enum CurveSpanPairState {
-    Rational(RetainedRationalBezierIntersection2),
+    Rational(RationalBezierIntersectionContext),
     RetainedLineageOverlap {
         first_range: ParamRange,
         second_range: ParamRange,
@@ -204,7 +205,7 @@ fn build_span_pairs(
                 });
                 continue;
             }
-            let state = match first.retain_intersection(second, policy) {
+            let state = match RationalBezierIntersectionContext::try_new(first, second, policy) {
                 Ok(intersection) => CurveSpanPairState::Rational(intersection),
                 Err(ExactCurveError::Blocked(blocker)) => {
                     CurveSpanPairState::Blocked(blocker.reason())

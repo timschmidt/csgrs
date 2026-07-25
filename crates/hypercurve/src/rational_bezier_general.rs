@@ -308,56 +308,43 @@ impl RationalBezierIntersectionTopology2 {
     }
 }
 
-/// Clone-shared retained facts for one rational Bezier pair.
-#[derive(Clone, Debug)]
-pub struct RetainedRationalBezierIntersection2 {
-    data: Rc<PreparedRationalBezierIntersectionData>,
+#[derive(Debug)]
+pub(crate) struct RationalBezierIntersectionContext {
+    data: RationalBezierIntersectionContextData,
 }
 
 #[derive(Debug)]
-struct PreparedRationalBezierIntersectionData {
+struct RationalBezierIntersectionContextData {
     first: RationalBezier2,
     second: RationalBezier2,
     policy: CurvePolicy,
     candidates: RationalBezierIntersectionCandidates2,
     contacts: OnceCell<CurveResult<Classification<RationalBezierIntersectionContacts2>>>,
-    topology: OnceCell<CurveResult<Classification<RationalBezierIntersectionTopology2>>>,
 }
 
-impl RetainedRationalBezierIntersection2 {
-    /// Returns the retained first operand.
-    pub fn first(&self) -> &RationalBezier2 {
-        &self.data.first
+impl RationalBezierIntersectionContext {
+    pub(crate) fn try_new(
+        first: &RationalBezier2,
+        second: &RationalBezier2,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<Self> {
+        match first.intersection_context_classified(second, policy) {
+            Ok(Classification::Decided(context)) => Ok(context),
+            Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
+                CurveOperation2::Intersection,
+                CurveFamily2::RationalBezier,
+                reason,
+            )),
+            Err(cause) => Err(ExactCurveError::invalid(
+                CurveOperation2::Intersection,
+                CurveFamily2::RationalBezier,
+                cause,
+            )),
+        }
     }
 
-    /// Returns the retained second operand.
-    pub fn second(&self) -> &RationalBezier2 {
-        &self.data.second
-    }
-
-    /// Returns the exact policy captured when the pair was retained.
-    pub fn policy(&self) -> &CurvePolicy {
-        &self.data.policy
-    }
-
-    /// Returns the complete retained resultant projections.
-    pub fn candidates(&self) -> &RationalBezierIntersectionCandidates2 {
-        &self.data.candidates
-    }
-
-    /// Returns whether paired contact replay has already been retained.
-    pub fn is_contact_replay_cached(&self) -> bool {
-        self.data.contacts.get().is_some()
-    }
-
-    /// Returns whether contact-derived split topology has already been retained.
-    pub fn is_topology_cached(&self) -> bool {
-        self.data.topology.get().is_some()
-    }
-
-    /// Borrows the retained contact replay with typed failure context.
-    pub fn try_contact_view(&self) -> ExactCurveResult<&RationalBezierIntersectionContacts2> {
-        match self.retained_contacts_ref() {
+    fn try_contact_view(&self) -> ExactCurveResult<&RationalBezierIntersectionContacts2> {
+        match self.contacts_ref() {
             Ok(Classification::Decided(contacts)) => Ok(contacts),
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
@@ -372,36 +359,27 @@ impl RetainedRationalBezierIntersection2 {
         }
     }
 
-    /// Returns retained contacts with typed failure context.
-    pub fn try_contacts(&self) -> ExactCurveResult<RationalBezierIntersectionContacts2> {
+    pub(crate) fn try_contacts(&self) -> ExactCurveResult<RationalBezierIntersectionContacts2> {
         self.try_contact_view().cloned()
     }
 
-    /// Borrows retained contact-derived topology with typed failure context.
-    pub fn try_topology_view(&self) -> ExactCurveResult<&RationalBezierIntersectionTopology2> {
-        match self.retained_topology_ref() {
+    fn try_topology(&self) -> ExactCurveResult<RationalBezierIntersectionTopology2> {
+        match self.build_topology() {
             Ok(Classification::Decided(topology)) => Ok(topology),
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Arrangement,
                 CurveFamily2::RationalBezier,
-                *reason,
+                reason,
             )),
             Err(cause) => Err(ExactCurveError::invalid(
                 CurveOperation2::Arrangement,
                 CurveFamily2::RationalBezier,
-                cause.clone(),
+                cause,
             )),
         }
     }
 
-    /// Returns retained contact-derived topology with typed failure context.
-    pub fn try_topology(&self) -> ExactCurveResult<RationalBezierIntersectionTopology2> {
-        self.try_topology_view().cloned()
-    }
-
-    fn retained_contacts_ref(
-        &self,
-    ) -> &CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+    fn contacts_ref(&self) -> &CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         self.data.contacts.get_or_init(|| {
             self.data.first.replay_intersection_candidate_set(
                 &self.data.second,
@@ -411,70 +389,66 @@ impl RetainedRationalBezierIntersection2 {
         })
     }
 
-    fn retained_topology_ref(
-        &self,
-    ) -> &CurveResult<Classification<RationalBezierIntersectionTopology2>> {
-        self.data.topology.get_or_init(|| {
-            let contacts = match self.retained_contacts_ref() {
-                Ok(Classification::Decided(
-                    RationalBezierIntersectionContacts2::NoIntersection,
-                )) => Rc::from([]),
-                Ok(Classification::Decided(RationalBezierIntersectionContacts2::Contacts(
-                    contacts,
-                ))) => Rc::clone(contacts),
-                Ok(Classification::Decided(RationalBezierIntersectionContacts2::Overlap(_))) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Ok(Classification::Decided(RationalBezierIntersectionContacts2::Incomplete {
-                    ..
-                })) => return Ok(Classification::Uncertain(UncertaintyReason::Predicate)),
-                Ok(Classification::Decided(
-                    RationalBezierIntersectionContacts2::DegenerateResultant,
-                )) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-                Ok(Classification::Uncertain(reason)) => {
-                    return Ok(Classification::Uncertain(*reason));
-                }
-                Err(cause) => return Err(cause.clone()),
-            };
-            let first_parameters = contacts
-                .iter()
-                .map(|contact| contact.first_parameter().clone())
-                .collect::<Vec<_>>();
-            let second_parameters = contacts
-                .iter()
-                .map(|contact| contact.second_parameter().clone())
-                .collect::<Vec<_>>();
-            let first = match self
-                .data
-                .first
-                .split_at_parameters(&first_parameters, &self.data.policy)?
-            {
-                Classification::Decided(first) => first,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let second = match self
-                .data
-                .second
-                .split_at_parameters(&second_parameters, &self.data.policy)?
-            {
-                Classification::Decided(second) => second,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+    fn build_topology(&self) -> CurveResult<Classification<RationalBezierIntersectionTopology2>> {
+        let contacts = match self.contacts_ref() {
+            Ok(Classification::Decided(RationalBezierIntersectionContacts2::NoIntersection)) => {
+                Rc::from([])
+            }
+            Ok(Classification::Decided(RationalBezierIntersectionContacts2::Contacts(
+                contacts,
+            ))) => Rc::clone(contacts),
+            Ok(Classification::Decided(RationalBezierIntersectionContacts2::Overlap(_))) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Ok(Classification::Decided(RationalBezierIntersectionContacts2::Incomplete {
+                ..
+            })) => return Ok(Classification::Uncertain(UncertaintyReason::Predicate)),
             Ok(Classification::Decided(
-                RationalBezierIntersectionTopology2 {
-                    data: Rc::new(RationalBezierIntersectionTopologyData {
-                        contacts,
-                        first,
-                        second,
-                        arrangement: OnceCell::new(),
-                    }),
-                },
-            ))
-        })
+                RationalBezierIntersectionContacts2::DegenerateResultant,
+            )) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            Ok(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(*reason));
+            }
+            Err(cause) => return Err(cause.clone()),
+        };
+        let first_parameters = contacts
+            .iter()
+            .map(|contact| contact.first_parameter().clone())
+            .collect::<Vec<_>>();
+        let second_parameters = contacts
+            .iter()
+            .map(|contact| contact.second_parameter().clone())
+            .collect::<Vec<_>>();
+        let first = match self
+            .data
+            .first
+            .split_at_parameters(&first_parameters, &self.data.policy)?
+        {
+            Classification::Decided(first) => first,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let second = match self
+            .data
+            .second
+            .split_at_parameters(&second_parameters, &self.data.policy)?
+        {
+            Classification::Decided(second) => second,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(
+            RationalBezierIntersectionTopology2 {
+                data: Rc::new(RationalBezierIntersectionTopologyData {
+                    contacts,
+                    first,
+                    second,
+                    arrangement: OnceCell::new(),
+                }),
+            },
+        ))
     }
 }
 
@@ -1303,49 +1277,34 @@ impl RationalBezier2 {
         }
     }
 
-    /// Prepares one pair with typed failure context.
-    pub fn retain_intersection(
+    /// Computes exact contact-derived split topology immediately.
+    pub fn intersection_topology(
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> ExactCurveResult<RetainedRationalBezierIntersection2> {
-        match self.prepare_intersection_classified(other, policy) {
-            Ok(Classification::Decided(prepared)) => Ok(prepared),
-            Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
-                CurveOperation2::Intersection,
-                CurveFamily2::RationalBezier,
-                reason,
-            )),
-            Err(cause) => Err(ExactCurveError::invalid(
-                CurveOperation2::Intersection,
-                CurveFamily2::RationalBezier,
-                cause,
-            )),
-        }
+    ) -> ExactCurveResult<RationalBezierIntersectionTopology2> {
+        RationalBezierIntersectionContext::try_new(self, other, policy)?.try_topology()
     }
 
-    fn prepare_intersection_classified(
+    fn intersection_context_classified(
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RetainedRationalBezierIntersection2>> {
+    ) -> CurveResult<Classification<RationalBezierIntersectionContext>> {
         if self.certified_bounds_are_disjoint(other, policy) {
             let contacts = OnceCell::new();
             let _ = contacts.set(Ok(Classification::Decided(
                 RationalBezierIntersectionContacts2::NoIntersection,
             )));
-            return Ok(Classification::Decided(
-                RetainedRationalBezierIntersection2 {
-                    data: Rc::new(PreparedRationalBezierIntersectionData {
-                        first: self.clone(),
-                        second: other.clone(),
-                        policy: policy.clone(),
-                        candidates: RationalBezierIntersectionCandidates2::NoIntersection,
-                        contacts,
-                        topology: OnceCell::new(),
-                    }),
+            return Ok(Classification::Decided(RationalBezierIntersectionContext {
+                data: RationalBezierIntersectionContextData {
+                    first: self.clone(),
+                    second: other.clone(),
+                    policy: policy.clone(),
+                    candidates: RationalBezierIntersectionCandidates2::NoIntersection,
+                    contacts,
                 },
-            ));
+            }));
         }
 
         let special =
@@ -1358,37 +1317,33 @@ impl RationalBezier2 {
             };
         if let Some(Classification::Decided(contacts)) = special {
             let candidates = intersection_candidates_from_contacts(&contacts);
-            let retained_contacts = OnceCell::new();
-            let _ = retained_contacts.set(Ok(Classification::Decided(contacts)));
-            return Ok(Classification::Decided(
-                RetainedRationalBezierIntersection2 {
-                    data: Rc::new(PreparedRationalBezierIntersectionData {
-                        first: self.clone(),
-                        second: other.clone(),
-                        policy: policy.clone(),
-                        candidates,
-                        contacts: retained_contacts,
-                        topology: OnceCell::new(),
-                    }),
+            let contact_cache = OnceCell::new();
+            let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
+            return Ok(Classification::Decided(RationalBezierIntersectionContext {
+                data: RationalBezierIntersectionContextData {
+                    first: self.clone(),
+                    second: other.clone(),
+                    policy: policy.clone(),
+                    candidates,
+                    contacts: contact_cache,
                 },
-            ));
+            }));
         }
         // Bounds were already checked before the implicit-conic fast path.
         // Continue directly so an overlapping pair is not boxed and compared
         // a second time before resultant construction.
         match self.intersection_candidates_after_bounds_check(other, policy)? {
-            Classification::Decided(candidates) => Ok(Classification::Decided(
-                RetainedRationalBezierIntersection2 {
-                    data: Rc::new(PreparedRationalBezierIntersectionData {
+            Classification::Decided(candidates) => {
+                Ok(Classification::Decided(RationalBezierIntersectionContext {
+                    data: RationalBezierIntersectionContextData {
                         first: self.clone(),
                         second: other.clone(),
                         policy: policy.clone(),
                         candidates,
                         contacts: OnceCell::new(),
-                        topology: OnceCell::new(),
-                    }),
-                },
-            )),
+                    },
+                }))
+            }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
     }
@@ -5125,13 +5080,11 @@ mod tests {
         )
         .unwrap();
 
-        let retained = conic
-            .retain_intersection(&line, &CurvePolicy::certified())
-            .unwrap();
-        let RationalBezierIntersectionContacts2::Contacts(contacts) =
-            retained.try_contact_view().unwrap()
+        let RationalBezierIntersectionContacts2::Contacts(contacts) = conic
+            .intersection_contacts(&line, &CurvePolicy::certified())
+            .unwrap()
         else {
-            panic!("parabola and horizontal line did not retain their algebraic contact");
+            panic!("parabola and horizontal line did not produce their algebraic contact");
         };
         let [contact] = contacts.as_ref() else {
             panic!("parabola and horizontal line should have one finite contact");

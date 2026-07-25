@@ -12,6 +12,7 @@ because neither their blocker nor their resolver remains executable.
 
 | Resolved blocker | Regression |
 | --- | --- |
+| Complete mixed-family `CurveRegion2` workload: every curve family, every `Real` representation fixture, and all four exact Boolean operations | `full_pathological_native_workload_decides_all_268_exact_booleans`; `pathological_pi_weight_conic_decides_native_booleans_without_projection` |
 | Algebraic polyline region crossings and all four Boolean operations (`2491124`) | `shared_demo_algebraic_polyline_blocker_resolves_all_boolean_modes`; `shared_demo_conic_cubic_contacts_are_complete`; `shared_demo_cubic_pair_contacts_are_complete` |
 | Mixed-family rational-quadratic `RealSign` selection and complex curved Booleans (`2860f1d`) | `pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans`; `implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders`; `algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures` |
 | Real-coefficient conic/cubic parameter images for transcendental weights | `pathological_pi_weight_conic_decides_native_booleans_without_projection`; `rational_point_image_retains_real_coefficient_root_expression` |

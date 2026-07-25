@@ -351,10 +351,10 @@ predicate-blocker context instead of leaking an ambiguous public classification.
 Exact
 subdivisions additionally retain
 their source-parameter lineage and a positive source-injectivity certificate, allowing
-related partial-overlap pairs to skip resultant construction. Retained rational-Bezier pairs retain resultant projections, exact paired
-contact replay, contact-derived split topology, and lazily assembled arrangements across
-clones. Top-level retained curve pairs retain every promoted span-pair dispatch and share
-their provenance-bearing evidence. Native arc dispatch computes exact circle witnesses,
+related partial-overlap pairs to skip resultant construction. Immediate rational-Bezier
+intersection queries return exact candidates, contacts, or contact-derived split topology
+without exposing a prepared pair handle. Immediate top-level curve queries likewise return
+complete provenance-bearing evidence or topology. Native arc dispatch computes exact circle witnesses,
 recovers represented rational-span parameters by projective inversion, and avoids
 irrelevant span-pair resultants. Curved Boolean arrangements retain certified contact
 vertex identities, so traversal reuses proven connectivity rather than comparing
@@ -398,7 +398,8 @@ Implemented today:
   classification, two-axis homogeneous resultant candidate projections, exact represented/algebraic
   candidate replay with explicit incomplete evidence, retained exact parameter ranges for
   full and strict partial rational overlaps, exact algebraic-parameter point and
-  first/second/third derivative images, clone-shared retained pair facts, contact-derived algebraic split topology,
+  first/second/third derivative images, immediate exact pair contacts and
+  contact-derived algebraic split topology,
   projective overlap recognition, graph-order
   predicates, retained intersection-region refinement/isolation helpers, and exact
   low-degree relation fast paths;

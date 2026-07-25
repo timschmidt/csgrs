@@ -542,31 +542,6 @@ fn general_rational_contacts_reject_disjoint_control_hulls() {
 }
 
 #[test]
-fn retained_disjoint_conic_cubic_skips_implicit_solver() {
-    let policy = CurvePolicy::certified();
-    let conic =
-        RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
-    let disjoint_cubic =
-        RationalBezier2::try_new(vec![p(10, 0), p(11, 1), p(11, 2), p(10, 3)], vec![r(1); 4])
-            .unwrap();
-
-    let prepared = conic.retain_intersection(&disjoint_cubic, &policy).unwrap();
-    assert!(prepared.is_contact_replay_cached());
-    assert_eq!(
-        prepared.candidates(),
-        &RationalBezierIntersectionCandidates2::NoIntersection
-    );
-    assert_eq!(
-        prepared.try_contact_view().unwrap(),
-        &RationalBezierIntersectionContacts2::NoIntersection
-    );
-    assert!(
-        !disjoint_cubic.is_homogeneous_power_basis_cached(),
-        "certified disjoint bounds must reject the pair before implicit substitution"
-    );
-}
-
-#[test]
 fn direct_disjoint_conic_cubic_skips_implicit_solver() {
     let policy = CurvePolicy::certified();
     let conic =
@@ -575,6 +550,12 @@ fn direct_disjoint_conic_cubic_skips_implicit_solver() {
         RationalBezier2::try_new(vec![p(10, 0), p(11, 1), p(11, 2), p(10, 3)], vec![r(1); 4])
             .unwrap();
 
+    assert_eq!(
+        conic
+            .intersection_candidates(&disjoint_cubic, &policy)
+            .unwrap(),
+        RationalBezierIntersectionCandidates2::NoIntersection
+    );
     assert_eq!(
         conic
             .intersection_contacts(&disjoint_cubic, &policy)
@@ -604,9 +585,8 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
     )
     .unwrap();
 
-    let prepared = conic.retain_intersection(&cubic_line, &policy).unwrap();
-    assert!(prepared.is_contact_replay_cached());
-    let RationalBezierIntersectionContacts2::Contacts(contacts) = prepared.try_contacts().unwrap()
+    let RationalBezierIntersectionContacts2::Contacts(contacts) =
+        conic.intersection_contacts(&cubic_line, &policy).unwrap()
     else {
         panic!("implicit conic route did not retain its exact contact");
     };
@@ -794,33 +774,10 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
         RationalBezierIntersectionPointEvidence2::Algebraic(_)
     ));
 
-    let prepared = parabola.retain_intersection(&horizontal, &policy).unwrap();
-    let prepared_clone = prepared.clone();
-    assert!(!prepared.is_contact_replay_cached());
-    assert!(matches!(
-        prepared.try_contacts().unwrap(),
-        RationalBezierIntersectionContacts2::Contacts(ref contacts) if contacts.len() == 1
-    ));
-    assert!(prepared.is_contact_replay_cached());
-    assert!(prepared_clone.is_contact_replay_cached());
-    assert!(matches!(
-        prepared_clone.try_contact_view().unwrap(),
-        RationalBezierIntersectionContacts2::Contacts(contacts) if contacts.len() == 1
-    ));
-    assert_eq!(
-        prepared_clone.try_contacts().unwrap(),
-        prepared.try_contacts().unwrap()
-    );
-    assert!(!prepared.is_topology_cached());
-    let topology = prepared.try_topology_view().unwrap();
-    assert!(prepared.is_topology_cached());
-    assert!(prepared_clone.is_topology_cached());
+    let topology = parabola
+        .intersection_topology(&horizontal, &policy)
+        .unwrap();
     assert_eq!(topology.contacts().len(), 1);
-    let retained_contacts = match prepared.try_contact_view().unwrap() {
-        RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.as_ref(),
-        other => panic!("unexpected retained contacts: {other:?}"),
-    };
-    assert!(std::ptr::eq(topology.contacts(), retained_contacts));
     assert_eq!(topology.first().fragments().len(), 2);
     assert_eq!(topology.second().fragments().len(), 2);
     assert!(
@@ -941,8 +898,9 @@ fn rational_resultant_replays_identical_and_reversed_full_image_overlap() {
         overlap.second_range(),
         &ParamRange::new(Real::one(), Real::zero())
     );
-    let prepared = curve.retain_intersection(&curve.clone(), &policy).unwrap();
-    let error = prepared.try_topology().unwrap_err();
+    let error = curve
+        .intersection_topology(&curve.clone(), &policy)
+        .unwrap_err();
     assert_eq!(error.operation(), hypercurve::CurveOperation2::Arrangement);
     assert_eq!(error.family(), CurveFamily2::RationalBezier);
 }

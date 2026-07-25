@@ -241,7 +241,6 @@ pub use rational_bezier_general::{
     RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
     RationalBezierIntersectionPointEvidence2, RationalBezierIntersectionTopology2,
     RationalBezierOverlapOrientation2, RationalBezierPointIncidence2,
-    RetainedRationalBezierIntersection2,
 };
 pub use reconstruct::PolylineReconstructionOptions;
 #[doc(hidden)]

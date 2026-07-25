@@ -5204,6 +5204,43 @@ Complete all-feature and no-default-feature validation passed, including the
 slow all-mode algebraic blocker regression, as did strict all-target Clippy in
 both feature configurations.
 
+### Immediate rational-Bezier intersections
+
+The final public retained intersection handle has been removed.
+`RationalBezier2::intersection_candidates`, `intersection_contacts`, and the
+new `intersection_topology` now form an immediate result surface. A private
+one-call context still shares candidates and paired contact replay while a
+top-level curve/path/region operation is in progress, but it cannot escape or
+be cloned into a long-lived prepared API. Its cached topology slot and outer
+`Rc` allocation are gone; immediate topology is built exactly once for its
+call, and returned topology continues to lazily share only its arrangement.
+
+The disjoint conic/cubic regression proves that both immediate candidates and
+contacts terminate at certified bounds without constructing the implicit
+power basis. The algebraic-resultant regression now obtains immediate topology
+and still verifies its exact algebraic contact, four source fragments, and
+four-vertex arrangement. Exact full-image overlap continues to return the
+typed arrangement blocker rather than projecting or manufacturing a split.
+The blocker-history gate now explicitly names the complete 268-operation
+mixed-family regression.
+
+The release rational-Bezier benchmark measured disjoint candidates at
+0.715 microseconds, disjoint contacts at 0.739 microseconds, algebraic
+immediate contacts at 100.8 microseconds, and algebraic immediate topology
+including arrangement access at 119.0 microseconds per call. On the identical
+three-cell Callgrind workload, instruction references were 96,697,042 versus
+96,661,943 at the preceding immediate-curve checkpoint (a 0.036% difference).
+Heaptrack allocation events fell from 130,767 to 130,740, exactly one removed
+allocation for each of the 27 candidate carrier pairs; temporary allocations
+remained 11,973.
+
+Five complete 67-cell release runs had a 272.8 millisecond native exact-Boolean
+median and a 16.66 millisecond exact-polyline median. Every run preserved 603
+candidate pairs, 3,248 fragments, 134 point classifications, checksum 6, all
+268 exact results, and zero blockers. The release pathological executable
+contains 4,749,141 bytes of text, 5,011,037 total loadable bytes, and
+6,278,912 bytes on disk, reductions of 3,284, 4, and 4,072 bytes respectively.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
