@@ -767,7 +767,7 @@ impl Rational {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn retained_linear(
         owner: &Self,
         other: &Self,
