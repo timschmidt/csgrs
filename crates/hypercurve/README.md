@@ -30,11 +30,10 @@ XOR. `RetainedCurvePathIntersection2::boolean_region_view` caches and borrows ea
 operation/side-policy result when the same path pair is queried repeatedly.
 `CurveRegion2::boolean_region` accepts those retained results directly, including
 nonlinear algebraic endpoint carriers, nested holes, and prior Boolean output.
-`CurveRegion2::retain_boolean` returns a `RetainedCurveRegionBoolean2` that
-computes each cross-region carrier intersection once and clone-shares the four lazy
-regularized results. The retained region pair preserves certified loop-junction vertex
-identity, so independently represented algebraic endpoint images are not reclassified
-when a result feeds another operation.
+`CurveRegion2::boolean_regions` immediately computes all four regularized results
+while sharing cross-region carrier intersections, split topology, and fragment
+classifications within the call. Certified loop-junction vertex identity prevents
+independently represented algebraic endpoint images from being reclassified.
 
 `CurveRegion2` is the sole general owned region carrier. Native line/circular-arc
 topology is retained internally as a specialized accelerator; borrowed native
@@ -231,10 +230,10 @@ cases remain explicit uncertainty instead of being hidden behind display polylin
   retains aggregate contacts, overlaps, split topology, regularized Boolean selection,
   arrangement traversal, and `CurveRegion2` output for each operation and declared
   boundary-interior side. `CurvePath2::boolean_region` is the direct one-shot entry.
-- `RetainedCurveRegionBoolean2` performs the corresponding operation on retained
-  `CurveRegion2` values, reuses exact carrier-pair evidence across all four operations,
-  and preserves algebraic fragment intervals and parent source provenance in chained
-  results.
+- `CurveRegionBooleanResults2` contains the immediate union, intersection, difference,
+  and XOR returned by `CurveRegion2::boolean_regions`. The batch shares exact
+  carrier-pair evidence across all four operations and preserves algebraic fragment
+  intervals and parent source provenance in chained results.
 - `Contour2`, `CurveString2`, `Point2`, `LineSeg2`, `CircularArc2`, and `Segment2`
   provide boundary and primitive geometry. `CircularArc2::sweep_fraction` and
   `point_at_sweep_fraction` are exact inverse directed-angular operations for minor,
@@ -361,10 +360,10 @@ irrelevant span-pair resultants. Curved Boolean arrangements retain certified co
 vertex identities, so traversal reuses proven connectivity rather than comparing
 independently expanded radical coordinates. Borrowed fact views avoid copying algebraic
 evidence on repeated queries.
-Retained curved-region pairs additionally seed each retained loop junction as a known
-topology vertex, merge new contacts into those identities, and split only the carriers
-whose source intervals contain a contact. Each operation result is retained separately,
-while source-curve intersection evidence remain shared by the pair.
+Immediate curved-region batches seed each loop junction as a known topology vertex,
+merge new contacts into those identities, and split only carriers whose source
+intervals contain a contact. Source-curve intersection evidence, classified fragments,
+and topology are shared across the four results only for the duration of the call.
 Degree-aligned shared-component replay elevates only the lower-degree homogeneous
 Bernstein control net and reuses retained elevations, so independently rebuilt exact
 degree elevations do not fall through to an unresolved resultant. Benchmarks track raw

@@ -77,18 +77,31 @@ fn pathological_cell_covers_every_curve_and_real_representation_family() {
 fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans() {
     let cell = build_native_cell(0);
     let policy = CurvePolicy::certified();
-    let prepared = cell
-        .source
-        .retain_boolean(&cell.rotated, &policy)
-        .expect("all-family pair reaches curved Boolean preparation");
-    assert!(prepared.authored_carrier_pair_count() > 0);
-    assert!(prepared.carrier_pair_count() > 0);
     #[cfg(feature = "predicates")]
     {
-        let evidence = prepared
-            .intersection_result()
+        let evidence = cell
+            .source
+            .intersect_region(&cell.rotated, &policy)
             .expect("all-family intersections are evidenceable");
         assert!(evidence.blockers().is_empty());
+        let results = cell
+            .source
+            .boolean_regions(&cell.rotated, &policy)
+            .expect("all-family immediate curved Booleans are decided");
+        assert!(results.authored_carrier_pair_count() > 0);
+        assert!(results.candidate_carrier_pair_count() > 0);
+        assert!(
+            results.topology_point_classification_count() < results.topology_fragment_count(),
+            "certified interior transversal contacts should reuse adjacent fragment classification"
+        );
+        for operation in [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ] {
+            assert!(!results.region(operation).is_empty());
+        }
     }
 
     for operation in [
@@ -97,10 +110,6 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        #[cfg(feature = "predicates")]
-        prepared
-            .boolean_region(operation)
-            .expect("all-family curved Boolean is decided");
         assert!(matches!(
             cell.source_projection.boolean_region(
                 &cell.rotated_projection,
@@ -111,14 +120,6 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
             Ok(Classification::Decided(_))
         ));
     }
-    #[cfg(feature = "predicates")]
-    assert!(
-        prepared
-            .boolean_topology_point_classification_count()
-            .unwrap()
-            < prepared.boolean_topology_fragment_count().unwrap(),
-        "certified interior transversal contacts should reuse adjacent fragment classification"
-    );
 }
 
 #[test]
@@ -130,24 +131,23 @@ fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
     // through the rational-coefficient algebraic-number image package.
     let cell = build_native_cell(2);
     let policy = CurvePolicy::certified();
-    let prepared = cell
+    let evidence = cell
         .source
-        .retain_boolean(&cell.rotated, &policy)
-        .expect("pi-weight all-family pair reaches exact Boolean preparation");
-    let evidence = prepared
-        .intersection_result()
+        .intersect_region(&cell.rotated, &policy)
         .expect("pi-weight conic/cubic intersections retain exact evidence");
     assert!(evidence.blockers().is_empty(), "{:#?}", evidence.blockers());
 
+    let results = cell
+        .source
+        .boolean_regions(&cell.rotated, &policy)
+        .expect("pi-weight all-family pair completes immediate exact Booleans");
     for operation in [
         BooleanOp::Union,
         BooleanOp::Intersection,
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        prepared
-            .boolean_region(operation)
-            .unwrap_or_else(|error| panic!("{operation:?} remained blocked: {error}"));
+        let _exact_region = results.region(operation);
     }
 }
 
@@ -165,27 +165,26 @@ fn full_pathological_native_workload_decides_all_268_exact_booleans() {
     let mut decided = 0_usize;
 
     for (cell_index, cell) in dataset.cells.iter().enumerate() {
-        let prepared = cell
+        let evidence = cell
             .source
-            .retain_boolean(&cell.rotated, &policy)
+            .intersect_region(&cell.rotated, &policy)
             .unwrap_or_else(|error| {
-                panic!("pathological cell {cell_index} failed exact preparation: {error}")
+                panic!("pathological cell {cell_index} failed exact intersections: {error}")
             });
-        let evidence = prepared.intersection_result().unwrap_or_else(|error| {
-            panic!("pathological cell {cell_index} failed exact intersections: {error}")
-        });
         assert!(
             evidence.blockers().is_empty(),
             "pathological cell {cell_index} retained blockers: {:#?}",
             evidence.blockers()
         );
 
+        let results = cell
+            .source
+            .boolean_regions(&cell.rotated, &policy)
+            .unwrap_or_else(|error| {
+                panic!("pathological cell {cell_index} immediate Booleans failed: {error}")
+            });
         for operation in operations {
-            let _exact_region = prepared
-                .boolean_region_view(operation)
-                .unwrap_or_else(|error| {
-                    panic!("pathological cell {cell_index} {operation:?} remained blocked: {error}")
-                });
+            let _exact_region = results.region(operation);
             decided += 1;
         }
     }

@@ -1,6 +1,5 @@
-//! Composable exact Booleans over retained curved regions.
+//! Immediate exact Booleans over curved regions.
 
-use std::cell::OnceCell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -69,24 +68,30 @@ struct CurveRegionIntersectionResultData {
     blockers: Rc<[CurveRegionIntersectionBlocker2]>,
 }
 
-/// Clone-shared retained arrangement for repeated curved-region Booleans.
+/// The four exact regularized Boolean results for one region pair.
 #[derive(Clone, Debug)]
-pub struct RetainedCurveRegionBoolean2 {
-    data: Rc<PreparedCurveRegionBooleanData>,
+pub struct CurveRegionBooleanResults2 {
+    regions: Box<[CurveRegion2; 4]>,
+    authored_carrier_pair_count: usize,
+    candidate_carrier_pair_count: usize,
+    topology_fragment_count: usize,
+    topology_point_classification_count: usize,
 }
 
 #[derive(Debug)]
-struct PreparedCurveRegionBooleanData {
-    first: CurveRegion2,
-    second: CurveRegion2,
+struct CurveRegionBooleanContext<'a> {
+    data: CurveRegionBooleanContextData<'a>,
+}
+
+#[derive(Debug)]
+struct CurveRegionBooleanContextData<'a> {
+    first: &'a CurveRegion2,
+    second: &'a CurveRegion2,
     policy: CurvePolicy,
-    carriers: Rc<[RegionCarrier]>,
+    carriers: Vec<RegionCarrier>,
     first_carrier_count: usize,
     authored_carrier_pair_count: usize,
-    pairs: Vec<PreparedRegionCarrierPair>,
-    intersection_result: OnceCell<ExactCurveResult<CurveRegionIntersectionResult2>>,
-    topology: OnceCell<ExactCurveResult<PreparedCurveRegionBooleanTopology>>,
-    results: [OnceCell<ExactCurveResult<CurveRegion2>>; 4],
+    pairs: Vec<RegionCarrierPair>,
 }
 
 #[derive(Clone, Debug)]
@@ -103,7 +108,7 @@ struct RegionCarrier {
 }
 
 #[derive(Debug)]
-struct PreparedRegionCarrierPair {
+struct RegionCarrierPair {
     first_carrier_index: usize,
     second_carrier_index: usize,
     prepared: RetainedCurveIntersection2,
@@ -151,7 +156,7 @@ struct BooleanArrangementFragmentDirection {
 }
 
 #[derive(Clone, Debug)]
-struct PreparedCurveRegionBooleanTopology {
+struct CurveRegionBooleanTopology {
     split_fragments: Vec<Vec<ClassifiedSplitCarrierFragment>>,
     overlaps: Vec<CarrierOverlap>,
     transverse_contacts: HashMap<usize, TransitionContactCandidate>,
@@ -295,45 +300,122 @@ impl CurveRegionIntersectionResult2 {
     }
 }
 
-impl CurveRegion2 {
-    /// Prepares a region pair once for repeated exact regularized Booleans.
-    pub fn retain_boolean(
-        &self,
-        other: &Self,
-        policy: &CurvePolicy,
-    ) -> ExactCurveResult<RetainedCurveRegionBoolean2> {
-        RetainedCurveRegionBoolean2::try_new(self, other, policy)
+impl CurveRegionBooleanResults2 {
+    /// Returns the exact result for one Boolean operation.
+    pub fn region(&self, operation: BooleanOp) -> &CurveRegion2 {
+        &self.regions[boolean_operation_index(operation)]
     }
 
-    /// Computes one exact regularized Boolean against another retained region.
+    /// Returns the exact union.
+    pub const fn union(&self) -> &CurveRegion2 {
+        &self.regions[0]
+    }
+
+    /// Returns the exact intersection.
+    pub const fn intersection(&self) -> &CurveRegion2 {
+        &self.regions[1]
+    }
+
+    /// Returns the exact first-minus-second difference.
+    pub const fn difference(&self) -> &CurveRegion2 {
+        &self.regions[2]
+    }
+
+    /// Returns the exact symmetric difference.
+    pub const fn xor(&self) -> &CurveRegion2 {
+        &self.regions[3]
+    }
+
+    /// Returns the Cartesian carrier-pair count before certified broad-phase filtering.
+    pub const fn authored_carrier_pair_count(&self) -> usize {
+        self.authored_carrier_pair_count
+    }
+
+    /// Returns the number of general cross-region pairs retained by the
+    /// certified broad phase, or zero when native topology completed the batch.
+    pub const fn candidate_carrier_pair_count(&self) -> usize {
+        self.candidate_carrier_pair_count
+    }
+
+    /// Returns the number of split fragments shared by all four operations.
+    pub const fn topology_fragment_count(&self) -> usize {
+        self.topology_fragment_count
+    }
+
+    /// Returns the number of exact representative-point classifications shared
+    /// by all four operations.
+    pub const fn topology_point_classification_count(&self) -> usize {
+        self.topology_point_classification_count
+    }
+}
+
+impl CurveRegion2 {
+    /// Computes one exact regularized Boolean immediately.
     pub fn boolean_region(
         &self,
         other: &Self,
         operation: BooleanOp,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<Self> {
-        self.retain_boolean(other, policy)?
-            .boolean_region(operation)
+        if let Some(region) =
+            boolean_region_without_general_context(self, other, operation, policy)?
+        {
+            return Ok(region);
+        }
+        CurveRegionBooleanContext::try_new(self, other, policy)?
+            .build_boolean_region(operation, None)
     }
 
-    /// Collects exact contacts and overlaps against another retained region.
-    ///
-    /// The same retained carrier pairs used by regularized Booleans are reused,
-    /// including certified broad-phase pruning and algebraic parameter ranges.
+    /// Computes all four exact regularized Booleans immediately while sharing
+    /// intersection and split-topology work within this call.
+    pub fn boolean_regions(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurveRegionBooleanResults2> {
+        let operations = [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ];
+        let immediate = [
+            boolean_region_without_general_context(self, other, operations[0], policy)?,
+            boolean_region_without_general_context(self, other, operations[1], policy)?,
+            boolean_region_without_general_context(self, other, operations[2], policy)?,
+            boolean_region_without_general_context(self, other, operations[3], policy)?,
+        ];
+        if immediate.iter().all(Option::is_some) {
+            return Ok(CurveRegionBooleanResults2 {
+                regions: Box::new(
+                    immediate
+                        .map(|region| region.expect("all immediate Boolean results were checked")),
+                ),
+                authored_carrier_pair_count: region_carrier_count(self)
+                    .saturating_mul(region_carrier_count(other)),
+                candidate_carrier_pair_count: 0,
+                topology_fragment_count: 0,
+                topology_point_classification_count: 0,
+            });
+        }
+        CurveRegionBooleanContext::try_new(self, other, policy)?.build_boolean_regions(immediate)
+    }
+
+    /// Collects exact contacts and overlaps against another region immediately.
     pub fn intersect_region(
         &self,
         other: &Self,
         policy: &CurvePolicy,
     ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
-        self.retain_boolean(other, policy)?.intersection_result()
+        CurveRegionBooleanContext::try_new(self, other, policy)?.build_intersection_evidence()
     }
 }
 
-impl RetainedCurveRegionBoolean2 {
+impl<'a> CurveRegionBooleanContext<'a> {
     fn try_new(
-        first: &CurveRegion2,
-        second: &CurveRegion2,
-        policy: &CurvePolicy,
+        first: &'a CurveRegion2,
+        second: &'a CurveRegion2,
+        policy: &'a CurvePolicy,
     ) -> ExactCurveResult<Self> {
         let mut rational_quadratic_area_cache = RationalQuadraticAreaIntegralCache::default();
         let first_carriers = build_region_carriers(
@@ -369,7 +451,7 @@ impl RetainedCurveRegionBoolean2 {
                 if carrier_bounds_decided_disjoint(first_curve, second_curve, policy) {
                     continue;
                 }
-                pairs.push(PreparedRegionCarrierPair {
+                pairs.push(RegionCarrierPair {
                     first_carrier_index,
                     second_carrier_index,
                     prepared: first_curve.retain_intersection(second_curve, policy)?,
@@ -378,115 +460,16 @@ impl RetainedCurveRegionBoolean2 {
         }
 
         Ok(Self {
-            data: Rc::new(PreparedCurveRegionBooleanData {
-                first: first.clone(),
-                second: second.clone(),
+            data: CurveRegionBooleanContextData {
+                first,
+                second,
                 policy: policy.clone(),
-                carriers: carriers.into(),
+                carriers,
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
-                intersection_result: OnceCell::new(),
-                topology: OnceCell::new(),
-                results: std::array::from_fn(|_| OnceCell::new()),
-            }),
+            },
         })
-    }
-
-    /// Returns the retained first region.
-    pub fn first(&self) -> &CurveRegion2 {
-        &self.data.first
-    }
-
-    /// Returns the retained second region.
-    pub fn second(&self) -> &CurveRegion2 {
-        &self.data.second
-    }
-
-    /// Returns the policy captured when the arrangement was retained.
-    pub fn policy(&self) -> &CurvePolicy {
-        &self.data.policy
-    }
-
-    /// Returns the Cartesian carrier-pair count before certified broad-phase filtering.
-    pub fn authored_carrier_pair_count(&self) -> usize {
-        self.data.authored_carrier_pair_count
-    }
-
-    /// Returns the number of retained cross-region candidate pairs.
-    pub fn carrier_pair_count(&self) -> usize {
-        self.data.pairs.len()
-    }
-
-    /// Returns whether the aggregate exact intersection result is cached.
-    pub fn is_intersection_result_cached(&self) -> bool {
-        self.data.intersection_result.get().is_some()
-    }
-
-    /// Returns whether operation-independent split topology and fragment
-    /// classifications have been retained.
-    pub fn is_boolean_topology_cached(&self) -> bool {
-        self.data.topology.get().is_some()
-    }
-
-    /// Returns the number of exact representative-point classifications used
-    /// to construct the retained Boolean topology.
-    pub fn boolean_topology_point_classification_count(&self) -> Option<usize> {
-        self.data
-            .topology
-            .get()?
-            .as_ref()
-            .ok()
-            .map(|topology| topology.point_classification_count)
-    }
-
-    /// Returns the number of retained split fragments in the Boolean topology.
-    pub fn boolean_topology_fragment_count(&self) -> Option<usize> {
-        self.data
-            .topology
-            .get()?
-            .as_ref()
-            .ok()
-            .map(|topology| topology.split_fragments.iter().map(Vec::len).sum::<usize>())
-    }
-
-    /// Returns a clone-shared aggregate exact intersection result.
-    pub fn intersection_result(&self) -> ExactCurveResult<CurveRegionIntersectionResult2> {
-        self.intersection_result_view().cloned()
-    }
-
-    /// Borrows the aggregate exact intersection result without copying records.
-    pub fn intersection_result_view(&self) -> ExactCurveResult<&CurveRegionIntersectionResult2> {
-        match self
-            .data
-            .intersection_result
-            .get_or_init(|| self.build_intersection_evidence())
-        {
-            Ok(result) => Ok(result),
-            Err(error) => Err(error.clone()),
-        }
-    }
-
-    /// Returns whether this operation has already been materialized.
-    pub fn is_boolean_region_cached(&self, operation: BooleanOp) -> bool {
-        self.data.results[boolean_operation_index(operation)]
-            .get()
-            .is_some()
-    }
-
-    /// Returns a clone of one retained exact Boolean result.
-    pub fn boolean_region(&self, operation: BooleanOp) -> ExactCurveResult<CurveRegion2> {
-        self.boolean_region_view(operation).cloned()
-    }
-
-    /// Borrows one retained exact Boolean result.
-    pub fn boolean_region_view(&self, operation: BooleanOp) -> ExactCurveResult<&CurveRegion2> {
-        match self.data.results[boolean_operation_index(operation)]
-            .get_or_init(|| self.build_boolean_region(operation))
-        {
-            Ok(region) => Ok(region),
-            Err(error) => Err(error.clone()),
-        }
     }
 
     fn build_intersection_evidence(&self) -> ExactCurveResult<CurveRegionIntersectionResult2> {
@@ -561,7 +544,7 @@ impl RetainedCurveRegionBoolean2 {
 
     fn clipped_overlap_ranges(
         &self,
-        pair: &PreparedRegionCarrierPair,
+        pair: &RegionCarrierPair,
         overlap: &CurveIntersectionOverlap2,
     ) -> ExactCurveResult<Option<(BezierParameterRange2, BezierParameterRange2)>> {
         let first_carrier = &self.data.carriers[pair.first_carrier_index];
@@ -605,18 +588,7 @@ impl RetainedCurveRegionBoolean2 {
         Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported))
     }
 
-    fn boolean_topology(&self) -> ExactCurveResult<&PreparedCurveRegionBooleanTopology> {
-        match self
-            .data
-            .topology
-            .get_or_init(|| self.build_boolean_topology())
-        {
-            Ok(topology) => Ok(topology),
-            Err(error) => Err(error.clone()),
-        }
-    }
-
-    fn build_boolean_topology(&self) -> ExactCurveResult<PreparedCurveRegionBooleanTopology> {
+    fn build_boolean_topology(&self) -> ExactCurveResult<CurveRegionBooleanTopology> {
         let mut events = vec![Vec::new(); self.data.carriers.len()];
         let mut contact_points = Vec::<(RationalBezierIntersectionPointEvidence2, usize)>::new();
         let mut next_topology_vertex = 0_usize;
@@ -916,7 +888,7 @@ impl RetainedCurveRegionBoolean2 {
             }
             classified_split_fragments.push(classified);
         }
-        Ok(PreparedCurveRegionBooleanTopology {
+        Ok(CurveRegionBooleanTopology {
             split_fragments: classified_split_fragments,
             overlaps,
             transverse_contacts,
@@ -924,42 +896,64 @@ impl RetainedCurveRegionBoolean2 {
         })
     }
 
-    fn build_boolean_region(&self, operation: BooleanOp) -> ExactCurveResult<CurveRegion2> {
-        if self.data.first.is_empty() || self.data.second.is_empty() {
-            return empty_operand_result(&self.data.first, &self.data.second, operation);
-        }
-        if self.data.first == self.data.second {
-            return identical_operand_result(&self.data.first, operation);
-        }
-
-        // Keep the mature line/arc Boolean kernel as an implementation detail of
-        // the unified carrier. Promotion retains the exact source `LineArcRegion2`, so
-        // this dispatch neither segments curves nor gives ownership back to the
-        // caller. If native topology cannot decide the operation, continue into
-        // the general retained-Bezier pipeline below.
-        if let (Classification::Decided(first), Classification::Decided(second)) = (
-            self.data
-                .first
-                .native_line_arc_region(&self.data.policy)
-                .map_err(|cause| self.invalid(0, cause))?,
-            self.data
-                .second
-                .native_line_arc_region(&self.data.policy)
-                .map_err(|cause| self.invalid(0, cause))?,
-        ) {
-            match first
-                .boolean_region(second, operation, FillRule::NonZero, &self.data.policy)
-                .map_err(|cause| self.invalid(0, cause))?
-            {
-                Classification::Decided(region) => {
-                    return CurveRegion2::try_from_line_arc_region(&region, &self.data.policy)
-                        .map_err(|error| error.with_operation(CurveOperation2::Boolean));
-                }
-                Classification::Uncertain(_) => {}
+    fn build_boolean_regions(
+        &self,
+        immediate: [Option<CurveRegion2>; 4],
+    ) -> ExactCurveResult<CurveRegionBooleanResults2> {
+        let operations = [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ];
+        let topology = self.build_boolean_topology()?;
+        let [union, intersection, difference, xor] = immediate;
+        let resolve = |region: Option<CurveRegion2>,
+                       operation: BooleanOp|
+         -> ExactCurveResult<CurveRegion2> {
+            match region {
+                Some(region) => Ok(region),
+                None => self.build_boolean_region_from_topology(operation, &topology),
             }
-        }
+        };
+        let regions = [
+            resolve(union, operations[0])?,
+            resolve(intersection, operations[1])?,
+            resolve(difference, operations[2])?,
+            resolve(xor, operations[3])?,
+        ];
+        let topology_fragment_count = topology.split_fragments.iter().map(Vec::len).sum();
+        let topology_point_classification_count = topology.point_classification_count;
+        Ok(CurveRegionBooleanResults2 {
+            regions: Box::new(regions),
+            authored_carrier_pair_count: self.data.authored_carrier_pair_count,
+            candidate_carrier_pair_count: self.data.pairs.len(),
+            topology_fragment_count,
+            topology_point_classification_count,
+        })
+    }
 
-        let topology = self.boolean_topology()?;
+    fn build_boolean_region(
+        &self,
+        operation: BooleanOp,
+        topology: Option<&CurveRegionBooleanTopology>,
+    ) -> ExactCurveResult<CurveRegion2> {
+        let topology_storage;
+        let topology = match topology {
+            Some(topology) => topology,
+            None => {
+                topology_storage = self.build_boolean_topology()?;
+                &topology_storage
+            }
+        };
+        self.build_boolean_region_from_topology(operation, topology)
+    }
+
+    fn build_boolean_region_from_topology(
+        &self,
+        operation: BooleanOp,
+        topology: &CurveRegionBooleanTopology,
+    ) -> ExactCurveResult<CurveRegion2> {
         let mut arrangement_fragments = Vec::new();
         let mut arrangement_directions = Vec::new();
         for carrier_index in 0..self.data.carriers.len() {
@@ -1143,6 +1137,52 @@ impl RetainedCurveRegionBoolean2 {
     }
 }
 
+fn region_carrier_count(region: &CurveRegion2) -> usize {
+    region
+        .boundary_loops()
+        .iter()
+        .map(|boundary| boundary.fragments().len())
+        .sum()
+}
+
+fn boolean_region_without_general_context(
+    first: &CurveRegion2,
+    second: &CurveRegion2,
+    operation: BooleanOp,
+    policy: &CurvePolicy,
+) -> ExactCurveResult<Option<CurveRegion2>> {
+    if first.is_empty() || second.is_empty() {
+        return empty_operand_result(first, second, operation).map(Some);
+    }
+    if first == second {
+        return identical_operand_result(first, operation).map(Some);
+    }
+
+    // Keep the mature line/arc Boolean kernel as an implementation detail of
+    // the unified carrier. Promotion retains the exact source
+    // `LineArcRegion2`, so immediate operations can bypass general carrier and
+    // intersection construction without segmenting curves.
+    let invalid =
+        |cause| ExactCurveError::invalid(CurveOperation2::Boolean, CurveFamily2::Line, cause);
+    if let (Classification::Decided(first), Classification::Decided(second)) = (
+        first.native_line_arc_region(policy).map_err(invalid)?,
+        second.native_line_arc_region(policy).map_err(invalid)?,
+    ) {
+        match first
+            .boolean_region(second, operation, FillRule::NonZero, policy)
+            .map_err(invalid)?
+        {
+            Classification::Decided(region) => {
+                return CurveRegion2::try_from_line_arc_region(&region, policy)
+                    .map(Some)
+                    .map_err(|error| error.with_operation(CurveOperation2::Boolean));
+            }
+            Classification::Uncertain(_) => {}
+        }
+    }
+    Ok(None)
+}
+
 fn carrier_bounds_decided_disjoint(first: &Curve2, second: &Curve2, policy: &CurvePolicy) -> bool {
     let (Ok(first_bounds), Ok(second_bounds)) = (first.bounds(), second.bounds()) else {
         return false;
@@ -1295,7 +1335,7 @@ fn split_carrier_with_refinement(
 fn certified_boolean_successors(
     graph: &BezierArrangementGraph2,
     directions: &[BooleanArrangementFragmentDirection],
-    topology: &PreparedCurveRegionBooleanTopology,
+    topology: &CurveRegionBooleanTopology,
     carriers: &[RegionCarrier],
 ) -> Vec<Option<usize>> {
     // Index starts once so retaining branch certificates stays linear in the
@@ -1353,7 +1393,7 @@ fn certified_boolean_successors(
 }
 
 fn transverse_carrier_cross_is_positive(
-    topology: &PreparedCurveRegionBooleanTopology,
+    topology: &CurveRegionBooleanTopology,
     contact: &TransitionContactCandidate,
     vertex: usize,
     carriers: &[RegionCarrier],

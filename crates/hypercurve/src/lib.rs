@@ -194,8 +194,9 @@ pub use curve_path_intersection::{
     CurvePathSplit2, RetainedCurvePathIntersection2,
 };
 pub use curve_region_boolean::{
-    CurveRegionCarrierRef2, CurveRegionIntersectionBlocker2, CurveRegionIntersectionContact2,
-    CurveRegionIntersectionOverlap2, CurveRegionIntersectionResult2, RetainedCurveRegionBoolean2,
+    CurveRegionBooleanResults2, CurveRegionCarrierRef2, CurveRegionIntersectionBlocker2,
+    CurveRegionIntersectionContact2, CurveRegionIntersectionOverlap2,
+    CurveRegionIntersectionResult2,
 };
 pub use curve_string::{
     CurveString2, CurveStringEndpoint2, CurveStringIntersection, CurveStringLinkKind2,

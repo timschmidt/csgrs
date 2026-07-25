@@ -3,7 +3,7 @@ mod pathological_fixture;
 
 use std::env;
 use std::hint::black_box;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use hypercurve::{BooleanOp, Classification, CurvePolicy, FillRule};
 
@@ -141,53 +141,33 @@ fn run_tier(tier: MemoryTier, mode: BenchmarkMode) {
 fn benchmark_booleans(dataset: &NativeDataset) {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
-    let mut prepared_count = 0_usize;
+    let mut completed_pair_count = 0_usize;
     let mut candidate_pair_count = 0_usize;
     let mut decided_count = 0_usize;
     let mut blocked_count = 0_usize;
     let mut boundary_checksum = 0_usize;
     let mut first_blocker = None;
-    let mut preparation_elapsed = Duration::ZERO;
-    let mut operation_elapsed = [Duration::ZERO; 4];
     let mut topology_fragment_count = 0_usize;
     let mut topology_point_classification_count = 0_usize;
 
     for cell in &dataset.cells {
-        let preparation_started = Instant::now();
-        let prepared = cell.source.retain_boolean(&cell.rotated, &policy);
-        preparation_elapsed += preparation_started.elapsed();
-        match prepared {
-            Ok(prepared) => {
-                prepared_count += 1;
-                candidate_pair_count += prepared.carrier_pair_count();
-                for (operation_index, operation) in [
+        match cell.source.boolean_regions(&cell.rotated, &policy) {
+            Ok(results) => {
+                completed_pair_count += 1;
+                candidate_pair_count += results.candidate_carrier_pair_count();
+                for operation in [
                     BooleanOp::Union,
                     BooleanOp::Intersection,
                     BooleanOp::Difference,
                     BooleanOp::Xor,
-                ]
-                .into_iter()
-                .enumerate()
-                {
-                    let operation_started = Instant::now();
-                    match prepared.boolean_region_view(operation) {
-                        Ok(region) => {
-                            decided_count += 1;
-                            boundary_checksum ^= region.len();
-                        }
-                        Err(error) => {
-                            blocked_count += 1;
-                            first_blocker.get_or_insert_with(|| error.to_string());
-                        }
-                    }
-                    operation_elapsed[operation_index] += operation_started.elapsed();
+                ] {
+                    let region = results.region(operation);
+                    decided_count += 1;
+                    boundary_checksum ^= region.len();
                 }
-                topology_fragment_count += prepared
-                    .boolean_topology_fragment_count()
-                    .unwrap_or_default();
-                topology_point_classification_count += prepared
-                    .boolean_topology_point_classification_count()
-                    .unwrap_or_default();
+                topology_fragment_count += results.topology_fragment_count();
+                topology_point_classification_count +=
+                    results.topology_point_classification_count();
             }
             Err(error) => {
                 blocked_count += 4;
@@ -197,10 +177,10 @@ fn benchmark_booleans(dataset: &NativeDataset) {
     }
 
     println!(
-        "pathological/{}/boolean_all_ops: cells={} prepared={} candidate_pairs={} fragments={} point_classifications={} decided={} blocked={} first_blocker={first_blocker:?} checksum={} preparation={preparation_elapsed:?} operations={operation_elapsed:?} elapsed={:?}",
+        "pathological/{}/boolean_all_ops: cells={} completed_pairs={} candidate_pairs={} fragments={} point_classifications={} decided={} blocked={} first_blocker={first_blocker:?} checksum={} elapsed={:?}",
         dataset.tier.name(),
         dataset.cells.len(),
-        prepared_count,
+        completed_pair_count,
         candidate_pair_count,
         topology_fragment_count,
         topology_point_classification_count,

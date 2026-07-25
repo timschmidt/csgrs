@@ -55,29 +55,13 @@ fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLo
 }
 
 #[test]
-fn curved_regions_boolean_and_reuse_prepared_pair() {
+fn curved_regions_immediate_batch_reuses_pair_topology() {
     let first = square(0, 0, 4, 4);
     let second = square(2, 0, 6, 4);
-    let prepared = first
-        .retain_boolean(&second, &CurvePolicy::certified())
-        .unwrap();
-    assert_eq!(prepared.authored_carrier_pair_count(), 16);
-    assert!(prepared.carrier_pair_count() < prepared.authored_carrier_pair_count());
-    assert!(!prepared.is_boolean_region_cached(BooleanOp::Union));
-    assert!(!prepared.is_intersection_result_cached());
-
-    let contacts = prepared.intersection_result().unwrap();
-    assert!(prepared.is_intersection_result_cached());
+    let policy = CurvePolicy::certified();
+    let contacts = first.intersect_region(&second, &policy).unwrap();
     assert!(contacts.is_complete());
     assert!(!contacts.is_disjoint());
-    assert_eq!(
-        contacts.authored_carrier_pair_count(),
-        prepared.authored_carrier_pair_count()
-    );
-    assert_eq!(
-        contacts.candidate_carrier_pair_count(),
-        prepared.carrier_pair_count()
-    );
     assert!(!contacts.contacts().is_empty());
     assert!(!contacts.overlaps().is_empty());
     assert!(contacts.blockers().is_empty());
@@ -88,30 +72,33 @@ fn curved_regions_boolean_and_reuse_prepared_pair() {
             && contact.second().loop_index() == 0
     }));
 
-    let direct_contacts = first
-        .intersect_region(&second, &CurvePolicy::certified())
-        .unwrap();
-    assert_eq!(direct_contacts.contacts().len(), contacts.contacts().len());
-    assert_eq!(direct_contacts.overlaps().len(), contacts.overlaps().len());
+    let results = first.boolean_regions(&second, &policy).unwrap();
+    assert_eq!(results.authored_carrier_pair_count(), 16);
+    assert!(results.candidate_carrier_pair_count() < results.authored_carrier_pair_count());
+    assert_eq!(
+        contacts.authored_carrier_pair_count(),
+        results.authored_carrier_pair_count()
+    );
+    assert_eq!(results.candidate_carrier_pair_count(), 0);
+    assert_eq!(results.topology_fragment_count(), 0);
+    assert_eq!(results.topology_point_classification_count(), 0);
+    let union = results.union();
+    assert_location(union, point(1, 2), RegionPointLocation::Inside);
+    assert_location(union, point(3, 2), RegionPointLocation::Inside);
+    assert_location(union, point(5, 2), RegionPointLocation::Inside);
 
-    let union = prepared.boolean_region(BooleanOp::Union).unwrap();
-    assert!(prepared.is_boolean_region_cached(BooleanOp::Union));
-    assert_location(&union, point(1, 2), RegionPointLocation::Inside);
-    assert_location(&union, point(3, 2), RegionPointLocation::Inside);
-    assert_location(&union, point(5, 2), RegionPointLocation::Inside);
+    let intersection = results.intersection();
+    assert_location(intersection, point(1, 2), RegionPointLocation::Outside);
+    assert_location(intersection, point(3, 2), RegionPointLocation::Inside);
 
-    let intersection = prepared.boolean_region(BooleanOp::Intersection).unwrap();
-    assert_location(&intersection, point(1, 2), RegionPointLocation::Outside);
-    assert_location(&intersection, point(3, 2), RegionPointLocation::Inside);
+    let difference = results.difference();
+    assert_location(difference, point(1, 2), RegionPointLocation::Inside);
+    assert_location(difference, point(3, 2), RegionPointLocation::Outside);
 
-    let difference = prepared.boolean_region(BooleanOp::Difference).unwrap();
-    assert_location(&difference, point(1, 2), RegionPointLocation::Inside);
-    assert_location(&difference, point(3, 2), RegionPointLocation::Outside);
-
-    let xor = prepared.boolean_region(BooleanOp::Xor).unwrap();
-    assert_location(&xor, point(1, 2), RegionPointLocation::Inside);
-    assert_location(&xor, point(3, 2), RegionPointLocation::Outside);
-    assert_location(&xor, point(5, 2), RegionPointLocation::Inside);
+    let xor = results.xor();
+    assert_location(xor, point(1, 2), RegionPointLocation::Inside);
+    assert_location(xor, point(3, 2), RegionPointLocation::Outside);
+    assert_location(xor, point(5, 2), RegionPointLocation::Inside);
 }
 
 #[test]
@@ -191,15 +178,16 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     assert_location(&chained, point(11, 1), RegionPointLocation::Inside);
 
     let crossing = square(-2, -1, 2, 1);
-    let prepared = algebraic.retain_boolean(&crossing, &policy).unwrap();
-    assert!(!prepared.is_boolean_topology_cached());
-    let crossed = prepared.boolean_region(BooleanOp::Union).unwrap();
-    assert!(prepared.is_boolean_topology_cached());
-    prepared.boolean_region(BooleanOp::Difference).unwrap();
-    assert!(prepared.is_boolean_topology_cached());
+    let results = algebraic.boolean_regions(&crossing, &policy).unwrap();
+    let crossed = results.union();
+    assert!(results.topology_fragment_count() > 0);
+    assert!(
+        results.topology_point_classification_count() < results.topology_fragment_count(),
+        "the immediate batch should share classified topology across operations"
+    );
     assert!(crossed.has_algebraic_fragments());
-    assert_location(&crossed, point(0, 0), RegionPointLocation::Inside);
-    assert_location(&crossed, point(0, 1), RegionPointLocation::Inside);
+    assert_location(crossed, point(0, 0), RegionPointLocation::Inside);
+    assert_location(crossed, point(0, 1), RegionPointLocation::Inside);
 
     assert_eq!(
         algebraic
@@ -248,27 +236,22 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
         .unwrap();
     assert!(narrow.has_algebraic_fragments());
     assert!(wide.has_algebraic_fragments());
-    let prepared = narrow.retain_boolean(&wide, &policy).unwrap();
-    let union = prepared.boolean_region(BooleanOp::Union).unwrap();
-    assert_location(&union, point(0, 1), RegionPointLocation::Inside);
-    assert_location(&union, point(0, 3), RegionPointLocation::Boundary);
-    assert_location(&union, point(0, 4), RegionPointLocation::Outside);
+    let results = narrow.boolean_regions(&wide, &policy).unwrap();
+    let union = results.union();
+    assert_location(union, point(0, 1), RegionPointLocation::Inside);
+    assert_location(union, point(0, 3), RegionPointLocation::Boundary);
+    assert_location(union, point(0, 4), RegionPointLocation::Outside);
 
-    let intersection = prepared.boolean_region(BooleanOp::Intersection).unwrap();
-    assert_location(&intersection, point(0, 1), RegionPointLocation::Inside);
-    assert_location(&intersection, point(0, 3), RegionPointLocation::Outside);
+    let intersection = results.intersection();
+    assert_location(intersection, point(0, 1), RegionPointLocation::Inside);
+    assert_location(intersection, point(0, 3), RegionPointLocation::Outside);
 
-    assert!(
-        prepared
-            .boolean_region(BooleanOp::Difference)
-            .unwrap()
-            .is_empty()
-    );
+    assert!(results.difference().is_empty());
 
-    let xor = prepared.boolean_region(BooleanOp::Xor).unwrap();
+    let xor = results.xor();
     let between_tops = Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap());
-    assert_location(&xor, point(0, 1), RegionPointLocation::Outside);
-    assert_location(&xor, between_tops, RegionPointLocation::Inside);
+    assert_location(xor, point(0, 1), RegionPointLocation::Outside);
+    assert_location(xor, between_tops, RegionPointLocation::Inside);
 }
 
 #[test]
@@ -340,23 +323,21 @@ fn shared_demo_algebraic_polyline_blocker_resolves_all_boolean_modes() {
     let first = CurveRegion2::try_from_boundary_paths(&[first_path]).unwrap();
     let second = CurveRegion2::try_from_boundary_paths(&[second_path]).unwrap();
     let policy = CurvePolicy::certified();
-    let prepared = first.retain_boolean(&second, &policy).unwrap();
-    let intersections = prepared.intersection_result().unwrap();
+    let intersections = first.intersect_region(&second, &policy).unwrap();
     assert!(
         intersections.blockers().is_empty(),
         "{:#?}",
         intersections.blockers()
     );
 
+    let results = first.boolean_regions(&second, &policy).unwrap();
     for operation in [
         BooleanOp::Union,
         BooleanOp::Intersection,
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        let result = prepared
-            .boolean_region(operation)
-            .unwrap_or_else(|error| panic!("{operation:?} remained blocked: {error}"));
+        let result = results.region(operation);
         assert!(matches!(
             result.project_to_finite_curve_paths(&policy).unwrap(),
             Classification::Decided(_)

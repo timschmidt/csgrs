@@ -186,42 +186,35 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut region_boolean_checksum = 0_usize;
     for _ in 0..region_boolean_iterations {
-        let prepared = first_region
-            .retain_boolean(&second_region, &policy)
-            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
-        let region = prepared
-            .boolean_region(BooleanOp::Union)
+        let region = first_region
+            .boolean_region(&second_region, BooleanOp::Union, &policy)
             .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
         region_boolean_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_region_boolean_prepare_and_union: {region_boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={region_boolean_checksum}",
+        "curve_region_boolean_immediate_union: {region_boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={region_boolean_checksum}",
         elapsed / region_boolean_iterations
     );
 
-    let prepared_region_boolean = first_region
-        .retain_boolean(&second_region, &policy)
-        .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
-    prepared_region_boolean
-        .boolean_region_view(BooleanOp::Union)
-        .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
     let started = Instant::now();
-    let mut cached_region_boolean_checksum = 0_usize;
-    let cached_region_boolean_iterations = 2_000_u32;
-    for _ in 0..cached_region_boolean_iterations {
-        cached_region_boolean_checksum ^= black_box(
-            prepared_region_boolean
-                .boolean_region_view(BooleanOp::Union)
-                .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?
-                .boundary_loops()
-                .len(),
+    let mut batch_region_boolean_checksum = 0_usize;
+    let batch_region_boolean_iterations = 1_000_u32;
+    for _ in 0..batch_region_boolean_iterations {
+        let results = first_region
+            .boolean_regions(&second_region, &policy)
+            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
+        batch_region_boolean_checksum ^= black_box(
+            results.union().boundary_loops().len()
+                + results.intersection().boundary_loops().len()
+                + results.difference().boundary_loops().len()
+                + results.xor().boundary_loops().len(),
         );
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_region_boolean_cached_union: {cached_region_boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={cached_region_boolean_checksum}",
-        elapsed / cached_region_boolean_iterations
+        "curve_region_boolean_immediate_all_ops: {batch_region_boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={batch_region_boolean_checksum}",
+        elapsed / batch_region_boolean_iterations
     );
 
     let algebraic_ray_loop = BezierBoundaryLoop2::new(vec![
