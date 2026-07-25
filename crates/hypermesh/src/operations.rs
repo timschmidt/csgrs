@@ -2492,18 +2492,13 @@ fn exact_inside_and_active_planes(
             crate::trace_dispatch!("projective-active-planes", "proposed-empty");
             return Ok(None);
         }
-        if cycle_satisfies_planes(
-            &inside,
-            support_planes,
-            normalized_support_planes_f64,
-            candidate_planes,
-            support_plane_mesh,
-        )
-        .inspect_err(|_error| {
-            if cfg!(debug_assertions) {
-                eprintln!("[DEBUG] proposed projective verification failed");
-            }
-        })? {
+        if cycle_satisfies_planes(&inside, support_planes, candidate_planes).inspect_err(
+            |_error| {
+                if cfg!(debug_assertions) {
+                    eprintln!("[DEBUG] proposed projective verification failed");
+                }
+            },
+        )? {
             crate::trace_dispatch!("projective-active-planes", "proposed-certified");
             let active = outside.as_ref().map_or_else(
                 || active_cycle_planes(&inside, proposed_planes, support_plane_mesh, point_cache),
@@ -2673,29 +2668,15 @@ fn active_cycle_planes(
 fn cycle_satisfies_planes(
     cycle: &ProjectiveCycle,
     support_planes: &[&Plane],
-    normalized_support_planes_f64: &[Option<[f64; 4]>],
     plane_indices: &[usize],
-    support_plane_mesh: usize,
 ) -> HypermeshResult<bool> {
     let prepared_planes = plane_indices
         .iter()
         .map(|&plane_index| PreparedRationalPlane4::new(support_planes[plane_index]))
         .collect::<Vec<_>>();
-    for (point_index, point) in cycle.points.iter().enumerate() {
+    for point in &cycle.points {
         let prepared = PreparedProjectivePoint3::new(point);
         for (candidate_index, &plane_index) in plane_indices.iter().enumerate() {
-            let plane_identity = ConstructionPlaneIdentity {
-                mesh: support_plane_mesh,
-                plane: plane_index,
-            };
-            if cycle.point_has_plane_incidence(
-                point_index,
-                plane_identity,
-                support_planes[plane_index],
-                normalized_support_planes_f64[plane_index],
-            ) {
-                continue;
-            }
             let classification = match &prepared_planes[candidate_index] {
                 Some(plane) => match prepared.classify_rational_plane(plane) {
                     Some(classification) => classification,
@@ -3106,6 +3087,26 @@ mod tests {
         assert_eq!(faces[0].vertex_count(), 3);
         assert_eq!(faces[0].delta_w, vec![1, 0]);
         assert_eq!(face_supports, vec![support_identity]);
+    }
+
+    #[test]
+    fn projective_cycle_verification_accepts_exact_plane_incidences() {
+        let polygon = crate::polygon::make_triangle_with_deferred_edges(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )
+        .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        let cycle = ProjectiveCycle::from_polygon(
+            &polygon,
+            ConstructionPlaneIdentity { mesh: 0, plane: 0 },
+            &mut ProjectivePointCache::default(),
+        )
+        .unwrap();
+
+        assert!(cycle_satisfies_planes(&cycle, &[&polygon.support], &[0]).unwrap());
     }
 
     #[test]
