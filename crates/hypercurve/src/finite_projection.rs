@@ -11,6 +11,7 @@
 
 use std::f64::consts::PI;
 
+use crate::bezier_parameter::BezierParameterRefinement2;
 use crate::{
     BezierParameter2, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
     Contour2, Curve2, CurveError, CurvePath2, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2,
@@ -573,15 +574,13 @@ fn finite_parameter_pair(
     end: &BezierParameter2,
     policy: &CurvePolicy,
 ) -> CurveResult<(Real, Real)> {
+    let mut start_refinement = BezierParameterRefinement2::new(start, policy);
+    let mut end_refinement = BezierParameterRefinement2::new(end, policy);
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
-        let start = start
-            .clone()
-            .refined_isolating_interval(refinement_steps, policy);
-        let end = end
-            .clone()
-            .refined_isolating_interval(refinement_steps, policy);
-        let start = finite_parameter_representative(&start)?;
-        let end = finite_parameter_representative(&end)?;
+        let start = start_refinement.refine_to(refinement_steps);
+        let end = end_refinement.refine_to(refinement_steps);
+        let start = finite_parameter_representative(start)?;
+        let end = finite_parameter_representative(end)?;
         if start < end {
             return Ok((start, end));
         }

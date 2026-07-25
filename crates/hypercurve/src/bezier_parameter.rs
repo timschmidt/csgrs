@@ -137,6 +137,17 @@ pub enum BezierParameter2 {
     Algebraic(BezierAlgebraicParameter2),
 }
 
+/// Incremental exact isolator refinement for increasing proof budgets.
+///
+/// Each target is interpreted relative to the original parameter. Reusing the
+/// preceding bracket avoids replaying already-certified bisections when a
+/// caller progressively asks for 2, 4, then 8 refinement steps.
+pub(crate) struct BezierParameterRefinement2<'a> {
+    parameter: BezierParameter2,
+    completed_steps: usize,
+    policy: &'a CurvePolicy,
+}
+
 /// Oriented positive-length range in a Bezier segment's `[0, 1]` domain.
 ///
 /// Endpoints retain their exact representation, including isolated algebraic
@@ -1252,13 +1263,11 @@ impl BezierParameter2 {
         if compare_reals(left.end(), right.start(), policy) == Some(Ordering::Less) {
             return midpoint_real(left.end(), right.start()).map(Classification::Decided);
         }
+        let mut left_refinement = BezierParameterRefinement2::new(self, policy);
+        let mut right_refinement = BezierParameterRefinement2::new(other, policy);
         for refinement_steps in [1, 2, 4, 8] {
-            let refined_left = self
-                .clone()
-                .refined_isolating_interval(refinement_steps, policy);
-            let refined_right = other
-                .clone()
-                .refined_isolating_interval(refinement_steps, policy);
+            let refined_left = left_refinement.refine_to(refinement_steps);
+            let refined_right = right_refinement.refine_to(refinement_steps);
             let Classification::Decided(left) = refined_left.known_interval(policy)? else {
                 continue;
             };
@@ -1548,6 +1557,34 @@ impl BezierParameter2 {
                 }
             }
         }
+    }
+}
+
+impl<'a> BezierParameterRefinement2<'a> {
+    pub(crate) fn new(parameter: &BezierParameter2, policy: &'a CurvePolicy) -> Self {
+        Self {
+            parameter: parameter.clone(),
+            completed_steps: 0,
+            policy,
+        }
+    }
+
+    pub(crate) fn refine_to(&mut self, target_steps: usize) -> &BezierParameter2 {
+        debug_assert!(target_steps >= self.completed_steps);
+        let additional_steps = target_steps.saturating_sub(self.completed_steps);
+        if additional_steps != 0 {
+            let refined = self
+                .parameter
+                .clone()
+                .refined_isolating_interval(additional_steps, self.policy);
+            let progressed =
+                matches!(refined, BezierParameter2::Exact(_)) || refined != self.parameter;
+            self.parameter = refined;
+            if progressed {
+                self.completed_steps = target_steps;
+            }
+        }
+        &self.parameter
     }
 }
 
@@ -2526,6 +2563,61 @@ enum UnitRootSearch {
     RepresentedRoot(Real),
 }
 
+fn quartic_bernstein_sign_variations(
+    controls: &[Real; 5],
+    start_sign: RealSign,
+    end_sign: RealSign,
+    policy: &CurvePolicy,
+) -> Option<usize> {
+    debug_assert!(start_sign != RealSign::Zero);
+    debug_assert!(end_sign != RealSign::Zero);
+    let mut previous = start_sign;
+    let mut variations = 0_usize;
+    for control in &controls[1..4] {
+        let sign = real_sign(control, policy)?;
+        if sign != RealSign::Zero {
+            variations += usize::from(previous != sign);
+            previous = sign;
+        }
+    }
+    Some(variations + usize::from(previous != end_sign))
+}
+
+fn subdivide_quartic_bernstein_half(controls: &[Real; 5]) -> CurveResult<([Real; 5], [Real; 5])> {
+    let first = [
+        midpoint_real(&controls[0], &controls[1])?,
+        midpoint_real(&controls[1], &controls[2])?,
+        midpoint_real(&controls[2], &controls[3])?,
+        midpoint_real(&controls[3], &controls[4])?,
+    ];
+    let second = [
+        midpoint_real(&first[0], &first[1])?,
+        midpoint_real(&first[1], &first[2])?,
+        midpoint_real(&first[2], &first[3])?,
+    ];
+    let third = [
+        midpoint_real(&second[0], &second[1])?,
+        midpoint_real(&second[1], &second[2])?,
+    ];
+    let midpoint = midpoint_real(&third[0], &third[1])?;
+    Ok((
+        [
+            controls[0].clone(),
+            first[0].clone(),
+            second[0].clone(),
+            third[0].clone(),
+            midpoint.clone(),
+        ],
+        [
+            midpoint,
+            third[1].clone(),
+            second[2].clone(),
+            first[3].clone(),
+            controls[4].clone(),
+        ],
+    ))
+}
+
 fn exact_nonrational_quartic_unit_roots(
     polynomial: &BezierParameterPolynomial,
     policy: &CurvePolicy,
@@ -2540,35 +2632,47 @@ fn exact_nonrational_quartic_unit_roots(
         return Ok(None);
     }
 
-    let controls = power_to_bernstein_coefficients(polynomial.coefficients(), 4)?;
-    let mut pending = vec![(controls, Real::zero(), Real::one(), 0_usize, true, true)];
+    let controls: [Real; 5] = power_to_bernstein_coefficients(polynomial.coefficients(), 4)?
+        .try_into()
+        .expect("a quartic has five Bernstein controls");
+    let start_sign = match real_sign(&controls[0], policy) {
+        Some(RealSign::Positive) => RealSign::Positive,
+        Some(RealSign::Negative) => RealSign::Negative,
+        Some(RealSign::Zero) | None => return Ok(None),
+    };
+    let end_sign = match real_sign(&controls[4], policy) {
+        Some(RealSign::Positive) => RealSign::Positive,
+        Some(RealSign::Negative) => RealSign::Negative,
+        Some(RealSign::Zero) | None => return Ok(None),
+    };
+    let mut pending = vec![(
+        controls,
+        Real::zero(),
+        Real::one(),
+        0_usize,
+        true,
+        true,
+        start_sign,
+        end_sign,
+    )];
     let mut isolated = Vec::new();
-    while let Some((controls, start, end, depth, touches_start, touches_end)) = pending.pop() {
+    while let Some((
+        controls,
+        start,
+        end,
+        depth,
+        touches_start,
+        touches_end,
+        start_sign,
+        end_sign,
+    )) = pending.pop()
+    {
         trace.maximum_depth = trace.maximum_depth.max(depth);
-        let signs = match controls
-            .iter()
-            .map(|coefficient| real_sign(coefficient, policy))
-            .collect::<Option<Vec<_>>>()
-        {
-            Some(signs) => signs,
-            None => return Ok(None),
-        };
-        // A zero endpoint control means subdivision landed exactly on a root.
-        // The existing Sturm path can materialize and deflate that represented
-        // root; mixing it into this all-or-fallback pass would risk duplicates.
-        if signs.first() == Some(&RealSign::Zero) || signs.last() == Some(&RealSign::Zero) {
-            return Ok(None);
-        }
-        let variations = signs
-            .into_iter()
-            .filter(|sign| *sign != RealSign::Zero)
-            .fold((None, 0_usize), |(previous, variations), sign| {
-                (
-                    Some(sign),
-                    variations + usize::from(previous.is_some_and(|value| value != sign)),
-                )
-            })
-            .1;
+        let variations =
+            match quartic_bernstein_sign_variations(&controls, start_sign, end_sign, policy) {
+                Some(variations) => variations,
+                None => return Ok(None),
+            };
         trace.interval_root_counts += 1;
         if variations == 0 {
             continue;
@@ -2590,10 +2694,35 @@ fn exact_nonrational_quartic_unit_roots(
             return Ok(None);
         }
         let midpoint = midpoint_real(&start, &end)?;
-        let (left, right) = subdivide_scalar_bernstein_half(&controls)?;
+        let (left, right) = subdivide_quartic_bernstein_half(&controls)?;
+        let midpoint_sign = match real_sign(&left[4], policy) {
+            Some(RealSign::Positive) => RealSign::Positive,
+            Some(RealSign::Negative) => RealSign::Negative,
+            // A zero midpoint is a represented root. The existing Sturm path
+            // materializes and deflates it without mixing certificates.
+            Some(RealSign::Zero) | None => return Ok(None),
+        };
         trace.bisections += 1;
-        pending.push((right, midpoint.clone(), end, depth + 1, false, touches_end));
-        pending.push((left, start, midpoint, depth + 1, touches_start, false));
+        pending.push((
+            right,
+            midpoint.clone(),
+            end,
+            depth + 1,
+            false,
+            touches_end,
+            midpoint_sign,
+            end_sign,
+        ));
+        pending.push((
+            left,
+            start,
+            midpoint,
+            depth + 1,
+            touches_start,
+            false,
+            start_sign,
+            midpoint_sign,
+        ));
     }
     Ok(Some(isolated))
 }
@@ -3287,6 +3416,22 @@ mod conversion_tests {
     }
 
     #[test]
+    fn fixed_quartic_subdivision_matches_the_shared_bernstein_kernel() {
+        let controls = [
+            rational(-7, 3),
+            rational(11, 5),
+            rational(-13, 7),
+            rational(17, 11),
+            rational(-19, 13),
+        ];
+        let expected = subdivide_scalar_bernstein_half(&controls).unwrap();
+        let (left, right) = subdivide_quartic_bernstein_half(&controls).unwrap();
+
+        assert_eq!(left.as_slice(), expected.0);
+        assert_eq!(right.as_slice(), expected.1);
+    }
+
+    #[test]
     fn simple_root_certificate_distinguishes_exact_multiplicity() {
         let policy = CurvePolicy::certified();
         let root = BezierParameter2::Exact(rational(1, 2));
@@ -3411,6 +3556,20 @@ mod conversion_tests {
                 assert!(refined_sequence.is_none());
             }
         }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn progressive_refinement_matches_one_pass_proof_budget() {
+        let policy = CurvePolicy::certified();
+        let source = algebraic_parameter(&polynomial(&[-1, 0, 2]));
+        let direct = source.clone().refined_isolating_interval(8, &policy);
+        let mut progressive = BezierParameterRefinement2::new(&source, &policy);
+
+        assert_eq!(progressive.refine_to(0), &source);
+        let _ = progressive.refine_to(2);
+        let _ = progressive.refine_to(4);
+        assert_eq!(progressive.refine_to(8), &direct);
     }
 
     #[test]

@@ -26,7 +26,7 @@ use crate::bezier_algebraic_image::{
     exact_real_algebraic_representation, parameter_representation,
     rational_derivative_images_from_power_basis, rational_point_image_from_power_basis,
 };
-use crate::bezier_parameter::bernstein_to_power_coefficients;
+use crate::bezier_parameter::{BezierParameterRefinement2, bernstein_to_power_coefficients};
 use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
 use crate::classify::{
     classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2d_real_expr,
@@ -2199,13 +2199,14 @@ impl RationalBezier2 {
                 }))
             }
             BezierParameter2::Algebraic(parameter) => {
+                let source = BezierParameter2::Algebraic(parameter.clone());
+                let mut refinement = BezierParameterRefinement2::new(&source, policy);
                 for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
-                    let refined = BezierParameter2::Algebraic(parameter.clone())
-                        .refined_isolating_interval(refinement_steps, policy);
+                    let refined = refinement.refine_to(refinement_steps);
                     let BezierParameter2::Algebraic(refined) = refined else {
-                        return self.candidate_point_replay(&refined, policy);
+                        return self.candidate_point_replay(refined, policy);
                     };
-                    let image = self.point_at_algebraic_parameter(&refined, policy)?;
+                    let image = self.point_at_algebraic_parameter(refined, policy)?;
                     let (Some(x), Some(y)) = (
                         image.x().and_then(|coordinate| coordinate.representation()),
                         image.y().and_then(|coordinate| coordinate.representation()),
@@ -3605,11 +3606,10 @@ fn conic_parameter_from_candidates(
     } else {
         &[2, 4, 8]
     };
+    let mut refinement = BezierParameterRefinement2::new(curve_parameter, policy);
     for &max_refinement_steps in refinement_steps {
-        let refined_curve_parameter = curve_parameter
-            .clone()
-            .refined_isolating_interval(max_refinement_steps, policy);
-        let root = parameter_root_representation(&refined_curve_parameter, policy);
+        let refined_curve_parameter = refinement.refine_to(max_refinement_steps);
+        let root = parameter_root_representation(refined_curve_parameter, policy);
         for candidate in candidates {
             match rational_image_parameter(&root, candidate, policy)? {
                 Classification::Decided(parameter) => {
@@ -3620,13 +3620,13 @@ fn conic_parameter_from_candidates(
         }
     }
     #[cfg(feature = "predicates")]
+    let mut refinement = BezierParameterRefinement2::new(curve_parameter, policy);
+    #[cfg(feature = "predicates")]
     for &max_refinement_steps in refinement_steps {
-        let refined_curve_parameter = curve_parameter
-            .clone()
-            .refined_isolating_interval(max_refinement_steps, policy);
+        let refined_curve_parameter = refinement.refine_to(max_refinement_steps);
         for candidate in candidates {
             if let Classification::Decided(parameter) = real_coefficient_rational_image_parameter(
-                &refined_curve_parameter,
+                refined_curve_parameter,
                 candidate,
                 policy,
             )? {
@@ -3871,10 +3871,9 @@ fn real_coefficient_rational_image_parameter(
         return Ok(Classification::Decided(None));
     }
 
+    let mut refinement = BezierParameterRefinement2::new(source_parameter, policy);
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
-        let refined = source_parameter
-            .clone()
-            .refined_isolating_interval(refinement_steps, policy);
+        let refined = refinement.refine_to(refinement_steps);
         let source_interval = match refined.known_interval(policy)? {
             Classification::Decided(interval) => ExactRealInterval {
                 lower: interval.start().clone(),
