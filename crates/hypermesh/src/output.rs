@@ -10,7 +10,7 @@ use crate::polygon::{ConstructionEdgeIdentity, ConstructionVertexIdentity, Conve
 use crate::storage_hash::StorageHashMap;
 use crate::winding::WindingPair;
 use hyperlattice::{Rational, Real};
-use hyperreal::{PreparedRationalLine2Filter, PreparedRationalPoint3Query};
+use hyperreal::{PreparedRationalLine2Filter, PreparedRationalPoint3Query, RealSign};
 
 const RESOLVE_TJUNCTION_MAX_PASSES: usize = 256;
 
@@ -1046,6 +1046,13 @@ fn output_triangle_is_nondegenerate(
 ) -> HypermeshResult<bool> {
     let left = sub_vertex(&vertices[triangle[1]], &vertices[triangle[0]]);
     let right = sub_vertex(&vertices[triangle[2]], &vertices[triangle[0]]);
+    if let Some(sign) = Real::exact_rational_det3_word_sign(
+        [&left[0], &left[1], &left[2]],
+        [&right[0], &right[1], &right[2]],
+        [&support.normal.x, &support.normal.y, &support.normal.z],
+    ) {
+        return Ok(sign != RealSign::Zero);
+    }
     let cross = cross_arrays(&left, &right);
     let oriented_area = Real::signed_product_sum(
         [true, true, true],
