@@ -1244,14 +1244,14 @@ mod tests {
     }
 
     #[test]
-    fn opposite_sign_add_with_inexact_msd_is_not_certified_nonzero() {
+    fn opposite_sign_quadratic_surd_is_certified_nonzero() {
         let half = Computable::rational(Rational::fraction(1, 2).unwrap());
         let negative_radical = Computable::rational(Rational::new(2))
             .sqrt()
             .multiply_rational(Rational::fraction(-3, 8).unwrap());
         let sum = half.add(negative_radical);
 
-        assert_eq!(sum.zero_status(), ZeroKnowledge::Unknown);
+        assert_eq!(sum.zero_status(), ZeroKnowledge::NonZero);
         assert_eq!(sum.sign_until(-64), Some(RealSign::Negative));
     }
 
@@ -1565,6 +1565,37 @@ mod tests {
             assert!(Computable::internal_structural_eq(&reduced, &tiny));
             assert_eq!(reduced.exact_sign(), Some(Sign::Plus));
         }
+    }
+
+    #[test]
+    fn exact_sign_reduces_quadratic_surd_field_identities() {
+        let root_two = Computable::sqrt_rational(Rational::new(2));
+        let collapse_distance = Computable::rational(Rational::new(4))
+            .add(root_two.clone().multiply_rational(Rational::new(-2)));
+        let expanded_zero = collapse_distance
+            .multiply(root_two.clone())
+            .add(Computable::rational(Rational::new(4)))
+            .add(root_two.clone().multiply_rational(Rational::new(-4)));
+        assert_eq!(expanded_zero.exact_sign(), Some(Sign::NoSign));
+
+        let conjugate_zero = Computable::one()
+            .add(root_two.clone())
+            .inverse()
+            .add(Computable::one())
+            .add(root_two.negate());
+        assert_eq!(conjugate_zero.exact_sign(), Some(Sign::NoSign));
+    }
+
+    #[test]
+    fn exact_sign_orders_nonzero_quadratic_surds() {
+        let root_two = Computable::sqrt_rational(Rational::new(2));
+        let positive = root_two
+            .clone()
+            .add(Computable::rational(Rational::new(-1)));
+        let negative = root_two.add(Computable::rational(Rational::new(-2)));
+
+        assert_eq!(positive.exact_sign(), Some(Sign::Plus));
+        assert_eq!(negative.exact_sign(), Some(Sign::Minus));
     }
 
     #[test]
