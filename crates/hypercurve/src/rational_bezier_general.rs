@@ -4283,6 +4283,7 @@ fn from_homogeneous(
 mod tests {
     use super::*;
 
+    #[cfg(feature = "predicates")]
     fn exact_f64(value: f64) -> Real {
         Real::try_from(value).expect("finite binary rational")
     }

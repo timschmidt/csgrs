@@ -467,6 +467,48 @@ fn boolean_boundary_fragment_set_constructor_validates_source_ownership() {
 }
 
 #[test]
+fn boundary_chain_assembly_orders_branch_points_by_tangent() {
+    let fragments = BooleanBoundaryFragmentSet::new(
+        vec![
+            directed_fragment(0, 0, 0, 1, 0),
+            directed_fragment(1, 1, 0, 2, 0),
+            directed_fragment(2, 1, 0, 1, 1),
+        ],
+        Vec::new(),
+    )
+    .unwrap();
+
+    let Classification::Decided(chains) = fragments.assemble_chains(&policy()) else {
+        panic!("distinct branch tangents should select an exact successor");
+    };
+    assert_eq!(chains.len(), 2);
+    assert_eq!(chains.closed_count(), 0);
+    assert_eq!(chains.chains()[0].len(), 2);
+    assert_eq!(chains.chains()[0].fragments()[0].fragment_index, 0);
+    assert_eq!(chains.chains()[0].fragments()[1].fragment_index, 1);
+    assert_eq!(chains.chains()[1].len(), 1);
+    assert_eq!(chains.chains()[1].fragments()[0].fragment_index, 2);
+}
+
+#[test]
+fn boundary_chain_assembly_rejects_equal_tangent_branch_points() {
+    let fragments = BooleanBoundaryFragmentSet::new(
+        vec![
+            directed_fragment(0, 0, 0, 1, 0),
+            directed_fragment(1, 1, 0, 2, 0),
+            directed_fragment(2, 1, 0, 3, 0),
+        ],
+        Vec::new(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        fragments.assemble_chains(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
 fn boolean_boundary_constructors_reject_zero_length_directed_fragments() {
     let zero = DirectedBooleanFragment {
         key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),

@@ -184,6 +184,7 @@ impl PolynomialSplineCurve2 {
         Ok(curve)
     }
 
+    #[cfg(feature = "svg")]
     pub(crate) fn try_new_expanded_with_periodicity(
         degree: usize,
         control_points: Vec<Point2>,

@@ -1,10 +1,10 @@
-#[cfg(feature = "predicates")]
-use hypercurve::CubicBezier2;
 use hypercurve::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, CurvePolicy, Point2, QuadraticBezier2,
-    RationalBezier2, RationalQuadraticBezier2, Real,
+    RationalQuadraticBezier2, Real,
 };
+#[cfg(feature = "predicates")]
+use hypercurve::{CubicBezier2, RationalBezier2};
 #[cfg(feature = "predicates")]
 use hypersolve::AlgebraicRootKind;
 use proptest::prelude::*;

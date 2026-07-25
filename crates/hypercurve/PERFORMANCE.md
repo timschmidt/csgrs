@@ -4650,6 +4650,52 @@ release WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 requested executions at 5,959 coverage points and 19,056
 feature edges with no finding; LeakSanitizer remained disabled under ptrace.
 
+### Reused Sturm multiplicity certificates
+
+Implicit conic intersection isolates every root of the substituted polynomial
+with a retained Sturm chain, then classifies root multiplicity to certify
+transverse contacts. Multiplicity classification formerly rebuilt
+`gcd(P, P')` even though the final nonzero polynomial in that retained
+polynomial-remainder chain is already the same gcd up to a nonzero scalar.
+
+The classifier now reads the retained final remainder. A constant remainder
+certifies that the source polynomial is square-free immediately. A
+nonconstant remainder is reused as the repeated-root polynomial, and only that
+smaller polynomial receives the additional Sturm chain needed to locate its
+roots. A nonconstant chain that reaches the 64-polynomial construction bound
+retains the former unbounded gcd path because its last remainder is not yet a
+completion certificate. Exact-parameter derivative evaluation is unchanged.
+The mixed simple/repeated-root regression explicitly verifies that root
+isolation retained the certificate before multiplicity classification consumes
+it.
+
+On a same-build A/B of the one-cell all-family exact Boolean sentinel,
+Callgrind instruction references fell from 26,627,740 to 26,021,056 (2.28%).
+Inclusive cost beneath `simple_root_classifications` fell from 673,447 to
+48,369 instructions (92.8%). Every run retained 9 candidate pairs, 48
+fragments, 2 point classifications, 4 decided operations, no blockers, and
+checksum 6. The optimized heaptrack run recorded 33,232 allocation events,
+2,712 temporary allocations, 935.00 KiB peak heap, and 10.93 MiB peak RSS.
+The release benchmark executable contains 4,639,985 bytes of text; the
+release curve-intersection test binary attributes 1.4 MiB of text to
+Hypercurve, 808.4 KiB to Hyperreal, 223.1 KiB to Hypersolve, 87.5 KiB to
+Hyperlattice, and 14.5 KiB to Hyperlimit.
+
+The blocker-resolution history audit and its named regression gate are
+recorded in `BLOCKER_REGRESSIONS.md`. In particular, the formerly blocked
+captured demo geometry now runs through core `CurveRegion2` preparation,
+requires an empty blocker list, decides union, intersection, difference, and
+XOR, and projects every result through the finite family-preserving boundary.
+
+The complete all-feature/all-target test and benchmark suite, the no-default
+library and integration suite, strict Clippy in both feature configurations,
+and warnings-as-errors rustdoc passed. Default and no-default release WASM
+library builds passed. The Hypercurve UI passed all 37 native tests and strict
+Clippy, then Trunk 0.21.14 produced the release Pages bundle for
+`/hypercurve/`. The requested `-runs=2509` AddressSanitizer region-Boolean
+replay completed 2,718 executions at 5,985 coverage points and 19,306 feature
+edges with no finding; LeakSanitizer remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

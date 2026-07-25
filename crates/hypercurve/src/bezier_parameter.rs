@@ -381,35 +381,76 @@ impl BezierParameterPolynomial {
         }
 
         let derivative_coefficients = derivative_coefficients(&self.coefficients);
-        let has_algebraic = parameters
-            .iter()
-            .any(|parameter| matches!(parameter, BezierParameter2::Algebraic(_)));
-        let repeated_evidence = if has_algebraic {
-            match Self::try_new_power_basis(derivative_coefficients.clone(), policy) {
-                Ok(Classification::Decided(derivative)) => {
-                    match self.greatest_common_divisor(&derivative, policy)? {
-                        Classification::Decided(Some(polynomial)) => {
-                            match sturm_sequence(polynomial.coefficients(), policy)? {
-                                Classification::Decided(sturm_sequence) => {
-                                    RepeatedRootEvidence::Repeated {
-                                        polynomial,
-                                        sturm_sequence,
-                                    }
-                                }
-                                Classification::Uncertain(reason) => {
-                                    RepeatedRootEvidence::Uncertain(reason)
+        let algebraic = parameters.iter().find_map(|parameter| match parameter {
+            BezierParameter2::Algebraic(parameter) => Some(parameter),
+            BezierParameter2::Exact(_) => None,
+        });
+        let repeated_evidence = if let Some(algebraic) = algebraic {
+            if algebraic.polynomial() != self {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            match algebraic.retained_sturm_sequence(policy)? {
+                Classification::Decided(sequence) => {
+                    let gcd_coefficients = sequence
+                        .last()
+                        .expect("a Sturm sequence contains its source polynomial");
+                    if gcd_coefficients.len() == 1 {
+                        RepeatedRootEvidence::SquareFree
+                    } else if sequence.len() < 64 {
+                        let polynomial = BezierParameterPolynomial {
+                            coefficients: gcd_coefficients.clone(),
+                        };
+                        match sturm_sequence(polynomial.coefficients(), policy)? {
+                            Classification::Decided(sturm_sequence) => {
+                                RepeatedRootEvidence::Repeated {
+                                    polynomial,
+                                    sturm_sequence,
                                 }
                             }
+                            Classification::Uncertain(reason) => {
+                                RepeatedRootEvidence::Uncertain(reason)
+                            }
                         }
-                        Classification::Decided(None) => RepeatedRootEvidence::SquareFree,
-                        Classification::Uncertain(reason) => {
-                            RepeatedRootEvidence::Uncertain(reason)
+                    } else {
+                        // A nonconstant 64th remainder may be the bounded
+                        // Sturm builder's last permitted step rather than the
+                        // completed gcd. Retain the unbounded classification
+                        // path for that high-degree case.
+                        match Self::try_new_power_basis(derivative_coefficients.clone(), policy) {
+                            Ok(Classification::Decided(derivative)) => {
+                                match self.greatest_common_divisor(&derivative, policy)? {
+                                    Classification::Decided(Some(polynomial)) => {
+                                        match sturm_sequence(polynomial.coefficients(), policy)? {
+                                            Classification::Decided(sturm_sequence) => {
+                                                RepeatedRootEvidence::Repeated {
+                                                    polynomial,
+                                                    sturm_sequence,
+                                                }
+                                            }
+                                            Classification::Uncertain(reason) => {
+                                                RepeatedRootEvidence::Uncertain(reason)
+                                            }
+                                        }
+                                    }
+                                    Classification::Decided(None) => {
+                                        RepeatedRootEvidence::SquareFree
+                                    }
+                                    Classification::Uncertain(reason) => {
+                                        RepeatedRootEvidence::Uncertain(reason)
+                                    }
+                                }
+                            }
+                            Err(CurveError::InvalidBezierPolynomial) => {
+                                RepeatedRootEvidence::NoDerivative
+                            }
+                            Ok(Classification::Uncertain(reason)) => {
+                                RepeatedRootEvidence::Uncertain(reason)
+                            }
+                            Err(error) => return Err(error),
                         }
                     }
                 }
-                Err(CurveError::InvalidBezierPolynomial) => RepeatedRootEvidence::NoDerivative,
-                Ok(Classification::Uncertain(reason)) => RepeatedRootEvidence::Uncertain(reason),
-                Err(error) => return Err(error),
+                Classification::Uncertain(reason) => RepeatedRootEvidence::Uncertain(reason),
             }
         } else {
             RepeatedRootEvidence::SquareFree
@@ -3070,7 +3111,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn simple_root_certificates_classify_one_polynomial_batch() {
+    fn retained_sturm_certificate_classifies_mixed_root_multiplicity() {
         let policy = CurvePolicy::certified();
         // (2t² - 1)²(8t² - 1) has one simple and one repeated root in
         // the unit interval, neither representable as a rational scalar.
@@ -3088,6 +3129,11 @@ mod conversion_tests {
                 .iter()
                 .all(|root| matches!(root, BezierParameter2::Algebraic(_)))
         );
+        assert!(roots.iter().all(|root| match root {
+            BezierParameter2::Algebraic(parameter) =>
+                parameter.data.shared.sturm_sequence.get().is_some(),
+            BezierParameter2::Exact(_) => false,
+        }));
         assert_eq!(
             polynomial
                 .simple_root_classifications(&roots, &policy)
