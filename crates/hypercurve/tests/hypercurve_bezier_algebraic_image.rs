@@ -203,6 +203,42 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
 
 #[test]
 #[cfg(feature = "predicates")]
+fn rational_point_image_retains_real_coefficient_root_expression() {
+    let conic =
+        RationalQuadraticBezier2::try_new(p(0, 0), p(2, 4), p(6, 0), r(1), r(2), r(3)).unwrap();
+    let parameter = isolate(
+        polynomial(vec![r(-1), Real::pi()]),
+        interval(q(1, 4), q(1, 2)),
+    );
+
+    let point = conic
+        .point_at_algebraic_parameter(&parameter, &policy())
+        .unwrap();
+
+    assert_eq!(
+        point.status(),
+        BezierAlgebraicImageStatus::RetainedRationalExpression
+    );
+    assert!(!point.parameter().is_valid());
+    assert!(point.x().is_none());
+    assert!(point.y().is_none());
+    assert_eq!(point.retained_parameter(), Some(&parameter));
+    let (x_numerator, y_numerator, denominator) = point
+        .retained_coordinate_polynomials()
+        .expect("the exact rational point expression is retained");
+    assert!(!x_numerator.is_empty());
+    assert!(!y_numerator.is_empty());
+    assert!(!denominator.is_empty());
+    assert!(
+        point
+            .message()
+            .unwrap()
+            .contains("Real-coefficient rational point expression")
+    );
+}
+
+#[test]
+#[cfg(feature = "predicates")]
 fn rational_image_cache_keeps_curve_family_certificate_shapes_distinct() {
     let controls = vec![p(0, 0), p(2, 4), p(6, 0)];
     let weights = vec![r(1), r(2), r(3)];

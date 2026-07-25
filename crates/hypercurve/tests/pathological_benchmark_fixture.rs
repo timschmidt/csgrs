@@ -118,3 +118,33 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
         "certified interior transversal contacts should reuse adjacent fragment classification"
     );
 }
+
+#[test]
+#[cfg(feature = "predicates")]
+fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
+    // Cell two assigns the exact transcendental value pi to both authored
+    // rational-quadratic weights. Its conic/cubic contacts formerly reached
+    // root isolation but blocked while forcing the Real-coefficient roots
+    // through the rational-coefficient algebraic-number image package.
+    let cell = build_native_cell(2);
+    let policy = CurvePolicy::certified();
+    let prepared = cell
+        .source
+        .retain_boolean(&cell.rotated, &policy)
+        .expect("pi-weight all-family pair reaches exact Boolean preparation");
+    let evidence = prepared
+        .intersection_result()
+        .expect("pi-weight conic/cubic intersections retain exact evidence");
+    assert!(evidence.blockers().is_empty(), "{:#?}", evidence.blockers());
+
+    for operation in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::Xor,
+    ] {
+        prepared
+            .boolean_region(operation)
+            .unwrap_or_else(|error| panic!("{operation:?} remained blocked: {error}"));
+    }
+}

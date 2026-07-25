@@ -4696,6 +4696,64 @@ Clippy, then Trunk 0.21.14 produced the release Pages bundle for
 replay completed 2,718 executions at 5,985 coverage points and 19,306 feature
 edges with no finding; LeakSanitizer remained disabled under ptrace.
 
+### Exact Real-coefficient conic parameter images
+
+The all-representation pathological schedule first became blocked when its
+rational-quadratic weights reached `pi`. The specialized implicit-conic route
+isolated the correct roots, but its rational parameter map then tried to force
+those certified Real-coefficient roots through Hypersolve's intentionally
+rational-coefficient algebraic-number representation. That conversion
+correctly rejected the evidence, and the generic resultant fallback eventually
+reported `RealSign`.
+
+Prepared conic candidates now retain the exact numerator and denominator of
+their rational parameter map. They also construct its exact image polynomial:
+the resultant is sampled at enough integer image parameters to cover its
+degree, then reconstructed by exact Lagrange interpolation. When the existing
+rational-coefficient fast path cannot represent the source root, Hypercurve
+isolates the Real-coefficient image roots once and refines the source isolator
+until conservative exact interval arithmetic certifies that the mapped
+interval lies inside exactly one image-root isolator. No primitive floating
+point conversion or approximate topology decision is involved. Rational
+Bezier point images likewise retain the certified source root and exact
+rational-coordinate expressions when only the narrower Hypersolve
+representation is unavailable.
+
+On the 67-cell, 100.5 MiB all-family benchmark, the exact native Boolean path
+moved from 40 decided and 228 blocked operations to all 268 operations decided
+with no blocker. Preparation fell from approximately 312.397 seconds to
+1.077 seconds (about 290x), and total native Boolean time fell from
+approximately 312.5 seconds to 1.663 seconds (about 188x). The completed path
+now materializes 3,248 fragments and performs 134 point classifications,
+compared with 488 fragments and 20 classifications when most operations
+stopped early, so the timing improvement includes substantially more exact
+topology work. The family-flattened exact control decided the same 268
+operations in 17.289 milliseconds.
+
+Heaptrack measured 36.00 MiB peak heap for the complete 67-cell run; its
+largest consumers remain Hyperreal rational storage and bigint growth rather
+than the retained image objects. A three-cell Callgrind run, which includes the
+first `pi` cell, completed all 12 operations and recorded 326,746,257
+instruction references. Hyperreal computable structural equality was the
+largest exclusive symbol at 13.48%, identifying expression comparison as the
+next local optimization target. The release benchmark executable contains
+4,663,333 bytes of text, 23,348 bytes (0.50%) more than the preceding
+checkpoint.
+
+The blocker matrix names both the end-to-end
+`pathological_pi_weight_conic_decides_native_booleans_without_projection`
+regression and the focused
+`rational_point_image_retains_real_coefficient_root_expression` evidence test.
+The complete all-feature suite and no-default library/integration suite,
+strict all-target Clippy in both feature configurations, formatting,
+warnings-as-errors rustdoc, and default/no-default release WASM library builds
+passed. The Hypercurve UI passed all 37 native tests and strict Clippy; its
+release WASM build and Trunk 0.21.14 Pages bundle for `/hypercurve/` both
+completed successfully. The requested `-runs=2509` AddressSanitizer
+region-Boolean replay completed 2,708 executions at 5,985 coverage points and
+19,289 feature edges with no finding; LeakSanitizer remained disabled under
+ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

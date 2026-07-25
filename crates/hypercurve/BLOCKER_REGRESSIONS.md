@@ -14,6 +14,7 @@ because neither their blocker nor their resolver remains executable.
 | --- | --- |
 | Algebraic polyline region crossings and all four Boolean operations (`2491124`) | `shared_demo_algebraic_polyline_blocker_resolves_all_boolean_modes`; `shared_demo_conic_cubic_contacts_are_complete`; `shared_demo_cubic_pair_contacts_are_complete` |
 | Mixed-family rational-quadratic `RealSign` selection and complex curved Booleans (`2860f1d`) | `pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans`; `implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders`; `algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures` |
+| Real-coefficient conic/cubic parameter images for transcendental weights | `pathological_pi_weight_conic_decides_native_booleans_without_projection`; `rational_point_image_retains_real_coefficient_root_expression` |
 | Simultaneous exact straight-skeleton line events (`ec8dda9`) | `non_general_position_l_shape_materializes_terminal_vertex_event`; `non_general_position_line_fixtures_complete_exactly` |
 | Exact line-Boolean branch vertices (`d9d009b`) | `boundary_chain_assembly_orders_branch_points_by_tangent`; `boundary_chain_assembly_rejects_equal_tangent_branch_points` |
 | Certified removal of unresolved opposite boundary pairs (`f1a7562`) | `unresolved_boundaries_require_opposite_fragment_pair_evidence`; `unresolved_boundaries_retain_certified_opposite_fragment_pairs` |

@@ -10,7 +10,7 @@ use hyperreal::{Real, RealSign, ZeroKnowledge};
 use hypersolve::{
     AlgebraicPolynomialValueInterval, AlgebraicRootRationalEvaluationReport,
     AlgebraicRootRationalImageStatus, PreparedAlgebraicRootRationalMap,
-    evaluate_rational_expression_at_algebraic_root,
+    evaluate_rational_expression_at_algebraic_root, resultant_univariate_polynomials,
 };
 #[cfg(feature = "predicates")]
 use hypersolve::{
@@ -3446,6 +3446,14 @@ struct ConicParameterMap2 {
 struct PreparedConicParameterCandidate2 {
     #[cfg(feature = "predicates")]
     map: PreparedAlgebraicRootRationalMap,
+    #[cfg(feature = "predicates")]
+    numerator: Vec<Real>,
+    #[cfg(feature = "predicates")]
+    denominator: Vec<Real>,
+    #[cfg(feature = "predicates")]
+    image_polynomial: Option<BezierParameterPolynomial>,
+    #[cfg(feature = "predicates")]
+    image_parameters: OnceCell<CurveResult<Classification<Vec<BezierParameter2>>>>,
 }
 
 fn conic_parameter_map(
@@ -3571,11 +3579,274 @@ fn conic_parameter_from_candidates(
                 Classification::Decided(parameter) => {
                     return Ok(Classification::Decided(parameter));
                 }
-                Classification::Uncertain(_) => {}
+                Classification::Uncertain(_) => {
+                    #[cfg(feature = "predicates")]
+                    {
+                        if let Classification::Decided(parameter) =
+                            real_coefficient_rational_image_parameter(
+                                &refined_curve_parameter,
+                                candidate,
+                                policy,
+                            )?
+                        {
+                            return Ok(Classification::Decided(parameter));
+                        }
+                    }
+                }
             }
         }
     }
     Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+}
+
+#[cfg(feature = "predicates")]
+fn rational_map_image_polynomial(
+    source_polynomial: &[Real],
+    numerator: &[Real],
+    denominator: &[Real],
+    policy: &CurvePolicy,
+) -> Option<BezierParameterPolynomial> {
+    let source_degree = source_polynomial.len().checked_sub(1)?;
+    let mut samples = Vec::with_capacity(source_degree + 1);
+    for sample in 0..=source_degree {
+        let value = Real::from(i64::try_from(sample).ok()?);
+        let relation =
+            subtract_power_polynomials(numerator, &scale_power_polynomial(denominator, &value));
+        let resultant = resultant_univariate_polynomials(
+            source_polynomial,
+            &relation,
+            RATIONAL_INTERSECTION_RESULTANT_PRECISION,
+        )
+        .ok()?
+        .resultant;
+        samples.push(resultant);
+    }
+    let coefficients = interpolate_exact_real_samples(&samples)?;
+    match BezierParameterPolynomial::try_new_power_basis(coefficients, policy).ok()? {
+        Classification::Decided(polynomial) => Some(polynomial),
+        Classification::Uncertain(_) => None,
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn interpolate_exact_real_samples(samples: &[Real]) -> Option<Vec<Real>> {
+    let mut polynomial = vec![Real::zero(); samples.len()];
+    for (sample_index, sample) in samples.iter().enumerate() {
+        let mut basis = vec![Real::one()];
+        let mut denominator = Real::one();
+        let sample_value = Real::from(i64::try_from(sample_index).ok()?);
+        for other_index in 0..samples.len() {
+            if sample_index == other_index {
+                continue;
+            }
+            let other_value = Real::from(i64::try_from(other_index).ok()?);
+            basis = multiply_power_polynomial_by_linear_factor(basis, -other_value.clone());
+            denominator *= &sample_value - other_value;
+        }
+        let scale = (sample / denominator).ok()?;
+        add_scaled_power_polynomial(&mut polynomial, &basis, &scale);
+    }
+    Some(polynomial)
+}
+
+#[cfg(feature = "predicates")]
+fn multiply_power_polynomial_by_linear_factor(polynomial: Vec<Real>, constant: Real) -> Vec<Real> {
+    let mut product = vec![Real::zero(); polynomial.len() + 1];
+    for (index, coefficient) in polynomial.into_iter().enumerate() {
+        product[index] += &coefficient * &constant;
+        product[index + 1] += coefficient;
+    }
+    product
+}
+
+#[cfg(feature = "predicates")]
+fn real_coefficient_rational_image_parameter(
+    source_parameter: &BezierParameter2,
+    candidate: &PreparedConicParameterCandidate2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    if let Some(source) = source_parameter.as_exact() {
+        let Some(value) =
+            evaluate_rational_map(&candidate.numerator, &candidate.denominator, source)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        };
+        return match BezierParameter2::exact(value, policy) {
+            Ok(Classification::Decided(parameter)) => Ok(Classification::Decided(Some(parameter))),
+            Err(CurveError::InvalidBezierParameter) => Ok(Classification::Decided(None)),
+            Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
+            Err(error) => Err(error),
+        };
+    }
+
+    let Some(image_polynomial) = &candidate.image_polynomial else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
+    let image_parameters = match candidate
+        .image_parameters
+        .get_or_init(|| image_polynomial.isolate_unit_interval_roots(policy))
+    {
+        Ok(Classification::Decided(parameters)) => parameters,
+        Ok(Classification::Uncertain(reason)) => {
+            return Ok(Classification::Uncertain(*reason));
+        }
+        Err(error) => return Err(error.clone()),
+    };
+    if image_parameters.is_empty() {
+        return Ok(Classification::Decided(None));
+    }
+
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
+        let refined = source_parameter
+            .clone()
+            .refined_isolating_interval(refinement_steps, policy);
+        let source_interval = match refined.known_interval(policy)? {
+            Classification::Decided(interval) => ExactRealInterval {
+                lower: interval.start().clone(),
+                upper: interval.end().clone(),
+            },
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let Some(image_interval) = evaluate_rational_map_interval(
+            &candidate.numerator,
+            &candidate.denominator,
+            &source_interval,
+            policy,
+        ) else {
+            continue;
+        };
+        if compare_reals(&image_interval.upper, &Real::zero(), policy) == Some(Ordering::Less)
+            || compare_reals(&image_interval.lower, &Real::one(), policy) == Some(Ordering::Greater)
+        {
+            return Ok(Classification::Decided(None));
+        }
+
+        let mut containing = image_parameters.iter().filter(|parameter| {
+            let Ok(Classification::Decided(interval)) = parameter.known_interval(policy) else {
+                return false;
+            };
+            matches!(
+                compare_reals(interval.start(), &image_interval.lower, policy),
+                Some(Ordering::Less | Ordering::Equal)
+            ) && matches!(
+                compare_reals(&image_interval.upper, interval.end(), policy),
+                Some(Ordering::Less | Ordering::Equal)
+            )
+        });
+        let Some(parameter) = containing.next() else {
+            continue;
+        };
+        if containing.next().is_none() {
+            return Ok(Classification::Decided(Some(parameter.clone())));
+        }
+    }
+    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+}
+
+#[cfg(feature = "predicates")]
+#[derive(Clone)]
+struct ExactRealInterval {
+    lower: Real,
+    upper: Real,
+}
+
+#[cfg(feature = "predicates")]
+fn evaluate_rational_map(
+    numerator: &[Real],
+    denominator: &[Real],
+    parameter: &Real,
+) -> Option<Real> {
+    let numerator = evaluate_power_polynomial(numerator, parameter);
+    let denominator = evaluate_power_polynomial(denominator, parameter);
+    (numerator / denominator).ok()
+}
+
+#[cfg(feature = "predicates")]
+fn evaluate_rational_map_interval(
+    numerator: &[Real],
+    denominator: &[Real],
+    parameter: &ExactRealInterval,
+    policy: &CurvePolicy,
+) -> Option<ExactRealInterval> {
+    let numerator = evaluate_power_polynomial_interval(numerator, parameter, policy)?;
+    let denominator = evaluate_power_polynomial_interval(denominator, parameter, policy)?;
+    let reciprocal = reciprocal_interval(&denominator, policy)?;
+    multiply_intervals(&numerator, &reciprocal, policy)
+}
+
+#[cfg(feature = "predicates")]
+fn evaluate_power_polynomial_interval(
+    coefficients: &[Real],
+    parameter: &ExactRealInterval,
+    policy: &CurvePolicy,
+) -> Option<ExactRealInterval> {
+    let mut value = ExactRealInterval {
+        lower: Real::zero(),
+        upper: Real::zero(),
+    };
+    for coefficient in coefficients.iter().rev() {
+        value = multiply_intervals(&value, parameter, policy)?;
+        value.lower += coefficient;
+        value.upper += coefficient;
+    }
+    Some(value)
+}
+
+#[cfg(feature = "predicates")]
+fn reciprocal_interval(
+    interval: &ExactRealInterval,
+    policy: &CurvePolicy,
+) -> Option<ExactRealInterval> {
+    let lower_sign = compare_reals(&interval.lower, &Real::zero(), policy)?;
+    let upper_sign = compare_reals(&interval.upper, &Real::zero(), policy)?;
+    if lower_sign != Ordering::Greater && upper_sign != Ordering::Less {
+        return None;
+    }
+    let mut endpoints = [
+        (Real::one() / &interval.lower).ok()?,
+        (Real::one() / &interval.upper).ok()?,
+    ];
+    sort_reals(&mut endpoints, policy)?;
+    Some(ExactRealInterval {
+        lower: endpoints[0].clone(),
+        upper: endpoints[1].clone(),
+    })
+}
+
+#[cfg(feature = "predicates")]
+fn multiply_intervals(
+    left: &ExactRealInterval,
+    right: &ExactRealInterval,
+    policy: &CurvePolicy,
+) -> Option<ExactRealInterval> {
+    let mut products = [
+        &left.lower * &right.lower,
+        &left.lower * &right.upper,
+        &left.upper * &right.lower,
+        &left.upper * &right.upper,
+    ];
+    sort_reals(&mut products, policy)?;
+    Some(ExactRealInterval {
+        lower: products[0].clone(),
+        upper: products[3].clone(),
+    })
+}
+
+#[cfg(feature = "predicates")]
+fn sort_reals(values: &mut [Real], policy: &CurvePolicy) -> Option<()> {
+    for index in 1..values.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            if compare_reals(&values[cursor], &values[cursor - 1], policy)? != Ordering::Less {
+                break;
+            }
+            values.swap(cursor, cursor - 1);
+            cursor -= 1;
+        }
+    }
+    Some(())
 }
 
 fn exact_contact_point_evidence(
@@ -3594,15 +3865,18 @@ fn exact_contact_point_evidence(
         }
         BezierParameter2::Algebraic(parameter) => {
             let image = curve.point_at_algebraic_parameter(parameter, policy)?;
-            Ok((image
-                .x()
-                .and_then(|coordinate| coordinate.representation())
-                .is_some()
-                && image
-                    .y()
-                    .and_then(|coordinate| coordinate.representation())
-                    .is_some())
-            .then_some(RationalBezierIntersectionPointEvidence2::Algebraic(image)))
+            Ok(
+                (image.status() == crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+                    || (image
+                        .x()
+                        .and_then(|coordinate| coordinate.representation())
+                        .is_some()
+                        && image
+                            .y()
+                            .and_then(|coordinate| coordinate.representation())
+                            .is_some()))
+                .then_some(RationalBezierIntersectionPointEvidence2::Algebraic(image)),
+            )
         }
     }
 }
@@ -3653,6 +3927,8 @@ fn prepare_conic_parameter_candidate(
     }
     #[cfg(feature = "predicates")]
     {
+        let image_polynomial =
+            rational_map_image_polynomial(source_polynomial, &numerator, &denominator, policy);
         Ok(Classification::Decided(PreparedConicParameterCandidate2 {
             map: PreparedAlgebraicRootRationalMap::new(
                 source_polynomial,
@@ -3660,6 +3936,10 @@ fn prepare_conic_parameter_candidate(
                 &denominator,
                 policy.predicate_policy,
             ),
+            numerator,
+            denominator,
+            image_polynomial,
+            image_parameters: OnceCell::new(),
         }))
     }
     #[cfg(not(feature = "predicates"))]

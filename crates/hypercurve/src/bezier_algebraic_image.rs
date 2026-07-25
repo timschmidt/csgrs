@@ -46,6 +46,10 @@ pub enum BezierAlgebraicImageStatus {
     /// The y coordinate image failed the bounded exact polynomial-image
     /// package.
     YImageFailed,
+    /// The exact rational-coordinate expressions and their certified
+    /// Real-coefficient source root were retained without forcing them into
+    /// the rational-coefficient algebraic-number package.
+    RetainedRationalExpression,
 }
 
 /// One exact coordinate image of a Bezier expression at an algebraic parameter.
@@ -235,7 +239,16 @@ struct RationalBezierAlgebraicPointImageData {
     parameter: AlgebraicRootRepresentation,
     x: Option<BezierAlgebraicRationalCoordinateImage>,
     y: Option<BezierAlgebraicRationalCoordinateImage>,
+    retained_expression: Option<RetainedRationalPointExpression>,
     message: Option<String>,
+}
+
+#[derive(Debug, PartialEq)]
+struct RetainedRationalPointExpression {
+    parameter: BezierAlgebraicParameter2,
+    x_numerator: Vec<Real>,
+    y_numerator: Vec<Real>,
+    denominator: Vec<Real>,
 }
 
 impl PartialEq for RationalBezierAlgebraicPointImage2 {
@@ -250,6 +263,7 @@ impl RationalBezierAlgebraicPointImage2 {
         parameter: AlgebraicRootRepresentation,
         x: Option<BezierAlgebraicRationalCoordinateImage>,
         y: Option<BezierAlgebraicRationalCoordinateImage>,
+        retained_expression: Option<RetainedRationalPointExpression>,
         message: Option<String>,
     ) -> Self {
         Self {
@@ -258,6 +272,7 @@ impl RationalBezierAlgebraicPointImage2 {
                 parameter,
                 x,
                 y,
+                retained_expression,
                 message,
             }),
         }
@@ -281,6 +296,27 @@ impl RationalBezierAlgebraicPointImage2 {
     /// Returns the y coordinate rational image when construction reached it.
     pub fn y(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
         self.data.y.as_ref()
+    }
+
+    /// Returns the exact isolated source parameter retained for a
+    /// Real-coefficient rational expression.
+    pub fn retained_parameter(&self) -> Option<&BezierAlgebraicParameter2> {
+        self.data
+            .retained_expression
+            .as_ref()
+            .map(|expression| &expression.parameter)
+    }
+
+    /// Returns the exact x numerator, y numerator, and shared denominator for
+    /// a retained Real-coefficient rational expression.
+    pub fn retained_coordinate_polynomials(&self) -> Option<(&[Real], &[Real], &[Real])> {
+        self.data.retained_expression.as_ref().map(|expression| {
+            (
+                expression.x_numerator.as_slice(),
+                expression.y_numerator.as_slice(),
+                expression.denominator.as_slice(),
+            )
+        })
     }
 
     /// Returns a compact diagnostic message for failed construction.
@@ -640,12 +676,23 @@ fn rational_point_image(
 ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
     let parameter_root = parameter_representation(parameter, policy);
     if !parameter_root.is_valid() {
+        let RationalCoordinatePolynomials {
+            x_numerator,
+            y_numerator,
+            denominator,
+        } = coefficients;
         return Ok(RationalBezierAlgebraicPointImage2::new(
-            BezierAlgebraicImageStatus::InvalidParameterEvidence,
+            BezierAlgebraicImageStatus::RetainedRationalExpression,
             parameter_root,
             None,
             None,
-            Some("Bezier algebraic parameter evidence did not validate".to_owned()),
+            Some(RetainedRationalPointExpression {
+                parameter: parameter.clone(),
+                x_numerator,
+                y_numerator,
+                denominator,
+            }),
+            Some("retained an exact Real-coefficient rational point expression".to_owned()),
         ));
     }
     let (x, y) = rational_coordinate_image_pair(
@@ -661,6 +708,7 @@ fn rational_point_image(
             parameter_root,
             None,
             None,
+            None,
             Some("x rational coordinate image failed".to_owned()),
         ));
     };
@@ -670,6 +718,7 @@ fn rational_point_image(
             parameter_root,
             Some(x),
             None,
+            None,
             Some("y rational coordinate image failed".to_owned()),
         ));
     };
@@ -678,6 +727,7 @@ fn rational_point_image(
         parameter_root,
         Some(x),
         Some(y),
+        None,
         None,
     ))
 }
