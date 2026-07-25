@@ -921,7 +921,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             resolve(union, operations[0])?,
             resolve(intersection, operations[1])?,
             resolve(difference, operations[2])?,
-            resolve(xor, operations[3])?,
+            match resolve(xor, operations[3]) {
+                Ok(region) => region,
+                Err(ExactCurveError::Blocked(_)) => self.build_xor_from_exact_set_identity()?,
+                Err(error) => return Err(error),
+            },
         ];
         let topology_fragment_count = topology.split_fragments.iter().map(Vec::len).sum();
         let topology_point_classification_count = topology.point_classification_count;
@@ -947,7 +951,67 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 &topology_storage
             }
         };
-        self.build_boolean_region_from_topology(operation, topology)
+        match self.build_boolean_region_from_topology(operation, topology) {
+            Ok(region) => Ok(region),
+            Err(ExactCurveError::Blocked(_)) if operation == BooleanOp::Xor => {
+                self.build_xor_from_exact_set_identity()
+            }
+            Err(error) => Err(error),
+        }
+    }
+
+    fn build_xor_from_exact_set_identity(&self) -> ExactCurveResult<CurveRegion2> {
+        let union = self.data.first.boolean_region(
+            self.data.second,
+            BooleanOp::Union,
+            &self.data.policy,
+        )?;
+        let intersection = self.data.first.boolean_region(
+            self.data.second,
+            BooleanOp::Intersection,
+            &self.data.policy,
+        )?;
+        if let Ok(xor) =
+            union.boolean_region(&intersection, BooleanOp::Difference, &self.data.policy)
+        {
+            return Ok(xor);
+        }
+        let mut filled_sides = match union.filled_side_is_left(&self.data.policy) {
+            Ok(Classification::Decided(sides)) => sides.to_vec(),
+            Ok(Classification::Uncertain(reason)) => return Err(self.blocked(0, reason)),
+            Err(cause) => return Err(self.invalid(0, cause)),
+        };
+        let intersection_filled_sides = match intersection.filled_side_is_left(&self.data.policy) {
+            Ok(Classification::Decided(sides)) => sides,
+            Ok(Classification::Uncertain(reason)) => return Err(self.blocked(0, reason)),
+            Err(cause) => return Err(self.invalid(0, cause)),
+        };
+        filled_sides.extend(intersection_filled_sides.iter().map(|side| !side));
+        // XOR is union with the intersection's filled side removed. Retain the
+        // two exact boundary sets directly when a second Boolean traversal
+        // cannot materialize that difference.
+        let mut union_loops = union
+            .into_boundary_loops()
+            .into_iter()
+            // Both derived regions reuse the operands' source records. Strip
+            // those records before combining them into one independent region.
+            .map(crate::CurveRegionBoundaryLoop2::without_arrangement_sources)
+            .collect::<Vec<_>>();
+        union_loops.extend(
+            intersection
+                .into_boundary_loops()
+                .into_iter()
+                .map(crate::CurveRegionBoundaryLoop2::without_arrangement_sources),
+        );
+        CurveRegion2::new(union_loops)
+            .and_then(|region| region.with_certified_filled_side_is_left(filled_sides))
+            .map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Boolean,
+                    CurveFamily2::RationalBezier,
+                    cause,
+                )
+            })
     }
 
     fn build_boolean_region_from_topology(
@@ -1009,10 +1073,22 @@ impl<'a> CurveRegionBooleanContext<'a> {
             topology,
             &self.data.carriers,
         );
-        let traversal = match graph
-            .traverse_retained_with_certified_successors(&certified_successors, &self.data.policy)
-        {
+        let primary = graph
+            .traverse_retained_with_certified_successors(&certified_successors, &self.data.policy);
+        // XOR can retain both result-side boundaries at the same contact. If
+        // the established smallest-turn walk collides at a four-valent XOR
+        // vertex, retry with filled-face half-edge pairing.
+        let traversal = match primary {
             Classification::Decided(traversal) => traversal,
+            Classification::Uncertain(_) if operation == BooleanOp::Xor => {
+                match graph.traverse_retained_filled_left_faces_with_certified_successors(
+                    &certified_successors,
+                    &self.data.policy,
+                ) {
+                    Classification::Decided(traversal) => traversal,
+                    Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
+                }
+            }
             Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
         };
         let mut region =

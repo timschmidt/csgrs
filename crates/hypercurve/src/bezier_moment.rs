@@ -20,7 +20,7 @@ use hyperreal::Real;
 use crate::classify::{compare_reals, in_closed_unit_interval};
 use crate::{
     Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, UncertaintyReason,
+    RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 
 #[derive(Default)]
@@ -366,6 +366,27 @@ impl RationalQuadraticBezier2 {
         cache: &mut RationalQuadraticAreaIntegralCache,
     ) -> CurveResult<Option<Real>> {
         rational_quadratic_signed_area_contribution(self, Some(cache))
+    }
+}
+
+impl RationalBezier2 {
+    /// Returns the exact signed-area contribution when uniform projective
+    /// weights certify that this rational Bezier is polynomial.
+    ///
+    /// Equal nonzero weights cancel from every homogeneous coordinate. The
+    /// affine controls can therefore use the arbitrary-degree polynomial
+    /// Green integral directly without changing the curve family or sampling.
+    /// `None` means the weights are not structurally uniform; it does not
+    /// approximate a general rational integral.
+    pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
+        let Some(first_weight) = self.weights().first() else {
+            return Err(CurveError::InvalidRationalBezier);
+        };
+        if !self.weights().iter().all(|weight| weight == first_weight) {
+            return Ok(None);
+        }
+        let controls = self.control_points().iter().collect::<Vec<_>>();
+        signed_area_for_controls(&controls).map(Some)
     }
 }
 
@@ -958,6 +979,28 @@ mod tests {
                 area_moments_for_controls(&controls).unwrap().signed_area
             );
         }
+    }
+
+    #[test]
+    fn uniform_weight_general_rational_bezier_uses_exact_polynomial_area() {
+        let controls = vec![point(-2, 3), point(5, 11), point(13, -7), point(17, 2)];
+        let polynomial = CubicBezier2::new(
+            controls[0].clone(),
+            controls[1].clone(),
+            controls[2].clone(),
+            controls[3].clone(),
+        );
+        let rational = RationalBezier2::try_new(controls.clone(), vec![Real::from(3_i8); 4])
+            .expect("uniform nonzero weights are valid");
+        assert_eq!(
+            rational.signed_area_contribution().unwrap(),
+            Some(polynomial.signed_area_contribution().unwrap())
+        );
+
+        let nonuniform =
+            RationalBezier2::try_new(controls, vec![Real::one(), 2.into(), 3.into(), 4.into()])
+                .expect("positive nonuniform weights are valid");
+        assert_eq!(nonuniform.signed_area_contribution().unwrap(), None);
     }
 
     #[test]

@@ -619,6 +619,87 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
 
 #[test]
 #[cfg(feature = "predicates")]
+fn implicit_conic_route_retains_an_interior_rational_quadratic_cubic_contact() {
+    let policy = CurvePolicy::certified();
+    let conic = RationalBezier2::try_new(vec![p(5, 6), p(14, 5), p(23, 6)], vec![r(1), r(2), r(1)])
+        .unwrap();
+    let cubic = RationalBezier2::try_new(
+        vec![
+            p(28, 4),
+            Point2::new(q(61, 3), r(8)),
+            Point2::new(q(38, 3), r(8)),
+            p(5, 4),
+        ],
+        vec![r(1); 4],
+    )
+    .unwrap();
+
+    let result = conic.intersection_contacts(&cubic, &policy).unwrap();
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = &result else {
+        let candidates = conic.intersection_candidates(&cubic, &policy).unwrap();
+        panic!(
+            "implicit conic route discarded its interior contact: {result:#?}; candidates: {candidates:#?}"
+        );
+    };
+    assert_eq!(contacts.len(), 1);
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn resultant_replay_retains_an_interior_nonuniform_rational_cubic_contact() {
+    let policy = CurvePolicy::certified();
+    let first = RationalBezier2::try_new(
+        vec![p(5, 6), p(11, 5), p(17, 5), p(23, 6)],
+        vec![r(1), r(2), r(2), r(1)],
+    )
+    .unwrap();
+    let second = RationalBezier2::try_new(
+        vec![
+            p(28, 4),
+            Point2::new(q(61, 3), r(8)),
+            Point2::new(q(38, 3), r(8)),
+            p(5, 4),
+        ],
+        vec![r(1), r(4), r(4), r(1)],
+    )
+    .unwrap();
+
+    let result = first.intersection_contacts(&second, &policy).unwrap();
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = &result else {
+        panic!("resultant replay discarded its interior contact: {result:#?}");
+    };
+    assert_eq!(contacts.len(), 1);
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn polynomial_graph_replay_accepts_unequal_resultant_projection_counts() {
+    let policy = CurvePolicy::certified();
+    let first = RationalBezier2::try_new(
+        vec![p(5, 6), p(11, 5), p(17, 5), p(23, 6)],
+        vec![r(1), r(2), r(2), r(1)],
+    )
+    .unwrap();
+    let second = RationalBezier2::try_new(
+        vec![
+            p(28, 4),
+            Point2::new(q(61, 3), r(8)),
+            Point2::new(q(38, 3), r(8)),
+            p(5, 4),
+        ],
+        vec![r(1); 4],
+    )
+    .unwrap();
+
+    let result = first.intersection_contacts(&second, &policy).unwrap();
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = &result else {
+        panic!("polynomial-graph replay discarded its interior contact: {result:#?}");
+    };
+    assert_eq!(contacts.len(), 1);
+}
+
+#[test]
+#[cfg(feature = "predicates")]
 fn implicit_conic_route_does_not_certify_a_tangent_root_as_transverse() {
     let policy = CurvePolicy::certified();
     let conic =

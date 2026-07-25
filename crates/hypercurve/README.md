@@ -584,6 +584,30 @@ arrangement, classification, and evidence workflow.
 `CurveRegionArrangement2` retains one canonical evaluation and optional unified
 region without duplicating evidence-shaped state.
 
+## Exact curve-region Boolean fuzzing
+
+The `hypercurve_curve_region_boolean_fuzz` integration test generates closed
+regions across line, arc, polynomial/rational Bezier, polynomial B-spline, and
+NURBS carriers. It requires complete exact intersection evidence, all four
+exact Boolean results, and equality between batched and individual immediate
+calls. No finite projection is used.
+
+Proptest minimizes a failure and appends its seed to
+`tests/hypercurve_curve_region_boolean_fuzz.proptest-regressions`. That file is
+replayed before new cases on every run and should be committed unchanged after
+the blocker is fixed. Fixed categories are also represented in the named
+retired-failure corpus; the test enforces at least one geometry per category.
+
+```sh
+# Routine deterministic regression campaign.
+cargo test --all-features --test hypercurve_curve_region_boolean_fuzz
+
+# Extended local/CI campaign; minimized failures persist automatically.
+HYPERCURVE_EXACT_BOOLEAN_FUZZ_CASES=10000 \
+  cargo test --all-features --test hypercurve_curve_region_boolean_fuzz \
+  generated_exact_curve_region_booleans_complete_and_match_immediate_results
+```
+
 ## Pathological memory benchmarks
 
 `pathological_regions` builds sharded pairs of retained `CurveRegion2` values.

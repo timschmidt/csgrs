@@ -223,7 +223,7 @@ pub fn compare_algebraic_tangent_turn_from_base(
     second: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
 ) -> Classification<BezierAlgebraicTangentOrderEvidence> {
-    compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, true)
+    compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, true, false)
 }
 
 pub(crate) fn compare_algebraic_tangent_turn_from_base_sign_only(
@@ -232,7 +232,16 @@ pub(crate) fn compare_algebraic_tangent_turn_from_base_sign_only(
     second: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
 ) -> Classification<BezierAlgebraicTangentOrderEvidence> {
-    compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, false)
+    compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, false, false)
+}
+
+pub(crate) fn compare_algebraic_tangent_filled_left_face_sign_only(
+    base: &BezierAlgebraicTangentVector2,
+    first: &BezierAlgebraicTangentVector2,
+    second: &BezierAlgebraicTangentVector2,
+    policy: &CurvePolicy,
+) -> Classification<BezierAlgebraicTangentOrderEvidence> {
+    compare_algebraic_tangent_turn_from_base_impl(base, first, second, policy, false, true)
 }
 
 pub(crate) fn algebraic_endpoint_tangents_are_transverse(
@@ -264,6 +273,7 @@ fn compare_algebraic_tangent_turn_from_base_impl(
     second: &BezierAlgebraicTangentVector2,
     policy: &CurvePolicy,
     retain_scalar: bool,
+    reverse_within_half: bool,
 ) -> Classification<BezierAlgebraicTangentOrderEvidence> {
     for tangent in [base, first, second] {
         match tangent_nonzero(tangent, policy) {
@@ -387,7 +397,11 @@ fn compare_algebraic_tangent_turn_from_base_impl(
     match sign_status(&first_second_cross) {
         ScalarSignStatus::Positive => Classification::Decided(order_evidence(
             BezierAlgebraicTangentOrderStatus::Ordered,
-            Some(BezierTangentTurnOrdering2::FirstBeforeSecond),
+            Some(if reverse_within_half {
+                BezierTangentTurnOrdering2::SecondBeforeFirst
+            } else {
+                BezierTangentTurnOrdering2::FirstBeforeSecond
+            }),
             Some(base_first_cross),
             Some(base_second_cross),
             Some(first_second_cross),
@@ -395,7 +409,11 @@ fn compare_algebraic_tangent_turn_from_base_impl(
         )),
         ScalarSignStatus::Negative => Classification::Decided(order_evidence(
             BezierAlgebraicTangentOrderStatus::Ordered,
-            Some(BezierTangentTurnOrdering2::SecondBeforeFirst),
+            Some(if reverse_within_half {
+                BezierTangentTurnOrdering2::FirstBeforeSecond
+            } else {
+                BezierTangentTurnOrdering2::SecondBeforeFirst
+            }),
             Some(base_first_cross),
             Some(base_second_cross),
             Some(first_second_cross),

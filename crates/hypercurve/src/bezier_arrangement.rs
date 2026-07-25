@@ -30,7 +30,10 @@ use hypersolve::{
     compare_algebraic_root_representations_by_difference,
 };
 
-use crate::bezier_tangent_order::compare_algebraic_tangent_turn_from_base_sign_only;
+use crate::bezier_tangent_order::{
+    compare_algebraic_tangent_filled_left_face_sign_only,
+    compare_algebraic_tangent_turn_from_base_sign_only,
+};
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicSameTangentOrderStatus,
@@ -355,6 +358,23 @@ impl BezierArrangementGraph2 {
         certified_successors: &[Option<usize>],
         policy: &CurvePolicy,
     ) -> Classification<BezierArrangementTraversal2> {
+        self.traverse_retained_with_successor_rule(certified_successors, false, policy)
+    }
+
+    pub(crate) fn traverse_retained_filled_left_faces_with_certified_successors(
+        &self,
+        certified_successors: &[Option<usize>],
+        policy: &CurvePolicy,
+    ) -> Classification<BezierArrangementTraversal2> {
+        self.traverse_retained_with_successor_rule(certified_successors, true, policy)
+    }
+
+    fn traverse_retained_with_successor_rule(
+        &self,
+        certified_successors: &[Option<usize>],
+        filled_left_faces: bool,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierArrangementTraversal2> {
         let defer_higher_derivatives = !certified_successors.is_empty();
         let mut endpoints = Vec::with_capacity(self.fragments.len());
         for fragment in &self.fragments {
@@ -405,6 +425,7 @@ impl BezierArrangementGraph2 {
                     &outgoing,
                     &endpoints,
                     certified_successors,
+                    filled_left_faces,
                     &mut used,
                     policy,
                 ) {
@@ -420,6 +441,7 @@ impl BezierArrangementGraph2 {
                     &outgoing,
                     &endpoints,
                     certified_successors,
+                    filled_left_faces,
                     &mut used,
                     policy,
                 ) {
@@ -1693,6 +1715,7 @@ fn follow_retained_tangent_ordered_chain(
     outgoing: &[Vec<usize>],
     endpoints: &[RetainedEndpointData],
     certified_successors: &[Option<usize>],
+    filled_left_faces: bool,
     used: &mut [bool],
     policy: &CurvePolicy,
 ) -> Classification<BezierArrangementChain2> {
@@ -1713,6 +1736,7 @@ fn follow_retained_tangent_ordered_chain(
             &outgoing[current],
             endpoints,
             certified_successors.get(current).copied().flatten(),
+            filled_left_faces,
             policy,
         ) {
             Classification::Decided(next) => next,
@@ -1746,6 +1770,7 @@ fn choose_retained_tangent_successor(
     candidates: &[usize],
     endpoints: &[RetainedEndpointData],
     certified_successor: Option<usize>,
+    filled_left_faces: bool,
     policy: &CurvePolicy,
 ) -> Classification<Option<usize>> {
     if candidates.is_empty() {
@@ -1799,15 +1824,20 @@ fn choose_retained_tangent_successor(
             }
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        match compare_retained_turn_from_base(&base, &first, &second, policy) {
+        match compare_retained_turn_from_base(&base, &first, &second, filled_left_faces, policy) {
             Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
             Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
             Classification::Decided(TurnOrdering::SameDirection) => {
-                match compare_retained_same_tangent_second_order(
+                let ordering = compare_retained_same_tangent_second_order(
                     &endpoints[candidate],
                     &endpoints[best],
                     policy,
-                ) {
+                );
+                match if filled_left_faces {
+                    reverse_turn_ordering(ordering)
+                } else {
+                    ordering
+                } {
                     Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
                     Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
                     Classification::Decided(TurnOrdering::SameDirection) => {
@@ -1926,6 +1956,43 @@ enum TurnOrdering {
     SameDirection,
 }
 
+fn reverse_turn_ordering(ordering: Classification<TurnOrdering>) -> Classification<TurnOrdering> {
+    ordering.map(|ordering| match ordering {
+        TurnOrdering::FirstBeforeSecond => TurnOrdering::SecondBeforeFirst,
+        TurnOrdering::SecondBeforeFirst => TurnOrdering::FirstBeforeSecond,
+        TurnOrdering::SameDirection => TurnOrdering::SameDirection,
+    })
+}
+
+fn compare_filled_left_face_turn_from_base(
+    base: &TangentVector,
+    first: &TangentVector,
+    second: &TangentVector,
+    policy: &CurvePolicy,
+) -> Classification<TurnOrdering> {
+    let first_half = match turn_half(base, first, policy) {
+        Some(half) => half,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    let second_half = match turn_half(base, second, policy) {
+        Some(half) => half,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    if first_half != second_half {
+        return Classification::Decided(if first_half < second_half {
+            TurnOrdering::FirstBeforeSecond
+        } else {
+            TurnOrdering::SecondBeforeFirst
+        });
+    }
+    match real_sign(&cross_vectors(first, second), policy) {
+        Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
+        Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
+        Some(RealSign::Zero) => Classification::Decided(TurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
 fn compare_turn_from_base(
     base: &TangentVector,
     first: &TangentVector,
@@ -1960,6 +2027,7 @@ fn compare_retained_turn_from_base(
     base: &RetainedTangentVector,
     first: &RetainedTangentVector,
     second: &RetainedTangentVector,
+    filled_left_faces: bool,
     policy: &CurvePolicy,
 ) -> Classification<TurnOrdering> {
     match (base, first, second) {
@@ -1967,13 +2035,23 @@ fn compare_retained_turn_from_base(
             RetainedTangentVector::Native(base),
             RetainedTangentVector::Native(first),
             RetainedTangentVector::Native(second),
-        ) => compare_turn_from_base(base, first, second, policy),
+        ) => {
+            if filled_left_faces {
+                compare_filled_left_face_turn_from_base(base, first, second, policy)
+            } else {
+                compare_turn_from_base(base, first, second, policy)
+            }
+        }
         _ => {
             let base = retained_tangent_as_algebraic(base);
             let first = retained_tangent_as_algebraic(first);
             let second = retained_tangent_as_algebraic(second);
-            match compare_algebraic_tangent_turn_from_base_sign_only(&base, &first, &second, policy)
-            {
+            let comparison = if filled_left_faces {
+                compare_algebraic_tangent_filled_left_face_sign_only(&base, &first, &second, policy)
+            } else {
+                compare_algebraic_tangent_turn_from_base_sign_only(&base, &first, &second, policy)
+            };
+            match comparison {
                 Classification::Decided(evidence) => match evidence.status {
                     BezierAlgebraicTangentOrderStatus::Ordered => match evidence.ordering {
                         Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {

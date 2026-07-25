@@ -32,12 +32,13 @@ use crate::{
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallelVerificationOptions,
     BezierParameter2, BezierRetainedLinearOverlapTraversal2,
     BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2, CurveError, CurveFamily2,
-    CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2,
-    CurvePathIntersectionContact2, CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult,
-    FillRule, LineArcRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
-    RegionArrangementEvidence2, RegionPointLocation, RegionQuery2, Segment2, UncertaintyReason,
+    Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
+    CurveBoundaryInteriorSide2, CurveError, CurveFamily2, CurveGeometry2,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2, CurvePathIntersectionContact2,
+    CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineArcRegion2,
+    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2,
+    RationalQuadraticBezier2, RegionArrangement2, RegionArrangementEvidence2, RegionPointLocation,
+    RegionQuery2, Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -1342,6 +1343,11 @@ impl CurveRegionBoundaryLoop2 {
         self.fragments
     }
 
+    pub(crate) fn without_arrangement_sources(mut self) -> Self {
+        self.arrangement_sources = None;
+        self
+    }
+
     /// Returns arrangement/source indices for graph-built loops, when retained.
     pub fn arrangement_sources(&self) -> Option<&[CurveRegionFragmentSource2]> {
         self.arrangement_sources.as_deref()
@@ -2202,6 +2208,47 @@ impl CurveRegion2 {
             fill_rules,
             &CurvePolicy::certified(),
             None,
+        )
+    }
+
+    /// Constructs a curved region with explicit loop roles, fill rules, and
+    /// authored interior sides.
+    ///
+    /// This is the immediate exact constructor for carriers whose signed-area
+    /// integral is not yet representable, including nonuniform general
+    /// rational Beziers. The supplied side is topology evidence, not an
+    /// approximation: `Left` states that filled material lies to the left
+    /// while traversing the corresponding path, and `Right` states the
+    /// opposite. One entry must be supplied for every path.
+    pub fn try_from_boundary_paths_with_loop_topology(
+        paths: &[CurvePath2],
+        roles: &[CurveRegionLoopRole],
+        fill_rules: &[FillRule],
+        interior_sides: &[CurveBoundaryInteriorSide2],
+    ) -> ExactCurveResult<Self> {
+        if paths.len() != interior_sides.len() {
+            let family = paths
+                .first()
+                .map_or(CurveFamily2::Line, |path| path.curves()[0].family());
+            return Err(ExactCurveError::invalid(
+                CurveOperation2::Construction,
+                family,
+                CurveError::Topology(
+                    "curved-region interior sides must match boundary path count".into(),
+                ),
+            ));
+        }
+        Self::try_from_boundary_paths_with_loop_semantics_and_policy(
+            paths,
+            roles,
+            fill_rules,
+            &CurvePolicy::certified(),
+            Some(
+                interior_sides
+                    .iter()
+                    .map(|side| *side == CurveBoundaryInteriorSide2::Left)
+                    .collect(),
+            ),
         )
     }
 
@@ -6205,7 +6252,10 @@ impl BezierSubcurve2 {
             Self::Quadratic(curve) => curve.signed_area_contribution().map(Some),
             Self::Cubic(curve) => curve.signed_area_contribution().map(Some),
             Self::RationalQuadratic(curve) => curve.signed_area_contribution(),
-            Self::Rational(curve) => rational_line_signed_area_contribution(curve),
+            Self::Rational(curve) => match curve.signed_area_contribution()? {
+                Some(area) => Ok(Some(area)),
+                None => rational_line_signed_area_contribution(curve),
+            },
         }
     }
 
@@ -6219,7 +6269,10 @@ impl BezierSubcurve2 {
             Self::RationalQuadratic(curve) => {
                 curve.signed_area_contribution_with_cache(rational_quadratic_cache)
             }
-            Self::Rational(curve) => rational_line_signed_area_contribution(curve),
+            Self::Rational(curve) => match curve.signed_area_contribution()? {
+                Some(area) => Ok(Some(area)),
+                None => rational_line_signed_area_contribution(curve),
+            },
         }
     }
 }

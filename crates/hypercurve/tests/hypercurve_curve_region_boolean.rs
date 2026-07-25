@@ -3,21 +3,10 @@ use hypercurve::{
     Real, RegionPointLocation,
 };
 #[cfg(feature = "predicates")]
-use hypercurve::{
-    CircularArc2, CubicBezier2, CurveBoundaryInteriorSide2, QuadraticBezier2,
-    RationalQuadraticBezier2,
-};
+use hypercurve::{CurveBoundaryInteriorSide2, QuadraticBezier2};
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
-}
-
-#[cfg(feature = "predicates")]
-fn exact_f64_point(x: f64, y: f64) -> Point2 {
-    Point2::new(
-        Real::try_from(x).expect("finite binary rational x"),
-        Real::try_from(y).expect("finite binary rational y"),
-    )
 }
 
 fn square_path(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurvePath2 {
@@ -252,95 +241,4 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
     let between_tops = Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap());
     assert_location(xor, point(0, 1), RegionPointLocation::Outside);
     assert_location(xor, between_tops, RegionPointLocation::Inside);
-}
-
-#[test]
-#[cfg(feature = "predicates")]
-fn shared_demo_algebraic_polyline_blocker_resolves_all_boolean_modes() {
-    let p0 = exact_f64_point(-18.6, -6.2);
-    let p1 = exact_f64_point(-14.20650382593274, -19.07368476688862);
-    let p2 = exact_f64_point(-6.4565038147568705, -21.17386977761984);
-    let p3 = exact_f64_point(4.03, -4.03);
-    let p4 = exact_f64_point(14.600491094738247, -20.78282692939043);
-    let p5 = exact_f64_point(20.150000000000002, 6.820000000000001);
-    let p6 = exact_f64_point(7.4399999999999995, 10.85);
-    let p7 = exact_f64_point(-16.43, 7.13);
-    let first_path = CurvePath2::try_new(vec![
-        Curve2::from(LineSeg2::try_new(p0.clone(), p1.clone()).unwrap()),
-        Curve2::from(
-            CircularArc2::from_bulge(
-                p1,
-                p2.clone(),
-                Real::try_from(0.46).expect("finite binary rational bulge"),
-            )
-            .unwrap(),
-        ),
-        Curve2::from(QuadraticBezier2::new(
-            p2,
-            exact_f64_point(-0.31000000000000005, 7.13),
-            p3.clone(),
-        )),
-        Curve2::from(CubicBezier2::new(
-            p3,
-            exact_f64_point(7.184295191466809, -46.13835323035717),
-            exact_f64_point(10.85, 5.89),
-            p4.clone(),
-        )),
-        Curve2::from(
-            RationalQuadraticBezier2::try_new(
-                p4,
-                exact_f64_point(18.91, 6.2),
-                p5.clone(),
-                Real::one(),
-                Real::try_from(0.36).expect("finite binary rational weight"),
-                Real::one(),
-            )
-            .unwrap(),
-        ),
-        Curve2::from(LineSeg2::try_new(p5, p6.clone()).unwrap()),
-        Curve2::from(LineSeg2::try_new(p6, p7.clone()).unwrap()),
-        Curve2::from(LineSeg2::try_new(p7, p0).unwrap()),
-    ])
-    .unwrap();
-
-    let q0 = exact_f64_point(-24.8, -18.6);
-    let q1 = exact_f64_point(24.8, -18.6);
-    let q2 = exact_f64_point(24.8, 8.06);
-    let q3 = exact_f64_point(-24.8, 8.06);
-    let second_path = CurvePath2::try_new(vec![
-        Curve2::from(CubicBezier2::new(
-            q0.clone(),
-            exact_f64_point(-12.4, -20.77),
-            exact_f64_point(12.4, -20.77),
-            q1.clone(),
-        )),
-        Curve2::from(LineSeg2::try_new(q1, q2.clone()).unwrap()),
-        Curve2::from(LineSeg2::try_new(q2, q3.clone()).unwrap()),
-        Curve2::from(LineSeg2::try_new(q3, q0).unwrap()),
-    ])
-    .unwrap();
-
-    let first = CurveRegion2::try_from_boundary_paths(&[first_path]).unwrap();
-    let second = CurveRegion2::try_from_boundary_paths(&[second_path]).unwrap();
-    let policy = CurvePolicy::certified();
-    let intersections = first.intersect_region(&second, &policy).unwrap();
-    assert!(
-        intersections.blockers().is_empty(),
-        "{:#?}",
-        intersections.blockers()
-    );
-
-    let results = first.boolean_regions(&second, &policy).unwrap();
-    for operation in [
-        BooleanOp::Union,
-        BooleanOp::Intersection,
-        BooleanOp::Difference,
-        BooleanOp::Xor,
-    ] {
-        let result = results.region(operation);
-        assert!(matches!(
-            result.project_to_finite_curve_paths(&policy).unwrap(),
-            Classification::Decided(_)
-        ));
-    }
 }

@@ -5241,6 +5241,66 @@ candidate pairs, 3,248 fragments, 134 point classifications, checksum 6, all
 contains 4,749,141 bytes of text, 5,011,037 total loadable bytes, and
 6,278,912 bytes on disk, reductions of 3,284, 4, and 4,072 bytes respectively.
 
+### Persistent exact curve-region Boolean fuzzing
+
+The exact curved-region property test now generates paired closed regions over
+all eight retained carrier families, requires blocker-free intersections and
+all four Boolean results, and compares each immediate result with the shared
+four-operation batch. Proptest persists minimized failures beside the test and
+replays them before fresh generation. A separate named corpus maps every
+retired failure category to at least one authored geometry and compares that
+coverage with the exhaustive `RetiredFailure::ALL` list.
+
+The corpus also retains the shared-endpoint XOR failure whose filled-face
+traversal must pair each incoming half-edge with a distinct outgoing boundary
+at a four-carrier vertex.
+
+The first campaign exposed a uniform-weight general rational region whose
+orientation was previously unsupported. Equal nonzero weights now cancel
+exactly into the arbitrary-degree polynomial Green integral. Nonuniform
+rational loops can instead carry authored left/right interior-side topology;
+this is exact caller evidence and does not project or sample the carrier.
+
+The next persisted seed exposed an algebraic point-image interval accelerator
+that discarded a real rational/cubic contact. Those intervals were only an
+optimization and were not sound enough to decide pair inequality, so exact
+candidate replay no longer uses them. The resulting complete replay then
+exposed a degree-twelve rational/rational intersection parameter whose cubic
+coordinate map exceeded Hypersolve's dimension-12 rational-image ceiling. The
+bounded exact package now admits Sylvester dimension 16 and has a direct
+degree-twelve/cubic regression.
+
+The extended campaign then found finite rational/line contacts hidden by
+degree-elevated line parameterization factors. Exact line images are now
+recognized before the generic resultant: supporting-line roots are solved
+directly, mapped back to the finite line parameter through an exact rational
+image, and retained as exact or algebraic point evidence. Conic parameter
+charts also skip an exact pole and try their remaining charts instead of
+turning a projective base point into global `Predicate` uncertainty.
+
+The extended generated campaign found three further exact replay defects.
+Conic charts now retain certified out-of-domain image results, polynomial-graph
+replay no longer assumes the two unpaired resultant projections have equal
+cardinality, and Hypersolve skips retained-parameter samples where
+specialization lowers a Sylvester polynomial's eliminated degree. The last fix
+restored the correct roots for nonuniform rational/rational contacts and made
+the full pathological native workload complete all 268 exact Booleans.
+Independently degree-elevated line images also replay their certified partial
+overlap before entering the generic resultant.
+
+The next minimized seed combined a shared conic endpoint with a second
+nonrational intersection. Unit-interval isolation had correctly deflated the
+represented endpoint, so the remaining algebraic root retained a lower-degree
+carrier. Shared multiplicity classification now uses that certified carrier
+for algebraic roots while continuing to classify represented endpoints
+against the original polynomial.
+
+Removing the unsafe pruning increases difficult debug-profile campaigns:
+32 generated cases plus the persisted seeds complete in about 9.6 seconds on
+the current host. This is the deliberate exactness/performance boundary until
+a replacement accelerator carries independently validated conservative image
+bounds.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

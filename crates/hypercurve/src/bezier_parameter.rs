@@ -392,19 +392,44 @@ impl BezierParameterPolynomial {
             Uncertain(UncertaintyReason),
         }
 
-        let derivative_coefficients = derivative_coefficients(&self.coefficients);
-        let algebraic = parameters.iter().find_map(|parameter| match parameter {
-            BezierParameter2::Algebraic(parameter)
-                if parameter.data.shared.simple_root.get() != Some(&true) =>
-            {
-                Some(parameter)
-            }
-            BezierParameter2::Exact(_) | BezierParameter2::Algebraic(_) => None,
+        let source_derivative_coefficients = derivative_coefficients(&self.coefficients);
+        let algebraic_polynomial = parameters.iter().find_map(|parameter| match parameter {
+            BezierParameter2::Algebraic(parameter) => Some(parameter.polynomial()),
+            BezierParameter2::Exact(_) => None,
         });
-        let repeated_evidence = if let Some(algebraic) = algebraic {
-            if algebraic.polynomial() != self {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
+        let algebraic_needing_classification =
+            parameters.iter().find_map(|parameter| match parameter {
+                BezierParameter2::Algebraic(parameter)
+                    if parameter.data.shared.simple_root.get() != Some(&true) =>
+                {
+                    Some(parameter)
+                }
+                BezierParameter2::Exact(_) | BezierParameter2::Algebraic(_) => None,
+            });
+        // Unit-interval isolation exactly deflates represented rational roots,
+        // including endpoints, before isolating the remaining algebraic roots.
+        // Their retained carrier can therefore differ from `self`, while
+        // preserving the multiplicity of every root that remains on it.
+        if let Some(polynomial) = algebraic_polynomial
+            && polynomial != self
+        {
+            match polynomial_remainder(
+                self.coefficients.clone(),
+                polynomial.coefficients(),
+                policy,
+            )? {
+                Classification::Decided(None) => {}
+                Classification::Decided(Some(_)) => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(vec![Classification::Uncertain(reason); parameters.len()]);
+                }
             }
+        }
+        let algebraic_derivative_coefficients = algebraic_polynomial
+            .map(|polynomial| derivative_coefficients(polynomial.coefficients()));
+        let repeated_evidence = if let Some(algebraic) = algebraic_needing_classification {
             match algebraic.retained_sturm_sequence(policy)? {
                 Classification::Decided(sequence) => {
                     let gcd_coefficients = sequence
@@ -432,9 +457,18 @@ impl BezierParameterPolynomial {
                         // Sturm builder's last permitted step rather than the
                         // completed gcd. Retain the unbounded classification
                         // path for that high-degree case.
-                        match Self::try_new_power_basis(derivative_coefficients.clone(), policy) {
+                        match Self::try_new_power_basis(
+                            algebraic_derivative_coefficients
+                                .as_ref()
+                                .expect("an algebraic carrier has a derivative")
+                                .clone(),
+                            policy,
+                        ) {
                             Ok(Classification::Decided(derivative)) => {
-                                match self.greatest_common_divisor(&derivative, policy)? {
+                                match algebraic_polynomial
+                                    .expect("an algebraic parameter retains its carrier")
+                                    .greatest_common_divisor(&derivative, policy)?
+                                {
                                     Classification::Decided(Some(polynomial)) => {
                                         match sturm_sequence(polynomial.coefficients(), policy)? {
                                             Classification::Decided(sturm_sequence) => {
@@ -480,7 +514,7 @@ impl BezierParameterPolynomial {
                         return Err(CurveError::InvalidBezierParameter);
                     }
                     match real_sign(
-                        &evaluate_coefficients(&derivative_coefficients, root),
+                        &evaluate_coefficients(&source_derivative_coefficients, root),
                         policy,
                     ) {
                         Some(RealSign::Positive | RealSign::Negative) => {
@@ -491,7 +525,7 @@ impl BezierParameterPolynomial {
                     }
                 }
                 BezierParameter2::Algebraic(parameter) => {
-                    if parameter.polynomial() != self {
+                    if Some(parameter.polynomial()) != algebraic_polynomial {
                         return Err(CurveError::InvalidBezierAlgebraicParameter);
                     }
                     if parameter.data.shared.simple_root.get() == Some(&true) {
@@ -3696,6 +3730,41 @@ mod conversion_tests {
         assert_eq!(
             simple_root_classification(&repeated, &repeated_root, &policy),
             Classification::Decided(false)
+        );
+    }
+
+    #[test]
+    fn simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier() {
+        let policy = CurvePolicy::certified();
+        // t(2t² - 1) has a represented endpoint root and one nonrational
+        // interior root. Isolation deflates t before retaining the algebraic
+        // carrier, without changing the interior root's multiplicity.
+        let source_polynomial = polynomial(&[0, -1, 0, 2]);
+        let roots = match source_polynomial
+            .isolate_unit_interval_roots(&policy)
+            .unwrap()
+        {
+            Classification::Decided(roots) => roots,
+            Classification::Uncertain(reason) => {
+                panic!("roots unexpectedly uncertain: {reason:?}")
+            }
+        };
+
+        assert_eq!(roots.len(), 2);
+        assert!(matches!(&roots[0], BezierParameter2::Exact(root) if root == &Real::zero()));
+        assert!(matches!(&roots[1], BezierParameter2::Algebraic(_)));
+        assert_eq!(
+            source_polynomial
+                .simple_root_classifications(&roots, &policy)
+                .unwrap(),
+            vec![Classification::Decided(true), Classification::Decided(true)]
+        );
+
+        let unrelated = polynomial(&[-1, 0, 3]);
+        let unrelated_root = algebraic_parameter(&unrelated);
+        assert_eq!(
+            source_polynomial.simple_root_classifications(&[unrelated_root], &policy),
+            Err(CurveError::InvalidBezierAlgebraicParameter)
         );
     }
 
