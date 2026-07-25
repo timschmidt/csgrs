@@ -109,7 +109,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     }
 }
 
-#[cfg(feature = "obj-io")]
+#[cfg(any(feature = "obj-io", feature = "vrml-io"))]
 pub(crate) fn triangulate_indexed_positions_into(
     positions: &[Point3],
     indices: &[usize],

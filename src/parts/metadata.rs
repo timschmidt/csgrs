@@ -66,18 +66,6 @@ pub struct InterfaceAspect {
 pub enum InterfaceKind {
     /// Physical body or sub-body.
     Body,
-    /// Legacy PCB/electronics package marker.
-    #[deprecated(
-        since = "0.23.0",
-        note = "compatibility marker scheduled for removal in csgrs 0.25.0; PCB package and footprint semantics belong to hypercircuit::LandPattern"
-    )]
-    Package,
-    /// Legacy electrical terminal-group marker.
-    #[deprecated(
-        since = "0.23.0",
-        note = "compatibility marker scheduled for removal in csgrs 0.25.0; electrical interfaces belong to hypercircuit::DeviceModel and DevicePin"
-    )]
-    Electrical,
     /// Thermal/contact region.
     Thermal,
     /// Mechanical mating/mounting interface.
@@ -88,19 +76,14 @@ pub enum InterfaceKind {
     Custom(String),
 }
 
-/// Geometry-attached terminal handle exposed by a part.
-///
-/// This remains useful for mechanical, thermal, and process attachment points.
-/// New electrical pins and PCB pads must be authored as
-/// `hypercircuit::DevicePin` and `hypercircuit::LandPatternPad`; legacy
-/// `role = "pin"` or `role = "pad"` values are compatibility data only.
+/// Geometry-attached mechanical, thermal, or process attachment point.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PartTerminal {
-    /// Stable terminal handle.
+    /// Stable attachment handle.
     pub handle: String,
-    /// Human-readable name or pin number.
+    /// Human-readable attachment name.
     pub name: String,
-    /// Domain role such as `pin`, `pad`, `lead`, `mounting`, or `thermal`.
+    /// Geometry-side role such as `mounting`, `mating`, `thermal`, or `tooling`.
     pub role: String,
 }
 

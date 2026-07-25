@@ -46,6 +46,20 @@ impl Config {
     where
         F: FnMut() -> Measurement,
     {
+        self.run_engine("csgrs", suite, benchmark, case, iterations, &mut f);
+    }
+
+    pub fn run_engine<F>(
+        &self,
+        engine: &str,
+        suite: &str,
+        benchmark: &str,
+        case: &str,
+        iterations: usize,
+        mut f: F,
+    ) where
+        F: FnMut() -> Measurement,
+    {
         if !selected(suite, benchmark, case) {
             return;
         }
@@ -53,7 +67,10 @@ impl Config {
         let iterations = self
             .iterations_override
             .unwrap_or_else(|| iterations.saturating_mul(self.iteration_scale).max(1));
-        let (samples, warmup) = if matches!(suite, "corpus" | "stress" | "dangerous") {
+        let (samples, warmup) = if matches!(
+            suite,
+            "corpus" | "stress" | "dangerous" | "competitive-large" | "competitive-yeahright"
+        ) {
             (self.stress_samples, self.stress_warmup)
         } else {
             (self.samples, self.warmup)
@@ -72,7 +89,7 @@ impl Config {
                     measurement = measurement.combine(black_box(f()));
                 }
                 emit(
-                    "csgrs",
+                    engine,
                     &self.temperature,
                     suite,
                     benchmark,

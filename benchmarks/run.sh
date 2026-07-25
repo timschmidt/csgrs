@@ -96,9 +96,16 @@ fi
 
 export CSGRS_BENCH_TEMPERATURE="${CSGRS_BENCH_TEMPERATURE:-warm}"
 cargo bench --bench kernel_comparison >"$output/csgrs-kernel.csv"
-cargo bench --bench feature_pipeline --features offset,bevymesh >"$output/csgrs-feature.csv"
+cargo bench --bench feature_pipeline \
+  --features bench-feature-pipeline \
+  >"$output/csgrs-feature.csv"
+cargo bench --bench competitive >"$output/rust-competitive.csv"
 
-csv_files=("$output/csgrs-kernel.csv" "$output/csgrs-feature.csv")
+csv_files=(
+  "$output/csgrs-kernel.csv"
+  "$output/csgrs-feature.csv"
+  "$output/rust-competitive.csv"
+)
 if ((!csgrs_only)); then
   cmake -S benchmarks/native -B target/native-benchmarks \
     -DCMAKE_BUILD_TYPE=Release -DCSGRS_BENCH_REQUIRE_ALL=ON
