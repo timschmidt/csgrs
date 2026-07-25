@@ -598,8 +598,7 @@ impl BoardBoundaryGeometry {
         })?;
         for contour in &inset.contour_paths {
             let result = centerline
-                .retain_intersection(contour, policy)
-                .and_then(|retained| retained.result())
+                .intersect_path(contour, policy)
                 .map_err(|error| {
                     BoardBoundaryGeometryError::new(format!(
                         "board segment intersection failed: {error:?}"
@@ -656,8 +655,7 @@ impl BoardBoundaryGeometry {
         let required_squared = clearance.clone() * clearance.clone();
         for contour in &self.contour_paths {
             let result = centerline
-                .retain_intersection(contour, policy)
-                .and_then(|retained| retained.result())
+                .intersect_path(contour, policy)
                 .map_err(|error| {
                     BoardBoundaryGeometryError::new(format!(
                         "board segment intersection failed: {error:?}"
@@ -748,14 +746,11 @@ impl BoardBoundaryGeometry {
             ))
         })?;
         for contour in &self.contour_paths {
-            let result = rectangle
-                .retain_intersection(contour, policy)
-                .and_then(|retained| retained.result())
-                .map_err(|error| {
-                    BoardBoundaryGeometryError::new(format!(
-                        "placement envelope intersection failed: {error:?}"
-                    ))
-                })?;
+            let result = rectangle.intersect_path(contour, policy).map_err(|error| {
+                BoardBoundaryGeometryError::new(format!(
+                    "placement envelope intersection failed: {error:?}"
+                ))
+            })?;
             if !result.is_complete() {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }

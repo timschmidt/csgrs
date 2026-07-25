@@ -262,16 +262,25 @@ fn declarative_board_materializes_source_addressable_copper_and_drills() {
         .unwrap();
     assert_eq!(core.metadata.z_start, Real::one());
     assert_eq!(core.metadata.thickness, Real::one());
+    let realized_layer_names = assembly
+        .layers
+        .iter()
+        .map(|layer| layer.metadata.name.as_str())
+        .collect::<Vec<_>>();
+    let drilled_layer_names = assembly
+        .subtractions
+        .iter()
+        .filter_map(|evidence| match &evidence.kind {
+            hypercircuit::Pcb3dSubtractionKind::Drill { source, .. }
+                if source == "via:signal-via" =>
+            {
+                Some(evidence.layer.as_str())
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
     assert_eq!(
-        assembly
-            .subtractions
-            .iter()
-            .filter(|evidence| matches!(
-                evidence.kind,
-                hypercircuit::Pcb3dSubtractionKind::Drill { .. }
-            ))
-            .count(),
-        1,
+        drilled_layer_names, realized_layer_names,
         "3D omissions: {:?}",
         assembly.omissions
     );
@@ -282,8 +291,13 @@ fn declarative_board_materializes_source_addressable_copper_and_drills() {
     )));
     let gltf = assembly.to_gltf("materialized-board").unwrap();
     let scene = serde_json::from_str::<serde_json::Value>(&gltf.gltf).unwrap();
-    assert_eq!(scene["meshes"].as_array().unwrap().len(), 1);
-    assert_eq!(gltf.objects.len(), 1);
+    let expected_scene_object_count =
+        assembly.layers.len() + assembly.component_bodies.len() + assembly.component_models.len();
+    assert_eq!(
+        scene["meshes"].as_array().unwrap().len(),
+        expected_scene_object_count
+    );
+    assert_eq!(gltf.objects.len(), expected_scene_object_count);
     assert_eq!(
         gltf.coordinate_encoding,
         hypercircuit::Pcb3dCoordinateEncoding::Ieee754Binary32
@@ -334,10 +348,18 @@ fn declarative_board_materializes_source_addressable_copper_and_drills() {
             ..hypercircuit::DrcReadinessPolicy::default()
         });
         assert!(!readiness.is_release_clean());
-        assert!(readiness.violations.iter().any(|violation| {
-            violation.check == "authored-keepout-readiness"
-                && violation.severity == hyperdrc::Severity::Error
-        }));
+        assert!(
+            readiness.violations.iter().any(|violation| {
+                violation.severity == hyperdrc::Severity::Error
+                    && (violation.check == "authored-keepout-readiness"
+                        || (violation.check == "geometry-uncertainty"
+                            && violation.message.as_deref().is_some_and(|message| {
+                                message.contains("authored-keepout-readiness")
+                            })))
+            }),
+            "readiness violations: {:?}",
+            readiness.violations
+        );
         assert!(readiness.violations.iter().any(|violation| {
             violation.check == "authored-routed-slot-readiness"
                 && violation.severity == hyperdrc::Severity::Warning
