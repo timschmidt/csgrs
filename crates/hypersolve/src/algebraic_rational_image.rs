@@ -46,7 +46,7 @@ use crate::integer_interpolation::{
 use crate::resultant::{quotient_ring_resultant_polynomial, resultant_univariate_polynomials};
 use crate::root_isolation::IsolatedRootInterval;
 
-const MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION: usize = 12;
+const MAX_RATIONAL_IMAGE_SYLVESTER_DIMENSION: usize = 16;
 
 /// Status for constructing a rational-function image of a represented root.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -1403,6 +1403,26 @@ mod tests {
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
         assert!(report.numerator_image.is_none());
         assert!(report.denominator_image.is_none());
+        assert!(report.representation.as_ref().unwrap().is_valid());
+    }
+
+    #[test]
+    fn rational_image_supports_degree_twelve_source_with_cubic_map() {
+        let mut polynomial_coefficients = vec![Real::zero(); 13];
+        polynomial_coefficients[0] = real(-64);
+        polynomial_coefficients[12] = Real::one();
+        let represented = AlgebraicRootRepresentation {
+            polynomial_coefficients,
+            ..sqrt_two_positive()
+        };
+        let report = transform_algebraic_root_rational_image(
+            &represented,
+            &[Real::zero(), Real::one(), Real::zero(), Real::one()],
+            &[real(2), Real::one(), Real::one()],
+            PredicatePolicy,
+        );
+
+        assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
         assert!(report.representation.as_ref().unwrap().is_valid());
     }
 

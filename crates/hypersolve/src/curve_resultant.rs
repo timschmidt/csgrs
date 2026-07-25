@@ -308,35 +308,24 @@ pub fn resultant_rational_parametric_curve_intersection(
         );
     }
 
-    let Ok(retained_x_degree) = certified_degree(&retained.x_numerator, config.min_precision)
-    else {
+    let Ok((x_retained_degree, x_eliminated_degree)) = rational_cross_equation_degrees(
+        &retained.x_numerator,
+        &retained.weight,
+        &eliminated.x_numerator,
+        &eliminated.weight,
+        config.min_precision,
+    ) else {
         return undecided_report(retained_parameter, eliminated_parameter);
     };
-    let Ok(retained_y_degree) = certified_degree(&retained.y_numerator, config.min_precision)
-    else {
+    let Ok((y_retained_degree, y_eliminated_degree)) = rational_cross_equation_degrees(
+        &retained.y_numerator,
+        &retained.weight,
+        &eliminated.y_numerator,
+        &eliminated.weight,
+        config.min_precision,
+    ) else {
         return undecided_report(retained_parameter, eliminated_parameter);
     };
-    let Ok(retained_weight_degree) = certified_degree(&retained.weight, config.min_precision)
-    else {
-        return undecided_report(retained_parameter, eliminated_parameter);
-    };
-    let Ok(eliminated_x_degree) = certified_degree(&eliminated.x_numerator, config.min_precision)
-    else {
-        return undecided_report(retained_parameter, eliminated_parameter);
-    };
-    let Ok(eliminated_y_degree) = certified_degree(&eliminated.y_numerator, config.min_precision)
-    else {
-        return undecided_report(retained_parameter, eliminated_parameter);
-    };
-    let Ok(eliminated_weight_degree) = certified_degree(&eliminated.weight, config.min_precision)
-    else {
-        return undecided_report(retained_parameter, eliminated_parameter);
-    };
-
-    let x_retained_degree = retained_x_degree.max(retained_weight_degree);
-    let y_retained_degree = retained_y_degree.max(retained_weight_degree);
-    let x_eliminated_degree = eliminated_x_degree.max(eliminated_weight_degree);
-    let y_eliminated_degree = eliminated_y_degree.max(eliminated_weight_degree);
     let degree_bound =
         y_eliminated_degree * x_retained_degree + x_eliminated_degree * y_retained_degree;
     if degree_bound > config.max_resultant_degree {
@@ -352,8 +341,10 @@ pub fn resultant_rational_parametric_curve_intersection(
     }
 
     let mut samples = Vec::with_capacity(degree_bound + 1);
-    for index in 0..=degree_bound {
+    let mut index = 0_usize;
+    while samples.len() <= degree_bound {
         let parameter_value = Real::from(index as i64);
+        index += 1;
         let x_numerator = eval_univariate(&retained.x_numerator, &parameter_value);
         let y_numerator = eval_univariate(&retained.y_numerator, &parameter_value);
         let weight = eval_univariate(&retained.weight, &parameter_value);
@@ -365,6 +356,19 @@ pub fn resultant_rational_parametric_curve_intersection(
             scale_polynomial(&eliminated.weight, y_numerator),
             scale_polynomial(&eliminated.y_numerator, weight),
         );
+        let (Ok(sample_x_degree), Ok(sample_y_degree)) = (
+            certified_degree(&x_difference, config.min_precision),
+            certified_degree(&y_difference, config.min_precision),
+        ) else {
+            return undecided_report(retained_parameter, eliminated_parameter);
+        };
+        // Specializing the retained parameter may cancel an eliminated
+        // leading coefficient. Trimming and evaluating a lower-degree
+        // Sylvester determinant at such a sample is not the specialization of
+        // the generic resultant, so skip the finitely many degree-drop points.
+        if sample_x_degree != x_eliminated_degree || sample_y_degree != y_eliminated_degree {
+            continue;
+        }
         let resultant = match resultant_univariate_polynomials(
             &x_difference,
             &y_difference,
@@ -513,6 +517,40 @@ fn is_certified_zero_polynomial(coefficients: &[Real], min_precision: i32) -> Re
         }
     }
     Ok(true)
+}
+
+fn rational_cross_equation_degrees(
+    retained_coordinate: &[Real],
+    retained_weight: &[Real],
+    eliminated_coordinate: &[Real],
+    eliminated_weight: &[Real],
+    min_precision: i32,
+) -> Result<(usize, usize), ()> {
+    let coefficient_count = eliminated_coordinate.len().max(eliminated_weight.len());
+    let mut retained_degree = 0_usize;
+    let mut eliminated_degree = None;
+    for eliminated_index in 0..coefficient_count {
+        let weight_coefficient = eliminated_weight
+            .get(eliminated_index)
+            .cloned()
+            .unwrap_or_else(Real::zero);
+        let coordinate_coefficient = eliminated_coordinate
+            .get(eliminated_index)
+            .cloned()
+            .unwrap_or_else(Real::zero);
+        let coefficient = polynomial_difference(
+            scale_polynomial(retained_coordinate, weight_coefficient),
+            scale_polynomial(retained_weight, coordinate_coefficient),
+        );
+        if is_certified_zero_polynomial(&coefficient, min_precision)? {
+            continue;
+        }
+        retained_degree = retained_degree.max(certified_degree(&coefficient, min_precision)?);
+        eliminated_degree = Some(eliminated_index);
+    }
+    eliminated_degree
+        .map(|eliminated_degree| (retained_degree, eliminated_degree))
+        .ok_or(())
 }
 
 fn scale_polynomial(polynomial: &[Real], scale: Real) -> Vec<Real> {
@@ -721,6 +759,50 @@ mod tests {
         assert_eq!(
             report.status,
             CurveIntersectionResultantStatus::InvalidHomogeneousWeight
+        );
+    }
+
+    #[test]
+    fn rational_resultant_skips_specialized_degree_drop_samples() {
+        let first = RationalParametricCurve2::new(
+            vec![real(5), real(51), real(-15), real(-18)],
+            vec![real(6), real(12), real(-12)],
+            vec![real(1), real(3), real(-3)],
+        );
+        let second = RationalParametricCurve2::new(
+            vec![real(28), real(160), real(-252), real(69)],
+            vec![real(4), real(84), real(-84)],
+            vec![real(1), real(9), real(-9)],
+        );
+        let report = resultant_rational_parametric_curve_intersection(
+            &first,
+            &second,
+            CurveResultantParameter::Second,
+            CurveIntersectionResultantConfig::default(),
+        );
+
+        assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
+        let expected = [
+            -1, -491, -9495, 66678, 1737203, 1859523, -33269637, 76011300, -71374833, 24098715,
+            5240457, -5130702, 771282,
+        ]
+        .map(real);
+        assert_eq!(report.resultant_coefficients.len(), expected.len());
+        for (coefficient, expected_coefficient) in
+            report.resultant_coefficients.iter().zip(&expected)
+        {
+            assert_eq!(
+                coefficient * &expected[0],
+                expected_coefficient * &report.resultant_coefficients[0]
+            );
+        }
+        assert_eq!(report.samples.len(), report.degree_bound + 1);
+        assert!(
+            report
+                .samples
+                .last()
+                .is_some_and(|sample| sample.parameter_value > real(report.degree_bound as i64)),
+            "a degree-drop sample must be replaced, not interpolated at lower Sylvester degree"
         );
     }
 
