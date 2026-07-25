@@ -1327,6 +1327,25 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RetainedRationalBezierIntersection2>> {
+        if self.certified_bounds_are_disjoint(other, policy) {
+            let contacts = OnceCell::new();
+            let _ = contacts.set(Ok(Classification::Decided(
+                RationalBezierIntersectionContacts2::NoIntersection,
+            )));
+            return Ok(Classification::Decided(
+                RetainedRationalBezierIntersection2 {
+                    data: Rc::new(PreparedRationalBezierIntersectionData {
+                        first: self.clone(),
+                        second: other.clone(),
+                        policy: policy.clone(),
+                        candidates: RationalBezierIntersectionCandidates2::NoIntersection,
+                        contacts,
+                        topology: OnceCell::new(),
+                    }),
+                },
+            ));
+        }
+
         let special =
             if let Some(contacts) = self.implicit_conic_intersection_contacts(other, policy)? {
                 Some(contacts)
@@ -1352,7 +1371,10 @@ impl RationalBezier2 {
                 },
             ));
         }
-        match self.intersection_candidates_classified(other, policy)? {
+        // Bounds were already checked before the implicit-conic fast path.
+        // Continue directly so an overlapping pair is not boxed and compared
+        // a second time before resultant construction.
+        match self.intersection_candidates_after_overlapping_bounds(other, policy)? {
             Classification::Decided(candidates) => Ok(Classification::Decided(
                 RetainedRationalBezierIntersection2 {
                     data: Rc::new(PreparedRationalBezierIntersectionData {
@@ -1603,23 +1625,26 @@ impl RationalBezier2 {
         // unavailable sign or ordering certificate must fall through to the
         // homogeneous resultant, whose affine replay independently rejects
         // projective poles and out-of-domain roots.
-        if matches!(self.common_weight_sign(policy), Classification::Decided(_))
-            && matches!(other.common_weight_sign(policy), Classification::Decided(_))
-            && let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
-                self.certified_bounds_classified(policy),
-                other.certified_bounds_classified(policy),
-            )
-            && matches!(
-                first_bounds.overlaps(&second_bounds, policy),
-                Classification::Decided(false)
-            )
-        {
+        if self.certified_bounds_are_disjoint(other, policy) {
             return Ok(Classification::Decided(
                 RationalBezierIntersectionCandidates2::NoIntersection,
             ));
         }
 
         self.intersection_candidates_after_overlapping_bounds(other, policy)
+    }
+
+    fn certified_bounds_are_disjoint(&self, other: &Self, policy: &CurvePolicy) -> bool {
+        let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
+            self.certified_bounds_classified(policy),
+            other.certified_bounds_classified(policy),
+        ) else {
+            return false;
+        };
+        matches!(
+            first_bounds.overlaps(&second_bounds, policy),
+            Classification::Decided(false)
+        )
     }
 
     fn intersection_candidates_after_overlapping_bounds(

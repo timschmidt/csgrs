@@ -451,6 +451,30 @@ fn main() {
         elapsed / exact_derivative_iterations
     );
 
+    let disjoint_cubic =
+        RationalBezier2::try_new(vec![p(10, 0), p(11, 1), p(11, 2), p(10, 3)], vec![r(1); 4])
+            .expect("benchmark disjoint cubic is valid");
+    let conic = RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)])
+        .expect("benchmark conic is valid");
+    let disjoint_prepare_iterations = 2_000_u32;
+    let started = Instant::now();
+    let mut disjoint_prepare_count = 0_usize;
+    for _ in 0..disjoint_prepare_iterations {
+        let prepared = black_box(&conic)
+            .retain_intersection(black_box(&disjoint_cubic), black_box(&policy))
+            .expect("disjoint conic/cubic preparation is exact");
+        disjoint_prepare_count =
+            disjoint_prepare_count.wrapping_add(black_box(usize::from(matches!(
+                prepared.try_contact_view().unwrap(),
+                RationalBezierIntersectionContacts2::NoIntersection
+            ))));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_bezier_disjoint_conic_cubic_cold_prepare: {disjoint_prepare_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={disjoint_prepare_count}",
+        elapsed / disjoint_prepare_iterations
+    );
+
     let prepared = parabola.retain_intersection(&horizontal, &policy).unwrap();
     prepared.try_contact_view().unwrap();
     let prepared_iterations = 20_000_u32;

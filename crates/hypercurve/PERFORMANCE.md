@@ -4909,6 +4909,54 @@ downstream `region_boolean` replay completed 2,721 executions at 5,980 coverage
 points and 19,259 feature edges. Neither found an error; LeakSanitizer alone
 remained disabled under ptrace.
 
+### Once-only certified bounds before implicit conic solving
+
+Retained rational-Bezier preparation formerly tried the implicit-conic solver
+before consulting the same-sign control-hull certificate already used by the
+generic resultant path. A disjoint conic/cubic pair therefore constructed the
+cubic homogeneous power basis, substituted it into the conic implicit form,
+and isolated an empty polynomial root set before reaching an exact bounds test
+that could have rejected the pair immediately.
+
+Preparation now performs that exact rejection first. When both rational curves
+have one certified weight sign and their exact control-hull boxes are disjoint,
+it retains an already-complete `NoIntersection` result without constructing
+implicit or resultant algebra. Overlapping and uncertified boxes continue
+unchanged. The generic fallback reuses the first bounds outcome rather than
+boxing and comparing the pair a second time. This is a once-visiting schedule
+change only: lossy coordinates do not participate in the decision.
+
+The new cold benchmark improved from 10.945 microseconds to 413 nanoseconds per
+disjoint conic/cubic preparation, a 96.2% reduction (26.5x). Its regression
+requires complete cached no-contact evidence and verifies that the cubic
+homogeneous power basis remains unconstructed, proving that the implicit solver
+was skipped rather than merely producing the same answer later.
+
+On the identical three-cell exact-native Callgrind workload, instruction
+references fell from 262,166,772 to 229,883,683 (12.31%). The final ten-run
+median for the complete 67-cell workload fell from 994.7 to 861.1
+milliseconds (13.4%), while preparation fell from 936.2 to 802.5 milliseconds
+(14.3%). All 268 native union, intersection, difference, and XOR operations
+remained exact and decided with zero blockers, 2,763 carrier candidate pairs,
+3,248 fragments, 134 point classifications, and checksum 6.
+
+Heaptrack allocation events fell from 13,717,229 to 11,563,420 (15.70%) and
+temporary allocations from 2,495,405 to 2,093,056 (16.12%). Peak heap moved
+from 36.05 to 35.97 MiB. The release benchmark added 4,192 bytes of text
+(0.09%), 4,096 bytes of total loadable size (0.08%), and 4,856 bytes on disk
+(0.08%).
+
+The latest family-flattened exact-polyline comparison median was 18.27
+milliseconds, leaving the native exact-curve path about 47 times slower.
+`LineArc` removal therefore remains gated on native performance even though
+the workload's correctness and feature-completion gate remains satisfied.
+
+Complete all-feature and no-default-feature library/integration suites passed,
+as did strict all-target Clippy. The targeted `bezier_region`
+AddressSanitizer replay completed 2,509 executions at 10,140 coverage points
+and 34,775 feature edges without a finding; LeakSanitizer alone remained
+disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

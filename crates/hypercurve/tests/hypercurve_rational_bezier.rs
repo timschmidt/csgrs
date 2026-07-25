@@ -520,6 +520,31 @@ fn general_rational_contacts_reject_disjoint_control_hulls() {
 }
 
 #[test]
+fn retained_disjoint_conic_cubic_skips_implicit_solver() {
+    let policy = CurvePolicy::certified();
+    let conic =
+        RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
+    let disjoint_cubic =
+        RationalBezier2::try_new(vec![p(10, 0), p(11, 1), p(11, 2), p(10, 3)], vec![r(1); 4])
+            .unwrap();
+
+    let prepared = conic.retain_intersection(&disjoint_cubic, &policy).unwrap();
+    assert!(prepared.is_contact_replay_cached());
+    assert_eq!(
+        prepared.candidates(),
+        &RationalBezierIntersectionCandidates2::NoIntersection
+    );
+    assert_eq!(
+        prepared.try_contact_view().unwrap(),
+        &RationalBezierIntersectionContacts2::NoIntersection
+    );
+    assert!(
+        !disjoint_cubic.is_homogeneous_power_basis_cached(),
+        "certified disjoint bounds must reject the pair before implicit substitution"
+    );
+}
+
+#[test]
 #[cfg(feature = "predicates")]
 fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
     let policy = CurvePolicy::certified();
