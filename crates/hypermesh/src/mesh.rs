@@ -237,8 +237,10 @@ fn build_polygon_soup_with_edge_mode(
                     triangle_index,
                 });
             }
-            polygon.delta_w = vec![0; meshes.len()];
-            polygon.delta_w[mesh_index] = 1;
+            if !defer_edges {
+                polygon.delta_w = vec![0; meshes.len()];
+                polygon.delta_w[mesh_index] = 1;
+            }
             polygons.push(polygon);
             polygon_index += 1;
         }

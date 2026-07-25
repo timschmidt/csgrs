@@ -2363,6 +2363,12 @@ fn collapse_certified_convex_faces(
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
         let source = &polygons[polygon_indices[0]];
+        let mesh_index = usize::try_from(source.mesh_index)
+            .ok()
+            .filter(|&mesh| mesh < support_planes.len())
+            .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+        let mut delta_w = vec![0; support_planes.len()];
+        delta_w[mesh_index] = 1;
         faces.push(ConvexPolygon::from_certified_convex_face(
             support_planes[support_identity.mesh][support_identity.plane].clone(),
             face_vertices,
@@ -2371,7 +2377,7 @@ fn collapse_certified_convex_faces(
             edge_identities,
             source.mesh_index,
             source.polygon_index,
-            source.delta_w.clone(),
+            delta_w,
         ));
         face_supports.push(support_identity);
     }
