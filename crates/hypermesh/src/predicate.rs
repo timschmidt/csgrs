@@ -9,7 +9,7 @@ use hyperreal::{PreparedRationalLinearForm4Filter, PreparedRationalLinearForm4Qu
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Plane;
-use crate::storage_hash::StorageHashMap;
+use crate::storage_hash::StorageSequenceHashMap;
 
 const LINEAR_FORM_FILTER_CACHE_CAPACITY: usize = 8_192;
 
@@ -20,8 +20,8 @@ struct CachedLinearForm3Filter {
 
 thread_local! {
     static LINEAR_FORM_FILTERS: RefCell<
-        StorageHashMap<[usize; 4], CachedLinearForm3Filter>
-    > = RefCell::new(StorageHashMap::default());
+        StorageSequenceHashMap<[usize; 4], CachedLinearForm3Filter>
+    > = RefCell::new(StorageSequenceHashMap::default());
 }
 
 fn prepared_linear_form3_filter(
