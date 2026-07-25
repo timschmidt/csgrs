@@ -7,12 +7,11 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::checks::distance::polygon_boundary_distance_scalar;
-use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
+use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
@@ -200,8 +199,37 @@ pub fn dense_pad_via_spacing_readiness(
     min_via_clearance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
+    dense_pad_via_spacing_readiness_with_stats(
+        board,
+        selected_layers,
+        pitch_threshold,
+        via_search_radius,
+        min_via_clearance,
+        min_area,
+    )
+    .0
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+#[allow(dead_code)] // Counters are consumed by deterministic performance regression tests.
+struct DensePadViaSpacingStats {
+    via_candidates: usize,
+    exact_via_distances: usize,
+    pad_candidates: usize,
+    exact_pad_clearances: usize,
+}
+
+#[allow(clippy::too_many_arguments)] // Mirror the public rule inputs and return audit counters.
+fn dense_pad_via_spacing_readiness_with_stats(
+    board: &BoardModel,
+    selected_layers: &[String],
+    pitch_threshold: &Scalar,
+    via_search_radius: &Scalar,
+    min_via_clearance: &Scalar,
+    min_area: &Scalar,
+) -> (Vec<Violation>, DensePadViaSpacingStats) {
     if min_via_clearance <= &Scalar::zero() {
-        return Vec::new();
+        return (Vec::new(), DensePadViaSpacingStats::default());
     }
 
     let broad_via_search_radius = scalar_broad_phase_radius(via_search_radius);
@@ -262,12 +290,38 @@ pub fn dense_pad_via_spacing_readiness(
                 vec![layer.clone(), via.layer.clone()],
             ) {
                 Ok(keepout) => keepout,
-                Err(uncertainty) => return vec![*uncertainty],
+                Err(uncertainty) => {
+                    return (
+                        vec![*uncertainty],
+                        DensePadViaSpacingStats {
+                            via_candidates: candidate_count,
+                            exact_via_distances: exact_via_distance_count,
+                            pad_candidates: pad_candidate_count,
+                            exact_pad_clearances: exact_pad_clearance_count,
+                        },
+                    );
+                }
             };
-            let shapes = multipolygon_to_shapes_scalar(
-                &keepout.intersection(&pad.sketch).to_multipolygon(),
-                min_area,
-            );
+            let overlap = match intersection_for_check(
+                &keepout,
+                &pad.sketch,
+                "dense-pad-via-spacing-readiness",
+                vec![layer.clone(), via.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => {
+                    return (
+                        vec![*uncertainty],
+                        DensePadViaSpacingStats {
+                            via_candidates: candidate_count,
+                            exact_via_distances: exact_via_distance_count,
+                            pad_candidates: pad_candidate_count,
+                            exact_pad_clearances: exact_pad_clearance_count,
+                        },
+                    );
+                }
+            };
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             violations.push(Violation::new(
                 "dense-pad-via-spacing-readiness",
                 Severity::Warning,
@@ -299,7 +353,15 @@ pub fn dense_pad_via_spacing_readiness(
     debug_assert!(exact_via_distance_count <= candidate_count);
     debug_assert!(exact_pad_clearance_count <= pad_candidate_count);
 
-    violations
+    (
+        violations,
+        DensePadViaSpacingStats {
+            via_candidates: candidate_count,
+            exact_via_distances: exact_via_distance_count,
+            pad_candidates: pad_candidate_count,
+            exact_pad_clearances: exact_pad_clearance_count,
+        },
+    )
 }
 
 /// Review solder-mask bridge margin between pads in dense fine-pitch clusters.
@@ -620,7 +682,8 @@ fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
 mod tests {
     use super::{
         DENSE_PAD_CLUSTER_MIN_PADS, dense_pad_escape_readiness, dense_pad_mask_bridge_readiness,
-        dense_pad_via_spacing_readiness, local_fiducial_readiness,
+        dense_pad_via_spacing_readiness, dense_pad_via_spacing_readiness_with_stats,
+        local_fiducial_readiness,
     };
     use crate::LayerMetadata;
     use crate::geometry::{circle_polygon, polygons_to_profile, rect_polygon};
@@ -802,8 +865,7 @@ mod tests {
         );
         copper.push(copper_via("ESC_NEAR", [0.32, 0.0], 0.20));
 
-        let started = std::time::Instant::now();
-        let violations = dense_pad_via_spacing_readiness(
+        let (violations, stats) = dense_pad_via_spacing_readiness_with_stats(
             &board_with_copper(copper),
             &[],
             &s(0.8),
@@ -814,9 +876,13 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert!(
-            started.elapsed() < std::time::Duration::from_secs(2),
-            "dense-pad via spacing should spatially cull distant vias"
+            stats.via_candidates <= 4,
+            "spatial index admitted {} of 2001 vias",
+            stats.via_candidates
         );
+        assert_eq!(stats.exact_via_distances, stats.via_candidates);
+        assert!(stats.pad_candidates <= DENSE_PAD_CLUSTER_MIN_PADS);
+        assert_eq!(stats.exact_pad_clearances, stats.pad_candidates);
     }
 
     #[test]

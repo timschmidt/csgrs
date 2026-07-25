@@ -4,11 +4,11 @@
 //! review often combines flattened Gerber aperture geometry with richer KiCad
 //! via or drill context.
 
-use csgrs::csg::CSG;
+use csgrs::{csg::CSG, sketch::Profile};
 use geo::Polygon;
 
 use crate::geometry::{
-    circle_polygon, multipolygon_area_scalar, multipolygon_to_shapes_scalar, polygon_area_scalar,
+    multipolygon_area_scalar, multipolygon_to_shapes_scalar, polygon_area_scalar,
     polygon_bounds_scalar, polygon_to_profile, polygons_to_profile,
 };
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
@@ -16,6 +16,7 @@ use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 
 use super::spatial::{LayerPolygonSpatialIndex, PointSpatialIndex};
+use super::{intersection_for_check, union_for_check};
 
 /// Warn when a large copper island is pasted as one broad aperture.
 ///
@@ -58,7 +59,16 @@ pub fn thermal_pad_paste_windowpane_readiness(
                 paste_polygons[paste_index].clone(),
                 Some(metadata(paste_name)),
             );
-            let overlap = island.intersection(&paste_island).to_multipolygon();
+            let overlap = match intersection_for_check(
+                &island,
+                &paste_island,
+                "thermal-pad-paste-windowpane-readiness",
+                vec![paste_name.to_string(), copper_name.to_string()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            }
+            .to_multipolygon();
             let Some(overlap_area) = multipolygon_area_scalar(&overlap) else {
                 continue;
             };
@@ -258,14 +268,26 @@ pub fn tombstone_paste_imbalance_readiness(
         let paste_candidates = paste_index.candidates_near_polygon(&polygon, 0.0);
         paste_candidate_polygons += paste_candidates.len();
         let island = polygon_to_profile(polygon, Some(metadata(copper_name)));
-        let paste_area =
-            Scalar::sum_owned(paste_candidates.into_iter().filter_map(|paste_index| {
-                let paste_island = polygon_to_profile(
-                    paste_polygons[paste_index].clone(),
-                    Some(metadata(paste_name)),
-                );
-                multipolygon_area_scalar(&island.intersection(&paste_island).to_multipolygon())
-            }));
+        let mut paste_areas = Vec::new();
+        for paste_index in paste_candidates {
+            let paste_island = polygon_to_profile(
+                paste_polygons[paste_index].clone(),
+                Some(metadata(paste_name)),
+            );
+            let overlap = match intersection_for_check(
+                &island,
+                &paste_island,
+                "tombstone-paste-imbalance-readiness",
+                vec![paste_name.to_string(), copper_name.to_string()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            if let Some(area) = multipolygon_area_scalar(&overlap.to_multipolygon()) {
+                paste_areas.push(area);
+            }
+        }
+        let paste_area = Scalar::sum_owned(paste_areas);
         let Ok(paste_ratio) = paste_area / &area else {
             continue;
         };
@@ -314,7 +336,15 @@ pub fn tombstone_paste_imbalance_readiness(
                 continue;
             }
 
-            let combined = left_island.union(right_island);
+            let combined = match union_for_check(
+                left_island,
+                right_island,
+                "tombstone-paste-imbalance-readiness",
+                vec![paste_name.to_string(), copper_name.to_string()],
+            ) {
+                Ok(combined) => combined,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             violations.push(Violation::new(
                 "tombstone-paste-imbalance-readiness",
                 Severity::Warning,
@@ -368,18 +398,17 @@ pub fn paste_via_exposure_readiness(
     for via in &vias {
         let via_opening = matching_plated_drill(board, via)
             .and_then(|drill| {
-                let diameter = drill.diameter_f64_compatibility()?;
-                polygons_to_profile(
-                    vec![circle_polygon(
-                        drill.location_f64_compatibility_required(),
-                        diameter / 2.0,
-                        48,
-                    )],
+                let radius = (drill.diameter.clone() / crate::scalar::scalar("2")).ok()?;
+                Some(PcbSketch::new(
+                    Profile::circle(radius, 48).translate(
+                        drill.location[0].clone(),
+                        drill.location[1].clone(),
+                        Scalar::zero(),
+                    ),
                     Some(LayerMetadata {
                         name: "via drill opening".to_string(),
                     }),
-                )
-                .into()
+                ))
             })
             .unwrap_or_else(|| via.sketch.clone());
         let via_polygons = via_opening.to_multipolygon().0;
@@ -398,7 +427,15 @@ pub fn paste_via_exposure_readiness(
         let paste_candidate_sketch =
             polygons_to_profile(paste_candidates, Some(metadata(paste_name)));
 
-        let overlap = paste_candidate_sketch.intersection(&via_opening);
+        let overlap = match intersection_for_check(
+            &paste_candidate_sketch,
+            &via_opening,
+            "paste-via-exposure-readiness",
+            vec![paste_name.to_string(), via.layer.clone()],
+        ) {
+            Ok(overlap) => overlap,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;

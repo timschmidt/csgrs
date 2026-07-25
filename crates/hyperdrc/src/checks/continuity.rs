@@ -10,15 +10,17 @@
 //! DRC, generated CAM data, and electrical test outputs.
 
 use csgrs::csg::CSG;
+use csgrs::sketch::Profile;
 use std::collections::BTreeMap;
 
-use geo::{Area, BoundingRect};
+use geo::BoundingRect;
 
-use crate::geometry::{circle_polygon, multipolygon_to_shapes_scalar, polygons_to_profile};
+use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 
+use super::intersection_for_check;
 use super::spatial::CopperSpatialIndex;
 
 /// Warn when different named nets have overlapping copper on the same layer.
@@ -74,17 +76,19 @@ pub fn different_net_short_readiness(
                     continue;
                 }
 
-                let overlap = left.sketch.intersection(&right.sketch);
-                let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-                let has_area = !shapes.is_empty()
-                    || overlap
-                        .to_multipolygon()
-                        .0
-                        .iter()
-                        .any(|polygon| polygon.unsigned_area() > 0.0);
-                if !has_area {
+                let overlap = match intersection_for_check(
+                    &left.sketch,
+                    &right.sketch,
+                    "different-net-short-readiness",
+                    vec![left.layer.clone()],
+                ) {
+                    Ok(overlap) => overlap,
+                    Err(uncertainty) => return vec![*uncertainty],
+                };
+                if overlap.is_empty() {
                     continue;
                 }
+                let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
 
                 violations.push(Violation::new(
                     "different-net-short-readiness",
@@ -165,17 +169,19 @@ pub fn same_net_drill_break_readiness(
                 keepouts_built += 1;
                 drill_keepout_sketch(drill)
             });
-            let overlap = drill_sketch.intersection(&feature.sketch);
-            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
-            if shapes.is_empty()
-                && !overlap
-                    .to_multipolygon()
-                    .0
-                    .iter()
-                    .any(|polygon| polygon.unsigned_area() > 0.0)
-            {
+            let overlap = match intersection_for_check(
+                drill_sketch,
+                &feature.sketch,
+                "same-net-drill-break-readiness",
+                vec![feature.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            if overlap.is_empty() {
                 continue;
             }
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
 
             violations.push(Violation::new(
                 "same-net-drill-break-readiness",
@@ -218,15 +224,14 @@ fn selected_copper_features<'a>(
 }
 
 fn drill_keepout_sketch(drill: &DrillFeature) -> PcbSketch {
-    let diameter = drill
-        .diameter_f64_compatibility()
-        .expect("parsed drill diameter must have a finite geometry projection");
-    polygons_to_profile(
-        vec![circle_polygon(
-            drill.location_f64_compatibility_required(),
-            diameter / 2.0,
-            32,
-        )],
+    let radius = (drill.diameter.clone() / Scalar::from(2))
+        .expect("positive integer division remains exact");
+    PcbSketch::new(
+        Profile::circle(radius, 32).translate(
+            drill.location[0].clone(),
+            drill.location[1].clone(),
+            Scalar::zero(),
+        ),
         Some(LayerMetadata {
             name: "non-plated drill continuity keepout".to_string(),
         }),

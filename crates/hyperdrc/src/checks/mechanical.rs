@@ -15,6 +15,7 @@ use geo::BoundingRect;
 use super::distance::{polygon_boundaries_within_scalar, polygon_boundary_distance_scalar};
 use super::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex};
+use super::{difference_for_check, intersection_for_check};
 use crate::geometry::{multipolygon_to_shapes_scalar, polygon_bounds_scalar, polygons_to_profile};
 use crate::kicad::{BoardModel, CopperFeature, DrillFeature};
 use crate::report::{Severity, Violation};
@@ -158,7 +159,15 @@ pub fn mounting_hole_copper_keepout_readiness(
             // a conservative geometric readiness check: model the screw/hole
             // region as a circular keepout and report nearby non-ground copper
             // so the release package makes the grounding/isolation intent clear.
-            let overlap = keepout_sketch.intersection(&feature.sketch);
+            let overlap = match intersection_for_check(
+                &keepout_sketch,
+                &feature.sketch,
+                "mounting-hole-copper-keepout-readiness",
+                vec![feature.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
@@ -237,19 +246,17 @@ pub fn mounting_hole_edge_clearance_readiness(
 
         let keepout_sketch = drill_keepout(drill, edge_clearance);
         exact_difference_count += 1;
-        let (shapes, uncertain) = match keepout_sketch.try_difference(outline) {
-            Ok(outside_outline) => (
-                multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area),
-                false,
-            ),
-            Err(error) => {
-                log::warn!(
-                    "mounting-hole edge clearance used conservative finding after uncertified profile difference: {error}"
-                );
-                (Vec::new(), true)
-            }
+        let outside_outline = match difference_for_check(
+            &keepout_sketch,
+            outline,
+            "mounting-hole-edge-clearance-readiness",
+            vec![board.source.clone()],
+        ) {
+            Ok(outside_outline) => outside_outline,
+            Err(uncertainty) => return vec![*uncertainty],
         };
-        if shapes.is_empty() && !uncertain {
+        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
+        if shapes.is_empty() {
             continue;
         }
 
@@ -642,7 +649,15 @@ pub fn edge_plating_intent_readiness(
             continue;
         }
 
-        let outside_outline = feature.sketch.difference(outline);
+        let outside_outline = match difference_for_check(
+            &feature.sketch,
+            outline,
+            "edge-plating-intent-readiness",
+            vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+        ) {
+            Ok(outside) => outside,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
         if !reaches_outline && shapes.is_empty() {
             continue;

@@ -10,7 +10,6 @@
 
 use std::collections::BTreeMap;
 
-use csgrs::csg::CSG;
 use geo::{
     Area, BoundingRect, Coord, Line, LineString, MultiPolygon, Polygon,
     line_intersection::{LineIntersection, line_intersection},
@@ -18,8 +17,8 @@ use geo::{
 use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, Sign, compare_reals_with_policy};
 
 use crate::checks::distance::polygon_boundary_distance_scalar_with_grid;
-use crate::checks::offset_for_check;
 use crate::checks::spatial::LayerPolygonSpatialIndex;
+use crate::checks::{difference_for_check, intersection_for_check, offset_for_check};
 use crate::geometry::{
     RuleGeometryProvenance, SourceGridFacts, multipolygon_area_scalar,
     multipolygon_to_shapes_scalar, polygon_area_scalar, polygon_bounds_scalar, polygon_to_profile,
@@ -90,7 +89,15 @@ pub fn mask_island_keepout(
                     Ok(expanded) => expanded,
                     Err(uncertainty) => return vec![*uncertainty],
                 };
-            let overlap = expanded_island.intersection(&expanded_neighbor);
+            let overlap = match intersection_for_check(
+                &expanded_island,
+                &expanded_neighbor,
+                "mask-island-keepout",
+                vec![layer_name.to_string()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
 
             if !shapes.is_empty() {
@@ -163,7 +170,15 @@ pub fn copper_overlap_with_ipc356(
     ipc356_points: &[Ipc356Point],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let overlap = left.intersection(right);
+    let overlap = match intersection_for_check(
+        left,
+        right,
+        "copper-overlap",
+        vec![left_name.to_string(), right_name.to_string()],
+    ) {
+        Ok(overlap) => overlap,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
     if shapes.is_empty() {
         return Vec::new();
@@ -233,7 +248,15 @@ pub fn board_edge_clearance(
         Ok(allowed) => allowed,
         Err(uncertainty) => return vec![*uncertainty],
     };
-    let intrusion = copper.difference(&allowed);
+    let intrusion = match difference_for_check(
+        copper,
+        &allowed,
+        "copper-to-board-edge-clearance",
+        vec![copper_name.to_string(), board_name.to_string()],
+    ) {
+        Ok(intrusion) => intrusion,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
 
     if shapes.is_empty() {
@@ -289,7 +312,15 @@ pub fn board_outline_cutout_clearance_with_grid(
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
     let outline_polygons = outline.to_multipolygon();
-    for cutout in board_outline_cutouts(&outline_polygons) {
+    let cutouts = match board_outline_cutouts(
+        &outline_polygons,
+        "board-outline-cutout-clearance",
+        vec![subject_name.to_string(), outline_name.to_string()],
+    ) {
+        Ok(cutouts) => cutouts,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
+    for cutout in cutouts {
         let cutout = polygon_to_profile(cutout, Some(metadata("board cutout")));
         let clearance_band = if clearance > &Scalar::zero() {
             match offset_for_check(
@@ -305,7 +336,15 @@ pub fn board_outline_cutout_clearance_with_grid(
             cutout.clone()
         };
 
-        let intrusion = subject.intersection(&clearance_band);
+        let intrusion = match intersection_for_check(
+            subject,
+            &clearance_band,
+            "board-outline-cutout-clearance",
+            vec![subject_name.to_string(), outline_name.to_string()],
+        ) {
+            Ok(intrusion) => intrusion,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
         let touches_cutout = shapes.is_empty()
             && polygon_boundary_distance_scalar_with_grid(
@@ -334,30 +373,40 @@ pub fn board_outline_cutout_clearance_with_grid(
     violations
 }
 
-fn board_outline_cutouts(outline: &MultiPolygon<f64>) -> Vec<Polygon<f64>> {
+fn board_outline_cutouts(
+    outline: &MultiPolygon<f64>,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<Vec<Polygon<f64>>, Box<Violation>> {
     let polygons = &outline.0;
     if polygons.len() < 2 {
-        return Vec::new();
+        return Ok(Vec::new());
     }
 
     let mut cutouts = Vec::new();
     for inner_index in 0..polygons.len() {
         let inner = &polygons[inner_index];
-        if inner.unsigned_area() <= 0.0 {
+        if polygon_area_scalar(inner).is_none_or(|area| area <= Scalar::zero()) {
             continue;
         }
 
-        let is_nested = (0..polygons.len())
-            .filter(|&outer_index| outer_index != inner_index)
-            .any(|outer_index| {
-                let outer = &polygons[outer_index];
-                polygon_contains_other_outer(
-                    outer,
-                    inner,
-                    &crate::scalar::scalar(BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
-                    &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
-                )
-            });
+        let mut is_nested = false;
+        for (outer_index, outer) in polygons.iter().enumerate() {
+            if outer_index == inner_index {
+                continue;
+            }
+            if polygon_contains_other_outer(
+                outer,
+                inner,
+                &crate::scalar::scalar(BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
+                &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
+                requested_check,
+                layers.clone(),
+            )? {
+                is_nested = true;
+                break;
+            }
+        }
         if !is_nested {
             continue;
         }
@@ -376,7 +425,7 @@ fn board_outline_cutouts(outline: &MultiPolygon<f64>) -> Vec<Polygon<f64>> {
         cutouts.push(inner.clone());
     }
 
-    cutouts
+    Ok(cutouts)
 }
 
 /// Run the `silkscreen_board_edge_clearance` design-readiness check or report helper.
@@ -397,7 +446,15 @@ pub fn silkscreen_board_edge_clearance(
         Ok(allowed) => allowed,
         Err(uncertainty) => return vec![*uncertainty],
     };
-    let intrusion = silk.difference(&allowed);
+    let intrusion = match difference_for_check(
+        silk,
+        &allowed,
+        "silkscreen-to-board-edge-clearance",
+        vec![silk_name.to_string(), board_name.to_string()],
+    ) {
+        Ok(intrusion) => intrusion,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation_scalar(
         "silkscreen-to-board-edge-clearance",
         Severity::Warning,
@@ -426,7 +483,15 @@ pub fn solder_mask_board_edge_clearance(
         Ok(allowed) => allowed,
         Err(uncertainty) => return vec![*uncertainty],
     };
-    let intrusion = mask.difference(&allowed);
+    let intrusion = match difference_for_check(
+        mask,
+        &allowed,
+        "solder-mask-to-board-edge-clearance",
+        vec![mask_name.to_string(), board_name.to_string()],
+    ) {
+        Ok(intrusion) => intrusion,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     shapes_violation_scalar(
         "solder-mask-to-board-edge-clearance",
         Severity::Warning,
@@ -579,21 +644,28 @@ pub fn paste_aperture_ratio(
         let island = polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
         let candidate_indexes = paste_index.candidates_near_polygon(&copper_polygon, 0.0);
         candidate_apertures += candidate_indexes.len();
-        let paste_area = Scalar::sum_owned(
-            candidate_indexes
-                .into_iter()
-                .map(|index| &paste_polygons[index])
-                .filter_map(|paste_polygon| {
-                    let paste_island =
-                        polygon_to_profile((*paste_polygon).clone(), Some(metadata(paste_name)));
-                    let overlap = island.intersection(&paste_island).to_multipolygon();
-                    let area = multipolygon_area_scalar(&overlap)?;
-                    (&area > min_area)
-                        .then(|| polygon_area_scalar(paste_polygon))
-                        .flatten()
-                })
-                .collect::<Vec<_>>(),
-        );
+        let mut qualifying_areas = Vec::new();
+        for index in candidate_indexes {
+            let paste_polygon = &paste_polygons[index];
+            let paste_island =
+                polygon_to_profile(paste_polygon.clone(), Some(metadata(paste_name)));
+            let overlap = match intersection_for_check(
+                &island,
+                &paste_island,
+                "paste-aperture-ratio",
+                vec![paste_name.to_string(), copper_name.to_string()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            if multipolygon_area_scalar(&overlap.to_multipolygon())
+                .is_some_and(|area| &area > min_area)
+                && let Some(area) = polygon_area_scalar(paste_polygon)
+            {
+                qualifying_areas.push(area);
+            }
+        }
+        let paste_area = Scalar::sum_owned(qualifying_areas);
         let Ok(ratio) = paste_area / copper_area else {
             continue;
         };
@@ -723,7 +795,15 @@ pub fn paste_aperture_spacing(
             Ok(expanded) => expanded,
             Err(uncertainty) => return vec![*uncertainty],
         };
-        let overlap = expanded_island.intersection(&expanded_remaining);
+        let overlap = match intersection_for_check(
+            &expanded_island,
+            &expanded_remaining,
+            "paste-aperture-spacing",
+            vec![paste_name.to_string()],
+        ) {
+            Ok(overlap) => overlap,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
@@ -895,21 +975,27 @@ pub fn solder_mask_opening_ratio_readiness(
         let island = polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
         let candidate_indexes = mask_index.candidates_near_polygon(&copper_polygon, 0.0);
         candidate_openings += candidate_indexes.len();
-        let opening_area = Scalar::sum_owned(
-            candidate_indexes
-                .into_iter()
-                .map(|index| &mask_polygons[index])
-                .filter_map(|mask_polygon| {
-                    let mask_island =
-                        polygon_to_profile((*mask_polygon).clone(), Some(metadata(mask_name)));
-                    let overlap = island.intersection(&mask_island).to_multipolygon();
-                    let area = multipolygon_area_scalar(&overlap)?;
-                    (&area > min_area)
-                        .then(|| polygon_area_scalar(mask_polygon))
-                        .flatten()
-                })
-                .collect::<Vec<_>>(),
-        );
+        let mut qualifying_areas = Vec::new();
+        for index in candidate_indexes {
+            let mask_polygon = &mask_polygons[index];
+            let mask_island = polygon_to_profile(mask_polygon.clone(), Some(metadata(mask_name)));
+            let overlap = match intersection_for_check(
+                &island,
+                &mask_island,
+                "solder-mask-opening-ratio-readiness",
+                vec![copper_name.to_string(), mask_name.to_string()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            if multipolygon_area_scalar(&overlap.to_multipolygon())
+                .is_some_and(|area| &area > min_area)
+                && let Some(area) = polygon_area_scalar(mask_polygon)
+            {
+                qualifying_areas.push(area);
+            }
+        }
+        let opening_area = Scalar::sum_owned(qualifying_areas);
         let Ok(ratio) = opening_area / copper_area else {
             continue;
         };
@@ -1002,7 +1088,15 @@ pub fn solder_mask_annular_ring_readiness(
                 .map(|index| mask_polygons[index].clone())
                 .collect::<Vec<_>>();
             let mask_sketch = polygons_to_profile(candidate_openings, Some(metadata(mask_name)));
-            required_opening.difference(&mask_sketch)
+            match difference_for_check(
+                &required_opening,
+                &mask_sketch,
+                "solder-mask-annular-ring-readiness",
+                vec![copper_name.to_string(), mask_name.to_string()],
+            ) {
+                Ok(missing_relief) => missing_relief,
+                Err(uncertainty) => return vec![*uncertainty],
+            }
         };
         let shapes = multipolygon_to_shapes_scalar(&missing_relief.to_multipolygon(), min_area);
         if shapes.is_empty() {
@@ -1179,7 +1273,15 @@ pub fn silkscreen_min_width(
             Ok(reconstructed) => reconstructed,
             Err(uncertainty) => return vec![*uncertainty],
         };
-        let thin_features = island.difference(&reconstructed);
+        let thin_features = match difference_for_check(
+            &island,
+            &reconstructed,
+            "silkscreen-min-width",
+            vec![silk_name.to_string()],
+        ) {
+            Ok(thin_features) => thin_features,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         let mut island_shapes =
             multipolygon_to_shapes_scalar(&thin_features.to_multipolygon(), min_area);
         // Native offset can conservatively retain an island when collapse is
@@ -1315,7 +1417,6 @@ pub fn min_copper_neck_width(
     // the check's intent while bounding each offset operation to a much smaller
     // contour set.
     let mut shapes = Vec::new();
-    let mut uncertain_difference_count = 0_usize;
     let mut complexity_retained_count = 0_usize;
     for (island_index, polygon) in source_polygons.iter().enumerate() {
         log::trace!(
@@ -1377,20 +1478,14 @@ pub fn min_copper_neck_width(
             Ok(reconstructed) => reconstructed,
             Err(uncertainty) => return vec![*uncertainty],
         };
-        let thin = match island.try_difference(&reconstructed) {
+        let thin = match difference_for_check(
+            &island,
+            &reconstructed,
+            "minimum-copper-neck-width",
+            vec![copper_name.to_string()],
+        ) {
             Ok(thin_features) => thin_features.to_multipolygon(),
-            Err(error) => {
-                // A DRC readiness check must not turn an undecidable exact
-                // topology query into a process-wide panic. Retaining the
-                // entire source island is conservative: it can produce a
-                // review finding, but cannot hide a genuinely narrow feature.
-                log::warn!(
-                    "min-copper-neck retained island {island_index} on layer {copper_name} after uncertified profile difference: {error}"
-                );
-                uncertain_difference_count += 1;
-                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
-                continue;
-            }
+            Err(uncertainty) => return vec![*uncertainty],
         };
         if whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
             continue;
@@ -1398,15 +1493,15 @@ pub fn min_copper_neck_width(
         shapes.extend(multipolygon_to_shapes_scalar(&thin, min_area));
     }
 
-    if shapes.is_empty() && uncertain_difference_count == 0 && complexity_retained_count == 0 {
+    if shapes.is_empty() && complexity_retained_count == 0 {
         return Vec::new();
     }
 
-    let message = if uncertain_difference_count == 0 && complexity_retained_count == 0 {
+    let message = if complexity_retained_count == 0 {
         format!("copper features are removed by opening with width {min_width}")
     } else {
         format!(
-            "copper features are removed by opening with width {min_width}; {uncertain_difference_count} island(s) were retained because exact profile difference certification was uncertain and {complexity_retained_count} island(s) because their contours exceeded the bounded morphology complexity"
+            "copper features are removed by opening with width {min_width}; {complexity_retained_count} island(s) were retained because their contours exceeded the bounded morphology complexity"
         )
     };
 
@@ -1494,7 +1589,15 @@ pub fn solder_mask_sliver(
         Ok(reconstructed) => reconstructed,
         Err(uncertainty) => return vec![*uncertainty],
     };
-    let slivers = mask.difference(&reconstructed);
+    let slivers = match difference_for_check(
+        mask,
+        &reconstructed,
+        "solder-mask-sliver",
+        vec![mask_name.to_string()],
+    ) {
+        Ok(slivers) => slivers,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let mut violations = shapes_violation_scalar(
         "solder-mask-sliver",
         Severity::Warning,
@@ -1634,7 +1737,15 @@ pub fn solder_mask_opening_spacing(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let bridge_conflict = expanded_opening.intersection(&expanded_neighbor);
+            let bridge_conflict = match intersection_for_check(
+                &expanded_opening,
+                &expanded_neighbor,
+                "solder-mask-opening-spacing",
+                vec![mask_name.to_string()],
+            ) {
+                Ok(bridge_conflict) => bridge_conflict,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes =
                 multipolygon_to_shapes_scalar(&bridge_conflict.to_multipolygon(), min_area);
             if shapes.is_empty() {
@@ -2275,11 +2386,17 @@ pub fn duplicate_layer_island_readiness(
         for left_index in 0..bucket.len() {
             let mut matched_left = false;
             for right_index in (left_index + 1)..bucket.len() {
-                if polygons_are_duplicate(
+                let duplicate = match polygons_are_duplicate(
                     bucket[left_index],
                     bucket[right_index],
                     &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
+                    "layer-sanity",
+                    vec![layer_name.to_string()],
                 ) {
+                    Ok(duplicate) => duplicate,
+                    Err(uncertainty) => return vec![*uncertainty],
+                };
+                if duplicate {
                     if let Some(location) = polygon_bounds_center(bucket[left_index]) {
                         push_unique_location(&mut locations, location);
                     }
@@ -2391,7 +2508,15 @@ where
                 continue;
             }
 
-            let overlap = left.sketch.intersection(right.sketch);
+            let overlap = match intersection_for_check(
+                left.sketch,
+                right.sketch,
+                "layer-sanity",
+                vec![left.name.to_string(), right.name.to_string()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let Some(overlap_area) = multipolygon_area_scalar(&overlap.to_multipolygon()) else {
                 continue;
             };
@@ -3002,14 +3127,18 @@ pub fn board_outline_duplicate_readiness_with_grid(
 ) -> Vec<Violation> {
     let mut locations = Vec::new();
 
-    collect_board_outline_overlapping_exteriors(
+    if let Err(uncertainty) = collect_board_outline_overlapping_exteriors(
         &outline.to_multipolygon(),
         &crate::scalar::scalar(BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO),
         &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
         false,
         grid,
         &mut locations,
-    );
+        "board-outline-duplicate-readiness",
+        vec![layer_name.to_string()],
+    ) {
+        return vec![*uncertainty];
+    }
 
     if locations.is_empty() {
         return Vec::new();
@@ -3048,14 +3177,18 @@ pub fn board_outline_nesting_readiness_with_grid(
 ) -> Vec<Violation> {
     let mut locations = Vec::new();
 
-    collect_board_outline_overlapping_exteriors(
+    if let Err(uncertainty) = collect_board_outline_overlapping_exteriors(
         &outline.to_multipolygon(),
         &crate::scalar::scalar(BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
         &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
         true,
         grid,
         &mut locations,
-    );
+        "board-outline-nesting-readiness",
+        vec![layer_name.to_string()],
+    ) {
+        return vec![*uncertainty];
+    }
 
     if locations.is_empty() {
         return Vec::new();
@@ -3080,7 +3213,15 @@ fn intersection_violation(
     right: &PcbSketch,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let overlap = left.intersection(right);
+    let overlap = match intersection_for_check(
+        left,
+        right,
+        spec.check,
+        vec![left_name.to_string(), right_name.to_string()],
+    ) {
+        Ok(overlap) => overlap,
+        Err(uncertainty) => return vec![*uncertainty],
+    };
     let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
     if shapes.is_empty() {
         return Vec::new();
@@ -3190,6 +3331,7 @@ fn collect_board_outline_notches_with_grid(
     }
 }
 
+#[allow(clippy::too_many_arguments)] // Keep exact-predicate context explicit at this audit boundary.
 fn collect_board_outline_overlapping_exteriors(
     multipolygon: &MultiPolygon<f64>,
     containment_ratio: &Scalar,
@@ -3197,10 +3339,12 @@ fn collect_board_outline_overlapping_exteriors(
     detect_nesting: bool,
     grid: SourceGridFacts,
     locations: &mut Vec<[f64; 2]>,
-) {
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<(), Box<Violation>> {
     let polygons = &multipolygon.0;
     if polygons.len() < 2 {
-        return;
+        return Ok(());
     }
 
     for outer_index in 0..polygons.len() {
@@ -3212,7 +3356,14 @@ fn collect_board_outline_overlapping_exteriors(
             }
 
             if detect_nesting {
-                if polygons_are_duplicate_with_grid(outer, inner, geometry_tolerance, grid) {
+                if polygons_are_duplicate_with_grid(
+                    outer,
+                    inner,
+                    geometry_tolerance,
+                    grid,
+                    requested_check,
+                    layers.clone(),
+                )? {
                     continue;
                 }
                 if polygon_contains_other_outer_with_grid(
@@ -3221,7 +3372,9 @@ fn collect_board_outline_overlapping_exteriors(
                     containment_ratio,
                     geometry_tolerance,
                     grid,
-                ) && let Some(point) = representative_point(inner)
+                    requested_check,
+                    layers.clone(),
+                )? && let Some(point) = representative_point(inner)
                 {
                     push_unique_location(locations, point);
                 }
@@ -3232,25 +3385,42 @@ fn collect_board_outline_overlapping_exteriors(
                     containment_ratio,
                     geometry_tolerance,
                     grid,
-                ) && let Some(point) = representative_point(outer)
+                    requested_check,
+                    layers.clone(),
+                )? && let Some(point) = representative_point(outer)
                 {
                     push_unique_location(locations, point);
                 }
-            } else if polygons_are_duplicate_with_grid(outer, inner, geometry_tolerance, grid)
-                && let Some(point) = representative_point(outer)
+            } else if polygons_are_duplicate_with_grid(
+                outer,
+                inner,
+                geometry_tolerance,
+                grid,
+                requested_check,
+                layers.clone(),
+            )? && let Some(point) = representative_point(outer)
             {
                 push_unique_location(locations, point);
             }
         }
     }
+    Ok(())
 }
 
-fn polygons_are_duplicate(left: &Polygon<f64>, right: &Polygon<f64>, tolerance: &Scalar) -> bool {
+fn polygons_are_duplicate(
+    left: &Polygon<f64>,
+    right: &Polygon<f64>,
+    tolerance: &Scalar,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<bool, Box<Violation>> {
     polygons_are_duplicate_with_grid(
         left,
         right,
         tolerance,
         SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+        requested_check,
+        layers,
     )
 }
 
@@ -3259,32 +3429,35 @@ fn polygons_are_duplicate_with_grid(
     right: &Polygon<f64>,
     tolerance: &Scalar,
     grid: SourceGridFacts,
-) -> bool {
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<bool, Box<Violation>> {
     if !polygon_bounding_rects_overlap_with_grid(left, right, grid) {
-        return false;
+        return Ok(false);
     }
 
     let Some(left_area) = polygon_area_scalar(left) else {
-        return false;
+        return Ok(false);
     };
     let Some(right_area) = polygon_area_scalar(right) else {
-        return false;
+        return Ok(false);
     };
     if left_area <= Scalar::zero() || right_area <= Scalar::zero() {
-        return false;
+        return Ok(false);
     }
 
     if !areas_approximately_equal_scalar(&left_area, &right_area, tolerance) {
-        return false;
+        return Ok(false);
     }
 
-    let Some(overlap) = polygon_intersection_area_scalar(left, right) else {
-        return false;
+    let Some(overlap) = polygon_intersection_area_scalar(left, right, requested_check, layers)?
+    else {
+        return Ok(false);
     };
     let left_delta = (&left_area - &overlap).abs();
     let right_delta = (&right_area - &overlap).abs();
-    left_delta <= tolerance_area_scalar(&left_area)
-        && right_delta <= tolerance_area_scalar(&right_area)
+    Ok(left_delta <= tolerance_area_scalar(&left_area)
+        && right_delta <= tolerance_area_scalar(&right_area))
 }
 
 fn polygon_contains_other_outer(
@@ -3292,13 +3465,17 @@ fn polygon_contains_other_outer(
     inner: &Polygon<f64>,
     ratio: &Scalar,
     tolerance: &Scalar,
-) -> bool {
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<bool, Box<Violation>> {
     polygon_contains_other_outer_with_grid(
         outer,
         inner,
         ratio,
         tolerance,
         SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+        requested_check,
+        layers,
     )
 }
 
@@ -3308,41 +3485,50 @@ fn polygon_contains_other_outer_with_grid(
     ratio: &Scalar,
     tolerance: &Scalar,
     grid: SourceGridFacts,
-) -> bool {
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<bool, Box<Violation>> {
     if !polygon_bounding_rects_overlap_with_grid(outer, inner, grid) {
-        return false;
+        return Ok(false);
     }
 
     let Some(outer_area) = polygon_area_scalar(outer) else {
-        return false;
+        return Ok(false);
     };
     let Some(inner_area) = polygon_area_scalar(inner) else {
-        return false;
+        return Ok(false);
     };
     if outer_area <= Scalar::zero() || inner_area <= Scalar::zero() || outer_area <= inner_area {
-        return false;
+        return Ok(false);
     }
 
-    let Some(overlap) = polygon_intersection_area_scalar(outer, inner) else {
-        return false;
+    let Some(overlap) = polygon_intersection_area_scalar(outer, inner, requested_check, layers)?
+    else {
+        return Ok(false);
     };
     if overlap <= &inner_area * crate::scalar::scalar("0.25") {
-        return false;
+        return Ok(false);
     }
 
     let Some(coverage) = (&overlap / &inner_area).ok() else {
-        return false;
+        return Ok(false);
     };
     let area_gap = &outer_area - &inner_area;
-    coverage >= ratio.clone()
+    Ok(coverage >= ratio.clone()
         && area_gap > tolerance_area_scalar(&outer_area)
-        && !areas_approximately_equal_scalar(&outer_area, &inner_area, tolerance)
+        && !areas_approximately_equal_scalar(&outer_area, &inner_area, tolerance))
 }
 
-fn polygon_intersection_area_scalar(left: &Polygon<f64>, right: &Polygon<f64>) -> Option<Scalar> {
+fn polygon_intersection_area_scalar(
+    left: &Polygon<f64>,
+    right: &Polygon<f64>,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<Option<Scalar>, Box<Violation>> {
     let left_sketch = polygon_to_profile(left.clone(), None);
     let right_sketch = polygon_to_profile(right.clone(), None);
-    multipolygon_area_scalar(&left_sketch.intersection(&right_sketch).to_multipolygon())
+    let overlap = intersection_for_check(&left_sketch, &right_sketch, requested_check, layers)?;
+    Ok(multipolygon_area_scalar(&overlap.to_multipolygon()))
 }
 
 fn representative_point(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
@@ -3635,7 +3821,13 @@ fn indexed_difference(
                 vec![subject_name.to_string(), cover_name.to_string()],
             )?,
         };
-        remainder_polygons.extend(subject_island.difference(&cover_sketch).to_multipolygon().0);
+        let remainder = difference_for_check(
+            &subject_island,
+            &cover_sketch,
+            requested_check,
+            vec![subject_name.to_string(), cover_name.to_string()],
+        )?;
+        remainder_polygons.extend(remainder.to_multipolygon().0);
     }
 
     log::trace!(
@@ -3715,33 +3907,21 @@ fn indexed_intersection_with_mode(
                     requested_check,
                     vec![subject_name.to_string(), cover_name.to_string()],
                 )?;
-                match expanded.try_difference(&cover_sketch) {
-                    Ok(ring) => ring,
-                    Err(error) => {
-                        // An uncertified ring subtraction must not abort a
-                        // readiness run. Retaining the expanded opening is
-                        // conservative: it can add a review finding, but
-                        // cannot hide copper near a mask boundary.
-                        log::warn!(
-                            "indexed offset ring retained expanded cover after uncertified profile difference: {error}"
-                        );
-                        expanded
-                    }
-                }
+                difference_for_check(
+                    &expanded,
+                    &cover_sketch,
+                    requested_check,
+                    vec![subject_name.to_string(), cover_name.to_string()],
+                )?
             }
         };
-        match subject_island.try_intersection(&cover_sketch) {
-            Ok(overlap) => overlap_polygons.extend(overlap.to_multipolygon().0),
-            Err(error) => {
-                // Preserve a possible finding if exact topology cannot certify
-                // the candidate intersection. Returning the subject island is
-                // conservative for every caller of this readiness-only helper.
-                log::warn!(
-                    "indexed intersection retained subject island after uncertified profile intersection: {error}"
-                );
-                overlap_polygons.extend(subject_island.to_multipolygon().0);
-            }
-        }
+        let overlap = intersection_for_check(
+            &subject_island,
+            &cover_sketch,
+            requested_check,
+            vec![subject_name.to_string(), cover_name.to_string()],
+        )?;
+        overlap_polygons.extend(overlap.to_multipolygon().0);
     }
 
     log::trace!(
@@ -6501,17 +6681,27 @@ pub(crate) mod tests {
             vec![],
         );
 
-        assert!(!super::polygon_contains_other_outer(
-            &outer,
-            &touching,
-            &crate::scalar::scalar(super::BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
-            &crate::scalar::scalar(super::BOARD_OUTLINE_GEOMETRY_TOLERANCE),
-        ));
-        assert!(super::polygons_are_duplicate(
-            &outer,
-            &outer,
-            &crate::scalar::scalar(super::BOARD_OUTLINE_GEOMETRY_TOLERANCE),
-        ));
+        assert!(
+            !super::polygon_contains_other_outer(
+                &outer,
+                &touching,
+                &crate::scalar::scalar(super::BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
+                &crate::scalar::scalar(super::BOARD_OUTLINE_GEOMETRY_TOLERANCE),
+                "test",
+                vec!["edge".to_string()],
+            )
+            .expect("test geometry should certify")
+        );
+        assert!(
+            super::polygons_are_duplicate(
+                &outer,
+                &outer,
+                &crate::scalar::scalar(super::BOARD_OUTLINE_GEOMETRY_TOLERANCE),
+                "test",
+                vec!["edge".to_string()],
+            )
+            .expect("test geometry should certify")
+        );
     }
 
     #[test]

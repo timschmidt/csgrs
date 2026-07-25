@@ -10,14 +10,13 @@
 //! suspect for custom naming schemes, shields, and intentional copper near
 //! radiators. Verify findings against the RF layout plan or measured constraints.
 
-use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::PcbSketchExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
-use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
+use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
@@ -91,7 +90,15 @@ pub fn rf_keepout_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&neighbor.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &neighbor.sketch,
+                "rf-keepout-readiness",
+                vec![rf.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -201,7 +208,15 @@ pub fn antenna_copper_keepout_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&neighbor.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &neighbor.sketch,
+                "antenna-copper-keepout-readiness",
+                vec![antenna.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(

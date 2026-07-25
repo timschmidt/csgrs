@@ -8,7 +8,6 @@
 //! isolated domains, chassis strategies, and untranslated safety rules. Verify
 //! against creepage/clearance standards and the system grounding design.
 
-use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::PcbSketchExt;
@@ -21,6 +20,7 @@ use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
 
 use super::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
+use super::{difference_for_check, intersection_for_check};
 
 /// Warn when likely high-voltage copper enters the board-edge review band.
 ///
@@ -68,7 +68,15 @@ pub fn high_voltage_edge_readiness(
         }
 
         exact_difference_count += 1;
-        let intrusion = feature.sketch.difference(&allowed);
+        let intrusion = match difference_for_check(
+            &feature.sketch,
+            &allowed,
+            "high-voltage-edge-readiness",
+            vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
+        ) {
+            Ok(intrusion) => intrusion,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
@@ -170,7 +178,15 @@ pub fn voltage_clearance_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&right.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &right.sketch,
+                "voltage-clearance-readiness",
+                vec![left.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -281,7 +297,15 @@ pub fn protective_earth_spacing_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&pe.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &pe.sketch,
+                "protective-earth-spacing-readiness",
+                vec![hv.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -393,7 +417,15 @@ pub fn surge_protection_keepout_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&neighbor.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &neighbor.sketch,
+                "surge-protection-keepout-readiness",
+                vec![source.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(

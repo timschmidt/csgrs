@@ -921,6 +921,7 @@ dependencies = [
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
+ "num",
 ]
 
 [[package]]

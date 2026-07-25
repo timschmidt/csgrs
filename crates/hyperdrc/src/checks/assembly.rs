@@ -17,9 +17,9 @@ use crate::checks::distance::{
     exact_point_polygon_boundary_within_scalar, polygon_boundaries_within_scalar,
     polygon_boundary_distance_scalar,
 };
-use crate::checks::offset_for_check;
 use crate::checks::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
 use crate::checks::spatial::{CopperSpatialIndex, PointSpatialIndex};
+use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::{multipolygon_area_scalar, multipolygon_to_shapes_scalar};
 use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
@@ -182,7 +182,15 @@ pub fn component_hole_clearance_readiness(
 
         for pad_index in candidates {
             let pad = pads[pad_index];
-            let overlap = keepout.intersection(&pad.sketch);
+            let overlap = match intersection_for_check(
+                &keepout,
+                &pad.sketch,
+                "component-hole-clearance-readiness",
+                vec![pad.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
@@ -1466,7 +1474,15 @@ pub fn fiducial_keepout_readiness(
             // clear copper-free annulus around the target improves optical
             // contrast for placement cameras; this models that annulus as an
             // offset target region and reports same-layer copper intrusions.
-            let overlap = keepout.intersection(&blocker.sketch);
+            let overlap = match intersection_for_check(
+                &keepout,
+                &blocker.sketch,
+                "fiducial-keepout-readiness",
+                vec![fiducial.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
@@ -1574,7 +1590,15 @@ pub fn selective_wave_solder_keepout_readiness(
         for pad_index in candidates {
             let pad = pads[pad_index];
             exact_pair_count += 1;
-            let overlap = keepout_sketch.intersection(&pad.sketch);
+            let overlap = match intersection_for_check(
+                &keepout_sketch,
+                &pad.sketch,
+                "selective-wave-solder-keepout-readiness",
+                vec![pad.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let touching = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
@@ -1694,7 +1718,15 @@ pub fn conformal_coating_keepout_readiness(
                 continue;
             }
             exact_pair_count += 1;
-            let overlap = keepout_sketch.intersection(&neighbor.sketch);
+            let overlap = match intersection_for_check(
+                &keepout_sketch,
+                &neighbor.sketch,
+                "conformal-coating-keepout-readiness",
+                vec![no_coat.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
                 continue;
@@ -2064,7 +2096,15 @@ fn process_drill_keepout_readiness(
         for pad_index in candidates {
             let pad = pads[pad_index];
             exact_pair_count += 1;
-            let overlap = keepout_sketch.intersection(&pad.sketch);
+            let overlap = match intersection_for_check(
+                &keepout_sketch,
+                &pad.sketch,
+                check,
+                vec![pad.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
                 continue;

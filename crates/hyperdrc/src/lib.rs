@@ -235,6 +235,17 @@ impl PcbSketch {
         Ok(result)
     }
 
+    /// Compute a certified profile union without panicking when the native
+    /// topology kernel cannot certify a boundary decision.
+    pub fn try_union(&self, other: &Self) -> Result<Self, csgrs::errors::ProfileBooleanError> {
+        let mut result = Self::new(
+            self.profile.try_union(&other.profile)?,
+            self.metadata.clone(),
+        );
+        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
+        Ok(result)
+    }
+
     /// Compute a certified profile intersection without panicking when the
     /// native topology kernel cannot certify a boundary decision.
     pub fn try_intersection(
@@ -245,6 +256,14 @@ impl PcbSketch {
             self.profile.try_intersection(&other.profile)?,
             self.metadata.clone(),
         );
+        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
+        Ok(result)
+    }
+
+    /// Compute a certified profile symmetric difference without panicking when
+    /// the native topology kernel cannot certify a boundary decision.
+    pub fn try_xor(&self, other: &Self) -> Result<Self, csgrs::errors::ProfileBooleanError> {
+        let mut result = Self::new(self.profile.try_xor(&other.profile)?, self.metadata.clone());
         result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
         Ok(result)
     }

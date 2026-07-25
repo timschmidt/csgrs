@@ -12,9 +12,9 @@ use csgrs::{csg::CSG, sketch::Profile};
 use geo::BoundingRect;
 
 use crate::checks::distance::{polygon_boundaries_within_scalar, polygon_boundary_distance_scalar};
-use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::spread::maximum_point_spread;
+use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
@@ -57,7 +57,15 @@ pub fn thermal_relief_readiness(
                 continue;
             }
 
-            let overlap = anchor.sketch.intersection(&zone.sketch);
+            let overlap = match intersection_for_check(
+                &anchor.sketch,
+                &zone.sketch,
+                "thermal-relief-readiness",
+                vec![anchor.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
                 continue;
@@ -126,13 +134,17 @@ pub fn thermal_via_readiness(
             continue;
         }
 
-        let (zone_vias, zone_candidate_vias) = thermal_zone_vias_indexed(
+        let (zone_vias, zone_candidate_vias) = match thermal_zone_vias_indexed(
             &vias,
             &via_index,
             zone,
             anchor_tolerance,
             broad_phase_tolerance,
-        );
+            "thermal-via-readiness",
+        ) {
+            Ok(result) => result,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         candidate_vias += zone_candidate_vias;
         let via_count = zone_vias.len();
         if via_count >= minimum_vias {
@@ -206,13 +218,17 @@ pub fn thermal_via_distribution_readiness(
             continue;
         }
 
-        let (zone_vias, zone_candidate_vias) = thermal_zone_vias_indexed(
+        let (zone_vias, zone_candidate_vias) = match thermal_zone_vias_indexed(
             &vias,
             &via_index,
             zone,
             anchor_tolerance,
             broad_phase_tolerance,
-        );
+            "thermal-via-distribution-readiness",
+        ) {
+            Ok(result) => result,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         candidate_vias += zone_candidate_vias;
         if zone_vias.len() < minimum_vias {
             continue;
@@ -311,18 +327,27 @@ pub fn thermal_pad_via_readiness(
 
         let candidates = via_index.same_layer_near_feature(pad, 0.0);
         candidate_vias += candidates.len();
-        let has_same_net_via = candidates.into_iter().any(|via_index| {
+        let mut has_same_net_via = false;
+        for via_index in candidates {
             let via = vias[via_index];
             if via.net != pad.net {
-                return false;
+                continue;
             }
             exact_via_checks += 1;
-            !multipolygon_to_shapes_scalar(
-                &via.sketch.intersection(&pad.sketch).to_multipolygon(),
-                &crate::scalar::scalar("1.0e-9"),
-            )
-            .is_empty()
-        });
+            let overlap = match intersection_for_check(
+                &via.sketch,
+                &pad.sketch,
+                "thermal-pad-via-readiness",
+                vec![pad.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            if !overlap.is_empty() {
+                has_same_net_via = true;
+                break;
+            }
+        }
         if has_same_net_via {
             continue;
         }
@@ -498,7 +523,15 @@ pub fn hot_component_spacing_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&neighbor.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &neighbor.sketch,
+                "hot-component-spacing-readiness",
+                vec![hot.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -625,25 +658,23 @@ pub fn thermal_mechanical_keepout_readiness(
         for hot_index in candidates {
             let hot = hot_features[hot_index];
             exact_pair_count += 1;
-            let (shapes, uncertain) = match keepout_sketch.try_intersection(&hot.sketch) {
-                Ok(overlap) => (
-                    multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area),
-                    false,
-                ),
-                Err(error) => {
-                    log::warn!(
-                        "thermal mechanical keepout used conservative finding after uncertified profile intersection: {error}"
-                    );
-                    (Vec::new(), true)
-                }
+            let overlap = match intersection_for_check(
+                &keepout_sketch,
+                &hot.sketch,
+                "thermal-mechanical-keepout-readiness",
+                vec![hot.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
             };
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
                     &keepout_sketch.to_multipolygon(),
                     &hot.sketch.to_multipolygon(),
                     &Scalar::zero(),
                 );
-            if shapes.is_empty() && !fallback_hit && !uncertain {
+            if shapes.is_empty() && !fallback_hit {
                 continue;
             }
 
@@ -683,38 +714,43 @@ fn thermal_zone_vias_indexed<'a>(
     zone: &CopperFeature,
     anchor_tolerance: &Scalar,
     broad_phase_tolerance: f64,
-) -> (Vec<&'a CopperFeature>, usize) {
+    requested_check: &str,
+) -> Result<(Vec<&'a CopperFeature>, usize), Box<Violation>> {
     let candidates = via_index.same_layer_near_feature(zone, broad_phase_tolerance);
     let candidate_count = candidates.len();
-    let zone_vias = candidates
-        .into_iter()
-        .filter_map(|via_index| {
-            let via = vias[via_index];
-            (via.net == zone.net
-                && (feature_contains_point_scalar(zone, &via.location)
-                    || copper_features_touch_scalar(via, zone, anchor_tolerance)))
-            .then_some(via)
-        })
-        .collect();
-    (zone_vias, candidate_count)
+    let mut zone_vias = Vec::new();
+    for via_index in candidates {
+        let via = vias[via_index];
+        if via.net != zone.net {
+            continue;
+        }
+        if feature_contains_point_scalar(zone, &via.location)
+            || copper_features_touch_scalar(via, zone, anchor_tolerance, requested_check)?
+        {
+            zone_vias.push(via);
+        }
+    }
+    Ok((zone_vias, candidate_count))
 }
 
 fn copper_features_touch_scalar(
     left: &CopperFeature,
     right: &CopperFeature,
     tolerance: &Scalar,
-) -> bool {
-    !left
-        .sketch
-        .intersection(&right.sketch)
-        .native_contours()
-        .material_contours()
-        .is_empty()
+    requested_check: &str,
+) -> Result<bool, Box<Violation>> {
+    let overlap = intersection_for_check(
+        &left.sketch,
+        &right.sketch,
+        requested_check,
+        vec![left.layer.clone()],
+    )?;
+    Ok(!overlap.is_empty()
         || polygon_boundary_distance_scalar(
             &left.sketch.to_multipolygon(),
             &right.sketch.to_multipolygon(),
         )
-        .is_some_and(|distance| &distance <= tolerance)
+        .is_some_and(|distance| &distance <= tolerance))
 }
 
 fn feature_contains_point_scalar(feature: &CopperFeature, point: &[Scalar; 2]) -> bool {

@@ -6,6 +6,7 @@
 //! crates hand that intent to HyperDRC without teaching geometry engines about
 //! PCB semantics.
 
+use crate::checks::intersection_for_check;
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperKind};
 use crate::report::{Severity, Violation};
@@ -100,23 +101,14 @@ pub fn authored_keepout_readiness(
             if !feature_matches_scope(feature.kind, &feature.layer, &keepout.scope) {
                 continue;
             }
-            let intersection = match keepout.sketch.try_intersection(&feature.sketch) {
+            let intersection = match intersection_for_check(
+                &keepout.sketch,
+                &feature.sketch,
+                "authored-keepout-readiness",
+                vec![feature.layer.clone(), format!("keepout:{}", keepout.source)],
+            ) {
                 Ok(intersection) => intersection,
-                Err(error) => {
-                    violations.push(Violation::new(
-                        "authored-keepout-readiness",
-                        Severity::Warning,
-                        vec![feature.layer.clone(), format!("keepout:{}", keepout.source)],
-                        None,
-                        Vec::new(),
-                        vec![feature.location_f64_compatibility_required()],
-                        Some(format!(
-                            "could not certify authored keepout intersection for {}: {error}",
-                            keepout.source
-                        )),
-                    ));
-                    continue;
-                }
+                Err(uncertainty) => return vec![*uncertainty],
             };
             if intersection.is_empty() {
                 continue;
@@ -222,7 +214,7 @@ pub fn authored_component_readiness(
             if left.side != right.side {
                 continue;
             }
-            append_component_intersection(
+            if let Err(uncertainty) = append_component_intersection(
                 &mut violations,
                 &left.sketch,
                 &right.sketch,
@@ -235,7 +227,9 @@ pub fn authored_component_readiness(
                     "component envelopes {} ({:?}) and {} ({:?}) overlap on {:?}",
                     left.source, left.kind, right.source, right.kind, left.side
                 ),
-            );
+            ) {
+                return vec![*uncertainty];
+            }
         }
     }
     for keepout in keepouts
@@ -243,7 +237,7 @@ pub fn authored_component_readiness(
         .filter(|keepout| keepout.scope == AuthoredKeepoutScope::Components)
     {
         for component in components {
-            append_component_intersection(
+            if let Err(uncertainty) = append_component_intersection(
                 &mut violations,
                 &keepout.sketch,
                 &component.sketch,
@@ -256,7 +250,9 @@ pub fn authored_component_readiness(
                     "component envelope {} ({:?}) intersects component keepout {}",
                     component.source, component.kind, keepout.source
                 ),
-            );
+            ) {
+                return vec![*uncertainty];
+            }
         }
     }
     violations
@@ -269,29 +265,16 @@ fn append_component_intersection(
     minimum_report_area: &Scalar,
     layers: Vec<String>,
     message: String,
-) {
-    let intersection = match left.try_intersection(right) {
-        Ok(intersection) => intersection,
-        Err(error) => {
-            violations.push(Violation::new(
-                "authored-component-readiness",
-                Severity::Warning,
-                layers,
-                None,
-                Vec::new(),
-                Vec::new(),
-                Some(format!("could not certify {message}: {error}")),
-            ));
-            return;
-        }
-    };
+) -> Result<(), Box<Violation>> {
+    let intersection =
+        intersection_for_check(left, right, "authored-component-readiness", layers.clone())?;
     if intersection.is_empty() {
-        return;
+        return Ok(());
     }
     let polygons =
         multipolygon_to_shapes_scalar(&intersection.to_multipolygon(), minimum_report_area);
     if polygons.is_empty() {
-        return;
+        return Ok(());
     }
     violations.push(Violation::new(
         "authored-component-readiness",
@@ -302,6 +285,7 @@ fn append_component_intersection(
         Vec::new(),
         Some(message),
     ));
+    Ok(())
 }
 
 fn feature_matches_scope(kind: CopperKind, layer: &str, scope: &AuthoredKeepoutScope) -> bool {

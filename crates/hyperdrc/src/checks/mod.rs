@@ -89,6 +89,95 @@ pub(crate) fn offset_for_check(
     })
 }
 
+pub(crate) fn intersection_for_check(
+    left: &PcbSketch,
+    right: &PcbSketch,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<PcbSketch, Box<Violation>> {
+    left.try_intersection(right).map_err(|error| {
+        Box::new(geometry_uncertainty_violation(
+            requested_check,
+            layers,
+            PcbGeometryUncertainty {
+                operation: "profile-intersection".into(),
+                source: left
+                    .metadata()
+                    .as_ref()
+                    .map(|metadata| metadata.name.clone()),
+                detail: error.to_string(),
+            },
+        ))
+    })
+}
+
+pub(crate) fn difference_for_check(
+    left: &PcbSketch,
+    right: &PcbSketch,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<PcbSketch, Box<Violation>> {
+    left.try_difference(right).map_err(|error| {
+        Box::new(geometry_uncertainty_violation(
+            requested_check,
+            layers,
+            PcbGeometryUncertainty {
+                operation: "profile-difference".into(),
+                source: left
+                    .metadata()
+                    .as_ref()
+                    .map(|metadata| metadata.name.clone()),
+                detail: error.to_string(),
+            },
+        ))
+    })
+}
+
+pub(crate) fn union_for_check(
+    left: &PcbSketch,
+    right: &PcbSketch,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<PcbSketch, Box<Violation>> {
+    left.try_union(right).map_err(|error| {
+        Box::new(geometry_uncertainty_violation(
+            requested_check,
+            layers,
+            PcbGeometryUncertainty {
+                operation: "profile-union".into(),
+                source: left
+                    .metadata()
+                    .as_ref()
+                    .map(|metadata| metadata.name.clone()),
+                detail: error.to_string(),
+            },
+        ))
+    })
+}
+
+#[allow(dead_code)] // Kept with the complete Boolean gateway set for future XOR-based checks.
+pub(crate) fn xor_for_check(
+    left: &PcbSketch,
+    right: &PcbSketch,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<PcbSketch, Box<Violation>> {
+    left.try_xor(right).map_err(|error| {
+        Box::new(geometry_uncertainty_violation(
+            requested_check,
+            layers,
+            PcbGeometryUncertainty {
+                operation: "profile-xor".into(),
+                source: left
+                    .metadata()
+                    .as_ref()
+                    .map(|metadata| metadata.name.clone()),
+                detail: error.to_string(),
+            },
+        ))
+    })
+}
+
 fn geometry_uncertainty_violation(
     requested_check: &str,
     layers: Vec<String>,
@@ -105,4 +194,73 @@ fn geometry_uncertainty_violation(
             "{requested_check} could not certify required geometry: {uncertainty}"
         )),
     )
+}
+
+#[cfg(test)]
+mod exact_math_audit_tests {
+    use std::fs;
+    use std::path::Path;
+
+    #[test]
+    fn production_geometry_uses_fallible_boolean_gateways() {
+        let checks_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/checks");
+        for entry in fs::read_dir(&checks_dir).expect("read check modules") {
+            let entry = entry.expect("read check module entry");
+            let path = entry.path();
+            if path.extension().and_then(|extension| extension.to_str()) != Some("rs") {
+                continue;
+            }
+            let file_name = path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("");
+            let source = fs::read_to_string(&path).expect("read check module source");
+            if file_name != "mod.rs" {
+                for forbidden in [
+                    ".try_union(",
+                    ".try_difference(",
+                    ".try_intersection(",
+                    ".try_xor(",
+                ] {
+                    assert!(
+                        !source.contains(forbidden),
+                        "{} bypasses the typed geometry-uncertainty gateway with {forbidden}",
+                        path.display()
+                    );
+                }
+            }
+            for forbidden in [".union(", ".difference(", ".intersection(", ".xor("] {
+                if source.contains(forbidden) {
+                    assert!(
+                        matches!(
+                            file_name,
+                            "artifacts.rs" | "constraints.rs" | "differential.rs" | "mod.rs"
+                        ),
+                        "{} contains an infallible geometry Boolean call {forbidden}",
+                        path.display()
+                    );
+                }
+            }
+        }
+
+        let authoring = fs::read_to_string(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("src/authoring_intent.rs"),
+        )
+        .expect("read authoring intent source");
+        for forbidden in [
+            ".try_union(",
+            ".try_difference(",
+            ".try_intersection(",
+            ".try_xor(",
+            ".union(",
+            ".difference(",
+            ".intersection(",
+            ".xor(",
+        ] {
+            assert!(
+                !authoring.contains(forbidden),
+                "authoring intent bypasses the typed geometry-uncertainty gateway with {forbidden}"
+            );
+        }
+    }
 }

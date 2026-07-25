@@ -8,14 +8,13 @@
 //! return-current paths. Results are suspect around split planes, unusual net
 //! names, and intentional guard structures that are not parsed as copper.
 
-use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::PcbSketchExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
-use crate::checks::offset_for_check;
 use crate::checks::spatial::CopperSpatialIndex;
+use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
@@ -91,7 +90,15 @@ pub fn sensitive_net_spacing_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&noisy.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &noisy.sketch,
+                "sensitive-net-spacing-readiness",
+                vec![sensitive.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -179,10 +186,23 @@ pub fn sensitive_return_readiness(
 
         let guard_candidates = ground_index.same_layer_near_feature(feature, broad_phase_guard);
         candidate_count += guard_candidates.len();
-        let has_guard = guard_candidates.into_iter().any(|ground_index| {
+        let mut has_guard = false;
+        for ground_index in guard_candidates {
             exact_guard_checks += 1;
-            copper_features_touch(feature, ground_features[ground_index], guard_distance)
-        });
+            match copper_features_touch(
+                feature,
+                ground_features[ground_index],
+                guard_distance,
+                "sensitive-return-readiness",
+            ) {
+                Ok(true) => {
+                    has_guard = true;
+                    break;
+                }
+                Ok(false) => {}
+                Err(uncertainty) => return vec![*uncertainty],
+            }
+        }
         if has_guard {
             continue;
         }
@@ -300,10 +320,23 @@ pub fn mixed_signal_partition_readiness(
             let guard_candidates =
                 ground_index.same_layer_near_feature(sensitive, broad_phase_guard);
             guard_candidate_count += guard_candidates.len();
-            let has_guard = guard_candidates.into_iter().any(|ground_index| {
+            let mut has_guard = false;
+            for ground_index in guard_candidates {
                 exact_guard_checks += 1;
-                copper_features_touch(sensitive, ground_features[ground_index], guard_distance)
-            });
+                match copper_features_touch(
+                    sensitive,
+                    ground_features[ground_index],
+                    guard_distance,
+                    "mixed-signal-partition-readiness",
+                ) {
+                    Ok(true) => {
+                        has_guard = true;
+                        break;
+                    }
+                    Ok(false) => {}
+                    Err(uncertainty) => return vec![*uncertainty],
+                }
+            }
             if has_guard {
                 continue;
             }
@@ -317,7 +350,15 @@ pub fn mixed_signal_partition_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&digital.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &digital.sketch,
+                "mixed-signal-partition-readiness",
+                vec![sensitive.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -437,30 +478,35 @@ fn looks_ground_net(net: &str) -> bool {
         || normalized.ends_with("-GND")
 }
 
-fn copper_features_touch(left: &CopperFeature, right: &CopperFeature, tolerance: &Scalar) -> bool {
+fn copper_features_touch(
+    left: &CopperFeature,
+    right: &CopperFeature,
+    tolerance: &Scalar,
+    requested_check: &str,
+) -> Result<bool, Box<Violation>> {
     if !sketches_within_clearance(
         &left.sketch,
         &right.sketch,
         scalar_broad_phase_radius(tolerance),
     ) {
-        return false;
+        return Ok(false);
     }
 
-    if !left
-        .sketch
-        .intersection(&right.sketch)
-        .to_multipolygon()
-        .0
-        .is_empty()
-    {
-        return true;
+    let overlap = intersection_for_check(
+        &left.sketch,
+        &right.sketch,
+        requested_check,
+        vec![left.layer.clone()],
+    )?;
+    if !overlap.is_empty() {
+        return Ok(true);
     }
 
-    polygon_boundary_distance_scalar(
+    Ok(polygon_boundary_distance_scalar(
         &left.sketch.to_multipolygon(),
         &right.sketch.to_multipolygon(),
     )
-    .is_some_and(|distance| &distance <= tolerance)
+    .is_some_and(|distance| &distance <= tolerance))
 }
 
 fn scalar_broad_phase_radius(value: &Scalar) -> f64 {

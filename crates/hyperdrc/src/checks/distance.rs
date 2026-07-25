@@ -4,7 +4,7 @@
 //! fallbacks where two shapes are close but do not intersect.
 
 use geo::{Coord, LineString, MultiPolygon, Polygon};
-use hyperlimit::{Point2, SegmentIntersection};
+use hyperlimit::{CircleSegmentRelation, Point2, SegmentIntersection, classify_circle_segment2};
 
 use crate::Scalar;
 use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
@@ -102,8 +102,8 @@ pub(super) fn exact_point_polygon_boundary_within_scalar(
                     let Some(end) = lift_scalar_coord(segment[1], provenance) else {
                         return true;
                     };
-                    point_segment_distance_from_scalars(point, &start, &end)
-                        .is_some_and(|distance| &distance <= threshold)
+                    point_segment_within_threshold_from_scalars(point, &start, &end, threshold)
+                        .unwrap_or(true)
                 })
             })
     })
@@ -132,16 +132,68 @@ fn ring_boundaries_within_scalar(
             ) {
                 return false;
             }
-            segment_distance_scalar_with_grid(
+            segment_segments_within_threshold_with_grid(
                 left_segment[0],
                 left_segment[1],
                 right_segment[0],
                 right_segment[1],
+                threshold,
                 SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
             )
-            .is_some_and(|distance| &distance <= threshold)
+            .unwrap_or(true)
         })
     })
+}
+
+fn segment_segments_within_threshold_with_grid(
+    a_start: Coord<f64>,
+    a_end: Coord<f64>,
+    b_start: Coord<f64>,
+    b_end: Coord<f64>,
+    threshold: &Scalar,
+    grid: SourceGridFacts,
+) -> Option<bool> {
+    if !coords_are_finite_4(a_start, a_end, b_start, b_end) {
+        return None;
+    }
+    if segments_intersect_with_grid(a_start, a_end, b_start, b_end, grid) {
+        return Some(true);
+    }
+
+    let provenance = RuleGeometryProvenance::new("exact-clearance-threshold", grid);
+    let a_start = lift_scalar_coord(a_start, provenance)?;
+    let a_end = lift_scalar_coord(a_end, provenance)?;
+    let b_start = lift_scalar_coord(b_start, provenance)?;
+    let b_end = lift_scalar_coord(b_end, provenance)?;
+    for (point, start, end) in [
+        (&a_start, &b_start, &b_end),
+        (&a_end, &b_start, &b_end),
+        (&b_start, &a_start, &a_end),
+        (&b_end, &a_start, &a_end),
+    ] {
+        if point_segment_within_threshold_from_scalars(point, start, end, threshold)? {
+            return Some(true);
+        }
+    }
+    Some(false)
+}
+
+fn point_segment_within_threshold_from_scalars(
+    point: &[Scalar; 2],
+    start: &[Scalar; 2],
+    end: &[Scalar; 2],
+    threshold: &Scalar,
+) -> Option<bool> {
+    if threshold < &Scalar::zero() {
+        return Some(false);
+    }
+    let center = Point2::new(point[0].clone(), point[1].clone());
+    let start = Point2::new(start[0].clone(), start[1].clone());
+    let end = Point2::new(end[0].clone(), end[1].clone());
+    let threshold_squared = threshold * threshold;
+    classify_circle_segment2(&center, &threshold_squared, &start, &end)
+        .value()
+        .map(|relation| relation != CircleSegmentRelation::Disjoint)
 }
 
 fn segment_axis_gap_exceeds(
@@ -624,7 +676,8 @@ mod tests {
 
     use super::{
         point_segment_distance, polygon_boundary_distance, polygon_boundary_distance_scalar,
-        polygon_boundary_distance_with_grid, segment_distance, segments_intersect,
+        polygon_boundary_distance_with_grid, segment_distance,
+        segment_segments_within_threshold_with_grid, segments_intersect,
     };
 
     fn square(x: f64, y: f64, size: f64) -> Polygon<f64> {
@@ -872,6 +925,38 @@ mod tests {
         let measured = segment_distance(left[0], left[1], right[0], right[1]);
         assert!(measured > 0.0);
         assert!((measured - 5.0e-13).abs() <= f64::EPSILON);
+    }
+
+    #[test]
+    fn segment_threshold_predicate_certifies_exact_dyadic_boundary() {
+        let gap = 2.0_f64.powi(-40);
+        let left = [Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 0.0 }];
+        let right = [Coord { x: 0.0, y: gap }, Coord { x: 1.0, y: gap }];
+        let threshold = crate::Scalar::try_from(gap).expect("finite dyadic threshold");
+        let below = crate::Scalar::try_from(gap.next_down()).expect("finite dyadic threshold");
+
+        assert_eq!(
+            segment_segments_within_threshold_with_grid(
+                left[0],
+                left[1],
+                right[0],
+                right[1],
+                &threshold,
+                SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+            ),
+            Some(true)
+        );
+        assert_eq!(
+            segment_segments_within_threshold_with_grid(
+                left[0],
+                left[1],
+                right[0],
+                right[1],
+                &below,
+                SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+            ),
+            Some(false)
+        );
     }
 
     #[test]

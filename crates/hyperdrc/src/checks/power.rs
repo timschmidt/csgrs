@@ -11,7 +11,7 @@
 use crate::PcbSketchExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
-use crate::checks::offset_for_check;
+use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
@@ -76,7 +76,15 @@ pub fn switch_node_keepout_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&neighbor.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &neighbor.sketch,
+                "switch-node-keepout-readiness",
+                vec![switch_feature.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(
@@ -183,7 +191,15 @@ pub fn inductor_copper_keepout_readiness(
                 Ok(expanded) => expanded,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            let overlap = expanded.intersection(&neighbor.sketch);
+            let overlap = match intersection_for_check(
+                &expanded,
+                &neighbor.sketch,
+                "inductor-copper-keepout-readiness",
+                vec![inductor.layer.clone()],
+            ) {
+                Ok(overlap) => overlap,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(

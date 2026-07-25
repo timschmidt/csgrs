@@ -10,6 +10,7 @@
 
 use geo::BoundingRect;
 
+use super::difference_for_check;
 use super::distance::polygon_boundary_distance_scalar;
 use super::spatial::CopperSpatialIndex;
 use crate::geometry::{multipolygon_to_shapes_scalar, polygons_to_profile};
@@ -107,12 +108,15 @@ pub fn split_plane_crossing_readiness(
                 name: "nearby KiCad ground zones".to_string(),
             }),
         );
-        let uncovered = feature.sketch.try_difference(&ground).unwrap_or_else(|error| {
-            log::debug!(
-                "split-plane difference was uncertified for net {net}; reporting the candidate segment conservatively: {error}"
-            );
-            feature.sketch.clone()
-        });
+        let uncovered = match difference_for_check(
+            &feature.sketch,
+            &ground,
+            "split-plane-crossing-readiness",
+            vec![feature.layer.clone(), "nearby KiCad ground zones".into()],
+        ) {
+            Ok(uncovered) => uncovered,
+            Err(uncertainty) => return vec![*uncertainty],
+        };
         let shapes = multipolygon_to_shapes_scalar(&uncovered.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
