@@ -1,4 +1,61 @@
 impl Computable {
+    fn pi_rational_multiple(&self) -> Option<Rational> {
+        let Approximation::Multiply(left, right) = &self.internal.approximation else {
+            return None;
+        };
+        if left.shared_constant_kind() == Some(SharedConstant::Pi) {
+            return right.exact_rational();
+        }
+        if right.shared_constant_kind() == Some(SharedConstant::Pi) {
+            return left.exact_rational();
+        }
+        None
+    }
+
+    fn canonical_sin_pi_term(&self) -> Option<(Rational, Rational)> {
+        match &self.internal.approximation {
+            Approximation::PrescaledSin(argument) => {
+                let argument = argument.pi_rational_multiple()?;
+                (argument.sign() == Sign::Plus
+                    && argument < Rational::fraction(1, 2).expect("two is nonzero"))
+                .then(|| (argument, Rational::one()))
+            }
+            Approximation::Negate(child) => {
+                let (argument, scale) = child.canonical_sin_pi_term()?;
+                Some((argument, scale.neg()))
+            }
+            Approximation::Offset(child, shift) => {
+                let (argument, scale) = child.canonical_sin_pi_term()?;
+                Some((argument, scale * Self::power_of_two_rational(*shift)))
+            }
+            Approximation::Multiply(left, right) => {
+                if let Some(scale) = left.exact_rational() {
+                    let (argument, inner_scale) = right.canonical_sin_pi_term()?;
+                    return Some((argument, scale * inner_scale));
+                }
+                if let Some(scale) = right.exact_rational() {
+                    let (argument, inner_scale) = left.canonical_sin_pi_term()?;
+                    return Some((argument, scale * inner_scale));
+                }
+                None
+            }
+            _ => None,
+        }
+    }
+
+    fn sin_pi_rational_sum_sign(&self, rational: &Rational) -> Option<Sign> {
+        let (_, scale) = self.canonical_sin_pi_term()?;
+        let endpoint = rational + &scale;
+        match scale.sign() {
+            Sign::Plus if rational.sign() != Sign::Minus => Some(Sign::Plus),
+            Sign::Plus if endpoint.sign() != Sign::Plus => Some(Sign::Minus),
+            Sign::Minus if rational.sign() != Sign::Plus => Some(Sign::Minus),
+            Sign::Minus if endpoint.sign() != Sign::Minus => Some(Sign::Plus),
+            Sign::NoSign => Some(rational.sign()),
+            Sign::Plus | Sign::Minus => None,
+        }
+    }
+
     /// Negate this number.
     pub fn negate(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
@@ -431,6 +488,17 @@ impl Computable {
             }
         };
         let certified_sign = certified_bound.known_sign().or(child_sign);
+        let certified_sign = certified_sign
+            .or_else(|| {
+                right_exact
+                    .as_ref()
+                    .and_then(|rational| self.sin_pi_rational_sum_sign(rational))
+            })
+            .or_else(|| {
+                left_exact
+                    .as_ref()
+                    .and_then(|rational| other.sin_pi_rational_sum_sign(rational))
+            });
         Self {
             internal: Arc::new(Node::new(Approximation::Add(self, other), if certified_bound == BoundInfo::Unknown {
                     BoundCache::Invalid
