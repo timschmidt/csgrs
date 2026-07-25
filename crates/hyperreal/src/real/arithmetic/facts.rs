@@ -737,6 +737,13 @@ impl Real {
         positive_terms: [bool; TERMS],
         terms: [[&Real; FACTORS]; TERMS],
     ) -> Option<Real> {
+        if !terms
+            .iter()
+            .flatten()
+            .any(|factor| matches!(factor.class, SinPi(_)))
+        {
+            return None;
+        }
         let half = Rational::fraction(1, 2).expect("two is nonzero");
         let mut base_argument: Option<Rational> = None;
         let mut monomials = Vec::with_capacity(TERMS);
