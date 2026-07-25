@@ -449,9 +449,10 @@ pub(crate) fn make_triangle_with_deferred_edges(
     let support = Plane::from_points(p0, p1, p2);
     ConvexPolygon {
         // Certified two-convex preparation needs only aligned placeholders
-        // for source edges that actually reach projective clipping. Retain one
-        // shared value here and expand it at that narrower boundary.
-        edges: Arc::new(vec![support.clone()]),
+        // for source edges that actually reach projective clipping. The
+        // support already carries that deferred plane, so keep this empty and
+        // expand it at the narrower projective boundary.
+        edges: Arc::new(Vec::new()),
         support,
         mesh_index,
         polygon_index,
@@ -479,7 +480,7 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges(
     let p2 = &positions[i2];
     let support = Plane::from_points(p0, p1, p2);
     ConvexPolygon {
-        edges: Arc::new(vec![support.clone()]),
+        edges: Arc::new(Vec::new()),
         support,
         mesh_index,
         polygon_index,

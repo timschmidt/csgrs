@@ -1043,6 +1043,7 @@ impl ProjectiveCycle {
             .unzip();
         let edges = match polygon.edges.len() {
             len if len == points.len() => polygon.edges.as_ref().clone(),
+            0 => vec![polygon.support.clone(); points.len()],
             1 => vec![polygon.edges[0].clone(); points.len()],
             _ => return Err(crate::error::HypermeshError::UnknownClassification),
         };
@@ -2934,7 +2935,7 @@ mod tests {
             0,
         )
         .with_source_triangle_edge_identities(0, [0, 1, 2]);
-        assert_eq!(polygon.edges.len(), 1);
+        assert!(polygon.edges.is_empty());
         assert_eq!(polygon.vertex_count(), 3);
 
         let mut point_cache = ProjectivePointCache::default();
