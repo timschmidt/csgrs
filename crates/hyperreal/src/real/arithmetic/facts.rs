@@ -624,6 +624,14 @@ impl Real {
         positive_terms: [bool; TERMS],
         terms: [[&Real; FACTORS]; TERMS],
     ) -> Real {
+        if let Some(sum) = Self::sin_pi_pythagorean_product_sum(positive_terms, terms) {
+            crate::trace_dispatch!("real", "product_sum", "sin-pi-pythagorean");
+            return sum;
+        }
+        if let Some(sum) = Self::sin_pi_orthonormal_zero_product_sum(positive_terms, terms) {
+            crate::trace_dispatch!("real", "product_sum", "sin-pi-orthonormal-zero");
+            return sum;
+        }
         if let Some(sum) = Self::exact_rational_signed_product_sum(positive_terms, terms) {
             crate::trace_dispatch!("real", "product_sum", "fixed-exact-rational");
             return sum;
@@ -643,6 +651,22 @@ impl Real {
         positive_terms: [bool; TERMS],
         terms: [[&Real; FACTORS]; TERMS],
     ) -> Real {
+        if let Some(sum) = Self::sin_pi_pythagorean_product_sum(positive_terms, terms) {
+            crate::trace_dispatch!(
+                "real",
+                "product_sum",
+                "active-sin-pi-pythagorean"
+            );
+            return sum;
+        }
+        if let Some(sum) = Self::sin_pi_orthonormal_zero_product_sum(positive_terms, terms) {
+            crate::trace_dispatch!(
+                "real",
+                "product_sum",
+                "active-sin-pi-orthonormal-zero"
+            );
+            return sum;
+        }
         if let Some(sum) = Self::exact_rational_signed_product_sum(positive_terms, terms) {
             crate::trace_dispatch!("real", "product_sum", "active-fixed-exact-rational");
             return sum;
@@ -660,6 +684,119 @@ impl Real {
             });
         }
         total.unwrap_or_else(Real::zero)
+    }
+
+    fn sin_pi_pythagorean_product_sum<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; FACTORS]; TERMS],
+    ) -> Option<Real> {
+        if TERMS != 2 || FACTORS != 2 || positive_terms[0] != positive_terms[1] {
+            return None;
+        }
+        let [first_left, first_right] = terms[0].as_slice() else {
+            return None;
+        };
+        let [second_left, second_right] = terms[1].as_slice() else {
+            return None;
+        };
+        let (SinPi(first_argument), SinPi(second_argument)) =
+            (&first_left.class, &second_left.class)
+        else {
+            return None;
+        };
+        if !first_left.same_symbolic_basis(first_right)
+            || !second_left.same_symbolic_basis(second_right)
+            || first_argument + second_argument
+                != Rational::fraction(1, 2).expect("two is nonzero")
+        {
+            return None;
+        }
+        let first_scale = &first_left.rational * &first_right.rational;
+        let second_scale = &second_left.rational * &second_right.rational;
+        if first_scale != second_scale {
+            return None;
+        }
+        Some(Real::new(if positive_terms[0] {
+            first_scale
+        } else {
+            -first_scale
+        }))
+    }
+
+    /// Recognizes a rational polynomial identity in one retained sine/cosine
+    /// pair and certifies it only when reduction by `sin² + cos² = 1` leaves
+    /// the zero polynomial.
+    ///
+    /// Geometry kernels use this at fixed determinant boundaries, where each
+    /// factor is still either rational or one rational-scaled `SinPi` atom.
+    /// It is deliberately not a general expression-tree simplifier.
+    fn sin_pi_orthonormal_zero_product_sum<
+        const TERMS: usize,
+        const FACTORS: usize,
+    >(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; FACTORS]; TERMS],
+    ) -> Option<Real> {
+        let half = Rational::fraction(1, 2).expect("two is nonzero");
+        let mut base_argument: Option<Rational> = None;
+        let mut monomials = Vec::with_capacity(TERMS);
+
+        for term_index in 0..TERMS {
+            let mut scale = Rational::from(1);
+            let mut sine_power = 0usize;
+            let mut cosine_power = 0usize;
+            for factor in terms[term_index] {
+                scale = &scale * &factor.rational;
+                match &factor.class {
+                    One => {}
+                    SinPi(argument) => {
+                        let base = base_argument.get_or_insert_with(|| argument.clone());
+                        if argument == base {
+                            sine_power += 1;
+                        } else if &*base + argument == half {
+                            cosine_power += 1;
+                        } else {
+                            return None;
+                        }
+                    }
+                    _ => return None,
+                }
+            }
+            if !positive_terms[term_index] {
+                scale = -scale;
+            }
+            monomials.push((sine_power, cosine_power, scale));
+        }
+
+        let max_degree = FACTORS.saturating_mul(2);
+        let mut reduced: Vec<[Rational; 2]> = (0..=max_degree)
+            .map(|_| [Rational::from(0), Rational::from(0)])
+            .collect();
+        for (sine_power, cosine_power, scale) in monomials {
+            let cosine_remainder = cosine_power % 2;
+            let pairs = cosine_power / 2;
+            let mut binomial = BigUint::from(1_u8);
+            for expanded_pair in 0..=pairs {
+                let degree = sine_power + expanded_pair * 2;
+                let mut coefficient =
+                    &scale * &Self::rational_from_biguint(binomial.clone());
+                if expanded_pair % 2 == 1 {
+                    coefficient = -coefficient;
+                }
+                reduced[degree][cosine_remainder] =
+                    &reduced[degree][cosine_remainder] + &coefficient;
+                if expanded_pair < pairs {
+                    binomial *= BigUint::from(pairs - expanded_pair);
+                    binomial /= BigUint::from(expanded_pair + 1);
+                }
+            }
+        }
+
+        reduced
+            .iter()
+            .flatten()
+            .all(|coefficient| coefficient.sign() == Sign::NoSign)
+            .then(Real::zero)
     }
 
     /// Conservatively inspect public structural facts about this value.

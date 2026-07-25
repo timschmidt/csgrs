@@ -4091,4 +4091,47 @@ mod tests {
         let actual = Real::active_dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
         assert!((actual.to_f64_lossy().unwrap() - expected.to_f64_lossy().unwrap()).abs() < 1e-12);
     }
+
+    #[test]
+    fn signed_product_sum_certifies_complementary_sin_pi_squares() {
+        let angle = Rational::fraction(1, 1_800_000).unwrap();
+        let sine = Real::new(angle.clone()).sin_pi();
+        let cosine = Real::new(Rational::fraction(1, 2).unwrap() - angle).sin_pi();
+
+        assert_eq!(
+            Real::signed_product_sum([true, true], [[&sine, &sine], [&cosine, &cosine]],),
+            Real::one()
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_certifies_orthonormal_trig_zero_polynomial() {
+        let angle = Rational::fraction(1, 1_800_000).unwrap();
+        let sine = Real::new(angle.clone()).sin_pi();
+        let cosine = Real::new(Rational::fraction(1, 2).unwrap() - angle).sin_pi();
+        let one = Real::one();
+
+        assert_eq!(
+            Real::signed_product_sum(
+                [true, true, false],
+                [[&sine, &sine], [&cosine, &cosine], [&one, &one],],
+            ),
+            Real::zero()
+        );
+    }
+
+    #[test]
+    fn rational_offsets_retain_strict_sin_pi_endpoint_signs() {
+        let angle = Rational::fraction(899_999, 1_800_000).unwrap();
+        let sine = Real::new(angle).sin_pi();
+
+        assert_eq!(
+            (sine.clone() - Real::one()).structural_facts().sign,
+            Some(RealSign::Negative)
+        );
+        assert_eq!(
+            (Real::one() - sine).structural_facts().sign,
+            Some(RealSign::Positive)
+        );
+    }
 }
