@@ -4957,6 +4957,43 @@ AddressSanitizer replay completed 2,509 executions at 10,140 coverage points
 and 34,775 feature edges without a finding; LeakSanitizer alone remained
 disabled under ptrace.
 
+### Direct exact contacts reject certified disjoint bounds first
+
+The public `RationalBezier2::intersection_contacts` path still performed the
+implicit-conic substitution before the certified control-hull rejection used
+by retained preparation and generic resultant candidates. It also called the
+generic candidate entry point after the special cases, repeating both rational
+bounds and their exact overlap comparison when the boxes were not disjoint.
+
+Direct contacts now use the shared certified-bounds rejection before any
+implicit or resultant algebra and continue directly to the post-bounds
+candidate path after the special cases. A missing weight-sign or box-ordering
+certificate still falls through to the complete algebraic solver, while
+touching boxes remain inclusive. The optimization therefore changes only the
+once-visiting schedule; every rejection still comes from same-sign rational
+control hulls and exact `Real` comparisons.
+
+The new direct-path regression checks a disjoint conic/cubic pair, requires a
+complete `NoIntersection` result, and verifies that the cubic homogeneous power
+basis remains unconstructed. Before the source change, the new 2,000-iteration
+cold benchmark took 10.947 microseconds per call. Its five-run optimized median
+is now 396 nanoseconds per call, a 96.4% reduction (27.6x).
+
+The complete 67-cell exact-native workload still prepared every region and
+decided all 268 Boolean operations with zero blockers, 2,763 carrier pairs,
+3,248 fragments, 134 point classifications, and checksum 6. The measured run
+took 836.0 milliseconds, including 779.3 milliseconds of retained preparation;
+the direct-only change is intentionally outside that retained call graph. The
+pathological benchmark's text, data, BSS, and total loadable sizes were
+unchanged at 4,682,077, 256,360, 2,960, and 4,941,397 bytes respectively; its
+file grew by 32 bytes.
+
+Complete all-feature and no-default-feature library/integration suites passed,
+including both retained and direct cache-state regressions, as did strict
+all-target Clippy. The `bezier_region` AddressSanitizer replay completed 2,509
+executions at 10,241 coverage points and 37,743 feature edges without a finding;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

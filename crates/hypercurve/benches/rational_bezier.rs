@@ -475,6 +475,25 @@ fn main() {
         elapsed / disjoint_prepare_iterations
     );
 
+    let disjoint_contacts_iterations = 2_000_u32;
+    let started = Instant::now();
+    let mut disjoint_contacts_count = 0_usize;
+    for _ in 0..disjoint_contacts_iterations {
+        let contacts = black_box(&conic)
+            .intersection_contacts(black_box(&disjoint_cubic), black_box(&policy))
+            .expect("disjoint conic/cubic contacts are exact");
+        disjoint_contacts_count =
+            disjoint_contacts_count.wrapping_add(black_box(usize::from(matches!(
+                contacts,
+                RationalBezierIntersectionContacts2::NoIntersection
+            ))));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_bezier_disjoint_conic_cubic_cold_contacts: {disjoint_contacts_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={disjoint_contacts_count}",
+        elapsed / disjoint_contacts_iterations
+    );
+
     let prepared = parabola.retain_intersection(&horizontal, &policy).unwrap();
     prepared.try_contact_view().unwrap();
     let prepared_iterations = 20_000_u32;

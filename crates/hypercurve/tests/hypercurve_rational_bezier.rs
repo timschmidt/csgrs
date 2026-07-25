@@ -545,6 +545,27 @@ fn retained_disjoint_conic_cubic_skips_implicit_solver() {
 }
 
 #[test]
+fn direct_disjoint_conic_cubic_skips_implicit_solver() {
+    let policy = CurvePolicy::certified();
+    let conic =
+        RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
+    let disjoint_cubic =
+        RationalBezier2::try_new(vec![p(10, 0), p(11, 1), p(11, 2), p(10, 3)], vec![r(1); 4])
+            .unwrap();
+
+    assert_eq!(
+        conic
+            .intersection_contacts(&disjoint_cubic, &policy)
+            .unwrap(),
+        RationalBezierIntersectionContacts2::NoIntersection
+    );
+    assert!(
+        !disjoint_cubic.is_homogeneous_power_basis_cached(),
+        "certified disjoint bounds must reject direct contacts before implicit substitution"
+    );
+}
+
+#[test]
 #[cfg(feature = "predicates")]
 fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
     let policy = CurvePolicy::certified();

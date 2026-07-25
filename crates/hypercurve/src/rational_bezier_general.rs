@@ -1374,7 +1374,7 @@ impl RationalBezier2 {
         // Bounds were already checked before the implicit-conic fast path.
         // Continue directly so an overlapping pair is not boxed and compared
         // a second time before resultant construction.
-        match self.intersection_candidates_after_overlapping_bounds(other, policy)? {
+        match self.intersection_candidates_after_bounds_check(other, policy)? {
             Classification::Decided(candidates) => Ok(Classification::Decided(
                 RetainedRationalBezierIntersection2 {
                     data: Rc::new(PreparedRationalBezierIntersectionData {
@@ -1421,6 +1421,12 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+        if self.certified_bounds_are_disjoint(other, policy) {
+            return Ok(Classification::Decided(
+                RationalBezierIntersectionContacts2::NoIntersection,
+            ));
+        }
+
         if let Some(Classification::Decided(contacts)) =
             self.implicit_conic_intersection_contacts(other, policy)?
         {
@@ -1443,7 +1449,10 @@ impl RationalBezier2 {
                 policy,
             );
         }
-        let candidates = match self.intersection_candidates_classified(other, policy)? {
+        // Bounds were already checked before the implicit-conic fast path.
+        // Continue directly so an overlapping or inconclusive pair is not
+        // boxed and compared a second time before resultant construction.
+        let candidates = match self.intersection_candidates_after_bounds_check(other, policy)? {
             Classification::Decided(candidates) => candidates,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -1631,7 +1640,7 @@ impl RationalBezier2 {
             ));
         }
 
-        self.intersection_candidates_after_overlapping_bounds(other, policy)
+        self.intersection_candidates_after_bounds_check(other, policy)
     }
 
     fn certified_bounds_are_disjoint(&self, other: &Self, policy: &CurvePolicy) -> bool {
@@ -1647,7 +1656,7 @@ impl RationalBezier2 {
         )
     }
 
-    fn intersection_candidates_after_overlapping_bounds(
+    fn intersection_candidates_after_bounds_check(
         &self,
         other: &Self,
         policy: &CurvePolicy,
