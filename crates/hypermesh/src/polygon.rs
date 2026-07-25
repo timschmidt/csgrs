@@ -15,7 +15,7 @@ pub(crate) struct ConstructionPlaneIdentity {
     pub(crate) plane: usize,
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) enum ConstructionEdgeIdentity {
     Source {
         mesh: usize,
@@ -26,7 +26,7 @@ pub(crate) enum ConstructionEdgeIdentity {
     },
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) enum ConstructionVertexIdentity {
     Source {
         mesh: usize,

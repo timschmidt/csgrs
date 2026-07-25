@@ -728,14 +728,18 @@ where
                 ]);
             }
         } else {
-            let appended_construction = construction_candidates.is_some()
-                && append_construction_boundary_triangles(
+            let appended_construction = if construction_candidates.is_some() {
+                append_exact_corner_boundary_triangles(
                     polygon,
                     &indexed,
                     &boundary,
+                    &vertices,
                     &mut triangles,
-                )
-                .is_some();
+                )?
+                .is_some()
+            } else {
+                false
+            };
             if !appended_construction {
                 match triangulate_weakly_convex_boundary(&boundary, &vertices, &polygon.support) {
                     Ok(polygon_triangles) => triangles.extend(polygon_triangles),
@@ -766,14 +770,39 @@ where
         }
     }
 
-    Ok((
-        TriangleSoup {
-            vertices,
-            triangles,
-            sources,
-        },
-        triangle_windings,
-    ))
+    let mut soup = TriangleSoup {
+        vertices,
+        triangles,
+        sources,
+    };
+    remove_unused_vertices(&mut soup);
+    Ok((soup, triangle_windings))
+}
+
+fn remove_unused_vertices(soup: &mut TriangleSoup) {
+    let mut used = vec![false; soup.vertices.len()];
+    for triangle in &soup.triangles {
+        for &vertex in triangle {
+            used[vertex] = true;
+        }
+    }
+    let mut remap = vec![0; soup.vertices.len()];
+    let mut next = 0;
+    for (index, &is_used) in used.iter().enumerate() {
+        if is_used {
+            remap[index] = next;
+            next += 1;
+        }
+    }
+    for triangle in &mut soup.triangles {
+        *triangle = triangle.map(|vertex| remap[vertex]);
+    }
+    let mut index = 0;
+    soup.vertices.retain(|_| {
+        let retain = used[index];
+        index += 1;
+        retain
+    });
 }
 
 pub(crate) fn triangulate_classified_arrangement_precomputed_f64_scan(
@@ -935,36 +964,34 @@ fn mean_output_coordinate<'a>(
         .map_err(|_| HypermeshError::UnknownClassification)
 }
 
-fn append_construction_boundary_triangles(
+fn append_exact_corner_boundary_triangles(
     polygon: &ConvexPolygon,
     indexed: &[usize],
     boundary: &[usize],
+    vertices: &[OutputVertex],
     triangles: &mut Vec<[usize; 3]>,
-) -> Option<()> {
+) -> HypermeshResult<Option<()>> {
     if indexed != boundary {
-        return None;
+        return Ok(None);
     }
-    let identities = polygon.known_edge_identities.as_ref()?;
-    if identities.len() != boundary.len() {
-        return None;
-    }
-    let mut strictly_convex_count = 0usize;
-    let mut anchor = None;
-    let mut previous = None;
-    for (index, &vertex) in boundary.iter().enumerate() {
-        let incoming = (index + identities.len() - 1) % identities.len();
-        if identities[incoming] != identities[index] {
-            strictly_convex_count += 1;
-            if let Some(anchor) = anchor {
-                if let Some(previous) = previous.replace(vertex) {
-                    triangles.push([anchor, previous, vertex]);
-                }
-            } else {
-                anchor = Some(vertex);
-            }
+    let mut corners = Vec::with_capacity(boundary.len());
+    for index in 0..boundary.len() {
+        let turn = [
+            boundary[(index + boundary.len() - 1) % boundary.len()],
+            boundary[index],
+            boundary[(index + 1) % boundary.len()],
+        ];
+        if output_triangle_is_nondegenerate(turn, vertices, &polygon.support)? {
+            corners.push(boundary[index]);
         }
     }
-    (strictly_convex_count >= 3).then_some(())
+    if corners.len() < 3 {
+        return Ok(None);
+    }
+    for index in 1..corners.len() - 1 {
+        triangles.push([corners[0], corners[index], corners[index + 1]]);
+    }
+    Ok(Some(()))
 }
 
 fn triangulate_weakly_convex_boundary(
@@ -2600,8 +2627,6 @@ fn vertex_axis(vertex: &OutputVertex, axis: usize) -> &Real {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
     use super::*;
     use crate::geometry::Aabb;
     use crate::polygon::make_triangle;
@@ -2640,77 +2665,64 @@ mod tests {
         }
     }
 
-    fn source_edge(endpoints: [usize; 2]) -> ConstructionEdgeIdentity {
-        ConstructionEdgeIdentity::Source { mesh: 0, endpoints }
-    }
-
     #[test]
-    fn construction_boundary_appends_fan_without_intermediate_triangle_storage() {
-        let mut polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-        polygon.known_edge_identities = Some(Arc::from(vec![
-            source_edge([0, 1]),
-            source_edge([1, 2]),
-            source_edge([0, 2]),
-        ]));
+    fn exact_corner_boundary_appends_a_convex_fan() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let vertices = vec![ov(0, 0, 0), ov(1, 0, 0), ov(1, 1, 0), ov(0, 1, 0)];
         let mut triangles = Vec::new();
 
         assert_eq!(
-            append_construction_boundary_triangles(
+            append_exact_corner_boundary_triangles(
                 &polygon,
-                &[10, 11, 12],
-                &[10, 11, 12],
+                &[0, 1, 2, 3],
+                &[0, 1, 2, 3],
+                &vertices,
                 &mut triangles,
-            ),
+            )
+            .unwrap(),
             Some(())
         );
-        assert_eq!(triangles, vec![[10, 11, 12]]);
+        assert_eq!(triangles, vec![[0, 1, 2], [0, 2, 3]]);
     }
 
     #[test]
-    fn construction_boundary_skips_repeated_collinear_edge_identity() {
-        let mut polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-        let repeated = source_edge([0, 1]);
-        polygon.known_edge_identities = Some(Arc::from(vec![
-            repeated.clone(),
-            repeated,
-            source_edge([1, 2]),
-            source_edge([2, 3]),
-        ]));
+    fn exact_corner_boundary_skips_collinear_vertices() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 1, 0), 0, 0);
+        let vertices = vec![ov(0, 0, 0), ov(1, 0, 0), ov(2, 0, 0), ov(0, 1, 0)];
         let mut triangles = Vec::new();
 
         assert_eq!(
-            append_construction_boundary_triangles(
+            append_exact_corner_boundary_triangles(
                 &polygon,
-                &[10, 11, 12, 13],
-                &[10, 11, 12, 13],
+                &[0, 1, 2, 3],
+                &[0, 1, 2, 3],
+                &vertices,
                 &mut triangles,
-            ),
+            )
+            .unwrap(),
             Some(())
         );
-        assert_eq!(triangles, vec![[10, 12, 13]]);
+        assert_eq!(triangles, vec![[0, 2, 3]]);
     }
 
     #[test]
-    fn construction_boundary_fallback_leaves_output_unchanged() {
-        let mut polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-        let repeated = source_edge([0, 1]);
-        polygon.known_edge_identities = Some(Arc::from(vec![
-            repeated.clone(),
-            repeated.clone(),
-            repeated,
-        ]));
-        let mut triangles = vec![[1, 2, 3]];
+    fn unused_output_vertices_are_compacted_and_remapped() {
+        let mut soup = TriangleSoup {
+            vertices: vec![
+                ov(9, 9, 9),
+                ov(0, 0, 0),
+                ov(8, 8, 8),
+                ov(1, 0, 0),
+                ov(0, 1, 0),
+            ],
+            triangles: vec![[1, 3, 4]],
+            sources: vec![TriangleSource::default()],
+        };
 
-        assert_eq!(
-            append_construction_boundary_triangles(
-                &polygon,
-                &[10, 11, 12],
-                &[10, 11, 12],
-                &mut triangles,
-            ),
-            None
-        );
-        assert_eq!(triangles, vec![[1, 2, 3]]);
+        remove_unused_vertices(&mut soup);
+
+        assert_eq!(soup.vertices, vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0)]);
+        assert_eq!(soup.triangles, vec![[0, 1, 2]]);
     }
 
     #[test]

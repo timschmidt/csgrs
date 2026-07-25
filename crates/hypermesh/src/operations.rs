@@ -375,13 +375,46 @@ struct ProjectivePointCache {
     points: StorageHashMap<ConstructionVertexIdentity, HomogeneousPoint3>,
     canonical_identities: StorageHashMap<ConstructionVertexIdentity, ConstructionVertexIdentity>,
     canonical_planes: StorageHashMap<ConstructionPlaneIdentity, ConstructionPlaneIdentity>,
-    approximate_points: StorageHashMap<[u64; 3], Vec<ConstructionVertexIdentity>>,
     planes: StorageHashMap<ConstructionPlaneIdentity, Plane>,
     source_edges: StorageHashMap<ConstructionEdgeIdentity, [Plane; 2]>,
     source_edge_supports: StorageHashMap<ConstructionEdgeIdentity, Vec<ConstructionPlaneIdentity>>,
     source_vertices: StorageHashMap<ConstructionVertexIdentity, [Plane; 3]>,
     point_incidences: StorageHashMap<ConstructionVertexIdentity, Vec<ConstructionPlaneIdentity>>,
-    canonical_edges: StorageHashMap<ConstructionEdgeIdentity, ConstructionEdgeIdentity>,
+}
+
+struct AtomicDisjointSets {
+    parents: Vec<usize>,
+}
+
+impl AtomicDisjointSets {
+    fn new(len: usize) -> Self {
+        Self {
+            parents: (0..len).collect(),
+        }
+    }
+
+    fn representative(&mut self, mut index: usize) -> usize {
+        while self.parents[index] != index {
+            let parent = self.parents[index];
+            self.parents[index] = self.parents[parent];
+            index = self.parents[index];
+        }
+        index
+    }
+
+    fn merge(&mut self, left: usize, right: usize) {
+        let left = self.representative(left);
+        let right = self.representative(right);
+        if left == right {
+            return;
+        }
+        let (representative, merged) = if left < right {
+            (left, right)
+        } else {
+            (right, left)
+        };
+        self.parents[merged] = representative;
+    }
 }
 
 impl ConstructionEdgeIdentity {
@@ -432,47 +465,6 @@ impl ProjectivePointCache {
         edge.intersection_identity(plane)
     }
 
-    fn edge_definition_planes(&self, identity: &ConstructionEdgeIdentity) -> Option<[Plane; 2]> {
-        match identity {
-            ConstructionEdgeIdentity::Source { .. } => self.source_edges.get(identity).cloned(),
-            ConstructionEdgeIdentity::Split { planes } => Some([
-                self.planes.get(&planes[0])?.clone(),
-                self.planes.get(&planes[1])?.clone(),
-            ]),
-        }
-    }
-
-    fn canonical_edge_identity(
-        &mut self,
-        identity: &ConstructionEdgeIdentity,
-    ) -> ConstructionEdgeIdentity {
-        if let Some(canonical) = self.canonical_edges.get(identity) {
-            return canonical.clone();
-        }
-        let definition = self.edge_definition_planes(identity);
-        let canonical = definition.as_ref().and_then(|definition| {
-            let approximate = line_f64(definition)?;
-            self.canonical_edges
-                .values()
-                .find(|candidate| {
-                    let Some(candidate_definition) = self.edge_definition_planes(candidate) else {
-                        return false;
-                    };
-                    line_f64(&candidate_definition).is_some_and(|candidate| {
-                        candidate.iter().zip(approximate).all(|(left, right)| {
-                            let scale = left.abs().max(right.abs()).max(1.0);
-                            (left - right).abs() <= scale * 1.0e-9
-                        })
-                    }) && planes_certifiably_define_same_line(definition, &candidate_definition)
-                })
-                .cloned()
-        });
-        let canonical = canonical.unwrap_or_else(|| identity.clone());
-        self.canonical_edges
-            .insert(identity.clone(), canonical.clone());
-        canonical
-    }
-
     fn record_incidence(
         &mut self,
         identity: &ConstructionVertexIdentity,
@@ -480,14 +472,8 @@ impl ProjectivePointCache {
     ) {
         let plane = self.canonical_plane_identity(plane);
         let incidences = self.point_incidences.entry(identity.clone()).or_default();
-        let inserted = if incidences.contains(&plane) {
-            false
-        } else {
+        if !incidences.contains(&plane) {
             incidences.push(plane);
-            true
-        };
-        if inserted && !matches!(identity, ConstructionVertexIdentity::Source { .. }) {
-            self.refresh_canonical_identity(identity);
         }
     }
 
@@ -503,59 +489,6 @@ impl ProjectivePointCache {
             canonical = next.clone();
         }
         canonical
-    }
-
-    fn refresh_canonical_identity(&mut self, identity: &ConstructionVertexIdentity) {
-        let Some(point) = self.points.get(identity).cloned() else {
-            return;
-        };
-        let exact_bucket_equivalent = projective_point_f64_key(&point)
-            .and_then(|key| self.approximate_points.get(&key))
-            .into_iter()
-            .flatten()
-            .find_map(|candidate_identity| {
-                let candidate = self
-                    .points
-                    .get(candidate_identity)
-                    .expect("approximate point identities are interned");
-                (candidate_identity != identity
-                    && self.identities_certifiably_equal(
-                        candidate_identity,
-                        candidate,
-                        identity,
-                        &point,
-                    ))
-                .then(|| self.canonical_vertex_identity(candidate_identity))
-            });
-        // The f64 projection only narrows the candidate set. Canonicalization
-        // still requires the exact incidence/construction-plane certificate.
-        let equivalent = exact_bucket_equivalent.or_else(|| {
-            let approximate = projective_point_f64(&point)?;
-            self.points
-                .iter()
-                .filter(|(candidate_identity, candidate)| {
-                    *candidate_identity != identity
-                        && projective_point_f64(candidate).is_some_and(|candidate| {
-                            candidate.iter().zip(approximate).all(|(left, right)| {
-                                let scale = left.abs().max(right.abs()).max(1.0);
-                                (left - right).abs() <= scale * 1.0e-9
-                            })
-                        })
-                })
-                .find_map(|(candidate_identity, candidate)| {
-                    self.identities_certifiably_equal(
-                        candidate_identity,
-                        candidate,
-                        identity,
-                        &point,
-                    )
-                    .then(|| self.canonical_vertex_identity(candidate_identity))
-                })
-        });
-        if let Some(canonical) = equivalent {
-            self.canonical_identities
-                .insert(identity.clone(), canonical);
-        }
     }
 
     fn record_definition_incidences(&mut self, identity: &ConstructionVertexIdentity) {
@@ -630,8 +563,9 @@ impl ProjectivePointCache {
                     .get(identity)
                     .is_some_and(|incidences| planes.iter().all(|plane| incidences.contains(plane)))
             };
-        if identity_on_triple(left_identity, right_identity)
-            || identity_on_triple(right_identity, left_identity)
+        if (identity_on_triple(left_identity, right_identity)
+            || identity_on_triple(right_identity, left_identity))
+            && projective_points_certifiably_equal(left, right)
         {
             return true;
         }
@@ -675,6 +609,87 @@ impl ProjectivePointCache {
         }
     }
 
+    fn resolve_vertex_coincidences(&mut self) {
+        let mut entries = self
+            .points
+            .iter()
+            .map(|(identity, point)| (identity.clone(), point.clone(), projective_point_f64(point)))
+            .collect::<Vec<_>>();
+        entries.sort_unstable_by(|left, right| left.0.cmp(&right.0));
+
+        let mut sets = AtomicDisjointSets::new(entries.len());
+        let mut finite = entries
+            .iter()
+            .enumerate()
+            .filter_map(|(index, entry)| entry.2.map(|point| (index, point)))
+            .collect::<Vec<_>>();
+        finite.sort_unstable_by(|left, right| left.1[0].total_cmp(&right.1[0]));
+        for right in 0..finite.len() {
+            let (right_index, right_point) = finite[right];
+            for &(left_index, left_point) in finite[..right].iter().rev() {
+                let x_scale = left_point[0].abs().max(right_point[0].abs()).max(1.0);
+                if right_point[0] - left_point[0] > x_scale * 1.0e-9 {
+                    break;
+                }
+                if left_point.iter().zip(right_point).all(|(left, right)| {
+                    let scale = left.abs().max(right.abs()).max(1.0);
+                    (left - right).abs() <= scale * 1.0e-9
+                }) && self.identities_certifiably_equal(
+                    &entries[left_index].0,
+                    &entries[left_index].1,
+                    &entries[right_index].0,
+                    &entries[right_index].1,
+                ) {
+                    sets.merge(left_index, right_index);
+                }
+            }
+        }
+        for right in 0..entries.len() {
+            for left in 0..right {
+                if (entries[left].2.is_none() || entries[right].2.is_none())
+                    && self.identities_certifiably_equal(
+                        &entries[left].0,
+                        &entries[left].1,
+                        &entries[right].0,
+                        &entries[right].1,
+                    )
+                {
+                    sets.merge(left, right);
+                }
+            }
+        }
+
+        let representatives = (0..entries.len())
+            .map(|index| sets.representative(index))
+            .collect::<Vec<_>>();
+        let mut class_incidences = vec![Vec::new(); entries.len()];
+        for (index, (identity, _, _)) in entries.iter().enumerate() {
+            let representative = representatives[index];
+            if let Some(incidences) = self.point_incidences.get(identity) {
+                for &incidence in incidences {
+                    if !class_incidences[representative].contains(&incidence) {
+                        class_incidences[representative].push(incidence);
+                    }
+                }
+            }
+        }
+        for incidences in &mut class_incidences {
+            incidences.sort_unstable();
+        }
+
+        self.canonical_identities.clear();
+        for (index, (identity, _, _)) in entries.iter().enumerate() {
+            let representative = representatives[index];
+            let canonical_identity = entries[representative].0.clone();
+            let canonical_point = entries[representative].1.clone();
+            self.canonical_identities
+                .insert(identity.clone(), canonical_identity);
+            self.points.insert(identity.clone(), canonical_point);
+            self.point_incidences
+                .insert(identity.clone(), class_incidences[representative].clone());
+        }
+    }
+
     fn intern(
         &mut self,
         identity: ConstructionVertexIdentity,
@@ -682,70 +697,10 @@ impl ProjectivePointCache {
     ) -> (HomogeneousPoint3, ConstructionVertexIdentity) {
         self.record_definition_incidences(&identity);
         if let Some(existing) = self.points.get(&identity) {
-            let canonical_identity = self
-                .canonical_identities
-                .get(&identity)
-                .cloned()
-                .unwrap_or_else(|| identity.clone());
-            return (existing.clone(), canonical_identity);
+            return (existing.clone(), identity);
         }
-        let approximate_key = projective_point_f64_key(&point);
-        let exact_bucket_equivalent = approximate_key
-            .and_then(|key| self.approximate_points.get(&key))
-            .into_iter()
-            .flatten()
-            .find_map(|existing_identity| {
-                let existing = self
-                    .points
-                    .get(existing_identity)
-                    .expect("approximate point identities are interned");
-                self.identities_certifiably_equal(existing_identity, existing, &identity, &point)
-                    .then(|| (existing.clone(), existing_identity.clone()))
-            });
-        // Algebraically identical projective constructions can round to nearby,
-        // rather than bit-identical, affine f64 values when they use different
-        // determinant formulas.  Approximation is only a candidate accelerator
-        // here: a point is canonicalized exclusively after the exact
-        // construction-plane certificate above succeeds.
-        let equivalent = exact_bucket_equivalent.or_else(|| {
-            let approximate = projective_point_f64(&point)?;
-            self.points
-                .iter()
-                .filter(|(_, existing)| {
-                    projective_point_f64(existing).is_some_and(|candidate| {
-                        candidate.iter().zip(approximate).all(|(left, right)| {
-                            let scale = left.abs().max(right.abs()).max(1.0);
-                            (left - right).abs() <= scale * 1.0e-9
-                        })
-                    })
-                })
-                .find_map(|(existing_identity, existing)| {
-                    self.identities_certifiably_equal(
-                        existing_identity,
-                        existing,
-                        &identity,
-                        &point,
-                    )
-                    .then(|| (existing.clone(), existing_identity.clone()))
-                })
-        });
-        let (canonical, canonical_identity) =
-            equivalent.unwrap_or_else(|| (point, identity.clone()));
-        let canonical_identity = self
-            .canonical_identities
-            .get(&canonical_identity)
-            .cloned()
-            .unwrap_or(canonical_identity);
-        self.points.insert(identity.clone(), canonical.clone());
-        self.canonical_identities
-            .insert(identity.clone(), canonical_identity.clone());
-        if let Some(key) = approximate_key {
-            self.approximate_points
-                .entry(key)
-                .or_default()
-                .push(identity);
-        }
-        (canonical, canonical_identity)
+        self.points.insert(identity.clone(), point.clone());
+        (point, identity)
     }
 }
 
@@ -771,10 +726,6 @@ fn affine_point_f64(point: &Point3) -> Option<[f64; 3]> {
         point.z.to_f64_lossy()?,
     ];
     point.into_iter().all(f64::is_finite).then_some(point)
-}
-
-fn projective_point_f64_key(point: &HomogeneousPoint3) -> Option<[u64; 3]> {
-    projective_point_f64(point).map(|point| point.map(f64::to_bits))
 }
 
 fn projective_point_plane_may_be_on(point: &HomogeneousPoint3, plane: &Plane) -> bool {
@@ -810,106 +761,6 @@ fn projective_points_certifiably_equal(
         }
     }
     true
-}
-
-fn line_f64(planes: &[Plane; 2]) -> Option<[f64; 6]> {
-    let coefficients = planes.each_ref().map(|plane| {
-        let values = [
-            plane.normal.x.to_f64_lossy()?,
-            plane.normal.y.to_f64_lossy()?,
-            plane.normal.z.to_f64_lossy()?,
-            plane.offset.to_f64_lossy()?,
-        ];
-        values.into_iter().all(f64::is_finite).then_some(values)
-    });
-    let [Some(first), Some(second)] = coefficients else {
-        return None;
-    };
-    let direction = [
-        first[1] * second[2] - first[2] * second[1],
-        first[2] * second[0] - first[0] * second[2],
-        first[0] * second[1] - first[1] * second[0],
-    ];
-    let moment = [
-        first[3] * second[0] - second[3] * first[0],
-        first[3] * second[1] - second[3] * first[1],
-        first[3] * second[2] - second[3] * first[2],
-    ];
-    let norm = direction
-        .iter()
-        .map(|value| value * value)
-        .sum::<f64>()
-        .sqrt();
-    if norm == 0.0 || !norm.is_finite() {
-        return None;
-    }
-    let orientation = if direction
-        .iter()
-        .max_by(|left, right| left.abs().total_cmp(&right.abs()))
-        .copied()?
-        .is_sign_negative()
-    {
-        -1.0
-    } else {
-        1.0
-    };
-    let scale = orientation / norm;
-    Some([
-        direction[0] * scale,
-        direction[1] * scale,
-        direction[2] * scale,
-        moment[0] * scale,
-        moment[1] * scale,
-        moment[2] * scale,
-    ])
-}
-
-fn planes_certifiably_define_same_line(left: &[Plane; 2], right: &[Plane; 2]) -> bool {
-    right
-        .iter()
-        .all(|plane| plane_in_span_of_two_planes(plane, left))
-        && left
-            .iter()
-            .all(|plane| plane_in_span_of_two_planes(plane, right))
-}
-
-fn plane_in_span_of_two_planes(plane: &Plane, span: &[Plane; 2]) -> bool {
-    let [first, second, third] = [
-        [
-            &span[0].normal.x,
-            &span[0].normal.y,
-            &span[0].normal.z,
-            &span[0].offset,
-        ],
-        [
-            &span[1].normal.x,
-            &span[1].normal.y,
-            &span[1].normal.z,
-            &span[1].offset,
-        ],
-        [
-            &plane.normal.x,
-            &plane.normal.y,
-            &plane.normal.z,
-            &plane.offset,
-        ],
-    ];
-    [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]]
-        .into_iter()
-        .all(|[a, b, c]| {
-            let determinant = Real::signed_product_sum(
-                [true, true, true, false, false, false],
-                [
-                    [first[a], second[b], third[c]],
-                    [first[b], second[c], third[a]],
-                    [first[c], second[a], third[b]],
-                    [first[c], second[b], third[a]],
-                    [first[b], second[a], third[c]],
-                    [first[a], second[c], third[b]],
-                ],
-            );
-            crate::predicate::classify_real(&determinant) == Ok(Classification::On)
-        })
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -1494,13 +1345,18 @@ impl ProjectiveCycle {
     ) -> (HomogeneousPoint3, ConstructionVertexIdentity) {
         let identity = point_cache
             .edge_plane_intersection_identity(&self.edge_identities[edge_index], plane_identity);
-        let point = projective_crossing_point(
-            current,
-            current_value,
-            current_classification,
-            next,
-            next_value,
-        );
+        let point = point_cache
+            .definition_planes(&identity)
+            .and_then(|planes| positive_weight_plane_intersection(&planes))
+            .unwrap_or_else(|| {
+                projective_crossing_point(
+                    current,
+                    current_value,
+                    current_classification,
+                    next,
+                    next_value,
+                )
+            });
         point_cache.intern(identity, point)
     }
 
@@ -2084,22 +1940,44 @@ fn compute_two_convex_inputs_projectively(
             )?;
         }
     }
+    projective_point_cache.resolve_vertex_coincidences();
+    affine_cache.identities.clear();
     for fragment in &mut classified {
         if let Some(vertex_identities) = fragment.polygon.known_vertex_identities.as_ref() {
-            fragment.polygon.known_vertex_identities = Some(std::sync::Arc::from(
-                vertex_identities
-                    .iter()
-                    .map(|identity| projective_point_cache.canonical_vertex_identity(identity))
-                    .collect::<Vec<_>>(),
-            ));
-        }
-        if let Some(edge_identities) = fragment.polygon.known_edge_identities.as_ref() {
-            fragment.polygon.known_edge_identities = Some(std::sync::Arc::from(
-                edge_identities
-                    .iter()
-                    .map(|identity| projective_point_cache.canonical_edge_identity(identity))
-                    .collect::<Vec<_>>(),
-            ));
+            let canonical_identities = vertex_identities
+                .iter()
+                .map(|identity| projective_point_cache.canonical_vertex_identity(identity))
+                .collect::<Vec<_>>();
+            let original_vertices = fragment
+                .polygon
+                .known_vertices
+                .as_ref()
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?
+                .iter()
+                .cloned()
+                .collect::<Vec<_>>();
+            let vertices = canonical_identities
+                .iter()
+                .zip(original_vertices)
+                .map(|(identity, original)| {
+                    let Some(point) = projective_point_cache.points.get(identity) else {
+                        return Ok(original);
+                    };
+                    affine_cache.resolve(point, Some(identity.clone()))
+                })
+                .collect::<HypermeshResult<Vec<_>>>()?;
+            let edge_identities = fragment
+                .polygon
+                .known_edge_identities
+                .as_deref()
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?
+                .to_vec();
+            fragment.polygon = fragment.polygon.with_known_vertex_cycle_and_edges(
+                vertices,
+                canonical_identities,
+                fragment.polygon.edges.as_ref().clone(),
+                edge_identities,
+            );
         }
     }
 
@@ -2721,6 +2599,20 @@ fn projective_plane_value(
     Ok((value, classification))
 }
 
+fn positive_weight_plane_intersection(planes: &[Plane; 3]) -> Option<HomogeneousPoint3> {
+    let point = intersect_three_planes(&planes[0], &planes[1], &planes[2]);
+    let weight = point.w.exact_rational_ref()?;
+    if weight.is_positive() {
+        Some(point)
+    } else if weight.is_negative() {
+        Some(HomogeneousPoint3::new(
+            -point.x, -point.y, -point.z, -point.w,
+        ))
+    } else {
+        None
+    }
+}
+
 fn projective_crossing_point(
     current: &HomogeneousPoint3,
     current_value: &Real,
@@ -3008,5 +2900,70 @@ mod tests {
         assert_eq!(identities[0][0], identities[1][0]);
         assert_eq!(identities[0][0], identities[1][1]);
         assert_ne!(identities[0][0], identities[0][1]);
+    }
+
+    #[test]
+    fn plane_intersection_normalizes_negative_homogeneous_weight() {
+        let planes = [
+            Plane::axis_aligned(1, Real::from(2)),
+            Plane::axis_aligned(0, Real::from(1)),
+            Plane::axis_aligned(2, Real::from(3)),
+        ];
+
+        let point = positive_weight_plane_intersection(&planes).unwrap();
+        assert!(
+            point
+                .w
+                .exact_rational_ref()
+                .is_some_and(Rational::is_positive)
+        );
+        assert_eq!(point.to_affine_point().unwrap(), p(1, 2, 3));
+    }
+
+    #[test]
+    fn vertex_coincidences_resolve_atomically_to_order_independent_identity() {
+        let planes = [
+            Plane::axis_aligned(0, Real::from(1)),
+            Plane::axis_aligned(1, Real::from(2)),
+            Plane::axis_aligned(2, Real::from(3)),
+            Plane::from_coefficients(Real::one(), Real::zero(), Real::one(), Real::from(-4)),
+        ];
+        let plane_ids: [ConstructionPlaneIdentity; 4] =
+            std::array::from_fn(|plane| ConstructionPlaneIdentity { mesh: 0, plane });
+        let identities = [
+            ConstructionVertexIdentity::PlaneTriple {
+                planes: [plane_ids[0], plane_ids[1], plane_ids[2]],
+            },
+            ConstructionVertexIdentity::PlaneTriple {
+                planes: [plane_ids[0], plane_ids[1], plane_ids[3]],
+            },
+        ];
+
+        let resolve = |order: [usize; 2]| {
+            let mut cache = ProjectivePointCache::default();
+            for (identity, plane) in plane_ids.into_iter().zip(planes.iter().cloned()) {
+                cache.planes.insert(identity, plane);
+            }
+            for index in order {
+                let definition = cache.definition_planes(&identities[index]).unwrap();
+                let point = positive_weight_plane_intersection(&definition).unwrap();
+                let (_, interned) = cache.intern(identities[index].clone(), point);
+                assert_eq!(interned, identities[index]);
+            }
+
+            cache.resolve_vertex_coincidences();
+            identities
+                .each_ref()
+                .map(|identity| cache.canonical_vertex_identity(identity))
+        };
+
+        let forward = resolve([0, 1]);
+        let reverse = resolve([1, 0]);
+        assert_eq!(forward, reverse);
+        assert_eq!(forward[0], forward[1]);
+        assert_eq!(
+            forward[0],
+            std::cmp::min(identities[0].clone(), identities[1].clone())
+        );
     }
 }

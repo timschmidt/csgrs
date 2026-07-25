@@ -1,10 +1,12 @@
 #[path = "../competitive/support.rs"]
 mod support;
 
+use hypermesh::{Plane, Point3, triangle_soup_closure_evidence};
 use support::{
     LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_TRIANGLES, assert_close, assert_summary, corpus,
-    large_boolean_case, prepare, prepare_meshes, run_boolmesh, run_hypermesh, run_manifold,
-    summarize, validate_with_tri_mesh, yeahright_boolean_case,
+    large_boolean_case, prepare, prepare_yeahright, raw_from_hypermesh, run_boolmesh,
+    run_hypermesh, run_hypermesh_exact, run_manifold, summarize, validate_with_tri_mesh,
+    yeahright_boolean_case,
 };
 
 #[test]
@@ -161,7 +163,7 @@ fn yeahright_benchmark_inputs_reach_every_competitor() {
         );
     }
 
-    let prepared = prepare_meshes(&case.left, &case.right);
+    let prepared = prepare_yeahright(&case);
     assert!(prepared.boolmesh.iter().all(|mesh| mesh.is_manifold()));
     assert_eq!(
         prepared.manifold[0].num_tri(),
@@ -173,6 +175,50 @@ fn yeahright_benchmark_inputs_reach_every_competitor() {
         YEAHRIGHT_TRIANGLES,
         "HyperMesh did not receive the subdivided YeahRight hull"
     );
+}
+
+#[test]
+fn yeahright_exact_hypermesh_outputs_remain_boundaryless_for_every_operation() {
+    let case = yeahright_boolean_case();
+    let prepared = prepare_yeahright(&case);
+    for operation in Operation::ALL {
+        let exact = run_hypermesh_exact(&prepared.hypermesh, operation);
+        let closure = triangle_soup_closure_evidence(&exact);
+        assert!(
+            closure.has_no_boundary(),
+            "HyperMesh {} exact output has a boundary: {closure:?}",
+            operation.name()
+        );
+        let degenerate_triangles = exact
+            .triangles
+            .iter()
+            .filter(|triangle| {
+                let [a, b, c] = triangle.map(|index| {
+                    let vertex = &exact.vertices[index];
+                    Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
+                });
+                !Plane::points_are_nondegenerate(&a, &b, &c)
+            })
+            .count();
+        assert_eq!(
+            degenerate_triangles,
+            0,
+            "HyperMesh {} exact output contains degenerate triangles",
+            operation.name()
+        );
+        let output = raw_from_hypermesh(&exact);
+        let summary = summarize(&output);
+        assert!(
+            summary.closed,
+            "HyperMesh {} output is open: {summary:?}",
+            operation.name(),
+        );
+        assert!(
+            summary.finite,
+            "HyperMesh {} output is non-finite",
+            operation.name()
+        );
+    }
 }
 
 fn operation_index(operation: Operation) -> usize {

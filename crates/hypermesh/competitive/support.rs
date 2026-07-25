@@ -233,15 +233,29 @@ pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> PreparedInputs {
     }
 }
 
+pub fn prepare_yeahright(case: &MeshPair) -> PreparedInputs {
+    let base = parse_triangle_obj(include_str!("data/yeahright_boolean_hull.obj"));
+    let exact_hull = subdivide_hypermesh_midpoints(&base);
+    assert_eq!(exact_hull.triangles.len(), YEAHRIGHT_TRIANGLES);
+    PreparedInputs {
+        hypermesh: [exact_hull, to_hypermesh(&case.right)],
+        boolmesh: [to_boolmesh(&case.left), to_boolmesh(&case.right)],
+        manifold: [to_manifold(&case.left), to_manifold(&case.right)],
+    }
+}
+
 pub fn run_hypermesh(inputs: &[InputMesh; 2], operation: Operation) -> RawMesh {
-    let soup = boolean_triangle_soup_with_certified_convex_inputs(
+    raw_from_hypermesh(&run_hypermesh_exact(inputs, operation))
+}
+
+pub fn run_hypermesh_exact(inputs: &[InputMesh; 2], operation: Operation) -> TriangleSoup {
+    boolean_triangle_soup_with_certified_convex_inputs(
         &[inputs[0].as_ref(), inputs[1].as_ref()],
         operation.hypermesh(),
         &[true, true],
         EmberConfig::default(),
     )
-    .unwrap_or_else(|error| panic!("hypermesh {} failed: {error}", operation.name()));
-    raw_from_hypermesh(&soup)
+    .unwrap_or_else(|error| panic!("hypermesh {} failed: {error}", operation.name()))
 }
 
 pub fn run_boolmesh(inputs: &[BoolmeshManifold; 2], operation: Operation) -> RawMesh {
@@ -513,7 +527,7 @@ pub fn to_three_d_asset(mesh: &RawMesh) -> TriMesh {
     }
 }
 
-fn raw_from_hypermesh(soup: &TriangleSoup) -> RawMesh {
+pub fn raw_from_hypermesh(soup: &TriangleSoup) -> RawMesh {
     RawMesh {
         positions: soup
             .vertices
@@ -640,6 +654,48 @@ fn subdivide(mesh: &RawMesh, divisions: usize) -> RawMesh {
         positions,
         triangles,
     }
+}
+
+fn subdivide_hypermesh_midpoints(mesh: &RawMesh) -> InputMesh {
+    let mut positions = mesh
+        .positions
+        .iter()
+        .map(|point| Point3::new(real(point[0]), real(point[1]), real(point[2])))
+        .collect::<Vec<_>>();
+    let mut edge_midpoints = BTreeMap::<[usize; 2], usize>::new();
+    let mut triangles = Vec::with_capacity(mesh.triangles.len() * 4);
+
+    for &[a, b, c] in &mesh.triangles {
+        let mut midpoint = |left: usize, right: usize| {
+            let mut edge = [left, right];
+            edge.sort_unstable();
+            *edge_midpoints.entry(edge).or_insert_with(|| {
+                let two = Real::from(2);
+                let point = Point3::new(
+                    ((&positions[left].x + &positions[right].x) / two.clone())
+                        .expect("fixture midpoint is finite"),
+                    ((&positions[left].y + &positions[right].y) / two.clone())
+                        .expect("fixture midpoint is finite"),
+                    ((&positions[left].z + &positions[right].z) / two)
+                        .expect("fixture midpoint is finite"),
+                );
+                let index = positions.len();
+                positions.push(point);
+                index
+            })
+        };
+        let ab = midpoint(a, b);
+        let bc = midpoint(b, c);
+        let ac = midpoint(a, c);
+        triangles.extend([
+            Triangle::new(a, ab, ac),
+            Triangle::new(ab, bc, ac),
+            Triangle::new(ac, bc, c),
+            Triangle::new(ab, b, bc),
+        ]);
+    }
+
+    InputMesh::new(positions, triangles)
 }
 
 fn parse_triangle_obj(source: &str) -> RawMesh {

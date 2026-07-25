@@ -6,7 +6,7 @@ use std::{hint::black_box, time::Duration};
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use support::{
-    Operation, corpus, large_boolean_case, prepare, prepare_meshes, run_boolmesh, run_hypermesh,
+    Operation, corpus, large_boolean_case, prepare, prepare_yeahright, run_boolmesh, run_hypermesh,
     run_manifold, summarize, to_boolmesh, to_hypermesh, to_manifold, to_three_d_asset,
     validate_with_tri_mesh, yeahright_boolean_case,
 };
@@ -62,7 +62,7 @@ fn competitive(c: &mut Criterion) {
     large_boolean_group.finish();
 
     let yeahright_case = yeahright_boolean_case();
-    let yeahright_inputs = prepare_meshes(&yeahright_case.left, &yeahright_case.right);
+    let yeahright_inputs = prepare_yeahright(&yeahright_case);
     let mut yeahright_boolean_group = c.benchmark_group("competitive_yeahright_boolean");
     yeahright_boolean_group.sample_size(10);
     yeahright_boolean_group.warm_up_time(Duration::from_secs(1));
