@@ -722,6 +722,7 @@ impl Rational {
         self.canonicalized_ref().denominator == other.canonicalized_ref().denominator
     }
 
+    #[inline]
     pub(crate) fn dyadic_denominator_shift(&self) -> Option<u64> {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().dyadic_denominator_shift();
