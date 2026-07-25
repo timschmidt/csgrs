@@ -21,12 +21,12 @@ runs:
           git -C "${destination}" checkout --detach FETCH_HEAD
         }
 
-        checkout_repo hypercurve https://github.com/timschmidt/hypercurve.git 1a65dd24341875937bdea08a067264a0ba6aa807
-        checkout_repo hyperlattice https://github.com/timschmidt/hyperlattice.git c46f29ae8621d403f0ba755e97d8e4ac2360e3d2
-        checkout_repo hyperlimit https://github.com/timschmidt/liminal.git 4ad5fdb67da4d45bc8431b256300d4ac1ec1721a
-        checkout_repo hypermesh https://github.com/timschmidt/hypermesh.git 8c7fd8c97cfd6e3347a4751fa43e6658dc22ff63
-        checkout_repo hyperphysics https://github.com/timschmidt/hyperphysics.git 27f5ddcb7b9be88b4d616426297801a8cb66b550
-        checkout_repo hyperreal https://github.com/timschmidt/hyperreal.git 77039e613ab855f3d5cc8346ef03ef11d25c6404
-        checkout_repo hypersdf https://github.com/timschmidt/hypersdf.git 48b2235389d46095e5e8cb19ee38f8fd4dee44f6
-        checkout_repo hypersolve https://github.com/timschmidt/hypersolve.git 22fb082060395d54a1e853d757470f9ab03ae775
-        checkout_repo hypertri https://github.com/timschmidt/hypertriangulate.git b8d6d85726da6ca3d3da92d585e9d2d29b222bb7
+        checkout_repo hypercurve https://github.com/timschmidt/hypercurve.git 9c79febdd0618081ed8b5fa6f8b108de8957b8d3
+        checkout_repo hyperlattice https://github.com/timschmidt/hyperlattice.git e3c74e3acc462c38be0475e6381d210efbe35a5c
+        checkout_repo hyperlimit https://github.com/timschmidt/liminal.git 838887426941ff5af2060aacd03597929519207f
+        checkout_repo hypermesh https://github.com/timschmidt/hypermesh.git 92effa8df5d0640a66af99a7145d722b0acd78ed
+        checkout_repo hyperphysics https://github.com/timschmidt/hyperphysics.git 86f84d0e470fe68bdec66459595a63cb1d8c8d7f
+        checkout_repo hyperreal https://github.com/timschmidt/hyperreal.git 6f8ce9a7e600b8f32acf8313d5be6c1972c207bc
+        checkout_repo hypersdf https://github.com/timschmidt/hypersdf.git ecb9811f99fdca083faae8e97624679c8ce1970c
+        checkout_repo hypersolve https://github.com/timschmidt/hypersolve.git 2ec9cd754e519197dc558a2b77f12dc43265064c
+        checkout_repo hypertri https://github.com/timschmidt/hypertriangulate.git 2f9b27222e2108ceffe7e2a9cf669c3c3e63a5e0
