@@ -4754,6 +4754,39 @@ region-Boolean replay completed 2,708 executions at 5,985 coverage points and
 19,289 feature edges with no finding; LeakSanitizer remained disabled under
 ptrace.
 
+### Clone-shared exact expression identity
+
+The preceding three-cell profile attributed 13.48% of all exclusive
+instructions to Hyperreal's structural expression equality. Retained
+Hypercurve geometry frequently compares two handles cloned from the same
+immutable `Computable` node, but the scalar layer formerly traversed the
+complete expression graph before accepting those handles as structurally
+equal.
+
+Hyperreal now accepts shared node identity first while preserving recursive
+comparison for independently constructed graphs. On the identical three-cell
+Callgrind workload, instruction references fell from 326,746,257 to
+273,691,629 (16.24%). The complete 67-cell, 100.5 MiB native Boolean
+benchmark's matched ten-run median fell from 1.6343 seconds to 1.0095 seconds
+(38.2%). Preparation fell 10.7%, from 1.0640 seconds to 949.8 milliseconds;
+union fell from 539.3 to 26.75 milliseconds (95.0%, or 20.2x). All 268
+operations remained decided with no blockers, 2,883 candidate pairs, 3,248
+fragments, 134 point classifications, and checksum 6.
+
+Heaptrack remained at 14,614,979 allocation events and 36.00 MiB peak heap.
+The release benchmark gained 160 bytes of text, while its total loadable size
+remained unchanged. Hyperreal retains a named shared-composite regression and
+Criterion row for the optimized comparison.
+
+Validation passed across the complete Hyperreal all-target suite and
+fuzz-target build, all-feature suites in Hyperlattice, Hyperlimit, Hypersolve,
+and Hypercurve, strict Hypercurve Clippy, all 37 UI tests, UI Clippy, and the
+release WASM demo build. The `computable_approximation` AddressSanitizer replay
+completed 2,509 executions at 5,271 coverage points and 19,200 feature edges;
+the downstream `region_boolean` replay completed 2,704 executions at 5,984
+coverage points and 19,292 feature edges. Neither found an error; LeakSanitizer
+alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
