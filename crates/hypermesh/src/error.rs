@@ -18,10 +18,6 @@ pub enum HypermeshError {
     },
     /// A mesh operation needs at least one point.
     EmptyInput,
-    /// Boolean preparation needs at least one supported extraction operation.
-    EmptyBooleanOperationSet,
-    /// An extraction requested an operation outside the prepared operation set.
-    UnsupportedBooleanExtraction,
     /// A query supplied a point slice different from the one used to build an
     /// acceleration structure.
     PointCountMismatch {
@@ -65,6 +61,9 @@ pub enum HypermeshError {
         /// not cancel.
         unbalanced_edges: usize,
     },
+    /// A mesh presented for convex certification has a vertex outside one of
+    /// its outward-oriented supporting half-spaces.
+    NonConvexInput,
     /// A predicate or certified construction could not be decided through the
     /// strict exact-predicate routes without choosing a precision budget or an
     /// approximate fallback.
@@ -116,12 +115,6 @@ impl fmt::Display for HypermeshError {
                 "vertex index {index} is out of bounds for {vertex_count} vertices"
             ),
             Self::EmptyInput => f.write_str("input mesh set is empty"),
-            Self::EmptyBooleanOperationSet => {
-                f.write_str("boolean preparation operation set is empty")
-            }
-            Self::UnsupportedBooleanExtraction => {
-                f.write_str("boolean operation was not retained by this preparation")
-            }
             Self::PointCountMismatch { expected, actual } => write!(
                 f,
                 "point acceleration structure contains {expected} points but query supplied {actual}"
@@ -156,6 +149,7 @@ impl fmt::Display for HypermeshError {
                 f,
                 "input mesh {mesh_index} has {unbalanced_edges} directed edge imbalances"
             ),
+            Self::NonConvexInput => f.write_str("input mesh is not convex"),
             Self::UnknownClassification => f.write_str("could not certify scalar sign"),
             Self::ReferencePropagationFailed => {
                 f.write_str("could not construct a certified subdivision reference")

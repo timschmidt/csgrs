@@ -3,10 +3,11 @@ mod common;
 use hypermesh::clip::clip_polygon;
 use hypermesh::{
     BooleanOp, EmberConfig, ExactBvh, HypermeshResult, LocalBsp, Plane, Point3, Real,
-    boolean_operation, classify_polygon_output, convex_hull, convex_hull_with_coplanar_groups,
+    boolean_operation, boolean_operation_with_certified_convex_inputs,
+    boolean_triangle_soup_with_certified_convex_inputs, build_polygon_soup,
+    classify_polygon_output, convex_hull, convex_hull_with_coplanar_groups,
     convex_hull_with_retained_facts, extract_output, intersect_polygons, make_indicator,
-    make_triangle, prepare_boolean_operations_with_certified_convex_inputs, prepare_input,
-    propagate_wnv, trace_axis_segment, trace_segment,
+    make_triangle, propagate_wnv, trace_axis_segment, trace_segment,
 };
 
 fn trace_workload<T>(name: &str, workload: impl FnOnce() -> HypermeshResult<T>) -> T {
@@ -159,31 +160,32 @@ fn main() {
         );
     }
 
-    let prepared_pair = common::cube_pair();
-    let prepared_refs = [prepared_pair[0].as_ref(), prepared_pair[1].as_ref()];
-    let prepared = trace_workload("mesh_prepare_input", || prepare_input(&prepared_refs));
-    assert_eq!(prepared.num_meshes, 2);
-    assert!(!prepared.polygons.is_empty());
+    let cube_pair = common::cube_pair();
+    let cube_refs = [cube_pair[0].as_ref(), cube_pair[1].as_ref()];
+    let soup = trace_workload("mesh_build_polygon_soup", || build_polygon_soup(&cube_refs));
+    assert_eq!(soup.num_meshes, 2);
+    assert!(!soup.polygons.is_empty());
 
-    trace_workload("prepared_certified_convex_and_output_views", || {
-        let operations = [
+    trace_workload("immediate_certified_convex_polygon", || {
+        let result = boolean_operation_with_certified_convex_inputs(
+            &cube_refs,
             BooleanOp::Union,
-            BooleanOp::Intersection,
-            BooleanOp::Difference,
-            BooleanOp::SymmetricDifference,
-        ];
-        let arrangement = prepare_boolean_operations_with_certified_convex_inputs(
-            &prepared_refs,
-            &operations,
             &[true, true],
             EmberConfig::default(),
         )?;
-        let result = arrangement.extract(BooleanOp::Union)?;
-        let triangle_soup = arrangement.extract_triangle_soup(BooleanOp::Union)?;
         let owned = extract_output(&result)?;
         let borrowed = hypermesh::output::extract_output_polygons(&result.output().polygons)?;
         assert_eq!(owned.len(), borrowed.len());
-        Ok((owned.len(), triangle_soup.triangles.len()))
+        Ok(owned.len())
+    });
+    trace_workload("immediate_certified_convex_triangle_soup", || {
+        let triangle_soup = boolean_triangle_soup_with_certified_convex_inputs(
+            &cube_refs,
+            BooleanOp::Union,
+            &[true, true],
+            EmberConfig::default(),
+        )?;
+        Ok(triangle_soup.triangles.len())
     });
 
     let p = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));

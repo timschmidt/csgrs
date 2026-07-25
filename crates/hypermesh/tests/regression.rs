@@ -4,9 +4,8 @@ use std::str::FromStr;
 use hypermesh::{
     Aabb, BooleanOp, BooleanResult, Classification, EmberConfig, ExactBvh, HypermeshResult,
     InputMesh, MeshRef, OutputVertex, Plane, Point3, Real, Triangle, TriangleSoup,
-    boolean_difference, boolean_intersection, boolean_operation, boolean_union,
-    certify_output_polygon_closure, classify_point, prepare_input,
-    triangulate_and_resolve_certified,
+    boolean_difference, boolean_intersection, boolean_operation, boolean_union, build_polygon_soup,
+    certify_output_polygon_closure, classify_point, triangulate_and_resolve_certified,
 };
 use proptest::prelude::*;
 
@@ -272,14 +271,14 @@ fn assert_closed_triangle_soup(soup: &TriangleSoup) {
 }
 
 fn assert_no_boundary_edges(soup: &TriangleSoup) {
-    let closure = hypermesh::triangle_soup_closure_report(soup);
+    let closure = hypermesh::triangle_soup_closure_evidence(soup);
     assert_eq!(
         closure.boundary_edges, 0,
-        "expected no boundary edges; closure report: {closure:?}",
+        "expected no boundary edges; closure evidence: {closure:?}",
     );
     assert_eq!(
         closure.unbalanced_edges, 0,
-        "expected signed edge cancellation; closure report: {closure:?}",
+        "expected signed edge cancellation; closure evidence: {closure:?}",
     );
 }
 
@@ -287,11 +286,11 @@ fn assert_output_polygons_closed(result: &BooleanResult) {
     let closure = certify_output_polygon_closure(result).unwrap();
     assert_eq!(
         closure.boundary_edges, 0,
-        "expected classified polygon output to be closed before cleanup; closure report: {closure:?}",
+        "expected classified polygon output to be closed before cleanup; closure evidence: {closure:?}",
     );
     assert_eq!(
         closure.unbalanced_edges, 0,
-        "expected classified polygon output to have signed edge cancellation; closure report: {closure:?}",
+        "expected classified polygon output to have signed edge cancellation; closure evidence: {closure:?}",
     );
 }
 
@@ -478,7 +477,7 @@ fn assert_overlapping_box_xor_topology(a: InputMesh, b: InputMesh, volumes: [i32
 
     let xor = triangulate_and_resolve_certified(&xor_result).unwrap();
     assert_no_boundary_edges(&xor);
-    let closure = hypermesh::triangle_soup_closure_report(&xor);
+    let closure = hypermesh::triangle_soup_closure_evidence(&xor);
     assert!(closure.non_manifold_edges > 0);
     assert_volume_numerator(&xor, r(6 * volumes[3]));
 }
@@ -613,7 +612,7 @@ fn ordered_axis_aligned_boxes_use_same_basis_cell_decomposition_with_certified_o
 #[test]
 fn roundtrip_preserves_triangle_vertices_exactly() {
     let mesh = octahedron([r(0), r(0), r(0)], r(2));
-    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
 
     assert_eq!(soup.polygons.len(), mesh.triangles.len());
     for (poly_index, polygon) in soup.polygons.iter().enumerate() {
@@ -645,7 +644,7 @@ fn roundtrip_preserves_triangle_vertices_exactly() {
 fn bvh_candidates_match_bruteforce_bounds_for_complex_fixture() {
     let a = octahedron([r(0), r(0), r(0)], r(3));
     let b = octahedron([r(1), r(1), r(1)], r(3));
-    let soup = prepare_input(&[a.as_ref(), b.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[a.as_ref(), b.as_ref()]).unwrap();
     let polygons = soup.polygons;
     let left = polygons
         .iter()

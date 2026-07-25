@@ -7,10 +7,10 @@ use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use hypermesh::{
     BooleanOp, EmberConfig, ExactGpuMeshBuffers, Point3, Real, approximate_gpu_mesh_f32,
     approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
-    approximate_interleaved_gpu_mesh_f64, boolean_operation, build_boolean_arrangement,
-    convex_hull, convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, extract_output,
-    prepare_boolean_operations, prepare_boolean_operations_with_certified_convex_inputs,
-    prepare_input, triangulate_and_resolve_certified,
+    approximate_interleaved_gpu_mesh_f64, boolean_operation, boolean_triangle_soup,
+    boolean_triangle_soup_with_certified_convex_inputs, build_polygon_soup, convex_hull,
+    convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, extract_output,
+    triangulate_and_resolve_certified,
 };
 
 fn curved_shell(segments: usize, stacks: usize) -> Vec<Point3> {
@@ -43,9 +43,9 @@ fn bench_end_to_end(c: &mut Criterion) {
     let nested_cubes = common::nested_cube_pair();
     let octahedra = common::octahedron_pair();
 
-    c.bench_function("prepare_input/cube_pair", |b| {
+    c.bench_function("build_polygon_soup/cube_pair", |b| {
         b.iter(|| {
-            prepare_input(black_box(&[cubes[0].as_ref(), cubes[1].as_ref()]))
+            build_polygon_soup(black_box(&[cubes[0].as_ref(), cubes[1].as_ref()]))
                 .expect("benchmark mesh is valid")
         })
     });
@@ -79,127 +79,55 @@ fn bench_end_to_end(c: &mut Criterion) {
     }
     group.finish();
 
-    let all_ops = [
+    let operations = [
         BooleanOp::Union,
         BooleanOp::Intersection,
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ];
     let cube_refs = [cubes[0].as_ref(), cubes[1].as_ref()];
-    let arrangement = build_boolean_arrangement(&cube_refs, EmberConfig::default())
-        .expect("cube arrangement is certified");
-    let mut arrangement_group = c.benchmark_group("boolean_arrangement/cubes");
-    arrangement_group.sample_size(20);
-    arrangement_group.warm_up_time(Duration::from_secs(1));
-    arrangement_group.measurement_time(Duration::from_secs(4));
-    arrangement_group.bench_function("direct_four_operations", |b| {
-        b.iter(|| {
-            all_ops.map(|op| {
-                boolean_operation(black_box(&cube_refs), op, EmberConfig::default())
-                    .expect("cube boolean is certified")
-            })
-        })
-    });
-    arrangement_group.bench_function("build_and_extract_four", |b| {
-        b.iter(|| {
-            let arrangement =
-                build_boolean_arrangement(black_box(&cube_refs), EmberConfig::default())
-                    .expect("cube arrangement is certified");
-            all_ops.map(|op| {
-                arrangement
-                    .extract(op)
-                    .expect("cube arrangement extraction is certified")
-            })
-        })
-    });
-    arrangement_group.bench_function("prepare_certified_convex_and_extract_four", |b| {
-        b.iter(|| {
-            let arrangement = prepare_boolean_operations_with_certified_convex_inputs(
-                black_box(&cube_refs),
-                &all_ops,
-                &[true, true],
-                EmberConfig::default(),
-            )
-            .expect("certified convex cube arrangement is certified");
-            all_ops.map(|op| {
-                arrangement
-                    .extract(op)
-                    .expect("certified convex cube extraction is certified")
-            })
-        })
-    });
-    arrangement_group.bench_function("extract_four_from_prebuilt", |b| {
-        b.iter(|| {
-            all_ops.map(|op| {
-                black_box(&arrangement)
-                    .extract(op)
-                    .expect("cube arrangement extraction is certified")
-            })
-        })
-    });
-    arrangement_group.finish();
-
-    let mut crossover_group = c.benchmark_group("boolean_arrangement_crossover/cubes");
-    crossover_group.sample_size(20);
-    crossover_group.warm_up_time(Duration::from_secs(1));
-    crossover_group.measurement_time(Duration::from_secs(4));
-    for count in 1..=all_ops.len() {
-        let operations = &all_ops[..count];
-        crossover_group.bench_with_input(
-            BenchmarkId::new("direct_scoped", count),
-            &operations,
-            |b, operations| {
+    let mut output_group = c.benchmark_group("boolean_immediate_output/cubes");
+    output_group.sample_size(20);
+    output_group.warm_up_time(Duration::from_secs(1));
+    output_group.measurement_time(Duration::from_secs(4));
+    for operation in operations {
+        output_group.bench_with_input(
+            BenchmarkId::new("polygon", format!("{operation:?}")),
+            &operation,
+            |b, operation| {
                 b.iter(|| {
-                    operations
-                        .iter()
-                        .map(|&op| {
-                            boolean_operation(black_box(&cube_refs), op, EmberConfig::default())
-                                .expect("cube boolean is certified")
-                        })
-                        .collect::<Vec<_>>()
+                    boolean_operation(black_box(&cube_refs), *operation, EmberConfig::default())
+                        .expect("cube Boolean is certified")
                 })
             },
         );
-        crossover_group.bench_with_input(
-            BenchmarkId::new("prepare_scoped_and_extract", count),
-            &operations,
-            |b, operations| {
+        output_group.bench_with_input(
+            BenchmarkId::new("triangle_soup", format!("{operation:?}")),
+            &operation,
+            |b, operation| {
                 b.iter(|| {
-                    let arrangement = prepare_boolean_operations(
+                    boolean_triangle_soup(black_box(&cube_refs), *operation, EmberConfig::default())
+                        .expect("cube triangle soup is certified")
+                })
+            },
+        );
+        output_group.bench_with_input(
+            BenchmarkId::new("certified_convex_triangle_soup", format!("{operation:?}")),
+            &operation,
+            |b, operation| {
+                b.iter(|| {
+                    boolean_triangle_soup_with_certified_convex_inputs(
                         black_box(&cube_refs),
-                        operations,
+                        *operation,
+                        &[true, true],
                         EmberConfig::default(),
                     )
-                    .expect("cube arrangement is certified");
-                    operations
-                        .iter()
-                        .map(|&op| {
-                            arrangement
-                                .extract(op)
-                                .expect("cube arrangement extraction is certified")
-                        })
-                        .collect::<Vec<_>>()
-                })
-            },
-        );
-        crossover_group.bench_with_input(
-            BenchmarkId::new("extract_from_prebuilt", count),
-            &operations,
-            |b, operations| {
-                b.iter(|| {
-                    operations
-                        .iter()
-                        .map(|&op| {
-                            black_box(&arrangement)
-                                .extract(op)
-                                .expect("cube arrangement extraction is certified")
-                        })
-                        .collect::<Vec<_>>()
+                    .expect("certified-convex cube triangle soup is certified")
                 })
             },
         );
     }
-    crossover_group.finish();
+    output_group.finish();
 
     let nested_tools = common::nested_tool_cubes();
     let nested_tool_refs = nested_tools

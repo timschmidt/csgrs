@@ -11,8 +11,12 @@ hyperreal = { path = "../hyperreal" }
 hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
 
 [dev-dependencies]
+boolmesh = "=0.1.9"
 criterion = "0.5"
+manifold-rust = "=0.9.2"
 proptest = "1.7.0"
+three-d-asset = "=0.4.0"
+tri-mesh = "=0.6.1"
 
 [features]
 default = []
@@ -30,6 +34,10 @@ harness = false
 name = "dispatch_trace"
 harness = false
 required-features = ["dispatch-trace"]
+
+[[bench]]
+name = "competitive"
+harness = false
 
 [patch.crates-io]
 hyperreal = { path = "../hyperreal" }

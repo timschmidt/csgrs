@@ -9183,6 +9183,7 @@ fn detour_trace_reports_unknown_when_fallback_surface_detour_is_skipped() {
         delta_w: Vec::new(),
         approx_bounds: None,
         known_vertices: None,
+        known_vertex_identities: None,
         known_edge_identities: None,
     }];
 
@@ -10889,6 +10890,7 @@ fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_surface_detour_is
         delta_w: Vec::new(),
         approx_bounds: None,
         known_vertices: None,
+        known_vertex_identities: None,
         known_edge_identities: None,
     }];
     let mut trace_without_detours =
@@ -12153,7 +12155,7 @@ fn ordered_interior_points_for_probe_search_prefers_axis_aligned_definition_plan
 #[test]
 fn ordered_interior_points_for_probe_search_with_support_prefers_retained_definition_points_in_root_host_fixture()
  {
-    use crate::mesh::prepare_input;
+    use crate::mesh::build_polygon_soup;
     use crate::polygon::ConvexPolygon;
 
     fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> crate::InputMesh {
@@ -12185,7 +12187,7 @@ fn ordered_interior_points_for_probe_search_with_support_prefers_retained_defini
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = soup.polygons.clone();
     let host = face_at(&polygons, 0, 1);
     let intersections = polygons
@@ -12475,6 +12477,7 @@ fn probe_reachability_reports_unknown_when_fallback_surface_detour_is_skipped() 
         delta_w: Vec::new(),
         approx_bounds: None,
         known_vertices: None,
+        known_vertex_identities: None,
         known_edge_identities: None,
     }];
     let mut trace_without_detours =
@@ -13652,7 +13655,7 @@ fn plane_replacement_no_nested_ordering_warmup_reuses_cached_local_warm_state() 
 
 #[test]
 fn probe_hot_leaf_probe_family_breakdown() {
-    use crate::mesh::prepare_input;
+    use crate::mesh::build_polygon_soup;
     use crate::polygon::ConvexPolygon;
 
     fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> crate::InputMesh {
@@ -13684,7 +13687,7 @@ fn probe_hot_leaf_probe_family_breakdown() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         face_at(&soup.polygons, 1, 4),
         face_at(&soup.polygons, 1, 5),

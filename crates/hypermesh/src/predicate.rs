@@ -91,7 +91,7 @@ pub fn classify_point(point: &Point3, plane: &Plane) -> HypermeshResult<Classifi
     PreparedPoint3::new(point).classify(plane)
 }
 
-/// Borrowed point coordinates prepared for repeated plane predicates.
+/// Borrowed point coordinates cached for repeated plane predicates.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct PreparedPoint3<'a> {
     point: &'a Point3,
@@ -186,7 +186,7 @@ pub fn classify_projective_point(
     classify_real(&homogeneous_point_plane_expression(point, plane))
 }
 
-/// Borrowed homogeneous coordinates prepared for repeated plane predicates.
+/// Borrowed homogeneous coordinates cached for repeated plane predicates.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct PreparedProjectivePoint3<'a> {
     point: &'a HomogeneousPoint3,
