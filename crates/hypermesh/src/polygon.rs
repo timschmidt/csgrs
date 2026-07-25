@@ -273,10 +273,8 @@ impl ConvexPolygon {
         debug_assert_eq!(vertices.len(), edges.len());
         debug_assert_eq!(vertices.len(), vertex_identities.len());
         debug_assert_eq!(vertices.len(), edge_identities.len());
-        let approx_bounds = (!vertices.is_empty()).then(|| {
-            let points = vertices.iter().collect::<Vec<_>>();
-            bounds_for_points(&points)
-        });
+        let approx_bounds =
+            (!vertices.is_empty()).then(|| bounds_for_owned_points(vertices.as_slice()));
         let mut result = self.clone();
         result.edges = Arc::new(edges);
         result.approx_bounds = approx_bounds;
@@ -317,14 +315,13 @@ impl ConvexPolygon {
         debug_assert_eq!(vertices.len(), vertex_identities.len());
         debug_assert_eq!(vertices.len(), edges.len());
         debug_assert_eq!(vertices.len(), edge_identities.len());
-        let points = vertices.iter().collect::<Vec<_>>();
         Self {
             support,
             edges: Arc::new(edges),
             mesh_index,
             polygon_index,
             delta_w,
-            approx_bounds: Some(bounds_for_points(&points)),
+            approx_bounds: Some(bounds_for_owned_points(vertices.as_slice())),
             known_vertices: Some(RetainedVertexCycle::Owned(Arc::from(vertices))),
             known_vertex_identities: Some(Arc::from(vertex_identities)),
             known_edge_identities: Some(Arc::from(edge_identities)),
@@ -582,6 +579,20 @@ fn oriented_edge_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
 }
 
 fn bounds_for_points(points: &[&Point3]) -> ApproxBounds {
+    let min = Point3::new(
+        min_real(points.iter().map(|point| &point.x)),
+        min_real(points.iter().map(|point| &point.y)),
+        min_real(points.iter().map(|point| &point.z)),
+    );
+    let max = Point3::new(
+        max_real(points.iter().map(|point| &point.x)),
+        max_real(points.iter().map(|point| &point.y)),
+        max_real(points.iter().map(|point| &point.z)),
+    );
+    ApproxBounds::new(min, max)
+}
+
+fn bounds_for_owned_points(points: &[Point3]) -> ApproxBounds {
     let min = Point3::new(
         min_real(points.iter().map(|point| &point.x)),
         min_real(points.iter().map(|point| &point.y)),
